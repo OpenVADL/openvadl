@@ -40,6 +40,21 @@ public class Ast {
     return builder;
   }
 
+  /**
+   * Convert the tree back into sourcecode.
+   * The generated sourcecode might look quite different but is semantically equal. Some notable
+   * details are however:
+   * <li> All macros are expanded and macro definitions are no longer in the tree.
+   * <li> Grouping with parenthesis might be lost.
+   *
+   * <p>Consider prettyPrint() if performance is important.
+   *
+   * @return a source code resulting in the same AST.
+   */
+  public String prettyPrintToString() {
+    return prettyPrint().toString();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -91,6 +106,10 @@ abstract class Node implements WithSourceLocation {
   abstract SyntaxType syntaxType();
 
   abstract void prettyPrint(int indent, StringBuilder builder);
+}
+
+interface IdentifiableNode {
+  Identifier identifier();
 }
 
 final class BinOp extends Node implements IsBinOp {

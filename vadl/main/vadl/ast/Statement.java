@@ -7,9 +7,10 @@ import javax.annotation.Nullable;
 import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
-    permits AssignmentStatement, BlockStatement, CallStatement, ForallStatement, IfStatement,
-    InstructionCallStatement, LetStatement, LockStatement, MacroInstanceStatement,
-    MacroMatchStatement, MatchStatement, PlaceholderStatement, RaiseStatement, StatementList {
+    permits AssignmentStatement, BlockStatement, CallStatement, ForallStatement,
+    ForallStatement.Index, IfStatement, InstructionCallStatement, LetStatement, LockStatement,
+    MacroInstanceStatement, MacroMatchStatement, MatchStatement, PlaceholderStatement,
+    RaiseStatement, StatementList {
   <T> T accept(StatementVisitor<T> visitor) {
     // TODO Use exhaustive switch with patterns in future Java versions
     if (this instanceof BlockStatement b) {
@@ -761,6 +762,7 @@ final class LockStatement extends Statement {
   }
 }
 
+
 final class ForallStatement extends Statement {
   List<Index> indices;
   Statement statement;
@@ -786,9 +788,7 @@ final class ForallStatement extends Statement {
       if (!isFirst) {
         builder.append(", ");
       }
-      index.name.prettyPrint(0, builder);
-      builder.append(" in ");
-      index.domain.prettyPrint(0, builder);
+      index.prettyPrint(indent, builder);
     }
     builder.append(" do\n");
     statement.prettyPrint(indent + 1, builder);
@@ -812,7 +812,48 @@ final class ForallStatement extends Statement {
     return Objects.hash(indices, statement);
   }
 
-  record Index(Identifier name, Expr domain) {
+  static final class Index extends Statement implements IdentifiableNode {
+    Identifier name;
+    Expr domain;
+
+    public Index(Identifier name, Expr domain) {
+      this.name = name;
+      this.domain = domain;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return name;
+    }
+
+    @Override
+    SourceLocation location() {
+      return name.location().join(domain.location());
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      name.prettyPrint(0, builder);
+      builder.append(" in ");
+      domain.prettyPrint(0, builder);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Index that = (Index) o;
+      return name.equals(that.name) && domain.equals(that.domain);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = name.hashCode();
+      result = 31 * result + domain.hashCode();
+      return result;
+    }
   }
 }
 

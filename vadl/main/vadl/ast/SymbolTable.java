@@ -15,168 +15,35 @@ class SymbolTable {
   SymbolTable parent = null;
   final List<SymbolTable> children = new ArrayList<>();
   final Map<String, Symbol> symbols = new HashMap<>();
-  final Map<String, Symbol> macroSymbols = new HashMap<>();
+  final Map<String, AstSymbol> macroSymbols = new HashMap<>();
   List<Diagnostic> errors = new ArrayList<>();
 
+  interface Symbol {
+  }
+
+  record AstSymbol(Node origin) implements Symbol {
+  }
+
+  record BuiltInSymbol() implements Symbol {
+  }
+
+  /**
+   * Load all builtin function names into the scope so that the names are reserved and can be used
+   * (in some contextes). However, we don't store any useful informations with them and the next
+   * passes (the type-checker) needs to know on it's own how to deal with them.
+   */
   void loadBuiltins() {
     for (String builtinFunction : Builtins.BUILTIN_FUNCTIONS) {
-      defineSymbol(new GenericSymbol(builtinFunction, "BUILTIN"),
-          SourceLocation.INVALID_SOURCE_LOCATION);
+      symbols.put(builtinFunction, new BuiltInSymbol());
     }
   }
 
-  void defineSymbol(Symbol symbol, SourceLocation loc) {
-    if (symbol instanceof ModelTypeSymbol || symbol instanceof ModelSymbol
-        || symbol instanceof RecordSymbol) {
-      verifyMacroAvailable(symbol.name(), loc);
-      macroSymbols.put(symbol.name(), symbol);
-    } else {
-      verifyAvailable(symbol.name(), loc);
-      symbols.put(symbol.name(), symbol);
-    }
-  }
-
-  SymbolTable createChild() {
-    SymbolTable child = new SymbolTable();
-    child.parent = this;
-    child.errors = this.errors;
-    this.children.add(child);
-    return child;
-  }
-
-  void addModelDefinition(ModelDefinition modelDefinition) {
-    defineSymbol(new ModelSymbol(modelDefinition.toMacro().name().name, modelDefinition,
-        modelDefinition.toMacro()), modelDefinition.id.location());
-  }
-
-  @Nullable
-  Macro getMacro(String name) {
-    Symbol symbol = resolveMacroSymbol(name);
-    if (symbol instanceof ModelSymbol modelSymbol) {
-      return modelSymbol.macro();
-    }
-    return null;
-  }
-
-  @Nullable
-  Symbol resolveSymbol(String name) {
-    Symbol symbol = symbols.get(name);
-    if (symbol != null) {
-      return symbol;
-    } else if (parent != null) {
-      return parent.resolveSymbol(name);
-    } else {
-      return null;
-    }
-  }
-
-  @Nullable
-  Symbol resolveMacroSymbol(String name) {
-    Symbol symbol = macroSymbols.get(name);
-    if (symbol != null) {
-      return symbol;
-    } else if (parent != null) {
-      return parent.resolveMacroSymbol(name);
-    } else {
-      return null;
-    }
-  }
-
-  @Nullable
-  FormatSymbol requireFormat(Identifier formatId) {
-    var symbol = resolveSymbol(formatId.name);
-    if (symbol instanceof FormatSymbol formatSymbol) {
-      return formatSymbol;
-    } else {
-      reportError("Unresolved format " + formatId.name, formatId.location());
-      return null;
-    }
-  }
-
-  @Nullable
-  PseudoInstructionDefinition findPseudoInstruction(Identifier pseudoInstrId) {
-    var symbol = resolveSymbol(pseudoInstrId.name);
-    if (symbol instanceof PseudoInstructionSymbol pseudoInstructionSymbol) {
-      return pseudoInstructionSymbol.origin;
-    } else {
-      return null;
-    }
-  }
-
-  @Nullable
-  InstructionDefinition findInstruction(Identifier instrId) {
-    var symbol = resolveSymbol(instrId.name);
-    if (symbol instanceof InstructionSymbol instructionSymbol) {
-      return instructionSymbol.origin;
-    } else {
-      return null;
-    }
-  }
-
-  @Nullable
-  FormatSymbol requireInstructionFormat(Identifier instrId) {
-    var symbol = findInstructionFormat(instrId);
-    if (symbol == null) {
-      reportError("Unresolved instruction " + instrId.name, instrId.location());
-      return null;
-    }
-    return symbol;
-  }
-
-  @Nullable
-  FormatSymbol findInstructionFormat(Identifier instrId) {
-    var instruction = findInstruction(instrId);
-    if (instruction != null && instruction.typeIdentifier instanceof Identifier typeId) {
-      return requireFormat(typeId);
-    } else {
-      return null;
-    }
-  }
-
-  @Nullable
-  InstructionSetDefinition requireIsa(Identifier isa) {
-    var symbol = resolveSymbol(isa.name);
-    if (symbol instanceof IsaSymbol isaSymbol) {
-      return isaSymbol.origin;
-    }
-    reportError("Unresolved ISA " + isa.name, isa.location());
-    return null;
-  }
-
-  @Nullable
-  ApplicationBinaryInterfaceDefinition requireAbi(Identifier abi) {
-    var symbol = resolveSymbol(abi.name);
-    if (symbol instanceof AbiSymbol abiSymbol) {
-      return abiSymbol.origin;
-    }
-    reportError("Unresolved ABI " + abi.name, abi.location());
-    return null;
-  }
-
-  void addRecord(RecordTypeDefinition definition) {
-    defineSymbol(new RecordSymbol(definition.name.name, definition), definition.name.location());
-  }
-
-  SyntaxType findType(Identifier recordName) {
-    var symbol = resolveMacroSymbol(recordName.name);
-    if (symbol instanceof RecordSymbol recordSymbol) {
-      return recordSymbol.origin.recordType;
-    } else if (symbol instanceof ModelTypeSymbol modelTypeSymbol) {
-      return modelTypeSymbol.origin.projectionType;
-    }
-    reportError("Unresolved record " + recordName.name, recordName.location());
-    return BasicSyntaxType.INVALID;
-  }
-
-  void addModelType(ModelTypeDefinition definition) {
-    defineSymbol(new ModelTypeSymbol(definition.name.name, definition), definition.name.location());
-  }
-
-  void extendBy(SymbolTable other) {
-    symbols.putAll(other.symbols);
-    macroSymbols.putAll(other.macroSymbols);
-  }
-
+  /**
+   * Imports all the symbols from the module specified into the current symbol-tabel.
+   *
+   * @param moduleAst       of the module from which you import.
+   * @param importedSymbols to be imported.
+   */
   void importFrom(Ast moduleAst, List<List<Identifier>> importedSymbols) {
     for (List<Identifier> importedSymbolSegments : importedSymbols) {
       var importedSymbol = new StringBuilder();
@@ -186,135 +53,217 @@ class SymbolTable {
         }
         importedSymbol.append(segment.name);
       }
-      var symbol = moduleAst.rootSymbolTable().resolveSymbol(importedSymbol.toString());
-      var macroSymbol = moduleAst.rootSymbolTable().resolveMacroSymbol(importedSymbol.toString());
+      var name = importedSymbol.toString();
+      var symbol = moduleAst.rootSymbolTable().symbols.get(name);
+      var macroSymbol = moduleAst.rootSymbolTable().macroSymbols.get(name);
       var location = importedSymbolSegments.get(0).location()
           .join(importedSymbolSegments.get(importedSymbolSegments.size() - 1).location());
       if (symbol == null && macroSymbol == null) {
-        reportError("Unresolved symbol " + importedSymbol, location);
+        reportError("Unresolved symbol " + name, location);
       } else {
         if (symbol != null) {
-          defineSymbol(symbol, location);
+          symbols.put(name, symbol);
         }
         if (macroSymbol != null) {
-          defineSymbol(macroSymbol, location);
+          macroSymbols.put(name, macroSymbol);
         }
       }
     }
   }
 
-  private SourceLocation getIdentifierLocation(Node node) {
-    if (node instanceof AliasDefinition) {
-      return ((AliasDefinition) node).id().location();
-    } else if (node instanceof ApplicationBinaryInterfaceDefinition) {
-      return ((ApplicationBinaryInterfaceDefinition) node).id.location();
-    } else if (node instanceof AsmDescriptionDefinition) {
-      return ((AsmDescriptionDefinition) node).id.location();
-    } else if (node instanceof AsmGrammarRuleDefinition) {
-      return ((AsmGrammarRuleDefinition) node).id.location();
-    } else if (node instanceof AsmGrammarLocalVarDefinition) {
-      return ((AsmGrammarLocalVarDefinition) node).id.location();
-    } else if (node instanceof AssemblyDefinition) {
-      var identifiers = ((AssemblyDefinition) node).identifiers;
-      return identifiers.get(0).location().join(identifiers.get(identifiers.size() - 1).location());
-    } else if (node instanceof CacheDefinition) {
-      return ((CacheDefinition) node).id.location();
-    } else if (node instanceof ConstantDefinition) {
-      return ((ConstantDefinition) node).identifier.location();
-    } else if (node instanceof CounterDefinition) {
-      return ((CounterDefinition) node).identifier.location();
-    } else if (node instanceof EncodingDefinition) {
-      return ((EncodingDefinition) node).instrId().location();
-    } else if (node instanceof EnumerationDefinition) {
-      return ((EnumerationDefinition) node).id().location();
-    } else if (node instanceof ExceptionDefinition) {
-      return ((ExceptionDefinition) node).id().location();
-    } else if (node instanceof FormatDefinition) {
-      return ((FormatDefinition) node).identifier().location();
-    } else if (node instanceof FunctionDefinition) {
-      return ((FunctionDefinition) node).name().location();
-    } else if (node instanceof InstructionDefinition) {
-      return ((InstructionDefinition) node).id().location();
-    } else if (node instanceof InstructionSetDefinition) {
-      return ((InstructionSetDefinition) node).identifier.location();
-    } else if (node instanceof LogicDefinition) {
-      return ((LogicDefinition) node).id.location();
-    } else if (node instanceof MemoryDefinition) {
-      return ((MemoryDefinition) node).identifier().location();
-    } else if (node instanceof MicroArchitectureDefinition) {
-      return ((MicroArchitectureDefinition) node).id.location();
-    } else if (node instanceof MicroProcessorDefinition) {
-      return ((MicroProcessorDefinition) node).id.location();
-    } else if (node instanceof ModelDefinition) {
-      return ((ModelDefinition) node).id.location();
-    } else if (node instanceof ModelTypeDefinition) {
-      return ((ModelTypeDefinition) node).name.location();
-    } else if (node instanceof OperationDefinition) {
-      return ((OperationDefinition) node).name().location();
-      // FIXME: Must be a Node to work.
-      // } else if (node instanceof ParameterDefinition) {
-      //  return ((ParameterDefinition) node).name().location();
-    } else if (node instanceof PipelineDefinition) {
-      return ((PipelineDefinition) node).id.location();
-    } else if (node instanceof PortBehaviorDefinition) {
-      return ((PortBehaviorDefinition) node).id.location();
-    } else if (node instanceof ProcessDefinition) {
-      return ((ProcessDefinition) node).name().location();
-    } else if (node instanceof PseudoInstructionDefinition) {
-      return ((PseudoInstructionDefinition) node).id().location();
-    } else if (node instanceof RecordTypeDefinition) {
-      return ((RecordTypeDefinition) node).name.location();
-    } else if (node instanceof RegisterDefinition) {
-      return ((RegisterDefinition) node).identifier().location();
-    } else if (node instanceof RegisterFileDefinition) {
-      return ((RegisterFileDefinition) node).identifier().location();
-    } else if (node instanceof RelocationDefinition) {
-      return ((RelocationDefinition) node).identifier.location();
-    } else if (node instanceof SignalDefinition) {
-      return ((SignalDefinition) node).id.location();
-    } else if (node instanceof SourceDefinition) {
-      return ((SourceDefinition) node).id.location();
-    } else if (node instanceof StageDefinition) {
-      return ((StageDefinition) node).id.location();
-    } else if (node instanceof UsingDefinition) {
-      return ((UsingDefinition) node).identifier().location();
+
+  SymbolTable createChild() {
+    SymbolTable child = new SymbolTable();
+    child.parent = this;
+    child.errors = this.errors;
+    this.children.add(child);
+    return child;
+  }
+
+
+  void defineSymbol(String name, Node origin) {
+    if (origin instanceof ModelDefinition || origin instanceof ModelTypeDefinition
+        || origin instanceof RecordTypeDefinition) {
+      verifyMacroAvailable(name, origin);
+      macroSymbols.put(name, new AstSymbol(origin));
     } else {
-      return node.location();
+      verifyAvailable(name, origin);
+      symbols.put(name, new AstSymbol(origin));
     }
   }
 
-  private void verifyAvailable(String name, SourceLocation loc) {
+  <T extends Node & IdentifiableNode> void defineSymbol(T origin) {
+    var name = origin.identifier().name;
+    defineSymbol(name, origin);
+  }
+
+  void addModelDefinition(ModelDefinition modelDefinition) {
+    // Note: We cannot use .identifier here because the identifier might not be initialized with
+    // macros that generate macros.
+    defineSymbol(modelDefinition.toMacro().name().name, modelDefinition);
+  }
+
+  @Nullable
+  Symbol resolveSymbol(String name) {
+    var symbol = symbols.get(name);
+
+    if (symbol != null) {
+      return symbol;
+    }
+
+    if (parent != null) {
+      return parent.resolveSymbol(name);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  Node resolveNode(String name) {
+    var symbol = resolveSymbol(name);
+    if (!(symbol instanceof AstSymbol astSymbol)) {
+      return null;
+    }
+
+    return astSymbol.origin;
+  }
+
+  @Nullable
+  Node resolveMacroSymbol(String name) {
+    var symbol = macroSymbols.get(name);
+    if (symbol == null && parent != null) {
+      return parent.resolveMacroSymbol(name);
+    }
+
+    if (symbol == null) {
+      return null;
+    }
+
+    return symbol.origin;
+  }
+
+  @Nullable
+  Macro getMacro(String name) {
+    var origin = resolveMacroSymbol(name);
+    if (origin instanceof ModelDefinition) {
+      return ((ModelDefinition) origin).toMacro();
+    }
+
+    return null;
+  }
+
+  <T extends Node> @Nullable T findAs(Identifier usage, Class<T> type) {
+    var origin = resolveNode(usage.name);
+    if (type.isInstance(origin)) {
+      return type.cast(origin);
+    }
+    return null;
+  }
+
+  // FIXME: I don't like how it's called require but still returns null
+  <T extends Node> @Nullable T requireAs(Identifier usage, Class<T> type) {
+    var origin = resolveNode(usage.name);
+    if (type.isInstance(origin)) {
+      return type.cast(origin);
+    }
+
+    if (origin == null) {
+      errors.add(Diagnostic.error("Unknown name " + usage.name, usage).build());
+    } else {
+      // FIXME: write about how this is the wrong type.
+      errors.add(Diagnostic.error("Unknown name " + usage.name, usage).build());
+    }
+    return null;
+  }
+
+  /**
+   * Load an instruction by name and return its format.
+   *
+   * @param instrId Identifier of the instruction.
+   * @return the format of that instruction.
+   */
+  @Nullable
+  FormatDefinition requireInstructionFormat(Identifier instrId) {
+    var inst = requireAs(instrId, InstructionDefinition.class);
+    if (inst == null || inst.formatNode == null) {
+      return null;
+    }
+
+    return inst.formatNode;
+  }
+
+  @Nullable
+  FormatDefinition findInstructionFormat(Identifier instrId) {
+    var inst = findAs(instrId, InstructionDefinition.class);
+    if (inst == null || inst.formatNode == null) {
+      return null;
+    }
+
+    return inst.formatNode;
+  }
+
+  SyntaxType requireSyntaxType(Identifier recordName) {
+    var symbol = resolveMacroSymbol(recordName.name);
+    if (symbol instanceof RecordTypeDefinition recordType) {
+      return recordType.recordType;
+    } else if (symbol instanceof ModelTypeDefinition modelType) {
+      return modelType.projectionType;
+    }
+    reportError("Unresolved record " + recordName.name, recordName.location());
+    return BasicSyntaxType.INVALID;
+  }
+
+
+  void extendBy(SymbolTable other) {
+    symbols.putAll(other.symbols);
+    macroSymbols.putAll(other.macroSymbols);
+  }
+
+  private SourceLocation getIdentifierLocation(Node node) {
+    if (node instanceof IdentifiableNode identifiableNode) {
+      return identifiableNode.identifier().location();
+    }
+
+    return node.location();
+  }
+
+  private void verifyAvailable(String name, Node origin) {
     if (!symbols.containsKey(name)) {
       return;
     }
 
-    var error = Diagnostic.error("Symbol name already used: " + name, loc)
-        .locationDescription(loc, "Second definition here.")
+    var originLoc = getIdentifierLocation(origin);
+
+    var error = Diagnostic.error("Symbol name already used: " + name, originLoc)
+        .locationDescription(originLoc, "Second definition here.")
         .note("All symbols must have a unique name.");
 
-    var other = symbols.get(name).origin();
-    if (other instanceof Node) {
-      var otherLoc = getIdentifierLocation((Node) other);
+
+    var otherSymbol = symbols.get(name);
+    if (otherSymbol instanceof BuiltInSymbol) {
+      error.description("`%s` is a builtin and cannot be used as a name", name);
+    } else if (otherSymbol instanceof AstSymbol astSymbol) {
+      var other = astSymbol.origin;
+      var otherLoc = getIdentifierLocation(other);
       error.locationDescription(otherLoc, "First defined here.");
     }
 
     errors.add(error.build());
   }
 
-  private void verifyMacroAvailable(String name, SourceLocation loc) {
+  private void verifyMacroAvailable(String name, Node origin) {
     if (!macroSymbols.containsKey(name)) {
       return;
     }
 
-    var error = Diagnostic.error("Macro name already used: " + name, loc)
-        .locationDescription(loc, "Second definition here.")
+    var originLocation = getIdentifierLocation(origin);
+    var error = Diagnostic.error("Macro name already used: " + name, originLocation)
+        .locationDescription(originLocation, "Second definition here.")
         .note("All macros must have a unique name.");
 
     var other = macroSymbols.get(name).origin();
-    if (other instanceof Node) {
-      var otherLoc = getIdentifierLocation((Node) other);
-      error.locationDescription(otherLoc, "First defined here.");
-    }
+    var otherLoc = getIdentifierLocation(other);
+    error.locationDescription(otherLoc, "First defined here.");
 
     errors.add(error.build());
   }
@@ -322,57 +271,6 @@ class SymbolTable {
   private void reportError(String error, SourceLocation location) {
     errors.add(Diagnostic.error(error, location)
         .build());
-  }
-
-  interface Symbol {
-    String name();
-
-    Object origin();
-  }
-
-  record IsaSymbol(String name, InstructionSetDefinition origin)
-      implements Symbol {
-  }
-
-  record AbiSymbol(String name, ApplicationBinaryInterfaceDefinition origin)
-      implements Symbol {
-  }
-
-  record MipSymbol(String name, MicroProcessorDefinition origin)
-      implements Symbol {
-  }
-
-  record MiaSymbol(String name, MicroArchitectureDefinition origin)
-      implements Symbol {
-  }
-
-  // TODO origin should always be a node
-  record GenericSymbol(String name, Object origin) implements Symbol {
-  }
-
-  record ModelSymbol(String name, ModelDefinition origin, Macro macro) implements Symbol {
-  }
-
-  record FormatSymbol(String name, FormatDefinition origin) implements Symbol {
-  }
-
-  record AliasSymbol(String name, UsingDefinition origin) implements Symbol {
-    TypeLiteral aliasType() {
-      return origin.type;
-    }
-  }
-
-  record InstructionSymbol(String name, InstructionDefinition origin) implements Symbol {
-  }
-
-  record PseudoInstructionSymbol(String name, PseudoInstructionDefinition origin)
-      implements Symbol {
-  }
-
-  record RecordSymbol(String name, RecordTypeDefinition origin) implements Symbol {
-  }
-
-  record ModelTypeSymbol(String name, ModelTypeDefinition origin) implements Symbol {
   }
 
   /**
@@ -390,69 +288,55 @@ class SymbolTable {
     static void collectSymbols(SymbolTable symbols, Definition definition) {
       definition.symbolTable = symbols;
       if (definition instanceof InstructionSetDefinition isa) {
-        symbols.defineSymbol(new IsaSymbol(isa.identifier.name, isa), isa.identifier.location());
+        symbols.defineSymbol(isa);
         isa.symbolTable = symbols.createChild();
         for (Definition childDef : isa.definitions) {
           collectSymbols(isa.symbolTable, childDef);
         }
       } else if (definition instanceof ConstantDefinition constant) {
-        symbols.defineSymbol(new GenericSymbol(constant.identifier().name, constant),
-            constant.identifier().location());
+        symbols.defineSymbol(constant);
         collectSymbols(symbols, constant.value);
       } else if (definition instanceof CounterDefinition counter) {
-        symbols.defineSymbol(new GenericSymbol(counter.identifier().name, counter),
-            counter.identifier().location());
+        symbols.defineSymbol(counter);
       } else if (definition instanceof RegisterDefinition register) {
-        symbols.defineSymbol(new GenericSymbol(register.identifier().name, register),
-            register.identifier().location());
+        symbols.defineSymbol(register);
       } else if (definition instanceof RegisterFileDefinition registerFile) {
-        symbols.defineSymbol(new GenericSymbol(registerFile.identifier().name, registerFile),
-            registerFile.identifier().location());
+        symbols.defineSymbol(registerFile);
       } else if (definition instanceof MemoryDefinition memory) {
-        symbols.defineSymbol(new GenericSymbol(memory.identifier().name, memory),
-            memory.identifier().location());
+        symbols.defineSymbol(memory);
       } else if (definition instanceof UsingDefinition using) {
-        symbols.defineSymbol(new AliasSymbol(using.identifier().name, using),
-            using.identifier().loc);
+        symbols.defineSymbol(using);
       } else if (definition instanceof FunctionDefinition function) {
-        symbols.defineSymbol(new GenericSymbol(function.name().name, function),
-            function.name.location());
+        symbols.defineSymbol(function);
         function.symbolTable = symbols.createChild();
         for (Parameter param : function.params) {
-          function.symbolTable.defineSymbol(new GenericSymbol(param.name().name, param),
-              param.name().location());
+          function.symbolTable.defineSymbol(param);
         }
         collectSymbols(function.symbolTable, function.expr);
       } else if (definition instanceof FormatDefinition format) {
         format.symbolTable = symbols.createChild();
-        symbols.defineSymbol(new FormatSymbol(format.identifier().name, format),
-            format.identifier.location());
+        symbols.defineSymbol(format);
         for (FormatDefinition.FormatField field : format.fields) {
-          format.symbolTable().defineSymbol(new GenericSymbol(field.identifier().name, field),
-              field.identifier().location());
+          format.symbolTable().defineSymbol(field.identifier().name, (Node) field);
         }
       } else if (definition instanceof InstructionDefinition instr) {
-        symbols.defineSymbol(new InstructionSymbol(instr.id().name, instr), instr.id().location());
+        symbols.defineSymbol(instr);
         instr.symbolTable = symbols.createChild();
         collectSymbols(instr.symbolTable, instr.behavior);
       } else if (definition instanceof PseudoInstructionDefinition pseudo) {
-        symbols.defineSymbol(new PseudoInstructionSymbol(pseudo.id().name, pseudo),
-            pseudo.id().location());
+        symbols.defineSymbol(pseudo);
         pseudo.symbolTable = symbols.createChild();
         for (var param : pseudo.params) {
-          pseudo.symbolTable.defineSymbol(new GenericSymbol(param.name().name, param),
-              param.name().loc);
+          pseudo.symbolTable.defineSymbol(param);
         }
         for (InstructionCallStatement statement : pseudo.statements) {
           collectSymbols(pseudo.symbolTable, statement);
         }
       } else if (definition instanceof RelocationDefinition relocation) {
-        symbols.defineSymbol(new GenericSymbol(relocation.identifier.name, relocation),
-            relocation.identifier.loc);
+        symbols.defineSymbol(relocation);
         relocation.symbolTable = symbols.createChild();
         for (Parameter param : relocation.params) {
-          relocation.symbolTable.defineSymbol(new GenericSymbol(param.name().name, param),
-              param.name().loc);
+          relocation.symbolTable.defineSymbol(param);
         }
         collectSymbols(relocation.symbolTable, relocation.expr);
       } else if (definition instanceof AssemblyDefinition assembly) {
@@ -465,12 +349,12 @@ class SymbolTable {
               ((EncodingDefinition.EncodingField) fieldEncoding).value());
         }
       } else if (definition instanceof AliasDefinition alias) {
-        symbols.defineSymbol(new GenericSymbol(alias.id().name, alias), alias.id().loc);
+        symbols.defineSymbol(alias);
         collectSymbols(symbols, alias.value);
       } else if (definition instanceof EnumerationDefinition enumeration) {
         for (EnumerationDefinition.Entry entry : enumeration.entries) {
-          String path = enumeration.id().name + "::" + entry.name().name;
-          symbols.defineSymbol(new GenericSymbol(path, entry), entry.name().location());
+          String path = enumeration.identifier().name + "::" + entry.name().name;
+          symbols.defineSymbol(path, enumeration);
           if (entry.value() != null) {
             collectSymbols(symbols, entry.value());
           }
@@ -479,35 +363,31 @@ class SymbolTable {
           }
         }
       } else if (definition instanceof ExceptionDefinition exception) {
-        symbols.defineSymbol(new GenericSymbol(exception.id().name, exception), exception.id().loc);
+        symbols.defineSymbol(exception);
         collectSymbols(symbols, exception.statement);
       } else if (definition instanceof ImportDefinition importDef) {
         symbols.importFrom(importDef.moduleAst, importDef.importedSymbols);
       } else if (definition instanceof ModelDefinition model) {
-        symbols.addModelDefinition(model);
+        symbols.defineSymbol(model);
       } else if (definition instanceof RecordTypeDefinition record) {
-        symbols.addRecord(record);
+        symbols.defineSymbol(record);
       } else if (definition instanceof ModelTypeDefinition modelType) {
-        symbols.addModelType(modelType);
+        symbols.defineSymbol(modelType);
       } else if (definition instanceof ProcessDefinition process) {
-        symbols.defineSymbol(new GenericSymbol(process.name().name, process), process.name().loc);
+        symbols.defineSymbol(process);
         process.symbolTable = symbols.createChild();
-        for (ProcessDefinition.TemplateParam templateParam : process.templateParams) {
-          process.symbolTable.defineSymbol(
-              new GenericSymbol(templateParam.name().name, templateParam),
-              templateParam.name().location());
+        for (TemplateParam templateParam : process.templateParams) {
+          process.symbolTable.defineSymbol(templateParam);
         }
         for (Parameter input : process.inputs) {
-          process.symbolTable.defineSymbol(new GenericSymbol(input.name().name, input),
-              input.name().location());
+          process.symbolTable.defineSymbol(input);
         }
         for (Parameter output : process.outputs) {
-          process.symbolTable.defineSymbol(new GenericSymbol(output.name().name, output),
-              output.name().location());
+          process.symbolTable.defineSymbol(output);
         }
         collectSymbols(process.symbolTable, process.statement);
       } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {
-        symbols.defineSymbol(new AbiSymbol(abi.id.name, abi), abi.id.loc);
+        symbols.defineSymbol(abi);
         abi.symbolTable = symbols.createChild();
         for (Definition def : abi.definitions) {
           collectSymbols(abi.symbolTable, def);
@@ -515,14 +395,13 @@ class SymbolTable {
       } else if (definition instanceof AbiSequenceDefinition abiSequence) {
         abiSequence.symbolTable = symbols.createChild();
         for (Parameter param : abiSequence.params) {
-          abiSequence.symbolTable.defineSymbol(new GenericSymbol(param.name().name, param),
-              param.name().loc);
+          abiSequence.symbolTable.defineSymbol(param);
         }
         for (InstructionCallStatement statement : abiSequence.statements) {
           collectSymbols(abiSequence.symbolTable, statement);
         }
       } else if (definition instanceof MicroProcessorDefinition mip) {
-        symbols.defineSymbol(new MipSymbol(mip.id.name, mip), mip.id.loc);
+        symbols.defineSymbol(mip);
         mip.symbolTable = symbols.createChild();
         for (Definition def : mip.definitions) {
           collectSymbols(mip.symbolTable, def);
@@ -536,14 +415,11 @@ class SymbolTable {
       } else if (definition instanceof CpuProcessDefinition cpuProcess) {
         cpuProcess.symbolTable = symbols.createChild();
         for (Parameter startupOutput : cpuProcess.startupOutputs) {
-          cpuProcess.symbolTable.defineSymbol(
-              new GenericSymbol(startupOutput.name().name, cpuProcess),
-              startupOutput.name().loc
-          );
+          cpuProcess.symbolTable.defineSymbol(startupOutput);
         }
         collectSymbols(cpuProcess.symbolTable, cpuProcess.statement);
       } else if (definition instanceof MicroArchitectureDefinition mia) {
-        symbols.defineSymbol(new MiaSymbol(mia.id.name, mia), mia.id.loc);
+        symbols.defineSymbol(mia);
         mia.symbolTable = symbols.createChild();
         for (Definition def : mia.definitions) {
           collectSymbols(mia.symbolTable, def);
@@ -551,12 +427,10 @@ class SymbolTable {
       } else if (definition instanceof MacroInstructionDefinition macroInstruction) {
         macroInstruction.symbolTable = symbols.createChild();
         for (Parameter input : macroInstruction.inputs) {
-          macroInstruction.symbolTable.defineSymbol(new GenericSymbol(input.name().name, input),
-              input.name().loc);
+          macroInstruction.symbolTable.defineSymbol(input);
         }
         for (Parameter output : macroInstruction.outputs) {
-          macroInstruction.symbolTable.defineSymbol(new GenericSymbol(output.name().name, output),
-              output.name().loc);
+          macroInstruction.symbolTable.defineSymbol(output);
         }
         collectSymbols(macroInstruction.symbolTable, macroInstruction.statement);
       } else if (definition instanceof PortBehaviorDefinition portBehavior) {
@@ -564,27 +438,23 @@ class SymbolTable {
         collectSymbols(symbols, portBehavior.statement);
       } else if (definition instanceof PipelineDefinition pipeline) {
         pipeline.symbolTable = symbols.createChild();
-        pipeline.symbolTable.defineSymbol(new GenericSymbol("stage", pipeline),
-            SourceLocation.INVALID_SOURCE_LOCATION);
+        pipeline.symbolTable.defineSymbol("stage", pipeline);
         for (Parameter output : pipeline.outputs) {
-          pipeline.symbolTable.defineSymbol(new GenericSymbol(output.name().name, output),
-              output.name().loc);
+          pipeline.symbolTable.defineSymbol(output);
         }
         collectSymbols(pipeline.symbolTable, pipeline.statement);
       } else if (definition instanceof StageDefinition stage) {
         stage.symbolTable = symbols.createChild();
         for (Parameter output : stage.outputs) {
-          stage.symbolTable.defineSymbol(new GenericSymbol(output.name().name, output),
-              output.name().loc);
+          stage.symbolTable.defineSymbol(output);
         }
         collectSymbols(stage.symbolTable, stage.statement);
       } else if (definition instanceof CacheDefinition cache) {
-        symbols.defineSymbol(new GenericSymbol(cache.id.name, cache), cache.id.loc);
+        symbols.defineSymbol(cache);
       } else if (definition instanceof SignalDefinition signal) {
-        symbols.defineSymbol(new GenericSymbol(signal.id.name, signal), signal.id.loc);
+        symbols.defineSymbol(signal);
       } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
-        symbols.defineSymbol(new GenericSymbol(asmDescription.id.name, asmDescription),
-            asmDescription.id.location());
+        symbols.defineSymbol(asmDescription);
         var asmDescSymbolTable = symbols.createChild();
         asmDescription.symbolTable = asmDescSymbolTable;
 
@@ -614,13 +484,11 @@ class SymbolTable {
         defaultRules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
         asmDescription.rules.addAll(defaultRules);
       } else if (definition instanceof AsmModifierDefinition modifier) {
-        symbols.defineSymbol(new GenericSymbol(modifier.stringLiteral.toString(), modifier),
-            modifier.location());
+        symbols.defineSymbol(modifier.stringLiteral.toString(), modifier);
       } else if (definition instanceof AsmDirectiveDefinition directive) {
-        symbols.defineSymbol(new GenericSymbol(directive.stringLiteral.toString(), directive),
-            directive.location());
+        symbols.defineSymbol(directive.stringLiteral.toString(), directive);
       } else if (definition instanceof AsmGrammarRuleDefinition rule) {
-        symbols.defineSymbol(new GenericSymbol(rule.id.name, rule), rule.id.location());
+        symbols.defineSymbol(rule);
         collectSymbols(symbols, rule.alternatives);
         if (rule.asmType != null) {
           collectSymbols(symbols, rule.asmType);
@@ -651,7 +519,7 @@ class SymbolTable {
           collectSymbols(symbols, element.groupAsmType);
         }
       } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
-        symbols.defineSymbol(new GenericSymbol(localVar.id.name, localVar), localVar.id.location());
+        symbols.defineSymbol(localVar);
         if (localVar.asmLiteral != null) {
           collectSymbols(symbols, localVar.asmLiteral);
         }
@@ -678,7 +546,7 @@ class SymbolTable {
         collectSymbols(symbols, let.valueExpression);
         var child = symbols.createChild();
         for (var identifier : let.identifiers) {
-          child.defineSymbol(new GenericSymbol(identifier.name, identifier), identifier.location());
+          child.defineSymbol(identifier.name, identifier);
         }
         collectSymbols(child, let.body);
       } else if (stmt instanceof IfStatement ifStmt) {
@@ -718,9 +586,8 @@ class SymbolTable {
       } else if (stmt instanceof ForallStatement forall) {
         forall.symbolTable = symbols.createChild();
         for (ForallStatement.Index index : forall.indices) {
-          forall.symbolTable.defineSymbol(new GenericSymbol(index.name().name, index),
-              index.name().loc);
-          collectSymbols(symbols, index.domain());
+          forall.symbolTable.defineSymbol(index);
+          collectSymbols(symbols, index.domain);
         }
         collectSymbols(forall.symbolTable, forall.statement);
       }
@@ -731,8 +598,7 @@ class SymbolTable {
       if (expr instanceof LetExpr letExpr) {
         letExpr.symbolTable = symbols.createChild();
         for (var identifier : letExpr.identifiers) {
-          letExpr.symbolTable.defineSymbol(new GenericSymbol(identifier.name, identifier),
-              identifier.location());
+          letExpr.symbolTable.defineSymbol(identifier.name, identifier);
         }
         collectSymbols(symbols, letExpr.valueExpr);
         collectSymbols(letExpr.symbolTable, letExpr.body);
@@ -796,9 +662,8 @@ class SymbolTable {
       } else if (expr instanceof ForallThenExpr forallThen) {
         forallThen.symbolTable = symbols.createChild();
         for (ForallThenExpr.Index index : forallThen.indices) {
-          forallThen.symbolTable().defineSymbol(new GenericSymbol(index.id().pathToString(), index),
-              index.id().location());
-          for (IsId operation : index.operations()) {
+          forallThen.symbolTable().defineSymbol(index);
+          for (IsId operation : index.operations) {
             ((Node) operation).symbolTable = symbols;
           }
         }
@@ -806,9 +671,8 @@ class SymbolTable {
       } else if (expr instanceof ForallExpr forallExpr) {
         forallExpr.symbolTable = symbols.createChild();
         for (ForallExpr.Index index : forallExpr.indices) {
-          forallExpr.symbolTable().defineSymbol(new GenericSymbol(index.id().pathToString(), index),
-              index.id().location());
-          collectSymbols(symbols, index.domain());
+          forallExpr.symbolTable().defineSymbol(index);
+          collectSymbols(symbols, index.domain);
         }
         collectSymbols(forallExpr.symbolTable(), forallExpr.expr);
       } else if (expr instanceof SequenceCallExpr sequenceCall) {
@@ -838,7 +702,8 @@ class SymbolTable {
     static void resolveSymbols(Definition definition) {
       if (definition instanceof InstructionSetDefinition isa) {
         if (isa.extending != null) {
-          var extending = isa.symbolTable().requireIsa(isa.extending);
+          var extending =
+              isa.symbolTable().requireAs(isa.extending, InstructionSetDefinition.class);
           isa.extendingNode = extending;
           if (extending != null) {
             isa.symbolTable().extendBy(extending.symbolTable());
@@ -852,10 +717,10 @@ class SymbolTable {
       } else if (definition instanceof FunctionDefinition function) {
         resolveSymbols(function.expr);
       } else if (definition instanceof InstructionDefinition instr) {
-        var format = instr.symbolTable().requireFormat(instr.type());
+        var format = instr.symbolTable().requireAs(instr.type(), FormatDefinition.class);
         if (format != null) {
-          instr.symbolTable().extendBy(format.origin.symbolTable());
-          instr.formatNode = format.origin;
+          instr.symbolTable().extendBy(format.symbolTable());
+          instr.formatNode = format;
         }
         resolveSymbols(instr.behavior);
       } else if (definition instanceof PseudoInstructionDefinition pseudo) {
@@ -866,30 +731,32 @@ class SymbolTable {
         resolveSymbols(relocation.expr);
       } else if (definition instanceof AssemblyDefinition assembly) {
         for (IdentifierOrPlaceholder identifier : assembly.identifiers) {
-          var pseudoInstr = assembly.symbolTable().findPseudoInstruction((Identifier) identifier);
+          var pseudoInstr = assembly.symbolTable()
+              .findAs((Identifier) identifier, PseudoInstructionDefinition.class);
           if (pseudoInstr != null) {
             assembly.instructionNodes.add(pseudoInstr);
             assembly.symbolTable().extendBy(pseudoInstr.symbolTable());
           } else {
-            var instr = assembly.symbolTable().findInstruction((Identifier) identifier);
+            var instr =
+                assembly.symbolTable().findAs((Identifier) identifier, InstructionDefinition.class);
             if (instr != null) {
               assembly.instructionNodes.add(instr);
             }
             var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
             if (format != null) {
-              assembly.symbolTable().extendBy(format.origin.symbolTable());
+              assembly.symbolTable().extendBy(format.symbolTable());
             }
           }
         }
         resolveSymbols(assembly.expr);
       } else if (definition instanceof EncodingDefinition encoding) {
-        var format = encoding.symbolTable().requireInstructionFormat(encoding.instrId());
+        var format = encoding.symbolTable().requireInstructionFormat(encoding.identifier());
         if (format != null) {
-          encoding.formatNode = format.origin;
+          encoding.formatNode = format;
           for (var item : encoding.encodings.items) {
             var fieldEncoding = (EncodingDefinition.EncodingField) item;
             var field = fieldEncoding.field();
-            if (findField(format.origin, field.name) == null) {
+            if (findField(format, field.name) == null) {
               encoding.symbolTable()
                   .reportError("Format field %s not found".formatted(field.name), field.location());
             }
@@ -911,7 +778,8 @@ class SymbolTable {
       } else if (definition instanceof ProcessDefinition process) {
         resolveSymbols(process.statement);
       } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {
-        var isa = abi.symbolTable().requireIsa((Identifier) abi.isa);
+        var isa =
+            abi.symbolTable().requireAs((Identifier) abi.isa, InstructionSetDefinition.class);
         if (isa != null) {
           abi.isaNode = isa;
           abi.symbolTable().extendBy(isa.symbolTable());
@@ -925,12 +793,14 @@ class SymbolTable {
         }
       } else if (definition instanceof MicroProcessorDefinition mip) {
         for (IsId implementedIsa : mip.implementedIsas) {
-          InstructionSetDefinition isa = mip.symbolTable().requireIsa((Identifier) implementedIsa);
+          InstructionSetDefinition isa = mip.symbolTable()
+              .requireAs((Identifier) implementedIsa, InstructionSetDefinition.class);
           if (isa != null) {
             mip.implementedIsaNodes.add(isa);
           }
         }
-        var abi = mip.symbolTable().requireAbi((Identifier) mip.abi);
+        var abi = mip.symbolTable()
+            .requireAs((Identifier) mip.abi, ApplicationBinaryInterfaceDefinition.class);
         if (abi != null) {
           mip.abiNode = abi;
           mip.symbolTable().extendBy(abi.symbolTable());
@@ -959,7 +829,8 @@ class SymbolTable {
       } else if (definition instanceof StageDefinition stage) {
         resolveSymbols(stage.statement);
       } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
-        var abi = asmDescription.symbolTable().requireAbi(asmDescription.abi);
+        var abi = asmDescription.symbolTable()
+            .requireAs(asmDescription.abi, ApplicationBinaryInterfaceDefinition.class);
         if (abi != null) {
           asmDescription.symbolTable().extendBy(abi.symbolTable());
         }
@@ -1072,13 +943,14 @@ class SymbolTable {
           }
         }
       } else if (stmt instanceof InstructionCallStatement instructionCall) {
-        var instr = instructionCall.symbolTable().findInstruction(instructionCall.id());
+        var instr =
+            instructionCall.symbolTable().findAs(instructionCall.id(), InstructionDefinition.class);
         var format = instructionCall.symbolTable().findInstructionFormat(instructionCall.id());
         if (format != null) {
           instructionCall.instrNode = instr;
           for (var namedArgument : instructionCall.namedArguments) {
             FormatDefinition.FormatField foundField = null;
-            for (var field : format.origin.fields) {
+            for (var field : format.fields) {
               if (field.identifier().name.equals(namedArgument.name().name)) {
                 foundField = field;
                 break;
@@ -1093,13 +965,14 @@ class SymbolTable {
           }
         } else {
           var pseudoInstr =
-              instructionCall.symbolTable().findPseudoInstruction(instructionCall.id());
+              instructionCall.symbolTable()
+                  .findAs(instructionCall.id(), PseudoInstructionDefinition.class);
           if (pseudoInstr != null) {
             instructionCall.instrNode = pseudoInstr;
             for (var namedArgument : instructionCall.namedArguments) {
               Parameter foundParam = null;
               for (var param : pseudoInstr.params) {
-                if (param.name().name.equals(namedArgument.name().name)) {
+                if (param.identifier().name.equals(namedArgument.name().name)) {
                   foundParam = param;
                   break;
                 }
@@ -1108,7 +981,7 @@ class SymbolTable {
                 instructionCall.symbolTable()
                     .reportError(
                         "Unknown instruction param %s (%s)".formatted(namedArgument.name().name,
-                            pseudoInstr.id().name),
+                            pseudoInstr.identifier().name),
                         namedArgument.name().location());
               }
               resolveSymbols(namedArgument.value());
@@ -1127,7 +1000,7 @@ class SymbolTable {
         resolveSymbols(lock.statement);
       } else if (stmt instanceof ForallStatement forall) {
         for (ForallStatement.Index index : forall.indices) {
-          resolveSymbols(index.domain());
+          resolveSymbols(index.domain);
         }
         resolveSymbols(forall.statement);
       }
@@ -1173,10 +1046,6 @@ class SymbolTable {
         var symbol = expr.symbolTable().resolveSymbol(id.pathToString());
         if (symbol == null) {
           expr.symbolTable().reportError("Symbol not found: " + id.pathToString(), id.location());
-        } else if (id instanceof Identifier identifier) {
-          identifier.refNode = symbol.origin();
-        } else if (id instanceof IdentifierPath identifierPath) {
-          identifierPath.refNode = symbol.origin();
         }
       } else if (expr instanceof MatchExpr match) {
         resolveSymbols(match.candidate);
@@ -1193,7 +1062,7 @@ class SymbolTable {
         resolveSymbols(forAllThen.thenExpr);
       } else if (expr instanceof ForallExpr forallExpr) {
         for (ForallExpr.Index index : forallExpr.indices) {
-          resolveSymbols(index.domain());
+          resolveSymbols(index.domain);
         }
         resolveSymbols(forallExpr.expr);
       } else if (expr instanceof SequenceCallExpr sequenceCall) {
