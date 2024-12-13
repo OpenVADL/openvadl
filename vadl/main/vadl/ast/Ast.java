@@ -46,8 +46,8 @@ public class Ast {
    * details are however:
    * <li> All macros are expanded and macro definitions are no longer in the tree.
    * <li> Grouping with parenthesis might be lost.
-   * <p>
-   * Consider prettyPrint() if performance is important.
+   *
+   * <p>Consider prettyPrint() if performance is important.
    *
    * @return a source code resulting in the same AST.
    */
