@@ -4,6 +4,8 @@ import os
 import time
 import traceback
 import yaml
+import sys
+import subprocess
 from dataclasses import dataclass
 from typing import List
 
@@ -14,6 +16,12 @@ from test_case_executer_v1 import QMPTestCaseExecutor, TestSpec
 class TestSuiteConfig:
     tests: List[TestSpec]
 
+def reset_terminal():
+    """Resets terminal state using stty."""
+    try:
+        subprocess.run(["stty", "sane"], check=True)
+    except Exception as e:
+        print(f"Warning: Failed to reset terminal state: {e}", file=sys.stderr)
 
 async def main(qemu_exec: str):
     print(f"Starting runner with qemu executable: {qemu_exec}")
@@ -45,6 +53,7 @@ async def main(qemu_exec: str):
                 test_case.test_result.errors.append(str(e))
                 print(traceback.format_exc())
             finally:
+                reset_terminal()
                 test_end_time = time.time()
                 test_case.test_result.duration = f"{(test_end_time - test_start_time) * 1000:.2f}ms"
                 status = test_case.test_result.status == 'PASS' and "✅ PASS" or "❌ FAIL"

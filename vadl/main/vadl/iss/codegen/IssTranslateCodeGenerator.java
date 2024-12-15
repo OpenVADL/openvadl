@@ -107,7 +107,7 @@ public class IssTranslateCodeGenerator extends CodeGenerator
 
           var fmtArgsStr = fmtArgs.isBlank() ? "" : ", " + fmtArgs;
 
-          writer.write("\tqemu_printf(\"[VADL][%lx] trans_");
+          writer.write("\tqemu_printf(\"[VADL][%llx] trans_");
           writer.write(name);
           writer.write(" (" + fmtString + ")");
           writer.write("\\n\", ctx->base.pc_next" + fmtArgsStr + ");\n");

@@ -1,5 +1,6 @@
 import asyncio
 import os
+import signal
 import socket
 import time
 from qemu.qmp import QMPClient, EventListener
@@ -24,7 +25,6 @@ class QEMUExecuter:
             # remove socket file if it exists
             os.remove(self.sock_addr)
         except Exception as e:
-            print(f"Error when removing sock: {e}")
             pass
 
     async def execute(self, test_elf: str,
@@ -87,14 +87,41 @@ class QEMUExecuter:
 
     async def _shutdown(self, force: bool = False):
         print(f"[QEMU_EXECUTOR] Shutting down QEMU")
-        if not force:
-            await self.qmp.execute('stop')
-        self.event_handle_task.cancel()
-        await self.event_handle_task
-        if self.process.returncode is None:
-            self.process.kill()
+
+        try:
+            if not force:
+                await self.qmp.execute('stop')
+        except Exception as e:
+            print(f"[QEMU_EXECUTOR] Error during graceful shutdown: {e}")
+
+        
         self.qmp.remove_listener(self.listener)
         await self.qmp.disconnect()
+
+        # Cancel the event handle task if it's running
+        if self.event_handle_task:
+            self.event_handle_task.cancel()
+            try:
+                await self.event_handle_task
+            except asyncio.CancelledError:
+                pass
+
+        # Forcefully terminate the process if it's still running
+        if self.process.returncode is None:
+            try:
+                print(f"[QEMU_EXECUTOR] Terminating process...")
+                self.process.terminate()
+                await self.process.wait()
+            except Exception as e:
+                print(f"[QEMU_EXECUTOR] Terminate failed, trying kill: {e}")
+                try:
+                    # Send a SIGKILL signal as a last resort
+                    os.kill(self.process.pid, signal.SIGKILL)
+                    print(f"[QEMU_EXECUTOR] Sent SIGKILL to process")
+                except Exception as kill_error:
+                    print(f"[QEMU_EXECUTOR] Failed to force kill process: {kill_error}")
+
+        print(f"[QEMU_EXECUTOR] Shutdown complete.")
 
     async def _wait_until_done(self, signal_reg: str, signal_content: str, timeout_sec: int):
         start_time = time.time()
