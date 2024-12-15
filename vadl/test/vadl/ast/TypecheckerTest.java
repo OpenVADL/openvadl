@@ -164,5 +164,32 @@ public class TypecheckerTest {
         "Shouldn't accept the program");
   }
 
+  @Test
+  public void typeFromVariable() {
+    var prog = """
+        constant a = 3
+        constant b = a
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(3)),
+        typeFinder.getConstantType(ast, "b"));
+  }
+
+  @Test
+  public void typeSizeDependsOnConstant() {
+    var prog = """
+        constant a = 3
+        constant b: SInt<a> = 1
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(Type.signedInt(3), typeFinder.getConstantType(ast, "b"));
+  }
+
 
 }

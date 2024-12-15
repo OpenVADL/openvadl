@@ -295,6 +295,9 @@ class SymbolTable {
         }
       } else if (definition instanceof ConstantDefinition constant) {
         symbols.defineSymbol(constant);
+        if (constant.typeLiteral != null) {
+          collectSymbols(symbols, constant.typeLiteral);
+        }
         collectSymbols(symbols, constant.value);
       } else if (definition instanceof CounterDefinition counter) {
         symbols.defineSymbol(counter);
@@ -680,7 +683,14 @@ class SymbolTable {
         if (sequenceCall.range != null) {
           collectSymbols(symbols, sequenceCall.range);
         }
+      } else if (expr instanceof TypeLiteral typeLiteral) {
+        for (var sizeExprList : typeLiteral.sizeIndices) {
+          for (Expr sizeExpr : sizeExprList) {
+            collectSymbols(symbols, sizeExpr);
+          }
+        }
       }
+
     }
   }
 
@@ -713,6 +723,9 @@ class SymbolTable {
           resolveSymbols(childDef);
         }
       } else if (definition instanceof ConstantDefinition constant) {
+        if (constant.typeLiteral != null) {
+          resolveSymbols(constant.typeLiteral);
+        }
         resolveSymbols(constant.value);
       } else if (definition instanceof FunctionDefinition function) {
         resolveSymbols(function.expr);
@@ -1067,6 +1080,12 @@ class SymbolTable {
         resolveSymbols(forallExpr.expr);
       } else if (expr instanceof SequenceCallExpr sequenceCall) {
         resolveSymbols(sequenceCall.target);
+      } else if (expr instanceof TypeLiteral typeLiteral) {
+        for (var sizeExprList : typeLiteral.sizeIndices) {
+          for (Expr sizeExpr : sizeExprList) {
+            resolveSymbols(sizeExpr);
+          }
+        }
       }
     }
 

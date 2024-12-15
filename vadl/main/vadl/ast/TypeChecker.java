@@ -103,7 +103,9 @@ public class TypeChecker
 
   @Override
   public Void visit(InstructionSetDefinition definition) {
-    throwUnimplemented(definition);
+    for (var def : definition.definitions) {
+      def.accept(this);
+    }
     return null;
   }
 
@@ -409,7 +411,22 @@ public class TypeChecker
 
   @Override
   public Void visit(Identifier expr) {
-    throwUnimplemented(expr);
+    // The typechecker should have already caught that.
+
+    // FIXME: Handle builtin values
+    var origin = Objects.requireNonNull(
+        Objects.requireNonNull(expr.symbolTable).requireAs(expr, Node.class)
+    );
+
+    if (origin instanceof ConstantDefinition constDef) {
+      if (constDef.type == null) {
+        constDef.accept(this);
+      }
+      expr.type = constDef.type;
+    } else {
+      throw new RuntimeException("Don't handle class " + origin.getClass().getName());
+    }
+
     return null;
   }
 
@@ -572,7 +589,15 @@ public class TypeChecker
 
   @Override
   public Void visit(CastExpr expr) {
-    throwUnimplemented(expr);
+    expr.value.accept(this);
+    expr.typeLiteral.accept(this);
+
+    //var valueType = Objects.requireNonNull(expr.value.type);
+    var litType = Objects.requireNonNull(expr.typeLiteral.type);
+
+    // FIXME: For complex types add restrictions here
+
+    expr.type = litType;
     return null;
   }
 
