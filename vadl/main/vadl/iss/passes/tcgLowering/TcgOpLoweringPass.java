@@ -188,6 +188,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       // by setting the jmp type to chain.
       // the tcg_stop_tb method will take care about the instruction chaining.
       instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.CHAIN));
+    } else {
+      // if the jump is unconditional we must exit the tb loop anyway
+      instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
     }
   }
 
