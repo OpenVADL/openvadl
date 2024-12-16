@@ -42,55 +42,6 @@ namespace [(${namespace})]MatInt {
   InstSeq generateInstSeq(int64_t Val, const MCSubtargetInfo &STI);
   InstSeq generateInstSeqImpl(int64_t Val, const MCSubtargetInfo &STI, InstSeq &Res);
 }
-
-/*
-static void generateInstSeqImplForPositiveNumbers(int64_t Val, const MCSubtargetInfo &STI,
-                                [(${namespace})]MatInt::InstSeq &Res) {
-  auto largestPossibleValue = [(${largestPossibleValueAddi})];
-  if(Val <= largestPossibleValue) {
-    Res.emplace_back([(${namespace})]::[(${addi})], Val);
-  } else {
-    auto largestPossibleLi = [(${largestPossibleValue})];
-    if(Val >= largestPossibleLi) {
-      auto lui = project_range<[(${luiLowBit})], [(${luiHighBit})]> (std::bitset<[(${luiFormatSize})]>(largestPossibleLi)).to_ullong();
-      auto addi = largestPossibleValue;
-      Res.emplace_back([(${namespace})]::[(${lui})], lui);
-      Res.emplace_back([(${namespace})]::[(${addi})], addi);
-      generateInstSeqImplForPositiveNumbers(Val - largestPossibleLi, STI, Res);
-    } else {
-      auto rest = largestPossibleLi - Val;
-      auto lui = project_range<[(${luiLowBit})], [(${luiHighBit})]> (std::bitset<[(${luiFormatSize})]>(rest)).to_ullong();
-      auto addi = largestPossibleValue;
-      Res.emplace_back([(${namespace})]::[(${lui})], lui);
-      Res.emplace_back([(${namespace})]::[(${addi})], addi);
-    }
-  }
-}
-
-
-static void generateInstSeqImplForNegativeNumbers(int64_t Val, const MCSubtargetInfo &STI,
-                                [(${namespace})]MatInt::InstSeq &Res) {
-  auto smallestPossibleValue = [(${smallestPossibleValueAddi})];
-  auto abs = std::abs(Val);
-  if(abs <= std::abs(smallestPossibleValue)) {
-    Res.emplace_back([(${namespace})]::[(${addi})], Val);
-  } else {
-    auto largestPossibleLi = [(${largestPossibleValue})];
-    if(std::abs(Val) >= largestPossibleLi) {
-      auto lui = project_range<[(${luiLowBit})], [(${luiHighBit})]> (std::bitset<[(${luiFormatSize})]>(largestPossibleLi)).to_ullong();
-      auto addi = smallestPossibleValue;
-      Res.emplace_back([(${namespace})]::[(${lui})], lui);
-      Res.emplace_back([(${namespace})]::[(${addi})], addi);
-      generateInstSeqImplForNegativeNumbers(Val + largestPossibleLi, STI, Res);
-    } else {
-      auto lui = project_range<[(${luiLowBit})], [(${luiHighBit})]> (std::bitset<[(${luiFormatSize})]>(Val)).to_ullong();
-      auto addi = smallestPossibleValue;
-      Res.emplace_back([(${namespace})]::[(${lui})], lui);
-      Res.emplace_back([(${namespace})]::[(${addi})], addi);
-    }
-  }
-}
-*/
 }
 
 namespace llvm::[(${namespace})]MatInt {
