@@ -796,7 +796,8 @@ class MacroExpander
 
   @Override
   public Definition visit(AsmGrammarRuleDefinition definition) {
-    return new AsmGrammarRuleDefinition(definition.id, definition.asmType, definition.alternatives,
+    return new AsmGrammarRuleDefinition(definition.id, definition.asmTypeDefinition,
+        definition.alternatives,
         copyLoc(definition.loc));
   }
 
@@ -811,7 +812,7 @@ class MacroExpander
     return new AsmGrammarElementDefinition(definition.localVar, definition.attribute,
         definition.isPlusEqualsAttributeAssign, definition.asmLiteral, definition.groupAlternatives,
         definition.optionAlternatives, definition.repetitionAlternatives,
-        definition.semanticPredicate, definition.groupAsmType, copyLoc(definition.loc));
+        definition.semanticPredicate, definition.groupAsmTypeDefinition, copyLoc(definition.loc));
   }
 
   @Override
@@ -823,7 +824,7 @@ class MacroExpander
   @Override
   public Definition visit(AsmGrammarLiteralDefinition definition) {
     return new AsmGrammarLiteralDefinition(definition.id, definition.parameters,
-        definition.stringLiteral, definition.asmType, copyLoc(definition.loc));
+        definition.stringLiteral, definition.asmTypeDefinition, copyLoc(definition.loc));
   }
 
   @Override
