@@ -3995,13 +3995,7 @@ def : Pat<(and X:$rs1, RV64IM_Itype_immAsInt64:$imm),
 def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$imm),
         (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
-def : Pat<(brcc SETNE, X:$rs2, X:$rs1, bb:$imm),
-        (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
-
 def : Pat<(brcond (i64 (seteq X:$rs1, X:$rs2)), bb:$imm),
-        (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
-
-def : Pat<(brcond (i64 (setne X:$rs2, X:$rs1)), bb:$imm),
         (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -4060,13 +4054,7 @@ def : Pat<(brcond (i64 (setugt X:$rs2, X:$rs1)), bb:$imm),
 def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$imm),
         (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
-def : Pat<(brcc SETEQ, X:$rs2, X:$rs1, bb:$imm),
-        (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
-
 def : Pat<(brcond (i64 (setne X:$rs1, X:$rs2)), bb:$imm),
-        (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
-
-def : Pat<(brcond (i64 (seteq X:$rs2, X:$rs1)), bb:$imm),
         (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond X:$rs1, bb:$imm),
@@ -4322,9 +4310,6 @@ def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
 def : Pat<(setcc X:$rs1, X:$rs2, SETEQ),
         (SLTIU (XOR X:$rs1, X:$rs2), 1)>;
 
-def : Pat<(setcc X:$rs1, X:$rs2, SETNE),
-        (SLTU X0, (XOR X:$rs1, X:$rs2))>;
-
 def : Pat<(setcc X:$rs1, X:$rs2, SETGT),
         (SLT X:$rs2, X:$rs1)>;
 
@@ -4345,6 +4330,9 @@ def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETNE),
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
         (SLTU X:$rs1, X:$rs2)>;
+
+def : Pat<(setcc X:$rs1, X:$rs2, SETNE),
+        (SLTU X0, (XOR X:$rs1, X:$rs2))>;
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETUGE),
         (XORI (SLTU X:$rs1, X:$rs2), 1)>;

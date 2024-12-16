@@ -51,54 +51,67 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     );
   }
 
-  private static TestOutput createTestOutputRR_ForLessThanUnsigned(LlvmCondCode condCode,
-                                                                   String machineInstruction,
-                                                                   LlvmCondCode condCode2,
-                                                                   String machineInstruction2,
-                                                                   LlvmCondCode condCode3,
-                                                                   LlvmCondCode condCode4) {
+  private static TestOutput createTestOutputRR_ForLessThanUnsigned() {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        List.of(String.format("(setcc X:$rs1, X:$rs2, %s)", condCode),
-            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode2),
-            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode3),
-            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode4)),
-        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction),
-            String.format("(%s (%s X:$rs1, X:$rs2), 1)", machineInstruction2, machineInstruction),
-            String.format("(%s X:$rs2, X:$rs1)", machineInstruction),
-            String.format("(%s (%s X:$rs2, X:$rs1), 1)", machineInstruction2, machineInstruction)),
+        List.of(String.format("(setcc X:$rs1, X:$rs2, %s)", LlvmCondCode.SETULT),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", LlvmCondCode.SETNE),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", LlvmCondCode.SETUGE),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", LlvmCondCode.SETUGT),
+            String.format("(setcc X:$rs1, X:$rs2, %s)", LlvmCondCode.SETULE)),
+        List.of(String.format("(%s X:$rs1, X:$rs2)", "SLTU"),
+            String.format("(SLTU X0, (XOR X:$rs1, X:$rs2))"),
+            String.format("(%s (%s X:$rs1, X:$rs2), 1)", "XORI", "SLTU"),
+            String.format("(%s X:$rs2, X:$rs1)", "SLTU"),
+            String.format("(%s (%s X:$rs2, X:$rs1), 1)", "XORI", "SLTU")),
         createEmptyFlags(),
         false
     );
   }
 
-  private static TestOutput createTestOutputRRWithConditionalToImmediate(LlvmCondCode condCode,
-                                                                         String machineInstruction,
-                                                                         LlvmCondCode condCodeWithImmediate,
-                                                                         String machineInstructionWithImmediate,
-                                                                         LlvmCondCode condCodeAlternative,
-                                                                         String machineInstructionAlternative,
-                                                                         LlvmCondCode condCode3,
-                                                                         LlvmCondCode condCode4,
-                                                                         String machineInstruction4) {
+  private static TestOutput createTestOutputRRForSlt() {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        List.of(String.format("(setcc X:$rs1, X:$rs2, %s)", condCode),
-            String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeWithImmediate),
-            String.format("(setcc X:$rs1, X:$rs2, %s)", condCodeAlternative),
-            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode3),
-            String.format("(setcc X:$rs1, X:$rs2, %s)", condCode4)),
-        List.of(String.format("(%s X:$rs1, X:$rs2)", machineInstruction),
-            String.format("(%s (XOR X:$rs1, X:$rs2), 1)", machineInstructionWithImmediate),
-            String.format("(%s X0, (XOR X:$rs1, X:$rs2))", machineInstructionAlternative),
-            String.format("(%s X:$rs2, X:$rs1)", machineInstruction),
-            String.format("(%s (%s X:$rs2, X:$rs1), 1)", machineInstruction4, machineInstruction)),
+        List.of("(setcc X:$rs1, X:$rs2, SETLT)",
+            "(setcc X:$rs1, X:$rs2, SETEQ)",
+            "(setcc X:$rs1, X:$rs2, SETGT)",
+            "(setcc X:$rs1, X:$rs2, SETLE)"),
+        List.of("(SLT X:$rs1, X:$rs2)",
+            "(SLTIU (XOR X:$rs1, X:$rs2), 1)",
+            "(SLT X:$rs2, X:$rs1)",
+            "(XORI (SLT X:$rs2, X:$rs1 ), 1)"),
         createEmptyFlags(),
         false
+    );
+  }
+
+
+  private static TestOutput createTestOutputRRWithConditionalBranchForBeq(LlvmCondCode condCode,
+                                                                          String machineInstruction) {
+    return new TestOutput(
+        List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
+            new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2"),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Btype_immAsLabel",
+                "imm")),
+        List.of(),
+        List.of(
+            String.format("(brcc %s, X:$rs1, X:$rs2, bb:$imm)", condCode),
+            String.format(
+                "(brcond (i64 (%s X:$rs1, X:$rs2)), bb:$imm)",
+                condCode.name().toLowerCase())),
+        // We have the same pattern twice because we have to selectors which emit the same
+        // machine instruction.
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+                machineInstruction),
+            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+                machineInstruction)
+        ),
+        createBranchFlags(),
+        true
     );
   }
 
@@ -138,8 +151,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
 
 
   private static TestOutput createTestOutputRRWithConditionalBranchForBne(LlvmCondCode condCode,
-                                                                          String machineInstruction,
-                                                                          LlvmCondCode inverseCondCode) {
+                                                                          String machineInstruction) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2"),
@@ -148,21 +160,13 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(),
         List.of(
             String.format("(brcc %s, X:$rs1, X:$rs2, bb:$imm)", condCode),
-            String.format("(brcc %s, X:$rs2, X:$rs1, bb:$imm)", inverseCondCode),
             String.format(
                 "(brcond (i64 (%s X:$rs1, X:$rs2)), bb:$imm)",
                 condCode.name().toLowerCase()),
-            String.format(
-                "(brcond (i64 (%s X:$rs2, X:$rs1)), bb:$imm)",
-                inverseCondCode.name().toLowerCase()),
-            "(brcond X:$rs1, bb:$imm)"),
+                "(brcond X:$rs1, bb:$imm)"),
         // We have the same pattern twice because we have to selectors which emit the same
         // machine instruction.
         List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
-                machineInstruction),
-            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
-                machineInstruction),
-            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
                 machineInstruction),
             String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
                 machineInstruction),
@@ -392,20 +396,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     CONDITIONALS
      */
     expectedResults.put("SLT",
-        createTestOutputRRWithConditionalToImmediate(LlvmCondCode.SETLT, "SLT",
-            LlvmCondCode.SETEQ,
-            "SLTIU",
-            LlvmCondCode.SETNE,
-            "SLTU",
-            LlvmCondCode.SETGT,
-            LlvmCondCode.SETLE,
-            "XORI"));
+        createTestOutputRRForSlt());
     expectedResults.put("SLTU",
-        createTestOutputRR_ForLessThanUnsigned(LlvmCondCode.SETULT, "SLTU",
-            LlvmCondCode.SETUGE,
-            "XORI",
-            LlvmCondCode.SETUGT,
-            LlvmCondCode.SETULE));
+        createTestOutputRR_ForLessThanUnsigned());
     expectedResults.put("SLTI",
         createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
             LlvmCondCode.SETLT, "SLTI"));
@@ -417,7 +410,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     CONDITIONAL BRANCHES
      */
     expectedResults.put("BEQ",
-        createTestOutputRRWithConditionalBranch(LlvmCondCode.SETEQ, "BEQ", LlvmCondCode.SETNE));
+        createTestOutputRRWithConditionalBranchForBeq(LlvmCondCode.SETEQ, "BEQ"));
     expectedResults.put("BGE",
         createTestOutputRRWithConditionalBranch(LlvmCondCode.SETGE, "BGE", LlvmCondCode.SETLE));
     expectedResults.put("BGEU",
@@ -427,8 +420,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("BLTU",
         createTestOutputRRWithConditionalBranch(LlvmCondCode.SETULT, "BLTU", LlvmCondCode.SETUGT));
     expectedResults.put("BNE",
-        createTestOutputRRWithConditionalBranchForBne(LlvmCondCode.SETNE, "BNE",
-            LlvmCondCode.SETEQ));
+        createTestOutputRRWithConditionalBranchForBne(LlvmCondCode.SETNE, "BNE"));
     /*
     INDIRECT CALL
      */

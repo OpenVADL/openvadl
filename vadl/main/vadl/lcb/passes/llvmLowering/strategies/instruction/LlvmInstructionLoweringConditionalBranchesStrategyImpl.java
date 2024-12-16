@@ -10,6 +10,8 @@ import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGEQ;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGTH;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULEQ;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULTH;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.EQ;
+import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.NEQ;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
@@ -139,13 +141,19 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     var label = flipped.get(instruction);
 
     ArrayList<TableGenPattern> alternatives = new ArrayList<>();
-    var swapped = generatePatternsForSwappedOperands(patterns);
-    alternatives.addAll(swapped);
-    alternatives.addAll(
-        generateBrCondFromBrCc(Stream.concat(patterns.stream(), swapped.stream()).toList()));
+    if (label != BEQ && label != BNEQ) {
+      var swapped = generatePatternsForSwappedOperands(patterns);
+      alternatives.addAll(swapped);
+      alternatives.addAll(
+          generateBrCondFromBrCc(Stream.concat(patterns.stream(), swapped.stream()).toList()));
+    } else {
+      alternatives.addAll(
+          generateBrCondFromBrCc(patterns));
+    }
 
     if (label == BNEQ) {
-      alternatives.add(generateBrCondWithRegister(instruction, behavior));
+      alternatives.add(
+          generateBrCondWithRegister(instruction, behavior));
     }
 
     return alternatives;

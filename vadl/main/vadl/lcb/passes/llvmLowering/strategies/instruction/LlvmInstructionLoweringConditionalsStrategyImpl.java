@@ -78,11 +78,12 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     var xori = getFirst(instruction, supportedInstructions, MachineInstructionLabel.XORI);
 
     if (label == MachineInstructionLabel.LTS) {
+      // We use the `patterns` from `LTS` because it has two registers in the `patterns`.
       eq(lti, xor, patterns, result);
-      neq(ltu, xor, patterns, result);
       gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETGT);
       leqOrUleq(xori, patterns, result, BuiltInTable.SLEQ);
     } else if (label == MachineInstructionLabel.LTU) {
+      neq(ltu, xor, patterns, result);
       uge(xori, patterns, result);
       gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETUGT);
       leqOrUleq(xori, patterns, result, BuiltInTable.ULEQ);
