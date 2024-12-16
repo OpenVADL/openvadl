@@ -3597,8 +3597,8 @@ let Namespace = "processorNameValue";
 let OutOperandList = ( outs  );
 let InOperandList = ( ins bare_symbol:$symbol );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3826,8 +3826,8 @@ let Namespace = "processorNameValue";
 let OutOperandList = ( outs  );
 let InOperandList = ( ins  );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3940,8 +3940,8 @@ let Namespace = "processorNameValue";
 let OutOperandList = ( outs  );
 let InOperandList = ( ins bare_symbol:$symbol );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
