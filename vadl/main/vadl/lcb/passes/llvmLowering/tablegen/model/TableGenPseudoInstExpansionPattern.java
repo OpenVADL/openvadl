@@ -10,6 +10,8 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
 
   private final String name;
   private final boolean isCall;
+  private final boolean isBranch;
+  private final boolean isIndirectBranch;
   private final List<TableGenInstructionOperand> outputs;
   private final List<TableGenInstructionOperand> inputs;
   private final Graph machine;
@@ -21,11 +23,15 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
                                             Graph selector,
                                             Graph machine,
                                             boolean isCall,
+                                            boolean isBranch,
+                                            boolean isIndirectBranch,
                                             List<TableGenInstructionOperand> inputs,
                                             List<TableGenInstructionOperand> outputs) {
     super(selector);
     this.name = name;
     this.isCall = isCall;
+    this.isBranch = isBranch;
+    this.isIndirectBranch = isIndirectBranch;
     this.machine = machine;
     this.inputs = inputs;
     this.outputs = outputs;
@@ -37,6 +43,8 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
   @Override
   public TableGenPattern copy() {
     return new TableGenPseudoInstExpansionPattern(name, selector.copy(), machine.copy(), isCall,
+        isBranch,
+        isIndirectBranch,
         inputs,
         outputs);
   }
@@ -51,6 +59,14 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
 
   public boolean isCall() {
     return isCall;
+  }
+
+  public boolean isBranch() {
+    return isBranch;
+  }
+
+  public boolean isIndirectBranch() {
+    return isIndirectBranch;
   }
 
   public List<TableGenInstructionOperand> outputs() {
