@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
@@ -85,7 +86,7 @@ public class TcgOpLoweringPass extends Pass {
    *
    * @param configuration The general configuration for this pass.
    */
-  public TcgOpLoweringPass(GeneralConfiguration configuration) {
+  public TcgOpLoweringPass(IssConfiguration configuration) {
     super(configuration);
   }
 
@@ -97,6 +98,11 @@ public class TcgOpLoweringPass extends Pass {
   @Override
   public PassName getName() {
     return PassName.of("TCG Operation Lowering");
+  }
+
+  @Override
+  public IssConfiguration configuration() {
+    return (IssConfiguration) super.configuration();
   }
 
   /**
@@ -117,7 +123,8 @@ public class TcgOpLoweringPass extends Pass {
 
     viam.isa().get().ownInstructions()
         .forEach(i ->
-            new TcgOpLoweringExecutor(requireNonNull(assignments.varAssignments().get(i)))
+            new TcgOpLoweringExecutor(requireNonNull(assignments.varAssignments().get(i)),
+                configuration().targetSize())
                 .runOn(i.behavior()));
 
     return null;
@@ -140,13 +147,16 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   @LazyInit
   ScheduledNode toReplace;
 
+  Tcg_32_64 targetSize;
+
   /**
    * Constructs a new {@code TcgOpLoweringExecutor} with the given variable assignments.
    *
    * @param assignments The map of dependency nodes to their assigned TCG variables.
    */
-  public TcgOpLoweringExecutor(Map<DependencyNode, TcgVRefNode> assignments) {
+  public TcgOpLoweringExecutor(Map<DependencyNode, TcgVRefNode> assignments, Tcg_32_64 targetSize) {
     this.assignments = assignments;
+    this.targetSize = targetSize;
   }
 
   /**
@@ -348,7 +358,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(BuiltInCall toHandle) {
-    var result = BuiltInTcgLoweringExecutor.lower(toHandle, assignments);
+    var result = BuiltInTcgLoweringExecutor.lower(toHandle, assignments, targetSize);
     replaceCurrent(result.replacements().toArray(TcgNode[]::new));
   }
 
@@ -664,8 +674,11 @@ class BuiltInTcgLoweringExecutor {
             new TcgShrNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
 
+        // when doing an arithmatic shift right, we must sign extend the source value
         .set(BuiltInTable.ASR, (ctx) -> out(
-            new TcgSarNode(ctx.dest(), ctx.src(0), ctx.src(1))
+            // TODO: Don't hardcode this sign extend from i32 but instead use the width of the src(0)
+            new TcgExtendNode(Tcg_8_16_32.i32, TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
+            new TcgSarNode(ctx.dest(), ctx.tmp(0), ctx.src(1))
         ))
 
         .build();
@@ -679,8 +692,9 @@ class BuiltInTcgLoweringExecutor {
    * @return A {@link BuiltInResult} containing the TCG nodes that replace the built-in call.
    */
   public static BuiltInResult lower(BuiltInCall call,
-                                    Map<DependencyNode, TcgVRefNode> assignments) {
-    var context = new Context(assignments, call);
+                                    Map<DependencyNode, TcgVRefNode> assignments,
+                                    Tcg_32_64 targetSize) {
+    var context = new Context(assignments, call, targetSize, new HashMap<>());
     var impl = impls.get(call.builtIn());
 
     call.ensure(impl != null, "No TCG lowering implementation for built-in %s found",
@@ -704,7 +718,9 @@ class BuiltInTcgLoweringExecutor {
    */
   private record Context(
       Map<DependencyNode, TcgVRefNode> assignments,
-      BuiltInCall call
+      BuiltInCall call,
+      Tcg_32_64 targetSize,
+      HashMap<Integer, TcgVRefNode> localTmps
   ) {
     /**
      * Retrieves the destination TCG variable assigned to the built-in call.
@@ -729,6 +745,25 @@ class BuiltInTcgLoweringExecutor {
       var src = assignments.get(arg);
       arg.ensure(src != null, "Expected to be represented by a TCGv");
       return src;
+    }
+
+    /**
+     * Returns a temporary tcgV ref node for the given local index id.
+     * If a temp for {@code i} does not exist yet, it creates one and returns it.
+     *
+     * @param i refers to a specific temporary
+     * @return a new temp tcgV
+     */
+    private TcgVRefNode tmp(int i) {
+      return localTmps.computeIfAbsent(i, (k) -> {
+        var name = "tmp_" + call.id + "_" + k;
+        return graph().addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize)));
+      });
+    }
+
+
+    private Graph graph() {
+      return requireNonNull(call.graph());
     }
   }
 
