@@ -126,7 +126,7 @@ jpegdct:                                # @jpegdct
 	SLL ra,ra,t2
 	SRA ra,ra,t2
 	LH tp,-80(fp)
-	ADDI t0,zero,-1
+	ADDI t0,zero,1
 	SLLIW t0,t0,32
 	ADDI t0,t0,-1
 	SD t0,-100(fp)
