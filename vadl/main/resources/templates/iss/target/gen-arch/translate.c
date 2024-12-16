@@ -273,7 +273,6 @@ static void [(${gen_arch_lower})]_tr_insn_start(DisasContextBase *db, CPUState *
 
 static void [(${gen_arch_lower})]_tr_translate_insn(DisasContextBase *db, CPUState *cpu)
 {
-    qemu_printf("[[(${gen_arch_upper})]] [(${gen_arch_lower})]_tr_translate_insn\n");
     DisasContext *ctx = container_of(db, DisasContext, base);
 
     // translate current insn

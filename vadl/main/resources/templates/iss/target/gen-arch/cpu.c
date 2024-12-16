@@ -24,8 +24,6 @@ static void [(${gen_arch_lower})]_cpu_disas_set_info(CPUState *cpu, disassemble_
 
 static void [(${gen_arch_lower})]_cpu_init(Object *obj)
 {
-  qemu_printf("[VADL] cpu_init\n");
-
   CPUState *cs = CPU(obj);
   [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(obj);
   CPU[(${gen_arch_upper})]State *env = &cpu->env;
@@ -34,7 +32,6 @@ static void [(${gen_arch_lower})]_cpu_init(Object *obj)
 // Realize function that sets up the CPU
 static void [(${gen_arch_lower})]_cpu_realizefn(DeviceState *dev, Error **errp)
 {
-	  qemu_printf("[VADL] cpu_realizefn\n");
     CPUState *cs = CPU(dev);
     cpu_self = [(${gen_arch_upper})]_CPU(cs);
     [(${gen_arch_upper})]CPUClass *vcc = [(${gen_arch_upper})]_CPU_GET_CLASS(dev);
@@ -78,7 +75,6 @@ static void [(${gen_arch_lower})]_cpu_reset(DeviceState *dev)
 
 static ObjectClass* [(${gen_arch_lower})]_cpu_class_by_name(const char *cpu_model)
 {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_class_by_name\n");
     return object_class_by_name(cpu_model);
 }
 
@@ -90,7 +86,6 @@ static bool [(${gen_arch_lower})]_cpu_has_work(CPUState *cs)
 }
 
 static int [(${gen_arch_lower})]_cpu_mmu_index(CPUState *cs, bool ifetch) {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_mmu_index\n");
     // TODO: What should we do here?
     return 0;
 }
@@ -99,7 +94,6 @@ static int [(${gen_arch_lower})]_cpu_mmu_index(CPUState *cs, bool ifetch) {
 //to give us the CPU state at the begining of the block.
 static void [(${gen_arch_lower})]_cpu_dump_state(CPUState *cs, FILE *f, int flags)
 {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_dump_state\n");
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
     //The CPU environment is used to access the content of the emulated registers.
     CPU[(${gen_arch_upper})]State *env = &cpu->env;
@@ -252,7 +246,6 @@ static const struct TCGCPUOps [(${gen_arch_lower})]_tcg_ops = {
 
 static void [(${gen_arch_lower})]_cpu_class_init(ObjectClass *oc, void *data)
 {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_class_init\n");
     [(${gen_arch_upper})]CPUClass *vcc = [(${gen_arch_upper})]_CPU_CLASS(oc);
     CPUClass *cc = CPU_CLASS(oc);
     DeviceClass *dc = DEVICE_CLASS(oc);
