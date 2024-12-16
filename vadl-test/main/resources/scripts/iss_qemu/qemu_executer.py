@@ -32,11 +32,11 @@ class QEMUExecuter:
                       signal_reg: str,
                       signal_content: str,
                       timeout_sec: int):
-        print(f"[QEMU_EXECUTOR] Starting QEMU ({self.qemu_exec}) with {test_elf}")
+#         print(f"[QEMU_EXECUTOR] Starting QEMU ({self.qemu_exec}) with {test_elf}")
         await self._start_qemu(test_elf)
         await self._connect_qmp(timeout_sec)
         await self.qmp.execute('cont')
-        print(f"[QEMU_EXECUTOR] Wait until test is finished... ", end="", flush=True)
+#         print(f"[QEMU_EXECUTOR] Wait until test is finished... ", end="", flush=True)
         await self._wait_until_done(signal_reg, signal_content, timeout_sec)
         print(f"done.")
         reg_results = await self._fetch_result_regs(result_regs)
@@ -86,7 +86,7 @@ class QEMUExecuter:
         return result
 
     async def _shutdown(self, force: bool = False):
-        print(f"[QEMU_EXECUTOR] Shutting down QEMU")
+#         print(f"[QEMU_EXECUTOR] Shutting down QEMU")
 
         try:
             if not force:
@@ -109,7 +109,7 @@ class QEMUExecuter:
         # Forcefully terminate the process if it's still running
         if self.process.returncode is None:
             try:
-                print(f"[QEMU_EXECUTOR] Terminating process...")
+#                 print(f"[QEMU_EXECUTOR] Terminating process...")
                 self.process.terminate()
                 await self.process.wait()
             except Exception as e:
@@ -121,7 +121,7 @@ class QEMUExecuter:
                 except Exception as kill_error:
                     print(f"[QEMU_EXECUTOR] Failed to force kill process: {kill_error}")
 
-        print(f"[QEMU_EXECUTOR] Shutdown complete.")
+#         print(f"[QEMU_EXECUTOR] Shutdown complete.")
 
     async def _wait_until_done(self, signal_reg: str, signal_content: str, timeout_sec: int):
         start_time = time.time()
