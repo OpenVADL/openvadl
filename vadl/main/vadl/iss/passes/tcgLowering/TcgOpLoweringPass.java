@@ -347,7 +347,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   void handle(SignExtendNode toHandle) {
     var dest = destOf(toHandle);
     var src = destOf(toHandle.value());
-    var fromSize = Tcg_8_16_32.from(toHandle.value());
+    var fromSize = toHandle.value().type().asDataType().bitWidth();
     replaceCurrent(new TcgExtendNode(fromSize, TcgExtend.SIGN, dest, src));
   }
 
@@ -676,8 +676,7 @@ class BuiltInTcgLoweringExecutor {
 
         // when doing an arithmatic shift right, we must sign extend the source value
         .set(BuiltInTable.ASR, (ctx) -> out(
-            // TODO: Don't hardcode this sign extend from i32 but instead use the width of the src(0)
-            new TcgExtendNode(Tcg_8_16_32.i32, TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
+            new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
             new TcgSarNode(ctx.dest(), ctx.tmp(0), ctx.src(1))
         ))
 
@@ -759,6 +758,10 @@ class BuiltInTcgLoweringExecutor {
         var name = "tmp_" + call.id + "_" + k;
         return graph().addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize)));
       });
+    }
+
+    private int argWidth(int i) {
+      return call.arguments().get(i).type().asDataType().bitWidth();
     }
 
 

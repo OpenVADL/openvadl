@@ -184,6 +184,12 @@ static inline void gen_trunc(TCGv dest, TCGv arg, int bitWidth) {
     tcg_gen_andi_tl(dest, arg, (int64_t)((1ULL << bitWidth) - 1));
 }
 
+static inline void gen_exts(TCGv dest, TCGv arg, int bitWidth) {
+	uint32_t leftRight = TARGET_LONG_BITS - bitWidth;
+	tcg_gen_shli_tl(dest, arg, leftRight);
+	tcg_gen_sari_tl(dest, dest, leftRight);
+}
+
 /*
  * Instruction translation functions.
  * Called by decode_insn() function produced by insn.deocde decode-tree.
