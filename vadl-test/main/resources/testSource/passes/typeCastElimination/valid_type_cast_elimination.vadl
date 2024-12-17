@@ -59,11 +59,8 @@ function SignExtend_Bits_SInt(a: Bits<10>) -> SInt<20> = a as SInt<20>
 function SignExtend_SInt_UInt(a: SInt<10>) -> UInt<20> = a as UInt<20>
 function SignExtend_SInt_Bits(a: SInt<10>) -> Bits<20> = a as Bits<20>
 
-// TODO: @jzottele remove or uncomment when https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/93 is resolved
-// If there would be no sign extend for UInts this would be a zero extend!
-// function NoSignExtend(a: SInt<10>) -> SInt<20> = (a as UInt<10>) as SInt<20>
-// However this would create a sign extend
-// function SignExtend_NonTrivial(a: SInt<10>) -> UInt<20> = (a as SInt<20>) as UInt<20>
+// The trivial cast must be removed after the signExtend (outer cast) got processed
+function SignExtend_TrivCast(a: UInt<10>) -> SInt<20> = (a as SInt) as SInt<20>
 
 //// BOOL CAST TESTS ////
 function BoolCast_Bits10(a: Bits<10>) -> Bool = a as Bool
