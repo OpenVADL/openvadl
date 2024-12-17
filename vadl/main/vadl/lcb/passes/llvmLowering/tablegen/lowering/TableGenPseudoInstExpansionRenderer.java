@@ -8,8 +8,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPa
  */
 public class TableGenPseudoInstExpansionRenderer {
   /**
-  * Lowers a pseudo inst.
-  */
+   * Lowers a pseudo inst.
+   */
   public static String lower(
       TableGenPseudoInstExpansionPattern pattern) {
     var out = pattern.outputs().stream().map(TableGenInstructionRenderer::lower).collect(
@@ -19,11 +19,14 @@ public class TableGenPseudoInstExpansionRenderer {
     var selector = TableGenInstructionPatternRenderer.lowerSelector(pattern.selector());
     var machine = TableGenInstructionPatternRenderer.lowerMachine(pattern.machine());
     return String.format("""
-        let isCall = %s in {
-            def %s : Pseudo<(outs %s), (ins %s),
-                                [%s]>,
-                         PseudoInstExpansion<%s>;
-        }
-        """, pattern.isPatternLowerable() ? "1" : "0", pattern.name(), out, in, selector, machine);
+            let isCall = %s, isBranch = %s, isIndirectBranch = %s in {
+                def %s : Pseudo<(outs %s), (ins %s),
+                                    [%s]>,
+                             PseudoInstExpansion<%s>;
+            }
+            """, pattern.isCall() ? "1" : "0",
+        pattern.isBranch() ? "1" : "0",
+        pattern.isIndirectBranch() ? "1" : "0",
+        pattern.name(), out, in, selector, machine);
   }
 }
