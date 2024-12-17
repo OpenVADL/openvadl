@@ -63,4 +63,19 @@ public class GroupAsmType implements AsmType {
   public int hashCode() {
     return Objects.hash(subtypes);
   }
+
+  @Override
+  public String toString() {
+    var nameWithSubtypes = new StringBuilder("@").append(name()).append("(");
+
+    for (int i = 0; i < subtypes.size(); i++) {
+      nameWithSubtypes.append(subtypes.get(i));
+      if (i != subtypes.size() - 1) {
+        nameWithSubtypes.append(", ");
+      }
+    }
+    nameWithSubtypes.append(")");
+
+    return nameWithSubtypes.toString();
+  }
 }

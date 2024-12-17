@@ -22,4 +22,9 @@ public class VoidAsmType implements AsmType {
   public boolean canBeCastTo(AsmType to) {
     return to == this;
   }
+
+  @Override
+  public String toString() {
+    return "@" + name();
+  }
 }

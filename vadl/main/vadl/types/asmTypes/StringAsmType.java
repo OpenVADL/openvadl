@@ -26,4 +26,9 @@ public class StringAsmType implements AsmType {
         || to == SymbolAsmType.instance() || to == RegisterAsmType.instance()
         || to == OperandAsmType.instance();
   }
+
+  @Override
+  public String toString() {
+    return "@" + name();
+  }
 }

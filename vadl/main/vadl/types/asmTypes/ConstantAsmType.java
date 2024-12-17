@@ -27,4 +27,9 @@ public class ConstantAsmType implements AsmType {
     return to == this || to == VoidAsmType.instance() || to == OperandAsmType.instance()
         || to == RegisterAsmType.instance();
   }
+
+  @Override
+  public String toString() {
+    return "@" + name();
+  }
 }

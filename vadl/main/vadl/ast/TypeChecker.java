@@ -10,6 +10,7 @@ import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.StringAsmType;
+import vadl.utils.WithSourceLocation;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
@@ -49,6 +50,12 @@ public class TypeChecker
     throw new RuntimeException(
         "The typechecker encountered an invalid state in `%s` at %s: %s".formatted(
             node.getClass().getSimpleName(), node.location().toIDEString(), message));
+  }
+
+  private void throwInvalidAsmCast(AsmType from, AsmType to, WithSourceLocation location) {
+    throw Diagnostic.error(
+            "From %s to %s is an invalid cast of assembly types.".formatted(from, to), location)
+        .build();
   }
 
   /**
@@ -302,7 +309,8 @@ public class TypeChecker
       if (definition.alternatives.asmType.canBeCastTo(castToAsmType)) {
         definition.asmType = castToAsmType;
       } else {
-        // TODO error: invalid cast from alternatives to castToType
+        throwInvalidAsmCast(definition.alternatives.asmType, castToAsmType,
+            definition.asmTypeDefinition);
       }
     } else {
       definition.asmType = definition.alternatives.asmType;
@@ -372,7 +380,8 @@ public class TypeChecker
         if (definition.groupAlternatives.asmType.canBeCastTo(castToAsmType)) {
           definition.asmType = castToAsmType;
         } else {
-          // TODO error: invalid cast from alternatives to castToType
+          throwInvalidAsmCast(definition.groupAlternatives.asmType, castToAsmType,
+              definition.groupAsmTypeDefinition);
         }
       } else {
         definition.asmType = definition.groupAlternatives.asmType;
@@ -431,7 +440,7 @@ public class TypeChecker
       if (StringAsmType.instance().canBeCastTo(castToAsmType)) {
         definition.asmType = castToAsmType;
       } else {
-        // TODO error: invalid cast from string to castToType
+        throwInvalidAsmCast(StringAsmType.instance(), castToAsmType, definition.asmTypeDefinition);
       }
     } else {
       definition.asmType = StringAsmType.instance();
@@ -454,7 +463,7 @@ public class TypeChecker
       if (invokedRule.asmType.canBeCastTo(castToAsmType)) {
         definition.asmType = castToAsmType;
       } else {
-        // TODO error: invalid cast from rule.type to castToType
+        throwInvalidAsmCast(invokedRule.asmType, castToAsmType, definition.asmTypeDefinition);
       }
     } else {
       definition.asmType = invokedRule.asmType;

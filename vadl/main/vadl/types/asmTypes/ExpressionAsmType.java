@@ -23,4 +23,9 @@ public class ExpressionAsmType implements AsmType {
   public boolean canBeCastTo(AsmType to) {
     return to == this || to == VoidAsmType.instance() || to == OperandAsmType.instance();
   }
+
+  @Override
+  public String toString() {
+    return "@" + name();
+  }
 }
