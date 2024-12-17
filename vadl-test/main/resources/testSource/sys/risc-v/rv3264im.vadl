@@ -34,35 +34,34 @@ instruction set architecture RV3264I = {
   using Bits5    = Bits< 5>               // 5 bit type
   using Bits6    = Bits< 6>               // 6 bit type
   using Bits7    = Bits< 7>               // 7 bit type
-  using Bits12   = Bits<12>              // 12 bit type
   using Index    = Bits< 5>               // 5 bit register index type for 32 registers
-  using UInt5    = UInt< 5>               // 5 bit unsigned shift amount
-  using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift amount
+  using UInt5    = UInt< 5>               // 5 bit unsigned shift ammount
+  using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift ammount
 
-  [X(0) = 0]            // register with index 0 always is 0
+  [X(0) = 0]                              // register with index 0 always is 0
   register file    X : Index   -> Regs    // integer register file with 32 registers of 32 bits
   program counter PC : Address            // PC points to the start of the current instruction
   memory         MEM : Address -> Byte    // byte addressed memory
 
-  format Rtype : Inst =                   // Rtype register 3 operand instruction formatMULH
+  format Rtype : Inst =                   // Rtype register 3 operand instruction format
     { funct7 : Bits7                      // [31..25] 7 bit function code
     , rs2    : Index                      // [24..20] 2nd source register index / shamt
     , rs1    : Index                      // [19..15] 1st source register index
     , funct3 : Bits3                      // [14..12] 3 bit function code
     , rd     : Index                      // [11..7]  destination register index
     , opcode : Bits7                      // [6..0]   7 bit operation code
-    , shamt  = rs2 as UInt                // 5 bit unsigned shift amount
+    , shamt  = rs2 as UInt                // 5 bit unsigned shift ammount
     }
 
   model FtypeModel (funct67 : Id, shift : Id) : IsaDefs = {
     format Ftype : Inst =                 // Ftype shift immediate instruction format
       { fun67  : $funct67                 // [31..26/25] 6 or 7 bit function code
-      , sft    : $shift                   // [24/25..20] 5 or 6 bit shift amount
+      , sft    : $shift                   // [24/25..20] 5 or 6 bit shift ammount
       , rs1    : Index                    // [19..15] 1st source register index
       , funct3 : Bits3                    // [14..12] 3 bit function code
       , rd     : Index                    // [11..7]  destination register index
       , opcode : Bits7                    // [6..0]   7 bit operation code
-      , shamt  = sft as UInt              // 5/6 bit unsigned shift amount
+      , shamt  = sft as UInt              // 5/6 bit unsigned shift ammount
       }
     }
 
@@ -79,7 +78,7 @@ instruction set architecture RV3264I = {
     { imm    : Bits<20>                   // [31..12] 20 bit immediate value
     , rd     : Index                      // [11..7]  destination register index
     , opcode : Bits7                      // [6..0]   7 bit operation code
-    , immU   = (imm as SIntR) << 12       // shifted unsigned immediate value
+    , immUp  = (imm as SIntR) << 12       // shifted signed immediate value
     }
 
   format Stype : Inst =                   // Stype store instruction format
@@ -116,7 +115,7 @@ instruction set architecture RV3264I = {
 
   model WtypeInstr (name : Id, op : BinOp, funct3 : Bin, funct7 : Bin, lhsTy : Id, rhsTy : Id) : IsaDefs = {
     instruction $name : Rtype =                        // 3 register operand instructions word
-      X(rd) := ((X(rs1) as $lhsTy) $op (X(rs2) as $rhsTy)) as SIntR
+      X(rd) := (((X(rs1) as $lhsTy) $op (X(rs2) as $rhsTy)) as SInt) as SIntR
     encoding $name = { opcode = 0b011'1011, funct3 = $funct3, funct7 = $funct7}
     assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
     }
@@ -130,7 +129,7 @@ instruction set architecture RV3264I = {
 
   model WShftInstr (name : Id, op : BinOp, funct3 : Bin, funct7 : Bin, lhsTy : Id) : IsaDefs = {
     instruction $name : Rtype =                        // shift immediate instructions word
-      X(rd) := ((X(rs1) as $lhsTy) $op shamt) as SIntR
+      X(rd) := (((X(rs1) as $lhsTy) $op shamt) as SInt) as SIntR
     encoding $name = {opcode = 0b001'1011, funct3 = $funct3, funct7 = $funct7}
     assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(shamt))
     }
@@ -144,7 +143,7 @@ instruction set architecture RV3264I = {
 
   model WItypInstr (name : Id, op : BinOp, funct3 : Bin, exTy : Id) : IsaDefs = {
     instruction $name : Itype =                        // immediate instructions word
-      X(rd) := ((X(rs1) as $exTy) $op (immS as $exTy)) as SIntR
+      X(rd) := (((X(rs1) as $exTy) $op (immS as $exTy)) as SInt) as SIntR
     encoding $name = {opcode = 0b001'1011, funct3 = $funct3}
     assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
     }
@@ -153,7 +152,6 @@ instruction set architecture RV3264I = {
     instruction $name : Utype =                        // upper immediate instructions
       X(rd) := $rhsEx
     encoding $name = {opcode = $opcode}
-    [encode imm]
     assembly $name = (mnemonic, " ", register(rd), ",", hex(imm))
     }
 
@@ -178,18 +176,16 @@ instruction set architecture RV3264I = {
       if (X(rs1) as $lhsTy) $relOp X(rs2) then
         PC := PC + immS
     encoding $name = {opcode = 0b110'0011, funct3 = $funct3}
-    [encode imm]
     assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
     }
 
   model JLinkInstr (name : Id, iFormat : Id, reg : Ex, opcode : Encs, asm : Ex) : IsaDefs = {
     instruction $name : $iFormat =                     // jump and link (register)
       let retaddr = PC.next in {
-        PC    := (($reg + immS) as UInt) & 0xffff'fffe // $reg could be equal to X(rd)
+        PC    := ($reg + immS) & (-(2 as SIntR))       // $reg could be equal to X(rd)
         X(rd) := retaddr                               // when rs1 is equal to rd
         }
     encoding $name = {$opcode}
-    [encode imm]
     assembly $name = (mnemonic, " ", register(rd), ",", decimal(imm), $asm)
     }
 
@@ -217,8 +213,8 @@ instruction set architecture RV3264I = {
   $ItypeInstr (SLTI ; <  ; 0b010 ; SInt)               // set less than immediate
   $ItypeInstr (SLTIU; <  ; 0b011 ; UInt)               // set less than immediate unsigned
 
-  $UtypeInstr (AUIPC; 0b001'0111 ; PC + immU)          // add upper immediate to PC
-  $UtypeInstr (LUI  ; 0b011'0111 ;      immU)          // load upper immediate
+  $UtypeInstr (AUIPC; 0b001'0111 ; PC + immUp)         // add upper immediate to PC
+  $UtypeInstr (LUI  ; 0b011'0111 ;      immUp)         // load upper immediate
 
   $LtypeInstr (LB   ; 0b000 ; MEM   (addr) ; SIntR)    // load byte signed
   $LtypeInstr (LBU  ; 0b100 ; MEM   (addr) ; UIntR)    // load byte unsigned
@@ -273,137 +269,6 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   $IShftInstr (SRLI ; >> ; 0b101 ; 0b000'0000 ; UInt)  // shift right logical immediate
   $IShftInstr (SRAI ; >> ; 0b101 ; 0b010'0000 ; SInt)  // shift right arithmetic immediate
 
-  relocation hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 ) >> 12 ) as UInt<20>
-  relocation lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
-
-  pseudo instruction CALL( symbol : Bits<32> ) =
-  {
-      LUI{ rd = 1 as Bits5, imm = hi( symbol ) }
-      JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo( symbol ) }
-  }
-  assembly CALL = (mnemonic, " ", hex( symbol ))
-
-  pseudo instruction TAIL( symbol : Bits<32> ) =
-  {
-      AUIPC{ rd = 6 as Bits5, imm = hi( symbol ) }
-      JALR{ rd = 0 as Bits5, rs1 = 6 as Bits5, imm = lo( symbol ) as Bits12 }
-  }
-  assembly TAIL = (mnemonic, " ", hex( symbol ))
-
-  pseudo instruction RET =
-  {
-      JALR{ rs1 = 1 as Bits5, rd = 0 as Bits5, imm = 0 as Bits12 }
-  }
-  assembly RET = mnemonic
-
-  pseudo instruction J( offset : Bits<20> ) =
-  {
-      JAL{ rd = 0 as Bits5, imm = offset }
-  }
-  assembly J = (mnemonic, " ", decimal( offset ))
-
-  pseudo instruction NOP =
-  {
-      ADDI{ rd = 0 as Bits5, rs1 = 0 as Bits5, imm = 0 as Bits12 }
-  }
-  assembly NOP = mnemonic
-
-  pseudo instruction MOV( rd : Index, rs1 : Index ) =
-  {
-      ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits12 }
-  }
-  assembly MOV = (mnemonic, " ", register( rd ), ",", register( rs1 ))
-
-  pseudo instruction NOT( rd : Index, rs1 : Index ) =
-  {
-      XORI{ rd = rd, rs1 = rs1, imm = 0xFFF /* -1 */ }
-  }
-
-  assembly NOT = (mnemonic, " ", register( rd ), ",", register( rs1 ))
-
-  pseudo instruction NEG( rd : Index, rs1 : Index ) =
-  {
-      SUB{ rd = rd, rs1 = 0 as Bits5, rs2 = rs1 }
-  }
-
-  assembly NEG = (mnemonic, " ", register( rd ), ",", register( rs1 ))
-
-  pseudo instruction SNEZ( rd : Index, rs1 : Index ) =
-  {
-      SLTU{ rd = rd, rs1 = 0 as Bits5, rs2 = rs1 }
-  }
-
-  assembly SNEZ = (mnemonic, " ", register( rd ), ",", register( rs1 ))
-
-  pseudo instruction SLTZ( rd : Index, rs1 : Index ) =
-  {
-      SLT{ rd = rd, rs1 = rs1, rs2 = 0 as Bits5 }
-  }
-
-  assembly SLTZ = (mnemonic, " ", register( rd ), ",", register( rs1 ))
-
-  pseudo instruction SGTZ( rd : Index, rs1 : Index ) =
-  {
-      SLT{ rd = rd, rs1 = 0 as Bits5, rs2 = rs1 }
-  }
-
-  assembly SGTZ = (mnemonic, " ", register( rd ), ",", register( rs1 ))
-
-  pseudo instruction BEQZ( rs : Index, offset : Bits<12> ) =
-  {
-      BEQ{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
-  }
-
-  assembly BEQZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
-
-  pseudo instruction BNEZ( rs : Index, offset : Bits<12> ) =
-  {
-      BNE{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
-  }
-
-  assembly BNEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
-
-  pseudo instruction BLEZ( rs : Index, offset : Bits<12> ) =
-  {
-      BGE{ rs1 = 0 as Bits5, rs2 = rs, imm = offset }
-  }
-
-  assembly BLEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
-
-  pseudo instruction BGEZ( rs : Index, offset : Bits<12> ) =
-  {
-      BGE{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
-  }
-
-  assembly BGEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
-
-  pseudo instruction BLTZ( rs : Index, offset : Bits<12> ) =
-  {
-      BLT{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
-  }
-
-  assembly BLTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
-
-  pseudo instruction BGTZ( rs : Index, offset : Bits<12> ) =
-  {
-      BLT{ rs1 = 0 as Bits5, rs2 = rs, imm = offset }
-  }
-
-  assembly BGTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
-
-  pseudo instruction LLA( rd: Index, symbol: Bits<32> ) =
-  {
-      LUI { rd = rd, imm = hi( symbol ) }
-      ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
-  }
-  assembly LLA = (mnemonic, " ", register(rd), hex( symbol ))
-
-   pseudo instruction LI( rd : Index, symbol : Bits<32> ) =
-   {
-      LUI{ rd = rd, imm = hi( symbol ) }
-      ADDI{ rd = rd, rs1 = rd, imm = lo( symbol ) }
-   }
-   assembly LI = (mnemonic, " ", register( rd ), ",", decimal( symbol ))
   }
 
 
@@ -416,7 +281,7 @@ instruction set architecture RV3264IM extending RV3264I = {
   constant AllOnes = (- (1 as SIntR)) as Regs
 
   function isOverflow (dividend : Regs, divisor : Regs) -> Bool =
-    (dividend = TopBitSet) & (dividend = AllOnes)
+    (dividend = TopBitSet) & (divisor = AllOnes)
 
   model MtypeInstr (name : Id, funct3 : Bin, lhsTy : Id, rhsTy : Id, resEx : Ex) : IsaDefs = {
     instruction $name : Rtype =                        // multiply instructions
@@ -433,12 +298,12 @@ instruction set architecture RV3264IM extending RV3264I = {
 // | Overflow (signed only)  | TopBitSet |    -1   | TopBitSet |    -    |     0    |     -    |
 // +-------------------------+-----------+---------+-----------|---------+----------+----------+
 
-  model DivModInstr (name : Id, opName : Id, funct3 : Bin, opCode : Bin, opTy : Id) : IsaDefs = {
+  model DivModInstr (name : Id, opName : Id, funct3 : Bin, opCode : Bin, opTy : Id, sign : Id) : IsaDefs = {
     instruction $name : Rtype =                        // division and remainder instructions
       let dividend = X(rs1) as $opTy in let divisor = X(rs2) as $opTy in
         X(rd) :=  if divisor = (0 as $opTy)
                     then match : Ex ($opName = div => AllOnes; _  => dividend)
-                  else match : Ex ($opTy = SInt =>
+                  else match : Ex ($sign = SInt =>
                     if isOverflow (dividend, divisor)
                       then match : Ex ($opName = div => TopBitSet; _  => 0)
                       else VADL::$opName(dividend, divisor) as SIntR
@@ -454,24 +319,24 @@ instruction set architecture RV3264IM extending RV3264I = {
   $MtypeInstr (MULHSU ; 0b010 ; SInt ; UInt ; result(MLen2_1..MLen)) // multiply high signed * unsigned
   $MtypeInstr (MULHU  ; 0b011 ; UInt ; UInt ; result(MLen2_1..MLen)) // multiply high unsigned * unsigned
 
-  $DivModInstr(DIV   ; div ; 0b100 ; 0b011'0011 ; SIntR)               // signed division
-  $DivModInstr(DIVU  ; div ; 0b101 ; 0b011'0011 ; UIntR)               // unsigned division
-  $DivModInstr(REM   ; mod ; 0b110 ; 0b011'0011 ; SIntR)               // signed remainder
+  $DivModInstr(DIV   ; div ; 0b100 ; 0b011'0011 ; SIntR ; SInt)      // signed division
+  $DivModInstr(DIVU  ; div ; 0b101 ; 0b011'0011 ; UIntR ; UInt)      // unsigned division
+  $DivModInstr(REM   ; mod ; 0b110 ; 0b011'0011 ; SIntR ; SInt)      // signed remainder
 
 $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
-  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR)               // unsigned remainder
+  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR ; UInt)      // unsigned remainder
 
 ;           // ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR)               // unsigned remainder
+  $DivModInstr(REMU  ; mod ; 0b111 ; 0b011'0011 ; UIntR ; UInt)      // unsigned remainder
 
-  $WtypeInstr (MULW  ;  *  ; 0b000 ; 0b000'0001 ; SIntW ; SIntW)       // multiply signed word
+  $WtypeInstr (MULW  ;  *  ; 0b000 ; 0b000'0001 ; SIntW ; SIntW)     // multiply signed word
 
-  $DivModInstr(DIVW  ; div ; 0b100 ; 0b011'1011 ; SIntW)               // signed division word
-  $DivModInstr(DIVUW ; div ; 0b101 ; 0b011'1011 ; UIntW)               // unsigned division word
-  $DivModInstr(REMW  ; mod ; 0b110 ; 0b011'1011 ; SIntW)               // signed remainder word
-  $DivModInstr(REMUW ; mod ; 0b111 ; 0b011'1011 ; UIntW)               // unsigned remainder word
+  $DivModInstr(DIVW  ; div ; 0b100 ; 0b011'1011 ; SIntW ; SInt)      // signed division word
+  $DivModInstr(DIVUW ; div ; 0b101 ; 0b011'1011 ; UIntW ; UInt)      // unsigned division word
+  $DivModInstr(REMW  ; mod ; 0b110 ; 0b011'1011 ; SIntW ; SInt)      // signed remainder word
+  $DivModInstr(REMUW ; mod ; 0b111 ; 0b011'1011 ; UIntW ; UInt)      // unsigned remainder word
 
 )           // ))))))))))))))))))))))))))))))))))))))))
 
