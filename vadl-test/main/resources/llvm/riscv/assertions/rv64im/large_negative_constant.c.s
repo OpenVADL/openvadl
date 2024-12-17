@@ -10,7 +10,7 @@ constant_return:                        # @constant_return
                                         # kill: def $x1 killed $x10
 	SW a0,-12(fp)
 	LW ra,-12(fp)
-	LUI tp,0x80000
+	LUI tp,0x80
 	ADD a0,ra,tp
 	LD fp,8(sp)
 	ADDI sp,sp,16

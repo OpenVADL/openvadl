@@ -69,7 +69,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       DummyAbi abi) {
     var result = new ArrayList<TableGenPattern>();
 
-    var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(supportedInstructions);
+    var flipped = LlvmLoweringPass.flipMachineInstructions(supportedInstructions);
     var label = flipped.get(instruction);
 
     var lti = getFirst(instruction, supportedInstructions, MachineInstructionLabel.LTIU);

@@ -56,6 +56,22 @@ public class LlvmLoweringPass extends Pass {
     public static Flags empty() {
       return new Flags(false, false, false, false, false, false, false, false);
     }
+
+    /**
+     * Given {@link Flags} overwrite the {@code isTerminator} and return it.
+     */
+    public static Flags withTerminator(Flags flags) {
+      return new Flags(true, flags.isBranch, flags.isCall, flags.isReturn, flags.isPseudo,
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore());
+    }
+
+    /**
+     * Given {@link Flags} overwrite the {@code isBranch} and return it.
+     */
+    public static Flags withBranch(Flags flags) {
+      return new Flags(flags.isTerminator(), true, flags.isCall, flags.isReturn, flags.isPseudo,
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore());
+    }
   }
 
   /**
@@ -86,12 +102,11 @@ public class LlvmLoweringPass extends Pass {
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
 
-    var architectureType = ensurePresent(
-        ValueType.from(abi.stackPointer().registerFile().resultType()),
-        "Architecture type is required.");
+    var architectureType =
+        ensurePresent(ValueType.from(abi.stackPointer().registerFile().resultType()),
+            "Architecture type is required.");
     var machineStrategies =
-        List.of(
-            new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType),
+        List.of(new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType),
             new LlvmInstructionLoweringDivisionAndRemainderStrategyImpl(architectureType),
             new LlvmInstructionLoweringConditionalsStrategyImpl(architectureType),
             new LlvmInstructionLoweringUnconditionalJumpsStrategyImpl(architectureType),
@@ -101,38 +116,27 @@ public class LlvmLoweringPass extends Pass {
             new LlvmInstructionLoweringMemoryLoadStrategyImpl(architectureType),
             new LlvmInstructionLoweringDefaultStrategyImpl(architectureType));
     var pseudoStrategies =
-        List.of(
-            new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies),
-            new LlvmPseudoInstructionLoweringDefaultStrategyImpl(machineStrategies)
-        );
+        List.of(new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies),
+            new LlvmPseudoInstructionLoweringDefaultStrategyImpl(machineStrategies));
 
-    var machineRecords =
-        generateRecordsForMachineInstructions(viam,
-            abi,
-            machineStrategies,
-            labelledMachineInstructions);
-    var pseudoRecords =
-        generateRecordsForPseudoInstructions(viam,
-            abi,
-            pseudoStrategies,
-            labelledMachineInstructions,
-            labelledPseudoInstructions);
+    var machineRecords = generateRecordsForMachineInstructions(viam, abi, machineStrategies,
+        labelledMachineInstructions);
+    var pseudoRecords = pseudoInstructions(viam, abi, pseudoStrategies,
+        labelledMachineInstructions, labelledPseudoInstructions);
 
     return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
   }
 
 
   private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
-      Specification viam,
-      DummyAbi abi,
-      List<LlvmInstructionLoweringStrategy> strategies,
+      Specification viam, DummyAbi abi, List<LlvmInstructionLoweringStrategy> strategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
 
     // We flip it because we need to know the label for the instruction to
     // apply one of the different lowering strategies.
     // A strategy knows whether it can lower it by the label.
-    var instructionLookup = flipIsaMatchingMachineInstructions(labelledMachineInstructions);
+    var instructionLookup = flipMachineInstructions(labelledMachineInstructions);
 
     viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
         .forEach(instruction -> {
@@ -144,10 +148,9 @@ public class LlvmLoweringPass extends Pass {
               continue;
             }
 
-            var record = strategy.lower(labelledMachineInstructions,
-                instruction,
-                instruction.behavior(),
-                abi);
+            var record =
+                strategy.lower(labelledMachineInstructions, instruction, instruction.behavior(),
+                    abi);
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(instruction,
@@ -162,15 +165,12 @@ public class LlvmLoweringPass extends Pass {
     return tableGenRecords;
   }
 
-  private IdentityHashMap<PseudoInstruction,
-      LlvmLoweringRecord> generateRecordsForPseudoInstructions(
-      Specification viam,
-      DummyAbi abi,
-      List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
+  private IdentityHashMap<PseudoInstruction, LlvmLoweringRecord> pseudoInstructions(
+      Specification viam, DummyAbi abi, List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Map<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
-    var flipped = flipIsaMatchingPseudoInstructions(labelledPseudoInstructions);
+    var flipped = flipPseudoInstructions(labelledPseudoInstructions);
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .forEach(pseudo -> {
@@ -199,8 +199,7 @@ public class LlvmLoweringPass extends Pass {
    * However, we would like to check whether {@link LlvmInstructionLoweringStrategy} supports this
    * {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
-  public static IdentityHashMap
-      <Instruction, MachineInstructionLabel> flipIsaMatchingMachineInstructions(
+  public static IdentityHashMap<Instruction, MachineInstructionLabel> flipMachineInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatched) {
     IdentityHashMap<Instruction, MachineInstructionLabel> inverse = new IdentityHashMap<>();
 
@@ -219,8 +218,8 @@ public class LlvmLoweringPass extends Pass {
    * However, we would like to check whether {@link LlvmPseudoInstructionLowerStrategy} supports
    * this {@link Instruction} in this pass. That's why we have the flip the hashmap.
    */
-  public static IdentityHashMap
-      <PseudoInstruction, PseudoInstructionLabel> flipIsaMatchingPseudoInstructions(
+  public static IdentityHashMap<PseudoInstruction,
+      PseudoInstructionLabel> flipPseudoInstructions(
       Map<PseudoInstructionLabel, List<PseudoInstruction>> isaMatched) {
     IdentityHashMap<PseudoInstruction, PseudoInstructionLabel> inverse = new IdentityHashMap<>();
 

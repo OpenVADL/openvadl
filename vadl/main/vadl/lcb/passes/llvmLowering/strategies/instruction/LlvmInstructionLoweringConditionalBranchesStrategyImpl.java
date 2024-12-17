@@ -135,7 +135,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       DummyAbi abi) {
-    var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(supportedInstructions);
+    var flipped = LlvmLoweringPass.flipMachineInstructions(supportedInstructions);
     var label = flipped.get(instruction);
 
     ArrayList<TableGenPattern> alternatives = new ArrayList<>();

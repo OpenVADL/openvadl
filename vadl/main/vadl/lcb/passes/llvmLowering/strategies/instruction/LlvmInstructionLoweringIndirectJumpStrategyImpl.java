@@ -92,7 +92,9 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         copy,
         inputOperands,
         outputOperands,
-        LlvmLoweringPass.Flags.empty(),
+        LlvmLoweringPass.Flags.withBranch(
+            LlvmLoweringPass.Flags.withTerminator(LlvmLoweringPass.Flags.empty())
+        ),
         patterns,
         uses,
         defs

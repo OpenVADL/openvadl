@@ -6,13 +6,17 @@ compdecomp:                             # @compdecomp
 # %bb.0:                                # %entry
 	ADDI sp,sp,-2047
 	ADDI sp,sp,-33
-	SD fp,2072(sp)
+	ADDI ra,sp,2047
+	ADDI ra,ra,25
+	SD fp,0(ra)
 	ADDI fp,sp,2047
 	ADDI fp,fp,33
                                         # kill: def $x1 killed $x11
 	SD a0,-16(fp)
 	SW a1,-20(fp)
-	LD fp,2072(sp)
+	ADDI ra,sp,2047
+	ADDI ra,ra,25
+	LD fp,0(ra)
 	ADDI sp,sp,2047
 	ADDI sp,sp,33
 	JALR zero,0(ra)
