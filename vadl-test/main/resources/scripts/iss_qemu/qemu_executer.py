@@ -36,9 +36,9 @@ class QEMUExecuter:
         await self._start_qemu(test_elf)
         await self._connect_qmp(timeout_sec)
         await self.qmp.execute('cont')
-#         print(f"[QEMU_EXECUTOR] Wait until test is finished... ", end="", flush=True)
+#         print(f"[QEMU_EXECUTOR] Wait until test is finished... ")
         await self._wait_until_done(signal_reg, signal_content, timeout_sec)
-        print(f"done.")
+
         reg_results = await self._fetch_result_regs(result_regs)
 
         await self._shutdown()
