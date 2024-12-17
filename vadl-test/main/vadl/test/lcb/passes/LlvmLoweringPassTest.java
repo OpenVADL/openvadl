@@ -83,7 +83,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of("(SLT X:$rs1, X:$rs2)",
             "(SLTIU (XOR X:$rs1, X:$rs2), 1)",
             "(SLT X:$rs2, X:$rs1)",
-            "(XORI (SLT X:$rs2, X:$rs1 ), 1)"),
+            "(XORI (SLT X:$rs2, X:$rs1), 1)"),
         createEmptyFlags(),
         false
     );
