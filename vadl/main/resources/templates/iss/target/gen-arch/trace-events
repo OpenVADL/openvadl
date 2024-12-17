@@ -1,0 +1,5 @@
+
+# Instruction emitting trace event
+[(${gen_arch_lower})]_instr_trans(const char *name) "[[(${gen_arch_upper})]] Translate instruction: %s"
+
+[(${gen_arch_lower})]_cpu_call(const char *func) "[[(${gen_arch_upper})]] CPU call: %s"

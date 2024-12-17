@@ -82,35 +82,7 @@ public class IssTranslateCodeGenerator extends CodeGenerator
           writer.write(name);
           writer.write(" *a) {\n");
 
-          // format debug string
-          var fieldStream = Arrays.stream(insn.format().fields())
-              .filter(f -> insn.encoding().fieldEncodingOf(f) == null)
-              // those filters are just because of riscv decode incompatibility
-              // we will remove the print in anyway
-              .filter(f -> !f.simpleName().startsWith("imm"))
-              .filter(f -> !f.simpleName().contains("rs2"));
-          var printingFields = Stream.concat(fieldStream, insn.format()
-                  .fieldAccesses().stream()
-                  // we need this filter as the insn.decode of RISCV is incompatible with the
-                  // definition in vadl spec.
-                  // Is later deleted anyway
-                  .filter(f -> !List.of("EBREAK", "ECALL").contains(insn.simpleName()))
-              )
-              .map(Definition::simpleName)
-              .toList();
-
-          var fmtString = printingFields.stream().map(f -> f + ": %d ")
-              .collect(Collectors.joining(", "));
-          var fmtArgs = printingFields.stream().map(f ->
-                  "a->" + f)
-              .collect(Collectors.joining(", "));
-
-          var fmtArgsStr = fmtArgs.isBlank() ? "" : ", " + fmtArgs;
-
-          writer.write("\tqemu_printf(\"[VADL][%llx] trans_");
-          writer.write(name);
-          writer.write(" (" + fmtString + ")");
-          writer.write("\\n\", ctx->base.pc_next" + fmtArgsStr + ");\n");
+          writer.write("trace_vadl_instr_trans(__func__);");
 
           if (generateInsnCount) {
             //Add separate add instruction after each that increments special cpu_insn_count flag in

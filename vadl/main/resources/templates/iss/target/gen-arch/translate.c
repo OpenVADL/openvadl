@@ -7,6 +7,7 @@
 #include "qemu/qemu-print.h"
 #include "tcg/tcg-op.h"
 #include "cpu-bits.h"
+#include "trace.h"
 
 #include "exec/helper-proto.h"
 #include "exec/helper-gen.h"
@@ -47,7 +48,6 @@ typedef struct DisasContext {
 void [(${gen_arch_lower})]_tcg_init(void)
 {
     int i;
-    qemu_printf("[[(${gen_arch_upper})]] TODO: [(${gen_arch_lower})]_tcg_init\n");
 
     // set the cpu_pc TCGv
     cpu_pc         = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, [(${gen_arch_upper})]_PC), "[(${gen_arch_upper})]_PC");

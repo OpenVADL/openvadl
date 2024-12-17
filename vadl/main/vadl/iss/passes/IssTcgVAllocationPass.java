@@ -355,13 +355,13 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
     if (!(node instanceof TcgNode tcgNode)) {
       return Set.of();
     }
-    
+
     // get variables
     var directlyUsedVars = new HashSet<>(tcgNode.usedVars());
     for (var usedVar : directlyUsedVars.stream().toList()) {
       if (usedVar.var().kind() == TcgV.Kind.REG_FILE) {
-        var reg_file = (RegisterFile) usedVar.var().registerOrFile();
-        directlyUsedVars.addAll(registerFileVars.get(reg_file));
+        var regFile = (RegisterFile) usedVar.var().registerOrFile();
+        directlyUsedVars.addAll(registerFileVars.get(regFile));
       }
     }
 
