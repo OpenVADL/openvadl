@@ -4,7 +4,6 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.utility.MountableFile;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.VadlFileUtils;
@@ -16,7 +15,7 @@ public class IssRV64IEmbenchTest extends QemuIssTest {
   // TODO: Remove this (it is just for testing purposes)
   @Test
   void issLoweringTest() throws IOException, DuplicatedPassKeyException {
-    var image = generateSimulator("sys/risc-v/rv64i.vadl");
+    var image = generateIssSimulator("sys/risc-v/rv64i.vadl");
 
     // load embench from resources
     var embenchPath = VadlFileUtils.copyResourceDirToTempDir("embench", "embench");

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import org.testcontainers.utility.MountableFile;
-import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -25,7 +25,7 @@ import vadl.test.DockerExecutionTest;
 
 /**
  * The test class to build and run tests on the QEMU ISS.
- * The {@link #generateSimulator(String)} methods runs the ISS generation and builds
+ * The {@link #generateIssSimulator(String)} methods runs the ISS generation and builds
  * a working QEMU image with the new target.
  * Every target specification is cached and therefore only built for the first test.
  *
@@ -38,18 +38,22 @@ public abstract class QemuIssTest extends DockerExecutionTest {
       "jozott/qemu@sha256:9fa0d230b540829f25d8b7fcbe494a078bbee4785578372afaa64e7fabda03e0";
 
   // specification to image cache
+  // we must separate CAS and ISS, otherwise the CAS test would use the ISS image
   private static final ConcurrentHashMap<String, ImageFromDockerfile> issImageCache =
+      new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<String, ImageFromDockerfile> casImageCache =
       new ConcurrentHashMap<>();
 
   private static final Logger log = LoggerFactory.getLogger(QemuIssTest.class);
 
-  public IssConfiguration getIssConfig(boolean instrCount) {
-    return IssConfiguration.from(getConfiguration(instrCount), instrCount);
+  protected ImageFromDockerfile generateIssSimulator(String specPath) {
+    var config = IssConfiguration.from(getConfiguration(false));
+    return generateIssSimulator(issImageCache, specPath, config);
   }
 
-  protected ImageFromDockerfile generateSimulator(String specPath) {
-    var config = IssConfiguration.from(getConfiguration(false));
-    return generateSimulator(specPath, config);
+  protected ImageFromDockerfile generateCasSimulator(String specPath) {
+    var config = IssConfiguration.from(getConfiguration(false), true);
+    return generateIssSimulator(casImageCache, specPath, config);
   }
 
   /**
@@ -61,15 +65,16 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * @param specPath path to VADL specification in testSource
    * @return the image containing the generated QEMU ISS
    */
-  protected ImageFromDockerfile generateSimulator(String specPath, IssConfiguration configuration) {
-    return issImageCache.computeIfAbsent(specPath, (path) -> {
+  private ImageFromDockerfile generateIssSimulator(Map<String, ImageFromDockerfile> cache,
+                                                   String specPath,
+                                                   IssConfiguration configuration) {
+    return cache.computeIfAbsent(specPath, (path) -> {
       try {
-        var config = configuration;
         // run iss generation
-        setupPassManagerAndRunSpec(path, PassOrders.iss(config));
+        setupPassManagerAndRunSpec(path, PassOrders.iss(configuration));
 
         // find iss output path
-        var issOutputPath = Path.of(config.outputPath() + "/iss").toAbsolutePath();
+        var issOutputPath = Path.of(configuration.outputPath() + "/iss").toAbsolutePath();
         if (!issOutputPath.toFile().exists()) {
           throw new IllegalStateException("ISS output path was not found (not generated?)");
         }
