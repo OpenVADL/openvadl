@@ -4472,7 +4472,6 @@ let isCall = 1, isBranch = 0, isIndirectBranch = 0, isTerminator = 1 in {
 }
 
 let isCall = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1 in {
->>>>>>> edb80ccf (lcb: Fixed undefined symbol error)
     def PseudoBRIND : Pseudo<(outs ), (ins X:$rs1),
                         [(brind X:$rs1)]>,
                  PseudoInstExpansion<(JALR X0, X:$rs1, 0)>;
