@@ -46,28 +46,41 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
   private static final Logger log = LoggerFactory.getLogger(QemuIssTest.class);
 
-  protected ImageFromDockerfile generateIssSimulator(String specPath) {
-    var config = IssConfiguration.from(getConfiguration(false));
-    return generateIssSimulator(issImageCache, specPath, config);
-  }
-
-  protected ImageFromDockerfile generateCasSimulator(String specPath) {
-    var config = IssConfiguration.from(getConfiguration(false), true);
-    return generateIssSimulator(casImageCache, specPath, config);
-  }
-
   /**
    * This will run the given specification and produces a working docker image that contains
    * a compiled QEMU ISS from the specification.
    *
-   * <p>If the specification was already build by some other test, the image is reused.</p>
+   * <p>If this ISS specification was already build by some other test, the image is reused.</p>
    *
    * @param specPath path to VADL specification in testSource
    * @return the image containing the generated QEMU ISS
    */
-  private ImageFromDockerfile generateIssSimulator(Map<String, ImageFromDockerfile> cache,
-                                                   String specPath,
-                                                   IssConfiguration configuration) {
+  protected ImageFromDockerfile generateIssSimulator(String specPath) {
+    var config = IssConfiguration.from(getConfiguration(false));
+    return generateSimulator(issImageCache, specPath, config);
+  }
+
+  /**
+   * This will run the given specification and produces a working docker image that contains
+   * a compiled QEMU CAS from the specification.
+   *
+   * <p>If the CAS specification was already build by some other test, the image is reused.</p>
+   *
+   * @param specPath path to VADL specification in testSource
+   * @return the image containing the generated QEMU ISS
+   */
+  protected ImageFromDockerfile generateCasSimulator(String specPath) {
+    var config = IssConfiguration.from(getConfiguration(false), true);
+    return generateSimulator(casImageCache, specPath, config);
+  }
+
+  /**
+   * This will generate the simulator image if it is not already contained in the provided
+   * cache.
+   */
+  private ImageFromDockerfile generateSimulator(Map<String, ImageFromDockerfile> cache,
+                                                String specPath,
+                                                IssConfiguration configuration) {
     return cache.computeIfAbsent(specPath, (path) -> {
       try {
         // run iss generation
