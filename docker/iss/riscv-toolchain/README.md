@@ -3,18 +3,54 @@
 This dockerfile provides the instructions to build an ubuntu docker image with the [RISC-V
 GNU toolchain]() installed.
 
-This is trivial for `linux/amd64` targets, as there already exists nightly builds for
-`amd64`.
-However to build a native image for `arm64` we have to build the toolchain our-self.
-The dockerfile is multi-staged and produces the correct platform image depending on
-the platform provided by the `--platform` option when calling `docker build`.
-By default the host platform is chosen.
+The RISC-V GNU toolchain is pretty large and takes some time to build.
+Thus is it very time-consuming to build a multi-platform image on one machine
+because the non-native image will take forever.
+Therefore the faster option is to build the image on two machine (on arm64 and one amd64) and
+then merge the manifest once pushed.
 
-To build an push the image run
+On both machines execute the following
 
 ```bash
-docker buildx build --platform linux/amd64,linux/arm64 -t open-vadl/riscv-toolchain:latest -f RiscvToolchain.Dockerfile --push .
+docker buildx build \
+  -t <username>/riscv-toolchain \
+  -f Dockerfile \
+  --platform linux/arm64 \
+  --output push-by-digest=true,type=image,push=true \
+  .
 ```
 
-This will take up to two hours. You want to ensure a stable
-internet connection.
+This will directly push the image to the dockerhub. However, you won't see the image yet.
+Once this is done on both machines, you must look at the last output of the docker build, e.i.
+the `exporting manifest list` line.
+This looks like
+
+```
+ => exporting to image                                                                                      394.0s
+ => => exporting layers                                                                                      61.2s
+ => => exporting manifest sha256:1c5fb8ae970800a0944f69a275c54f86281c400216c570041f2a26e13568771d             0.0s
+ => => exporting config sha256:9257698dd437fd2386ff582dc6a678af57c5b3eb599e4c2dc7e47271296636ec               0.0s
+ => => exporting attestation manifest sha256:dd63a4f96b40689044bf5247372e551be1a63b700a299d4d1bb585a650fee93  0.0s
+ => => exporting manifest list sha256:e7567a835255bbb69922fb32b1c193b985ce3dae1d516c3baf3b2c4e41586e10        0.0s  <----
+ => => pushing layers                                                                                       330.7s
+ => => pushing manifest for docker.io/jozott/riscv-toolchain                                                  2.1s
+```
+
+For the above output the hash of relevance is `sha256:e7567a835255bbb69922fb32b1c193b985ce3dae1d516c3baf3b2c4e41586e10`.
+Copy both hashes and place paste them as argument to this command
+
+```bash
+docker buildx imagetools create \
+    -t <username>/riscv-toolchain:<version-tag> \
+    <username>/riscv-toolchain@<sha256-hash-machine-1> \
+    <username>/riscv-toolchain@<sha256-hash-machine-2>
+```
+
+Now you can inspect the image build using
+
+```bash
+docker buildx imagetools inspect <username>/riscv-toolchain:<version-tag>
+```
+
+It is also available on the container repository now.
+

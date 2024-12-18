@@ -23,7 +23,7 @@ RUN ../configure --prefix=/opt/riscv  \
     rv64i-lp64--;\
     rv64im-lp64--;\
     rv64im_zicsr-lp64--"
-RUN make
+RUN make -j8
 
 # Separate final stages for different architectures
 FROM ubuntu:22.04 AS final
@@ -50,7 +50,6 @@ RUN riscv64-unknown-elf-cpp --help
 RUN riscv64-unknown-elf-elfedit --help
 RUN riscv64-unknown-elf-g++ --help
 RUN riscv64-unknown-elf-gcc --help
-RUN riscv64-unknown-elf-gcc-13.2.0 --help
 RUN riscv64-unknown-elf-gcc-ar --help
 RUN riscv64-unknown-elf-gcc-nm --help
 RUN riscv64-unknown-elf-gcc-ranlib --help

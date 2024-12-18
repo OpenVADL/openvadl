@@ -1,5 +1,5 @@
 # RISCV64 toolchain
-FROM jozott/riscv-toolchain
+FROM jozott/riscv-toolchain:medany-rv32i-rv32im-rv32impriv-rv64i-rv64im-rv64impriv
 
 ARG QEMU_VERSION="9.0.3"
 ENV QEMU_RELEASE="https://github.com/qemu/qemu/archive/refs/tags/v$QEMU_VERSION.tar.gz"
@@ -20,14 +20,17 @@ RUN apt update &&  \
     ninja-build  \
     python3  \
     python3-venv  \
-    python3-pip
+    python3-pip \
+    netcat \
+    qemu-system
+
+RUN pip install pyyaml qemu.qmp
 
 # download qemu into the current directory
 RUN curl -L $QEMU_RELEASE | tar -xvz --strip-components=1
 
-# build qemu for riscv64
- RUN mkdir build && cd build && \
-    ../configure --enable-debug --target-list=riscv64-softmmu
+# just make build dir
+RUN mkdir build
 
 WORKDIR /work
 
