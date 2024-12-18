@@ -35,14 +35,14 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
   // config of qemu test image
   private static final String QEMU_TEST_IMAGE =
-      "jozott/qemu@sha256:59fd89489908864d9c5267a39152a55559903040299bcb7a65382c4beebac2e2";
+      "jozott/qemu@sha256:9fa0d230b540829f25d8b7fcbe494a078bbee4785578372afaa64e7fabda03e0";
 
   // specification to image cache
   private static final ConcurrentHashMap<String, ImageFromDockerfile> issImageCache =
       new ConcurrentHashMap<>();
 
   private static final Logger log = LoggerFactory.getLogger(QemuIssTest.class);
-  
+
   public IssConfiguration getIssConfig(boolean instrCount) {
     return IssConfiguration.from(getConfiguration(instrCount), instrCount);
   }
@@ -183,22 +183,14 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         .withDockerfileFromBuilder(d -> {
               d
                   .from(QEMU_TEST_IMAGE)
-                  .run("apt install -y netcat")
-                  // TODO: Remove when using updated docker image
-                  .run("pip install pyyaml qemu.qmp")
-                  .copy("iss", "/qemu")
-                  // TODO: Move this to prebuilt docker image
-                  .workDir("/qemu/build");
-              d.run("mv qemu-system-riscv64 /bin/qemu-system-riscv64");
-              // TODO remove this when we updated the docker image
-              d.run("rm -rf *");
-              d.run("qemu-system-riscv64 --version");
+                  .copy("iss", "/qemu");
 
               // use redis cache for building (sccache allows remote caching)
               var cc = "sccache gcc";
               redisCache.setupEnv(d);
 
               // TODO: update target name
+              d.workDir("/qemu/build");
               // configure qemu with the new target from the specification
               d.run("../configure --cc='" + cc + "' --target-list=vadl-softmmu");
               // build qemu with all cpu cores and print if cache was used
