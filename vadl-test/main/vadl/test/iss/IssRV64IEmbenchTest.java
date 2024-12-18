@@ -22,10 +22,10 @@ public class IssRV64IEmbenchTest extends QemuIssTest {
     var embenchPath = VadlFileUtils.copyResourceDirToTempDir("embench", "embench");
 
     // build benchmarks for rv64i spike and run benchmarks in generated iss
-    var runCommand = "chmod -R +x /work/embench " +
-        "&& cd /work/embench " +
-        "&& bash ./build_spike-rv64i.sh " +
-        "&& bash ./benchmark_qemu.sh qemu-system-vadl -nographic -M virt -bios";
+    var runCommand = "chmod -R +x /work/embench "
+        + "&& cd /work/embench "
+        + "&& bash ./build_spike-rv64i.sh "
+        + "&& bash ./benchmark_qemu.sh qemu-system-vadl -nographic -M virt -bios";
 
     runContainer(image,
         container -> container
