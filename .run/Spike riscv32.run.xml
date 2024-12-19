@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Spike riscv32" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Spike riscv32" type="GradleRunConfiguration" factoryName="Gradle" folderName="LCB">
     <ExternalSystemSettings>
       <option name="env">
         <map>

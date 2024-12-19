@@ -52,7 +52,7 @@ public class ExplicitBitSizesInTypingPass extends Pass {
           List<BitsType> types =
               node.arguments().stream().map(ExpressionNode::type)
                   .map(x -> x.asDataType().toBitsType()).toList();
-          var join = (node.arguments().get(0).type().asDataType().toBitsType())
+          var join = node.arguments().get(0).type().asDataType().toBitsType()
               .join(types);
 
           node.arguments().forEach(arg -> arg.setType(join));

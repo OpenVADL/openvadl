@@ -1,15 +1,10 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Embench riscv64" type="GradleRunConfiguration" factoryName="Gradle" folderName="LCB">
+  <configuration default="false" name="OpenVADL Test Suite" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
-      <option name="env">
-        <map>
-          <entry key="test.embench.enabled" value="true" />
-        </map>
-      </option>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/.." />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="-Dtest.llvm=true -PopenVadl.tests=EmbenchSpikeRiscv64SimulationTest -PnoXtendCompile -i" />
+      <option name="scriptParameters" value="-PnoXtendCompile -i --stacktrace" />
       <option name="taskDescriptions">
         <list />
       </option>
@@ -17,7 +12,7 @@
         <list>
           <option value="test" />
           <option value="--tests" />
-          <option value="at.ac.tuwien.complang.vadl.tests.OpenVADLSpecificTests" />
+          <option value="at.ac.tuwien.complang.vadl.tests.OpenVADLTestSuite" />
         </list>
       </option>
       <option name="vmOptions" />
