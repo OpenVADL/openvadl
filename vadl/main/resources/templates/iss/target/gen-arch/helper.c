@@ -32,7 +32,9 @@ void helper_unsupported(CPU[(${gen_arch_upper})]State *env) {
 
 target_ulong helper_csrrw(CPU[(${gen_arch_upper})]State *env, int csr, target_ulong src) {
     // Currently the only CSR to access is MTVEC.
-    assert(csr == CSR_MTVEC);
+    if (csr != CSR_MTVEC) {
+      qemu_printf("[VADL] CSR is not MTVEC, was %x . Do nothing.", csr);
+    }
 
     const target_ulong val = env->mtvec;
     env->mtvec             = src;
