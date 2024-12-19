@@ -192,10 +192,8 @@ public class TypeCastEliminator extends GraphProcessor<Node> {
 
   @Override
   protected Node processUnprocessedNode(Node toProcess) {
-    // visit all inputs first, so type casts near to leaves
-    // are eliminated earlier
-    toProcess.visitInputs(this);
 
+    var result = toProcess;
     if (toProcess instanceof TypeCastNode typeCastNode) {
       // backup the input
       var input = typeCastNode.value();
@@ -205,10 +203,14 @@ public class TypeCastEliminator extends GraphProcessor<Node> {
 
       // if the type cast resulted in a deletion without a replacement
       // we use the input node as result
-      return resultNode != null ? resultNode : input;
+      result = resultNode != null ? resultNode : input;
     }
 
-    return toProcess;
+    // visit all inputs after this cast elimination, so type casts depending on
+    // trivial casts take effect
+    toProcess.visitInputs(this);
+
+    return result;
   }
 
   private static BuiltInCall produceNeqToZero(ExpressionNode node) {

@@ -7,6 +7,7 @@
 #include "qemu/qemu-print.h"
 #include "tcg/tcg-op.h"
 #include "cpu-bits.h"
+#include "trace.h"
 
 #include "exec/helper-proto.h"
 #include "exec/helper-gen.h"
@@ -47,7 +48,6 @@ typedef struct DisasContext {
 void [(${gen_arch_lower})]_tcg_init(void)
 {
     int i;
-    qemu_printf("[[(${gen_arch_upper})]] TODO: [(${gen_arch_lower})]_tcg_init\n");
 
     // set the cpu_pc TCGv
     cpu_pc         = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, [(${gen_arch_upper})]_PC), "[(${gen_arch_upper})]_PC");
@@ -124,7 +124,7 @@ static TCGv dest_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num)
     assert(reg_num < [(${reg_file["size"]})]);
     [# th:each="constraint, iterState : ${reg_file.constraints}"]
     // TODO: This should be temporary instead
-    if (reg_num == [(${constraint.index})]) return ctx->const[(${reg_file.name_lower})][(${constraint.value})];
+    if (reg_num == [(${constraint.index})]) return tcg_temp_new_i64();
     [/]
     return cpu_[(${reg_file.name_lower})][reg_num];
 }
@@ -182,6 +182,12 @@ static void generate_exception(DisasContext *ctx, int excp) {
 
 static inline void gen_trunc(TCGv dest, TCGv arg, int bitWidth) {
     tcg_gen_andi_tl(dest, arg, (int64_t)((1ULL << bitWidth) - 1));
+}
+
+static inline void gen_exts(TCGv dest, TCGv arg, int bitWidth) {
+	uint32_t leftRight = TARGET_LONG_BITS - bitWidth;
+	tcg_gen_shli_tl(dest, arg, leftRight);
+	tcg_gen_sari_tl(dest, dest, leftRight);
 }
 
 /*
@@ -267,7 +273,6 @@ static void [(${gen_arch_lower})]_tr_insn_start(DisasContextBase *db, CPUState *
 
 static void [(${gen_arch_lower})]_tr_translate_insn(DisasContextBase *db, CPUState *cpu)
 {
-    qemu_printf("[[(${gen_arch_upper})]] [(${gen_arch_lower})]_tr_translate_insn\n");
     DisasContext *ctx = container_of(db, DisasContext, base);
 
     // translate current insn

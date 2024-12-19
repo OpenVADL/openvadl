@@ -6,23 +6,22 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.DataFlowAnalysis;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
+import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -261,9 +260,15 @@ class IssVariableAllocator {
 class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
 
   private final Map<DependencyNode, TcgVRefNode> tempAssignments;
+  private final Map<RegisterFile, List<TcgVRefNode>> registerFileVars;
 
   public LivenessAnalysis(Map<DependencyNode, TcgVRefNode> tempAssignments) {
     this.tempAssignments = tempAssignments;
+    // collect all registerFileVariables to their respective registerFile
+    this.registerFileVars = tempAssignments.values().stream()
+        .filter(v -> v.var().kind() == TcgV.Kind.REG_FILE)
+        .collect(Collectors.groupingBy(
+            v -> (RegisterFile) requireNonNull(v.var().registerOrFile())));
   }
 
   @Override
@@ -350,7 +355,22 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
     if (!(node instanceof TcgNode tcgNode)) {
       return Set.of();
     }
-    return tcgNode.usedVars();
+
+    // get variables
+    var directlyUsedVars = new HashSet<>(tcgNode.usedVars());
+    for (var usedVar : directlyUsedVars.stream().toList()) {
+      if (usedVar.var().kind() == TcgV.Kind.REG_FILE) {
+        var regFile = (RegisterFile) usedVar.var().registerOrFile();
+        directlyUsedVars.addAll(registerFileVars.get(regFile));
+      }
+    }
+
+
+    // however, if those variables are register files
+    // all variables of the same register file must be considered also used
+    // as the concrete register file index is not known
+
+    return directlyUsedVars;
   }
 
 }

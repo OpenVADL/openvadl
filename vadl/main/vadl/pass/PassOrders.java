@@ -395,6 +395,9 @@ public class PassOrders {
 
   private static void addIssEmitPasses(PassOrder order, IssConfiguration config) {
     order
+        // top-level meson build. just because we want to add target trace-events
+        .add(issDefault("meson.build", config))
+
         // config rendering
         .add(issDefault("/configs/devices/gen-arch-softmmu/default.mak", config))
         .add(issDefault("/configs/targets/gen-arch-softmmu.mak", config))
@@ -417,6 +420,8 @@ public class PassOrders {
         // target rendering
         .add(issDefault("/target/Kconfig", config))
         .add(issDefault("/target/meson.build", config))
+        .add(issDefault("/target/gen-arch/trace-events", config))
+        .add(issDefault("/target/gen-arch/trace.h", config))
         .add(issDefault("/target/gen-arch/Kconfig", config))
         .add(issDefault("/target/gen-arch/meson.build", config))
         .add(issDefault("/target/gen-arch/helper.c", config))

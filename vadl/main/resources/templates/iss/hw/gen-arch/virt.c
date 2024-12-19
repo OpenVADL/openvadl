@@ -31,7 +31,6 @@ static void virt_sym_cb(const char *st_name, int st_info, uint64_t st_value,
 static void virt_machine_ready(Notifier *notifier, void *data)
 {
     // load the firmware
-    qemu_printf("[VADL] virt_machine_ready\n");
 
     [(${gen_arch_upper})]VirtMachineState *s = container_of(notifier, [(${gen_arch_upper})]VirtMachineState, machine_ready);
     const MemMapEntry *memmap = virt_memmap;
@@ -54,8 +53,6 @@ static void virt_machine_ready(Notifier *notifier, void *data)
         exit(1);
     }
 
-    qemu_printf("[VADL] firmware loaded from %x to %x\n", start_addr, firmware_end_addr);
-
 
     // now we can init the htif, as it requires the firmware callbacks to be loaded
     htif_mm_init(system_memory, serial_hd(0), memmap[VIRT_HTIF].base, !tofromhost_defined);
@@ -63,13 +60,10 @@ static void virt_machine_ready(Notifier *notifier, void *data)
 
 static void virt_machine_init(MachineState *machine)
 {
-    qemu_printf("[VADL] virt_machine_init\n");
     const MemMapEntry *memmap = virt_memmap;
     [(${gen_arch_upper})]VirtMachineState *s = [(${gen_arch_upper})]_VIRT_MACHINE(machine);
 
-    qemu_printf("[VADL] ram-size: %x\n", machine->ram_size);
     MemoryRegion *system_memory = get_system_memory();
-    qemu_printf("[VADL] sys mem size: %x\n", system_memory->size);
 
 
     object_initialize_child(OBJECT(machine), "cpu", &s->cpu, TYPE_[(${gen_arch_upper})]_CPU);
@@ -101,7 +95,6 @@ static void virt_machine_init(MachineState *machine)
 }
 
 static void virt_machine_instance_init(Object *obj) {
-    qemu_printf("[VADL] virt_machine_instance_init\n");
     VADLVirtMachineState *m_state = VADL_VIRT_MACHINE(obj);
 
     // nothing to do

@@ -380,6 +380,103 @@ public class IssRV64IInstrTest extends QemuIssTest {
     return testRelationalBranchInstruction("bgeu", "BGEU", false, true);
   }
 
+  @TestFactory
+  Stream<DynamicTest> addw() throws IOException {
+    return testBinaryRegRegInstruction("addw", "ADDW");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> subw() throws IOException {
+    return testBinaryRegRegInstruction("subw", "SUBW");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> addiw() throws IOException {
+    return testBinaryRegImmInstruction("addiw", "ADDIW");
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sllw() throws IOException {
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("SLLW_" + id);
+      var regSrc1 = b.anyTempReg().sample();
+      var regSrc2 = b.anyTempReg().sample();
+      b.fillReg(regSrc1, 64);
+      b.fillReg(regSrc2, arbitraryUnsignedInt(5).sample()); // 5 bits for 32-bit shift
+      var regDest = b.anyTempReg().sample();
+      b.add("sllw %s, %s, %s", regDest, regSrc1, regSrc2);
+      return b.toTestSpec(regSrc1, regSrc2, regDest);
+    });
+  }
+
+  @TestFactory
+  Stream<DynamicTest> srlw() throws IOException {
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("SRLW_" + id);
+      var regSrc1 = b.anyTempReg().sample();
+      var regSrc2 = b.anyTempReg().sample();
+      b.fillReg(regSrc1, 64);
+      b.fillReg(regSrc2, arbitraryUnsignedInt(5).sample());
+      var regDest = b.anyTempReg().sample();
+      b.add("srlw %s, %s, %s", regDest, regSrc1, regSrc2);
+      return b.toTestSpec(regSrc1, regSrc2, regDest);
+    });
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sraw() throws IOException {
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("SRAW_" + id);
+      var regSrc1 = b.anyTempReg().sample();
+      var regSrc2 = b.anyTempReg().sample();
+      b.fillReg(regSrc1, 64);
+      b.fillReg(regSrc2, arbitraryUnsignedInt(5).sample());
+      var regDest = b.anyTempReg().sample();
+      b.add("sraw %s, %s, %s", regDest, regSrc1, regSrc2);
+      return b.toTestSpec(regSrc1, regSrc2, regDest);
+    });
+  }
+
+  @TestFactory
+  Stream<DynamicTest> slliw() throws IOException {
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("SLLIW_" + id);
+      var regSrc = b.anyTempReg().sample();
+      b.fillReg(regSrc, 64);
+      var shamt = arbitraryUnsignedInt(5).sample();
+      var regDest = b.anyTempReg().sample();
+      b.add("slliw %s, %s, %s", regDest, regSrc, shamt);
+      return b.toTestSpec(regSrc, regDest);
+    });
+  }
+
+  @TestFactory
+  Stream<DynamicTest> srliw() throws IOException {
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("SRLIW_" + id);
+      var regSrc = b.anyTempReg().sample();
+      b.fillReg(regSrc, 64);
+      var shamt = arbitraryUnsignedInt(5).sample();
+      var regDest = b.anyTempReg().sample();
+      b.add("srliw %s, %s, %s", regDest, regSrc, shamt);
+      return b.toTestSpec(regSrc, regDest);
+    });
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sraiw() throws IOException {
+    return runTestsWith(id -> {
+      var b = new RV64ITestBuilder("SRAIW_" + id);
+      var regSrc = b.anyTempReg().sample();
+      b.fillReg(regSrc, 64);
+      var shamt = arbitraryUnsignedInt(5).sample();
+      var regDest = b.anyTempReg().sample();
+      b.add("sraiw %s, %s, %s", regDest, regSrc, shamt);
+      return b.toTestSpec(regSrc, regDest);
+    });
+  }
+
+
 // The following instructions are unique and might not fit into the above helpers, so we'll keep them as is.
 
   @TestFactory
@@ -444,7 +541,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   @SafeVarargs
   private Stream<DynamicTest> runTestsWith(
       Function<Integer, IssTestUtils.TestSpec>... generators) throws IOException {
-    var image = generateSimulator("sys/risc-v/rv64i.vadl");
+    var image = generateIssSimulator("sys/risc-v/rv64i.vadl");
     var testCases = Stream.of(generators)
         .flatMap(genFunc -> IntStream.range(0, TESTS_PER_INSTRUCTION)
             .mapToObj(genFunc::apply)

@@ -35,7 +35,7 @@
 &r2   rd rs1
 &r2_s rs1 rs2
 &s    immS rs1 rs2
-&u    immU rd
+&u    immUp rd
 &shift     shamt sft rs1 rd
 &atomic    aq rl rs2 rs1 rd
 &rmrr      vm rd rs1 rs2
@@ -51,7 +51,7 @@
 @i       ............    ..... ... ..... ....... &i      immS=%imm_i     %rs1 %rd
 @b       .......   ..... ..... ... ..... ....... &b      immS=%imm_b %rs2 %rs1
 @s       .......   ..... ..... ... ..... ....... &s      immS=%imm_s %rs2 %rs1
-@u       ....................      ..... ....... &u      immU=%imm_u          %rd
+@u       ....................      ..... ....... &u      immUp=%imm_u          %rd
 @j       ....................      ..... ....... &j      immS=%imm_j          %rd
 
 @sh      ......  ...... .....  ... ..... ....... &shift  sft=%sh7  shamt=%sh7   %rs1 %rd

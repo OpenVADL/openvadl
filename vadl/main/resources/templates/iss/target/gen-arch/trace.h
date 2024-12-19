@@ -1,0 +1,1 @@
+#include "trace/trace-target_[(${gen_arch_lower})].h"

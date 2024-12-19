@@ -10,6 +10,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
+import vadl.types.DataType;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -49,8 +50,10 @@ public class ExplicitBitSizesInTypingPass extends Pass {
                 .size() != 1)
         .forEach(node -> {
           List<BitsType> types =
-              node.arguments().stream().map(ExpressionNode::type).map(x -> (BitsType) x).toList();
-          var join = ((BitsType) node.arguments().get(0).type()).join(types);
+              node.arguments().stream().map(ExpressionNode::type)
+                  .map(x -> x.asDataType().toBitsType()).toList();
+          var join = node.arguments().get(0).type().asDataType().toBitsType()
+              .join(types);
 
           node.arguments().forEach(arg -> arg.setType(join));
         });

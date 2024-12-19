@@ -1,16 +1,6 @@
+# Base build stage for all architectures
+FROM ubuntu:22.04 AS build
 
-FROM ubuntu:22.04 AS build-amd64
-
-ENV RISCV_RELEASE="https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2024.09.03/riscv64-elf-ubuntu-22.04-gcc-nightly-2024.09.03-nightly.tar.gz"
-WORKDIR /work
-
-RUN apt update && apt install -y curl
-RUN mkdir /opt/riscv \
-    && curl -L $RISCV_RELEASE  \
-    | tar -xz -C /opt \
-    && rm -rf *
-
-FROM ubuntu:22.04 AS build-arm64
 WORKDIR /work
 
 RUN apt update
@@ -23,16 +13,23 @@ RUN git clone https://github.com/riscv-collab/riscv-gnu-toolchain
 RUN mkdir riscv-gnu-toolchain/build
 WORKDIR /work/riscv-gnu-toolchain/build
 
-RUN ../configure --prefix=/opt/riscv --enable-multilib
-RUN make
+RUN ../configure --prefix=/opt/riscv  \
+    --with-cmodel=medany  \
+    --with-arch=rv64i --with-abi=lp64  \
+    --with-multilib-generator="\
+    rv32i-ilp32--;\
+    rv32im-ilp32--;\
+    rv32im_zicsr-ilp32--;\
+    rv64i-lp64--;\
+    rv64im-lp64--;\
+    rv64im_zicsr-lp64--"
+RUN make -j8
 
-FROM ubuntu:22.04 AS final-amd64
-COPY --from=build-amd64 /opt/riscv /opt/riscv
+# Separate final stages for different architectures
+FROM ubuntu:22.04 AS final
+COPY --from=build /opt/riscv /opt/riscv
 
-FROM ubuntu:22.04 AS final-arm64
-COPY --from=build-arm64 /opt/riscv /opt/riscv
-
-FROM final-$TARGETARCH AS riscv-toolchain
+FROM final AS riscv-toolchain
 ENV PATH=/opt/riscv/bin:$PATH
 
 WORKDIR /work
@@ -43,7 +40,7 @@ RUN apt update && \
     gperf libtool patchutils bc zlib1g-dev libexpat-dev       \
     libglib2.0-dev libslirp-dev
 
-
+# Testing toolchain commands
 RUN riscv64-unknown-elf-addr2line --help
 RUN riscv64-unknown-elf-ar --help
 RUN riscv64-unknown-elf-as --help
@@ -53,7 +50,6 @@ RUN riscv64-unknown-elf-cpp --help
 RUN riscv64-unknown-elf-elfedit --help
 RUN riscv64-unknown-elf-g++ --help
 RUN riscv64-unknown-elf-gcc --help
-RUN riscv64-unknown-elf-gcc-13.2.0 --help
 RUN riscv64-unknown-elf-gcc-ar --help
 RUN riscv64-unknown-elf-gcc-nm --help
 RUN riscv64-unknown-elf-gcc-ranlib --help
@@ -74,3 +70,4 @@ RUN riscv64-unknown-elf-run --help
 RUN riscv64-unknown-elf-size --help
 RUN riscv64-unknown-elf-strings --help
 RUN riscv64-unknown-elf-strip --help
+RUN riscv64-unknown-elf-gcc --print-multi-lib
