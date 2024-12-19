@@ -2,6 +2,7 @@ package vadl.cppCodeGen.mixins;
 
 import java.io.StringWriter;
 import vadl.cppCodeGen.CodeGenerator;
+import vadl.javaannotations.Handler;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
@@ -14,6 +15,11 @@ import vadl.viam.graph.dependency.BuiltInCall;
  */
 public interface CBuiltinMixin extends CGenMixin {
 
+
+  @Handler
+  default void impl(BuiltInCall op) {
+
+  }
 
   /**
    * Adds the C gen TCG node implementations to the given impls.

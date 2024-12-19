@@ -4,6 +4,7 @@ import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
 import vadl.cppCodeGen.CodeGenerator;
+import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -58,5 +59,4 @@ public interface CTypeCastMixin extends CGenMixin {
     ;
 
   }
-
 }

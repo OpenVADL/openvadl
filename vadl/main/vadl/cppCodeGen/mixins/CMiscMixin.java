@@ -4,6 +4,7 @@ import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 
 import java.io.StringWriter;
 import vadl.cppCodeGen.CodeGenerator;
+import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
 
@@ -34,4 +35,10 @@ public interface CMiscMixin extends CGenMixin {
 
     ;
   }
+
+  @Handler
+  default void impl(ConstantNode node) {
+
+  }
+
 }

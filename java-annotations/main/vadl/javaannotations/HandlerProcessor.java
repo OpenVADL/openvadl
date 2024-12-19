@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -216,7 +217,7 @@ public class HandlerProcessor extends AbstractProcessor {
    */
   private void collectHandlerMethodsRecursive(
       TypeElement clazz, TypeMirror baseType, Map<String, HandlerMethod> handlerMethods,
-      Set<TypeElement> processedClasses, TypeMirror returnType) {
+      Set<TypeElement> processedClasses, TypeMirror returnType, @Nullable Class<?> contextClass) {
 
     if (processedClasses.contains(clazz)) {
       return;
