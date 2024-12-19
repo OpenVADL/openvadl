@@ -244,13 +244,13 @@ def RV64IM_Itype_immAsLabel : RV64IM_Itype_imm<OtherVT>;
 
 class RV64IM_Utype_imm<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV64IM_Utype_immU_encoding_wrapper";
-  let DecoderMethod = "RV64IM_Utype_immU_decode_wrapper";
+  let EncoderMethod = "RV64IM_Utype_immUp_encoding_wrapper";
+  let DecoderMethod = "RV64IM_Utype_immUp_decode_wrapper";
 }
 
 def RV64IM_Utype_immAsInt64
     : RV64IM_Utype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<20>(Imm) && Imm >= -524288 && Imm <= 524287 && RV64IM_Utype_immU_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<20>(Imm) && Imm >= -524288 && Imm <= 524287 && RV64IM_Utype_immUp_predicate(Imm); }]>;
 
 def RV64IM_Utype_immAsLabel : RV64IM_Utype_imm<OtherVT>;
 
@@ -2449,12 +2449,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100100;
 bits<3> funct3 = 0b100;
-bits<6> fun67 = 0b000000;
+bits<4> zero = 0b0000;
+bits<2> funct2 = 0b00;
 bits<6> sft;
 bits<5> rs1;
 bits<5> rd;
 
-let Inst{31-26} = fun67{5-0};
+let Inst{31-30} = funct2{1-0};
+let Inst{29-26} = zero{3-0};
 let Inst{25-20} = sft{5-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -2845,12 +2847,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100100;
 bits<3> funct3 = 0b101;
-bits<6> fun67 = 0b000001;
+bits<4> zero = 0b0000;
+bits<2> funct2 = 0b10;
 bits<6> sft;
 bits<5> rs1;
 bits<5> rd;
 
-let Inst{31-26} = fun67{5-0};
+let Inst{31-30} = funct2{1-0};
+let Inst{29-26} = zero{3-0};
 let Inst{25-20} = sft{5-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -3045,12 +3049,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100100;
 bits<3> funct3 = 0b101;
-bits<6> fun67 = 0b000000;
+bits<4> zero = 0b0000;
+bits<2> funct2 = 0b00;
 bits<6> sft;
 bits<5> rs1;
 bits<5> rd;
 
-let Inst{31-26} = fun67{5-0};
+let Inst{31-30} = funct2{1-0};
+let Inst{29-26} = zero{3-0};
 let Inst{25-20} = sft{5-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
