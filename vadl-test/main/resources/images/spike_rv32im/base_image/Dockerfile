@@ -29,7 +29,7 @@ RUN ./configure --prefix=/opt/spike && make -j$num_jobs && make install && make 
 
 # LLVM
 FROM kper1337/llvm17_base:v1
-RUN apt update -y
+RUN apt update -y && apt-get update --fix-missing
 RUN apt-get install -y device-tree-compiler python3 python3-pip python3-pandas
 COPY --from=builder-riscv-toolchain /opt/riscv-cross /opt/riscv-cross
 COPY --from=builder-spike-toolchain /opt/spike /opt/spike

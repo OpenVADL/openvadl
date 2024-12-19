@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.annotation.Nullable;
@@ -136,16 +137,26 @@ public abstract class DockerExecutionTest extends AbstractTest {
    *                        temp file.
    * @param envName         is the name of the environment variable which will be set.
    * @param envValue        is the value of the environment variable which will be set.
+   * @param doCommit        commits the container into a new layer which contains the
+   *                        environment variables and copied files. Note that testcontainers
+   *                        will automatically remove these images after the test was executed.
    */
   protected void runContainerWithEnv(ImageFromDockerfile image,
                                      Path inHostPath,
                                      String inContainerPath,
                                      String envName,
-                                     String envValue) {
+                                     String envValue,
+                                     boolean doCommit) {
     runContainer(image, (container) -> container
             .withCopyFileToContainer(MountableFile.forHostPath(inHostPath), inContainerPath)
             .withEnv(envName, envValue),
         (container) -> {
+          if (doCommit) {
+            // If you need to debug the container, then put a breakpoint here.
+            // Testcontainer will remove these images after the test has been executed.
+            container.getDockerClient().commitCmd(container.getContainerId())
+                .exec();
+          }
         });
   }
 
@@ -172,7 +183,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
       modifiedContainer.start();
 
       await()
-          .atMost(Duration.ofSeconds(30))
+          .atMost(Duration.ofSeconds(300))
           .until(() -> {
             var result =
                 modifiedContainer.getDockerClient()

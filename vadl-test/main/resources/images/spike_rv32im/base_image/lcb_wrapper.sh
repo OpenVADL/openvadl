@@ -11,4 +11,3 @@ set -x
 
 echo "Running spike..."
 timeout --preserve-status 5 /opt/spike/bin/spike --isa=${SPIKE_TARGET} /tmp/main
-echo "Completed spike..."
