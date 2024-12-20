@@ -25,6 +25,6 @@ public class SpikeRiscv32SimulationTest extends SpikeRiscvSimulationTest {
 
   @Override
   protected String getSpikeTarget() {
-    return "rv32gc";
+    return "rv32im";
   }
 }
