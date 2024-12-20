@@ -19,6 +19,11 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 
+/**
+ * Abstract base class responsible for generating C code from a given function's expression nodes.
+ * Utilizes dispatching mechanisms to handle various node types
+ * and produce a finalized C++ function.
+ */
 @DispatchFor(
     value = ExpressionNode.class,
     context = CNodeContext.class,
@@ -30,6 +35,11 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
   private StringBuilder builder;
   private CNodeContext context;
 
+  /**
+   * Creates a new code generator for the specified function.
+   *
+   * @param function the function for which code should be generated
+   */
   public FunctionCodeGenerator(Function function) {
     this.function = function;
     this.builder = new StringBuilder();
@@ -40,6 +50,11 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
     );
   }
 
+  /**
+   * Generates and returns the C++ code for the function, including its signature and body.
+   *
+   * @return the generated C++ function code
+   */
   public String fetch() {
     var returnType = function.returnType().asDataType().fittingCppType();
     var cppArgs = Stream.of(function.parameters())

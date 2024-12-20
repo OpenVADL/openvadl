@@ -12,15 +12,24 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
+/**
+ * A collection of mixins for nodes that should not be used for
+ * code generation.
+ * If a generator implements such a node mixin and tries to
+ * generate code from it, an exception is raised.
+ */
 public interface CInvalidMixins {
 
+  @SuppressWarnings("MissingJavadocType")
   interface SideEffect extends WriteReg, WriteRegFile, WriteMem {
 
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface ResourceReads extends ReadReg, ReadMem, ReadRegFile {
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface WriteReg {
     @Handler
     default void impl(CGenContext<Node> ctx, WriteRegNode node) {
@@ -29,6 +38,7 @@ public interface CInvalidMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface WriteRegFile {
     @Handler
     default void impl(CGenContext<Node> ctx, WriteRegFileNode node) {
@@ -37,6 +47,7 @@ public interface CInvalidMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface WriteMem {
     @Handler
     default void impl(CGenContext<Node> ctx, WriteMemNode node) {
@@ -46,6 +57,7 @@ public interface CInvalidMixins {
   }
 
 
+  @SuppressWarnings("MissingJavadocType")
   interface ReadReg {
     @Handler
     default void impl(CGenContext<Node> ctx, ReadRegNode node) {
@@ -54,6 +66,7 @@ public interface CInvalidMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface ReadRegFile {
     @Handler
     default void impl(CGenContext<Node> ctx, ReadRegFileNode node) {
@@ -62,6 +75,7 @@ public interface CInvalidMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface ReadMem {
     @Handler
     default void impl(CGenContext<Node> ctx, ReadMemNode node) {
@@ -70,6 +84,7 @@ public interface CInvalidMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface InstrCall {
     @Handler
     default void impl(CGenContext<Node> ctx, InstrCallNode node) {

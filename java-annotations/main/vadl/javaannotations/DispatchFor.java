@@ -147,8 +147,12 @@ public @interface DispatchFor {
   /**
    * The return type of the dispatch method (and all handler) should return.
    */
-  Class<?> returnType() default Void.class; // Add this line
+  Class<?> returnType() default Void.class;
 
+  /**
+   * The context types passed to each handler method.
+   * The actual handled entity is always the last argument.
+   */
   Class<?>[] context() default {};
 
 }

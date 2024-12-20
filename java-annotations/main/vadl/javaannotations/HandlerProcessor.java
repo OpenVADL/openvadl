@@ -480,9 +480,6 @@ public class HandlerProcessor extends AbstractProcessor {
       var contextParams = contextTypes.stream()
           .map(t -> t.toString() + " " + typeMirrorSimpleName(t).toLowerCase() + ", ")
           .collect(Collectors.joining());
-      var contextParamNames =
-          contextTypes.stream().map(p -> typeMirrorSimpleName(p).toLowerCase() + ", ")
-              .collect(Collectors.joining());
 
       writer.write("    @SuppressWarnings(\"BadInstanceof\")\n");
       writer.write(
@@ -504,6 +501,10 @@ public class HandlerProcessor extends AbstractProcessor {
           return 0; // Unrelated types
         }
       });
+
+      var contextParamNames =
+          contextTypes.stream().map(p -> typeMirrorSimpleName(p).toLowerCase() + ", ")
+              .collect(Collectors.joining());
 
       for (int i = 0; i < sortedHandlerMethods.size(); i++) {
         HandlerMethod hm = sortedHandlerMethods.get(i);

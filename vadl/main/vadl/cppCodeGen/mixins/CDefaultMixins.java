@@ -20,19 +20,24 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.TypeCastNode;
-import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
+/**
+ * A collection of default mixins for C code generation.
+ * Some nodes don't have a default implementation as they don't have a basic C representation.
+ * All generators must implement handlers for them or implement them via the {@link CInvalidMixins}
+ * mixins.
+ */
 public interface CDefaultMixins {
 
+  @SuppressWarnings("MissingJavadocType")
   interface All extends AllDependencies, AllControl {
 
   }
@@ -40,11 +45,13 @@ public interface CDefaultMixins {
 
   ///  CONTROL HANDLERS ///
 
+  @SuppressWarnings("MissingJavadocType")
   interface AllControl
       extends Scheduled, InstrExit, IfElse, Begin, Start, Merge, BranchEnd, Return, InstrEnd {
 
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface Scheduled {
     @Handler
     default void impl(CGenContext<Node> ctx, ScheduledNode node) {
@@ -53,6 +60,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface InstrExit {
     @Handler
     default void impl(CGenContext<Node> ctx, InstrExitNode node) {
@@ -60,9 +68,11 @@ public interface CDefaultMixins {
     }
   }
 
-
+  @SuppressWarnings("MissingJavadocType")
   interface IfElse {
+
     @Handler
+    @SuppressWarnings("MissingJavadocMethod")
     default void impl(CGenContext<Node> ctx, IfNode node) {
       ctx.wr("if (")
           .gen(node.condition())
@@ -74,6 +84,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface Begin {
     @Handler
     default void impl(CGenContext<Node> ctx, BeginNode node) {
@@ -81,6 +92,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface Start {
     @Handler
     default void impl(CGenContext<Node> ctx, StartNode node) {
@@ -88,6 +100,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface Merge {
     @Handler
     default void impl(CGenContext<Node> ctx, MergeNode node) {
@@ -95,6 +108,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface BranchEnd {
     @Handler
     default void impl(CGenContext<Node> ctx, BranchEndNode node) {
@@ -102,6 +116,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface Return {
     @Handler
     default void impl(CGenContext<Node> ctx, ReturnNode node) {
@@ -109,6 +124,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface InstrEnd {
     @Handler
     default void impl(CGenContext<Node> ctx, InstrEndNode node) {
@@ -118,28 +134,34 @@ public interface CDefaultMixins {
 
   ///  DEPENDENCY HANDLERS ///
 
+  @SuppressWarnings("MissingJavadocType")
   interface AllDependencies extends AllExpressions {
   }
 
 
   ///  EXPRESSION HANDLERS ///
 
+  @SuppressWarnings("MissingJavadocType")
   interface AllExpressions
       extends TypeCasts, Constant, FuncCall, BuiltIns, Slice, LetNode, Select, FuncParam,
       TupleAccess {
 
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface TypeCasts extends SignExtend, ZeroExtend, Truncate {
     @Handler
+    @SuppressWarnings("MissingJavadocMethod")
     default void handle(CNodeContext ctx, TypeCastNode toHandle) {
       throw new ViamGraphError("Type Cast node should not exist at this stage.")
           .addContext(toHandle);
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface SignExtend {
     @Handler
+    @SuppressWarnings("MissingJavadocMethod")
     default void impl(CGenContext<Node> ctx, SignExtendNode node) {
       var srcType = node.value().type().asDataType();
       ctx.wr("sextract" + ctx.cTypeOf(node.type()) + "(")
@@ -148,8 +170,10 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface ZeroExtend {
     @Handler
+    @SuppressWarnings("MissingJavadocMethod")
     default void impl(CGenContext<Node> ctx, ZeroExtendNode node) {
       var type = node.type().fittingCppType();
       node.ensure(type != null, "Nodes type cannot fit in a c/c++ type.");
@@ -159,8 +183,10 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface Truncate {
     @Handler
+    @SuppressWarnings("MissingJavadocMethod")
     default void impl(CGenContext<Node> ctx, TruncateNode node) {
       var type = node.type().fittingCppType();
       node.ensure(type != null, "Nodes type cannot fit in a c/c++ type.");
@@ -172,8 +198,10 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface Constant {
     @Handler
+    @SuppressWarnings("MissingJavadocMethod")
     default void impl(CGenContext<Node> ctx, ConstantNode constant) {
       var fittingCppType = constant.type().asDataType().fittingCppType();
       constant.ensure(fittingCppType != null, "No fitting cpp type");
@@ -182,6 +210,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface Slice {
     @Handler
     default void handle(CNodeContext ctx, SliceNode toHandle) {
@@ -189,6 +218,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface Select {
     @Handler
     default void handle(CNodeContext ctx, SelectNode toHandle) {
@@ -196,6 +226,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface TupleAccess {
     @Handler
     default void handle(CNodeContext ctx, TupleGetFieldNode toHandle) {
@@ -203,6 +234,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface LetNode {
     @Handler
     default void handle(CNodeContext ctx, vadl.viam.graph.dependency.LetNode toHandle) {
@@ -210,8 +242,10 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface FuncCall {
     @Handler
+    @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
       ctx.wr(toHandle.function().simpleName())
           .wr("(");
@@ -226,6 +260,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface FuncParam {
     @Handler
     default void handle(CNodeContext ctx, FuncParamNode toHandle) {
@@ -234,8 +269,10 @@ public interface CDefaultMixins {
   }
 
 
+  @SuppressWarnings("MissingJavadocType")
   interface BuiltIns {
     @Handler
+    @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx, BuiltInCall op) {
       // open scope
       ctx.wr("(");

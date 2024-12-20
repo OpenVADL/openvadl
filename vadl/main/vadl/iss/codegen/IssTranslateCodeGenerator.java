@@ -69,9 +69,8 @@ public class IssTranslateCodeGenerator implements CDefaultMixins.All,
     var generator = new IssTranslateCodeGenerator(def, generateInsnCount);
     return generator.fetch();
   }
-
-
-  public String fetch() {
+  
+  private String fetch() {
 
     var name = insn.identifier.simpleName().toLowerCase();
     // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
