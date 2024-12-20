@@ -4,21 +4,22 @@ import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.utils.GraphUtils.getSingleNode;
 
-import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import vadl.cppCodeGen.CodeGenerator;
-import vadl.cppCodeGen.mixins.CBuiltinMixin;
-import vadl.cppCodeGen.mixins.CMiscMixin;
-import vadl.cppCodeGen.mixins.CTypeCastMixin;
-import vadl.viam.Definition;
+import vadl.cppCodeGen.context.CGenContext;
+import vadl.cppCodeGen.context.CNodeContext;
+import vadl.cppCodeGen.mixins.CDefaultMixins;
+import vadl.cppCodeGen.mixins.CInvalidMixins;
+import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.TcgVRefNode;
+import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgNode;
+import vadl.javaannotations.DispatchFor;
+import vadl.javaannotations.Handler;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
@@ -27,14 +28,18 @@ import vadl.viam.graph.dependency.FieldRefNode;
  * It produces translate functions for all instructions
  * in the {@link vadl.viam.InstructionSetArchitecture}.
  */
-public class IssTranslateCodeGenerator extends CodeGenerator
-    implements CTypeCastMixin, CTcgOpsMixin, CBuiltinMixin, CMiscMixin {
+@DispatchFor(
+    value = Node.class,
+    context = CNodeContext.class,
+    include = {"vadl.viam", "vadl.iss"}
+)
+public class IssTranslateCodeGenerator implements CDefaultMixins.All,
+    CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads, CInvalidMixins.InstrCall {
 
+  private Instruction insn;
   private boolean generateInsnCount = false;
-
-  public IssTranslateCodeGenerator(StringWriter writer) {
-    super(writer);
-  }
+  private StringBuilder builder;
+  private CNodeContext ctx;
 
   /**
    * Constructs IssTranslateCodeGenerator.
@@ -42,19 +47,17 @@ public class IssTranslateCodeGenerator extends CodeGenerator
    * @param generateInsnCount used to determine if the iss generates add instruction for special
    *                          cpu register (QEMU)
    */
-  public IssTranslateCodeGenerator(StringWriter writer, boolean generateInsnCount) {
-    super(writer);
+  public IssTranslateCodeGenerator(Instruction instr, boolean generateInsnCount) {
+    this.insn = instr;
     this.generateInsnCount = generateInsnCount;
+    this.builder = new StringBuilder();
+    this.ctx = new CNodeContext(
+        builder::append,
+        (ctx, node)
+            -> IssTranslateCodeGeneratorDispatcher.dispatch(this, ctx, node)
+    );
   }
 
-  /**
-   * The static entry point to get the translation function for a given instruction.
-   */
-  public static String fetch(Instruction def) {
-    var generator = new IssTranslateCodeGenerator(new StringWriter());
-    generator.gen(def);
-    return generator.writer.toString();
-  }
 
   /**
    * The static entry point to get the translation function for a given instruction.
@@ -63,73 +66,83 @@ public class IssTranslateCodeGenerator extends CodeGenerator
    *                          cpu register (QEMU)
    */
   public static String fetch(Instruction def, boolean generateInsnCount) {
-    var generator = new IssTranslateCodeGenerator(new StringWriter(), generateInsnCount);
-    generator.gen(def);
-    return generator.writer.toString();
+    var generator = new IssTranslateCodeGenerator(def, generateInsnCount);
+    return generator.fetch();
   }
 
 
-  @Override
-  public void defImpls(Impls<Definition> impls) {
-    impls
-        .set(Instruction.class, (insn, writer) -> {
+  public String fetch() {
 
-          var name = insn.identifier.simpleName().toLowerCase();
-          // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
-          writer.write("static bool trans_");
-          writer.write(name);
-          writer.write("(DisasContext *ctx, arg_");
-          writer.write(name);
-          writer.write(" *a) {\n");
+    var name = insn.identifier.simpleName().toLowerCase();
+    // static bool trans_<name>(DisasContext *ctx, arg_<name> *a) {\n
+    ctx.wr("static bool trans_");
+    ctx.wr(name);
+    ctx.wr("(DisasContext *ctx, arg_");
+    ctx.wr(name);
+    ctx.ln(" *a) {");
 
-          writer.write("trace_vadl_instr_trans(__func__);");
+    ctx.wr("trace_vadl_instr_trans(__func__);");
 
-          if (generateInsnCount) {
-            //Add separate add instruction after each that increments special cpu_insn_count flag in
-            //QEMU CPU state
-            //see resources/templates/iss/target/cpu.h/CPUArchState
-            writer.write("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);\n");
-          }
+    if (generateInsnCount) {
+      //Add separate add instruction after each that increments special cpu_insn_count flag in
+      //QEMU CPU state
+      //see resources/templates/iss/target/cpu.h/CPUArchState
+      ctx.ln("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);");
+    }
 
-          var start = getSingleNode(insn.behavior(), StartNode.class);
-          var current = start.next();
+    var start = getSingleNode(insn.behavior(), StartNode.class);
+    var current = start.next();
 
-          while (current instanceof DirectionalNode dirNode) {
-            gen(dirNode);
-            current = dirNode.next();
-          }
+    while (current instanceof DirectionalNode dirNode) {
+      ctx.gen(dirNode);
+      current = dirNode.next();
+    }
 
-          ensure(current instanceof InstrEndNode, () ->
-              error("Instruction contains unsupported features (e.g. if-else on constants).",
-                  insn.identifier.sourceLocation())
-          );
+    ensure(current instanceof InstrEndNode, () ->
+        error("Instruction contains unsupported features (e.g. if-else on constants).",
+            insn.identifier.sourceLocation())
+    );
 
-          writer.write("\n\treturn true; \n}\n");
-        })
+    ctx.wr("\n\treturn true; \n}\n");
 
-    ;
+    return builder.toString();
   }
 
-  @Override
-  public void nodeImpls(Impls<Node> impls) {
-    castImpls(impls);
-    tcgOpImpls(impls);
-    builtinImpls(impls);
-    miscImpls(impls);
-
-    impls.set(FieldRefNode.class, (node, writer) -> {
-      writer.write("a->");
-      writer.write(node.formatField().simpleName());
-    });
-
-    impls.set(FieldAccessRefNode.class, (node, writer) -> {
-      writer.write("a->");
-      writer.write(node.fieldAccess().simpleName());
-    });
+  @Handler
+  void impl(CGenContext<Node> ctx, TcgNode node) {
+    var c = node.cCode(ctx::genToString).trim();
+    if (!c.endsWith(";")) {
+      c += ";";
+    }
+    ctx.wr("\t")
+        .ln(c);
   }
 
-  @Override
-  public StringWriter writer() {
-    return writer;
+  @Handler
+  void impl(CGenContext<Node> ctx, IssStaticPcRegNode node) {
+    ctx.wr("(ctx->base.pc_next)");
   }
+
+  @Handler
+  void impl(CGenContext<Node> ctx, FieldRefNode node) {
+    ctx.wr("a->");
+    ctx.wr(node.formatField().simpleName());
+  }
+
+  @Handler
+  void impl(CGenContext<Node> ctx, FieldAccessRefNode node) {
+    ctx.wr("a->");
+    ctx.wr(node.fieldAccess().simpleName());
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, ExprSaveNode toHandle) {
+    throw new UnsupportedOperationException("Type ExprSaveNode not yet implemented");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, TcgVRefNode toHandle) {
+    ctx.wr(toHandle.cCode());
+  }
+
 }
