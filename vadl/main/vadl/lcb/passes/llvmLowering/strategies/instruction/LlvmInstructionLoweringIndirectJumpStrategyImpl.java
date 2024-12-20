@@ -154,7 +154,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         true,
         false,
         false,
-        true,
+        false,
         false,
         List.of(
             new TableGenInstructionRegisterFileOperand(
