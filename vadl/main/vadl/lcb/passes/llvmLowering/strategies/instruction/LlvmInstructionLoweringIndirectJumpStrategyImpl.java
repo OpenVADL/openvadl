@@ -155,6 +155,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         false,
         false,
         true,
+        false,
         List.of(
             new TableGenInstructionRegisterFileOperand(
                 ParameterIdentity.from(ref, ref.address()),
@@ -189,6 +190,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     return new TableGenPseudoInstExpansionPattern("PseudoBRIND",
         selector,
         machine,
+        true,
         true,
         true,
         true,

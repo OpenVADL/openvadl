@@ -19,7 +19,7 @@ public class TableGenPseudoInstExpansionRenderer {
     var selector = TableGenInstructionPatternRenderer.lowerSelector(pattern.selector());
     var machine = TableGenInstructionPatternRenderer.lowerMachine(pattern.machine());
     return String.format("""
-            let isCall = %s, isBranch = %s, isIndirectBranch = %s, isTerminator = %s in {
+            let isCall = %s, isBranch = %s, isIndirectBranch = %s, isTerminator = %s, isBarrier = %s in {
                 def %s : Pseudo<(outs %s), (ins %s),
                                     [%s]>,
                              PseudoInstExpansion<%s>;
@@ -28,6 +28,7 @@ public class TableGenPseudoInstExpansionRenderer {
         pattern.isBranch() ? "1" : "0",
         pattern.isIndirectBranch() ? "1" : "0",
         pattern.isTerminator() ? "1" : "0",
+        pattern.isBarrier() ? "1" : "0",
         pattern.name(), out, in, selector, machine);
   }
 }

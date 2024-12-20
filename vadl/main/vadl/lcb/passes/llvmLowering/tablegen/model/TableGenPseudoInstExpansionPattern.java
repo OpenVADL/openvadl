@@ -13,6 +13,7 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
   private final boolean isBranch;
   private final boolean isIndirectBranch;
   private final boolean isTerminator;
+  private final boolean isBarrier;
   private final List<TableGenInstructionOperand> outputs;
   private final List<TableGenInstructionOperand> inputs;
   private final Graph machine;
@@ -27,6 +28,7 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
                                             boolean isBranch,
                                             boolean isIndirectBranch,
                                             boolean isTerminator,
+                                            boolean isBarrier,
                                             List<TableGenInstructionOperand> inputs,
                                             List<TableGenInstructionOperand> outputs) {
     super(selector);
@@ -35,6 +37,7 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
     this.isBranch = isBranch;
     this.isIndirectBranch = isIndirectBranch;
     this.isTerminator = isTerminator;
+    this.isBarrier = isBarrier;
     this.machine = machine;
     this.inputs = inputs;
     this.outputs = outputs;
@@ -49,6 +52,7 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
         isBranch,
         isIndirectBranch,
         isTerminator,
+        isBarrier,
         inputs,
         outputs);
   }
@@ -75,6 +79,10 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
 
   public boolean isTerminator() {
     return isTerminator;
+  }
+
+  public boolean isBarrier() {
+    return isBarrier;
   }
 
   public List<TableGenInstructionOperand> outputs() {
