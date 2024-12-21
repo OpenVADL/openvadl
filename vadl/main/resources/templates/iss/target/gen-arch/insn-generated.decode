@@ -1,0 +1,17 @@
+[# th:if="${decode_header != null}"][(${decode_header})][/]
+
+# Fields:
+[# th:if="${decode_fields != null}"] [# th:each="field, iterState : ${decode_fields}"]
+[(${field.render(decode_context)})][/][/]
+
+# Argument sets:
+[# th:if="${decode_argument_sets != null}"] [# th:each="arg_set, iterState : ${decode_argument_sets}"]
+[(${arg_set.render(decode_context)})][/][/]
+
+# Formats:
+[# th:if="${decode_formats != null}"] [# th:each="format, iterState : ${decode_formats}"]
+[(${format.render(decode_context)})][/][/]
+
+# Patterns:
+[# th:if="${decode_patterns != null}"] [# th:each="pattern, iterState : ${decode_patterns}"]
+[(${pattern.render(decode_context)})][/][/]
