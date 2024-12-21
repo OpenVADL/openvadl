@@ -1,4 +1,4 @@
-package vadl.viam.passes.dummyAbi;
+package vadl.viam.passes.dummyPasses;
 
 import java.io.IOException;
 import java.util.HashMap;
