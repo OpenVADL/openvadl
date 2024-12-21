@@ -4,7 +4,7 @@ import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.passes.GraphProcessor;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * Calls the verification method on all definitions in the given one and all its
@@ -30,7 +30,7 @@ public class ViamVerifier extends DefinitionVisitor.Recursive {
   }
 
   @Override
-  public void visit(DummyAbi dummyAbi) {
+  public void visit(Abi abi) {
 
   }
 

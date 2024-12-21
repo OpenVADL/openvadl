@@ -20,7 +20,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * This file contains the transformation from DAG to InstructionSelectionDag.
@@ -48,7 +48,7 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi =
-        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var labelledInstructions =
         ensureNonNull(
             (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(

@@ -33,7 +33,7 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * Lowers instructions which can store into memory.
@@ -64,7 +64,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi dummyAbi) {
+      Abi abi) {
     var alternativePatterns = new ArrayList<TableGenPattern>();
     var storesWithoutImmediates = createStoreFromsWithoutImmediate(patterns);
     var frameIndexPatterns = replaceRegisterWithFrameIndex(

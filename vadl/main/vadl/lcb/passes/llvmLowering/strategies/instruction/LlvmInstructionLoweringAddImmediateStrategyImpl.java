@@ -19,7 +19,7 @@ import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * Lowers add with immediate into {@link TableGenInstruction} and additionally,
@@ -52,7 +52,7 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi) {
+      Abi abi) {
     var alternativePatterns = new ArrayList<TableGenPattern>();
 
     // We are only interested in the pattern with selector and machine pattern.

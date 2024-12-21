@@ -1,20 +1,15 @@
-package vadl.viam.passes.dummyAbi;
+package vadl.viam;
 
 import java.util.List;
 import java.util.Map;
 import vadl.utils.Pair;
-import vadl.viam.Definition;
-import vadl.viam.DefinitionVisitor;
-import vadl.viam.Identifier;
-import vadl.viam.PseudoInstruction;
-import vadl.viam.RegisterFile;
 
 /**
- * Proof of concept ABI for RISC-V until we have a solution.
+ * VADL ABI representation.
  */
-public class DummyAbi extends Definition {
+public class Abi extends Definition {
 
-  enum Alignment {
+  public enum Alignment {
     NO_ALIGNMENT(-1),
     HALF_WORD(4),
     WORD(8);
@@ -31,7 +26,8 @@ public class DummyAbi extends Definition {
    * Constructor.
    *
    * @param registerFile is the "parent" of the register.
-   * @param addr         represents the index in a register file. X11 would have {@code addr = 11}.
+   * @param addr         represents the index in a register file.
+   *                     E.g., RISC-V's X11 would have {@code addr = 11}.
    * @param alignment    for the spilling of the register.
    */
   public record RegisterRef(RegisterFile registerFile,
@@ -67,19 +63,19 @@ public class DummyAbi extends Definition {
   /**
    * Constructor.
    */
-  public DummyAbi(Identifier identifier,
-                  RegisterRef returnAddress,
-                  RegisterRef stackPointer,
-                  RegisterRef framePointer,
-                  RegisterRef globalPointer,
-                  Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases,
-                  List<RegisterRef> callerSaved,
-                  List<RegisterRef> calleeSaved,
-                  List<RegisterRef> argumentRegisters,
-                  List<RegisterRef> returnRegisters,
-                  PseudoInstruction returnSequence,
-                  PseudoInstruction callSequence,
-                  PseudoInstruction addressSequence
+  public Abi(Identifier identifier,
+             RegisterRef returnAddress,
+             RegisterRef stackPointer,
+             RegisterRef framePointer,
+             RegisterRef globalPointer,
+             Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases,
+             List<RegisterRef> callerSaved,
+             List<RegisterRef> calleeSaved,
+             List<RegisterRef> argumentRegisters,
+             List<RegisterRef> returnRegisters,
+             PseudoInstruction returnSequence,
+             PseudoInstruction callSequence,
+             PseudoInstruction addressSequence
   ) {
     super(identifier);
     this.returnAddress = returnAddress;

@@ -12,7 +12,7 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * This file includes the util functions for asm.
@@ -50,7 +50,7 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi =
-        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "registers",
         specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))

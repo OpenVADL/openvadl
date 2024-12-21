@@ -35,7 +35,7 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * Lowers instructions which can load from memory.
@@ -64,7 +64,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi) {
+      Abi abi) {
     var alternativePatterns = new ArrayList<TableGenPattern>();
     var anyExtendPatterns = createAnyExtPatterns(patterns);
     var loadFromRegisterPatterns = createLoadsFromRegister(

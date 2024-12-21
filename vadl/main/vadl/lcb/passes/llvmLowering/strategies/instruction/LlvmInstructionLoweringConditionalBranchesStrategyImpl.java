@@ -10,8 +10,6 @@ import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGEQ;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGTH;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULEQ;
 import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULTH;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.EQ;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.NEQ;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
@@ -50,7 +48,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * Lowering conditional branch instructions into TableGen patterns.
@@ -76,7 +74,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph uninlinedBehavior,
-      DummyAbi abi) {
+      Abi abi) {
     var visitor = replacementHooks();
     var copy = uninlinedBehavior.copy();
 
@@ -93,7 +91,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       Graph visitedGraph,
-      DummyAbi dummyAbi) {
+      Abi abi) {
 
     var outputOperands = getTableGenOutputOperands(visitedGraph);
     var inputOperands = getTableGenInputOperands(outputOperands, visitedGraph);
@@ -108,7 +106,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
             inputOperands,
             outputOperands,
             patterns,
-            dummyAbi);
+            abi);
 
     var allPatterns = Stream.concat(patterns.stream(), alternatives.stream())
         .map(LoweringStrategyUtils::replaceBasicBlockByLabelImmediateInMachineInstruction)
@@ -136,7 +134,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi) {
+      Abi abi) {
     var flipped = LlvmLoweringPass.flipMachineInstructions(supportedInstructions);
     var label = flipped.get(instruction);
 

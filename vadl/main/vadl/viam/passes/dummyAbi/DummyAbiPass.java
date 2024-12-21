@@ -12,13 +12,14 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
+import vadl.viam.Abi;
 import vadl.viam.Identifier;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 
 /**
- * Inserts a {@link DummyAbi} to the {@link Specification}.
+ * Inserts a hardcoded {@link Abi} to the {@link Specification} for RISC-V.
  */
 public class DummyAbiPass extends Pass {
 
@@ -51,11 +52,11 @@ public class DummyAbiPass extends Pass {
     var callSequence = getCallSequence(viam);
     var addressSequence = getAddressSequence(viam);
 
-    viam.add(new DummyAbi(new Identifier("dummyAbi", SourceLocation.INVALID_SOURCE_LOCATION),
-        new DummyAbi.RegisterRef(registerFile, 1, DummyAbi.Alignment.WORD),
-        new DummyAbi.RegisterRef(registerFile, 2, DummyAbi.Alignment.HALF_WORD),
-        new DummyAbi.RegisterRef(registerFile, 8, DummyAbi.Alignment.WORD),
-        new DummyAbi.RegisterRef(registerFile, 3, DummyAbi.Alignment.WORD),
+    viam.add(new Abi(new Identifier("dummyAbi", SourceLocation.INVALID_SOURCE_LOCATION),
+        new Abi.RegisterRef(registerFile, 1, Abi.Alignment.WORD),
+        new Abi.RegisterRef(registerFile, 2, Abi.Alignment.HALF_WORD),
+        new Abi.RegisterRef(registerFile, 8, Abi.Alignment.WORD),
+        new Abi.RegisterRef(registerFile, 3, Abi.Alignment.WORD),
         aliases,
         callerSaved,
         calleeSaved,
@@ -108,100 +109,100 @@ public class DummyAbiPass extends Pass {
     return x;
   }
 
-  private List<DummyAbi.RegisterRef> getReturnRegisters(RegisterFile registerFile) {
+  private List<Abi.RegisterRef> getReturnRegisters(RegisterFile registerFile) {
     return List.of(
-        new DummyAbi.RegisterRef(registerFile, 10, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 11, DummyAbi.Alignment.NO_ALIGNMENT)
+        new Abi.RegisterRef(registerFile, 10, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 11, Abi.Alignment.NO_ALIGNMENT)
     );
   }
 
-  private List<DummyAbi.RegisterRef> getArgumentRegisters(RegisterFile registerFile) {
+  private List<Abi.RegisterRef> getArgumentRegisters(RegisterFile registerFile) {
     return List.of(
-        new DummyAbi.RegisterRef(registerFile, 10, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 11, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 12, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 13, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 14, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 15, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 16, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 17, DummyAbi.Alignment.NO_ALIGNMENT)
+        new Abi.RegisterRef(registerFile, 10, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 11, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 12, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 13, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 14, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 15, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 16, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 17, Abi.Alignment.NO_ALIGNMENT)
     );
   }
 
-  private Map<Pair<RegisterFile, Integer>, DummyAbi.RegisterAlias> getAliases(
+  private Map<Pair<RegisterFile, Integer>, Abi.RegisterAlias> getAliases(
       RegisterFile registerFile) {
-    var map = new HashMap<Pair<RegisterFile, Integer>, DummyAbi.RegisterAlias>();
-    map.put(Pair.of(registerFile, 0), new DummyAbi.RegisterAlias("zero"));
-    map.put(Pair.of(registerFile, 1), new DummyAbi.RegisterAlias("ra"));
-    map.put(Pair.of(registerFile, 2), new DummyAbi.RegisterAlias("sp"));
-    map.put(Pair.of(registerFile, 3), new DummyAbi.RegisterAlias("gp"));
-    map.put(Pair.of(registerFile, 4), new DummyAbi.RegisterAlias("tp"));
-    map.put(Pair.of(registerFile, 8), new DummyAbi.RegisterAlias("fp"));
-    map.put(Pair.of(registerFile, 9), new DummyAbi.RegisterAlias("s1"));
-    map.put(Pair.of(registerFile, 10), new DummyAbi.RegisterAlias("a0"));
-    map.put(Pair.of(registerFile, 11), new DummyAbi.RegisterAlias("a1"));
-    map.put(Pair.of(registerFile, 12), new DummyAbi.RegisterAlias("a2"));
-    map.put(Pair.of(registerFile, 13), new DummyAbi.RegisterAlias("a3"));
-    map.put(Pair.of(registerFile, 14), new DummyAbi.RegisterAlias("a4"));
-    map.put(Pair.of(registerFile, 15), new DummyAbi.RegisterAlias("a5"));
-    map.put(Pair.of(registerFile, 16), new DummyAbi.RegisterAlias("a6"));
-    map.put(Pair.of(registerFile, 17), new DummyAbi.RegisterAlias("a7"));
-    map.put(Pair.of(registerFile, 18), new DummyAbi.RegisterAlias("s2"));
-    map.put(Pair.of(registerFile, 19), new DummyAbi.RegisterAlias("s3"));
-    map.put(Pair.of(registerFile, 20), new DummyAbi.RegisterAlias("s4"));
-    map.put(Pair.of(registerFile, 21), new DummyAbi.RegisterAlias("s5"));
-    map.put(Pair.of(registerFile, 22), new DummyAbi.RegisterAlias("s6"));
-    map.put(Pair.of(registerFile, 23), new DummyAbi.RegisterAlias("s7"));
-    map.put(Pair.of(registerFile, 24), new DummyAbi.RegisterAlias("s8"));
-    map.put(Pair.of(registerFile, 25), new DummyAbi.RegisterAlias("s9"));
-    map.put(Pair.of(registerFile, 26), new DummyAbi.RegisterAlias("s10"));
-    map.put(Pair.of(registerFile, 27), new DummyAbi.RegisterAlias("s11"));
-    map.put(Pair.of(registerFile, 5), new DummyAbi.RegisterAlias("t0"));
-    map.put(Pair.of(registerFile, 6), new DummyAbi.RegisterAlias("t1"));
-    map.put(Pair.of(registerFile, 7), new DummyAbi.RegisterAlias("t2"));
-    map.put(Pair.of(registerFile, 28), new DummyAbi.RegisterAlias("t3"));
-    map.put(Pair.of(registerFile, 29), new DummyAbi.RegisterAlias("t4"));
-    map.put(Pair.of(registerFile, 30), new DummyAbi.RegisterAlias("t5"));
-    map.put(Pair.of(registerFile, 31), new DummyAbi.RegisterAlias("t6"));
+    var map = new HashMap<Pair<RegisterFile, Integer>, Abi.RegisterAlias>();
+    map.put(Pair.of(registerFile, 0), new Abi.RegisterAlias("zero"));
+    map.put(Pair.of(registerFile, 1), new Abi.RegisterAlias("ra"));
+    map.put(Pair.of(registerFile, 2), new Abi.RegisterAlias("sp"));
+    map.put(Pair.of(registerFile, 3), new Abi.RegisterAlias("gp"));
+    map.put(Pair.of(registerFile, 4), new Abi.RegisterAlias("tp"));
+    map.put(Pair.of(registerFile, 8), new Abi.RegisterAlias("fp"));
+    map.put(Pair.of(registerFile, 9), new Abi.RegisterAlias("s1"));
+    map.put(Pair.of(registerFile, 10), new Abi.RegisterAlias("a0"));
+    map.put(Pair.of(registerFile, 11), new Abi.RegisterAlias("a1"));
+    map.put(Pair.of(registerFile, 12), new Abi.RegisterAlias("a2"));
+    map.put(Pair.of(registerFile, 13), new Abi.RegisterAlias("a3"));
+    map.put(Pair.of(registerFile, 14), new Abi.RegisterAlias("a4"));
+    map.put(Pair.of(registerFile, 15), new Abi.RegisterAlias("a5"));
+    map.put(Pair.of(registerFile, 16), new Abi.RegisterAlias("a6"));
+    map.put(Pair.of(registerFile, 17), new Abi.RegisterAlias("a7"));
+    map.put(Pair.of(registerFile, 18), new Abi.RegisterAlias("s2"));
+    map.put(Pair.of(registerFile, 19), new Abi.RegisterAlias("s3"));
+    map.put(Pair.of(registerFile, 20), new Abi.RegisterAlias("s4"));
+    map.put(Pair.of(registerFile, 21), new Abi.RegisterAlias("s5"));
+    map.put(Pair.of(registerFile, 22), new Abi.RegisterAlias("s6"));
+    map.put(Pair.of(registerFile, 23), new Abi.RegisterAlias("s7"));
+    map.put(Pair.of(registerFile, 24), new Abi.RegisterAlias("s8"));
+    map.put(Pair.of(registerFile, 25), new Abi.RegisterAlias("s9"));
+    map.put(Pair.of(registerFile, 26), new Abi.RegisterAlias("s10"));
+    map.put(Pair.of(registerFile, 27), new Abi.RegisterAlias("s11"));
+    map.put(Pair.of(registerFile, 5), new Abi.RegisterAlias("t0"));
+    map.put(Pair.of(registerFile, 6), new Abi.RegisterAlias("t1"));
+    map.put(Pair.of(registerFile, 7), new Abi.RegisterAlias("t2"));
+    map.put(Pair.of(registerFile, 28), new Abi.RegisterAlias("t3"));
+    map.put(Pair.of(registerFile, 29), new Abi.RegisterAlias("t4"));
+    map.put(Pair.of(registerFile, 30), new Abi.RegisterAlias("t5"));
+    map.put(Pair.of(registerFile, 31), new Abi.RegisterAlias("t6"));
     return map;
   }
 
-  private List<DummyAbi.RegisterRef> getCalleeSaved(RegisterFile registerFile) {
+  private List<Abi.RegisterRef> getCalleeSaved(RegisterFile registerFile) {
     return List.of(
-        new DummyAbi.RegisterRef(registerFile, 2, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 8, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 9, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 18, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 19, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 20, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 21, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 22, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 23, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 24, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 25, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 26, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 27, DummyAbi.Alignment.NO_ALIGNMENT)
+        new Abi.RegisterRef(registerFile, 2, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 8, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 9, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 18, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 19, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 20, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 21, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 22, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 23, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 24, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 25, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 26, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 27, Abi.Alignment.NO_ALIGNMENT)
     );
   }
 
-  private List<DummyAbi.RegisterRef> getCallerSaved(RegisterFile registerFile) {
+  private List<Abi.RegisterRef> getCallerSaved(RegisterFile registerFile) {
     return List.of(
-        new DummyAbi.RegisterRef(registerFile, 1, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 10, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 11, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 12, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 13, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 14, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 15, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 16, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 17, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 5, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 6, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 7, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 28, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 29, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 30, DummyAbi.Alignment.NO_ALIGNMENT),
-        new DummyAbi.RegisterRef(registerFile, 31, DummyAbi.Alignment.NO_ALIGNMENT)
+        new Abi.RegisterRef(registerFile, 1, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 10, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 11, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 12, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 13, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 14, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 15, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 16, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 17, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 5, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 6, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 7, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 28, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 29, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 30, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 31, Abi.Alignment.NO_ALIGNMENT)
     );
   }
 }

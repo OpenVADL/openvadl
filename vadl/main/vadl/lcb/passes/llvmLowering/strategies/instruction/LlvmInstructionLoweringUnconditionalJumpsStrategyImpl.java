@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -20,8 +19,7 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
+import vadl.viam.Abi;
 
 /**
  * Lowering unconditional jump instructions into TableGen patterns.
@@ -42,7 +40,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph uninlinedBehavior,
-      DummyAbi abi) {
+      Abi abi) {
 
     var visitor = replacementHooks();
     var copy = uninlinedBehavior.copy();
@@ -109,7 +107,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi) {
+      Abi abi) {
     return Collections.emptyList();
   }
 }

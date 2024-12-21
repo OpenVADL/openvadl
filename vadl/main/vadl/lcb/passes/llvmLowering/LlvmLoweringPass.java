@@ -37,7 +37,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.
@@ -100,7 +100,7 @@ public class LlvmLoweringPass extends Pass {
         (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
-    var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
 
     var architectureType =
         ensurePresent(ValueType.from(abi.stackPointer().registerFile().resultType()),
@@ -129,7 +129,7 @@ public class LlvmLoweringPass extends Pass {
 
 
   private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
-      Specification viam, DummyAbi abi, List<LlvmInstructionLoweringStrategy> strategies,
+      Specification viam, Abi abi, List<LlvmInstructionLoweringStrategy> strategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
 
@@ -166,7 +166,7 @@ public class LlvmLoweringPass extends Pass {
   }
 
   private IdentityHashMap<PseudoInstruction, LlvmLoweringRecord> pseudoInstructions(
-      Specification viam, DummyAbi abi, List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
+      Specification viam, Abi abi, List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Map<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();

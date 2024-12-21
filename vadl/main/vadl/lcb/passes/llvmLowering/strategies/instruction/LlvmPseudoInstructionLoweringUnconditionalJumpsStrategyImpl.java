@@ -34,7 +34,7 @@ import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * Lowers unconditional jumps into TableGen.
@@ -56,7 +56,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
 
   @Override
   public Optional<LlvmLoweringPseudoRecord> lower(
-      DummyAbi abi,
+      Abi abi,
       PseudoInstruction pseudo,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var tableGenRecord = super.lower(abi, pseudo, labelledMachineInstructions);

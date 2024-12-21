@@ -17,7 +17,7 @@ import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * DotVisualizer is a class that implements the ViamVisualizer interface to generate a visualization
@@ -180,7 +180,7 @@ class DotVisitor extends DefinitionVisitor.Recursive {
   }
 
   @Override
-  public void visit(DummyAbi dummyAbi) {
+  public void visit(Abi abi) {
 
   }
 }

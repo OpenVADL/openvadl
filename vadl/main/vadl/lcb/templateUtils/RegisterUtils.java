@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 import vadl.utils.Pair;
 import vadl.viam.RegisterFile;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * Utility class for registers.
@@ -46,15 +46,15 @@ public class RegisterUtils {
   @NotNull
   public static RegisterClass getRegisterClass(
       RegisterFile registerFile,
-      @Nullable Map<Pair<RegisterFile, Integer>, DummyAbi.RegisterAlias> aliases) {
+      @Nullable Map<Pair<RegisterFile, Integer>, Abi.RegisterAlias> aliases) {
     return new RegisterClass(registerFile,
         IntStream.range(0, (int) Math.pow(2, registerFile.addressType().bitWidth()))
             .mapToObj(i -> {
               var name = registerFile.identifier.simpleName() + i;
-              Optional<DummyAbi.RegisterAlias> alias =
+              Optional<Abi.RegisterAlias> alias =
                   aliases != null ? Optional.ofNullable(aliases.get(Pair.of(registerFile, i))) :
                       Optional.empty();
-              return new Register(i, name, alias.map(DummyAbi.RegisterAlias::value));
+              return new Register(i, name, alias.map(Abi.RegisterAlias::value));
             }).toList());
   }
 }

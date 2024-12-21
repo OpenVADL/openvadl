@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
@@ -28,10 +27,8 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFi
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
-import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
-import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
@@ -42,8 +39,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
-import vadl.viam.passes.functionInliner.UninlinedGraph;
+import vadl.viam.Abi;
 
 /**
  * Generates the {@link LlvmLoweringRecord} for {@link MachineInstructionLabel#JALR}
@@ -66,7 +62,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
-      DummyAbi abi) {
+      Abi abi) {
     var copy = unmodifiedBehavior.copy();
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
 
@@ -114,7 +110,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi) {
+      Abi abi) {
     var result = new ArrayList<TableGenPattern>();
     inputOperands.stream().filter(x -> x instanceof TableGenInstructionRegisterFileOperand)
         .findFirst()
@@ -131,7 +127,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   private static @NotNull TableGenPseudoInstExpansionPattern generateIndirectCall(
       Map<MachineInstructionLabel,
           List<Instruction>> supportedInstructions,
-      DummyAbi abi,
+      Abi abi,
       TableGenInstructionRegisterFileOperand inputRegister) {
     var selector = new Graph("selector");
     var ref = (ReadRegFileNode) inputRegister.reference().copy();

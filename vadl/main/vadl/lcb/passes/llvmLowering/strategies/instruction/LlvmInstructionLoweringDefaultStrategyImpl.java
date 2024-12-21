@@ -15,7 +15,7 @@ import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * Lowers instructions into {@link TableGenInstruction}.
@@ -51,7 +51,7 @@ public class LlvmInstructionLoweringDefaultStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi) {
+      Abi abi) {
     return Collections.emptyList();
   }
 }

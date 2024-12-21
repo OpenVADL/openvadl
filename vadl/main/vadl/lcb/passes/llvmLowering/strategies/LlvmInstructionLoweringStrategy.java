@@ -104,7 +104,7 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * Defines how a {@link Instruction} will be lowered to {@link TableGenInstruction}.
@@ -259,7 +259,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
-      DummyAbi abi) {
+      Abi abi) {
     return lowerInstruction(labelledMachineInstructions,
         instruction,
         unmodifiedBehavior,
@@ -274,7 +274,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       PseudoInstruction pseudoInstruction,
       Instruction instruction,
       Graph unmodifiedBehavior,
-      DummyAbi abi) {
+      Abi abi) {
     logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
         pseudoInstruction.identifier.simpleName());
     return lowerInstruction(labelledMachineInstructions,
@@ -291,7 +291,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
-      DummyAbi abi) {
+      Abi abi) {
     var visitor = replacementHooksWithDefaultFieldAccessReplacement();
     var copy = unmodifiedBehavior.copy();
 
@@ -474,7 +474,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi);
+      Abi abi);
 
   /**
    * LLvm's TableGen cannot work with control flow. So if statements and other constructs are not

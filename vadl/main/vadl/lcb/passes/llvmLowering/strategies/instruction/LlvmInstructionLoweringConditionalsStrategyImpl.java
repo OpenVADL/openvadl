@@ -30,7 +30,7 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 
 /**
  * Lowering of conditionals into TableGen.
@@ -66,7 +66,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi) {
+      Abi abi) {
     var result = new ArrayList<TableGenPattern>();
 
     var flipped = LlvmLoweringPass.flipMachineInstructions(supportedInstructions);

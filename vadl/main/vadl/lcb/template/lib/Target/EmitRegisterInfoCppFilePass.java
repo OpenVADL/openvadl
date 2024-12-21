@@ -11,7 +11,6 @@ import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import jdk.jshell.Diag;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
@@ -34,7 +33,7 @@ import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
+import vadl.viam.Abi;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -78,7 +77,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi =
-        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var instructionLabels =
         (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class);
