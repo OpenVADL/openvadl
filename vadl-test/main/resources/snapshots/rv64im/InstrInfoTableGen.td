@@ -4471,13 +4471,15 @@ def : Pat<(setcc (i64 0), X:$rs1, SETULT),
 def : Pat<(rotl X:$rs1, X:$rs2),
         (OR (SLL X:$rs1, X:$rs2), (SRL X:$rs1, (SUB (LI (i64 64)), X:$rs2)))>;
 
-let isCall = 1, isBranch = 0, isIndirectBranch = 0, isTerminator = 0, isBarrier = 0 in {
+let isCall = 1, isBranch = 0, isIndirectBranch = 0, isTerminator = 0, isBarrier = 0
+in {
     def PseudoCALLIndirect : Pseudo<(outs ), (ins X:$rs1),
                         [(target_call X:$rs1)]>,
                  PseudoInstExpansion<(JALR X1, X:$rs1, 0)>;
 }
 
-let isCall = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1, isBarrier = 1 in {
+let isCall = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1, isBarrier = 1
+in {
     def PseudoBRIND : Pseudo<(outs ), (ins X:$rs1),
                         [(brind X:$rs1)]>,
                  PseudoInstExpansion<(JALR X0, X:$rs1, 0)>;
