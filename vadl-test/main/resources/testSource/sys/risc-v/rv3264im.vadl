@@ -43,11 +43,11 @@ instruction set architecture RV3264I = {
   using UIntR    = UInt<MLen>             // unsigned integer register word type
   using Address  = Regs                   // address is register word type
   using Bits3    = Bits< 3>               // 3 bit type
-  using Bits4    = Bits< 4>               // 3 bit type
+  using Bits4    = Bits< 4>               // 4 bit type
   using Bits5    = Bits< 5>               // 5 bit type
   using Bits6    = Bits< 6>               // 6 bit type
   using Bits7    = Bits< 7>               // 7 bit type
-  using Bits12   = Bits<12>              // 12 bit type
+  using Bits12   = Bits<12>               // 12 bit type
   using Index    = Bits< 5>               // 5 bit register index type for 32 registers
   using UInt5    = UInt< 5>               // 5 bit unsigned shift amount
   using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift amount
@@ -411,12 +411,12 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   }
   assembly LLA = (mnemonic, " ", register(rd), hex( symbol ))
 
-   pseudo instruction LI( rd : Index, symbol : Bits<32> ) =
-   {
+  pseudo instruction LI( rd : Index, symbol : Bits<32> ) =
+  {
       LUI{ rd = rd, imm = hi( symbol ) }
       ADDI{ rd = rd, rs1 = rd, imm = lo( symbol ) }
-   }
-   assembly LI = (mnemonic, " ", register( rd ), ",", decimal( symbol ))
+  }
+  assembly LI = (mnemonic, " ", register( rd ), ",", decimal( symbol ))
 
 }
 

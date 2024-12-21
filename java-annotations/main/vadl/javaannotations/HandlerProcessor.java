@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -122,7 +124,8 @@ public class HandlerProcessor extends AbstractProcessor {
 
     // Collect handler methods from the class and its supertypes
     Map<String, HandlerMethod> handlerMethods =
-        collectHandlerMethods(handlerClass, baseType, dispatchForData.returnType);
+        collectHandlerMethods(handlerClass, baseType, dispatchForData.returnType,
+            dispatchForData.contextTypes);
 
     if (handlerMethods.isEmpty()) {
       messager.printMessage(Diagnostic.Kind.WARNING,
@@ -138,7 +141,8 @@ public class HandlerProcessor extends AbstractProcessor {
         dispatchForData.returnType);
 
     // Generate dispatcher
-    generateDispatcher(handlerClass, baseType, handlerMethods, dispatchForData.returnType);
+    generateDispatcher(handlerClass, baseType, dispatchForData.contextTypes, handlerMethods,
+        dispatchForData.returnType);
   }
 
   /**
@@ -149,12 +153,13 @@ public class HandlerProcessor extends AbstractProcessor {
    * @return a map of parameter type strings to handler methods
    */
   private Map<String, HandlerMethod> collectHandlerMethods(
-      TypeElement handlerClass, TypeMirror baseType, TypeMirror returnType) {
+      TypeElement handlerClass, TypeMirror baseType, TypeMirror returnType,
+      List<TypeMirror> contextClasses) {
 
     Map<String, HandlerMethod> handlerMethods = new HashMap<>();
     Set<TypeElement> processedClasses = new HashSet<>();
     collectHandlerMethodsRecursive(handlerClass, baseType, handlerMethods, processedClasses,
-        returnType); // Pass 'returnType'
+        returnType, contextClasses); // Pass 'returnType'
     return handlerMethods;
   }
 
@@ -162,7 +167,8 @@ public class HandlerProcessor extends AbstractProcessor {
   private record DispatchForData(
       TypeMirror baseType,
       List<String> includePackages,
-      TypeMirror returnType
+      TypeMirror returnType,
+      List<TypeMirror> contextTypes
   ) {
   }
 
@@ -173,6 +179,7 @@ public class HandlerProcessor extends AbstractProcessor {
     TypeMirror baseType = null;
     List<String> includePackages = new ArrayList<>();
     TypeMirror returnType = null; // Add this line
+    List<TypeMirror> contextClasses = new ArrayList<>();
 
     for (AnnotationMirror annotation : handlerClass.getAnnotationMirrors()) {
       if (annotation.getAnnotationType().toString().equals(DispatchFor.class.getCanonicalName())) {
@@ -192,6 +199,11 @@ public class HandlerProcessor extends AbstractProcessor {
             }
           } else if (key.equals("returnType")) { // Add this block
             returnType = (TypeMirror) entry.getValue().getValue();
+          } else if (key.equals("context")) {
+            var ctxs = (List<? extends AnnotationValue>) entry.getValue().getValue();
+            for (var ctx : ctxs) {
+              contextClasses.add((TypeMirror) ctx.getValue());
+            }
           }
         }
       }
@@ -203,7 +215,7 @@ public class HandlerProcessor extends AbstractProcessor {
     if (returnType == null) {
       returnType = elementUtils.getTypeElement("java.lang.Void").asType();
     }
-    return new DispatchForData(baseType, includePackages, returnType);
+    return new DispatchForData(baseType, includePackages, returnType, contextClasses);
   }
 
   /**
@@ -216,12 +228,15 @@ public class HandlerProcessor extends AbstractProcessor {
    */
   private void collectHandlerMethodsRecursive(
       TypeElement clazz, TypeMirror baseType, Map<String, HandlerMethod> handlerMethods,
-      Set<TypeElement> processedClasses, TypeMirror returnType) {
+      Set<TypeElement> processedClasses, TypeMirror returnType,
+      List<TypeMirror> contextTypes) {
 
     if (processedClasses.contains(clazz)) {
       return;
     }
     processedClasses.add(clazz);
+
+    var expectedParams = contextTypes.size() + 1;
 
     // Collect methods from the current class
     for (Element elem : clazz.getEnclosedElements()) {
@@ -231,16 +246,31 @@ public class HandlerProcessor extends AbstractProcessor {
         ExecutableElement method = (ExecutableElement) elem;
         List<? extends VariableElement> parameters = method.getParameters();
 
-        if (parameters.size() != 1) {
+        if (parameters.size() != expectedParams) {
           messager.printMessage(Diagnostic.Kind.ERROR,
-              "@Handler methods must have exactly one parameter", method);
+              "@Handler methods must have exactly %s parameter(s)".formatted(expectedParams),
+              method);
           continue;
         }
 
-        VariableElement param = parameters.get(0);
+
+        int i = 0;
+        for (; i < contextTypes.size(); i++) {
+          var param = parameters.get(i);
+          var paramType = param.asType();
+          var contextClass = contextTypes.get(i);
+          if (!typeUtils.isSubtype(contextClass, paramType)) {
+            messager.printMessage(Diagnostic.Kind.ERROR,
+                "%sth context parameter of @Handler must be super type of %s but was %s".formatted(
+                    i, contextClass, paramType),
+                method);
+          }
+        }
+
+        VariableElement param = parameters.get(i);
         TypeMirror paramType = param.asType();
 
-        // Check if paramType is a subtype of baseType
+        // Check if handleType is a subtype of baseType
         if (!typeUtils.isSubtype(paramType, baseType)) {
           messager.printMessage(Diagnostic.Kind.ERROR,
               "Parameter type of @Handler method must be a subtype of " + baseType.toString(),
@@ -261,7 +291,7 @@ public class HandlerProcessor extends AbstractProcessor {
 
         String paramTypeStr = paramType.toString();
         handlerMethods.put(paramTypeStr,
-            new HandlerMethod(method.getSimpleName().toString(), paramType));
+            new HandlerMethod(method.getSimpleName().toString(), contextTypes, paramType));
       }
     }
 
@@ -269,7 +299,7 @@ public class HandlerProcessor extends AbstractProcessor {
     for (TypeMirror iface : clazz.getInterfaces()) {
       TypeElement ifaceElement = (TypeElement) typeUtils.asElement(iface);
       collectHandlerMethodsRecursive(ifaceElement, baseType, handlerMethods, processedClasses,
-          returnType);
+          returnType, contextTypes);
     }
 
     // Process superclass
@@ -277,7 +307,7 @@ public class HandlerProcessor extends AbstractProcessor {
     if (superclass != null && superclass.getKind() != TypeKind.NONE) {
       TypeElement superClassElement = (TypeElement) typeUtils.asElement(superclass);
       collectHandlerMethodsRecursive(superClassElement, baseType, handlerMethods, processedClasses,
-          returnType);
+          returnType, contextTypes);
     }
   }
 
@@ -387,7 +417,7 @@ public class HandlerProcessor extends AbstractProcessor {
   private boolean isSubtypeHandled(TypeMirror subtype, Map<String, HandlerMethod> handlerMethods) {
     // Check if there is a handler for the subtype or any of its supertypes
     for (HandlerMethod hm : handlerMethods.values()) {
-      if (typeUtils.isSubtype(subtype, hm.paramType)) {
+      if (typeUtils.isSubtype(subtype, hm.handleType)) {
         return true;
       }
     }
@@ -397,7 +427,8 @@ public class HandlerProcessor extends AbstractProcessor {
 
   private record HandlerMethod(
       String methodName,
-      TypeMirror paramType
+      List<TypeMirror> contextTypes,
+      TypeMirror handleType
   ) {
   }
 
@@ -410,6 +441,7 @@ public class HandlerProcessor extends AbstractProcessor {
    * @throws IOException if an error occurs while writing the dispatcher class
    */
   private void generateDispatcher(TypeElement handlerClass, TypeMirror baseType,
+                                  List<TypeMirror> contextTypes,
                                   Map<String, HandlerMethod> handlerMethods, TypeMirror returnType)
       throws IOException {
     String handlerClassName = handlerClass.getQualifiedName().toString();
@@ -429,7 +461,7 @@ public class HandlerProcessor extends AbstractProcessor {
       // Import types for the handler methods
       Set<String> importTypes = new HashSet<>();
       for (HandlerMethod hm : handlerMethods.values()) {
-        importTypes.add(hm.paramType.toString());
+        importTypes.add(hm.handleType.toString());
       }
       for (String importType : importTypes) {
         writer.write("import " + importType + ";\n");
@@ -445,17 +477,21 @@ public class HandlerProcessor extends AbstractProcessor {
 
       String returnTypeName = isVoidReturnType ? "void" : returnType.toString();
 
+      var contextParams = contextTypes.stream()
+          .map(t -> t.toString() + " " + typeMirrorSimpleName(t).toLowerCase() + ", ")
+          .collect(Collectors.joining());
+
       writer.write("    @SuppressWarnings(\"BadInstanceof\")\n");
       writer.write(
           "    public static " + returnTypeName + " dispatch(" + handlerClassName
-              + " handler, " + baseTypeName
+              + " handler, " + contextParams + baseTypeName
               + " obj) {\n");
 
       // Sort handler methods by specificity
       List<HandlerMethod> sortedHandlerMethods = new ArrayList<>(handlerMethods.values());
       sortedHandlerMethods.sort((hm1, hm2) -> {
-        TypeMirror type1 = hm1.paramType;
-        TypeMirror type2 = hm2.paramType;
+        TypeMirror type1 = hm1.handleType;
+        TypeMirror type2 = hm2.handleType;
 
         if (typeUtils.isSubtype(type1, type2) && !typeUtils.isSameType(type1, type2)) {
           return -1; // type1 is more specific
@@ -466,9 +502,13 @@ public class HandlerProcessor extends AbstractProcessor {
         }
       });
 
+      var contextParamNames =
+          contextTypes.stream().map(p -> typeMirrorSimpleName(p).toLowerCase() + ", ")
+              .collect(Collectors.joining());
+
       for (int i = 0; i < sortedHandlerMethods.size(); i++) {
         HandlerMethod hm = sortedHandlerMethods.get(i);
-        String paramTypeStr = hm.paramType.toString();
+        String paramTypeStr = hm.handleType.toString();
         String simpleParamType = paramTypeStr.substring(paramTypeStr.lastIndexOf('.') + 1);
         String methodName = hm.methodName;
 
@@ -479,10 +519,13 @@ public class HandlerProcessor extends AbstractProcessor {
         }
 
         if (isVoidReturnType) {
-          writer.write("            handler." + methodName + "((" + simpleParamType + ") obj);\n");
+          writer.write(
+              "            handler." + methodName + "(" + contextParamNames
+                  + "(" + simpleParamType + ") obj);\n");
         } else {
           writer.write(
-              "            return handler." + methodName + "((" + simpleParamType + ") obj);\n");
+              "            return handler." + methodName + "(" + contextParamNames
+                  + "(" + simpleParamType + ") obj);\n");
         }
         writer.write("        }\n");
       }
