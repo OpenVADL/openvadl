@@ -17,6 +17,7 @@ import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrindSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
@@ -161,7 +162,12 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
                 ParameterIdentity.from(ref, ref.address()),
                 ref,
                 address.formatField())
-        ), Collections.emptyList());
+        ), Collections.emptyList(),
+        List.of(
+            new RegisterRef(abi.returnAddress().registerFile(),
+                Constant.Value.of(abi.returnAddress().addr(),
+                    abi.returnAddress().registerFile().resultType())))
+    );
   }
 
   private static @NotNull TableGenPseudoInstExpansionPattern generateBranchIndirect(
@@ -200,7 +206,8 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
                 ParameterIdentity.from(ref, ref.address()),
                 ref,
                 address.formatField())
-        ), Collections.emptyList());
+        ), Collections.emptyList(),
+        Collections.emptyList());
   }
 
   private static String zeroRegister(RegisterFile registerFile) {

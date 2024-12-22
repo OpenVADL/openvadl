@@ -1,6 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.List;
+import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.viam.graph.Graph;
 
 /**
@@ -16,6 +17,7 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
   private final boolean isBarrier;
   private final List<TableGenInstructionOperand> outputs;
   private final List<TableGenInstructionOperand> inputs;
+  private final List<RegisterRef> defs;
   private final Graph machine;
 
   /**
@@ -30,7 +32,8 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
                                             boolean isTerminator,
                                             boolean isBarrier,
                                             List<TableGenInstructionOperand> inputs,
-                                            List<TableGenInstructionOperand> outputs) {
+                                            List<TableGenInstructionOperand> outputs,
+                                            List<RegisterRef> defs) {
     super(selector);
     this.name = name;
     this.isCall = isCall;
@@ -41,6 +44,7 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
     this.machine = machine;
     this.inputs = inputs;
     this.outputs = outputs;
+    this.defs = defs;
   }
 
   /**
@@ -54,7 +58,8 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
         isTerminator,
         isBarrier,
         inputs,
-        outputs);
+        outputs,
+        defs);
   }
 
   public Graph machine() {
@@ -91,5 +96,9 @@ public class TableGenPseudoInstExpansionPattern extends TableGenPattern {
 
   public List<TableGenInstructionOperand> inputs() {
     return inputs;
+  }
+
+  public List<RegisterRef> defs() {
+    return defs;
   }
 }
