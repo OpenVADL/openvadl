@@ -203,6 +203,9 @@ static inline Bits VADL_smull(Bits a, Width aw, Bits b, Width bw) {
     SInt y           = VADL_sextract(b, bw);
     __int128 product = (__int128) x * (__int128) y;
     Width width      = aw + bw;
+
+    // Check if the product fits within 64 bits (signed range)
+    assert(product >= INT64_MIN && product <= INT64_MAX && "Overflow: result exceeds 64 bits");
     return VADL_uextract((Bits) product, width);
 }
 
@@ -215,6 +218,9 @@ static inline Bits VADL_umull(Bits a, Width aw, Bits b, Width bw) {
     Bits y              = VADL_uextract(b, bw);
     __uint128_t product = (__uint128_t) x * (__uint128_t) y;
     Width width         = aw + bw;
+
+    // Check if the product fits within 64 bits (unsigned range)
+    assert((product >> 64) == 0 && "Overflow: result exceeds 64 bits");
     return VADL_uextract((Bits) product, width);
 }
 
@@ -227,6 +233,8 @@ static inline Bits VADL_sumull(Bits a, Width aw, Bits b, Width bw) {
     Bits y           = VADL_uextract(b, bw);
     __int128 product = (__int128) x * (__int128) y;
     Width width      = aw + bw;
+    // Check if the product fits within 64 bits (signed range)
+    assert(product >= INT64_MIN && product <= INT64_MAX && "Overflow: result exceeds 64 bits");
     return VADL_uextract((Bits) product, width);
 }
 

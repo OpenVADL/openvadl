@@ -556,7 +556,7 @@ public abstract class Constant {
 
     @Override
     public java.lang.String toString() {
-      return integer() + ": " + type().toString();
+      return hexadecimal() + ": " + type().toString();
     }
 
     /**
@@ -672,7 +672,9 @@ public abstract class Constant {
       if (padding) {
         if (padFactor > 0) {
           var padSize = (type().bitWidth() / padFactor) - str.length();
-          str = "0".repeat(padSize) + str;
+          if (padSize > 0) {
+            str = "0".repeat(padSize) + str;
+          }
         }
       }
       return prefix + str;

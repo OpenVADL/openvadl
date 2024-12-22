@@ -92,9 +92,7 @@ public class BitsType extends DataType {
   @Override
   @Nullable
   public DataType fittingCppType() {
-    if (bitWidth == 1) {
-      return this;
-    } else if (bitWidth <= 8) {
+    if (bitWidth <= 8) {
       return constructDataType(this.getClass(), 8);
     } else if (bitWidth <= 16) {
       return constructDataType(this.getClass(), 16);
