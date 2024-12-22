@@ -2,7 +2,8 @@ package vadl.ast;
 
 import java.math.BigInteger;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.SIntType;
@@ -21,6 +22,7 @@ import vadl.utils.WithSourceLocation;
 public class TypeChecker
     implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void> {
 
+  private static final Logger log = LoggerFactory.getLogger(TypeChecker.class);
   //private final List<Diagnostic> errors = new ArrayList<>();
   private final ConstantEvaluator constantEvaluator;
 
@@ -41,9 +43,11 @@ public class TypeChecker
   }
 
   private void throwUnimplemented(Node node) {
-    throw new RuntimeException(
-        "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
-            node.getClass().getSimpleName(), node.location().toIDEString()));
+    //    throw new RuntimeException(
+    //        "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
+    //            node.getClass().getSimpleName(), node.location().toIDEString()));
+    log.error("The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
+        node.getClass().getSimpleName(), node.location().toIDEString()));
   }
 
   private void throwInvalidState(Node node, String message) {
@@ -282,7 +286,13 @@ public class TypeChecker
 
   @Override
   public Void visit(AsmDescriptionDefinition definition) {
-    definition.rules.forEach(rule -> rule.accept(this));
+    for (var rule : definition.rules) {
+      // Only visit rules that have not yet been checked,
+      // as rules can be invoked by other rules and may have already been checked
+      if (rule.asmType == null) {
+        rule.accept(this);
+      }
+    }
     definition.commonDefinitions.forEach(commonDef -> commonDef.accept(this));
     return null;
   }
@@ -323,7 +333,11 @@ public class TypeChecker
 
     // resolve types of all elements
     definition.alternatives.forEach(elements -> {
-      elements.forEach(element -> element.accept(this));
+      for (var element : elements) {
+        if (element.asmType == null) {
+          element.accept(this);
+        }
+      }
     });
 
     // all alternatives have to have the same type
@@ -336,7 +350,7 @@ public class TypeChecker
             "Typechecker found an AsmGrammarAlternative without elements.");
       }
       if (elements.size() == 1) {
-        curAlternativeType = elements.getFirst().asmType;
+        curAlternativeType = elements.get(0).asmType;
       } else {
         // create GroupAsmType, but only consider elements which are assigned to an attribute
         var groupSubtypes =
@@ -354,6 +368,8 @@ public class TypeChecker
         // TODO error: alternatives with different types
       }
     }
+
+    definition.asmType = allAlternativeType;
     return null;
   }
 
@@ -366,6 +382,11 @@ public class TypeChecker
 
     if (definition.asmLiteral != null) {
       definition.asmLiteral.accept(this);
+      if (definition.asmLiteral.asmType == null) {
+        throwInvalidState(definition, "AsmType of asm literal could not be resolved.");
+        return null;
+      }
+      definition.asmType = definition.asmLiteral.asmType;
     }
 
     if (definition.groupAlternatives != null) {
@@ -427,6 +448,7 @@ public class TypeChecker
     } else if (invocationSymbolOrigin instanceof FunctionDefinition function) {
       // TODO check input fits to types of arguments
       // TODO check return type and infer asm type
+
     } else {
       // TODO error: symbol in grammar rule has to be rule / localVar / function
     }
@@ -454,7 +476,8 @@ public class TypeChecker
     }
 
     if (invokedRule.asmType == null) {
-      throwInvalidState(definition, "Could not resolve AsmType of grammar rule.");
+      throwInvalidState(definition,
+          "Could not resolve AsmType of grammar rule %s.".formatted(invokedRule.identifier().name));
       return;
     }
 

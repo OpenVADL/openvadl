@@ -22,7 +22,7 @@ public class OperandAsmType implements AsmType {
 
   @Override
   public boolean canBeCastTo(AsmType to) {
-    return to == this || to == VoidAsmType.instance();
+    return to == this || to == VoidAsmType.instance() || to == InstructionAsmType.instance();
   }
 
   @Override

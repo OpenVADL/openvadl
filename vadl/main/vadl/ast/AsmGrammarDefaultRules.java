@@ -84,15 +84,15 @@ public class AsmGrammarDefaultRules {
         terminalRuleTypeString("AT", "@"),
         terminalRuleTypeString("MINUSGREATER", "->"),
         terminalRule("EOL", "[\\r(\\r\\n)]", VoidAsmType.instance()),
-        nonTerminalRule("Statement", instructionRule(), ruleReference("EOL")),
-        nonTerminalRule("Register", ruleReference("IDENTIFIER", RegisterAsmType.instance())),
-        nonTerminalRule("ImmediateOperand", ruleReference("Expression")),
-        nonTerminalRule("Identifier", ruleReference("IDENTIFIER")),
-        nonTerminalRule("Expression", ruleReference("Expression", ExpressionAsmType.instance())),
-        nonTerminalRule("Instruction", ruleReference("Instruction", InstructionAsmType.instance())),
+        nonTerminalRule("Statement", null, instructionRule(), ruleReference("EOL")),
+        nonTerminalRule("Register", RegisterAsmType.instance(), ruleReference("IDENTIFIER")),
+        nonTerminalRule("ImmediateOperand", null, ruleReference("Expression")),
+        nonTerminalRule("Identifier", StringAsmType.instance(), ruleReference("IDENTIFIER")),
+        nonTerminalRule("Expression", ExpressionAsmType.instance(), ruleReference("Expression")),
+        nonTerminalRule("Instruction", InstructionAsmType.instance(), ruleReference("Instruction")),
         integerRule(),
-        nonTerminalRule("Natural", ruleReference("INTEGER")),
-        nonTerminalRule("Label", ruleReference("Identifier", SymbolAsmType.instance()))
+        nonTerminalRule("Natural", ConstantAsmType.instance(), ruleReference("INTEGER")),
+        nonTerminalRule("Label", SymbolAsmType.instance(), ruleReference("Identifier"))
     ));
   }
 
@@ -137,17 +137,20 @@ public class AsmGrammarDefaultRules {
         SourceLocation.INVALID_SOURCE_LOCATION
     );
 
+    var grammarLiteral = new AsmGrammarLiteralDefinition(
+        null, new ArrayList<>(), new StringLiteral(regularExpression), asmTypeDef,
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+    grammarLiteral.asmType = terminalRuleType;
+
     return new AsmGrammarRuleDefinition(
         new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
         null,
         new AsmGrammarAlternativesDefinition(
             new ArrayList<>(List.of(List.of(
                 new AsmGrammarElementDefinition(
-                    null, null, false,
-                    new AsmGrammarLiteralDefinition(
-                        null, new ArrayList<>(), new StringLiteral(regularExpression), asmTypeDef,
-                        SourceLocation.INVALID_SOURCE_LOCATION
-                    ), null, null, null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
+                    null, null, false, grammarLiteral, null, null,
+                    null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
                 )
             ))),
             SourceLocation.INVALID_SOURCE_LOCATION
@@ -156,9 +159,9 @@ public class AsmGrammarDefaultRules {
     );
   }
 
-  private static AsmGrammarRuleDefinition nonTerminalRule(String name,
+  private static AsmGrammarRuleDefinition nonTerminalRule(String name, @Nullable AsmType ruleType,
                                                           AsmGrammarElementDefinition... elements) {
-    return new AsmGrammarRuleDefinition(
+    var rule = new AsmGrammarRuleDefinition(
         new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
         null,
         new AsmGrammarAlternativesDefinition(
@@ -167,6 +170,10 @@ public class AsmGrammarDefaultRules {
         ),
         SourceLocation.INVALID_SOURCE_LOCATION
     );
+
+    // by setting the asmType we can avoid checking the default rules in the typechecker
+    rule.asmType = ruleType;
+    return rule;
   }
 
   private static AsmGrammarRuleDefinition integerRule() {
@@ -185,7 +192,7 @@ public class AsmGrammarDefaultRules {
         null, null, null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
     );
 
-    return new AsmGrammarRuleDefinition(
+    var rule = new AsmGrammarRuleDefinition(
         new Identifier("Integer", SourceLocation.INVALID_SOURCE_LOCATION),
         new AsmGrammarTypeDefinition(
             new Identifier(ConstantAsmType.instance().name(),
@@ -197,6 +204,10 @@ public class AsmGrammarDefaultRules {
                 List.of(ruleReference("INTEGER", ConstantAsmType.instance()))
             ), SourceLocation.INVALID_SOURCE_LOCATION
         ), SourceLocation.INVALID_SOURCE_LOCATION);
+
+    // by setting the asmType we can avoid checking the default rules in the typechecker
+    rule.asmType = ConstantAsmType.instance();
+    return rule;
   }
 
   private static AsmGrammarElementDefinition instructionRule() {
@@ -212,25 +223,15 @@ public class AsmGrammarDefaultRules {
 
   private static AsmGrammarElementDefinition ruleReference(String refName,
                                                            @Nullable AsmType refRuleType) {
-    AsmGrammarTypeDefinition asmTypeDef = null;
-    if (refRuleType != null) {
-      asmTypeDef = new AsmGrammarTypeDefinition(
-          new Identifier(refRuleType.name(),
-              SourceLocation.INVALID_SOURCE_LOCATION),
-          SourceLocation.INVALID_SOURCE_LOCATION
-      );
-    }
     var element = new AsmGrammarElementDefinition(
         null, null, false,
         new AsmGrammarLiteralDefinition(
             new Identifier(refName, SourceLocation.INVALID_SOURCE_LOCATION),
-            new ArrayList<>(), null, asmTypeDef, SourceLocation.INVALID_SOURCE_LOCATION
+            new ArrayList<>(), null, null, SourceLocation.INVALID_SOURCE_LOCATION
         ),
         null, null, null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
     );
 
-    // by setting the asmType we can avoid infinite loops in the type checker
-    // for the Instruction and Expression rule
     element.asmType = refRuleType;
     return element;
   }

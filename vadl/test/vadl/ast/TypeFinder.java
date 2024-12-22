@@ -2,6 +2,7 @@ package vadl.ast;
 
 import javax.annotation.Nullable;
 import vadl.types.Type;
+import vadl.types.asmTypes.AsmType;
 
 class TypeFinder implements DefinitionVisitor<Void> {
 
@@ -12,6 +13,15 @@ class TypeFinder implements DefinitionVisitor<Void> {
     Type type;
 
     public FoundTypeSignal(@Nullable Type type) {
+      this.type = type;
+    }
+  }
+
+  private static class FoundAsmTypeSignal extends RuntimeException {
+    @Nullable
+    AsmType type;
+
+    public FoundAsmTypeSignal(@Nullable AsmType type) {
       this.type = type;
     }
   }
@@ -27,6 +37,18 @@ class TypeFinder implements DefinitionVisitor<Void> {
       return e.type;
     }
     throw new RuntimeException("No constant with the name %s found.".formatted(name));
+  }
+
+  AsmType getAsmRuleType(Ast ast, String name) {
+    target = name;
+    try {
+      for (var definition : ast.definitions) {
+        definition.accept(this);
+      }
+    } catch (FoundAsmTypeSignal e) {
+      return e.type;
+    }
+    throw new RuntimeException("No asm rule with the name %s found.".formatted(name));
   }
 
   @Override
@@ -49,6 +71,12 @@ class TypeFinder implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(AsmDescriptionDefinition definition) {
+    for (var rule : definition.rules) {
+      rule.accept(this);
+    }
+    for (var commonDef : definition.commonDefinitions) {
+      commonDef.accept(this);
+    }
     return null;
   }
 
@@ -79,6 +107,9 @@ class TypeFinder implements DefinitionVisitor<Void> {
 
   @Override
   public Void visit(AsmGrammarRuleDefinition definition) {
+    if (definition.identifier().name.equals(target)) {
+      throw new FoundAsmTypeSignal(definition.asmType);
+    }
     return null;
   }
 

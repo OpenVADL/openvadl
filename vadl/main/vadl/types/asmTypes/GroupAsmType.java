@@ -27,7 +27,7 @@ public class GroupAsmType implements AsmType {
       return subtypes.stream().allMatch(subtype -> subtype == OperandAsmType.instance());
     }
 
-    if (to == ExpressionAsmType.instance()) {
+    if (to == OperandAsmType.instance()) {
       if (subtypes.size() != 2) {
         return false;
       }
