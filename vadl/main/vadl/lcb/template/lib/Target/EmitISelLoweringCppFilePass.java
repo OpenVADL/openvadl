@@ -21,10 +21,10 @@ import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file contains the legalization, promotions and legalization of nodes.
@@ -67,7 +67,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi =
-        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var registerFiles = ((GenerateRegisterClassesPass.Output) passResults.lastResultOf(
         GenerateRegisterClassesPass.class)).registerClasses();
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
@@ -89,7 +89,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("stackPointer", stackPointer);
     map.put("stackPointerByteSize", abi.stackPointer().registerFile().resultType().bitWidth() / 8);
     map.put("argumentRegisterClasses", abi.argumentRegisters().stream().map(
-            DummyAbi.RegisterRef::registerFile)
+            Abi.RegisterRef::registerFile)
         .distinct()
         .map(LlvmRegisterFile::new)
         .toList());

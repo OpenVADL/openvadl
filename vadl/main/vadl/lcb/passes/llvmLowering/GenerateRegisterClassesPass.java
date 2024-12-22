@@ -16,10 +16,10 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.viam.Abi;
 import vadl.viam.RegisterFile;
 import vadl.viam.RegisterFile.Constraint;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Generate register classes from {@link RegisterFile}.
@@ -54,7 +54,7 @@ public class GenerateRegisterClassesPass extends Pass {
   @Nullable
   @Override
   public Output execute(PassResults passResults, Specification viam) throws IOException {
-    var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var configuration = (LcbConfiguration) configuration();
 
     var registers = viam.registers().map(register -> new TableGenRegister(
@@ -100,7 +100,7 @@ public class GenerateRegisterClassesPass extends Pass {
   private List<TableGenRegisterClass> getMainRegisterClasses(
       LcbConfiguration configuration,
       Stream<RegisterFile> registerFiles,
-      DummyAbi abi) {
+      Abi abi) {
     return
         registerFiles.map(registerFile -> {
           var type = ValueType.from(registerFile.resultType()).get();
@@ -111,7 +111,7 @@ public class GenerateRegisterClassesPass extends Pass {
         }).toList();
   }
 
-  private List<TableGenRegister> getRegisters(RegisterFile registerFile, DummyAbi abi) {
+  private List<TableGenRegister> getRegisters(RegisterFile registerFile, Abi abi) {
     var configuration = (LcbConfiguration) configuration();
     var bitWidth = registerFile.addressType().bitWidth();
     var numberOfRegisters = (int) Math.pow(2, bitWidth);
@@ -123,7 +123,7 @@ public class GenerateRegisterClassesPass extends Pass {
           registerAlias -> String.join(", ", wrapInQuotes(registerAlias.value()),
               wrapInQuotes(registerFile.identifier.simpleName() + number))).stream().toList();
       return new TableGenRegister(configuration.processorName(), name,
-          alias.orElse(new DummyAbi.RegisterAlias(registerFile.identifier.simpleName() + number))
+          alias.orElse(new Abi.RegisterAlias(registerFile.identifier.simpleName() + number))
               .value(),
           altNames, bitWidth - 1, number, Optional.of(number));
     }).toList();

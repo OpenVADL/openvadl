@@ -206,7 +206,7 @@ public interface CDefaultMixins {
       var fittingCppType = constant.type().asDataType().fittingCppType();
       constant.ensure(fittingCppType != null, "No fitting cpp type");
       var cppType = getCppTypeNameByVadlType(fittingCppType);
-      ctx.wr("((" + cppType + ") " + constant.constant().asVal().decimal() + " )");
+      ctx.wr("((" + cppType + ") " + constant.constant().asVal().hexadecimal() + " )");
     }
   }
 

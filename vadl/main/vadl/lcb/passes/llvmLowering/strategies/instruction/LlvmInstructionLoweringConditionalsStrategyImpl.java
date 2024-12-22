@@ -21,6 +21,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.types.BuiltInTable;
+import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -30,7 +31,6 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Lowering of conditionals into TableGen.
@@ -66,7 +66,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi) {
+      Abi abi) {
     var result = new ArrayList<TableGenPattern>();
 
     var flipped = LlvmLoweringPass.flipMachineInstructions(supportedInstructions);

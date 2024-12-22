@@ -9,10 +9,10 @@ import vadl.error.Diagnostic;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.viam.Abi;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Expand "real" pseudo instructions which are defined in the specification.
@@ -32,7 +32,7 @@ public class PseudoExpansionFunctionGeneratorPass
   protected Stream<Pair<PseudoInstruction, Graph>> getApplicable(
       PassResults passResults,
       Specification viam) {
-    var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var appliedArguments =
         (AbstractPseudoInstructionArgumentReplacementPass.Output) passResults.lastResultOf(
             PseudoInstructionArgumentReplacementPass.class);

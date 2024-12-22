@@ -5,12 +5,14 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.utils.Pair;
 import vadl.viam.Function;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -21,7 +23,7 @@ import vadl.viam.graph.dependency.ReadRegNode;
 
 /**
  * Abstract base class responsible for generating C code from a given function's expression nodes.
- * Utilizes dispatching mechanisms to handle various node types
+ * Uses dispatching mechanisms to handle various node types
  * and produce a finalized C++ function.
  */
 @DispatchFor(
@@ -50,12 +52,32 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
     );
   }
 
+  @Handler
+  protected abstract void handle(CGenContext<Node> ctx, ReadRegNode toHandle);
+
+  @Handler
+  protected abstract void handle(CGenContext<Node> ctx, ReadRegFileNode toHandle);
+
+  @Handler
+  protected abstract void handle(CGenContext<Node> ctx, ReadMemNode toHandle);
+
+  @Handler
+  protected abstract void handle(CGenContext<Node> ctx, FieldAccessRefNode toHandle);
+
+  @Handler
+  protected abstract void handle(CGenContext<Node> ctx, FieldRefNode toHandle);
+
+  public String genReturnExpression() {
+    var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
+    return context.genToString(returnNode.value());
+  }
+
   /**
    * Generates and returns the C++ code for the function, including its signature and body.
    *
    * @return the generated C++ function code
    */
-  public String fetch() {
+  public String genFunctionDefinition() {
     var returnType = function.returnType().asDataType().fittingCppType();
     var cppArgs = Stream.of(function.parameters())
         .map(p -> Pair.of(p.simpleName(), requireNonNull(p.type().asDataType().fittingCppType())))
@@ -78,22 +100,6 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
 
     return builder.toString();
   }
-
-  @Handler
-  abstract void handle(CNodeContext ctx, ReadRegNode toHandle);
-
-  @Handler
-  abstract void handle(CNodeContext ctx, ReadRegFileNode toHandle);
-
-  @Handler
-  abstract void handle(CNodeContext ctx, ReadMemNode toHandle);
-
-  @Handler
-  abstract void handle(CNodeContext ctx, FieldAccessRefNode toHandle);
-
-  @Handler
-  abstract void handle(CNodeContext ctx, FieldRefNode toHandle);
-
 
 }
 

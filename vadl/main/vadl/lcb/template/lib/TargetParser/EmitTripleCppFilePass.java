@@ -6,8 +6,8 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file contains code which handles the triple.
@@ -33,7 +33,7 @@ public class EmitTripleCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi =
-        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "pointerBitWidth", abi.stackPointer().registerFile().addressType().bitWidth(),
         "isLittleEndian", true); // TODO kper make adjustable

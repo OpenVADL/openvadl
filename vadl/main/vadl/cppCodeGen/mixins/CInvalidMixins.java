@@ -1,7 +1,11 @@
 package vadl.cppCodeGen.mixins;
 
+import static vadl.error.DiagUtils.throwNotAllowed;
+
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.error.Diagnostic;
 import vadl.javaannotations.Handler;
+import vadl.utils.SourceLocation;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.InstrCallNode;
@@ -33,8 +37,7 @@ public interface CInvalidMixins {
   interface WriteReg {
     @Handler
     default void impl(CGenContext<Node> ctx, WriteRegNode node) {
-      throw new ViamGraphError("Should not exist at this point")
-          .addContext(node);
+      throwNotAllowed(node, "Register writes");
     }
   }
 
@@ -42,8 +45,7 @@ public interface CInvalidMixins {
   interface WriteRegFile {
     @Handler
     default void impl(CGenContext<Node> ctx, WriteRegFileNode node) {
-      throw new ViamGraphError("Should not exist at this point")
-          .addContext(node);
+      throwNotAllowed(node, "Register writes");
     }
   }
 
@@ -51,8 +53,7 @@ public interface CInvalidMixins {
   interface WriteMem {
     @Handler
     default void impl(CGenContext<Node> ctx, WriteMemNode node) {
-      throw new ViamGraphError("Should not exist at this point")
-          .addContext(node);
+      throwNotAllowed(node, "Memory writes");
     }
   }
 
@@ -61,8 +62,7 @@ public interface CInvalidMixins {
   interface ReadReg {
     @Handler
     default void impl(CGenContext<Node> ctx, ReadRegNode node) {
-      throw new ViamGraphError("Should not exist at this point")
-          .addContext(node);
+      throwNotAllowed(node, "Register reads");
     }
   }
 
@@ -70,8 +70,7 @@ public interface CInvalidMixins {
   interface ReadRegFile {
     @Handler
     default void impl(CGenContext<Node> ctx, ReadRegFileNode node) {
-      throw new ViamGraphError("Should not exist at this point")
-          .addContext(node);
+      throwNotAllowed(node, "Register reads");
     }
   }
 
@@ -79,8 +78,7 @@ public interface CInvalidMixins {
   interface ReadMem {
     @Handler
     default void impl(CGenContext<Node> ctx, ReadMemNode node) {
-      throw new ViamGraphError("Should not exist at this point")
-          .addContext(node);
+      throwNotAllowed(node, "Memory reads");
     }
   }
 
@@ -88,8 +86,7 @@ public interface CInvalidMixins {
   interface InstrCall {
     @Handler
     default void impl(CGenContext<Node> ctx, InstrCallNode node) {
-      throw new ViamGraphError("Should not exist at this point")
-          .addContext(node);
+      throwNotAllowed(node, "Instruction calls");
     }
   }
 
