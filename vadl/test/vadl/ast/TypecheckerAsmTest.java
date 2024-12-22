@@ -39,6 +39,75 @@ public class TypecheckerAsmTest {
     Assertions.assertEquals(ConstantAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
+  @Test
+  void luiInstruction() {
+    var prog = """
+          grammar = {
+            LuiInstruction @instruction :
+              mnemonic = 'LUI' @operand
+              rd = Register<> @operand
+              imm = Expression<> @operand
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(InstructionAsmType.instance(),
+        typeFinder.getAsmRuleType(ast, "LuiInstruction"));
+  }
+
+  @Test
+  void addInstruction() {
+    var prog = """
+          grammar = {
+            AddInstruction :
+              (
+              mnemonic = 'ADD' @operand
+              rd   = Register  @operand
+              rs1  = Register  @operand
+                 ( rs2 = Register   @operand
+                 | imm = Expression @operand
+                 )
+              ) @instruction
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(InstructionAsmType.instance(),
+        typeFinder.getAsmRuleType(ast, "AddInstruction"));
+  }
+
+  @Test
+  void JalrInstruction() {
+    var prog = """
+          grammar = {
+            JalrInstruction : var tmp = null @operand
+              (
+              mnemonic = 'JALR' @operand
+              tmp = Register @operand
+              [ COMMA rs1 = tmp
+                tmp = Register @operand ]
+              rd = tmp
+              ) @instruction
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(InstructionAsmType.instance(),
+        typeFinder.getAsmRuleType(ast, "JalrInstruction"));
+  }
+
   //region casts
   @Test
   void castOperandsToInstruction() {

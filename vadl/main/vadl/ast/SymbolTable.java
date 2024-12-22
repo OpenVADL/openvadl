@@ -881,8 +881,8 @@ class SymbolTable {
         if (element.attribute != null) {
           // if attrSymbol is not null, attribute refers to local variable
           // else attribute is handled by matching in the AsmParser
-          var attrSymbol = element.symbolTable().resolveSymbol(element.attribute.name);
-          element.isAttributeLocalVar = attrSymbol != null;
+          var attrSymbol = element.symbolTable().resolveNode(element.attribute.name);
+          element.isAttributeLocalVar = attrSymbol instanceof AsmGrammarLocalVarDefinition;
         }
       } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
         if (localVar.asmLiteral.id != null && !localVar.asmLiteral.id.name.equals("null")) {

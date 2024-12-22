@@ -4601,6 +4601,9 @@ class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNod
   AsmGrammarLiteralDefinition asmLiteral;
   SourceLocation loc;
 
+  @Nullable
+  AsmType asmType;
+
   public AsmGrammarLocalVarDefinition(Identifier id, AsmGrammarLiteralDefinition asmLiteral,
                                       SourceLocation loc) {
     this.id = id;

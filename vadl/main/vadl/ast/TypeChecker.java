@@ -11,6 +11,7 @@ import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.StringAsmType;
+import vadl.types.asmTypes.VoidAsmType;
 import vadl.utils.WithSourceLocation;
 
 /**
@@ -344,17 +345,23 @@ public class TypeChecker
     AsmType allAlternativeType = null;
 
     for (var elements : definition.alternatives) {
+
+      var elementsToConsider = elements.stream().filter(
+          element -> element.localVar == null && element.semanticPredicate == null
+      ).toList();
+
       AsmType curAlternativeType;
-      if (elements.isEmpty()) {
+      if (elementsToConsider.isEmpty()) {
         throwInvalidState(definition,
             "Typechecker found an AsmGrammarAlternative without elements.");
       }
-      if (elements.size() == 1) {
-        curAlternativeType = elements.get(0).asmType;
+      if (elementsToConsider.size() == 1) {
+        curAlternativeType = elementsToConsider.get(0).asmType;
       } else {
+        // TODO: flatten types option and repetition alternatives into this group
         // create GroupAsmType, but only consider elements which are assigned to an attribute
         var groupSubtypes =
-            elements.stream().filter(e -> e.attribute != null && !e.isAttributeLocalVar)
+            elementsToConsider.stream().filter(e -> e.attribute != null && !e.isAttributeLocalVar)
                 .map(e -> e.asmType).toList();
         curAlternativeType = new GroupAsmType(groupSubtypes);
       }
@@ -422,6 +429,18 @@ public class TypeChecker
       // definition.semanticPredicate.accept(this);
     }
 
+    // update asmType of local variable if a new literal is assigned to it
+    if (definition.attribute != null && definition.isAttributeLocalVar) {
+      var localVarDefinition = (AsmGrammarLocalVarDefinition) definition.symbolTable()
+          .resolveNode(definition.attribute.name);
+      if (localVarDefinition == null) {
+        throwInvalidState(definition, "Assigning to unknown local variable %s.".formatted(
+            definition.attribute.name));
+        return null;
+      }
+      localVarDefinition.asmType = definition.asmType;
+    }
+
     return null;
   }
 
@@ -481,47 +500,62 @@ public class TypeChecker
       return;
     }
 
-    if (definition.asmTypeDefinition != null) {
-      var castToAsmType = getAsmTypeFromAsmTypeDefinition(definition.asmTypeDefinition);
-      if (invokedRule.asmType.canBeCastTo(castToAsmType)) {
-        definition.asmType = castToAsmType;
-      } else {
-        throwInvalidAsmCast(invokedRule.asmType, castToAsmType, definition.asmTypeDefinition);
-      }
-    } else {
-      definition.asmType = invokedRule.asmType;
-    }
+    determineAsmTypeForEnclosingLiteral(definition, invokedRule.asmType);
   }
 
-  private void visitAsmLocalVarUsage(AsmGrammarLiteralDefinition definition,
+  private void visitAsmLocalVarUsage(AsmGrammarLiteralDefinition enclosingAsmLiteral,
                                      AsmGrammarLocalVarDefinition localVar) {
-    if (localVar.asmLiteral.asmType == null) {
+    if (localVar.asmType == null) {
       localVar.accept(this);
     }
 
-    if (definition.asmTypeDefinition != null) {
-      // TODO is it allowed to cast a local variable usage?
+    if (localVar.asmType == null) {
+      throwInvalidState(enclosingAsmLiteral,
+          "Could not resolve AsmType of local variable %s.".formatted(localVar.identifier().name));
+      return;
+    }
+
+    determineAsmTypeForEnclosingLiteral(enclosingAsmLiteral, localVar.asmType);
+  }
+
+  private void determineAsmTypeForEnclosingLiteral(AsmGrammarLiteralDefinition enclosingAsmLiteral,
+                                                   AsmType beforeCastType) {
+    if (enclosingAsmLiteral.asmTypeDefinition != null) {
+      var castToAsmType = getAsmTypeFromAsmTypeDefinition(enclosingAsmLiteral.asmTypeDefinition);
+      if (beforeCastType.canBeCastTo(castToAsmType)) {
+        enclosingAsmLiteral.asmType = castToAsmType;
+      } else {
+        throwInvalidAsmCast(beforeCastType, castToAsmType, enclosingAsmLiteral.asmTypeDefinition);
+      }
     } else {
-      definition.asmType = localVar.asmLiteral.asmType;
+      enclosingAsmLiteral.asmType = beforeCastType;
     }
   }
 
-  // NullAway says that a nullable value is returned, but if asmType is null an exception is thrown
+  // NullAway says that a nullable value is returned, but if correspondingAsmType is null an exception is thrown
   @SuppressWarnings("NullAway")
   private AsmType getAsmTypeFromAsmTypeDefinition(AsmGrammarTypeDefinition definition) {
-    var asmType = AsmType.ASM_TYPES.get(definition.id.name);
-    if (asmType == null) {
+    var correspondingAsmType = AsmType.ASM_TYPES.get(definition.id.name);
+    if (correspondingAsmType == null) {
       throwInvalidState(definition,
           "Symbol resolution found asm type %s but the typechecker could not find it.".formatted(
               definition.id.name));
     }
-    return asmType;
+    return correspondingAsmType;
   }
 
   @SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
   @Override
   public Void visit(AsmGrammarLocalVarDefinition definition) {
+    if (definition.asmLiteral.id != null && definition.asmLiteral.id.name.equals("null")) {
+      // TODO should we consider cast on null?
+      //if (definition.asmLiteral.asmType)
+      definition.asmType = VoidAsmType.instance();
+      return null;
+    }
+
     definition.asmLiteral.accept(this);
+    definition.asmType = definition.asmLiteral.asmType;
     return null;
   }
 
