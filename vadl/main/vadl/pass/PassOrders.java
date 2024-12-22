@@ -430,6 +430,7 @@ public class PassOrders {
         .add(issDefault("/target/gen-arch/trace.h", config))
         .add(issDefault("/target/gen-arch/Kconfig", config))
         .add(issDefault("/target/gen-arch/meson.build", config))
+        .add(issDefault("/target/gen-arch/vadl-builtins.h", config))
         .add(issDefault("/target/gen-arch/helper.c", config))
         .add(issDefault("/target/gen-arch/helper.h", config))
         .add(issDefault("/target/gen-arch/cpu-bits.h", config))
