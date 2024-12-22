@@ -41,7 +41,7 @@ public class IssVerificationPass extends AbstractIssPass {
     // create list of diagnostics to collect them
     var diagnostics = new ArrayList<DiagnosticBuilder>();
 
-    checkIsaExists(viam, diagnostics);
+    checkMipExists(viam, diagnostics);
     checkProgramCounter(viam, diagnostics);
     checkRegister(viam, diagnostics);
     checkRegisterFiles(viam, diagnostics);
@@ -55,13 +55,12 @@ public class IssVerificationPass extends AbstractIssPass {
     return null;
   }
 
-  private void checkIsaExists(Specification viam, List<DiagnosticBuilder> diagnostics) {
+  private void checkMipExists(Specification viam, List<DiagnosticBuilder> diagnostics) {
     if (viam.isa().isEmpty()) {
       diagnostics.add(
-          error("No Instruction Set Architecture found",
+          error("No Micro Processor Definition found",
               viam.identifier.sourceLocation())
               .help("Add a `instruction set architecture` definition to your specification.")
-
       );
     }
   }

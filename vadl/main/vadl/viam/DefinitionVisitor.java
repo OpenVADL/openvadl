@@ -42,6 +42,8 @@ public interface DefinitionVisitor {
 
   void visit(Abi abi);
 
+  void visit(MicroProcessor microProcessor);
+
   /**
    * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor
    * interface.
@@ -232,6 +234,18 @@ public interface DefinitionVisitor {
       beforeTraversal(abi);
       afterTraversal(abi);
     }
+
+    @Override
+    public void visit(MicroProcessor microProcessor) {
+      beforeTraversal(microProcessor);
+      var start = microProcessor.start();
+      start.accept(this);
+      var stop = microProcessor.stop();
+      if (stop != null) {
+        stop.accept(this);
+      }
+      afterTraversal(microProcessor);
+    }
   }
 
   /**
@@ -331,6 +345,11 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Abi abi) {
+
+    }
+
+    @Override
+    public void visit(MicroProcessor microProcessor) {
 
     }
   }
