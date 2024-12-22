@@ -7,8 +7,8 @@ import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 import vadl.utils.Pair;
-import vadl.viam.RegisterFile;
 import vadl.viam.Abi;
+import vadl.viam.RegisterFile;
 
 /**
  * Utility class for registers.

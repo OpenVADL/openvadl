@@ -27,7 +27,9 @@ public class Function extends Definition implements DefProp.WithBehavior, DefPro
    * @param identifier The identifier of the Function.
    * @param parameters The parameters of the Function.
    * @param returnType The return type of the Function.
+   * @deprecated Use the other constructor instead.
    */
+  @Deprecated
   public Function(Identifier identifier,
                   Parameter[] parameters,
                   Type returnType) {

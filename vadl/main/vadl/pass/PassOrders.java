@@ -33,6 +33,7 @@ import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
+import vadl.iss.template.hw.EmitIssVirtCPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
@@ -62,6 +63,7 @@ import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyPasses.DummyAbiPass;
+import vadl.viam.passes.dummyPasses.DummyMipPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
@@ -351,6 +353,10 @@ public class PassOrders {
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
 
+    // TODO: Remove once frontend creates it
+    order.add(new DummyAbiPass(config))
+        .add(new DummyMipPass(config));
+
     // iss function passes
     order
         .add(new IssVerificationPass(config))
@@ -412,7 +418,7 @@ public class PassOrders {
         .add(issDefault("/hw/meson.build", config))
         .add(issDefault("/hw/gen-arch/Kconfig", config))
         .add(issDefault("/hw/gen-arch/meson.build", config))
-        .add(issDefault("/hw/gen-arch/virt.c", config))
+        .add(new EmitIssVirtCPass(config))
         .add(issDefault("/hw/gen-arch/virt.h", config))
         .add(issDefault("/hw/gen-arch/boot.c", config))
         .add(issDefault("/hw/gen-arch/boot.h", config))

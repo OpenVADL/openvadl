@@ -5,11 +5,11 @@ import java.util.stream.Stream;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.Abi;
 
 /**
  * Applies the arguments of an {@link Instruction} of a {@link PseudoInstruction}.

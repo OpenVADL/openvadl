@@ -15,9 +15,9 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.Abi;
 
 /**
  * This file includes the definitions for expanding instructions in the MC layer.

@@ -11,8 +11,8 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
-import vadl.viam.Specification;
 import vadl.viam.Abi;
+import vadl.viam.Specification;
 
 /**
  * This file includes the util functions for asm.

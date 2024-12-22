@@ -19,6 +19,10 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * Adds a hardcoded RISC-V {@link MicroProcessor} definition to the VIAM specification.
+ * This is deleted as soon as the frontend can handle the translation.
+ */
 public class DummyMipPass extends Pass {
 
   public DummyMipPass(GeneralConfiguration configuration) {
@@ -56,7 +60,7 @@ public class DummyMipPass extends Pass {
   }
 
 
-  public Function startFunc(Identifier parentIdent) {
+  private Function startFunc(Identifier parentIdent) {
     var type = Type.bits(64);
     var behavior = genericFuncBehavior(
         "start",

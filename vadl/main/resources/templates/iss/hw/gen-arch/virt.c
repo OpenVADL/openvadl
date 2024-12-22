@@ -10,15 +10,14 @@
 #include <stdlib.h>
 
 static const MemMapEntry virt_memmap[] = {
-  [VIRT_HTIF] = {0x1000000, 0x1000},
-  [VIRT_DRAM] = {0x80000000, 0x0},
+  [VIRT_DRAM] = {[(${dram_base})], 0x0},
 };
 
 static bool tofromhost_defined = false;
 
 /*
- * Checks if a fromhost/tohost symbol was found. This is used to define if we use
- * our custom fromhost/tohost addresses or the ones defined in the elf.
+ * Checks if a fromhost/tohost symbol was found. If at least one was found,
+ * we activate HTIF.
  */
 static void virt_sym_cb(const char *st_name, int st_info, uint64_t st_value,
                         uint64_t st_size) {
@@ -35,7 +34,7 @@ static void virt_machine_ready(Notifier *notifier, void *data)
     [(${gen_arch_upper})]VirtMachineState *s = container_of(notifier, [(${gen_arch_upper})]VirtMachineState, machine_ready);
     const MemMapEntry *memmap = virt_memmap;
     MachineState *machine = MACHINE(s);
-    target_ulong start_addr = memmap[VIRT_DRAM].base;
+    target_ulong start_addr = [(${start_addr})];
     target_ulong firmware_end_addr;
     MemoryRegion *system_memory = get_system_memory();
 
@@ -54,8 +53,10 @@ static void virt_machine_ready(Notifier *notifier, void *data)
     }
 
 
-    // now we can init the htif, as it requires the firmware callbacks to be loaded
-    htif_mm_init(system_memory, serial_hd(0), memmap[VIRT_HTIF].base, !tofromhost_defined);
+    if (tofromhost_defined) {
+      // now we can init the htif, as it requires the firmware callbacks to be loaded
+      htif_mm_init(system_memory, serial_hd(0), 0, false);
+    }
 }
 
 static void virt_machine_init(MachineState *machine)

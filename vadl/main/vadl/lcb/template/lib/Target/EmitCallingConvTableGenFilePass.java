@@ -11,8 +11,8 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.Specification;
 import vadl.viam.Abi;
+import vadl.viam.Specification;
 
 /**
  * This file contains the calling conventions for the defined backend.

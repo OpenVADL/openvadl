@@ -14,9 +14,9 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.Abi;
 
 /**
  * This pass extracts the immediates from the TableGen records. This makes it easier for the

@@ -14,9 +14,9 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.Format;
 import vadl.viam.Specification;
-import vadl.viam.Abi;
 
 /**
  * This file contains the target specific implementation for the disassembler.

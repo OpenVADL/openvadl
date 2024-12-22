@@ -2,6 +2,12 @@ package vadl.viam;
 
 import javax.annotation.Nullable;
 
+/**
+ * Represents VADLs Micro Processor definition.
+ * It is used by the ISS and LCB and defines a combination of ISA and ABI together with
+ * additional information like the emulation start address, emulation stop condition,
+ * default firmware, and startup functionality.
+ */
 public class MicroProcessor extends Definition {
 
   private final InstructionSetArchitecture isa;
@@ -14,6 +20,9 @@ public class MicroProcessor extends Definition {
   @Nullable
   private final Function stop;
 
+  /**
+   * Constructs the microprocessor.
+   */
   public MicroProcessor(Identifier identifier, InstructionSetArchitecture isa, Abi abi,
                         Function start, @Nullable Function stop) {
     super(identifier);

@@ -3,8 +3,6 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 import static vadl.viam.ViamError.ensure;
 
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;

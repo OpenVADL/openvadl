@@ -215,6 +215,11 @@ public abstract class Node implements WithSourceLocation {
     return this.graph;
   }
 
+  public final Graph ensureGraph() {
+    ensure(graph != null, "Graph must not be null");
+    return graph;
+  }
+
   public final int usageCount() {
     return usages.size();
   }

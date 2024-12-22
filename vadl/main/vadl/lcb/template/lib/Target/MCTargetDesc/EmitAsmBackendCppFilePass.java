@@ -7,8 +7,8 @@ import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.Specification;
 import vadl.viam.Abi;
+import vadl.viam.Specification;
 
 /**
  * This file contains the implementation for assembly fixups.

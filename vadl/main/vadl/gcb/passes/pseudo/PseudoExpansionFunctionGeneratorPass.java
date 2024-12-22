@@ -9,10 +9,10 @@ import vadl.error.Diagnostic;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.viam.Abi;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.Abi;
 
 /**
  * Expand "real" pseudo instructions which are defined in the specification.

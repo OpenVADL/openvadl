@@ -34,10 +34,10 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.Abi;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.

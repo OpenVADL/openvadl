@@ -1,14 +1,12 @@
 package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.types.BuiltInTable;
 import vadl.viam.ViamError;
-import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;

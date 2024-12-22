@@ -9,6 +9,9 @@ import vadl.utils.Pair;
  */
 public class Abi extends Definition {
 
+  /**
+   * Register Spilling Alignments.
+   */
   public enum Alignment {
     NO_ALIGNMENT(-1),
     HALF_WORD(4),

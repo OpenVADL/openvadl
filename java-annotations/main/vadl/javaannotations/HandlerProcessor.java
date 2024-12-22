@@ -200,6 +200,7 @@ public class HandlerProcessor extends AbstractProcessor {
           } else if (key.equals("returnType")) { // Add this block
             returnType = (TypeMirror) entry.getValue().getValue();
           } else if (key.equals("context")) {
+            @SuppressWarnings("unchecked")
             var ctxs = (List<? extends AnnotationValue>) entry.getValue().getValue();
             for (var ctx : ctxs) {
               contextClasses.add((TypeMirror) ctx.getValue());
