@@ -6,6 +6,7 @@ import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
+import vadl.viam.annotations.EnableHtifAnno;
 
 /**
  * Emits the {@code hw/gen-arch/virt.c} which is the core implementation for the
@@ -29,6 +30,7 @@ public class EmitIssVirtCPass extends IssTemplateRenderingPass {
     var vars = super.createVariables(passResults, specification);
     vars.put("dram_base", getDramBaseExpr());
     vars.put("start_addr", getStartAddrExpr(specification));
+    vars.put("htif_enabled", htifEnabled(specification));
     return vars;
   }
 
@@ -42,5 +44,11 @@ public class EmitIssVirtCPass extends IssTemplateRenderingPass {
     var mip = specification.mip().orElse(null);
     specification.ensure(mip != null, "No MicroProcessor definition found");
     return new PureFunctionCodeGenerator(mip.start()).genReturnExpression();
+  }
+
+  private boolean htifEnabled(Specification specification) {
+    var mip = specification.mip().orElse(null);
+    specification.ensure(mip != null, "No MicroProcessor definition found");
+    return mip.hasAnnotation(EnableHtifAnno.class);
   }
 }

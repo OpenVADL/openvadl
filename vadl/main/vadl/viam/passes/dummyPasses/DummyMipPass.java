@@ -13,6 +13,7 @@ import vadl.viam.Identifier;
 import vadl.viam.MicroProcessor;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
+import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
@@ -54,6 +55,8 @@ public class DummyMipPass extends Pass {
         startFunc(ident),
         null
     );
+    // enabled HTIF
+    mip.addAnnotation(new EnableHtifAnno());
 
     viam.add(mip);
     return null;

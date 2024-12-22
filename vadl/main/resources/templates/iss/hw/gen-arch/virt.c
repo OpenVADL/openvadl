@@ -13,18 +13,21 @@ static const MemMapEntry virt_memmap[] = {
   [VIRT_DRAM] = {[(${dram_base})], 0x0},
 };
 
-static bool tofromhost_defined = false;
 
-/*
- * Checks if a fromhost/tohost symbol was found. If at least one was found,
- * we activate HTIF.
- */
+[# th:if="${htif_enabled}"]
+static bool tofromhost_defined = false;
+[/]
+
 static void virt_sym_cb(const char *st_name, int st_info, uint64_t st_value,
                         uint64_t st_size) {
+   [# th:if="${htif_enabled}"]
+   // Checks if a fromhost/tohost symbol was found. If at least one was found,
+   // we activate HTIF.
     if (strcmp("fromhost", st_name) == 0 || strcmp("tohost", st_name) == 0) {
         tofromhost_defined = true;
     }
     htif_symbol_callback(st_name, st_info, st_value, st_size);
+    [/]
 }
 
 static void virt_machine_ready(Notifier *notifier, void *data)
@@ -52,11 +55,11 @@ static void virt_machine_ready(Notifier *notifier, void *data)
         exit(1);
     }
 
-
+    [# th:if="${htif_enabled}"]
     if (tofromhost_defined) {
       // now we can init the htif, as it requires the firmware callbacks to be loaded
       htif_mm_init(system_memory, serial_hd(0), 0, false);
-    }
+    }[/]
 }
 
 static void virt_machine_init(MachineState *machine)
