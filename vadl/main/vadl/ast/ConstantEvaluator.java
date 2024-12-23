@@ -1,7 +1,12 @@
 package vadl.ast;
 
 import java.math.BigInteger;
+import java.util.Objects;
+import vadl.types.BitsType;
+import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.utils.BigIntUtils;
+import vadl.viam.Constant;
 
 
 /**
@@ -16,7 +21,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   public ConstantValue eval(Expr expr) {
     // A simple optimization that avoids unneeded traversing the tree.
     if (expr.type instanceof ConstantType) {
-      return new ConstantValue(expr.type, ((ConstantType) expr.type).getValue());
+      return new ConstantValue(((ConstantType) expr.type).getValue(), expr.type);
     }
 
     return expr.accept(this);
@@ -24,8 +29,16 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(Identifier expr) {
+    var origin =
+        Objects.requireNonNull(Objects.requireNonNull(expr.symbolTable).resolveNode(expr.name));
+
+    if (origin instanceof ConstantDefinition constantDefinition) {
+      return eval(constantDefinition.value);
+    }
+
     throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+        "Constant evaluator cannot evaluate identifier with origin of %s yet.".formatted(
+            expr.getClass().getSimpleName()));
   }
 
   @Override
@@ -42,32 +55,29 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(IntegerLiteral expr) {
-    return new ConstantValue(new ConstantType(expr.number), expr.number);
+    return new ConstantValue(expr.number, new ConstantType(expr.number));
   }
 
   @Override
   public ConstantValue visit(BinaryLiteral expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    return new ConstantValue(expr.number, Type.bits(expr.bitWidth));
   }
 
   @Override
   public ConstantValue visit(BoolLiteral expr) {
-    return new ConstantValue(Type.bool(), BigInteger.valueOf(expr.value ? 1 : 0));
+    return new ConstantValue(BigInteger.valueOf(expr.value ? 1 : 0), Type.bool());
   }
 
   @Override
   public ConstantValue visit(StringLiteral expr) {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
   }
 
   @Override
   public ConstantValue visit(PlaceholderExpr expr) {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
   }
 
   @Override
@@ -81,14 +91,12 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   public ConstantValue visit(RangeExpr expr) {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
   }
 
   @Override
   public ConstantValue visit(TypeLiteral expr) {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
   }
 
   @Override
@@ -132,9 +140,12 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(CastExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    var innerVal = expr.value.accept(this);
 
+    var viamVal =
+        innerVal.toViamConstant()
+            .castTo((DataType) Objects.requireNonNull(expr.type));
+    return ConstantValue.fromViam(viamVal);
   }
 
   @Override
@@ -208,7 +219,23 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   }
 }
 
-record ConstantValue(Type type, BigInteger value) {
+/**
+ * This class is quite similar to VIAM's Constant.Value but unfortunatley that cannot handle values
+ * of types which bit widths aren't known, as it stores negative values 2-compliment encoded.
+ *
+ * <p>The ConstantValue instead stores the sign bit just as a native BigInteger would.
+ */
+record ConstantValue(BigInteger value, Type type) {
+
+
+  static ConstantValue fromViam(Constant.Value v) {
+    if (!(v.type() instanceof BitsType bitsType)) {
+      throw new IllegalArgumentException();
+    }
+    return new ConstantValue(
+        BigIntUtils.fromTwosComplement(v.integer(), bitsType),
+        bitsType);
+  }
 
   ConstantValue withValue(BigInteger value) {
     var type = this.type;
@@ -216,6 +243,22 @@ record ConstantValue(Type type, BigInteger value) {
       type = new ConstantType(value);
     }
 
-    return new ConstantValue(type, value);
+    return new ConstantValue(value, type);
+  }
+
+  public Constant.Value toViamConstant() {
+    if (this.type instanceof ConstantType) {
+      var isNegative = value.compareTo(BigInteger.ZERO) >= 0;
+      var bitWidth = value.bitLength() + (isNegative ? 1 : 0);
+      var closestType = isNegative ? Type.unsignedInt(bitWidth) : Type.signedInt(bitWidth);
+      return Constant.Value.fromInteger(value, closestType);
+    }
+
+    if (this.type instanceof DataType dataType) {
+      return Constant.Value.fromInteger(value, dataType);
+    }
+
+    throw new IllegalStateException(
+        "Constant evaluator cannot convert type %s yet.".formatted(this.type));
   }
 }
