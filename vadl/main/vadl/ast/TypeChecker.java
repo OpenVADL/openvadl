@@ -1,6 +1,10 @@
 package vadl.ast;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -308,8 +312,17 @@ public class TypeChecker
     return null;
   }
 
+  HashSet<String> asmRuleInvocationChain = new LinkedHashSet<>();
+
   @Override
   public Void visit(AsmGrammarRuleDefinition definition) {
+    if (!asmRuleInvocationChain.add(definition.identifier().name)) {
+      var cycle =
+          String.join(" -> ", asmRuleInvocationChain) + " -> " + definition.identifier().name;
+      throw Diagnostic.error("Found a cycle in grammar rules: %s.".formatted(cycle),
+          definition.sourceLocation()).build();
+    }
+
     definition.alternatives.accept(this);
     if (definition.asmTypeDefinition != null) {
       var castToAsmType = getAsmTypeFromAsmTypeDefinition(definition.asmTypeDefinition);
@@ -326,6 +339,7 @@ public class TypeChecker
     } else {
       definition.asmType = definition.alternatives.asmType;
     }
+    asmRuleInvocationChain.remove(definition.identifier().name);
     return null;
   }
 
@@ -343,6 +357,7 @@ public class TypeChecker
 
     // all alternatives have to have the same type
     AsmType allAlternativeType = null;
+    AsmGrammarElementDefinition allAlternativeTypeElement = null;
 
     for (var elements : definition.alternatives) {
 
@@ -355,24 +370,61 @@ public class TypeChecker
         throwInvalidState(definition,
             "Typechecker found an AsmGrammarAlternative without elements.");
       }
+
       if (elementsToConsider.size() == 1) {
         curAlternativeType = elementsToConsider.get(0).asmType;
       } else {
-        // TODO: flatten types option and repetition alternatives into this group
-        // create GroupAsmType, but only consider elements which are assigned to an attribute
-        var groupSubtypes =
-            elementsToConsider.stream().filter(e -> e.attribute != null && !e.isAttributeLocalVar)
-                .map(e -> e.asmType).toList();
+        var groupSubtypes = new ArrayList<AsmType>();
+        var alreadyAssignedAttributes = new HashMap<String, AsmGrammarElementDefinition>();
+        for (var element : elementsToConsider) {
+
+          // consider elements which are assigned to an attribute
+          if (element.attribute != null && !element.isAttributeLocalVar) {
+            groupSubtypes.add(element.asmType);
+            var attributeOtherElement =
+                alreadyAssignedAttributes.put(element.attribute.name, element);
+            if (attributeOtherElement != null) {
+              throw Diagnostic.error(
+                      "Found multiple assignments to attribute %s in a grammar rule.".formatted(
+                          element.attribute.name), element.sourceLocation())
+                  .locationDescription(attributeOtherElement,
+                      "Attribute %s was already assigned here.", element.attribute.name)
+                  .build();
+            }
+          }
+
+          // flatten nested GroupAsmTypes (from group-, option- and repetition-blocks)
+          if (element.asmType instanceof GroupAsmType groupAsmType) {
+            groupSubtypes.addAll(groupAsmType.getSubtypes());
+          }
+
+          // grammar syntax does not allow for an element to be assigned to an attribute
+          // and be of GroupAsmType at the same time
+        }
+
         curAlternativeType = new GroupAsmType(groupSubtypes);
       }
 
       if (allAlternativeType == null) {
         allAlternativeType = curAlternativeType;
+        allAlternativeTypeElement = elements.get(0);
         continue;
       }
 
+      if (curAlternativeType == null || allAlternativeTypeElement == null) {
+        throwInvalidState(definition, "AsmType of an asm alternative could not be resolved.");
+        return null;
+      }
+
       if (!allAlternativeType.equals(curAlternativeType)) {
-        // TODO error: alternatives with different types
+        throw Diagnostic.error(
+                "Found asm alternatives with differing AsmTypes.", definition.sourceLocation())
+            .note("All alternatives must resolve to the same AsmType.")
+            .locationDescription(allAlternativeTypeElement,
+                "Found alternative with type %s,", allAlternativeType)
+            .locationDescription(elements.get(0),
+                "Found other alternative with type %s,", curAlternativeType)
+            .build();
       }
     }
 
@@ -422,6 +474,7 @@ public class TypeChecker
     if (definition.repetitionAlternatives != null) {
       definition.repetitionAlternatives.accept(this);
       definition.asmType = definition.repetitionAlternatives.asmType;
+      // TODO check if correct attributes assign operator?
     }
 
     if (definition.semanticPredicate != null) {
@@ -467,9 +520,13 @@ public class TypeChecker
     } else if (invocationSymbolOrigin instanceof FunctionDefinition function) {
       // TODO check input fits to types of arguments
       // TODO check return type and infer asm type
-
     } else {
-      // TODO error: symbol in grammar rule has to be rule / localVar / function
+      Objects.requireNonNull(invocationSymbolOrigin);
+      throw Diagnostic.error(("Symbol %s used in grammar rule does not reference a grammar rule "
+              + "/ function / local variable.").formatted(definition.id.name), definition)
+          .locationDescription(invocationSymbolOrigin, "Symbol %s is defined here.",
+              definition.id.name)
+          .build();
     }
 
     return null;
@@ -532,7 +589,8 @@ public class TypeChecker
     }
   }
 
-  // NullAway says that a nullable value is returned, but if correspondingAsmType is null an exception is thrown
+  // NullAway says that a nullable value is returned,
+  // but if correspondingAsmType is null an exception is thrown
   @SuppressWarnings("NullAway")
   private AsmType getAsmTypeFromAsmTypeDefinition(AsmGrammarTypeDefinition definition) {
     var correspondingAsmType = AsmType.ASM_TYPES.get(definition.id.name);

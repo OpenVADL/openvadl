@@ -3,6 +3,7 @@ package vadl.ast;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.error.Diagnostic;
 import vadl.types.asmTypes.ConstantAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.ModifierAsmType;
@@ -85,7 +86,7 @@ public class TypecheckerAsmTest {
   }
 
   @Test
-  void JalrInstruction() {
+  void jalrInstruction() {
     var prog = """
           grammar = {
             JalrInstruction : var tmp = null @operand
@@ -106,6 +107,135 @@ public class TypecheckerAsmTest {
     var typeFinder = new TypeFinder();
     Assertions.assertEquals(InstructionAsmType.instance(),
         typeFinder.getAsmRuleType(ast, "JalrInstruction"));
+  }
+
+  @Test
+  void nestedModifiedExpression() {
+    var prog = """
+          grammar = {
+            A @instruction:
+              Integer @operand
+              (mod=Identifier@modifier val=Expression) @operand
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(InstructionAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
+  }
+
+  @Test
+  void nestedAlternative() {
+    var prog = """
+          grammar = {
+            A @instruction:
+              Integer @operand
+              (Register | Integer @register) @operand
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(InstructionAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
+  }
+
+  @Test
+  void nestedGroupToBeFlattened() {
+    var prog = """
+          grammar = {
+            A @instruction:
+              attr1 = Integer @operand
+              (
+                attr2 = Register @operand
+                attr3 = Integer @operand
+              )
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(InstructionAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
+  }
+
+  // TODO test repetition block
+
+
+  @Test
+  void alternativeOfDifferingAsmTypes() {
+    var prog = """
+          grammar = {
+            A : Integer | Identifier;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void invalidSymbolInRule() {
+    var prog = """
+          constant a = 5
+          grammar = {
+            A : a;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void invalidDoubleAssignToAttribute() {
+    var prog = """
+          grammar = {
+            A : a1 = Integer a1 = Identifier;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void invalidCycleInRules() {
+    var prog = """
+          grammar = {
+            A : B;
+            B : C;
+            C : D;
+            D : A;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void invalidCycleWithBuiltinRules() {
+    var prog = """
+          grammar = {
+            Expression : ImmediateOperand;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
 
   //region casts

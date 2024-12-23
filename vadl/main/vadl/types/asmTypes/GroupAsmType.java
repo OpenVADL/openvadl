@@ -15,6 +15,10 @@ public class GroupAsmType implements AsmType {
     this.subtypes = subtypes;
   }
 
+  public List<AsmType> getSubtypes() {
+    return subtypes;
+  }
+
   @Override
   public String name() {
     return "GroupAsmType";
