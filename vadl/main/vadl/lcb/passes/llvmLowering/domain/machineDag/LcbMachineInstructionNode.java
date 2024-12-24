@@ -17,7 +17,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  */
 public class LcbMachineInstructionNode extends AbstractFunctionCallNode {
   @DataValue
-  protected Instruction instruction;
+  protected OutputInstructionName outputInstructionName;
 
   /**
    * Constructor.
@@ -26,23 +26,29 @@ public class LcbMachineInstructionNode extends AbstractFunctionCallNode {
                                    Instruction instruction) {
     super(args,
         Type.dummy());
-    this.instruction = instruction;
+    this.outputInstructionName = new OutputInstructionName(instruction.identifier.simpleName());
   }
 
-  public void setInstruction(Instruction instruction) {
-    this.instruction = instruction;
+  /**
+   * Constructor.
+   */
+  public LcbMachineInstructionNode(NodeList<ExpressionNode> args,
+                                   OutputInstructionName outputInstructionName) {
+    super(args,
+        Type.dummy());
+    this.outputInstructionName = outputInstructionName;
   }
 
   @Override
   public Node copy() {
     return new LcbMachineInstructionNode(
         new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
-        instruction);
+        outputInstructionName);
   }
 
   @Override
   public Node shallowCopy() {
-    return new LcbMachineInstructionNode(args, instruction);
+    return new LcbMachineInstructionNode(args, outputInstructionName);
   }
 
   @Override
@@ -53,10 +59,14 @@ public class LcbMachineInstructionNode extends AbstractFunctionCallNode {
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(instruction);
+    collection.add(outputInstructionName);
   }
 
-  public Instruction instruction() {
-    return instruction;
+  public OutputInstructionName outputInstructionName() {
+    return outputInstructionName;
+  }
+
+  public void setOutputInstruction(Instruction instruction) {
+    this.outputInstructionName = new OutputInstructionName(instruction.identifier.simpleName());
   }
 }

@@ -102,6 +102,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     var renderedPatterns =
         Stream.concat(
+                pseudoExpansionPatterns.stream().map(TableGenPseudoInstExpansionRenderer::lower),
                 Stream.concat(
                     tableGenMachineRecords.stream().map(TableGenInstructionPatternRenderer::lower),
                     Stream.concat(
@@ -109,8 +110,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                             .map(TableGenInstructionPatternRenderer::lower),
                         compensationPatterns.stream()
                             .map(TableGenInstructionPatternRenderer::lower))
-                ),
-                pseudoExpansionPatterns.stream().map(TableGenPseudoInstExpansionRenderer::lower))
+                ))
             .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),

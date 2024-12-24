@@ -19,5 +19,5 @@ int main() {
         option3    // Index 2
     };
 
-    return !(jumpTable[0] == 0 && jumpTable[1] == 1 && jumpTable[2] == 2);
+    return !(jumpTable[0]() == 0 && jumpTable[1]() == 1 && jumpTable[2]() == 2);
 }

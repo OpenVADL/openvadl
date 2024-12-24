@@ -2,6 +2,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import java.util.stream.Collectors;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 
 /**
@@ -23,11 +24,10 @@ public class TableGenPseudoInstExpansionRenderer {
       return String.format("""
               let isCall = %s, isBranch = %s, isIndirectBranch = %s, isTerminator = %s,
               isBarrier = %s, Defs = [%s]
-              in {
+              in
                   def %s : Pseudo<(outs %s), (ins %s),
                                       [%s]>,
                                PseudoInstExpansion<%s>;
-              }
               """, pattern.isCall() ? "1" : "0",
           pattern.isBranch() ? "1" : "0",
           pattern.isIndirectBranch() ? "1" : "0",
@@ -39,11 +39,10 @@ public class TableGenPseudoInstExpansionRenderer {
       return String.format("""
               let isCall = %s, isBranch = %s, isIndirectBranch = %s, isTerminator = %s,
               isBarrier = %s
-              in {
+              in
                   def %s : Pseudo<(outs %s), (ins %s),
                                       [%s]>,
                                PseudoInstExpansion<%s>;
-              }
               """, pattern.isCall() ? "1" : "0",
           pattern.isBranch() ? "1" : "0",
           pattern.isIndirectBranch() ? "1" : "0",

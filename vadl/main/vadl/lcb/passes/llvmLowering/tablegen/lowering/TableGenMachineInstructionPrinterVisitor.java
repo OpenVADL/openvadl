@@ -6,6 +6,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParam
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.viam.Constant;
@@ -70,7 +71,7 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   @Override
   public void visit(LcbMachineInstructionNode node) {
     writer.write("(");
-    writer.write(node.instruction().identifier.simpleName() + " ");
+    writer.write(node.outputInstructionName().value() + " ");
 
     joinArgumentsWithComma(node.arguments());
 
@@ -91,6 +92,12 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   @Override
   public void visit(LlvmBasicBlockSD basicBlockSD) {
     writer.write(basicBlockSD.parameterIdentity().render());
+  }
+
+  @Override
+  public void visit(LlvmFieldAccessRefNode fieldAccessRefNode) {
+    var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(fieldAccessRefNode);
+    writer.write(operand.render());
   }
 
   @Override

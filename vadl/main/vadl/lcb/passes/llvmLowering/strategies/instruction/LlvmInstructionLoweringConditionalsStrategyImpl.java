@@ -144,7 +144,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(lt);
+              node.setOutputInstruction(lt);
               // Swap the operands
               Collections.reverse(node.arguments());
             });
@@ -202,7 +202,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(basePattern);
+              node.setOutputInstruction(basePattern);
 
               var newArgs = new LcbMachineInstructionNode(node.arguments(), xor);
               node.setArgs(
@@ -345,7 +345,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(basePattern);
+              node.setOutputInstruction(basePattern);
 
               var registerFile =
                   ensurePresent(
@@ -417,7 +417,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(machineInstructionToBeEmitted);
+              node.setOutputInstruction(machineInstructionToBeEmitted);
 
               var registerFile =
                   ensurePresent(

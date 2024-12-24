@@ -5,6 +5,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParam
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphNodeVisitor;
 
@@ -36,4 +37,9 @@ public interface TableGenMachineInstructionVisitor extends GraphNodeVisitor {
    * Visit {@link LlvmBasicBlockSD}.
    */
   void visit(LlvmBasicBlockSD basicBlockSD);
+
+  /**
+   * Visit {@link LlvmFieldAccessRefNode}.
+   */
+  void visit(LlvmFieldAccessRefNode fieldAccessRefNode);
 }
