@@ -126,7 +126,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
               (TableGenInstructionRegisterFileOperand) uncastInputRegister));
           result.add(generateBranchIndirect(supportedInstructions,
               (TableGenInstructionRegisterFileOperand) uncastInputRegister));
-          result.add(generateBranchIndirectWithZero(supportedInstructions,
+          result.add(generateBranchIndirectWithZero(
               (TableGenInstructionRegisterFileOperand) uncastInputRegister));
           result.add(generateBranchIndirectWithAdd(supportedInstructions,
               (TableGenInstructionRegisterFileOperand) uncastInputRegister));
@@ -282,7 +282,6 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   private TableGenPattern generateBranchIndirectWithZero(
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       TableGenInstructionRegisterFileOperand inputRegister) {
     var selector = new Graph("selector");
     var ref = (ReadRegFileNode) inputRegister.reference().copy();
