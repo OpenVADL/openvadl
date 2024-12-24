@@ -181,13 +181,13 @@ public class DummyAbiPass extends Pass {
         new Abi.RegisterRef(registerFile, 24, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 25, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 26, Abi.Alignment.NO_ALIGNMENT),
-        new Abi.RegisterRef(registerFile, 27, Abi.Alignment.NO_ALIGNMENT)
-    );
+        new Abi.RegisterRef(registerFile, 27, Abi.Alignment.NO_ALIGNMENT),
+        new Abi.RegisterRef(registerFile, 1, Abi.Alignment.NO_ALIGNMENT)
+        );
   }
 
   private List<Abi.RegisterRef> getCallerSaved(RegisterFile registerFile) {
     return List.of(
-        new Abi.RegisterRef(registerFile, 1, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 10, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 11, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 12, Abi.Alignment.NO_ALIGNMENT),
