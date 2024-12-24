@@ -22,7 +22,7 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
 
   @EnabledIfEnvironmentVariable(named = "test.embench.enabled", matches = "true")
   @Test
-  //@Disabled("embench has errors")
+  @Disabled("embench has errors")
   void testEmbench() throws IOException, DuplicatedPassKeyException {
     var target = "rv32im";
     var upstreamBuildTarget = "RISCV";
@@ -51,7 +51,7 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
     }
 
     var redisCache = getRunningRedisCache();
-    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_embench_spike_riscv32", false)
+    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_embench_spike_riscv32")
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile.riscv32.spike.lcb"))
         .withBuildArg("TARGET", target)
         .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget));

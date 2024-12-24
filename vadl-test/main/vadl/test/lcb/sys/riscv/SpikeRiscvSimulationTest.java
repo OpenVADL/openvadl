@@ -42,7 +42,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
   @EnabledIfEnvironmentVariable(named = "test.spike.enabled", matches = "true")
   @TestFactory
   List<DynamicTest> testSpike() throws IOException, DuplicatedPassKeyException {
-    var doDebug = true;
+    var doDebug = false;
     var target = getTarget();
     var upstreamBuildTarget = getUpstreamBuildTarget();
     var upstreamClangTarget = getUpstreamClangTarget();
