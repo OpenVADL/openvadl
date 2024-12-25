@@ -169,7 +169,7 @@ public class DummyAbiPass extends Pass {
 
   private List<Abi.RegisterRef> getCalleeSaved(RegisterFile registerFile) {
     return List.of(
-        new Abi.RegisterRef(registerFile, 2, Abi.Alignment.NO_ALIGNMENT),
+        //new Abi.RegisterRef(registerFile, 2, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 8, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 9, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 18, Abi.Alignment.NO_ALIGNMENT),
