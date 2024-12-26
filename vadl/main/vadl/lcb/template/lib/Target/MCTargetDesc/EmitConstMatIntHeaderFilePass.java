@@ -1,7 +1,9 @@
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
+import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
+import static vadl.viam.ViamError.unwrap;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -10,12 +12,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import jdk.jshell.Diag;
 import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
+import vadl.lcb.passes.EncodeAssemblyImmediateAnnotation;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -82,6 +89,13 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
                 .stream().findFirst(),
             () -> Diagnostic.error("Expected an instruction of load upper immediate",
                 specification.sourceLocation()));
+    ensure(lui.assembly().hasAnnotation(EncodeAssemblyImmediateAnnotation.class),
+        () -> Diagnostic.error(
+                "Load upper immediate machine instruction has no encoding immediate function.",
+                lui.sourceLocation())
+            .note(
+                "The compiler expects that the load upper immediate has an annotation for " +
+                    "formatting the immediate. This is important for the constant materialisation."));
     var luiImmediate = immediate(immediateDetection, lui).get();
     var immediateLuiSize = immediateSize(immediateDetection, lui);
     var largestPossibleValueLui = (long) (Math.pow(2, immediateLuiSize) - 1);
@@ -91,6 +105,7 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
     map.put(CommonVarNames.NAMESPACE, specification.simpleName());
     map.put("addi", addi.identifier.simpleName());
     map.put("lui", lui.identifier.simpleName());
+    map.put("luiRawEncoderMethod", rawEncoderMethodForLui(passResults, lui));
     map.put("slli", slli.identifier.simpleName());
     map.put("luiHighBit", luiImmediate.bitSlice().msb());
     map.put("luiLowBit", luiImmediate.bitSlice().lsb());
@@ -102,6 +117,32 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
     map.put("largestPossibleValueLui", largestPossibleValueLui);
 
     return map;
+  }
+
+  /**
+   * To format the value of LUI, we need to call the encoder method. This method gets the name
+   * of the method.
+   */
+  private String rawEncoderMethodForLui(PassResults passResults, Instruction lui) {
+    var machineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
+        GenerateTableGenMachineInstructionRecordPass.class);
+
+    var record = unwrap(machineRecords.stream()
+        .filter(x -> x.instruction() == lui)
+        .findFirst());
+
+    return
+        ensurePresent(
+            record.getInOperands()
+                .stream()
+                .filter(x -> x instanceof TableGenInstructionImmediateOperand)
+                .map(y -> (TableGenInstructionImmediateOperand) y)
+                .map(x -> x.immediateOperand().rawEncoderMethod())
+                .findFirst(),
+            () -> Diagnostic.error(
+                "Cannot find encoder method for load upper immediate instruction",
+                lui.sourceLocation())
+        );
   }
 
   private static int immediateSize(
