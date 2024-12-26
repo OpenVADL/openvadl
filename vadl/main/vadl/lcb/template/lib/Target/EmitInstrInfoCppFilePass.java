@@ -198,49 +198,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     );
   }
 
-  private List<AdjustRegCase> getAdjustCases(PassResults passResults,
-                                             Map<MachineInstructionLabel, List<Instruction>>
-                                                 isaMatches,
-                                             IdentifyFieldUsagePass.ImmediateDetectionContainer
-                                                 fieldUsages) {
-    var predicates = ImmediatePredicateFunctionProvider.generatePredicateFunctions(passResults);
-    var addi32 = isaMatches.getOrDefault(MachineInstructionLabel.ADDI_32, Collections.emptyList());
-    var addi64 = isaMatches.getOrDefault(MachineInstructionLabel.ADDI_64, Collections.emptyList());
-
-    return Stream.concat(addi32.stream(), addi64.stream())
-        .map(addImm -> {
-          var fields = fieldUsages.getImmediates(addImm.format());
-          verifyInstructionHasOnlyOneImm(addImm, fields);
-          var inputRegisters = fieldUsages.getSourceRegisters(addImm);
-          var imm =
-              ensurePresent(fields.stream().findFirst(), "already checked that it is present");
-          var srcRegisterFiles =
-              inputRegisters.stream().map(inputRegister -> ensurePresent(
-                      addImm.behavior().getNodes(ReadRegFileNode.class)
-                          .filter(x -> x.address() instanceof FieldRefNode fieldRefNode &&
-                              fieldRefNode.formatField() == inputRegister)
-                          .map(ReadRegFileNode::registerFile)
-                          .findFirst(),
-                      () -> Diagnostic.error("Cannot find source register file for field",
-                          imm.sourceLocation())))
-                  .collect(Collectors.toSet());
-          ensure(srcRegisterFiles.size() == 1, () -> Diagnostic.error(
-              "We are only supporting frame index elimination for instructions with the same register file operands",
-              addImm.sourceLocation()));
-          var srcRegisterFile =
-              unwrap(srcRegisterFiles.stream().findFirst());
-
-          var destRegisterFile =
-              ensurePresent(addImm.behavior().getNodes(WriteRegFileNode.class).findFirst(),
-                  "There must be destination register").registerFile();
-          return new AdjustRegCase(addImm,
-              ensureNonNull(predicates.get(imm), "predicate must exist").identifier,
-              destRegisterFile,
-              srcRegisterFile);
-        })
-        .toList();
-  }
-
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
@@ -255,8 +212,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         "storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches),
         "loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches),
         "additionImmInstruction", addition,
-        "additionImmSize", getImmBitSize(fieldUsages, addition),
-        "adjustCases", getAdjustCases(passResults, isaMatches, fieldUsages)
+        "additionImmSize", getImmBitSize(fieldUsages, addition)
     );
   }
 }
