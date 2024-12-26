@@ -54,7 +54,7 @@ namespace llvm::[(${namespace})]MatInt {
         // v[0,12) != 0 && v[12,32) == 0 : ADDI
         // v[0,12) == 0 && v[12,32) != 0 : LUI
         // v[0,32) != 0                  : LUI+ADDI(W)
-        int64_t Hi20 = ((Val + 0x800) >> 12) & 0xFFFFF;
+        int64_t Hi20 = (Val + 0x800);
         int64_t Lo12 = SignExtend64<12>(Val);
 
         if (Hi20)
