@@ -4,13 +4,16 @@ import static vadl.error.Diagnostic.error;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
+import static vadl.viam.ViamError.unwrap;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
@@ -23,6 +26,8 @@ import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -88,7 +93,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    */
   record AdjustRegCase(Instruction instruction,
                        Identifier predicate,
-                       RegisterFile destRegisterFile) {
+                       RegisterFile destRegisterFile,
+                       RegisterFile srcRegisterFile) {
 
   }
 
@@ -205,14 +211,32 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         .map(addImm -> {
           var fields = fieldUsages.getImmediates(addImm.format());
           verifyInstructionHasOnlyOneImm(addImm, fields);
+          var inputRegisters = fieldUsages.getSourceRegisters(addImm);
           var imm =
               ensurePresent(fields.stream().findFirst(), "already checked that it is present");
+          var srcRegisterFiles =
+              inputRegisters.stream().map(inputRegister -> ensurePresent(
+                      addImm.behavior().getNodes(ReadRegFileNode.class)
+                          .filter(x -> x.address() instanceof FieldRefNode fieldRefNode &&
+                              fieldRefNode.formatField() == inputRegister)
+                          .map(ReadRegFileNode::registerFile)
+                          .findFirst(),
+                      () -> Diagnostic.error("Cannot find source register file for field",
+                          imm.sourceLocation())))
+                  .collect(Collectors.toSet());
+          ensure(srcRegisterFiles.size() == 1, () -> Diagnostic.error(
+              "We are only supporting frame index elimination for instructions with the same register file operands",
+              addImm.sourceLocation()));
+          var srcRegisterFile =
+              unwrap(srcRegisterFiles.stream().findFirst());
+
           var destRegisterFile =
               ensurePresent(addImm.behavior().getNodes(WriteRegFileNode.class).findFirst(),
                   "There must be destination register").registerFile();
           return new AdjustRegCase(addImm,
               ensureNonNull(predicates.get(imm), "predicate must exist").identifier,
-              destRegisterFile);
+              destRegisterFile,
+              srcRegisterFile);
         })
         .toList();
   }
@@ -222,8 +246,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var isaMatches = (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
         IsaMachineInstructionMatchingPass.class);
-    var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
-        IdentifyFieldUsagePass.class);
+    var fieldUsages =
+        (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
+            IdentifyFieldUsagePass.class);
     var addition = getAddition(isaMatches);
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
         "copyPhysInstructions", getMovInstructions(isaMatches),

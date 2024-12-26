@@ -126,7 +126,7 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
 
     [# th:each="r : ${adjustCases}" ]
     if ( [(${r.predicate.lower()})]( Val ) /* check if immediate fits */
-           && [(${namespace})]::PC == SrcReg /* check if source register fits */
+           && ( (SrcReg.isVirtual() && [(${namespace})]::[(${r.srcRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(MRI.getRegClass(SrcReg)))
            && ( (DestReg.isVirtual() && [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(MRI.getRegClass(DestReg)))
            || (DestReg.isPhysical() && [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.contains(DestReg))
            )
