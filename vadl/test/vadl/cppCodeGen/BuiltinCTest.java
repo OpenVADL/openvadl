@@ -1653,8 +1653,8 @@ public class BuiltinCTest extends DockerExecutionTest {
       var returnExpr = getSingleNode(function.behavior(), ReturnNode.class);
       System.out.println("------------");
       System.out.println("Test pretty print:\n" + returnExpr.value().prettyPrint());
-      System.out.println("\nTest function: \n" +
-          new PureFunctionCodeGenerator(function).genFunctionDefinition());
+      System.out.println("\nTest function: \n"
+          + new PureFunctionCodeGenerator(function).genFunctionDefinition());
 
       assertThat(testOutcome.get(function.simpleName())).isTrue();
     });

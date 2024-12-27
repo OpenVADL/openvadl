@@ -233,7 +233,7 @@ public class NameResolutionTest {
   }
 
   @Test
-  void InvalidTypeSizeNameDoesNotExist() {
+  void invalidTypeSizeNameDoesNotExist() {
     var prog = """
         constant b: SInt<a> = 1
         """;
