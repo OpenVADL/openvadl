@@ -17,14 +17,18 @@ import vadl.iss.passes.decode.dto.Pattern;
 import vadl.iss.passes.decode.dto.QemuDecodeLoweringPassResult;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.DataType;
+import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
 import vadl.viam.Format;
+import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
+import vadl.viam.graph.Graph;
 
 /**
  * Lowering pass that converts VADL form    s and instructions to QEMU decode definitions,
@@ -104,23 +108,58 @@ public class QemuDecodeLoweringPass extends AbstractIssPass {
     final List<Field> fields =
         new ArrayList<>(Arrays.stream(format.fields()).map(this::mapField).toList());
 
-    // TODO: Handle field access functions
-    // A field access function references a single encoded field in the format,
-    // and converts it using some instruction logic.
-    //
-    // In QEMU this has to be it's own field with a 'decodeFunction'
-    //
-    // If the field access is a trivial sign extension, we can encode this in the field directly,
-    // however it would also be correct to use an extraction function for this.
+    /* A field access function references a single encoded field in the format, and converts it
+     * using some (for this sake) arbitrary logic.
+     *
+     * In QEMU a field access has to be its own field with a 'decodeFunction'
+     *
+     * If the field access is a trivial sign extension, we can encode this in the field directly,
+     * however it would also be correct to use an extraction function for this. */
+    for (Format.FieldAccess access : format.fieldAccesses()) {
+
+      final Format.Field field = access.fieldRef();
+      final Function function = access.accessFunction();
+
+      // Map the referenced field to obtain the slices
+      final Field tmp = mapField(field);
+
+      if (!isTrivialSignExtension(access)) {
+        // Construct a pseudo field for the field access function
+        final Field pseudoField = new Field(access, tmp.getSlices(), function.simpleName());
+        fields.add(pseudoField);
+        continue;
+      }
+
+      // We can encode the sign extension in the field itself, rather than using a function
+      final List<FieldSlice> slices = tmp.getSlices();
+      if (slices.isEmpty()) {
+        throw new ViamError("Field has no slices");
+      }
+      final FieldSlice signedSlice = slices.get(0);
+
+      // Replace the first slice with a signed one
+      slices.remove(0);
+      slices.add(0, new FieldSlice(signedSlice.start(), signedSlice.length(), true));
+    }
 
     return new ArgumentSet(format, fields);
   }
 
   private Field mapField(Format.Field field) {
-    final List<FieldSlice> s = field.bitSlice().parts()
-        .map(p -> new FieldSlice(p.lsb(), p.size(), false))
+    final boolean signed = field.type().isSigned();
+
+    // Prepare the slices
+    final List<Constant.BitSlice.Part> parts = field.bitSlice().parts()
         .toList();
-    return new Field(field, s, null);
+
+    // If the field is signed, the leftmost slice contains the sign bit
+    final List<FieldSlice> slices = new ArrayList<>();
+    for (int i = 0; i < parts.size(); i++) {
+      var p = parts.get(i);
+      slices.add(new FieldSlice(p.lsb(), p.size(), signed && i == 0));
+    }
+
+    return new Field(field, slices, null);
   }
 
   private vadl.iss.passes.decode.dto.Format mapFormat(Format format, BigInteger fixedBits,
@@ -170,5 +209,29 @@ public class QemuDecodeLoweringPass extends AbstractIssPass {
       result = result.setBit(i);
     }
     return result;
+  }
+
+  private boolean isTrivialSignExtension(Format.FieldAccess access) {
+    final Type targetType = access.type();
+    if (!targetType.isData() || !targetType.asDataType().isSigned()) {
+      return false;
+    }
+
+    final DataType sourceType = access.fieldRef().type();
+    if (sourceType.isSigned()) {
+      // No sign extension needed
+      return false;
+    }
+
+    final Graph behavior = access.accessFunction().behavior();
+
+    if (!behavior.isPureFunction()) {
+      // Contains control flow or side effects, cannot be a trivial sign extension
+      return false;
+    }
+
+    // TODO: Check if the function is a trivial sign extension
+
+    return false;
   }
 }

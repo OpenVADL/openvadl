@@ -5,6 +5,7 @@ import java.util.Objects;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.decode.QemuDecodeSymbolResolvingPass;
 import vadl.iss.passes.decode.dto.ArgumentSet;
+import vadl.iss.passes.decode.dto.Field;
 import vadl.iss.passes.decode.dto.Format;
 import vadl.iss.passes.decode.dto.Pattern;
 import vadl.iss.passes.decode.dto.QemuDecodeResolveSymbolPassResult;
@@ -73,13 +74,20 @@ public class EmitIssInsnDecodePass extends IssTemplateRenderingPass {
         .map(Format::toBitPattern)
         .mapToInt(String::length)
         .max().orElse(0);
-    final int maxFieldNameLength = qemuDefs.fields().stream()
-        .map(f -> f.getSource().simpleName().length())
-        .max(Integer::compare).orElse(0);
     final int maxArgSetNameLength = qemuDefs.argSets().stream()
         .map(ArgumentSet::getName)
         .filter(Objects::nonNull)
         .mapToInt(String::length).max().orElse(0);
+    final int maxFieldNameLength = qemuDefs.fields().stream()
+        .map(Field::getName)
+        .filter(Objects::nonNull)
+        .mapToInt(String::length).max().orElse(0);
+    final int maxFieldBitLength = qemuDefs.fields().stream()
+        .mapToInt(f ->
+            f.getSlices().stream()
+                .mapToInt(s -> s.render(RenderContext.EMPTY).length()).sum() +
+                f.getSlices().size() - 1)
+        .max().orElse(0);
 
     final var context = new RenderContext(
         maxPatternNameLength,
@@ -87,8 +95,10 @@ public class EmitIssInsnDecodePass extends IssTemplateRenderingPass {
         maxFormatNameLength,
         maxFormatBitLength,
         maxArgSetNameLength,
-        maxFieldNameLength
+        maxFieldNameLength,
+        maxFieldBitLength
     );
+
     variables.put(CONTEXT_KEY, context);
 
     return variables;

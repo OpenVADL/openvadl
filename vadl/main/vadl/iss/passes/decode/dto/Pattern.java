@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.utils.Pair;
 import vadl.viam.Constant;
+import vadl.viam.Definition;
 import vadl.viam.Encoding;
 import vadl.viam.Instruction;
 
@@ -52,8 +53,18 @@ public final class Pattern implements Renderable, SourceMapping {
 
     // Append constant assignments
     for (Field f : format.getArgs().getFields()) {
+
+      // If it's a 'pseudo' field (i.e. backed by a field access), and the referenced field is a
+      // constant, then we also encode the constant value in the pattern. The access transformation
+      // will not be applied in this case (but most probably not be needed either).
+      Definition actualFieldRef = f.getSource();
+      if (actualFieldRef instanceof vadl.viam.Format.FieldAccess acc) {
+        actualFieldRef = acc.fieldRef();
+      }
+
+      final Definition finalFieldRef = actualFieldRef;
       final var encodedField = Arrays.stream(source.encoding().fieldEncodings())
-          .filter(i -> Objects.equals(i.formatField().identifier, f.getSource().identifier))
+          .filter(i -> Objects.equals(i.formatField().identifier, finalFieldRef.identifier))
           .findFirst();
 
       if (encodedField.isEmpty()) {
@@ -110,7 +121,6 @@ public final class Pattern implements Renderable, SourceMapping {
     return sb.toString();
   }
 
-  // TODO: fix the mapping here. the part's lsb & msb are not the positions within the field's value
   private String formatPart(Encoding.Field f, Constant.BitSlice.Part p) {
     final BigInteger value = f.constant().integer();
 

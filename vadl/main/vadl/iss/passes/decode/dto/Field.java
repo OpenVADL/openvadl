@@ -3,12 +3,12 @@ package vadl.iss.passes.decode.dto;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import vadl.viam.Format;
+import vadl.viam.Definition;
 
 public final class Field
     implements Renderable, SourceMapping {
 
-  private final Format.Field source;
+  private final Definition source;
   private final List<FieldSlice> slices;
 
   @Nullable
@@ -17,7 +17,7 @@ public final class Field
   @Nullable
   private String name;
 
-  public Field(Format.Field source, List<FieldSlice> slices,
+  public Field(Definition source, List<FieldSlice> slices,
                @Nullable String decodeFunction) {
     this.source = source;
     this.slices = slices;
@@ -39,13 +39,16 @@ public final class Field
     }
 
     if (decodeFunction != null) {
+      int sWidth = slices.stream().mapToInt(f -> f.render(RenderContext.EMPTY).length()).sum() +
+          slices.size() - 1;
+      sb.append(" ".repeat(context.maxFieldBitLength() - sWidth));
       sb.append(" !function=").append(decodeFunction);
     }
     return sb.toString();
   }
 
   @Override
-  public Format.Field getSource() {
+  public Definition getSource() {
     return source;
   }
 

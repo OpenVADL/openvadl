@@ -5,5 +5,8 @@ public record RenderContext(int maxPatternNameLength,
                             int maxFormatNameLength,
                             int maxFormatBitLength,
                             int maxArgSetNameLength,
-                            int maxFieldNameLength) {
+                            int maxFieldNameLength,
+                            int maxFieldBitLength) {
+
+  public static final RenderContext EMPTY = new RenderContext(0, 0, 0, 0, 0, 0, 0);
 }

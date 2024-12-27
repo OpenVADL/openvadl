@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,7 @@ import vadl.iss.passes.decode.dto.QemuDecodeResolveSymbolPassResult;
 import vadl.iss.passes.decode.dto.SourceMapping;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.Pair;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
@@ -55,12 +57,15 @@ public class QemuDecodeSymbolResolvingPass extends AbstractIssPass {
         resolveNames(res.formats(), Object::hashCode, e -> e.getSource().simpleName(),
             Format::setName);
 
-    // We reuse fields if they have the same bit patterns, to avoid duplicate definitions
+    // We reuse fields if they have the same bit patterns (and the same decode function), to avoid
+    // duplicate field definitions.
     final var allFields = res.argSets().stream()
         .flatMap(a -> a.getFields().stream())
         .toList();
     final var distinctFields =
-        resolveNames(allFields, Field::getSlices, f -> f.getSource().identifier.simpleName(),
+        resolveNames(allFields,
+            f -> Pair.of(f.getSlices(), Optional.ofNullable(f.getDecodeFunction()).orElse("")),
+            f -> f.getSource().identifier.simpleName(),
             Field::setName);
 
     return new QemuDecodeResolveSymbolPassResult(distinctPatterns, distinctFormats, distinctArgSets,
