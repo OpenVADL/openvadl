@@ -222,4 +222,22 @@ public class NameResolutionTest {
     Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
         "Should reject typos");
   }
+
+  @Test
+  void typeSizeDependsOnConstant() {
+    var prog = """
+        constant a = 3
+        constant b: SInt<a> = 1
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+  }
+
+  @Test
+  void InvalidTypeSizeNameDoesNotExist() {
+    var prog = """
+        constant b: SInt<a> = 1
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
+        "Should reject typos");
+  }
 }

@@ -566,23 +566,23 @@ class IntegerLiteral extends Expr {
 class BinaryLiteral extends Expr {
   String token;
   BigInteger number;
+  int bitWidth;
   SourceLocation loc;
-
-  private static BigInteger parse(String token) {
-    token = token.replace("'", "");
-    if (token.startsWith("0x")) {
-      return new BigInteger(token.substring(2), 16);
-    } else if (token.startsWith("0b")) {
-      return new BigInteger(token.substring(2), 2);
-    } else {
-      throw new IllegalArgumentException("No conversion implemented for binary literal " + token);
-    }
-  }
 
   public BinaryLiteral(String token, SourceLocation loc) {
     this.token = token;
-    this.number = parse(token);
     this.loc = loc;
+
+    var simplifiedToken = token.replace("'", "");
+    if (token.startsWith("0x")) {
+      this.number = new BigInteger(simplifiedToken.substring(2), 16);
+      this.bitWidth = (simplifiedToken.length() - 2) * 4;
+    } else if (simplifiedToken.startsWith("0b")) {
+      this.number = new BigInteger(simplifiedToken.substring(2), 2);
+      this.bitWidth = (simplifiedToken.length() - 2);
+    } else {
+      throw new IllegalArgumentException("No conversion implemented for binary literal " + token);
+    }
   }
 
   @Override

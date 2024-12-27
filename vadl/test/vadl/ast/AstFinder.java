@@ -3,17 +3,29 @@ package vadl.ast;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 
-class TypeFinder implements DefinitionVisitor<Void> {
+class AstFinder implements DefinitionVisitor<Void> {
 
   private String target = "";
 
-  private static class FoundTypeSignal extends RuntimeException {
-    @Nullable
-    Type type;
+  private static class FoundSignal extends RuntimeException {
+    ConstantDefinition constantDefinition;
 
-    public FoundTypeSignal(@Nullable Type type) {
-      this.type = type;
+    public FoundSignal(ConstantDefinition constantDefinition) {
+      this.constantDefinition = constantDefinition;
     }
+  }
+
+  ConstantValue getConstantValue(Ast ast, String name) {
+    var evaluator = new ConstantEvaluator();
+    target = name;
+    try {
+      for (var definition : ast.definitions) {
+        definition.accept(this);
+      }
+    } catch (FoundSignal e) {
+      return evaluator.eval(e.constantDefinition.value);
+    }
+    throw new RuntimeException("No constant with the name %s found.".formatted(name));
   }
 
   @Nullable
@@ -23,8 +35,8 @@ class TypeFinder implements DefinitionVisitor<Void> {
       for (var definition : ast.definitions) {
         definition.accept(this);
       }
-    } catch (FoundTypeSignal e) {
-      return e.type;
+    } catch (FoundSignal e) {
+      return e.constantDefinition.type;
     }
     throw new RuntimeException("No constant with the name %s found.".formatted(name));
   }
@@ -108,7 +120,7 @@ class TypeFinder implements DefinitionVisitor<Void> {
   @Override
   public Void visit(ConstantDefinition definition) {
     if (definition.identifier().name.equals(target)) {
-      throw new FoundTypeSignal(definition.type);
+      throw new FoundSignal(definition);
     }
     return null;
   }

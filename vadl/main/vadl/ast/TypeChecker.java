@@ -1,11 +1,13 @@
 package vadl.ast;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Objects;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.SIntType;
 import vadl.types.Type;
+import vadl.types.UIntType;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
@@ -58,14 +60,41 @@ public class TypeChecker
         return false;
       }
 
-      if (to instanceof SIntType toSint) {
-        var availableWidth = toSint.bitWidth();
+      if (to.getClass() == SIntType.class) {
+        var availableWidth = ((SIntType) to).bitWidth();
         var value = fromConstant.getValue();
         var isNegative = value.compareTo(BigInteger.ZERO) < 0;
         var requiredWidth = value.bitLength() + (isNegative ? 1 : 0);
 
         return availableWidth >= requiredWidth;
       }
+
+      if (to.getClass() == UIntType.class) {
+        var availableWidth = ((UIntType) to).bitWidth();
+        var value = fromConstant.getValue();
+        var isNegative = value.compareTo(BigInteger.ZERO) < 0;
+        if (isNegative) {
+          return false;
+        }
+
+        var requiredWidth = value.bitLength();
+
+        return availableWidth >= requiredWidth;
+      }
+
+      if (to.getClass() == BitsType.class) {
+        var availableWidth = ((BitsType) to).bitWidth();
+        var value = fromConstant.getValue();
+        var isNegative = value.compareTo(BigInteger.ZERO) < 0;
+        if (isNegative) {
+          return false;
+        }
+
+        var requiredWidth = value.bitLength();
+
+        return availableWidth >= requiredWidth;
+      }
+
     }
 
     return false;
@@ -89,7 +118,11 @@ public class TypeChecker
         ).build();
       }
 
-      // FIXME: Should I now insert a cast here?
+      // Insert a cast if needed
+      if (!litType.equals(valType)) {
+        definition.value = new CastExpr(definition.value, definition.typeLiteral);
+        definition.value.accept(this);
+      }
     }
 
     return null;
@@ -103,7 +136,9 @@ public class TypeChecker
 
   @Override
   public Void visit(InstructionSetDefinition definition) {
-    throwUnimplemented(definition);
+    for (var def : definition.definitions) {
+      def.accept(this);
+    }
     return null;
   }
 
@@ -409,7 +444,22 @@ public class TypeChecker
 
   @Override
   public Void visit(Identifier expr) {
-    throwUnimplemented(expr);
+    // The typechecker should have already caught that.
+
+    // FIXME: Handle builtin values
+    var origin = Objects.requireNonNull(
+        Objects.requireNonNull(expr.symbolTable).requireAs(expr, Node.class)
+    );
+
+    if (origin instanceof ConstantDefinition constDef) {
+      if (constDef.type == null) {
+        constDef.accept(this);
+      }
+      expr.type = constDef.type;
+    } else {
+      throw new RuntimeException("Don't handle class " + origin.getClass().getName());
+    }
+
     return null;
   }
 
@@ -421,7 +471,11 @@ public class TypeChecker
 
   @Override
   public Void visit(GroupedExpr expr) {
-    throwUnimplemented(expr);
+    if (expr.expressions.size() != 1) {
+      throw new RuntimeException("Research what to do in that case");
+    }
+    expr.expressions.get(0).accept(this);
+    expr.type = expr.expressions.get(0).type;
     return null;
   }
 
@@ -433,7 +487,7 @@ public class TypeChecker
 
   @Override
   public Void visit(BinaryLiteral expr) {
-    throwUnimplemented(expr);
+    expr.type = Type.bits(expr.bitWidth);
     return null;
   }
 
@@ -481,27 +535,35 @@ public class TypeChecker
       return null;
     }
 
-    if (base.equals("SInt")) {
+    // The basic types SINT<n>, UINT<n> and BITS<n>
+    if (Arrays.asList("SInt", "UInt", "Bits").contains(base)) {
       if (expr.sizeIndices.size() != 1 || expr.sizeIndices.get(0).size() != 1) {
         throw Diagnostic.error("Invalid Type Notation", expr.location())
-            .description("The SInt type requires exactly one size parameter.")
+            .description("The %s type requires exactly one size parameter.", base)
             .build();
       }
 
-      // FIXME: Should we verify the type here at all?
       var widthExpr = expr.sizeIndices.get(0).get(0);
       widthExpr.accept(this);
       var bitWidth = constantEvaluator.eval(widthExpr).value();
-      if (bitWidth.compareTo(BigInteger.valueOf(1)) < 0) {
+
+      var minWidth = BigInteger.ONE;
+      if (bitWidth.compareTo(minWidth) < 0) {
         throw Diagnostic.error("Invalid Type Notation", widthExpr.location())
             .locationDescription(widthExpr.location(),
-                "Width must be a positive integer greater 1 but was %s", bitWidth)
+                "Width must of a %s must be greater than %s but was %s", base, minWidth, bitWidth)
             .build();
       }
 
-      // FIXME ensure that bitWidth isn't > int32.MAX
 
-      expr.type = Type.signedInt(bitWidth.intValueExact());
+      // FIXME: ensure that bitWidth isn't > int32.MAX
+
+      expr.type = switch (base) {
+        case "SInt" -> Type.signedInt(bitWidth.intValueExact());
+        case "UInt" -> Type.unsignedInt(bitWidth.intValueExact());
+        case "Bits" -> Type.bits(bitWidth.intValueExact());
+        default -> throw new IllegalStateException("Unexpected value: " + base);
+      };
       return null;
     }
 
@@ -572,7 +634,15 @@ public class TypeChecker
 
   @Override
   public Void visit(CastExpr expr) {
-    throwUnimplemented(expr);
+    expr.value.accept(this);
+    expr.typeLiteral.accept(this);
+
+    //var valueType = Objects.requireNonNull(expr.value.type);
+    var litType = Objects.requireNonNull(expr.typeLiteral.type);
+
+    // FIXME: For complex types add restrictions here
+
+    expr.type = litType;
     return null;
   }
 
