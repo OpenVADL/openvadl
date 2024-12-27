@@ -7,27 +7,26 @@ import static vadl.viam.ViamError.ensurePresent;
 import static vadl.viam.ViamError.unwrap;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.database.Database;
+import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.utils.ImmediatePredicateFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
-import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -198,6 +197,10 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     );
   }
 
+  record BranchInstruction(String name, int bitWidth) {
+
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
@@ -212,7 +215,41 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         "storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches),
         "loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches),
         "additionImmInstruction", addition,
-        "additionImmSize", getImmBitSize(fieldUsages, addition)
+        "additionImmSize", getImmBitSize(fieldUsages, addition),
+        "branchInstructions", getBranchInstructions(specification, passResults, fieldUsages)
     );
+  }
+
+  private List<BranchInstruction> getBranchInstructions(
+      Specification specification,
+      PassResults passResults,
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages) {
+    var branchInstructions = new ArrayList<BranchInstruction>();
+    var database = new Database(passResults, specification);
+    var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
+        MachineInstructionLabel.BEQ,
+        MachineInstructionLabel.BNEQ,
+        MachineInstructionLabel.BSGEQ,
+        MachineInstructionLabel.BSGTH,
+        MachineInstructionLabel.BSLEQ,
+        MachineInstructionLabel.BSLTH,
+        MachineInstructionLabel.BUGEQ,
+        MachineInstructionLabel.BUGTH,
+        MachineInstructionLabel.BULEQ,
+        MachineInstructionLabel.BULTH
+    )).build());
+
+    for (var machineInstruction : result.machineInstructions()) {
+      var immediates = fieldUsages.getImmediates(machineInstruction.format());
+      ensure(immediates.size() == 1,
+          () -> Diagnostic.error("We only support branch instructions with one label.",
+              machineInstruction.sourceLocation()));
+      var immediate = unwrap(immediates.stream().findFirst());
+      int bitWidth = immediate.size();
+      branchInstructions.add(
+          new BranchInstruction(machineInstruction.identifier.simpleName(), bitWidth));
+    }
+
+    return branchInstructions;
   }
 }

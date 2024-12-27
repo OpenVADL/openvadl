@@ -143,3 +143,74 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
 
     return false; // success
 }
+
+MachineBasicBlock *[(${namespace})]InstrInfo::getBranchDestBlock(const MachineInstr &MI) const {
+  assert(MI.getDesc().isBranch() && "Unexpected opcode!");
+  // The branch target is always the last operand.
+  int NumOp = MI.getNumExplicitOperands();
+  return MI.getOperand(NumOp - 1).getMBB();
+}
+
+bool [(${namespace})]InstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                     MachineBasicBlock *&FBB,
+                     SmallVectorImpl<MachineOperand> &Cond,
+                     bool AllowModify) const {
+  TBB = FBB = nullptr;
+  Cond.clear();
+  MachineBasicBlock::iterator FirstUncondOrIndirectBr = MBB.end();
+
+  MachineBasicBlock::iterator I = MBB.getLastNonDebugInstr();
+  if (I == MBB.end() || !isUnpredicatedTerminator(*I))
+      return false;
+
+  // Count the number of terminators and find the first unconditional or
+  // indirect branch.
+  int NumTerminators = 0;
+  for (auto J = I.getReverse(); J != MBB.rend() && isUnpredicatedTerminator(*J);
+       J++) {
+    NumTerminators++;
+    if (J->getDesc().isUnconditionalBranch() ||
+        J->getDesc().isIndirectBranch()) {
+      FirstUncondOrIndirectBr = J.getReverse();
+    }
+  }
+
+  if (AllowModify && FirstUncondOrIndirectBr != MBB.end()) {
+      while (std::next(FirstUncondOrIndirectBr) != MBB.end()) {
+        std::next(FirstUncondOrIndirectBr)->eraseFromParent();
+        NumTerminators--;
+      }
+      I = FirstUncondOrIndirectBr;
+  }
+
+  // We can't handle blocks that end in an indirect branch.
+  if (I->getDesc().isIndirectBranch())
+    return true;
+
+  // We can't handle Generic branch opcodes from Global ISel.
+  if (I->isPreISelOpcode())
+    return true;
+
+  // We can't handle blocks with more than 2 terminators.
+  if (NumTerminators > 2)
+    return true;
+
+  // Handle a single unconditional branch.
+  if (NumTerminators == 1 && I->getDesc().isUnconditionalBranch()) {
+    TBB = getBranchDestBlock(*I);
+    return false;
+  }
+
+  return true;
+}
+
+bool [(${namespace})]InstrInfo::isBranchOffsetInRange(unsigned BranchOp, int64_t BrOffset) const {
+  switch (BranchOp) {
+    default:
+      llvm_unreachable("Unexpected opcode!");
+    [# th:each="branch : ${branchInstructions}" ]
+    case [(${namespace})]::[(${branch.name})]:
+      return isIntN([(${branch.bitWidth})], BrOffset);
+    [/]
+  }
+}

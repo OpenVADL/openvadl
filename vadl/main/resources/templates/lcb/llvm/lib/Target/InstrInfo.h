@@ -58,6 +58,15 @@ namespace llvm
                 , MachineInstr::MIFlag Flag = MachineInstr::NoFlags
                 ) const;
 
+            MachineBasicBlock *getBranchDestBlock(const MachineInstr &MI) const override;
+
+            bool analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                                 MachineBasicBlock *&FBB,
+                                 SmallVectorImpl<MachineOperand> &Cond,
+                                 bool AllowModify) const override;
+
+            bool isBranchOffsetInRange(unsigned BranchOpc, int64_t BrOffset) const override;
+
         private:
             const [(${namespace})]Subtarget &STI;
     };

@@ -1,10 +1,12 @@
 package vadl.lcb.passes.isaMatching.database;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.viam.ViamError;
 
 /**
  * Query to find instructions and pseudo instructions.
@@ -74,6 +76,22 @@ public class Query {
 
     public Builder machineInstructionLabel(MachineInstructionLabel machineInstructionLabel) {
       this.machineInstructionLabel = machineInstructionLabel;
+      return this;
+    }
+
+    public Builder machineInstructionLabels(Collection<MachineInstructionLabel> labels) {
+      if (labels.isEmpty()) {
+        return this;
+      }
+
+      this.machineInstructionLabel = ViamError.unwrap(labels.stream().findFirst());
+      var rest = labels.stream().skip(1).toList();
+
+      if (!rest.isEmpty()) {
+        var subQuery = new Builder().machineInstructionLabels(rest);
+        or.add(subQuery.build());
+      }
+
       return this;
     }
 
