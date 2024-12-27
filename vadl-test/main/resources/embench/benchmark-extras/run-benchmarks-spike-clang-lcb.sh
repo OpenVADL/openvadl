@@ -17,5 +17,4 @@ rm -r ../src/statemate
 
 ../build_spike-lcb.sh
 ./run-benchmark.sh "rv32-spike" ./benchmark_spike.sh
-
-git checkout ../src
+cat /src/embench/benchmark-extras/results/rv32-spike/1.json
