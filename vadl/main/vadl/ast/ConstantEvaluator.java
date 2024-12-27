@@ -1,11 +1,13 @@
 package vadl.ast;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Objects;
 import vadl.types.BitsType;
+import vadl.types.BoolType;
+import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.utils.BigIntUtils;
 import vadl.viam.Constant;
 
 
@@ -49,8 +51,11 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(GroupedExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    if (expr.expressions.size() != 1) {
+      // FIXME: What does a `(1, 2, 3) even mean, is'nt that a tuple?
+      throw new RuntimeException("Research what to do in that case");
+    }
+    return expr.expressions.get(0).accept(this);
   }
 
   @Override
@@ -109,12 +114,26 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   public ConstantValue visit(UnaryExpr expr) {
     var innerVal = eval(expr.operand);
 
-    return switch (expr.unOp().operator) {
-      case NEGATIVE -> innerVal.withValue(innerVal.value().negate());
-      case COMPLEMENT -> innerVal.withValue(innerVal.value().not());
-      case LOG_NOT -> innerVal.withValue(innerVal.value().xor(BigInteger.ONE));
+    // Constant's (with variable bit width) types are evaluated directly.
+    if (innerVal.type() instanceof ConstantType) {
+      return switch (expr.unOp().operator) {
+        case NEGATIVE -> innerVal.withValue(innerVal.value().negate());
+        case COMPLEMENT -> innerVal.withValue(innerVal.value().not());
+        case LOG_NOT -> innerVal.withValue(innerVal.value().xor(BigInteger.ONE));
+      };
+    }
+
+    // Concrete types (with fixed bit width) are evaluated with the builtin functions.
+    var computeFunc = switch (expr.unOp().operator) {
+      case NEGATIVE -> BuiltInTable.NEG;
+      case COMPLEMENT, LOG_NOT -> BuiltInTable.NOT;
     };
 
+    return ConstantValue.fromViam(
+        (
+            (Constant.Value) computeFunc.compute(List.of(innerVal.toViamConstant())).get()
+        ).castTo((DataType) innerVal.type())
+    );
   }
 
   @Override
@@ -159,28 +178,24 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   public ConstantValue visit(MacroMatchExpr expr) {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
   }
 
   @Override
   public ConstantValue visit(MatchExpr expr) {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
   }
 
   @Override
   public ConstantValue visit(ExtendIdExpr expr) {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
   }
 
   @Override
   public ConstantValue visit(IdToStrExpr expr) {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
   }
 
   @Override
@@ -229,12 +244,13 @@ record ConstantValue(BigInteger value, Type type) {
 
 
   static ConstantValue fromViam(Constant.Value v) {
-    if (!(v.type() instanceof BitsType bitsType)) {
-      throw new IllegalArgumentException();
+    if (v.type() instanceof BitsType) {
+      return new ConstantValue(v.integer(), v.type());
+    } else if (v.type() instanceof BoolType) {
+      return new ConstantValue(v.integer(), v.type());
     }
-    return new ConstantValue(
-        BigIntUtils.fromTwosComplement(v.integer(), bitsType),
-        bitsType);
+
+    throw new IllegalArgumentException();
   }
 
   ConstantValue withValue(BigInteger value) {

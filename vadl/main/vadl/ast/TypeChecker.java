@@ -471,7 +471,11 @@ public class TypeChecker
 
   @Override
   public Void visit(GroupedExpr expr) {
-    throwUnimplemented(expr);
+    if (expr.expressions.size() != 1) {
+      throw new RuntimeException("Research what to do in that case");
+    }
+    expr.expressions.get(0).accept(this);
+    expr.type = expr.expressions.get(0).type;
     return null;
   }
 
@@ -483,7 +487,7 @@ public class TypeChecker
 
   @Override
   public Void visit(BinaryLiteral expr) {
-    throwUnimplemented(expr);
+    expr.type = Type.bits(expr.bitWidth);
     return null;
   }
 
@@ -547,7 +551,7 @@ public class TypeChecker
       if (bitWidth.compareTo(minWidth) < 0) {
         throw Diagnostic.error("Invalid Type Notation", widthExpr.location())
             .locationDescription(widthExpr.location(),
-                "Width must be a %s must be greater %s but was %s", base, minWidth, bitWidth)
+                "Width must of a %s must be greater than %s but was %s", base, minWidth, bitWidth)
             .build();
       }
 
