@@ -30,8 +30,10 @@ import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 public class BuiltinCTest extends DockerExecutionTest {
@@ -570,6 +572,1002 @@ public class BuiltinCTest extends DockerExecutionTest {
   private Function udiv(long a, long b, int size, long expected) {
     return binaryTest(BuiltInTable.UDIV, a, b, size, expected);
   }
+
+
+  /// LOGICAL OPERATIONS ///
+
+  @TestFactory
+  Stream<DynamicTest> notTests() {
+    return runTests(
+        // 1-bit NOT: ~1 = 0
+        not(0x1, 1, 0x0),
+        // 2-bit NOT: ~2 = 1
+        not(0x2, 2, 0x1),
+        // 2-bit NOT: ~3 = 0
+        not(0x3, 2, 0x0),
+        // 8-bit NOT: ~255 = 0
+        not(0xFF, 8, 0x00),
+        // 8-bit NOT: ~0 = 255
+        not(0x00, 8, 0xFF),
+        // 16-bit NOT: ~32767 = 32768
+        not(0x7FFF, 16, 0x8000),
+        // 16-bit NOT: ~0 = 65535
+        not(0x0000, 16, 0xFFFF),
+        // 32-bit NOT: ~2147483647 = 2147483648
+        not(0x7FFFFFFF, 32, 0x80000000L),
+        // 32-bit NOT: ~0 = 4294967295
+        not(0x00000000, 32, 0xFFFFFFFFL),
+        // 64-bit NOT: ~9223372036854775807 = 9223372036854775808
+        not(0x7FFFFFFFFFFFFFFFL, 64, 0x8000000000000000L),
+        // 64-bit NOT: ~0 = 18446744073709551615
+        not(0x0000000000000000L, 64, 0xFFFFFFFFFFFFFFFFL)
+    );
+  }
+
+  private Function not(long a, int size, long expected) {
+    return unaryTest(BuiltInTable.NOT, a, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> andTests() {
+    return runTests(
+        // 1-bit AND: 1 & 1 = 1
+        and(0x1, 0x1, 1, 0x1),
+        and(0x1, 0x0, 1, 0x0),
+        // 2-bit AND: 2 & 3 = 2
+        and(0x2, 0x3, 2, 0x2),
+        // 2-bit AND: 2 & 0 = 0
+        and(0x2, 0x0, 2, 0x0),
+        // 8-bit AND: 255 & 128 = 128
+        and(0xFF, 0x80, 8, 0x80),
+        and(0xFF, 0x0, 8, 0x0),
+        // 8-bit AND: 200 & 127 = 72
+        and(0xC8, 0x7F, 8, 0x48),
+        // 16-bit AND: 65535 & 32768 = 32768
+        and(0xFFFF, 0x8000, 16, 0x8000),
+        // 16-bit AND: 50000 & 32767 = 17232
+        and(0xC350, 0x7FFF, 16, 0x4350),
+        // 32-bit AND: 4294967295 & 2147483648 = 2147483648
+        and(0xFFFFFFFFL, 0x80000000L, 32, 0x80000000L),
+        // 32-bit AND: 3000000000 & 2147483647 = 852516352
+        and(0xB2D05E00L, 0x7FFFFFFF, 32, 0x32d05e00),
+        // 64-bit AND: 18446744073709551615 & 9223372036854775808 = 9223372036854775808
+        and(0xFFFFFFFFFFFFFFFFL, 0x8000000000000000L, 64, 0x8000000000000000L),
+        // 64-bit AND: 10000000000000000000 & 9223372036854775807 = 776627963145224192
+        and(0x8AC7230489E80000L, 0x7FFFFFFFFFFFFFFFL, 64, 0x0AC7230489E80000L)
+    );
+  }
+
+  private Function and(long a, long b, int size, long expected) {
+    return binaryTest(BuiltInTable.AND, a, b, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> xorTests() {
+    return runTests(
+        // 1-bit XOR: 1 ^ 1 = 0
+        xor(0x1, 0x1, 1, 0x0),
+        // 2-bit XOR: 2 ^ 3 = 1
+        xor(0x2, 0x3, 2, 0x1),
+        // 2-bit XOR: 2 ^ 0 = 2
+        xor(0x2, 0x0, 2, 0x2),
+        // 8-bit XOR: 255 ^ 128 = 127
+        xor(0xFF, 0x80, 8, 0x7F),
+        // 8-bit XOR: 200 ^ 127 = 183
+        xor(0xC8, 0x7F, 8, 0xB7),
+        // 16-bit XOR: 65535 ^ 32768 = 32767
+        xor(0xFFFF, 0x8000, 16, 0x7FFF),
+        // 16-bit XOR: 50000 ^ 32767 = 17233
+        xor(0xC350, 0x7FFF, 16, 0xbcaf),
+        // 32-bit XOR: 4294967295 ^ 2147483648 = 2147483647
+        xor(0xFFFFFFFFL, 0x80000000L, 32, 0x7FFFFFFF),
+        // 32-bit XOR: 3000000000 ^ 2147483647 = 852516353
+        xor(0xB2D05E00L, 0x7FFFFFFF, 32, 0xcd2fa1ffL),
+        // 64-bit XOR: 18446744073709551615 ^ 9223372036854775808 = 9223372036854775807
+        xor(0xFFFFFFFFFFFFFFFFL, 0x8000000000000000L, 64, 0x7FFFFFFFFFFFFFFFL),
+        // 64-bit XOR: 10000000000000000000 ^ 9223372036854775807 = 776627963145224192
+        xor(0x8AC7230489E80000L, 0x7FFFFFFFFFFFFFFFL, 64, 0xf538dcfb7617ffffL)
+    );
+  }
+
+
+  private Function xor(long a, long b, int size, long expected) {
+    return binaryTest(BuiltInTable.XOR, a, b, size, expected);
+  }
+
+
+  @TestFactory
+  Stream<DynamicTest> orTests() {
+    return runTests(
+        // 1-bit OR: 1 | 1 = 1
+        or(0x1, 0x1, 1, 0x1),
+        // 2-bit OR: 2 | 3 = 3
+        or(0x2, 0x3, 2, 0x3),
+        // 2-bit OR: 2 | 0 = 2
+        or(0x2, 0x0, 2, 0x2),
+        // 8-bit OR: 255 | 128 = 255
+        or(0xFF, 0x80, 8, 0xFF),
+        // 8-bit OR: 200 | 127 = 255
+        or(0xC8, 0x7F, 8, 0xFF),
+        // 16-bit OR: 50000 | 32767 = 50047
+        or(0xC8, 0x0, 11, 0xC8),
+        // 16-bit OR: 65535 | 32768 = 65535
+        or(0xFFFF, 0x8000, 16, 0xFFFF),
+        // 16-bit OR: 50000 | 32767 = 50047
+        or(0xC350, 0x7FFF, 16, 0xffff),
+        // 32-bit OR: 4294967295 | 2147483648 = 4294967295
+        or(0xFFFFFFFFL, 0x80000000L, 32, 0xFFFFFFFFL),
+        // 32-bit OR: 3000000000 | 2147483647 = 4147483647
+        or(0xB2D05E00L, 0x7FFFFFFF, 32, 0xFFFFFFFFL),
+        // 64-bit OR: 18446744073709551615 | 9223372036854775808 = 18446744073709551615
+        or(0xFFFFFFFFFFFFFFFFL, 0x8000000000000000L, 64, 0xFFFFFFFFFFFFFFFFL),
+        // 64-bit OR: 10000000000000000000 | 9223372036854775807 = 18446744073709551615
+        or(0x8AC7230489E80000L, 0x7FFFFFFFFFFFFFFFL, 64, 0xFFFFFFFFFFFFFFFFL)
+    );
+  }
+
+  private Function or(long a, long b, int size, long expected) {
+    return binaryTest(BuiltInTable.OR, a, b, size, expected);
+  }
+
+  /// COMPARISON OPERATIONS ///
+
+  @TestFactory
+  Stream<DynamicTest> equTests() {
+    return runTests(
+        // 1-bit EQUAL: 1 == 1 -> true
+        equ(0x1, 0x1, 1, true),
+        // 1-bit EQUAL: 1 == 0 -> false
+        equ(0x1, 0x0, 1, false),
+        // 2-bit EQUAL: 2 == 3 -> false
+        equ(0x2, 0x3, 2, false),
+        // 2-bit EQUAL: 2 == 2 -> true
+        equ(0x2, 0x2, 2, true),
+        // 8-bit EQUAL: 255 == 128 -> false
+        equ(0xFF, 0x80, 8, false),
+        // 8-bit EQUAL: 200 == 200 -> true
+        equ(0xC8, 0xC8, 8, true),
+        // 16-bit EQUAL: 65535 == 32768 -> false
+        equ(0xFFFF, 0x8000, 16, false),
+        // 16-bit EQUAL: 50000 == 50000 -> true
+        equ(0xC350, 0xC350, 16, true),
+        // 32-bit EQUAL: 4294967295 == 2147483648 -> false
+        equ(0xFFFFFFFFL, 0xFFFFFFFL, 32, false),
+        // 32-bit EQUAL: 3000000000 == 3000000000 -> true
+        equ(0xB2D05E00L, 0xB2D05E00L, 32, true),
+        // 64-bit EQUAL: 18446744073709551615 == 9223372036854775808 -> false
+        equ(0xFFFFFFFFFFFFFFFFL, 0x8000000000000000L, 64, false),
+        // 64-bit EQUAL: 10000000000000000000 == 10000000000000000000 -> true
+        equ(0x8AC7230489E80000L, 0x8AC7230489E80000L, 64, true)
+    );
+  }
+
+  private Function equ(long a, long b, int size, boolean expected) {
+    return binaryTest(BuiltInTable.EQU, a, b, size, expected ? 0x1 : 0x0);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> neqTests() {
+    return runTests(
+        // 1-bit NOT EQUAL: 1 != 1 -> false
+        neq(0x1, 0x1, 1, false),
+        // 1-bit NOT EQUAL: 1 != 0 -> true
+        neq(0x1, 0x0, 1, true),
+        // 2-bit NOT EQUAL: 2 != 3 -> true
+        neq(0x2, 0x3, 2, true),
+        // 2-bit NOT EQUAL: 2 != 2 -> false
+        neq(0x2, 0x2, 2, false),
+        // 8-bit NOT EQUAL: 255 != 128 -> true
+        neq(0xFF, 0x80, 8, true),
+        // 8-bit NOT EQUAL: 200 != 200 -> false
+        neq(0xC8, 0xC8, 8, false),
+        // 16-bit NOT EQUAL: 65535 != 32768 -> true
+        neq(0xFFFF, 0x8000, 16, true),
+        // 16-bit NOT EQUAL: 50000 != 50000 -> false
+        neq(0xC350, 0xC350, 16, false),
+        // 32-bit NOT EQUAL: 4294967295 != 2147483648 -> true
+        neq(0xFFFFFFFFL, 0x80000000L, 32, true),
+        // 32-bit NOT EQUAL: 3000000000 != 3000000000 -> false
+        neq(0xB2D05E00L, 0xB2D05E00L, 32, false),
+        // 64-bit NOT EQUAL: 18446744073709551615 != 9223372036854775808 -> true
+        neq(0xFFFFFFFFFFFFFFFFL, 0x8000000000000000L, 64, true),
+        // 64-bit NOT EQUAL: 10000000000000000000 != 10000000000000000000 -> false
+        neq(0x8AC7230489E80000L, 0x8AC7230489E80000L, 64, false)
+    );
+  }
+
+  private Function neq(long a, long b, int size, boolean expected) {
+    return binaryTest(BuiltInTable.NEQ, a, b, size, expected ? 0x1 : 0x0);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> slthTests() {
+    return runTests(
+        // 1-bit signed less than: 0 < -1 -> false
+        slth(0x0, 0x1, 1, false),
+        // 1-bit signed less than: -1 < 0 -> false
+        slth(0x1, 0x0, 1, true),
+        // 2-bit signed less than: -2 < -1 -> true
+        slth(-0x2, -0x1, 2, true),
+        // 2-bit signed less than: -1 < -2 -> false
+        slth(-0x1, -0x2, 2, false),
+        // 8-bit signed less than: -128 < 127 -> true
+        slth(-0x80, 0x7F, 8, true),
+        // 8-bit signed less than: 127 < -128 -> false
+        slth(0x7F, -0x80, 8, false),
+        // 16-bit signed less than: -32768 < 32767 -> true
+        slth(-0x8000, 0x7FFF, 16, true),
+        // 16-bit signed less than: 32767 < -32768 -> false
+        slth(0x7FFF, -0x8000, 16, false),
+        // 32-bit signed less than: -2147483648 < 2147483647 -> true
+        slth(-0x80000000, 0x7FFFFFFF, 32, true),
+        // 32-bit signed less than: 2147483647 < -2147483648 -> false
+        slth(0x7FFFFFFF, -0x80000000, 32, false),
+        // 64-bit signed less than: -9223372036854775808 < 9223372036854775807 -> true
+        slth(-0x8000000000000000L, 0x7FFFFFFFFFFFFFFFL, 64, true),
+        // 64-bit signed less than: 9223372036854775807 < -9223372036854775808 -> false
+        slth(0x7FFFFFFFFFFFFFFFL, -0x8000000000000000L, 64, false)
+    );
+  }
+
+  private Function slth(long a, long b, int size, boolean expected) {
+    return binaryTest(BuiltInTable.SLTH, a, b, size, expected ? 0x1 : 0x0);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> ulthTests() {
+    return runTests(
+        // 1-bit unsigned less than: 0 < 1 -> true
+        ulth(0x0, 0x1, 1, true),
+        // 1-bit unsigned less than: 1 < 0 -> false
+        ulth(0x1, 0x0, 1, false),
+        // 2-bit unsigned less than: 2 < 3 -> true
+        ulth(0x2, 0x3, 2, true),
+        // 2-bit unsigned less than: 3 < 2 -> false
+        ulth(0x3, 0x2, 2, false),
+        // 8-bit unsigned less than: 128 < 255 -> true
+        ulth(0x80, 0xFF, 8, true),
+        // 8-bit unsigned less than: 255 < 128 -> false
+        ulth(0xFF, 0x80, 8, false),
+        // 16-bit unsigned less than: 32768 < 65535 -> true
+        ulth(0x8000, 0xFFFF, 16, true),
+        // 16-bit unsigned less than: 65535 < 32768 -> false
+        ulth(0xFFFF, 0x8000, 16, false),
+        // 32-bit unsigned less than: 2147483648 < 4294967295 -> true
+        ulth(0x80000000, 0xFFFFFFFF, 32, true),
+        // 32-bit unsigned less than: 4294967295 < 2147483648 -> false
+        ulth(0xFFFFFFFF, 0x80000000, 32, false),
+        // 64-bit unsigned less than: 9223372036854775808 < 18446744073709551615 -> true
+        ulth(0x8000000000000000L, 0xFFFFFFFFFFFFFFFFL, 64, true),
+        // 64-bit unsigned less than: 18446744073709551615 < 9223372036854775808 -> false
+        ulth(0xFFFFFFFFFFFFFFFFL, 0x8000000000000000L, 64, false)
+    );
+  }
+
+  private Function ulth(long a, long b, int size, boolean expected) {
+    return binaryTest(BuiltInTable.ULTH, a, b, size, expected ? 0x1 : 0x0);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sleqTests() {
+    return runTests(
+        // 1-bit signed less than or equal: 0 <= -1 -> false
+        sleq(0x0, 0x1, 1, false),
+        // 1-bit signed less than or equal: 1 <= 1 -> true
+        sleq(0x1, 0x1, 1, true),
+        // 1-bit signed less than or equal: -1 <= 0 -> true
+        sleq(0x1, 0x0, 1, true),
+        // 2-bit signed less than or equal: -2 <= -1 -> true
+        sleq(-0x2, -0x1, 2, true),
+        // 2-bit signed less than or equal: -1 <= -2 -> false
+        sleq(-0x1, -0x2, 2, false),
+        // 2-bit signed less than or equal: -1 <= -1 -> true
+        sleq(-0x1, -0x1, 2, true),
+        // 8-bit signed less than or equal: -128 <= 127 -> true
+        sleq(-0x80, 0x7F, 8, true),
+        // 8-bit signed less than or equal: 127 <= -128 -> false
+        sleq(0x7F, -0x80, 8, false),
+        // 8-bit signed less than or equal: -128 <= -128 -> true
+        sleq(-0x80, -0x80, 8, true),
+        // 16-bit signed less than or equal: -32768 <= 32767 -> true
+        sleq(-0x8000, 0x7FFF, 16, true),
+        // 16-bit signed less than or equal: 32767 <= -32768 -> false
+        sleq(0x7FFF, -0x8000, 16, false),
+        // 16-bit signed less than or equal: 32767 <= 32767 -> true
+        sleq(0x7FFF, 0x7FFF, 16, true),
+        // 32-bit signed less than or equal: -2147483648 <= 2147483647 -> true
+        sleq(-0x80000000, 0x7FFFFFFF, 32, true),
+        // 32-bit signed less than or equal: 2147483647 <= -2147483648 -> false
+        sleq(0x7FFFFFFF, -0x80000000, 32, false),
+        // 32-bit signed less than or equal: -2147483648 <= -2147483648 -> true
+        sleq(-0x80000000, -0x80000000, 32, true),
+        // 64-bit signed less than or equal: -9223372036854775808 <= 9223372036854775807 -> true
+        sleq(-0x8000000000000000L, 0x7FFFFFFFFFFFFFFFL, 64, true),
+        // 64-bit signed less than or equal: 9223372036854775807 <= -9223372036854775808 -> false
+        sleq(0x7FFFFFFFFFFFFFFFL, -0x8000000000000000L, 64, false),
+        // 64-bit signed less than or equal: -9223372036854775808 <= -9223372036854775808 -> true
+        sleq(-0x8000000000000000L, -0x8000000000000000L, 64, true)
+    );
+  }
+
+  private Function sleq(long a, long b, int size, boolean expected) {
+    return binaryTest(BuiltInTable.SLEQ, a, b, size, expected ? 0x1 : 0x0);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> uleqTests() {
+    return runTests(
+        // 1-bit unsigned less than or equal: 0 <= 1 -> true
+        uleq(0x0, 0x1, 1, true),
+        // 1-bit unsigned less than or equal: 1 <= 1 -> true
+        uleq(0x1, 0x1, 1, true),
+        // 1-bit unsigned less than or equal: 1 <= 0 -> false
+        uleq(0x1, 0x0, 1, false),
+        // 2-bit unsigned less than or equal: 2 <= 3 -> true
+        uleq(0x2, 0x3, 2, true),
+        // 2-bit unsigned less than or equal: 3 <= 2 -> false
+        uleq(0x3, 0x2, 2, false),
+        // 2-bit unsigned less than or equal: 3 <= 3 -> true
+        uleq(0x3, 0x3, 2, true),
+        // 8-bit unsigned less than or equal: 128 <= 255 -> true
+        uleq(0x80, 0xFF, 8, true),
+        // 8-bit unsigned less than or equal: 255 <= 128 -> false
+        uleq(0xFF, 0x80, 8, false),
+        // 8-bit unsigned less than or equal: 128 <= 128 -> true
+        uleq(0x80, 0x80, 8, true),
+        // 16-bit unsigned less than or equal: 32768 <= 65535 -> true
+        uleq(0x8000, 0xFFFF, 16, true),
+        // 16-bit unsigned less than or equal: 65535 <= 32768 -> false
+        uleq(0xFFFF, 0x8000, 16, false),
+        // 16-bit unsigned less than or equal: 32768 <= 32768 -> true
+        uleq(0x8000, 0x8000, 16, true),
+        // 32-bit unsigned less than or equal: 2147483648 <= 4294967295 -> true
+        uleq(0x80000000, 0xFFFFFFFF, 32, true),
+        // 32-bit unsigned less than or equal: 4294967295 <= 2147483648 -> false
+        uleq(0xFFFFFFFF, 0x80000000, 32, false),
+        // 32-bit unsigned less than or equal: 4294967295 <= 4294967295 -> true
+        uleq(0xFFFFFFFF, 0xFFFFFFFF, 32, true),
+        // 64-bit unsigned less than or equal: 9223372036854775808 <= 18446744073709551615 -> true
+        uleq(0x8000000000000000L, 0xFFFFFFFFFFFFFFFFL, 64, true),
+        // 64-bit unsigned less than or equal: 18446744073709551615 <= 9223372036854775808 -> false
+        uleq(0xFFFFFFFFFFFFFFFFL, 0x8000000000000000L, 64, false),
+        // 64-bit unsigned less than or equal: 9223372036854775808 <= 9223372036854775808 -> true
+        uleq(0x8000000000000000L, 0x8000000000000000L, 64, true)
+    );
+  }
+
+  private Function uleq(long a, long b, int size, boolean expected) {
+    return binaryTest(BuiltInTable.ULEQ, a, b, size, expected ? 0x1 : 0x0);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sqthTests() {
+    return runTests(
+        // 1-bit signed greater than: -1 > 0 -> false
+        sqth(0x1, 0x0, 1, false),
+        // 1-bit signed greater than: 0 > -1 -> true
+        sqth(0x0, 0x1, 1, true),
+        // 2-bit signed greater than: -1 > -2 -> true
+        sqth(-0x1, -0x2, 2, true),
+        // 2-bit signed greater than: -2 > -1 -> false
+        sqth(-0x2, -0x1, 2, false),
+        // 2-bit signed greater than: -1 > -1 -> false
+        sqth(-0x1, -0x1, 2, false),
+        // 8-bit signed greater than: 127 > -128 -> true
+        sqth(0x7F, -0x80, 8, true),
+        // 8-bit signed greater than: -128 > 127 -> false
+        sqth(-0x80, 0x7F, 8, false),
+        // 8-bit signed greater than: 127 > 127 -> false
+        sqth(0x7F, 0x7F, 8, false),
+        // 16-bit signed greater than: 32767 > -32768 -> true
+        sqth(0x7FFF, -0x8000, 16, true),
+        // 16-bit signed greater than: -32768 > 32767 -> false
+        sqth(-0x8000, 0x7FFF, 16, false),
+        // 16-bit signed greater than: 32767 > 32767 -> false
+        sqth(0x7FFF, 0x7FFF, 16, false),
+        // 32-bit signed greater than: 2147483647 > -2147483648 -> true
+        sqth(0x7FFFFFFF, -0x80000000, 32, true),
+        // 32-bit signed greater than: -2147483648 > 2147483647 -> false
+        sqth(-0x80000000, 0x7FFFFFFF, 32, false),
+        // 32-bit signed greater than: -2147483648 > -2147483648 -> false
+        sqth(-0x80000000, -0x80000000, 32, false),
+        // 64-bit signed greater than: 9223372036854775807 > -9223372036854775808 -> true
+        sqth(0x7FFFFFFFFFFFFFFFL, -0x8000000000000000L, 64, true),
+        // 64-bit signed greater than: -9223372036854775808 > 9223372036854775807 -> false
+        sqth(-0x8000000000000000L, 0x7FFFFFFFFFFFFFFFL, 64, false),
+        // 64-bit signed greater than: -9223372036854775808 > -9223372036854775808 -> false
+        sqth(-0x8000000000000000L, -0x8000000000000000L, 64, false)
+    );
+  }
+
+  private Function sqth(long a, long b, int size, boolean expected) {
+    return binaryTest(BuiltInTable.SGTH, a, b, size, expected ? 0x1 : 0x0);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> uqthTests() {
+    return runTests(
+        // 1-bit unsigned greater than: 1 > 0 -> true
+        uqth(0x1, 0x0, 1, true),
+        // 1-bit unsigned greater than: 0 > 1 -> false
+        uqth(0x0, 0x1, 1, false),
+        // 2-bit unsigned greater than: 3 > 2 -> true
+        uqth(0x3, 0x2, 2, true),
+        // 2-bit unsigned greater than: 2 > 3 -> false
+        uqth(0x2, 0x3, 2, false),
+        // 2-bit unsigned greater than: 3 > 3 -> false
+        uqth(0x3, 0x3, 2, false),
+        // 8-bit unsigned greater than: 255 > 128 -> true
+        uqth(0xFF, 0x80, 8, true),
+        // 8-bit unsigned greater than: 128 > 255 -> false
+        uqth(0x80, 0xFF, 8, false),
+        // 8-bit unsigned greater than: 255 > 255 -> false
+        uqth(0xFF, 0xFF, 8, false),
+        // 16-bit unsigned greater than: 65535 > 32768 -> true
+        uqth(0xFFFF, 0x8000, 16, true),
+        // 16-bit unsigned greater than: 32768 > 65535 -> false
+        uqth(0x8000, 0xFFFF, 16, false),
+        // 16-bit unsigned greater than: 65535 > 65535 -> false
+        uqth(0xFFFF, 0xFFFF, 16, false),
+        // 32-bit unsigned greater than: 4294967295 > 2147483648 -> true
+        uqth(0xFFFFFFFFL, 0x80000000L, 32, true),
+        // 32-bit unsigned greater than: 2147483648 > 4294967295 -> false
+        uqth(0x80000000L, 0xFFFFFFFFL, 32, false),
+        // 32-bit unsigned greater than: 4294967295 > 4294967295 -> false
+        uqth(0xFFFFFFFFL, 0xFFFFFFFFL, 32, false),
+        // 64-bit unsigned greater than: 18446744073709551615 > 9223372036854775808 -> true
+        uqth(0xFFFFFFFFFFFFFFFFL, 0x8000000000000000L, 64, true),
+        // 64-bit unsigned greater than: 9223372036854775808 > 18446744073709551615 -> false
+        uqth(0x8000000000000000L, 0xFFFFFFFFFFFFFFFFL, 64, false),
+        // 64-bit unsigned greater than: 18446744073709551615 > 18446744073709551615 -> false
+        uqth(0xFFFFFFFFFFFFFFFFL, 0xFFFFFFFFFFFFFFFFL, 64, false)
+    );
+  }
+
+  private Function uqth(long a, long b, int size, boolean expected) {
+    return binaryTest(BuiltInTable.UGTH, a, b, size, expected ? 0x1 : 0x0);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sgeqTests() {
+    return runTests(
+        // 1-bit signed greater than or equal: -1 >= 0 -> false
+        sgeq(0x1, 0x0, 1, false),
+        // 1-bit signed greater than or equal: 1 >= 1 -> true
+        sgeq(0x1, 0x1, 1, true),
+        // 1-bit signed greater than or equal: 0 >= -1 -> true
+        sgeq(0x0, 0x1, 1, true),
+        // 2-bit signed greater than or equal: -1 >= -2 -> true
+        sgeq(-0x1, -0x2, 2, true),
+        // 2-bit signed greater than or equal: -2 >= -1 -> false
+        sgeq(-0x2, -0x1, 2, false),
+        // 2-bit signed greater than or equal: -1 >= -1 -> true
+        sgeq(-0x1, -0x1, 2, true),
+        // 8-bit signed greater than or equal: 127 >= -128 -> true
+        sgeq(0x7F, -0x80, 8, true),
+        // 8-bit signed greater than or equal: -128 >= 127 -> false
+        sgeq(-0x80, 0x7F, 8, false),
+        // 8-bit signed greater than or equal: 127 >= 127 -> true
+        sgeq(0x7F, 0x7F, 8, true),
+        // 16-bit signed greater than or equal: 32767 >= -32768 -> true
+        sgeq(0x7FFF, -0x8000, 16, true),
+        // 16-bit signed greater than or equal: -32768 >= 32767 -> false
+        sgeq(-0x8000, 0x7FFF, 16, false),
+        // 16-bit signed greater than or equal: 32767 >= 32767 -> true
+        sgeq(0x7FFF, 0x7FFF, 16, true),
+        // 32-bit signed greater than or equal: 2147483647 >= -2147483648 -> true
+        sgeq(0x7FFFFFFF, -0x80000000, 32, true),
+        // 32-bit signed greater than or equal: -2147483648 >= 2147483647 -> false
+        sgeq(-0x80000000, 0x7FFFFFFF, 32, false),
+        // 32-bit signed greater than or equal: -2147483648 >= -2147483648 -> true
+        sgeq(-0x80000000, -0x80000000, 32, true),
+        // 64-bit signed greater than or equal: 9223372036854775807 >= -9223372036854775808 -> true
+        sgeq(0x7FFFFFFFFFFFFFFFL, -0x8000000000000000L, 64, true),
+        // 64-bit signed greater than or equal: -9223372036854775808 >= 9223372036854775807 -> false
+        sgeq(-0x8000000000000000L, 0x7FFFFFFFFFFFFFFFL, 64, false),
+        // 64-bit signed greater than or equal: -9223372036854775808 >= -9223372036854775808 -> true
+        sgeq(-0x8000000000000000L, -0x8000000000000000L, 64, true)
+    );
+  }
+
+  private Function sgeq(long a, long b, int size, boolean expected) {
+    return binaryTest(BuiltInTable.SGEQ, a, b, size, expected ? 0x1 : 0x0);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> ugeqTests() {
+    return runTests(
+        // 1-bit unsigned greater than or equal: 1 >= 0 -> true
+        ugeq(0x1, 0x0, 1, true),
+        // 1-bit unsigned greater than or equal: 1 >= 1 -> true
+        ugeq(0x1, 0x1, 1, true),
+        // 1-bit unsigned greater than or equal: 0 >= 1 -> false
+        ugeq(0x0, 0x1, 1, false),
+        // 2-bit unsigned greater than or equal: 3 >= 2 -> true
+        ugeq(0x3, 0x2, 2, true),
+        // 2-bit unsigned greater than or equal: 2 >= 3 -> false
+        ugeq(0x2, 0x3, 2, false),
+        // 2-bit unsigned greater than or equal: 3 >= 3 -> true
+        ugeq(0x3, 0x3, 2, true),
+        // 8-bit unsigned greater than or equal: 255 >= 128 -> true
+        ugeq(0xFF, 0x80, 8, true),
+        // 8-bit unsigned greater than or equal: 128 >= 255 -> false
+        ugeq(0x80, 0xFF, 8, false),
+        // 8-bit unsigned greater than or equal: 255 >= 255 -> true
+        ugeq(0xFF, 0xFF, 8, true),
+        // 16-bit unsigned greater than or equal: 65535 >= 32768 -> true
+        ugeq(0xFFFF, 0x8000, 16, true),
+        // 16-bit unsigned greater than or equal: 32768 >= 65535 -> false
+        ugeq(0x8000, 0xFFFF, 16, false),
+        // 16-bit unsigned greater than or equal: 65535 >= 65535 -> true
+        ugeq(0xFFFF, 0xFFFF, 16, true),
+        // 32-bit unsigned greater than or equal: 4294967295 >= 2147483648 -> true
+        ugeq(0xFFFFFFFF, 0x80000000, 32, true),
+        // 32-bit unsigned greater than or equal: 2147483648 >= 4294967295 -> false
+        ugeq(0x80000000, 0xFFFFFFFF, 32, false),
+        // 32-bit unsigned greater than or equal: 4294967295 >= 4294967295 -> true
+        ugeq(0xFFFFFFFF, 0xFFFFFFFF, 32, true),
+        // 64-bit unsigned greater than or equal: 18446744073709551615 >= 9223372036854775808 -> true
+        ugeq(0xFFFFFFFFFFFFFFFFL, 0x8000000000000000L, 64, true),
+        // 64-bit unsigned greater than or equal: 9223372036854775808 >= 18446744073709551615 -> false
+        ugeq(0x8000000000000000L, 0xFFFFFFFFFFFFFFFFL, 64, false),
+        // 64-bit unsigned greater than or equal: 18446744073709551615 >= 18446744073709551615 -> true
+        ugeq(0xFFFFFFFFFFFFFFFFL, 0xFFFFFFFFFFFFFFFFL, 64, true)
+    );
+  }
+
+  private Function ugeq(long a, long b, int size, boolean expected) {
+    return binaryTest(BuiltInTable.UGEQ, a, b, size, expected ? 0x1 : 0x0);
+  }
+
+
+  /// SHIFTING OPERATIONS ///
+
+  @TestFactory
+  Stream<DynamicTest> lslTests() {
+    return runTests(
+        // 1-bit logical shift left: 1 << 0 = 1
+        lsl(0x1, 0x0, 1, 0x1),
+        // 1-bit logical shift left: 1 << 1 = 0 (shift out of range for 1-bit)
+        lsl(0x1, 0x1, 1, 0x0),
+        // 2-bit logical shift left: 2 << 1 = 0 (shift out of range for 2-bit)
+        lsl(0x2, 0x1, 2, 0x0),
+        // 2-bit logical shift left: 1 << 1 = 2
+        lsl(0x1, 0x1, 2, 0x2),
+        // 8-bit logical shift left: 127 << 1 = 254
+        lsl(0x7F, 0x1, 8, 0xFE),
+        // 8-bit logical shift left: 128 << 1 = 0 (shift out of range for 8-bit)
+        lsl(0x80, 0x1, 8, 0x0),
+        // 16-bit logical shift left: 32767 << 1 = 65534
+        lsl(0x7FFF, 0x1, 16, 0xFFFE),
+        // 16-bit logical shift left: 32768 << 1 = 0 (shift out of range for 16-bit)
+        lsl(0x8000, 0x1, 16, 0x0),
+        // 32-bit logical shift left: 2147483647 << 1 = 4294967294
+        lsl(0x7FFFFFFF, 0x1, 32, 0xFFFFFFFEL),
+        // 32-bit logical shift left: 2147483648 << 1 = 0 (shift out of range for 32-bit)
+        lsl(0x80000000L, 0x1, 32, 0x0),
+        // 64-bit logical shift left: 9223372036854775807 << 1 = 18446744073709551614
+        lsl(0x7FFFFFFFFFFFFFFFL, 0x1, 64, 0xFFFFFFFFFFFFFFFEL),
+        // 64-bit logical shift left: 9223372036854775808 << 1 = 0 (shift out of range for 64-bit)
+        lsl(0x8000000000000000L, 0x1, 64, 0x0)
+    );
+  }
+
+  private Function lsl(long a, long b, int size, long expected) {
+    return binaryTest(BuiltInTable.LSL, a, b, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> asrTests() {
+    return runTests(
+        // 1-bit arithmetic shift right: 1 >> 0 = 1
+        asr(0x1, 0x0, 1, 0x1),
+        // 1-bit arithmetic shift right: 1 >> 1 = 1 (preserves sign)
+        asr(0x1, 0x1, 1, 0x1),
+        // 1-bit arithmetic shift right: 0 >> 1 = 0
+        asr(0x0, 0x1, 1, 0x0),
+        // 1-bit arithmetic shift right: -1 >> 1 = -1 (preserves sign)
+        asr(-0x1, 0x1, 1, -0x1),
+        // 2-bit arithmetic shift right: 2 >> 1 = 1
+        asr(0x2, 0x1, 2, 0x1),
+        // 2-bit arithmetic shift right: -2 >> 1 = -1
+        asr(-0x2, 0x1, 2, -0x1),
+        // 8-bit arithmetic shift right: 127 >> 1 = 63
+        asr(0x7F, 0x1, 8, 0x3F),
+        // 8-bit arithmetic shift right: -128 >> 1 = -64
+        asr(-0x80, 0x1, 8, -0x40),
+        // 8-bit arithmetic shift right: -1 >> 1 = -1
+        asr(-0x1, 0x1, 8, -0x1),
+        // 16-bit arithmetic shift right: 32767 >> 1 = 16383
+        asr(0x7FFF, 0x1, 16, 0x3FFF),
+        // 16-bit arithmetic shift right: -32768 >> 1 = -16384
+        asr(-0x8000, 0x1, 16, -0x4000),
+        // 32-bit arithmetic shift right: 2147483647 >> 1 = 1073741823
+        asr(0x7FFFFFFF, 0x1, 32, 0x3FFFFFFF),
+        // 32-bit arithmetic shift right: -2147483648 >> 1 = -1073741824
+        asr(-0x80000000, 0x1, 32, -0x40000000),
+        // 64-bit arithmetic shift right: 9223372036854775807 >> 1 = 4611686018427387903
+        asr(0x7FFFFFFFFFFFFFFFL, 0x1, 64, 0x3FFFFFFFFFFFFFFFL),
+        // 64-bit arithmetic shift right: -9223372036854775808 >> 1 = -4611686018427387904
+        asr(-0x8000000000000000L, 0x1, 64, -0x4000000000000000L)
+    );
+  }
+
+  private Function asr(long a, long b, int size, long expected) {
+    return binaryTest(BuiltInTable.ASR, a, b, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> lsrTests() {
+    return runTests(
+        // 1-bit logical shift right: 1 >> 0 = 1
+        lsr(0x1, 0x0, 1, 0x1),
+        // 1-bit logical shift right: 1 >> 1 = 0
+        lsr(0x1, 0x1, 1, 0x0),
+        // 2-bit logical shift right: 2 >> 1 = 1
+        lsr(0x2, 0x1, 2, 0x1),
+        // 2-bit logical shift right: 3 >> 1 = 1
+        lsr(0x3, 0x1, 2, 0x1),
+        // 8-bit logical shift right: 255 >> 1 = 127
+        lsr(0xFF, 0x1, 8, 0x7F),
+        // 8-bit logical shift right: 128 >> 1 = 64
+        lsr(0x80, 0x1, 8, 0x40),
+        // 8-bit logical shift right: 0 >> 1 = 0
+        lsr(0x0, 0x1, 8, 0x0),
+        // 16-bit logical shift right: 65535 >> 1 = 32767
+        lsr(0xFFFF, 0x1, 16, 0x7FFF),
+        // 16-bit logical shift right: 32768 >> 1 = 16384
+        lsr(0x8000, 0x1, 16, 0x4000),
+        // 32-bit logical shift right: 4294967295 >> 1 = 2147483647
+        lsr(0xFFFFFFFFL, 0x1, 32, 0x7FFFFFFF),
+        // 32-bit logical shift right: 2147483648 >> 1 = 1073741824
+        lsr(0x80000000L, 0x1, 32, 0x40000000),
+        // 64-bit logical shift right: 18446744073709551615 >> 1 = 9223372036854775807
+        lsr(0xFFFFFFFFFFFFFFFFL, 0x1, 64, 0x7FFFFFFFFFFFFFFFL),
+        // 64-bit logical shift right: 9223372036854775808 >> 1 = 4611686018427387904
+        lsr(0x8000000000000000L, 0x1, 64, 0x4000000000000000L)
+    );
+  }
+
+  private Function lsr(long a, long b, int size, long expected) {
+    return binaryTest(BuiltInTable.LSR, a, b, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> rolTests() {
+    return runTests(
+        // 1-bit rotate left: 1 << 0 (mod 1) = 1
+        rol(0x1, 0x0, 1, 0x1),
+        // 1-bit rotate left: 1 << 1 (mod 1) = 1
+        rol(0x1, 0x1, 1, 0x1),
+        // 2-bit rotate left: 1 << 1 (mod 2) = 2
+        rol(0x1, 0x1, 2, 0x2),
+        // 2-bit rotate left: 2 << 1 (mod 2) = 1
+        rol(0x2, 0x1, 2, 0x1),
+        // 8-bit rotate left: 0x80 << 1 (mod 8) = 0x1
+        rol(0x80, 0x1, 8, 0x1),
+        // 8-bit rotate left: 0x7F << 1 (mod 8) = 0xFE
+        rol(0x7F, 0x1, 8, 0xFE),
+        // 16-bit rotate left: 0x8000 << 1 (mod 16) = 0x1
+        rol(0x8000, 0x1, 16, 0x1),
+        // 16-bit rotate left: 0x7FFF << 1 (mod 16) = 0xFFFE
+        rol(0x7FFF, 0x1, 16, 0xFFFE),
+        // 32-bit rotate left: 0x80000000 << 1 (mod 32) = 0x1
+        rol(0x80000000L, 0x1, 32, 0x1),
+        // 32-bit rotate left: 0x7FFFFFFF << 1 (mod 32) = 0xFFFFFFFE
+        rol(0x7FFFFFFF, 0x1, 32, 0xFFFFFFFEL),
+        // 64-bit rotate left: 0x8000000000000000 << 1 (mod 64) = 0x1
+        rol(0x8000000000000000L, 0x1, 64, 0x1),
+        // 64-bit rotate left: 0x7FFFFFFFFFFFFFFF << 1 (mod 64) = 0xFFFFFFFFFFFFFFFE
+        rol(0x7FFFFFFFFFFFFFFFL, 0x1, 64, 0xFFFFFFFFFFFFFFFEL)
+    );
+  }
+
+  private Function rol(long a, long b, int size, long expected) {
+    return binaryTest(BuiltInTable.ROL, a, b, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> rorTests() {
+    return runTests(
+        // 1-bit rotate right: 1 >> 0 (mod 1) = 1
+        ror(0x1, 0x0, 1, 0x1),
+        // 1-bit rotate right: 1 >> 1 (mod 1) = 1
+        ror(0x1, 0x1, 1, 0x1),
+        // 2-bit rotate right: 1 >> 1 (mod 2) = 2
+        ror(0x1, 0x1, 2, 0x2),
+        // 2-bit rotate right: 2 >> 1 (mod 2) = 1
+        ror(0x2, 0x1, 2, 0x1),
+        // 8-bit rotate right: 0x80 >> 1 (mod 8) = 0x40
+        ror(0x80, 0x1, 8, 0x40),
+        // 8-bit rotate right: 0x01 >> 1 (mod 8) = 0x80
+        ror(0x01, 0x1, 8, 0x80),
+        // 16-bit rotate right: 0x8000 >> 1 (mod 16) = 0x4000
+        ror(0x8000, 0x1, 16, 0x4000),
+        // 16-bit rotate right: 0x0001 >> 1 (mod 16) = 0x8000
+        ror(0x0001, 0x1, 16, 0x8000),
+        // 32-bit rotate right: 0x80000000 >> 1 (mod 32) = 0x40000000
+        ror(0x80000000L, 0x1, 32, 0x40000000),
+        // 32-bit rotate right: 0x00000001 >> 1 (mod 32) = 0x80000000
+        ror(0x00000001, 0x1, 32, 0x80000000L),
+        // 64-bit rotate right: 0x8000000000000000 >> 1 (mod 64) = 0x4000000000000000
+        ror(0x8000000000000000L, 0x1, 64, 0x4000000000000000L),
+        // 64-bit rotate right: 0x0000000000000001 >> 1 (mod 64) = 0x8000000000000000
+        ror(0x0000000000000001L, 0x1, 64, 0x8000000000000000L)
+    );
+  }
+
+
+  private Function ror(long a, long b, int size, long expected) {
+    return binaryTest(BuiltInTable.ROR, a, b, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> rrxTests() {
+    return runTests(
+        // 1-bit rotate right with carry: 1 >> 1 + carry(0) = 0
+        rrx(0x1, 0x1, false, 1, 0x0),
+        // 1-bit rotate right with carry: 1 >> 1 + carry(1) = 1
+        rrx(0x1, 0x1, true, 1, 0x1),
+        // 2-bit rotate right with carry: 2 >> 1 + carry(0) = 1
+        rrx(0x2, 0x1, false, 2, 0x1),
+        // 2-bit rotate right with carry: 2 >> 1 + carry(1) = 3
+        rrx(0x2, 0x1, true, 2, 0x3),
+        // 8-bit rotate right with carry: 0x80 >> 1 + carry(0) = 0x40
+        rrx(0x80, 0x1, false, 8, 0x40),
+        // 8-bit rotate right with carry: 0x80 >> 1 + carry(1) = 0xC0
+        rrx(0x80, 0x1, true, 8, 0xC0),
+        // 8-bit rotate right with carry: 0x01 >> 1 + carry(1) = 0x80
+        rrx(0x01, 0x1, true, 8, 0x80),
+        // 16-bit rotate right with carry: 0x8000 >> 1 + carry(0) = 0x4000
+        rrx(0x8000, 0x1, false, 16, 0x4000),
+        // 16-bit rotate right with carry: 0x8000 >> 1 + carry(1) = 0xC000
+        rrx(0x8000, 0x1, true, 16, 0xC000),
+        // 32-bit rotate right with carry: 0x80000000 >> 1 + carry(0) = 0x40000000
+        rrx(0x80000000L, 0x1, false, 32, 0x40000000),
+        // 32-bit rotate right with carry: 0x80000000 >> 1 + carry(1) = 0xC0000000
+        rrx(0x80000000L, 0x1, true, 32, 0xC0000000L),
+        // 64-bit rotate right with carry: 0x8000000000000000 >> 1 + carry(0) = 0x4000000000000000
+        rrx(0x8000000000000000L, 0x1, false, 64, 0x4000000000000000L),
+        // 64-bit rotate right with carry: 0x8000000000000000 >> 1 + carry(1) = 0xC000000000000000
+        rrx(0x8000000000000000L, 0x1, true, 64, 0xC000000000000000L)
+    );
+  }
+
+  private Function rrx(long a, long b, boolean carry, int size, long expected) {
+    a = norm(a, size);
+    b = norm(b, size);
+    expected = norm(expected, size);
+    var builtIn = BuiltInTable.RRX;
+    var name = builtIn.name().toLowerCase() + "_" + counter++;
+    return genericFunc(name, binaryOp(BuiltInTable.EQU,
+        Type.bool(),
+        new BuiltInCall(builtIn,
+            new NodeList<>(
+                GraphUtils.bitsNode(a, size),
+                GraphUtils.bitsNode(b, size),
+                GraphUtils.bitsNode(carry ? 1 : 0, 1)
+            ),
+            Type.bits(size)
+        ),
+        bitsNode(expected, size)));
+  }
+
+  /// BIT COUNTING OPERATIONS ///
+
+  @TestFactory
+  Stream<DynamicTest> cobTests() {
+    return runTests(
+        // 1-bit count ones: 1 has 1 one
+        cob(0x1, 1, 0x1),
+        // 1-bit count ones: 0 has 0 ones
+        cob(0x0, 1, 0x0),
+        // 2-bit count ones: 3 (0b11) has 2 ones
+        cob(0x3, 2, 0x2),
+        // 2-bit count ones: 2 (0b10) has 1 one
+        cob(0x2, 2, 0x1),
+        // 8-bit count ones: 255 (0xFF) has 8 ones
+        cob(0xFF, 8, 0x8),
+        // 8-bit count ones: 128 (0x80) has 1 one
+        cob(0x80, 8, 0x1),
+        // 8-bit count ones: 0 has 0 ones
+        cob(0x00, 8, 0x0),
+        // 16-bit count ones: 65535 (0xFFFF) has 16 ones
+        cob(0xFFFF, 16, 0x10),
+        // 16-bit count ones: 32768 (0x8000) has 1 one
+        cob(0x8000, 16, 0x1),
+        // 32-bit count ones: 4294967295 (0xFFFFFFFF) has 32 ones
+        cob(0xFFFFFFFFL, 32, 0x20),
+        // 32-bit count ones: 2147483648 (0x80000000) has 1 one
+        cob(0x80000000L, 32, 0x1),
+        // 64-bit count ones: 18446744073709551615 (0xFFFFFFFFFFFFFFFF) has 64 ones
+        cob(0xFFFFFFFFFFFFFFFFL, 64, 0x40),
+        // 64-bit count ones: 9223372036854775808 (0x8000000000000000) has 1 one
+        cob(0x8000000000000000L, 64, 0x1),
+        // 64-bit count ones: 0 has 0 ones
+        cob(0x0000000000000000L, 64, 0x0)
+    );
+  }
+
+  private Function cob(long a, int size, long expected) {
+    return unaryTest(BuiltInTable.COB, a, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> czbTests() {
+    return runTests(
+        // 1-bit count zeros: 1 has 0 zeros
+        czb(0x1, 1, 0x0),
+        // 1-bit count zeros: 0 has 1 zero
+        czb(0x0, 1, 0x1),
+        // 2-bit count zeros: 3 (0b11) has 0 zeros
+        czb(0x3, 2, 0x0),
+        // 2-bit count zeros: 2 (0b10) has 1 zero
+        czb(0x2, 2, 0x1),
+        // 8-bit count zeros: 255 (0xFF) has 0 zeros
+        czb(0xFF, 8, 0x0),
+        // 8-bit count zeros: 128 (0x80) has 7 zeros
+        czb(0x80, 8, 0x7),
+        // 8-bit count zeros: 0 has 8 zeros
+        czb(0x00, 8, 0x8),
+        // 16-bit count zeros: 65535 (0xFFFF) has 0 zeros
+        czb(0xFFFF, 16, 0x0),
+        // 16-bit count zeros: 32768 (0x8000) has 15 zeros
+        czb(0x8000, 16, 0xF),
+        // 32-bit count zeros: 4294967295 (0xFFFFFFFF) has 0 zeros
+        czb(0xFFFFFFFFL, 32, 0x0),
+        // 32-bit count zeros: 2147483648 (0x80000000) has 31 zeros
+        czb(0x80000000L, 32, 0x1F),
+        // 64-bit count zeros: 18446744073709551615 (0xFFFFFFFFFFFFFFFF) has 0 zeros
+        czb(0xFFFFFFFFFFFFFFFFL, 64, 0x0),
+        // 64-bit count zeros: 9223372036854775808 (0x8000000000000000) has 63 zeros
+        czb(0x8000000000000000L, 64, 0x3F),
+        // 64-bit count zeros: 0 has 64 zeros
+        czb(0x0000000000000000L, 64, 0x40)
+    );
+  }
+
+  private Function czb(long a, int size, long expected) {
+    return unaryTest(BuiltInTable.CZB, a, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> clzTests() {
+    return runTests(
+        // 1-bit count leading zeros: 0 has 1 leading zero
+        clz(0x0, 1, 0x1),
+        // 1-bit count leading zeros: 1 has 0 leading zeros
+        clz(0x1, 1, 0x0),
+        // 2-bit count leading zeros: 0 (0b00) has 2 leading zeros
+        clz(0x0, 2, 0x2),
+        // 2-bit count leading zeros: 1 (0b01) has 1 leading zero
+        clz(0x1, 2, 0x1),
+        // 2-bit count leading zeros: 2 (0b10) has 0 leading zeros
+        clz(0x2, 2, 0x0),
+        // 8-bit count leading zeros: 255 (0xFF) has 0 leading zeros
+        clz(0xFF, 8, 0x0),
+        // 8-bit count leading zeros: 128 (0x80) has 0 leading zeros
+        clz(0x80, 8, 0x0),
+        // 8-bit count leading zeros: 1 (0x01) has 7 leading zeros
+        clz(0x01, 8, 0x7),
+        // 8-bit count leading zeros: 0 has 8 leading zeros
+        clz(0x00, 8, 0x8),
+        // 16-bit count leading zeros: 32768 (0x8000) has 0 leading zeros
+        clz(0x8000, 16, 0x0),
+        // 16-bit count leading zeros: 1 (0x0001) has 15 leading zeros
+        clz(0x0001, 16, 0xF),
+        // 16-bit count leading zeros: 0 has 16 leading zeros
+        clz(0x0000, 16, 0x10),
+        // 32-bit count leading zeros: 2147483648 (0x80000000) has 0 leading zeros
+        clz(0x80000000L, 32, 0x0),
+        // 32-bit count leading zeros: 1 (0x00000001) has 31 leading zeros
+        clz(0x00000001, 32, 0x1F),
+        // 32-bit count leading zeros: 0 has 32 leading zeros
+        clz(0x00000000, 32, 0x20),
+        // 64-bit count leading zeros: 9223372036854775808 (0x8000000000000000) has 0 leading zeros
+        clz(0x8000000000000000L, 64, 0x0),
+        // 64-bit count leading zeros: 1 (0x0000000000000001) has 63 leading zeros
+        clz(0x0000000000000001L, 64, 0x3F),
+        // 64-bit count leading zeros: 0 has 64 leading zeros
+        clz(0x0000000000000000L, 64, 0x40)
+    );
+  }
+
+  private Function clz(long a, int size, long expected) {
+    return unaryTest(BuiltInTable.CLZ, a, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> cloTests() {
+    return runTests(
+        // 1-bit count leading ones: 0 has 0 leading ones
+        clo(0x0, 1, 0x0),
+        // 1-bit count leading ones: 1 has 1 leading one
+        clo(0x1, 1, 0x1),
+        // 2-bit count leading ones: 0b00 has 0 leading ones
+        clo(0x0, 2, 0x0),
+        // 2-bit count leading ones: 0b01 has 0 leading ones
+        clo(0x1, 2, 0x0),
+        // 2-bit count leading ones: 0b11 has 2 leading ones
+        clo(0x3, 2, 0x2),
+        // 8-bit count leading ones: 0xFF has 8 leading ones
+        clo(0xFF, 8, 0x8),
+        // 8-bit count leading ones: 0x80 has 1 leading one
+        clo(0x80, 8, 0x1),
+        // 8-bit count leading ones: 0x7F has 0 leading ones
+        clo(0x7F, 8, 0x0),
+        // 16-bit count leading ones: 0xFFFF has 16 leading ones
+        clo(0xFFFF, 16, 0x10),
+        // 16-bit count leading ones: 0x8000 has 1 leading one
+        clo(0x8000, 16, 0x1),
+        // 16-bit count leading ones: 0x7FFF has 0 leading ones
+        clo(0x7FFF, 16, 0x0),
+        // 32-bit count leading ones: 0xFFFFFFFF has 32 leading ones
+        clo(0xFFFFFFFFL, 32, 0x20),
+        // 32-bit count leading ones: 0x80000000 has 1 leading one
+        clo(0x80000000L, 32, 0x1),
+        // 32-bit count leading ones: 0x7FFFFFFF has 0 leading ones
+        clo(0x7FFFFFFF, 32, 0x0),
+        // 64-bit count leading ones: 0xFFFFFFFFFFFFFFFF has 64 leading ones
+        clo(0xFFFFFFFFFFFFFFFFL, 64, 0x40),
+        // 64-bit count leading ones: 0x8000000000000000 has 1 leading one
+        clo(0x8000000000000000L, 64, 0x1),
+        // 64-bit count leading ones: 0x7FFFFFFFFFFFFFFF has 0 leading ones
+        clo(0x7FFFFFFFFFFFFFFFL, 64, 0x0)
+    );
+  }
+
+  private Function clo(long a, int size, long expected) {
+    return unaryTest(BuiltInTable.CLO, a, size, expected);
+  }
+
+  @TestFactory
+  Stream<DynamicTest> clsTests() {
+    return runTests(
+        // 1-bit count leading sign bits: 0 has 0 leading sign bits (same as MSB)
+        cls(0x0, 1, 0x0),
+        // 1-bit count leading sign bits: 1 has 0 leading sign bits (same as MSB)
+        cls(0x1, 1, 0x0),
+        // 2-bit count leading sign bits: 0b00 has 1 leading sign bit
+        cls(0x0, 2, 0x1),
+        // 2-bit count leading sign bits: 0b01 has 0 leading sign bits
+        cls(0x1, 2, 0x0),
+        // 2-bit count leading sign bits: 0b11 has 1 leading sign bit
+        cls(0x3, 2, 0x1),
+        // 2-bit count leading sign bits: 0b10 has 0 leading sign bits
+        cls(0x2, 2, 0x0),
+        // 8-bit count leading sign bits: 0xFF (signed -1) has 7 leading sign bits
+        cls(0xFF, 8, 0x7),
+        cls(0x80, 8, 0x0),
+        // 8-bit count leading sign bits: 0x7F (signed 127) has 0 leading sign bits
+        cls(0x7F, 8, 0x0),
+        cls(0x7ffa, 15, 11),
+        // 16-bit count leading sign bits: 0xFFFF (signed -1) has 15 leading sign bits
+        cls(0xFFFF, 16, 0xF),
+        // 16-bit count leading sign bits: 0x8000 (signed -32768) has 15 leading sign bits
+        cls(0x8000, 16, 0),
+        // 16-bit count leading sign bits: 0x7FFF (signed 32767) has 0 leading sign bits
+        cls(0x7FFF, 16, 0x0),
+        // 32-bit count leading sign bits: 0xFFFFFFFF (signed -1) has 31 leading sign bits
+        cls(0xFFFFFFFFL, 32, 0x1F),
+        // 32-bit count leading sign bits: 0x80000000 (signed -2147483648) has 31 leading sign bits
+        cls(0x80000000L, 32, 0x00),
+        // 32-bit count leading sign bits: 0x7FFFFFFF (signed 2147483647) has 0 leading sign bits
+        cls(0x7FFFFFFF, 32, 0x0),
+        // 64-bit count leading sign bits: 0xFFFFFFFFFFFFFFFF (signed -1) has 63 leading sign bits
+        cls(0xFFFFFFFFFFFFFFFFL, 64, 0x3F),
+        // 64-bit count leading sign bits: 0x8000000000000000 (signed -9223372036854775808) has 63 leading sign bits
+        cls(0x8000000000000000L, 64, 0x0),
+        // 64-bit count leading sign bits: 0x7FFFFFFFFFFFFFFF (signed 9223372036854775807) has 0 leading sign bits
+        cls(0x7FFFFFFFFFFFFFFFL, 64, 0x0)
+    );
+  }
+
+  private Function cls(long a, int size, long expected) {
+    return unaryTest(BuiltInTable.CLS, a, size, expected);
+  }
+
+  /// TEST HELPER FUNCTIONS ///
 
   private Function unaryTest(BuiltInTable.BuiltIn builtIn, long val, int size, long expected) {
     val = norm(val, size);

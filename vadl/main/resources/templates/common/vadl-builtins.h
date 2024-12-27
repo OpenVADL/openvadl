@@ -550,9 +550,11 @@ static inline Bits VADL_ror(Bits a, Width aw, Bits b, Width bw) {
  *    rrx(a : Bits<N>, b : UInt<M>, c : Bool) => Bits<N>
  *    Rotate-right-extend by b bits, each step inserting 'c' from the left.
  *---------------------------------------------------------------------*/
-static inline Bits VADL_rrx(Bits a, Width aw, Bits b, Width bw, Bits c) {
+static inline Bits VADL_rrx(Bits a, Width aw, Bits b, Width bw, Bits c, Width cw) {
     Bits x = VADL_uextract(a, aw);
     Bits s = VADL_uextract(b, bw);
+    // normalize c to 0 or 1
+    c = c != 0;
 
     assert(aw > 0 && "Can't rotate 0 bits");
     assert(aw <= 64 && "Max 64 bits supported");
