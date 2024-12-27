@@ -1168,8 +1168,8 @@ public class BuiltinCTest extends DockerExecutionTest {
         asr(0x0, 0x1, 1, 0x0),
         // 1-bit arithmetic shift right: -1 >> 1 = -1 (preserves sign)
         asr(-0x1, 0x1, 1, -0x1),
-        // 2-bit arithmetic shift right: 2 >> 1 = 1
-        asr(0x2, 0x1, 2, 0x1),
+        // 2-bit arithmetic shift right: 2 >> 1 = 3
+        asr(0x2, 0x1, 2, 0x3),
         // 2-bit arithmetic shift right: -2 >> 1 = -1
         asr(-0x2, 0x1, 2, -0x1),
         // 8-bit arithmetic shift right: 127 >> 1 = 63
