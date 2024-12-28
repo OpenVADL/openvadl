@@ -251,4 +251,140 @@ public class TypecheckerTest {
     Assertions.assertEquals(BigInteger.valueOf(0),
         finder.getConstantValue(ast, "c").value());
   }
+
+  @Test
+  public void binaryOperationsOnConstantTypes() {
+    var prog = """
+        constant a = 51                 // 0b110011
+        constant b = 42                 // 0b101010
+        
+        constant c = true && true       // true
+        constant d = true || false      // true
+        constant e = a | b              // 0b111011 = 59
+        constant f = a & b              // 0b100010 = 34
+        constant g = a ^ b              // 0b011001 = 25
+        constant h = a = b              // false
+        constant i = a != b             // true
+        constant j = a >= b             // true
+        constant k = a > b              // true
+        constant l = a < b              // false
+        constant m = a <= b             // false
+        constant n = b << 2             // 0b10101000 = 168
+        constant o = b >> 2             // 0b1010 = 10
+        constant p = a + b              // 93
+        constant q = a - b              // 9
+        constant r = a * b              // 2142
+        constant s = a / 5              // 5
+        constant t = b % 20             // 2
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+
+    var finder = new AstFinder();
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "c"));
+    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "c").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "d"));
+    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "d").value());
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(59)),
+        finder.getConstantType(ast, "e"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(34)),
+        finder.getConstantType(ast, "f"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(25)),
+        finder.getConstantType(ast, "g"));
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "h"));
+    Assertions.assertEquals(BigInteger.ZERO, finder.getConstantValue(ast, "h").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "i"));
+    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "i").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "j"));
+    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "j").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "k"));
+    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "k").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "l"));
+    Assertions.assertEquals(BigInteger.ZERO, finder.getConstantValue(ast, "l").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "m"));
+    Assertions.assertEquals(BigInteger.ZERO, finder.getConstantValue(ast, "m").value());
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(168)),
+        finder.getConstantType(ast, "n"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(10)),
+        finder.getConstantType(ast, "o"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(93)),
+        finder.getConstantType(ast, "p"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(9)),
+        finder.getConstantType(ast, "q"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(2142)),
+        finder.getConstantType(ast, "r"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(10)),
+        finder.getConstantType(ast, "s"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(2)),
+        finder.getConstantType(ast, "t"));
+  }
+
+  @Test
+  public void binaryOperationsOnDataTypes() {
+    var prog = """
+        constant a: Bits<32> = 51       // 0b110011
+        constant b: Bits<32> = 42       // 0b101010
+        
+        constant c = true && true       // true
+        constant d = true || false      // true
+        //constant e = a | b              // 0b111011 = 59
+        //constant f = a & b              // 0b100010 = 34
+        //constant g = a ^ b              // 0b011001 = 25
+        //constant h = a = b              // false
+        //constant i = a != b             // true
+        constant j = a >= b             // true
+        constant k = a > b              // true
+        constant l = a < b              // false
+        constant m = a <= b             // false
+        constant n = b << 2 as Bits<32>             // 0b10101000 = 168
+        constant o = b >> 2  as Bits<32>            // 0b1010 = 10
+        constant p = a + b              // 93
+        constant q = a - b              // 9
+        constant r = a * b              // 2142
+        constant s = a / 5  as Bits<32>             // 5
+        constant t = b % 20  as Bits<32>            // 2
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+
+    var finder = new AstFinder();
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "c"));
+    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "c").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "d"));
+    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "d").value());
+//    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "e"));
+//    Assertions.assertEquals(BigInteger.valueOf(59), finder.getConstantValue(ast, "e").value());
+//    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "f"));
+//    Assertions.assertEquals(BigInteger.valueOf(34), finder.getConstantValue(ast, "f").value());
+//    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "g"));
+//    Assertions.assertEquals(BigInteger.valueOf(25), finder.getConstantValue(ast, "g").value());
+//    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "h"));
+//    Assertions.assertEquals(BigInteger.ZERO, finder.getConstantValue(ast, "h").value());
+//    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "i"));
+//    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "i").value());
+//    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "j"));
+//    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "j").value());
+//    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "k"));
+//    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "k").value());
+//    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "l"));
+//    Assertions.assertEquals(BigInteger.ZERO, finder.getConstantValue(ast, "l").value());
+//    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "m"));
+//    Assertions.assertEquals(BigInteger.ZERO, finder.getConstantValue(ast, "m").value());
+//    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "n"));
+//    Assertions.assertEquals(BigInteger.valueOf(168), finder.getConstantValue(ast, "n").value());
+//    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "o"));
+//    Assertions.assertEquals(BigInteger.valueOf(10), finder.getConstantValue(ast, "o").value());
+    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "p"));
+    Assertions.assertEquals(BigInteger.valueOf(93), finder.getConstantValue(ast, "p").value());
+//    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "q"));
+//    Assertions.assertEquals(BigInteger.valueOf(9), finder.getConstantValue(ast, "q").value());
+    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "r"));
+    Assertions.assertEquals(BigInteger.valueOf(2142), finder.getConstantValue(ast, "r").value());
+    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "s"));
+    Assertions.assertEquals(BigInteger.valueOf(10), finder.getConstantValue(ast, "s").value());
+//    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "t"));
+//    Assertions.assertEquals(BigInteger.valueOf(2), finder.getConstantValue(ast, "t").value());
+  }
 }

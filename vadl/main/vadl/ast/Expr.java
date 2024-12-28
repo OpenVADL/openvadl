@@ -154,6 +154,11 @@ class Operator {
     this.precedence = precedence;
   }
 
+  @Override
+  public String toString() {
+    return symbol;
+  }
+
   private static final int precLogicalOr = 0;
   private static final int precLogicalAnd = precLogicalOr + 1;
   private static final int precIn = precLogicalAnd + 1;
@@ -166,142 +171,41 @@ class Operator {
   private static final int precTerm = precShift + 1;
   private static final int precFactor = precTerm + 1;
 
-  private static final Operator opLogicalOr = new Operator("||", precLogicalOr);
-  private static final Operator opLogicalAnd = new Operator("&&", precLogicalAnd);
-  private static final Operator opOr = new Operator("|", precOr);
-  private static final Operator opXor = new Operator("^", precXor);
-  private static final Operator opAnd = new Operator("&", precAnd);
-  private static final Operator opEqual = new Operator("=", precEquality);
-  private static final Operator opNotEqual = new Operator("!=", precEquality);
-  private static final Operator opGreaterEqual = new Operator(">=", precComparison);
-  private static final Operator opGreater = new Operator(">", precComparison);
-  private static final Operator opLessEqual = new Operator("<=", precComparison);
-  private static final Operator opLess = new Operator("<", precComparison);
-  private static final Operator opRotateRight = new Operator("<>>", precShift);
-  private static final Operator opRotateLeft = new Operator("<<>", precShift);
-  private static final Operator opShiftRight = new Operator(">>", precShift);
-  private static final Operator opShiftLeft = new Operator("<<", precShift);
-  private static final Operator opAdd = new Operator("+", precTerm);
-  private static final Operator opSubtract = new Operator("-", precTerm);
-  private static final Operator opSatAdd = new Operator("+|", precTerm);
-  private static final Operator opSatSubtract = new Operator("-|", precTerm);
-  private static final Operator opMultiply = new Operator("*", precFactor);
-  private static final Operator opDivide = new Operator("/", precFactor);
-  private static final Operator opModulo = new Operator("%", precFactor);
-  private static final Operator opLongMultiply = new Operator("*#", precFactor);
-  private static final Operator opIn = new Operator("in", precIn);
-  private static final Operator opNotIn = new Operator("!in", precIn);
-  private static final Operator opElemOf = new Operator("∈", precIn);
-  private static final Operator opNotElemOf = new Operator("∉", precIn);
+  public static final Operator LogicalOr = new Operator("||", precLogicalOr);
+  public static final Operator LogicalAnd = new Operator("&&", precLogicalAnd);
+  public static final Operator Or = new Operator("|", precOr);
+  public static final Operator Xor = new Operator("^", precXor);
+  public static final Operator And = new Operator("&", precAnd);
+  public static final Operator Equal = new Operator("=", precEquality);
+  public static final Operator NotEqual = new Operator("!=", precEquality);
+  public static final Operator GreaterEqual = new Operator(">=", precComparison);
+  public static final Operator Greater = new Operator(">", precComparison);
+  public static final Operator LessEqual = new Operator("<=", precComparison);
+  public static final Operator Less = new Operator("<", precComparison);
+  public static final Operator RotateRight = new Operator("<>>", precShift);
+  public static final Operator RotateLeft = new Operator("<<>", precShift);
+  public static final Operator ShiftRight = new Operator(">>", precShift);
+  public static final Operator ShiftLeft = new Operator("<<", precShift);
+  public static final Operator Add = new Operator("+", precTerm);
+  public static final Operator Subtract = new Operator("-", precTerm);
+  public static final Operator SaturatedAdd = new Operator("+|", precTerm);
+  public static final Operator SaturatedSubtract = new Operator("-|", precTerm);
+  public static final Operator Multiply = new Operator("*", precFactor);
+  public static final Operator Divide = new Operator("/", precFactor);
+  public static final Operator Modulo = new Operator("%", precFactor);
+  public static final Operator LongMultiply = new Operator("*#", precFactor);
+  public static final Operator In = new Operator("in", precIn);
+  public static final Operator NotIn = new Operator("!in", precIn);
+  public static final Operator ElementOf = new Operator("∈", precIn);
+  public static final Operator NotElementOf = new Operator("∉", precIn);
 
-  static Operator LogicalOr() {
-    return opLogicalOr;
-  }
-
-  static Operator LogicalAnd() {
-    return opLogicalAnd;
-  }
-
-  static Operator Or() {
-    return opOr;
-  }
-
-  static Operator Xor() {
-    return opXor;
-  }
-
-  static Operator And() {
-    return opAnd;
-  }
-
-  static Operator Equal() {
-    return opEqual;
-  }
-
-  static Operator NotEqual() {
-    return opNotEqual;
-  }
-
-  static Operator GreaterEqual() {
-    return opGreaterEqual;
-  }
-
-  static Operator Greater() {
-    return opGreater;
-  }
-
-  static Operator LessEqual() {
-    return opLessEqual;
-  }
-
-  static Operator Less() {
-    return opLess;
-  }
-
-
-  static Operator RotateRight() {
-    return opRotateRight;
-  }
-
-  static Operator RotateLeft() {
-    return opRotateLeft;
-  }
-
-  static Operator ShiftRight() {
-    return opShiftRight;
-  }
-
-  static Operator ShiftLeft() {
-    return opShiftLeft;
-  }
-
-  static Operator Add() {
-    return opAdd;
-  }
-
-  static Operator Subtract() {
-    return opSubtract;
-  }
-
-  static Operator SaturatedAdd() {
-    return opSatAdd;
-  }
-
-  static Operator SaturatedSubtract() {
-    return opSatSubtract;
-  }
-
-  static Operator Multiply() {
-    return opMultiply;
-  }
-
-  static Operator Divide() {
-    return opDivide;
-  }
-
-  static Operator Modulo() {
-    return opModulo;
-  }
-
-  static Operator LongMultiply() {
-    return opLongMultiply;
-  }
-
-  static Operator In() {
-    return opIn;
-  }
-
-  static Operator NotIn() {
-    return opNotIn;
-  }
-
-  static Operator ElementOf() {
-    return opElemOf;
-  }
-
-  static Operator NotElementOf() {
-    return opNotElemOf;
-  }
+  public static final List<Operator> logicalComparisions = List.of(LogicalOr, LogicalAnd);
+  public static final List<Operator> arithmeticOperators =
+      List.of(Or, Xor, And, RotateRight, RotateLeft, ShiftLeft, ShiftRight, Add, Subtract, Multiply,
+          Divide, Modulo, LongMultiply);
+  public static final List<Operator> artihmeticComparisons =
+      List.of(Equal, NotEqual, GreaterEqual, Greater, LessEqual, Less
+      );
 }
 
 enum UnaryOperator {

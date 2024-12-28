@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
+import vadl.types.BoolType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -252,8 +253,8 @@ public class TypeChecker
 
   @Override
   public Void visit(ModelDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw new IllegalStateException(
+        "The type-checker should never see a %s".formatted(definition.getClass().getSimpleName()));
   }
 
   @Override
@@ -465,7 +466,88 @@ public class TypeChecker
 
   @Override
   public Void visit(BinaryExpr expr) {
-    throwUnimplemented(expr);
+    expr.left.accept(this);
+    expr.right.accept(this);
+    var leftTyp = Objects.requireNonNull(expr.left.type);
+    var rightTyp = Objects.requireNonNull(expr.right.type);
+
+    // Verify input types
+    if (Operator.logicalComparisions.contains(expr.operator())) {
+      // Both sides must be boolean
+      if (!(leftTyp instanceof BoolType)) {
+        throw Diagnostic.error("Type Missmatch", expr)
+            .locationDescription(expr, "Expected an Boolean here but the left side was an `%s`",
+                leftTyp)
+            .description("The `%s` operator only works on booleans.", expr.operator())
+            .build();
+      }
+      if (!(rightTyp instanceof BoolType)) {
+        throw Diagnostic.error("Type Missmatch", expr)
+            .locationDescription(expr, "Expected an Boolean here but the right was an `%s`",
+                rightTyp)
+            .description("The `%s` operator only works on booleans.", expr.operator())
+            .build();
+      }
+    } else if (Operator.arithmeticOperators.contains(expr.operator()) ||
+        Operator.artihmeticComparisons.contains(expr.operator())) {
+      if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
+        throw Diagnostic.error("Type Missmatch", expr)
+            .locationDescription(expr, "Expected a number here but the left side was an `%s`",
+                leftTyp)
+            .description("The `%s` operator only works on numbers.", expr.operator())
+            .build();
+      }
+      if (!(rightTyp instanceof BitsType) && !(rightTyp instanceof ConstantType)) {
+        throw Diagnostic.error("Type Missmatch", expr)
+            .locationDescription(expr, "Expected a number here but the right side was an `%s`",
+                rightTyp)
+            .description("The `%s` operator only works on numbers.", expr.operator())
+            .build();
+      }
+    } else {
+      throw new RuntimeException("Don't handle operator " + expr.operator());
+    }
+
+    // Const types are a special case
+    if (leftTyp instanceof ConstantType && rightTyp instanceof ConstantType) {
+      var result = constantEvaluator.eval(expr);
+      expr.type = result.type();
+      return null;
+    }
+
+    // See if we need to insert an implicit cast
+    if (leftTyp.equals(rightTyp)) {
+      // Do nothing on purpose
+    } else if (canImplicitCast(leftTyp, rightTyp)) {
+      // FIXME: Somehow we need to convert a type into a typeliteral.
+      //expr.left = new CastExpr(expr.left, expr.right.type);
+      throw new RuntimeException("Casting not yet implemented");
+
+    } else if (canImplicitCast(rightTyp, leftTyp)) {
+      // FIXME: Somehow we need to convert a type into a typeliteral.
+      //expr.left = new CastExpr(expr.left, expr.right.type);
+      throw new RuntimeException("Casting not yet implemented");
+
+    } else {
+      throw Diagnostic.error("Type Missmatch", expr)
+          .locationNote(expr, "The left type is %s while right is %s", leftTyp, rightTyp)
+          .description(
+              "Both types on the left and right side of an binary operation should be equal.")
+          .build();
+    }
+
+    // Output type depends on type of operation
+    if (Operator.artihmeticComparisons.contains(expr.operator())) {
+      expr.type = Type.bool();
+    } else if (Operator.arithmeticOperators.contains(expr.operator())) {
+      // Note: No that isn't the same as leftTyp
+      expr.type = expr.left.type;
+    } else if (Operator.logicalComparisions.contains(expr.operator())) {
+      expr.type = Type.bool();
+    } else {
+      throw new RuntimeException("Don't yet know how to handle " + expr.operator);
+    }
+
     return null;
   }
 
@@ -499,20 +581,20 @@ public class TypeChecker
 
   @Override
   public Void visit(StringLiteral expr) {
-    throwUnimplemented(expr);
+    expr.type = Type.string();
     return null;
   }
 
   @Override
   public Void visit(PlaceholderExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw new IllegalStateException(
+        "The typechecker should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
   public Void visit(MacroInstanceExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw new IllegalStateException(
+        "The typechecker should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
@@ -584,12 +666,19 @@ public class TypeChecker
     var innerType = Objects.requireNonNull(expr.operand.type);
 
     switch (expr.unOp().operator) {
-      // FIXME: doesn't work for sint and const as expected.
-      case NEGATIVE, COMPLEMENT -> {
+      case NEGATIVE -> {
         if (!(innerType instanceof BitsType) && !(innerType instanceof ConstantType)) {
           throw Diagnostic
               .error("Type Mismatch", expr)
               .description("Expected a numerical type but got `%s`", innerType)
+              .build();
+        }
+      }
+      case COMPLEMENT -> {
+        if (!(innerType instanceof BitsType)) {
+          throw Diagnostic
+              .error("Type Mismatch", expr)
+              .description("Expected a numerical type with fixed bit-width but got `%s`", innerType)
               .build();
         }
       }
