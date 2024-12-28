@@ -33,9 +33,9 @@ import vadl.viam.graph.dependency.ReadRegNode;
 )
 public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpressions {
 
-  private Function function;
-  private StringBuilder builder;
-  private CNodeContext context;
+  protected final Function function;
+  protected final CNodeContext context;
+  protected final StringBuilder builder;
 
   /**
    * Creates a new code generator for the specified function.
@@ -78,6 +78,16 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
    * @return the generated C++ function code
    */
   public String genFunctionDefinition() {
+    var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
+    context.wr(genFunctionSignature())
+        .wr(" {\n")
+        .wr("\treturn ")
+        .gen(returnNode.value())
+        .wr(";\n}");
+    return builder.toString();
+  }
+
+  public String genFunctionSignature() {
     var returnType = function.returnType().asDataType().fittingCppType();
     var cppArgs = Stream.of(function.parameters())
         .map(p -> Pair.of(p.simpleName(), requireNonNull(p.type().asDataType().fittingCppType())))
@@ -86,19 +96,13 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
     function.ensure(returnType != null, "No fitting Cpp type found for return type %s", returnType);
     function.ensure(function.behavior().isPureFunction(), "Function is not pure.");
 
-    var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
     var cppArgsString = cppArgs.stream().map(
         s -> CppTypeMap.getCppTypeNameByVadlType(s.right())
             + " " + s.left()
     ).collect(Collectors.joining(", "));
 
-    context.wr(CppTypeMap.getCppTypeNameByVadlType(returnType))
-        .wr(" %s(%s) {\n", function.simpleName(), cppArgsString)
-        .wr("\treturn ")
-        .gen(returnNode.value())
-        .wr(";\n}");
-
-    return builder.toString();
+    return CppTypeMap.getCppTypeNameByVadlType(returnType)
+        + " %s(%s)".formatted(function.simpleName(), cppArgsString);
   }
 
 }

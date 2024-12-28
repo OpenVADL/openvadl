@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.decode.dto.ArgumentSet;
 import vadl.iss.passes.decode.dto.Field;
