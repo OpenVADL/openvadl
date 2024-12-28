@@ -277,6 +277,13 @@ static inline Bits VADL_sdiv(Bits a, Width aw, Bits b, Width bw) {
     if (y == 0) {
         return 0ULL;
     }
+
+    if (x == INT64_MIN && y == -1) {
+        // Return the minimum value, as dividing it by -1 would overflow
+        // --> prevents exception on x86 for Bits<64>
+        return VADL_uextract((Bits)INT64_MIN, aw);
+    }
+
     SInt quotient = x / y;
     return VADL_uextract((Bits) quotient, aw);
 }
