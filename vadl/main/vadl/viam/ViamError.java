@@ -178,14 +178,6 @@ public class ViamError extends RuntimeException {
   }
 
   /**
-   * Unwrap an object because it is known that a value is present.
-   */
-  public static <T> T unwrap(Optional<T> obj) {
-    ensure(obj.isPresent(), "unwrapped");
-    return obj.get();
-  }
-
-  /**
    * Ensures that a given object is present.
    * with the provided format string and arguments.
    *
@@ -198,6 +190,14 @@ public class ViamError extends RuntimeException {
   public static <T> T ensurePresent(Optional<T> obj,
                                     Supplier<DiagnosticBuilder> diagnosticSupplier) {
     ensure(obj.isPresent(), diagnosticSupplier);
+    return obj.get();
+  }
+
+  /**
+   * Unwrap an object because it is known that a value is present.
+   */
+  public static <T> T unwrap(Optional<T> obj) {
+    ensure(obj.isPresent(), "unwrapped");
     return obj.get();
   }
 

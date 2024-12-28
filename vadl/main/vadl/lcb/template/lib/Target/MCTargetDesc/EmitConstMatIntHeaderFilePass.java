@@ -55,11 +55,11 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var labelledInstructions =
+    final var labelledInstructions =
         ensureNonNull(
             (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
                 IsaMachineInstructionMatchingPass.class), "labelling must be present");
-    var addi =
+    final var addi =
         ensurePresent(
             Objects.requireNonNull(labelledInstructions)
                 .getOrDefault(MachineInstructionLabel.ADDI_64,
@@ -68,7 +68,7 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
                 .stream().findFirst(),
             () -> Diagnostic.error("Expected an instruction with addition of immediate",
                 specification.sourceLocation()));
-    var slli =
+    final var slli =
         ensurePresent(
             Objects.requireNonNull(labelledInstructions)
                 .getOrDefault(MachineInstructionLabel.SLLI,
@@ -79,10 +79,10 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
     var immediateDetection =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults
             .lastResultOf(IdentifyFieldUsagePass.class);
-    var immediateAddiSize = immediateSize(immediateDetection, addi);
-    var largestPossibleValueAddi = (long) (Math.pow(2, immediateAddiSize) / 2) - 1;
-    var smallestPossibleValueAddi = (long) (Math.pow(2, immediateAddiSize) / -2);
-    var lui =
+    final var immediateAddiSize = immediateSize(immediateDetection, addi);
+    final var largestPossibleValueAddi = (long) (Math.pow(2, immediateAddiSize) / 2) - 1;
+    final var smallestPossibleValueAddi = (long) (Math.pow(2, immediateAddiSize) / -2);
+    final var lui =
         ensurePresent(
             Objects.requireNonNull(labelledInstructions)
                 .getOrDefault(MachineInstructionLabel.LUI, Collections.emptyList())
@@ -94,12 +94,13 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
                 "Load upper immediate machine instruction has no encoding immediate function.",
                 lui.sourceLocation())
             .note(
-                "The compiler expects that the load upper immediate has an annotation for " +
-                    "formatting the immediate. This is important for the constant materialisation."));
-    var luiImmediate = immediate(immediateDetection, lui).get();
-    var immediateLuiSize = immediateSize(immediateDetection, lui);
-    var largestPossibleValueLui = (long) (Math.pow(2, immediateLuiSize) - 1);
-    int luiFormatSize = lui.format().type().bitWidth();
+                "The compiler expects that the load upper immediate has an annotation for "
+                    + "formatting the immediate. This is important for the "
+                    + "constant materialisation."));
+    final var luiImmediate = immediate(immediateDetection, lui).get();
+    final var immediateLuiSize = immediateSize(immediateDetection, lui);
+    final var largestPossibleValueLui = (long) (Math.pow(2, immediateLuiSize) - 1);
+    final int luiFormatSize = lui.format().type().bitWidth();
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, specification.simpleName());

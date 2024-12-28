@@ -85,7 +85,8 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
     var loadUpperImmediates =
         new HashSet<>(
             database.run(
-                    new Query.Builder().machineInstructionLabel(MachineInstructionLabel.LUI).build())
+                    new Query.Builder().machineInstructionLabel(MachineInstructionLabel.LUI)
+                        .build())
                 .machineInstructions());
 
     var machineInstructionsWithImmediate = machineRecords
