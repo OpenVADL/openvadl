@@ -3,8 +3,8 @@ package vadl.iss.passes.decode;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,8 @@ public class QemuDecodeSymbolResolvingPass extends AbstractIssPass {
 
     // Every pattern is identified by its source instruction definition
     final var distinctPatterns =
-        resolveNames(res.patterns(), p -> p.getSource().identifier, Pattern::setName);
+        resolveNames(res.patterns(), p -> p.getSource().identifier,
+            p -> p.getSource().identifier.simpleName().toLowerCase(Locale.US), Pattern::setName);
 
     // Every format instance will receive its own name (there is a one-to-many relationship between
     // VADL format and QEMU format)
@@ -57,16 +58,32 @@ public class QemuDecodeSymbolResolvingPass extends AbstractIssPass {
         resolveNames(res.formats(), Object::hashCode, e -> e.getSource().simpleName(),
             Format::setName);
 
-    // We reuse fields if they have the same bit patterns (and the same decode function), to avoid
-    // duplicate field definitions.
+    // We reuse fields if they have the same bit patterns to avoid duplicate field definitions.
+    // Pseudo fields, which by definition will re-use the same bit patterns, will only be unified
+    // if they have the same decode function (i.e. refer to the same field access).
     final var allFields = res.argSets().stream()
         .flatMap(a -> a.getFields().stream())
         .toList();
     final var distinctFields =
         resolveNames(allFields,
-            f -> Pair.of(f.getSlices(), Optional.ofNullable(f.getDecodeFunction()).orElse("")),
+            f -> {
+              final var pattern = f.getSlices();
+              String fieldAccess = "";
+              if (f.getSource() instanceof vadl.viam.Format.FieldAccess fa) {
+                fieldAccess = fa.identifier.name();
+              }
+              // Unique by bit pattern and field access
+              return Pair.of(pattern, fieldAccess);
+            },
             f -> f.getSource().identifier.simpleName(),
             Field::setName);
+
+    // Resolve unique function names for the field accesses
+    final var pseudoFields = distinctFields.stream()
+        .filter(f -> f.getSource() instanceof vadl.viam.Format.FieldAccess)
+        .toList();
+    resolveNames(pseudoFields, f -> f.getSource().identifier,
+        (f, name) -> f.setDecodeFunction("access_" + name));
 
     return new QemuDecodeResolveSymbolPassResult(distinctPatterns, distinctFormats, distinctArgSets,
         distinctFields);

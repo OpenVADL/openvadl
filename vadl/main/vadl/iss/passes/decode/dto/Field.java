@@ -3,6 +3,7 @@ package vadl.iss.passes.decode.dto;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 import vadl.viam.Definition;
 
 public final class Field
@@ -12,16 +13,14 @@ public final class Field
   private final List<FieldSlice> slices;
 
   @Nullable
-  private final String decodeFunction;
+  private String decodeFunction;
 
   @Nullable
   private String name;
 
-  public Field(Definition source, List<FieldSlice> slices,
-               @Nullable String decodeFunction) {
+  public Field(Definition source, List<FieldSlice> slices) {
     this.source = source;
     this.slices = slices;
-    this.decodeFunction = decodeFunction;
   }
 
   @Override
@@ -59,6 +58,10 @@ public final class Field
   @Nullable
   public String getDecodeFunction() {
     return decodeFunction;
+  }
+
+  public void setDecodeFunction(@NotNull String decodeFunction) {
+    this.decodeFunction = decodeFunction;
   }
 
   @Nullable

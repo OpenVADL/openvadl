@@ -5,6 +5,7 @@ import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.common.AccessFunctionCodeGenerator;
 import vadl.iss.passes.decode.QemuDecodeSymbolResolvingPass;
+import vadl.iss.passes.decode.dto.Field;
 import vadl.iss.passes.decode.dto.QemuDecodeResolveSymbolPassResult;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -36,20 +37,19 @@ public class EmitIssInsnAccessFunctionPass extends IssTemplateRenderingPass {
       return variables;
     }
 
-    final List<Format.FieldAccess> fieldAccesses = qemuDefs.fields().stream()
+    final List<Field> pseudoFields = qemuDefs.fields().stream()
         .filter(f -> f.getSource() instanceof Format.FieldAccess)
-        .map(f -> (Format.FieldAccess) f.getSource())
         .toList();
 
-    if (fieldAccesses.isEmpty()) {
+    if (pseudoFields.isEmpty()) {
       // Nothing to do, no field accesses
       return variables;
     }
 
-    // TODO: handle function name collision
-    final List<String> fnDefs = fieldAccesses.stream()
+    final List<String> fnDefs = pseudoFields.stream()
         .distinct()
-        .map(a -> new AccessFunctionCodeGenerator(a, a.accessFunction().simpleName()))
+        .map(f -> new AccessFunctionCodeGenerator((Format.FieldAccess) f.getSource(),
+            f.getDecodeFunction()))
         .map(AccessFunctionCodeGenerator::genFunctionDefinition)
         .toList();
 

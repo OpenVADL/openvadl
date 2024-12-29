@@ -197,6 +197,7 @@ static inline void gen_exts(TCGv dest, TCGv arg, int bitWidth) {
  */
 
 static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
+#include "insn-access.c"
 #include "decode-insn.c.inc"
 
 //// START OF TRANSLATE FUNCTIONS ////

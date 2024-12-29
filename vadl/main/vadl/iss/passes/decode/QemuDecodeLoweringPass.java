@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.decode.dto.ArgumentSet;
 import vadl.iss.passes.decode.dto.Field;
@@ -24,7 +23,6 @@ import vadl.utils.Pair;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
 import vadl.viam.Format;
-import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -119,14 +117,14 @@ public class QemuDecodeLoweringPass extends AbstractIssPass {
     for (Format.FieldAccess access : format.fieldAccesses()) {
 
       final Format.Field field = access.fieldRef();
-      final Function function = access.accessFunction();
 
       // Map the referenced field to obtain the slices
       final Field tmp = mapField(field);
 
       if (!isTrivialSignExtension(access)) {
-        // Construct a pseudo field for the field access function
-        final Field pseudoField = new Field(access, tmp.getSlices(), function.simpleName());
+        // Construct a pseudo field for the field access function. The name of the decode function
+        // will be resolved in a follow-up pass
+        final Field pseudoField = new Field(access, tmp.getSlices());
         fields.add(pseudoField);
         continue;
       }
@@ -160,7 +158,7 @@ public class QemuDecodeLoweringPass extends AbstractIssPass {
       slices.add(new FieldSlice(p.lsb(), p.size(), signed && i == 0));
     }
 
-    return new Field(field, slices, null);
+    return new Field(field, slices);
   }
 
   private vadl.iss.passes.decode.dto.Format mapFormat(Format format, BigInteger fixedBits,

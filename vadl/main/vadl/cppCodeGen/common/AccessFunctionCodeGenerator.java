@@ -2,6 +2,7 @@ package vadl.cppCodeGen.common;
 
 import static vadl.error.DiagUtils.throwNotAllowed;
 
+import javax.annotation.Nullable;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
@@ -41,10 +42,11 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
    * @param fieldAccess  The field fieldAccess for which the function should be generated
    * @param functionName The name of the access function to generate
    */
-  public AccessFunctionCodeGenerator(Format.FieldAccess fieldAccess, String functionName) {
+  public AccessFunctionCodeGenerator(Format.FieldAccess fieldAccess,
+                                     @Nullable String functionName) {
     super(fieldAccess.accessFunction());
     this.fieldAccess = fieldAccess;
-    this.functionName = functionName;
+    this.functionName = functionName == null ? function.simpleName() : functionName;
   }
 
   @Override

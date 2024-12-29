@@ -34,7 +34,7 @@ public class EmitIssInsnDecodePass extends IssTemplateRenderingPass {
 
   @Override
   protected String issTemplatePath() {
-    return "target/gen-arch/insn-generated.decode";
+    return "target/gen-arch/insn.decode";
   }
 
   @Override
