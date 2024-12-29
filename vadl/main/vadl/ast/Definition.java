@@ -4482,6 +4482,7 @@ class AsmGrammarElementDefinition extends Definition {
 
   @Nullable
   AsmType asmType;
+  Boolean isWithinRepetitionBlock = false;
 
   public AsmGrammarElementDefinition(@Nullable AsmGrammarLocalVarDefinition localVar,
                                      @Nullable Identifier attribute,

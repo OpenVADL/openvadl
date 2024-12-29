@@ -9,6 +9,7 @@ import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.ModifierAsmType;
 import vadl.types.asmTypes.OperandAsmType;
 import vadl.types.asmTypes.RegisterAsmType;
+import vadl.types.asmTypes.StatementsAsmType;
 import vadl.types.asmTypes.SymbolAsmType;
 import vadl.types.asmTypes.VoidAsmType;
 
@@ -166,7 +167,116 @@ public class TypecheckerAsmTest {
     Assertions.assertEquals(InstructionAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
-  // TODO test repetition block
+  @Test
+  void discardTypeOfRepetitionBlock() {
+    var prog = """
+          grammar = {
+            A @operand:
+              attr1 = Integer @operand
+              {
+                (attr2 = Register)
+              }
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(OperandAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
+  }
+
+  @Test
+  void invalidAttributeAssignInGroup() {
+    var prog = """
+          grammar = {
+            A @operand:
+              attr1 += Integer @operand
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void invalidAttributeAssignInRepetition() {
+    var prog = """
+          grammar = {
+            A @operand:
+              {
+                attr1 = Integer @operand
+              }
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void repetitionBlock() {
+    var prog = """
+          grammar = {
+            Statements @statements:
+              stmts = Statement @statements
+              { stmts += Statement }
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(StatementsAsmType.instance(),
+        typeFinder.getAsmRuleType(ast, "Statements"));
+  }
+
+  @Test
+  void repetitionWithNestedGroup() {
+    var prog = """
+          grammar = {
+            Statements @statements:
+              stmts = Statement @statements
+              {
+                stmts += Statement
+                (rd = "A")
+              }
+            ;
+            Op : Integer @operand;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(StatementsAsmType.instance(),
+        typeFinder.getAsmRuleType(ast, "Statements"));
+  }
+
+  @Test
+  void repetitionAssignToUnknownAttribute() {
+    var prog = """
+          grammar = {
+            Statements @statements:
+              {
+                stmts += Statement
+              }
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
 
 
   @Test

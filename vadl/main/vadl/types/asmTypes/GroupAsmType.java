@@ -27,16 +27,25 @@ public class GroupAsmType implements AsmType {
   @Override
   public boolean canBeCastTo(AsmType to) {
 
+    if (subtypes.size() == 1 && subtypes.get(0) == to) {
+      return true;
+    }
+
     if (to == InstructionAsmType.instance()) {
       return subtypes.stream().allMatch(subtype -> subtype == OperandAsmType.instance());
     }
 
     if (to == OperandAsmType.instance()) {
-      if (subtypes.size() != 2) {
-        return false;
-      }
-      return subtypes.get(0) == ModifierAsmType.instance()
+      return subtypes.size() == 2 && subtypes.get(0) == ModifierAsmType.instance()
           && subtypes.get(1) == ExpressionAsmType.instance();
+    }
+
+    if (to == StatementsAsmType.instance()) {
+      return subtypes.stream().allMatch(subtype -> subtype == InstructionAsmType.instance());
+    }
+
+    if (to == OperandsAsmType.instance()) {
+      return subtypes.stream().allMatch(subtype -> subtype == OperandAsmType.instance());
     }
 
     return false;
