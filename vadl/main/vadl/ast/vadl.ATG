@@ -1199,8 +1199,8 @@ PRODUCTIONS
                                                                                     optionAlternatives, repetitionAlternatives, semanticPred, type, start.join(loc())); .)
   .
 
-  assemblyLocalVarDeclaration<out AsmGrammarLocalVarDefinition localVar> (. var start = loc(); .)
-  = VAR
+  assemblyLocalVarDeclaration<out AsmGrammarLocalVarDefinition localVar>
+  = VAR                                                                 (. var start = loc(); .)
     assemblyIdentifier<out Identifier id>
     SYM_EQ
     assemblyGrammarLiteral<out AsmGrammarLiteralDefinition asmLiteral>  (. localVar = new AsmGrammarLocalVarDefinition(id, asmLiteral, start.join(loc())); .)

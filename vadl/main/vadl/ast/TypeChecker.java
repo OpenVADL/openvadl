@@ -350,15 +350,7 @@ public class TypeChecker
   @Override
   public Void visit(AsmGrammarAlternativesDefinition definition) {
 
-    // mark elements within repetition blocks
-    definition.alternatives.forEach(elements -> {
-      for (var element : elements) {
-        if (element.repetitionAlternatives != null) {
-          element.repetitionAlternatives.alternatives.forEach(
-              es -> es.forEach(e -> e.isWithinRepetitionBlock = true));
-        }
-      }
-    });
+    preprocessAlternativesElements(definition);
 
     // all alternatives have to have the same type
     AsmType allAlternativeType = null;
@@ -378,6 +370,35 @@ public class TypeChecker
 
     definition.asmType = allAlternativeType;
     return null;
+  }
+
+  private static void preprocessAlternativesElements(AsmGrammarAlternativesDefinition definition) {
+    definition.alternatives.forEach(elements -> {
+      for (int i = 0; i < elements.size(); i++) {
+        var element = elements.get(i);
+
+        // mark elements that are within a repetition block
+        if (element.repetitionAlternatives != null) {
+          element.repetitionAlternatives.alternatives.forEach(
+              es -> es.forEach(e -> e.isWithinRepetitionBlock = true));
+        }
+
+        // ensure that local variable declarations are at the beginning of a block
+        if (element.localVar != null) {
+          for (int j = 0; j < i; j++) {
+            if (elements.get(j).localVar == null && elements.get(j).semanticPredicate == null) {
+              throw Diagnostic.error(
+                      "Local variable declaration is not at the beginning of a block.",
+                      element.sourceLocation())
+                  .locationDescription(element.localVar.sourceLocation(),
+                      "Local variable declared here.")
+                  .locationDescription(elements.get(0).sourceLocation(), "Block starts here.")
+                  .build();
+            }
+          }
+        }
+      }
+    });
   }
 
   @Nullable
@@ -411,7 +432,6 @@ public class TypeChecker
 
       appendToAsmGroupType(element, groupSubtypes, alreadyAssignedAttributes);
     }
-    //attributesAssignedInParent = new HashMap<>();
 
     return new GroupAsmType(groupSubtypes);
   }
@@ -492,12 +512,12 @@ public class TypeChecker
       definition.asmType = definition.repetitionAlternatives.asmType;
     }
 
-    if (definition.semanticPredicate != null) {
-      // TODO: expression type checking
-      // definition.semanticPredicate.accept(this);
-    }
+    // TODO: expression type checking
+    //if (definition.semanticPredicate != null) {
+    // definition.semanticPredicate.accept(this);
+    //}
 
-    // actions that depend on the resolved asm type for this element
+    // actions that depend on the resolved asm type of this element
     updateLocalVarIfNecessary(definition);
     validateAttributeAsmType(definition);
 

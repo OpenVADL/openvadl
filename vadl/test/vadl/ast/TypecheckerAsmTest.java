@@ -293,6 +293,41 @@ public class TypecheckerAsmTest {
   }
 
   @Test
+  void invalidLocalVarDeclaration() {
+    var prog = """
+          grammar = {
+            A :
+              Integer
+              var tmp = null @operand
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void multipleLocalVarDeclarations() {
+    var prog = """
+          grammar = {
+            A :
+              var tmp = null @operand
+              var tmp2 = Identifier @symbol
+              Integer
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(ConstantAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
+  }
+
+  @Test
   void invalidSymbolInRule() {
     var prog = """
           constant a = 5
