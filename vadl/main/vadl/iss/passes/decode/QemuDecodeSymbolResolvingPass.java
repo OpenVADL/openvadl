@@ -23,8 +23,17 @@ import vadl.utils.Pair;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
+/**
+ * This pass resolves unique names for the symbols in the QEMU decode lowering pass result and
+ * removes potential duplicates.
+ */
 public class QemuDecodeSymbolResolvingPass extends AbstractIssPass {
 
+  /**
+   * Constructor for the QEMU Decode Symbol Resolving Pass.
+   *
+   * @param configuration The configuration
+   */
   public QemuDecodeSymbolResolvingPass(IssConfiguration configuration) {
     super(configuration);
   }
@@ -89,9 +98,10 @@ public class QemuDecodeSymbolResolvingPass extends AbstractIssPass {
         distinctFields);
   }
 
-  private static <T extends SourceMapping> Collection<T> resolveNames(Collection<T> entities,
-                                                                      Function<T, Identifier> identExtractor,
-                                                                      BiConsumer<T, String> nameSetter) {
+  private static <T extends SourceMapping> Collection<T> resolveNames(
+      Collection<T> entities,
+      Function<T, Identifier> identExtractor,
+      BiConsumer<T, String> nameSetter) {
     return resolveNames(entities, identExtractor, e -> e.getSource().identifier.simpleName(),
         nameSetter);
   }
@@ -100,18 +110,21 @@ public class QemuDecodeSymbolResolvingPass extends AbstractIssPass {
    * Group the given entities by their grouping condition and assign them a unique name, based on
    * the given suggestion.
    *
-   * @param entities
-   * @param groupingConditionExtractor
-   * @param nameSuggestionGetter
-   * @param nameSetter
-   * @param <T>
-   * @param <I>
-   * @return
+   * @param entities                   The collection of entities to resolve names for
+   * @param groupingConditionExtractor The function to extract the grouping condition. Grouping
+   *                                   will be decided based on the #equals method of the extracted
+   *                                   object.
+   * @param nameSuggestionGetter       The function to get a name suggestion for the entity
+   * @param nameSetter                 The function to set the name on the entity
+   * @param <T>                        The type of the entities
+   * @param <I>                        The type of the grouping condition
+   * @return A collection of entities with unique names
    */
-  private static <T, I> Collection<T> resolveNames(Collection<T> entities,
-                                                   Function<T, I> groupingConditionExtractor,
-                                                   Function<T, String> nameSuggestionGetter,
-                                                   BiConsumer<T, String> nameSetter) {
+  private static <T, I> Collection<T> resolveNames(
+      Collection<T> entities,
+      Function<T, I> groupingConditionExtractor,
+      Function<T, String> nameSuggestionGetter,
+      BiConsumer<T, String> nameSetter) {
 
     final Map<String, T> distinct = new LinkedHashMap<>();
     final Map<I, String> symbols = new LinkedHashMap<>();

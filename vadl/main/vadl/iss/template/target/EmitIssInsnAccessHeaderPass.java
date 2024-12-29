@@ -12,6 +12,10 @@ import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.Specification;
 
+/**
+ * Emits the target/gen-arch/insn-access.h that contains the function signatures for the
+ * access functions required by the QEMU decode tree.
+ */
 public class EmitIssInsnAccessHeaderPass extends IssTemplateRenderingPass {
 
   public static final String ACCESS_SGN_KEY = "insn_access_signatures";

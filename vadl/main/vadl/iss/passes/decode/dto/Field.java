@@ -6,6 +6,9 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 import vadl.viam.Definition;
 
+/**
+ * Represents a single field definition in the QEMU decode tree definition.
+ */
 public final class Field
     implements Renderable, SourceMapping {
 
@@ -38,9 +41,9 @@ public final class Field
     }
 
     if (decodeFunction != null) {
-      int sWidth = slices.stream().mapToInt(f -> f.render(RenderContext.EMPTY).length()).sum() +
-          slices.size() - 1;
-      sb.append(" ".repeat(context.maxFieldBitLength() - sWidth));
+      int slWidth = slices.stream().mapToInt(f -> f.render(RenderContext.EMPTY).length()).sum()
+          + slices.size() - 1;
+      sb.append(" ".repeat(context.maxFieldBitLength() - slWidth));
       sb.append(" !function=").append(decodeFunction);
     }
     return sb.toString();

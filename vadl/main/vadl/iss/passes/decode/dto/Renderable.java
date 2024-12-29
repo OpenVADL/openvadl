@@ -1,5 +1,9 @@
 package vadl.iss.passes.decode.dto;
 
+/**
+ * Interface for objects that can be rendered to a string (particularly in the context of the QEMU
+ * decode tree).
+ */
 public interface Renderable {
 
   /**

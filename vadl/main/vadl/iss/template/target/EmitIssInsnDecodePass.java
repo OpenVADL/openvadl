@@ -82,8 +82,8 @@ public class EmitIssInsnDecodePass extends IssTemplateRenderingPass {
     final int maxFieldBitLength = qemuDefs.fields().stream()
         .mapToInt(f ->
             f.getSlices().stream()
-                .mapToInt(s -> s.render(RenderContext.EMPTY).length()).sum() +
-                f.getSlices().size() - 1)
+                .mapToInt(s -> s.render(RenderContext.EMPTY).length()).sum()
+                + f.getSlices().size() - 1)
         .max().orElse(0);
 
     final var context = new RenderContext(

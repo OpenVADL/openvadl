@@ -196,7 +196,7 @@ public class QemuDecodeLoweringPass extends AbstractIssPass {
   }
 
   /**
-   * Returns a bit mask where all bits from the lsb to the msb are set
+   * Returns a bit mask where all bits from the lsb to the msb are set.
    *
    * @param lsb The least significant bit
    * @param msb The most significant bit

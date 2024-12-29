@@ -7,6 +7,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.viam.ViamError;
 
+/**
+ * Represents a single format definition in the QEMU decode tree definition.
+ */
 public final class Format implements Renderable, SourceMapping {
 
   private final vadl.viam.Format source;
@@ -16,6 +19,14 @@ public final class Format implements Renderable, SourceMapping {
   @Nullable
   private String name;
 
+  /**
+   * Constructor for the Format class.
+   *
+   * @param source the source (VADL) format
+   * @param args   the argument set used by the format
+   * @param fields the fields extracted by the format, i.e. the non-fixed fields which are not
+   *               already specified by the pattern definition
+   */
   public Format(vadl.viam.Format source, ArgumentSet args, List<Field> fields) {
     this.source = source;
     this.args = args;
@@ -67,6 +78,12 @@ public final class Format implements Renderable, SourceMapping {
 
   }
 
+  /**
+   * Returns the bit pattern of the format (QEMU requires a bit pattern for each format, even if it
+   * is just a 'match-all' pattern '...').
+   *
+   * @return the bit pattern of the format
+   */
   public String toBitPattern() {
     StringBuilder sb = new StringBuilder();
     IntStream.range(0, source.type().bitWidth())

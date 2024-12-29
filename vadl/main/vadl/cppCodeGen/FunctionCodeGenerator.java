@@ -87,6 +87,12 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
     return builder.toString();
   }
 
+  /**
+   * Generates and returns the C++ function signature for the function. Does not modify the internal
+   * state of the code generator.
+   *
+   * @return the generated C++ function signature
+   */
   public String genFunctionSignature() {
     var returnType = function.returnType().asDataType().fittingCppType();
     var cppArgs = Stream.of(function.parameters())

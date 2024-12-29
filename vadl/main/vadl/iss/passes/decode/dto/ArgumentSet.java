@@ -5,6 +5,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.viam.Format;
 
+/**
+ * Represents a single argument set definition in the QEMU decode tree definition.
+ */
 public class ArgumentSet implements Renderable, SourceMapping {
 
   private final Format source;

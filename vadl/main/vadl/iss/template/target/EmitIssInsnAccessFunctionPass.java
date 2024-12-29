@@ -12,6 +12,10 @@ import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.Specification;
 
+/**
+ * Emits the target/gen-arch/insn-access.c that contains the access functions for the
+ * fields in the QEMU decode tree.
+ */
 public class EmitIssInsnAccessFunctionPass extends IssTemplateRenderingPass {
 
   public static final String ACCESS_FNS_KEY = "insn_access";

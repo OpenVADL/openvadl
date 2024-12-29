@@ -13,6 +13,9 @@ import vadl.viam.Definition;
 import vadl.viam.Encoding;
 import vadl.viam.Instruction;
 
+/**
+ * Represents a single pattern definition in the QEMU decode tree definition.
+ */
 public final class Pattern implements Renderable, SourceMapping {
 
   private final Instruction source;
@@ -96,6 +99,11 @@ public final class Pattern implements Renderable, SourceMapping {
     this.name = name;
   }
 
+  /**
+   * Returns the bit pattern of the pattern.
+   *
+   * @return the bit pattern of the pattern
+   */
   public String toBitPattern() {
     final var sb = new StringBuilder();
 
