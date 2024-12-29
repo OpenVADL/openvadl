@@ -87,13 +87,13 @@ void [(${gen_arch_lower})]_tcg_init(void)
  */
 
 // TODO: Could potentially be removed
-static int ex_plus_1(DisasContext *ctx, int nf)
+/*static int ex_plus_1(DisasContext *ctx, int nf)
 {
     return nf + 1;
-}
+}*/
 
 // TODO: Could potentially be removed
-#define EX_SH(amount) \
+/*#define EX_SH(amount) \
 static int ex_shift_##amount(DisasContext *ctx, int imm) \
 {                                         \
     return imm << amount;                 \
@@ -102,7 +102,7 @@ EX_SH(1)
 EX_SH(2)
 EX_SH(3)
 EX_SH(4)
-EX_SH(12)
+EX_SH(12)*/
 
 static target_ulong next_insn(DisasContext *ctx)
 {
@@ -197,7 +197,7 @@ static inline void gen_exts(TCGv dest, TCGv arg, int bitWidth) {
  */
 
 static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
-#include "insn-access.c"
+#include "insn-access.h"
 #include "decode-insn.c.inc"
 
 //// START OF TRANSLATE FUNCTIONS ////
@@ -208,7 +208,7 @@ static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 
 
 // TODO: Remove this hardcoded translate functions in template
-static bool trans_csrrw(DisasContext *ctx, arg_csrrw *a) {
+/*static bool trans_csrrw(DisasContext *ctx, arg_csrrw *a) {
     qemu_printf("[VADL] trans_csrrw (rd: %d , csr: %d , rs1: %d , shamt: %d )\n",
                 a->rd, a->csr, a->rs1);
 
@@ -223,7 +223,7 @@ static bool trans_csrrw(DisasContext *ctx, arg_csrrw *a) {
     ctx->base.is_jmp = DISAS_NORETURN;
 
     return true;
-}
+}*/
 
 //// END OF TRANSLATE FUNCTIONS ////
 

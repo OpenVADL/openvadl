@@ -41,6 +41,7 @@ import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
 import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssInsnAccessFunctionPass;
+import vadl.iss.template.target.EmitIssInsnAccessHeaderPass;
 import vadl.iss.template.target.EmitIssInsnDecodePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
@@ -449,6 +450,8 @@ public class PassOrders {
         .add(new EmitIssCpuSourcePass(config))
         // target/gen-arch/insn.decode
         .add(new EmitIssInsnDecodePass(config))
+        // target/gen-arch/insn-access.h
+        .add(new EmitIssInsnAccessHeaderPass(config))
         // target/gen-arch/insn-access.c
         .add(new EmitIssInsnAccessFunctionPass(config))
         // target/gen-arch/translate.c

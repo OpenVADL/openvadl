@@ -163,10 +163,12 @@ public interface CDefaultMixins {
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void impl(CGenContext<Node> ctx, SignExtendNode node) {
+      // Use the built-in VADL library functions.
+      // Generators must include the vadl-builtins.h header file.
       var srcType = node.value().type().asDataType();
-      ctx.wr("sextract" + ctx.cTypeOf(node.type()) + "(")
+      ctx.wr("VADL_sextract(")
           .gen(node.value())
-          .wr(", 0, %s)", srcType.bitWidth());
+          .wr(", %s)", srcType.bitWidth());
     }
   }
 
