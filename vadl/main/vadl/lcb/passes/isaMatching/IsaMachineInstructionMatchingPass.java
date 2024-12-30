@@ -66,9 +66,11 @@ import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -190,7 +192,10 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         extend(matched, MachineInstructionLabel.UMOD, instruction);
       } else if (findRR(behavior, List.of(LSL, LSLS))) {
         extend(matched, MachineInstructionLabel.SLL, instruction);
-      } else if (findRI(behavior, List.of(LSL, LSLS))) {
+      } else if (findRI(behavior, List.of(LSL, LSLS))
+          /* the `hasNot` constraints are to differentiate between `SLLI` and `SLLIW` */
+          && hasNot(behavior, TruncateNode.class)
+          && hasNot(behavior, SignExtendNode.class)) {
         extend(matched, MachineInstructionLabel.SLLI, instruction);
       } else if (findRR(behavior, List.of(LSR, LSRS))) {
         extend(matched, MachineInstructionLabel.SRL, instruction);
@@ -242,6 +247,14 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     });
 
     return Collections.unmodifiableMap(matched);
+  }
+
+  /**
+   * Checks that the given {@code behavior} has no node of type {@code nodeClass} in the
+   * graph.
+   */
+  private <T extends Node> boolean hasNot(UninlinedGraph behavior, Class<T> nodeClass) {
+    return behavior.getNodes(nodeClass).findAny().isEmpty();
   }
 
   private boolean findRR_Mul(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
