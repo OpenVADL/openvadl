@@ -138,6 +138,23 @@ public class GraphUtils {
   //// GRAPH CREATION UTILS ////
 
   /**
+   * Creates a unary operation built-in call with the specified operation and a constant value.
+   *
+   * @param op The built-in operation to be performed.
+   * @param a  The constant value operand.
+   * @return A new instance of {@code BuiltInCall} representing the unary operation.
+   */
+  public static BuiltInCall unaryOp(BuiltInTable.BuiltIn op, Constant.Value a) {
+    return new BuiltInCall(
+        op,
+        new NodeList<>(
+            new ConstantNode(a)
+        ),
+        a.type()
+    );
+  }
+
+  /**
    * Creates a binary operation built-in call with the specified operation and constant values.
    *
    * @param op The built-in operation to be performed.

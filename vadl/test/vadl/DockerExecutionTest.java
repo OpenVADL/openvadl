@@ -2,11 +2,15 @@ package vadl;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -81,6 +85,49 @@ public abstract class DockerExecutionTest extends AbstractTest {
       var result = container.getDockerClient().inspectContainerCmd(container.getContainerId());
       var state = result.exec().getState();
       assertThat(state.getExitCodeLong()).isZero();
+    }
+  }
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   *
+   * @param image             is the docker image for the {@link GenericContainer}.
+   * @param containerModifier a consumer that allows modification of the container configuration
+   * @param postExecution     a consumer that is called when the container successfully terminated
+   */
+  protected void runContainer(ImageFromDockerfile image,
+                              Function<GenericContainer<?>, GenericContainer<?>> containerModifier,
+                              @Nullable Consumer<GenericContainer<?>> postExecution
+  ) {
+    try (GenericContainer<?> container = new GenericContainer<>(image)
+        .withLogConsumer(new Slf4jLogConsumer(logger))
+        .withStartupAttempts(1)) {
+      var modifiedContainer = containerModifier.apply(container);
+      modifiedContainer.setStartupAttempts(1);
+      modifiedContainer.start();
+
+      await()
+          .atMost(Duration.ofSeconds(30))
+          .until(() -> {
+            var result =
+                modifiedContainer.getDockerClient()
+                    .inspectContainerCmd(modifiedContainer.getContainerId());
+            var state = result.exec().getState();
+            return state.getStatus().equals("exited");
+          });
+
+      var result = modifiedContainer.getDockerClient()
+          .inspectContainerCmd(modifiedContainer.getContainerId());
+
+      var state = result.exec().getState();
+      assertEquals(0, state.getExitCodeLong().intValue());
+
+      if (postExecution != null) {
+        postExecution.accept(modifiedContainer);
+      }
     }
   }
 }

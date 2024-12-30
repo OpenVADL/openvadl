@@ -364,8 +364,9 @@ public abstract class Constant {
      * @param signed      if the multiplication should be signed or unsigned.
      *                    This is only in case of longVersion == true.
      *                    Otherwise, the value is ignored
-     * @return the result of the multiplication. If longVersion is true, then the result type
-     * will be double the size of the operands, otherwise it will be the same size
+     * @return the result of the multiplication.
+     *     If longVersion is true, then the result type will be double the size of the operands,
+     *     otherwise it will be the same size
      */
     public Constant.Value multiply(Constant.Value other, boolean longVersion, boolean signed) {
       ensure(type().isTrivialCastTo(other.type()),
@@ -556,7 +557,7 @@ public abstract class Constant {
 
     @Override
     public java.lang.String toString() {
-      return integer() + ": " + type().toString();
+      return hexadecimal() + ": " + type().toString();
     }
 
     /**
@@ -672,7 +673,9 @@ public abstract class Constant {
       if (padding) {
         if (padFactor > 0) {
           var padSize = (type().bitWidth() / padFactor) - str.length();
-          str = "0".repeat(padSize) + str;
+          if (padSize > 0) {
+            str = "0".repeat(padSize) + str;
+          }
         }
       }
       return prefix + str;

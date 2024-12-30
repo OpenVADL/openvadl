@@ -274,32 +274,28 @@ public interface CDefaultMixins {
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx, BuiltInCall op) {
-      // open scope
-      ctx.wr("(");
+      // use the built-in VADL library functions.
+      // generators must include the vadl-builtins.h header file.
 
-      var a = op.arguments().get(0);
+      var name = "VADL_" + op.builtIn().name().toLowerCase();
+      ctx.wr(name)
+          .wr("(");
 
-      if (op.arguments().size() == 2) {
-        var b = op.arguments().get(1);
-        ctx.gen(a);
-        // TODO: Refactor this unreadable stuff
-        if (op.builtIn() == BuiltInTable.LSL) {
-          ctx.wr(" << ");
-        } else if (op.builtIn() == BuiltInTable.ADD) {
-          ctx.wr(" + ");
-        } else if (op.builtIn() == BuiltInTable.AND) {
-          ctx.wr(" & ");
-        } else {
-          throw new ViamGraphError("built-in to C of %s is not implemented", op.builtIn())
-              .addContext(op);
+      var first = true;
+      for (var arg : op.arguments()) {
+        if (!first) {
+          ctx.wr(", ");
         }
-        ctx.gen(b);
-      } else {
-        throw new ViamGraphError("built-in to C of %s is not supported", op.builtIn())
-            .addContext(op);
+
+        var argWidth = arg.type()
+            .asDataType().bitWidth();
+
+        ctx.gen(arg)
+            .wr(", " + argWidth);
+
+        first = false;
       }
 
-      // close scope
       ctx.wr(")");
     }
   }

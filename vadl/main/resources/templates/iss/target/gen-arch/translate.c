@@ -8,6 +8,7 @@
 #include "tcg/tcg-op.h"
 #include "cpu-bits.h"
 #include "trace.h"
+#include "vadl-builtins.h"
 
 #include "exec/helper-proto.h"
 #include "exec/helper-gen.h"
