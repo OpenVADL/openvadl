@@ -87,16 +87,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   }
 
-  /**
-   * An entry to adapt a register with an immediate.
-   */
-  record AdjustRegCase(Instruction instruction,
-                       Identifier predicate,
-                       RegisterFile destRegisterFile,
-                       RegisterFile srcRegisterFile) {
-
-  }
-
   private List<CopyPhysRegInstruction> getMovInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
     var addi32 = mapWithInstructionLabel(MachineInstructionLabel.ADDI_32, isaMatching);
@@ -197,7 +187,11 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     );
   }
 
-  record BranchInstruction(String name, int bitWidth) {
+  record BranchInstruction(String name, /* size of the immediate */ int bitWidth) {
+
+  }
+
+  record InstructionSize(String name, /* format size */ int byteSize) {
 
   }
 
@@ -216,8 +210,17 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         "loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches),
         "additionImmInstruction", addition,
         "additionImmSize", getImmBitSize(fieldUsages, addition),
-        "branchInstructions", getBranchInstructions(specification, passResults, fieldUsages)
+        "branchInstructions", getBranchInstructions(specification, passResults, fieldUsages),
+        "instructionSizes", instructionSizes(specification)
     );
+  }
+
+  private List<InstructionSize> instructionSizes(Specification specification) {
+    return specification.isa().get().ownInstructions()
+        .stream()
+        .map(instruction -> new InstructionSize(instruction.identifier.simpleName(),
+            instruction.format().type().bitWidth() / 8))
+        .toList();
   }
 
   private List<BranchInstruction> getBranchInstructions(

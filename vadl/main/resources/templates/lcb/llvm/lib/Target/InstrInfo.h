@@ -67,6 +67,13 @@ namespace llvm
 
             bool isBranchOffsetInRange(unsigned BranchOpc, int64_t BrOffset) const override;
 
+            unsigned getInstSizeInBytes(const MachineInstr &MI) const override;
+
+            unsigned insertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                    MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
+                                    const DebugLoc &dl,
+                                    int *BytesAdded = nullptr) const override;
+
         private:
             const [(${namespace})]Subtarget &STI;
     };

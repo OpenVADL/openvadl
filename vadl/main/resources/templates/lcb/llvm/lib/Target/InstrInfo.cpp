@@ -214,3 +214,60 @@ bool [(${namespace})]InstrInfo::isBranchOffsetInRange(unsigned BranchOp, int64_t
     [/]
   }
 }
+
+unsigned [(${namespace})]InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
+  if (MI.isMetaInstruction())
+    return 0;
+
+  unsigned Opcode = MI.getOpcode();
+
+  switch(Opcode) {
+    [# th:each="x : ${instructionSizes}" ]
+    case [(${namespace})]::[(${x.name})]:
+      return [(${x.byteSize})];
+    [/]
+    default:
+      llvm_unreachable("Can't get inst size");
+  }
+}
+
+// Inserts a branch into the end of the specific MachineBasicBlock, returning
+// the number of instructions inserted.
+unsigned [(${namespace})]InstrInfo::insertBranch(
+    MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+    ArrayRef<MachineOperand> Cond, const DebugLoc &DL, int *BytesAdded) const {
+  if (BytesAdded)
+    *BytesAdded = 0;
+
+  // Shouldn't be a fall through.
+  assert(TBB && "insertBranch must not be told to insert a fallthrough");
+  assert((Cond.size() == 3 || Cond.size() == 0) &&
+         "RISC-V branch conditions have two components!");
+
+  // Unconditional branch.
+  if (Cond.empty()) {
+    MachineInstr &MI = *BuildMI(&MBB, DL, get(RISCV::PseudoBR)).addMBB(TBB);
+    if (BytesAdded)
+      *BytesAdded += getInstSizeInBytes(MI);
+    return 1;
+  }
+
+  // Either a one or two-way conditional branch.
+  auto CC = static_cast<[(${namespace})]CC::CondCode>(Cond[0].getImm());
+  MachineInstr &CondMI = *BuildMI(&MBB, DL, getBrCond(CC, Cond[2].isImm()))
+                              .add(Cond[1])
+                              .add(Cond[2])
+                              .addMBB(TBB);
+  if (BytesAdded)
+    *BytesAdded += getInstSizeInBytes(CondMI);
+
+  // One-way conditional branch.
+  if (!FBB)
+    return 1;
+
+  // Two-way conditional branch.
+  MachineInstr &MI = *BuildMI(&MBB, DL, get(RISCV::PseudoBR)).addMBB(FBB);
+  if (BytesAdded)
+    *BytesAdded += getInstSizeInBytes(MI);
+  return 2;
+}
