@@ -3,6 +3,7 @@ package vadl.ast;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
@@ -10,6 +11,7 @@ import vadl.types.BoolType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.utils.Pair;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
@@ -557,7 +559,6 @@ public class TypeChecker
       throw new RuntimeException("Don't handle operator " + expr.operator());
     }
 
-    // FIXME: Incorporate special casting rules for binary operators.
     // Shifts and rotates require that the right type is uint and the left can be anything.
     var requireRightUInt =
         List.of(Operator.ShiftLeft, Operator.ShiftRight, Operator.RotateLeft, Operator.RotateRight);
@@ -606,22 +607,43 @@ public class TypeChecker
     if (leftTyp instanceof ConstantType && rightTyp instanceof ConstantType) {
       var result = constantEvaluator.eval(expr);
       expr.type = result.type();
+      return null;
     }
 
-    // Insert implicit cast if needed
-    if (leftTyp.equals(rightTyp)) {
-      // Do nothing on purpose
-    } else if (canImplicitCast(leftTyp, rightTyp)) {
-      // FIXME: Somehow we need to convert a type into a typeliteral.
-      //expr.left = new CastExpr(expr.left, expr.right.type);
-      throw new RuntimeException("Casting not yet implemented");
+    // If only one type is const, cast it to it's partner (or as close as possible)
+    if (leftTyp instanceof ConstantType leftConstType) {
+      expr.left = new CastExpr(expr.left, leftConstType.closestTo(rightTyp), expr.left.location());
+      leftTyp = Objects.requireNonNull(expr.left.type);
+    } else if (rightTyp instanceof ConstantType rightConstType) {
+      expr.right =
+          new CastExpr(expr.right, rightConstType.closestTo(leftTyp), expr.right.location());
+      rightTyp = Objects.requireNonNull(expr.right.type);
+    }
 
-    } else if (canImplicitCast(rightTyp, leftTyp)) {
-      // FIXME: Somehow we need to convert a type into a typeliteral.
-      //expr.left = new CastExpr(expr.left, expr.right.type);
-      throw new RuntimeException("Casting not yet implemented");
+    var bitWidth = ((BitsType) leftTyp).bitWidth();
+    var sizedUInt = Type.unsignedInt(bitWidth);
+    var sizedSInt = Type.signedInt(bitWidth);
+    var sizedBits = Type.bits(bitWidth);
+    var specialBinaryPattern = Map.of(
+        Pair.of(sizedUInt, sizedBits), Pair.of(sizedUInt, sizedUInt),
+        Pair.of(sizedBits, sizedUInt), Pair.of(sizedUInt, sizedUInt),
+        Pair.of(sizedSInt, sizedBits), Pair.of(sizedSInt, sizedSInt),
+        Pair.of(sizedBits, sizedSInt), Pair.of(sizedSInt, sizedSInt)
+    );
 
-    } else {
+    if (((BitsType) leftTyp).bitWidth() == ((BitsType) rightTyp).bitWidth() &&
+        specialBinaryPattern.containsKey(Pair.of(leftTyp, rightTyp))) {
+      var target = Objects.requireNonNull(specialBinaryPattern.get(Pair.of(leftTyp, rightTyp)));
+      if (!leftTyp.equals(target.left())) {
+        expr.left = new CastExpr(expr.left, target.left(), expr.left.location());
+        leftTyp = Objects.requireNonNull(expr.left.type);
+      } else {
+        expr.right = new CastExpr(expr.right, target.right(), expr.right.location());
+        rightTyp = Objects.requireNonNull(expr.right.type);
+      }
+    }
+
+    if (!leftTyp.equals(rightTyp)) {
       throw Diagnostic.error("Type Missmatch", expr)
           .locationNote(expr, "The left type is %s while right is %s", leftTyp, rightTyp)
           .description(

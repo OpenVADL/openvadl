@@ -39,6 +39,34 @@ public class ConstantType extends Type {
     return Type.bits(requiredBitWidth());
   }
 
+  Type closestTo(Type target) {
+    if (target instanceof SIntType targetSInt) {
+      var bitsWidth = Math.min(targetSInt.bitWidth(), requiredBitWidth());
+      return Type.signedInt(bitsWidth);
+    }
+
+    if (target instanceof UIntType targetUInt) {
+      var bitsWidth = Math.min(targetUInt.bitWidth(), requiredBitWidth());
+      if (value.compareTo(BigInteger.ZERO) < 0) {
+        // Cannot pack into uint is negative, closest is still SInt
+        return Type.signedInt(bitsWidth);
+      }
+      return Type.unsignedInt(bitsWidth);
+    }
+
+    if (target instanceof BitsType targetBits) {
+      var bitsWidth = Math.min(targetBits.bitWidth(), requiredBitWidth());
+
+      if (value.compareTo(BigInteger.ZERO) < 0) {
+        // Cannot pack into uint is negative, closest is still SInt
+        return Type.signedInt(bitsWidth);
+      }
+      return Type.bits(bitsWidth);
+    }
+
+    return this;
+  }
+
   @Override
   public String name() {
     return "Const<%s>".formatted(value);
