@@ -19,6 +19,7 @@ import vadl.utils.Pair;
  * <p>As the typesystem can depend on constants, the typechecker needs to evaluate (at least some
  * of) them.
  */
+@SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
 public class TypeChecker
     implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void> {
 
@@ -538,8 +539,8 @@ public class TypeChecker
 
     // Verify the rough shapes of the input parameters
     // This however doesn't check if the types relate to each other.
-    if (Operator.arithmeticOperators.contains(expr.operator()) ||
-        Operator.artihmeticComparisons.contains(expr.operator())) {
+    if (Operator.arithmeticOperators.contains(expr.operator())
+        || Operator.artihmeticComparisons.contains(expr.operator())) {
 
       if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
         throw Diagnostic.error("Type Missmatch", expr)
@@ -631,8 +632,8 @@ public class TypeChecker
         Pair.of(sizedBits, sizedSInt), Pair.of(sizedSInt, sizedSInt)
     );
 
-    if (((BitsType) leftTyp).bitWidth() == ((BitsType) rightTyp).bitWidth() &&
-        specialBinaryPattern.containsKey(Pair.of(leftTyp, rightTyp))) {
+    if (((BitsType) leftTyp).bitWidth() == ((BitsType) rightTyp).bitWidth()
+        && specialBinaryPattern.containsKey(Pair.of(leftTyp, rightTyp))) {
       var target = Objects.requireNonNull(specialBinaryPattern.get(Pair.of(leftTyp, rightTyp)));
       if (!leftTyp.equals(target.left())) {
         expr.left = new CastExpr(expr.left, target.left(), expr.left.location());
@@ -641,6 +642,16 @@ public class TypeChecker
         expr.right = new CastExpr(expr.right, target.right(), expr.right.location());
         rightTyp = Objects.requireNonNull(expr.right.type);
       }
+    }
+
+    // Apply general implicit casting rules after specialised once.
+    if (!leftTyp.equals(rightTyp) && canImplicitCast(leftTyp, rightTyp)) {
+      expr.left = new CastExpr(expr.left, rightTyp, expr.left.location());
+      leftTyp = Objects.requireNonNull(expr.left.type);
+    }
+    if (!rightTyp.equals(leftTyp) && canImplicitCast(rightTyp, leftTyp)) {
+      expr.right = new CastExpr(expr.right, leftTyp, expr.right.location());
+      rightTyp = Objects.requireNonNull(expr.right.type);
     }
 
     if (!leftTyp.equals(rightTyp)) {

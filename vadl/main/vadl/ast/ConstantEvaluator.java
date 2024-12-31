@@ -89,9 +89,14 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     var leftVal = eval(expr.left);
     var rightVal = eval(expr.right);
 
-    // Logical operations and constant types are handled directly
-    if (Operator.logicalComparisions.contains(expr.operator()) ||
-        (leftVal.type() instanceof ConstantType && rightVal.type() instanceof ConstantType)) {
+    // Logical operations 
+    // And shifts with the left side constant
+    // And all other operations with both side constant
+    // ... are handled directly.
+    if (Operator.logicalComparisions.contains(expr.operator())
+        || (List.of(Operator.ShiftLeft, Operator.ShiftRight).contains(expr.operator())
+        && leftVal.type() instanceof ConstantType)
+        || (leftVal.type() instanceof ConstantType && rightVal.type() instanceof ConstantType)) {
 
       var func = Objects.requireNonNull(BinOpFuncs.get(expr.operator()));
       var val = func.apply(leftVal.value(), rightVal.value());
@@ -102,6 +107,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     }
 
     var builtIns = BuiltInTable.builtIns()
+        .filter(b -> b.signature().argTypeClasses().size() == 2)
         .filter(b -> Objects.equals(b.operator(), expr.operator().symbol))
         .toList();
 
@@ -123,7 +129,6 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       default -> throw new IllegalStateException(
           "Too many matching builtin (%d) for %s".formatted(builtIns.size(), expr.operator));
     };
-    System.out.println(builtIn.name());
 
     var val = builtIn
         .compute(List.of(leftVal.toViamConstant(), rightVal.toViamConstant()))
@@ -135,7 +140,8 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     } else if (Operator.artihmeticComparisons.contains(expr.operator())) {
       type = Type.bool();
     } else {
-      // Just throw so that we now we need to implement something, should never happen if we are done.
+      // Just throw so that we now we need to implement something, should never happen if we are
+      // done.
       throw new IllegalStateException("Cannot find result type for operator " + expr.operator());
     }
 
