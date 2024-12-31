@@ -431,7 +431,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of("(target_call X:$rs1)",
             "(brind X:$rs1)",
             "(brind (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))"),
-        Collections.emptyList(),
+        List.of("(PseudoBRIND X:$rs1, 0)", "(PseudoBRIND X:$rs1, RV64IM_Itype_immAsInt64:$imm)"),
         createBranchFlags(),
         false
     ));
