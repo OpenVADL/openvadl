@@ -17,15 +17,21 @@ import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.OutputInstructionName;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrindSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTargetCallSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
 import vadl.types.Type;
 import vadl.viam.Abi;
@@ -37,6 +43,7 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -119,10 +126,15 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
               (TableGenInstructionRegisterFileOperand) uncastInputRegister));
           result.add(generateBranchIndirect(supportedInstructions,
               (TableGenInstructionRegisterFileOperand) uncastInputRegister));
+          result.add(generateBranchIndirectWithZero(
+              (TableGenInstructionRegisterFileOperand) uncastInputRegister));
+          result.add(generateBranchIndirectWithAdd(supportedInstructions,
+              (TableGenInstructionRegisterFileOperand) uncastInputRegister));
         });
 
     return result;
   }
+
 
   private static @NotNull TableGenPseudoInstExpansionPattern generateIndirectCall(
       Map<MachineInstructionLabel,
@@ -154,38 +166,61 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         true,
         false,
         false,
-        true,
+        false,
+        false,
         List.of(
             new TableGenInstructionRegisterFileOperand(
                 ParameterIdentity.from(ref, ref.address()),
                 ref,
                 address.formatField())
-        ), Collections.emptyList());
+        ), Collections.emptyList(),
+        List.of(
+            new RegisterRef(abi.returnAddress().registerFile(),
+                Constant.Value.of(abi.returnAddress().addr(),
+                    abi.returnAddress().registerFile().resultType())))
+    );
   }
 
   private static @NotNull TableGenPseudoInstExpansionPattern generateBranchIndirect(
       Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       TableGenInstructionRegisterFileOperand inputRegister) {
+    /*
+    let isCall = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
+      isBarrier = 1
+      in
+          def PseudoBRIND : Pseudo<(outs ), (ins X:$rs1, RV32IM_Itype_immAsInt32:$imm), []>,
+                       PseudoInstExpansion<(JALR X0, X:$rs1, RV32IM_Itype_immAsInt32:$imm)>;
+     */
+
     var selector = new Graph("selector");
     var ref = (ReadRegFileNode) inputRegister.reference().copy();
     var address = (FieldRefNode) ref.address().copy();
+    /*
     selector.addWithInputs(new LlvmBrindSD(new NodeList<>(new LlvmReadRegFileNode(
         inputRegister.registerFile(), address, inputRegister.formatField().type(),
         ref.staticCounterAccess()
     )),
         Type.dummy()));
+     */
 
     var database = new Database(supportedInstructions);
     var jalr =
         database.run(
                 new Query.Builder().machineInstructionLabel(MachineInstructionLabel.JALR).build())
             .firstMachineInstruction();
+    var immediate = ensurePresent(jalr.behavior().getNodes(FieldAccessRefNode.class).findFirst(),
+        () -> Diagnostic.error("Cannot find an immediate.", jalr.sourceLocation()));
+    var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
+        () -> Diagnostic.error("Cannot construct llvm type from field access",
+            immediate.sourceLocation()));
+    var fieldRef = new LlvmFieldAccessRefNode(immediate.fieldAccess(), immediate.type(), llvmType,
+        LlvmFieldAccessRefNode.Usage.Immediate);
     var machine = new Graph("machine");
-    var constant = new Constant.Str("0");
     machine.addWithInputs(new LcbMachineInstructionNode(
         new NodeList<>(
-            new ConstantNode(new Constant.Str(zeroRegister(inputRegister.registerFile()))), ref,
-            new ConstantNode(constant)), jalr));
+            new ConstantNode(new Constant.Str(zeroRegister(inputRegister.registerFile()))),
+            ref,
+            fieldRef), jalr));
     return new TableGenPseudoInstExpansionPattern("PseudoBRIND",
         selector,
         machine,
@@ -193,12 +228,80 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         true,
         true,
         true,
+        true,
         List.of(
             new TableGenInstructionRegisterFileOperand(
                 ParameterIdentity.from(ref, ref.address()),
                 ref,
-                address.formatField())
-        ), Collections.emptyList());
+                address.formatField()),
+            new TableGenInstructionImmediateOperand(
+                ParameterIdentity.from(fieldRef),
+                fieldRef
+            )
+        ), Collections.emptyList(),
+        Collections.emptyList());
+  }
+
+  @NotNull
+  private TableGenPattern generateBranchIndirectWithAdd(
+      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      TableGenInstructionRegisterFileOperand inputRegister) {
+    var database = new Database(supportedInstructions);
+    var jalr =
+        database.run(
+                new Query.Builder().machineInstructionLabel(MachineInstructionLabel.JALR).build())
+            .firstMachineInstruction();
+    var immediate = ensurePresent(
+        jalr.behavior().getNodes(FieldAccessRefNode.class).findFirst(),
+        () -> Diagnostic.error("Cannot find immediate.", jalr.sourceLocation()));
+
+    var selector = new Graph("selector");
+    var ref = (ReadRegFileNode) inputRegister.reference().copy();
+    var address = (FieldRefNode) ref.address().copy();
+    var llvmRegister = new LlvmReadRegFileNode(
+        inputRegister.registerFile(), address, inputRegister.formatField().type(),
+        ref.staticCounterAccess()
+    );
+
+    var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
+        () -> Diagnostic.error("Cannot construct llvm type from field access",
+            immediate.sourceLocation()));
+    var fieldRef = new LlvmFieldAccessRefNode(immediate.fieldAccess(), immediate.type(), llvmType,
+        LlvmFieldAccessRefNode.Usage.Immediate);
+    selector.addWithInputs(new LlvmBrindSD(new NodeList<>(
+        new LlvmAddSD(new NodeList<>(llvmRegister, fieldRef), Type.dummy())),
+        Type.dummy()));
+
+    var machine = new Graph("machine");
+    machine.addWithInputs(new LcbMachineInstructionNode(
+        new NodeList<>((LlvmReadRegFileNode) llvmRegister.copy(),
+            (LlvmFieldAccessRefNode) fieldRef.copy()),
+        new OutputInstructionName("PseudoBRIND")));
+
+    return new TableGenSelectionWithOutputPattern(selector, machine);
+  }
+
+  private TableGenPattern generateBranchIndirectWithZero(
+      TableGenInstructionRegisterFileOperand inputRegister) {
+    var selector = new Graph("selector");
+    var ref = (ReadRegFileNode) inputRegister.reference().copy();
+    var address = (FieldRefNode) ref.address().copy();
+    var llvmRegister = new LlvmReadRegFileNode(
+        inputRegister.registerFile(), address, inputRegister.formatField().type(),
+        ref.staticCounterAccess()
+    );
+    var constant = new Constant.Str("0");
+    selector.addWithInputs(new LlvmBrindSD(new NodeList<>(
+        llvmRegister),
+        Type.dummy()));
+
+    var machine = new Graph("machine");
+    machine.addWithInputs(new LcbMachineInstructionNode(
+        new NodeList<>((LlvmReadRegFileNode) llvmRegister.copy(),
+            new ConstantNode(constant)),
+        new OutputInstructionName("PseudoBRIND")));
+
+    return new TableGenSelectionWithOutputPattern(selector, machine);
   }
 
   private static String zeroRegister(RegisterFile registerFile) {

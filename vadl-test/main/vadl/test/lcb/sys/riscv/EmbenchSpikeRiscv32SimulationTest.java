@@ -22,7 +22,6 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
 
   @EnabledIfEnvironmentVariable(named = "test.embench.enabled", matches = "true")
   @Test
-  @Disabled("embench has errors")
   void testEmbench() throws IOException, DuplicatedPassKeyException {
     var target = "rv32im";
     var upstreamBuildTarget = "RISCV";

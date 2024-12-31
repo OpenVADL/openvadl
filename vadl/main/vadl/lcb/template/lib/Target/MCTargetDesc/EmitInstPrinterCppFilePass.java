@@ -4,6 +4,7 @@ import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -13,7 +14,11 @@ import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.assembly.AssemblyInstructionPrinterCodeGenerator;
 import vadl.lcb.passes.EncodeAssemblyImmediateAnnotation;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.database.Database;
+import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
@@ -76,6 +81,13 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
           return new PrintableInstruction(instruction.identifier.simpleName(), result);
         })
         .toList();
+    var database = new Database(passResults, specification);
+    var loadUpperImmediates =
+        new HashSet<>(
+            database.run(
+                    new Query.Builder().machineInstructionLabel(MachineInstructionLabel.LUI)
+                        .build())
+                .machineInstructions());
 
     var machineInstructionsWithImmediate = machineRecords
         .stream()
@@ -83,6 +95,11 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
             x -> x.instruction().assembly().hasAnnotation(EncodeAssemblyImmediateAnnotation.class))
         .filter(x -> x.getInOperands().stream()
             .anyMatch(y -> y instanceof TableGenInstructionImmediateOperand))
+        /*
+        We skip the adjustment of the immediate for LUIs because they are already adjusted in
+        constant materialisation. By doing it twice, the value would be wrong.
+         */
+        .filter(x -> !loadUpperImmediates.contains(x.instruction()))
         .map(x -> {
           var immOperand = x.getInOperands().stream()
               .filter(y -> y instanceof TableGenInstructionImmediateOperand)

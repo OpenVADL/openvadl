@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.model.llvm.ValueType;
@@ -116,17 +118,45 @@ public class GenerateRegisterClassesPass extends Pass {
     var bitWidth = registerFile.addressType().bitWidth();
     var numberOfRegisters = (int) Math.pow(2, bitWidth);
 
-    return IntStream.range(0, numberOfRegisters).mapToObj(number -> {
-      var name = registerFile.identifier.simpleName() + number;
-      var alias = Optional.ofNullable(abi.aliases().get(Pair.of(registerFile, number)));
-      var altNames = alias.map(
-          registerAlias -> String.join(", ", wrapInQuotes(registerAlias.value()),
-              wrapInQuotes(registerFile.identifier.simpleName() + number))).stream().toList();
-      return new TableGenRegister(configuration.processorName(), name,
-          alias.orElse(new Abi.RegisterAlias(registerFile.identifier.simpleName() + number))
-              .value(),
-          altNames, bitWidth - 1, number, Optional.of(number));
-    }).toList();
+    var registers = new ArrayList<TableGenRegister>();
+
+    // We need to add all the registers into the register class.
+    // However, first caller-saved, second callee-saved and finally everything else.
+    var all = IntStream.range(0, numberOfRegisters).boxed().collect(Collectors.toSet());
+    for (var x : abi.callerSaved()) {
+      var reg = tableGenRegister(registerFile, abi, configuration, bitWidth, x.addr());
+      registers.add(reg);
+      all.remove(x.addr());
+    }
+
+    for (var x : abi.calleeSaved()) {
+      var reg = tableGenRegister(registerFile, abi, configuration, bitWidth, x.addr());
+      registers.add(reg);
+      all.remove(x.addr());
+    }
+
+    for (var addr :
+        all) {
+      var reg = tableGenRegister(registerFile, abi, configuration, bitWidth, addr);
+      registers.add(reg);
+    }
+
+    return registers;
+  }
+
+  private @NotNull TableGenRegister tableGenRegister(RegisterFile registerFile, Abi abi,
+                                                     LcbConfiguration configuration, int bitWidth,
+                                                     int addr) {
+    var name = registerFile.identifier.simpleName() + addr;
+    var alias = Optional.ofNullable(abi.aliases().get(Pair.of(registerFile, addr)));
+    var altNames = alias.map(
+        registerAlias -> String.join(", ", wrapInQuotes(registerAlias.value()),
+            wrapInQuotes(registerFile.identifier.simpleName() + addr))).stream().toList();
+    var reg = new TableGenRegister(configuration.processorName(), name,
+        alias.orElse(new Abi.RegisterAlias(registerFile.identifier.simpleName() + addr))
+            .value(),
+        altNames, bitWidth - 1, addr, Optional.of(addr));
+    return reg;
   }
 
   private String wrapInQuotes(String value) {

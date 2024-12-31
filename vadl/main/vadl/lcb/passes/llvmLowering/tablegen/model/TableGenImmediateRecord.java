@@ -5,6 +5,7 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
+import vadl.types.BitsType;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 
@@ -19,7 +20,8 @@ public class TableGenImmediateRecord {
   private final Identifier rawEncoderMethod;
   private final Identifier decoderMethod;
   private final Identifier predicateMethod;
-  private final ValueType type;
+  private final ValueType llvmType;
+  private final BitsType rawType;
   private final int formatFieldBitSize;
   private final Format.FieldAccess fieldAccessRef;
   private final VariantKind variantKind;
@@ -32,14 +34,15 @@ public class TableGenImmediateRecord {
                                   Identifier rawEncoderIdentifier,
                                   Identifier decoderIdentifier,
                                   Identifier predicateIdentifier,
-                                  ValueType type,
+                                  ValueType llvmType,
                                   Format.FieldAccess fieldAccessRef) {
     this.name = identifier.lower();
     this.encoderMethod = encoderIdentifier;
     this.rawEncoderMethod = rawEncoderIdentifier;
     this.decoderMethod = decoderIdentifier;
     this.predicateMethod = predicateIdentifier;
-    this.type = type;
+    this.llvmType = llvmType;
+    this.rawType = (BitsType) fieldAccessRef.type();
     this.formatFieldBitSize = fieldAccessRef.fieldRef().size();
     this.fieldAccessRef = fieldAccessRef;
     this.variantKind = new VariantKind(fieldAccessRef.fieldRef());
@@ -76,12 +79,16 @@ public class TableGenImmediateRecord {
     return decoderMethod.lower();
   }
 
-  public ValueType type() {
-    return type;
+  public ValueType llvmType() {
+    return llvmType;
+  }
+
+  public BitsType rawType() {
+    return rawType;
   }
 
   public String fullname() {
-    return String.format("%sAs%s", this.name, type.getTableGen());
+    return String.format("%sAs%s", this.name, llvmType.getTableGen());
   }
 
   public String predicateMethod() {
@@ -105,12 +112,12 @@ public class TableGenImmediateRecord {
         && Objects.equals(encoderMethod, that.encoderMethod)
         && Objects.equals(decoderMethod, that.decoderMethod)
         && Objects.equals(predicateMethod, that.predicateMethod)
-        && type == that.type;
+        && llvmType == that.llvmType;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, encoderMethod, decoderMethod, predicateMethod, type);
+    return Objects.hash(name, encoderMethod, decoderMethod, predicateMethod, llvmType);
   }
 
   public Format.FieldAccess fieldAccessRef() {
