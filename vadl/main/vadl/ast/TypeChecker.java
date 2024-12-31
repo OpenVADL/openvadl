@@ -2,6 +2,7 @@ package vadl.ast;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
@@ -63,11 +64,7 @@ public class TypeChecker
 
       if (to.getClass() == SIntType.class) {
         var availableWidth = ((SIntType) to).bitWidth();
-        var value = fromConstant.getValue();
-        var isNegative = value.compareTo(BigInteger.ZERO) < 0;
-        var requiredWidth = value.bitLength() + (isNegative ? 1 : 0);
-
-        return availableWidth >= requiredWidth;
+        return availableWidth >= fromConstant.requiredBitWidth();
       }
 
       if (to.getClass() == UIntType.class) {
@@ -78,9 +75,7 @@ public class TypeChecker
           return false;
         }
 
-        var requiredWidth = value.bitLength();
-
-        return availableWidth >= requiredWidth;
+        return availableWidth >= fromConstant.requiredBitWidth();
       }
 
       if (to.getClass() == BitsType.class) {
@@ -91,11 +86,38 @@ public class TypeChecker
           return false;
         }
 
-        var requiredWidth = value.bitLength();
-
-        return availableWidth >= requiredWidth;
+        return availableWidth >= fromConstant.requiredBitWidth();
       }
 
+    }
+
+    // Bool => Bits<1>
+    if (from.getClass() == BoolType.class) {
+      return (to.getClass() == BitsType.class) && (((BitsType) to).bitWidth() == 1);
+    }
+
+    // SInt<n> => Bits<n>
+    if (from.getClass() == SIntType.class) {
+      if (to.getClass() == BitsType.class) {
+        return ((SIntType) from).bitWidth() == ((BitsType) to).bitWidth();
+      }
+    }
+
+    // UInt<n> => Bits<n>
+    if (from.getClass() == UIntType.class) {
+      if (to.getClass() == BitsType.class) {
+        var fromUInt = (UIntType) from;
+        var toBitsType = (BitsType) from;
+        return fromUInt.bitWidth() == toBitsType.bitWidth();
+      }
+    }
+
+    // Bits<1> => Bool
+    if (from.getClass() == BitsType.class) {
+      if (to.getClass() == BoolType.class) {
+        var fromBits = (BitsType) from;
+        return (fromBits.bitWidth() == 1);
+      }
     }
 
     return false;
@@ -464,6 +486,41 @@ public class TypeChecker
     return null;
   }
 
+  private void visitLogicalBinaryExpression(BinaryExpr expr) {
+    var leftTyp = Objects.requireNonNull(expr.left.type);
+    var rightTyp = Objects.requireNonNull(expr.right.type);
+
+    // Both sides must be boolean
+    if (!(leftTyp instanceof BoolType) && !canImplicitCast(leftTyp, Type.bool())) {
+      throw Diagnostic.error("Type Mismatch", expr)
+          .locationDescription(expr, "Expected a Boolean here but the left side was an `%s`",
+              leftTyp)
+          .description("The `%s` operator only works on booleans.", expr.operator())
+          .build();
+    }
+
+    if (!(leftTyp instanceof BoolType)) {
+      expr.left = new CastExpr(expr.left, Type.bool(), expr.left.location());
+      leftTyp = Objects.requireNonNull(expr.left.type);
+    }
+
+    if (!(rightTyp instanceof BoolType) && !canImplicitCast(rightTyp, Type.bool())) {
+      throw Diagnostic.error("Type Mismatch", expr)
+          .locationDescription(expr, "Expected a Boolean here but the right side was an `%s`",
+              rightTyp)
+          .description("The `%s` operator only works on booleans.", expr.operator())
+          .build();
+    }
+
+    if (!(rightTyp instanceof BoolType)) {
+      expr.right = new CastExpr(expr.right, Type.bool(), expr.right.location());
+      rightTyp = Objects.requireNonNull(expr.right.type);
+    }
+
+    // Return is always boolean
+    expr.type = Type.bool();
+  }
+
   @Override
   public Void visit(BinaryExpr expr) {
     expr.left.accept(this);
@@ -471,25 +528,17 @@ public class TypeChecker
     var leftTyp = Objects.requireNonNull(expr.left.type);
     var rightTyp = Objects.requireNonNull(expr.right.type);
 
-    // Verify input types
+    // Logical operations are easy, let's get them out of the way.
     if (Operator.logicalComparisions.contains(expr.operator())) {
-      // Both sides must be boolean
-      if (!(leftTyp instanceof BoolType)) {
-        throw Diagnostic.error("Type Missmatch", expr)
-            .locationDescription(expr, "Expected an Boolean here but the left side was an `%s`",
-                leftTyp)
-            .description("The `%s` operator only works on booleans.", expr.operator())
-            .build();
-      }
-      if (!(rightTyp instanceof BoolType)) {
-        throw Diagnostic.error("Type Missmatch", expr)
-            .locationDescription(expr, "Expected an Boolean here but the right was an `%s`",
-                rightTyp)
-            .description("The `%s` operator only works on booleans.", expr.operator())
-            .build();
-      }
-    } else if (Operator.arithmeticOperators.contains(expr.operator()) ||
+      visitLogicalBinaryExpression(expr);
+      return null;
+    }
+
+    // Verify the rough shapes of the input parameters
+    // This however doesn't check if the types relate to each other.
+    if (Operator.arithmeticOperators.contains(expr.operator()) ||
         Operator.artihmeticComparisons.contains(expr.operator())) {
+
       if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
         throw Diagnostic.error("Type Missmatch", expr)
             .locationDescription(expr, "Expected a number here but the left side was an `%s`",
@@ -508,14 +557,58 @@ public class TypeChecker
       throw new RuntimeException("Don't handle operator " + expr.operator());
     }
 
+    // FIXME: Incorporate special casting rules for binary operators.
+    // Shifts and rotates require that the right type is uint and the left can be anything.
+    var requireRightUInt =
+        List.of(Operator.ShiftLeft, Operator.ShiftRight, Operator.RotateLeft, Operator.RotateRight);
+    if (requireRightUInt.contains(expr.operator())) {
+
+      Type closestUIntType;
+      if (rightTyp instanceof BitsType bitsRightType) {
+        closestUIntType = Type.unsignedInt(bitsRightType.bitWidth());
+      } else if (rightTyp instanceof ConstantType constantRightType) {
+        closestUIntType = constantRightType.closestUInt();
+      } else {
+        throw new IllegalStateException("Don't handle operator " + expr.operator());
+      }
+
+      if (!(rightTyp instanceof UIntType) && !canImplicitCast(rightTyp, closestUIntType)) {
+        throw Diagnostic.error("Type Missmatch", expr)
+            .locationNote(expr, "The right type must be unsigned but is %s", rightTyp)
+            .build();
+      }
+
+      if (!(rightTyp instanceof UIntType)) {
+        expr.right = new CastExpr(expr.right, closestUIntType, expr.right.location());
+        rightTyp = Objects.requireNonNull(expr.right.type);
+      }
+
+      // Only the left side decides the output type
+      if (leftTyp instanceof ConstantType) {
+
+        if (List.of(Operator.RotateLeft, Operator.RotateRight).contains(expr.operator())) {
+          throw Diagnostic.error("Type Missmatch", expr)
+              .locationNote(expr, "The left side must be a concrete type but was %s", rightTyp)
+              .description("Rotate operations require a type with a fixed bit width.")
+              .build();
+        }
+
+        var result = constantEvaluator.eval(expr);
+        expr.type = result.type();
+        return null;
+      }
+
+      expr.type = leftTyp;
+      return null;
+    }
+
     // Const types are a special case
     if (leftTyp instanceof ConstantType && rightTyp instanceof ConstantType) {
       var result = constantEvaluator.eval(expr);
       expr.type = result.type();
-      return null;
     }
 
-    // See if we need to insert an implicit cast
+    // Insert implicit cast if needed
     if (leftTyp.equals(rightTyp)) {
       // Do nothing on purpose
     } else if (canImplicitCast(leftTyp, rightTyp)) {
@@ -536,14 +629,12 @@ public class TypeChecker
           .build();
     }
 
-    // Output type depends on type of operation
     if (Operator.artihmeticComparisons.contains(expr.operator())) {
+      // Output type depends on type of operation
       expr.type = Type.bool();
     } else if (Operator.arithmeticOperators.contains(expr.operator())) {
       // Note: No that isn't the same as leftTyp
       expr.type = expr.left.type;
-    } else if (Operator.logicalComparisions.contains(expr.operator())) {
-      expr.type = Type.bool();
     } else {
       throw new RuntimeException("Don't yet know how to handle " + expr.operator);
     }
@@ -724,7 +815,7 @@ public class TypeChecker
   @Override
   public Void visit(CastExpr expr) {
     expr.value.accept(this);
-    expr.typeLiteral.accept(this);
+    Objects.requireNonNull(expr.typeLiteral).accept(this);
 
     //var valueType = Objects.requireNonNull(expr.value.type);
     var litType = Objects.requireNonNull(expr.typeLiteral.type);

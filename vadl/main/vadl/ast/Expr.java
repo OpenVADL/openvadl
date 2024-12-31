@@ -5,7 +5,11 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.types.BitsType;
+import vadl.types.BoolType;
+import vadl.types.SIntType;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.utils.SourceLocation;
 
 /**
@@ -1128,6 +1132,34 @@ final class TypeLiteral extends Expr {
     this.loc = symExpr.location();
   }
 
+  // A constructor used internally when the type is already known
+  public TypeLiteral(Type type, SourceLocation loc) {
+    this.type = type;
+    this.loc = loc;
+
+    if (type.getClass() == BoolType.class) {
+      this.baseType = new Identifier("Bool", SourceLocation.INVALID_SOURCE_LOCATION);
+      this.sizeIndices = List.of(List.of());
+    } else if (type.getClass() == BitsType.class) {
+      var bitsType = (BitsType) type;
+      this.baseType = new Identifier("Bits", SourceLocation.INVALID_SOURCE_LOCATION);
+      this.sizeIndices =
+          List.of(List.of(new IntegerLiteral(Integer.toString(bitsType.bitWidth()), loc)));
+    } else if (type.getClass() == UIntType.class) {
+      var uintType = (UIntType) type;
+      this.baseType = new Identifier("UInt", SourceLocation.INVALID_SOURCE_LOCATION);
+      this.sizeIndices =
+          List.of(List.of(new IntegerLiteral(Integer.toString(uintType.bitWidth()), loc)));
+    } else if (type.getClass() == SIntType.class) {
+      var sintType = (SIntType) type;
+      this.baseType = new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION);
+      this.sizeIndices =
+          List.of(List.of(new IntegerLiteral(Integer.toString(sintType.bitWidth()), loc)));
+    } else {
+      throw new IllegalStateException("Unsupported type " + type.getClass().getSimpleName());
+    }
+  }
+
 
   @Override
   SourceLocation location() {
@@ -1634,15 +1666,24 @@ class LetExpr extends Expr {
 class CastExpr extends Expr {
   Expr value;
   TypeLiteral typeLiteral;
+  SourceLocation location;
 
   public CastExpr(Expr value, TypeLiteral typeLiteral) {
     this.value = value;
     this.typeLiteral = typeLiteral;
+    this.location = value.location().join(typeLiteral.location());
+  }
+
+  public CastExpr(Expr value, Type type, SourceLocation location) {
+    this.value = value;
+    this.type = type;
+    this.location = location;
+    this.typeLiteral = new TypeLiteral(type, location);
   }
 
   @Override
   SourceLocation location() {
-    return value.location().join(((Expr) typeLiteral).location());
+    return location;
   }
 
   @Override
