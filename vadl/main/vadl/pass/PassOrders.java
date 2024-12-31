@@ -30,6 +30,8 @@ import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
 import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.IssVerificationPass;
+import vadl.iss.passes.decode.QemuDecodeLoweringPass;
+import vadl.iss.passes.decode.QemuDecodeSymbolResolvingPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
@@ -38,6 +40,8 @@ import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
 import vadl.iss.template.target.EmitIssCpuSourcePass;
+import vadl.iss.template.target.EmitIssInsnAccessFunctionPass;
+import vadl.iss.template.target.EmitIssInsnAccessHeaderPass;
 import vadl.iss.template.target.EmitIssInsnDecodePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
@@ -371,6 +375,8 @@ public class PassOrders {
         .add(new TcgOpLoweringPass(config))
         .add(new IssHardcodedTcgAddOnPass(config))
         .add(new IssTcgVAllocationPass(config))
+        .add(new QemuDecodeLoweringPass(config))
+        .add(new QemuDecodeSymbolResolvingPass(config))
     ;
 
 
@@ -444,6 +450,10 @@ public class PassOrders {
         .add(new EmitIssCpuSourcePass(config))
         // target/gen-arch/insn.decode
         .add(new EmitIssInsnDecodePass(config))
+        // target/gen-arch/insn-access.h
+        .add(new EmitIssInsnAccessHeaderPass(config))
+        // target/gen-arch/insn-access.c
+        .add(new EmitIssInsnAccessFunctionPass(config))
         // target/gen-arch/translate.c
         .add(new EmitIssTranslatePass(config))
         // target/gen-arch/machine.c
