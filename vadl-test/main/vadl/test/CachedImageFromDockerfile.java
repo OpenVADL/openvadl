@@ -26,13 +26,22 @@ public class CachedImageFromDockerfile extends ImageFromDockerfile {
     var args = this.getBuildArgs();
     args.put(key, value);
 
-    if (getDockerFilePath().isPresent()) {
-      var dockerFile = cache.get(getDockerFilePath().get());
+    if (getDockerfile().isPresent()) {
+      var dockerFile = cache.get(getDockerfile().get().toString());
       if (dockerFile != null && dockerFile.containsKey(args)) {
         return dockerFile.get(args);
       }
     }
 
-    return super.withBuildArg(key, value);
+    var ref = super.withBuildArg(key, value);
+    this.getDockerfile().ifPresent(x -> {
+      var dockerFile = cache.get(x.toString());
+      if (dockerFile != null) {
+        dockerFile.put(getBuildArgs(), ref);
+      } else {
+        cache.put(getDockerfile().get().toString(), Map.of(getBuildArgs(), ref));
+      }
+    });
+    return ref;
   }
 }
