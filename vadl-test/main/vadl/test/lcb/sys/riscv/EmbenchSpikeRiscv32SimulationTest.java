@@ -34,9 +34,9 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
     Files.createDirectories(Path.of(configuration.outputPath() + "/lcb/embench"));
     {
       var inputStream = new FileInputStream(
-          "../../open-vadl/vadl-test/main/resources/embench/Dockerfile.riscv32.spike.lcb");
+          "../../open-vadl/vadl-test/main/resources/images/spike_rv32im/Dockerfile");
       var outputStream =
-          new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile.riscv32.spike.lcb");
+          new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
       inputStream.transferTo(outputStream);
       outputStream.close();
     }
@@ -51,12 +51,13 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
 
     var redisCache = getRunningRedisCache();
     var image = redisCache.setupEnv(new ImageFromDockerfile("tc_embench_spike_riscv32")
-        .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile.riscv32.spike.lcb"))
+        .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
         .withBuildArg("TARGET", target)
         .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget));
 
     runContainerAndCopyInputIntoContainer(image,
         "../../open-vadl/vadl-test/main/resources/llvm/riscv/spike",
-        "/src/inputs");
+        "/src/inputs",
+        "sh /src/embench/benchmark-extras/run-benchmarks-spike-clang-lcb.sh");
   }
 }
