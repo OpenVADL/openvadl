@@ -1,0 +1,100 @@
+# VADL generated file
+
+# Fields:
+ 
+%imm     20:12
+%rs1     15:5
+%funct3  12:3
+%rd      7:5
+%opcode  0:7
+%immS    20:12                !function=access_immS
+%imm_1   31:1 12:8 20:1 21:10
+%immS_1  31:1 12:8 20:1 21:10 !function=access_immS_1
+%funct2  30:2
+%zero    26:4
+%sft     20:6
+%shamt   20:6                 !function=access_shamt
+%funct7  25:7
+%rs2     20:5
+%shamt_1 20:5                 !function=access_shamt_1
+%imm_2   31:1 7:1 25:6 8:4
+%immS_2  31:1 7:1 25:6 8:4    !function=access_immS_2
+%imm_3   25:7 7:5
+%immS_3  25:7 7:5             !function=access_immS_3
+%imm_4   12:20
+%immUp   12:20                !function=access_immUp
+
+# Argument sets:
+ 
+&Itype imm rs1 funct3 rd opcode immS
+&Jtype imm rd opcode immS
+&Ftype funct2 zero sft rs1 funct3 rd opcode shamt
+&Rtype funct7 rs2 rs1 funct3 rd opcode shamt
+&Btype imm rs2 rs1 funct3 opcode immS
+&Stype imm rs2 rs1 funct3 opcode immS
+&Utype imm rd opcode immUp
+
+# Formats:
+ 
+@Jtype   ................................ &Jtype imm=%imm_1 %rd immS=%immS_1
+@Rtype   ................................ &Rtype %rs2 %rs1 %rd shamt=%shamt_1
+@Ftype   ................................ &Ftype %sft %rs1 %rd %shamt
+@Stype   ................................ &Stype imm=%imm_3 %rs2 %rs1 immS=%immS_3
+@Btype   ................................ &Btype imm=%imm_2 %rs2 %rs1 immS=%immS_2
+@Itype   ................................ &Itype
+@Itype_1 ................................ &Itype %imm %rs1 %rd %immS
+@Utype   ................................ &Utype imm=%imm_4 %rd %immUp
+
+# Patterns:
+ 
+add    0000000..........000.....0110011 @Rtype   funct7=0000000 funct3=000 opcode=0110011
+sub    0100000..........000.....0110011 @Rtype   funct7=0100000 funct3=000 opcode=0110011
+and    0000000..........111.....0110011 @Rtype   funct7=0000000 funct3=111 opcode=0110011
+or     0000000..........110.....0110011 @Rtype   funct7=0000000 funct3=110 opcode=0110011
+xor    0000000..........100.....0110011 @Rtype   funct7=0000000 funct3=100 opcode=0110011
+slt    0000000..........010.....0110011 @Rtype   funct7=0000000 funct3=010 opcode=0110011
+sltu   0000000..........011.....0110011 @Rtype   funct7=0000000 funct3=011 opcode=0110011
+sll    0000000..........001.....0110011 @Rtype   funct7=0000000 funct3=001 opcode=0110011
+srl    0000000..........101.....0110011 @Rtype   funct7=0000000 funct3=101 opcode=0110011
+sra    0100000..........101.....0110011 @Rtype   funct7=0100000 funct3=101 opcode=0110011
+addi   .................000.....0010011 @Itype_1 funct3=000 opcode=0010011
+andi   .................111.....0010011 @Itype_1 funct3=111 opcode=0010011
+ori    .................110.....0010011 @Itype_1 funct3=110 opcode=0010011
+xori   .................100.....0010011 @Itype_1 funct3=100 opcode=0010011
+slti   .................010.....0010011 @Itype_1 funct3=010 opcode=0010011
+sltiu  .................011.....0010011 @Itype_1 funct3=011 opcode=0010011
+auipc  .........................0010111 @Utype   opcode=0010111
+lui    .........................0110111 @Utype   opcode=0110111
+lb     .................000.....0000011 @Itype_1 funct3=000 opcode=0000011
+lbu    .................100.....0000011 @Itype_1 funct3=100 opcode=0000011
+lh     .................001.....0000011 @Itype_1 funct3=001 opcode=0000011
+lhu    .................101.....0000011 @Itype_1 funct3=101 opcode=0000011
+lw     .................010.....0000011 @Itype_1 funct3=010 opcode=0000011
+sb     .................000.....0100011 @Stype   funct3=000 opcode=0100011
+sh     .................001.....0100011 @Stype   funct3=001 opcode=0100011
+sw     .................010.....0100011 @Stype   funct3=010 opcode=0100011
+beq    .................000.....1100011 @Btype   funct3=000 opcode=1100011
+bne    .................001.....1100011 @Btype   funct3=001 opcode=1100011
+bge    .................101.....1100011 @Btype   funct3=101 opcode=1100011
+bgeu   .................111.....1100011 @Btype   funct3=111 opcode=1100011
+blt    .................100.....1100011 @Btype   funct3=100 opcode=1100011
+bltu   .................110.....1100011 @Btype   funct3=110 opcode=1100011
+jal    .........................1101111 @Jtype   opcode=1101111
+jalr   .................000.....1100111 @Itype_1 funct3=000 opcode=1100111
+ecall  00000000000000000000000001110011 @Itype   imm=000000000000 rs1=00000 funct3=000 rd=00000 opcode=1110011 immS=000000000000
+ebreak 00000000000100000000000001110011 @Itype   imm=000000000001 rs1=00000 funct3=000 rd=00000 opcode=1110011 immS=000000000001
+lwu    .................110.....0000011 @Itype_1 funct3=110 opcode=0000011
+ld     .................011.....0000011 @Itype_1 funct3=011 opcode=0000011
+sd     .................011.....0100011 @Stype   funct3=011 opcode=0100011
+addiw  .................000.....0011011 @Itype_1 funct3=000 opcode=0011011
+slliw  0000000..........001.....0011011 @Rtype   funct7=0000000 funct3=001 opcode=0011011
+srliw  0000000..........101.....0011011 @Rtype   funct7=0000000 funct3=101 opcode=0011011
+sraiw  0100000..........101.....0011011 @Rtype   funct7=0100000 funct3=101 opcode=0011011
+addw   0000000..........000.....0111011 @Rtype   funct7=0000000 funct3=000 opcode=0111011
+subw   0100000..........000.....0111011 @Rtype   funct7=0100000 funct3=000 opcode=0111011
+sllw   0000000..........001.....0111011 @Rtype   funct7=0000000 funct3=001 opcode=0111011
+srlw   0000000..........101.....0111011 @Rtype   funct7=0000000 funct3=101 opcode=0111011
+sraw   0100000..........101.....0111011 @Rtype   funct7=0100000 funct3=101 opcode=0111011
+slli   000000...........001.....0010011 @Ftype   funct2=00 zero=0000 funct3=001 opcode=0010011
+srli   000000...........101.....0010011 @Ftype   funct2=00 zero=0000 funct3=101 opcode=0010011
+srai   010000...........101.....0010011 @Ftype   funct2=01 zero=0000 funct3=101 opcode=0010011

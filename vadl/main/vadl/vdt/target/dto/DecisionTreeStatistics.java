@@ -48,4 +48,15 @@ public class DecisionTreeStatistics {
   public void setAvgDepth(double avgDepth) {
     this.avgDepth = avgDepth;
   }
+
+  @Override
+  public String toString() {
+    return "{\n" +
+        "  numberOfNodes: " + numberOfNodes + ",\n" +
+        "  numberOfLeafNodes: " + numberOfLeafNodes + ",\n" +
+        "  maxDepth: " + maxDepth + ",\n" +
+        "  minDepth: " + minDepth + ",\n" +
+        "  avgDepth: " + avgDepth + "\n" +
+        "}";
+  }
 }

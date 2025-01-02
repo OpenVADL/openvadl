@@ -77,6 +77,11 @@ public class DecisionTreeCodeGenerator implements Visitor<Void>, Closeable, Auto
         indent += 2;
         n.getFallback().accept(this);
         indent -= 2;
+      } else {
+        writer.append(" ".repeat(indent)).append("default:\n");
+        indent += 2;
+        writer.append(" ".repeat(indent)).append("return false;\n");
+        indent -= 2;
       }
 
       indent -= 2;
