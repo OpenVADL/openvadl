@@ -1,7 +1,13 @@
 package vadl.vdt.utils;
 
+/**
+ * A pattern bit, i.e. a bit that can be either 0, 1 or <i>don't care</i>.
+ */
 public class PBit {
 
+  /**
+   * The possible values of a pattern bit.
+   */
   public enum Value {
     ZERO, ONE, DONT_CARE
   }

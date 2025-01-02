@@ -19,14 +19,14 @@ import vadl.vdt.utils.PBit;
 
 /**
  * Uses the Theiling algorithm to generate a decode tree.
- * <p>
- * See: <a
+ *
+ * <p>See: <a
  * href="https://ea.complang.tuwien.ac.at/vadl/vadl/raw/branch/master/etc/literature/decode/GeneratingDecisionTreesForDecodingBinaries.pdf">Generating
  * Decision Trees For Decoding Binaries (Henrik Theiling)</a>
- * <p>
- * The concrete behaviour is equivalent to the QEMU TCG decoder. That is, overlapping instructions
- * will pushed down the tree to the lowest possible level and decided based on the most specific
- * instruction first.
+ *
+ * <p>The concrete behaviour is equivalent to the QEMU TCG decoder. That is, overlapping
+ * instructions will pushed down the tree to the lowest possible level and decided based on the
+ * most specific instruction first.
  */
 public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruction> {
 
@@ -39,11 +39,11 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
     return generateInternal(fullMask(insnWidth), instructions);
   }
 
-  private Node generateInternal(BitVector gMask, Collection<Instruction> instructions) {
+  private Node generateInternal(BitVector ggMask, Collection<Instruction> instructions) {
 
     // Step 1: compute a bit mask of bits that are significant for all patterns. Only the bits
     // set in the gMask are considered.
-    BitVector mask = gMask;
+    BitVector mask = ggMask;
     for (Instruction instruction : instructions) {
       mask = mask.and(mask(instruction));
     }
@@ -56,7 +56,7 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
     // Step 3: Decide about default node (for subsumed instructions)
     Optional<Node> defaultNode = Optional.empty();
     if (mask.toValue().equals(BigInteger.ZERO)) {
-      final var result = getDefault(gMask, instructions);
+      final var result = getDefault(ggMask, instructions);
 
       defaultNode = Optional.of(new LeafNodeImpl(result.getLeft()));
       instructions = result.getMiddle();
@@ -73,7 +73,7 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
       final BitPattern decision = entry.getKey();
       final Collection<Instruction> subset = entry.getValue();
 
-      final var subGMask = gMask.and(mask.not());
+      final var subGMask = ggMask.and(mask.not());
       children.put(decision, generateInternal(subGMask, subset));
     }
 
@@ -94,13 +94,33 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
     return partition;
   }
 
+  /**
+   * Compute the decision bits for the given instruction based on the mask. Only the set bits in the
+   * mask are considered for the decision.
+   *
+   * @param mask        The mask to use for the decision
+   * @param instruction The instruction to compute the decision for
+   * @return The decision bits
+   */
+  private BitPattern partition(BitVector mask, Instruction instruction) {
+    final PBit[] decisionBits = new PBit[instruction.width()];
+    for (int i = 0; i < instruction.width(); i++) {
+      if (mask.get(i).value()) {
+        decisionBits[i] = instruction.pattern().get(i);
+      } else {
+        decisionBits[i] = new PBit(PBit.Value.DONT_CARE);
+      }
+    }
+    return new BitPattern(decisionBits);
+  }
+
   private ImmutableTriple<Instruction, Collection<Instruction>, BitVector> getDefault(
-      BitVector gMask, Collection<Instruction> instructions) {
+      BitVector ggMask, Collection<Instruction> instructions) {
 
     // Compute the set of bit patterns that have empty remaining bit masks
     final Set<Instruction> m = new LinkedHashSet<>();
     for (Instruction instruction : instructions) {
-      var k = mask(instruction).and(gMask);
+      var k = mask(instruction).and(ggMask);
       if (k.toValue().equals(BigInteger.ZERO)) {
         m.add(instruction);
       }
@@ -116,7 +136,7 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
         .toList();
 
     // Compute the new mask for the subsumed instructions (Similar to Step 1)
-    var newMask = gMask;
+    var newMask = ggMask;
     for (var insn : subsumed) {
       newMask = newMask.and(mask(insn));
     }
@@ -141,26 +161,6 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
       maskBits[i] = new Bit(instruction.pattern().get(i).getValue() != PBit.Value.DONT_CARE);
     }
     return new BitVector(maskBits);
-  }
-
-  /**
-   * Compute the decision bits for the given instruction based on the mask. Only the set bits in the
-   * mask are considered for the decision.
-   *
-   * @param mask        The mask to use for the decision
-   * @param instruction The instruction to compute the decision for
-   * @return The decision bits
-   */
-  private BitPattern partition(BitVector mask, Instruction instruction) {
-    final PBit[] decisionBits = new PBit[instruction.width()];
-    for (int i = 0; i < instruction.width(); i++) {
-      if (mask.get(i).value()) {
-        decisionBits[i] = instruction.pattern().get(i);
-      } else {
-        decisionBits[i] = new PBit(PBit.Value.DONT_CARE);
-      }
-    }
-    return new BitPattern(decisionBits);
   }
 
   private BitVector fullMask(int width) {

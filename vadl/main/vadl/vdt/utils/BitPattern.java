@@ -3,6 +3,10 @@ package vadl.vdt.utils;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+/**
+ * Represents a bit pattern, which is a vector of bits where each bit can be either 0, 1 or <i>don't
+ * care</i>.
+ */
 public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
 
   private final PBit[] bits;
@@ -36,6 +40,15 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
     return true;
   }
 
+  /**
+   * Creates a bit pattern from the given string representation. The string must consist of '0's,
+   * '1's, which represent the corresponding bits. Any other character is interpreted as a <i>don't
+   * care</i> bit.
+   *
+   * @param pattern The string representation of the bit pattern
+   * @param width   The width of the bit pattern
+   * @return The bit pattern
+   */
   public static BitPattern fromString(String pattern, int width) {
     final PBit[] bits = new PBit[width];
     if (pattern.length() != width) {
@@ -48,6 +61,11 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
     return new BitPattern(bits);
   }
 
+  /**
+   * Returns whether this bit pattern matches all bits, i.e. all bits are <i>don't care</i>.
+   *
+   * @return {@code true} if all bits are <i>don't care</i>, {@code false} otherwise
+   */
   public boolean doesMatchAll() {
     for (int i = 0; i < width(); i++) {
       if (get(i).getValue() != PBit.Value.DONT_CARE) {

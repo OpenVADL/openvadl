@@ -1,5 +1,10 @@
 package vadl.vdt.utils;
 
+/**
+ * Represents a single bit.
+ *
+ * @param value the value of the bit (true for 1, false for 0)
+ */
 public record Bit(boolean value) implements BitWise<Bit> {
 
   @Override

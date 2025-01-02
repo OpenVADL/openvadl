@@ -3,14 +3,29 @@ package vadl.vdt.utils;
 import java.math.BigInteger;
 import java.util.Objects;
 
+/**
+ * Represents a bit vector, i.e. a sequence of bits.
+ */
 public class BitVector implements Vector<Bit>, BitWise<BitVector> {
 
   private final Bit[] bits;
 
+  /**
+   * Creates a new bit vector from the given bits.
+   *
+   * @param bits the bits of the vector
+   */
   public BitVector(Bit[] bits) {
     this.bits = bits;
   }
 
+  /**
+   * Creates a bit vector from the given value.
+   *
+   * @param value the value as a big integer
+   * @param width the width of the bit vector to create
+   * @return the bit vector
+   */
   public static BitVector fromValue(BigInteger value, int width) {
     final Bit[] bits = new Bit[width];
     for (int i = 0; i < width; i++) {
@@ -19,6 +34,14 @@ public class BitVector implements Vector<Bit>, BitWise<BitVector> {
     return new BitVector(bits);
   }
 
+  /**
+   * Creates a bit vector from the given string representation. The string must consist of '0's and
+   * '1's, which represent the corresponding bits.
+   *
+   * @param value the string representation of the bit vector
+   * @param width the width of the bit vector to create
+   * @return the bit vector
+   */
   public static BitVector fromString(String value, int width) {
     final Bit[] bits = new Bit[width];
     for (int i = 0; i < width; i++) {
@@ -34,6 +57,11 @@ public class BitVector implements Vector<Bit>, BitWise<BitVector> {
     return new BitVector(bits);
   }
 
+  /**
+   * Converts the bit vector to its corresponding BigInteger representation.
+   *
+   * @return the value as a big integer
+   */
   public BigInteger toValue() {
     BigInteger value = BigInteger.ZERO;
     for (int i = 0; i < width(); i++) {
@@ -90,6 +118,13 @@ public class BitVector implements Vector<Bit>, BitWise<BitVector> {
     return new BitVector(result);
   }
 
+  /**
+   * Shifts the bit vector to the left by n bits. The bits that are shifted out are lost.
+   *
+   * @param n    the number of bits to shift
+   * @param fill the value to fill the shifted out bits with (true for 1, false for 0)
+   * @return the shifted bit vector
+   */
   public BitVector shiftLeft(int n, boolean fill) {
     final Bit[] result = new Bit[width()];
     for (int i = n; i < width(); i++) {
@@ -101,6 +136,13 @@ public class BitVector implements Vector<Bit>, BitWise<BitVector> {
     return new BitVector(result);
   }
 
+  /**
+   * Shifts the bit vector to the right by n bits. The bits that are shifted out are lost.
+   *
+   * @param n    the number of bits to shift
+   * @param fill the value to fill the shifted out bits with (true for 1, false for 0)
+   * @return the shifted bit vector
+   */
   public BitVector shiftRight(int n, boolean fill) {
     final Bit[] result = new Bit[width()];
     for (int i = 0; i < n; i++) {

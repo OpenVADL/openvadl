@@ -28,10 +28,21 @@ public class DecisionTreeCodeGenerator implements Visitor<Void>, Closeable, Auto
   private final Writer writer;
   private int indent = 0;
 
+  /**
+   * Create a new code generator.
+   *
+   * @param out the output stream to write the generated code to
+   */
   public DecisionTreeCodeGenerator(OutputStream out) {
     this.writer = new PrintWriter(out, true, StandardCharsets.UTF_8);
   }
 
+  /**
+   * Generate the code for the given decision tree.
+   *
+   * @param tree The decode decision tree to generate code for
+   * @throws IOException if an I/O error occurs
+   */
   public void generate(Node tree) throws IOException {
 
     indent = 0;

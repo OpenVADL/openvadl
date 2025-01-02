@@ -1,5 +1,8 @@
 package vadl.vdt.target.dto;
 
+/**
+ * Holds statistics about a decision tree.
+ */
 public class DecisionTreeStatistics {
 
   private int numberOfNodes;
@@ -51,12 +54,12 @@ public class DecisionTreeStatistics {
 
   @Override
   public String toString() {
-    return "{\n" +
-        "  numberOfNodes: " + numberOfNodes + ",\n" +
-        "  numberOfLeafNodes: " + numberOfLeafNodes + ",\n" +
-        "  maxDepth: " + maxDepth + ",\n" +
-        "  minDepth: " + minDepth + ",\n" +
-        "  avgDepth: " + avgDepth + "\n" +
-        "}";
+    return "{\n"
+        + "  numberOfNodes: " + numberOfNodes + ",\n"
+        + "  numberOfLeafNodes: " + numberOfLeafNodes + ",\n"
+        + "  maxDepth: " + maxDepth + ",\n"
+        + "  minDepth: " + minDepth + ",\n"
+        + "  avgDepth: " + avgDepth + "\n"
+        + "}";
   }
 }

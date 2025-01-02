@@ -7,6 +7,10 @@ import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
 import vadl.vdt.target.dto.DecisionTreeStatistics;
 
+/**
+ * Calculate general statistics about the structure of a decision tree, such as the number of nodes,
+ * the number of leaf nodes, the maximum depth, the minimum depth, and the average depth.
+ */
 public class DecisionTreeStatsCalculator implements Visitor<DecisionTreeStatistics> {
 
   public DecisionTreeStatistics calculate(Node node) {
@@ -15,8 +19,6 @@ public class DecisionTreeStatsCalculator implements Visitor<DecisionTreeStatisti
 
   @Override
   public DecisionTreeStatistics visit(InnerNode node) {
-
-    var children = node.children();
 
     var stats = new DecisionTreeStatistics();
 
@@ -27,7 +29,7 @@ public class DecisionTreeStatsCalculator implements Visitor<DecisionTreeStatisti
     stats.setMinDepth(Integer.MAX_VALUE);
     stats.setAvgDepth(0);
 
-    for (Node child : children) {
+    for (Node child : node.children()) {
       DecisionTreeStatistics childStats = Objects.requireNonNull(child.accept(this));
 
       stats.setNumberOfNodes(stats.getNumberOfNodes() + childStats.getNumberOfNodes());
