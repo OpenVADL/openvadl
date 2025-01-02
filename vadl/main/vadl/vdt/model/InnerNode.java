@@ -1,5 +1,6 @@
 package vadl.vdt.model;
 
+import java.util.Collection;
 import vadl.vdt.utils.BitVector;
 
 /**
@@ -15,4 +16,10 @@ public interface InnerNode extends Node {
    */
   Node decide(BitVector insn);
 
+  /**
+   * The children of this decision node.
+   *
+   * @return The children of this decision node
+   */
+  Collection<Node> children();
 }

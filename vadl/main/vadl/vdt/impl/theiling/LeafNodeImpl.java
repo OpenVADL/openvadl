@@ -1,13 +1,14 @@
 package vadl.vdt.impl.theiling;
 
+import javax.annotation.Nullable;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Visitor;
-import vadl.viam.Instruction;
+import vadl.vdt.utils.Instruction;
 
 public record LeafNodeImpl(Instruction instruction) implements LeafNode {
 
   @Override
-  public <T> T accept(Visitor<T> visitor) {
+  public <T> @Nullable T accept(Visitor<T> visitor) {
     return visitor.visit(this);
   }
 }

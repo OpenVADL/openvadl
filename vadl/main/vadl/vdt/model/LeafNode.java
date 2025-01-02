@@ -1,6 +1,6 @@
 package vadl.vdt.model;
 
-import vadl.viam.Instruction;
+import vadl.vdt.utils.Instruction;
 
 /**
  * Leaf node of the decode decision tree, representing a single instruction.

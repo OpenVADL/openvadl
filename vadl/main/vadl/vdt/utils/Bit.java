@@ -21,4 +21,20 @@ public record Bit(boolean value) implements BitWise<Bit> {
   public Bit not() {
     return !this.value ? new Bit(true) : new Bit(false);
   }
+
+  @Override
+  public int hashCode() {
+    return this.value ? 1 : 0;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (!(obj instanceof Bit)) {
+      return false;
+    }
+    return this.value == ((Bit) obj).value;
+  }
 }

@@ -1,7 +1,9 @@
 package vadl.vdt.model;
 
+import javax.annotation.Nullable;
+
 public interface Node {
 
-  <T> T accept(Visitor<T> visitor);
+  <T> @Nullable T accept(Visitor<T> visitor);
 
 }

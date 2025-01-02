@@ -1,6 +1,7 @@
 package vadl.vdt.utils;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 public class BitVector implements Vector<Bit> {
 
@@ -22,6 +23,9 @@ public class BitVector implements Vector<Bit> {
     final Bit[] bits = new Bit[width];
     for (int i = 0; i < width; i++) {
       if (i < value.length()) {
+        if (value.charAt(i) != '0' && value.charAt(i) != '1') {
+          throw new IllegalArgumentException("Invalid character in value");
+        }
         bits[i] = new Bit(value.charAt(i) == '1');
       } else {
         bits[i] = new Bit(false);
@@ -50,7 +54,7 @@ public class BitVector implements Vector<Bit> {
     return bits[i];
   }
 
-  public Vector<Bit> and(Vector<Bit> other) {
+  public BitVector and(Vector<Bit> other) {
     final Bit[] result = new Bit[width()];
     for (int i = 0; i < width(); i++) {
       result[i] = get(i).and(other.get(i));
@@ -58,7 +62,7 @@ public class BitVector implements Vector<Bit> {
     return new BitVector(result);
   }
 
-  public Vector<Bit> or(Vector<Bit> other) {
+  public BitVector or(Vector<Bit> other) {
     final Bit[] result = new Bit[width()];
     for (int i = 0; i < width(); i++) {
       result[i] = get(i).or(other.get(i));
@@ -66,7 +70,7 @@ public class BitVector implements Vector<Bit> {
     return new BitVector(result);
   }
 
-  public Vector<Bit> xor(Vector<Bit> other) {
+  public BitVector xor(Vector<Bit> other) {
     final Bit[] result = new Bit[width()];
     for (int i = 0; i < width(); i++) {
       result[i] = get(i).xor(other.get(i));
@@ -74,7 +78,7 @@ public class BitVector implements Vector<Bit> {
     return new BitVector(result);
   }
 
-  public Vector<Bit> not() {
+  public BitVector not() {
     final Bit[] result = new Bit[width()];
     for (int i = 0; i < width(); i++) {
       result[i] = get(i).not();
@@ -82,7 +86,7 @@ public class BitVector implements Vector<Bit> {
     return new BitVector(result);
   }
 
-  public Vector<Bit> shiftLeft(int n, boolean fill) {
+  public BitVector shiftLeft(int n, boolean fill) {
     final Bit[] result = new Bit[width()];
     for (int i = n; i < width(); i++) {
       result[i - n] = get(i);
@@ -93,7 +97,7 @@ public class BitVector implements Vector<Bit> {
     return new BitVector(result);
   }
 
-  public Vector<Bit> shiftRight(int n, boolean fill) {
+  public BitVector shiftRight(int n, boolean fill) {
     final Bit[] result = new Bit[width()];
     for (int i = 0; i < n; i++) {
       result[i] = fill ? new Bit(true) : new Bit(false);
@@ -102,5 +106,43 @@ public class BitVector implements Vector<Bit> {
       result[i] = get(i - n);
     }
     return new BitVector(result);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 1;
+    for (int i = 0; i < width(); i++) {
+      result = 31 * result + Objects.hashCode(get(i));
+    }
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    final BitVector other = (BitVector) obj;
+    if (width() != other.width()) {
+      return false;
+    }
+    for (int i = 0; i < width(); i++) {
+      if (!Objects.equals(get(i), other.get(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < width(); i++) {
+      builder.append(get(i).value() ? '1' : '0');
+    }
+    return builder.toString();
   }
 }

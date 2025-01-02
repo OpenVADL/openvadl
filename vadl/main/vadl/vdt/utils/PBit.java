@@ -1,6 +1,6 @@
 package vadl.vdt.utils;
 
-public class PBit implements BitWise<PBit> {
+public class PBit {
 
   public enum Value {
     ZERO, ONE, DONT_CARE
@@ -17,23 +17,18 @@ public class PBit implements BitWise<PBit> {
   }
 
   @Override
-  public PBit and(PBit other) {
-    return null;
+  public int hashCode() {
+    return value.hashCode();
   }
 
   @Override
-  public PBit or(PBit other) {
-    return null;
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (!(obj instanceof PBit)) {
+      return false;
+    }
+    return value == ((PBit) obj).value;
   }
-
-  @Override
-  public PBit xor(PBit other) {
-    return null;
-  }
-
-  @Override
-  public PBit not() {
-    return null;
-  }
-
 }
