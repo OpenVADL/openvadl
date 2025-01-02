@@ -18,6 +18,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.test.CachedImageFromDockerfile;
 import vadl.test.lcb.AbstractLcbTest;
 
 public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
@@ -61,7 +62,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
     }
 
     var redisCache = getRunningRedisCache();
-    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv", !doDebug)
+    var image = redisCache.setupEnv(new CachedImageFromDockerfile("tc_spike_riscv", !doDebug)
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
         .withBuildArg("TARGET", target)
         .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
