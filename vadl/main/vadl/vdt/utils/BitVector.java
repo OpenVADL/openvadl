@@ -37,7 +37,7 @@ public class BitVector implements Vector<Bit> {
   public BigInteger toValue() {
     BigInteger value = BigInteger.ZERO;
     for (int i = 0; i < width(); i++) {
-      if (get(i).value()) {
+      if (get(width() - (i + 1)).value()) {
         value = value.setBit(i);
       }
     }

@@ -12,10 +12,12 @@ import vadl.vdt.utils.BitVector;
 
 public class InnerNodeImpl implements InnerNode {
 
+  private final BitVector mask;
   private final @Nullable Node fallback;
   private final Map<BitPattern, Node> children;
 
-  public InnerNodeImpl(Map<BitPattern, Node> children, @Nullable Node fallback) {
+  public InnerNodeImpl(BitVector mask, Map<BitPattern, Node> children, @Nullable Node fallback) {
+    this.mask = mask;
     this.children = children;
     this.fallback = fallback;
   }
@@ -34,6 +36,18 @@ public class InnerNodeImpl implements InnerNode {
     }
 
     throw new RuntimeException("No decision found for " + insn);
+  }
+
+  public BitVector getMask() {
+    return mask;
+  }
+
+  public @Nullable Node getFallback() {
+    return fallback;
+  }
+
+  public Map<BitPattern, Node> getChildren() {
+    return children;
   }
 
   @Override

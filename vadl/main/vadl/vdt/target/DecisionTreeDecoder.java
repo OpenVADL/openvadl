@@ -10,15 +10,15 @@ import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
 
 /**
- * A decoder that uses an in-memory decision tree to decode instructions. Useful for testing and
+ * A decoder that uses the in-memory decision tree to decode instructions. Useful for testing and
  * debugging.
  */
-public class InMemoryDecoder implements Visitor<Instruction> {
+public class DecisionTreeDecoder implements Visitor<Instruction> {
 
   private final Node decisionTree;
   private @Nullable BitVector encoding;
 
-  public InMemoryDecoder(Node tree) {
+  public DecisionTreeDecoder(Node tree) {
     this.decisionTree = tree;
   }
 

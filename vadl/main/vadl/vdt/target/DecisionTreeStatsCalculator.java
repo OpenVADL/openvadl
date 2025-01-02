@@ -7,7 +7,7 @@ import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
 import vadl.vdt.target.dto.DecisionTreeStatistics;
 
-public class DtStatisticsCalculator implements Visitor<DecisionTreeStatistics> {
+public class DecisionTreeStatsCalculator implements Visitor<DecisionTreeStatistics> {
 
   public DecisionTreeStatistics calculate(Node node) {
     return Objects.requireNonNull(node.accept(this));

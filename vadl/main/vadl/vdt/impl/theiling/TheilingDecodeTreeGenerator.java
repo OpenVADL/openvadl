@@ -78,7 +78,7 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
     }
 
     // Step 6: Construct the inner decision node
-    return new InnerNodeImpl(children, defaultNode.orElse(null));
+    return new InnerNodeImpl(mask, children, defaultNode.orElse(null));
   }
 
   private Map<BitPattern, Collection<Instruction>> partition(BitVector mask,
@@ -107,8 +107,7 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
     }
 
     if (m.size() != 1) {
-      // TODO: improve error message (e.g. list the conflicting instructions)
-      throw new IllegalStateException("Overlapping instructions found");
+      throw new IllegalArgumentException("Overlapping instructions found: " + m);
     }
 
     final var defaultInsn = m.iterator().next();
@@ -123,8 +122,7 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
     }
 
     if (newMask.toValue().equals(BigInteger.ZERO)) {
-      // TODO: improve error message (e.g. list the conflicting instructions)
-      throw new IllegalStateException("Overlapping instructions found");
+      throw new IllegalArgumentException("Overlapping instructions found: " + subsumed);
     }
 
     return new ImmutableTriple<>(defaultInsn, subsumed, newMask);

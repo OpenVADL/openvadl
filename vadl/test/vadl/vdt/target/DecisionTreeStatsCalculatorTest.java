@@ -1,0 +1,74 @@
+package vadl.vdt.target;
+
+import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import vadl.vdt.AbstractDecisionTreeTest;
+import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
+import vadl.vdt.model.Node;
+import vadl.vdt.target.dto.DecisionTreeStatistics;
+
+class DecisionTreeStatsCalculatorTest extends AbstractDecisionTreeTest {
+
+  @Test
+  void testGenerate_statistics_1() {
+
+    /* GIVEN */
+    final var instructions = createInsns(List.of("1--", "01-", "00-"));
+
+    /* WHEN */
+    final Node dt = new TheilingDecodeTreeGenerator().generate(instructions);
+
+    /* THEN */
+    final DecisionTreeStatsCalculator calculator = new DecisionTreeStatsCalculator();
+    final DecisionTreeStatistics stats = calculator.calculate(dt);
+
+    Assertions.assertEquals(5, stats.getNumberOfNodes());
+    Assertions.assertEquals(3, stats.getNumberOfLeafNodes());
+    Assertions.assertEquals(1, stats.getMinDepth());
+    Assertions.assertEquals(2, stats.getMaxDepth());
+    Assertions.assertEquals(1.67, Math.round(stats.getAvgDepth() * 100) / 100.0);
+  }
+
+  @Test
+  void testGenerate_statistics_2() {
+
+    /* GIVEN */
+    final var instructions = createInsns(List.of("1--", "01-", "000", "001"));
+
+    /* WHEN */
+    final Node dt = new TheilingDecodeTreeGenerator().generate(instructions);
+
+    /* THEN */
+    final DecisionTreeStatsCalculator calculator = new DecisionTreeStatsCalculator();
+    final DecisionTreeStatistics stats = calculator.calculate(dt);
+
+    Assertions.assertEquals(7, stats.getNumberOfNodes());
+    Assertions.assertEquals(4, stats.getNumberOfLeafNodes());
+    Assertions.assertEquals(1, stats.getMinDepth());
+    Assertions.assertEquals(3, stats.getMaxDepth());
+    Assertions.assertEquals(2.25, stats.getAvgDepth());
+  }
+
+  @Test
+  void testGenerate_statistics_3() {
+
+    /* GIVEN */
+    final var instructions = createInsns(
+        List.of("100", "101", "110", "111", "010", "011", "000", "001"));
+
+    /* WHEN */
+    final Node dt = new TheilingDecodeTreeGenerator().generate(instructions);
+
+    /* THEN */
+    final DecisionTreeStatsCalculator calculator = new DecisionTreeStatsCalculator();
+    final DecisionTreeStatistics stats = calculator.calculate(dt);
+
+    Assertions.assertEquals(9, stats.getNumberOfNodes());
+    Assertions.assertEquals(8, stats.getNumberOfLeafNodes());
+    Assertions.assertEquals(1, stats.getMinDepth());
+    Assertions.assertEquals(1, stats.getMaxDepth());
+    Assertions.assertEquals(1, stats.getAvgDepth());
+  }
+
+}
