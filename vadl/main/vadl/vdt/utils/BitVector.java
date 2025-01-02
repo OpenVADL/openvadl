@@ -3,7 +3,7 @@ package vadl.vdt.utils;
 import java.math.BigInteger;
 import java.util.Objects;
 
-public class BitVector implements Vector<Bit> {
+public class BitVector implements Vector<Bit>, BitWise<BitVector> {
 
   private final Bit[] bits;
 
@@ -54,7 +54,8 @@ public class BitVector implements Vector<Bit> {
     return bits[i];
   }
 
-  public BitVector and(Vector<Bit> other) {
+  @Override
+  public BitVector and(BitVector other) {
     final Bit[] result = new Bit[width()];
     for (int i = 0; i < width(); i++) {
       result[i] = get(i).and(other.get(i));
@@ -62,7 +63,8 @@ public class BitVector implements Vector<Bit> {
     return new BitVector(result);
   }
 
-  public BitVector or(Vector<Bit> other) {
+  @Override
+  public BitVector or(BitVector other) {
     final Bit[] result = new Bit[width()];
     for (int i = 0; i < width(); i++) {
       result[i] = get(i).or(other.get(i));
@@ -70,7 +72,8 @@ public class BitVector implements Vector<Bit> {
     return new BitVector(result);
   }
 
-  public BitVector xor(Vector<Bit> other) {
+  @Override
+  public BitVector xor(BitVector other) {
     final Bit[] result = new Bit[width()];
     for (int i = 0; i < width(); i++) {
       result[i] = get(i).xor(other.get(i));
@@ -78,6 +81,7 @@ public class BitVector implements Vector<Bit> {
     return new BitVector(result);
   }
 
+  @Override
   public BitVector not() {
     final Bit[] result = new Bit[width()];
     for (int i = 0; i < width(); i++) {

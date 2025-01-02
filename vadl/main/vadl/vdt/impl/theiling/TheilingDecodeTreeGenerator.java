@@ -3,8 +3,8 @@ package vadl.vdt.impl.theiling;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -67,7 +67,7 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
     final var partition = partition(mask, instructions);
 
     // Step 5: Recurse on the partition subsets
-    final Map<BitPattern, Node> children = new HashMap<>();
+    final Map<BitPattern, Node> children = new LinkedHashMap<>();
 
     for (Map.Entry<BitPattern, Collection<Instruction>> entry : partition.entrySet()) {
       final BitPattern decision = entry.getKey();
@@ -84,7 +84,7 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
   private Map<BitPattern, Collection<Instruction>> partition(BitVector mask,
                                                              Collection<Instruction> instructions) {
 
-    final Map<BitPattern, Collection<Instruction>> partition = new HashMap<>();
+    final Map<BitPattern, Collection<Instruction>> partition = new LinkedHashMap<>();
 
     for (Instruction instruction : instructions) {
       final BitPattern part = partition(mask, instruction);
@@ -98,7 +98,7 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
       BitVector gMask, Collection<Instruction> instructions) {
 
     // Compute the set of bit patterns that have empty remaining bit masks
-    final Set<Instruction> m = new HashSet<>();
+    final Set<Instruction> m = new LinkedHashSet<>();
     for (Instruction instruction : instructions) {
       var k = mask(instruction).and(gMask);
       if (k.toValue().equals(BigInteger.ZERO)) {
