@@ -1,4 +1,4 @@
-package vadl.iss.passes.decode;
+package vadl.iss.passes.decode.qemu;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -10,11 +10,11 @@ import java.util.Map;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
-import vadl.iss.passes.decode.dto.ArgumentSet;
-import vadl.iss.passes.decode.dto.Field;
-import vadl.iss.passes.decode.dto.FieldSlice;
-import vadl.iss.passes.decode.dto.Pattern;
-import vadl.iss.passes.decode.dto.QemuDecodeLoweringPassResult;
+import vadl.iss.passes.decode.qemu.dto.ArgumentSet;
+import vadl.iss.passes.decode.qemu.dto.Field;
+import vadl.iss.passes.decode.qemu.dto.FieldSlice;
+import vadl.iss.passes.decode.qemu.dto.Pattern;
+import vadl.iss.passes.decode.qemu.dto.QemuDecodeLoweringPassResult;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.DataType;
@@ -81,7 +81,7 @@ public class QemuDecodeLoweringPass extends AbstractIssPass {
     }
 
     final Map<Identifier, ArgumentSet> qArgs = new HashMap<>();
-    final Map<Pair<Identifier, BigInteger>, vadl.iss.passes.decode.dto.Format> qFormats =
+    final Map<Pair<Identifier, BigInteger>, vadl.iss.passes.decode.qemu.dto.Format> qFormats =
         new HashMap<>();
     final List<Pattern> qPatterns = new ArrayList<>();
 
@@ -161,8 +161,8 @@ public class QemuDecodeLoweringPass extends AbstractIssPass {
     return new Field(field, slices);
   }
 
-  private vadl.iss.passes.decode.dto.Format mapFormat(Format format, BigInteger fixedBits,
-                                                      ArgumentSet args) {
+  private vadl.iss.passes.decode.qemu.dto.Format mapFormat(Format format, BigInteger fixedBits,
+                                                           ArgumentSet args) {
 
     // We may only extract fields which are not fixed in the corresponding patterns
     List<Field> fields = args.getFields().stream()
@@ -173,7 +173,7 @@ public class QemuDecodeLoweringPass extends AbstractIssPass {
               return m.and(fixedBits).equals(BigInteger.ZERO);
             }))
         .toList();
-    return new vadl.iss.passes.decode.dto.Format(format, args, fields);
+    return new vadl.iss.passes.decode.qemu.dto.Format(format, args, fields);
   }
 
   /**

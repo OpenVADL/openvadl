@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import vadl.vdt.AbstractDecisionTreeTest;
 import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
 
-class DecisionTreeCodeGeneratorTest extends AbstractDecisionTreeTest {
+class IssDecisionTreeCodeGeneratorTest extends AbstractDecisionTreeTest {
 
   @Test
   void testCodeGen_simpleInstructions_succeeds() throws IOException {
@@ -19,7 +19,7 @@ class DecisionTreeCodeGeneratorTest extends AbstractDecisionTreeTest {
     final var out = new ByteArrayOutputStream();
 
     /* WHEN */
-    try (var generator = new DecisionTreeCodeGenerator(out)) {
+    try (var generator = new IssDecisionTreeCodeGenerator(out)) {
       generator.generate(tree);
     }
 
@@ -38,7 +38,7 @@ class DecisionTreeCodeGeneratorTest extends AbstractDecisionTreeTest {
     final var out = new ByteArrayOutputStream();
 
     /* WHEN */
-    try (var generator = new DecisionTreeCodeGenerator(out)) {
+    try (var generator = new IssDecisionTreeCodeGenerator(out)) {
       generator.generate(tree);
     }
 

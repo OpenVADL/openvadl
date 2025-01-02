@@ -7,12 +7,5 @@ package vadl.vdt.utils;
  * an instruction is augmented with relevant information for decoding, such as the width of the
  * instruction and the fixed bit pattern that represents the instruction.
  */
-public interface Instruction {
-
-  vadl.viam.Instruction source();
-
-  int width();
-
-  BitPattern pattern();
-
+public record Instruction(vadl.viam.Instruction source, int width, BitPattern pattern) {
 }

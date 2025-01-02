@@ -61,39 +61,24 @@ public class AbstractDecisionTreeTest {
   protected List<Instruction> createInsns(Map<String, String> patternsByName) {
     final List<Instruction> result = new ArrayList<>();
 
-    int i = 0;
     for (Map.Entry<String, String> entry : patternsByName.entrySet()) {
       String name = entry.getKey();
       String insn = entry.getValue();
 
-      result.add(new Instruction() {
-        @Override
-        public vadl.viam.Instruction source() {
-          var id = Identifier.noLocation(name);
-          var behaviour = new Graph("mock");
-          return new vadl.viam.Instruction(id, behaviour, null, null);
-        }
+      // Prepare a dummy instruction with a unique name
+      var id = Identifier.noLocation(name);
+      var behaviour = new Graph("mock");
+      var source = new vadl.viam.Instruction(id, behaviour, null, null);
 
-        @Override
-        public int width() {
-          return insn.length();
-        }
+      // Prepare the bit pattern
+      final PBit[] bits = new PBit[insn.length()];
+      for (int i = 0; i < insn.length(); i++) {
+        bits[i] = new PBit(insn.charAt(i) == '1' ? PBit.Value.ONE
+            : (insn.charAt(i) == '0' ? PBit.Value.ZERO : PBit.Value.DONT_CARE));
+      }
+      var pattern = new BitPattern(bits);
 
-        @Override
-        public BitPattern pattern() {
-          final PBit[] bits = new PBit[insn.length()];
-          for (int i = 0; i < insn.length(); i++) {
-            bits[i] = new PBit(insn.charAt(i) == '1' ? PBit.Value.ONE
-                : (insn.charAt(i) == '0' ? PBit.Value.ZERO : PBit.Value.DONT_CARE));
-          }
-          return new BitPattern(bits);
-        }
-
-        @Override
-        public String toString() {
-          return "Instruction{" + pattern() + "}";
-        }
-      });
+      result.add(new Instruction(source, pattern.width(), pattern));
     }
     return result;
   }

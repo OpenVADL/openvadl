@@ -1,4 +1,4 @@
-package vadl.iss.passes.decode.dto;
+package vadl.iss.passes.decode.qemu.dto;
 
 /**
  * The rendering context contains information about the maximum lengths of the different elements

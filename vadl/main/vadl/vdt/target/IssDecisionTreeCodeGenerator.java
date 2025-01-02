@@ -23,7 +23,7 @@ import vadl.vdt.utils.PBit;
 /**
  * Generate C/C++ code for a decision tree from an in-memory representation of the decision tree.
  */
-public class DecisionTreeCodeGenerator implements Visitor<Void>, Closeable, AutoCloseable {
+public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, AutoCloseable {
 
   private final Writer writer;
   private int indent = 0;
@@ -33,7 +33,7 @@ public class DecisionTreeCodeGenerator implements Visitor<Void>, Closeable, Auto
    *
    * @param out the output stream to write the generated code to
    */
-  public DecisionTreeCodeGenerator(OutputStream out) {
+  public IssDecisionTreeCodeGenerator(OutputStream out) {
     this.writer = new PrintWriter(out, true, StandardCharsets.UTF_8);
   }
 

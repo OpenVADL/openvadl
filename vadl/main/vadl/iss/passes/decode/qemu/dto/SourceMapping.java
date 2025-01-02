@@ -1,4 +1,4 @@
-package vadl.iss.passes.decode.dto;
+package vadl.iss.passes.decode.qemu.dto;
 
 import vadl.viam.Definition;
 

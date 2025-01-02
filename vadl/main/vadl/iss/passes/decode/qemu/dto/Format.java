@@ -1,4 +1,4 @@
-package vadl.iss.passes.decode.dto;
+package vadl.iss.passes.decode.qemu.dto;
 
 import java.util.List;
 import java.util.Optional;

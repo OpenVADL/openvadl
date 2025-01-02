@@ -1,4 +1,4 @@
-package vadl.iss.passes.decode.dto;
+package vadl.iss.passes.decode.qemu.dto;
 
 /**
  * Interface for objects that can be rendered to a string (particularly in the context of the QEMU

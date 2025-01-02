@@ -1,15 +1,15 @@
-package vadl.iss.template.target;
+package vadl.iss.template.target.decode.qemu;
 
 import java.util.Map;
 import java.util.Objects;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.decode.QemuDecodeSymbolResolvingPass;
-import vadl.iss.passes.decode.dto.ArgumentSet;
-import vadl.iss.passes.decode.dto.Field;
-import vadl.iss.passes.decode.dto.Format;
-import vadl.iss.passes.decode.dto.Pattern;
-import vadl.iss.passes.decode.dto.QemuDecodeResolveSymbolPassResult;
-import vadl.iss.passes.decode.dto.RenderContext;
+import vadl.iss.passes.decode.qemu.QemuDecodeSymbolResolvingPass;
+import vadl.iss.passes.decode.qemu.dto.ArgumentSet;
+import vadl.iss.passes.decode.qemu.dto.Field;
+import vadl.iss.passes.decode.qemu.dto.Format;
+import vadl.iss.passes.decode.qemu.dto.Pattern;
+import vadl.iss.passes.decode.qemu.dto.QemuDecodeResolveSymbolPassResult;
+import vadl.iss.passes.decode.qemu.dto.RenderContext;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -43,11 +43,13 @@ public class EmitIssInsnDecodePass extends IssTemplateRenderingPass {
 
     final Map<String, Object> variables = super.createVariables(passResults, specification);
 
-    final var passResult = passResults.lastResultOf(QemuDecodeSymbolResolvingPass.class);
-    if (!(passResult instanceof QemuDecodeResolveSymbolPassResult qemuDefs)) {
+    if (!passResults.hasRunPassOnce(QemuDecodeSymbolResolvingPass.class)) {
       // Nothing to enrich
       return variables;
     }
+
+    final var qemuDefs = passResults.lastResultOf(QemuDecodeSymbolResolvingPass.class,
+        QemuDecodeResolveSymbolPassResult.class);
 
     variables.put(FORMATS_KEY, qemuDefs.formats());
     variables.put(PATTERNS_KEY, qemuDefs.patterns());

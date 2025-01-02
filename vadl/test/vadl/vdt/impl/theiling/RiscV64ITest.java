@@ -10,7 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import vadl.vdt.AbstractDecisionTreeTest;
 import vadl.vdt.model.Node;
-import vadl.vdt.target.DecisionTreeCodeGenerator;
+import vadl.vdt.target.IssDecisionTreeCodeGenerator;
 import vadl.vdt.utils.Instruction;
 
 class RiscV64ITest extends AbstractDecisionTreeTest {
@@ -51,7 +51,7 @@ class RiscV64ITest extends AbstractDecisionTreeTest {
 
     /* WHEN */
 
-    try (final var codeGen = new DecisionTreeCodeGenerator(out)) {
+    try (final var codeGen = new IssDecisionTreeCodeGenerator(out)) {
       codeGen.generate(tree);
     }
 

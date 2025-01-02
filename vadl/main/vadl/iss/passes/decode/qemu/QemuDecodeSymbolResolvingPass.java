@@ -1,4 +1,4 @@
-package vadl.iss.passes.decode;
+package vadl.iss.passes.decode.qemu;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -10,13 +10,13 @@ import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
-import vadl.iss.passes.decode.dto.ArgumentSet;
-import vadl.iss.passes.decode.dto.Field;
-import vadl.iss.passes.decode.dto.Format;
-import vadl.iss.passes.decode.dto.Pattern;
-import vadl.iss.passes.decode.dto.QemuDecodeLoweringPassResult;
-import vadl.iss.passes.decode.dto.QemuDecodeResolveSymbolPassResult;
-import vadl.iss.passes.decode.dto.SourceMapping;
+import vadl.iss.passes.decode.qemu.dto.ArgumentSet;
+import vadl.iss.passes.decode.qemu.dto.Field;
+import vadl.iss.passes.decode.qemu.dto.Format;
+import vadl.iss.passes.decode.qemu.dto.Pattern;
+import vadl.iss.passes.decode.qemu.dto.QemuDecodeLoweringPassResult;
+import vadl.iss.passes.decode.qemu.dto.QemuDecodeResolveSymbolPassResult;
+import vadl.iss.passes.decode.qemu.dto.SourceMapping;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;

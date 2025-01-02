@@ -30,8 +30,9 @@ import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
 import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.IssVerificationPass;
-import vadl.iss.passes.decode.QemuDecodeLoweringPass;
-import vadl.iss.passes.decode.QemuDecodeSymbolResolvingPass;
+import vadl.iss.passes.decode.qemu.QemuDecodeLoweringPass;
+import vadl.iss.passes.decode.qemu.QemuDecodeSymbolResolvingPass;
+import vadl.iss.passes.decode.vdt.VdtLoweringPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
@@ -40,11 +41,12 @@ import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
 import vadl.iss.template.target.EmitIssCpuSourcePass;
-import vadl.iss.template.target.EmitIssInsnAccessFunctionPass;
-import vadl.iss.template.target.EmitIssInsnAccessHeaderPass;
-import vadl.iss.template.target.EmitIssInsnDecodePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
+import vadl.iss.template.target.decode.qemu.EmitIssInsnAccessFunctionPass;
+import vadl.iss.template.target.decode.qemu.EmitIssInsnAccessHeaderPass;
+import vadl.iss.template.target.decode.qemu.EmitIssInsnDecodePass;
+import vadl.iss.template.target.decode.vdt.EmitIssDecodeTreePass;
 import vadl.lcb.passes.DummyAnnotationPass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
@@ -375,10 +377,9 @@ public class PassOrders {
         .add(new TcgOpLoweringPass(config))
         .add(new IssHardcodedTcgAddOnPass(config))
         .add(new IssTcgVAllocationPass(config))
-        .add(new QemuDecodeLoweringPass(config))
-        .add(new QemuDecodeSymbolResolvingPass(config))
     ;
 
+    addDecodePasses(order, config);
 
     if (config.doDump()) {
       // TODO: this should be set in the frontend that creates the scheduling
@@ -454,6 +455,8 @@ public class PassOrders {
         .add(new EmitIssInsnAccessHeaderPass(config))
         // target/gen-arch/insn-access.c
         .add(new EmitIssInsnAccessFunctionPass(config))
+        // target/gen-arch/vdt-decode.c
+        .add(new EmitIssDecodeTreePass(config))
         // target/gen-arch/translate.c
         .add(new EmitIssTranslatePass(config))
         // target/gen-arch/machine.c
@@ -480,6 +483,20 @@ public class PassOrders {
       return Optional.of(new CollectBehaviorDotGraphPass(config));
     });
     return order;
+  }
+
+  private static void addDecodePasses(PassOrder order, IssConfiguration config) {
+
+    // TODO: Add config params to switch between decoder implementations. For now we generate
+    // code for both. The implementation used by the ISS is determined by the linking of the
+    // generated resources.
+
+    // QEMU Decode Passes
+    order.add(new QemuDecodeLoweringPass(config));
+    order.add(new QemuDecodeSymbolResolvingPass(config));
+
+    // VDT Decode Passes
+    order.add(new VdtLoweringPass(config));
   }
 
 }

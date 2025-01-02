@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -132,7 +133,7 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
 
     final var defaultInsn = m.iterator().next();
     final var subsumed = instructions.stream()
-        .filter(i -> i != defaultInsn)
+        .filter(i -> !Objects.equals(i, defaultInsn))
         .toList();
 
     // Compute the new mask for the subsumed instructions (Similar to Step 1)
