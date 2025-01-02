@@ -239,6 +239,28 @@ public class TypecheckerAsmTest {
   }
 
   @Test
+  void repetitionWithDoubleAssignment() {
+    var prog = """
+          grammar = {
+            Statements @statements:
+              stmts = Statement @statements
+              {
+                stmts += Statement
+                stmts += Statement
+              }
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new TypeFinder();
+    Assertions.assertEquals(StatementsAsmType.instance(),
+        typeFinder.getAsmRuleType(ast, "Statements"));
+  }
+
+  @Test
   void repetitionWithNestedGroup() {
     var prog = """
           grammar = {
@@ -278,6 +300,24 @@ public class TypecheckerAsmTest {
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
 
+  @Test
+  void assignToLocalVarInRepetition() {
+    var prog = """
+          grammar = {
+            Statements:
+              var tmp = Statement
+              stmts = tmp @statements
+              { tmp = Statement
+                stmts += tmp }
+              lastStmt = tmp
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+  }
 
   @Test
   void alternativeOfDifferingAsmTypes() {
