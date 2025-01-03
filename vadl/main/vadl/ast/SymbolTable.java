@@ -301,26 +301,40 @@ class SymbolTable {
         collectSymbols(symbols, constant.value);
       } else if (definition instanceof CounterDefinition counter) {
         symbols.defineSymbol(counter);
+        collectSymbols(symbols, counter.type);
       } else if (definition instanceof RegisterDefinition register) {
         symbols.defineSymbol(register);
+        collectSymbols(symbols, register.type);
       } else if (definition instanceof RegisterFileDefinition registerFile) {
         symbols.defineSymbol(registerFile);
+        for (var argType : registerFile.type.argTypes()) {
+          collectSymbols(symbols, argType);
+        }
+        collectSymbols(symbols, registerFile.type.resultType());
       } else if (definition instanceof MemoryDefinition memory) {
         symbols.defineSymbol(memory);
+        collectSymbols(symbols, memory.addressType);
+        collectSymbols(symbols, memory.dataType);
       } else if (definition instanceof UsingDefinition using) {
         symbols.defineSymbol(using);
+        collectSymbols(symbols, using.typeLiteral);
       } else if (definition instanceof FunctionDefinition function) {
         symbols.defineSymbol(function);
+        collectSymbols(symbols, function.retType);
         function.symbolTable = symbols.createChild();
         for (Parameter param : function.params) {
           function.symbolTable.defineSymbol(param);
+          collectSymbols(symbols, param.type);
         }
         collectSymbols(function.symbolTable, function.expr);
       } else if (definition instanceof FormatDefinition format) {
         format.symbolTable = symbols.createChild();
         symbols.defineSymbol(format);
+        collectSymbols(symbols, format.type);
         for (FormatDefinition.FormatField field : format.fields) {
           format.symbolTable().defineSymbol(field.identifier().name, (Node) field);
+
+          // FIXME: Add symboltables to all the fields and their children.
         }
       } else if (definition instanceof InstructionDefinition instr) {
         symbols.defineSymbol(instr);
@@ -338,8 +352,10 @@ class SymbolTable {
       } else if (definition instanceof RelocationDefinition relocation) {
         symbols.defineSymbol(relocation);
         relocation.symbolTable = symbols.createChild();
+        collectSymbols(symbols, relocation.resultType);
         for (Parameter param : relocation.params) {
           relocation.symbolTable.defineSymbol(param);
+          collectSymbols(symbols, param.type);
         }
         collectSymbols(relocation.symbolTable, relocation.expr);
       } else if (definition instanceof AssemblyDefinition assembly) {
@@ -354,7 +370,16 @@ class SymbolTable {
       } else if (definition instanceof AliasDefinition alias) {
         symbols.defineSymbol(alias);
         collectSymbols(symbols, alias.value);
+        if (alias.aliasType != null) {
+          collectSymbols(symbols, alias.aliasType);
+        }
+        if (alias.targetType != null) {
+          collectSymbols(symbols, alias.targetType);
+        }
       } else if (definition instanceof EnumerationDefinition enumeration) {
+        if (enumeration.enumType != null) {
+          collectSymbols(symbols, enumeration.enumType);
+        }
         for (EnumerationDefinition.Entry entry : enumeration.entries) {
           String path = enumeration.identifier().name + "::" + entry.name().name;
           symbols.defineSymbol(path, enumeration);
@@ -381,12 +406,15 @@ class SymbolTable {
         process.symbolTable = symbols.createChild();
         for (TemplateParam templateParam : process.templateParams) {
           process.symbolTable.defineSymbol(templateParam);
+          collectSymbols(symbols, templateParam.type);
         }
         for (Parameter input : process.inputs) {
           process.symbolTable.defineSymbol(input);
+          collectSymbols(symbols, input.type);
         }
         for (Parameter output : process.outputs) {
           process.symbolTable.defineSymbol(output);
+          collectSymbols(symbols, output.type);
         }
         collectSymbols(process.symbolTable, process.statement);
       } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {
@@ -454,8 +482,11 @@ class SymbolTable {
         collectSymbols(stage.symbolTable, stage.statement);
       } else if (definition instanceof CacheDefinition cache) {
         symbols.defineSymbol(cache);
+        collectSymbols(symbols, cache.sourceType);
+        collectSymbols(symbols, cache.targetType);
       } else if (definition instanceof SignalDefinition signal) {
         symbols.defineSymbol(signal);
+        collectSymbols(symbols, signal.type);
       } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
         symbols.defineSymbol(asmDescription);
         var asmDescSymbolTable = symbols.createChild();
@@ -620,6 +651,7 @@ class SymbolTable {
         collectSymbols(symbols, binary.right);
       } else if (expr instanceof CastExpr cast) {
         collectSymbols(symbols, cast.value);
+        collectSymbols(symbols, cast.typeLiteral);
       } else if (expr instanceof CallExpr call) {
         collectSymbols(symbols, (Expr) call.target);
         for (List<Expr> argsIndex : call.argsIndices) {

@@ -513,7 +513,7 @@ class MacroExpander
   @Override
   public Definition visit(UsingDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.id);
-    return new UsingDefinition(id, definition.type, copyLoc(definition.loc))
+    return new UsingDefinition(id, definition.typeLiteral, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 

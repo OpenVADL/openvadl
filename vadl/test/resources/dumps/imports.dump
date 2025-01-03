@@ -16,7 +16,7 @@ ImportDefinition
 . : ' Module AST
 . : ' | InstructionSetDefinition
 . : ' | . Identifier name: "A", type: null
-. : ' | . ConstantDefinition type: null
+. : ' | . ConstantDefinition
 . : ' | . : Identifier name: "a", type: null
 . : ' | . : IntegerLiteral literal: 1 (1), type: null
 . : ImportDefinition
@@ -27,7 +27,7 @@ ImportDefinition
 . : ' Module AST
 . : ' | InstructionSetDefinition
 . : ' | . Identifier name: "A", type: null
-. : ' | . ConstantDefinition type: null
+. : ' | . ConstantDefinition
 . : ' | . : Identifier name: "a", type: null
 . : ' | . : IntegerLiteral literal: 1 (1), type: null
 . : ImportDefinition
@@ -38,15 +38,15 @@ ImportDefinition
 . : ' Module AST
 . : ' | InstructionSetDefinition
 . : ' | . Identifier name: "B", type: null
-. : ' | . ConstantDefinition type: null
+. : ' | . ConstantDefinition
 . : ' | . : Identifier name: "b", type: null
 . : ' | . : IntegerLiteral literal: 2 (2), type: null
 . : InstructionSetDefinition
 . : ' Identifier name: "C", type: null
-. : ' ConstantDefinition type: null
+. : ' ConstantDefinition
 . : ' | Identifier name: "c", type: null
 . : ' | IntegerLiteral literal: 3 (3), type: null
-ConstantDefinition type: null
+ConstantDefinition
 . Identifier name: "topLevelConstant", type: null
 . BinaryExpr operator: +, type: null
 . : IntegerLiteral literal: 456 (456), type: null
@@ -57,6 +57,6 @@ InstructionSetDefinition
 InstructionSetDefinition
 . Identifier name: "ISA_B", type: null
 . Identifier name: "B", type: null
-. ConstantDefinition type: null
+. ConstantDefinition
 . : Identifier name: "modelInIsa", type: null
 . : IntegerLiteral literal: 123 (123), type: null

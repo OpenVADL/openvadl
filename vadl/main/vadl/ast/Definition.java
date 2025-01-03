@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 /**
@@ -212,9 +211,6 @@ class ConstantDefinition extends Definition implements IdentifiableNode {
   @Nullable
   TypeLiteral typeLiteral;
 
-  @Nullable
-  Type type;
-
   Expr value;
   SourceLocation loc;
 
@@ -267,7 +263,7 @@ class ConstantDefinition extends Definition implements IdentifiableNode {
 
   @Override
   public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
+    return "%s".formatted(this.getClass().getSimpleName());
   }
 
   @Override
@@ -1573,12 +1569,12 @@ class AssemblyDefinition extends Definition {
 
 class UsingDefinition extends Definition implements IdentifiableNode {
   final IdentifierOrPlaceholder id;
-  final TypeLiteral type;
+  final TypeLiteral typeLiteral;
   final SourceLocation loc;
 
-  UsingDefinition(IdentifierOrPlaceholder id, TypeLiteral type, SourceLocation location) {
+  UsingDefinition(IdentifierOrPlaceholder id, TypeLiteral typeLiteral, SourceLocation location) {
     this.id = id;
-    this.type = type;
+    this.typeLiteral = typeLiteral;
     this.loc = location;
   }
 
@@ -1604,7 +1600,7 @@ class UsingDefinition extends Definition implements IdentifiableNode {
     builder.append("using ");
     id.prettyPrint(indent, builder);
     builder.append(" = ");
-    type.prettyPrint(indent, builder);
+    typeLiteral.prettyPrint(indent, builder);
     builder.append("\n");
   }
 
@@ -1630,14 +1626,14 @@ class UsingDefinition extends Definition implements IdentifiableNode {
     var that = (UsingDefinition) o;
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(id, that.id)
-        && Objects.equals(type, that.type);
+        && Objects.equals(typeLiteral, that.typeLiteral);
   }
 
   @Override
   public int hashCode() {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(id);
-    result = 31 * result + Objects.hashCode(type);
+    result = 31 * result + Objects.hashCode(typeLiteral);
     return result;
   }
 }

@@ -146,12 +146,11 @@ public class TypeChecker
     Type valType = Objects.requireNonNull(definition.value.type);
 
     if (definition.typeLiteral == null) {
-      definition.type = definition.value.type;
+      // Do nothing on purpose
     } else {
       definition.typeLiteral.type =
           parseTypeLiteral(definition.typeLiteral, preferredBitWidthOf(valType));
       Type litType = Objects.requireNonNull(definition.typeLiteral.type);
-      definition.type = litType;
 
       if (!canImplicitCast(valType, litType)) {
         throw Diagnostic.error("Type missmatch: expected %s, got %s".formatted(litType, valType),
@@ -239,7 +238,7 @@ public class TypeChecker
 
   @Override
   public Void visit(UsingDefinition definition) {
-    throwUnimplemented(definition);
+    definition.typeLiteral.accept(this);
     return null;
   }
 
@@ -493,10 +492,10 @@ public class TypeChecker
     );
 
     if (origin instanceof ConstantDefinition constDef) {
-      if (constDef.type == null) {
+      if (constDef.value.type == null) {
         constDef.accept(this);
       }
-      expr.type = constDef.type;
+      expr.type = constDef.value.type;
     } else {
       throw new RuntimeException("Don't handle class " + origin.getClass().getName());
     }
@@ -811,9 +810,18 @@ public class TypeChecker
       };
     }
 
+    // Find the type from the symbol table
+    var usingDef = expr.symbolTable().findAs(((Identifier) expr.baseType), UsingDefinition.class);
+    if (usingDef != null) {
+      if (usingDef.typeLiteral.type == null) {
+        usingDef.typeLiteral.accept(this);
+      }
+
+      return Objects.requireNonNull(usingDef.typeLiteral.type);
+    }
 
     throw new RuntimeException(
-        "Don't know how to parse the typeliteral %s yet.".formatted(expr.baseType.pathToString()));
+        "No type with the name `%s` exists.".formatted(expr.baseType.pathToString()));
   }
 
   @Override
