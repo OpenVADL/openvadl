@@ -540,32 +540,52 @@ public abstract class Constant {
     /**
      * Performs singed or and unsigned less comparison.
      */
-    public Constant.Value lth(Constant.Value other) {
-      var result = integer().compareTo(other.integer()) < 0;
+    public Constant.Value lth(Constant.Value other, boolean singed) {
+      boolean result;
+      if (singed) {
+        result = integer().compareTo(other.integer()) < 0;
+      } else {
+        result = value.compareTo(other.value) < 0;
+      }
       return Constant.Value.fromBoolean(result);
     }
 
     /**
      * Performs singed or and unsigned less equals comparison.
      */
-    public Constant.Value leq(Constant.Value other) {
-      var result = integer().compareTo(other.integer()) <= 0;
+    public Constant.Value leq(Constant.Value other, boolean singed) {
+      boolean result;
+      if (singed) {
+        result = integer().compareTo(other.integer()) <= 0;
+      } else {
+        result = value.compareTo(other.value) <= 0;
+      }
       return Constant.Value.fromBoolean(result);
     }
 
     /**
      * Performs singed or and unsigned greater comparison.
      */
-    public Constant.Value gth(Constant.Value other) {
-      var result = integer().compareTo(other.integer()) > 0;
+    public Constant.Value gth(Constant.Value other, boolean singed) {
+      boolean result;
+      if (singed) {
+        result = integer().compareTo(other.integer()) > 0;
+      } else {
+        result = value.compareTo(other.value) > 0;
+      }
       return Constant.Value.fromBoolean(result);
     }
 
     /**
      * Performs singed or and unsigned less equals comparison.
      */
-    public Constant.Value geq(Constant.Value other) {
-      var result = integer().compareTo(other.integer()) >= 0;
+    public Constant.Value geq(Constant.Value other, boolean singed) {
+      boolean result;
+      if (singed) {
+        result = integer().compareTo(other.integer()) >= 0;
+      } else {
+        result = value.compareTo(other.value) >= 0;
+      }
       return Constant.Value.fromBoolean(result);
     }
 

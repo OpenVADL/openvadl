@@ -594,7 +594,7 @@ public class BuiltInTable {
   public static final BuiltIn SLTH =
       func("SLTH", "<", Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
-          .compute(Constant.Value::lth)
+          .compute((Constant.Value a, Constant.Value b) -> a.lth(b, true))
           .returns(Type.bool())
           .build();
 
@@ -605,7 +605,7 @@ public class BuiltInTable {
   public static final BuiltIn ULTH =
       func("ULTH", "<", Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
-          .compute(Constant.Value::lth)
+          .compute((Constant.Value a, Constant.Value b) -> a.lth(b, false))
           .returns(Type.bool())
           .build();
 
@@ -617,7 +617,7 @@ public class BuiltInTable {
       func("SLEQ", "<=",
           Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
-          .compute(Constant.Value::leq)
+          .compute((Constant.Value a, Constant.Value b) -> a.leq(b, true))
           .returns(Type.bool())
           .build();
 
@@ -629,7 +629,7 @@ public class BuiltInTable {
       func("ULEQ", "<=",
           Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
-          .compute(Constant.Value::leq)
+          .compute((Constant.Value a, Constant.Value b) -> a.leq(b, false))
           .returns(Type.bool())
           .build();
 
@@ -641,7 +641,7 @@ public class BuiltInTable {
       func("SGTH", ">",
           Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
-          .compute(Constant.Value::gth)
+          .compute((Constant.Value a, Constant.Value b) -> a.gth(b, true))
           .returns(Type.bool())
           .build();
 
@@ -653,7 +653,7 @@ public class BuiltInTable {
       func("UGTH", ">",
           Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
-          .compute(Constant.Value::gth)
+          .compute((Constant.Value a, Constant.Value b) -> a.gth(b, false))
           .returns(Type.bool())
           .build();
 
@@ -665,7 +665,7 @@ public class BuiltInTable {
       func("SGEQ", ">=",
           Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
-          .compute(Constant.Value::geq)
+          .compute((Constant.Value a, Constant.Value b) -> a.geq(b, true))
           .returns(Type.bool())
           .build();
 
@@ -677,7 +677,7 @@ public class BuiltInTable {
       func("UGEQ", ">=",
           Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
-          .compute(Constant.Value::geq)
+          .compute((Constant.Value a, Constant.Value b) -> a.geq(b, false))
           .returns(Type.bool())
           .build();
 
