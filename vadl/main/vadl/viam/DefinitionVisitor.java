@@ -1,7 +1,5 @@
 package vadl.viam;
 
-import vadl.viam.passes.dummyAbi.DummyAbi;
-
 /**
  * DefinitionVisitor is an interface that defines the visit methods for all types of
  * definitions in a VADL specification.
@@ -29,7 +27,7 @@ public interface DefinitionVisitor {
   void visit(Function function);
 
   void visit(Relocation relocation);
-  
+
   void visit(Parameter parameter);
 
   void visit(PseudoInstruction pseudoInstruction);
@@ -42,7 +40,9 @@ public interface DefinitionVisitor {
 
   void visit(Counter counter);
 
-  void visit(DummyAbi dummyAbi);
+  void visit(Abi abi);
+
+  void visit(MicroProcessor microProcessor);
 
   /**
    * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor
@@ -230,9 +230,21 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(DummyAbi dummyAbi) {
-      beforeTraversal(dummyAbi);
-      afterTraversal(dummyAbi);
+    public void visit(Abi abi) {
+      beforeTraversal(abi);
+      afterTraversal(abi);
+    }
+
+    @Override
+    public void visit(MicroProcessor microProcessor) {
+      beforeTraversal(microProcessor);
+      var start = microProcessor.start();
+      start.accept(this);
+      var stop = microProcessor.stop();
+      if (stop != null) {
+        stop.accept(this);
+      }
+      afterTraversal(microProcessor);
     }
   }
 
@@ -332,7 +344,12 @@ public interface DefinitionVisitor {
 
 
     @Override
-    public void visit(DummyAbi dummyAbi) {
+    public void visit(Abi abi) {
+
+    }
+
+    @Override
+    public void visit(MicroProcessor microProcessor) {
 
     }
   }

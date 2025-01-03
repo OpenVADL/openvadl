@@ -122,27 +122,6 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
         return false; // success
     }
 
-    int64_t negatedVal = -Val;
-
-    [# th:each="r : ${adjustCases}" ]
-    if ( [(${r.predicate.lower()})]( Val ) /* check if immediate fits */
-           && [(${namespace})]::PC == SrcReg /* check if source register fits */
-           && ( (DestReg.isVirtual() && [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(MRI.getRegClass(DestReg)))
-           || (DestReg.isPhysical() && [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.contains(DestReg))
-           )
-            /* check if destination register fits */
-           )
-       {
-           BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ) )
-               .addReg( DestReg, RegState::Define )
-               .addImm( Val )
-               .setMIFlag(Flag)
-               ;
-
-           return false; // success
-       }
-    [/]
-
     auto parts = splitNumber(Val);
 
     // First define the destination register

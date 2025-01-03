@@ -14,9 +14,9 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This pass extracts the immediates from the TableGen records. This makes it easier for the
@@ -38,7 +38,7 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
   @Override
   public List<TableGenImmediateRecord> execute(PassResults passResults,
                                                Specification viam) throws IOException {
-    var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
     return viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(fieldUsages -> fieldUsages.fieldAccesses().stream())
         .distinct()

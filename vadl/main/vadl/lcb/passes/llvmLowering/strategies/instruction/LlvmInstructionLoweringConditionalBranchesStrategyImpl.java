@@ -36,6 +36,7 @@ import vadl.lcb.passes.llvmLowering.strategies.LoweringStrategyUtils;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
+import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
@@ -48,7 +49,6 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Lowering conditional branch instructions into TableGen patterns.
@@ -74,7 +74,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
       Instruction instruction,
       Graph uninlinedBehavior,
-      DummyAbi abi) {
+      Abi abi) {
     var visitor = replacementHooks();
     var copy = uninlinedBehavior.copy();
 
@@ -91,7 +91,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       Instruction instruction,
       Graph visitedGraph,
-      DummyAbi dummyAbi) {
+      Abi abi) {
 
     var outputOperands = getTableGenOutputOperands(visitedGraph);
     var inputOperands = getTableGenInputOperands(outputOperands, visitedGraph);
@@ -106,7 +106,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
             inputOperands,
             outputOperands,
             patterns,
-            dummyAbi);
+            abi);
 
     var allPatterns = Stream.concat(patterns.stream(), alternatives.stream())
         .map(LoweringStrategyUtils::replaceBasicBlockByLabelImmediateInMachineInstruction)
@@ -134,18 +134,24 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi) {
-    var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(supportedInstructions);
+      Abi abi) {
+    var flipped = LlvmLoweringPass.flipMachineInstructions(supportedInstructions);
     var label = flipped.get(instruction);
 
     ArrayList<TableGenPattern> alternatives = new ArrayList<>();
-    var swapped = generatePatternsForSwappedOperands(patterns);
-    alternatives.addAll(swapped);
-    alternatives.addAll(
-        generateBrCondFromBrCc(Stream.concat(patterns.stream(), swapped.stream()).toList()));
+    if (label != BEQ && label != BNEQ) {
+      var swapped = generatePatternsForSwappedOperands(patterns);
+      alternatives.addAll(swapped);
+      alternatives.addAll(
+          generateBrCondFromBrCc(Stream.concat(patterns.stream(), swapped.stream()).toList()));
+    } else {
+      alternatives.addAll(
+          generateBrCondFromBrCc(patterns));
+    }
 
     if (label == BNEQ) {
-      alternatives.add(generateBrCondWithRegister(instruction, behavior));
+      alternatives.add(
+          generateBrCondWithRegister(instruction, behavior));
     }
 
     return alternatives;

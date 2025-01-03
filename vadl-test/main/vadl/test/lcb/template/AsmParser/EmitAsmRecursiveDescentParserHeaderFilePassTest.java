@@ -147,9 +147,9 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
           ParsedValue<rv64imParsedOperand> rs1;
         
         };
-        struct fun67 {
+        struct funct2 {
         
-          ParsedValue<rv64imParsedOperand> fun67;
+          ParsedValue<rv64imParsedOperand> funct2;
         
         };
         struct funct3 {
@@ -190,6 +190,11 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
         struct sft {
         
           ParsedValue<rv64imParsedOperand> sft;
+        
+        };
+        struct zero {
+        
+          ParsedValue<rv64imParsedOperand> zero;
         
         };
         

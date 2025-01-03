@@ -1,6 +1,7 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.iss.passes.tcgLowering.TcgV;
@@ -16,7 +17,7 @@ import vadl.viam.graph.Node;
 public class TcgExtendNode extends TcgUnaryOpNode {
 
   @DataValue
-  Tcg_8_16_32 fromSize;
+  int fromSize;
 
   @DataValue
   TcgExtend extend;
@@ -30,7 +31,7 @@ public class TcgExtendNode extends TcgUnaryOpNode {
    * @param res      The result variable of the operation.
    * @param arg      The argument variable to be extended.
    */
-  public TcgExtendNode(Tcg_8_16_32 fromSize, TcgExtend extend, TcgVRefNode res, TcgVRefNode arg) {
+  public TcgExtendNode(int fromSize, TcgExtend extend, TcgVRefNode res, TcgVRefNode arg) {
     super(res, arg);
     this.fromSize = fromSize;
     this.extend = extend;
@@ -50,7 +51,12 @@ public class TcgExtendNode extends TcgUnaryOpNode {
   @Override
   public String tcgFunctionName() {
     var postfix = extend == TcgExtend.SIGN ? "s" : "u";
-    return "tcg_gen_ext" + fromSize.width + postfix + "_i" + width.width;
+    return "gen_ext" + postfix;
+  }
+
+  @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return tcgFunctionName() + "(" + dest.varName() + ", " + arg.varName() + ", " + fromSize + ");";
   }
 
   @Override

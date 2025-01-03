@@ -36,4 +36,8 @@ public abstract class DataType extends Type {
   @Nullable
   public abstract DataType fittingCppType();
 
+  public BitsType toBitsType() {
+    return Type.bits(bitWidth());
+  }
+
 }

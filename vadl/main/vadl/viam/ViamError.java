@@ -194,6 +194,14 @@ public class ViamError extends RuntimeException {
   }
 
   /**
+   * Unwrap an object because it is known that a value is present.
+   */
+  public static <T> T unwrap(Optional<T> obj) {
+    ensure(obj.isPresent(), "unwrapped");
+    return obj.get();
+  }
+
+  /**
    * Ensures that the given object is not null. If the object is null, an exception is thrown
    * with the specified message.
    *

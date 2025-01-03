@@ -2,6 +2,7 @@ package vadl.javaannotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import javax.annotation.Nullable;
 
 /**
  * Annotation to specify the base type for dispatching in handler classes.
@@ -146,6 +147,12 @@ public @interface DispatchFor {
   /**
    * The return type of the dispatch method (and all handler) should return.
    */
-  Class<?> returnType() default Void.class; // Add this line
+  Class<?> returnType() default Void.class;
+
+  /**
+   * The context types passed to each handler method.
+   * The actual handled entity is always the last argument.
+   */
+  Class<?>[] context() default {};
 
 }

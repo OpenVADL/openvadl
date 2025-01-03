@@ -15,7 +15,7 @@ public class TypecheckerTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(Type.bool(), typeFinder.getConstantType(ast, "b"));
   }
 
@@ -27,7 +27,7 @@ public class TypecheckerTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(Type.bool(), typeFinder.getConstantType(ast, "b"));
   }
 
@@ -50,7 +50,7 @@ public class TypecheckerTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(Type.signedInt(32), typeFinder.getConstantType(ast, "i"));
   }
 
@@ -97,7 +97,7 @@ public class TypecheckerTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(new ConstantType(BigInteger.valueOf(-3)),
         typeFinder.getConstantType(ast, "i"));
   }
@@ -110,7 +110,7 @@ public class TypecheckerTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(new ConstantType(BigInteger.valueOf(-3)),
         typeFinder.getConstantType(ast, "i"));
   }
@@ -135,7 +135,7 @@ public class TypecheckerTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(Type.bool(),
         typeFinder.getConstantType(ast, "b"));
   }
@@ -148,7 +148,7 @@ public class TypecheckerTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(Type.bool(),
         typeFinder.getConstantType(ast, "b"));
   }
@@ -164,5 +164,91 @@ public class TypecheckerTest {
         "Shouldn't accept the program");
   }
 
+  @Test
+  public void typeFromVariable() {
+    var prog = """
+        constant a = 3
+        constant b = a
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(3)),
+        typeFinder.getConstantType(ast, "b"));
+  }
 
+  @Test
+  public void typeSizeDependsOnConstant() {
+    var prog = """
+        constant a = 3
+        constant b: SInt<a> = 1
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(Type.signedInt(3), typeFinder.getConstantType(ast, "b"));
+  }
+
+  @Test
+  public void castConstants() {
+    var prog = """
+        constant a = 3 as UInt<8>
+        constant b = 3 as SInt<8>
+        constant c = 3 as Bits<8>
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(Type.unsignedInt(8), typeFinder.getConstantType(ast, "a"));
+    Assertions.assertEquals(Type.signedInt(8), typeFinder.getConstantType(ast, "b"));
+    Assertions.assertEquals(Type.bits(8), typeFinder.getConstantType(ast, "c"));
+  }
+
+  @Test
+  public void castEvalTruncates() {
+    var prog = """
+        constant a = 9 as UInt<3>
+        constant b: UInt<a> = 1
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(Type.unsignedInt(3), typeFinder.getConstantType(ast, "a"));
+    Assertions.assertEquals(Type.unsignedInt(1), typeFinder.getConstantType(ast, "b"));
+  }
+
+  @Test
+  public void invalidCastAfterEvalTruncates() {
+    var prog = """
+        constant a = 9 as UInt<3>
+        constant b: UInt<a> = 3
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
+        "Program isn't typesafe");
+  }
+
+  @Test
+  public void unaryOperationsOnConcreteTypes() {
+    var prog = """
+        constant a = - (8 as SInt<8>)
+        constant b = ~ (0b10101010 as UInt<8>)
+        constant c = ! (true)
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    Assertions.assertEquals(BigInteger.valueOf(-8),
+        finder.getConstantValue(ast, "a").value());
+    Assertions.assertEquals(BigInteger.valueOf(0b01010101),
+        finder.getConstantValue(ast, "b").value());
+    Assertions.assertEquals(BigInteger.valueOf(0),
+        finder.getConstantValue(ast, "c").value());
+  }
 }

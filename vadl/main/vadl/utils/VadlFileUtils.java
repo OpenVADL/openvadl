@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -20,6 +21,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -50,6 +52,24 @@ public class VadlFileUtils {
     writer.write(content);
     writer.close();
     return tempFile;
+  }
+
+  /**
+   * Copies a directory with in the resources to a temporary directory.
+   *
+   * @param resourcePath the path within the resource dir
+   * @param prefix       prefix of the temporary dir name
+   * @return the path to the created temporary dir
+   */
+  public static Path copyResourceDirToTempDir(String resourcePath, String prefix)
+      throws IOException {
+    var resource = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
+    var url = VadlFileUtils.class.getResource(resource);
+    try {
+      return copyDirToTempDir(Objects.requireNonNull(url).toURI(), prefix, null);
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**

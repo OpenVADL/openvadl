@@ -6,6 +6,7 @@
 #include "cpu.h"
 #include "cpu-bits.h"
 #include "disas/dis-asm.h"
+#include "trace.h"
 #include "tcg/debug-assert.h"
 
 static [(${gen_arch_upper})]CPU* cpu_self;
@@ -18,14 +19,13 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg_file.name_lower})]_names[[(
 
 static void [(${gen_arch_lower})]_cpu_disas_set_info(CPUState *cpu, disassemble_info *info)
 {
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
     printf("[VADL-DISAS] [(${gen_arch_lower})]_cpu_disas_set_info\n");
     info->mach = bfd_arch_[(${gen_arch_lower})];
 }
 
 static void [(${gen_arch_lower})]_cpu_init(Object *obj)
 {
-  qemu_printf("[VADL] cpu_init\n");
-
   CPUState *cs = CPU(obj);
   [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(obj);
   CPU[(${gen_arch_upper})]State *env = &cpu->env;
@@ -34,7 +34,6 @@ static void [(${gen_arch_lower})]_cpu_init(Object *obj)
 // Realize function that sets up the CPU
 static void [(${gen_arch_lower})]_cpu_realizefn(DeviceState *dev, Error **errp)
 {
-	  qemu_printf("[VADL] cpu_realizefn\n");
     CPUState *cs = CPU(dev);
     cpu_self = [(${gen_arch_upper})]_CPU(cs);
     [(${gen_arch_upper})]CPUClass *vcc = [(${gen_arch_upper})]_CPU_GET_CLASS(dev);
@@ -53,7 +52,7 @@ static void [(${gen_arch_lower})]_cpu_realizefn(DeviceState *dev, Error **errp)
 
 static void [(${gen_arch_lower})]_cpu_reset(DeviceState *dev)
 {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_reset\n");
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
     CPUState *cs = CPU(dev);
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(dev);
     [(${gen_arch_upper})]CPUClass *vcc = [(${gen_arch_upper})]_CPU_GET_CLASS(dev);
@@ -78,19 +77,17 @@ static void [(${gen_arch_lower})]_cpu_reset(DeviceState *dev)
 
 static ObjectClass* [(${gen_arch_lower})]_cpu_class_by_name(const char *cpu_model)
 {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_class_by_name\n");
     return object_class_by_name(cpu_model);
 }
 
 static bool [(${gen_arch_lower})]_cpu_has_work(CPUState *cs)
 {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_has_work\n");
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
     // TODO: Could be true (RISCV)
     return true;
 }
 
 static int [(${gen_arch_lower})]_cpu_mmu_index(CPUState *cs, bool ifetch) {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_mmu_index\n");
     // TODO: What should we do here?
     return 0;
 }
@@ -99,7 +96,6 @@ static int [(${gen_arch_lower})]_cpu_mmu_index(CPUState *cs, bool ifetch) {
 //to give us the CPU state at the begining of the block.
 static void [(${gen_arch_lower})]_cpu_dump_state(CPUState *cs, FILE *f, int flags)
 {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_dump_state\n");
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
     //The CPU environment is used to access the content of the emulated registers.
     CPU[(${gen_arch_upper})]State *env = &cpu->env;
@@ -123,7 +119,7 @@ static void [(${gen_arch_lower})]_cpu_dump_state(CPUState *cs, FILE *f, int flag
 
 static void [(${gen_arch_lower})]_cpu_set_pc(CPUState *cs, vaddr value)
 {
-    qemu_printf("[VADL-CPU] [(${gen_arch_lower})]_cpu_set_pc, pc: %04lx\n", value);
+    trace_vadl_cpu_call(__func__);
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
 
     cpu->env.[(${gen_arch_upper})]_PC = value;
@@ -131,7 +127,7 @@ static void [(${gen_arch_lower})]_cpu_set_pc(CPUState *cs, vaddr value)
 
 static void [(${gen_arch_lower})]_cpu_do_interrupt(CPUState *cs)
 {
-    qemu_printf("[VADL] vadl_do_interrupt\n");
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
 
     [(${gen_arch_upper})]CPU *cpu      = [(${gen_arch_upper})]_CPU(cs);
     CPUVADLState *env = &cpu->env;
@@ -174,20 +170,20 @@ static void [(${gen_arch_lower})]_cpu_do_interrupt(CPUState *cs)
 
 static hwaddr [(${gen_arch_lower})]_cpu_get_phys_page_debug(CPUState *cs, vaddr addr)
 {
-    qemu_printf("[VADL] TODO: [(${gen_arch_lower})]_cpu_get_phys_page_debug\n");
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
     return addr; /* I assume 1:1 address correspondence */
 }
 
 static int [(${gen_arch_lower})]_cpu_memory_rw_debug(CPUState *cs, vaddr addr, uint8_t *buf, int len, bool is_write)
 {
-    qemu_printf("[VADL] TODO: [(${gen_arch_lower})]_cpu_memory_rw_debug\n");
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
     // TODO: Later
     return -1;
 }
 
 static bool [(${gen_arch_lower})]_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
 {
-    qemu_printf("[VADL] TODO: [(${gen_arch_lower})]_cpu_exec_interrupt\n");
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
     // should never happen right now (no irq handling)
     assert(false);
     // TODO: Later
@@ -196,12 +192,12 @@ static bool [(${gen_arch_lower})]_cpu_exec_interrupt(CPUState *cs, int interrupt
 
 static void [(${gen_arch_lower})]_cpu_exec_halt(CPUState *cs)
 {
-    qemu_printf("[VADL] TODO: [(${gen_arch_lower})]_cpu_exec_halt\n");
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
     // TODO: Later
 }
 
 static void [(${gen_arch_lower})]_cpu_restore_state_to_opc(CPUState *cs, const TranslationBlock *tb, const uint64_t *data) {
-    qemu_printf("[VADL] %s\n", __func__);
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
 
     [(${gen_arch_upper})]CPU *cpu      = [(${gen_arch_upper})]_CPU(cs);
     CPU[(${gen_arch_upper})]State *env = &cpu->env;
@@ -213,7 +209,7 @@ static bool [(${gen_arch_lower})]_cpu_tlb_fill(CPUState *cs, vaddr address, int 
                        MMUAccessType access_type, int mmu_idx,
                        bool probe, uintptr_t retaddr)
 {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_tlb\n");
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
 
     // TODO: Make eventually better
     int port = 0;
@@ -224,7 +220,7 @@ static bool [(${gen_arch_lower})]_cpu_tlb_fill(CPUState *cs, vaddr address, int 
 
 static void [(${gen_arch_lower})]_cpu_synchronize_from_tb(CPUState *cs, const TranslationBlock *tb)
 {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_synchronize_from_tb\n");
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
     cpu->env.[(${gen_arch_upper})]_PC = tb->pc;
 }
@@ -252,7 +248,6 @@ static const struct TCGCPUOps [(${gen_arch_lower})]_tcg_ops = {
 
 static void [(${gen_arch_lower})]_cpu_class_init(ObjectClass *oc, void *data)
 {
-    qemu_printf("[VADL] [(${gen_arch_lower})]_cpu_class_init\n");
     [(${gen_arch_upper})]CPUClass *vcc = [(${gen_arch_upper})]_CPU_CLASS(oc);
     CPUClass *cc = CPU_CLASS(oc);
     DeviceClass *dc = DEVICE_CLASS(oc);

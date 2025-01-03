@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -41,6 +42,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
   @EnabledIfEnvironmentVariable(named = "test.spike.enabled", matches = "true")
   @TestFactory
   List<DynamicTest> testSpike() throws IOException, DuplicatedPassKeyException {
+    var doDebug = false;
     var target = getTarget();
     var upstreamBuildTarget = getUpstreamBuildTarget();
     var upstreamClangTarget = getUpstreamClangTarget();
@@ -59,7 +61,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
     }
 
     var redisCache = getRunningRedisCache();
-    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv")
+    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv", !doDebug)
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
         .withBuildArg("TARGET", target)
         .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
@@ -72,7 +74,8 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
           Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
           "/src/inputs",
           "INPUT",
-          input);
+          input,
+          doDebug);
     })).toList();
   }
 }

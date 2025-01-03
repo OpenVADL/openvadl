@@ -37,7 +37,27 @@ public class Specification extends Definition {
         .map(InstructionSetArchitecture.class::cast)
         .findFirst();
   }
-  
+
+  /**
+   * Returns the instruction set architecture of the specification.
+   */
+  public Optional<Abi> abi() {
+    return definitions()
+        .filter(Abi.class::isInstance)
+        .map(Abi.class::cast)
+        .findFirst();
+  }
+
+  /**
+   * Returns the instruction set architecture of the specification.
+   */
+  public Optional<MicroProcessor> mip() {
+    return definitions()
+        .filter(MicroProcessor.class::isInstance)
+        .map(MicroProcessor.class::cast)
+        .findFirst();
+  }
+
   /**
    * Returns all global format definitions as stream.
    */

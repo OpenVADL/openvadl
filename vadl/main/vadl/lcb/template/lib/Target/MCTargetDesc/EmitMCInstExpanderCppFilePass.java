@@ -26,10 +26,10 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file includes the implementations for expanding instructions in the MC layer.
@@ -104,14 +104,14 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<RenderedPseudoInstruction> compilerInstructions(
-      DummyAbi dummyAbi,
+      Abi abi,
       Specification specification,
       Map<PseudoInstruction, CppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
       List<CompilerRelocation> relocations,
       PassResults passResults) {
-    return Stream.of(dummyAbi.returnSequence(), dummyAbi.callSequence())
+    return Stream.of(abi.returnSequence(), abi.callSequence())
         .map(pseudoInstruction -> renderPseudoInstruction(specification,
             cppFunctions,
             fieldUsages,
@@ -125,7 +125,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi =
-        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var cppFunctionsForPseudoInstructions =
         (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
             PseudoExpansionFunctionGeneratorPass.class);

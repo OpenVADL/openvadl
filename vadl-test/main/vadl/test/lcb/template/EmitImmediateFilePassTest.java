@@ -69,7 +69,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static int64_t RV64IM_Stype_immS_decode(uint16_t param) {
         return ((int64_t) param);
         }
-        static int64_t RV64IM_Utype_immU_decode(uint32_t param) {
+        static int64_t RV64IM_Utype_immUp_decode(uint32_t param) {
         return (((int64_t) param)) << (12);
         }
         static uint8_t RV64IM_Ftype_shamt_decode(uint8_t param) {
@@ -93,8 +93,8 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static uint32_t RV64IM_Jtype_immS_encoding(int64_t immS) {
         return (project_range<1, 20>(std::bitset<64>(immS)) << 0).to_ulong();
         }
-        static uint32_t RV64IM_Utype_immU_encoding(int64_t immU) {
-        return (project_range<12, 31>(std::bitset<64>(immU)) << 0).to_ulong();
+        static uint32_t RV64IM_Utype_immUp_encoding(int64_t immUp) {
+        return (project_range<12, 31>(std::bitset<64>(immUp)) << 0).to_ulong();
         }
         static uint8_t RV64IM_Ftype_shamt_encoding(uint8_t shamt) {
         return (project_range<0, 5>(std::bitset<6>(shamt)) << 0).to_ulong();
@@ -124,7 +124,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static bool RV64IM_Stype_immS_predicate(int64_t immS_decode) {
         return 1;
         }
-        static bool RV64IM_Utype_immU_predicate(int64_t immU_decode) {
+        static bool RV64IM_Utype_immUp_predicate(int64_t immUp_decode) {
         return 1;
         }
         
@@ -144,7 +144,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                               , IK_RV64IM_Jtype_immS_decode
                               , IK_RV64IM_Rtype_shamt_decode
                               , IK_RV64IM_Stype_immS_decode
-                              , IK_RV64IM_Utype_immU_decode
+                              , IK_RV64IM_Utype_immUp_decode
                              \s
                             };
         
@@ -169,8 +169,8 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                         return RV64IM_Rtype_shamt_decode(value);
                       case IK_RV64IM_Stype_immS_decode:
                         return RV64IM_Stype_immS_decode(value);
-                      case IK_RV64IM_Utype_immU_decode:
-                        return RV64IM_Utype_immU_decode(value);
+                      case IK_RV64IM_Utype_immUp_decode:
+                        return RV64IM_Utype_immUp_decode(value);
                    \s
                     }
                 }

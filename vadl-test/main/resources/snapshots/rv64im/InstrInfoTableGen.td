@@ -105,7 +105,7 @@ def RESERVED_PSEUDO_RET : Instruction
     let mayLoad       = 0;
     let mayStore      = 0;
     let Defs = [];
-    let Uses = [];
+    let Uses = [ X1 ];
 }
 
 /*
@@ -190,7 +190,7 @@ class RV64IM_Ftype_sft<ValueType ty> : Operand<ty>
 
 def RV64IM_Ftype_sftAsInt64
     : RV64IM_Ftype_sft<i64>
-    , ImmLeaf<i64, [{ return isInt<6>(Imm) && Imm >= -32 && Imm <= 31 && RV64IM_Ftype_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<6>(Imm) && Imm >= 0 && Imm <= 63 && RV64IM_Ftype_shamt_predicate(Imm); }]>;
 
 def RV64IM_Ftype_sftAsLabel : RV64IM_Ftype_sft<OtherVT>;
 
@@ -202,7 +202,7 @@ class RV64IM_Btype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Btype_immAsInt64
     : RV64IM_Btype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<12>(Imm) && Imm >= -2048 && Imm <= 2047 && RV64IM_Btype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<12>(Imm) && Imm >= -2048 && Imm <= 2046 && RV64IM_Btype_immS_predicate(Imm); }]>;
 
 def RV64IM_Btype_immAsLabel : RV64IM_Btype_imm<OtherVT>;
 
@@ -214,7 +214,7 @@ class RV64IM_Stype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Stype_immAsInt64
     : RV64IM_Stype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<12>(Imm) && Imm >= -2048 && Imm <= 2047 && RV64IM_Stype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<12>(Imm) && Imm >= -2048 && Imm <= 2046 && RV64IM_Stype_immS_predicate(Imm); }]>;
 
 def RV64IM_Stype_immAsLabel : RV64IM_Stype_imm<OtherVT>;
 
@@ -226,7 +226,7 @@ class RV64IM_Rtype_rs2<ValueType ty> : Operand<ty>
 
 def RV64IM_Rtype_rs2AsInt64
     : RV64IM_Rtype_rs2<i64>
-    , ImmLeaf<i64, [{ return isInt<5>(Imm) && Imm >= -16 && Imm <= 15 && RV64IM_Rtype_shamt_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<5>(Imm) && Imm >= 0 && Imm <= 31 && RV64IM_Rtype_shamt_predicate(Imm); }]>;
 
 def RV64IM_Rtype_rs2AsLabel : RV64IM_Rtype_rs2<OtherVT>;
 
@@ -238,19 +238,19 @@ class RV64IM_Itype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Itype_immAsInt64
     : RV64IM_Itype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<12>(Imm) && Imm >= -2048 && Imm <= 2047 && RV64IM_Itype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<12>(Imm) && Imm >= -2048 && Imm <= 2046 && RV64IM_Itype_immS_predicate(Imm); }]>;
 
 def RV64IM_Itype_immAsLabel : RV64IM_Itype_imm<OtherVT>;
 
 class RV64IM_Utype_imm<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV64IM_Utype_immU_encoding_wrapper";
-  let DecoderMethod = "RV64IM_Utype_immU_decode_wrapper";
+  let EncoderMethod = "RV64IM_Utype_immUp_encoding_wrapper";
+  let DecoderMethod = "RV64IM_Utype_immUp_decode_wrapper";
 }
 
 def RV64IM_Utype_immAsInt64
     : RV64IM_Utype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<20>(Imm) && Imm >= -524288 && Imm <= 524287 && RV64IM_Utype_immU_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<20>(Imm) && Imm >= -524288 && Imm <= 524286 && RV64IM_Utype_immUp_predicate(Imm); }]>;
 
 def RV64IM_Utype_immAsLabel : RV64IM_Utype_imm<OtherVT>;
 
@@ -262,7 +262,7 @@ class RV64IM_Jtype_imm<ValueType ty> : Operand<ty>
 
 def RV64IM_Jtype_immAsInt64
     : RV64IM_Jtype_imm<i64>
-    , ImmLeaf<i64, [{ return isInt<20>(Imm) && Imm >= -524288 && Imm <= 524287 && RV64IM_Jtype_immS_predicate(Imm); }]>;
+    , ImmLeaf<i64, [{ return isInt<20>(Imm) && Imm >= -524288 && Imm <= 524286 && RV64IM_Jtype_immS_predicate(Imm); }]>;
 
 def RV64IM_Jtype_immAsLabel : RV64IM_Jtype_imm<OtherVT>;
 
@@ -1286,8 +1286,8 @@ let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
 let Inst{6-0} = opcode{6-0};
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 0;
@@ -2449,12 +2449,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100100;
 bits<3> funct3 = 0b100;
-bits<6> fun67 = 0b000000;
+bits<4> zero = 0b0000;
+bits<2> funct2 = 0b00;
 bits<6> sft;
 bits<5> rs1;
 bits<5> rd;
 
-let Inst{31-26} = fun67{5-0};
+let Inst{31-30} = funct2{1-0};
+let Inst{29-26} = zero{3-0};
 let Inst{25-20} = sft{5-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -2845,12 +2847,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100100;
 bits<3> funct3 = 0b101;
-bits<6> fun67 = 0b000001;
+bits<4> zero = 0b0000;
+bits<2> funct2 = 0b10;
 bits<6> sft;
 bits<5> rs1;
 bits<5> rd;
 
-let Inst{31-26} = fun67{5-0};
+let Inst{31-30} = funct2{1-0};
+let Inst{29-26} = zero{3-0};
 let Inst{25-20} = sft{5-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -3045,12 +3049,14 @@ field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100100;
 bits<3> funct3 = 0b101;
-bits<6> fun67 = 0b000000;
+bits<4> zero = 0b0000;
+bits<2> funct2 = 0b00;
 bits<6> sft;
 bits<5> rs1;
 bits<5> rd;
 
-let Inst{31-26} = fun67{5-0};
+let Inst{31-30} = funct2{1-0};
+let Inst{29-26} = zero{3-0};
 let Inst{25-20} = sft{5-0};
 let Inst{19-15} = rs1{4-0};
 let Inst{14-12} = funct3{2-0};
@@ -3597,8 +3603,8 @@ let Namespace = "processorNameValue";
 let OutOperandList = ( outs  );
 let InOperandList = ( ins bare_symbol:$symbol );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3826,8 +3832,8 @@ let Namespace = "processorNameValue";
 let OutOperandList = ( outs  );
 let InOperandList = ( ins  );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3940,8 +3946,8 @@ let Namespace = "processorNameValue";
 let OutOperandList = ( outs  );
 let InOperandList = ( ins bare_symbol:$symbol );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3962,6 +3968,20 @@ let Defs = [ PC ];
 
 
 
+
+let isCall = 1, isBranch = 0, isIndirectBranch = 0, isTerminator = 0,
+isBarrier = 0, Defs = [X1]
+in
+    def PseudoCALLIndirect : Pseudo<(outs ), (ins X:$rs1),
+                        [(target_call X:$rs1)]>,
+                 PseudoInstExpansion<(JALR X1, X:$rs1, 0)>;
+
+let isCall = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
+isBarrier = 1
+in
+    def PseudoBRIND : Pseudo<(outs ), (ins X:$rs1, RV64IM_Itype_immAsInt64:$imm),
+                        []>,
+                 PseudoInstExpansion<(JALR X0, X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
 def : Pat<(add X:$rs1, X:$rs2),
         (ADD X:$rs1, X:$rs2)>;
@@ -3995,13 +4015,7 @@ def : Pat<(and X:$rs1, RV64IM_Itype_immAsInt64:$imm),
 def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$imm),
         (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
-def : Pat<(brcc SETNE, X:$rs2, X:$rs1, bb:$imm),
-        (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
-
 def : Pat<(brcond (i64 (seteq X:$rs1, X:$rs2)), bb:$imm),
-        (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
-
-def : Pat<(brcond (i64 (setne X:$rs2, X:$rs1)), bb:$imm),
         (BEQ X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 
@@ -4060,13 +4074,7 @@ def : Pat<(brcond (i64 (setugt X:$rs2, X:$rs1)), bb:$imm),
 def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$imm),
         (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
-def : Pat<(brcc SETEQ, X:$rs2, X:$rs1, bb:$imm),
-        (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
-
 def : Pat<(brcond (i64 (setne X:$rs1, X:$rs2)), bb:$imm),
-        (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
-
-def : Pat<(brcond (i64 (seteq X:$rs2, X:$rs1)), bb:$imm),
         (BNE X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond X:$rs1, bb:$imm),
@@ -4095,6 +4103,11 @@ def : Pat<(sdiv X:$rs1, X:$rs2),
 
 
 
+def : Pat<(brind X:$rs1),
+        (PseudoBRIND X:$rs1, 0)>;
+
+def : Pat<(brind (add X:$rs1, RV64IM_Itype_immAsInt64:$imm)),
+        (PseudoBRIND X:$rs1, RV64IM_Itype_immAsInt64:$imm)>;
 
 
 def : Pat<(i64 (sextloadi8 (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))),
@@ -4322,9 +4335,6 @@ def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
 def : Pat<(setcc X:$rs1, X:$rs2, SETEQ),
         (SLTIU (XOR X:$rs1, X:$rs2), 1)>;
 
-def : Pat<(setcc X:$rs1, X:$rs2, SETNE),
-        (SLTU X0, (XOR X:$rs1, X:$rs2))>;
-
 def : Pat<(setcc X:$rs1, X:$rs2, SETGT),
         (SLT X:$rs2, X:$rs1)>;
 
@@ -4345,6 +4355,9 @@ def : Pat<(setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETNE),
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
         (SLTU X:$rs1, X:$rs2)>;
+
+def : Pat<(setcc X:$rs1, X:$rs2, SETNE),
+        (SLTU X0, (XOR X:$rs1, X:$rs2))>;
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETUGE),
         (XORI (SLTU X:$rs1, X:$rs2), 1)>;
@@ -4476,15 +4489,3 @@ def : Pat<(setcc (i64 0), X:$rs1, SETULT),
 
 def : Pat<(rotl X:$rs1, X:$rs2),
         (OR (SLL X:$rs1, X:$rs2), (SRL X:$rs1, (SUB (LI (i64 64)), X:$rs2)))>;
-
-let isCall = 1 in {
-    def PseudoCALLIndirect : Pseudo<(outs ), (ins X:$rs1),
-                        [(target_call X:$rs1)]>,
-                 PseudoInstExpansion<(JALR X1, X:$rs1, 0)>;
-}
-
-let isCall = 1 in {
-    def PseudoBRIND : Pseudo<(outs ), (ins X:$rs1),
-                        [(brind X:$rs1)]>,
-                 PseudoInstExpansion<(JALR X0, X:$rs1, 0)>;
-}

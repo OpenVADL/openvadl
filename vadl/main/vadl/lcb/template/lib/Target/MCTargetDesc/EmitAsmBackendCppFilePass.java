@@ -7,8 +7,8 @@ import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file contains the implementation for assembly fixups.
@@ -36,7 +36,7 @@ public class EmitAsmBackendCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi =
-        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
     var fixups = output.fixups();

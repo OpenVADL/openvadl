@@ -11,6 +11,7 @@ gen_arch_ss.add(files(
                'translate.c',
                'cpu.c',
                'helper.c',
+               'insn-access.c',
 #              'disas.c'
 ))
 

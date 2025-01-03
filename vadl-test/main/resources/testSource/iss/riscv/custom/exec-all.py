@@ -1,7 +1,6 @@
 import os
 import subprocess
 import sys
-import termios
 import signal
 
 OUT_DIR = "out"

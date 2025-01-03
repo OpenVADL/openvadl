@@ -7,6 +7,8 @@
 #include "qemu/qemu-print.h"
 #include "tcg/tcg-op.h"
 #include "cpu-bits.h"
+#include "trace.h"
+#include "vadl-builtins.h"
 
 #include "exec/helper-proto.h"
 #include "exec/helper-gen.h"
@@ -47,7 +49,6 @@ typedef struct DisasContext {
 void [(${gen_arch_lower})]_tcg_init(void)
 {
     int i;
-    qemu_printf("[[(${gen_arch_upper})]] TODO: [(${gen_arch_lower})]_tcg_init\n");
 
     // set the cpu_pc TCGv
     cpu_pc         = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, [(${gen_arch_upper})]_PC), "[(${gen_arch_upper})]_PC");
@@ -86,13 +87,13 @@ void [(${gen_arch_lower})]_tcg_init(void)
  */
 
 // TODO: Could potentially be removed
-static int ex_plus_1(DisasContext *ctx, int nf)
+/*static int ex_plus_1(DisasContext *ctx, int nf)
 {
     return nf + 1;
-}
+}*/
 
 // TODO: Could potentially be removed
-#define EX_SH(amount) \
+/*#define EX_SH(amount) \
 static int ex_shift_##amount(DisasContext *ctx, int imm) \
 {                                         \
     return imm << amount;                 \
@@ -101,7 +102,7 @@ EX_SH(1)
 EX_SH(2)
 EX_SH(3)
 EX_SH(4)
-EX_SH(12)
+EX_SH(12)*/
 
 static target_ulong next_insn(DisasContext *ctx)
 {
@@ -124,7 +125,7 @@ static TCGv dest_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num)
     assert(reg_num < [(${reg_file["size"]})]);
     [# th:each="constraint, iterState : ${reg_file.constraints}"]
     // TODO: This should be temporary instead
-    if (reg_num == [(${constraint.index})]) return ctx->const[(${reg_file.name_lower})][(${constraint.value})];
+    if (reg_num == [(${constraint.index})]) return tcg_temp_new_i64();
     [/]
     return cpu_[(${reg_file.name_lower})][reg_num];
 }
@@ -184,12 +185,19 @@ static inline void gen_trunc(TCGv dest, TCGv arg, int bitWidth) {
     tcg_gen_andi_tl(dest, arg, (int64_t)((1ULL << bitWidth) - 1));
 }
 
+static inline void gen_exts(TCGv dest, TCGv arg, int bitWidth) {
+	uint32_t leftRight = TARGET_LONG_BITS - bitWidth;
+	tcg_gen_shli_tl(dest, arg, leftRight);
+	tcg_gen_sari_tl(dest, dest, leftRight);
+}
+
 /*
  * Instruction translation functions.
  * Called by decode_insn() function produced by insn.deocde decode-tree.
  */
 
 static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
+#include "insn-access.h"
 #include "decode-insn.c.inc"
 
 //// START OF TRANSLATE FUNCTIONS ////
@@ -200,7 +208,7 @@ static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 
 
 // TODO: Remove this hardcoded translate functions in template
-static bool trans_csrrw(DisasContext *ctx, arg_csrrw *a) {
+/*static bool trans_csrrw(DisasContext *ctx, arg_csrrw *a) {
     qemu_printf("[VADL] trans_csrrw (rd: %d , csr: %d , rs1: %d , shamt: %d )\n",
                 a->rd, a->csr, a->rs1);
 
@@ -215,7 +223,7 @@ static bool trans_csrrw(DisasContext *ctx, arg_csrrw *a) {
     ctx->base.is_jmp = DISAS_NORETURN;
 
     return true;
-}
+}*/
 
 //// END OF TRANSLATE FUNCTIONS ////
 
@@ -267,7 +275,6 @@ static void [(${gen_arch_lower})]_tr_insn_start(DisasContextBase *db, CPUState *
 
 static void [(${gen_arch_lower})]_tr_translate_insn(DisasContextBase *db, CPUState *cpu)
 {
-    qemu_printf("[[(${gen_arch_upper})]] [(${gen_arch_lower})]_tr_translate_insn\n");
     DisasContext *ctx = container_of(db, DisasContext, base);
 
     // translate current insn

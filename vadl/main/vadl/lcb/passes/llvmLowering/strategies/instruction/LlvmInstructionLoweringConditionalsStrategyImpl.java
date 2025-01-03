@@ -21,6 +21,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.types.BuiltInTable;
+import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -30,7 +31,6 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Lowering of conditionals into TableGen.
@@ -66,10 +66,10 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi abi) {
+      Abi abi) {
     var result = new ArrayList<TableGenPattern>();
 
-    var flipped = LlvmLoweringPass.flipIsaMatchingMachineInstructions(supportedInstructions);
+    var flipped = LlvmLoweringPass.flipMachineInstructions(supportedInstructions);
     var label = flipped.get(instruction);
 
     var lti = getFirst(instruction, supportedInstructions, MachineInstructionLabel.LTIU);
@@ -78,11 +78,12 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     var xori = getFirst(instruction, supportedInstructions, MachineInstructionLabel.XORI);
 
     if (label == MachineInstructionLabel.LTS) {
+      // We use the `patterns` from `LTS` because it has two registers in the `patterns`.
       eq(lti, xor, patterns, result);
-      neq(ltu, xor, patterns, result);
       gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETGT);
       leqOrUleq(xori, patterns, result, BuiltInTable.SLEQ);
     } else if (label == MachineInstructionLabel.LTU) {
+      neq(ltu, xor, patterns, result);
       uge(xori, patterns, result);
       gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETUGT);
       leqOrUleq(xori, patterns, result, BuiltInTable.ULEQ);
@@ -143,7 +144,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(lt);
+              node.setOutputInstruction(lt);
               // Swap the operands
               Collections.reverse(node.arguments());
             });
@@ -201,7 +202,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(basePattern);
+              node.setOutputInstruction(basePattern);
 
               var newArgs = new LcbMachineInstructionNode(node.arguments(), xor);
               node.setArgs(
@@ -344,7 +345,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(basePattern);
+              node.setOutputInstruction(basePattern);
 
               var registerFile =
                   ensurePresent(
@@ -416,7 +417,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setInstruction(machineInstructionToBeEmitted);
+              node.setOutputInstruction(machineInstructionToBeEmitted);
 
               var registerFile =
                   ensurePresent(

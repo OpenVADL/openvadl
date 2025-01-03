@@ -7,8 +7,8 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file includes the definitions for util functions for asm.
@@ -40,7 +40,7 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi =
-        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var registerFiles =
         specification.registerFiles()
             .map(x -> new RegisterClass(x.identifier.simpleName()))

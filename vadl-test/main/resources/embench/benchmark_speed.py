@@ -301,7 +301,7 @@ def collect_data(benchmarks, remnant):
         log.info('  { "detailed speed results" :')
         for bench in benchmarks:
             output = ''
-            if raw_data[bench] != 0.0:
+            if bench in raw_data and raw_data[bench] != 0.0:
                 if gp['absolute']:
                     output = f'{round(raw_data[bench])}'
                 else:

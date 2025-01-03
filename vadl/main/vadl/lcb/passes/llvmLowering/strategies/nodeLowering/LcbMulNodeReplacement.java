@@ -4,12 +4,10 @@ import java.util.List;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulhSD;
-import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 
 /**

@@ -5,11 +5,11 @@ import java.util.stream.Stream;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Applies the arguments of an {@link Instruction} of a {@link PseudoInstruction}.
@@ -23,7 +23,7 @@ public class PseudoInstructionArgumentReplacementPass
 
   @Override
   protected Stream<PseudoInstruction> getApplicable(PassResults passResults, Specification viam) {
-    var abi = (DummyAbi) viam.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
     // Pseudo Instructions + ABI sequences
     return
         Stream.concat(

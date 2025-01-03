@@ -12,13 +12,13 @@ public final class TableGenImmediateOperandRenderer {
    * Transforms the given {@code operand} into a string which can be used by LLVM's TableGen.
    */
   public static String lower(TableGenImmediateRecord operand) {
-    var type = operand.type().isSigned() ? operand.type() : operand.type().makeSigned();
+    var rawType = operand.rawType();
     int highestPossibleValue =
-        (int) (operand.type().isSigned()
+        (int) (rawType.isSigned()
             ? Math.pow(2, (double) operand.formatFieldBitSize() - 1) - 1
-            : Math.pow(2, operand.formatFieldBitSize()));
+            : Math.pow(2, operand.formatFieldBitSize())) - 1;
     int lowestPossibleValue =
-        operand.type().isSigned()
+        rawType.isSigned()
             ? (int) (-1 * Math.pow(2, (double) operand.formatFieldBitSize() - 1))
             : 0;
     return String.format("""
@@ -38,8 +38,8 @@ public final class TableGenImmediateOperandRenderer {
         operand.decoderMethod(),
         operand.fullname(),
         operand.rawName(),
-        type.getLlvmType(),
-        type.getLlvmType(),
+        operand.llvmType().getLlvmType(),
+        operand.llvmType().getLlvmType(),
         operand.formatFieldBitSize(),
         lowestPossibleValue,
         highestPossibleValue,

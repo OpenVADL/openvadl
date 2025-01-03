@@ -105,7 +105,7 @@ def RESERVED_PSEUDO_RET : Instruction
     let mayLoad       = 0;
     let mayStore      = 0;
     let Defs = [];
-    let Uses = [];
+    let Uses = [ [(${returnAddress.render()})] ];
 }
 
 /*

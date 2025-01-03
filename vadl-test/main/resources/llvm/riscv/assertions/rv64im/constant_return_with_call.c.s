@@ -6,8 +6,10 @@ foo:                                    # @foo
 # %bb.0:                                # %entry
 	ADDI sp,sp,-16
 	SD fp,8(sp)
+	SD ra,0(sp)
 	ADDI fp,sp,16
 	ADDI a0,zero,0
+	LD ra,0(sp)
 	LD fp,8(sp)
 	ADDI sp,sp,16
 	JALR zero,0(ra)
@@ -19,19 +21,19 @@ foo:                                    # @foo
 constant_return:                        # @constant_return
 # %bb.0:                                # %entry
 	ADDI sp,sp,-16
-	SD sp,8(sp)
-	SD fp,0(sp)
+	SD fp,8(sp)
+	SD ra,0(sp)
 	ADDI fp,sp,16
 	LUI ra,%hi(foo)
 	JALR ra,%lo(foo)(ra)
-	LD fp,0(sp)
-	LD sp,8(sp)
+	LD ra,0(sp)
+	LD fp,8(sp)
 	ADDI sp,sp,16
 	JALR zero,0(ra)
 .Lfunc_end1:
 	.size	constant_return, .Lfunc_end1-constant_return
                                         # -- End function
-	.ident	"clang version 17.0.6 (https://github.com/llvm/llvm-project.git 6009708b4367171ccdbf4b5905cb6a803753fe18)"
+	.ident	"clang version 17.0.6 (https://github.com/llvm/llvm-project 6009708b4367171ccdbf4b5905cb6a803753fe18)"
 	.section	".note.GNU-stack","",@progbits
 	.addrsig
 	.addrsig_sym foo

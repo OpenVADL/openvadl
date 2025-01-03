@@ -24,6 +24,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.types.Type;
+import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
@@ -33,7 +34,6 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Lowers instructions which can store into memory.
@@ -64,7 +64,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
-      DummyAbi dummyAbi) {
+      Abi abi) {
     var alternativePatterns = new ArrayList<TableGenPattern>();
     var storesWithoutImmediates = createStoreFromsWithoutImmediate(patterns);
     var frameIndexPatterns = replaceRegisterWithFrameIndex(

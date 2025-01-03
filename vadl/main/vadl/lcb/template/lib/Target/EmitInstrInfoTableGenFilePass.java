@@ -22,16 +22,15 @@ import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRendere
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPseudoInstExpansionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * This file contains the mapping for ISelNodes to MI.
@@ -58,7 +57,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi =
-        (DummyAbi) specification.definitions().filter(x -> x instanceof DummyAbi).findFirst().get();
+        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var tableGenMachineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class);
     var tableGenPseudoRecords = (List<TableGenPseudoInstruction>) passResults.lastResultOf(
@@ -103,6 +102,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     var renderedPatterns =
         Stream.concat(
+                pseudoExpansionPatterns.stream().map(TableGenPseudoInstExpansionRenderer::lower),
                 Stream.concat(
                     tableGenMachineRecords.stream().map(TableGenInstructionPatternRenderer::lower),
                     Stream.concat(
@@ -110,11 +110,11 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                             .map(TableGenInstructionPatternRenderer::lower),
                         compensationPatterns.stream()
                             .map(TableGenInstructionPatternRenderer::lower))
-                ),
-                pseudoExpansionPatterns.stream().map(TableGenPseudoInstExpansionRenderer::lower))
+                ))
             .toList();
 
     return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+        "returnAddress", abi.returnAddress(),
         "addi", addi,
         "stackPointerRegister", abi.stackPointer(),
         "stackPointerType",

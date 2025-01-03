@@ -30,13 +30,18 @@ import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
 import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.IssVerificationPass;
+import vadl.iss.passes.decode.QemuDecodeLoweringPass;
+import vadl.iss.passes.decode.QemuDecodeSymbolResolvingPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
+import vadl.iss.template.hw.EmitIssVirtCPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
 import vadl.iss.template.target.EmitIssCpuSourcePass;
+import vadl.iss.template.target.EmitIssInsnAccessFunctionPass;
+import vadl.iss.template.target.EmitIssInsnAccessHeaderPass;
 import vadl.iss.template.target.EmitIssInsnDecodePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
@@ -61,7 +66,8 @@ import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
-import vadl.viam.passes.dummyAbi.DummyAbiPass;
+import vadl.viam.passes.dummyPasses.DummyAbiPass;
+import vadl.viam.passes.dummyPasses.DummyMipPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
@@ -351,6 +357,10 @@ public class PassOrders {
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
 
+    // TODO: Remove once frontend creates it
+    order.add(new DummyAbiPass(config))
+        .add(new DummyMipPass(config));
+
     // iss function passes
     order
         .add(new IssVerificationPass(config))
@@ -365,6 +375,8 @@ public class PassOrders {
         .add(new TcgOpLoweringPass(config))
         .add(new IssHardcodedTcgAddOnPass(config))
         .add(new IssTcgVAllocationPass(config))
+        .add(new QemuDecodeLoweringPass(config))
+        .add(new QemuDecodeSymbolResolvingPass(config))
     ;
 
 
@@ -395,6 +407,9 @@ public class PassOrders {
 
   private static void addIssEmitPasses(PassOrder order, IssConfiguration config) {
     order
+        // top-level meson build. just because we want to add target trace-events
+        .add(issDefault("meson.build", config))
+
         // config rendering
         .add(issDefault("/configs/devices/gen-arch-softmmu/default.mak", config))
         .add(issDefault("/configs/targets/gen-arch-softmmu.mak", config))
@@ -409,7 +424,7 @@ public class PassOrders {
         .add(issDefault("/hw/meson.build", config))
         .add(issDefault("/hw/gen-arch/Kconfig", config))
         .add(issDefault("/hw/gen-arch/meson.build", config))
-        .add(issDefault("/hw/gen-arch/virt.c", config))
+        .add(new EmitIssVirtCPass(config))
         .add(issDefault("/hw/gen-arch/virt.h", config))
         .add(issDefault("/hw/gen-arch/boot.c", config))
         .add(issDefault("/hw/gen-arch/boot.h", config))
@@ -417,8 +432,11 @@ public class PassOrders {
         // target rendering
         .add(issDefault("/target/Kconfig", config))
         .add(issDefault("/target/meson.build", config))
+        .add(issDefault("/target/gen-arch/trace-events", config))
+        .add(issDefault("/target/gen-arch/trace.h", config))
         .add(issDefault("/target/gen-arch/Kconfig", config))
         .add(issDefault("/target/gen-arch/meson.build", config))
+        .add(issDefault("/target/gen-arch/vadl-builtins.h", config))
         .add(issDefault("/target/gen-arch/helper.c", config))
         .add(issDefault("/target/gen-arch/helper.h", config))
         .add(issDefault("/target/gen-arch/cpu-bits.h", config))
@@ -432,6 +450,10 @@ public class PassOrders {
         .add(new EmitIssCpuSourcePass(config))
         // target/gen-arch/insn.decode
         .add(new EmitIssInsnDecodePass(config))
+        // target/gen-arch/insn-access.h
+        .add(new EmitIssInsnAccessHeaderPass(config))
+        // target/gen-arch/insn-access.c
+        .add(new EmitIssInsnAccessFunctionPass(config))
         // target/gen-arch/translate.c
         .add(new EmitIssTranslatePass(config))
         // target/gen-arch/machine.c

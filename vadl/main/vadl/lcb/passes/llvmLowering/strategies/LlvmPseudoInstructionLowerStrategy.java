@@ -28,6 +28,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.utils.Pair;
+import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
@@ -40,7 +41,6 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.passes.dummyAbi.DummyAbi;
 
 /**
  * Defines a {@link PseudoInstruction} will be lowered to {@link TableGenInstruction}.
@@ -79,12 +79,12 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
    * Lower a {@link PseudoInstruction} into a {@link LlvmLoweringPseudoRecord}.
    */
   public Optional<LlvmLoweringPseudoRecord> lower(
-      DummyAbi abi,
+      Abi abi,
       PseudoInstruction pseudo,
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     var patterns = new ArrayList<TableGenPattern>();
     var flippedInstructions =
-        LlvmLoweringPass.flipIsaMatchingMachineInstructions(labelledMachineInstructions);
+        LlvmLoweringPass.flipMachineInstructions(labelledMachineInstructions);
 
     var uses = new ArrayList<RegisterRef>();
     var defs = new ArrayList<RegisterRef>();
