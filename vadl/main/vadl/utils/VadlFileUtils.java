@@ -35,6 +35,32 @@ import org.apache.commons.io.FileUtils;
  */
 public class VadlFileUtils {
 
+  /**
+   * Copy a directory from {@code source} to {@code target}.
+   */
+  public static void copyDirectory(Path source, Path target) throws IOException {
+    if (!Files.exists(source)) {
+      throw new IOException("Source directory does not exist: " + source);
+    }
+
+    // Walk through the file tree and copy each file/directory
+    Files.walkFileTree(source, new SimpleFileVisitor<>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+          throws IOException {
+        Path targetDir = target.resolve(source.relativize(dir));
+        Files.createDirectories(targetDir);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Path targetFile = target.resolve(source.relativize(file));
+        Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
 
   /**
    * Writes the given content to a temporary file.

@@ -17,15 +17,10 @@ public class AbstractCppCodeGenTest extends DockerExecutionTest {
 
   /**
    * Runs gcb passorder.
-   *
-   * @deprecated as {@link #setupPassManagerAndRunSpecUntil(String, PassOrder, PassKey)} is also
-   *     deprecated.
    */
-  @Deprecated
   public TestSetup runGcbAndCppCodeGen(GcbConfiguration configuration,
-                                       String specPath, PassKey until)
+                                       String specPath)
       throws IOException, DuplicatedPassKeyException {
-    return setupPassManagerAndRunSpecUntil(specPath,
-        PassOrders.gcbAndCppCodeGen(configuration), until);
+    return setupPassManagerAndRunSpec(specPath, PassOrders.gcbAndCppCodeGen(configuration));
   }
 }

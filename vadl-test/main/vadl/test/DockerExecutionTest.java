@@ -87,6 +87,38 @@ public abstract class DockerExecutionTest extends AbstractTest {
     );
   }
 
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will copy the copy mappings into the container. After the container was
+   * executed it will copy a file back to read the result.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   *
+   * @param image               is the docker image for the {@link GenericContainer}.
+   * @param copyMappings        are mappings from the host to the container for the files which should
+   *                            be copied.
+   * @param hostOutputPath      is the path where the {@code containerResultPath} should be copied
+   *                            to.
+   * @param containerResultPath is the path of a file which the container has computed and should
+   *                            be copied to the host.
+   */
+  protected void runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(
+      ImageFromDockerfile image,
+      List<Pair<String, String>> copyMappings,
+      String hostOutputPath,
+      String containerResultPath) {
+    runContainer(image, (container) -> {
+          for (var mapping : copyMappings) {
+            container.withCopyToContainer(MountableFile.forHostPath(mapping.left()), mapping.right());
+          }
+          return container;
+        },
+        (container) -> container.copyFileFromContainer(containerResultPath, hostOutputPath)
+    );
+  }
+
   /**
    * Starts a container and checks the status code for the exited container.
    * It will write the given {@code content} into a temporary file. The
