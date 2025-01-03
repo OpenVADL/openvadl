@@ -132,7 +132,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
       indent += 2;
 
       for (Map.Entry<BitPattern, Node> entry : children.entrySet()) {
-        final BigInteger caseValue = toBitVector(entry.getKey()).toValue();
+        final BigInteger caseValue = entry.getKey().toBitVector().toValue();
         writer.append(" ".repeat(indent)).append("case 0x").append(caseValue.toString(16))
             .append(":\n");
         indent += 2;
@@ -364,22 +364,6 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
   @Override
   public void close() throws IOException {
     writer.close();
-  }
-
-  /**
-   * Convert a bit pattern to a bit vector. This is a helper method to convert the bit pattern with
-   * potentially ignored (don't care) bits to a bit vector. The ignored bits in the pattern are
-   * set to 0 in the resulting bit vector.
-   *
-   * @param pattern the bit pattern
-   * @return the bit vector
-   */
-  private BitVector toBitVector(BitPattern pattern) {
-    Bit[] bits = new Bit[pattern.width()];
-    for (int i = 0; i < bits.length; i++) {
-      bits[i] = new Bit(pattern.get(i).getValue() == PBit.Value.ONE);
-    }
-    return new BitVector(bits);
   }
 
   /**

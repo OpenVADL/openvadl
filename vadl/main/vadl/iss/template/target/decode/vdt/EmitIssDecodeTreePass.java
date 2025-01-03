@@ -4,10 +4,10 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
-import vadl.vdt.passes.VdtLoweringPass;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.vdt.model.Node;
+import vadl.vdt.passes.VdtLoweringPass;
 import vadl.vdt.target.iss.IssDecisionTreeCodeGenerator;
 import vadl.viam.Specification;
 
