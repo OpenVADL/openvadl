@@ -234,6 +234,22 @@ public class TypecheckerTest {
   }
 
   @Test
+  public void implicitTypeBitWidths() {
+    var prog = """
+        constant a: SInt<32> = 32
+        constant b = a as Bits
+        constant c: Bits = a
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(Type.bits(32), typeFinder.getConstantType(ast, "b"));
+    Assertions.assertEquals(Type.bits(32), typeFinder.getConstantType(ast, "c"));
+  }
+
+
+  @Test
   public void unaryOperationsOnConcreteTypes() {
     var prog = """
         constant a = - (8 as SInt<8>)

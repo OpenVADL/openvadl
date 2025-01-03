@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
@@ -126,18 +127,32 @@ public class TypeChecker
     return false;
   }
 
+  @Nullable
+  private static Integer preferredBitWidthOf(Type type) {
+    if (type instanceof BitsType bitsType) {
+      return bitsType.bitWidth();
+    }
+
+    if (type instanceof BoolType) {
+      return 1;
+    }
+
+    return null;
+  }
+
   @Override
   public Void visit(ConstantDefinition definition) {
     definition.value.accept(this);
+    Type valType = Objects.requireNonNull(definition.value.type);
 
     if (definition.typeLiteral == null) {
       definition.type = definition.value.type;
     } else {
-      definition.typeLiteral.accept(this);
+      definition.typeLiteral.type =
+          parseTypeLiteral(definition.typeLiteral, preferredBitWidthOf(valType));
       Type litType = Objects.requireNonNull(definition.typeLiteral.type);
       definition.type = litType;
 
-      Type valType = Objects.requireNonNull(definition.value.type);
       if (!canImplicitCast(valType, litType)) {
         throw Diagnostic.error("Type missmatch: expected %s, got %s".formatted(litType, valType),
             definition.value.location()
@@ -727,8 +742,20 @@ public class TypeChecker
     return null;
   }
 
-  @Override
-  public Void visit(TypeLiteral expr) {
+  /**
+   * Parses the type literal to an actual type.
+   *
+   * <p>The parsing can be dependent on the context the literal is placed.
+   * Sometimes there can be a preferred bit size, like in castings when the source already has a bit
+   * size.
+   *
+   * <p>This function doesn't modify any node, and the caller needs to do that.
+   *
+   * @param expr              of the literal.
+   * @param preferredBitWidth of the target type, will only apply if nothing else is found.
+   * @return the parsed type.
+   */
+  private Type parseTypeLiteral(TypeLiteral expr, @Nullable Integer preferredBitWidth) {
     var base = expr.baseType.pathToString();
 
     if (base.equals("Bool")) {
@@ -737,45 +764,62 @@ public class TypeChecker
             .description("The Bool type doesn't use the size notation as it is always one bit.")
             .build();
       }
-      expr.type = Type.bool();
-      return null;
+      return Type.bool();
     }
 
     // The basic types SINT<n>, UINT<n> and BITS<n>
     if (Arrays.asList("SInt", "UInt", "Bits").contains(base)) {
-      if (expr.sizeIndices.size() != 1 || expr.sizeIndices.get(0).size() != 1) {
+
+      if (expr.sizeIndices.isEmpty() && preferredBitWidth == null) {
+        throw Diagnostic.error("Invalid Type Notation", expr.location())
+            .description(
+                "Unsized `%s` can only be used in special places when it's obvious what the bit"
+                    + " width should be.",
+                base)
+            .help("Try adding a size parameter here.")
+            .build();
+      }
+
+      if (!expr.sizeIndices.isEmpty()
+          && (expr.sizeIndices.size() != 1 || expr.sizeIndices.get(0).size() != 1)) {
         throw Diagnostic.error("Invalid Type Notation", expr.location())
             .description("The %s type requires exactly one size parameter.", base)
             .build();
       }
 
-      var widthExpr = expr.sizeIndices.get(0).get(0);
-      widthExpr.accept(this);
-      var bitWidth = constantEvaluator.eval(widthExpr).value();
+      int bitWidth;
+      if (!expr.sizeIndices.isEmpty()) {
+        var widthExpr = expr.sizeIndices.get(0).get(0);
+        widthExpr.accept(this);
+        bitWidth = constantEvaluator.eval(widthExpr).value().intValueExact();
 
-      var minWidth = BigInteger.ONE;
-      if (bitWidth.compareTo(minWidth) < 0) {
-        throw Diagnostic.error("Invalid Type Notation", widthExpr.location())
-            .locationDescription(widthExpr.location(),
-                "Width must of a %s must be greater than %s but was %s", base, minWidth, bitWidth)
-            .build();
+        if (bitWidth < 1) {
+          throw Diagnostic.error("Invalid Type Notation", widthExpr.location())
+              .locationDescription(widthExpr.location(),
+                  "Width must of a %s must be greater than 1 but was %s", base, bitWidth)
+              .build();
+        }
+      } else {
+        bitWidth = Objects.requireNonNull(preferredBitWidth);
       }
 
-
-      // FIXME: ensure that bitWidth isn't > int32.MAX
-
-      expr.type = switch (base) {
-        case "SInt" -> Type.signedInt(bitWidth.intValueExact());
-        case "UInt" -> Type.unsignedInt(bitWidth.intValueExact());
-        case "Bits" -> Type.bits(bitWidth.intValueExact());
+      return switch (base) {
+        case "SInt" -> Type.signedInt(bitWidth);
+        case "UInt" -> Type.unsignedInt(bitWidth);
+        case "Bits" -> Type.bits(bitWidth);
         default -> throw new IllegalStateException("Unexpected value: " + base);
       };
-      return null;
     }
 
 
     throw new RuntimeException(
         "Don't know how to parse the typeliteral %s yet.".formatted(expr.baseType.pathToString()));
+  }
+
+  @Override
+  public Void visit(TypeLiteral expr) {
+    expr.type = parseTypeLiteral(expr, null);
+    return null;
   }
 
   @Override
@@ -848,9 +892,10 @@ public class TypeChecker
   @Override
   public Void visit(CastExpr expr) {
     expr.value.accept(this);
-    Objects.requireNonNull(expr.typeLiteral).accept(this);
+    var valType = Objects.requireNonNull(expr.value.type);
 
-    //var valueType = Objects.requireNonNull(expr.value.type);
+
+    expr.typeLiteral.type = parseTypeLiteral(expr.typeLiteral, preferredBitWidthOf(valType));
     var litType = Objects.requireNonNull(expr.typeLiteral.type);
 
     // FIXME: For complex types add restrictions here
