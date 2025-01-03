@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
+import vadl.configuration.GeneralConfiguration;
 
 /**
  * A collection of useful methods to handle files.
@@ -34,6 +35,16 @@ import org.apache.commons.io.FileUtils;
  * {@link org.apache.commons.io.FileUtils}.
  */
 public class VadlFileUtils {
+
+  /**
+   * Creates directories in the output path of the {@code configuration}.
+   */
+  public static void createDirectories(GeneralConfiguration configuration, String... directories)
+      throws IOException {
+    for (var dir : directories) {
+      Files.createDirectory(Path.of(configuration.outputPath() + "/" + dir));
+    }
+  }
 
   /**
    * Copy a directory from {@code source} to {@code target}.

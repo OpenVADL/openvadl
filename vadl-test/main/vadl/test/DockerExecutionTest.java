@@ -11,19 +11,24 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DynamicTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -63,6 +68,25 @@ public abstract class DockerExecutionTest extends AbstractTest {
     testNetwork.close();
   }
 
+  /**
+   * Read the file from {@code resultPath} line by line and assert that the status is zero.
+   */
+  protected List<DynamicTest> assertStatusCodes(String resultPath)
+      throws IOException {
+    ArrayList<DynamicTest> tests = new ArrayList<>();
+    try (Stream<String> stream = Files.lines(Paths.get(resultPath))) {
+      stream.forEach(x -> {
+        var split = x.split(",");
+        var name = split[0];
+        var statusCode = split[1];
+
+        tests.add(DynamicTest.dynamicTest(name,
+            () -> Assertions.assertEquals("0", statusCode)));
+      });
+    }
+
+    return tests;
+  }
 
   /**
    * Starts a container and checks the status code for the exited container.

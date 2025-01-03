@@ -1,7 +1,7 @@
 #!/bin/bash
 
 for FILE in /inputs/*; do
-    g++ -Wall "$FILE" -o /tmp/a.out && /tmp/a.out
+    python3 "$FILE"
     STATUS_CODE=$?
 
     # Write the file name and status code to the CSV file

@@ -1,18 +1,20 @@
 package vadl.test.cppCodeGen.z3;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+import vadl.configuration.GcbConfiguration;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
-import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.gcb.AbstractGcbTest;
+import vadl.utils.Pair;
+import vadl.utils.VadlFileUtils;
 import vadl.viam.Format;
 import vadl.viam.graph.control.ReturnNode;
 
@@ -22,35 +24,52 @@ import vadl.viam.graph.control.ReturnNode;
  * automatically and testing it.
  */
 public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTest {
-  private static final Logger logger =
-      LoggerFactory.getLogger(EncodingCodeGeneratorSymbolicVerificationTest.class);
-
   private static final String GENERIC_FIELD_NAME = "x";
   private static final String DECODING_FUNCTION_NAME = "f_x";
-  private static final String MOUNT_PATH = "/app/main.py";
-
-  private static final ImageFromDockerfile DOCKER_IMAGE = new ImageFromDockerfile()
-      .withDockerfileFromBuilder(builder ->
-          builder
-              .from("python:3.8")
-              .run("python3 -m pip install z3 z3-solver")
-              .cmd("python3", MOUNT_PATH)
-              .build());
 
   @TestFactory
-  @Execution(ExecutionMode.CONCURRENT)
-  Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
-    var setup = setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
-        PassOrders.gcbAndCppCodeGen(getConfiguration(false)));
-    var spec = setup.specification();
+  Collection<DynamicTest> instructions() throws DuplicatedPassKeyException, IOException {
+    var configuration = new GcbConfiguration(getConfiguration(false));
+    var setup = runGcbAndCppCodeGen(configuration, "sys/risc-v/rv64im.vadl");
 
-    return spec.findAllFormats().flatMap(f -> f.fieldAccesses().stream())
-        .map(fieldAccess -> DynamicTest.dynamicTest(fieldAccess.identifier.lower(),
-            () -> verify(fieldAccess)))
-        .toList();
+    // Move files into Docker Context
+    {
+      VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
+      VadlFileUtils.copyDirectory(
+          Path.of(
+              "../../open-vadl/vadl-test/main/resources/images/encodingCodeGeneratorSymbolicVerification/"),
+          Path.of(configuration.outputPath() + "/encoding/"));
+    }
+
+    var image = new ImageFromDockerfile()
+        .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile"));
+
+    // Generate files and output them into the temporary directory.
+    return generateInputs(setup, image, configuration.outputPath());
   }
 
-  void verify(Format.FieldAccess fieldAccess) {
+  private Collection<DynamicTest> generateInputs(TestSetup setup,
+                                                 ImageFromDockerfile image,
+                                                 Path path) throws IOException {
+    var spec = setup.specification();
+
+    List<Pair<String, String>> copyMappings = new ArrayList<>();
+    spec.findAllFormats().flatMap(f -> f.fieldAccesses().stream())
+        .forEach(fieldAccess -> {
+          var testCase = createTestCase(fieldAccess);
+          copyMappings.add(Pair.of(path.toString() + "/inputs/" + testCase.testName() + ".py",
+              "/inputs/" + testCase.testName() + ".py"));
+        });
+
+    runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(image,
+        copyMappings,
+        path + "/result.csv",
+        "/work/output.csv");
+
+    return assertStatusCodes(path + "/result.csv");
+  }
+
+  private TestCase createTestCase(Format.FieldAccess fieldAccess) {
     var decodingFunction = fieldAccess.accessFunction();
     // Then generate the z3 code for the f_x
     var visitorDecode = new Z3EncodingCodeGeneratorVisitor(GENERIC_FIELD_NAME);
@@ -107,12 +126,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
             """, fieldAccess.fieldRef().bitSlice().bitSize(),
         generatedDecodeFunctionCode,
         generatedEncodeWithDecodeFunctionCode);
-    logger.info(z3Code);
 
-    try {
-      runContainerAndCopyInputIntoContainer(DOCKER_IMAGE, z3Code, MOUNT_PATH);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return new TestCase(fieldAccess.identifier.lower(), z3Code);
   }
 }

@@ -15,6 +15,10 @@ public class AbstractCppCodeGenTest extends DockerExecutionTest {
     return new GcbConfiguration(super.getConfiguration(doDump));
   }
 
+  public record TestCase(String testName, String code) {
+
+  }
+
   /**
    * Runs gcb passorder.
    */
