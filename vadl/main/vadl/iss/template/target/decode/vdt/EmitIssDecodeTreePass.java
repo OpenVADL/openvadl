@@ -1,13 +1,14 @@
 package vadl.iss.template.target.decode.vdt;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.decode.vdt.VdtLoweringPass;
+import vadl.vdt.passes.VdtLoweringPass;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.vdt.model.Node;
-import vadl.vdt.target.IssDecisionTreeCodeGenerator;
+import vadl.vdt.target.iss.IssDecisionTreeCodeGenerator;
 import vadl.viam.Specification;
 
 /**
@@ -53,7 +54,7 @@ public class EmitIssDecodeTreePass extends IssTemplateRenderingPass {
       throw new RuntimeException("Failed to generate the decision tree code", e);
     }
 
-    variables.put(VDT_CODE_KEY, out.toString());
+    variables.put(VDT_CODE_KEY, out.toString(StandardCharsets.UTF_8));
     return variables;
   }
 }

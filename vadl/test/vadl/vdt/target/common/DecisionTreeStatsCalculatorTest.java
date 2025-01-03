@@ -1,4 +1,4 @@
-package vadl.vdt.target;
+package vadl.vdt.target.common;
 
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import vadl.vdt.AbstractDecisionTreeTest;
 import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
 import vadl.vdt.model.Node;
-import vadl.vdt.target.dto.DecisionTreeStatistics;
+import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 
 class DecisionTreeStatsCalculatorTest extends AbstractDecisionTreeTest {
 

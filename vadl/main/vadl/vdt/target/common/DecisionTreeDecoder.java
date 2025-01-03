@@ -1,4 +1,4 @@
-package vadl.vdt.target;
+package vadl.vdt.target.common;
 
 import java.util.Objects;
 import javax.annotation.Nullable;

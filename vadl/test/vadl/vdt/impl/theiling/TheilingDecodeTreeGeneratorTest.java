@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.vdt.AbstractDecisionTreeTest;
 import vadl.vdt.model.Node;
-import vadl.vdt.target.DecisionTreeDecoder;
+import vadl.vdt.target.common.DecisionTreeDecoder;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
 

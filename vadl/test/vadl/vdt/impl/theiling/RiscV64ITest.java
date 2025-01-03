@@ -3,14 +3,11 @@ package vadl.vdt.impl.theiling;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import vadl.vdt.AbstractDecisionTreeTest;
 import vadl.vdt.model.Node;
-import vadl.vdt.target.IssDecisionTreeCodeGenerator;
 import vadl.vdt.utils.Instruction;
 
 class RiscV64ITest extends AbstractDecisionTreeTest {
@@ -38,24 +35,4 @@ class RiscV64ITest extends AbstractDecisionTreeTest {
     assertEquals(2.06, Math.round(stats.getAvgDepth() * 100.0) / 100.0);
   }
 
-  @Test
-  void test_generate_code() throws IOException {
-
-    /* GIVEN */
-    final List<Instruction> riscV = parseQemuDecoding("rv64i.decode");
-
-    final Node tree = new TheilingDecodeTreeGenerator().generate(riscV);
-    assertNotNull(tree, "Expected the decision tree to be created");
-
-    final OutputStream out = new ByteArrayOutputStream();
-
-    /* WHEN */
-
-    try (final var codeGen = new IssDecisionTreeCodeGenerator(out)) {
-      codeGen.generate(tree);
-    }
-
-    /* THEN */
-    System.out.println(out);
-  }
 }

@@ -1,4 +1,4 @@
-package vadl.vdt.target.dto;
+package vadl.vdt.target.common.dto;
 
 /**
  * Holds statistics about a decision tree.
@@ -11,6 +11,8 @@ public class DecisionTreeStatistics {
   private int maxDepth;
   private int minDepth;
   private double avgDepth;
+
+  private int maxInstructionWidth;
 
   public int getNumberOfNodes() {
     return numberOfNodes;
@@ -52,6 +54,14 @@ public class DecisionTreeStatistics {
     this.avgDepth = avgDepth;
   }
 
+  public int getMaxInstructionWidth() {
+    return maxInstructionWidth;
+  }
+
+  public void setMaxInstructionWidth(int maxInstructionWidth) {
+    this.maxInstructionWidth = maxInstructionWidth;
+  }
+
   @Override
   public String toString() {
     return "{\n"
@@ -60,6 +70,7 @@ public class DecisionTreeStatistics {
         + "  maxDepth: " + maxDepth + ",\n"
         + "  minDepth: " + minDepth + ",\n"
         + "  avgDepth: " + avgDepth + "\n"
+        + "  maxInsnWidth: " + maxInstructionWidth + "\n"
         + "}";
   }
 }

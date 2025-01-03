@@ -32,7 +32,7 @@ import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.passes.decode.qemu.QemuDecodeLoweringPass;
 import vadl.iss.passes.decode.qemu.QemuDecodeSymbolResolvingPass;
-import vadl.iss.passes.decode.vdt.VdtLoweringPass;
+import vadl.vdt.passes.VdtLoweringPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
