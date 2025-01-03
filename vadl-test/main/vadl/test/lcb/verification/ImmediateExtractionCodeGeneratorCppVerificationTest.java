@@ -1,6 +1,9 @@
 package vadl.test.lcb.verification;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,26 +26,14 @@ import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.test.AbstractTest;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.utils.Pair;
+import vadl.utils.VadlFileUtils;
 import vadl.viam.Format;
 
 public class ImmediateExtractionCodeGeneratorCppVerificationTest extends AbstractLcbTest {
-  private static final String MOUNT_PATH = "/app/main.cpp";
-
-  private static final Logger logger =
-      LoggerFactory.getLogger(ImmediateExtractionCodeGeneratorCppVerificationTest.class);
-
-  private static final ImageFromDockerfile DOCKER_IMAGE = new ImageFromDockerfile()
-      .withDockerfileFromBuilder(builder ->
-          builder
-              .from("gcc:12.4.0")
-              .cmd(String.format("c++ -Wall -Werror %s && /a.out", MOUNT_PATH))
-              .build());
-
-
   @TestFactory
-  @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var configuration = getConfiguration(false);
     var temporaryPasses = List.of(
@@ -55,12 +46,37 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
         "sys/risc-v/rv64im.vadl", new PassKey(GenerateLinkerComponentsPass.class.getName()),
         temporaryPasses);
 
+    // Move files into Docker Context
+    {
+      VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
+      VadlFileUtils.copyDirectory(
+          Path.of(
+              "../../open-vadl/vadl-test/main/resources/images/encodingCodeGeneratorCppVerification/"),
+          Path.of(configuration.outputPath() + "/encoding/"));
+    }
+
+    var image = new ImageFromDockerfile()
+        .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile"));
+
+    return generateInputs(testSetup, image, configuration.outputPath());
+  }
+
+  /**
+   * The idea of the test is that we have a {@code instruction} and we want to extract
+   * the immediate {@code x} from it. This immediate {@code x} has to be equal to the given
+   * parameter {@code imm}.
+   * However, note that {@code instruction} has not yet the immediate encoded in it. This is also
+   * done in the container test with `set_bits` function.
+   */
+  private Collection<DynamicTest> generateInputs(TestSetup setup,
+                                                 ImageFromDockerfile image,
+                                                 Path path) throws IOException {
     var cppNormalisedImmediateExtraction = (CppTypeNormalizationPass.NormalisedTypeResult)
-        testSetup.passManager().getPassResults()
+        setup.passManager().getPassResults()
             .lastResultOf(CppTypeNormalizationForImmediateExtractionPass.class);
 
-    ArrayList<DynamicTest> tests = new ArrayList<>();
-    testSetup.specification()
+    List<Pair<String, String>> copyMappings = new ArrayList<>();
+    setup.specification()
         .isa()
         .map(isa -> isa.ownFormats().stream())
         .orElse(Stream.empty())
@@ -79,35 +95,39 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
                   arbitraryInstruction.sampleStream().limit(limit),
                   Pair::of)
               .forEach(pair -> {
-                var displayName =
-                    String.format("fieldAccess = %s (%s, %s)",
-                        fieldAccess.identifier.lower(),
-                        pair.left(),
-                        pair.right());
-                tests.add(DynamicTest.dynamicTest(displayName,
-                    () -> testExtractFunction(displayName, fieldAccess, pair.left(), pair.right(),
-                        fieldBitSize,
-                        cppNormalisedImmediateExtraction)));
-              });
+                var fileName = fieldAccess.identifier.lower() + ".cpp";
+                var filePath = path + "/inputs/" + fileName;
+                var code = renderCode(fieldAccess,
+                    pair.left(),
+                    pair.right(),
+                    fieldBitSize,
+                    cppNormalisedImmediateExtraction);
 
+                copyMappings.add(Pair.of(filePath, "/inputs/" + fileName));
+                try {
+                  var fs = new FileWriter(filePath);
+                  fs.write(code);
+                  fs.close();
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
+              });
         });
 
-    return tests;
+    runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(image,
+        copyMappings,
+        path + "/result.csv",
+        "/work/output.csv");
+
+    return assertStatusCodes(path + "/result.csv");
   }
 
-  /**
-   * The idea of the test is that we have a {@code instruction} and we want to extract
-   * the immediate {@code x} from it. This immediate {@code x} has to be equal to the given
-   * parameter {@code imm}.
-   * However, note that {@code instruction} has not yet the immediate encoded in it. This is also
-   * done in the container test with `set_bits` function.
-   */
-  private void testExtractFunction(String testName,
-                                   Format.FieldAccess fieldAccess,
-                                   Long imm,
-                                   Long instruction,
-                                   int fieldBitSize,
-                                   CppTypeNormalizationPass.NormalisedTypeResult cppNormalisedImmediateExtraction) {
+  private String renderCode(
+      Format.FieldAccess fieldAccess,
+      Long imm,
+      Long instruction,
+      int fieldBitSize,
+      CppTypeNormalizationPass.NormalisedTypeResult cppNormalisedImmediateExtraction) {
     var extractionFunctionCodeGenerator = new LcbGenericCodeGenerator();
 
     var extractFunction =
@@ -186,12 +206,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
         extractionFunctionName
     );
 
-    try {
-      logger.info(testName + "\n" + cppCode);
-      runContainerAndCopyInputIntoContainer(DOCKER_IMAGE, cppCode, MOUNT_PATH);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return cppCode;
   }
 
   Arbitrary<Long> uint(int bitWidth) {

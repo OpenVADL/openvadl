@@ -37,7 +37,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
       VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
       VadlFileUtils.copyDirectory(
           Path.of(
-              "../../open-vadl/vadl-test/main/resources/images/encodingCodeGeneratorSymbolicVerification/"),
+              "../../open-vadl/vadl-test/main/resources/images/python_z3/"),
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 

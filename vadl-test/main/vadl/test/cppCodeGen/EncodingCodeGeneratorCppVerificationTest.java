@@ -31,7 +31,6 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
   @TestFactory
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var configuration = new GcbConfiguration(getConfiguration(false));
-
     var setup = runGcbAndCppCodeGen(configuration, "sys/risc-v/rv64im.vadl");
 
     // Move files into Docker Context
