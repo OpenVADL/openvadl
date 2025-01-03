@@ -441,7 +441,7 @@ class ParserUtils {
     } else {
       parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
           "Expected node of type BinOp, received " + node.syntaxType().print() + " - " + node);
-      return new BinOp(Operator.Xor(), node.location());
+      return new BinOp(Operator.Xor, node.location());
     }
   }
 
