@@ -37,7 +37,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(ConstantAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -56,7 +56,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(InstructionAsmType.instance(),
         typeFinder.getAsmRuleType(ast, "LuiInstruction"));
   }
@@ -81,7 +81,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(InstructionAsmType.instance(),
         typeFinder.getAsmRuleType(ast, "AddInstruction"));
   }
@@ -105,7 +105,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(InstructionAsmType.instance(),
         typeFinder.getAsmRuleType(ast, "JalrInstruction"));
   }
@@ -124,7 +124,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(InstructionAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -142,7 +142,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(InstructionAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -163,7 +163,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(InstructionAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -183,7 +183,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(OperandAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -233,7 +233,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(StatementsAsmType.instance(),
         typeFinder.getAsmRuleType(ast, "Statements"));
   }
@@ -255,7 +255,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(StatementsAsmType.instance(),
         typeFinder.getAsmRuleType(ast, "Statements"));
   }
@@ -278,7 +278,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(StatementsAsmType.instance(),
         typeFinder.getAsmRuleType(ast, "Statements"));
   }
@@ -363,7 +363,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(ConstantAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -438,7 +438,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(InstructionAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -453,7 +453,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(OperandAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -468,7 +468,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(OperandAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -483,7 +483,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(OperandAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -498,7 +498,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(OperandAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -513,7 +513,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(OperandAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -528,7 +528,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(OperandAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -543,7 +543,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(RegisterAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -558,7 +558,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(RegisterAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -573,7 +573,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(ModifierAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -588,7 +588,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(SymbolAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
 
@@ -603,7 +603,7 @@ public class TypecheckerAsmTest {
         () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
-    var typeFinder = new TypeFinder();
+    var typeFinder = new AstFinder();
     Assertions.assertEquals(VoidAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
   //endregion
