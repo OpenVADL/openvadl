@@ -90,30 +90,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
 
   /**
    * Starts a container and checks the status code for the exited container.
-   * It will write the given {@code content} into a temporary file. The
-   * temporary file requires a {@code prefix} and {@code suffix}.
-   * It will assert that the status code is zero. If the check takes longer
-   * than 10 seconds or the status code is not zero then it will throw an
-   * exception.
-   *
-   * @param image         is the docker image for the {@link GenericContainer}.
-   * @param containerPath is the path where the {@code path} should be copied to.
-   * @param content       is the content of file which will be written to the
-   *                      temp file.
-   * @throws IOException when the temp file is writable.
-   */
-  protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
-                                                       String content,
-                                                       String containerPath) throws IOException {
-    runContainer(image, (container) -> container
-            .withCopyToContainer(Transferable.of(content), containerPath),
-        null
-    );
-  }
-
-
-  /**
-   * Starts a container and checks the status code for the exited container.
    * It will copy the copy mappings into the container. After the container was
    * executed it will copy a file back to read the result.
    * It will assert that the status code is zero. If the check takes longer
@@ -140,6 +116,29 @@ public abstract class DockerExecutionTest extends AbstractTest {
           return container;
         },
         (container) -> container.copyFileFromContainer(containerResultPath, hostOutputPath)
+    );
+  }
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will write the given {@code content} into a temporary file. The
+   * temporary file requires a {@code prefix} and {@code suffix}.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   *
+   * @param image         is the docker image for the {@link GenericContainer}.
+   * @param containerPath is the path where the {@code path} should be copied to.
+   * @param content       is the content of file which will be written to the
+   *                      temp file.
+   * @throws IOException when the temp file is writable.
+   */
+  protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
+                                                       String content,
+                                                       String containerPath) throws IOException {
+    runContainer(image, (container) -> container
+            .withCopyToContainer(Transferable.of(content), containerPath),
+        null
     );
   }
 
