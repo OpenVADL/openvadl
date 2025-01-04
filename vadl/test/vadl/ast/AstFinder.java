@@ -46,7 +46,7 @@ class AstFinder implements DefinitionVisitor<Void> {
         definition.accept(this);
       }
     } catch (FoundSignal e) {
-      return e.constantDefinition.type;
+      return e.constantDefinition.value.type;
     }
     throw new RuntimeException("No constant with the name %s found.".formatted(name));
   }

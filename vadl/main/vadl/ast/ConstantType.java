@@ -1,7 +1,10 @@
 package vadl.ast;
 
 import java.math.BigInteger;
+import vadl.types.BitsType;
+import vadl.types.SIntType;
 import vadl.types.Type;
+import vadl.types.UIntType;
 
 /**
  * A type for constants that voids many casts.
@@ -15,8 +18,53 @@ public class ConstantType extends Type {
     this.value = value;
   }
 
-  public BigInteger getValue() {
+  BigInteger getValue() {
     return value;
+  }
+
+  int requiredBitWidth() {
+    var isNegative = value.compareTo(BigInteger.ZERO) < 0;
+    return value.bitLength() + (isNegative ? 1 : 0);
+  }
+
+  SIntType closestSInt() {
+    return Type.signedInt(requiredBitWidth());
+  }
+
+  UIntType closestUInt() {
+    return Type.unsignedInt(requiredBitWidth());
+  }
+
+  BitsType closestBits() {
+    return Type.bits(requiredBitWidth());
+  }
+
+  Type closestTo(Type target) {
+    if (target instanceof SIntType targetSInt) {
+      var bitsWidth = Math.max(targetSInt.bitWidth(), requiredBitWidth());
+      return Type.signedInt(bitsWidth);
+    }
+
+    if (target instanceof UIntType targetUInt) {
+      var bitsWidth = Math.max(targetUInt.bitWidth(), requiredBitWidth());
+      if (value.compareTo(BigInteger.ZERO) < 0) {
+        // Cannot pack into uint is negative, closest is still SInt
+        return Type.signedInt(bitsWidth);
+      }
+      return Type.unsignedInt(bitsWidth);
+    }
+
+    if (target instanceof BitsType targetBits) {
+      var bitsWidth = Math.max(targetBits.bitWidth(), requiredBitWidth());
+
+      if (value.compareTo(BigInteger.ZERO) < 0) {
+        // Cannot pack into uint is negative, closest is still SInt
+        return Type.signedInt(bitsWidth);
+      }
+      return Type.bits(bitsWidth);
+    }
+
+    return this;
   }
 
   @Override

@@ -1,9 +1,9 @@
 InstructionSetDefinition
 . Identifier name: "RV3264I", type: null
-. ConstantDefinition type: null
+. ConstantDefinition
 . : Identifier name: "Arch32", type: null
 . : IntegerLiteral literal: 32 (32), type: null
-. ConstantDefinition type: null
+. ConstantDefinition
 . : Identifier name: "MLen", type: null
 . : Identifier name: "Arch32", type: null
 . UsingDefinition

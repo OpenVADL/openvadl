@@ -8,12 +8,16 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
+import vadl.types.BoolType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -22,6 +26,7 @@ import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.types.asmTypes.VoidAsmType;
 import vadl.utils.WithSourceLocation;
+import vadl.utils.Pair;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
@@ -92,11 +97,7 @@ public class TypeChecker
 
       if (to.getClass() == SIntType.class) {
         var availableWidth = ((SIntType) to).bitWidth();
-        var value = fromConstant.getValue();
-        var isNegative = value.compareTo(BigInteger.ZERO) < 0;
-        var requiredWidth = value.bitLength() + (isNegative ? 1 : 0);
-
-        return availableWidth >= requiredWidth;
+        return availableWidth >= fromConstant.requiredBitWidth();
       }
 
       if (to.getClass() == UIntType.class) {
@@ -107,9 +108,7 @@ public class TypeChecker
           return false;
         }
 
-        var requiredWidth = value.bitLength();
-
-        return availableWidth >= requiredWidth;
+        return availableWidth >= fromConstant.requiredBitWidth();
       }
 
       if (to.getClass() == BitsType.class) {
@@ -120,28 +119,68 @@ public class TypeChecker
           return false;
         }
 
-        var requiredWidth = value.bitLength();
-
-        return availableWidth >= requiredWidth;
+        return availableWidth >= fromConstant.requiredBitWidth();
       }
 
+    }
+
+    // Bool => Bits<1>
+    if (from.getClass() == BoolType.class) {
+      return (to.getClass() == BitsType.class) && (((BitsType) to).bitWidth() == 1);
+    }
+
+    // SInt<n> => Bits<n>
+    if (from.getClass() == SIntType.class) {
+      if (to.getClass() == BitsType.class) {
+        return ((SIntType) from).bitWidth() == ((BitsType) to).bitWidth();
+      }
+    }
+
+    // UInt<n> => Bits<n>
+    if (from.getClass() == UIntType.class) {
+      if (to.getClass() == BitsType.class) {
+        var fromUInt = (UIntType) from;
+        var toBitsType = (BitsType) from;
+        return fromUInt.bitWidth() == toBitsType.bitWidth();
+      }
+    }
+
+    // Bits<1> => Bool
+    if (from.getClass() == BitsType.class) {
+      if (to.getClass() == BoolType.class) {
+        var fromBits = (BitsType) from;
+        return (fromBits.bitWidth() == 1);
+      }
     }
 
     return false;
   }
 
+  @Nullable
+  private static Integer preferredBitWidthOf(Type type) {
+    if (type instanceof BitsType bitsType) {
+      return bitsType.bitWidth();
+    }
+
+    if (type instanceof BoolType) {
+      return 1;
+    }
+
+    return null;
+  }
+
   @Override
   public Void visit(ConstantDefinition definition) {
     definition.value.accept(this);
+    Type valType = Objects.requireNonNull(definition.value.type);
 
     if (definition.typeLiteral == null) {
-      definition.type = definition.value.type;
+      // Do nothing on purpose
     } else {
-      definition.typeLiteral.accept(this);
+      definition.typeLiteral.type =
+          parseTypeLiteral(definition.typeLiteral, preferredBitWidthOf(valType));
       Type litType = Objects.requireNonNull(definition.typeLiteral.type);
-      definition.type = litType;
 
-      Type valType = Objects.requireNonNull(definition.value.type);
       if (!canImplicitCast(valType, litType)) {
         throw Diagnostic.error("Type missmatch: expected %s, got %s".formatted(litType, valType),
             definition.value.location()
@@ -228,7 +267,7 @@ public class TypeChecker
 
   @Override
   public Void visit(UsingDefinition definition) {
-    throwUnimplemented(definition);
+    definition.typeLiteral.accept(this);
     return null;
   }
 
@@ -282,8 +321,8 @@ public class TypeChecker
 
   @Override
   public Void visit(ModelDefinition definition) {
-    throwUnimplemented(definition);
-    return null;
+    throw new IllegalStateException(
+        "The type-checker should never see a %s".formatted(definition.getClass().getSimpleName()));
   }
 
   @Override
@@ -867,10 +906,10 @@ public class TypeChecker
     );
 
     if (origin instanceof ConstantDefinition constDef) {
-      if (constDef.type == null) {
+      if (constDef.value.type == null) {
         constDef.accept(this);
       }
-      expr.type = constDef.type;
+      expr.type = constDef.value.type;
     } else {
       throw new RuntimeException("Don't handle class " + origin.getClass().getName());
     }
@@ -878,9 +917,189 @@ public class TypeChecker
     return null;
   }
 
+  private void visitLogicalBinaryExpression(BinaryExpr expr) {
+    var leftTyp = Objects.requireNonNull(expr.left.type);
+    var rightTyp = Objects.requireNonNull(expr.right.type);
+
+    // Both sides must be boolean
+    if (!(leftTyp instanceof BoolType) && !canImplicitCast(leftTyp, Type.bool())) {
+      throw Diagnostic.error("Type Mismatch", expr)
+          .locationDescription(expr, "Expected a Boolean here but the left side was an `%s`",
+              leftTyp)
+          .description("The `%s` operator only works on booleans.", expr.operator())
+          .build();
+    }
+
+    if (!(leftTyp instanceof BoolType)) {
+      expr.left = new CastExpr(expr.left, Type.bool(), expr.left.location());
+      leftTyp = Objects.requireNonNull(expr.left.type);
+    }
+
+    if (!(rightTyp instanceof BoolType) && !canImplicitCast(rightTyp, Type.bool())) {
+      throw Diagnostic.error("Type Mismatch", expr)
+          .locationDescription(expr, "Expected a Boolean here but the right side was an `%s`",
+              rightTyp)
+          .description("The `%s` operator only works on booleans.", expr.operator())
+          .build();
+    }
+
+    if (!(rightTyp instanceof BoolType)) {
+      expr.right = new CastExpr(expr.right, Type.bool(), expr.right.location());
+      rightTyp = Objects.requireNonNull(expr.right.type);
+    }
+
+    // Return is always boolean
+    expr.type = Type.bool();
+  }
+
   @Override
   public Void visit(BinaryExpr expr) {
-    throwUnimplemented(expr);
+    expr.left.accept(this);
+    expr.right.accept(this);
+    var leftTyp = Objects.requireNonNull(expr.left.type);
+    var rightTyp = Objects.requireNonNull(expr.right.type);
+
+    // Logical operations are easy, let's get them out of the way.
+    if (Operator.logicalComparisions.contains(expr.operator())) {
+      visitLogicalBinaryExpression(expr);
+      return null;
+    }
+
+    // Verify the rough shapes of the input parameters
+    // This however doesn't check if the types relate to each other.
+    if (Operator.arithmeticOperators.contains(expr.operator())
+        || Operator.artihmeticComparisons.contains(expr.operator())) {
+
+      if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
+        throw Diagnostic.error("Type Missmatch", expr)
+            .locationDescription(expr, "Expected a number here but the left side was an `%s`",
+                leftTyp)
+            .description("The `%s` operator only works on numbers.", expr.operator())
+            .build();
+      }
+      if (!(rightTyp instanceof BitsType) && !(rightTyp instanceof ConstantType)) {
+        throw Diagnostic.error("Type Missmatch", expr)
+            .locationDescription(expr, "Expected a number here but the right side was an `%s`",
+                rightTyp)
+            .description("The `%s` operator only works on numbers.", expr.operator())
+            .build();
+      }
+    } else {
+      throw new RuntimeException("Don't handle operator " + expr.operator());
+    }
+
+    // Shifts and rotates require that the right type is uint and the left can be anything.
+    var requireRightUInt =
+        List.of(Operator.ShiftLeft, Operator.ShiftRight, Operator.RotateLeft, Operator.RotateRight);
+    if (requireRightUInt.contains(expr.operator())) {
+
+      Type closestUIntType;
+      if (rightTyp instanceof BitsType bitsRightType) {
+        closestUIntType = Type.unsignedInt(bitsRightType.bitWidth());
+      } else if (rightTyp instanceof ConstantType constantRightType) {
+        closestUIntType = constantRightType.closestUInt();
+      } else {
+        throw new IllegalStateException("Don't handle operator " + expr.operator());
+      }
+
+      if (!(rightTyp instanceof UIntType) && !canImplicitCast(rightTyp, closestUIntType)) {
+        throw Diagnostic.error("Type Missmatch", expr)
+            .locationNote(expr, "The right type must be unsigned but is %s", rightTyp)
+            .build();
+      }
+
+      if (!(rightTyp instanceof UIntType)) {
+        expr.right = new CastExpr(expr.right, closestUIntType, expr.right.location());
+        rightTyp = Objects.requireNonNull(expr.right.type);
+      }
+
+      // Only the left side decides the output type
+      if (leftTyp instanceof ConstantType) {
+
+        if (List.of(Operator.RotateLeft, Operator.RotateRight).contains(expr.operator())) {
+          throw Diagnostic.error("Type Missmatch", expr)
+              .locationNote(expr, "The left side must be a concrete type but was %s", rightTyp)
+              .description("Rotate operations require a type with a fixed bit width.")
+              .build();
+        }
+
+        var result = constantEvaluator.eval(expr);
+        expr.type = result.type();
+        return null;
+      }
+
+      expr.type = leftTyp;
+      return null;
+    }
+
+    // Const types are a special case
+    if (leftTyp instanceof ConstantType && rightTyp instanceof ConstantType) {
+      var result = constantEvaluator.eval(expr);
+      expr.type = result.type();
+      return null;
+    }
+
+    // If only one type is const, cast it to it's partner (or as close as possible)
+    if (leftTyp instanceof ConstantType leftConstType) {
+      expr.left = new CastExpr(expr.left, leftConstType.closestTo(rightTyp), expr.left.location());
+      leftTyp = Objects.requireNonNull(expr.left.type);
+    } else if (rightTyp instanceof ConstantType rightConstType) {
+      expr.right =
+          new CastExpr(expr.right, rightConstType.closestTo(leftTyp), expr.right.location());
+      rightTyp = Objects.requireNonNull(expr.right.type);
+    }
+
+    var bitWidth = ((BitsType) leftTyp).bitWidth();
+    var sizedUInt = Type.unsignedInt(bitWidth);
+    var sizedSInt = Type.signedInt(bitWidth);
+    var sizedBits = Type.bits(bitWidth);
+    var specialBinaryPattern = Map.of(
+        Pair.of(sizedUInt, sizedBits), Pair.of(sizedUInt, sizedUInt),
+        Pair.of(sizedBits, sizedUInt), Pair.of(sizedUInt, sizedUInt),
+        Pair.of(sizedSInt, sizedBits), Pair.of(sizedSInt, sizedSInt),
+        Pair.of(sizedBits, sizedSInt), Pair.of(sizedSInt, sizedSInt)
+    );
+
+    if (((BitsType) leftTyp).bitWidth() == ((BitsType) rightTyp).bitWidth()
+        && specialBinaryPattern.containsKey(Pair.of(leftTyp, rightTyp))) {
+      var target = Objects.requireNonNull(specialBinaryPattern.get(Pair.of(leftTyp, rightTyp)));
+      if (!leftTyp.equals(target.left())) {
+        expr.left = new CastExpr(expr.left, target.left(), expr.left.location());
+        leftTyp = Objects.requireNonNull(expr.left.type);
+      } else {
+        expr.right = new CastExpr(expr.right, target.right(), expr.right.location());
+        rightTyp = Objects.requireNonNull(expr.right.type);
+      }
+    }
+
+    // Apply general implicit casting rules after specialised once.
+    if (!leftTyp.equals(rightTyp) && canImplicitCast(leftTyp, rightTyp)) {
+      expr.left = new CastExpr(expr.left, rightTyp, expr.left.location());
+      leftTyp = Objects.requireNonNull(expr.left.type);
+    }
+    if (!rightTyp.equals(leftTyp) && canImplicitCast(rightTyp, leftTyp)) {
+      expr.right = new CastExpr(expr.right, leftTyp, expr.right.location());
+      rightTyp = Objects.requireNonNull(expr.right.type);
+    }
+
+    if (!leftTyp.equals(rightTyp)) {
+      throw Diagnostic.error("Type Missmatch", expr)
+          .locationNote(expr, "The left type is %s while right is %s", leftTyp, rightTyp)
+          .description(
+              "Both types on the left and right side of an binary operation should be equal.")
+          .build();
+    }
+
+    if (Operator.artihmeticComparisons.contains(expr.operator())) {
+      // Output type depends on type of operation
+      expr.type = Type.bool();
+    } else if (Operator.arithmeticOperators.contains(expr.operator())) {
+      // Note: No that isn't the same as leftTyp
+      expr.type = expr.left.type;
+    } else {
+      throw new RuntimeException("Don't yet know how to handle " + expr.operator);
+    }
+
     return null;
   }
 
@@ -914,20 +1133,20 @@ public class TypeChecker
 
   @Override
   public Void visit(StringLiteral expr) {
-    throwUnimplemented(expr);
+    expr.type = Type.string();
     return null;
   }
 
   @Override
   public Void visit(PlaceholderExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw new IllegalStateException(
+        "The typechecker should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
   public Void visit(MacroInstanceExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw new IllegalStateException(
+        "The typechecker should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
@@ -936,8 +1155,20 @@ public class TypeChecker
     return null;
   }
 
-  @Override
-  public Void visit(TypeLiteral expr) {
+  /**
+   * Parses the type literal to an actual type.
+   *
+   * <p>The parsing can be dependent on the context the literal is placed.
+   * Sometimes there can be a preferred bit size, like in castings when the source already has a bit
+   * size.
+   *
+   * <p>This function doesn't modify any node, and the caller needs to do that.
+   *
+   * @param expr              of the literal.
+   * @param preferredBitWidth of the target type, will only apply if nothing else is found.
+   * @return the parsed type.
+   */
+  private Type parseTypeLiteral(TypeLiteral expr, @Nullable Integer preferredBitWidth) {
     var base = expr.baseType.pathToString();
 
     if (base.equals("Bool")) {
@@ -946,45 +1177,71 @@ public class TypeChecker
             .description("The Bool type doesn't use the size notation as it is always one bit.")
             .build();
       }
-      expr.type = Type.bool();
-      return null;
+      return Type.bool();
     }
 
     // The basic types SINT<n>, UINT<n> and BITS<n>
     if (Arrays.asList("SInt", "UInt", "Bits").contains(base)) {
-      if (expr.sizeIndices.size() != 1 || expr.sizeIndices.get(0).size() != 1) {
+
+      if (expr.sizeIndices.isEmpty() && preferredBitWidth == null) {
+        throw Diagnostic.error("Invalid Type Notation", expr.location())
+            .description(
+                "Unsized `%s` can only be used in special places when it's obvious what the bit"
+                    + " width should be.",
+                base)
+            .help("Try adding a size parameter here.")
+            .build();
+      }
+
+      if (!expr.sizeIndices.isEmpty()
+          && (expr.sizeIndices.size() != 1 || expr.sizeIndices.get(0).size() != 1)) {
         throw Diagnostic.error("Invalid Type Notation", expr.location())
             .description("The %s type requires exactly one size parameter.", base)
             .build();
       }
 
-      var widthExpr = expr.sizeIndices.get(0).get(0);
-      widthExpr.accept(this);
-      var bitWidth = constantEvaluator.eval(widthExpr).value();
+      int bitWidth;
+      if (!expr.sizeIndices.isEmpty()) {
+        var widthExpr = expr.sizeIndices.get(0).get(0);
+        widthExpr.accept(this);
+        bitWidth = constantEvaluator.eval(widthExpr).value().intValueExact();
 
-      var minWidth = BigInteger.ONE;
-      if (bitWidth.compareTo(minWidth) < 0) {
-        throw Diagnostic.error("Invalid Type Notation", widthExpr.location())
-            .locationDescription(widthExpr.location(),
-                "Width must of a %s must be greater than %s but was %s", base, minWidth, bitWidth)
-            .build();
+        if (bitWidth < 1) {
+          throw Diagnostic.error("Invalid Type Notation", widthExpr.location())
+              .locationDescription(widthExpr.location(),
+                  "Width must of a %s must be greater than 1 but was %s", base, bitWidth)
+              .build();
+        }
+      } else {
+        bitWidth = Objects.requireNonNull(preferredBitWidth);
       }
 
-
-      // FIXME: ensure that bitWidth isn't > int32.MAX
-
-      expr.type = switch (base) {
-        case "SInt" -> Type.signedInt(bitWidth.intValueExact());
-        case "UInt" -> Type.unsignedInt(bitWidth.intValueExact());
-        case "Bits" -> Type.bits(bitWidth.intValueExact());
+      return switch (base) {
+        case "SInt" -> Type.signedInt(bitWidth);
+        case "UInt" -> Type.unsignedInt(bitWidth);
+        case "Bits" -> Type.bits(bitWidth);
         default -> throw new IllegalStateException("Unexpected value: " + base);
       };
-      return null;
     }
 
+    // Find the type from the symbol table
+    var usingDef = expr.symbolTable().findAs(((Identifier) expr.baseType), UsingDefinition.class);
+    if (usingDef != null) {
+      if (usingDef.typeLiteral.type == null) {
+        usingDef.typeLiteral.accept(this);
+      }
+
+      return Objects.requireNonNull(usingDef.typeLiteral.type);
+    }
 
     throw new RuntimeException(
-        "Don't know how to parse the typeliteral %s yet.".formatted(expr.baseType.pathToString()));
+        "No type with the name `%s` exists.".formatted(expr.baseType.pathToString()));
+  }
+
+  @Override
+  public Void visit(TypeLiteral expr) {
+    expr.type = parseTypeLiteral(expr, null);
+    return null;
   }
 
   @Override
@@ -999,12 +1256,19 @@ public class TypeChecker
     var innerType = Objects.requireNonNull(expr.operand.type);
 
     switch (expr.unOp().operator) {
-      // FIXME: doesn't work for sint and const as expected.
-      case NEGATIVE, COMPLEMENT -> {
+      case NEGATIVE -> {
         if (!(innerType instanceof BitsType) && !(innerType instanceof ConstantType)) {
           throw Diagnostic
               .error("Type Mismatch", expr)
               .description("Expected a numerical type but got `%s`", innerType)
+              .build();
+        }
+      }
+      case COMPLEMENT -> {
+        if (!(innerType instanceof BitsType)) {
+          throw Diagnostic
+              .error("Type Mismatch", expr)
+              .description("Expected a numerical type with fixed bit-width but got `%s`", innerType)
               .build();
         }
       }
@@ -1050,9 +1314,10 @@ public class TypeChecker
   @Override
   public Void visit(CastExpr expr) {
     expr.value.accept(this);
-    expr.typeLiteral.accept(this);
+    var valType = Objects.requireNonNull(expr.value.type);
 
-    //var valueType = Objects.requireNonNull(expr.value.type);
+
+    expr.typeLiteral.type = parseTypeLiteral(expr.typeLiteral, preferredBitWidthOf(valType));
     var litType = Objects.requireNonNull(expr.typeLiteral.type);
 
     // FIXME: For complex types add restrictions here

@@ -110,6 +110,13 @@ public abstract class Constant {
     }
 
     /**
+     * Constructor of a constant value from a boolean.
+     */
+    public static Value fromBoolean(Boolean value) {
+      return fromInteger(value ? BigInteger.ONE : BigInteger.ZERO, Type.bool());
+    }
+
+    /**
      * Constructor of a constant value from an integer (that is not in two's complement form).
      * So the {@code integer} argument might be negative.
      */
@@ -359,14 +366,15 @@ public abstract class Constant {
     /**
      * Multiplies two constant values.
      *
+     * <p>If longVersion is true, then the result type will be double the size of the operands,
+     * otherwise it will be the same size
+     *
      * @param other       the second operand
      * @param longVersion if the result should be double the size of the operands.
      * @param signed      if the multiplication should be signed or unsigned.
      *                    This is only in case of longVersion == true.
      *                    Otherwise, the value is ignored
      * @return the result of the multiplication.
-     *     If longVersion is true, then the result type will be double the size of the operands,
-     *     otherwise it will be the same size
      */
     public Constant.Value multiply(Constant.Value other, boolean longVersion, boolean signed) {
       ensure(type().isTrivialCastTo(other.type()),
@@ -414,6 +422,27 @@ public abstract class Constant {
 
       var newIntegerValue = a.integer()
           .divide(b.integer());
+      return fromInteger(newIntegerValue, divType);
+    }
+
+    /**
+     * Modulo of this constant divided by the other one.
+     */
+    public Constant.Value modulo(Constant.Value other, boolean signed) {
+      ensure(type().isTrivialCastTo(other.type()),
+          "Division must be of same type, but other was %s",
+          other.type());
+
+      var divType = signed
+          ? Type.signedInt(type().bitWidth())
+          : Type.unsignedInt(type().bitWidth());
+      Objects.requireNonNull(divType);
+
+      var a = this.trivialCastTo(divType);
+      var b = other.trivialCastTo(divType);
+
+      var newIntegerValue = a.integer()
+          .mod(b.integer());
       return fromInteger(newIntegerValue, divType);
     }
 
@@ -491,6 +520,76 @@ public abstract class Constant {
     }
 
     /**
+     * Performs a bitwise XOR. Both operands must have the same width.
+     */
+    public Constant.Value xor(Constant.Value other) {
+      ensureSameWidth(other);
+      var xorResult = this.value.xor(other.value);
+      return Constant.Value.fromTwosComplement(xorResult, type());
+    }
+
+    /**
+     * Performs a bitwise OR. Both operands must have the same width.
+     */
+    public Constant.Value or(Constant.Value other) {
+      ensureSameWidth(other);
+      var orResult = this.value.or(other.value);
+      return Constant.Value.fromTwosComplement(orResult, type());
+    }
+
+    /**
+     * Performs singed or and unsigned less comparison.
+     */
+    public Constant.Value lth(Constant.Value other, boolean singed) {
+      boolean result;
+      if (singed) {
+        result = integer().compareTo(other.integer()) < 0;
+      } else {
+        result = value.compareTo(other.value) < 0;
+      }
+      return Constant.Value.fromBoolean(result);
+    }
+
+    /**
+     * Performs singed or and unsigned less equals comparison.
+     */
+    public Constant.Value leq(Constant.Value other, boolean singed) {
+      boolean result;
+      if (singed) {
+        result = integer().compareTo(other.integer()) <= 0;
+      } else {
+        result = value.compareTo(other.value) <= 0;
+      }
+      return Constant.Value.fromBoolean(result);
+    }
+
+    /**
+     * Performs singed or and unsigned greater comparison.
+     */
+    public Constant.Value gth(Constant.Value other, boolean singed) {
+      boolean result;
+      if (singed) {
+        result = integer().compareTo(other.integer()) > 0;
+      } else {
+        result = value.compareTo(other.value) > 0;
+      }
+      return Constant.Value.fromBoolean(result);
+    }
+
+    /**
+     * Performs singed or and unsigned less equals comparison.
+     */
+    public Constant.Value geq(Constant.Value other, boolean singed) {
+      boolean result;
+      if (singed) {
+        result = integer().compareTo(other.integer()) >= 0;
+      } else {
+        result = value.compareTo(other.value) >= 0;
+      }
+      return Constant.Value.fromBoolean(result);
+    }
+
+    /**
      * Performs a logical shift left of this constant value by the specified amount
      * of the other value (which must be an unsigned integer).
      * The resulting type is the same as this type, the result is truncated on overflow.
@@ -502,6 +601,20 @@ public abstract class Constant {
       var newValue = value
           .shiftLeft(other.intValue()) // shift value by other
           .and(mask(type().bitWidth(), 0)); // truncate value
+      return fromTwosComplement(newValue, type());
+    }
+
+    /**
+     * Performs a logical shift left of this constant value by the specified amount
+     * of the other value (which must be an unsigned integer).
+     * The resulting type is the same as this type, the result is truncated on overflow.
+     */
+    public Constant.Value lsr(Constant.Value other) {
+      ensure(other.type().getClass() == UIntType.class,
+          "LSR shift argument must be an unsigned integer.");
+
+      var newValue = value
+          .shiftRight(other.intValue());
       return fromTwosComplement(newValue, type());
     }
 
