@@ -8,13 +8,10 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
@@ -25,8 +22,8 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.types.asmTypes.VoidAsmType;
-import vadl.utils.WithSourceLocation;
 import vadl.utils.Pair;
+import vadl.utils.WithSourceLocation;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
