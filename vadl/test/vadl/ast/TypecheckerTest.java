@@ -248,6 +248,48 @@ public class TypecheckerTest {
     Assertions.assertEquals(Type.bits(32), typeFinder.getConstantType(ast, "c"));
   }
 
+  @Test
+  public void usingTypeDefinition() {
+    var prog = """
+        using Flo = SInt<32>
+        constant a: Flo = 32
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(Type.signedInt(32), typeFinder.getConstantType(ast, "a"));
+  }
+
+  @Test
+  public void multipleUsingTypeDefinition() {
+    var prog = """
+        using Flo = SInt<32>
+        using Johannes = Flo
+        using Paul = Johannes
+        constant a: Paul = 32
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(Type.signedInt(32), typeFinder.getConstantType(ast, "a"));
+  }
+
+  @Test
+  public void usingTypeDefinitionAfterUsage() {
+    var prog = """
+        constant a = 32 as Paul
+        using Paul = Johannes
+        using Johannes = Flo
+        using Flo = SInt<32>
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(Type.signedInt(32), typeFinder.getConstantType(ast, "a"));
+  }
 
   @Test
   public void unaryOperationsOnConcreteTypes() {
@@ -455,4 +497,6 @@ public class TypecheckerTest {
     Assertions.assertEquals(Type.signedInt(32), finder.getConstantType(ast, "k"));
     Assertions.assertEquals(Type.signedInt(32), finder.getConstantType(ast, "l"));
   }
+
+
 }
