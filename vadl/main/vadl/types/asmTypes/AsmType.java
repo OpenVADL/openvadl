@@ -73,6 +73,6 @@ public interface AsmType {
   String name();
 
 
-  //TODO implement this method to type check vadl function invocations
-  //Type toOperationalType();
+  // TODO: implement this method to type check vadl function invocations
+  // Type toOperationalType();
 }

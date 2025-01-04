@@ -61,15 +61,15 @@ public class TypeChecker
         node.getClass().getSimpleName(), node.location().toIDEString()));
   }
 
-  private void throwIllegalState(Node node, String message) {
-    throw new IllegalStateException(
+  private IllegalStateException buildIllegalStateException(Node node, String message) {
+    return new IllegalStateException(
         "The typechecker encountered an invalid state in `%s` at %s: %s".formatted(
             node.getClass().getSimpleName(), node.location().toIDEString(), message));
   }
 
   private void throwInvalidAsmCast(AsmType from, AsmType to, WithSourceLocation location) {
-    throw Diagnostic.error(
-            "From %s to %s is an invalid cast of assembly types.".formatted(from, to), location)
+    throw Diagnostic.error("Type Mismatch", location)
+        .description("Invalid cast from `%s` to `%s`.", from, to)
         .build();
   }
 
@@ -367,8 +367,7 @@ public class TypeChecker
     if (definition.asmTypeDefinition != null) {
       var castToAsmType = getAsmTypeFromAsmTypeDefinition(definition.asmTypeDefinition);
       if (definition.alternatives.asmType == null) {
-        throwIllegalState(definition, "AsmType of rule body could not be resolved.");
-        return null;
+        throw buildIllegalStateException(definition, "AsmType of rule body could not be resolved.");
       }
       if (definition.alternatives.asmType.canBeCastTo(castToAsmType)) {
         definition.asmType = castToAsmType;
@@ -445,7 +444,7 @@ public class TypeChecker
     ).toList();
 
     if (elementsToConsider.isEmpty()) {
-      throwIllegalState(definition,
+      throw buildIllegalStateException(definition,
           "Typechecker found an AsmGrammarAlternative without elements.");
     }
 
@@ -511,8 +510,8 @@ public class TypeChecker
                                           AsmGrammarElementDefinition allAlternativeTypeElement,
                                           AsmType allAlternativeType) {
     if (curAlternativeType == null || allAlternativeTypeElement == null) {
-      throwIllegalState(definition, "AsmType of an asm alternative could not be resolved.");
-      return;
+      throw buildIllegalStateException(definition,
+          "AsmType of an asm alternative could not be resolved.");
     }
 
     if (!allAlternativeType.equals(curAlternativeType)) {
@@ -566,7 +565,7 @@ public class TypeChecker
 
     definition.asmLiteral.accept(this);
     if (definition.asmLiteral.asmType == null) {
-      throwIllegalState(definition, "AsmType of asm literal could not be resolved.");
+      throw buildIllegalStateException(definition, "AsmType of asm literal could not be resolved.");
     }
     definition.asmType = definition.asmLiteral.asmType;
   }
@@ -584,8 +583,8 @@ public class TypeChecker
 
     var castToAsmType = getAsmTypeFromAsmTypeDefinition(definition.groupAsmTypeDefinition);
     if (definition.groupAlternatives.asmType == null) {
-      throwIllegalState(definition, "AsmType of group element could not be resolved.");
-      return;
+      throw buildIllegalStateException(definition,
+          "AsmType of group element could not be resolved.");
     }
 
     if (definition.groupAlternatives.asmType.canBeCastTo(castToAsmType)) {
@@ -601,9 +600,8 @@ public class TypeChecker
       var localVarDefinition = (AsmGrammarLocalVarDefinition) definition.symbolTable()
           .resolveNode(definition.attribute.name);
       if (localVarDefinition == null) {
-        throwIllegalState(definition, "Assigning to unknown local variable %s.".formatted(
-            definition.attribute.name));
-        return;
+        throw buildIllegalStateException(definition,
+            "Assigning to unknown local variable %s.".formatted(definition.attribute.name));
       }
       localVarDefinition.asmType = definition.asmType;
     }
@@ -632,8 +630,8 @@ public class TypeChecker
         }
 
         if (definition.asmType == null) {
-          throwIllegalState(definition, "AsmType of asm element could not be resolved.");
-          return;
+          throw buildIllegalStateException(definition,
+              "AsmType of asm element could not be resolved.");
         }
 
         if (!definition.asmType.canBeCastTo(parentAttributeElement.asmType)) {
@@ -659,23 +657,22 @@ public class TypeChecker
     }
 
     if (definition.id == null) {
-      throwIllegalState(definition,
+      throw buildIllegalStateException(definition,
           "AsmGrammarLiteral is not a StringLiteral "
               + "and does not reference a grammar rule / function / local variable.");
-      return null;
     }
 
     var invocationSymbolOrigin = definition.symbolTable().resolveNode(definition.id.name);
     if (invocationSymbolOrigin == null) {
-      throwIllegalState(definition, "Symbol %s used in grammar rule does not exist."
+      throw buildIllegalStateException(definition, "Symbol %s used in grammar rule does not exist."
           .formatted(definition.id.name));
     } else if (invocationSymbolOrigin instanceof AsmGrammarRuleDefinition rule) {
       visitAsmRuleInvocation(definition, rule);
     } else if (invocationSymbolOrigin instanceof AsmGrammarLocalVarDefinition localVar) {
       visitAsmLocalVarUsage(definition, localVar);
     } else if (invocationSymbolOrigin instanceof FunctionDefinition function) {
-      // TODO check input fits to types of arguments
-      // TODO check return type and infer asm type
+      // TODO: check input fits to types of arguments
+      // TODO: check return type and infer asm type
     } else {
       throw Diagnostic.error(("Symbol %s used in grammar rule does not reference a grammar rule "
               + "/ function / local variable.").formatted(definition.id.name), definition)
@@ -707,9 +704,8 @@ public class TypeChecker
     }
 
     if (invokedRule.asmType == null) {
-      throwIllegalState(definition,
+      throw buildIllegalStateException(definition,
           "Could not resolve AsmType of grammar rule %s.".formatted(invokedRule.identifier().name));
-      return;
     }
 
     determineAsmTypeForEnclosingLiteral(definition, invokedRule.asmType);
@@ -722,9 +718,8 @@ public class TypeChecker
     }
 
     if (localVar.asmType == null) {
-      throwIllegalState(enclosingAsmLiteral,
+      throw buildIllegalStateException(enclosingAsmLiteral,
           "Could not resolve AsmType of local variable %s.".formatted(localVar.identifier().name));
-      return;
     }
 
     determineAsmTypeForEnclosingLiteral(enclosingAsmLiteral, localVar.asmType);
@@ -744,13 +739,10 @@ public class TypeChecker
     }
   }
 
-  // NullAway claims that a nullable value is returned,
-  // but if correspondingAsmType is null an exception is thrown
-  @SuppressWarnings("NullAway")
   private AsmType getAsmTypeFromAsmTypeDefinition(AsmGrammarTypeDefinition definition) {
     var correspondingAsmType = AsmType.ASM_TYPES.get(definition.id.name);
     if (correspondingAsmType == null) {
-      throwIllegalState(definition,
+      throw buildIllegalStateException(definition,
           "Symbol resolution found asm type %s but the typechecker could not find it.".formatted(
               definition.id.name));
     }
