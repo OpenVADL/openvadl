@@ -184,13 +184,14 @@ public class TypeChecker
 
   @Override
   public Void visit(CounterDefinition definition) {
-    throwUnimplemented(definition);
+    definition.type.accept(this);
     return null;
   }
 
   @Override
   public Void visit(MemoryDefinition definition) {
-    throwUnimplemented(definition);
+    definition.addressType.accept(this);
+    definition.dataType.accept(this);
     return null;
   }
 
@@ -202,7 +203,8 @@ public class TypeChecker
 
   @Override
   public Void visit(RegisterFileDefinition definition) {
-    throwUnimplemented(definition);
+    definition.type.argTypes().forEach(arg -> arg.accept(this));
+    definition.type.resultType().accept(this);
     return null;
   }
 
@@ -244,7 +246,10 @@ public class TypeChecker
 
   @Override
   public Void visit(FunctionDefinition definition) {
-    throwUnimplemented(definition);
+    for (var param : definition.params) {
+      param.type.accept(this);
+    }
+    definition.retType.accept(this);
     return null;
   }
 
