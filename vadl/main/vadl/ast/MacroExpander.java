@@ -969,7 +969,7 @@ class MacroExpander
             expandExpr(derivedFormatField.expr));
       } else if (field instanceof FormatDefinition.TypedFormatField typedFormatField) {
         return new FormatDefinition.TypedFormatField(typedFormatField.identifier,
-            (TypeLiteral) expandExpr(typedFormatField.type));
+            (TypeLiteral) expandExpr(typedFormatField.typeLiteral));
       } else {
         return field;
       }
