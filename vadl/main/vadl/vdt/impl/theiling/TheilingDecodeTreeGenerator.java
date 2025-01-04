@@ -22,12 +22,10 @@ import vadl.vdt.utils.PBit;
  * Uses the Theiling algorithm to generate a decode tree.
  *
  * <p>See: <a
- * href="https://ea.complang.tuwien.ac.at/vadl/vadl/raw/branch/master/etc/literature/decode/GeneratingDecisionTreesForDecodingBinaries.pdf">Generating
- * Decision Trees For Decoding Binaries (Henrik Theiling)</a>
+ * href="https://doi.org/10.1145/384198.384213">Generating Decision Trees For Decoding Binaries (Henrik Theiling)</a>
  *
- * <p>The concrete behaviour is equivalent to the QEMU TCG decoder. That is, overlapping
- * instructions will pushed down the tree to the lowest possible level and decided based on the
- * most specific instruction first.
+ * <p>This implementation is limited to fixed-width instructions and does not support overlapping
+ * instruction patterns (Except of subsumed instructions, through default nodes).
  */
 public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruction> {
 
