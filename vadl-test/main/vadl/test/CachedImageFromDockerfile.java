@@ -11,7 +11,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
  * the docker file and the build args are the same.
  */
 public class CachedImageFromDockerfile extends ImageFromDockerfile {
-  private static final Map<String, Map<Map<String, String>, ImageFromDockerfile>> cache =
+  private static final Map<String, Map<String, ImageFromDockerfile>> cache =
       new HashMap<>();
 
   /**
@@ -37,9 +37,10 @@ public class CachedImageFromDockerfile extends ImageFromDockerfile {
     this.getDockerfile().ifPresent(x -> {
       var dockerFile = cache.get(x.toString());
       if (dockerFile != null) {
-        dockerFile.put(getBuildArgs(), ref);
+        var target = getBuildArgs().get("TARGET");
+        dockerFile.put(target, ref);
       } else {
-        cache.put(getDockerfile().get().toString(), Map.of(getBuildArgs(), ref));
+        cache.put(getDockerfile().get().toString(), Map.of(getBuildArgs().get("TARGET"), ref));
       }
     });
     return ref;
