@@ -1,11 +1,11 @@
-package vadl.lcb.passes.llvmLowering.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.NoParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.NoTableGenParameter;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.RegisterFile;
@@ -22,7 +22,7 @@ public class TableGenConstantOperand extends TableGenInstructionOperand {
    * Constructor.
    */
   public TableGenConstantOperand(ConstantNode constantNode, Constant value) {
-    super(constantNode, new NoParameterIdentity());
+    super(constantNode, new NoTableGenParameter());
     ensure(constantNode.constant().equals(value),
         "This is definitely wrong because index and constraint value are mismatched");
     this.constant = value;

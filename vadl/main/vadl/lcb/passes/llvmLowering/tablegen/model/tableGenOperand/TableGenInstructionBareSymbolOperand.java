@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.Node;

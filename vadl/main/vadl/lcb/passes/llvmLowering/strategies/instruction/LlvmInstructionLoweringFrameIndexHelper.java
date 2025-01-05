@@ -5,18 +5,22 @@ import static vadl.viam.ViamError.ensureNonNull;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
  * Common superclass for {@link LlvmInstructionLoweringMemoryLoadStrategyImpl} and
@@ -46,15 +50,24 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
     // Machine: replace by frame register operand but the `affectedParameterIdentity`
     // should change the type. So `X:$rs1` should be `Addr:$rs1`.
     BiFunction<LcbMachineInstructionParameterNode,
-        ParameterTypeAndNameIdentity,
+        TableGenParameterTypeAndName,
         TableGenInstructionOperand>
         machineInstructionTransformation = (machineInstructionParameterNode,
-                                            affectedParameterIdentity) ->
-        new TableGenInstructionFrameRegisterOperand(
-            affectedParameterIdentity.withType(LlvmFrameIndexSD.NAME),
-            ensureNonNull(machineInstructionParameterNode.instructionOperand().origin(),
-                "origin must exist")
-        );
+                                            affectedParameterIdentity) -> {
+
+      var node = ensureNonNull(machineInstructionParameterNode.instructionOperand().origin(),
+          "origin must exist");
+      if (node instanceof LlvmReadRegFileNode llvmReadRegFileNode
+          && llvmReadRegFileNode.address() instanceof FieldRefNode fieldRefNode) {
+        return new TableGenInstructionFrameRegisterOperand(llvmReadRegFileNode, fieldRefNode);
+      } else if (node instanceof LlvmReadRegFileNode llvmReadRegFileNode
+          && llvmReadRegFileNode.address() instanceof FuncParamNode funcParamNode) {
+        return new TableGenInstructionFrameRegisterOperand(llvmReadRegFileNode, funcParamNode);
+      } else {
+        throw Diagnostic.error("Node type is not supported to be replaced", node.sourceLocation())
+            .build();
+      }
+    };
 
     replaceNodeByParameterIdentity(affectedNodes,
         machine,

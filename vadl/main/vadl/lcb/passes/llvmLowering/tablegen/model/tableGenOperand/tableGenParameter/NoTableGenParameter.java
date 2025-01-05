@@ -1,9 +1,9 @@
-package vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter;
 
 /**
  * Some parameters like constants have no parameter identity.
  */
-public class NoParameterIdentity extends ParameterIdentity {
+public class NoTableGenParameter extends TableGenParameter {
   @Override
   public String render() {
     throw new RuntimeException(

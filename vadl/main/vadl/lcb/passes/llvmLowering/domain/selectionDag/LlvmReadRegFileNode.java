@@ -1,16 +1,23 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import org.jetbrains.annotations.Nullable;
+import vadl.error.Diagnostic;
+import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionIndexedRegisterFileOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
 import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 
 /**
@@ -18,7 +25,18 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
  */
 public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowerable,
     LlvmNodeReplaceable {
-  protected ParameterIdentity parameterIdentity;
+  protected TableGenInstructionOperand instructionOperand;
+
+  /**
+   * Constructor.
+   */
+  public LlvmReadRegFileNode(RegisterFile registerFile,
+                             FieldRefNode address,
+                             DataType type,
+                             @Nullable Counter.RegisterFileCounter staticCounterAccess) {
+    super(registerFile, address, type, staticCounterAccess);
+    instructionOperand = new TableGenInstructionRegisterFileOperand(this, address);
+  }
 
   /**
    * Constructor.
@@ -28,12 +46,18 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
                              DataType type,
                              @Nullable Counter.RegisterFileCounter staticCounterAccess) {
     super(registerFile, address, type, staticCounterAccess);
-    parameterIdentity = ParameterIdentity.from(this, address);
+    if (address instanceof FieldRefNode fieldRefNode) {
+      instructionOperand = new TableGenInstructionRegisterFileOperand(this, fieldRefNode);
+    } else if (address instanceof FuncParamNode funcParamNode) {
+      instructionOperand = new TableGenInstructionIndexedRegisterFileOperand(this, funcParamNode);
+    } else {
+      throw Diagnostic.error("Not supported", address.sourceLocation()).build();
+    }
   }
 
   @Override
-  public ParameterIdentity parameterIdentity() {
-    return parameterIdentity;
+  public TableGenInstructionOperand operand() {
+    return instructionOperand;
   }
 
   @Override
@@ -49,7 +73,7 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
 
   @Override
   public String lower() {
-    return parameterIdentity.render();
+    return operand().render();
   }
 
   @Override

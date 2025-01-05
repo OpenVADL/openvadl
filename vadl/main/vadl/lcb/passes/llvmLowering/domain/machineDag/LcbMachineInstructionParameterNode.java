@@ -3,7 +3,7 @@ package vadl.lcb.passes.llvmLowering.domain.machineDag;
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.types.Type;
 import vadl.viam.Instruction;

@@ -1,4 +1,4 @@
-package vadl.lcb.passes.llvmLowering.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import static vadl.viam.ViamError.ensure;
 
@@ -6,7 +6,9 @@ import java.util.Objects;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
 
 /**
@@ -19,18 +21,18 @@ public class TableGenInstructionImmediateLabelOperand extends TableGenInstructio
   /**
    * Constructor.
    */
-  public TableGenInstructionImmediateLabelOperand(ParameterIdentity identity,
-                                                  LlvmBasicBlockSD node) {
-    super(node, identity);
+  public TableGenInstructionImmediateLabelOperand(LlvmBasicBlockSD node) {
+    super(node, new TableGenParameterTypeAndName(node.immediateOperand().rawName() + "AsLabel",
+        node.fieldAccess().fieldRef().identifier.simpleName()));
     this.immediateOperand = node.immediateOperand();
   }
 
   /**
    * Constructor.
    */
-  public TableGenInstructionImmediateLabelOperand(ParameterIdentity identity,
-                                                  LlvmFieldAccessRefNode node) {
-    super(node, identity);
+  public TableGenInstructionImmediateLabelOperand(LlvmFieldAccessRefNode node) {
+    super(node, new TableGenParameterTypeAndName(node.immediateOperand().rawName() + "AsLabel",
+        node.fieldAccess().fieldRef().identifier.simpleName()));
     ensure(node.usage() == LlvmFieldAccessRefNode.Usage.BasicBlock,
         () -> Diagnostic.error(
             "Field reference has wrong type. It is expected to be basic block but it is not.",

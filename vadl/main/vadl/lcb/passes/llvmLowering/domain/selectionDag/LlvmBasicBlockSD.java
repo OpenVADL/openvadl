@@ -6,7 +6,8 @@ import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -21,7 +22,7 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
   private final TableGenImmediateRecord immediateOperand;
 
 
-  protected final ParameterIdentity parameterIdentity;
+  protected final TableGenParameter parameter;
 
   /**
    * Creates an {@link LlvmBasicBlockSD} object that holds a reference to a format field
@@ -37,7 +38,8 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
     super(fieldAccess, originalType);
     this.immediateOperand =
         new TableGenImmediateRecord(fieldAccess, llvmType);
-    this.parameterIdentity = ParameterIdentity.from(this);
+    this.parameter = new TableGenParameterTypeAndName(lower(),
+        fieldAccess.fieldRef().identifier.simpleName());
     this.llvmType = llvmType;
   }
 
@@ -70,7 +72,7 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
     return "bb";
   }
 
-  public ParameterIdentity parameterIdentity() {
-    return parameterIdentity;
+  public TableGenParameter parameter() {
+    return parameter;
   }
 }

@@ -1,9 +1,13 @@
-package vadl.lcb.passes.llvmLowering.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import java.util.Objects;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
+import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
  * Indicates that the operand is an immediate.
@@ -12,17 +16,10 @@ public class TableGenInstructionImmediateOperand extends TableGenInstructionOper
     implements ReferencesFormatField {
   private final TableGenImmediateRecord immediateOperand;
 
-  public TableGenInstructionImmediateOperand(ParameterIdentity identity,
-                                             LlvmFieldAccessRefNode node) {
-    super(node, identity);
+  public TableGenInstructionImmediateOperand(LlvmFieldAccessRefNode node) {
+    super(node, new TableGenParameterTypeAndName(node.immediateOperand().fullname(),
+        node.fieldAccess().fieldRef().identifier.simpleName()));
     this.immediateOperand = node.immediateOperand();
-  }
-
-
-  public TableGenInstructionImmediateOperand(ParameterIdentity identity,
-                                             TableGenImmediateRecord immediateRecord) {
-    super(null, identity);
-    this.immediateOperand = immediateRecord;
   }
 
   public TableGenImmediateRecord immediateOperand() {
