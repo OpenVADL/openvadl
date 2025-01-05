@@ -1,8 +1,23 @@
 #include "[(${namespace})]InstrInfo.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "[(${namespace})]RegisterInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/MC/MCInstBuilder.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/MemoryLocation.h"
+#include "llvm/CodeGen/LiveIntervals.h"
+#include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/MachineCombinerPattern.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineTraceMetrics.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "Utils/ImmediateUtils.h"
 #include <math.h>
 
@@ -15,6 +30,63 @@ using namespace llvm;
 #include "[(${namespace})]GenInstrInfo.inc"
 
 void [(${namespace})]InstrInfo::anchor() {}
+
+const MCInstrDesc &[(${namespace})]InstrInfo::getBrCond([(${namespace})]CC::CondCode CC) const {
+  switch (CC) {
+  default:
+    llvm_unreachable("Unknown condition code!");
+  case [(${namespace})]CC::COND_EQ:
+    return get([(${namespace})]::[(${beq.identifier.simpleName()})]);
+  case [(${namespace})]CC::COND_NE:
+    return get([(${namespace})]::[(${bne.identifier.simpleName()})]);
+  case [(${namespace})]CC::COND_LT:
+    return get([(${namespace})]::[(${blt.identifier.simpleName()})]);
+  case [(${namespace})]CC::COND_GE:
+    return get([(${namespace})]::[(${bge.identifier.simpleName()})]);
+  case [(${namespace})]CC::COND_LTU:
+    return get([(${namespace})]::[(${bltu.identifier.simpleName()})]);
+  case [(${namespace})]CC::COND_GEU:
+    return get([(${namespace})]::[(${bgeu.identifier.simpleName()})]);
+  }
+}
+
+static [(${namespace})]CC::CondCode getCondFromBranchOpc(unsigned Opc) {
+  switch (Opc) {
+  default:
+    return [(${namespace})]CC::COND_INVALID;
+  case [(${namespace})]::[(${beq.identifier.simpleName()})]:
+    return [(${namespace})]CC::COND_EQ;
+  case [(${namespace})]::[(${bne.identifier.simpleName()})]:
+    return [(${namespace})]CC::COND_NE;
+  case [(${namespace})]::[(${blt.identifier.simpleName()})]:
+    return [(${namespace})]CC::COND_LT;
+  case [(${namespace})]::[(${bge.identifier.simpleName()})]:
+    return [(${namespace})]CC::COND_GE;
+  case [(${namespace})]::[(${bltu.identifier.simpleName()})]:
+    return [(${namespace})]CC::COND_LTU;
+  case [(${namespace})]::[(${bgeu.identifier.simpleName()})]:
+    return [(${namespace})]CC::COND_GEU;
+  }
+}
+
+[(${namespace})]CC::CondCode [(${namespace})]CC::getOppositeBranchCondition([(${namespace})]CC::CondCode CC) {
+  switch (CC) {
+  default:
+    llvm_unreachable("Unrecognized conditional branch");
+  case [(${namespace})]CC::COND_EQ:
+    return [(${namespace})]CC::COND_NE;
+  case [(${namespace})]CC::COND_NE:
+    return [(${namespace})]CC::COND_EQ;
+  case [(${namespace})]CC::COND_LT:
+    return [(${namespace})]CC::COND_GE;
+  case [(${namespace})]CC::COND_GE:
+    return [(${namespace})]CC::COND_LT;
+  case [(${namespace})]CC::COND_LTU:
+    return [(${namespace})]CC::COND_GEU;
+  case [(${namespace})]CC::COND_GEU:
+    return [(${namespace})]CC::COND_LTU;
+  }
+}
 
 [(${namespace})]InstrInfo::[(${namespace})]InstrInfo( [(${namespace})]Subtarget &STI)
     : [(${namespace})]GenInstrInfo( [(${namespace})]::ADJCALLSTACKDOWN, [(${namespace})]::ADJCALLSTACKUP), STI(STI)
@@ -151,6 +223,21 @@ MachineBasicBlock *[(${namespace})]InstrInfo::getBranchDestBlock(const MachineIn
   return MI.getOperand(NumOp - 1).getMBB();
 }
 
+// The contents of values added to Cond are not examined outside of
+// RISCVInstrInfo, giving us flexibility in what to push to it. For RISCV, we
+// push BranchOpcode, Reg1, Reg2.
+static void parseCondBranch(MachineInstr &LastInst, MachineBasicBlock *&Target,
+                            SmallVectorImpl<MachineOperand> &Cond) {
+  // Block ends with fall-through condbranch.
+  assert(LastInst.getDesc().isConditionalBranch() &&
+         "Unknown conditional branch");
+  Target = LastInst.getOperand(2).getMBB();
+  unsigned CC = getCondFromBranchOpc(LastInst.getOpcode());
+  Cond.push_back(MachineOperand::CreateImm(CC));
+  Cond.push_back(LastInst.getOperand(0));
+  Cond.push_back(LastInst.getOperand(1));
+}
+
 bool [(${namespace})]InstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                      MachineBasicBlock *&FBB,
                      SmallVectorImpl<MachineOperand> &Cond,
@@ -201,6 +288,12 @@ bool [(${namespace})]InstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBas
     return false;
   }
 
+  // Handle a single conditional branch.
+  if (NumTerminators == 1 && I->getDesc().isConditionalBranch()) {
+    parseCondBranch(*I, TBB, Cond);
+    return false;
+  }
+
   return true;
 }
 
@@ -242,11 +335,11 @@ unsigned [(${namespace})]InstrInfo::insertBranch(
   // Shouldn't be a fall through.
   assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 3 || Cond.size() == 0) &&
-         "RISC-V branch conditions have two components!");
+         "(${namespace})] branch conditions have two components!");
 
   // Unconditional branch.
   if (Cond.empty()) {
-    MachineInstr &MI = *BuildMI(&MBB, DL, get(RISCV::PseudoBR)).addMBB(TBB);
+    MachineInstr &MI = *BuildMI(&MBB, DL, get([(${namespace})]::[(${jumpInstruction.identifier.simpleName()})])).addMBB(TBB);
     if (BytesAdded)
       *BytesAdded += getInstSizeInBytes(MI);
     return 1;
@@ -254,10 +347,8 @@ unsigned [(${namespace})]InstrInfo::insertBranch(
 
   // Either a one or two-way conditional branch.
   auto CC = static_cast<[(${namespace})]CC::CondCode>(Cond[0].getImm());
-  MachineInstr &CondMI = *BuildMI(&MBB, DL, getBrCond(CC, Cond[2].isImm()))
-                              .add(Cond[1])
-                              .add(Cond[2])
-                              .addMBB(TBB);
+    MachineInstr &CondMI =
+        *BuildMI(&MBB, DL, getBrCond(CC)).add(Cond[1]).add(Cond[2]).addMBB(TBB);
   if (BytesAdded)
     *BytesAdded += getInstSizeInBytes(CondMI);
 
@@ -266,7 +357,7 @@ unsigned [(${namespace})]InstrInfo::insertBranch(
     return 1;
 
   // Two-way conditional branch.
-  MachineInstr &MI = *BuildMI(&MBB, DL, get(RISCV::PseudoBR)).addMBB(FBB);
+  MachineInstr &MI = *BuildMI(&MBB, DL, get([(${namespace})]::[(${jumpInstruction.identifier.simpleName()})])).addMBB(FBB);
   if (BytesAdded)
     *BytesAdded += getInstSizeInBytes(MI);
   return 2;

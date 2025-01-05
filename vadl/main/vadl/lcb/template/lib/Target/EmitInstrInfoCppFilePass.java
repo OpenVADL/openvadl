@@ -9,14 +9,18 @@ import static vadl.viam.ViamError.unwrap;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.template.CommonVarNames;
@@ -25,6 +29,7 @@ import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -172,6 +177,18 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  private PseudoInstruction getJump(Specification specification,
+                                    Map<PseudoInstructionLabel,
+                                        List<PseudoInstruction>> pseudoMatches) {
+    var jump = Optional.ofNullable(pseudoMatches.get(PseudoInstructionLabel.J))
+        .map(x -> x.stream().findFirst().get());
+    return ensurePresent(jump,
+        () -> Diagnostic.error(
+            "Compiler generator requires a pseudo instruction for an unconditional jump",
+            specification.sourceLocation()
+        ));
+  }
+
   private int getImmBitSize(IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
                             Instruction addition) {
     var fields = fieldUsages.getImmediates(addition.format());
@@ -200,19 +217,45 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var isaMatches = (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
         IsaMachineInstructionMatchingPass.class);
+    var pseudoMatches =
+        (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
+            IsaPseudoInstructionMatchingPass.class);
     var fieldUsages =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);
     var addition = getAddition(isaMatches);
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        "copyPhysInstructions", getMovInstructions(isaMatches),
-        "storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches),
-        "loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches),
-        "additionImmInstruction", addition,
-        "additionImmSize", getImmBitSize(fieldUsages, addition),
-        "branchInstructions", getBranchInstructions(specification, passResults, fieldUsages),
-        "instructionSizes", instructionSizes(specification)
-    );
+    var jump = getJump(specification, pseudoMatches);
+
+    var map = new HashMap<String, Object>();
+    map.put(CommonVarNames.NAMESPACE, specification.simpleName());
+    map.put("copyPhysInstructions", getMovInstructions(isaMatches));
+    map.put("storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches));
+    map.put("loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches));
+    map.put("additionImmInstruction", addition);
+    map.put("additionImmSize", getImmBitSize(fieldUsages, addition));
+    map.put("branchInstructions", getBranchInstructions(specification, passResults, fieldUsages));
+    map.put("instructionSizes", instructionSizes(specification));
+    map.put("jumpInstruction", jump);
+    map.put("beq", getBranchInstruction(specification, passResults, MachineInstructionLabel.BEQ));
+    map.put("bne", getBranchInstruction(specification, passResults, MachineInstructionLabel.BNEQ));
+    map.put("blt", getBranchInstruction(specification, passResults, MachineInstructionLabel.BSLTH));
+    map.put("bge", getBranchInstruction(specification, passResults, MachineInstructionLabel.BSGEQ));
+    map.put("bltu",
+        getBranchInstruction(specification, passResults, MachineInstructionLabel.BULTH));
+    map.put("bgeu",
+        getBranchInstruction(specification, passResults, MachineInstructionLabel.BUGEQ));
+
+    return map;
+  }
+
+  private Instruction getBranchInstruction(Specification specification,
+                                           PassResults passResults,
+                                           MachineInstructionLabel machineInstructionLabel) {
+    var database = new Database(passResults, specification);
+    var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
+        machineInstructionLabel
+    )).build());
+    return result.firstMachineInstruction();
   }
 
   private List<InstructionSize> instructionSizes(Specification specification) {

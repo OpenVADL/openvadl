@@ -10,6 +10,21 @@ namespace llvm
 {
     class [(${namespace})]Subtarget;
 
+    namespace [(${namespace})]CC {
+      enum CondCode {
+        COND_EQ,
+        COND_NE,
+        COND_LT,
+        COND_GE,
+        COND_LTU,
+        COND_GEU,
+        COND_INVALID
+      };
+
+      CondCode getOppositeBranchCondition(CondCode);
+      CondCode getCondFromBranchOpc(unsigned Opc);
+    }
+
     class [(${namespace})]InstrInfo : public [(${namespace})]GenInstrInfo
     {
         // virtual anchor method to decrease link time as the vtable
@@ -73,6 +88,8 @@ namespace llvm
                                     MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
                                     const DebugLoc &dl,
                                     int *BytesAdded = nullptr) const override;
+
+            const MCInstrDesc &getBrCond([(${namespace})]CC::CondCode CC) const;
 
         private:
             const [(${namespace})]Subtarget &STI;
