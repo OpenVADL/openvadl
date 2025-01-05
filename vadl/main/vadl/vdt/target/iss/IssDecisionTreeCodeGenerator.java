@@ -24,11 +24,8 @@ import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
-import vadl.vdt.utils.Bit;
 import vadl.vdt.utils.BitPattern;
-import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
-import vadl.vdt.utils.PBit;
 import vadl.viam.Format;
 
 /**
