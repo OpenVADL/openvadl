@@ -131,6 +131,33 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param containerPath is the path where the {@code path} should be copied to.
    * @param content       is the content of file which will be written to the
    *                      temp file.
+   * @param cmd           is the command which gets executed on startup.
+   * @throws IOException when the temp file is writable.
+   */
+  protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
+                                                       String content,
+                                                       String containerPath,
+                                                       String cmd) throws IOException {
+    runContainer(image, (container) -> container
+            .withCommand(cmd)
+            .withCopyToContainer(Transferable.of(content), containerPath),
+        null
+    );
+  }
+
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will write the given {@code content} into a temporary file. The
+   * temporary file requires a {@code prefix} and {@code suffix}.
+   * It will assert that the status code is zero. If the check takes longer
+   * than 10 seconds or the status code is not zero then it will throw an
+   * exception.
+   *
+   * @param image         is the docker image for the {@link GenericContainer}.
+   * @param containerPath is the path where the {@code path} should be copied to.
+   * @param content       is the content of file which will be written to the
+   *                      temp file.
    * @throws IOException when the temp file is writable.
    */
   protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
@@ -154,10 +181,12 @@ public abstract class DockerExecutionTest extends AbstractTest {
    *                            from the host to the container.
    * @param environmentMappings is a list where each entry defines an environment variable which
    *                            will be set in the container.
+   * @param cmd                 is the command which is executed.
    */
   protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
                                                        List<Pair<Path, String>> copyMappings,
-                                                       Map<String, String> environmentMappings) {
+                                                       Map<String, String> environmentMappings,
+                                                       String cmd) {
     runContainer(image, (container) -> {
       for (var mapping : copyMappings) {
         container
@@ -172,6 +201,8 @@ public abstract class DockerExecutionTest extends AbstractTest {
                 mapping.getKey(),
                 mapping.getValue());
       }
+
+      container.withCommand(cmd);
 
       return container;
     }, (container) -> {
@@ -195,16 +226,19 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param doCommit        commits the container into a new layer which contains the
    *                        environment variables and copied files. Note that testcontainers
    *                        will automatically remove these images after the test was executed.
+   * @param cmd             is the command which gets executed.
    */
   protected void runContainerWithEnv(ImageFromDockerfile image,
                                      Path inHostPath,
                                      String inContainerPath,
                                      String envName,
                                      String envValue,
-                                     boolean doCommit) {
+                                     boolean doCommit,
+                                     String... cmd) {
     runContainer(image, (container) -> container
             .withCopyFileToContainer(MountableFile.forHostPath(inHostPath), inContainerPath)
-            .withEnv(envName, envValue),
+            .withEnv(envName, envValue)
+            .withCommand(cmd),
         (container) -> {
           if (doCommit) {
             // If you need to debug the container, then put a breakpoint here.

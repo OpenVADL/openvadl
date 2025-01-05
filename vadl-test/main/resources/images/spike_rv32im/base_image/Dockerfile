@@ -42,3 +42,5 @@ COPY --from=builder-fail-if /usr/local/cargo/bin/fail_if /usr/bin/fail_if
 WORKDIR /work
 COPY helper /helper
 COPY lcb_wrapper.sh .
+COPY spike.sh .
+COPY llvm.sh .

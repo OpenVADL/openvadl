@@ -9,7 +9,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -18,6 +17,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.test.DockerImageStore;
 import vadl.test.lcb.AbstractLcbTest;
 
 public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
@@ -68,9 +68,11 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
         .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
         .withBuildArg("SPIKE_TARGET", getSpikeTarget()));
 
+    var cachedImage = DockerImageStore.replaceWithCachedImage(getTarget(), image);
+
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
-      runContainerWithEnv(image,
+      runContainerWithEnv(cachedImage,
           Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
           "/src/inputs",
           "INPUT",
