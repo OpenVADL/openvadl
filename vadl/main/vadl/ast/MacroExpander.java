@@ -1164,7 +1164,7 @@ class MacroExpander
   private List<Parameter> expandParams(List<Parameter> params) {
     var expandedParams = new ArrayList<>(params);
     expandedParams.replaceAll(param ->
-        new Parameter(param.identifier(), (TypeLiteral) expandExpr(param.type)));
+        new Parameter(param.identifier(), (TypeLiteral) expandExpr(param.typeLiteral)));
     return expandedParams;
   }
 

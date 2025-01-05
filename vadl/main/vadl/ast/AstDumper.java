@@ -246,7 +246,7 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.identifier());
     dumpChildren(definition.params.stream()
-        .flatMap(param -> Stream.of(param.identifier(), param.type)).toList());
+        .flatMap(param -> Stream.of(param.identifier(), param.typeLiteral)).toList());
     dumpChildren(definition.statements);
     return null;
   }
@@ -289,7 +289,7 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.identifier());
     for (var param : definition.params) {
-      dumpChildren(param.identifier(), param.type);
+      dumpChildren(param.identifier(), param.typeLiteral);
     }
     dumpChildren(definition.retType, definition.expr);
     return null;
@@ -419,10 +419,10 @@ public class AstDumper
       }
     }
     for (var input : processDefinition.inputs) {
-      dumpChildren(input.identifier(), input.type);
+      dumpChildren(input.identifier(), input.typeLiteral);
     }
     for (var output : processDefinition.outputs) {
-      dumpChildren(output.identifier(), output.type);
+      dumpChildren(output.identifier(), output.typeLiteral);
     }
     return null;
   }
@@ -517,7 +517,7 @@ public class AstDumper
   public Void visit(CpuProcessDefinition definition) {
     dumpNode(definition);
     for (Parameter startupOutput : definition.startupOutputs) {
-      dumpChildren(startupOutput.identifier(), startupOutput.type);
+      dumpChildren(startupOutput.identifier(), startupOutput.typeLiteral);
     }
     dumpChildren(definition.statement);
     return null;
@@ -535,10 +535,10 @@ public class AstDumper
   public Void visit(MacroInstructionDefinition definition) {
     dumpNode(definition);
     for (Parameter input : definition.inputs) {
-      dumpChildren(input.identifier(), input.type);
+      dumpChildren(input.identifier(), input.typeLiteral);
     }
     for (Parameter output : definition.outputs) {
-      dumpChildren(output.identifier(), output.type);
+      dumpChildren(output.identifier(), output.typeLiteral);
     }
     dumpChildren(definition.statement);
     return null;
@@ -549,10 +549,10 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.id);
     for (Parameter input : definition.inputs) {
-      dumpChildren(input.identifier(), input.type);
+      dumpChildren(input.identifier(), input.typeLiteral);
     }
     for (Parameter output : definition.outputs) {
-      dumpChildren(output.identifier(), output.type);
+      dumpChildren(output.identifier(), output.typeLiteral);
     }
     dumpChildren(definition.statement);
     return null;
@@ -563,7 +563,7 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.id);
     for (Parameter output : definition.outputs) {
-      dumpChildren(output.identifier(), output.type);
+      dumpChildren(output.identifier(), output.typeLiteral);
     }
     dumpChildren(definition.statement);
     return null;
@@ -574,7 +574,7 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.id);
     for (Parameter output : definition.outputs) {
-      dumpChildren(output.identifier(), output.type);
+      dumpChildren(output.identifier(), output.typeLiteral);
     }
     dumpChildren(definition.statement);
     return null;

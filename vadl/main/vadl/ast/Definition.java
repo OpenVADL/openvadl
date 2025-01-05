@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
@@ -144,11 +145,11 @@ interface DefinitionVisitor<R> {
  */
 class Parameter extends Node implements IdentifiableNode {
   Identifier name;
-  TypeLiteral type;
+  TypeLiteral typeLiteral;
 
-  public Parameter(Identifier name, TypeLiteral type) {
+  public Parameter(Identifier name, TypeLiteral typeLiteral) {
     this.name = name;
-    this.type = type;
+    this.typeLiteral = typeLiteral;
   }
 
   @Override
@@ -158,7 +159,7 @@ class Parameter extends Node implements IdentifiableNode {
 
   @Override
   SourceLocation location() {
-    return name.location().join(type.location());
+    return name.location().join(typeLiteral.location());
   }
 
   @Override
@@ -170,7 +171,7 @@ class Parameter extends Node implements IdentifiableNode {
   void prettyPrint(int indent, StringBuilder builder) {
     name.prettyPrint(indent, builder);
     builder.append(" : ");
-    type.prettyPrint(indent, builder);
+    typeLiteral.prettyPrint(indent, builder);
   }
 
   static void prettyPrintMultiple(int indent, List<Parameter> parameters, StringBuilder builder) {
@@ -196,13 +197,13 @@ class Parameter extends Node implements IdentifiableNode {
     }
 
     Parameter parameter = (Parameter) o;
-    return name.equals(parameter.name) && type.equals(parameter.type);
+    return name.equals(parameter.name) && typeLiteral.equals(parameter.typeLiteral);
   }
 
   @Override
   public int hashCode() {
     int result = name.hashCode();
-    result = 31 * result + type.hashCode();
+    result = 31 * result + typeLiteral.hashCode();
     return result;
   }
 }
@@ -1650,6 +1651,9 @@ class FunctionDefinition extends Definition implements IdentifiableNode {
   TypeLiteral retType;
   Expr expr;
   SourceLocation loc;
+
+  @Nullable
+  ConcreteRelationType type;
 
   FunctionDefinition(IdentifierOrPlaceholder name, List<Parameter> params, TypeLiteral retType,
                      Expr expr, SourceLocation location) {
