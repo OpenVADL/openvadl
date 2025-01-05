@@ -18,6 +18,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.test.DockerImageStore;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.utils.Pair;
 
@@ -58,11 +59,13 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
         .withBuildArg("TARGET", target));
 
+    var cachedImage = DockerImageStore.replaceWithCachedImage(getTarget(), image);
+
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
       var name = Paths.get(input).getFileName().toString();
 
-      runContainerAndCopyInputIntoContainer(image,
+      runContainerAndCopyInputIntoContainer(cachedImage,
           List.of(
               Pair.of(
                   Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
