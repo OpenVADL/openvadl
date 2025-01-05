@@ -1,9 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
-import vadl.viam.Parameter;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
@@ -25,13 +23,21 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
 public class TableGenInstructionIndexedRegisterFileOperand extends TableGenInstructionOperand {
   private final RegisterFile registerFile;
 
-  public TableGenInstructionIndexedRegisterFileOperand(ReadRegFileNode node, FuncParamNode address) {
+  /**
+   * Constructor.
+   */
+  public TableGenInstructionIndexedRegisterFileOperand(ReadRegFileNode node,
+                                                       FuncParamNode address) {
     super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
         address.parameter().identifier.simpleName()));
     this.registerFile = node.registerFile();
   }
 
-  public TableGenInstructionIndexedRegisterFileOperand(WriteRegFileNode node, FuncParamNode address) {
+  /**
+   * Constructor.
+   */
+  public TableGenInstructionIndexedRegisterFileOperand(WriteRegFileNode node,
+                                                       FuncParamNode address) {
     super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
         address.parameter().identifier.simpleName()));
     this.registerFile = node.registerFile();

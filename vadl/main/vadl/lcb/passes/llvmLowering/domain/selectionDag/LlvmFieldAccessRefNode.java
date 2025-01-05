@@ -50,9 +50,9 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
     super(fieldAccess, originalType);
     this.immediateOperand =
         new TableGenImmediateRecord(fieldAccess, llvmType);
-    this.parameter = usage == Usage.Immediate ?
-        new TableGenParameterTypeAndName(immediateOperand.fullname(),
-            fieldAccess.fieldRef().identifier.simpleName()) :
+    this.parameter = usage == Usage.Immediate
+        ? new TableGenParameterTypeAndName(immediateOperand.fullname(),
+        fieldAccess.fieldRef().identifier.simpleName()) :
         new TableGenParameterTypeAndName(immediateOperand.rawName() + TableGenParameter.AS_LABEL,
             fieldAccess.fieldRef().identifier.simpleName());
     this.llvmType = llvmType;

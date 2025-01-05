@@ -4,8 +4,8 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 
@@ -40,9 +40,5 @@ public class LlvmLoweringPseudoRecord extends LlvmLoweringRecord {
     super(base.behavior(), inputs, base.outputs(), base.flags(), base.patterns(), base.uses(),
         base.defs());
     this.appliedBehaviors = base.appliedBehaviors;
-  }
-
-  public Map<Instruction, Graph> appliedBehaviors() {
-    return appliedBehaviors;
   }
 }

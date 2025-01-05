@@ -4,10 +4,8 @@ import java.util.Objects;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
-import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
  * Indicates that the operand is an immediate.
@@ -16,6 +14,9 @@ public class TableGenInstructionImmediateOperand extends TableGenInstructionOper
     implements ReferencesFormatField {
   private final TableGenImmediateRecord immediateOperand;
 
+  /**
+   * Constructor.
+   */
   public TableGenInstructionImmediateOperand(LlvmFieldAccessRefNode node) {
     super(node, new TableGenParameterTypeAndName(node.immediateOperand().fullname(),
         node.fieldAccess().fieldRef().identifier.simpleName()));

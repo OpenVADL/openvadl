@@ -1,6 +1,5 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
-import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
@@ -19,6 +18,9 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
   private final Format.Field formatField;
   private final Node reference;
 
+  /**
+   * Constructor.
+   */
   public TableGenInstructionRegisterFileOperand(ReadRegFileNode node, FieldRefNode address) {
     super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
         address.formatField().identifier.simpleName()));
@@ -27,6 +29,9 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
     this.reference = node;
   }
 
+  /**
+   * Constructor.
+   */
   public TableGenInstructionRegisterFileOperand(WriteRegFileNode node, FieldRefNode address) {
     super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
         address.formatField().identifier.simpleName()));
