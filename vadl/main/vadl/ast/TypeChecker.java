@@ -204,45 +204,56 @@ public class TypeChecker
           .build();
     }
 
-    // var bitWidth = bitsType.bitWidth();
-    // var bitMask = Collections.nCopies(bitWidth, false);
+    var bitWidth = bitsType.bitWidth();
+    var bitsVerifier = new FormatBitsVerifier(bitWidth);
 
     for (var field : definition.fields) {
       if (field instanceof FormatDefinition.TypedFormatField typedField) {
         typedField.typeLiteral.accept(this);
-        // FIXME: Verify bits
+        if (!(typedField.typeLiteral.type instanceof BitsType fieldBitsType)) {
+          throw Diagnostic.error("Bits Type expected", typedField.typeLiteral)
+              .build();
+        }
+        bitsVerifier.addType(fieldBitsType);
+
       } else if (field instanceof FormatDefinition.RangeFormatField rangeField) {
         if (rangeField.typeLiteral != null) {
           rangeField.typeLiteral.accept(this);
+          rangeField.type = Objects.requireNonNull(rangeField.typeLiteral.type);
         }
 
         for (var range : rangeField.ranges) {
           range.accept(this);
-          // FIXME: Verify bits
+
+          // FIXME: This should be so much more elegant
+          int from;
+          int to;
+          if (range instanceof RangeExpr rangeExpr) {
+            from = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+            to = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+          } else {
+            from = constantEvaluator.eval(range).value().intValueExact();
+            to = from;
+          }
+
+          if (rangeField.type == null) {
+            rangeField.type = Type.bits(to - from + 1);
+          }
+
+          bitsVerifier.addRange(from, to);
         }
 
-        // Determine the type of the field
-        if (rangeField.typeLiteral != null) {
-          rangeField.type = Objects.requireNonNull(rangeField.typeLiteral.type);
-        } else {
-          var fieldWidth = 0;
-          for (var range : rangeField.ranges) {
-            // FIXME: I guess the correct way would be to always evaluate and verify the output
-            if (range instanceof RangeExpr rangeExpr) {
-              var start = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
-              var end = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
-              fieldWidth += end - start + 1;
-            } else {
-              fieldWidth += 1;
-            }
-          }
-          rangeField.type = Type.bits(fieldWidth);
-        }
       } else if (field instanceof FormatDefinition.DerivedFormatField dfField) {
         dfField.expr.accept(this);
       } else {
         throw new RuntimeException("Unknown FormatField Class ".concat(field.getClass().getName()));
       }
+    }
+
+    if (bitsVerifier.hasViolations()) {
+      throw Diagnostic.error("Invalid Format", definition)
+          .description("%s", Objects.requireNonNull(bitsVerifier.getViolationsMessage()))
+          .build();
     }
 
     return null;
@@ -1241,7 +1252,35 @@ public class TypeChecker
 
   @Override
   public Void visit(RangeExpr expr) {
-    throwUnimplemented(expr);
+    expr.from.accept(this);
+    expr.to.accept(this);
+
+    var fromType = Objects.requireNonNull(expr.from.type);
+    var toType = Objects.requireNonNull(expr.to.type);
+
+    if (!(fromType instanceof BitsType) && !(fromType instanceof ConstantType)) {
+      throw Diagnostic.error("Type Mismatch", expr.from)
+          .description("The from part of a range must be a number but was %s", fromType)
+          .build();
+    }
+
+    if (!(toType instanceof BitsType) && !(toType instanceof ConstantType)) {
+      throw Diagnostic.error("Type Mismatch", expr.to)
+          .description("The to part of a range must be a number but was %s", fromType)
+          .build();
+    }
+
+    var fromVal = constantEvaluator.eval(expr.from).value();
+    var toVal = constantEvaluator.eval(expr.to).value();
+
+    if (toVal.compareTo(fromVal) > 0) {
+      throw Diagnostic.error("Invalid range", expr)
+          .description("From is %s but to is %s, but ranges must be decreasing", fromVal, toVal)
+          .build();
+    }
+
+    // FIXME: There is no range type so I am not sure what to assign here
+    expr.type = null;
     return null;
   }
 
