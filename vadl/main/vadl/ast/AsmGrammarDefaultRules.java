@@ -3,7 +3,14 @@ package vadl.ast;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import vadl.types.AsmType;
+import vadl.types.asmTypes.AsmType;
+import vadl.types.asmTypes.ConstantAsmType;
+import vadl.types.asmTypes.ExpressionAsmType;
+import vadl.types.asmTypes.InstructionAsmType;
+import vadl.types.asmTypes.RegisterAsmType;
+import vadl.types.asmTypes.StringAsmType;
+import vadl.types.asmTypes.SymbolAsmType;
+import vadl.types.asmTypes.VoidAsmType;
 import vadl.utils.SourceLocation;
 
 /**
@@ -37,55 +44,56 @@ public class AsmGrammarDefaultRules {
     // regex pattern needed for checking LL(1) conflicts
     // in the AsmParser this is handled by the LLVM lexer
     return new ArrayList<>(List.of(
-        terminalRule("IDENTIFIER", "[a-zA-Z_.][a-zA-Z0-9_$.@]*"),
-        terminalRule("STRING", "\\\".*\\\""),
-        terminalRule("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+"),
-        terminalRule("COLON", ":"),
-        terminalRule("PLUS", "+"),
-        terminalRule("MINUS", "-"),
-        terminalRule("TILDE", "~"),
-        terminalRule("SLASH", "/"),
-        terminalRule("BACKSLASH", "\\\\"),
-        terminalRule("LPAREN", "("),
-        terminalRule("RPAREN", ")"),
-        terminalRule("LBRAC", "["),
-        terminalRule("RBRAC", "]"),
-        terminalRule("LCURLY", "{"),
-        terminalRule("RCURLY", "}"),
-        terminalRule("STAR", "*"),
-        terminalRule("DOT", "."),
-        terminalRule("COMMA", ","),
-        terminalRule("DOLLAR", "$"),
-        terminalRule("EQUAL", "="),
-        terminalRule("EQUALEQUAL", "=="),
-        terminalRule("PIPE", "|"),
-        terminalRule("PIPEPIPE", "||"),
-        terminalRule("CARET", "^"),
-        terminalRule("AMP", "&"),
-        terminalRule("AMPAMP", "&&"),
-        terminalRule("EXCLAIM", "!"),
-        terminalRule("EXCLAIMEQUAL", "!="),
-        terminalRule("PERCENT", "%"),
-        terminalRule("HASH", "#"),
-        terminalRule("LESS", "<"),
-        terminalRule("LESSEQUAL", "<="),
-        terminalRule("LESSLESS", "<<"),
-        terminalRule("LESSGREATER", "<>"),
-        terminalRule("GREATER", ">"),
-        terminalRule("GREATEREQUAL", ">="),
-        terminalRule("GREATERGREATER", ">>"),
-        terminalRule("AT", "@"),
-        terminalRule("MINUSGREATER", "->"),
-        terminalRule("EOL", "[\\r(\\r\\n)]"),
-        nonTerminalRule("Statement", instructionRule(), ruleReference("EOL")),
-        nonTerminalRule("Register", ruleReference("IDENTIFIER", AsmType.REGISTER)),
-        nonTerminalRule("ImmediateOperand", ruleReference("Expression")),
-        nonTerminalRule("Identifier", ruleReference("IDENTIFIER")),
-        nonTerminalRule("Expression", ruleReference("Expression", AsmType.EXPRESSION)),
-        nonTerminalRule("Instruction", ruleReference("Instruction", AsmType.INSTRUCTION)),
+        terminalRuleTypeString("IDENTIFIER", "[a-zA-Z_.][a-zA-Z0-9_$.@]*"),
+        terminalRuleTypeString("STRING", "\\\".*\\\""),
+        terminalRuleTypeString("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+"),
+        terminalRuleTypeString("COLON", ":"),
+        terminalRuleTypeString("PLUS", "+"),
+        terminalRuleTypeString("MINUS", "-"),
+        terminalRuleTypeString("TILDE", "~"),
+        terminalRuleTypeString("SLASH", "/"),
+        terminalRuleTypeString("BACKSLASH", "\\\\"),
+        terminalRuleTypeString("LPAREN", "("),
+        terminalRuleTypeString("RPAREN", ")"),
+        terminalRuleTypeString("LBRAC", "["),
+        terminalRuleTypeString("RBRAC", "]"),
+        terminalRuleTypeString("LCURLY", "{"),
+        terminalRuleTypeString("RCURLY", "}"),
+        terminalRuleTypeString("STAR", "*"),
+        terminalRuleTypeString("DOT", "."),
+        terminalRuleTypeString("COMMA", ","),
+        terminalRuleTypeString("DOLLAR", "$"),
+        terminalRuleTypeString("EQUAL", "="),
+        terminalRuleTypeString("EQUALEQUAL", "=="),
+        terminalRuleTypeString("PIPE", "|"),
+        terminalRuleTypeString("PIPEPIPE", "||"),
+        terminalRuleTypeString("CARET", "^"),
+        terminalRuleTypeString("AMP", "&"),
+        terminalRuleTypeString("AMPAMP", "&&"),
+        terminalRuleTypeString("EXCLAIM", "!"),
+        terminalRuleTypeString("EXCLAIMEQUAL", "!="),
+        terminalRuleTypeString("PERCENT", "%"),
+        terminalRuleTypeString("HASH", "#"),
+        terminalRuleTypeString("LESS", "<"),
+        terminalRuleTypeString("LESSEQUAL", "<="),
+        terminalRuleTypeString("LESSLESS", "<<"),
+        terminalRuleTypeString("LESSGREATER", "<>"),
+        terminalRuleTypeString("GREATER", ">"),
+        terminalRuleTypeString("GREATEREQUAL", ">="),
+        terminalRuleTypeString("GREATERGREATER", ">>"),
+        terminalRuleTypeString("AT", "@"),
+        terminalRuleTypeString("MINUSGREATER", "->"),
+        terminalRule("EOL", "[\\r(\\r\\n)]", VoidAsmType.instance()),
+        nonTerminalRule("Statement", InstructionAsmType.instance(), instructionRule(),
+            ruleReference("EOL")),
+        nonTerminalRule("Register", RegisterAsmType.instance(), ruleReference("IDENTIFIER")),
+        nonTerminalRule("ImmediateOperand", null, ruleReference("Expression")),
+        nonTerminalRule("Identifier", StringAsmType.instance(), ruleReference("IDENTIFIER")),
+        nonTerminalRule("Expression", ExpressionAsmType.instance(), ruleReference("Expression")),
+        nonTerminalRule("Instruction", InstructionAsmType.instance(), ruleReference("Instruction")),
         integerRule(),
-        nonTerminalRule("Natural", ruleReference("INTEGER")),
-        nonTerminalRule("Label", ruleReference("Identifier", AsmType.SYMBOL))
+        nonTerminalRule("Natural", ConstantAsmType.instance(), ruleReference("INTEGER")),
+        nonTerminalRule("Label", SymbolAsmType.instance(), ruleReference("Identifier"))
     ));
   }
 
@@ -117,18 +125,33 @@ public class AsmGrammarDefaultRules {
     );
   }
 
-  private static AsmGrammarRuleDefinition terminalRule(String name, String regularExpression) {
+  private static AsmGrammarRuleDefinition terminalRuleTypeString(String name,
+                                                                 String regularExpression) {
+    return terminalRule(name, regularExpression, StringAsmType.instance());
+  }
+
+  private static AsmGrammarRuleDefinition terminalRule(String name, String regularExpression,
+                                                       AsmType terminalRuleType) {
+    var asmTypeDef = new AsmGrammarTypeDefinition(
+        new Identifier(terminalRuleType.name(),
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+
+    var grammarLiteral = new AsmGrammarLiteralDefinition(
+        null, new ArrayList<>(), new StringLiteral(regularExpression), asmTypeDef,
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+    grammarLiteral.asmType = terminalRuleType;
+
     return new AsmGrammarRuleDefinition(
         new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
         null,
         new AsmGrammarAlternativesDefinition(
             new ArrayList<>(List.of(List.of(
                 new AsmGrammarElementDefinition(
-                    null, null, false,
-                    new AsmGrammarLiteralDefinition(
-                        null, new ArrayList<>(), new StringLiteral(regularExpression), null,
-                        SourceLocation.INVALID_SOURCE_LOCATION
-                    ), null, null, null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
+                    null, null, false, grammarLiteral, null, null,
+                    null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
                 )
             ))),
             SourceLocation.INVALID_SOURCE_LOCATION
@@ -137,9 +160,9 @@ public class AsmGrammarDefaultRules {
     );
   }
 
-  private static AsmGrammarRuleDefinition nonTerminalRule(String name,
+  private static AsmGrammarRuleDefinition nonTerminalRule(String name, @Nullable AsmType ruleType,
                                                           AsmGrammarElementDefinition... elements) {
-    return new AsmGrammarRuleDefinition(
+    var rule = new AsmGrammarRuleDefinition(
         new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
         null,
         new AsmGrammarAlternativesDefinition(
@@ -148,6 +171,10 @@ public class AsmGrammarDefaultRules {
         ),
         SourceLocation.INVALID_SOURCE_LOCATION
     );
+
+    // by setting the asmType we can avoid checking the default rules in the typechecker
+    rule.asmType = ruleType;
+    return rule;
   }
 
   private static AsmGrammarRuleDefinition integerRule() {
@@ -166,22 +193,26 @@ public class AsmGrammarDefaultRules {
         null, null, null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
     );
 
-    return new AsmGrammarRuleDefinition(
+    var rule = new AsmGrammarRuleDefinition(
         new Identifier("Integer", SourceLocation.INVALID_SOURCE_LOCATION),
         new AsmGrammarTypeDefinition(
-            new Identifier(AsmType.CONSTANT.toString().toLowerCase(),
+            new Identifier(ConstantAsmType.instance().name(),
                 SourceLocation.INVALID_SOURCE_LOCATION),
             SourceLocation.INVALID_SOURCE_LOCATION),
         new AsmGrammarAlternativesDefinition(
             List.of(
                 List.of(ruleReference("MINUS"), negCallElement),
-                List.of(ruleReference("INTEGER", AsmType.CONSTANT))
+                List.of(ruleReference("INTEGER", ConstantAsmType.instance()))
             ), SourceLocation.INVALID_SOURCE_LOCATION
         ), SourceLocation.INVALID_SOURCE_LOCATION);
+
+    // by setting the asmType we can avoid checking the default rules in the typechecker
+    rule.asmType = ConstantAsmType.instance();
+    return rule;
   }
 
   private static AsmGrammarElementDefinition instructionRule() {
-    var instructionElement = ruleReference("Instruction", AsmType.INSTRUCTION);
+    var instructionElement = ruleReference("Instruction", InstructionAsmType.instance());
     instructionElement.attribute =
         new Identifier("instruction", SourceLocation.INVALID_SOURCE_LOCATION);
     return instructionElement;
@@ -193,21 +224,16 @@ public class AsmGrammarDefaultRules {
 
   private static AsmGrammarElementDefinition ruleReference(String refName,
                                                            @Nullable AsmType refRuleType) {
-    AsmGrammarTypeDefinition asmTypeDef = null;
-    if (refRuleType != null) {
-      asmTypeDef = new AsmGrammarTypeDefinition(
-          new Identifier(refRuleType.toString().toLowerCase(),
-              SourceLocation.INVALID_SOURCE_LOCATION),
-          SourceLocation.INVALID_SOURCE_LOCATION
-      );
-    }
-    return new AsmGrammarElementDefinition(
+    var element = new AsmGrammarElementDefinition(
         null, null, false,
         new AsmGrammarLiteralDefinition(
             new Identifier(refName, SourceLocation.INVALID_SOURCE_LOCATION),
-            new ArrayList<>(), null, asmTypeDef, SourceLocation.INVALID_SOURCE_LOCATION
+            new ArrayList<>(), null, null, SourceLocation.INVALID_SOURCE_LOCATION
         ),
         null, null, null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
     );
+
+    element.asmType = refRuleType;
+    return element;
   }
 }

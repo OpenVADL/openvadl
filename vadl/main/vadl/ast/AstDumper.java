@@ -630,8 +630,8 @@ public class AstDumper
   public Void visit(AsmGrammarRuleDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.id);
-    if (definition.asmType != null) {
-      dumpChildren(definition.asmType);
+    if (definition.asmTypeDefinition != null) {
+      dumpChildren(definition.asmTypeDefinition);
     }
     dumpChildren(definition.alternatives);
     return null;
@@ -670,8 +670,8 @@ public class AstDumper
     if (definition.semanticPredicate != null) {
       dumpChildren(definition.semanticPredicate);
     }
-    if (definition.groupAsmType != null) {
-      dumpChildren(definition.groupAsmType);
+    if (definition.groupAsmTypeDefinition != null) {
+      dumpChildren(definition.groupAsmTypeDefinition);
     }
     return null;
   }
@@ -692,8 +692,8 @@ public class AstDumper
     if (definition.stringLiteral != null) {
       dumpChildren(definition.stringLiteral);
     }
-    if (definition.asmType != null) {
-      dumpChildren(definition.asmType);
+    if (definition.asmTypeDefinition != null) {
+      dumpChildren(definition.asmTypeDefinition);
     }
     dumpChildren(definition.parameters);
     return null;

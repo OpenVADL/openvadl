@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.Type;
+import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 
 /**
@@ -4284,15 +4285,19 @@ class AsmDirectiveDefinition extends Definition {
 class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   @Nullable
-  AsmGrammarTypeDefinition asmType;
+  AsmGrammarTypeDefinition asmTypeDefinition;
   AsmGrammarAlternativesDefinition alternatives;
   SourceLocation loc;
 
-  public AsmGrammarRuleDefinition(Identifier id, @Nullable AsmGrammarTypeDefinition asmType,
+  @Nullable
+  AsmType asmType;
+
+  public AsmGrammarRuleDefinition(Identifier id,
+                                  @Nullable AsmGrammarTypeDefinition asmTypeDefinition,
                                   AsmGrammarAlternativesDefinition alternatives,
                                   SourceLocation loc) {
     this.id = id;
-    this.asmType = asmType;
+    this.asmTypeDefinition = asmTypeDefinition;
     this.alternatives = alternatives;
     this.loc = loc;
   }
@@ -4315,8 +4320,8 @@ class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     id.prettyPrint(indent, builder);
-    if (asmType != null) {
-      asmType.prettyPrint(indent, builder);
+    if (asmTypeDefinition != null) {
+      asmTypeDefinition.prettyPrint(indent, builder);
     }
     builder.append(" : ");
     builder.append("\n");
@@ -4337,13 +4342,13 @@ class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
       return false;
     }
     AsmGrammarRuleDefinition that = (AsmGrammarRuleDefinition) o;
-    return Objects.equals(id, that.id) && Objects.equals(asmType, that.asmType)
+    return Objects.equals(id, that.id) && Objects.equals(asmTypeDefinition, that.asmTypeDefinition)
         && Objects.equals(alternatives, that.alternatives);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, asmType, alternatives);
+    return Objects.hash(id, asmTypeDefinition, alternatives);
   }
 
   @Override
@@ -4361,6 +4366,9 @@ class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
 class AsmGrammarAlternativesDefinition extends Definition {
   List<List<AsmGrammarElementDefinition>> alternatives;
   SourceLocation loc;
+
+  @Nullable
+  AsmType asmType;
 
   public AsmGrammarAlternativesDefinition(List<List<AsmGrammarElementDefinition>> alternatives,
                                           SourceLocation loc) {
@@ -4470,8 +4478,12 @@ class AsmGrammarElementDefinition extends Definition {
   @Nullable
   Expr semanticPredicate;
   @Nullable
-  AsmGrammarTypeDefinition groupAsmType;
+  AsmGrammarTypeDefinition groupAsmTypeDefinition;
   SourceLocation loc;
+
+  @Nullable
+  AsmType asmType;
+  Boolean isWithinRepetitionBlock = false;
 
   public AsmGrammarElementDefinition(@Nullable AsmGrammarLocalVarDefinition localVar,
                                      @Nullable Identifier attribute,
@@ -4492,7 +4504,7 @@ class AsmGrammarElementDefinition extends Definition {
     this.optionAlternatives = optionAlternatives;
     this.repetitionAlternatives = repetitionAlternatives;
     this.semanticPredicate = semanticPredicate;
-    this.groupAsmType = groupAsmType;
+    this.groupAsmTypeDefinition = groupAsmType;
     this.loc = loc;
   }
 
@@ -4552,8 +4564,8 @@ class AsmGrammarElementDefinition extends Definition {
       semanticPredicate.prettyPrint(0, builder);
       builder.append(" )");
     }
-    if (groupAsmType != null) {
-      groupAsmType.prettyPrint(0, builder);
+    if (groupAsmTypeDefinition != null) {
+      groupAsmTypeDefinition.prettyPrint(0, builder);
     }
   }
 
@@ -4570,13 +4582,13 @@ class AsmGrammarElementDefinition extends Definition {
         && Objects.equals(isPlusEqualsAttributeAssign, that.isPlusEqualsAttributeAssign)
         && Objects.equals(asmLiteral, that.asmLiteral)
         && Objects.equals(groupAlternatives, that.groupAlternatives)
-        && Objects.equals(groupAsmType, that.groupAsmType);
+        && Objects.equals(groupAsmTypeDefinition, that.groupAsmTypeDefinition);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(localVar, attribute, isPlusEqualsAttributeAssign, asmLiteral,
-        groupAlternatives, groupAsmType);
+        groupAlternatives, groupAsmTypeDefinition);
   }
 }
 
@@ -4590,6 +4602,9 @@ class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNod
   Identifier id;
   AsmGrammarLiteralDefinition asmLiteral;
   SourceLocation loc;
+
+  @Nullable
+  AsmType asmType;
 
   public AsmGrammarLocalVarDefinition(Identifier id, AsmGrammarLiteralDefinition asmLiteral,
                                       SourceLocation loc) {
@@ -4652,6 +4667,7 @@ class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNod
  * <li>string literal</li>
  * <li>rule invocation</li>
  * <li>vadl function invocation</li>
+ * <li>local variable usage</li>
  * </p>
  */
 class AsmGrammarLiteralDefinition extends Definition {
@@ -4661,17 +4677,21 @@ class AsmGrammarLiteralDefinition extends Definition {
   @Nullable
   Expr stringLiteral;
   @Nullable
-  AsmGrammarTypeDefinition asmType;
+  AsmGrammarTypeDefinition asmTypeDefinition;
   SourceLocation loc;
+
+  @Nullable
+  AsmType asmType;
 
   public AsmGrammarLiteralDefinition(@Nullable Identifier id,
                                      List<AsmGrammarLiteralDefinition> parameters,
                                      @Nullable Expr stringLiteral, @Nullable
-                                     AsmGrammarTypeDefinition asmType, SourceLocation loc) {
+                                     AsmGrammarTypeDefinition asmTypeDefinition,
+                                     SourceLocation loc) {
     this.id = id;
     this.parameters = parameters;
     this.stringLiteral = stringLiteral;
-    this.asmType = asmType;
+    this.asmTypeDefinition = asmTypeDefinition;
     this.loc = loc;
   }
 
@@ -4709,8 +4729,8 @@ class AsmGrammarLiteralDefinition extends Definition {
     if (stringLiteral != null) {
       stringLiteral.prettyPrint(0, builder);
     }
-    if (asmType != null) {
-      asmType.prettyPrint(0, builder);
+    if (asmTypeDefinition != null) {
+      asmTypeDefinition.prettyPrint(0, builder);
     }
   }
 
@@ -4724,12 +4744,12 @@ class AsmGrammarLiteralDefinition extends Definition {
     }
     AsmGrammarLiteralDefinition that = (AsmGrammarLiteralDefinition) o;
     return Objects.equals(id, that.id) && Objects.equals(stringLiteral, that.stringLiteral)
-        && Objects.equals(asmType, that.asmType);
+        && Objects.equals(asmTypeDefinition, that.asmTypeDefinition);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, stringLiteral, asmType);
+    return Objects.hash(id, stringLiteral, asmTypeDefinition);
   }
 }
 
