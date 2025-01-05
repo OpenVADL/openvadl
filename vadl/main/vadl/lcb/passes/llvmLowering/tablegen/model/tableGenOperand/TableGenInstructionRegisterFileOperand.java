@@ -1,9 +1,11 @@
-package vadl.lcb.passes.llvmLowering.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
@@ -19,24 +21,22 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
   /**
    * Constructor.
    */
-  public TableGenInstructionRegisterFileOperand(ParameterIdentity identity,
-                                                ReadRegFileNode node,
-                                                Format.Field formatField) {
-    super(node, identity);
+  public TableGenInstructionRegisterFileOperand(ReadRegFileNode node, FieldRefNode address) {
+    super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
+        address.formatField().identifier.simpleName()));
     this.registerFile = node.registerFile();
-    this.formatField = formatField;
+    this.formatField = address.formatField();
     this.reference = node;
   }
 
   /**
    * Constructor.
    */
-  public TableGenInstructionRegisterFileOperand(ParameterIdentity identity,
-                                                WriteRegFileNode node,
-                                                Format.Field formatField) {
-    super(node, identity);
+  public TableGenInstructionRegisterFileOperand(WriteRegFileNode node, FieldRefNode address) {
+    super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
+        address.formatField().identifier.simpleName()));
     this.registerFile = node.registerFile();
-    this.formatField = formatField;
+    this.formatField = address.formatField();
     this.reference = node;
   }
 

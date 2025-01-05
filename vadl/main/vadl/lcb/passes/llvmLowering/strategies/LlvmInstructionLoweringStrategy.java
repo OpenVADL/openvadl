@@ -65,19 +65,18 @@ import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbWriteRegFileNodeR
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbWriteRegNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbZeroExtendNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LlvmUnlowerableNodeReplacement;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenConstantOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionBareSymbolOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionFrameRegisterOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateLabelOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionIndexedRegisterFileOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenConstantOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionIndexedRegisterFileOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -619,25 +618,28 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(LlvmBasicBlockSD node) {
-    return new TableGenInstructionImmediateLabelOperand(
-        ParameterIdentity.fromBasicBlockToImmediateLabel(node),
-        node);
+    return new TableGenInstructionImmediateLabelOperand(node);
   }
 
   /**
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(FieldRefNode node) {
-    return new TableGenInstructionOperand(node,
-        ParameterIdentity.from(node));
+    return new TableGenInstructionOperand(node, new TableGenParameterTypeAndName("test", "test"));
   }
 
   /**
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(LlvmFrameIndexSD node) {
-    return new TableGenInstructionFrameRegisterOperand(
-        ParameterIdentity.from(node, node.address()), node);
+    if (node.address() instanceof FieldRefNode fieldRefNode) {
+      return new TableGenInstructionFrameRegisterOperand(node, fieldRefNode);
+    } else if (node.address() instanceof FuncParamNode funcParamNode) {
+      return new TableGenInstructionFrameRegisterOperand(node, funcParamNode);
+    } else {
+      throw Diagnostic.error("Node's address is not supported", node.address().sourceLocation())
+          .build();
+    }
   }
 
   /**
@@ -645,15 +647,9 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   private static TableGenInstructionOperand generateInstructionOperand(ReadRegFileNode node) {
     if (node.address() instanceof FieldRefNode field) {
-      return new TableGenInstructionRegisterFileOperand(
-          ParameterIdentity.from(node, field),
-          node,
-          field.formatField());
+      return new TableGenInstructionRegisterFileOperand(node, field);
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
-      return new TableGenInstructionIndexedRegisterFileOperand(
-          ParameterIdentity.from(node, funcParamNode),
-          node,
-          funcParamNode.parameter());
+      return new TableGenInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else if (node.address() instanceof ConstantNode constantNode) {
       // The register file has a constant as address.
       // This is ok as long as the value of the register file at the address is also constant.
@@ -684,15 +680,9 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   private static TableGenInstructionOperand generateInstructionOperand(WriteRegFileNode node) {
     if (node.address() instanceof FieldRefNode field) {
-      return new TableGenInstructionRegisterFileOperand(
-          ParameterIdentity.from(node, field),
-          node,
-          field.formatField());
+      return new TableGenInstructionRegisterFileOperand(node, field);
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
-      return new TableGenInstructionIndexedRegisterFileOperand(
-          ParameterIdentity.from(node, funcParamNode),
-          node,
-          funcParamNode.parameter());
+      return new TableGenInstructionIndexedRegisterFileOperand(node, funcParamNode);
     } else {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "
@@ -707,13 +697,9 @@ public abstract class LlvmInstructionLoweringStrategy {
   private static TableGenInstructionOperand generateInstructionOperand(
       LlvmFieldAccessRefNode node) {
     if (node.usage() == LlvmFieldAccessRefNode.Usage.Immediate) {
-      return new TableGenInstructionImmediateOperand(
-          ParameterIdentity.from(node),
-          node);
+      return new TableGenInstructionImmediateOperand(node);
     } else if (node.usage() == LlvmFieldAccessRefNode.Usage.BasicBlock) {
-      return new TableGenInstructionImmediateLabelOperand(
-          ParameterIdentity.fromToImmediateLabel(node),
-          node);
+      return new TableGenInstructionImmediateLabelOperand(node);
     } else {
       throw Diagnostic.error("Not supported usage", node.sourceLocation()).build();
     }
@@ -806,12 +792,12 @@ public abstract class LlvmInstructionLoweringStrategy {
       Graph machine,
       Function<T, Node> selectorNodeTransformation,
       BiFunction<LcbMachineInstructionParameterNode,
-          ParameterTypeAndNameIdentity,
+          TableGenParameterTypeAndName,
           TableGenInstructionOperand>
           machineNodeTransformation) {
     for (var node : selectorNodes) {
       // Something like `X:$rs1`
-      var selectorParameter = node.parameterIdentity();
+      var selectorParameter = node.operand();
 
       // Updates the selector
       var newNode = selectorNodeTransformation.apply(node);
@@ -822,10 +808,10 @@ public abstract class LlvmInstructionLoweringStrategy {
       machine.getNodes(LcbMachineInstructionParameterNode.class)
           .filter(candidate ->
               candidate.instructionOperand().origin() instanceof LlvmNodeReplaceable cast
-                  && cast.parameterIdentity().equals(selectorParameter))
+                  && cast.operand().equals(selectorParameter))
           .forEach(occurrence -> {
             var operand = machineNodeTransformation.apply(occurrence,
-                (ParameterTypeAndNameIdentity) selectorParameter);
+                (TableGenParameterTypeAndName) selectorParameter.parameter());
             ensure(!operand.equals(occurrence.instructionOperand()),
                 "The returned operand must be a new instance because it was modified");
             occurrence.setInstructionOperand(operand);

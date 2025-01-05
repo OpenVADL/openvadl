@@ -26,13 +26,12 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTargetCallSD;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstructionRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
 import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
@@ -169,10 +168,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         false,
         false,
         List.of(
-            new TableGenInstructionRegisterFileOperand(
-                ParameterIdentity.from(ref, ref.address()),
-                ref,
-                address.formatField())
+            new TableGenInstructionRegisterFileOperand(ref, address)
         ), Collections.emptyList(),
         List.of(
             new RegisterRef(abi.returnAddress().registerFile(),
@@ -230,14 +226,8 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         true,
         true,
         List.of(
-            new TableGenInstructionRegisterFileOperand(
-                ParameterIdentity.from(ref, ref.address()),
-                ref,
-                address.formatField()),
-            new TableGenInstructionImmediateOperand(
-                ParameterIdentity.from(fieldRef),
-                fieldRef
-            )
+            new TableGenInstructionRegisterFileOperand(ref, address),
+            new TableGenInstructionImmediateOperand(fieldRef)
         ), Collections.emptyList(),
         Collections.emptyList());
   }

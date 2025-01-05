@@ -91,7 +91,7 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
 
   @Override
   public void visit(LlvmBasicBlockSD basicBlockSD) {
-    writer.write(basicBlockSD.parameterIdentity().render());
+    writer.write(basicBlockSD.parameter().render());
   }
 
   @Override

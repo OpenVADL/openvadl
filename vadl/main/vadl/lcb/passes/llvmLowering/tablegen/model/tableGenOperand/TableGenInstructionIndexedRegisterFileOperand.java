@@ -1,9 +1,9 @@
-package vadl.lcb.passes.llvmLowering.tablegen.model;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
-import vadl.viam.Parameter;
 import vadl.viam.RegisterFile;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
@@ -22,35 +22,28 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
  */
 public class TableGenInstructionIndexedRegisterFileOperand extends TableGenInstructionOperand {
   private final RegisterFile registerFile;
-  private final Parameter parameter;
 
   /**
    * Constructor.
    */
-  public TableGenInstructionIndexedRegisterFileOperand(ParameterIdentity identity,
-                                                       ReadRegFileNode node,
-                                                       Parameter parameter) {
-    super(node, identity);
+  public TableGenInstructionIndexedRegisterFileOperand(ReadRegFileNode node,
+                                                       FuncParamNode address) {
+    super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
+        address.parameter().identifier.simpleName()));
     this.registerFile = node.registerFile();
-    this.parameter = parameter;
   }
 
   /**
    * Constructor.
    */
-  public TableGenInstructionIndexedRegisterFileOperand(ParameterIdentity identity,
-                                                       WriteRegFileNode node,
-                                                       Parameter parameter) {
-    super(node, identity);
+  public TableGenInstructionIndexedRegisterFileOperand(WriteRegFileNode node,
+                                                       FuncParamNode address) {
+    super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
+        address.parameter().identifier.simpleName()));
     this.registerFile = node.registerFile();
-    this.parameter = parameter;
   }
 
   public RegisterFile registerFile() {
     return registerFile;
-  }
-
-  public Parameter parameter() {
-    return parameter;
   }
 }

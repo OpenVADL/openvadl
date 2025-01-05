@@ -22,7 +22,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterTypeAndNameIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -248,7 +248,7 @@ public class TableGenPatternPrinterVisitor
   @Override
   public void visit(LlvmBasicBlockSD node) {
     var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(node);
-    var identity = (ParameterTypeAndNameIdentity) operand.identity();
+    var identity = (TableGenParameterTypeAndName) operand.parameter();
     writer.write(node.lower() + ":$" + identity.name());
   }
 

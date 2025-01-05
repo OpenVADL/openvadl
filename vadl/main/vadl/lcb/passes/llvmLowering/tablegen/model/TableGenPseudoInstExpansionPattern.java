@@ -2,6 +2,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.List;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.graph.Graph;
 
 /**

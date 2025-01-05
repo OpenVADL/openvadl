@@ -1,15 +1,15 @@
-package vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter;
 
 import java.util.Objects;
 
 /**
- * Parameter identity with a type and a name.
+ * Parameter with a type and a name of a {@link TableGenParameter}.
  */
-public class ParameterTypeAndNameIdentity extends ParameterIdentity {
+public class TableGenParameterTypeAndName extends TableGenParameter {
   private final String type;
   private final String name;
 
-  public ParameterTypeAndNameIdentity(String type, String name) {
+  public TableGenParameterTypeAndName(String type, String name) {
     this.type = type;
     this.name = name;
   }
@@ -19,8 +19,8 @@ public class ParameterTypeAndNameIdentity extends ParameterIdentity {
     return String.format("%s:$%s", type, name);
   }
 
-  public ParameterTypeAndNameIdentity withType(String type) {
-    return new ParameterTypeAndNameIdentity(type, name);
+  public TableGenParameterTypeAndName withType(String type) {
+    return new TableGenParameterTypeAndName(type, name);
   }
 
   public String name() {
@@ -37,7 +37,7 @@ public class ParameterTypeAndNameIdentity extends ParameterIdentity {
       return true;
     }
 
-    if (o instanceof ParameterTypeAndNameIdentity casted) {
+    if (o instanceof TableGenParameterTypeAndName casted) {
       return type.equals(casted.type) && name.equals(casted.name);
     }
 

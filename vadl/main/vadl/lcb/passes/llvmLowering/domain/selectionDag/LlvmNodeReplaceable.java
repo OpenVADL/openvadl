@@ -1,10 +1,11 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterIdentity;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
 
 /**
- * Indicates that the node has a {@link ParameterIdentity} which
+ * Indicates that the node has a {@link TableGenParameter} which
  * makes it replaceable for selector and machine graphs.
  * This is useful when already a {@link TableGenPattern} exists,
  * and you want to replace a single node in it to create new pattern.
@@ -12,7 +13,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.parameterIdentity.ParameterId
  */
 public interface LlvmNodeReplaceable {
   /**
-   * Returns the {@link ParameterIdentity} of the node.
+   * Returns the {@link TableGenInstructionOperand} of the node.
    */
-  ParameterIdentity parameterIdentity();
+  TableGenInstructionOperand operand();
 }
