@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
+import vadl.configuration.GeneralConfiguration;
 
 /**
  * A collection of useful methods to handle files.
@@ -35,6 +36,42 @@ import org.apache.commons.io.FileUtils;
  */
 public class VadlFileUtils {
 
+  /**
+   * Creates directories in the output path of the {@code configuration}.
+   */
+  public static void createDirectories(GeneralConfiguration configuration, String... directories)
+      throws IOException {
+    for (var dir : directories) {
+      Files.createDirectory(Path.of(configuration.outputPath() + "/" + dir));
+    }
+  }
+
+  /**
+   * Copy a directory from {@code source} to {@code target}.
+   */
+  public static void copyDirectory(Path source, Path target) throws IOException {
+    if (!Files.exists(source)) {
+      throw new IOException("Source directory does not exist: " + source);
+    }
+
+    // Walk through the file tree and copy each file/directory
+    Files.walkFileTree(source, new SimpleFileVisitor<>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+          throws IOException {
+        Path targetDir = target.resolve(source.relativize(dir));
+        Files.createDirectories(targetDir);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Path targetFile = target.resolve(source.relativize(file));
+        Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
 
   /**
    * Writes the given content to a temporary file.
