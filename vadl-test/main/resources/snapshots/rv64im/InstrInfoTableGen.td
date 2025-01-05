@@ -603,7 +603,7 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC ];
+let Uses = [  ];
 let Defs = [  ];
 }
 
@@ -655,7 +655,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def BGE : Instruction
@@ -706,7 +706,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def BGEU : Instruction
@@ -757,7 +757,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def BLT : Instruction
@@ -808,7 +808,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def BLTU : Instruction
@@ -859,7 +859,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def BNE : Instruction
@@ -910,7 +910,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def DIV : Instruction
@@ -1252,8 +1252,8 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC ];
-let Defs = [ PC ];
+let Uses = [  ];
+let Defs = [  ];
 }
 
 def JALR : Instruction
@@ -1300,8 +1300,8 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC ];
-let Defs = [ PC ];
+let Uses = [  ];
+let Defs = [  ];
 }
 
 def LB : Instruction
@@ -3617,8 +3617,8 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC,X1 ];
-let Defs = [ X1,PC ];
+let Uses = [ X1 ];
+let Defs = [ X1 ];
 }
 
 
@@ -3644,8 +3644,8 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC ];
-let Defs = [ PC,X0 ];
+let Uses = [  ];
+let Defs = [ X0 ];
 }
 
 def : Pat<(br bb:$imm),
@@ -3846,8 +3846,8 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC,X1 ];
-let Defs = [ PC,X0 ];
+let Uses = [ X1 ];
+let Defs = [ X0 ];
 }
 
 
@@ -3960,8 +3960,8 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC,X6 ];
-let Defs = [ PC ];
+let Uses = [ X6 ];
+let Defs = [  ];
 }
 
 

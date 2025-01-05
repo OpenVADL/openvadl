@@ -378,13 +378,14 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Get a list of {@link RegisterRef} which are written. It is considered a
    * register definition when a {@link WriteRegNode} or a {@link WriteRegFileNode} with a
    * constant address exists. However, the only registers without any constraints on the
-   * register file will be returned.
+   * register file will be returned. Also program containers are not part of a "Def".
    *
    * @param behavior          of the {@link Instruction}.
    * @param filterConstraints whether registers with constraints should be considered.
    */
   private static List<RegisterRef> getRegisterDefs(Graph behavior, boolean filterConstraints) {
     return Stream.concat(behavior.getNodes(WriteRegNode.class)
+                .filter(node -> node.staticCounterAccess() == null)
                 .map(WriteRegNode::register)
                 .map(RegisterRef::new),
             behavior.getNodes(WriteRegFileNode.class)
@@ -419,13 +420,14 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Get a list of {@link RegisterRef} which are read. It is considered a
    * register usage when a {@link ReadRegNode} or a {@link ReadRegFileNode} with a
    * constant address exists. However, the only registers without any constraints on the
-   * register file will be returned.
+   * register file will be returned. Also program containers are not part of a "Use".
    *
    * @param behavior          of the {@link Instruction}.
    * @param filterConstraints whether registers with constraints should be considered.
    */
   private static List<RegisterRef> getRegisterUses(Graph behavior, boolean filterConstraints) {
     return Stream.concat(behavior.getNodes(ReadRegNode.class)
+                .filter(node -> node.staticCounterAccess() == null)
                 .map(ReadRegNode::register)
                 .map(RegisterRef::new),
             behavior.getNodes(ReadRegFileNode.class)
