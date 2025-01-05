@@ -3,7 +3,7 @@ package vadl.vdt.passes;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.pass.PassName;

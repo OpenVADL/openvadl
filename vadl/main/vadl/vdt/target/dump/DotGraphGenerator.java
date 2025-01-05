@@ -5,7 +5,7 @@ import static vadl.vdt.target.dump.DotGraphGeneratorDispatcher.dispatch;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.utils.Pair;
