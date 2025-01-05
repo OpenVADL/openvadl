@@ -197,8 +197,11 @@ static inline void gen_exts(TCGv dest, TCGv arg, int bitWidth) {
  */
 
 static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
-#include "insn-access.h"
-#include "decode-insn.c.inc"
+
+// Uncomment these imports to use the QEMU decode tree instead of the VADL decode tree
+//#include "insn-access.h"
+//#include "decode-insn.c.inc"
+#include "vdt-decode.c"
 
 //// START OF TRANSLATE FUNCTIONS ////
 

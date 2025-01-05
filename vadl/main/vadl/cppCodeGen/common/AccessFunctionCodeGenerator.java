@@ -23,6 +23,7 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
 
   protected final Format.FieldAccess fieldAccess;
   protected final String functionName;
+  protected final String fieldName;
 
   /**
    * Creates a new pure function code generator for the specified function.
@@ -33,6 +34,7 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
     super(fieldAccess.accessFunction());
     this.fieldAccess = fieldAccess;
     this.functionName = function.simpleName();
+    this.fieldName = fieldAccess.fieldRef().simpleName();
   }
 
   /**
@@ -47,6 +49,24 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
     super(fieldAccess.accessFunction());
     this.fieldAccess = fieldAccess;
     this.functionName = functionName == null ? function.simpleName() : functionName;
+    this.fieldName = fieldAccess.fieldRef().simpleName();
+  }
+
+  /**
+   * Creates a new pure function code generator for the specified function. The function will be
+   * named with the specified name. The field to access will be the specified field.
+   *
+   * @param fieldAccess  The field fieldAccess for which the function should be generated
+   * @param functionName The name of the access function to generate
+   * @param fieldName    The name of the field to access
+   */
+  public AccessFunctionCodeGenerator(Format.FieldAccess fieldAccess,
+                                     @Nullable String functionName,
+                                     @Nullable String fieldName) {
+    super(fieldAccess.accessFunction());
+    this.fieldAccess = fieldAccess;
+    this.functionName = functionName == null ? function.simpleName() : functionName;
+    this.fieldName = fieldName == null ? fieldAccess.fieldRef().simpleName() : fieldName;
   }
 
   @Override
@@ -87,7 +107,7 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
         "Field reference does not match the field access.");
 
     // Reference the function parameter
-    ctx.wr("field");
+    ctx.wr(fieldName);
   }
 
   @Override
@@ -100,7 +120,7 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
     var insnType = fieldAccess.fieldRef().format().type();
     var insnCppType = CppTypeMap.getCppTypeNameByVadlType(insnType);
 
-    var cppArgsString = "void* ctx, %s field".formatted(insnCppType);
+    var cppArgsString = "void* ctx, %s %s".formatted(insnCppType, fieldName);
 
     return CppTypeMap.getCppTypeNameByVadlType(returnType)
         + " %s(%s)".formatted(functionName, cppArgsString);

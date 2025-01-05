@@ -196,7 +196,55 @@ public class TypeChecker
 
   @Override
   public Void visit(FormatDefinition definition) {
-    throwUnimplemented(definition);
+    definition.type.accept(this);
+    var type = Objects.requireNonNull(definition.type.type);
+    if (!(type instanceof BitsType bitsType)) {
+      throw Diagnostic.error("Type Mismatch", definition.type)
+          .locationDescription(definition.type, "Expected bits type length but got `%s`", type)
+          .build();
+    }
+
+    // var bitWidth = bitsType.bitWidth();
+    // var bitMask = Collections.nCopies(bitWidth, false);
+
+    for (var field : definition.fields) {
+      if (field instanceof FormatDefinition.TypedFormatField typedField) {
+        typedField.typeLiteral.accept(this);
+        // FIXME: Verify bits
+      } else if (field instanceof FormatDefinition.RangeFormatField rangeField) {
+        if (rangeField.typeLiteral != null) {
+          rangeField.typeLiteral.accept(this);
+        }
+
+        for (var range : rangeField.ranges) {
+          range.accept(this);
+          // FIXME: Verify bits
+        }
+
+        // Determine the type of the field
+        if (rangeField.typeLiteral != null) {
+          rangeField.type = Objects.requireNonNull(rangeField.typeLiteral.type);
+        } else {
+          var fieldWidth = 0;
+          for (var range : rangeField.ranges) {
+            // FIXME: I guess the correct way would be to always evaluate and verify the output
+            if (range instanceof RangeExpr rangeExpr) {
+              var start = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+              var end = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+              fieldWidth += end - start + 1;
+            } else {
+              fieldWidth += 1;
+            }
+          }
+          rangeField.type = Type.bits(fieldWidth);
+        }
+      } else if (field instanceof FormatDefinition.DerivedFormatField dfField) {
+        dfField.expr.accept(this);
+      } else {
+        throw new RuntimeException("Unknown FormatField Class ".concat(field.getClass().getName()));
+      }
+    }
+
     return null;
   }
 
@@ -210,13 +258,14 @@ public class TypeChecker
 
   @Override
   public Void visit(CounterDefinition definition) {
-    throwUnimplemented(definition);
+    definition.type.accept(this);
     return null;
   }
 
   @Override
   public Void visit(MemoryDefinition definition) {
-    throwUnimplemented(definition);
+    definition.addressType.accept(this);
+    definition.dataType.accept(this);
     return null;
   }
 
@@ -228,7 +277,8 @@ public class TypeChecker
 
   @Override
   public Void visit(RegisterFileDefinition definition) {
-    throwUnimplemented(definition);
+    definition.type.argTypes().forEach(arg -> arg.accept(this));
+    definition.type.resultType().accept(this);
     return null;
   }
 
@@ -270,7 +320,10 @@ public class TypeChecker
 
   @Override
   public Void visit(FunctionDefinition definition) {
-    throwUnimplemented(definition);
+    for (var param : definition.params) {
+      param.type.accept(this);
+    }
+    definition.retType.accept(this);
     return null;
   }
 
@@ -907,11 +960,30 @@ public class TypeChecker
         constDef.accept(this);
       }
       expr.type = constDef.value.type;
-    } else {
-      throw new RuntimeException("Don't handle class " + origin.getClass().getName());
+      return null;
     }
 
-    return null;
+    if (origin instanceof FormatDefinition.RangeFormatField field) {
+      // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
+      expr.type = field.type;
+      return null;
+    }
+
+    if (origin instanceof FormatDefinition.TypedFormatField field) {
+      // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
+      expr.type = field.typeLiteral.type;
+      return null;
+    }
+
+    if (origin instanceof FormatDefinition.DerivedFormatField field) {
+      if (field.expr.type == null) {
+        field.expr.accept(this);
+      }
+      expr.type = field.expr.type;
+      return null;
+    }
+
+    throw new RuntimeException("Don't handle class " + origin.getClass().getName());
   }
 
   private void visitLogicalBinaryExpression(BinaryExpr expr) {

@@ -334,6 +334,17 @@ class SymbolTable {
         for (FormatDefinition.FormatField field : format.fields) {
           format.symbolTable().defineSymbol(field.identifier().name, (Node) field);
 
+          if (field instanceof FormatDefinition.RangeFormatField rangeField) {
+            if (rangeField.typeLiteral != null) {
+              collectSymbols(symbols, rangeField.typeLiteral);
+            }
+          } else if (field instanceof FormatDefinition.TypedFormatField typedField) {
+            collectSymbols(symbols, typedField.typeLiteral);
+          } else if (field instanceof FormatDefinition.DerivedFormatField dfField) {
+            collectSymbols(format.symbolTable, dfField.expr);
+          } else {
+            throw new RuntimeException("Unknown class");
+          }
           // FIXME: Add symboltables to all the fields and their children.
         }
       } else if (definition instanceof InstructionDefinition instr) {

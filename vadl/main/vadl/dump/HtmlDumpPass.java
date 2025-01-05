@@ -16,9 +16,11 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;
+import vadl.dump.entitySuppliers.VdtEntitySupplier;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
 import vadl.dump.infoEnrichers.IssEnricherCollection;
 import vadl.dump.infoEnrichers.LcbEnricherCollection;
+import vadl.dump.infoEnrichers.VdtEnricherCollection;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
@@ -61,6 +63,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
    */
   static Consumer<List<DumpEntitySupplier<?>>> entitySuppliers = suppliers -> {
     suppliers.add(new ViamEntitySupplier());
+    suppliers.add(new VdtEntitySupplier());
   };
 
   /**
@@ -71,6 +74,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
     enrichers.addAll(ViamEnricherCollection.all);
     enrichers.addAll(LcbEnricherCollection.all);
     enrichers.addAll(IssEnricherCollection.all);
+    enrichers.addAll(VdtEnricherCollection.all);
   };
 
 

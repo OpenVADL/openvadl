@@ -311,12 +311,16 @@ class FormatDefinition extends Definition implements IdentifiableNode {
     Identifier identifier;
     List<Expr> ranges;
     @Nullable
-    TypeLiteral type;
+    TypeLiteral typeLiteral;
 
-    public RangeFormatField(Identifier identifier, List<Expr> ranges, @Nullable TypeLiteral type) {
+    @Nullable
+    Type type;
+
+    public RangeFormatField(Identifier identifier, List<Expr> ranges,
+                            @Nullable TypeLiteral typeLiteral) {
       this.identifier = identifier;
       this.ranges = ranges;
-      this.type = type;
+      this.typeLiteral = typeLiteral;
     }
 
     @Override
@@ -344,9 +348,9 @@ class FormatDefinition extends Definition implements IdentifiableNode {
         ranges.get(i).prettyPrint(indent, builder);
       }
       builder.append("]");
-      if (type != null) {
+      if (typeLiteral != null) {
         builder.append(" : ");
-        type.prettyPrint(0, builder);
+        typeLiteral.prettyPrint(0, builder);
       }
     }
 
@@ -379,11 +383,11 @@ class FormatDefinition extends Definition implements IdentifiableNode {
 
   static class TypedFormatField extends Node implements FormatField {
     final Identifier identifier;
-    final TypeLiteral type;
+    final TypeLiteral typeLiteral;
 
-    public TypedFormatField(Identifier identifier, TypeLiteral type) {
+    public TypedFormatField(Identifier identifier, TypeLiteral typeLiteral) {
       this.identifier = identifier;
-      this.type = type;
+      this.typeLiteral = typeLiteral;
     }
 
     @Override
@@ -393,7 +397,7 @@ class FormatDefinition extends Definition implements IdentifiableNode {
 
     @Override
     SourceLocation location() {
-      return identifier().location().join(type.location());
+      return identifier().location().join(typeLiteral.location());
     }
 
     @Override
@@ -405,7 +409,7 @@ class FormatDefinition extends Definition implements IdentifiableNode {
     public void prettyPrint(int indent, StringBuilder builder) {
       identifier.prettyPrint(indent, builder);
       builder.append(" : ");
-      type.prettyPrint(indent, builder);
+      typeLiteral.prettyPrint(indent, builder);
     }
 
     @Override
@@ -424,13 +428,13 @@ class FormatDefinition extends Definition implements IdentifiableNode {
 
       TypedFormatField that = (TypedFormatField) o;
       return Objects.equals(identifier, that.identifier)
-          && Objects.equals(type, that.type);
+          && Objects.equals(typeLiteral, that.typeLiteral);
     }
 
     @Override
     public int hashCode() {
       int result = Objects.hashCode(identifier);
-      result = 31 * result + Objects.hashCode(type);
+      result = 31 * result + Objects.hashCode(typeLiteral);
       result = 31 * result + Objects.hashCode(symbolTable);
       return result;
     }

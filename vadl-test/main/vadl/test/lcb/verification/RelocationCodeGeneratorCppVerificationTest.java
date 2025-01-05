@@ -1,6 +1,9 @@
 package vadl.test.lcb.verification;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -8,10 +11,6 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
@@ -25,25 +24,13 @@ import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.types.BitsType;
+import vadl.utils.Pair;
+import vadl.utils.VadlFileUtils;
 import vadl.viam.Format;
 import vadl.viam.Parameter;
 
 public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest {
-  private static final String MOUNT_PATH = "/app/main.cpp";
-
-  private static final Logger logger =
-      LoggerFactory.getLogger(RelocationCodeGeneratorCppVerificationTest.class);
-
-  private static final ImageFromDockerfile DOCKER_IMAGE = new ImageFromDockerfile()
-      .withDockerfileFromBuilder(builder ->
-          builder
-              .from("gcc:12.4.0")
-              .cmd(String.format("c++ -Wall -Werror %s && /a.out", MOUNT_PATH))
-              .build());
-
-
   @TestFactory
-  @Execution(ExecutionMode.CONCURRENT)
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var configuration = getConfiguration(false);
     var temporaryPasses = List.of(
@@ -56,6 +43,24 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
         "sys/risc-v/rv64im.vadl", new PassKey(GenerateLinkerComponentsPass.class.getName()),
         temporaryPasses);
 
+    // Move files into Docker Context
+    {
+      VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
+      VadlFileUtils.copyDirectory(
+          Path.of(
+              "../../open-vadl/vadl-test/main/resources/images/encodingCodeGeneratorCppVerification/"),
+          Path.of(configuration.outputPath() + "/encoding/"));
+    }
+
+    var image = new ImageFromDockerfile()
+        .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile"));
+
+    return generateInputs(testSetup, image, configuration.outputPath());
+  }
+
+  private Collection<DynamicTest> generateInputs(TestSetup testSetup,
+                                                 ImageFromDockerfile image,
+                                                 Path path) throws IOException {
     var output = (GenerateLinkerComponentsPass.Output) testSetup.passManager().getPassResults()
         .lastResultOf(GenerateLinkerComponentsPass.class);
     var elfRelocations =
@@ -71,7 +76,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
         testSetup.passManager().getPassResults()
             .lastResultOf(CppTypeNormalizationForImmediateExtractionPass.class);
 
-    ArrayList<DynamicTest> tests = new ArrayList<>();
+    List<Pair<String, String>> copyMappings = new ArrayList<>();
     for (var relocation : elfRelocations) {
       var format = relocation.format();
       immediateDetection.getImmediates(format).forEach(immField -> {
@@ -85,21 +90,34 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
         var limit = 3;
         arbitraryInstructionWord.sampleStream().limit(limit).forEach(instructionWordSample -> {
           arbitraryImmediateValue.sampleStream().limit(limit).forEach(immediateValue -> {
-            var displayName =
-                String.format("immField = %s, instr = %s, imm = %s",
-                    immField.identifier.lower(),
-                    instructionWordSample, immediateValue);
-            tests.add(DynamicTest.dynamicTest(displayName,
-                () -> testUpdateFunction(displayName, immField, instructionWordSample,
-                    immediateValue,
-                    relocation,
-                    cppNormalisedImmediateExtraction)));
+            var fileName =
+                immField.identifier.lower() + "_instr_" + instructionWordSample + "_imm_"
+                    + immediateValue + ".cpp";
+            var filePath = path + "/inputs/" + fileName;
+            var code = render(immField,
+                instructionWordSample,
+                immediateValue,
+                relocation,
+                cppNormalisedImmediateExtraction);
+            copyMappings.add(Pair.of(filePath, "/inputs/" + fileName));
+            try {
+              var fs = new FileWriter(filePath);
+              fs.write(code);
+              fs.close();
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
           });
         });
       });
     }
 
-    return tests;
+    runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(image,
+        copyMappings,
+        path + "/result.csv",
+        "/work/output.csv");
+
+    return assertStatusCodes(path + "/result.csv");
   }
 
   private Arbitrary<Long> getArbitrary(Parameter parameter) {
@@ -115,13 +133,13 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     return Arbitraries.longs().greaterOrEqual(0).lessOrEqual((long) Math.pow(2, bitWidth));
   }
 
-  void testUpdateFunction(String testName,
-                          Format.Field immField,
-                          long instructionWord,
-                          long updatedValue,
-                          RelocationLowerable relocation,
-                          CppTypeNormalizationPass.NormalisedTypeResult
-                              cppNormalisedImmediateExtraction) {
+  private String render(
+      Format.Field immField,
+      long instructionWord,
+      long updatedValue,
+      RelocationLowerable relocation,
+      CppTypeNormalizationPass.NormalisedTypeResult
+          cppNormalisedImmediateExtraction) {
     // How do we test the relocation?
     // We have an extraction function for the immediate.
     // And we have an updating function.
@@ -205,11 +223,6 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
         instructionWord,
         updatedValue);
 
-    try {
-      logger.info(testName + "\n" + cppCode);
-      runContainerAndCopyInputIntoContainer(DOCKER_IMAGE, cppCode, MOUNT_PATH);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return cppCode;
   }
 }

@@ -98,6 +98,20 @@ public class ViamEnricherCollection {
         }
       });
 
+  /**
+   * A {@link InfoEnricher} that adds a {@link vadl.dump.Info.Tag} containing the fixed encoding of
+   * an instruction.
+   * This is only done if the given entity is a {@link DefinitionEntity} and if the origin
+   * definition is an instruction encoding field.
+   */
+  public static InfoEnricher ENCODING_SUPPLIER_TAG = InfoEnricher.forType(DefinitionEntity.class,
+      (definition, passResult) -> {
+        if (!(definition.origin() instanceof Encoding.Field field)) {
+          return;
+        }
+        definition.addInfo(Info.Tag.of("Encoding", field.constant().binary("")));
+      });
+
 
   /**
    * BEHAVIOR_SUPPLIER_MODAL is an implementation of the {@link InfoEnricher} interface.
@@ -251,6 +265,7 @@ public class ViamEnricherCollection {
       TYPE_SUPPLIER_TAG,
       PARENT_SUPPLIER_TAG,
       FORMAT_SUPPLIER_TAG,
+      ENCODING_SUPPLIER_TAG,
       BEHAVIOR_SUPPLIER_MODAL,
       VERIFY_SUPPLIER_EXPANDABLE,
       SOURCE_CODE_SUPPLIER_EXPANDABLE,

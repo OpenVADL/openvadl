@@ -87,7 +87,7 @@ public class AstDumper
         dumpChildren(f.ranges);
       } else if (field instanceof FormatDefinition.TypedFormatField f) {
         dumpNode(f);
-        dumpChildren(f.identifier, f.type);
+        dumpChildren(f.identifier, f.typeLiteral);
       } else if (field instanceof FormatDefinition.DerivedFormatField f) {
         dumpNode(f);
         dumpChildren(f.identifier, f.expr);
