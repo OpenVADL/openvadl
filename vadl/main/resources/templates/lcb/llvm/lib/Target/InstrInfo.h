@@ -89,6 +89,8 @@ namespace llvm
                                     const DebugLoc &dl,
                                     int *BytesAdded = nullptr) const override;
 
+            unsigned removeBranch(MachineBasicBlock &MBB, int *BytesRemoved = nullptr) const override;
+
             const MCInstrDesc &getBrCond([(${namespace})]CC::CondCode CC) const;
 
         private:
