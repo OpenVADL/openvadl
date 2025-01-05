@@ -324,7 +324,7 @@ class SymbolTable {
         function.symbolTable = symbols.createChild();
         for (Parameter param : function.params) {
           function.symbolTable.defineSymbol(param);
-          collectSymbols(symbols, param.type);
+          collectSymbols(symbols, param.typeLiteral);
         }
         collectSymbols(function.symbolTable, function.expr);
       } else if (definition instanceof FormatDefinition format) {
@@ -366,7 +366,7 @@ class SymbolTable {
         collectSymbols(symbols, relocation.resultType);
         for (Parameter param : relocation.params) {
           relocation.symbolTable.defineSymbol(param);
-          collectSymbols(symbols, param.type);
+          collectSymbols(symbols, param.typeLiteral);
         }
         collectSymbols(relocation.symbolTable, relocation.expr);
       } else if (definition instanceof AssemblyDefinition assembly) {
@@ -421,11 +421,11 @@ class SymbolTable {
         }
         for (Parameter input : process.inputs) {
           process.symbolTable.defineSymbol(input);
-          collectSymbols(symbols, input.type);
+          collectSymbols(symbols, input.typeLiteral);
         }
         for (Parameter output : process.outputs) {
           process.symbolTable.defineSymbol(output);
-          collectSymbols(symbols, output.type);
+          collectSymbols(symbols, output.typeLiteral);
         }
         collectSymbols(process.symbolTable, process.statement);
       } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {

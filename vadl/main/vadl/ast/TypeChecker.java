@@ -320,10 +320,26 @@ public class TypeChecker
 
   @Override
   public Void visit(FunctionDefinition definition) {
-    for (var param : definition.params) {
-      param.type.accept(this);
-    }
+    definition.params.forEach(param -> param.typeLiteral.accept(this));
     definition.retType.accept(this);
+    definition.expr.accept(this);
+
+    var argTypes = definition.params.stream().map(p -> p.typeLiteral.type).toList();
+    var retType = Objects.requireNonNull(definition.retType.type);
+    var exprType = Objects.requireNonNull(definition.expr.type);
+
+    if (!exprType.equals(retType) && canImplicitCast(exprType, retType)) {
+      definition.expr = new CastExpr(definition.expr, retType, definition.expr.location());
+    }
+
+    if (!exprType.equals(retType)) {
+      throw Diagnostic.error("Type Mismatch", definition.expr)
+          .locationDescription(definition.retType, "Return type defined here as `%s`", retType)
+          .locationDescription(definition.expr, "Expected `%s` but got `%s`", retType, exprType)
+          .build();
+    }
+
+    definition.type = Type.concreteRelation(argTypes, retType);
     return null;
   }
 
@@ -980,6 +996,11 @@ public class TypeChecker
         field.expr.accept(this);
       }
       expr.type = field.expr.type;
+      return null;
+    }
+
+    if (origin instanceof Parameter parameter) {
+      expr.type = parameter.typeLiteral.type;
       return null;
     }
 

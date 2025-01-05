@@ -498,5 +498,28 @@ public class TypecheckerTest {
     Assertions.assertEquals(Type.signedInt(32), finder.getConstantType(ast, "l"));
   }
 
+  @Test
+  public void functionDefinition() {
+    var prog = """
+        function addOne(n: SInt<8>) -> SInt<8> = n + 1 
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    Assertions.assertEquals(
+        Type.concreteRelation(Type.signedInt(8), Type.signedInt(8)),
+        finder.getFunctionType(ast, "addOne"));
+  }
 
+  @Test
+  public void invalidFunctionDefinitionWrongReturnType() {
+    var prog = """
+        function addOne(n: SInt<8>) -> SInt<8> = false
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
+        "Program isn't typesafe");
+  }
 }
