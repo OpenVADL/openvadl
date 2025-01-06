@@ -244,7 +244,6 @@ bool [(${namespace})]InstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBas
                      bool AllowModify) const {
   TBB = FBB = nullptr;
   Cond.clear();
-  MachineBasicBlock::iterator FirstUncondOrIndirectBr = MBB.end();
 
   MachineBasicBlock::iterator I = MBB.getLastNonDebugInstr();
   if (I == MBB.end() || !isUnpredicatedTerminator(*I))
@@ -253,6 +252,7 @@ bool [(${namespace})]InstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBas
   // Count the number of terminators and find the first unconditional or
   // indirect branch.
   int NumTerminators = 0;
+  MachineBasicBlock::iterator FirstUncondOrIndirectBr = MBB.end();
   for (auto J = I.getReverse(); J != MBB.rend() && isUnpredicatedTerminator(*J);
        J++) {
     NumTerminators++;
@@ -274,10 +274,6 @@ bool [(${namespace})]InstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBas
   if (I->getDesc().isIndirectBranch())
     return true;
 
-  // We can't handle Generic branch opcodes from Global ISel.
-  if (I->isPreISelOpcode())
-    return true;
-
   // We can't handle blocks with more than 2 terminators.
   if (NumTerminators > 2)
     return true;
@@ -291,6 +287,14 @@ bool [(${namespace})]InstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBas
   // Handle a single conditional branch.
   if (NumTerminators == 1 && I->getDesc().isConditionalBranch()) {
     parseCondBranch(*I, TBB, Cond);
+    return false;
+  }
+
+  // Handle a conditional branch followed by an unconditional branch.
+  if (NumTerminators == 2 && std::prev(I)->getDesc().isConditionalBranch() &&
+      I->getDesc().isUnconditionalBranch()) {
+    parseCondBranch(*std::prev(I), TBB, Cond);
+    FBB = getBranchDestBlock(*I);
     return false;
   }
 
@@ -314,14 +318,7 @@ unsigned [(${namespace})]InstrInfo::getInstSizeInBytes(const MachineInstr &MI) c
 
   unsigned Opcode = MI.getOpcode();
 
-  switch(Opcode) {
-    [# th:each="x : ${instructionSizes}" ]
-    case [(${namespace})]::[(${x.name})]:
-      return [(${x.byteSize})];
-    [/]
-    default:
-      llvm_unreachable("Can't get inst size");
-  }
+  return get(Opcode).getSize();
 }
 
 // Inserts a branch into the end of the specific MachineBasicBlock, returning
