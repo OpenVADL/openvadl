@@ -66,10 +66,27 @@ public class LlvmLoweringPass extends Pass {
     }
 
     /**
+     * Given {@link Flags} overwrite the {@code isTerminator} and return it.
+     */
+    public static Flags withNoTerminator(Flags flags) {
+      return new Flags(false, flags.isBranch, flags.isCall, flags.isReturn, flags.isPseudo,
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore());
+    }
+
+    /**
      * Given {@link Flags} overwrite the {@code isBranch} and return it.
      */
     public static Flags withBranch(Flags flags) {
       return new Flags(flags.isTerminator(), true, flags.isCall, flags.isReturn, flags.isPseudo,
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore());
+    }
+
+
+    /**
+     * Given {@link Flags} overwrite the {@code isBranch} and return it.
+     */
+    public static Flags withNoBranch(Flags flags) {
+      return new Flags(flags.isTerminator(), false, flags.isCall, flags.isReturn, flags.isPseudo,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore());
     }
   }
