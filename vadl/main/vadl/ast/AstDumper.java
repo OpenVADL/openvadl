@@ -117,7 +117,7 @@ public class AstDumper
   @Override
   public Void visit(CounterDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier(), definition.type);
+    dumpChildren(definition.identifier(), definition.typeLiteral);
     return null;
   }
 
@@ -139,8 +139,8 @@ public class AstDumper
   public Void visit(RegisterFileDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.identifier());
-    dumpChildren(definition.type.argTypes());
-    dumpChildren(definition.type.resultType());
+    dumpChildren(definition.typeLiteral.argTypes());
+    dumpChildren(definition.typeLiteral.resultType());
     return null;
   }
 

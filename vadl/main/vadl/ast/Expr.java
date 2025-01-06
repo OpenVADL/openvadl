@@ -983,11 +983,16 @@ final class IdToStrExpr extends Expr {
   }
 }
 
+
 /**
  * A grouped expression.
  * Grouped expressions can either be single expressions wrapped in parantheses like {@code (1 + 2)},
  * or multiple expressions separated by a comma like {@code (a, 1 + 2, c())}.
+ *
+ * <p>A group expression with a single expression is just arithmetic grouping, but a group expression
+ * with multiple is a string concatination.
  */
+// FIXME: This should probably be two nodes as the semantics are so different.
 class GroupedExpr extends Expr {
   List<Expr> expressions;
   SourceLocation loc;
@@ -1426,6 +1431,10 @@ final class CallExpr extends Expr implements IsCallExpr {
     this.argsIndices = argsIndices;
     this.subCalls = subCalls;
     this.location = location;
+
+    if (argsIndices.size() > 2) {
+      throw new RuntimeException("Flooooo");
+    }
   }
 
   @Override

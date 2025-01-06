@@ -301,16 +301,16 @@ class SymbolTable {
         collectSymbols(symbols, constant.value);
       } else if (definition instanceof CounterDefinition counter) {
         symbols.defineSymbol(counter);
-        collectSymbols(symbols, counter.type);
+        collectSymbols(symbols, counter.typeLiteral);
       } else if (definition instanceof RegisterDefinition register) {
         symbols.defineSymbol(register);
         collectSymbols(symbols, register.type);
       } else if (definition instanceof RegisterFileDefinition registerFile) {
         symbols.defineSymbol(registerFile);
-        for (var argType : registerFile.type.argTypes()) {
+        for (var argType : registerFile.typeLiteral.argTypes()) {
           collectSymbols(symbols, argType);
         }
-        collectSymbols(symbols, registerFile.type.resultType());
+        collectSymbols(symbols, registerFile.typeLiteral.resultType());
       } else if (definition instanceof MemoryDefinition memory) {
         symbols.defineSymbol(memory);
         collectSymbols(symbols, memory.addressType);
@@ -797,6 +797,14 @@ class SymbolTable {
                 assembly.symbolTable().findAs((Identifier) identifier, InstructionDefinition.class);
             if (instr != null) {
               assembly.instructionNodes.add(instr);
+
+              if (instr.assemblyDefinition != null) {
+                assembly.symbolTable().reportError(
+                    "Encoding for %s instruction is already defined".formatted(
+                        identifier),
+                    identifier.location());
+              }
+              instr.assemblyDefinition = assembly;
             }
             var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
             if (format != null) {
@@ -806,6 +814,18 @@ class SymbolTable {
         }
         resolveSymbols(assembly.expr);
       } else if (definition instanceof EncodingDefinition encoding) {
+        var inst =
+            encoding.symbolTable().requireAs(encoding.identifier(), InstructionDefinition.class);
+        if (inst != null) {
+          if (inst.encodingDefinition != null) {
+            encoding.symbolTable().reportError(
+                "Encoding for %s instruction is already defined".formatted(encoding.identifier()),
+                encoding.location());
+          } else {
+            inst.encodingDefinition = encoding;
+          }
+        }
+
         var format = encoding.symbolTable().requireInstructionFormat(encoding.identifier());
         if (format != null) {
           encoding.formatNode = format;

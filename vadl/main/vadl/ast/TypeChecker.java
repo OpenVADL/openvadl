@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
+import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
+import vadl.types.StringType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.types.asmTypes.AsmType;
@@ -56,9 +58,9 @@ public class TypeChecker
   }
 
   private void throwUnimplemented(Node node) {
-    //    throw new RuntimeException(
-    //        "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
-    //            node.getClass().getSimpleName(), node.location().toIDEString()));
+//    throw new RuntimeException(
+//        "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
+//            node.getClass().getSimpleName(), node.location().toIDEString()));
     log.error("The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
         node.getClass().getSimpleName(), node.location().toIDEString()));
   }
@@ -269,7 +271,7 @@ public class TypeChecker
 
   @Override
   public Void visit(CounterDefinition definition) {
-    definition.type.accept(this);
+    definition.typeLiteral.accept(this);
     return null;
   }
 
@@ -288,14 +290,25 @@ public class TypeChecker
 
   @Override
   public Void visit(RegisterFileDefinition definition) {
-    definition.type.argTypes().forEach(arg -> arg.accept(this));
-    definition.type.resultType().accept(this);
+    definition.typeLiteral.argTypes().forEach(arg -> arg.accept(this));
+    definition.typeLiteral.resultType().accept(this);
+    definition.type = Type.concreteRelation(
+        definition.typeLiteral.argTypes().stream().map(arg -> arg.type).toList(),
+        Objects.requireNonNull(definition.typeLiteral.resultType().type));
+
     return null;
   }
 
   @Override
   public Void visit(InstructionDefinition definition) {
-    throwUnimplemented(definition);
+    if (Objects.requireNonNull(definition.formatNode).type.type == null) {
+      definition.formatNode.accept(this);
+    }
+
+    definition.behavior.accept(this);
+
+    // FIXME: Verify that a corresponding encoding and assembly exists.
+
     return null;
   }
 
@@ -313,13 +326,39 @@ public class TypeChecker
 
   @Override
   public Void visit(EncodingDefinition definition) {
-    throwUnimplemented(definition);
+    for (var item : definition.encodings.items) {
+      if (!(item instanceof EncodingDefinition.EncodingField encodingField)) {
+        throw new IllegalStateException("Should that be possible?");
+      }
+
+      //encodingField.field().accept(this);
+      encodingField.value().accept(this);
+      //var fieldType = Objects.requireNonNull(encodingField.field().type);
+      var fieldType = Objects.requireNonNull(
+          Objects.requireNonNull(definition.formatNode)
+              .getFieldType(encodingField.field().name));
+
+      var valueType = Objects.requireNonNull(encodingField.value().type);
+
+      if (!fieldType.equals(valueType)) {
+        throw Diagnostic.error("Type Mismatch", encodingField.value())
+            .description("Expected %s but got `%s`", fieldType, valueType)
+            .build();
+      }
+    }
     return null;
   }
 
   @Override
   public Void visit(AssemblyDefinition definition) {
-    throwUnimplemented(definition);
+    definition.expr.accept(this);
+    var exprType = Objects.requireNonNull(definition.expr.type);
+
+    if (exprType.getClass() != StringType.class) {
+      throw Diagnostic.error("Type Mismatch", definition.expr)
+          .description("Expected String but got `%s`", exprType)
+          .build();
+    }
     return null;
   }
 
@@ -975,47 +1014,68 @@ public class TypeChecker
 
   @Override
   public Void visit(Identifier expr) {
-    // The typechecker should have already caught that.
 
-    // FIXME: Handle builtin values
-    var origin = Objects.requireNonNull(
-        Objects.requireNonNull(expr.symbolTable).requireAs(expr, Node.class)
-    );
-
-    if (origin instanceof ConstantDefinition constDef) {
-      if (constDef.value.type == null) {
-        constDef.accept(this);
+    var origin = Objects.requireNonNull(expr.symbolTable).requireAs(expr, Node.class);
+    if (origin != null) {
+      if (origin instanceof ConstantDefinition constDef) {
+        if (constDef.value.type == null) {
+          constDef.accept(this);
+        }
+        expr.type = constDef.value.type;
+        return null;
       }
-      expr.type = constDef.value.type;
-      return null;
-    }
 
-    if (origin instanceof FormatDefinition.RangeFormatField field) {
-      // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
-      expr.type = field.type;
-      return null;
-    }
-
-    if (origin instanceof FormatDefinition.TypedFormatField field) {
-      // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
-      expr.type = field.typeLiteral.type;
-      return null;
-    }
-
-    if (origin instanceof FormatDefinition.DerivedFormatField field) {
-      if (field.expr.type == null) {
-        field.expr.accept(this);
+      if (origin instanceof FormatDefinition.RangeFormatField field) {
+        // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
+        expr.type = field.type;
+        return null;
       }
-      expr.type = field.expr.type;
+
+      if (origin instanceof FormatDefinition.TypedFormatField field) {
+        // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
+        expr.type = field.typeLiteral.type;
+        return null;
+      }
+
+      if (origin instanceof FormatDefinition.DerivedFormatField field) {
+        if (field.expr.type == null) {
+          field.expr.accept(this);
+        }
+        expr.type = field.expr.type;
+        return null;
+      }
+
+      if (origin instanceof Parameter parameter) {
+        expr.type = parameter.typeLiteral.type;
+        return null;
+      }
+
+      if (origin instanceof CounterDefinition counter) {
+        if (counter.typeLiteral.type == null) {
+          counter.accept(this);
+        }
+        expr.type = Objects.requireNonNull(counter.typeLiteral.type);
+        return null;
+      }
+
+      throw new RuntimeException("Don't handle class " + origin.getClass().getName());
+    }
+
+    // It's also possible to call functions without parenthesis if the function doesn't take any
+    // arguments.
+    var matchingBuiltins = BuiltInTable.builtIns()
+        .filter(b -> b.signature().argTypeClasses().isEmpty())
+        .filter(b -> b.name().toLowerCase().equals(expr.name))
+        .toList();
+
+    if (matchingBuiltins.size() == 1) {
+      expr.type = matchingBuiltins.get(0).returns(List.of());
       return null;
     }
 
-    if (origin instanceof Parameter parameter) {
-      expr.type = parameter.typeLiteral.type;
-      return null;
-    }
+    // The symbol resolver should have caught that
+    throw new IllegalStateException("Cannot find symbol %s".formatted(expr.name));
 
-    throw new RuntimeException("Don't handle class " + origin.getClass().getName());
   }
 
   private void visitLogicalBinaryExpression(BinaryExpr expr) {
@@ -1206,11 +1266,25 @@ public class TypeChecker
 
   @Override
   public Void visit(GroupedExpr expr) {
-    if (expr.expressions.size() != 1) {
-      throw new RuntimeException("Research what to do in that case");
+    // Arithmetic grouping
+    if (expr.expressions.size() == 1) {
+      expr.expressions.get(0).accept(this);
+      expr.type = expr.expressions.get(0).type;
+      return null;
     }
-    expr.expressions.get(0).accept(this);
-    expr.type = expr.expressions.get(0).type;
+
+    // String concat
+    for (var argument : expr.expressions) {
+      argument.accept(this);
+      var argType = Objects.requireNonNull(argument.type);
+      if (!argType.equals(Type.string())) {
+        throw Diagnostic.error("Type Mismatch", argument.location())
+            .locationNote(argument, "Expected string but got `%s`", argType)
+            .description("The string concat operator can only concat strings.")
+            .build();
+      }
+    }
+    expr.type = Type.string();
     return null;
   }
 
@@ -1424,8 +1498,68 @@ public class TypeChecker
 
   @Override
   public Void visit(CallExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+
+    // Handle register
+    var registerFile =
+        Objects.requireNonNull(expr.symbolTable)
+            .findAs((Identifier) expr.target, RegisterFileDefinition.class);
+
+    if (registerFile != null) {
+      if (expr.argsIndices.size() != 1 || expr.argsIndices.get(0).size() != 1) {
+        throw Diagnostic.error("Invalid Register Usage", expr)
+            .description("A register call must have exactly one argument.")
+            .build();
+      }
+
+      var arg = expr.argsIndices.get(0).get(0);
+      arg.accept(this);
+      var actualArgType = Objects.requireNonNull(expr.argsIndices.get(0).get(0).type);
+
+      if (registerFile.type == null) {
+        registerFile.accept(this);
+      }
+      var requiredArgType =
+          Objects.requireNonNull(Objects.requireNonNull(registerFile.type).argTypes().get(0));
+
+      if (!actualArgType.equals(requiredArgType)) {
+        throw Diagnostic.error("Type Mismatch", arg)
+            .description("Expected %s but got `%s`", requiredArgType, actualArgType)
+            .build();
+      }
+
+      expr.type = Objects.requireNonNull(registerFile.type).resultType();
+      return null;
+    }
+
+    // Builtin function
+    var matchingBuiltin = BuiltInTable.builtIns()
+        .filter(b -> b.name().toLowerCase().equals(((Identifier) expr.target).name)).toList();
+    if (matchingBuiltin.size() == 1) {
+      var builtin = matchingBuiltin.get(0);
+      if (expr.argsIndices.size() != 1) {
+        // FIXME: Investigate this
+        throw new IllegalStateException("I don't even know what that means");
+      }
+
+      var args = expr.argsIndices.get(0);
+      args.forEach(a -> a.accept(this));
+      var argTypes = args.stream().map(a -> a.type).toList();
+
+      if (!builtin.takes(argTypes)) {
+        throw Diagnostic.error("Type Mismatch", expr)
+            .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
+            .build();
+      }
+
+      expr.type = builtin.returns(argTypes);
+      return null;
+    }
+
+    // FIXME also include user defined functions
+
+    throw Diagnostic.error("Unknown callable `%s`".formatted(expr.target), expr.location)
+        .description("No function, builtin or register file with that name exists.")
+        .build();
   }
 
   @Override
@@ -1535,7 +1669,25 @@ public class TypeChecker
 
   @Override
   public Void visit(AssignmentStatement statement) {
-    throwUnimplemented(statement);
+    statement.target.accept(this);
+    statement.valueExpression.accept(this);
+
+    var targetType = Objects.requireNonNull(statement.target.type);
+    var valueType = Objects.requireNonNull(statement.valueExpression.type);
+
+    if (!targetType.equals(valueType) && canImplicitCast(valueType, targetType)) {
+      statement.valueExpression =
+          new CastExpr(statement.valueExpression, targetType, statement.valueExpression.location());
+      valueType = targetType;
+    }
+
+    if (!targetType.equals(valueType)) {
+      throw Diagnostic.error("Type mismatch", statement.valueExpression)
+          .description("Expected %s but got `%s`", targetType, valueType)
+          .build();
+    }
+
+    // FIXME: Verify that the assignment types work
     return null;
   }
 
