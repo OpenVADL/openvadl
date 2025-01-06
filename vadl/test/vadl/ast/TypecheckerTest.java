@@ -522,4 +522,101 @@ public class TypecheckerTest {
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
         "Program isn't typesafe");
   }
+
+  @Test
+  public void formatWithTypes() {
+    var prog = """
+         format f : Bits<8> =
+         { first: Bits<2>
+         , second: Bits<6>
+         }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+  }
+
+  @Test
+  public void formatWithRanges() {
+    var prog = """
+         format f : Bits<8> =
+         { first   [7..3]
+         , second  [2..0]
+         }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+  }
+
+  @Test
+  public void formatComplexWithRanges() {
+    var prog = """
+           format x: Bits<6> = {
+             a  [0, 5..4, 2],
+             b  [1, 3]
+           }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+  }
+
+
+  @Test
+  public void invalidFormatUnusedBitsWithTypes() {
+    var prog = """
+        format f : Bits<8> =
+         { first: Bits<3>
+         , second: Bits<4>
+         }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
+        "Program isn't typesafe");
+  }
+
+  @Test
+  public void invalidFormatOverusedBitsWithTypes() {
+    var prog = """
+        format f : Bits<8> =
+         { first: Bits<6>
+         , second: Bits<4>
+         }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
+        "Program isn't typesafe");
+  }
+
+  @Test
+  public void invalidFormatUnusedBitsWithRanges() {
+    var prog = """
+        format f : Bits<8> =
+         { first   [7..6]
+         , second  [4..0]
+         }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
+        "Program isn't typesafe");
+  }
+
+  @Test
+  public void invalidFormatOverusedBitsWithRanges() {
+    var prog = """
+        format f : Bits<8> =
+         { first   [7..3]
+         , second  [5..0]
+         }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
+        "Program isn't typesafe");
+  }
+
 }
