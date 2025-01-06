@@ -22,6 +22,7 @@ namespace llvm
 
         bool addInstSelector() override;
         void addPreRegAlloc() override;
+        void addPreEmitPass() override;
     };
 }
 
