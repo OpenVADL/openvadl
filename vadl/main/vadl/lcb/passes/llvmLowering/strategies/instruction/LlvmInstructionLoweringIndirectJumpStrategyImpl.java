@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
@@ -135,7 +135,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
 
-  private static @NotNull TableGenPseudoInstExpansionPattern generateIndirectCall(
+  private static @Nonnull TableGenPseudoInstExpansionPattern generateIndirectCall(
       Map<MachineInstructionLabel,
           List<Instruction>> supportedInstructions,
       Abi abi,
@@ -177,7 +177,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     );
   }
 
-  private static @NotNull TableGenPseudoInstExpansionPattern generateBranchIndirect(
+  private static @Nonnull TableGenPseudoInstExpansionPattern generateBranchIndirect(
       Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       TableGenInstructionRegisterFileOperand inputRegister) {
     /*
@@ -232,7 +232,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         Collections.emptyList());
   }
 
-  @NotNull
+  @Nonnull
   private TableGenPattern generateBranchIndirectWithAdd(
       Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
       TableGenInstructionRegisterFileOperand inputRegister) {

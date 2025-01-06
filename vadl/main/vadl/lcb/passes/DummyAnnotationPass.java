@@ -3,7 +3,7 @@ package vadl.lcb.passes;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;

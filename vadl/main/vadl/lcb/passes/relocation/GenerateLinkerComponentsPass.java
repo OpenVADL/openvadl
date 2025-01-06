@@ -7,7 +7,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;

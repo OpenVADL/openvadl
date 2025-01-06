@@ -1,6 +1,6 @@
 package vadl.viam;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;

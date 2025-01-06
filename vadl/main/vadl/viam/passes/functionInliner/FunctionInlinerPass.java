@@ -9,8 +9,8 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -71,7 +71,7 @@ public class FunctionInlinerPass extends Pass {
     return inline(instruction, copy);
   }
 
-  private @NotNull UninlinedGraph inline(Instruction instruction, Graph copy) {
+  private @Nonnull UninlinedGraph inline(Instruction instruction, Graph copy) {
     var functionCalls = instruction.behavior().getNodes(FuncCallNode.class)
         .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction())
         .filter(funcCallNode -> !(funcCallNode.function() instanceof Relocation))

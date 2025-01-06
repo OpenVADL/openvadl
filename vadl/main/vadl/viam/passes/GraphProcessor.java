@@ -2,7 +2,7 @@ package vadl.viam.passes;
 
 import java.util.HashMap;
 import java.util.function.Function;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;

@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;

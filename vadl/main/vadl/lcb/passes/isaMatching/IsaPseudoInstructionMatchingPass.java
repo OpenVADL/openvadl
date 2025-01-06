@@ -9,7 +9,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;

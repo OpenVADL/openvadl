@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.IssVarSsaAssignment;

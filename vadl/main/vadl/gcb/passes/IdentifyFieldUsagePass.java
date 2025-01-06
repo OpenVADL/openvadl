@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.pass.Pass;

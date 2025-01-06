@@ -1,6 +1,6 @@
 package vadl.types;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * A type that represents actual data that can be stored in a continues

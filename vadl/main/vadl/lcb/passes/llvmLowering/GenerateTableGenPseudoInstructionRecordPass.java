@@ -5,7 +5,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;

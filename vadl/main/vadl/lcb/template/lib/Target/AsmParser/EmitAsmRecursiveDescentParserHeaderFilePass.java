@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.lcb.codegen.assembly.ParserGenerator;
@@ -58,7 +58,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         "parsingResults", parsingResults);
   }
 
-  @NotNull
+  @Nonnull
   private static Stream<ParserGenerator.FieldStructEnumeration> composedStructs(
       Specification specification) {
     return specification.isa()
@@ -72,7 +72,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         .sorted(Comparator.comparing(ParserGenerator.FieldStructEnumeration::structName));
   }
 
-  @NotNull
+  @Nonnull
   private static Stream<ParserGenerator.FieldStructEnumeration> singleFieldStructs(
       Specification specification) {
     return specification.isa()
@@ -86,7 +86,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         .sorted(Comparator.comparing(ParserGenerator.FieldStructEnumeration::structName));
   }
 
-  @NotNull
+  @Nonnull
   private static Stream<ParsingResultRecord> instructions(
       Specification specification) {
     return specification.isa()
@@ -96,7 +96,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
             ParserGenerator.generateInstructionName(instruction), instruction.simpleName()));
   }
 
-  @NotNull
+  @Nonnull
   private static Stream<ParsingResultRecord> constants(
       Specification specification) {
     return

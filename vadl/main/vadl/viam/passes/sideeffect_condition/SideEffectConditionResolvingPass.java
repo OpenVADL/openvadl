@@ -1,7 +1,7 @@
 package vadl.viam.passes.sideeffect_condition;
 
 import java.io.IOException;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;

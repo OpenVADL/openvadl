@@ -1,7 +1,7 @@
 package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.viam.graph.GraphVisitor;

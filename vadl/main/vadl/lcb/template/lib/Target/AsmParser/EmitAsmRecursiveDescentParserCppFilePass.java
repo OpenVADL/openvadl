@@ -6,7 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.lcb.codegen.assembly.AssemblyParserCodeGeneratorVisitor;
@@ -63,7 +63,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
         "instructionResults", instructions);
   }
 
-  @NotNull
+  @Nonnull
   private static List<RuleParsingResultForLex> lexes(Specification specification) {
     return specification.isa()
         .map(isa -> isa.ownInstructions().stream())
@@ -78,7 +78,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
         .toList();
   }
 
-  @NotNull
+  @Nonnull
   private List<RuleParsingResultWhenInstruction> instructions(Specification specification) {
     return specification.isa()
         .map(isa -> isa.ownInstructions().stream())

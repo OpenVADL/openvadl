@@ -11,8 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
@@ -184,7 +184,7 @@ public class GenerateConstantMaterialisationPass extends Pass {
    * For that we set the source registers to zero. However, we need a zero register for that.
    * This method tries to find such a constraint and throws an error if cannot find it.
    */
-  private static RegisterFile.@NotNull Constraint extractZeroConstraintFromRegisterFile(
+  private static @Nonnull RegisterFile.Constraint extractZeroConstraintFromRegisterFile(
       FieldRefNode fieldRefNode) {
     var registerFile = ensurePresent(fieldRefNode.usages()
         .filter(x -> x instanceof HasRegisterFile)

@@ -1,7 +1,7 @@
 package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.types.BitsType;

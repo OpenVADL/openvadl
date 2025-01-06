@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
@@ -131,14 +131,14 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
     );
   }
 
-  private static @NotNull ValueType upcastFieldAccess(Format.FieldAccess fieldAccess) {
+  private static @Nonnull ValueType upcastFieldAccess(Format.FieldAccess fieldAccess) {
     return ensurePresent(ValueType.from(fieldAccess.type()),
         () -> Diagnostic.error("Cannot convert immediate type to LLVM type.",
                 fieldAccess.sourceLocation())
             .help("Check whether this type exists in LLVM"));
   }
 
-  private static @NotNull InstrCallNode getInstrCallNodeOrThrowError(PseudoInstruction pseudo) {
+  private static @Nonnull InstrCallNode getInstrCallNodeOrThrowError(PseudoInstruction pseudo) {
     ensure(pseudo.behavior().getNodes(InstrCallNode.class).count() == 1,
         () -> Diagnostic.error("Expected only one machine instruction",
             pseudo.sourceLocation()));
@@ -148,7 +148,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
                 pseudo.sourceLocation()));
   }
 
-  private static Format.@NotNull FieldAccess getFieldAccessFunctionFromFormatOrThrowError(
+  private static @Nonnull Format.FieldAccess getFieldAccessFunctionFromFormatOrThrowError(
       InstrCallNode machineInstruction) {
     ensure(machineInstruction.target().format().fieldAccesses().size() == 1, () ->
         Diagnostic.error(

@@ -2,7 +2,7 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import java.util.List;
 import java.util.Set;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.types.BuiltInTable;

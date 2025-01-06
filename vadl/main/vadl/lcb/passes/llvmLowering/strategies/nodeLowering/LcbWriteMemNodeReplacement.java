@@ -2,7 +2,7 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import java.util.List;
 import java.util.Objects;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
 import vadl.viam.graph.GraphVisitor;

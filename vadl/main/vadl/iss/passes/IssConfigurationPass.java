@@ -3,7 +3,7 @@ package vadl.iss.passes;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.pass.PassName;

@@ -5,7 +5,7 @@ import static vadl.iss.template.IssRenderUtils.mapRegs;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.formatting.ClangFormatter;
 import vadl.cppCodeGen.formatting.CodeFormatter;

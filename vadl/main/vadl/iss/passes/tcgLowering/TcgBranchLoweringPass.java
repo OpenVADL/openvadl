@@ -6,7 +6,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
 import java.util.Map;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.TcgPassUtils;

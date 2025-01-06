@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
@@ -147,7 +147,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     return result;
   }
 
-  private static @NotNull Instruction getFirstInstruction(List<Instruction> value) {
+  private static @Nonnull Instruction getFirstInstruction(List<Instruction> value) {
     ensureNonNull(value, "Must not be null");
     return ensurePresent(value.stream().findFirst(), "At least one item must exist");
   }

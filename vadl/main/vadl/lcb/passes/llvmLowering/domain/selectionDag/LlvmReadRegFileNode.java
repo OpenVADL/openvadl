@@ -1,6 +1,6 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;

@@ -2,7 +2,7 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import java.util.List;
 import java.util.Set;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrategy;

@@ -5,7 +5,7 @@ import static vadl.viam.ViamError.ensure;
 import java.util.BitSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;

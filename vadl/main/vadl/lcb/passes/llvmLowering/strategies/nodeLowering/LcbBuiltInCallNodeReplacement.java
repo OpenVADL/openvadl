@@ -4,7 +4,7 @@ import static vadl.viam.ViamError.ensure;
 
 import java.util.List;
 import java.util.Set;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAndSD;

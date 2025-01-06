@@ -3,8 +3,8 @@ package vadl.viam.graph;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.types.TypeList;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -17,12 +17,12 @@ public class NodeList<T extends Node> extends ArrayList<T> {
   public NodeList() {
   }
 
-  public NodeList(@NotNull Collection<? extends T> c) {
+  public NodeList(@Nonnull Collection<? extends T> c) {
     super(c);
   }
 
   @SafeVarargs
-  public NodeList(@NotNull T... c) {
+  public NodeList(@Nonnull T... c) {
     this(Arrays.stream(c).toList());
   }
 

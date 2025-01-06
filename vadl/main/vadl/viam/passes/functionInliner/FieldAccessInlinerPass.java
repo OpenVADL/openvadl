@@ -4,7 +4,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import static vadl.utils.ViamUtils.findDefinitionsByFilter;
 
 import java.io.IOException;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;

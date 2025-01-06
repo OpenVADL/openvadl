@@ -2,7 +2,6 @@ package vadl.javaannotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
-import javax.annotation.Nullable;
 
 /**
  * Annotation to specify the base type for dispatching in handler classes.

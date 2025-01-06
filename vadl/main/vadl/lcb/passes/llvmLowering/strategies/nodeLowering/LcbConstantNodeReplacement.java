@@ -3,7 +3,7 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;

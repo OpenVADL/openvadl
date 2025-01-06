@@ -5,7 +5,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;

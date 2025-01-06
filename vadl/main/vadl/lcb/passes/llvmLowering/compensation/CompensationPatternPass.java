@@ -3,7 +3,7 @@ package vadl.lcb.passes.llvmLowering.compensation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.llvmLowering.compensation.strategies.LlvmCompensationPatternStrategy;

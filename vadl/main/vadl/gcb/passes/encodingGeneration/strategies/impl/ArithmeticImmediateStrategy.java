@@ -1,6 +1,6 @@
 package vadl.gcb.passes.encodingGeneration.strategies.impl;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;

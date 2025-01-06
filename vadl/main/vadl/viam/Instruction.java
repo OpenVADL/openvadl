@@ -1,11 +1,10 @@
 package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.jetbrains.annotations.Nullable;
 import vadl.viam.graph.Graph;
 
 /**
