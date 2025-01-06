@@ -15,8 +15,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.error.DeferredDiagnosticStore;
@@ -746,7 +746,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Constructs from the given dataflow node a new graph which is the pattern selector.
    */
-  @NotNull
+  @Nonnull
   protected Graph getPatternSelector(WriteResourceNode sideEffectNode) {
     var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
     graph.setParentDefinition(Objects.requireNonNull(sideEffectNode.graph()).parentDefinition());
@@ -761,7 +761,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Constructs from the given dataflow node a new graph which is the pattern selector.
    */
-  @NotNull
+  @Nonnull
   protected Graph getPatternSelector(BuiltInCall builtInCall) {
     var graph = new Graph(builtInCall.id().toString() + ".selector.lowering");
     graph.setParentDefinition(Objects.requireNonNull(builtInCall.graph()).parentDefinition());
@@ -772,7 +772,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     return graph;
   }
 
-  @NotNull
+  @Nonnull
   protected Graph getOutputPattern(Instruction instruction,
                                    List<TableGenInstructionOperand> inputOperands) {
     var graph = new Graph(instruction.simpleName() + ".machine.lowering");

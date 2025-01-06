@@ -5,7 +5,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
 import java.util.Map;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;

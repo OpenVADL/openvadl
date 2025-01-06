@@ -3,7 +3,6 @@ package vadl.iss.passes.decode.qemu.dto;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 import vadl.viam.Definition;
 
 /**
@@ -63,7 +62,7 @@ public final class Field
     return decodeFunction;
   }
 
-  public void setDecodeFunction(@NotNull String decodeFunction) {
+  public void setDecodeFunction(@Nonnull String decodeFunction) {
     this.decodeFunction = decodeFunction;
   }
 

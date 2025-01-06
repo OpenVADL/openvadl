@@ -2,7 +2,7 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import java.util.Arrays;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;

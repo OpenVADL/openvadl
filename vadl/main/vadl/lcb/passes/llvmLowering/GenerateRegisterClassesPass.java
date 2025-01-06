@@ -8,8 +8,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegister;
@@ -144,7 +144,7 @@ public class GenerateRegisterClassesPass extends Pass {
     return registers;
   }
 
-  private @NotNull TableGenRegister tableGenRegister(RegisterFile registerFile, Abi abi,
+  private @Nonnull TableGenRegister tableGenRegister(RegisterFile registerFile, Abi abi,
                                                      LcbConfiguration configuration, int bitWidth,
                                                      int addr) {
     var name = registerFile.identifier.simpleName() + addr;

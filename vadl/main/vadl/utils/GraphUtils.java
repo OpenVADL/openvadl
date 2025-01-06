@@ -2,8 +2,8 @@ package vadl.utils;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Constant;
@@ -85,7 +85,7 @@ public class GraphUtils {
   public static boolean hasDependencies(Node node, Function<Node, Boolean> filter) {
     GraphVisitor<Boolean> visitor = new GraphVisitor<>() {
       @Override
-      public @NotNull Boolean visit(Node from, @Nullable Node to) {
+      public @Nonnull Boolean visit(Node from, @Nullable Node to) {
         if (to == null || filter.apply(to)) {
           return filter.apply(to);
         }
@@ -107,7 +107,7 @@ public class GraphUtils {
   public static boolean hasUser(Node node, Function<Node, Boolean> filter) {
     GraphVisitor<Boolean> visitor = new GraphVisitor<>() {
       @Override
-      public @NotNull Boolean visit(Node from, @Nullable Node to) {
+      public @Nonnull Boolean visit(Node from, @Nullable Node to) {
         if (to == null || filter.apply(to)) {
           return filter.apply(to);
         }

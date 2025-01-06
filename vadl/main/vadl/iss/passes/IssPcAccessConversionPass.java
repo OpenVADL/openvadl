@@ -1,7 +1,7 @@
 package vadl.iss.passes;
 
 import java.io.IOException;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.pass.Pass;

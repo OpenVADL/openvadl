@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.types.BitsType;
 import vadl.types.SIntType;
@@ -165,7 +165,7 @@ public class TranslationValidation {
     )));
   }
 
-  @NotNull
+  @Nonnull
   private static String generateFormula(List<TranslationResult> matchings) {
     var symbolTableBeforeMatching = new SymbolTable();
     var symbolTableAfterMatching = new SymbolTable(matchings.size());
@@ -214,7 +214,7 @@ public class TranslationValidation {
     ).collect(Collectors.joining("\n"));
   }
 
-  @NotNull
+  @Nonnull
   private String getMemoryDefinitions(Instruction before) {
     var memRead = before.behavior().getNodes(ReadMemNode.class)
         .map(ReadMemNode::memory);

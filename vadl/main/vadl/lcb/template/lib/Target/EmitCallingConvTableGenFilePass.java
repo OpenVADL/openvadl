@@ -5,7 +5,7 @@ import static vadl.viam.ViamError.ensure;
 import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.CommonVarNames;
@@ -50,7 +50,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
         "returnRegisters", getReturnAssignToReg(abi));
   }
 
-  @NotNull
+  @Nonnull
   private AssignToReg getReturnAssignToReg(Abi abi) {
     ensure(abi.returnRegisters().stream().map(x -> x.registerFile().relationType()).collect(
             Collectors.toSet()).size() == 1,
@@ -62,7 +62,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
             .collect(Collectors.joining(", ")));
   }
 
-  @NotNull
+  @Nonnull
   private AssignToReg getFuncArgsAssignToReg(Abi abi) {
     ensure(abi.argumentRegisters().stream().map(x -> x.registerFile().relationType()).collect(
             Collectors.toSet()).size() == 1,

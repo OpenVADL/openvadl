@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppClassImplName;
 import vadl.cppCodeGen.model.CppFunction;
@@ -77,7 +77,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  private @NotNull RenderedPseudoInstruction renderPseudoInstruction(
+  private @Nonnull RenderedPseudoInstruction renderPseudoInstruction(
       Specification specification,
       Map<PseudoInstruction, CppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,

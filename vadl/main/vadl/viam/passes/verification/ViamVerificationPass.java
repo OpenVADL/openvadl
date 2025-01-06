@@ -1,7 +1,7 @@
 package vadl.viam.passes.verification;
 
 import java.io.IOException;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.GeneralConfiguration;

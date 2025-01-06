@@ -1,6 +1,6 @@
 package vadl.viam.passes.typeCastElimination;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;

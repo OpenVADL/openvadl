@@ -2,8 +2,8 @@ package vadl.viam;
 
 import com.google.errorprone.annotations.FormatMethod;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nullable;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
 

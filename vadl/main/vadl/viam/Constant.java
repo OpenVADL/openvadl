@@ -14,8 +14,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.DataType;
@@ -951,7 +951,7 @@ public abstract class Constant {
       return result;
     }
 
-    @NotNull
+    @Nonnull
     @Override
     public Iterator<Integer> iterator() {
       return stream()
@@ -1061,7 +1061,7 @@ public abstract class Constant {
         return isIndex() ? "" + msb : msb + ".." + lsb;
       }
 
-      @NotNull
+      @Nonnull
       @Override
       public Iterator<Integer> iterator() {
         return new Iterator<>() {

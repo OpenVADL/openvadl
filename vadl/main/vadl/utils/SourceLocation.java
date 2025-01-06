@@ -9,8 +9,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * References a location span in source.
@@ -267,7 +267,7 @@ public record SourceLocation(
     }
 
     @Override
-    public int compareTo(@NotNull SourceLocation.Position other) {
+    public int compareTo(@Nonnull SourceLocation.Position other) {
       if (this.line < other.line) {
         return -1;
       } else if (this.line > other.line) {

@@ -4,7 +4,7 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.Collection;
 import java.util.List;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
@@ -144,7 +144,7 @@ public class LlvmCompensationRotateLeftPatternStrategy implements LlvmCompensati
     return rotlMachineGraph;
   }
 
-  private static @NotNull List<LlvmReadRegFileNode> liftOperands(
+  private static @Nonnull List<LlvmReadRegFileNode> liftOperands(
       List<ReadRegFileNode> operands) {
     return operands.stream()
         .map(readRegFileNode -> new LlvmReadRegFileNode(readRegFileNode.registerFile(),

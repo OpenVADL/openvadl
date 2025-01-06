@@ -2,7 +2,7 @@ package vadl.viam.passes.staticCounterAccess;
 
 import java.io.IOException;
 import java.util.Set;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;

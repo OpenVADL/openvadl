@@ -5,7 +5,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.error.Diagnostic;

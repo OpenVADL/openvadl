@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.viam.Constant;

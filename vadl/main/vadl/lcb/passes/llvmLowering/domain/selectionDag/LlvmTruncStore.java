@@ -2,7 +2,7 @@ package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import java.util.List;
 import java.util.Objects;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;

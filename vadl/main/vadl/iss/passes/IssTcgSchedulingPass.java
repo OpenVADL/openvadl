@@ -9,7 +9,7 @@ import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;

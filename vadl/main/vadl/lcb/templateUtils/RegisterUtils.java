@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.RegisterFile;
@@ -43,7 +43,7 @@ public class RegisterUtils {
   /**
    * Constructing a {@link RegisterClass} from {@link RegisterFile}.
    */
-  @NotNull
+  @Nonnull
   public static RegisterClass getRegisterClass(
       RegisterFile registerFile,
       @Nullable Map<Pair<RegisterFile, Integer>, Abi.RegisterAlias> aliases) {

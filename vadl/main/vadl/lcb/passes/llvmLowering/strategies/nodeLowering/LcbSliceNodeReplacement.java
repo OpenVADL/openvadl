@@ -1,7 +1,7 @@
 package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.SliceNode;

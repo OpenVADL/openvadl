@@ -3,7 +3,7 @@ package vadl.viam.passes.algebraic_simplication;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;

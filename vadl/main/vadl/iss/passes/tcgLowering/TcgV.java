@@ -4,7 +4,7 @@ import static vadl.viam.ViamError.ensure;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;

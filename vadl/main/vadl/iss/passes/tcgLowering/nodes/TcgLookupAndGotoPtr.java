@@ -3,7 +3,7 @@ package vadl.iss.passes.tcgLowering.nodes;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;

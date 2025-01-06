@@ -3,7 +3,7 @@ package vadl.gcb.passes.pseudo;
 import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppGenericType;

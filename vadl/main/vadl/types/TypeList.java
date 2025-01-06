@@ -3,7 +3,7 @@ package vadl.types;
 import com.google.errorprone.annotations.FormatMethod;
 import java.util.ArrayList;
 import java.util.Collection;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import vadl.viam.ViamError;
 
 /**
@@ -21,7 +21,7 @@ public class TypeList<T extends Type> extends ArrayList<T> {
   public TypeList() {
   }
 
-  public TypeList(@NotNull Collection<? extends T> c) {
+  public TypeList(@Nonnull Collection<? extends T> c) {
     super(c);
   }
 

@@ -3,7 +3,7 @@ package vadl.gcb.passes.assembly;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
