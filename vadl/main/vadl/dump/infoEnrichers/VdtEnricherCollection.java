@@ -8,19 +8,21 @@ import vadl.dump.InfoUtils;
 import vadl.dump.entities.VdtEntity;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
 import vadl.vdt.target.dump.DotGraphGenerator;
+import vadl.vdt.target.dump.InsnDecisionTableGenerator;
+import vadl.vdt.target.dump.TextGraphGenerator;
 
 /**
  * A collection of enrichers for VDT entities.
  */
 public class VdtEnricherCollection {
 
-  public static InfoEnricher VDT_GRAPH_MODAL_ENRICHER =
+  public static InfoEnricher VDT_DOT_GRAPH_MODAL_ENRICHER =
       InfoEnricher.forType(VdtEntity.class, (entity, passResults) -> {
 
         var dot = DotGraphGenerator.generate(entity.tree());
 
         // Add a modal to the definition entity
-        var info = new Info.Modal("Decode Tree", "");
+        var info = new Info.Modal("Decode Tree (DOT)", "");
         var id = info.id();
 
         var dotScript = """
@@ -66,6 +68,30 @@ public class VdtEnricherCollection {
         entity.addInfo(info);
       });
 
+  public static InfoEnricher VDT_TXT_GRAPH_EXPANDABLE =
+      InfoEnricher.forType(VdtEntity.class, (entity, passResults) -> {
+
+        var graph = TextGraphGenerator.generate(entity.tree());
+        var info = InfoUtils.createCodeBlockExpandable(
+            "Decode Tree (Text)",
+            graph
+        );
+
+        entity.addInfo(info);
+      });
+
+  public static InfoEnricher VDT_TXT_TABLE_EXPANDABLE =
+      InfoEnricher.forType(VdtEntity.class, (entity, passResults) -> {
+
+        var graph = InsnDecisionTableGenerator.generate(entity.tree());
+        var info = InfoUtils.createTableExpandable(
+            "Decisions by instruction",
+            graph
+        );
+
+        entity.addInfo(info);
+      });
+
   public static InfoEnricher VDT_STATS_EXPANDABLE =
       InfoEnricher.forType(VdtEntity.class, (entity, passResults) -> {
 
@@ -99,9 +125,11 @@ public class VdtEnricherCollection {
       });
 
   public static List<InfoEnricher> all = List.of(
-      VDT_GRAPH_MODAL_ENRICHER,
+      VDT_STATS_TAGS,
       VDT_STATS_EXPANDABLE,
-      VDT_STATS_TAGS
+      VDT_TXT_GRAPH_EXPANDABLE,
+      VDT_DOT_GRAPH_MODAL_ENRICHER,
+      VDT_TXT_TABLE_EXPANDABLE
   );
 
 }
