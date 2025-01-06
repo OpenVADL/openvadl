@@ -79,6 +79,9 @@ namespace llvm
                 EmitInstrWithCustomInserter(MachineInstr &MI,
                                             MachineBasicBlock *BB) const override;
 
+            void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results, SelectionDAG &DAG) const override;
+
+
         private:
             const [(${namespace})]Subtarget &Subtarget;
             template <class NodeTy> SDValue getAddr(NodeTy *N, SelectionDAG &DAG, bool IsLocal = true) const;

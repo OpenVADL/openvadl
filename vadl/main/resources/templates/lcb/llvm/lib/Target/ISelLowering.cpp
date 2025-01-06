@@ -831,3 +831,14 @@ MachineBasicBlock *
     MI.eraseFromParent(); // The pseudo instruction is gone now.
     return TailMBB;
 }
+
+void [(${namespace})]TargetLowering::ReplaceNodeResults(SDNode *N,
+                                             SmallVectorImpl<SDValue> &Results,
+                                             SelectionDAG &DAG) const {
+    SDLoc DL(N);
+    switch (N->getOpcode()) {
+    default:
+      N->dump();
+      llvm_unreachable("Don't know how to custom type legalize this operation!");
+    }
+}
