@@ -14,6 +14,7 @@ build/
 !.idea/checkstyle-idea.xml
 !.idea/codeStyles
 !.idea/codeStyles/Project.xml
+!.idea/misc.xml
 *.iws
 *.iml
 *.ipr
