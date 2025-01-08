@@ -34,6 +34,6 @@ public class SIntType extends BitsType {
 
   @Override
   public BitsType withBitWidth(int bitWidth) {
-    return new SIntType(bitWidth);
+    return Type.signedInt(bitWidth);
   }
 }

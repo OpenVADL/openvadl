@@ -802,7 +802,8 @@ class CounterDefinition extends Definition implements IdentifiableNode {
     GROUP
   }
 
-  public CounterDefinition(CounterKind kind, IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral,
+  public CounterDefinition(CounterKind kind, IdentifierOrPlaceholder identifier,
+                           TypeLiteral typeLiteral,
                            SourceLocation location) {
     this.kind = kind;
     this.identifier = identifier;
@@ -877,6 +878,9 @@ class MemoryDefinition extends Definition implements IdentifiableNode {
   TypeLiteral addressType;
   TypeLiteral dataType;
   SourceLocation loc;
+
+  @Nullable
+  ConcreteRelationType type;
 
   public MemoryDefinition(IdentifierOrPlaceholder identifier, TypeLiteral addressType,
                           TypeLiteral dataType, SourceLocation loc) {
@@ -1137,7 +1141,7 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
     return (Identifier) identifier;
   }
 
-  Identifier type() {
+  Identifier typeIdentifier() {
     return (Identifier) typeIdentifier;
   }
 
@@ -1513,7 +1517,15 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
     }
   }
 
-  record EncodingField(Identifier field, Expr value) implements IsEncs {
+  static final class EncodingField implements IsEncs {
+    final Identifier field;
+    Expr value;
+
+    EncodingField(Identifier field, Expr value) {
+      this.field = field;
+      this.value = value;
+    }
+
     @Override
     public SourceLocation location() {
       return field.location().join(value.location());
@@ -1525,6 +1537,32 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
       builder.append(" = ");
       value.prettyPrint(0, builder);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (EncodingField) obj;
+      return Objects.equals(this.field, that.field)
+          && Objects.equals(this.value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(field, value);
+    }
+
+    @Override
+    public String toString() {
+      return "EncodingField["
+          + "field=" + field + ", "
+          + "value=" + value + ']';
+    }
+
   }
 }
 

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.types.TupleType;
+import vadl.types.Type;
 import vadl.utils.SourceLocation;
 
 abstract sealed class Statement extends Node
@@ -137,6 +139,9 @@ final class BlockStatement extends Statement {
   }
 }
 
+/**
+ * If multiple identifiers are provided, they are used to unpack a tuple.
+ */
 final class LetStatement extends Statement {
   List<Identifier> identifiers;
   Expr valueExpression;
@@ -149,6 +154,27 @@ final class LetStatement extends Statement {
     this.valueExpression = valueExpression;
     this.body = body;
     this.location = location;
+  }
+
+  /**
+   * Returns the type of one of the variables the statement defines.
+   *
+   * @return the type of the name provided.
+   */
+  @Nullable
+  Type getTypeOf(String name) {
+    var valType = valueExpression.type;
+    if (identifiers.size() == 1) {
+      return valType;
+    }
+
+    if (!(valType instanceof TupleType valTuple)) {
+      throw new IllegalStateException("Expected TupleType but got " + valType);
+    }
+
+    return valTuple.get(
+        identifiers.stream().map(i -> i.name).toList().indexOf(name)
+    );
   }
 
   @Override

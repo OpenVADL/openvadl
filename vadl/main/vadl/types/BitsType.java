@@ -46,6 +46,16 @@ public class BitsType extends DataType {
   }
 
   /**
+   * Returns a new Bits type scaled by the provided factor.
+   *
+   * @param factor to scale by
+   * @return the scaled type
+   */
+  public BitsType scaleBy(int factor) {
+    return withBitWidth(bitWidth * factor);
+  }
+
+  /**
    * Finds the join (upper bound) for the given BitsType types
    * by returning the one with the largest bit width.
    *
@@ -118,6 +128,6 @@ public class BitsType extends DataType {
   }
 
   public BitsType withBitWidth(int bitWidth) {
-    return new BitsType(bitWidth);
+    return Type.bits(bitWidth);
   }
 }

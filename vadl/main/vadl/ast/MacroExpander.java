@@ -1033,8 +1033,8 @@ class MacroExpander
 
   private List<IsEncs> resolveEnc(IsEncs encoding) {
     if (encoding instanceof EncodingDefinition.EncodingField encodingField) {
-      return List.of(new EncodingDefinition.EncodingField(encodingField.field(),
-          expandExpr(encodingField.value())));
+      return List.of(new EncodingDefinition.EncodingField(encodingField.field,
+          expandExpr(encodingField.value)));
     } else if (encoding instanceof EncodingDefinition.EncsNode encodings) {
       var encs = new ArrayList<IsEncs>(encodings.items.size());
       for (IsEncs enc : encodings.items) {

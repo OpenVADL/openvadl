@@ -989,8 +989,8 @@ final class IdToStrExpr extends Expr {
  * Grouped expressions can either be single expressions wrapped in parantheses like {@code (1 + 2)},
  * or multiple expressions separated by a comma like {@code (a, 1 + 2, c())}.
  *
- * <p>A group expression with a single expression is just arithmetic grouping, but a group expression
- * with multiple is a string concatination.
+ * <p>A group expression with a single expression is just arithmetic grouping, but a group
+ * expression with multiple is a string concatination.
  */
 // FIXME: This should probably be two nodes as the semantics are so different.
 class GroupedExpr extends Expr {
@@ -1411,13 +1411,27 @@ final class SymbolExpr extends Expr implements IsSymExpr {
   }
 }
 
+/**
+ * A call expression or many similar expressions.
+ *
+ * <p>The following are also call expressions:
+ * - Memory access: Mem<4>(addr)
+ * - Slicing: target(4..8)
+ * - Access of fields: PC.next
+ */
 final class CallExpr extends Expr implements IsCallExpr {
   IsSymExpr target;
+
   /**
-   * A list of function arguments or register/memory indices,
-   * where multidimensional index access is represented as multiple list entries.
+   * A list of function arguments or register/memory indices.
+   *
+   * <p>Calls of multiple arguments can be written as f(a)(b,c) or f(a,b,c) so for pretty printing
+   * the nested list of list must be kept but semantically the difference doesn't matter.
+   *
+   * <p>If you only care about semantics than use {@link #flatArgs()}.
    */
   List<List<Expr>> argsIndices;
+
   /**
    * A list of method or sub-field access, e.g. the {@code .bar()} in {@code Namespace::Foo.bar()}.
    * Each sub-call can itself also have single- and multidimensional arguments.
@@ -1431,10 +1445,10 @@ final class CallExpr extends Expr implements IsCallExpr {
     this.argsIndices = argsIndices;
     this.subCalls = subCalls;
     this.location = location;
+  }
 
-    if (argsIndices.size() > 2) {
-      throw new RuntimeException("Flooooo");
-    }
+  List<Expr> flatArgs() {
+    return argsIndices.stream().flatMap(List::stream).toList();
   }
 
   @Override
@@ -1683,11 +1697,11 @@ class CastExpr extends Expr {
     this.location = value.location().join(typeLiteral.location());
   }
 
-  public CastExpr(Expr value, Type type, SourceLocation location) {
+  public CastExpr(Expr value, Type type) {
     this.value = value;
     this.type = type;
-    this.location = location;
-    this.typeLiteral = new TypeLiteral(type, location);
+    this.location = value.location();
+    this.typeLiteral = new TypeLiteral(type, value.location());
   }
 
   @Override

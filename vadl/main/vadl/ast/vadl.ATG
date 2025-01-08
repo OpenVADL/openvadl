@@ -1431,7 +1431,7 @@ PRODUCTIONS
     }                                             (. expr = reorderBinaryExpr(expr); .)
   .
 
-  /// Call expressions of form "a::b<3>().c()".
+  /// Call expressions of form "a::b<3>(1,2)(3,4).c()".
   /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
   callOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; .)

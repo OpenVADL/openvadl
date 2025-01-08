@@ -376,7 +376,7 @@ class SymbolTable {
         encoding.symbolTable = symbols.createChild();
         for (var fieldEncoding : encoding.encodings.items) {
           collectSymbols(encoding.symbolTable,
-              ((EncodingDefinition.EncodingField) fieldEncoding).value());
+              ((EncodingDefinition.EncodingField) fieldEncoding).value);
         }
       } else if (definition instanceof AliasDefinition alias) {
         symbols.defineSymbol(alias);
@@ -591,7 +591,7 @@ class SymbolTable {
         collectSymbols(symbols, let.valueExpression);
         var child = symbols.createChild();
         for (var identifier : let.identifiers) {
-          child.defineSymbol(identifier.name, identifier);
+          child.defineSymbol(identifier.name, let);
         }
         collectSymbols(child, let.body);
       } else if (stmt instanceof IfStatement ifStmt) {
@@ -643,7 +643,7 @@ class SymbolTable {
       if (expr instanceof LetExpr letExpr) {
         letExpr.symbolTable = symbols.createChild();
         for (var identifier : letExpr.identifiers) {
-          letExpr.symbolTable.defineSymbol(identifier.name, identifier);
+          letExpr.symbolTable.defineSymbol(identifier.name, letExpr);
         }
         collectSymbols(symbols, letExpr.valueExpr);
         collectSymbols(letExpr.symbolTable, letExpr.body);
@@ -773,7 +773,7 @@ class SymbolTable {
       } else if (definition instanceof FunctionDefinition function) {
         resolveSymbols(function.expr);
       } else if (definition instanceof InstructionDefinition instr) {
-        var format = instr.symbolTable().requireAs(instr.type(), FormatDefinition.class);
+        var format = instr.symbolTable().requireAs(instr.typeIdentifier(), FormatDefinition.class);
         if (format != null) {
           instr.symbolTable().extendBy(format.symbolTable());
           instr.formatNode = format;
@@ -831,7 +831,7 @@ class SymbolTable {
           encoding.formatNode = format;
           for (var item : encoding.encodings.items) {
             var fieldEncoding = (EncodingDefinition.EncodingField) item;
-            var field = fieldEncoding.field();
+            var field = fieldEncoding.field;
             if (findField(format, field.name) == null) {
               encoding.symbolTable()
                   .reportError("Format field %s not found".formatted(field.name), field.location());
