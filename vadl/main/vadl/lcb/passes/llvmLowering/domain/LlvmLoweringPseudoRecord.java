@@ -2,7 +2,6 @@ package vadl.lcb.passes.llvmLowering.domain;
 
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
@@ -31,13 +30,13 @@ public class LlvmLoweringPseudoRecord extends LlvmLoweringRecord {
     this.appliedBehaviors = appliedBehaviors;
   }
 
-
   /**
-   * Constructor which overwrites the inputs from {@code base}.
+   * Constructor which overwrites the inputs from {@code base} and {@code flags}.
    */
   public LlvmLoweringPseudoRecord(LlvmLoweringPseudoRecord base,
-                                  List<TableGenInstructionOperand> inputs) {
-    super(base.behavior(), inputs, base.outputs(), base.flags(), base.patterns(), base.uses(),
+                                      List<TableGenInstructionOperand> inputs,
+                                      LlvmLoweringPass.Flags flags) {
+    super(base.behavior(), inputs, base.outputs(), flags, base.patterns(), base.uses(),
         base.defs());
     this.appliedBehaviors = base.appliedBehaviors;
   }

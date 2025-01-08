@@ -233,6 +233,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     var mayStore =
         graph.getNodes(Set.of(WriteMemNode.class, LlvmMayStoreMemory.class)).findFirst()
             .isPresent();
+    var isBarrier = false;
 
     return new LlvmLoweringPass.Flags(
         isTerminator,
@@ -242,7 +243,8 @@ public abstract class LlvmInstructionLoweringStrategy {
         isPseudo,
         isCodeGenOnly,
         mayLoad,
-        mayStore
+        mayStore,
+        isBarrier
     );
   }
 

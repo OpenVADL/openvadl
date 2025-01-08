@@ -16,6 +16,7 @@ import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
@@ -88,7 +89,12 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
           LlvmFieldAccessRefNode.Usage.BasicBlock);
       var inputOperand =
           LlvmInstructionLoweringStrategy.generateTableGenInputOutput(fieldAccessNode);
-      return Optional.of(new LlvmLoweringPseudoRecord(tableGenRecord.get(), List.of(inputOperand)));
+      var flags =
+          LlvmLoweringPass.Flags.withBarrier(LlvmLoweringPass.Flags.withBranch(
+              LlvmLoweringPass.Flags.withTerminator(tableGenRecord.get().flags()))
+          );
+      return Optional.of(
+          new LlvmLoweringPseudoRecord(tableGenRecord.get(), List.of(inputOperand), flags));
     } else {
       return Optional.empty();
     }
