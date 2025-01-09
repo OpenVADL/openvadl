@@ -534,17 +534,17 @@ PRODUCTIONS
     FILE
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON
-    relationType<out RegisterFileDefinition.RelationType type> (. def = new RegisterFileDefinition(id, type, startLocation.join(loc())); .)
+    relationType<out RegisterFileDefinition.RelationTypeLiteral type> (. def = new RegisterFileDefinition(id, type, startLocation.join(loc())); .)
   .
 
-  relationType<out RegisterFileDefinition.RelationType type> (. var argTypes = new ArrayList<TypeLiteral>(); .)
+  relationType<out RegisterFileDefinition.RelationTypeLiteral type> (. var argTypes = new ArrayList<TypeLiteral>(); .)
   = typeLiteral<out TypeLiteral argType>                     (. argTypes.add(argType); .)
     {
       SYM_MUL
       typeLiteral<out argType>                               (. argTypes.add(argType); .)
     }
     SYM_ARROW
-    typeLiteral<out TypeLiteral resultType>                  (. type = new RegisterFileDefinition.RelationType(argTypes, resultType); .)
+    typeLiteral<out TypeLiteral resultType>                  (. type = new RegisterFileDefinition.RelationTypeLiteral(argTypes, resultType); .)
   .
 
   aliasDefinition<out Definition def>
@@ -1431,7 +1431,7 @@ PRODUCTIONS
     }                                             (. expr = reorderBinaryExpr(expr); .)
   .
 
-  /// Call expressions of form "a::b<3>().c()".
+  /// Call expressions of form "a::b<3>(1,2)(3,4).c()".
   /// Due to the "<"-ambiguity with the less-than operator, this rule can also return a BinaryExpr.
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
   callOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; .)

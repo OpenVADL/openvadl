@@ -284,7 +284,7 @@ public class Ungrouper
     ungroupAnnotations(definition);
     definition.encodings.items.replaceAll(encoding -> {
       var enc = (EncodingDefinition.EncodingField) encoding;
-      return new EncodingDefinition.EncodingField(enc.field(), enc.value().accept(this));
+      return new EncodingDefinition.EncodingField(enc.field, enc.value.accept(this));
     });
     return definition;
   }

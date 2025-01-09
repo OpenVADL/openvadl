@@ -308,6 +308,7 @@ class FormatDefinition extends Definition implements IdentifiableNode {
     void prettyPrint(int indent, StringBuilder builder);
   }
 
+
   static class RangeFormatField extends Node implements FormatField {
     Identifier identifier;
     List<Expr> ranges;
@@ -586,6 +587,27 @@ class FormatDefinition extends Definition implements IdentifiableNode {
     this.loc = location;
   }
 
+  @Nullable
+  Type getFieldType(String name) {
+    for (var entry : fields) {
+      if (!entry.identifier().name.equals(name)) {
+        continue;
+      }
+
+      if (entry instanceof TypedFormatField typedField) {
+        return typedField.typeLiteral.type;
+      } else if (entry instanceof RangeFormatField rangeField) {
+        return rangeField.type;
+      } else if (entry instanceof DerivedFormatField derivedField) {
+        return derivedField.expr.type;
+      } else {
+        throw new IllegalStateException("Unknown field type: " + entry.getClass().getSimpleName());
+      }
+    }
+
+    throw new IllegalStateException("Field not found %s".formatted(name));
+  }
+
   @Override
   public Identifier identifier() {
     return (Identifier) identifier;
@@ -772,7 +794,7 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
 class CounterDefinition extends Definition implements IdentifiableNode {
   CounterKind kind;
   IdentifierOrPlaceholder identifier;
-  TypeLiteral type;
+  TypeLiteral typeLiteral;
   SourceLocation loc;
 
   enum CounterKind {
@@ -780,11 +802,12 @@ class CounterDefinition extends Definition implements IdentifiableNode {
     GROUP
   }
 
-  public CounterDefinition(CounterKind kind, IdentifierOrPlaceholder identifier, TypeLiteral type,
+  public CounterDefinition(CounterKind kind, IdentifierOrPlaceholder identifier,
+                           TypeLiteral typeLiteral,
                            SourceLocation location) {
     this.kind = kind;
     this.identifier = identifier;
-    this.type = type;
+    this.typeLiteral = typeLiteral;
     this.loc = location;
   }
 
@@ -810,7 +833,7 @@ class CounterDefinition extends Definition implements IdentifiableNode {
     builder.append("%s counter ".formatted(kind.toString().toLowerCase(Locale.ENGLISH)));
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    type.prettyPrint(indent, builder);
+    typeLiteral.prettyPrint(indent, builder);
     builder.append("\n");
   }
 
@@ -837,7 +860,7 @@ class CounterDefinition extends Definition implements IdentifiableNode {
     return annotations.equals(that.annotations)
         && kind == that.kind
         && identifier.equals(that.identifier)
-        && type.equals(that.type);
+        && typeLiteral.equals(that.typeLiteral);
   }
 
   @Override
@@ -845,7 +868,7 @@ class CounterDefinition extends Definition implements IdentifiableNode {
     int result = annotations.hashCode();
     result = 31 * result + kind.hashCode();
     result = 31 * result + identifier.hashCode();
-    result = 31 * result + type.hashCode();
+    result = 31 * result + typeLiteral.hashCode();
     return result;
   }
 }
@@ -855,6 +878,9 @@ class MemoryDefinition extends Definition implements IdentifiableNode {
   TypeLiteral addressType;
   TypeLiteral dataType;
   SourceLocation loc;
+
+  @Nullable
+  ConcreteRelationType type;
 
   public MemoryDefinition(IdentifierOrPlaceholder identifier, TypeLiteral addressType,
                           TypeLiteral dataType, SourceLocation loc) {
@@ -1002,13 +1028,16 @@ class RegisterDefinition extends Definition implements IdentifiableNode {
 
 class RegisterFileDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
-  RelationType type;
+  RelationTypeLiteral typeLiteral;
   SourceLocation loc;
 
-  public RegisterFileDefinition(IdentifierOrPlaceholder identifier, RelationType type,
+  @Nullable
+  ConcreteRelationType type = null;
+
+  public RegisterFileDefinition(IdentifierOrPlaceholder identifier, RelationTypeLiteral typeLiteral,
                                 SourceLocation location) {
     this.identifier = identifier;
-    this.type = type;
+    this.typeLiteral = typeLiteral;
     this.loc = location;
   }
 
@@ -1035,7 +1064,7 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode {
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
     var isFirst = true;
-    for (TypeLiteral argType : type.argTypes) {
+    for (TypeLiteral argType : typeLiteral.argTypes) {
       if (!isFirst) {
         builder.append(" * ");
       }
@@ -1043,7 +1072,7 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode {
       argType.prettyPrint(0, builder);
     }
     builder.append(" -> ");
-    type.resultType.prettyPrint(indent, builder);
+    typeLiteral.resultType.prettyPrint(indent, builder);
     builder.append("\n");
   }
 
@@ -1069,18 +1098,18 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode {
     RegisterFileDefinition that = (RegisterFileDefinition) o;
     return annotations.equals(that.annotations)
         && identifier.equals(that.identifier)
-        && type.equals(that.type);
+        && typeLiteral.equals(that.typeLiteral);
   }
 
   @Override
   public int hashCode() {
     int result = annotations.hashCode();
     result = 31 * result + identifier.hashCode();
-    result = 31 * result + type.hashCode();
+    result = 31 * result + typeLiteral.hashCode();
     return result;
   }
 
-  record RelationType(List<TypeLiteral> argTypes, TypeLiteral resultType) {
+  record RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
   }
 }
 
@@ -1092,6 +1121,12 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
 
   @Nullable
   FormatDefinition formatNode;
+
+  @Nullable
+  EncodingDefinition encodingDefinition;
+
+  @Nullable
+  AssemblyDefinition assemblyDefinition;
 
   InstructionDefinition(IdentifierOrPlaceholder identifier, IdentifierOrPlaceholder typeIdentifier,
                         Statement behavior, SourceLocation location) {
@@ -1106,7 +1141,7 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
     return (Identifier) identifier;
   }
 
-  Identifier type() {
+  Identifier typeIdentifier() {
     return (Identifier) typeIdentifier;
   }
 
@@ -1482,7 +1517,15 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
     }
   }
 
-  record EncodingField(Identifier field, Expr value) implements IsEncs {
+  static final class EncodingField implements IsEncs {
+    final Identifier field;
+    Expr value;
+
+    EncodingField(Identifier field, Expr value) {
+      this.field = field;
+      this.value = value;
+    }
+
     @Override
     public SourceLocation location() {
       return field.location().join(value.location());
@@ -1494,6 +1537,32 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
       builder.append(" = ");
       value.prettyPrint(0, builder);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (EncodingField) obj;
+      return Objects.equals(this.field, that.field)
+          && Objects.equals(this.value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(field, value);
+    }
+
+    @Override
+    public String toString() {
+      return "EncodingField["
+          + "field=" + field + ", "
+          + "value=" + value + ']';
+    }
+
   }
 }
 

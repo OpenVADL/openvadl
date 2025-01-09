@@ -534,6 +534,10 @@ public class TypecheckerTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    var format = finder.findDefinition(ast, "f", FormatDefinition.class);
+    Assertions.assertEquals(Type.bits(2), format.getFieldType("first"));
+    Assertions.assertEquals(Type.bits(6), format.getFieldType("second"));
   }
 
   @Test
@@ -547,6 +551,10 @@ public class TypecheckerTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    var format = finder.findDefinition(ast, "f", FormatDefinition.class);
+    Assertions.assertEquals(Type.bits(5), format.getFieldType("first"));
+    Assertions.assertEquals(Type.bits(3), format.getFieldType("second"));
   }
 
   @Test
@@ -560,6 +568,10 @@ public class TypecheckerTest {
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    var format = finder.findDefinition(ast, "x", FormatDefinition.class);
+    Assertions.assertEquals(Type.bits(4), format.getFieldType("a"));
+    Assertions.assertEquals(Type.bits(2), format.getFieldType("b"));
   }
 
 
@@ -619,4 +631,33 @@ public class TypecheckerTest {
         "Program isn't typesafe");
   }
 
+
+  @Test
+  public void instructionEncodingAssembly() {
+    var prog = """
+        instruction set architecture Mini = {
+        
+          using Inst     = Bits<32>               // instruction word is 32 bit
+          using Regs     = Bits<32>               // untyped register word type
+        
+          register file    X : Bits<5>   -> Regs  // integer register file with 32 registers of 32 bits
+        
+          format Rtype : Inst =                   // Rtype register 3 operand instruction format
+            { funct7 : Bits<7>                    // [31..25] 7 bit function code
+            , rs2    : Bits<5>                    // [24..20] 2nd source register index / shamt
+            , rs1    : Bits<5>                    // [19..15] 1st source register index
+            , funct3 : Bits<3>                    // [14..12] 3 bit function code
+            , rd     : Bits<5>                    // [11..7]  destination register index
+            , opcode : Bits<7>                    // [6..0]   7 bit operation code
+            }
+        
+          instruction ADD : Rtype = X(rd) := (X(rs1) + X(rs2)) as Regs
+          encoding ADD = {opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0000}
+          assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+  }
 }

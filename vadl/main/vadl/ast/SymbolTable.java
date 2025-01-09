@@ -301,16 +301,16 @@ class SymbolTable {
         collectSymbols(symbols, constant.value);
       } else if (definition instanceof CounterDefinition counter) {
         symbols.defineSymbol(counter);
-        collectSymbols(symbols, counter.type);
+        collectSymbols(symbols, counter.typeLiteral);
       } else if (definition instanceof RegisterDefinition register) {
         symbols.defineSymbol(register);
         collectSymbols(symbols, register.type);
       } else if (definition instanceof RegisterFileDefinition registerFile) {
         symbols.defineSymbol(registerFile);
-        for (var argType : registerFile.type.argTypes()) {
+        for (var argType : registerFile.typeLiteral.argTypes()) {
           collectSymbols(symbols, argType);
         }
-        collectSymbols(symbols, registerFile.type.resultType());
+        collectSymbols(symbols, registerFile.typeLiteral.resultType());
       } else if (definition instanceof MemoryDefinition memory) {
         symbols.defineSymbol(memory);
         collectSymbols(symbols, memory.addressType);
@@ -376,7 +376,7 @@ class SymbolTable {
         encoding.symbolTable = symbols.createChild();
         for (var fieldEncoding : encoding.encodings.items) {
           collectSymbols(encoding.symbolTable,
-              ((EncodingDefinition.EncodingField) fieldEncoding).value());
+              ((EncodingDefinition.EncodingField) fieldEncoding).value);
         }
       } else if (definition instanceof AliasDefinition alias) {
         symbols.defineSymbol(alias);
@@ -591,7 +591,7 @@ class SymbolTable {
         collectSymbols(symbols, let.valueExpression);
         var child = symbols.createChild();
         for (var identifier : let.identifiers) {
-          child.defineSymbol(identifier.name, identifier);
+          child.defineSymbol(identifier.name, let);
         }
         collectSymbols(child, let.body);
       } else if (stmt instanceof IfStatement ifStmt) {
@@ -643,7 +643,7 @@ class SymbolTable {
       if (expr instanceof LetExpr letExpr) {
         letExpr.symbolTable = symbols.createChild();
         for (var identifier : letExpr.identifiers) {
-          letExpr.symbolTable.defineSymbol(identifier.name, identifier);
+          letExpr.symbolTable.defineSymbol(identifier.name, letExpr);
         }
         collectSymbols(symbols, letExpr.valueExpr);
         collectSymbols(letExpr.symbolTable, letExpr.body);
@@ -773,7 +773,7 @@ class SymbolTable {
       } else if (definition instanceof FunctionDefinition function) {
         resolveSymbols(function.expr);
       } else if (definition instanceof InstructionDefinition instr) {
-        var format = instr.symbolTable().requireAs(instr.type(), FormatDefinition.class);
+        var format = instr.symbolTable().requireAs(instr.typeIdentifier(), FormatDefinition.class);
         if (format != null) {
           instr.symbolTable().extendBy(format.symbolTable());
           instr.formatNode = format;
@@ -797,6 +797,14 @@ class SymbolTable {
                 assembly.symbolTable().findAs((Identifier) identifier, InstructionDefinition.class);
             if (instr != null) {
               assembly.instructionNodes.add(instr);
+
+              if (instr.assemblyDefinition != null) {
+                assembly.symbolTable().reportError(
+                    "Encoding for %s instruction is already defined".formatted(
+                        identifier),
+                    identifier.location());
+              }
+              instr.assemblyDefinition = assembly;
             }
             var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
             if (format != null) {
@@ -806,12 +814,24 @@ class SymbolTable {
         }
         resolveSymbols(assembly.expr);
       } else if (definition instanceof EncodingDefinition encoding) {
+        var inst =
+            encoding.symbolTable().requireAs(encoding.identifier(), InstructionDefinition.class);
+        if (inst != null) {
+          if (inst.encodingDefinition != null) {
+            encoding.symbolTable().reportError(
+                "Encoding for %s instruction is already defined".formatted(encoding.identifier()),
+                encoding.location());
+          } else {
+            inst.encodingDefinition = encoding;
+          }
+        }
+
         var format = encoding.symbolTable().requireInstructionFormat(encoding.identifier());
         if (format != null) {
           encoding.formatNode = format;
           for (var item : encoding.encodings.items) {
             var fieldEncoding = (EncodingDefinition.EncodingField) item;
-            var field = fieldEncoding.field();
+            var field = fieldEncoding.field;
             if (findField(format, field.name) == null) {
               encoding.symbolTable()
                   .reportError("Format field %s not found".formatted(field.name), field.location());

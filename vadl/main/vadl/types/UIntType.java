@@ -34,7 +34,7 @@ public class UIntType extends BitsType {
 
   @Override
   public BitsType withBitWidth(int bitWidth) {
-    return new UIntType(bitWidth);
+    return Type.unsignedInt(bitWidth);
   }
 
   @Override

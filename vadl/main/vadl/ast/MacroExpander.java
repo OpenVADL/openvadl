@@ -439,7 +439,8 @@ class MacroExpander
   @Override
   public Definition visit(CounterDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    return new CounterDefinition(definition.kind, id, definition.type, copyLoc(definition.loc))
+    return new CounterDefinition(definition.kind, id, definition.typeLiteral,
+        copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -461,7 +462,7 @@ class MacroExpander
   @Override
   public Definition visit(RegisterFileDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    return new RegisterFileDefinition(id, definition.type,
+    return new RegisterFileDefinition(id, definition.typeLiteral,
         copyLoc(definition.loc)).withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -1032,8 +1033,8 @@ class MacroExpander
 
   private List<IsEncs> resolveEnc(IsEncs encoding) {
     if (encoding instanceof EncodingDefinition.EncodingField encodingField) {
-      return List.of(new EncodingDefinition.EncodingField(encodingField.field(),
-          expandExpr(encodingField.value())));
+      return List.of(new EncodingDefinition.EncodingField(encodingField.field,
+          expandExpr(encodingField.value)));
     } else if (encoding instanceof EncodingDefinition.EncsNode encodings) {
       var encs = new ArrayList<IsEncs>(encodings.items.size());
       for (IsEncs enc : encodings.items) {
