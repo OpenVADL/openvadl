@@ -1,7 +1,11 @@
 package vadl.ast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.ConstantAsmType;
@@ -27,6 +31,8 @@ public class AsmGrammarDefaultRules {
    */
   public static final String BUILTIN_ASM_NEG = "builtin_asm_neg";
 
+  private static final HashMap<AsmGrammarRuleDefinition, Pattern> patternCache = new HashMap<>();
+
   /**
    * Returns a list of default rules that are not included in the given rules.
    *
@@ -40,6 +46,27 @@ public class AsmGrammarDefaultRules {
     ).toList();
   }
 
+  /**
+   * Get the precompiled regex patterns for terminal rules.
+   * The regex patterns are used to check for LL(1) conflicts in the Asm Grammar.
+   *
+   * @return a map of terminal rules and their corresponding regex patterns
+   */
+  public static Map<AsmGrammarRuleDefinition, Pattern> terminalRuleRegexPatterns() {
+    if (patternCache.entrySet().isEmpty()) {
+      defaultRules().stream()
+          .filter(rule -> rule.isTerminalRule)
+          .forEach(rule -> {
+            var literal = rule.alternatives.alternatives.get(0).get(0).asmLiteral;
+            Objects.requireNonNull(literal);
+            Objects.requireNonNull(literal.stringLiteral);
+            var regex = ((StringLiteral) literal.stringLiteral).value;
+            patternCache.put(rule, Pattern.compile(regex));
+          });
+    }
+    return patternCache;
+  }
+
   private static List<AsmGrammarRuleDefinition> defaultRules() {
     // regex pattern needed for checking LL(1) conflicts
     // in the AsmParser this is handled by the LLVM lexer
@@ -48,19 +75,19 @@ public class AsmGrammarDefaultRules {
         terminalRuleTypeString("STRING", "\\\".*\\\""),
         terminalRuleTypeString("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+"),
         terminalRuleTypeString("COLON", ":"),
-        terminalRuleTypeString("PLUS", "+"),
+        terminalRuleTypeString("PLUS", "\\+"),
         terminalRuleTypeString("MINUS", "-"),
         terminalRuleTypeString("TILDE", "~"),
         terminalRuleTypeString("SLASH", "/"),
         terminalRuleTypeString("BACKSLASH", "\\\\"),
-        terminalRuleTypeString("LPAREN", "("),
-        terminalRuleTypeString("RPAREN", ")"),
-        terminalRuleTypeString("LBRAC", "["),
-        terminalRuleTypeString("RBRAC", "]"),
-        terminalRuleTypeString("LCURLY", "{"),
-        terminalRuleTypeString("RCURLY", "}"),
-        terminalRuleTypeString("STAR", "*"),
-        terminalRuleTypeString("DOT", "."),
+        terminalRuleTypeString("LPAREN", "\\("),
+        terminalRuleTypeString("RPAREN", "\\)"),
+        terminalRuleTypeString("LBRAC", "\\["),
+        terminalRuleTypeString("RBRAC", "\\]"),
+        terminalRuleTypeString("LCURLY", "\\{"),
+        terminalRuleTypeString("RCURLY", "\\}"),
+        terminalRuleTypeString("STAR", "\\*"),
+        terminalRuleTypeString("DOT", "\\."),
         terminalRuleTypeString("COMMA", ","),
         terminalRuleTypeString("DOLLAR", "$"),
         terminalRuleTypeString("EQUAL", "="),
@@ -84,13 +111,14 @@ public class AsmGrammarDefaultRules {
         terminalRuleTypeString("AT", "@"),
         terminalRuleTypeString("MINUSGREATER", "->"),
         terminalRule("EOL", "[\\r(\\r\\n)]", VoidAsmType.instance()),
-        nonTerminalRule("Statement", InstructionAsmType.instance(), instructionRule(),
-            ruleReference("EOL")),
+//        nonTerminalRule("Statement", InstructionAsmType.instance(), instructionRule(),
+//            ruleReference("EOL")),
         nonTerminalRule("Register", RegisterAsmType.instance(), ruleReference("IDENTIFIER")),
-        nonTerminalRule("ImmediateOperand", null, ruleReference("Expression")),
+//        nonTerminalRule("ImmediateOperand", null, ruleReference("Expression")),
         nonTerminalRule("Identifier", StringAsmType.instance(), ruleReference("IDENTIFIER")),
-        nonTerminalRule("Expression", ExpressionAsmType.instance(), ruleReference("Expression")),
-        nonTerminalRule("Instruction", InstructionAsmType.instance(), ruleReference("Instruction")),
+        // FIXME: fix infinite recursion
+//      nonTerminalRule("Expression", ExpressionAsmType.instance(), ruleReference("Expression")),
+//      nonTerminalRule("Instruction", InstructionAsmType.instance(), ruleReference("Instruction")),
         integerRule(),
         nonTerminalRule("Natural", ConstantAsmType.instance(), ruleReference("INTEGER")),
         nonTerminalRule("Label", SymbolAsmType.instance(), ruleReference("Identifier"))
@@ -144,7 +172,7 @@ public class AsmGrammarDefaultRules {
     );
     grammarLiteral.asmType = terminalRuleType;
 
-    return new AsmGrammarRuleDefinition(
+    var rule = new AsmGrammarRuleDefinition(
         new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
         null,
         new AsmGrammarAlternativesDefinition(
@@ -158,6 +186,8 @@ public class AsmGrammarDefaultRules {
         ),
         SourceLocation.INVALID_SOURCE_LOCATION
     );
+    rule.isTerminalRule = true;
+    return rule;
   }
 
   private static AsmGrammarRuleDefinition nonTerminalRule(String name, @Nullable AsmType ruleType,
@@ -211,12 +241,12 @@ public class AsmGrammarDefaultRules {
     return rule;
   }
 
-  private static AsmGrammarElementDefinition instructionRule() {
-    var instructionElement = ruleReference("Instruction", InstructionAsmType.instance());
-    instructionElement.attribute =
-        new Identifier("instruction", SourceLocation.INVALID_SOURCE_LOCATION);
-    return instructionElement;
-  }
+//  private static AsmGrammarElementDefinition instructionRule() {
+//    var instructionElement = ruleReference("Instruction", InstructionAsmType.instance());
+//    instructionElement.attribute =
+//        new Identifier("instruction", SourceLocation.INVALID_SOURCE_LOCATION);
+//    return instructionElement;
+//  }
 
   private static AsmGrammarElementDefinition ruleReference(String refName) {
     return ruleReference(refName, null);
