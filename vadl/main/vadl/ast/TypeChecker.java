@@ -184,6 +184,34 @@ public class TypeChecker
     return null;
   }
 
+  @Nullable
+  private static BuiltInTable.BuiltIn getBuiltIn(String name) {
+    // FIXME: Namespace should be propper resolved and not that hacky
+    if (name.startsWith("VADL::")) {
+      name = name.substring("VADL::".length());
+    }
+
+    // FIXME: THIS IS A TEMPORARY HACK! Propper selection should happen based on types.
+    var hackyRewrites = Map.of("div", "sdiv", "mod", "smod");
+    if (hackyRewrites.containsKey(name)) {
+      name = hackyRewrites.get(name);
+    }
+
+    String finalBuiltinName = name;
+    var matchingBuiltin = BuiltInTable.builtIns()
+        .filter(b -> b.name().toLowerCase().equals(finalBuiltinName)).toList();
+
+    if (matchingBuiltin.size() > 1) {
+      throw new IllegalStateException("Multiple builtin match '$s': " + finalBuiltinName);
+    }
+
+    if (matchingBuiltin.isEmpty()) {
+      return null;
+    }
+
+    return matchingBuiltin.get(0);
+  }
+
   @Override
   public Void visit(ConstantDefinition definition) {
     definition.value.accept(this);
@@ -1269,6 +1297,37 @@ public class TypeChecker
       rightTyp = Objects.requireNonNull(expr.right.type);
     }
 
+    // Long Multiply has different rules than all other arithmetic operations
+    if (expr.operator() == Operator.LongMultiply) {
+      // At this point both must be Bits or a subtype
+      var leftBitWidth = ((BitsType) leftTyp).bitWidth();
+      var rightBitWidth = ((BitsType) rightTyp).bitWidth();
+      if (leftBitWidth != rightBitWidth) {
+        throw Diagnostic.error("Type Mismatch", expr)
+            .description("Both sides must have the same width but left is `%s` while right is `%s`",
+                leftTyp, rightTyp)
+            .build();
+      }
+
+      // Rules determining the return type (switched input operators omitted because of
+      // commutative property)
+      // SInt<N> +# SInt<N> -> SInt<2*N>
+      // SInt<N> +# UInt<N> -> SInt<2*N>
+      // SInt<N> +# Bits<N> -> SInt<2*N>
+      // UInt<N> +# UInt<N> -> UInt<2*N>
+      // UInt<N> +# Bits<N> -> UInt<2*N>
+      // Bits<N> +# Bits<N> -> Bits<2*N>
+      if (leftTyp instanceof SIntType || rightTyp instanceof SIntType) {
+        expr.type = Type.signedInt(leftBitWidth * 2);
+        return null;
+      } else if (leftTyp instanceof UIntType || rightTyp instanceof UIntType) {
+        expr.type = Type.unsignedInt(leftBitWidth * 2);
+        return null;
+      } else {
+        expr.type = Type.bits(leftBitWidth * 2);
+      }
+    }
+
     var bitWidth = ((BitsType) leftTyp).bitWidth();
     var sizedUInt = Type.unsignedInt(bitWidth);
     var sizedSInt = Type.signedInt(bitWidth);
@@ -1593,9 +1652,13 @@ public class TypeChecker
     }
 
     // Handle register
+    if (!(expr.target instanceof Identifier)) {
+      System.out.println();
+    }
+
     var registerFile =
         Objects.requireNonNull(expr.symbolTable)
-            .findAs((Identifier) expr.target.path(), RegisterFileDefinition.class);
+            .findAs(expr.target.path().pathToString(), RegisterFileDefinition.class);
 
     if (registerFile != null) {
       if (expr.argsIndices.size() != 1 || expr.argsIndices.get(0).size() != 1) {
@@ -1629,7 +1692,7 @@ public class TypeChecker
 
     // Handle memory
     var memDef = Objects.requireNonNull(expr.symbolTable)
-        .findAs((Identifier) expr.target.path(), MemoryDefinition.class);
+        .findAs(expr.target.path().pathToString(), MemoryDefinition.class);
     if (memDef != null) {
       if (expr.argsIndices.size() != 1 || expr.argsIndices.get(0).size() != 1) {
         throw Diagnostic.error("Invalid Memory Usage", expr)
@@ -1675,7 +1738,7 @@ public class TypeChecker
 
     // Handle Counter
     var counterDef = Objects.requireNonNull(expr.symbolTable)
-        .findAs((Identifier) expr.target.path(), CounterDefinition.class);
+        .findAs(expr.target.path().pathToString(), CounterDefinition.class);
     if (counterDef != null) {
       if (counterDef.typeLiteral.type == null) {
         counterDef.accept(this);
@@ -1710,19 +1773,51 @@ public class TypeChecker
       return null;
     }
 
-    // Builtin function
-    var matchingBuiltin = BuiltInTable.builtIns()
-        .filter(b -> b.name().toLowerCase().equals(((Identifier) expr.target).name)).toList();
-    if (matchingBuiltin.size() == 1) {
-      var builtin = matchingBuiltin.get(0);
-      if (expr.argsIndices.size() != 1) {
-        // FIXME: Investigate this
-        throw new IllegalStateException("I don't even know what that means");
+    // User defined functions
+    var functionDef = Objects.requireNonNull(expr.symbolTable)
+        .findAs(expr.target.path().pathToString(), FunctionDefinition.class);
+    if (functionDef != null) {
+      if (functionDef.type == null) {
+        functionDef.accept(this);
       }
 
-      var args = expr.argsIndices.get(0);
-      args.forEach(a -> a.accept(this));
-      var argTypes = args.stream().map(a -> a.type).toList();
+      var funcType = Objects.requireNonNull(functionDef.type);
+      var expectedArgCount = funcType.argTypes().size();
+      var actualArgCount = expr.flatArgs().size();
+      if (expectedArgCount != actualArgCount) {
+        throw Diagnostic.error("Invalid Function Call", expr)
+            .description("Expected %s arguments but got `%s`", expectedArgCount, actualArgCount)
+            .build();
+      }
+
+      // NOTE: This code is so cursed because we are retaining the structure of the code rather than
+      // the semantic in the AST.
+      int argCount = 0;
+      for (var i = 0; i < expr.argsIndices.size(); i++) {
+        for (var j = 0; j < expr.argsIndices.get(i).size(); j++) {
+          var argNode = expr.argsIndices.get(i).get(j);
+          argNode.accept(this);
+          expr.argsIndices.get(i)
+              .set(j, wrapImplicitCast(argNode, funcType.argTypes().get(argCount)));
+          argNode = expr.argsIndices.get(i).get(j);
+          if (!Objects.requireNonNull(argNode.type).equals(funcType.argTypes().get(argCount))) {
+            throw Diagnostic.error("Type Mismatch", argNode)
+                .description("Expected %s but got `%s`", funcType.argTypes(), argNode)
+                .build();
+          }
+          argCount++;
+        }
+      }
+
+      expr.type = funcType.resultType();
+      return null;
+    }
+
+    // Builtin function
+    var builtin = getBuiltIn(expr.target.path().pathToString());
+    if (builtin != null) {
+      expr.flatArgs().forEach(a -> a.accept(this));
+      var argTypes = Objects.requireNonNull(expr.flatArgs().stream().map(v -> v.type)).toList();
 
       if (!builtin.takes(argTypes)) {
         throw Diagnostic.error("Type Mismatch", expr)
@@ -1734,16 +1829,44 @@ public class TypeChecker
       return null;
     }
 
-    // FIXME also include user defined functions
-
-    throw Diagnostic.error("Unknown callable `%s`".formatted(expr.target), expr.location)
+    throw Diagnostic.error("Unknown callable `%s`".formatted(expr.target.path().pathToString()),
+            expr.location)
         .description("No function, builtin or register file with that name exists.")
         .build();
   }
 
+  @SuppressWarnings("UnusedVariable")
   @Override
   public Void visit(IfExpr expr) {
-    throwUnimplemented(expr);
+    expr.condition.accept(this);
+    var condType = Objects.requireNonNull(expr.condition.type);
+    if (condType != Type.bool()) {
+      throw Diagnostic.error("Type Mismatch", expr.condition)
+          .description("Expected %s but got `%s`", condType, condType)
+          .build();
+    }
+
+    expr.thenExpr.accept(this);
+    expr.elseExpr.accept(this);
+    var thenType = Objects.requireNonNull(expr.thenExpr.type);
+    var elseType = Objects.requireNonNull(expr.elseExpr.type);
+
+    // Apply general implicit casting rules after specialised once.
+    expr.thenExpr = wrapImplicitCast(expr.thenExpr, elseType);
+    thenType = Objects.requireNonNull(expr.thenExpr.type);
+    expr.elseExpr = wrapImplicitCast(expr.elseExpr, thenType);
+    elseType = Objects.requireNonNull(expr.elseExpr.type);
+
+    if (!thenType.equals(elseType)) {
+      throw Diagnostic.error("Type Mismatch", expr)
+          .description(
+              "Both the than and else branch should have the same type "
+                  + "but than is `%s` and else is `%s`.",
+              thenType, elseType)
+          .build();
+    }
+
+    expr.type = thenType;
     return null;
   }
 

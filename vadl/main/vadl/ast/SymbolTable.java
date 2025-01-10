@@ -153,7 +153,11 @@ class SymbolTable {
   }
 
   <T extends Node> @Nullable T findAs(Identifier usage, Class<T> type) {
-    var origin = resolveNode(usage.name);
+    return findAs(usage.name, type);
+  }
+
+  <T extends Node> @Nullable T findAs(String name, Class<T> type) {
+    var origin = resolveNode(name);
     if (type.isInstance(origin)) {
       return type.cast(origin);
     }
@@ -732,6 +736,9 @@ class SymbolTable {
             collectSymbols(symbols, sizeExpr);
           }
         }
+      } else if (expr instanceof RangeExpr rangeExpr) {
+        collectSymbols(symbols, rangeExpr.from);
+        collectSymbols(symbols, rangeExpr.to);
       }
 
     }

@@ -77,7 +77,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     BinOpFuncs.put(Operator.Multiply, BigInteger::multiply);
     BinOpFuncs.put(Operator.Divide, BigInteger::divide);
     BinOpFuncs.put(Operator.Modulo, BigInteger::mod);
-    //BinOpFuncs.put(Operator.LongMultiply, BigInteger::add);
+    BinOpFuncs.put(Operator.LongMultiply, BigInteger::multiply);
     //BinOpFuncs.put(Operator.In, BigInteger::add);
     //BinOpFuncs.put(Operator.NotIn, BigInteger::add);
     //BinOpFuncs.put(Operator.ElementOf, BigInteger::add);
