@@ -37,7 +37,6 @@ import vadl.utils.WithSourceLocation;
 public class TypeChecker
     implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void> {
 
-  private static final Logger log = LoggerFactory.getLogger(TypeChecker.class);
   //private final List<Diagnostic> errors = new ArrayList<>();
   private final ConstantEvaluator constantEvaluator;
 
@@ -58,11 +57,9 @@ public class TypeChecker
   }
 
   private void throwUnimplemented(Node node) {
-    //    throw new RuntimeException(
-    //        "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
-    //            node.getClass().getSimpleName(), node.location().toIDEString()));
-    log.error("The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
-        node.getClass().getSimpleName(), node.location().toIDEString()));
+    throw new RuntimeException(
+        "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
+            node.getClass().getSimpleName(), node.location().toIDEString()));
   }
 
   private IllegalStateException buildIllegalStateException(Node node, String message) {
