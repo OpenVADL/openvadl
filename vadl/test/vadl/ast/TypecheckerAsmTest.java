@@ -615,6 +615,10 @@ public class TypecheckerAsmTest {
             A : "a" C;
             B : A "x";
             C : [Register];
+        
+            //A : B C;
+            //B : Integer;
+            //C : ("c" | "c");
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
