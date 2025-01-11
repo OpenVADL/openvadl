@@ -11,7 +11,7 @@ import vadl.viam.ViamError;
 public enum MachineInstructionLabelGroup {
   BRANCH_INSTRUCTIONS;
 
-  public final static Set<MachineInstructionLabel> branchMachineInstructions = Set.of(
+  public static final Set<MachineInstructionLabel> branchMachineInstructions = Set.of(
       MachineInstructionLabel.BEQ,
       MachineInstructionLabel.BSGEQ,
       MachineInstructionLabel.BSGTH,

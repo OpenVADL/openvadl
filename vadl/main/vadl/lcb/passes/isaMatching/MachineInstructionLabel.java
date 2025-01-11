@@ -100,8 +100,8 @@ public enum MachineInstructionLabel {
 
   /**
    * Return the {@link LlvmCondCode} given a branch {@link MachineInstructionLabel}.
-   * This method will return {@code null} when there is no mapping or the {@link MachineInstructionLabel}
-   * is not a branch.
+   * This method will return {@code null} when there is no mapping or the
+   * {@link MachineInstructionLabel} is not a branch.
    */
   @Nullable
   public static LlvmCondCode getLlvmCondCodeByLabel(MachineInstructionLabel label) {

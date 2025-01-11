@@ -88,9 +88,8 @@ public class Query {
     private final List<BehaviorQuery> withBehavior = new ArrayList<>();
 
     /**
-     *
-  * Set a machine instruction label group
-*/
+     * Set a machine instruction label group.
+     */
     public Builder machineInstructionLabelGroup(MachineInstructionLabelGroup group) {
       this.machineInstructionLabelGroup = group;
       return this;

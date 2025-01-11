@@ -117,9 +117,10 @@ public class Database {
 
   /**
    * The compiler generator has a pass which tries to assign {@link MachineInstructionLabel} for
-   * an {@link Instruction}. This is useful when we want to find an {@link Instruction} with a certain
-   * property. However, in some cases, we need to do opposite. We have an {@link Instruction} and
-   * require the {@link MachineInstructionLabel}. This method flips the matched {@link Map}.
+   * an {@link Instruction}. This is useful when we want to find an {@link Instruction} with
+   * a certain property. However, in some cases, we need to do opposite. We have an
+   * {@link Instruction} and require the {@link MachineInstructionLabel}. This method flips the
+   * matched {@link Map}.
    */
   public IdentityHashMap<Instruction, MachineInstructionLabel> flipMachineInstructions() {
     return LlvmLoweringPass.flipMachineInstructions(labelledMachineInstructions);
