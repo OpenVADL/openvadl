@@ -234,7 +234,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
               .withCopyFileToContainer(MountableFile.forHostPath(inHostPath), inContainerPath)
               .withCommand(cmd);
 
-          for(var v : env.entrySet()) {
+          for (var v : env.entrySet()) {
             container
                 .withEnv(v.getKey(), v.getValue());
           }
