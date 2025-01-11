@@ -1,7 +1,9 @@
 package vadl.ast;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -59,22 +61,40 @@ class AsmToken {
     this.ruleName = ruleName;
     this.stringLiteral = stringLiteral;
   }
-}
-
-class FirstSetComputer implements AsmGrammarEntityVisitor<List<AsmToken>> {
-
-  private final HashMap<String, List<AsmToken>> firstSetCache = new HashMap<>();
 
   @Override
-  public List<AsmToken> visit(AsmGrammarRuleDefinition entity) {
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AsmToken asmToken = (AsmToken) o;
+    return Objects.equals(ruleName, asmToken.ruleName) &&
+        Objects.equals(stringLiteral, asmToken.stringLiteral);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(ruleName, stringLiteral);
+  }
+}
+
+class FirstSetComputer implements AsmGrammarEntityVisitor<HashSet<AsmToken>> {
+
+  private final HashMap<String, HashSet<AsmToken>> firstSetCache = new HashMap<>();
+
+  @Override
+  public HashSet<AsmToken> visit(AsmGrammarRuleDefinition entity) {
     var ruleName = entity.identifier().name;
     if (firstSetCache.containsKey(ruleName)) {
       return firstSetCache.get(ruleName);
     }
 
-    List<AsmToken> firstSet;
+    HashSet<AsmToken> firstSet;
     if (entity.isTerminalRule) {
-      firstSet = new ArrayList<>(List.of(new AsmToken(ruleName, null)));
+      firstSet = new HashSet<>(List.of(new AsmToken(ruleName, null)));
     } else {
       firstSet = entity.alternatives.accept(this);
     }
@@ -84,20 +104,20 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<List<AsmToken>> {
   }
 
   @Override
-  public List<AsmToken> visit(AsmGrammarAlternativesDefinition entity) {
+  public HashSet<AsmToken> visit(AsmGrammarAlternativesDefinition entity) {
 
-    var alternativesTokens = new ArrayList<AsmToken>();
+    var alternativesTokens = new HashSet<AsmToken>();
 
     for (var alternative : entity.alternatives) {
       var firstEntityTokens = computeFirstSetOfGroup(alternative);
-      alternativesTokens.addAll(firstEntityTokens); // TODO: prevent duplicates
+      alternativesTokens.addAll(firstEntityTokens);
     }
 
     return alternativesTokens;
   }
 
   @Override
-  public List<AsmToken> visit(AsmGrammarElementDefinition entity) {
+  public HashSet<AsmToken> visit(AsmGrammarElementDefinition entity) {
     // only ever one of these fields is non-null
     // so the order of the statements has no effect
     if (entity.groupAlternatives != null) {
@@ -115,24 +135,24 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<List<AsmToken>> {
     if (entity.localVar != null) {
       return entity.localVar.accept(this);
     }
-    return new ArrayList<>();
+    return new HashSet<>();
   }
 
   @Override
-  public List<AsmToken> visit(AsmGrammarLocalVarDefinition entity) {
+  public HashSet<AsmToken> visit(AsmGrammarLocalVarDefinition entity) {
     if (entity.asmLiteral.id != null && entity.asmLiteral.id.name.equals("null")) {
-      return new ArrayList<>();
+      return new HashSet<>();
     }
     return entity.asmLiteral.accept(this);
   }
 
   @Override
-  public List<AsmToken> visit(AsmGrammarLiteralDefinition entity) {
+  public HashSet<AsmToken> visit(AsmGrammarLiteralDefinition entity) {
 
     if (entity.stringLiteral != null) {
       var stringValue = ((StringLiteral) entity.stringLiteral).value;
       var inferredRule = inferTerminalRule(stringValue);
-      return new ArrayList<>(List.of(new AsmToken(inferredRule.identifier().name, stringValue)));
+      return new HashSet<>(List.of(new AsmToken(inferredRule.identifier().name, stringValue)));
     }
 
     Objects.requireNonNull(entity.id);
@@ -147,12 +167,12 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<List<AsmToken>> {
 
     if (invocationSymbolOrigin instanceof AsmGrammarLocalVarDefinition) {
       // on usage of local variable, there is nothing to be parsed
-      return new ArrayList<>();
+      return new HashSet<>();
     }
 
     if (invocationSymbolOrigin instanceof FunctionDefinition) {
 
-      List<AsmToken> tokens = new ArrayList<>();
+      HashSet<AsmToken> tokens = new HashSet<>();
 
       // get the tokens of the first parameter that needs to be parsed
       // it can be the case that no parameter needs to be parsed
@@ -163,13 +183,13 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<List<AsmToken>> {
       return tokens;
     }
 
-    return new ArrayList<>();
+    return new HashSet<>();
   }
 
-  public List<AsmToken> computeFirstSetOfGroup(
+  public HashSet<AsmToken> computeFirstSetOfGroup(
       @Nullable List<AsmGrammarElementDefinition> elements) {
     if (elements == null) {
-      return new ArrayList<>();
+      return new HashSet<>();
     }
 
     AsmGrammarElementDefinition firstEntity = elements.get(0);
@@ -192,13 +212,13 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<List<AsmToken>> {
     }
 
     if (firstEntity.optionAlternatives != null || firstEntity.repetitionAlternatives != null) {
-      List<AsmToken> successorTokens = null;
+      Collection<AsmToken> successorTokens = null;
       while ((successorTokens == null || successorTokens.isEmpty()) && i < elements.size()) {
         successorTokens = elements.get(i).accept(this);
         i++;
       }
       if (successorTokens != null) {
-        firstEntityTokens.addAll(successorTokens);  // TODO: prevent duplicates
+        firstEntityTokens.addAll(successorTokens);
       }
     }
     return firstEntityTokens;
@@ -226,8 +246,11 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
   private final FirstSetComputer firstSetComputer = new FirstSetComputer();
   private final EntityDeletableComputer deletableComputer = new EntityDeletableComputer();
 
-  private final HashMap<String, List<AsmToken>> followSetCache = new HashMap<>();
-  private final HashMap<String, List<String>> rulesWhosFollowSetsHaveToBeAdded = new HashMap<>();
+  private final HashMap<String, HashSet<AsmToken>> followSetCache = new HashMap<>();
+
+  // a mapping of "RuleA" -> ["RuleB","RuleC",...]
+  // the follow sets of ["RuleB","RuleC",...] need to be merged into the follow set of "RuleA"
+  private final HashMap<String, HashSet<String>> followSetsToBeMergedFrom = new HashMap<>();
 
   @Nullable
   private String currentRuleName;
@@ -254,7 +277,7 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
   }
 
   private void complete(String ruleName) {
-    var rulesToGetFollowFrom = rulesWhosFollowSetsHaveToBeAdded.get(ruleName);
+    var rulesToGetFollowFrom = followSetsToBeMergedFrom.get(ruleName);
     if (rulesToGetFollowFrom == null) {
       return;
     }
@@ -262,12 +285,12 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
       complete(otherRule);
 
       if (followSetCache.get(otherRule) != null) {
-        followSetCache.computeIfAbsent(ruleName, key -> new ArrayList<>())
-            .addAll(followSetCache.get(otherRule)); // TODO: avoid duplicates
+        followSetCache.computeIfAbsent(ruleName, key -> new HashSet<>())
+            .addAll(followSetCache.get(otherRule));
       }
 
       if (otherRule.equals(currentRuleName)) {
-        rulesWhosFollowSetsHaveToBeAdded.put(currentRuleName, new ArrayList<>());
+        followSetsToBeMergedFrom.put(currentRuleName, new HashSet<>());
       }
     }
   }
@@ -340,12 +363,12 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
 
       var invokedRule = rule.identifier().name;
       var invokedRuleFollowSet =
-          followSetCache.computeIfAbsent(invokedRule, key -> new ArrayList<>());
+          followSetCache.computeIfAbsent(invokedRule, key -> new HashSet<>());
       invokedRuleFollowSet.addAll(firstSetComputer.computeFirstSetOfGroup(successorElements));
 
       if (successorElements == null ||
           deletableComputer.areAllElementsDeletable(successorElements)) {
-        rulesWhosFollowSetsHaveToBeAdded.computeIfAbsent(invokedRule, key -> new ArrayList<>())
+        followSetsToBeMergedFrom.computeIfAbsent(invokedRule, key -> new HashSet<>())
             .add(currentRuleName);
       }
     }
