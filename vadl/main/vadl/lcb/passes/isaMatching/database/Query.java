@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.viam.ViamError;
 
@@ -18,6 +19,9 @@ public class Query {
   @Nullable
   private PseudoInstructionLabel pseudoInstructionLabel;
 
+  @Nullable
+  private MachineInstructionLabelGroup machineInstructionLabelGroup;
+
   private final List<BehaviorQuery> withBehavior;
 
   private final List<Query> or;
@@ -28,11 +32,13 @@ public class Query {
   public Query(@Nullable MachineInstructionLabel machineInstructionLabel,
                @Nullable PseudoInstructionLabel pseudoInstructionLabel,
                List<Query> or,
+               @Nullable MachineInstructionLabelGroup machineInstructionLabelGroup,
                List<BehaviorQuery> withBehavior) {
     this.machineInstructionLabel = machineInstructionLabel;
     this.pseudoInstructionLabel = pseudoInstructionLabel;
     this.withBehavior = withBehavior;
     this.or = or;
+    this.machineInstructionLabelGroup = machineInstructionLabelGroup;
   }
 
   @Nullable
@@ -43,6 +49,11 @@ public class Query {
   @Nullable
   public PseudoInstructionLabel pseudoInstructionLabel() {
     return pseudoInstructionLabel;
+  }
+
+  @Nullable
+  public MachineInstructionLabelGroup machineInstructionLabelGroup() {
+    return machineInstructionLabelGroup;
   }
 
   /**
@@ -63,6 +74,8 @@ public class Query {
    * Builder for the Query.
    */
   public static class Builder {
+    @Nullable
+    private MachineInstructionLabelGroup machineInstructionLabelGroup;
 
     @Nullable
     private MachineInstructionLabel machineInstructionLabel;
@@ -73,6 +86,11 @@ public class Query {
     private final List<Query> or = new ArrayList<>();
 
     private final List<BehaviorQuery> withBehavior = new ArrayList<>();
+
+    public Builder machineInstructionLabelGroup(MachineInstructionLabelGroup group) {
+      this.machineInstructionLabelGroup = group;
+      return this;
+    }
 
     public Builder machineInstructionLabel(MachineInstructionLabel machineInstructionLabel) {
       this.machineInstructionLabel = machineInstructionLabel;
@@ -111,7 +129,8 @@ public class Query {
     }
 
     public Query build() {
-      return new Query(machineInstructionLabel, pseudoInstructionLabel, or, withBehavior);
+      return new Query(machineInstructionLabel, pseudoInstructionLabel, or,
+          machineInstructionLabelGroup, withBehavior);
     }
   }
 }
