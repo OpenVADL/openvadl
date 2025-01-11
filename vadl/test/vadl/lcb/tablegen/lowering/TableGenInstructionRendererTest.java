@@ -45,6 +45,7 @@ class TableGenInstructionRendererTest extends AbstractTest {
         false,
         false,
         false,
+        false,
         false
     );
     var instruction =
