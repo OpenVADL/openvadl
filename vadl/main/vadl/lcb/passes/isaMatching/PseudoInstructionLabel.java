@@ -9,5 +9,12 @@ import vadl.viam.PseudoInstruction;
  */
 public enum PseudoInstructionLabel {
   LI,
-  J
+  J,
+  /* BRANCHES */
+  BEQZ,
+  BNEZ,
+  BLEZ,
+  BGEZ,
+  BLTZ,
+  BGTZ
 }

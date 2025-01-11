@@ -68,10 +68,44 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
         pseudoInstructionMatched.put(PseudoInstructionLabel.J, List.of(pseudoInstruction));
       } else if (findLi(flipped, pseudoInstruction)) {
         pseudoInstructionMatched.put(PseudoInstructionLabel.LI, List.of(pseudoInstruction));
+      } else if (findBeqz(flipped, pseudoInstruction)) {
+        pseudoInstructionMatched.put(PseudoInstructionLabel.BEQZ, List.of(pseudoInstruction));
+      } else if (findBnez(flipped, pseudoInstruction)) {
+        pseudoInstructionMatched.put(PseudoInstructionLabel.BNEZ, List.of(pseudoInstruction));
+      } else if (findBlez(flipped, pseudoInstruction)) {
+        pseudoInstructionMatched.put(PseudoInstructionLabel.BLEZ, List.of(pseudoInstruction));
+      } else if (findBgez(flipped, pseudoInstruction)) {
+        pseudoInstructionMatched.put(PseudoInstructionLabel.BGEZ, List.of(pseudoInstruction));
+      } else if (findBgtz(flipped, pseudoInstruction)) {
+        pseudoInstructionMatched.put(PseudoInstructionLabel.BGTZ, List.of(pseudoInstruction));
       }
     });
 
     return Collections.unmodifiableMap(pseudoInstructionMatched);
+  }
+
+  private boolean findBgtz(IdentityHashMap<Instruction, MachineInstructionLabel> flipped,
+                           PseudoInstruction pseudoInstruction) {
+    return false;
+  }
+
+  private boolean findBgez(IdentityHashMap<Instruction, MachineInstructionLabel> flipped,
+                           PseudoInstruction pseudoInstruction) {
+    return false;
+  }
+
+  private boolean findBlez(IdentityHashMap<Instruction, MachineInstructionLabel> flipped,
+                           PseudoInstruction pseudoInstruction) {
+    return false;
+  }
+
+  private boolean findBnez(IdentityHashMap<Instruction, MachineInstructionLabel> flipped, PseudoInstruction pseudoInstruction) {
+    return false;
+  }
+
+  private boolean findBeqz(IdentityHashMap<Instruction, MachineInstructionLabel> flipped,
+                           PseudoInstruction pseudoInstruction) {
+    return false;
   }
 
   private boolean findLi(IdentityHashMap<Instruction, MachineInstructionLabel> flipped,
