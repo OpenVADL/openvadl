@@ -20,6 +20,7 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "Utils/ImmediateUtils.h"
 #include <math.h>
+#include <iostream>
 
 #define DEBUG_TYPE "[(${namespace})]InstrInfo"
 #include "llvm/Support/Debug.h"
@@ -304,6 +305,7 @@ bool [(${namespace})]InstrInfo::analyzeBranch(MachineBasicBlock &MBB, MachineBas
 bool [(${namespace})]InstrInfo::isBranchOffsetInRange(unsigned BranchOp, int64_t BrOffset) const {
   switch (BranchOp) {
     default:
+      std::cerr << "Op " << BranchOp << std::endl;
       llvm_unreachable("Unexpected opcode!");
     [# th:each="branch : ${branchInstructions}" ]
     case [(${namespace})]::[(${branch.name})]:
