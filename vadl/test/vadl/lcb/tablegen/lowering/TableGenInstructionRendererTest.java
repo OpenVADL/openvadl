@@ -64,7 +64,6 @@ class TableGenInstructionRendererTest extends AbstractTest {
 
     // Then
     assertThat(result).isEqualToIgnoringWhitespace("""
-        
         def nameValue : Instruction
         {
         let Namespace = "namespaceValue";
@@ -97,6 +96,7 @@ class TableGenInstructionRendererTest extends AbstractTest {
         let isCodeGenOnly = 0;
         let mayLoad       = 0;
         let mayStore      = 0;
+        let isBarrier     = 0;
                 
         let Constraints = "";
         let AddedComplexity = 0;
