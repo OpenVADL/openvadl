@@ -1,5 +1,8 @@
 package vadl.lcb.passes.isaMatching;
 
+import java.util.HashMap;
+import javax.annotation.Nullable;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.viam.Instruction;
 
 /**
@@ -74,5 +77,34 @@ public enum MachineInstructionLabel {
   CONDITIONAL MOVE
    */
   CMOVE_32,
-  CMOVE_64,
+  CMOVE_64;
+
+  /**
+   * The names of LLVM's cond code given a machine instruction label.
+   */
+  public static final HashMap<MachineInstructionLabel, LlvmCondCode> branchInstructionMapping =
+      new HashMap<>();
+
+  static {
+    branchInstructionMapping.put(MachineInstructionLabel.BEQ, LlvmCondCode.SETEQ);
+    branchInstructionMapping.put(MachineInstructionLabel.BSGEQ, LlvmCondCode.SETGE);
+    branchInstructionMapping.put(MachineInstructionLabel.BSGTH, LlvmCondCode.SETGT);
+    branchInstructionMapping.put(MachineInstructionLabel.BSLEQ, LlvmCondCode.SETLE);
+    branchInstructionMapping.put(MachineInstructionLabel.BSLTH, LlvmCondCode.SETLT);
+    branchInstructionMapping.put(MachineInstructionLabel.BUGEQ, LlvmCondCode.SETUGE);
+    branchInstructionMapping.put(MachineInstructionLabel.BUGTH, LlvmCondCode.SETUGT);
+    branchInstructionMapping.put(MachineInstructionLabel.BULEQ, LlvmCondCode.SETULE);
+    branchInstructionMapping.put(MachineInstructionLabel.BULTH, LlvmCondCode.SETULT);
+    branchInstructionMapping.put(MachineInstructionLabel.BNEQ, LlvmCondCode.SETNE);
+  }
+
+  /**
+   * Return the {@link LlvmCondCode} given a branch {@link MachineInstructionLabel}.
+   * This method will return {@code null} when there is no mapping or the {@link MachineInstructionLabel}
+   * is not a branch.
+   */
+  @Nullable
+  public static LlvmCondCode getLlvmCondCodeByLabel(MachineInstructionLabel label) {
+    return branchInstructionMapping.get(label);
+  }
 }

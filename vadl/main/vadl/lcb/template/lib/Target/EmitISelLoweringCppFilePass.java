@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
@@ -17,6 +16,7 @@ import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -94,6 +94,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         .map(LlvmRegisterFile::new)
         .toList());
     map.put("argumentRegisters", abi.argumentRegisters());
+    map.put("stackPointerBitWidth", abi.stackPointer().registerFile().resultType().bitWidth());
     map.put("stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
     map.put("addressSequence", addressSequence);
@@ -111,36 +112,17 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   private List<BranchInstruction> getBranchInstructions(
       Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
     final var result = new ArrayList<BranchInstruction>();
-    final var branchInstructions = Set.of(
-        MachineInstructionLabel.BEQ,
-        MachineInstructionLabel.BSGEQ,
-        MachineInstructionLabel.BSGTH,
-        MachineInstructionLabel.BSLEQ,
-        MachineInstructionLabel.BSLTH,
-        MachineInstructionLabel.BUGEQ,
-        MachineInstructionLabel.BUGTH,
-        MachineInstructionLabel.BULEQ,
-        MachineInstructionLabel.BULTH,
-        MachineInstructionLabel.BNEQ
-    );
-    var translation = new HashMap<MachineInstructionLabel, String>();
-    translation.put(MachineInstructionLabel.BEQ, "SETEQ");
-    translation.put(MachineInstructionLabel.BSGEQ, "SETGE");
-    translation.put(MachineInstructionLabel.BSGTH, "SETGT");
-    translation.put(MachineInstructionLabel.BSLEQ, "SETLE");
-    translation.put(MachineInstructionLabel.BSLTH, "SETLT");
-    translation.put(MachineInstructionLabel.BUGEQ, "SETUGE");
-    translation.put(MachineInstructionLabel.BUGTH, "SETUGT");
-    translation.put(MachineInstructionLabel.BULEQ, "SETULE");
-    translation.put(MachineInstructionLabel.BULTH, "SETULT");
-    translation.put(MachineInstructionLabel.BNEQ, "SETNE");
 
-    branchInstructions.forEach(bi -> {
+    MachineInstructionLabelGroup.branchMachineInstructions.forEach(bi -> {
       var entry = labelledMachineInstructions.get(bi);
       if (entry != null) {
         var instruction = getFirstInstruction(entry);
+        var condCode = ensureNonNull(MachineInstructionLabel.getLlvmCondCodeByLabel(bi),
+            () -> Diagnostic.error("There is no cond code for the machine instruction label.",
+                instruction.sourceLocation()));
+
         result.add(new BranchInstruction(instruction.simpleName(),
-            Objects.requireNonNull(translation.get(bi))));
+            condCode.name()));
       }
     });
 

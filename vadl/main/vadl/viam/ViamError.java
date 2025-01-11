@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
 import vadl.utils.SourceLocation;
@@ -212,6 +213,7 @@ public class ViamError extends RuntimeException {
    */
   @Contract("null, _  -> fail")
   @FormatMethod
+  @NotNull
   public static <T> T ensureNonNull(@Nullable T obj, String msg) {
     ensure(obj != null, msg);
     return obj;
@@ -227,6 +229,7 @@ public class ViamError extends RuntimeException {
    * @param diagnosticSupplier is the function which provides the {@link Diagnostic}.
    * @throws Diagnostic if the condition is false
    */
+  @NotNull
   public static <T> T ensureNonNull(@Nullable T obj,
                                     Supplier<DiagnosticBuilder> diagnosticSupplier) {
     ensure(obj != null, diagnosticSupplier);

@@ -10,6 +10,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
+#include <iostream>
 
 #define DEBUG_TYPE "[(${namespace})]TargetLowering"
 
@@ -38,10 +39,10 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::VAARG, MVT::Other, Custom);
     setOperationAction(ISD::VACOPY, MVT::Other, Expand);
     setOperationAction(ISD::VAEND, MVT::Other, Expand);
-    [#th:block th:if="${!hasCMove32}"]
+    [#th:block th:if="${!hasCMove32 && stackPointerBitWidth == 32}"]
     setOperationAction(ISD::SELECT, MVT::i32, Custom);
     [/th:block]
-    [#th:block th:if="${!hasCMove64}"]
+    [#th:block th:if="${!hasCMove64 && stackPointerBitWidth == 64}"]
     setOperationAction(ISD::SELECT, MVT::i64, Custom);
     [/th:block]
     setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Expand);
@@ -711,6 +712,7 @@ static unsigned getBranchOpcodeForIntCondCode(ISD::CondCode CC, MVT::SimpleValue
     }
     [/]
 
+    std::cerr << "Cond " << CC << std::endl;
     llvm_unreachable("Unsupported CondCode");
 }
 
