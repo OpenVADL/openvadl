@@ -86,7 +86,8 @@ public class LlvmLoweringPass extends Pass {
      * Given {@link Flags} overwrite the {@code isBarrier} and return it.
      */
     public static Flags withBarrier(Flags flags) {
-      return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn, flags.isPseudo,
+      return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
+          flags.isPseudo,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), true);
     }
 

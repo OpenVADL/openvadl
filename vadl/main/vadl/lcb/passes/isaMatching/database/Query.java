@@ -87,16 +87,26 @@ public class Query {
 
     private final List<BehaviorQuery> withBehavior = new ArrayList<>();
 
+    /**
+     *
+  * Set a machine instruction label group
+*/
     public Builder machineInstructionLabelGroup(MachineInstructionLabelGroup group) {
       this.machineInstructionLabelGroup = group;
       return this;
     }
 
+    /**
+     * Set the machine instruction label.
+     */
     public Builder machineInstructionLabel(MachineInstructionLabel machineInstructionLabel) {
       this.machineInstructionLabel = machineInstructionLabel;
       return this;
     }
 
+    /**
+     * Set the machine instructions labels.
+     */
     public Builder machineInstructionLabels(Collection<MachineInstructionLabel> labels) {
       if (labels.isEmpty()) {
         return this;
