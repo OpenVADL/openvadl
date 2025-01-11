@@ -1,4 +1,4 @@
-FROM kper1337/riscv64-spike-lcb-test@sha256:398e76d5c3370d074a90eea95940ba32a1f34aece28cf40fc4395309ecfce368
+FROM kper1337/riscv64-spike-lcb-test@sha256:349e0c1cb8e3c7a55da1bf7c661f37732081f51c3147bccb2e3b0e03ed75ad29
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
 ARG UPSTREAM_BUILD_TARGET
@@ -15,5 +15,4 @@ WORKDIR /src
 RUN mv /opt/sccache/sccache /usr/bin/sccache
 RUN make && sccache -s
 RUN mkdir /output
-
-CMD /src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/inputs/$INPUT -o /tmp/main.s && chmod 777 /tmp/main.s && cat /tmp/main.s && sh /work/lcb_wrapper.sh
+CMD sh /work/spike.sh
