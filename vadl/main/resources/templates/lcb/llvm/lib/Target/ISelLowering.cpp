@@ -772,66 +772,65 @@ MachineBasicBlock *
         llvm_unreachable("Unexpected instr type to insert");
     [# th:each="rg : ${registerFiles}" ]
       case [(${namespace})]::SelectCC_[(${rg.registerFileRef.identifier.simpleName()})]:
-        break;
+      // To "insert" a SELECT instruction, we actually have to insert the triangle
+      // control-flow pattern.  The incoming instruction knows the destination vreg
+      // to set, the condition code register to branch on, the true/false values to
+      // select between, and the condcode to use to select the appropriate branch.
+      //
+      // We produce the following control flow:
+      //     HeadMBB
+      //     |  \
+              //     |  IfFalseMBB
+      //     | /
+      //    TailMBB
+      const BasicBlock *LLVM_BB = BB->getBasicBlock();
+      MachineFunction::iterator I = ++BB->getIterator();
+
+      MachineBasicBlock *HeadMBB = BB;
+      MachineFunction *F = BB->getParent();
+      MachineBasicBlock *TailMBB = F->CreateMachineBasicBlock(LLVM_BB);
+      MachineBasicBlock *IfFalseMBB = F->CreateMachineBasicBlock(LLVM_BB);
+
+      F->insert(I, IfFalseMBB);
+      F->insert(I, TailMBB);
+      // Move all remaining instructions to TailMBB.
+      TailMBB->splice(TailMBB->begin(), HeadMBB,
+                      std::next(MachineBasicBlock::iterator(MI)), HeadMBB->end());
+      // Update machine-CFG edges by transferring all successors of the current
+      // block to the new block which will contain the Phi node for the select.
+      TailMBB->transferSuccessorsAndUpdatePHIs(HeadMBB);
+      // Set the successors for HeadMBB.
+      HeadMBB->addSuccessor(IfFalseMBB);
+      HeadMBB->addSuccessor(TailMBB);
+
+      // Insert appropriate branch.
+      unsigned LHS = MI.getOperand(1).getReg();
+      unsigned RHS = MI.getOperand(2).getReg();
+
+      auto CC = static_cast<ISD::CondCode>(MI.getOperand(3).getImm());
+      unsigned Opcode = getBranchOpcodeForIntCondCode(CC, MVT::[(${stackPointerType})]);
+
+      BuildMI(HeadMBB, DL, TII.get(Opcode))
+          .addReg(LHS)
+          .addReg(RHS)
+          .addMBB(TailMBB);
+
+      // IfFalseMBB just falls through to TailMBB.
+      IfFalseMBB->addSuccessor(TailMBB);
+
+      // %Result = phi [ %TrueValue, HeadMBB ], [ %FalseValue, IfFalseMBB ]
+      BuildMI(*TailMBB, TailMBB->begin(), DL, TII.get([(${namespace})]::PHI),
+              MI.getOperand(0).getReg())
+          .addReg(MI.getOperand(4).getReg())
+          .addMBB(HeadMBB)
+          .addReg(MI.getOperand(5).getReg())
+          .addMBB(IfFalseMBB);
+
+      MI.eraseFromParent(); // The pseudo instruction is gone now.
+      return TailMBB;
+      break;
     [/]
     }
-
-    // To "insert" a SELECT instruction, we actually have to insert the triangle
-    // control-flow pattern.  The incoming instruction knows the destination vreg
-    // to set, the condition code register to branch on, the true/false values to
-    // select between, and the condcode to use to select the appropriate branch.
-    //
-    // We produce the following control flow:
-    //     HeadMBB
-    //     |  \
-            //     |  IfFalseMBB
-    //     | /
-    //    TailMBB
-    const BasicBlock *LLVM_BB = BB->getBasicBlock();
-    MachineFunction::iterator I = ++BB->getIterator();
-
-    MachineBasicBlock *HeadMBB = BB;
-    MachineFunction *F = BB->getParent();
-    MachineBasicBlock *TailMBB = F->CreateMachineBasicBlock(LLVM_BB);
-    MachineBasicBlock *IfFalseMBB = F->CreateMachineBasicBlock(LLVM_BB);
-
-    F->insert(I, IfFalseMBB);
-    F->insert(I, TailMBB);
-    // Move all remaining instructions to TailMBB.
-    TailMBB->splice(TailMBB->begin(), HeadMBB,
-                    std::next(MachineBasicBlock::iterator(MI)), HeadMBB->end());
-    // Update machine-CFG edges by transferring all successors of the current
-    // block to the new block which will contain the Phi node for the select.
-    TailMBB->transferSuccessorsAndUpdatePHIs(HeadMBB);
-    // Set the successors for HeadMBB.
-    HeadMBB->addSuccessor(IfFalseMBB);
-    HeadMBB->addSuccessor(TailMBB);
-
-    // Insert appropriate branch.
-    unsigned LHS = MI.getOperand(1).getReg();
-    unsigned RHS = MI.getOperand(2).getReg();
-
-    auto CC = static_cast<ISD::CondCode>(MI.getOperand(3).getImm());
-    unsigned Opcode = getBranchOpcodeForIntCondCode(CC, MVT::i32);
-
-    BuildMI(HeadMBB, DL, TII.get(Opcode))
-        .addReg(LHS)
-        .addReg(RHS)
-        .addMBB(TailMBB);
-
-    // IfFalseMBB just falls through to TailMBB.
-    IfFalseMBB->addSuccessor(TailMBB);
-
-    // %Result = phi [ %TrueValue, HeadMBB ], [ %FalseValue, IfFalseMBB ]
-    BuildMI(*TailMBB, TailMBB->begin(), DL, TII.get([(${namespace})]::PHI),
-            MI.getOperand(0).getReg())
-        .addReg(MI.getOperand(4).getReg())
-        .addMBB(HeadMBB)
-        .addReg(MI.getOperand(5).getReg())
-        .addMBB(IfFalseMBB);
-
-    MI.eraseFromParent(); // The pseudo instruction is gone now.
-    return TailMBB;
 }
 
 void [(${namespace})]TargetLowering::ReplaceNodeResults(SDNode *N,
