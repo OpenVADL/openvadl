@@ -31,8 +31,7 @@ public class IssTcgSchedulingPassTest extends AbstractTest {
   @Test
   public void test_schedule_in_both_branches() throws IOException, DuplicatedPassKeyException {
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), true));
-    // var config = getConfiguration(false);
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
 
     var setup = setupPassManagerAndRunSpec("passes/issTcgScheduling/valid_branch_1.vadl",
         PassOrders.iss(config)
