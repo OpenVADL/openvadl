@@ -24,7 +24,7 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
    * @param tree the tree
    * @return the text representation
    */
-  public static String generate(Node tree) {
+  public static CharSequence generate(Node tree) {
 
     var sb = new StringBuilder();
 
@@ -34,7 +34,7 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
       result.forEach(l -> sb.append(l).append("\n"));
     }
 
-    return sb.toString();
+    return sb;
   }
 
   @Nullable

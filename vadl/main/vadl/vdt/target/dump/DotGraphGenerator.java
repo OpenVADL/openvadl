@@ -2,9 +2,9 @@ package vadl.vdt.target.dump;
 
 import static vadl.vdt.target.dump.DotGraphGeneratorDispatcher.dispatch;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -20,12 +20,13 @@ import vadl.vdt.model.Visitor;
  * Generates a simple dot graph from a VDT.
  */
 @DispatchFor(value = Node.class, include = {"vadl.vdt"}, returnType = Pair.class)
-public class DotGraphGenerator implements Visitor<Pair<String, List<String>>> {
+public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequence>>> {
 
   /**
    * The node counter.
    */
-  int ii = 0;
+  private final static ThreadLocal<AtomicInteger> counter =
+      ThreadLocal.withInitial(AtomicInteger::new);
 
   /**
    * Generate a dot graph from the given decode tree.
@@ -33,33 +34,46 @@ public class DotGraphGenerator implements Visitor<Pair<String, List<String>>> {
    * @param tree the decode tree
    * @return the dot graph
    */
-  public static String generate(Node tree) {
-    var sb = new StringBuilder();
-    sb.append("digraph G {\n");
-    sb.append("    rankdir=TB;\n");
-    sb.append("    node [shape=box];\n");
-    sb.append("\n");
+  public static CharSequence generate(Node tree) {
 
-    var result = tree.accept(new DotGraphGenerator());
+    try {
 
-    if (result != null) {
-      result.right().forEach(sb::append);
+      // Reset the counter
+      counter.get().set(0);
+
+      // Write the header
+      var sb = new StringBuilder();
+      sb.append("digraph G {\n");
+      sb.append("    rankdir=TB;\n");
+      sb.append("    node [shape=box];\n");
+      sb.append("\n");
+
+      // Recursively generate the graph
+      var result = tree.accept(new DotGraphGenerator());
+
+      // Append the result lines
+      if (result != null) {
+        result.right().forEach(sb::append);
+      }
+
+      sb.append("}\n");
+      return sb;
+
+    } finally {
+      counter.remove();
     }
-
-    sb.append("}\n");
-    return sb.toString();
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  public @Nullable Pair<String, List<String>> visit(InnerNode node) {
-    return (Pair<String, List<String>>) dispatch(this, node);
+  public @Nullable Pair<Integer, List<CharSequence>> visit(InnerNode node) {
+    return (Pair<Integer, List<CharSequence>>) dispatch(this, node);
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  public @Nullable Pair<String, List<String>> visit(LeafNode node) {
-    return (Pair<String, List<String>>) dispatch(this, node);
+  public @Nullable Pair<Integer, List<CharSequence>> visit(LeafNode node) {
+    return (Pair<Integer, List<CharSequence>>) dispatch(this, node);
   }
 
   /**
@@ -69,22 +83,27 @@ public class DotGraphGenerator implements Visitor<Pair<String, List<String>>> {
    * @return the node id and the list of lines to add to the graph
    */
   @Handler
-  public Pair<String, List<String>> handle(InnerNodeImpl node) {
-    var id = "node_" + ii++;
+  public Pair<Integer, List<CharSequence>> handle(InnerNodeImpl node) {
+    var id = counter.get().getAndIncrement();
 
-    var label = new StringBuilder();
-    BigInteger mask = node.getMask().toValue();
-    label.append("Mask 0x").append(mask.toString(16));
-
-    final List<String> lines = new ArrayList<>();
-    lines.add("    %s [label=\"%s\"];\n".formatted(id, label));
+    final List<CharSequence> lines = new ArrayList<>();
+    var nodeDefinition = new StringBuilder()
+        .append("    ")
+        .append(id).append(" [label=\"")
+        .append("Mask 0x").append(node.getMask().toValue().toString(16))
+        .append("\"];\n");
+    lines.add(nodeDefinition);
 
     // Handle default node
     if (node.getFallback() != null) {
       var childResult = node.getFallback().accept(this);
       if (childResult != null) {
         lines.addAll(childResult.right());
-        lines.add("    %s -> %s [label=\"default\"];\n".formatted(id, childResult.left()));
+        var defaultEdge = new StringBuilder()
+            .append("    ")
+            .append(id).append(" -> ").append(childResult.left())
+            .append(" [label=\"default\"];\n");
+        lines.add(defaultEdge);
       }
     }
 
@@ -98,10 +117,12 @@ public class DotGraphGenerator implements Visitor<Pair<String, List<String>>> {
 
       lines.addAll(childResult.right());
 
-      var edgeLabel = new StringBuilder();
-      edgeLabel.append("0x").append(pattern.toBitVector().toValue().toString(16));
-
-      lines.add("    %s -> %s [label=\"%s\"];\n".formatted(id, childResult.left(), edgeLabel));
+      var edgeLine = new StringBuilder()
+          .append("    ")
+          .append(id).append(" -> ").append(childResult.left())
+          .append(" [label=\"0x").append(pattern.toBitVector().toValue().toString(16))
+          .append("\"];\n");
+      lines.add(edgeLine);
     });
 
     return Pair.of(id, lines);
@@ -114,9 +135,16 @@ public class DotGraphGenerator implements Visitor<Pair<String, List<String>>> {
    * @return the node id and the list of lines to add to the graph
    */
   @Handler
-  public Pair<String, List<String>> handle(LeafNodeImpl node) {
-    var id = "node_" + ii++;
+  public Pair<Integer, List<CharSequence>> handle(LeafNodeImpl node) {
+    var id = counter.get().getAndIncrement();
     var name = node.instruction().source().simpleName();
-    return Pair.of(id, List.of("    %s [label=\"%s\"];\n".formatted(id, name)));
+
+    var leafNode = new StringBuilder()
+        .append("    ")
+        .append(id).append(" [label=\"")
+        .append(name)
+        .append("\"];\n");
+
+    return Pair.of(id, List.of(leafNode));
   }
 }

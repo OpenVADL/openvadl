@@ -15,7 +15,7 @@ import vadl.vdt.model.Visitor;
  * Generates a simple text table to list the decision path for each instruction.
  */
 @DispatchFor(value = InnerNode.class, include = {"vadl.vdt"}, returnType = List.class)
-public class InsnDecisionTableGenerator implements Visitor<List<List<String>>> {
+public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequence>>> {
 
   /**
    * Generates the path table for the given tree.
@@ -23,14 +23,14 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<String>>> {
    * @param tree the tree
    * @return the path table (a list of columns) or an empty list if the tree is empty
    */
-  public static List<List<String>> generate(Node tree) {
+  public static List<List<CharSequence>> generate(Node tree) {
     var rows = tree.accept(new InsnDecisionTableGenerator());
     if (rows == null) {
       return List.of();
     }
 
     // Transform: Rows -> Columns (required for the dump table enricher)
-    var table = new ArrayList<List<String>>();
+    var table = new ArrayList<List<CharSequence>>();
     for (int i = 0; i < rows.size(); i++) {
       var row = rows.get(i);
       for (int j = 0; j < row.size(); j++) {
@@ -51,7 +51,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<String>>> {
     // Add a header to each column
     table.get(0).add(0, "Instruction");
     for (int i = 1; i < table.size(); i++) {
-      table.get(i).add(0, "DL " + (i - 1));
+      table.get(i).add(0, new StringBuilder("DL").append(i - 1));
     }
 
     return table;
@@ -59,15 +59,15 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<String>>> {
 
   @Nullable
   @Override
-  public List<List<String>> visit(LeafNode node) {
+  public List<List<CharSequence>> visit(LeafNode node) {
     return List.of(new ArrayList<>(List.of(node.instruction().source().simpleName())));
   }
 
   @Nullable
   @Override
   @SuppressWarnings("unchecked")
-  public List<List<String>> visit(InnerNode node) {
-    return (List<List<String>>) InsnDecisionTableGeneratorDispatcher.dispatch(this, node);
+  public List<List<CharSequence>> visit(InnerNode node) {
+    return (List<List<CharSequence>>) InsnDecisionTableGeneratorDispatcher.dispatch(this, node);
   }
 
   /**
@@ -77,19 +77,19 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<String>>> {
    * @return the path table
    */
   @Handler
-  public List<List<String>> handle(InnerNodeImpl node) {
+  public List<List<CharSequence>> handle(InnerNodeImpl node) {
 
     var label = new StringBuilder();
     label.append("insn & 0x").append(node.getMask().toValue().toString(16));
 
-    var result = new ArrayList<List<String>>();
+    var result = new ArrayList<List<CharSequence>>();
 
     // Default
     var defaultNode = node.getFallback();
     if (defaultNode != null) {
       var childLines = defaultNode.accept(this);
       if (childLines != null) {
-        childLines.forEach(l -> l.add(1, label + " (default)"));
+        childLines.forEach(l -> l.add(1, new StringBuilder(label).append(" (default)")));
       }
       result.addAll(childLines);
     }
@@ -102,7 +102,9 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<String>>> {
         continue;
       }
 
-      var childLabel = label + " == 0x" + entry.getKey().toBitVector().toValue().toString(16);
+      var childLabel = new StringBuilder(label)
+          .append(" == 0x")
+          .append(entry.getKey().toBitVector().toValue().toString(16));
       childLines.forEach(l -> l.add(1, childLabel));
       result.addAll(childLines);
     }
