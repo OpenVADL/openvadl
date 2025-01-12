@@ -4375,6 +4375,7 @@ class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
   SourceLocation loc;
 
   Boolean isTerminalRule = false;
+  Boolean isBuiltinRule = false;
   @Nullable
   AsmType asmType;
 

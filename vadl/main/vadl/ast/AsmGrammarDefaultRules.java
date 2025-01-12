@@ -111,17 +111,20 @@ public class AsmGrammarDefaultRules {
         terminalRuleTypeString("AT", "@"),
         terminalRuleTypeString("MINUSGREATER", "->"),
         terminalRule("EOL", "[\\r(\\r\\n)]", VoidAsmType.instance()),
-//        nonTerminalRule("Statement", InstructionAsmType.instance(), instructionRule(),
-//            ruleReference("EOL")),
-        nonTerminalRule("Register", RegisterAsmType.instance(), ruleReference("IDENTIFIER")),
-//        nonTerminalRule("ImmediateOperand", null, ruleReference("Expression")),
-        nonTerminalRule("Identifier", StringAsmType.instance(), ruleReference("IDENTIFIER")),
-        // FIXME: fix infinite recursion
-//      nonTerminalRule("Expression", ExpressionAsmType.instance(), ruleReference("Expression")),
-//      nonTerminalRule("Instruction", InstructionAsmType.instance(), ruleReference("Instruction")),
+        nonTerminalRule("Statement", InstructionAsmType.instance(), false, instructionRule(),
+            ruleReference("EOL")),
+        nonTerminalRule("Register", RegisterAsmType.instance(),
+            false, ruleReference("IDENTIFIER")),
+        nonTerminalRule("ImmediateOperand", null, false, ruleReference("Expression")),
+        nonTerminalRule("Identifier", StringAsmType.instance(),
+            false, ruleReference("IDENTIFIER")),
+        nonTerminalRule("Expression", ExpressionAsmType.instance(), true,
+            ruleReference("Expression")),
+        nonTerminalRule("Instruction", InstructionAsmType.instance(), true,
+            ruleReference("Instruction")),
         integerRule(),
-        nonTerminalRule("Natural", ConstantAsmType.instance(), ruleReference("INTEGER")),
-        nonTerminalRule("Label", SymbolAsmType.instance(), ruleReference("Identifier"))
+        nonTerminalRule("Natural", ConstantAsmType.instance(), false, ruleReference("INTEGER")),
+        nonTerminalRule("Label", SymbolAsmType.instance(), false, ruleReference("Identifier"))
     ));
   }
 
@@ -191,6 +194,7 @@ public class AsmGrammarDefaultRules {
   }
 
   private static AsmGrammarRuleDefinition nonTerminalRule(String name, @Nullable AsmType ruleType,
+                                                          boolean isBuiltinRule,
                                                           AsmGrammarElementDefinition... elements) {
     var rule = new AsmGrammarRuleDefinition(
         new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
@@ -204,6 +208,7 @@ public class AsmGrammarDefaultRules {
 
     // by setting the asmType we can avoid checking the default rules in the typechecker
     rule.asmType = ruleType;
+    rule.isBuiltinRule = isBuiltinRule;
     return rule;
   }
 
@@ -241,12 +246,12 @@ public class AsmGrammarDefaultRules {
     return rule;
   }
 
-//  private static AsmGrammarElementDefinition instructionRule() {
-//    var instructionElement = ruleReference("Instruction", InstructionAsmType.instance());
-//    instructionElement.attribute =
-//        new Identifier("instruction", SourceLocation.INVALID_SOURCE_LOCATION);
-//    return instructionElement;
-//  }
+  private static AsmGrammarElementDefinition instructionRule() {
+    var instructionElement = ruleReference("Instruction", InstructionAsmType.instance());
+    instructionElement.attribute =
+        new Identifier("instruction", SourceLocation.INVALID_SOURCE_LOCATION);
+    return instructionElement;
+  }
 
   private static AsmGrammarElementDefinition ruleReference(String refName) {
     return ruleReference(refName, null);

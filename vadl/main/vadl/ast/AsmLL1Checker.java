@@ -1,7 +1,6 @@
 package vadl.ast;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,16 +33,13 @@ public class AsmLL1Checker {
    * @throws Diagnostic if there are unresolved LL(1) conflicts
    */
   public void verify(Ast ast) {
-
-    followSetSetComputer.computeFollowSets(ast);
-
     for (var definition : ast.definitions) {
       if (definition instanceof AsmDescriptionDefinition asmDescription) {
 
         followSetSetComputer.computeFollowSets(asmDescription.rules);
 
         for (var rule : asmDescription.rules) {
-          if (!rule.isTerminalRule) {
+          if (!rule.isTerminalRule && !rule.isBuiltinRule) {
             currentRule = rule;
             verifyAlternatives(rule.alternatives);
           }
@@ -57,12 +53,15 @@ public class AsmLL1Checker {
 
     for (var alternative : entity.alternatives) {
       var expectedTokens = expectedTokens(alternative);
-      if (doSetsOverlap(previousAlternativesTokens, expectedTokens)) {
+      var overlappingTokens = getOverlappingTokens(previousAlternativesTokens, expectedTokens);
+      if (!overlappingTokens.isEmpty()) {
         Objects.requireNonNull(currentRule);
-        // TODO: get violating symbol
         throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
                 currentRule)
-            .note("One symbol is the start of several alternatives.")
+            .note("%s %s the start of several alternatives.", String.join(", ",
+                    overlappingTokens.stream().map(AsmToken::toString).toList()),
+                overlappingTokens.size() > 1 ? "are" : "is")
+            .note("Start of each alternative must be distinct.")
             .build();
       }
       previousAlternativesTokens.addAll(expectedTokens);
@@ -83,6 +82,10 @@ public class AsmLL1Checker {
         if (element.repetitionAlternatives != null) {
           verifyOptionOrRepetitionElement(element.repetitionAlternatives, successorElements);
           verifyAlternatives(element.repetitionAlternatives);
+        }
+
+        if (element.groupAlternatives != null) {
+          verifyAlternatives(element.groupAlternatives);
         }
       }
     }
@@ -113,21 +116,8 @@ public class AsmLL1Checker {
     }
   }
 
-  // TODO: refactor to getOverlapping symbols
-  private Boolean doSetsOverlap(Set<AsmToken> first, Set<AsmToken> second) {
-    for (var outerToken : first) {
-      for (var innerToken : second) {
-        if (outerToken.ruleName.equals(innerToken.ruleName)) {
-          if (outerToken.stringLiteral == null || innerToken.stringLiteral == null) {
-            return true;
-          }
-          if (outerToken.stringLiteral.equals(innerToken.stringLiteral)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+  private List<AsmToken> getOverlappingTokens(Set<AsmToken> outerSet, Set<AsmToken> innerSet) {
+    return outerSet.stream().filter(innerSet::contains).toList();
   }
 
   private void checkDeletableWithinOptionOrRepetition(
@@ -154,14 +144,17 @@ public class AsmLL1Checker {
     // expected tokens after option / repetition block
     var expectedTokensAfter = expectedTokens(successors);
 
-    if (doSetsOverlap(expectedTokens, expectedTokensAfter)) {
+    var overlappingTokens = getOverlappingTokens(expectedTokens, expectedTokensAfter);
+    if (!overlappingTokens.isEmpty()) {
       Objects.requireNonNull(currentRule);
-      // TODO: get violating symbol
       throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
               currentRule)
           .locationDescription(alternatives, "Start is here.")
           .locationDescription(successors.get(0), "Successor is here.")
-          .note("Start and successor of [...] or {...} cannot be equal.")
+          .note("%s %s start and successor.", String.join(", ",
+                  overlappingTokens.stream().map(AsmToken::toString).toList()),
+              overlappingTokens.size() > 1 ? "are" : "is")
+          .note("Start and successor of [...] or {...} must be distinct.")
           .build();
     }
   }
@@ -178,6 +171,22 @@ class AsmToken {
   }
 
   @Override
+  public String toString() {
+    if (stringLiteral != null) {
+      return '"' + stringLiteral + '"';
+    }
+    return ruleName;
+  }
+
+  /**
+   * An AsmToken with ruleName=IDENTIFIER and stringLiteral=null
+   * is equal to an AsmToken with ruleName=IDENTIFIER and stringLiteral="something"
+   * since the parser cannot decide which alternative to choose.
+   *
+   * @param o the other AsmToken
+   * @return whether the two AsmTokens are equal from the AsmParsers viewpoint
+   */
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -185,14 +194,21 @@ class AsmToken {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AsmToken asmToken = (AsmToken) o;
-    return Objects.equals(ruleName, asmToken.ruleName)
-        && Objects.equals(stringLiteral, asmToken.stringLiteral);
+    AsmToken that = (AsmToken) o;
+
+    if (ruleName.equals(that.ruleName)) {
+      if (stringLiteral == null || that.stringLiteral == null) {
+        return true;
+      }
+      return stringLiteral.equals(that.stringLiteral);
+    }
+
+    return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(ruleName, stringLiteral);
+    return Objects.hash(ruleName);
   }
 }
 
@@ -208,7 +224,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
     }
 
     Set<AsmToken> firstSet;
-    if (entity.isTerminalRule) {
+    if (entity.isTerminalRule || entity.isBuiltinRule) {
       firstSet = new HashSet<>(List.of(new AsmToken(ruleName, null)));
     } else {
       firstSet = entity.alternatives.accept(this);
@@ -303,7 +319,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
 
   public Set<AsmToken> computeFirstSetOfGroup(
       @Nullable List<AsmGrammarElementDefinition> elements) {
-    if (elements == null) {
+    if (elements == null || elements.isEmpty()) {
       return new HashSet<>();
     }
 
@@ -314,7 +330,8 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
     int i = 1;
     while (firstEntityTokens.isEmpty()) {
       if (i == elements.size()) {
-        throw new RuntimeException("No parsable elements in alternative");
+        // no parsable element in elements
+        return new HashSet<>();
       }
       firstEntity = elements.get(i);
       firstEntityTokens = firstEntity.accept(this);
@@ -322,7 +339,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
     }
 
     if (firstEntity.optionAlternatives != null || firstEntity.repetitionAlternatives != null) {
-      Collection<AsmToken> successorTokens = null;
+      Set<AsmToken> successorTokens = null;
       while ((successorTokens == null || successorTokens.isEmpty()) && i < elements.size()) {
         successorTokens = elements.get(i).accept(this);
         i++;
@@ -339,8 +356,6 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
         AsmGrammarDefaultRules.terminalRuleRegexPatterns().entrySet().stream().filter(
             entry -> entry.getValue().matcher(value).matches()
         ).findFirst();
-
-    // FIXME: is this correct with respect to order of terminal rules?
 
     if (inferredRule.isEmpty()) {
       throw new RuntimeException(
@@ -375,25 +390,6 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
     return followSetCache;
   }
 
-  // TODO: remove this method
-  public void computeFollowSets(Ast ast) {
-    for (var definition : ast.definitions) {
-      if (definition instanceof AsmDescriptionDefinition asmDescription) {
-        // compute follow from first e.g. add first(C) to follow(B) for A : B C;
-        for (var rule : asmDescription.rules) {
-          currentRuleName = rule.identifier().name;
-          rule.accept(this);
-        }
-
-        // complete follow sets e.g. add follow(A) to follow(B) for A : B;
-        for (var rule : asmDescription.rules) {
-          currentRuleName = rule.identifier().name;
-          complete(rule.identifier().name);
-        }
-      }
-    }
-  }
-
   public void computeFollowSets(List<AsmGrammarRuleDefinition> rules) {
     // compute follow from first e.g. add first(C) to follow(B) for A : B C;
     for (var rule : rules) {
@@ -403,8 +399,10 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
 
     // complete follow sets e.g. add follow(A) to follow(B) for A : B;
     for (var rule : rules) {
-      currentRuleName = rule.identifier().name;
-      complete(rule.identifier().name);
+      if (!rule.isBuiltinRule) {
+        currentRuleName = rule.identifier().name;
+        complete(rule.identifier().name);
+      }
     }
   }
 
@@ -572,7 +570,7 @@ class EntityDeletableComputer implements AsmGrammarEntityVisitor<Boolean> {
   }
 
   private boolean isRuleDeletable(AsmGrammarRuleDefinition rule) {
-    if (rule.isTerminalRule) {
+    if (rule.isTerminalRule || rule.isBuiltinRule) {
       return false;
     }
 
