@@ -1,7 +1,5 @@
 package vadl.iss.template.target.decode.vdt;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.template.IssTemplateRenderingPass;
@@ -44,17 +42,9 @@ public class EmitIssDecodeTreePass extends IssTemplateRenderingPass {
     }
 
     final var vdtRoot = passResults.lastResultOf(VdtLoweringPass.class, Node.class);
+    final var code = new IssDecisionTreeCodeGenerator().generate(vdtRoot);
 
-    // The generator supports streaming, but we want to get the generated code as a string here.
-    final var out = new ByteArrayOutputStream();
-
-    try (final var generator = new IssDecisionTreeCodeGenerator(out)) {
-      generator.generate(vdtRoot);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to generate the decision tree code", e);
-    }
-
-    variables.put(VDT_CODE_KEY, out.toString(StandardCharsets.UTF_8));
+    variables.put(VDT_CODE_KEY, code.toString());
     return variables;
   }
 }
