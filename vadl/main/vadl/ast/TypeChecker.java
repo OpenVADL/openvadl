@@ -56,6 +56,7 @@ public class TypeChecker
       definition.accept(this);
     }
 
+    // FIXME: is this the correct place to call the LL1Checker?
     var ll1Checker = new AsmLL1Checker();
     ll1Checker.verify(ast);
   }

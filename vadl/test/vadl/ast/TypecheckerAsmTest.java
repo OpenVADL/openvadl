@@ -607,45 +607,4 @@ public class TypecheckerAsmTest {
     Assertions.assertEquals(VoidAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
   }
   //endregion
-
-  @Test
-  void debug() {
-    var prog = """
-          grammar = {
-            A : "a" C;
-            B : A "x";
-            C : [Register];
-        
-            //A : B C;
-            //B : Integer;
-            //C : ("c" | "c");
-          }
-        """;
-    var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    typechecker.verify(ast);
-
-//    var ll1checker = new AsmLL1Checker();
-//    ll1checker.verify(ast);
-//    Assertions.assertDoesNotThrow(() -> ll1checker.verify(ast), "Program isn't LL(1)");
-    var firstComp = new FirstSetComputer();
-    var followComp = new FollowSetSetComputer(firstComp);
-    followComp.computeFollowSets(ast);
-    var x = 1;
-  }
-
-  @Test
-  void debug2() {
-    var prog = """
-          grammar = {
-            RuleA : STRING | "B" ;
-          }
-        """;
-    var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    typechecker.verify(ast);
-    var x = 1;
-  }
 }
