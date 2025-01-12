@@ -30,26 +30,47 @@ def find_git_root(from_path):
 def install_git_hook(hook_name, source_path, target_path):
   print(f"- {hook_name}: ", end="")
 
-  if os.path.exists(target_path):
-    # Determine if it's a symlink and points to the correct source
-    if os.path.islink(target_path) and os.readlink(target_path) == source_path:
-      print("☑️ Skipping: already installed")
-    else:
+  if sys.platform == 'win32':
+    # Symbolic links are weird (and require admin rights) under windows.
+    # Instead we use a stub file that runs the actual hook.
+    # git uses gitbash as /usr/bin/sh under windows. Thus, we create a bash
+    # script that launches python with the actual hook, forwarding its
+    # arguments with $@.
+    target_content = f"#!/usr/bin/sh\npython '{source_path}' $@"
+    if os.path.exists(target_path):
+      if os.path.isfile(target_path):
+        with open(target_path, 'r') as existing:
+          if existing.read() == target_content:
+            print("☑️ Skipping: already installed")
+            return
+
       print(f"❌  Existing hook conflicts with the intended installation.\n  Hint: Remove {target_path} and try again.")
-    return
-
-  try:
-    # Make the source executable if it's not already
-    if not os.access(source_path, os.X_OK):
-      os.chmod(source_path, os.stat(source_path).st_mode | stat.S_IXUSR)
-      chmod_notice = "(updated to executable)"
+      return
     else:
-      chmod_notice = "(already executable)"
+      with open(target_path, 'w') as target_file:
+        target_file.write(target_content)
+        print(f"✅  Indirection file successfully created")
+  else:
+    if os.path.exists(target_path):
+      # Determine if it's a symlink and points to the correct source
+      if os.path.islink(target_path) and os.readlink(target_path) == source_path:
+        print("☑️ Skipping: already installed")
+      else:
+        print(f"❌  Existing hook conflicts with the intended installation.\n  Hint: Remove {target_path} and try again.")
+      return
 
-    os.symlink(source_path, target_path)
-    print(f"✅  Symlink successfully installed {chmod_notice}")
-  except OSError as e:
-    print(f"❌  Failed to create symlink: {e}")
+    try:
+      # Make the source executable if it's not already
+      if not os.access(source_path, os.X_OK):
+        os.chmod(source_path, os.stat(source_path).st_mode | stat.S_IXUSR)
+        chmod_notice = "(updated to executable)"
+      else:
+        chmod_notice = "(already executable)"
+
+      os.symlink(source_path, target_path)
+      print(f"✅  Symlink successfully installed {chmod_notice}")
+    except OSError as e:
+      print(f"❌  Failed to create symlink: {e}")
 
 
 # installs all hooks of given repo
@@ -75,9 +96,13 @@ def install_git_hooks(repo_path):
 
 def check_python3_availability():
   try:
+    # Since python3 is just python under windows and usr/bin/env does not exist,
+    # we need to handle it a bit differently. Just specifying 'python' should
+    # work, as python.exe's directory should be on the PATH when using a
+    # 'typical' installation.
+    args = ['python', '--version'] if sys.platform == 'win32' else ['/usr/bin/env', 'python3', '--version']
     # Try to run '/usr/bin/env python3 --version' to get the Python version
-    result = subprocess.run(['/usr/bin/env', 'python3', '--version'], check=True, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, text=True)
+    result = subprocess.run(args, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     # If the command was successful, print the version and return True
     print(f"Python3 is available: {result.stdout.strip()}")
     return True
@@ -86,8 +111,15 @@ def check_python3_availability():
     print("Python3 is not available.")
     return False
   except FileNotFoundError:
-    # If '/usr/bin/env' is not found, it indicates an environmental issue
-    print("'/usr/bin/env' command not found. Running on plain Windows?")
+    if sys.platform == 'win32':
+      print("'python' not found.\n"
+          + "Install it or add it to your PATH if it is already installed.\n"
+          + "If you have just added it to your path, try restarting your shell"
+          + "so changes can take effect.")
+    else:
+      # Under *nix, if '/usr/bin/env' is not found, it indicates an environmental
+      # issue.
+      print("'/usr/bin/env' command not found.")
     return False
 
 
