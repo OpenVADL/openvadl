@@ -25,7 +25,7 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
   /**
    * The node counter.
    */
-  private final static ThreadLocal<AtomicInteger> counter =
+  private static final ThreadLocal<AtomicInteger> counter =
       ThreadLocal.withInitial(AtomicInteger::new);
 
   /**

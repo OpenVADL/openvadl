@@ -1,8 +1,8 @@
 package vadl.vdt.utils.codegen;
 
 /**
- * A simple implementation of {@link CodeGeneratorAppendable} that uses a {@link StringBuilder} to store
- * the generated code. This implementation is not thread-safe.
+ * A simple implementation of {@link CodeGeneratorAppendable} that uses a {@link StringBuilder} to
+ * store the generated code. This implementation is not thread-safe.
  */
 public class StringBuilderAppendable implements CodeGeneratorAppendable {
 
@@ -31,13 +31,6 @@ public class StringBuilderAppendable implements CodeGeneratorAppendable {
         sb.appendCodePoint(c);
       }
     });
-    return this;
-  }
-
-  @Override
-  public CodeGeneratorAppendable appendLn(CharSequence csq) {
-    append(csq);
-    newLine();
     return this;
   }
 
@@ -80,6 +73,13 @@ public class StringBuilderAppendable implements CodeGeneratorAppendable {
 
     // At last, just append the string representation of the object
     append(String.valueOf(obj));
+    return this;
+  }
+
+  @Override
+  public CodeGeneratorAppendable appendLn(CharSequence csq) {
+    append(csq);
+    newLine();
     return this;
   }
 
@@ -139,8 +139,8 @@ public class StringBuilderAppendable implements CodeGeneratorAppendable {
   }
 
   private boolean isNewLine(int codePoint) {
-    return codePoint == '\n' || codePoint == '\r' || codePoint == '\f' || codePoint == '\u0085' ||
-        codePoint == '\u2028' || codePoint == '\u2029';
+    return codePoint == '\n' || codePoint == '\r' || codePoint == '\f' || codePoint == '\u0085'
+        || codePoint == '\u2028' || codePoint == '\u2029';
   }
 
   private CharSequence getIndentation() {

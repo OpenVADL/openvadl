@@ -7,9 +7,9 @@ public interface CodeGeneratorAppendable {
 
   CodeGeneratorAppendable append(CharSequence csq);
 
-  CodeGeneratorAppendable appendLn(CharSequence csq);
-
   CodeGeneratorAppendable append(Object obj);
+
+  CodeGeneratorAppendable appendLn(CharSequence csq);
 
   CodeGeneratorAppendable appendLn(Object obj);
 
