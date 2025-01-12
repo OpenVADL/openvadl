@@ -5,7 +5,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 
@@ -17,6 +19,13 @@ import vadl.error.Diagnostic;
 public class AsmLL1Checker {
   // TODO: handle semantic predicates
 
+  FirstSetComputer firstSetComputer = new FirstSetComputer();
+  FollowSetSetComputer followSetSetComputer = new FollowSetSetComputer(firstSetComputer);
+  EntityDeletableComputer deletableComputer = new EntityDeletableComputer();
+
+  @Nullable
+  AsmGrammarRuleDefinition currentRule;
+
   /**
    * Verify that the assembly grammar is LL(1) compliant
    * or any conflicts are resolved by semantic predicates.
@@ -25,31 +34,137 @@ public class AsmLL1Checker {
    * @throws Diagnostic if there are unresolved LL(1) conflicts
    */
   public void verify(Ast ast) {
-    //    var firstSetComputer = new FirstSetComputer();
-    //    for (var definition : ast.definitions) {
-    //      if (definition instanceof AsmDescriptionDefinition asmDescription) {
-    //        for (var rule : asmDescription.rules) {
-    //          // TODO: verify LL(1) characteristics
-    //        }
-    //      }
-    //    }
+
+    followSetSetComputer.computeFollowSets(ast);
+
+    for (var definition : ast.definitions) {
+      if (definition instanceof AsmDescriptionDefinition asmDescription) {
+
+        followSetSetComputer.computeFollowSets(asmDescription.rules);
+
+        for (var rule : asmDescription.rules) {
+          if (!rule.isTerminalRule) {
+            currentRule = rule;
+            verifyAlternatives(rule.alternatives);
+          }
+        }
+      }
+    }
   }
 
-  //  private Boolean CheckOverlap(List<AsmToken> first, List<AsmToken> second) {
-  //    for (var outerToken : first) {
-  //      for (var innerToken : second) {
-  //        if (outerToken.ruleName.equals(innerToken.ruleName)) {
-  //          if (outerToken.stringLiteral == null || innerToken.stringLiteral == null) {
-  //            return true;
-  //          }
-  //          if (outerToken.stringLiteral.equals(innerToken.stringLiteral)) {
-  //            return true;
-  //          }
-  //        }
-  //      }
-  //    }
-  //    return false;
-  //  }
+  private void verifyAlternatives(AsmGrammarAlternativesDefinition entity) {
+    HashSet<AsmToken> previousAlternativesTokens = new HashSet<>();
+
+    for (var alternative : entity.alternatives) {
+      var expectedTokens = expectedTokens(alternative);
+      if (doSetsOverlap(previousAlternativesTokens, expectedTokens)) {
+        Objects.requireNonNull(currentRule);
+        // TODO: get violating symbol
+        throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
+                currentRule)
+            .note("One symbol is the start of several alternatives.")
+            .build();
+      }
+      previousAlternativesTokens.addAll(expectedTokens);
+
+      List<AsmGrammarElementDefinition> successorElements;
+
+      for (int i = 0; i < alternative.size(); i++) {
+        var element = alternative.get(i);
+
+        successorElements = i < alternative.size() - 1
+            ? alternative.subList(i + 1, alternative.size()) : new ArrayList<>();
+
+        if (element.optionAlternatives != null) {
+          verifyOptionOrRepetitionElement(element.optionAlternatives, successorElements);
+          verifyAlternatives(element.optionAlternatives);
+        }
+
+        if (element.repetitionAlternatives != null) {
+          verifyOptionOrRepetitionElement(element.repetitionAlternatives, successorElements);
+          verifyAlternatives(element.repetitionAlternatives);
+        }
+      }
+    }
+  }
+
+  private Set<AsmToken> expectedTokens(List<AsmGrammarElementDefinition> elements) {
+    // TODO: if semanticPredicate --> return empty set
+    var expectedTokens = firstSetComputer.computeFirstSetOfGroup(elements);
+    if (deletableComputer.areAllElementsDeletable(elements)) {
+      addFollowSetOfCurrentRule(expectedTokens);
+    }
+    return expectedTokens;
+  }
+
+  private Set<AsmToken> expectedTokens(AsmGrammarAlternativesDefinition alternatives) {
+    var expectedTokens = firstSetComputer.visit(alternatives);
+    if (deletableComputer.visit(alternatives)) {
+      addFollowSetOfCurrentRule(expectedTokens);
+    }
+    return expectedTokens;
+  }
+
+  private void addFollowSetOfCurrentRule(Set<AsmToken> tokens) {
+    Objects.requireNonNull(currentRule);
+    var followSet = followSetSetComputer.getFollowSets().get(currentRule.identifier().name);
+    if (followSet != null) {
+      tokens.addAll(followSet);
+    }
+  }
+
+  // TODO: refactor to getOverlapping symbols
+  private Boolean doSetsOverlap(Set<AsmToken> first, Set<AsmToken> second) {
+    for (var outerToken : first) {
+      for (var innerToken : second) {
+        if (outerToken.ruleName.equals(innerToken.ruleName)) {
+          if (outerToken.stringLiteral == null || innerToken.stringLiteral == null) {
+            return true;
+          }
+          if (outerToken.stringLiteral.equals(innerToken.stringLiteral)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private void checkDeletableWithinOptionOrRepetition(
+      AsmGrammarAlternativesDefinition alternatives) {
+    Objects.requireNonNull(currentRule);
+    if (deletableComputer.visit(alternatives)) {
+      throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
+              currentRule)
+          .locationDescription(alternatives, "Conflicting block is here.")
+          .note("Contents of [...] or {...} must not be deletable.")
+          .build();
+    }
+  }
+
+
+  private void verifyOptionOrRepetitionElement(AsmGrammarAlternativesDefinition alternatives,
+                                               List<AsmGrammarElementDefinition> successors) {
+    checkDeletableWithinOptionOrRepetition(alternatives);
+
+    // expected tokens within option / repetition block
+    // TODO: check for sem pred on first element
+    var expectedTokens = expectedTokens(alternatives);
+
+    // expected tokens after option / repetition block
+    var expectedTokensAfter = expectedTokens(successors);
+
+    if (doSetsOverlap(expectedTokens, expectedTokensAfter)) {
+      Objects.requireNonNull(currentRule);
+      // TODO: get violating symbol
+      throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
+              currentRule)
+          .locationDescription(alternatives, "Start is here.")
+          .locationDescription(successors.get(0), "Successor is here.")
+          .note("Start and successor of [...] or {...} cannot be equal.")
+          .build();
+    }
+  }
 }
 
 class AsmToken {
@@ -71,8 +186,8 @@ class AsmToken {
       return false;
     }
     AsmToken asmToken = (AsmToken) o;
-    return Objects.equals(ruleName, asmToken.ruleName) &&
-        Objects.equals(stringLiteral, asmToken.stringLiteral);
+    return Objects.equals(ruleName, asmToken.ruleName)
+        && Objects.equals(stringLiteral, asmToken.stringLiteral);
   }
 
   @Override
@@ -81,18 +196,18 @@ class AsmToken {
   }
 }
 
-class FirstSetComputer implements AsmGrammarEntityVisitor<HashSet<AsmToken>> {
+class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
 
-  private final HashMap<String, HashSet<AsmToken>> firstSetCache = new HashMap<>();
+  private final HashMap<String, Set<AsmToken>> firstSetCache = new HashMap<>();
 
   @Override
-  public HashSet<AsmToken> visit(AsmGrammarRuleDefinition entity) {
+  public Set<AsmToken> visit(AsmGrammarRuleDefinition entity) {
     var ruleName = entity.identifier().name;
     if (firstSetCache.containsKey(ruleName)) {
       return firstSetCache.get(ruleName);
     }
 
-    HashSet<AsmToken> firstSet;
+    Set<AsmToken> firstSet;
     if (entity.isTerminalRule) {
       firstSet = new HashSet<>(List.of(new AsmToken(ruleName, null)));
     } else {
@@ -104,7 +219,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<HashSet<AsmToken>> {
   }
 
   @Override
-  public HashSet<AsmToken> visit(AsmGrammarAlternativesDefinition entity) {
+  public Set<AsmToken> visit(AsmGrammarAlternativesDefinition entity) {
 
     var alternativesTokens = new HashSet<AsmToken>();
 
@@ -117,7 +232,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<HashSet<AsmToken>> {
   }
 
   @Override
-  public HashSet<AsmToken> visit(AsmGrammarElementDefinition entity) {
+  public Set<AsmToken> visit(AsmGrammarElementDefinition entity) {
     // only ever one of these fields is non-null
     // so the order of the statements has no effect
     if (entity.groupAlternatives != null) {
@@ -139,7 +254,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<HashSet<AsmToken>> {
   }
 
   @Override
-  public HashSet<AsmToken> visit(AsmGrammarLocalVarDefinition entity) {
+  public Set<AsmToken> visit(AsmGrammarLocalVarDefinition entity) {
     if (entity.asmLiteral.id != null && entity.asmLiteral.id.name.equals("null")) {
       return new HashSet<>();
     }
@@ -147,7 +262,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<HashSet<AsmToken>> {
   }
 
   @Override
-  public HashSet<AsmToken> visit(AsmGrammarLiteralDefinition entity) {
+  public Set<AsmToken> visit(AsmGrammarLiteralDefinition entity) {
 
     if (entity.stringLiteral != null) {
       var stringValue = ((StringLiteral) entity.stringLiteral).value;
@@ -172,7 +287,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<HashSet<AsmToken>> {
 
     if (invocationSymbolOrigin instanceof FunctionDefinition) {
 
-      HashSet<AsmToken> tokens = new HashSet<>();
+      Set<AsmToken> tokens = new HashSet<>();
 
       // get the tokens of the first parameter that needs to be parsed
       // it can be the case that no parameter needs to be parsed
@@ -186,18 +301,13 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<HashSet<AsmToken>> {
     return new HashSet<>();
   }
 
-  public HashSet<AsmToken> computeFirstSetOfGroup(
+  public Set<AsmToken> computeFirstSetOfGroup(
       @Nullable List<AsmGrammarElementDefinition> elements) {
     if (elements == null) {
       return new HashSet<>();
     }
 
     AsmGrammarElementDefinition firstEntity = elements.get(0);
-    // TODO: transfer to above method
-
-    //    if (firstEntity.semanticPredicate != null) {
-    //      return new ArrayList<>();
-    //    }
 
     // get the firstSet of the first entity that needs to be parsed
     var firstEntityTokens = firstEntity.accept(this);
@@ -243,10 +353,10 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<HashSet<AsmToken>> {
 
 class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
 
-  private final FirstSetComputer firstSetComputer = new FirstSetComputer();
+  private final FirstSetComputer firstSetComputer;
   private final EntityDeletableComputer deletableComputer = new EntityDeletableComputer();
 
-  private final HashMap<String, HashSet<AsmToken>> followSetCache = new HashMap<>();
+  private final HashMap<String, Set<AsmToken>> followSetCache = new HashMap<>();
 
   // a mapping of "RuleA" -> ["RuleB","RuleC",...]
   // the follow sets of ["RuleB","RuleC",...] need to be merged into the follow set of "RuleA"
@@ -255,9 +365,17 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
   @Nullable
   private String currentRuleName;
   @Nullable
-  private List<AsmGrammarElementDefinition> successorElements;
+  private List<AsmGrammarElementDefinition> successors;
 
+  public FollowSetSetComputer(FirstSetComputer firstSetComputer) {
+    this.firstSetComputer = firstSetComputer;
+  }
 
+  public Map<String, Set<AsmToken>> getFollowSets() {
+    return followSetCache;
+  }
+
+  // TODO: remove this method
   public void computeFollowSets(Ast ast) {
     for (var definition : ast.definitions) {
       if (definition instanceof AsmDescriptionDefinition asmDescription) {
@@ -273,6 +391,20 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
           complete(rule.identifier().name);
         }
       }
+    }
+  }
+
+  public void computeFollowSets(List<AsmGrammarRuleDefinition> rules) {
+    // compute follow from first e.g. add first(C) to follow(B) for A : B C;
+    for (var rule : rules) {
+      currentRuleName = rule.identifier().name;
+      rule.accept(this);
+    }
+
+    // complete follow sets e.g. add follow(A) to follow(B) for A : B;
+    for (var rule : rules) {
+      currentRuleName = rule.identifier().name;
+      complete(rule.identifier().name);
     }
   }
 
@@ -306,9 +438,9 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
     for (var alternative : entity.alternatives) {
       for (int i = 0; i < alternative.size(); i++) {
         if (i < alternative.size() - 1) {
-          successorElements = alternative.subList(i + 1, alternative.size());
+          successors = alternative.subList(i + 1, alternative.size());
         } else {
-          successorElements = null;
+          successors = null;
         }
         alternative.get(i).accept(this);
       }
@@ -364,10 +496,10 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
       var invokedRule = rule.identifier().name;
       var invokedRuleFollowSet =
           followSetCache.computeIfAbsent(invokedRule, key -> new HashSet<>());
-      invokedRuleFollowSet.addAll(firstSetComputer.computeFirstSetOfGroup(successorElements));
 
-      if (successorElements == null ||
-          deletableComputer.areAllElementsDeletable(successorElements)) {
+      invokedRuleFollowSet.addAll(firstSetComputer.computeFirstSetOfGroup(successors));
+
+      if (successors == null || deletableComputer.areAllElementsDeletable(successors)) {
         followSetsToBeMergedFrom.computeIfAbsent(invokedRule, key -> new HashSet<>())
             .add(currentRuleName);
       }

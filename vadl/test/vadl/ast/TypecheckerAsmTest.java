@@ -629,8 +629,23 @@ public class TypecheckerAsmTest {
 //    var ll1checker = new AsmLL1Checker();
 //    ll1checker.verify(ast);
 //    Assertions.assertDoesNotThrow(() -> ll1checker.verify(ast), "Program isn't LL(1)");
-    var followComp = new FollowSetSetComputer();
+    var firstComp = new FirstSetComputer();
+    var followComp = new FollowSetSetComputer(firstComp);
     followComp.computeFollowSets(ast);
+    var x = 1;
+  }
+
+  @Test
+  void debug2() {
+    var prog = """
+          grammar = {
+            RuleA : STRING | "B" ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    typechecker.verify(ast);
     var x = 1;
   }
 }
