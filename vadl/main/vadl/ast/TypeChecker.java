@@ -54,6 +54,9 @@ public class TypeChecker
     for (var definition : ast.definitions) {
       definition.accept(this);
     }
+
+    var ll1Checker = new AsmLL1Checker();
+    ll1Checker.verify(ast);
   }
 
   private void throwUnimplemented(Node node) {
