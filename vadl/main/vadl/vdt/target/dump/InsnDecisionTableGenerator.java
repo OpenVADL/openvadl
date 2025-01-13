@@ -51,7 +51,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
     // Add a header to each column
     table.get(0).add(0, "Instruction");
     for (int i = 1; i < table.size(); i++) {
-      table.get(i).add(0, new StringBuilder("DL").append(i - 1));
+      table.get(i).add(0, "DL" + (i - 1));
     }
 
     return table;
@@ -89,7 +89,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
     if (defaultNode != null) {
       var childLines = defaultNode.accept(this);
       if (childLines != null) {
-        childLines.forEach(l -> l.add(1, new StringBuilder(label).append(" (default)")));
+        childLines.forEach(l -> l.add(1, label + " (default)"));
       }
       result.addAll(childLines);
     }
@@ -102,9 +102,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
         continue;
       }
 
-      var childLabel = new StringBuilder(label)
-          .append(" == 0x")
-          .append(entry.getKey().toBitVector().toValue().toString(16));
+      var childLabel = "%s == 0x%x".formatted(label, entry.getKey().toBitVector().toValue());
       childLines.forEach(l -> l.add(1, childLabel));
       result.addAll(childLines);
     }

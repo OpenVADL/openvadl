@@ -87,23 +87,14 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
     var id = counter.get().getAndIncrement();
 
     final List<CharSequence> lines = new ArrayList<>();
-    var nodeDefinition = new StringBuilder()
-        .append("    ")
-        .append(id).append(" [label=\"")
-        .append("Mask 0x").append(node.getMask().toValue().toString(16))
-        .append("\"];\n");
-    lines.add(nodeDefinition);
+    lines.add("    %d [label=\"Mask 0x%x\"];\n".formatted(id, node.getMask().toValue()));
 
     // Handle default node
     if (node.getFallback() != null) {
       var childResult = node.getFallback().accept(this);
       if (childResult != null) {
         lines.addAll(childResult.right());
-        var defaultEdge = new StringBuilder()
-            .append("    ")
-            .append(id).append(" -> ").append(childResult.left())
-            .append(" [label=\"default\"];\n");
-        lines.add(defaultEdge);
+        lines.add("    %d -> %d [label=\"default\"];\n".formatted(id, childResult.left()));
       }
     }
 
@@ -116,13 +107,8 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
       }
 
       lines.addAll(childResult.right());
-
-      var edgeLine = new StringBuilder()
-          .append("    ")
-          .append(id).append(" -> ").append(childResult.left())
-          .append(" [label=\"0x").append(pattern.toBitVector().toValue().toString(16))
-          .append("\"];\n");
-      lines.add(edgeLine);
+      lines.add("    %d -> %d [label=\"0x%x\"];\n".formatted(id, childResult.left(),
+          pattern.toBitVector().toValue()));
     });
 
     return Pair.of(id, lines);
@@ -138,13 +124,7 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
   public Pair<Integer, List<CharSequence>> handle(LeafNodeImpl node) {
     var id = counter.get().getAndIncrement();
     var name = node.instruction().source().simpleName();
-
-    var leafNode = new StringBuilder()
-        .append("    ")
-        .append(id).append(" [label=\"")
-        .append(name)
-        .append("\"];\n");
-
+    var leafNode = "    %d [label=\"%s\"];\n".formatted(id, name);
     return Pair.of(id, List.of(leafNode));
   }
 }
