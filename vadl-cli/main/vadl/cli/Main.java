@@ -2,14 +2,15 @@ package vadl.cli;
 
 
 import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
 /**
  * The VADL CLI entry class.
  */
-@CommandLine.Command(mixinStandardHelpOptions = true,
+@Command(mixinStandardHelpOptions = true,
     name = "OpenVADL",
     description = "The OpenVadl CLI tool.",
-    subcommands = {FrontendCommand.class, ExampleBackendCommand.class})
+    subcommands = {CheckCommand.class, IssCommand.class, LcbCommand.class})
 public class Main implements Runnable {
   @Override
   public void run() {

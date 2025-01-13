@@ -2,7 +2,6 @@ package vadl.template;
 
 import static vadl.viam.ViamError.ensure;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -21,6 +20,7 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.formatting.CodeFormatter;
+import vadl.dump.ArtifactTracker;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -118,6 +118,11 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
 
     var finalFilePath = createOutputPath(configuration(), subDir, getOutputPath());
     var writer = createFileWriter(finalFilePath);
+    if (this.subDir.equals("dump")) {
+      ArtifactTracker.addDump(finalFilePath);
+    } else {
+      ArtifactTracker.addArtifact(finalFilePath);
+    }
 
     renderTemplate(passResults, viam, writer);
     formatRenderedFile(finalFilePath);
