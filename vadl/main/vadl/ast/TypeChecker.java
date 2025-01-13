@@ -570,6 +570,9 @@ public class TypeChecker
       }
     }
     definition.commonDefinitions.forEach(commonDef -> commonDef.accept(this));
+
+    var ll1Checker = new AsmLL1Checker();
+    ll1Checker.verify(definition.rules);
     return null;
   }
 

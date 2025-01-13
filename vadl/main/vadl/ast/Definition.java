@@ -4349,6 +4349,18 @@ class AsmDirectiveDefinition extends Definition {
   }
 }
 
+interface AsmGrammarEntityVisitor<R> {
+  R visit(AsmGrammarRuleDefinition entity);
+
+  R visit(AsmGrammarAlternativesDefinition entity);
+
+  R visit(AsmGrammarElementDefinition entity);
+
+  R visit(AsmGrammarLocalVarDefinition entity);
+
+  R visit(AsmGrammarLiteralDefinition entity);
+}
+
 /**
  * Represents a rule(non-terminal) in the assembly language grammar.
  * The body of the rule is represented by a list of alternatives.
@@ -4362,6 +4374,8 @@ class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
   AsmGrammarAlternativesDefinition alternatives;
   SourceLocation loc;
 
+  boolean isTerminalRule = false;
+  boolean isBuiltinRule = false;
   @Nullable
   AsmType asmType;
 
@@ -4377,6 +4391,10 @@ class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -4451,6 +4469,10 @@ class AsmGrammarAlternativesDefinition extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
     return visitor.visit(this);
   }
 
@@ -4586,6 +4608,10 @@ class AsmGrammarElementDefinition extends Definition {
     return visitor.visit(this);
   }
 
+  <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
   @Override
   SourceLocation location() {
     return loc;
@@ -4691,6 +4717,10 @@ class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNod
     return visitor.visit(this);
   }
 
+  <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
   @Override
   SourceLocation location() {
     return loc;
@@ -4770,6 +4800,10 @@ class AsmGrammarLiteralDefinition extends Definition {
 
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  <R> R accept(AsmGrammarEntityVisitor<R> visitor) {
     return visitor.visit(this);
   }
 

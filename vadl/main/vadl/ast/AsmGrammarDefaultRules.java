@@ -1,7 +1,11 @@
 package vadl.ast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.ConstantAsmType;
@@ -27,6 +31,8 @@ public class AsmGrammarDefaultRules {
    */
   public static final String BUILTIN_ASM_NEG = "builtin_asm_neg";
 
+  private static final HashMap<AsmGrammarRuleDefinition, Pattern> patternCache = new HashMap<>();
+
   /**
    * Returns a list of default rules that are not included in the given rules.
    *
@@ -40,60 +46,74 @@ public class AsmGrammarDefaultRules {
     ).toList();
   }
 
+  /**
+   * Get the precompiled regex patterns for terminal rules.
+   * The regex patterns are used to check for LL(1) conflicts in the Asm Grammar.
+   *
+   * @return a map of terminal rules and their corresponding regex patterns
+   */
+  public static Map<AsmGrammarRuleDefinition, Pattern> terminalRuleRegexPatterns() {
+    return patternCache;
+  }
+
   private static List<AsmGrammarRuleDefinition> defaultRules() {
     // regex pattern needed for checking LL(1) conflicts
     // in the AsmParser this is handled by the LLVM lexer
     return new ArrayList<>(List.of(
-        terminalRuleTypeString("IDENTIFIER", "[a-zA-Z_.][a-zA-Z0-9_$.@]*"),
-        terminalRuleTypeString("STRING", "\\\".*\\\""),
-        terminalRuleTypeString("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+"),
-        terminalRuleTypeString("COLON", ":"),
-        terminalRuleTypeString("PLUS", "+"),
-        terminalRuleTypeString("MINUS", "-"),
-        terminalRuleTypeString("TILDE", "~"),
-        terminalRuleTypeString("SLASH", "/"),
-        terminalRuleTypeString("BACKSLASH", "\\\\"),
-        terminalRuleTypeString("LPAREN", "("),
-        terminalRuleTypeString("RPAREN", ")"),
-        terminalRuleTypeString("LBRAC", "["),
-        terminalRuleTypeString("RBRAC", "]"),
-        terminalRuleTypeString("LCURLY", "{"),
-        terminalRuleTypeString("RCURLY", "}"),
-        terminalRuleTypeString("STAR", "*"),
-        terminalRuleTypeString("DOT", "."),
-        terminalRuleTypeString("COMMA", ","),
-        terminalRuleTypeString("DOLLAR", "$"),
-        terminalRuleTypeString("EQUAL", "="),
-        terminalRuleTypeString("EQUALEQUAL", "=="),
-        terminalRuleTypeString("PIPE", "|"),
-        terminalRuleTypeString("PIPEPIPE", "||"),
-        terminalRuleTypeString("CARET", "^"),
-        terminalRuleTypeString("AMP", "&"),
-        terminalRuleTypeString("AMPAMP", "&&"),
-        terminalRuleTypeString("EXCLAIM", "!"),
-        terminalRuleTypeString("EXCLAIMEQUAL", "!="),
-        terminalRuleTypeString("PERCENT", "%"),
-        terminalRuleTypeString("HASH", "#"),
-        terminalRuleTypeString("LESS", "<"),
-        terminalRuleTypeString("LESSEQUAL", "<="),
-        terminalRuleTypeString("LESSLESS", "<<"),
-        terminalRuleTypeString("LESSGREATER", "<>"),
-        terminalRuleTypeString("GREATER", ">"),
-        terminalRuleTypeString("GREATEREQUAL", ">="),
-        terminalRuleTypeString("GREATERGREATER", ">>"),
-        terminalRuleTypeString("AT", "@"),
-        terminalRuleTypeString("MINUSGREATER", "->"),
-        terminalRule("EOL", "[\\r(\\r\\n)]", VoidAsmType.instance()),
-        nonTerminalRule("Statement", InstructionAsmType.instance(), instructionRule(),
+        terminalRuleTypeString("IDENTIFIER", "[a-zA-Z_.][a-zA-Z0-9_$.@]*", false),
+        terminalRuleTypeString("STRING", "\\\".*\\\"", false),
+        terminalRuleTypeString("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+", false),
+        terminalRuleTypeString("COLON", ":", false),
+        terminalRuleTypeString("PLUS", "+", true),
+        terminalRuleTypeString("MINUS", "-", false),
+        terminalRuleTypeString("TILDE", "~", false),
+        terminalRuleTypeString("SLASH", "/", false),
+        terminalRuleTypeString("BACKSLASH", "\\\\", false),
+        terminalRuleTypeString("LPAREN", "(", true),
+        terminalRuleTypeString("RPAREN", ")", true),
+        terminalRuleTypeString("LBRAC", "[", true),
+        terminalRuleTypeString("RBRAC", "]", true),
+        terminalRuleTypeString("LCURLY", "{", true),
+        terminalRuleTypeString("RCURLY", "}", true),
+        terminalRuleTypeString("STAR", "*", true),
+        terminalRuleTypeString("DOT", ".", true),
+        terminalRuleTypeString("COMMA", ",", false),
+        terminalRuleTypeString("DOLLAR", "$", true),
+        terminalRuleTypeString("EQUAL", "=", false),
+        terminalRuleTypeString("EQUALEQUAL", "==", false),
+        terminalRuleTypeString("PIPE", "|", true),
+        terminalRuleTypeString("PIPEPIPE", "||", true),
+        terminalRuleTypeString("CARET", "^", true),
+        terminalRuleTypeString("AMP", "&", false),
+        terminalRuleTypeString("AMPAMP", "&&", false),
+        terminalRuleTypeString("EXCLAIM", "!", false),
+        terminalRuleTypeString("EXCLAIMEQUAL", "!=", false),
+        terminalRuleTypeString("PERCENT", "%", false),
+        terminalRuleTypeString("HASH", "#", false),
+        terminalRuleTypeString("LESS", "<", false),
+        terminalRuleTypeString("LESSEQUAL", "<=", false),
+        terminalRuleTypeString("LESSLESS", "<<", false),
+        terminalRuleTypeString("LESSGREATER", "<>", false),
+        terminalRuleTypeString("GREATER", ">", false),
+        terminalRuleTypeString("GREATEREQUAL", ">=", false),
+        terminalRuleTypeString("GREATERGREATER", ">>", false),
+        terminalRuleTypeString("AT", "@", false),
+        terminalRuleTypeString("MINUSGREATER", "->", false),
+        terminalRule("EOL", "[\\r(\\r\\n)]", true, VoidAsmType.instance()),
+        nonTerminalRule("Statement", InstructionAsmType.instance(), false, instructionRule(),
             ruleReference("EOL")),
-        nonTerminalRule("Register", RegisterAsmType.instance(), ruleReference("IDENTIFIER")),
-        nonTerminalRule("ImmediateOperand", null, ruleReference("Expression")),
-        nonTerminalRule("Identifier", StringAsmType.instance(), ruleReference("IDENTIFIER")),
-        nonTerminalRule("Expression", ExpressionAsmType.instance(), ruleReference("Expression")),
-        nonTerminalRule("Instruction", InstructionAsmType.instance(), ruleReference("Instruction")),
+        nonTerminalRule("Register", RegisterAsmType.instance(),
+            false, ruleReference("IDENTIFIER")),
+        nonTerminalRule("ImmediateOperand", null, false, ruleReference("Expression")),
+        nonTerminalRule("Identifier", StringAsmType.instance(),
+            false, ruleReference("IDENTIFIER")),
+        nonTerminalRule("Expression", ExpressionAsmType.instance(), true,
+            ruleReference("Expression")),
+        nonTerminalRule("Instruction", InstructionAsmType.instance(), true,
+            ruleReference("Instruction")),
         integerRule(),
-        nonTerminalRule("Natural", ConstantAsmType.instance(), ruleReference("INTEGER")),
-        nonTerminalRule("Label", SymbolAsmType.instance(), ruleReference("Identifier"))
+        nonTerminalRule("Natural", ConstantAsmType.instance(), false, ruleReference("INTEGER")),
+        nonTerminalRule("Label", SymbolAsmType.instance(), false, ruleReference("Identifier"))
     ));
   }
 
@@ -126,11 +146,13 @@ public class AsmGrammarDefaultRules {
   }
 
   private static AsmGrammarRuleDefinition terminalRuleTypeString(String name,
-                                                                 String regularExpression) {
-    return terminalRule(name, regularExpression, StringAsmType.instance());
+                                                                 String regularExpression,
+                                                                 boolean escapeRegex) {
+    return terminalRule(name, regularExpression, escapeRegex, StringAsmType.instance());
   }
 
   private static AsmGrammarRuleDefinition terminalRule(String name, String regularExpression,
+                                                       boolean escapeRegex,
                                                        AsmType terminalRuleType) {
     var asmTypeDef = new AsmGrammarTypeDefinition(
         new Identifier(terminalRuleType.name(),
@@ -144,7 +166,7 @@ public class AsmGrammarDefaultRules {
     );
     grammarLiteral.asmType = terminalRuleType;
 
-    return new AsmGrammarRuleDefinition(
+    var rule = new AsmGrammarRuleDefinition(
         new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
         null,
         new AsmGrammarAlternativesDefinition(
@@ -158,9 +180,16 @@ public class AsmGrammarDefaultRules {
         ),
         SourceLocation.INVALID_SOURCE_LOCATION
     );
+    rule.isTerminalRule = true;
+
+    var pattern =
+        Pattern.compile(escapeRegex ? Pattern.quote(regularExpression) : regularExpression);
+    patternCache.put(rule, pattern);
+    return rule;
   }
 
   private static AsmGrammarRuleDefinition nonTerminalRule(String name, @Nullable AsmType ruleType,
+                                                          boolean isBuiltinRule,
                                                           AsmGrammarElementDefinition... elements) {
     var rule = new AsmGrammarRuleDefinition(
         new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
@@ -174,6 +203,7 @@ public class AsmGrammarDefaultRules {
 
     // by setting the asmType we can avoid checking the default rules in the typechecker
     rule.asmType = ruleType;
+    rule.isBuiltinRule = isBuiltinRule;
     return rule;
   }
 
