@@ -12,7 +12,7 @@ import vadl.error.Diagnostic;
 
 
 /**
- * A helper class that evaluates the assembly grammar for LL(1) compliance.
+ * A class that evaluates the assembly grammar for LL(1) compliance.
  * If there are LL(1) conflicts in the grammar, they need to be resolved by semantic predicates.
  */
 public class AsmLL1Checker {
@@ -147,8 +147,8 @@ public class AsmLL1Checker {
       Objects.requireNonNull(currentRule);
       throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
               currentRule)
-          .note("%s %s start and successor.", String.join(", ",
-                  overlappingTokens.stream().map(AsmToken::toString).toList()),
+          .locationDescription(alternatives, "%s %s start and successor of this block.",
+              String.join(", ", overlappingTokens.stream().map(AsmToken::toString).toList()),
               overlappingTokens.size() > 1 ? "are" : "is")
           .note("Start and successor of [...] or {...} must be distinct.")
           .build();
@@ -162,12 +162,26 @@ public class AsmLL1Checker {
     return expectedTokens(elements);
   }
 
+  /**
+   * <p>
+   * For a semantic predicate to apply to an option/repetition, there can only be one alternative.
+   * Compare rule A with rule B:
+   * </p>
+   * <ul>
+   *  <li>A : [?(true) (?(true) "A" | "A")] "A";
+   *  here the first semantic predicate applies to option.</li>
+   * <li>B : [?(true) "B" | "B"] "B";
+   * here the semantic predicate applies to the alternative within the option.</li>
+   * </ul>
+   * <p>
+   * In rule A we see that within the option there is only one alternative (with 2 elements:
+   * a semantic predicate and a nested group).
+   * </p>
+   *
+   * @param alternatives the alternatives of an option/repetition block
+   * @return the expected tokens for the block
+   */
   private Set<AsmToken> expectedTokensForConflict(AsmGrammarAlternativesDefinition alternatives) {
-    // [ ?(true) (?(true) "A" | "A")] "A" --> this gets parsed into alt[0]
-    //    where alt[0][0] is semPred != null and alt[0][1] is groupAlternatives != null
-    // [ ?(true) "A" | "A"] "A" --> this gets parsed into alt[0] with group and alt[1] with literal
-    // --> there can only be one alternative
-    // if semantic predicate is supposed to apply to option / repetition
     if (alternatives.alternatives.size() == 1) {
       if (alternatives.alternatives.get(0).get(0).semanticPredicate != null) {
         return new HashSet<>();
@@ -210,7 +224,7 @@ public class AsmLL1Checker {
     if (deletableComputer.visit(alternatives)) {
       throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
               currentRule)
-          .locationDescription(alternatives, "Conflicting block is here.")
+          .locationDescription(alternatives, "Deletable block.")
           .note("Contents of [...] or {...} must not be deletable.")
           .build();
     }

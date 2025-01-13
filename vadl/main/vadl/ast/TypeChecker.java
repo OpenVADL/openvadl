@@ -571,7 +571,6 @@ public class TypeChecker
     }
     definition.commonDefinitions.forEach(commonDef -> commonDef.accept(this));
 
-    // FIXME: is this the correct place to call the LL1Checker?
     var ll1Checker = new AsmLL1Checker();
     ll1Checker.verify(definition.rules);
     return null;
