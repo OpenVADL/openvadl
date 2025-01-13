@@ -250,4 +250,114 @@ public class AsmLL1CheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
+
+  @Test
+  void unnecessarySemanticPredicateInAlternatives() {
+    var prog = """
+          grammar = {
+            RuleA : ?(equ(1,2)) "A" | "B";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void semanticPredicateShouldBeInPreviousAlternatives() {
+    var prog = """
+          grammar = {
+            RuleA : "B" | ?(equ(1,2)) "B";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void unnecessarySemanticPredicateInOption() {
+    var prog = """
+          grammar = {
+            RuleA : [ ?(equ(1,2)) "A" ] "B";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void unnecessarySemanticPredicateInRepetition() {
+    var prog = """
+          grammar = {
+            RuleA : { ?(equ(1,2)) "A" } "B";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void misplacedSemanticPredicateInGroup() {
+    var prog = """
+          grammar = {
+            RuleA : ?(equ(1,2)) "A" ?(equ(3,4)) | "A";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void conflictInOptionCausedByFollowSet() {
+    var prog = """
+          grammar = {
+            A : B;            // Identifier in follow(A), therefore in follow(B)
+            B : [Identifier]; // Identifier in follow(B) --> LL(1) conflict
+            C : A Identifier; // Identifier in follow(A)
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void conflictByChainedFollowSet() {
+    var prog = """
+          grammar = {
+            A : D;
+            B : [Identifier];
+            C : A Identifier;
+            D : E;
+            E : B;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void conflictWithTerminal() {
+    var prog = """
+          grammar = {
+            A : "+" | PLUS;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
 }

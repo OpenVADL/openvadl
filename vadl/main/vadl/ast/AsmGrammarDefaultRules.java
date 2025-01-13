@@ -53,17 +53,6 @@ public class AsmGrammarDefaultRules {
    * @return a map of terminal rules and their corresponding regex patterns
    */
   public static Map<AsmGrammarRuleDefinition, Pattern> terminalRuleRegexPatterns() {
-    if (patternCache.entrySet().isEmpty()) {
-      defaultRules().stream()
-          .filter(rule -> rule.isTerminalRule)
-          .forEach(rule -> {
-            var literal = rule.alternatives.alternatives.get(0).get(0).asmLiteral;
-            Objects.requireNonNull(literal);
-            Objects.requireNonNull(literal.stringLiteral);
-            var regex = ((StringLiteral) literal.stringLiteral).value;
-            patternCache.put(rule, Pattern.compile(regex));
-          });
-    }
     return patternCache;
   }
 
@@ -71,46 +60,46 @@ public class AsmGrammarDefaultRules {
     // regex pattern needed for checking LL(1) conflicts
     // in the AsmParser this is handled by the LLVM lexer
     return new ArrayList<>(List.of(
-        terminalRuleTypeString("IDENTIFIER", "[a-zA-Z_.][a-zA-Z0-9_$.@]*"),
-        terminalRuleTypeString("STRING", "\\\".*\\\""),
-        terminalRuleTypeString("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+"),
-        terminalRuleTypeString("COLON", ":"),
-        terminalRuleTypeString("PLUS", "\\+"),
-        terminalRuleTypeString("MINUS", "-"),
-        terminalRuleTypeString("TILDE", "~"),
-        terminalRuleTypeString("SLASH", "/"),
-        terminalRuleTypeString("BACKSLASH", "\\\\"),
-        terminalRuleTypeString("LPAREN", "\\("),
-        terminalRuleTypeString("RPAREN", "\\)"),
-        terminalRuleTypeString("LBRAC", "\\["),
-        terminalRuleTypeString("RBRAC", "\\]"),
-        terminalRuleTypeString("LCURLY", "\\{"),
-        terminalRuleTypeString("RCURLY", "\\}"),
-        terminalRuleTypeString("STAR", "\\*"),
-        terminalRuleTypeString("DOT", "\\."),
-        terminalRuleTypeString("COMMA", ","),
-        terminalRuleTypeString("DOLLAR", "$"),
-        terminalRuleTypeString("EQUAL", "="),
-        terminalRuleTypeString("EQUALEQUAL", "=="),
-        terminalRuleTypeString("PIPE", "|"),
-        terminalRuleTypeString("PIPEPIPE", "||"),
-        terminalRuleTypeString("CARET", "^"),
-        terminalRuleTypeString("AMP", "&"),
-        terminalRuleTypeString("AMPAMP", "&&"),
-        terminalRuleTypeString("EXCLAIM", "!"),
-        terminalRuleTypeString("EXCLAIMEQUAL", "!="),
-        terminalRuleTypeString("PERCENT", "%"),
-        terminalRuleTypeString("HASH", "#"),
-        terminalRuleTypeString("LESS", "<"),
-        terminalRuleTypeString("LESSEQUAL", "<="),
-        terminalRuleTypeString("LESSLESS", "<<"),
-        terminalRuleTypeString("LESSGREATER", "<>"),
-        terminalRuleTypeString("GREATER", ">"),
-        terminalRuleTypeString("GREATEREQUAL", ">="),
-        terminalRuleTypeString("GREATERGREATER", ">>"),
-        terminalRuleTypeString("AT", "@"),
-        terminalRuleTypeString("MINUSGREATER", "->"),
-        terminalRule("EOL", "[\\r(\\r\\n)]", VoidAsmType.instance()),
+        terminalRuleTypeString("IDENTIFIER", "[a-zA-Z_.][a-zA-Z0-9_$.@]*", false),
+        terminalRuleTypeString("STRING", "\\\".*\\\"", false),
+        terminalRuleTypeString("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+", false),
+        terminalRuleTypeString("COLON", ":", false),
+        terminalRuleTypeString("PLUS", "+", true),
+        terminalRuleTypeString("MINUS", "-", false),
+        terminalRuleTypeString("TILDE", "~", false),
+        terminalRuleTypeString("SLASH", "/", false),
+        terminalRuleTypeString("BACKSLASH", "\\\\", false),
+        terminalRuleTypeString("LPAREN", "(", true),
+        terminalRuleTypeString("RPAREN", ")", true),
+        terminalRuleTypeString("LBRAC", "[", true),
+        terminalRuleTypeString("RBRAC", "]", true),
+        terminalRuleTypeString("LCURLY", "{", true),
+        terminalRuleTypeString("RCURLY", "}", true),
+        terminalRuleTypeString("STAR", "*", true),
+        terminalRuleTypeString("DOT", ".", true),
+        terminalRuleTypeString("COMMA", ",", false),
+        terminalRuleTypeString("DOLLAR", "$", true),
+        terminalRuleTypeString("EQUAL", "=", false),
+        terminalRuleTypeString("EQUALEQUAL", "==", false),
+        terminalRuleTypeString("PIPE", "|", true),
+        terminalRuleTypeString("PIPEPIPE", "||", true),
+        terminalRuleTypeString("CARET", "^", true),
+        terminalRuleTypeString("AMP", "&", false),
+        terminalRuleTypeString("AMPAMP", "&&", false),
+        terminalRuleTypeString("EXCLAIM", "!", false),
+        terminalRuleTypeString("EXCLAIMEQUAL", "!=", false),
+        terminalRuleTypeString("PERCENT", "%", false),
+        terminalRuleTypeString("HASH", "#", false),
+        terminalRuleTypeString("LESS", "<", false),
+        terminalRuleTypeString("LESSEQUAL", "<=", false),
+        terminalRuleTypeString("LESSLESS", "<<", false),
+        terminalRuleTypeString("LESSGREATER", "<>", false),
+        terminalRuleTypeString("GREATER", ">", false),
+        terminalRuleTypeString("GREATEREQUAL", ">=", false),
+        terminalRuleTypeString("GREATERGREATER", ">>", false),
+        terminalRuleTypeString("AT", "@", false),
+        terminalRuleTypeString("MINUSGREATER", "->", false),
+        terminalRule("EOL", "[\\r(\\r\\n)]", true, VoidAsmType.instance()),
         nonTerminalRule("Statement", InstructionAsmType.instance(), false, instructionRule(),
             ruleReference("EOL")),
         nonTerminalRule("Register", RegisterAsmType.instance(),
@@ -157,11 +146,13 @@ public class AsmGrammarDefaultRules {
   }
 
   private static AsmGrammarRuleDefinition terminalRuleTypeString(String name,
-                                                                 String regularExpression) {
-    return terminalRule(name, regularExpression, StringAsmType.instance());
+                                                                 String regularExpression,
+                                                                 boolean escapeRegex) {
+    return terminalRule(name, regularExpression, escapeRegex, StringAsmType.instance());
   }
 
   private static AsmGrammarRuleDefinition terminalRule(String name, String regularExpression,
+                                                       boolean escapeRegex,
                                                        AsmType terminalRuleType) {
     var asmTypeDef = new AsmGrammarTypeDefinition(
         new Identifier(terminalRuleType.name(),
@@ -190,6 +181,10 @@ public class AsmGrammarDefaultRules {
         SourceLocation.INVALID_SOURCE_LOCATION
     );
     rule.isTerminalRule = true;
+
+    var pattern =
+        Pattern.compile(escapeRegex ? Pattern.quote(regularExpression) : regularExpression);
+    patternCache.put(rule, pattern);
     return rule;
   }
 

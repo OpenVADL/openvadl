@@ -13,11 +13,9 @@ import vadl.error.Diagnostic;
 
 /**
  * A helper class that evaluates the assembly grammar for LL(1) compliance.
- * LL(1) conflicts are allowed in the grammar, if they are resolved by semantic predicates.
+ * If there are LL(1) conflicts in the grammar, they need to be resolved by semantic predicates.
  */
 public class AsmLL1Checker {
-  // TODO: handle semantic predicates
-
   FirstSetComputer firstSetComputer = new FirstSetComputer();
   FollowSetSetComputer followSetSetComputer = new FollowSetSetComputer(firstSetComputer);
   EntityDeletableComputer deletableComputer = new EntityDeletableComputer();
@@ -29,65 +27,131 @@ public class AsmLL1Checker {
    * Verify that the assembly grammar is LL(1) compliant
    * or any conflicts are resolved by semantic predicates.
    *
-   * @param ast to verify
-   * @throws Diagnostic if there are unresolved LL(1) conflicts
+   * @param rules grammar rules to verify
+   * @throws Diagnostic if there are unresolved LL(1) conflicts or misplaced semantic predicates
    */
-  public void verify(Ast ast) {
-    for (var definition : ast.definitions) {
-      if (definition instanceof AsmDescriptionDefinition asmDescription) {
+  public void verify(List<AsmGrammarRuleDefinition> rules) {
+    followSetSetComputer.computeFollowSets(rules);
 
-        followSetSetComputer.computeFollowSets(asmDescription.rules);
-
-        for (var rule : asmDescription.rules) {
-          if (!rule.isTerminalRule && !rule.isBuiltinRule) {
-            currentRule = rule;
-            verifyAlternatives(rule.alternatives);
-          }
-        }
+    for (var rule : rules) {
+      if (!rule.isTerminalRule && !rule.isBuiltinRule) {
+        currentRule = rule;
+        verifyAlternatives(rule.alternatives, false);
       }
     }
   }
 
-  private void verifyAlternatives(AsmGrammarAlternativesDefinition entity) {
+  private void verifyAlternatives(AsmGrammarAlternativesDefinition entity,
+                                  boolean isInOptionOrRepetition) {
     HashSet<AsmToken> previousAlternativesTokens = new HashSet<>();
+    Set<AsmToken> allAlternativesTokens = new HashSet<>();
 
     for (var alternative : entity.alternatives) {
-      var expectedTokens = expectedTokensForConflict(alternative);
-      var overlappingTokens = getOverlappingTokens(previousAlternativesTokens, expectedTokens);
-      if (!overlappingTokens.isEmpty()) {
-        Objects.requireNonNull(currentRule);
-        throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
-                currentRule)
-            .note("%s %s the start of several alternatives.", String.join(", ",
-                    overlappingTokens.stream().map(AsmToken::toString).toList()),
-                overlappingTokens.size() > 1 ? "are" : "is")
-            .note("Start of each alternative must be distinct.")
+      allAlternativesTokens.addAll(expectedTokensForConflict(alternative));
+    }
+
+    for (var alternative : entity.alternatives) {
+
+      var expected = expectedTokens(alternative);
+
+      var firstElement = alternative.get(0);
+      if (!(entity.alternatives.size() == 1 && isInOptionOrRepetition)
+          && firstElement.semanticPredicate != null) {
+
+        if (!getOverlappingTokens(previousAlternativesTokens, expected).isEmpty()) {
+          throw Diagnostic.error("Misplaced semantic predicate.", firstElement)
+              .note("This semantic predicate will never be evaluated."
+                  + "Place it at previous conflicting alternative.").build();
+        }
+        if (getOverlappingTokens(allAlternativesTokens, expected).isEmpty()) {
+          throw Diagnostic.error("Misplaced semantic predicate.", firstElement)
+              .note("There is no LL(1) conflict here.").build();
+        }
+      }
+
+      var expectedForConflict = expectedTokensForConflict(alternative);
+      checkAlternativeLL1Conflict(previousAlternativesTokens, expectedForConflict);
+
+      previousAlternativesTokens.addAll(expectedForConflict);
+      verifyElementsOfAlternative(alternative);
+    }
+  }
+
+  private void checkAlternativeLL1Conflict(Set<AsmToken> previousAlternativesTokens,
+                                           Set<AsmToken> expectedForConflict) {
+    var overlappingTokens = getOverlappingTokens(previousAlternativesTokens, expectedForConflict);
+    if (!overlappingTokens.isEmpty()) {
+      Objects.requireNonNull(currentRule);
+      throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
+              currentRule)
+          .note("%s %s the start of several alternatives.", String.join(", ",
+                  overlappingTokens.stream().map(AsmToken::toString).toList()),
+              overlappingTokens.size() > 1 ? "are" : "is")
+          .note("Start of each alternative must be distinct.")
+          .build();
+    }
+  }
+
+  private void verifyElementsOfAlternative(List<AsmGrammarElementDefinition> alternative) {
+    List<AsmGrammarElementDefinition> successorElements;
+
+    for (int i = 0; i < alternative.size(); i++) {
+      var element = alternative.get(i);
+
+      if (element.semanticPredicate != null && i > 0) {
+        throw Diagnostic.error("Misplaced semantic predicate.", element)
+            .note("Semantic predicates must be at the beginning of an alternative or a block.")
             .build();
       }
-      previousAlternativesTokens.addAll(expectedTokens);
 
-      List<AsmGrammarElementDefinition> successorElements;
+      successorElements = i < alternative.size() - 1
+          ? alternative.subList(i + 1, alternative.size()) : new ArrayList<>();
 
-      for (int i = 0; i < alternative.size(); i++) {
-        var element = alternative.get(i);
+      if (element.optionAlternatives != null) {
+        verifyOptionOrRepetitionElement(element.optionAlternatives, successorElements);
+        verifyAlternatives(element.optionAlternatives, true);
+      }
 
-        successorElements = i < alternative.size() - 1
-            ? alternative.subList(i + 1, alternative.size()) : new ArrayList<>();
+      if (element.repetitionAlternatives != null) {
+        verifyOptionOrRepetitionElement(element.repetitionAlternatives, successorElements);
+        verifyAlternatives(element.repetitionAlternatives, true);
+      }
 
-        if (element.optionAlternatives != null) {
-          verifyOptionOrRepetitionElement(element.optionAlternatives, successorElements);
-          verifyAlternatives(element.optionAlternatives);
-        }
+      if (element.groupAlternatives != null) {
+        verifyAlternatives(element.groupAlternatives, false);
+      }
+    }
+  }
 
-        if (element.repetitionAlternatives != null) {
-          verifyOptionOrRepetitionElement(element.repetitionAlternatives, successorElements);
-          verifyAlternatives(element.repetitionAlternatives);
-        }
+  private void verifyOptionOrRepetitionElement(AsmGrammarAlternativesDefinition alternatives,
+                                               List<AsmGrammarElementDefinition> successors) {
+    var expectedTokensAfter = expectedTokens(successors);
 
-        if (element.groupAlternatives != null) {
-          verifyAlternatives(element.groupAlternatives);
+    if (alternatives.alternatives.size() == 1) {
+      var firstElement = alternatives.alternatives.get(0).get(0);
+      if (firstElement.semanticPredicate != null) {
+        var expected = firstSetComputer.visit(alternatives);
+        if (getOverlappingTokens(expected, expectedTokensAfter).isEmpty()) {
+          throw Diagnostic.error("Misplaced semantic predicate.", firstElement)
+              .note("There is no LL(1) conflict here.").build();
         }
       }
+    }
+
+    checkDeletableWithinOptionOrRepetition(alternatives);
+
+    var expectedTokens = expectedTokensForConflict(alternatives);
+
+    var overlappingTokens = getOverlappingTokens(expectedTokens, expectedTokensAfter);
+    if (!overlappingTokens.isEmpty()) {
+      Objects.requireNonNull(currentRule);
+      throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
+              currentRule)
+          .note("%s %s start and successor.", String.join(", ",
+                  overlappingTokens.stream().map(AsmToken::toString).toList()),
+              overlappingTokens.size() > 1 ? "are" : "is")
+          .note("Start and successor of [...] or {...} must be distinct.")
+          .build();
     }
   }
 
@@ -98,7 +162,7 @@ public class AsmLL1Checker {
     return expectedTokens(elements);
   }
 
-  private Set<AsmToken> expectedTokenForConflict(AsmGrammarAlternativesDefinition alternatives) {
+  private Set<AsmToken> expectedTokensForConflict(AsmGrammarAlternativesDefinition alternatives) {
     // [ ?(true) (?(true) "A" | "A")] "A" --> this gets parsed into alt[0]
     //    where alt[0][0] is semPred != null and alt[0][1] is groupAlternatives != null
     // [ ?(true) "A" | "A"] "A" --> this gets parsed into alt[0] with group and alt[1] with literal
@@ -148,32 +212,6 @@ public class AsmLL1Checker {
               currentRule)
           .locationDescription(alternatives, "Conflicting block is here.")
           .note("Contents of [...] or {...} must not be deletable.")
-          .build();
-    }
-  }
-
-
-  private void verifyOptionOrRepetitionElement(AsmGrammarAlternativesDefinition alternatives,
-                                               List<AsmGrammarElementDefinition> successors) {
-    checkDeletableWithinOptionOrRepetition(alternatives);
-
-    // expected tokens within option / repetition block
-    var expectedTokens = expectedTokenForConflict(alternatives);
-
-    // expected tokens after option / repetition block
-    var expectedTokensAfter = expectedTokens(successors);
-
-    var overlappingTokens = getOverlappingTokens(expectedTokens, expectedTokensAfter);
-    if (!overlappingTokens.isEmpty()) {
-      Objects.requireNonNull(currentRule);
-      throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
-              currentRule)
-          .locationDescription(alternatives, "Start is here.")
-          .locationDescription(successors.get(0), "Successor is here.")
-          .note("%s %s start and successor.", String.join(", ",
-                  overlappingTokens.stream().map(AsmToken::toString).toList()),
-              overlappingTokens.size() > 1 ? "are" : "is")
-          .note("Start and successor of [...] or {...} must be distinct.")
           .build();
     }
   }
