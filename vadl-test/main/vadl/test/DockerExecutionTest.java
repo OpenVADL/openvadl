@@ -419,7 +419,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * While you must use the first method, the second one is only useful if you use
    * the {@link DockerfileBuilder}.
    */
-  protected record RedisCache(
+  public record RedisCache(
       String host,
       int port,
       GenericContainer<?> redisContainer,

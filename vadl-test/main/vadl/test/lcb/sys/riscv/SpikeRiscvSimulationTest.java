@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -15,11 +14,9 @@ import javax.annotation.Nonnull;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.DockerImageStore;
 import vadl.test.lcb.AbstractLcbTest;
 
 public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
@@ -74,17 +71,14 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
     }
 
     var redisCache = getRunningRedisCache();
-    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv", !doDebug)
-        .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
-        .withBuildArg("TARGET", target)
-        .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
-        .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
-        .withBuildArg("SPIKE_TARGET", getSpikeTarget()));
+    var cachedImage =
+        SpikeRiscv32ImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
+            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), doDebug);
 
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(
         input -> DynamicTest.dynamicTest(input + " with O" + optLevel,
-            () -> runContainerWithEnv(image,
+            () -> runContainerWithEnv(cachedImage,
                 Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
                 "/src/inputs",
                 Map.of("INPUT",
