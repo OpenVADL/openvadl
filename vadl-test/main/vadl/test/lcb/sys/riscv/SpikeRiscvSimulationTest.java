@@ -81,12 +81,10 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
         .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
         .withBuildArg("SPIKE_TARGET", getSpikeTarget()));
 
-    var cachedImage = DockerImageStore.replaceWithCachedImage(getTarget(), image);
-
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(
         input -> DynamicTest.dynamicTest(input + " with O" + optLevel,
-            () -> runContainerWithEnv(cachedImage,
+            () -> runContainerWithEnv(image,
                 Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
                 "/src/inputs",
                 Map.of("INPUT",

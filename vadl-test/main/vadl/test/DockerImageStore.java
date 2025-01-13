@@ -10,7 +10,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
  * existing images is that once an image has been build then it does not need to be built again.
  */
 public class DockerImageStore {
-  private static Map<String, ImageFromDockerfile> store = new HashMap<>();
+  private static final Map<String, ImageFromDockerfile> store = new HashMap<>();
 
   /**
    * Returns {@code true} when an {@link ImageFromDockerfile} exists with the given {@code key}.
@@ -46,5 +46,12 @@ public class DockerImageStore {
 
     setImage(key, image);
     return image;
+  }
+
+  /**
+   * Clears any existing saved images.
+   */
+  public static void clear() {
+    store.clear();
   }
 }

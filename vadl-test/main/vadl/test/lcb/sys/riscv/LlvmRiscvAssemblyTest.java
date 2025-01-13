@@ -43,6 +43,7 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
     var configuration = new LcbConfiguration(getConfiguration(false),
         new ProcessorName(target));
 
+
     runLcb(configuration, getSpecPath());
 
     // Move Dockerfile into Docker Context
@@ -59,13 +60,11 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
         .withBuildArg("TARGET", target));
 
-    var cachedImage = DockerImageStore.replaceWithCachedImage(getTarget(), image);
-
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
       var name = Paths.get(input).getFileName().toString();
 
-      runContainerAndCopyInputIntoContainer(cachedImage,
+      runContainerAndCopyInputIntoContainer(image,
           List.of(
               Pair.of(
                   Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
