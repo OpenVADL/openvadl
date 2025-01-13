@@ -185,4 +185,69 @@ public class AsmLL1CheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
   }
+
+  @Test
+  void semanticPredicateToSolveAlternativeConflict() {
+    var prog = """
+          grammar = {
+            RuleA : ?(equ(1,2)) "A" | "A";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+  }
+
+  @Test
+  void semanticPredicateToSolveOptionConflict() {
+    var prog = """
+          grammar = {
+            RuleA : [?(equ(1,2)) "A"] "A";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+  }
+
+  @Test
+  void semanticPredicateToSolveRepetitionConflict() {
+    var prog = """
+          grammar = {
+            RuleA : {?(equ(1,2)) "A"} "A";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+  }
+
+  @Test
+  void semanticPredicateFollowedByAlternatives() {
+    var prog = """
+          grammar = {
+            RuleA : [ ?(equ(1,2)) (?(equ(1,2)) "A" | "A")] "A";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+  }
+
+  @Test
+  void missingSemanticPredicateFollowedByAlternatives() {
+    var prog = """
+          grammar = {
+            RuleA : [ ?(equ(1,2)) "A" | "A"] "A";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
 }

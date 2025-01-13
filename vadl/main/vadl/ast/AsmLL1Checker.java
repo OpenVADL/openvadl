@@ -52,7 +52,7 @@ public class AsmLL1Checker {
     HashSet<AsmToken> previousAlternativesTokens = new HashSet<>();
 
     for (var alternative : entity.alternatives) {
-      var expectedTokens = expectedTokens(alternative);
+      var expectedTokens = expectedTokensForConflict(alternative);
       var overlappingTokens = getOverlappingTokens(previousAlternativesTokens, expectedTokens);
       if (!overlappingTokens.isEmpty()) {
         Objects.requireNonNull(currentRule);
@@ -91,8 +91,28 @@ public class AsmLL1Checker {
     }
   }
 
+  private Set<AsmToken> expectedTokensForConflict(List<AsmGrammarElementDefinition> elements) {
+    if (!elements.isEmpty() && elements.get(0).semanticPredicate != null) {
+      return new HashSet<>();
+    }
+    return expectedTokens(elements);
+  }
+
+  private Set<AsmToken> expectedTokenForConflict(AsmGrammarAlternativesDefinition alternatives) {
+    // [ ?(true) (?(true) "A" | "A")] "A" --> this gets parsed into alt[0]
+    //    where alt[0][0] is semPred != null and alt[0][1] is groupAlternatives != null
+    // [ ?(true) "A" | "A"] "A" --> this gets parsed into alt[0] with group and alt[1] with literal
+    // --> there can only be one alternative
+    // if semantic predicate is supposed to apply to option / repetition
+    if (alternatives.alternatives.size() == 1) {
+      if (alternatives.alternatives.get(0).get(0).semanticPredicate != null) {
+        return new HashSet<>();
+      }
+    }
+    return expectedTokens(alternatives);
+  }
+
   private Set<AsmToken> expectedTokens(List<AsmGrammarElementDefinition> elements) {
-    // TODO: if semanticPredicate --> return empty set
     var expectedTokens = firstSetComputer.computeFirstSetOfGroup(elements);
     if (deletableComputer.areAllElementsDeletable(elements)) {
       addFollowSetOfCurrentRule(expectedTokens);
@@ -138,8 +158,7 @@ public class AsmLL1Checker {
     checkDeletableWithinOptionOrRepetition(alternatives);
 
     // expected tokens within option / repetition block
-    // TODO: check for sem pred on first element
-    var expectedTokens = expectedTokens(alternatives);
+    var expectedTokens = expectedTokenForConflict(alternatives);
 
     // expected tokens after option / repetition block
     var expectedTokensAfter = expectedTokens(successors);
