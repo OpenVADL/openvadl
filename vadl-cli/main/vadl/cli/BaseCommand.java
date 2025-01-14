@@ -48,7 +48,7 @@ public abstract class BaseCommand implements Callable<Integer> {
   Path output = Paths.get("output");
 
   @Option(names = {"-m", "--model"}, scope = INHERIT,
-      description = "Override the value of an Id model.")
+      description = "Override the value of an Id macro model.")
   @Nullable
   Map<String, String> modelOverrides;
 
@@ -62,7 +62,7 @@ public abstract class BaseCommand implements Callable<Integer> {
 
   @Option(names = "--expand-macros",
       scope = INHERIT,
-      description = "Expand all macros and write them to disc.")
+      description = "Expand all macros and write them to disk.")
   boolean expandMacros;
 
   /**
