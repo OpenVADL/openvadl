@@ -74,7 +74,7 @@ public class VdtEnricherCollection {
         var graph = TextGraphGenerator.generate(entity.tree());
         var info = InfoUtils.createCodeBlockExpandable(
             "Decode Tree (Text)",
-            graph
+            graph.toString()
         );
 
         entity.addInfo(info);

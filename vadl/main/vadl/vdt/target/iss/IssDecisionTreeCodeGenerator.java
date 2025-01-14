@@ -1,14 +1,9 @@
 package vadl.vdt.target.iss;
 
+import static vadl.utils.StringBuilderUtils.join;
 import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -26,37 +21,26 @@ import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
+import vadl.vdt.utils.codegen.CodeGeneratorAppendable;
+import vadl.vdt.utils.codegen.StringBuilderAppendable;
 import vadl.viam.Format;
 
 /**
  * Generate C/C++ code for a decision tree from an in-memory representation of the decision tree.
  */
-public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, AutoCloseable {
+public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
 
-  private final Writer writer;
-  private int indent = 0;
-
-  /**
-   * Create a new code generator.
-   *
-   * @param out the output stream to write the generated code to
-   */
-  public IssDecisionTreeCodeGenerator(OutputStream out) {
-    this.writer = new PrintWriter(out, true, StandardCharsets.UTF_8);
-  }
+  private final CodeGeneratorAppendable appendable = new StringBuilderAppendable();
 
   /**
    * Generate the code for the given decision tree.
    *
    * @param tree The decode decision tree to generate code for
-   * @throws IOException if an I/O error occurs
    */
-  public void generate(Node tree) throws IOException {
-
-    indent = 0;
+  public CharSequence generate(Node tree) {
 
     // Imports (could be moved to the template)
-    writer
+    appendable
         .append("#include <stdint.h>\n")
         .append("#include \"vadl-builtins.h\"\n\n");
 
@@ -81,30 +65,34 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
 
     // Step 3: Generate code for the decoding decision tree
 
-    writer.append("static bool decode_insn(")
+    appendable.append("static bool decode_insn(")
         .append("DisasContext *ctx, ")
         .append(insnWordCType).append(" insn) {\n\n");
 
-    indent += 2;
+    appendable.indent();
 
     // Prepare the union of all instruction argument structs
-    writer.append(" ".repeat(indent)).append("union {\n");
-    indent += 2;
+    appendable.append("union {\n").indent();
+
     for (var format : formats) {
-      writer.append(" ".repeat(indent)).append("arg_")
+      appendable
+          .append("arg_")
           .append(format.simpleName().toLowerCase(Locale.US)).append(" ")
           .append(format.simpleName().toLowerCase()).append(";\n");
     }
-    indent -= 2;
-    writer.append(" ".repeat(indent)).append("} insn_args;\n\n");
+
+    appendable.unindent();
+    appendable.append("} insn_args;\n\n");
 
     // Generate the actual decision tree code
     tree.accept(this);
 
-    writer.append(" ".repeat(indent)).append("return false;\n");
-    indent -= 2;
+    appendable.append("return false;\n");
 
-    writer.append("}\n");
+    appendable.unindent();
+    appendable.append("}\n");
+
+    return appendable.toCharSequence();
   }
 
   /**
@@ -123,38 +111,33 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
     final BigInteger mask = n.getMask().toValue();
     final Map<BitPattern, Node> children = n.getChildren();
 
-    try {
-      writer.append(" ".repeat(indent)).append("switch (insn & 0x").append(mask.toString(16))
-          .append(") {\n");
-      indent += 2;
+    appendable.append("switch (insn & 0x")
+        .append(mask.toString(16))
+        .append(") {\n");
 
-      for (Map.Entry<BitPattern, Node> entry : children.entrySet()) {
-        final BigInteger caseValue = entry.getKey().toBitVector().toValue();
-        writer.append(" ".repeat(indent)).append("case 0x").append(caseValue.toString(16))
-            .append(":\n");
-        indent += 2;
-        entry.getValue().accept(this);
-        indent -= 2;
-      }
+    appendable.indent();
 
-      if (n.getFallback() != null) {
-        writer.append(" ".repeat(indent)).append("default:\n");
-        indent += 2;
-        n.getFallback().accept(this);
-        indent -= 2;
-      } else {
-        writer.append(" ".repeat(indent)).append("default:\n");
-        indent += 2;
-        writer.append(" ".repeat(indent)).append("return false;\n");
-        indent -= 2;
-      }
+    for (Map.Entry<BitPattern, Node> entry : children.entrySet()) {
+      final BigInteger caseValue = entry.getKey().toBitVector().toValue();
+      appendable.append("case 0x").append(caseValue.toString(16))
+          .append(":\n");
 
-      indent -= 2;
-      writer.append(" ".repeat(indent)).append("}\n");
-
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+      appendable.indent();
+      entry.getValue().accept(this);
+      appendable.unindent();
     }
+
+    if (n.getFallback() != null) {
+      appendable.append("default:\n");
+      appendable.indent();
+      n.getFallback().accept(this);
+      appendable.unindent();
+    } else {
+      appendable.append("default:\n").indent().append("return false;\n").unindent();
+    }
+
+    appendable.unindent();
+    appendable.append("}\n");
 
     return null;
   }
@@ -174,22 +157,18 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
 
     final Instruction insn = lf.instruction();
 
-    try {
-      // Extract the fields from the instruction word
-      writer.append(" ".repeat(indent)).append("extract_")
-          .append(insn.source().format().simpleName().toLowerCase(Locale.US))
-          .append("(insn, &insn_args.")
-          .append(insn.source().format().simpleName().toLowerCase(Locale.US))
-          .append(");\n");
-      // Call the translation function
-      writer.append(" ".repeat(indent)).append("return trans_")
-          .append(insn.source().simpleName().toLowerCase(Locale.US))
-          .append("(ctx, &insn_args.")
-          .append(insn.source().format().simpleName().toLowerCase(Locale.US))
-          .append(");\n");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    // Extract the fields from the instruction word
+    appendable.append("extract_")
+        .append(insn.source().format().simpleName().toLowerCase(Locale.US))
+        .append("(insn, &insn_args.")
+        .append(insn.source().format().simpleName().toLowerCase(Locale.US))
+        .append(");\n");
+    // Call the translation function
+    appendable.append("return trans_")
+        .append(insn.source().simpleName().toLowerCase(Locale.US))
+        .append("(ctx, &insn_args.")
+        .append(insn.source().format().simpleName().toLowerCase(Locale.US))
+        .append(");\n");
 
     return null;
   }
@@ -199,37 +178,35 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
    * existing translate.c file we generate a type alias for the instruction argument struct.
    *
    * @param insns The set of instructions
-   * @throws IOException if an I/O error occurs
    */
-  private void generateTranslateDeclarations(List<vadl.viam.Instruction> insns) throws IOException {
+  private void generateTranslateDeclarations(List<vadl.viam.Instruction> insns) {
     for (var insn : insns) {
       var insnName = insn.simpleName().toLowerCase(Locale.US);
       // Generate type alias for the instruction argument struct
-      writer.append("typedef arg_")
+      appendable.append("typedef arg_")
           .append(insn.format().simpleName().toLowerCase(Locale.US))
           .append(" arg_")
           .append(insnName)
           .append(";\n");
       // Generate translation function declaration
-      writer.append("static bool trans_")
+      appendable.append("static bool trans_")
           .append(insnName)
           .append("(DisasContext *ctx, arg_")
           .append(insnName)
           .append(" *insn);\n");
     }
-    writer.append("\n");
+    appendable.newLine();
   }
 
   /**
    * Generate the structs for holding the decoded fields of the instructions.
    *
    * @param formats The set of different formats of the instructions
-   * @throws IOException if an I/O error occurs
    */
-  private void generateFormatStructs(List<Format> formats) throws IOException {
+  private void generateFormatStructs(List<Format> formats) {
     for (Format format : formats) {
-      writer.append("typedef struct {\n");
-      indent += 2;
+      appendable.append("typedef struct {\n");
+      appendable.indent();
 
       // Persistent fields
       for (var field : format.fields()) {
@@ -239,7 +216,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
           throw new IllegalArgumentException("Unsupported field type: " + field.type());
         }
         var typeStr = CppTypeMap.getCppTypeNameByVadlType(fieldType);
-        writer.append(" ".repeat(indent))
+        appendable
             .append(typeStr).append(" ").append(fieldName)
             .append(";\n");
       }
@@ -252,15 +229,15 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
           throw new IllegalArgumentException("Unsupported field type: " + access.type());
         }
         var typeStr = CppTypeMap.getCppTypeNameByVadlType(fieldType);
-        writer.append(" ".repeat(indent))
+        appendable
             .append(typeStr).append(" ").append(fieldName)
             .append(";\n");
       }
 
-      indent -= 2;
+      appendable.unindent();
 
       var formatName = format.simpleName().toLowerCase();
-      writer.append("} arg_").append(formatName).append(";\n\n");
+      appendable.append("} arg_").append(formatName).append(";\n\n");
     }
   }
 
@@ -270,22 +247,21 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
    * @param insnWordCType The C type of the instruction word
    * @param formats       The set of different formats of the instructions
    */
-  private void generateFormatExtractors(String insnWordCType, List<Format> formats)
-      throws IOException {
+  private void generateFormatExtractors(String insnWordCType, List<Format> formats) {
     for (Format format : formats) {
 
       var formatName = format.simpleName().toLowerCase();
-      writer.append("static void extract_").append(formatName)
+      appendable.append("static void extract_").append(formatName)
           .append("(").append(insnWordCType).append(" insn, arg_").append(formatName)
           .append(" *a) {\n");
 
-      indent += 2;
+      appendable.indent();
 
       // Persistent fields
       for (var field : format.fields()) {
         var fieldName = field.simpleName();
 
-        writer.append(" ".repeat(indent))
+        appendable
             .append("a->").append(fieldName).append(" = ")
             .append(extractField(field))
             .append(";\n");
@@ -295,25 +271,25 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
       for (var access : format.fieldAccesses()) {
         var fieldName = access.simpleName();
 
-        writer.append(" ".repeat(indent))
+        appendable
             .append("a->").append(fieldName).append(" = ")
             .append(accessField(access))
             .append(";\n");
       }
 
-      indent -= 2;
-      writer.append("};\n\n");
+      appendable.unindent();
+      appendable.append("};\n\n");
     }
   }
 
-  private String extractField(Format.Field field) {
+  private CharSequence extractField(Format.Field field) {
     var parts = field.bitSlice().parts()
         .toList();
 
     // Walk from the least significant part to the most significant part. This way we can calculate
     // the offset to shift the extracted value to the correct position in the field.
 
-    final List<String> partExpressions = new ArrayList<>();
+    final List<CharSequence> partExpressions = new ArrayList<>();
 
     int offset = 0;
     for (int i = parts.size() - 1; i >= 0; i--) {
@@ -338,10 +314,10 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
       offset += width;
 
       // Insert at the front of the list to maintain the correct order (msb to lsb)
-      partExpressions.add(0, expr.toString());
+      partExpressions.add(0, expr);
     }
 
-    return String.join(" | ", partExpressions);
+    return join(" | ", partExpressions);
   }
 
   /**
@@ -356,11 +332,6 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void>, Closeable, A
 
     var generator = new AccessFunctionCodeGenerator(access, null, refName);
     return generator.genReturnExpression();
-  }
-
-  @Override
-  public void close() throws IOException {
-    writer.close();
   }
 
   /**
