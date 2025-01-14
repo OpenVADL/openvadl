@@ -14,11 +14,9 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.DockerImageStore;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.utils.Pair;
 
@@ -49,22 +47,28 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
     // Move Dockerfile into Docker Context
     {
       var inputStream = new FileInputStream(
-          "../../open-vadl/vadl-test/main/resources/images/spike_rv32im/Dockerfile");
+          "../../open-vadl/vadl-test/main/resources/images/spike_" + getTarget() + "/Dockerfile");
       var outputStream = new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
       inputStream.transferTo(outputStream);
       outputStream.close();
     }
 
     var redisCache = getRunningRedisCache();
-    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_llvm17")
-        .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
-        .withBuildArg("TARGET", target));
+
+    /* These variables are not required for LLVM assembly test. */
+    var upstreamBuildTarget = "";
+    var upstreamClangTarget = "";
+    var spikeTarget = "";
+
+    var cachedImage =
+        SpikeRiscvImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
+            target, upstreamBuildTarget, upstreamClangTarget, spikeTarget, false);
 
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
       var name = Paths.get(input).getFileName().toString();
 
-      runContainerAndCopyInputIntoContainer(image,
+      runContainerAndCopyInputIntoContainer(cachedImage,
           List.of(
               Pair.of(
                   Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),

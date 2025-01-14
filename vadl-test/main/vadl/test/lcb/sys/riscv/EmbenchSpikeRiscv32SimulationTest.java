@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.junit.Ignore;
-import org.junit.jupiter.api.Disabled;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.images.builder.ImageFromDockerfile;
@@ -17,6 +17,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
+import vadl.utils.Pair;
 
 public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
 
@@ -56,8 +57,11 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
         .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget));
 
     runContainerAndCopyInputIntoContainer(image,
-        "../../open-vadl/vadl-test/main/resources/llvm/riscv/spike",
-        "/src/inputs",
+        List.of(Pair.of(Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
+            "/src/inputs")),
+        Map.of(
+            "LLVM_PARALLEL_COMPILE_JOBS", "4",
+            "LLVM_PARALLEL_LINK_JOBS", "2"),
         "sh /src/embench/benchmark-extras/run-benchmarks-spike-clang-lcb.sh");
   }
 }

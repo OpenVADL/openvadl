@@ -119,32 +119,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
     );
   }
 
-  /**
-   * Starts a container and checks the status code for the exited container.
-   * It will write the given {@code content} into a temporary file. The
-   * temporary file requires a {@code prefix} and {@code suffix}.
-   * It will assert that the status code is zero. If the check takes longer
-   * than 10 seconds or the status code is not zero then it will throw an
-   * exception.
-   *
-   * @param image         is the docker image for the {@link GenericContainer}.
-   * @param containerPath is the path where the {@code path} should be copied to.
-   * @param content       is the content of file which will be written to the
-   *                      temp file.
-   * @param cmd           is the command which gets executed on startup.
-   * @throws IOException when the temp file is writable.
-   */
-  protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
-                                                       String content,
-                                                       String containerPath,
-                                                       String cmd) throws IOException {
-    runContainer(image, (container) -> container
-            .withCommand(cmd)
-            .withCopyToContainer(Transferable.of(content), containerPath),
-        null
-    );
-  }
-
 
   /**
    * Starts a container and checks the status code for the exited container.
@@ -167,6 +141,43 @@ public abstract class DockerExecutionTest extends AbstractTest {
             .withCopyToContainer(Transferable.of(content), containerPath),
         null
     );
+  }
+
+
+  /**
+   * Starts a container and checks the status code for the exited container.
+   * It will write the given {@code content} into a temporary file. The
+   * temporary file requires a {@code prefix} and {@code suffix}.
+   * Copies the data from {@code copyMappings}. Additionally, it will
+   * set environment variables based on {@code environmentMappings}.
+   *
+   * @param image               is the docker image for the {@link GenericContainer}.
+   * @param copyMappings        is a list where each {@link Pair} indicates what should be copied
+   *                            from the host to the container.
+   * @param environmentMappings is a list where each entry defines an environment variable which
+   *                            will be set in the container.
+   */
+  protected void runContainerAndCopyInputIntoContainer(ImageFromDockerfile image,
+                                                       List<Pair<Path, String>> copyMappings,
+                                                       Map<String, String> environmentMappings) {
+    runContainer(image, (container) -> {
+      for (var mapping : copyMappings) {
+        container
+            .withCopyFileToContainer(
+                MountableFile.forHostPath(mapping.left()),
+                mapping.right());
+      }
+
+      for (var mapping : environmentMappings.entrySet()) {
+        container
+            .withEnv(
+                mapping.getKey(),
+                mapping.getValue());
+      }
+
+      return container;
+    }, (container) -> {
+    });
   }
 
   /**
@@ -207,43 +218,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
       return container;
     }, (container) -> {
     });
-  }
-
-  /**
-   * Starts a container and checks the status code for the exited container.
-   * It will write the given {@code content} into a temporary file. The
-   * temporary file requires a {@code prefix} and {@code suffix}.
-   * It will assert that the status code is zero. If the check takes longer
-   * than 10 seconds or the status code is not zero then it will throw an
-   * exception.
-   *
-   * @param image           is the docker image for the {@link GenericContainer}.
-   * @param inContainerPath is the path where the {@code path} should be mounted to.
-   * @param inHostPath      is the content of file which will be written to the
-   *                        temp file.
-   * @param env             is a map of environment variables.
-   * @param cmd             is the command which gets executed.
-   */
-  protected void runContainerWithEnv(ImageFromDockerfile image,
-                                     Path inHostPath,
-                                     String inContainerPath,
-                                     Map<String, String> env,
-                                     String... cmd) {
-    runContainer(image, (container) -> {
-          container
-              .withCopyFileToContainer(MountableFile.forHostPath(inHostPath), inContainerPath)
-              .withCommand(cmd);
-
-          for (var v : env.entrySet()) {
-            container
-                .withEnv(v.getKey(), v.getValue());
-          }
-
-          return container;
-        },
-        (container) -> {
-
-        });
   }
 
   /**
@@ -419,7 +393,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * While you must use the first method, the second one is only useful if you use
    * the {@link DockerfileBuilder}.
    */
-  protected record RedisCache(
+  public record RedisCache(
       String host,
       int port,
       GenericContainer<?> redisContainer,
