@@ -65,6 +65,7 @@ public final class TableGenInstructionRenderer {
             let isCodeGenOnly = %d;
             let mayLoad       = %d;
             let mayStore      = %d;
+            let isBarrier     = %d;
                         
             let Constraints = "";
             let AddedComplexity = 0;
@@ -97,6 +98,7 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().isCodeGenOnly()),
         toInt(instruction.getFlags().mayLoad()),
         toInt(instruction.getFlags().mayStore()),
+        toInt(instruction.getFlags().isBarrier()),
         instruction.getAnonymousPatterns()
             .stream()
             .filter(x -> x instanceof TableGenSelectionPattern)
@@ -134,6 +136,7 @@ public final class TableGenInstructionRenderer {
             let isCodeGenOnly = %d;
             let mayLoad       = %d;
             let mayStore      = %d;
+            let isBarrier     = %d;
                         
             let Constraints = "";
             let AddedComplexity = 0;
@@ -160,6 +163,7 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().isCodeGenOnly()),
         toInt(instruction.getFlags().mayLoad()),
         toInt(instruction.getFlags().mayStore()),
+        toInt(instruction.getFlags().isBarrier()),
         instruction.getAnonymousPatterns()
             .stream()
             .filter(x -> x instanceof TableGenSelectionPattern)

@@ -130,10 +130,10 @@ public class IdentifyFieldUsagePass extends Pass {
     }
 
     /**
-     * Get the usages of registers by instruction.
+     * Get the usages of fields by instruction.
      */
-    public Map<Field, RegisterUsage> getRegisterUsages(Instruction instruction) {
-      var obj = registerUsage.get(instruction);
+    public Map<Field, FieldUsage> getFieldUsages(Instruction instruction) {
+      var obj = fieldUsage.get(instruction.format());
       if (obj == null) {
         throw new ViamError("Hashmap must not be null");
       }
@@ -141,21 +141,10 @@ public class IdentifyFieldUsagePass extends Pass {
     }
 
     /**
-     * Get the registers which are used as input or both.
+     * Get the usages of registers by instruction.
      */
-    public List<Field> getSourceRegisters(Instruction instruction) {
-      var map = getRegisterUsages(instruction);
-      return map.entrySet().stream()
-          .filter(x -> x.getValue() == RegisterUsage.SOURCE || x.getValue() == RegisterUsage.BOTH)
-          .map(Map.Entry::getKey)
-          .toList();
-    }
-
-    /**
-     * Get the usages of fields by instruction.
-     */
-    public Map<Field, FieldUsage> getImmediateUsages(Instruction instruction) {
-      var obj = fieldUsage.get(instruction.format());
+    public Map<Field, RegisterUsage> getRegisterUsages(Instruction instruction) {
+      var obj = registerUsage.get(instruction);
       if (obj == null) {
         throw new ViamError("Hashmap must not be null");
       }

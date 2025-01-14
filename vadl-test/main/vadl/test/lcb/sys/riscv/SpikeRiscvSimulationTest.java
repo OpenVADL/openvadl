@@ -8,8 +8,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -41,8 +43,19 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
 
   @EnabledIfEnvironmentVariable(named = "test.spike.enabled", matches = "true")
   @TestFactory
-  List<DynamicTest> testSpike() throws IOException, DuplicatedPassKeyException {
-    var doDebug = false;
+  List<DynamicTest> testSpikeOptLevel0() throws IOException, DuplicatedPassKeyException {
+    return run(0);
+  }
+
+  @EnabledIfEnvironmentVariable(named = "test.spike.enabled", matches = "true")
+  @TestFactory
+  List<DynamicTest> testSpikeOptLevel3() throws IOException, DuplicatedPassKeyException {
+    return run(3);
+  }
+
+  private @Nonnull List<DynamicTest> run(int optLevel)
+      throws IOException, DuplicatedPassKeyException {
+    var doDebug = true;
     var target = getTarget();
     var upstreamBuildTarget = getUpstreamBuildTarget();
     var upstreamClangTarget = getUpstreamClangTarget();
@@ -68,16 +81,14 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
         .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
         .withBuildArg("SPIKE_TARGET", getSpikeTarget()));
 
-    var cachedImage = DockerImageStore.replaceWithCachedImage(getTarget(), image);
-
     // The container is complete and has generated the assembly files.
-    return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
-      runContainerWithEnv(cachedImage,
-          Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
-          "/src/inputs",
-          "INPUT",
-          input,
-          doDebug);
-    })).toList();
+    return inputFilesFromCFile().map(
+        input -> DynamicTest.dynamicTest(input + " with O" + optLevel,
+            () -> runContainerWithEnv(image,
+                Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
+                "/src/inputs",
+                Map.of("INPUT",
+                    input,
+                    "OPT_LEVEL", optLevel + "")))).toList();
   }
 }

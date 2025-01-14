@@ -4,27 +4,29 @@
 	.type	if_eq,@function
 if_eq:                                  # @if_eq
 # %bb.0:                                # %entry
-	ADDI sp,sp,-16
-	SW fp,12(sp)
-	ADDI fp,sp,16
-	SW a0,-12(fp)
-	SW a1,-16(fp)
-	LW tp,-12(fp)
-	LW ra,-16(fp)
-	BEQ ra,tp,.LBB0_2
+	ADDI sp,sp,-32
+	SW fp,28(sp)
+	SW ra,24(sp)
+	ADDI fp,sp,32
+	SW a0,-16(fp)
+	SW a1,-20(fp)
+	LW a0,-16(fp)
+	LW a1,-20(fp)
+	BNE a0,a1,.LBB0_2
 	JAL zero,.LBB0_1
 .LBB0_1:                                # %if.then
-	LW ra,-12(fp)
-	SW ra,-8(fp)
+	LW a0,-16(fp)
+	SW a0,-12(fp)
 	JAL zero,.LBB0_3
 .LBB0_2:                                # %if.else
-	LW ra,-16(fp)
-	SW ra,-8(fp)
+	LW a0,-20(fp)
+	SW a0,-12(fp)
 	JAL zero,.LBB0_3
 .LBB0_3:                                # %return
-	LW a0,-8(fp)
-	LW fp,12(sp)
-	ADDI sp,sp,16
+	LW a0,-12(fp)
+	LW ra,24(sp)
+	LW fp,28(sp)
+	ADDI sp,sp,32
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	if_eq, .Lfunc_end0-if_eq

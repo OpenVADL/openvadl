@@ -221,31 +221,28 @@ public abstract class DockerExecutionTest extends AbstractTest {
    * @param inContainerPath is the path where the {@code path} should be mounted to.
    * @param inHostPath      is the content of file which will be written to the
    *                        temp file.
-   * @param envName         is the name of the environment variable which will be set.
-   * @param envValue        is the value of the environment variable which will be set.
-   * @param doCommit        commits the container into a new layer which contains the
-   *                        environment variables and copied files. Note that testcontainers
-   *                        will automatically remove these images after the test was executed.
+   * @param env             is a map of environment variables.
    * @param cmd             is the command which gets executed.
    */
   protected void runContainerWithEnv(ImageFromDockerfile image,
                                      Path inHostPath,
                                      String inContainerPath,
-                                     String envName,
-                                     String envValue,
-                                     boolean doCommit,
+                                     Map<String, String> env,
                                      String... cmd) {
-    runContainer(image, (container) -> container
-            .withCopyFileToContainer(MountableFile.forHostPath(inHostPath), inContainerPath)
-            .withEnv(envName, envValue)
-            .withCommand(cmd),
-        (container) -> {
-          if (doCommit) {
-            // If you need to debug the container, then put a breakpoint here.
-            // Testcontainer will remove these images after the test has been executed.
-            container.getDockerClient().commitCmd(container.getContainerId())
-                .exec();
+    runContainer(image, (container) -> {
+          container
+              .withCopyFileToContainer(MountableFile.forHostPath(inHostPath), inContainerPath)
+              .withCommand(cmd);
+
+          for (var v : env.entrySet()) {
+            container
+                .withEnv(v.getKey(), v.getValue());
           }
+
+          return container;
+        },
+        (container) -> {
+
         });
   }
 

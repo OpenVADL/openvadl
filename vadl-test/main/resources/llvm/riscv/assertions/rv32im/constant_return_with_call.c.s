@@ -6,8 +6,10 @@ foo:                                    # @foo
 # %bb.0:                                # %entry
 	ADDI sp,sp,-16
 	SW fp,12(sp)
+	SW ra,8(sp)
 	ADDI fp,sp,16
 	ADDI a0,zero,0
+	LW ra,8(sp)
 	LW fp,12(sp)
 	ADDI sp,sp,16
 	JALR zero,0(ra)
@@ -19,13 +21,13 @@ foo:                                    # @foo
 constant_return:                        # @constant_return
 # %bb.0:                                # %entry
 	ADDI sp,sp,-16
-	SW sp,12(sp)
-	SW fp,8(sp)
+	SW fp,12(sp)
+	SW ra,8(sp)
 	ADDI fp,sp,16
 	LUI ra,%hi(foo)
 	JALR ra,%lo(foo)(ra)
-	LW fp,8(sp)
-	LW sp,12(sp)
+	LW ra,8(sp)
+	LW fp,12(sp)
 	ADDI sp,sp,16
 	JALR zero,0(ra)
 .Lfunc_end1:

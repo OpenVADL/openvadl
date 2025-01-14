@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
@@ -65,7 +66,9 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
 
     var outputOperands = getTableGenOutputOperands(uninlinedGraph);
     var inputOperands = getTableGenInputOperands(outputOperands, uninlinedGraph);
-    var flags = getFlags(uninlinedGraph);
+    var unchangedFlags = getFlags(uninlinedGraph);
+    var flags = LlvmLoweringPass.Flags.withNoTerminator(
+        LlvmLoweringPass.Flags.withNoBranch(unchangedFlags));
 
     var writes = uninlinedGraph.getNodes(WriteResourceNode.class).toList();
     var patterns = generatePatterns(instruction, uninlinedGraph, inputOperands, writes);

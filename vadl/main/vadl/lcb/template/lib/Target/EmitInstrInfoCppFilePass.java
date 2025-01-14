@@ -7,27 +7,31 @@ import static vadl.viam.ViamError.ensurePresent;
 import static vadl.viam.ViamError.unwrap;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.lcb.passes.isaMatching.database.Database;
+import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.utils.ImmediatePredicateFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
-import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -85,16 +89,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    * @param words            indicates how many words are stored.
    */
   record LoadRegSlot(Instruction instruction, RegisterFile destRegisterFile, int words) {
-
-  }
-
-  /**
-   * An entry to adapt a register with an immediate.
-   */
-  record AdjustRegCase(Instruction instruction,
-                       Identifier predicate,
-                       RegisterFile destRegisterFile,
-                       RegisterFile srcRegisterFile) {
 
   }
 
@@ -183,6 +177,18 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  private PseudoInstruction getJump(Specification specification,
+                                    Map<PseudoInstructionLabel,
+                                        List<PseudoInstruction>> pseudoMatches) {
+    var jump = Optional.ofNullable(pseudoMatches.get(PseudoInstructionLabel.J))
+        .map(x -> x.stream().findFirst().get());
+    return ensurePresent(jump,
+        () -> Diagnostic.error(
+            "Compiler generator requires a pseudo instruction for an unconditional jump",
+            specification.sourceLocation()
+        ));
+  }
+
   private int getImmBitSize(IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
                             Instruction addition) {
     var fields = fieldUsages.getImmediates(addition.format());
@@ -198,21 +204,98 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     );
   }
 
+  record BranchInstruction(String name, /* size of the immediate */ int bitWidth) {
+
+  }
+
+  record InstructionSize(String name, /* format size */ int byteSize) {
+
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var isaMatches = (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
         IsaMachineInstructionMatchingPass.class);
+    var pseudoMatches =
+        (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
+            IsaPseudoInstructionMatchingPass.class);
     var fieldUsages =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);
     var addition = getAddition(isaMatches);
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
-        "copyPhysInstructions", getMovInstructions(isaMatches),
-        "storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches),
-        "loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches),
-        "additionImmInstruction", addition,
-        "additionImmSize", getImmBitSize(fieldUsages, addition)
-    );
+    var jump = getJump(specification, pseudoMatches);
+
+    var map = new HashMap<String, Object>();
+    map.put(CommonVarNames.NAMESPACE, specification.simpleName());
+    map.put("copyPhysInstructions", getMovInstructions(isaMatches));
+    map.put("storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches));
+    map.put("loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches));
+    map.put("additionImmInstruction", addition);
+    map.put("additionImmSize", getImmBitSize(fieldUsages, addition));
+    map.put("branchInstructions", getBranchInstructions(specification, passResults, fieldUsages));
+    map.put("instructionSizes", instructionSizes(specification));
+    map.put("jumpInstruction", jump);
+    map.put("beq", getBranchInstruction(specification, passResults, MachineInstructionLabel.BEQ));
+    map.put("bne", getBranchInstruction(specification, passResults, MachineInstructionLabel.BNEQ));
+    map.put("blt", getBranchInstruction(specification, passResults, MachineInstructionLabel.BSLTH));
+    map.put("bge", getBranchInstruction(specification, passResults, MachineInstructionLabel.BSGEQ));
+    map.put("bltu",
+        getBranchInstruction(specification, passResults, MachineInstructionLabel.BULTH));
+    map.put("bgeu",
+        getBranchInstruction(specification, passResults, MachineInstructionLabel.BUGEQ));
+
+    return map;
+  }
+
+  private Instruction getBranchInstruction(Specification specification,
+                                           PassResults passResults,
+                                           MachineInstructionLabel machineInstructionLabel) {
+    var database = new Database(passResults, specification);
+    var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
+        machineInstructionLabel
+    )).build());
+    return result.firstMachineInstruction();
+  }
+
+  private List<InstructionSize> instructionSizes(Specification specification) {
+    return specification.isa().get().ownInstructions()
+        .stream()
+        .map(instruction -> new InstructionSize(instruction.identifier.simpleName(),
+            instruction.format().type().bitWidth() / 8))
+        .toList();
+  }
+
+  private List<BranchInstruction> getBranchInstructions(
+      Specification specification,
+      PassResults passResults,
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages) {
+    var branchInstructions = new ArrayList<BranchInstruction>();
+    var database = new Database(passResults, specification);
+    var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
+        MachineInstructionLabel.BEQ,
+        MachineInstructionLabel.BNEQ,
+        MachineInstructionLabel.BSGEQ,
+        MachineInstructionLabel.BSGTH,
+        MachineInstructionLabel.BSLEQ,
+        MachineInstructionLabel.BSLTH,
+        MachineInstructionLabel.BUGEQ,
+        MachineInstructionLabel.BUGTH,
+        MachineInstructionLabel.BULEQ,
+        MachineInstructionLabel.BULTH
+    )).build());
+
+    for (var machineInstruction : result.machineInstructions()) {
+      var immediates = fieldUsages.getImmediates(machineInstruction.format());
+      ensure(immediates.size() == 1,
+          () -> Diagnostic.error("We only support branch instructions with one label.",
+              machineInstruction.sourceLocation()));
+      var immediate = unwrap(immediates.stream().findFirst());
+      int bitWidth = immediate.size();
+      branchInstructions.add(
+          new BranchInstruction(machineInstruction.identifier.simpleName(), bitWidth));
+    }
+
+    return branchInstructions;
   }
 }

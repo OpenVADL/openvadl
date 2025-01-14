@@ -6,8 +6,8 @@
      echo "LLVM_SOURCE_PATH is not set"
  fi
 
- for INPUT in $(find c -name "*.c")
+ for INPUT in $(find /inputs -name "*.c")
  do
      BASE_NAME=$(basename $INPUT)
-     $LLVM_SOURCE_PATH/build/bin/clang --target=$1 -c -S $INPUT -o assertions/$1/$BASE_NAME.s
+     $LLVM_SOURCE_PATH/build/bin/clang --target=$TARGET -c -S $INPUT -o /output/$BASE_NAME.s
  done

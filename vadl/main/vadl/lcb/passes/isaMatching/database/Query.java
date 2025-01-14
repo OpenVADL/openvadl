@@ -1,10 +1,13 @@
 package vadl.lcb.passes.isaMatching.database;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.viam.ViamError;
 
 /**
  * Query to find instructions and pseudo instructions.
@@ -16,6 +19,9 @@ public class Query {
   @Nullable
   private PseudoInstructionLabel pseudoInstructionLabel;
 
+  @Nullable
+  private MachineInstructionLabelGroup machineInstructionLabelGroup;
+
   private final List<BehaviorQuery> withBehavior;
 
   private final List<Query> or;
@@ -26,11 +32,13 @@ public class Query {
   public Query(@Nullable MachineInstructionLabel machineInstructionLabel,
                @Nullable PseudoInstructionLabel pseudoInstructionLabel,
                List<Query> or,
+               @Nullable MachineInstructionLabelGroup machineInstructionLabelGroup,
                List<BehaviorQuery> withBehavior) {
     this.machineInstructionLabel = machineInstructionLabel;
     this.pseudoInstructionLabel = pseudoInstructionLabel;
     this.withBehavior = withBehavior;
     this.or = or;
+    this.machineInstructionLabelGroup = machineInstructionLabelGroup;
   }
 
   @Nullable
@@ -41,6 +49,11 @@ public class Query {
   @Nullable
   public PseudoInstructionLabel pseudoInstructionLabel() {
     return pseudoInstructionLabel;
+  }
+
+  @Nullable
+  public MachineInstructionLabelGroup machineInstructionLabelGroup() {
+    return machineInstructionLabelGroup;
   }
 
   /**
@@ -61,6 +74,8 @@ public class Query {
    * Builder for the Query.
    */
   public static class Builder {
+    @Nullable
+    private MachineInstructionLabelGroup machineInstructionLabelGroup;
 
     @Nullable
     private MachineInstructionLabel machineInstructionLabel;
@@ -72,8 +87,38 @@ public class Query {
 
     private final List<BehaviorQuery> withBehavior = new ArrayList<>();
 
+    /**
+     * Set a machine instruction label group.
+     */
+    public Builder machineInstructionLabelGroup(MachineInstructionLabelGroup group) {
+      this.machineInstructionLabelGroup = group;
+      return this;
+    }
+
+    /**
+     * Set the machine instruction label.
+     */
     public Builder machineInstructionLabel(MachineInstructionLabel machineInstructionLabel) {
       this.machineInstructionLabel = machineInstructionLabel;
+      return this;
+    }
+
+    /**
+     * Set the machine instructions labels.
+     */
+    public Builder machineInstructionLabels(Collection<MachineInstructionLabel> labels) {
+      if (labels.isEmpty()) {
+        return this;
+      }
+
+      this.machineInstructionLabel = ViamError.unwrap(labels.stream().findFirst());
+      var rest = labels.stream().skip(1).toList();
+
+      if (!rest.isEmpty()) {
+        var subQuery = new Builder().machineInstructionLabels(rest);
+        or.add(subQuery.build());
+      }
+
       return this;
     }
 
@@ -93,7 +138,8 @@ public class Query {
     }
 
     public Query build() {
-      return new Query(machineInstructionLabel, pseudoInstructionLabel, or, withBehavior);
+      return new Query(machineInstructionLabel, pseudoInstructionLabel, or,
+          machineInstructionLabelGroup, withBehavior);
     }
   }
 }

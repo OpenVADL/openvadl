@@ -158,7 +158,7 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
   private static @Nonnull Optional<Format.Field> immediate(
       IdentifyFieldUsagePass.ImmediateDetectionContainer immediateDetection,
       Instruction instruction) {
-    return immediateDetection.getImmediateUsages(instruction)
+    return immediateDetection.getFieldUsages(instruction)
         .entrySet()
         .stream()
         .filter(x -> x.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE)

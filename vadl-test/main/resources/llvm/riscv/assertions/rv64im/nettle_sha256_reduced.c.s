@@ -77,6 +77,6 @@ _nettle_sha256_compress:                # @_nettle_sha256_compress
 .Lfunc_end0:
 	.size	_nettle_sha256_compress, .Lfunc_end0-_nettle_sha256_compress
                                         # -- End function
-	.ident	"clang version 17.0.6 (https://github.com/llvm/llvm-project 6009708b4367171ccdbf4b5905cb6a803753fe18)"
+	.ident	"clang version 17.0.6 (https://github.com/llvm/llvm-project.git 6009708b4367171ccdbf4b5905cb6a803753fe18)"
 	.section	".note.GNU-stack","",@progbits
 	.addrsig

@@ -249,7 +249,8 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
         true,
         false,
         mayLoad,
-        mayStore);
+        mayStore,
+        false);
 
     return Optional.of(new LlvmLoweringPseudoRecord(pseudo.behavior(),
         dedup(inputOperands),

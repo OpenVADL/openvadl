@@ -4,6 +4,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.error.Diagnostic;
@@ -11,6 +12,7 @@ import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -81,6 +83,16 @@ public class Database {
               Collections.emptyList()));
     }
 
+    if (query.machineInstructionLabelGroup() != null) {
+      var labels = query.machineInstructionLabelGroup().labels();
+      for (var label : labels) {
+        var instruction = labelledMachineInstructions.get(label);
+        if (instruction != null) {
+          resultMachineInstructions.addAll(instruction);
+        }
+      }
+    }
+
     for (var x : query.or()) {
       var subResult = matchInstructions(x);
       resultMachineInstructions.addAll(subResult.machineInstructions());
@@ -100,5 +112,29 @@ public class Database {
     }
 
     return new QueryResult(query, resultMachineInstructions, resultPseudoInstructions);
+  }
+
+
+  /**
+   * The compiler generator has a pass which tries to assign {@link MachineInstructionLabel} for
+   * an {@link Instruction}. This is useful when we want to find an {@link Instruction} with
+   * a certain property. However, in some cases, we need to do opposite. We have an
+   * {@link Instruction} and require the {@link MachineInstructionLabel}. This method flips the
+   * matched {@link Map}.
+   */
+  public IdentityHashMap<Instruction, MachineInstructionLabel> flipMachineInstructions() {
+    return LlvmLoweringPass.flipMachineInstructions(labelledMachineInstructions);
+  }
+
+  /**
+   * The compiler generator has a pass which tries to assign {@link PseudoInstructionLabel} for
+   * an {@link PseudoInstruction}. This is useful when we want to find an {@link PseudoInstruction}
+   * with a certain property. However, in some cases, we need to do opposite. We have an
+   * {@link PseudoInstruction} and require the {@link PseudoInstructionLabel}. This method flips the
+   * matched {@link Map}.
+   */
+  public IdentityHashMap<PseudoInstruction,
+      PseudoInstructionLabel> flipPseudoInstructions() {
+    return LlvmLoweringPass.flipPseudoInstructions(labelledPseudoInstructions);
   }
 }

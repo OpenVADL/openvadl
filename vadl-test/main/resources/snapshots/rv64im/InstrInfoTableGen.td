@@ -105,7 +105,7 @@ def RESERVED_PSEUDO_RET : Instruction
     let mayLoad       = 0;
     let mayStore      = 0;
     let Defs = [];
-    let Uses = [ X1 ];
+    let Uses = [];
 }
 
 /*
@@ -309,6 +309,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -357,6 +358,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -405,6 +407,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -455,6 +458,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -505,6 +509,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -553,6 +558,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -597,13 +603,14 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC ];
+let Uses = [  ];
 let Defs = [  ];
 }
 
@@ -648,6 +655,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -655,7 +663,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def BGE : Instruction
@@ -699,6 +707,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -706,7 +715,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def BGEU : Instruction
@@ -750,6 +759,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -757,7 +767,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def BLT : Instruction
@@ -801,6 +811,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -808,7 +819,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def BLTU : Instruction
@@ -852,6 +863,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -859,7 +871,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def BNE : Instruction
@@ -903,6 +915,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -910,7 +923,7 @@ let AddedComplexity = 0;
 let Pattern = [];
 
 let Uses = [  ];
-let Defs = [ PC ];
+let Defs = [  ];
 }
 
 def DIV : Instruction
@@ -953,6 +966,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1003,6 +1017,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1053,6 +1068,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1103,6 +1119,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1151,6 +1168,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1199,6 +1217,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1238,7 +1257,7 @@ let Inst{31} = imm{19};
 let Inst{11-7} = rd{4-0};
 let Inst{6-0} = opcode{6-0};
 
-let isTerminator  = 1;
+let isTerminator  = 0;
 let isBranch      = 0;
 let isCall        = 0;
 let isReturn      = 0;
@@ -1246,14 +1265,15 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC ];
-let Defs = [ PC ];
+let Uses = [  ];
+let Defs = [  ];
 }
 
 def JALR : Instruction
@@ -1286,22 +1306,23 @@ let Inst{14-12} = funct3{2-0};
 let Inst{11-7} = rd{4-0};
 let Inst{6-0} = opcode{6-0};
 
-let isTerminator  = 1;
-let isBranch      = 1;
+let isTerminator  = 0;
+let isBranch      = 0;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC ];
-let Defs = [ PC ];
+let Uses = [  ];
+let Defs = [  ];
 }
 
 def LB : Instruction
@@ -1342,6 +1363,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 1;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1390,6 +1412,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 1;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1438,6 +1461,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 1;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1486,6 +1510,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 1;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1534,6 +1559,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 1;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1578,6 +1604,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1626,6 +1653,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 1;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1674,6 +1702,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 1;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1724,6 +1753,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1774,6 +1804,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1824,6 +1855,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1874,6 +1906,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1924,6 +1957,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -1974,6 +2008,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2022,6 +2057,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2072,6 +2108,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2122,6 +2159,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2172,6 +2210,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2222,6 +2261,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2271,6 +2311,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 1;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2320,6 +2361,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 1;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2369,6 +2411,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 1;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2419,6 +2462,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2471,6 +2515,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2521,6 +2566,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2571,6 +2617,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2621,6 +2668,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2669,6 +2717,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2717,6 +2766,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2767,6 +2817,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2817,6 +2868,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2869,6 +2921,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2919,6 +2972,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -2969,6 +3023,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3019,6 +3074,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3071,6 +3127,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3121,6 +3178,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3171,6 +3229,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3221,6 +3280,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3271,6 +3331,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3320,6 +3381,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 1;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3370,6 +3432,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3418,6 +3481,7 @@ let isPseudo      = 0;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3449,6 +3513,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3476,6 +3541,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3503,6 +3569,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3530,6 +3597,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3557,6 +3625,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3584,6 +3653,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3603,22 +3673,23 @@ let Namespace = "processorNameValue";
 let OutOperandList = ( outs  );
 let InOperandList = ( ins bare_symbol:$symbol );
 
-let isTerminator  = 1;
-let isBranch      = 1;
+let isTerminator  = 0;
+let isBranch      = 0;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC,X1 ];
-let Defs = [ X1,PC ];
+let Uses = [ X1 ];
+let Defs = [ X1 ];
 }
 
 
@@ -3631,21 +3702,22 @@ let OutOperandList = ( outs  );
 let InOperandList = ( ins RV64IM_Jtype_immAsLabel:$imm );
 
 let isTerminator  = 1;
-let isBranch      = 0;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC ];
-let Defs = [ PC,X0 ];
+let Uses = [  ];
+let Defs = [ X0 ];
 }
 
 def : Pat<(br bb:$imm),
@@ -3667,6 +3739,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3694,6 +3767,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3721,6 +3795,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3753,6 +3828,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3782,6 +3858,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3811,6 +3888,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3832,22 +3910,23 @@ let Namespace = "processorNameValue";
 let OutOperandList = ( outs  );
 let InOperandList = ( ins  );
 
-let isTerminator  = 1;
-let isBranch      = 1;
+let isTerminator  = 0;
+let isBranch      = 0;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC,X1 ];
-let Defs = [ PC,X0 ];
+let Uses = [ X1 ];
+let Defs = [ X0 ];
 }
 
 
@@ -3867,6 +3946,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3896,6 +3976,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3925,6 +4006,7 @@ let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3946,22 +4028,23 @@ let Namespace = "processorNameValue";
 let OutOperandList = ( outs  );
 let InOperandList = ( ins bare_symbol:$symbol );
 
-let isTerminator  = 1;
-let isBranch      = 1;
+let isTerminator  = 0;
+let isBranch      = 0;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
 let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
+let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [ PC,X6 ];
-let Defs = [ PC ];
+let Uses = [ X6 ];
+let Defs = [  ];
 }
 
 

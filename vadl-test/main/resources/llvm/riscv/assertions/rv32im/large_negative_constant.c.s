@@ -6,11 +6,13 @@ constant_return:                        # @constant_return
 # %bb.0:                                # %entry
 	ADDI sp,sp,-16
 	SW fp,12(sp)
+	SW ra,8(sp)
 	ADDI fp,sp,16
-	SW a0,-8(fp)
-	LW ra,-8(fp)
-	LUI tp,0x80000
-	ADD a0,ra,tp
+	SW a0,-12(fp)
+	LW a0,-12(fp)
+	LUI a1,0x80000
+	ADD a0,a0,a1
+	LW ra,8(sp)
 	LW fp,12(sp)
 	ADDI sp,sp,16
 	JALR zero,0(ra)

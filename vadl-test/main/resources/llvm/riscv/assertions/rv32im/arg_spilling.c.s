@@ -6,33 +6,35 @@ arg_spilling:                           # @arg_spilling
 # %bb.0:                                # %entry
 	ADDI sp,sp,-48
 	SW fp,44(sp)
+	SW ra,40(sp)
 	ADDI fp,sp,48
-	LW ra,0(fp)
-	SW a0,-8(fp)
-	SW a1,-12(fp)
-	SW a2,-16(fp)
-	SW a3,-20(fp)
-	SW a4,-24(fp)
-	SW a5,-28(fp)
-	SW a6,-32(fp)
-	SW a7,-36(fp)
-	LW ra,-8(fp)
-	LW tp,-12(fp)
-	ADD ra,ra,tp
-	LW tp,-16(fp)
-	ADD ra,ra,tp
-	LW tp,-20(fp)
-	ADD ra,ra,tp
-	LW tp,-24(fp)
-	ADD ra,ra,tp
-	LW tp,-28(fp)
-	ADD ra,ra,tp
-	LW tp,-32(fp)
-	ADD ra,ra,tp
-	LW tp,-36(fp)
-	ADD ra,ra,tp
-	LW tp,0(fp)
-	ADD a0,ra,tp
+	LW t0,0(fp)
+	SW a0,-12(fp)
+	SW a1,-16(fp)
+	SW a2,-20(fp)
+	SW a3,-24(fp)
+	SW a4,-28(fp)
+	SW a5,-32(fp)
+	SW a6,-36(fp)
+	SW a7,-40(fp)
+	LW a0,-12(fp)
+	LW a1,-16(fp)
+	ADD a0,a0,a1
+	LW a1,-20(fp)
+	ADD a0,a0,a1
+	LW a1,-24(fp)
+	ADD a0,a0,a1
+	LW a1,-28(fp)
+	ADD a0,a0,a1
+	LW a1,-32(fp)
+	ADD a0,a0,a1
+	LW a1,-36(fp)
+	ADD a0,a0,a1
+	LW a1,-40(fp)
+	ADD a0,a0,a1
+	LW a1,0(fp)
+	ADD a0,a0,a1
+	LW ra,40(sp)
 	LW fp,44(sp)
 	ADDI sp,sp,48
 	JALR zero,0(ra)
@@ -44,11 +46,11 @@ arg_spilling:                           # @arg_spilling
 arg_spilling_call:                      # @arg_spilling_call
 # %bb.0:                                # %entry
 	ADDI sp,sp,-16
-	SW sp,12(sp)
-	SW fp,8(sp)
+	SW fp,12(sp)
+	SW ra,8(sp)
 	ADDI fp,sp,16
-	ADDI ra,zero,9
-	SW ra,0(sp)
+	ADDI a0,zero,9
+	SW a0,0(sp)
 	ADDI a0,zero,1
 	ADDI a1,zero,2
 	ADDI a2,zero,3
@@ -59,8 +61,8 @@ arg_spilling_call:                      # @arg_spilling_call
 	ADDI a7,zero,8
 	LUI ra,%hi(arg_spilling)
 	JALR ra,%lo(arg_spilling)(ra)
-	LW fp,8(sp)
-	LW sp,12(sp)
+	LW ra,8(sp)
+	LW fp,12(sp)
 	ADDI sp,sp,16
 	JALR zero,0(ra)
 .Lfunc_end1:

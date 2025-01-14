@@ -358,15 +358,15 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
   }
 
   private static LlvmLoweringPass.Flags createBranchFlags() {
-    return new LlvmLoweringPass.Flags(true, true, false, false, false, false, false, false);
+    return new LlvmLoweringPass.Flags(true, true, false, false, false, false, false, false, false);
   }
 
   private static LlvmLoweringPass.Flags createStoreMemoryFlags() {
-    return new LlvmLoweringPass.Flags(false, false, false, false, false, false, false, true);
+    return new LlvmLoweringPass.Flags(false, false, false, false, false, false, false, true, false);
   }
 
   private static LlvmLoweringPass.Flags createLoadMemoryFlags() {
-    return new LlvmLoweringPass.Flags(false, false, false, false, false, false, true, false);
+    return new LlvmLoweringPass.Flags(false, false, false, false, false, false, true, false, false);
   }
 
   static {
@@ -431,7 +431,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             "(brind X:$rs1)",
             "(brind (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))"),
         List.of("(PseudoBRIND X:$rs1, 0)", "(PseudoBRIND X:$rs1, RV64IM_Itype_immAsInt64:$imm)"),
-        createBranchFlags(),
+        new LlvmLoweringPass.Flags(false, false, false, false, false, false, false, false, false),
         false
     ));
     /*

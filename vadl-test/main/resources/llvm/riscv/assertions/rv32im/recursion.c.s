@@ -5,29 +5,29 @@
 recursion:                              # @recursion
 # %bb.0:                                # %entry
 	ADDI sp,sp,-16
-	SW sp,12(sp)
-	SW fp,8(sp)
+	SW fp,12(sp)
+	SW ra,8(sp)
 	ADDI fp,sp,16
 	SW a0,-16(fp)
-	LW ra,-16(fp)
-	ADDI tp,zero,1
-	BLT ra,tp,.LBB0_2
+	LW a0,-16(fp)
+	ADDI a1,zero,1
+	BLT a0,a1,.LBB0_2
 	JAL zero,.LBB0_1
 .LBB0_1:                                # %if.then
-	LW ra,-16(fp)
-	SW ra,-12(fp)
+	LW a0,-16(fp)
+	SW a0,-12(fp)
 	JAL zero,.LBB0_3
 .LBB0_2:                                # %if.end
-	LW ra,-16(fp)
-	ADDI a0,ra,1
+	LW a0,-16(fp)
+	ADDI a0,a0,1
 	LUI ra,%hi(recursion)
 	JALR ra,%lo(recursion)(ra)
 	SW a0,-12(fp)
 	JAL zero,.LBB0_3
 .LBB0_3:                                # %return
 	LW a0,-12(fp)
-	LW fp,8(sp)
-	LW sp,12(sp)
+	LW ra,8(sp)
+	LW fp,12(sp)
 	ADDI sp,sp,16
 	JALR zero,0(ra)
 .Lfunc_end0:

@@ -18,3 +18,8 @@ void [(${namespace})]PassConfig::addPreRegAlloc()
     auto expandPseudoPass = create[(${namespace})]ExpandPseudoPass();
     addPass(expandPseudoPass);
 }
+
+void [(${namespace})]PassConfig::addPreEmitPass()
+{
+  //addPass(&BranchRelaxationPassID);
+}

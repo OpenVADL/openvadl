@@ -1,1 +1,1 @@
-/src/llvm-final/build/bin/clang --target=${TARGET} -S -c /src/inputs/$INPUT -o /tmp/main.s && chmod 777 /tmp/main.s && cat /tmp/main.s && sh /work/lcb_wrapper.sh
+/src/llvm-final/build/bin/clang --target=${TARGET} -O${OPT_LEVEL} -S -c /src/inputs/$INPUT -o /tmp/main.s && chmod 777 /tmp/main.s && cat /tmp/main.s && sh /work/lcb_wrapper.sh

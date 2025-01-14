@@ -10,6 +10,21 @@ namespace llvm
 {
     class [(${namespace})]Subtarget;
 
+    namespace [(${namespace})]CC {
+      enum CondCode {
+        COND_EQ,
+        COND_NE,
+        COND_LT,
+        COND_GE,
+        COND_LTU,
+        COND_GEU,
+        COND_INVALID
+      };
+
+      CondCode getOppositeBranchCondition(CondCode);
+      CondCode getCondFromBranchOpc(unsigned Opc);
+    }
+
     class [(${namespace})]InstrInfo : public [(${namespace})]GenInstrInfo
     {
         // virtual anchor method to decrease link time as the vtable
@@ -57,6 +72,26 @@ namespace llvm
                 , int64_t Val
                 , MachineInstr::MIFlag Flag = MachineInstr::NoFlags
                 ) const;
+
+            MachineBasicBlock *getBranchDestBlock(const MachineInstr &MI) const override;
+
+            bool analyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                                 MachineBasicBlock *&FBB,
+                                 SmallVectorImpl<MachineOperand> &Cond,
+                                 bool AllowModify) const override;
+
+            bool isBranchOffsetInRange(unsigned BranchOpc, int64_t BrOffset) const override;
+
+            unsigned getInstSizeInBytes(const MachineInstr &MI) const override;
+
+            unsigned insertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                                    MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
+                                    const DebugLoc &dl,
+                                    int *BytesAdded = nullptr) const override;
+
+            unsigned removeBranch(MachineBasicBlock &MBB, int *BytesRemoved = nullptr) const override;
+
+            const MCInstrDesc &getBrCond([(${namespace})]CC::CondCode CC) const;
 
         private:
             const [(${namespace})]Subtarget &STI;
