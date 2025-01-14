@@ -18,6 +18,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.test.lcb.AbstractLcbTest;
+import vadl.utils.Pair;
 
 public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
   protected abstract String getTarget();
@@ -76,13 +77,16 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
             target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), doDebug);
 
     // The container is complete and has generated the assembly files.
-    return inputFilesFromCFile().map(
-        input -> DynamicTest.dynamicTest(input + " with O" + optLevel,
-            () -> runContainerWithEnv(cachedImage,
-                Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
-                "/src/inputs",
-                Map.of("INPUT",
-                    input,
-                    "OPT_LEVEL", optLevel + "")))).toList();
+    return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
+      runContainerAndCopyInputIntoContainer(cachedImage,
+          List.of(Pair.of(Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
+              "/src/inputs")),
+          Map.of(
+              "OPT_LEVEL", optLevel + "",
+              "INPUT",
+              input,
+              "LLVM_PARALLEL_COMPILE_JOBS", "4",
+              "LLVM_PARALLEL_LINK_JOBS", "2"));
+    })).toList();
   }
 }
