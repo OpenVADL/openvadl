@@ -274,22 +274,23 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var branchInstructions = new ArrayList<BranchInstruction>();
     var database = new Database(passResults, specification);
 
-    {
-      // Machine Instructions
-      var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
-          MachineInstructionLabel.BEQ,
-          MachineInstructionLabel.BNEQ,
-          MachineInstructionLabel.BSGEQ,
-          MachineInstructionLabel.BSGTH,
-          MachineInstructionLabel.BSLEQ,
-          MachineInstructionLabel.BSLTH,
-          MachineInstructionLabel.BUGEQ,
-          MachineInstructionLabel.BUGTH,
-          MachineInstructionLabel.BULEQ,
-          MachineInstructionLabel.BULTH
-      )).build());
+    machineInstructions(fieldUsages, database, branchInstructions);
+    pseudoInstructions(fieldUsages, database, branchInstructions);
 
-      for (var machineInstruction : result.machineInstructions()) {
+    return branchInstructions;
+  }
+
+  private static void pseudoInstructions(IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+                                Database database,
+                                ArrayList<BranchInstruction> branchInstructions) {
+    var result = database.run(
+        new Query.Builder().pseudoInstructionLabel(PseudoInstructionLabel.J).build());
+
+    for (var pseudoInstruction : result.pseudoInstructions()) {
+      var callNodes = pseudoInstruction.behavior().getNodes(InstrCallNode.class).toList();
+
+      for (var callNode : callNodes) {
+        var machineInstruction = callNode.target();
         var immediates = fieldUsages.getImmediates(machineInstruction.format());
         ensure(immediates.size() == 1,
             () -> Diagnostic.error("We only support branch instructions with one label.",
@@ -297,32 +298,37 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         var immediate = unwrap(immediates.stream().findFirst());
         int bitWidth = immediate.size();
         branchInstructions.add(
-            new BranchInstruction(machineInstruction.identifier.simpleName(), bitWidth));
+            new BranchInstruction(pseudoInstruction.identifier.simpleName(), bitWidth));
       }
     }
+  }
 
-    {
-      // Pseudo Instructions
-      var result = database.run(
-          new Query.Builder().pseudoInstructionLabel(PseudoInstructionLabel.J).build());
+  private static void machineInstructions(
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+      Database database,
+      ArrayList<BranchInstruction> branchInstructions) {
+    var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
+        MachineInstructionLabel.BEQ,
+        MachineInstructionLabel.BNEQ,
+        MachineInstructionLabel.BSGEQ,
+        MachineInstructionLabel.BSGTH,
+        MachineInstructionLabel.BSLEQ,
+        MachineInstructionLabel.BSLTH,
+        MachineInstructionLabel.BUGEQ,
+        MachineInstructionLabel.BUGTH,
+        MachineInstructionLabel.BULEQ,
+        MachineInstructionLabel.BULTH
+    )).build());
 
-      for (var pseudoInstruction : result.pseudoInstructions()) {
-        var callNodes = pseudoInstruction.behavior().getNodes(InstrCallNode.class).toList();
-
-        for (var callNode : callNodes) {
-          var machineInstruction = callNode.target();
-          var immediates = fieldUsages.getImmediates(machineInstruction.format());
-          ensure(immediates.size() == 1,
-              () -> Diagnostic.error("We only support branch instructions with one label.",
-                  machineInstruction.sourceLocation()));
-          var immediate = unwrap(immediates.stream().findFirst());
-          int bitWidth = immediate.size();
-          branchInstructions.add(
-              new BranchInstruction(pseudoInstruction.identifier.simpleName(), bitWidth));
-        }
-      }
+    for (var machineInstruction : result.machineInstructions()) {
+      var immediates = fieldUsages.getImmediates(machineInstruction.format());
+      ensure(immediates.size() == 1,
+          () -> Diagnostic.error("We only support branch instructions with one label.",
+              machineInstruction.sourceLocation()));
+      var immediate = unwrap(immediates.stream().findFirst());
+      int bitWidth = immediate.size();
+      branchInstructions.add(
+          new BranchInstruction(machineInstruction.identifier.simpleName(), bitWidth));
     }
-
-    return branchInstructions;
   }
 }
