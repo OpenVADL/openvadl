@@ -10,9 +10,6 @@ cd $(realpath $(dirname "$0"))
 # miscompile
 rm -r ../src/cubic
 # long jump problem
-rm -r ../src/nettle-sha256
-rm -r ../src/nsichneu
-rm -r ../src/wikisort
 rm -r ../src/statemate
 
 ../build_spike-lcb.sh
