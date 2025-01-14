@@ -1,6 +1,8 @@
 package vadl.test.lcb.sys.riscv;
 
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.test.DockerExecutionTest;
 
@@ -8,8 +10,8 @@ import vadl.test.DockerExecutionTest;
  * A singleton implementation to keep the reference to a {@link ImageFromDockerfile} to avoid
  * recompilation between {@link LlvmRiscvAssemblyTest} and {@link SpikeRiscvSimulationTest}.
  */
-public class SpikeRiscv32ImageProvider {
-  private static ImageFromDockerfile image;
+public class SpikeRiscvImageProvider {
+  private static Map<String, ImageFromDockerfile> images = new HashMap<>();
 
   /**
    * Create an {@link ImageFromDockerfile} or return an already existing image.
@@ -30,14 +32,16 @@ public class SpikeRiscv32ImageProvider {
                                           String upstreamClangTarget,
                                           String spikeTarget,
                                           boolean doDebug) {
+    var image = images.get(target);
     if (image == null) {
-      var img = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv", !doDebug)
+      var img = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv"
+          + target, !doDebug)
           .withDockerfile(Paths.get(pathDockerFile))
           .withBuildArg("TARGET", target)
           .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
           .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
           .withBuildArg("SPIKE_TARGET", spikeTarget));
-      image = img;
+      images.put(target, image);
       return img;
     } else {
       return image;

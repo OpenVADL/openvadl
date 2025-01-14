@@ -61,7 +61,7 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
     var spikeTarget = "";
 
     var cachedImage =
-        SpikeRiscv32ImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
+        SpikeRiscvImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
             target, upstreamBuildTarget, upstreamClangTarget, spikeTarget, false);
 
     // The container is complete and has generated the assembly files.
