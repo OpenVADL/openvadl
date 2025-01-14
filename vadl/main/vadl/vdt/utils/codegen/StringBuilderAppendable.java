@@ -69,6 +69,7 @@ public class StringBuilderAppendable implements CodeGeneratorAppendable {
       return this;
     } else if (obj instanceof Short) {
       sb.append((short) obj);
+      return this;
     }
 
     // At last, just append the string representation of the object
