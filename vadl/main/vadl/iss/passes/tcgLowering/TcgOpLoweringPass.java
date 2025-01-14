@@ -2,17 +2,14 @@ package vadl.iss.passes.tcgLowering;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
-import static vadl.utils.GraphUtils.hasUser;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
@@ -21,7 +18,7 @@ import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgGottoTbAbs;
+import vadl.iss.passes.tcgLowering.nodes.TcgGottoTb;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgLookupAndGotoPtr;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
@@ -148,6 +145,10 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   ScheduledNode toReplace;
 
   Tcg_32_64 targetSize;
+
+  // indicates whether jump slot 1 is already
+  // used by some branch (instr exit)
+  boolean isJumpSlotTaken = false;
 
   /**
    * Constructs a new {@code TcgOpLoweringExecutor} with the given variable assignments.
@@ -291,9 +292,19 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       );
     } else {
       var pcWrite = node.pcWrite();
+
+      var jmpSlot = TcgGottoTb.JmpSlot.LOOK_UP;
+      if (!this.isJumpSlotTaken) {
+        // if the jumpslot (1) is not yet taken, we take it.
+        // TODO: We could use heuristic to find the best slot assignment.
+        //  (other than just the first one)
+        this.isJumpSlotTaken = true;
+        jmpSlot = TcgGottoTb.JmpSlot.BRANCH_OUT;
+      }
+
       // Address jump to value
       node.replaceAndLinkAndDelete(
-          new TcgGottoTbAbs(pcWrite.value()));
+          new TcgGottoTb(pcWrite.value(), jmpSlot));
     }
   }
 

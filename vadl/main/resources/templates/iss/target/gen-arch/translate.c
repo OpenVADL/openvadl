@@ -162,9 +162,14 @@ static void gen_goto_tb_abs(DisasContext *ctx, target_ulong target_pc)
     ctx->base.is_jmp = DISAS_NORETURN;
 }
 
-static void gen_goto_tb(DisasContext *ctx, target_ulong n, target_ulong target_pc)
+/*
+ * Jumps to the given target_pc and sets is_jmp to NORETURN. n indicates the jump slot
+ * which is one of 0, 1 or -1. 0,1 are valid jumps slots, while -1 indicates a forced
+ * move to cpu_pc with a tcg_gen_lookup_and_goto_ptr call.
+ */
+static void gen_goto_tb(DisasContext *ctx, int8_t n, target_ulong target_pc)
 {
-    if (translator_use_goto_tb(&ctx->base, target_pc)) {
+    if (n >= 0 && translator_use_goto_tb(&ctx->base, target_pc)) {
         tcg_gen_movi_i64(cpu_pc, (int64_t) target_pc);
         tcg_gen_goto_tb(n);
         tcg_gen_exit_tb(ctx->base.tb, n);
