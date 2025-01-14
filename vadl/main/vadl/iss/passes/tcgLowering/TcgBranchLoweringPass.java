@@ -23,6 +23,8 @@ import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.control.AbstractBeginNode;
+import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
@@ -112,12 +114,29 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
       return CfgTraverser.super.traverseControlSplit(ifNode);
     }
 
-    var takenLabel = genLabelObj("taken");
+    return buildControlSequence(ifNode);
+  }
+
+
+  /**
+   * Converts the if-else construct into a branch/label sequence.
+   * It does this by negating the condition.
+   * If the original condition was true, it will jump to the else label,
+   * otherwise it will keep executing until the end of the if-branch.
+   */
+  private ControlNode buildControlSequence(IfNode ifNode) {
+    // if the else branch does not include any source code, we can skip it
+    var skipElse = isEmptyBranch(ifNode.falseBranch());
+
+    var elseLabel = genLabelObj("else");
     var endLabel = genLabelObj("end");
 
     // insert label generation
-    splitNode.addBefore(new TcgGenLabel(takenLabel));
-    splitNode.addBefore(new TcgGenLabel(endLabel));
+    ifNode.addBefore(new TcgGenLabel(elseLabel));
+    if (!skipElse) {
+      // we don't skip the else branch, we generate the end label
+      ifNode.addBefore(new TcgGenLabel(endLabel));
+    }
 
     // TODO: here we have potential to optimize the branch by using a branch condition
     // instead of the result of the condition.
@@ -131,33 +150,33 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
             Type.bits(condVar.width().width)
         )));
 
-    // check if true by check if value is not 0.
-    // if true, we branch to the ifLabel.
-    var tcgBranchNode = splitNode.addBefore(
-        new TcgBrCond(condVar, constZero, TcgCondition.NE, takenLabel)
+    // check if !condition by check if condition value is 0.
+    // if !condition, we branch to the elseLabel.
+    var condition = TcgCondition.EQ;
+    var tcgBranchNode = ifNode.addBefore(
+        new TcgBrCond(condVar, constZero, condition, elseLabel)
     );
 
-    // emit the false branch
-    var falseBranchEnd = traverseBranch(ifNode.falseBranch());
-    // at end of false branch we must take a jump
-    falseBranchEnd.addBefore(new TcgBr(endLabel));
+    // emit the true branch
+    var ifBranchEnd = traverseBranch(ifNode.trueBranch());
+    // emit the else branch label
+    var elseLabelPosition = ifBranchEnd.addBefore(new TcgSetLabel(elseLabel));
 
-    // emit the taken branch label
-    var takenLabelPosition = falseBranchEnd.addBefore(new TcgSetLabel(takenLabel));
+    if (!skipElse) {
+      // right before the else branch label, we must take a jump to the end label
+      elseLabelPosition.addBefore(new TcgBr(endLabel));
 
-    // traverse true branch
-    var trueBranchEnd = traverseBranch(ifNode.trueBranch());
-    // emit the end label
-    var endLabelPosition = trueBranchEnd.addBefore(new TcgSetLabel(endLabel));
+      // traverse and emit the false branch
+      var elseBranchEnd = traverseBranch(ifNode.falseBranch());
+      // emit the end label
+      elseBranchEnd.addBefore(new TcgSetLabel(endLabel));
+    }
 
     return linkBranchesAndRemoveControlSplit(
         ifNode,
+        skipElse,
         tcgBranchNode,
-        ifNode.trueBranch().next(),
-        ifNode.falseBranch().next(),
-        endLabelPosition,
-        takenLabelPosition,
-        (MergeNode) falseBranchEnd.usages().findFirst().get()
+        (MergeNode) ifBranchEnd.usages().findFirst().get()
     );
   }
 
@@ -180,42 +199,47 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    * Unlinks the original control split and merge nodes,
    * and relinks the branches using TCG labels and jumps.
    *
-   * @param ifNode               the original if-node representing the control split
-   * @param tcgBranchNode        the TCG branch instruction node
-   * @param firstTrueBranchNode  the first node in the true branch
-   * @param firstFalseBranchNode the first node in the false branch
-   * @param lastTrueBranchNode   the last node in the true branch
-   * @param lastFalseBranchNode  the last node in the false branch
-   * @param mergeNode            the merge node where branches join
+   * @param ifNode        the original if-node representing the control split
+   * @param tcgBranchNode the TCG branch instruction node
+   * @param mergeNode     the merge node where branches join
    * @return the control node to continue traversal from after relinking
    */
   private ControlNode linkBranchesAndRemoveControlSplit(
       IfNode ifNode,
+      boolean skipElse,
       DirectionalNode tcgBranchNode,
-      ControlNode firstTrueBranchNode,
-      ControlNode firstFalseBranchNode,
-      DirectionalNode lastTrueBranchNode,
-      DirectionalNode lastFalseBranchNode,
       MergeNode mergeNode
   ) {
+
+    var firstTrueBranchNode = ifNode.trueBranch().next();
+    var firstFalseBranchNode = ifNode.falseBranch().next();
+    var lastTrueBranchNode = mergeNode.trueBranchEnd().predecessor();
+    var lastFalseBranchNode = mergeNode.falseBranchEnd().predecessor();
 
     // Unlink branches
     ifNode.trueBranch().setNext(null);
     ifNode.falseBranch().setNext(null);
 
-    // Link TCG branch instruction with first node in false branch
-    tcgBranchNode.setNext(firstFalseBranchNode);
-    // Link last node in false branch with first node in true branch
-    lastFalseBranchNode.setNext(firstTrueBranchNode);
+    // node after if-else control split
+    var nodeToContinue = mergeNode.next();
+    // unlink merge node
+    mergeNode.setNext(null);
+
+    // Link TCG branch instruction with the first node in true branch
+    tcgBranchNode.setNext(firstTrueBranchNode);
+
+    if (skipElse) {
+      // skipping else -> Link end of true branch with node to continue after merge
+      lastTrueBranchNode.setNext(nodeToContinue);
+    } else {
+      // Link last node in true branch with first node in false branch
+      lastTrueBranchNode.setNext(firstFalseBranchNode);
+      // Link false branch end with node to continue after merge
+      lastFalseBranchNode.setNext(nodeToContinue);
+    }
 
     // Delete split node and branches
     ifNode.safeDelete();
-
-    // Link true branch end with node to continue after merge
-    var nodeToContinue = mergeNode.next();
-    mergeNode.setNext(null);
-    lastTrueBranchNode.setNext(nodeToContinue);
-
     // Delete merge node and all branch ends
     mergeNode.safeDelete();
 
@@ -256,6 +280,10 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
     var prefix = "l_" + namePrefix + "_";
     return new TcgLabel(prefix + labelCnt++);
 
+  }
+
+  private static boolean isEmptyBranch(AbstractBeginNode branch) {
+    return branch.next() instanceof AbstractEndNode;
   }
 
 }

@@ -24,6 +24,14 @@ public class MergeNode extends AbstractBeginNode {
     this.branchEnds = branchEnds;
   }
 
+  public BranchEndNode trueBranchEnd() {
+    return branchEnds.get(0);
+  }
+
+  public BranchEndNode falseBranchEnd() {
+    return branchEnds.get(branchEnds.size() - 1);
+  }
+
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);

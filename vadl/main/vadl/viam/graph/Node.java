@@ -207,7 +207,7 @@ public abstract class Node implements WithSourceLocation {
   /**
    * Returns the {@link Node} that has this node as {@link vadl.javaannotations.viam.Successor}.
    */
-  public final @Nullable Node predecessor() {
+  public @Nullable Node predecessor() {
     return predecessor;
   }
 
