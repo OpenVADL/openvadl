@@ -204,6 +204,7 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    * @param mergeNode     the merge node where branches join
    * @return the control node to continue traversal from after relinking
    */
+  @SuppressWarnings("VariableDeclarationUsageDistance")
   private ControlNode linkBranchesAndRemoveControlSplit(
       IfNode ifNode,
       boolean skipElse,
