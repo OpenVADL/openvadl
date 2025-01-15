@@ -21,5 +21,5 @@ void [(${namespace})]PassConfig::addPreRegAlloc()
 
 void [(${namespace})]PassConfig::addPreEmitPass()
 {
-  //addPass(&BranchRelaxationPassID);
+  addPass(&BranchRelaxationPassID);
 }

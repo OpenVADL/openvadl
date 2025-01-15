@@ -48,8 +48,9 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::SELECT_CC, MVT::[(${stackPointerType})], Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
-    for (auto VT : {MVT::i1, MVT::i8, MVT::i16, MVT::i32})
+    for (auto VT : {MVT::i1, MVT::i8, MVT::i16, MVT::i32}) {
         setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
+    }
     setOperationAction(ISD::BR_JT, MVT::Other, Expand);
     setOperationAction(ISD::ROTR, MVT::i32, Expand);
     setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
@@ -59,6 +60,10 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
     setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
     setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+
+    for (auto N : {ISD::EXTLOAD, ISD::SEXTLOAD, ISD::ZEXTLOAD}) {
+        setLoadExtAction(N, MVT::[(${stackPointerType})], MVT::i1, Promote);
+    }
 
     setBooleanContents(ZeroOrOneBooleanContent);
 
