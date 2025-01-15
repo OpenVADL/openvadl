@@ -55,7 +55,7 @@ namespace llvm::[(${namespace})]MatInt {
         // v[0,12) == 0 && v[12,32) != 0 : LUI
         // v[0,32) != 0                  : LUI+ADDI(W)
         auto Hi20 = [(${luiRawEncoderMethod})]([(${largestPossibleValueAddi})] + 1 + Val);
-        int64_t Lo12 = SignExtend64<12>(Val);
+        int64_t Lo12 = SignExtend64<[(${addiBitSize})]>(Val);
 
         if (Hi20)
           Res.emplace_back([(${namespace})]::[(${lui})], Hi20);
@@ -67,7 +67,7 @@ namespace llvm::[(${namespace})]MatInt {
         return Res;
       }
 
-      int64_t Lo12 = SignExtend64<12>(Val);
+      int64_t Lo12 = SignExtend64<[(${addiBitSize})]>(Val);
       Val = (uint64_t)Val - (uint64_t)Lo12;
 
       int ShiftAmount = 0;
@@ -81,12 +81,12 @@ namespace llvm::[(${namespace})]MatInt {
         // If the remaining bits don't fit in 12 bits, we might be able to reduce
         // the // shift amount in order to use LUI which will zero the lower 12
         // bits.
-        if (ShiftAmount > 12 && !isInt<12>(Val)) {
-          if (isInt<32>((uint64_t)Val << 12)) {
+        if (ShiftAmount > [(${addiBitSize})] && !isInt<[(${addiBitSize})]>(Val)) {
+          if (isInt<32>((uint64_t)Val << [(${addiBitSize})])) {
             // Reduce the shift amount and add zeros to the LSBs so it will match
             // LUI.
-            ShiftAmount -= 12;
-            Val = (uint64_t)Val << 12;
+            ShiftAmount -= [(${addiBitSize})];
+            Val = (uint64_t)Val << [(${addiBitSize})];
           }
         }
       }

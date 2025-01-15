@@ -27,7 +27,6 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
-import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterFile;

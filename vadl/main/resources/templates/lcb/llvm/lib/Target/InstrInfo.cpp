@@ -334,7 +334,7 @@ unsigned [(${namespace})]InstrInfo::insertBranch(
   // Shouldn't be a fall through.
   assert(TBB && "insertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 3 || Cond.size() == 0) &&
-         "(${namespace})] branch conditions have two components!");
+         "[(${namespace})] branch conditions have two components!");
 
   // Unconditional branch.
   if (Cond.empty()) {
