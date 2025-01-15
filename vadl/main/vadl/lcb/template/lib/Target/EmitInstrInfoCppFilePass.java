@@ -282,7 +282,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   private static void pseudoInstructions(IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
                                 Database database,
-                                ArrayList<BranchInstruction> branchInstructions) {
+                                List<BranchInstruction> branchInstructions) {
     var result = database.run(
         new Query.Builder().pseudoInstructionLabel(PseudoInstructionLabel.J).build());
 
@@ -306,7 +306,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   private static void machineInstructions(
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Database database,
-      ArrayList<BranchInstruction> branchInstructions) {
+      List<BranchInstruction> branchInstructions) {
     var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
         MachineInstructionLabel.BEQ,
         MachineInstructionLabel.BNEQ,
