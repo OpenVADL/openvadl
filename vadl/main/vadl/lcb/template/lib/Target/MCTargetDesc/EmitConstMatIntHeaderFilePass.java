@@ -110,7 +110,7 @@ public class EmitConstMatIntHeaderFilePass extends LcbTemplateRenderingPass {
     map.put("luiHighBit", luiImmediate.bitSlice().msb());
     map.put("luiLowBit", luiImmediate.bitSlice().lsb());
     map.put("luiFormatSize", luiFormatSize);
-    map.put("addiBitSize", immediateAddiSize - 1);
+    map.put("addiBitSize", immediateAddiSize);
     map.put("largestPossibleValueAddi", largestPossibleValueAddi);
     map.put("smallestPossibleValueAddi", smallestPossibleValueAddi);
     map.put("largestPossibleValue", (long) Math.pow(2, lui.format().type().bitWidth()) - 1);

@@ -3,6 +3,7 @@ package vadl.viam;
 import java.util.List;
 import java.util.stream.Stream;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 
