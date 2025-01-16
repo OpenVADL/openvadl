@@ -1,5 +1,7 @@
 package vadl.types.asmTypes;
 
+import javax.annotation.Nullable;
+
 /**
  * {@code @instructions} represents a set of {@code @instruction}.
  * It is used when defining a repetition block containing an instruction.
@@ -7,12 +9,21 @@ package vadl.types.asmTypes;
  * @see InstructionAsmType
  */
 public class InstructionsAsmType implements AsmType {
-  private static final InstructionsAsmType INSTANCE = new InstructionsAsmType();
+  @Nullable
+  private static InstructionsAsmType INSTANCE;
 
   private InstructionsAsmType() {
   }
 
+  /**
+   * Get the singleton instance of this AsmType.
+   *
+   * @return instance of the AsmType
+   */
   public static AsmType instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new InstructionsAsmType();
+    }
     return INSTANCE;
   }
 

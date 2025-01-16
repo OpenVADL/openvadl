@@ -1,5 +1,7 @@
 package vadl.types.asmTypes;
 
+import javax.annotation.Nullable;
+
 /**
  * {@code @instruction} is a whole machine or pseudo instruction.
  * It contains one or more {@code @operand}.
@@ -8,12 +10,21 @@ package vadl.types.asmTypes;
  * @see OperandAsmType
  */
 public class InstructionAsmType implements AsmType {
-  private static final InstructionAsmType INSTANCE = new InstructionAsmType();
+  @Nullable
+  private static InstructionAsmType INSTANCE;
 
   private InstructionAsmType() {
   }
 
+  /**
+   * Get the singleton instance of this AsmType.
+   *
+   * @return instance of the AsmType
+   */
   public static AsmType instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new InstructionAsmType();
+    }
     return INSTANCE;
   }
 

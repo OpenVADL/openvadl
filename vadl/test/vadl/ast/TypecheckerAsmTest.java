@@ -423,6 +423,117 @@ public class TypecheckerAsmTest {
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
 
+  @Test
+  void validTypesFunctionInvocation() {
+    var prog = """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            function minusOne(x: SInt<64>) -> SInt<64> = x - 1
+            grammar = {
+              A : attr = minusOne<Integer>;
+            }
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(ConstantAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
+  }
+
+  @Test
+  void invalidArgumentTypeFunctionInvocation() {
+    var prog = """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            function minusOne(x: SInt<64>) -> SInt<64> = x - 1
+            grammar = {
+              A : attr = minusOne<Identifier>;
+            }
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void tooManyArgumentsFunctionInvocation() {
+    var prog = """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            function minusOne(x: SInt<64>) -> SInt<64> = x - 1
+            grammar = {
+              A : attr = minusOne<Integer,Integer>;
+            }
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void functionInvocationInParameters() {
+    var prog = """
+          instruction set architecture ISA = {}
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            function one -> SInt<64> = 1
+            function minusOne(x: SInt<64>) -> SInt<64> = x - 1
+            grammar = {
+              A : minusOne<one>;
+            }
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(ConstantAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
+  }
+
+  @Test
+  void validSemanticPredicateType() {
+    var prog = """
+          grammar = {
+            A :
+              ?(VADL::equ(2 as Bits<2>,1 as Bits<2>)) Integer
+              | Integer
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var typeFinder = new AstFinder();
+    Assertions.assertEquals(ConstantAsmType.instance(), typeFinder.getAsmRuleType(ast, "A"));
+  }
+
+  @Test
+  void invalidSemanticPredicateType() {
+    var prog = """
+          grammar = {
+            A :
+              ?(VADL::ssatadd(2,1)) Integer
+              | Integer
+            ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
   //region casts
   @Test
   void castOperandsToInstruction() {

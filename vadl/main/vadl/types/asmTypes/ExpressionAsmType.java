@@ -1,16 +1,27 @@
 package vadl.types.asmTypes;
 
+import javax.annotation.Nullable;
+
 /**
  * {@code @expression} refers to a single constant or a complex expression tree.
  * Vadl provides a built-in to parse expressions. In the LCB, this corresponds to a MCExpr.
  */
 public class ExpressionAsmType implements AsmType {
-  private static final ExpressionAsmType INSTANCE = new ExpressionAsmType();
+  @Nullable
+  private static ExpressionAsmType INSTANCE;
 
   private ExpressionAsmType() {
   }
 
+  /**
+   * Get the singleton instance of this AsmType.
+   *
+   * @return instance of the AsmType
+   */
   public static AsmType instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new ExpressionAsmType();
+    }
     return INSTANCE;
   }
 

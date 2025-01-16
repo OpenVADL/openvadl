@@ -2,6 +2,7 @@ package vadl.types.asmTypes;
 
 import java.util.HashMap;
 import java.util.Map;
+import vadl.types.Type;
 
 /**
  * An AsmType is used to type assembly grammar elements in the assembly description.
@@ -58,6 +59,25 @@ public interface AsmType {
   }
 
   /**
+   * Get the AsmType corresponding to the given VADL type.
+   *
+   * @param operationalType the VADL type to get the AsmType for
+   * @return the corresponding VADL Type
+   * @throws UnsupportedOperationException if there is no AsmType for the given VADL type
+   */
+  static AsmType getAsmTypeFromOperationalType(Type operationalType) {
+    if (operationalType == Type.signedInt(64)) {
+      return ConstantAsmType.instance();
+    } else if (operationalType == Type.string()) {
+      return StringAsmType.instance();
+    } else if (operationalType == Type.void_()) {
+      return VoidAsmType.instance();
+    } else {
+      throw new UnsupportedOperationException("There is no VADL type for this AsmType.");
+    }
+  }
+
+  /**
    * Check whether this AsmType can be cast to the given AsmType.
    *
    * @param to AsmType to be cast to
@@ -72,7 +92,14 @@ public interface AsmType {
    */
   String name();
 
-
-  // TODO: implement this method to type check vadl function invocations
-  // Type toOperationalType();
+  /**
+   * Get the corresponding type of the VADL type system.
+   *
+   * @return the corresponding VADL type
+   * @throws UnsupportedOperationException if there is no VADL type for this AsmType
+   */
+  default Type toOperationalType() {
+    throw new UnsupportedOperationException(
+        "This AsmType does not have an corresponding VADL type.");
+  }
 }

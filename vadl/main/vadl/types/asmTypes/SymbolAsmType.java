@@ -1,15 +1,26 @@
 package vadl.types.asmTypes;
 
+import javax.annotation.Nullable;
+
 /**
  * {@code @symbol} refers to an identifier in the assembly language.
  */
 public class SymbolAsmType implements AsmType {
-  private static final SymbolAsmType INSTANCE = new SymbolAsmType();
+  @Nullable
+  private static SymbolAsmType INSTANCE;
 
   private SymbolAsmType() {
   }
 
+  /**
+   * Get the singleton instance of this AsmType.
+   *
+   * @return instance of the AsmType
+   */
   public static AsmType instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new SymbolAsmType();
+    }
     return INSTANCE;
   }
 

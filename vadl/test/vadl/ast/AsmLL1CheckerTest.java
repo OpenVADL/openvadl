@@ -94,8 +94,7 @@ public class AsmLL1CheckerTest {
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
 
-  // FIXME: enable when function calls are typechecked
-  //  @Test
+  @Test
   void firstParsableElementInParamsConflict() {
     var prog = """
           instruction set architecture ISA = {}
@@ -118,15 +117,14 @@ public class AsmLL1CheckerTest {
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
 
-  // FIXME: enable when function calls are typechecked
-  //  @Test
+  @Test
   void firstParsableElementInLastElementOfGroup() {
     var prog = """
           instruction set architecture ISA = {}
           application binary interface ABI for ISA = {}
         
           assembly description AD for ABI = {
-            function one () -> SInt<64> = 1
+            function one -> SInt<64> = 1
             function add (a: SInt<64>, b: SInt<64>) -> SInt<64> = a + b
         
             grammar = {
@@ -135,7 +133,7 @@ public class AsmLL1CheckerTest {
                   attr = one<>
                   attr2 = add<one,Integer>
                 )
-                | Integer Integer
+                | attr2 = Integer attr4 = Integer
               ;
             }
           }
@@ -190,7 +188,7 @@ public class AsmLL1CheckerTest {
   void semanticPredicateToSolveAlternativeConflict() {
     var prog = """
           grammar = {
-            RuleA : ?(equ(1,2)) "A" | "A";
+            RuleA : ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" | "A";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -203,7 +201,7 @@ public class AsmLL1CheckerTest {
   void semanticPredicateToSolveOptionConflict() {
     var prog = """
           grammar = {
-            RuleA : [?(equ(1,2)) "A"] "A";
+            RuleA : [?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A"] "A";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -216,7 +214,7 @@ public class AsmLL1CheckerTest {
   void semanticPredicateToSolveRepetitionConflict() {
     var prog = """
           grammar = {
-            RuleA : {?(equ(1,2)) "A"} "A";
+            RuleA : {?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A"} "A";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -229,7 +227,10 @@ public class AsmLL1CheckerTest {
   void semanticPredicateFollowedByAlternatives() {
     var prog = """
           grammar = {
-            RuleA : [ ?(equ(1,2)) (?(equ(1,2)) "A" | "A")] "A";
+            RuleA : [ ?(VADL::equ(1 as Bits<2>,2 as Bits<2>))
+                        (?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A"
+                        | "A")
+                    ] "A";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -242,7 +243,7 @@ public class AsmLL1CheckerTest {
   void missingSemanticPredicateFollowedByAlternatives() {
     var prog = """
           grammar = {
-            RuleA : [ ?(equ(1,2)) "A" | "A"] "A";
+            RuleA : [ ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" | "A"] "A";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -255,7 +256,7 @@ public class AsmLL1CheckerTest {
   void unnecessarySemanticPredicateInAlternatives() {
     var prog = """
           grammar = {
-            RuleA : ?(equ(1,2)) "A" | "B";
+            RuleA : ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" | "B";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -268,7 +269,7 @@ public class AsmLL1CheckerTest {
   void semanticPredicateShouldBeInPreviousAlternatives() {
     var prog = """
           grammar = {
-            RuleA : "B" | ?(equ(1,2)) "B";
+            RuleA : "B" | ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "B";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -281,7 +282,7 @@ public class AsmLL1CheckerTest {
   void unnecessarySemanticPredicateInOption() {
     var prog = """
           grammar = {
-            RuleA : [ ?(equ(1,2)) "A" ] "B";
+            RuleA : [ ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" ] "B";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -294,7 +295,7 @@ public class AsmLL1CheckerTest {
   void unnecessarySemanticPredicateInRepetition() {
     var prog = """
           grammar = {
-            RuleA : { ?(equ(1,2)) "A" } "B";
+            RuleA : { ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" } "B";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -307,7 +308,7 @@ public class AsmLL1CheckerTest {
   void misplacedSemanticPredicateInGroup() {
     var prog = """
           grammar = {
-            RuleA : ?(equ(1,2)) "A" ?(equ(3,4)) | "A";
+            RuleA : ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) | "A";
           }
         """;
     var ast = Assertions.assertDoesNotThrow(

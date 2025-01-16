@@ -1,23 +1,40 @@
 package vadl.types.asmTypes;
 
+import javax.annotation.Nullable;
+import vadl.types.Type;
+
 /**
  * {@code @string} is the type of most terminal rules.
  *
  * @see vadl.ast.AsmGrammarDefaultRules
  */
 public class StringAsmType implements AsmType {
-  private static final StringAsmType INSTANCE = new StringAsmType();
+  @Nullable
+  private static StringAsmType INSTANCE;
 
   private StringAsmType() {
   }
 
+  /**
+   * Get the singleton instance of this AsmType.
+   *
+   * @return instance of the AsmType
+   */
   public static AsmType instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new StringAsmType();
+    }
     return INSTANCE;
   }
 
   @Override
   public String name() {
     return "string";
+  }
+
+  @Override
+  public Type toOperationalType() {
+    return Type.string();
   }
 
   @Override

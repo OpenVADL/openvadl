@@ -1207,10 +1207,10 @@ PRODUCTIONS
   .
 
   assemblyGrammarLiteral<out AsmGrammarLiteralDefinition literal>       (. Identifier id = null; List<AsmGrammarLiteralDefinition> parameters = new ArrayList<>();
-                                                                           Expr strLit = null; AsmGrammarTypeDefinition type = null; var start = loc(); .)
+                                                                           Expr strLit = null; AsmGrammarTypeDefinition type = null; .)
   = ( assemblyIdentifier<out id>
         [SYM_LT assemblyParameterList<out parameters>  SYM_GT]
-      | stringLiteral<out strLit> )
+      | stringLiteral<out strLit> )                                     (. var start =  id != null ? id.location() : strLit.location(); .)
     [IF(la.kind == _SYM_AT)
       assemblyGrammarTypeDefinition<out type>]                          (. literal = new AsmGrammarLiteralDefinition(id, parameters, strLit, type, start.join(loc())); .)
   .
