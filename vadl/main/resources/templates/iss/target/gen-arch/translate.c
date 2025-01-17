@@ -144,27 +144,14 @@ static void gen_set_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num, T
 }
 [/]
 
-static void gen_goto_tb_rel(DisasContext *ctx, target_long diff)
+/*
+ * Jumps to the given target_pc and sets is_jmp to NORETURN. n indicates the jump slot
+ * which is one of 0, 1 or -1. 0,1 are valid jumps slots, while -1 indicates a forced
+ * move to cpu_pc with a tcg_gen_lookup_and_goto_ptr call.
+ */
+static void gen_goto_tb(DisasContext *ctx, int8_t n, target_ulong target_pc)
 {
-    target_ulong dest = ctx->base.pc_next + diff;
-
-    // TODO: optimize as lookup might be unnecessary
-    tcg_gen_movi_tl(cpu_pc, (int64_t) dest);
-    tcg_gen_lookup_and_goto_ptr();
-}
-
-// TODO: Replace by calls by gen_goto_tb
-static void gen_goto_tb_abs(DisasContext *ctx, target_ulong target_pc)
-{
-    // TODO: optimize as lookup might be unnecessary
-    tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
-    tcg_gen_lookup_and_goto_ptr();
-    ctx->base.is_jmp = DISAS_NORETURN;
-}
-
-static void gen_goto_tb(DisasContext *ctx, target_ulong n, target_ulong target_pc)
-{
-    if (translator_use_goto_tb(&ctx->base, target_pc)) {
+    if (n >= 0 && translator_use_goto_tb(&ctx->base, target_pc)) {
         tcg_gen_movi_i64(cpu_pc, (int64_t) target_pc);
         tcg_gen_goto_tb(n);
         tcg_gen_exit_tb(ctx->base.tb, n);
@@ -209,24 +196,6 @@ static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 [(${func})]
 [/]
 
-
-// TODO: Remove this hardcoded translate functions in template
-/*static bool trans_csrrw(DisasContext *ctx, arg_csrrw *a) {
-    qemu_printf("[VADL] trans_csrrw (rd: %d , csr: %d , rs1: %d , shamt: %d )\n",
-                a->rd, a->csr, a->rs1);
-
-    TCGv dest    = dest_x(ctx, a->rd);
-    TCGv src     = get_x(ctx, a->rs1);
-    TCGv_i32 csr = tcg_constant_i32(a->csr);
-
-    gen_helper_csrrw(dest, tcg_env, csr, src);
-
-    tcg_gen_movi_i64(cpu_pc, ctx->base.pc_next + 4);
-    tcg_gen_exit_tb(NULL, 0);
-    ctx->base.is_jmp = DISAS_NORETURN;
-
-    return true;
-}*/
 
 //// END OF TRANSLATE FUNCTIONS ////
 

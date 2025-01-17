@@ -1,5 +1,6 @@
 package vadl.viam.graph.control;
 
+import javax.annotation.Nonnull;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -12,6 +13,14 @@ public class BranchEndNode extends AbstractEndNode {
   public BranchEndNode(
       NodeList<SideEffectNode> sideEffects) {
     super(sideEffects);
+  }
+
+  @Override
+  @Nonnull
+  public DirectionalNode predecessor() {
+    var superNode = super.predecessor();
+    ensure(superNode instanceof DirectionalNode, "Invalid predecessor %s", superNode);
+    return (DirectionalNode) superNode;
   }
 
   @Override
