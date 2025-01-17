@@ -41,7 +41,7 @@ public class SpikeRiscvImageProvider {
           .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
           .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
           .withBuildArg("SPIKE_TARGET", spikeTarget));
-      images.put(target, image);
+      images.put(target, img);
       return img;
     } else {
       return image;
