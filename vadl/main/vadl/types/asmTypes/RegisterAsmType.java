@@ -1,5 +1,7 @@
 package vadl.types.asmTypes;
 
+import javax.annotation.Nullable;
+
 /**
  * {@code @register} refers to a register in the assembly language.
  * {@code @constant} and {@code @string} can be cast to {@code @register}.
@@ -8,12 +10,21 @@ package vadl.types.asmTypes;
  * @see StringAsmType
  */
 public class RegisterAsmType implements AsmType {
-  private static final RegisterAsmType INSTANCE = new RegisterAsmType();
+  @Nullable
+  private static RegisterAsmType INSTANCE;
 
   private RegisterAsmType() {
   }
 
+  /**
+   * Get the singleton instance of this AsmType.
+   *
+   * @return instance of the AsmType
+   */
   public static AsmType instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new RegisterAsmType();
+    }
     return INSTANCE;
   }
 

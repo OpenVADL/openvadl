@@ -1,5 +1,7 @@
 package vadl.types.asmTypes;
 
+import javax.annotation.Nullable;
+
 /**
  * {@code @operands} represents a set of {@code @operand}.
  * It is used when defining a repetition block containing an operand.
@@ -7,12 +9,21 @@ package vadl.types.asmTypes;
  * @see OperandAsmType
  */
 public class OperandsAsmType implements AsmType {
-  private static final OperandsAsmType INSTANCE = new OperandsAsmType();
+  @Nullable
+  private static OperandsAsmType INSTANCE;
 
   private OperandsAsmType() {
   }
 
+  /**
+   * Get the singleton instance of this AsmType.
+   *
+   * @return instance of the AsmType
+   */
   public static AsmType instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new OperandsAsmType();
+    }
     return INSTANCE;
   }
 

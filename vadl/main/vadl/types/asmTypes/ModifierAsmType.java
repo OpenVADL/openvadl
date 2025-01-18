@@ -1,5 +1,7 @@
 package vadl.types.asmTypes;
 
+import javax.annotation.Nullable;
+
 /**
  * {@code @modifier} refers to a relocation defined
  * in the modifiers section of the assembly description.
@@ -8,12 +10,21 @@ package vadl.types.asmTypes;
  * and an {@code @expression} can be cast to {@code @operand}.</p>
  */
 public class ModifierAsmType implements AsmType {
-  private static final ModifierAsmType INSTANCE = new ModifierAsmType();
+  @Nullable
+  private static ModifierAsmType INSTANCE;
 
   private ModifierAsmType() {
   }
 
+  /**
+   * Get the singleton instance of this AsmType.
+   *
+   * @return instance of the AsmType
+   */
   public static AsmType instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new ModifierAsmType();
+    }
     return INSTANCE;
   }
 

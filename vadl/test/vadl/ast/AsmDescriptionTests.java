@@ -260,6 +260,23 @@ public class AsmDescriptionTests {
   }
 
   @Test
+  void asmDescriptionWithFunctionCallAsFunctionCallArgument() {
+    var prog = """
+          instruction set architecture ISA = {
+            function minusOne (x : SInt<64>) -> SInt<64> = x - 1
+          }
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            grammar = {
+              A : a = minusOne<minusOne<Integer>> ;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
+  }
+
+  @Test
   void asmDescriptionNotAllowedFormatDefinition() {
     var prog = """
           format F : Bits<16> =
@@ -308,5 +325,45 @@ public class AsmDescriptionTests {
           }
         """;
     Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
+  void allSortsOfNestedFunctionCalls() {
+    var prog = """
+          instruction set architecture ISA = {
+            function oneArg (x : SInt<64>) -> SInt<64> = 1
+            function twoArgs (x : SInt<64>,y : SInt<64>) -> SInt<64> = 1
+            function threeArgs (x : SInt<64>,y : SInt<64>, z : SInt<64>) -> SInt<64> = 1
+          }
+        
+          application binary interface ABI for ISA = {}
+        
+          assembly description AD for ABI = {
+            grammar = {
+              A : a = oneArg<Integer>;
+              B : a = oneArg<oneArg<Integer>>;
+              C : a = oneArg<oneArg<oneArg<Integer>>>;
+              D : a = oneArg<oneArg<oneArg<oneArg<Integer>>>>;
+              E : a = oneArg<oneArg<oneArg<oneArg<oneArg<Integer>>>>>;
+              F : a = oneArg<oneArg<oneArg<oneArg<oneArg<oneArg<Integer>>>>>>;
+        
+              G : a = twoArgs<oneArg<oneArg<Integer>>,oneArg<Integer>>;
+              H : a = twoArgs<oneArg<Integer>,Integer>;
+              I : a = twoArgs<oneArg<oneArg<oneArg<Integer>>>,oneArg<Integer>>;
+              J : a = twoArgs<oneArg<oneArg<oneArg<oneArg<oneArg<oneArg<Integer>>>>>>,oneArg<oneArg<oneArg<oneArg<oneArg<oneArg<Integer>>>>>>>;
+        
+              K : a = threeArgs<Integer,Integer,Integer>;
+              L : a = twoArgs<threeArgs<Integer,Integer,Integer>,threeArgs<threeArgs<Integer,Integer,Integer>,Integer,threeArgs<Integer,Integer,Integer>>>;
+              M : a = threeArgs<twoArgs<oneArg<Integer>,Integer>,twoArgs<oneArg<Integer>,Integer>,twoArgs<oneArg<Integer>,Integer>>;
+        
+              N : a = threeArgs<Integer<>,Integer<>,Integer<>>;
+              O : a = threeArgs<oneArg<Integer<>>,Integer<>,Integer<>>;
+              P : a = threeArgs<Integer,Integer,oneArg<Integer<>>>;
+        
+              Q : a = threeArgs<oneArg<oneArg<Integer<>>>,Integer,oneArg<oneArg<Integer<>>>>;
+            }
+          }
+        """;
+    verifyPrettifiedAst(VadlParser.parse(prog));
   }
 }

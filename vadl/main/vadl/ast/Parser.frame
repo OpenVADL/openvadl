@@ -56,8 +56,19 @@ public class Parser {
 		if (errDist >= minErrDist) errors.SemErr(t.line, t.col, msg);
 		errDist = 0;
 	}
+
+	boolean nextLaShouldBeGT = false;
 	
 	void Get () {
+	  if (nextLaShouldBeGT) {
+    	    t = la;
+          la = new Token();
+          la.kind = _SYM_GT;
+          la.pos = t.pos; la.col = t.col; la.line = t.line; la.charPos = t.charPos; la.val = ">"; la.next = null;
+          nextLaShouldBeGT = false;
+    	    return;
+    	  }
+
 		for (;;) {
 			t = la;
 			la = scanner.Scan();

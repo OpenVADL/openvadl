@@ -555,6 +555,9 @@ class SymbolTable {
         if (element.asmLiteral != null) {
           collectSymbols(symbols, element.asmLiteral);
         }
+        if (element.semanticPredicate != null) {
+          collectSymbols(symbols, element.semanticPredicate);
+        }
         if (element.groupAlternatives != null) {
           collectSymbols(symbols, element.groupAlternatives);
         }
@@ -945,6 +948,9 @@ class SymbolTable {
       } else if (definition instanceof AsmGrammarElementDefinition element) {
         if (element.localVar != null) {
           resolveSymbols(element.localVar);
+        }
+        if (element.semanticPredicate != null) {
+          resolveSymbols(element.semanticPredicate);
         }
         if (element.groupAlternatives != null) {
           resolveSymbols(element.groupAlternatives);

@@ -1,17 +1,27 @@
 package vadl.types.asmTypes;
 
+import javax.annotation.Nullable;
+
 /**
  * {@code @operand} represents an operand of an {@code @instruction}.
  * Most types can be cast to an operand. In the LCB, this corresponds to a MCOperand.
  */
 public class OperandAsmType implements AsmType {
-
-  private static final OperandAsmType INSTANCE = new OperandAsmType();
+  @Nullable
+  private static OperandAsmType INSTANCE;
 
   private OperandAsmType() {
   }
 
+  /**
+   * Get the singleton instance of this AsmType.
+   *
+   * @return instance of the AsmType
+   */
   public static AsmType instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new OperandAsmType();
+    }
     return INSTANCE;
   }
 

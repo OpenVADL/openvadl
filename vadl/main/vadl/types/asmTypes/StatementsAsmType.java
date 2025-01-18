@@ -1,16 +1,27 @@
 package vadl.types.asmTypes;
 
+import javax.annotation.Nullable;
+
 /**
  * {@code @statements} represents a set of statements.
  * A statement is any one of all available {@code @instruction}.
  */
 public class StatementsAsmType implements AsmType {
-  private static final StatementsAsmType INSTANCE = new StatementsAsmType();
+  @Nullable
+  private static StatementsAsmType INSTANCE;
 
   private StatementsAsmType() {
   }
 
+  /**
+   * Get the singleton instance of this AsmType.
+   *
+   * @return instance of the AsmType
+   */
   public static AsmType instance() {
+    if (INSTANCE == null) {
+      INSTANCE = new StatementsAsmType();
+    }
     return INSTANCE;
   }
 

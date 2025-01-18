@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
@@ -562,6 +560,8 @@ public class TypeChecker
 
   @Override
   public Void visit(AsmDescriptionDefinition definition) {
+    definition.commonDefinitions.forEach(commonDef -> commonDef.accept(this));
+
     for (var rule : definition.rules) {
       // only visit rules that have not yet been visited,
       // as rules can be invoked by other rules and may already have an AsmType
@@ -569,7 +569,6 @@ public class TypeChecker
         rule.accept(this);
       }
     }
-    definition.commonDefinitions.forEach(commonDef -> commonDef.accept(this));
 
     var ll1Checker = new AsmLL1Checker();
     ll1Checker.verify(definition.rules);
@@ -683,24 +682,26 @@ public class TypeChecker
           "Typechecker found an AsmGrammarAlternative without elements.");
     }
 
-    if (elementsToConsider.size() == 1) {
-      elementsToConsider.get(0).accept(this);
-      return elementsToConsider.get(0).asmType;
-    }
-
     var groupSubtypes = new ArrayList<AsmType>();
     var alreadyAssignedAttributes = new HashMap<String, AsmGrammarElementDefinition>();
 
-    for (var element : elementsToConsider) {
-
-      if (element.asmType == null) {
-        if (element.repetitionAlternatives != null) {
-          attributesAssignedInParent = alreadyAssignedAttributes;
+    for (var element : elements) {
+      if (elementsToConsider.contains(element)) {
+        if (element.asmType == null) {
+          if (element.repetitionAlternatives != null) {
+            attributesAssignedInParent = alreadyAssignedAttributes;
+          }
+          element.accept(this);
         }
+
+        appendToAsmGroupType(element, groupSubtypes, alreadyAssignedAttributes);
+      } else {
         element.accept(this);
       }
+    }
 
-      appendToAsmGroupType(element, groupSubtypes, alreadyAssignedAttributes);
+    if (elementsToConsider.size() == 1) {
+      return elementsToConsider.get(0).asmType;
     }
 
     return new GroupAsmType(groupSubtypes);
@@ -781,10 +782,13 @@ public class TypeChecker
       definition.asmType = definition.repetitionAlternatives.asmType;
     }
 
-    // TODO: expression type checking
-    //if (definition.semanticPredicate != null) {
-    // definition.semanticPredicate.accept(this);
-    //}
+    if (definition.semanticPredicate != null) {
+      definition.semanticPredicate.accept(this);
+      if (definition.semanticPredicate.type != Type.bool()) {
+        throw Diagnostic.error("Semantic predicate expression does not evaluate to Boolean.",
+            definition.semanticPredicate).build();
+      }
+    }
 
     // actions that depend on the resolved asm type of this element
     updateLocalVarIfNecessary(definition);
@@ -906,8 +910,7 @@ public class TypeChecker
     } else if (invocationSymbolOrigin instanceof AsmGrammarLocalVarDefinition localVar) {
       visitAsmLocalVarUsage(definition, localVar);
     } else if (invocationSymbolOrigin instanceof FunctionDefinition function) {
-      // TODO: check input fits to types of arguments
-      // TODO: check return type and infer asm type
+      visitAsmFunctionInvocation(definition, function);
     } else {
       throw Diagnostic.error(("Symbol %s used in grammar rule does not reference a grammar rule "
               + "/ function / local variable.").formatted(definition.id.name), definition)
@@ -932,18 +935,18 @@ public class TypeChecker
     }
   }
 
-  private void visitAsmRuleInvocation(AsmGrammarLiteralDefinition definition,
+  private void visitAsmRuleInvocation(AsmGrammarLiteralDefinition enclosingAsmLiteral,
                                       AsmGrammarRuleDefinition invokedRule) {
     if (invokedRule.asmType == null) {
       invokedRule.accept(this);
     }
 
     if (invokedRule.asmType == null) {
-      throw buildIllegalStateException(definition,
+      throw buildIllegalStateException(enclosingAsmLiteral,
           "Could not resolve AsmType of grammar rule %s.".formatted(invokedRule.identifier().name));
     }
 
-    determineAsmTypeForEnclosingLiteral(definition, invokedRule.asmType);
+    determineAsmTypeForEnclosingLiteral(enclosingAsmLiteral, invokedRule.asmType);
   }
 
   private void visitAsmLocalVarUsage(AsmGrammarLiteralDefinition enclosingAsmLiteral,
@@ -958,6 +961,42 @@ public class TypeChecker
     }
 
     determineAsmTypeForEnclosingLiteral(enclosingAsmLiteral, localVar.asmType);
+  }
+
+  private void visitAsmFunctionInvocation(AsmGrammarLiteralDefinition enclosingAsmLiteral,
+                                          FunctionDefinition function) {
+    if (function.type == null) {
+      function.accept(this);
+    }
+
+    if (enclosingAsmLiteral.parameters.size() != function.params.size()) {
+      throw Diagnostic.error("Arguments Mismatch", enclosingAsmLiteral)
+          .locationDescription(function, "Expected %d arguments.", function.params.size())
+          .locationDescription(enclosingAsmLiteral, "But got %d arguments.",
+              enclosingAsmLiteral.parameters.size())
+          .build();
+    }
+
+    for (int i = 0; i < enclosingAsmLiteral.parameters.size(); i++) {
+      var asmParam = enclosingAsmLiteral.parameters.get(i);
+      asmParam.accept(this);
+      Objects.requireNonNull(asmParam.asmType);
+
+      var argumentType = function.params.get(i).typeLiteral.type;
+      Objects.requireNonNull(argumentType);
+
+      if (!canImplicitCast(asmParam.asmType.toOperationalType(), argumentType)) {
+        throw Diagnostic.error("Type Mismatch in function argument", enclosingAsmLiteral)
+            .locationDescription(function.params.get(i), "Expected %s.", argumentType)
+            .locationDescription(asmParam, "Got %s (from %s).",
+                asmParam.asmType.toOperationalType(), asmParam.asmType)
+            .build();
+      }
+    }
+
+    Objects.requireNonNull(function.retType.type);
+    var returnType = AsmType.getAsmTypeFromOperationalType(function.retType.type);
+    determineAsmTypeForEnclosingLiteral(enclosingAsmLiteral, returnType);
   }
 
   private void determineAsmTypeForEnclosingLiteral(AsmGrammarLiteralDefinition enclosingAsmLiteral,

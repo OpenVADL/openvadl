@@ -326,7 +326,7 @@ public class AsmGrammarTests {
     var prog = """
           grammar = {
             A :
-              [ ?( LaIdEq<1>("C") )
+              [ ?(VADL::equ(1 as Bits<2>, 2 as Bits<2>))
                 Register "C"
               ]
               Register
@@ -342,7 +342,7 @@ public class AsmGrammarTests {
           grammar = {
             A@instruction :
               ImmediateOperand
-              | ( ?(LaIdIn("CA","CB")) STRING | ImmediateOperand | Expression<>@expression)
+              | ( ?(VADL::equ(1 as Bits<2>, 2 as Bits<2>)) STRING | ImmediateOperand | Expression<>@expression)
               | IDENTIFIER<Integer>@operand
             ;
           }
@@ -369,7 +369,7 @@ public class AsmGrammarTests {
           grammar = {
             A :
               B
-              | ( ?(LaIdIn("CA","CB")) "C" | B  {B} | IDENTIFIER<>)
+              | ( ?(VADL::equ(1 as Bits<2>, 2 as Bits<2>)) "C" | B  {B} | IDENTIFIER<>)
               | IDENTIFIER<Integer>
             ;
             B : "B" STRING;
@@ -385,7 +385,7 @@ public class AsmGrammarTests {
             A :
               {
                 "B"
-                | ( ?(LaIdIn("CA","CB")) "C" | B  {B} | IDENTIFIER<>)
+                | ( ?(VADL::equ(1 as Bits<2>, 2 as Bits<2>)) "C" | B  {B} | IDENTIFIER<>)
                 | IDENTIFIER<Integer>
               }
             ;
