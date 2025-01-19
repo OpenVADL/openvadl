@@ -23,6 +23,7 @@ import vadl.ast.ModelRemover;
 import vadl.ast.TypeChecker;
 import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
+import vadl.ast.ViamGenerator;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.ArtifactTracker;
 import vadl.error.DeferredDiagnosticStore;
@@ -182,7 +183,6 @@ public abstract class BaseCommand implements Callable<Integer> {
    *
    * @return the viam specification
    */
-  @Nullable
   private Specification parseToVIAM() {
     var ast = parseToAst();
     dumpExpaned(ast);
@@ -190,9 +190,9 @@ public abstract class BaseCommand implements Callable<Integer> {
     var typeChecker = new TypeChecker();
     typeChecker.verify(ast);
     dumpTyped(ast);
-
-    // FIXME: add lowering and make not nullable;
-    return null;
+    var viamGenerator = new ViamGenerator();
+    var spec = viamGenerator.generate(ast);
+    return spec;
   }
 
   /**
@@ -206,8 +206,6 @@ public abstract class BaseCommand implements Callable<Integer> {
 
   abstract PassOrder passOrder(GeneralConfiguration configuration) throws IOException;
 
-  // FIXME: Remove supression once implemented.
-  @SuppressWarnings("UnusedVariable")
   @Override
   public Integer call() {
     int returnVal = 0;
@@ -216,11 +214,7 @@ public abstract class BaseCommand implements Callable<Integer> {
       var passOrder = passOrder(parseConfig());
       var passManager = new PassManager();
       passManager.add(passOrder);
-
-      // FIXME: Obviously enable that once a VIAM can get generated.
-      //passManager.run(viam);
-      System.out.println("NOTICE: The frontend isn't complete yet and doesn't actually "
-          + "generate any artifacts yet.");
+      passManager.run(viam);
 
     } catch (Diagnostic d) {
       new DiagnosticPrinter().print(d);

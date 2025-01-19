@@ -247,6 +247,7 @@ public class TypeChecker
 
     var bitWidth = bitsType.bitWidth();
     var bitsVerifier = new FormatBitsVerifier(bitWidth);
+    var nextOccupiedBit = bitWidth - 1;
 
     for (var field : definition.fields) {
       if (field instanceof FormatDefinition.TypedFormatField typedField) {
@@ -255,6 +256,9 @@ public class TypeChecker
           throw Diagnostic.error("Bits Type expected", typedField.typeLiteral)
               .build();
         }
+        typedField.range = new FormatDefinition.BitRange(nextOccupiedBit,
+            nextOccupiedBit - (fieldBitsType.bitWidth() - 1));
+        nextOccupiedBit -= fieldBitsType.bitWidth();
         bitsVerifier.addType(fieldBitsType);
 
       } else if (field instanceof FormatDefinition.RangeFormatField rangeField) {
@@ -264,6 +268,7 @@ public class TypeChecker
         }
 
         int fieldBitWidth = 0;
+        rangeField.computedRanges = new ArrayList<>();
         for (var range : rangeField.ranges) {
           range.accept(this);
 
@@ -286,6 +291,7 @@ public class TypeChecker
                 .build();
           }
           fieldBitWidth += rangeSize;
+          rangeField.computedRanges.add(new FormatDefinition.BitRange(from, to));
           bitsVerifier.addRange(from, to);
         }
 
@@ -330,6 +336,8 @@ public class TypeChecker
     for (var def : definition.definitions) {
       def.accept(this);
     }
+
+    // FIXME: Verify at least one programcounter
     return null;
   }
 
@@ -1055,7 +1063,7 @@ public class TypeChecker
 
   @Override
   public Void visit(MicroProcessorDefinition definition) {
-    throwUnimplemented(definition);
+    definition.definitions.forEach(def -> def.accept(this));
     return null;
   }
 

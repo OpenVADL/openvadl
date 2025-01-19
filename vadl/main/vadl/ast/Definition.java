@@ -302,8 +302,11 @@ class FormatDefinition extends Definition implements IdentifiableNode {
   List<AuxiliaryField> auxiliaryFields;
   SourceLocation loc;
 
+  record BitRange(int from, int to) {
+  }
+
   interface FormatField {
-    public Identifier identifier();
+    Identifier identifier();
 
     void prettyPrint(int indent, StringBuilder builder);
   }
@@ -317,6 +320,11 @@ class FormatDefinition extends Definition implements IdentifiableNode {
 
     @Nullable
     Type type;
+
+    // While the ranges are expressions in diffrent forms, once computed they are stored here to
+    // make them easier to process.
+    @Nullable
+    List<BitRange> computedRanges;
 
     public RangeFormatField(Identifier identifier, List<Expr> ranges,
                             @Nullable TypeLiteral typeLiteral) {
@@ -386,6 +394,10 @@ class FormatDefinition extends Definition implements IdentifiableNode {
   static class TypedFormatField extends Node implements FormatField {
     final Identifier identifier;
     final TypeLiteral typeLiteral;
+
+    // The range this field occupies in its parent format.
+    @Nullable
+    BitRange range;
 
     public TypedFormatField(Identifier identifier, TypeLiteral typeLiteral) {
       this.identifier = identifier;
