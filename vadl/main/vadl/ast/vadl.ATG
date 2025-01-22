@@ -244,8 +244,8 @@ IGNORE '\t' + '\r' + '\n'
 PRODUCTIONS
   vadl =
   {
-    topLevelDefinitions<out Definition def> (. addDef(ast.definitions, def); SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def); .)
-    | macroDef<out ModelDefinition def>     (. addDef(ast.definitions, def); SymbolTable.SymbolCollector.collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def); .)
+    topLevelDefinitions<out Definition def> (. addDef(ast.definitions, def); new SymbolTable.SymbolCollector(ParserUtils.baseName(sourceFile)).collectSymbols(ast.rootSymbolTable(), def); .)
+    | macroDef<out ModelDefinition def>     (. addDef(ast.definitions, def); new SymbolTable.SymbolCollector(ParserUtils.baseName(sourceFile)).collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def); .)
   }.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------

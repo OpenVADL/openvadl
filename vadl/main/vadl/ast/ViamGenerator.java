@@ -14,6 +14,7 @@ import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 import vadl.viam.Assembly;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
@@ -28,14 +29,14 @@ import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
-import vadl.viam.graph.Graph;
 
 /**
  * The lowering that converts the AST to the VIAM.
  */
-public class ViamGenerator
-    implements DefinitionVisitor<Optional<vadl.viam.Definition>>, StatementVisitor<Graph>,
-    ExprVisitor<Graph> {
+public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Definition>> {
+
+  @LazyInit
+  private BehaivorGenerator behaivorGenerator;
 
   private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
 
@@ -44,6 +45,10 @@ public class ViamGenerator
 
   @LazyInit
   private vadl.viam.Specification currentSpecification;
+
+  public ViamGenerator() {
+    this.behaivorGenerator = new BehaivorGenerator(this);
+  }
 
   /**
    * Generates a VIAM specification from an AST.
@@ -55,9 +60,9 @@ public class ViamGenerator
    * @throws Diagnostic if something goes wrong.
    */
   public vadl.viam.Specification generate(Ast ast) {
-    // FIXME: Add name to specification.
     var spec = new Specification(
-        new vadl.viam.Identifier("Name not yet in AST", SourceLocation.INVALID_SOURCE_LOCATION));
+        new vadl.viam.Identifier(ParserUtils.baseName(ast.fileUri),
+            SourceLocation.INVALID_SOURCE_LOCATION));
     this.currentSpecification = spec;
 
     spec.addAll(ast.definitions.stream()
@@ -67,8 +72,19 @@ public class ViamGenerator
     return spec;
   }
 
-  private vadl.viam.Identifier generateIdentifier(Identifier identifier) {
-    return new vadl.viam.Identifier(identifier.toString(), SourceLocation.INVALID_SOURCE_LOCATION);
+//  private vadl.viam.Identifier generateIdentifier(Identifier identifier) {
+//    return new vadl.viam.Identifier(identifier.toString(), identifier.location());
+//  }
+
+  /**
+   * Generate a new viam Identifier from an ast Identifier
+   *
+   * @param viamId    often the viam identifier have a different name than the ast (prepended by their "path")
+   * @param locatable the location of the identifier in the ast.
+   * @return the new identifier.
+   */
+  private vadl.viam.Identifier generateIdentifier(String viamId, WithSourceLocation locatable) {
+    return new vadl.viam.Identifier(viamId, locatable.sourceLocation());
   }
 
   /**
@@ -235,7 +251,7 @@ public class ViamGenerator
   @Override
   public Optional<vadl.viam.Definition> visit(FormatDefinition definition) {
     var format =
-        new Format(generateIdentifier(definition.identifier()),
+        new Format(generateIdentifier(definition.viamId, definition.identifier()),
             (BitsType) Objects.requireNonNull(definition.type.type));
 
     var fields = new ArrayList<Format.Field>();
@@ -244,7 +260,8 @@ public class ViamGenerator
 
       if (fieldDefinition instanceof FormatDefinition.TypedFormatField typedField) {
         fields.add(new Format.Field(
-            generateIdentifier(fieldDefinition.identifier()),
+            generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
+                fieldDefinition.identifier()),
             (BitsType) Objects.requireNonNull(typedField.typeLiteral.type),
             new Constant.BitSlice(new Constant.BitSlice.Part[] {
                 new Constant.BitSlice.Part(
@@ -257,7 +274,8 @@ public class ViamGenerator
 
       if (fieldDefinition instanceof FormatDefinition.RangeFormatField rangeField) {
         fields.add(new Format.Field(
-            generateIdentifier(fieldDefinition.identifier()),
+            generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
+                fieldDefinition.identifier()),
             (BitsType) Objects.requireNonNull(rangeField.type),
             new Constant.BitSlice(Objects.requireNonNull(rangeField.computedRanges).stream()
                 .map(r -> new Constant.BitSlice.Part(r.from(), r.to()))
@@ -300,16 +318,19 @@ public class ViamGenerator
   }
 
   private Assembly visitAssembly(AssemblyDefinition definition, String instructionName) {
-    var identifier = generateIdentifier(definition.identifiers.stream()
+    var identifier = generateIdentifier(definition.viamId, definition.identifiers.stream()
         .map(i -> (Identifier) i)
         .filter(i -> i.name.equals(instructionName))
         .findFirst().orElseThrow());
 
-    var behaivor = definition.expr.accept(this);
+
+    var funcIdentifier =
+        new vadl.viam.Identifier(identifier.name() + "::func", identifier.sourceLocation());
+    var behaivor = behaivorGenerator.getGraph(definition.expr, funcIdentifier.name());
 
     return new Assembly(
         identifier,
-        new Function(identifier, new Parameter[0], Type.string(), behaivor)
+        new Function(funcIdentifier, new Parameter[0], Type.string(), behaivor)
     );
   }
 
@@ -318,7 +339,8 @@ public class ViamGenerator
     for (var item : definition.encodings.items) {
       var encodingDef = (EncodingDefinition.EncodingField) item;
 
-      var identifier = generateIdentifier(encodingDef.field);
+      var identifier =
+          generateIdentifier(definition.viamId + "::" + encodingDef.field.name, encodingDef.field);
       var formatField =
           Arrays.stream(((Format) fetch(
                   Objects.requireNonNull(definition.formatNode)).orElseThrow()).fields())
@@ -332,7 +354,7 @@ public class ViamGenerator
 
 
     return new Encoding(
-        generateIdentifier(definition.identifier()),
+        generateIdentifier(definition.viamId, definition.identifier()),
         (Format) fetch(Objects.requireNonNull(definition.formatNode)).orElseThrow(),
         fields.toArray(new Encoding.Field[0])
     );
@@ -340,13 +362,14 @@ public class ViamGenerator
 
   @Override
   public Optional<vadl.viam.Definition> visit(InstructionDefinition definition) {
-    var behaivor = definition.behavior.accept(this);
+    var behaivor = behaivorGenerator.getInstructionGraph(definition);
+
     var assembly = visitAssembly(Objects.requireNonNull(definition.assemblyDefinition),
         definition.identifier().name);
     var encoding = visitEncoding(Objects.requireNonNull(definition.encodingDefinition));
 
     var instruction = new Instruction(
-        generateIdentifier(definition.identifier()),
+        generateIdentifier(definition.viamId, definition.identifier()),
         behaivor,
         assembly,
         encoding
@@ -356,7 +379,7 @@ public class ViamGenerator
 
   @Override
   public Optional<vadl.viam.Definition> visit(InstructionSetDefinition definition) {
-    var identifier = generateIdentifier(definition.identifier());
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
 
     var allDefinitions =
         definition.definitions.stream().map(this::fetch).flatMap(Optional::stream).toList();
@@ -500,7 +523,7 @@ public class ViamGenerator
   public Optional<vadl.viam.Definition> visit(RegisterFileDefinition definition) {
     // FIXME: Add proper constraints
     var regFile = new RegisterFile(
-        generateIdentifier(definition.identifier()),
+        generateIdentifier(definition.viamId, definition.identifier()),
         (DataType) Objects.requireNonNull(definition.type).argTypes().get(0),
         (DataType) Objects.requireNonNull(definition.type).resultType(),
         new RegisterFile.Constraint[0]
@@ -543,251 +566,5 @@ public class ViamGenerator
     // Do nothing on purpose.
     // The typechecker already resolved all types they are no longer needed.
     return Optional.empty();
-  }
-
-  @Override
-  public Graph visit(Identifier expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(BinaryExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(GroupedExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(IntegerLiteral expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(BinaryLiteral expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(BoolLiteral expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(StringLiteral expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(PlaceholderExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(MacroInstanceExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(RangeExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(TypeLiteral expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(IdentifierPath expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(UnaryExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(CallExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(IfExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(LetExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(CastExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(SymbolExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(MacroMatchExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(MatchExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(ExtendIdExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(IdToStrExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(ExistsInExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(ExistsInThenExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(ForallThenExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(ForallExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(SequenceCallExpr expr) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        expr.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(AssignmentStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(BlockStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(CallStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(ForallStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(IfStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(InstructionCallStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(LetStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(LockStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(MacroInstanceStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(MacroMatchStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(MatchStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(PlaceholderStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(RaiseStatement statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
-  }
-
-  @Override
-  public Graph visit(StatementList statement) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        statement.getClass().getSimpleName()));
   }
 }

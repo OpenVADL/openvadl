@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +21,9 @@ import vadl.utils.SourceLocation;
  */
 abstract class Definition extends Node {
   Annotations annotations = new Annotations();
+
+  @LazyInit
+  String viamId;
 
   Definition withAnnotations(Annotations annotations) {
     this.annotations = annotations;
