@@ -21,10 +21,19 @@ import vadl.test.lcb.AbstractLcbTest;
 import vadl.utils.Pair;
 
 public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
-
+  /*
+    We also need all the spike methods because we do not know whether this test
+    is run before the spike test. And therefore, the cached image must have the same vars.
+   */
   protected abstract String getTarget();
 
+  protected abstract String getUpstreamBuildTarget();
+
+  protected abstract String getUpstreamClangTarget();
+
   protected abstract String getSpecPath();
+
+  protected abstract String getSpikeTarget();
 
   private static Stream<String> inputFilesFromCFile() {
     return Arrays.stream(
@@ -38,6 +47,8 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
   @TestFactory
   List<DynamicTest> compileLlvm() throws IOException, DuplicatedPassKeyException {
     var target = getTarget();
+    var upstreamBuildTarget = getUpstreamBuildTarget();
+    var upstreamClangTarget = getUpstreamClangTarget();
     var configuration = new LcbConfiguration(getConfiguration(false),
         new ProcessorName(target));
 
@@ -55,14 +66,9 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
 
     var redisCache = getRunningRedisCache();
 
-    /* These variables are not required for LLVM assembly test. */
-    var upstreamBuildTarget = "";
-    var upstreamClangTarget = "";
-    var spikeTarget = "";
-
     var cachedImage =
         SpikeRiscvImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
-            target, upstreamBuildTarget, upstreamClangTarget, spikeTarget, false);
+            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), false);
 
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {

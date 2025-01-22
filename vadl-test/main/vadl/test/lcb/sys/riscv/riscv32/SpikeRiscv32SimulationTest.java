@@ -1,4 +1,4 @@
-package vadl.test.lcb.sys.riscv.riscv64;
+package vadl.test.lcb.sys.riscv.riscv32;
 
 import vadl.test.lcb.sys.riscv.SpikeRiscvSimulationTest;
 

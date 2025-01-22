@@ -13,4 +13,19 @@ public class LlvmRiscv64AssemblyTest extends LlvmRiscvAssemblyTest {
   protected String getSpecPath() {
     return "sys/risc-v/rv64im.vadl";
   }
+
+  @Override
+  protected String getUpstreamBuildTarget() {
+    return "RISCV";
+  }
+
+  @Override
+  protected String getUpstreamClangTarget() {
+    return "riscv64";
+  }
+
+  @Override
+  protected String getSpikeTarget() {
+    return "rv64im";
+  }
 }
