@@ -83,7 +83,7 @@ public abstract class LlvmRiscvFileCheckTest extends AbstractLcbTest {
             target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), false);
 
     return inputFilesFromCFile(target, optLevel).map(
-        input -> DynamicTest.dynamicTest(input + " O" + target, () -> {
+        input -> DynamicTest.dynamicTest(input + " O" + optLevel, () -> {
           var name = Paths.get(input).getFileName().toString();
 
           runContainerAndCopyInputIntoContainer(cachedImage,

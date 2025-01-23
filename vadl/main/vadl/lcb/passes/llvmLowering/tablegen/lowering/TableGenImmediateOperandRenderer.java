@@ -15,7 +15,7 @@ public final class TableGenImmediateOperandRenderer {
     var rawType = operand.rawType();
     int highestPossibleValue =
         (int) (rawType.isSigned()
-            ? Math.pow(2, (double) operand.formatFieldBitSize() - 1) - 1
+            ? Math.pow(2, (double) operand.formatFieldBitSize() - 1)
             : Math.pow(2, operand.formatFieldBitSize())) - 1;
     int lowestPossibleValue =
         rawType.isSigned()
