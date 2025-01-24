@@ -69,7 +69,7 @@ void [(${namespace})]DAGToDAGISel::Select(SDNode *Node)
 
 static SDNode *selectImm(SelectionDAG *CurDAG, const SDLoc &DL, int64_t Imm,
                          MVT XLenVT, const [(${namespace})]Subtarget &Subtarget) {
-  auto Seq = [(${namespace})]MatInt::generateInstSeq(Imm, Subtarget);
+  auto Seq = [(${namespace})]MatInt::generateInstSeq(Imm);
 
   SDNode *Result;
   SDValue SrcReg = CurDAG->getRegister([(${namespace})]::X0, XLenVT);
