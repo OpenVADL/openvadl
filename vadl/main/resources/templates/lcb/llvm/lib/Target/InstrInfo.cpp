@@ -1,6 +1,7 @@
 #include "[(${namespace})]InstrInfo.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "[(${namespace})]RegisterInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -126,6 +127,13 @@ void [(${namespace})]InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, Mach
         DL = MBBI->getDebugLoc();
     }
 
+    MachineFunction *MF = MBB.getParent();
+    MachineFrameInfo &MFI = MF->getFrameInfo();
+
+    MachineMemOperand *MMO = MF->getMachineMemOperand(
+    MachinePointerInfo::getFixedStack(*MF, FrameIndex), MachineMemOperand::MOStore,
+    MFI.getObjectSize(FrameIndex), MFI.getObjectAlign(FrameIndex));
+
     [# th:each="r : ${storeStackSlotInstructions}" ]
       if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
       {
@@ -133,6 +141,7 @@ void [(${namespace})]InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, Mach
               .addFrameIndex( FrameIndex )
               .addReg( SrcReg, getKillRegState( IsKill ) )
               .addImm( 0 )
+              .addMemOperand(MMO)
               ;
 
           return; // success
@@ -154,6 +163,13 @@ void [(${namespace})]InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, Mac
         DL = MBBI->getDebugLoc();
     }
 
+      MachineFunction *MF = MBB.getParent();
+      MachineFrameInfo &MFI = MF->getFrameInfo();
+
+      MachineMemOperand *MMO = MF->getMachineMemOperand(
+      MachinePointerInfo::getFixedStack(*MF, FrameIndex), MachineMemOperand::MOStore,
+      MFI.getObjectSize(FrameIndex), MFI.getObjectAlign(FrameIndex));
+
     [# th:each="r : ${loadStackSlotInstructions}" ]
     if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
     {
@@ -161,6 +177,7 @@ void [(${namespace})]InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, Mac
           .addReg( DestReg, RegState::Define )
           .addFrameIndex( FrameIndex )
           .addImm( 0 )
+          .addMemOperand(MMO)
           ;
 
         return; // success
