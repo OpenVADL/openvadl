@@ -196,13 +196,15 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
         return false; // success
     }
 
-    auto Seq = rv32imMatInt::generateInstSeq(Val);
-    Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::XRegClass);
+    auto Seq = [(${namespace})]MatInt::generateInstSeq(Val);
+    Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::[(${additionRegisterFile.identifier.simpleName()})]RegClass);
 
     if(Seq.size() == 1) {
-      BuildMI(MBB, MBBI, DL, get([(${namespace})]::ADDI))
+      // If the sequence contains only instruction then it is ADDI.
+      // In that case, we need to reset the scratch register.
+      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImm.identifier.simpleName()})]))
         .addReg(ScratchReg, RegState::Define)
-        .addReg([(${namespace})]::X0)
+        .addReg([(${namespace})]::[(${additionRegisterFile.identifier.simpleName()})][(${zeroRegisterIndex})])
         .addImm(0)
         .setMIFlag(Flag);
     }
@@ -212,13 +214,14 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
 
       if(desc.getNumOperands() == 2) {
         // LUI
+        // Then we need to set ScratchRegister as RegState::Define
         BuildMI(MBB, MBBI, DL, get(Inst.getOpcode()))
           .addReg(ScratchReg, RegState::Define)
           .addImm(Inst.getImm())
           .setMIFlag(Flag);
       }
       else if(desc.getNumOperands() == 3) {
-        // ADDI or SLLI
+        // ADDI or SLLI do not redefine the value in the ScratchRegister.
         BuildMI(MBB, MBBI, DL, get(Inst.getOpcode()), ScratchReg)
           .addReg(ScratchReg)
           .addImm(Inst.getImm())
@@ -226,7 +229,8 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
       }
     }
 
-    BuildMI(MBB, MBBI, DL, get([(${namespace})]::ADD), DestReg)
+    // Finally, add ScratchRegister to DestReg.
+    BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${addition.identifier.simpleName()})]), DestReg)
       .addReg(SrcReg, RegState::Kill)
       .addReg(ScratchReg, RegState::Kill)
       .setMIFlag(Flag);
