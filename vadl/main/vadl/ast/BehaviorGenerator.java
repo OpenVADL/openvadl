@@ -3,6 +3,11 @@ package vadl.ast;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.types.BuiltInTable;
+import vadl.types.DataType;
+import vadl.types.Type;
+import vadl.viam.Constant;
+import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
@@ -12,8 +17,12 @@ import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
 
 record ControlBlock(ControlNode firstNode, DirectionalNode lastNode) {
 }
@@ -153,10 +162,13 @@ class SubgraphContext {
   }
 }
 
-class BehaivorGenerator implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
+class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
   private final ViamGenerator viamGenerator;
 
-  BehaivorGenerator(ViamGenerator generator) {
+  @Nullable
+  private Graph currentGraph;
+
+  BehaviorGenerator(ViamGenerator generator) {
     this.viamGenerator = generator;
   }
 
@@ -165,7 +177,7 @@ class BehaivorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
 
     // FIXME: Should we set the parent here too?
     var graph = new Graph(name);
-    ControlNode endNode = graph.add(new ReturnNode(exprNode));
+    ControlNode endNode = graph.addWithInputs(new ReturnNode(exprNode));
     graph.add(new StartNode(endNode));
 
     return graph;
@@ -174,6 +186,7 @@ class BehaivorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
   Graph getInstructionGraph(InstructionDefinition definition) {
     // FIXME: there should be a link to the generated definition but it's not ready yet so we cannot fetch it.
     var graph = new Graph("%s Behavior".formatted(definition.identifier().name));
+    currentGraph = graph;
 
     var stmtCtx = definition.behavior.accept(this);
     var sideEffects = stmtCtx.sideEffects();
@@ -193,6 +206,28 @@ class BehaivorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
 
   @Override
   public ExpressionNode visit(Identifier expr) {
+
+    var computedTarget = Objects.requireNonNull(expr.symbolTable).resolveNode(expr.name);
+
+    // Format field
+    if (computedTarget instanceof FormatDefinition.TypedFormatField typedFormatField) {
+      return new FieldRefNode(
+          viamGenerator.fetch(typedFormatField).orElseThrow(),
+          (DataType) Objects.requireNonNull(expr.type));
+    }
+
+    // Builtin Call
+    var matchingBuiltins = BuiltInTable.builtIns()
+        .filter(b -> b.signature().argTypeClasses().isEmpty())
+        .filter(b -> b.name().toLowerCase().equals(expr.name))
+        .toList();
+
+    if (matchingBuiltins.size() == 1) {
+      var builtin = matchingBuiltins.get(0);
+      return new BuiltInCall(builtin, new NodeList<ExpressionNode>(),
+          Objects.requireNonNull(expr.type));
+    }
+
     throw new RuntimeException(
         "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
@@ -205,8 +240,28 @@ class BehaivorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
 
   @Override
   public ExpressionNode visit(GroupedExpr expr) {
-    throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    // Arithmetic grouping
+    if (expr.expressions.size() == 1) {
+      return expr.expressions.get(0).accept(this);
+    }
+
+    // String concatination
+    // This code looks so complicated because the concat function can only concat two arguments.
+    // So the first two are directly concatinaed and all others are depend on the previous concat
+    // node.
+    var call = new BuiltInCall(BuiltInTable.CONCATENATE_STRINGS,
+        new NodeList<ExpressionNode>(expr.expressions.get(0).accept(this),
+            expr.expressions.get(1).accept(this)),
+        Type.string());
+
+    for (int i = 2; i < expr.expressions.size(); i++) {
+      call = new BuiltInCall(BuiltInTable.CONCATENATE_STRINGS,
+          new NodeList<ExpressionNode>(call,
+              expr.expressions.get(i).accept(this)),
+          Type.string());
+    }
+
+    return call;
   }
 
   @Override
@@ -229,8 +284,9 @@ class BehaivorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
 
   @Override
   public ExpressionNode visit(StringLiteral expr) {
-    throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    return new ConstantNode(
+        //Constant.Value.of(expr.value, (DataType) Objects.requireNonNull(expr.type)));
+        new Constant.Str(expr.value));
   }
 
   @Override
@@ -271,8 +327,14 @@ class BehaivorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
 
   @Override
   public ExpressionNode visit(CallExpr expr) {
-    throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    var args = expr.flatArgs().stream().map(a -> a.accept(this)).toList();
+
+    if (expr.computedBuiltIn != null) {
+      return new BuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
+          Objects.requireNonNull(expr.type));
+    }
+
+    throw new IllegalStateException("cannot handle many calls yet");
   }
 
   @Override
@@ -289,8 +351,15 @@ class BehaivorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
 
   @Override
   public ExpressionNode visit(CastExpr expr) {
-    throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    // Shortcut for constant types
+    if (expr.value.type instanceof ConstantType constType) {
+      return new ConstantNode(
+          Constant.Value.of(constType.getValue().longValueExact(),
+              (DataType) Objects.requireNonNull(expr.type)));
+    }
+
+    throw new IllegalArgumentException(
+        "The behaivor generator doesn't implement real casting yet.");
   }
 
   @Override
@@ -355,8 +424,27 @@ class BehaivorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
 
   @Override
   public SubgraphContext visit(AssignmentStatement statement) {
-    throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var rightExpr = statement.valueExpression.accept(this);
+
+    if (statement.target instanceof CallExpr callTarget) {
+      if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
+        var regFile = viamGenerator.fetch(regFileTarget).orElseThrow();
+        var address = callTarget.flatArgs().get(0).accept(this);
+        var read = new WriteRegFileNode(
+            (RegisterFile) regFile,
+            address,
+            rightExpr,
+            null,
+            null);
+        Objects.requireNonNull(currentGraph).addWithInputs(read);
+        return SubgraphContext.of(read, read);
+      }
+
+    } else if (statement.target instanceof Identifier identifierExpr) {
+      throw new IllegalStateException("Identifier target not yet implemented" + statement.target);
+    }
+
+    throw new IllegalStateException("unknown target expression: " + statement.target);
   }
 
   @Override

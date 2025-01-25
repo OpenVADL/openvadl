@@ -603,25 +603,23 @@ class FormatDefinition extends Definition implements IdentifiableNode {
     this.loc = location;
   }
 
+  FormatField getField(String name) {
+    return fields.stream().filter(f -> f.identifier().name.equals(name)).findFirst().orElseThrow();
+  }
+
   @Nullable
   Type getFieldType(String name) {
-    for (var entry : fields) {
-      if (!entry.identifier().name.equals(name)) {
-        continue;
-      }
+    var field = getField(name);
 
-      if (entry instanceof TypedFormatField typedField) {
-        return typedField.typeLiteral.type;
-      } else if (entry instanceof RangeFormatField rangeField) {
-        return rangeField.type;
-      } else if (entry instanceof DerivedFormatField derivedField) {
-        return derivedField.expr.type;
-      } else {
-        throw new IllegalStateException("Unknown field type: " + entry.getClass().getSimpleName());
-      }
+    if (field instanceof TypedFormatField typedField) {
+      return typedField.typeLiteral.type;
+    } else if (field instanceof RangeFormatField rangeField) {
+      return rangeField.type;
+    } else if (field instanceof DerivedFormatField derivedField) {
+      return derivedField.expr.type;
+    } else {
+      throw new IllegalStateException("Unknown field type: " + field.getClass().getSimpleName());
     }
-
-    throw new IllegalStateException("Field not found %s".formatted(name));
   }
 
   @Override

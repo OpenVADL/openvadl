@@ -2,11 +2,11 @@ package vadl.ast;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Queue;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.types.asmTypes.AsmType;
@@ -291,18 +291,17 @@ class SymbolTable {
    * @see ResolutionPass
    */
   static class SymbolCollector {
-    Queue<String> vaimPath;
+    Deque<String> vaimPath;
 
     public SymbolCollector(String fileName) {
       this.vaimPath = new ArrayDeque<>();
-      this.vaimPath.add(fileName.toUpperCase());
     }
 
     void collectSymbols(SymbolTable symbols, Definition definition) {
       if (definition instanceof IdentifiableNode idNode) {
-        vaimPath.add(idNode.identifier().name);
+        vaimPath.offerLast(idNode.identifier().name);
       } else {
-        vaimPath.add("unknown");
+        vaimPath.offerLast("unknown");
       }
       definition.viamId = String.join("::", vaimPath);
 
@@ -600,7 +599,7 @@ class SymbolTable {
         }
       }
 
-      vaimPath.remove();
+      vaimPath.pollLast();
     }
 
     void collectSymbols(SymbolTable symbols, Statement stmt) {

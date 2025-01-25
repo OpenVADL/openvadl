@@ -3,7 +3,6 @@ package vadl.ast;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
@@ -36,18 +35,20 @@ import vadl.viam.Specification;
 public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Definition>> {
 
   @LazyInit
-  private BehaivorGenerator behaivorGenerator;
+  private BehaviorGenerator behaviorGenerator;
 
   private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
 
   final private IdentityHashMap<Definition, Optional<vadl.viam.Definition>> definitionCache =
       new IdentityHashMap<>();
+  final private IdentityHashMap<FormatDefinition.FormatField, Format.Field>
+      formatFieldCache = new IdentityHashMap<>();
 
   @LazyInit
   private vadl.viam.Specification currentSpecification;
 
   public ViamGenerator() {
-    this.behaivorGenerator = new BehaivorGenerator(this);
+    this.behaviorGenerator = new BehaviorGenerator(this);
   }
 
   /**
@@ -72,6 +73,35 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
     return spec;
   }
 
+  /**
+   * Fetch from the cache the viam node or evaluate it.
+   *
+   * @param definition for which we want to find the corresponding viam node.
+   * @return the viam node.
+   */
+  Optional<vadl.viam.Definition> fetch(Definition definition) {
+    if (definitionCache.containsKey(definition)) {
+      return definitionCache.get(definition);
+    }
+
+    var result = definition.accept(this);
+    definitionCache.put(definition, result);
+    return result;
+  }
+
+  /**
+   * Fetch from the cache the format field node or evaluate it.
+   *
+   * @param field for which we want to find the corresponding viam node.
+   * @return the viam node.
+   */
+  Optional<vadl.viam.Format.Field> fetch(FormatDefinition.FormatField field) {
+
+    // FIXME: Try to evaluate the format if it hasn't been seen before.
+    return Optional.ofNullable(formatFieldCache.get(field));
+  }
+
+
 //  private vadl.viam.Identifier generateIdentifier(Identifier identifier) {
 //    return new vadl.viam.Identifier(identifier.toString(), identifier.location());
 //  }
@@ -87,21 +117,6 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
     return new vadl.viam.Identifier(viamId, locatable.sourceLocation());
   }
 
-  /**
-   * Fetch from the cache the viam node or evaluate it.
-   *
-   * @param definition for which we want to find the corresponding viam node.
-   * @return the viam node.
-   */
-  private Optional<vadl.viam.Definition> fetch(Definition definition) {
-    if (definitionCache.containsKey(definition)) {
-      return definitionCache.get(definition);
-    }
-
-    var result = definition.accept(this);
-    definitionCache.put(definition, result);
-    return result;
-  }
 
   /**
    * A simple helper util that returns a copy of the list casted to the class provided.
@@ -259,7 +274,7 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
     for (var fieldDefinition : definition.fields) {
 
       if (fieldDefinition instanceof FormatDefinition.TypedFormatField typedField) {
-        fields.add(new Format.Field(
+        var field = new Format.Field(
             generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
                 fieldDefinition.identifier()),
             (BitsType) Objects.requireNonNull(typedField.typeLiteral.type),
@@ -268,12 +283,14 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
                     Objects.requireNonNull(typedField.range).from(),
                     Objects.requireNonNull(typedField.range).to())}),
             format
-        ));
+        );
+        formatFieldCache.put(typedField, field);
+        fields.add(field);
         continue;
       }
 
       if (fieldDefinition instanceof FormatDefinition.RangeFormatField rangeField) {
-        fields.add(new Format.Field(
+        var field = new Format.Field(
             generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
                 fieldDefinition.identifier()),
             (BitsType) Objects.requireNonNull(rangeField.type),
@@ -281,7 +298,9 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
                 .map(r -> new Constant.BitSlice.Part(r.from(), r.to()))
                 .toArray(Constant.BitSlice.Part[]::new)),
             format
-        ));
+        );
+        fields.add(field);
+        formatFieldCache.put(rangeField, field);
         continue;
       }
 
@@ -317,34 +336,38 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
         definition.getClass().getSimpleName()));
   }
 
-  private Assembly visitAssembly(AssemblyDefinition definition, String instructionName) {
-    var identifier = generateIdentifier(definition.viamId, definition.identifiers.stream()
+  private Assembly visitAssembly(AssemblyDefinition definition,
+                                 InstructionDefinition instructionDefinition) {
+
+    var identifierLoc = definition.identifiers.stream()
         .map(i -> (Identifier) i)
-        .filter(i -> i.name.equals(instructionName))
-        .findFirst().orElseThrow());
-
-
+        .filter(i -> i.name.equals(instructionDefinition.identifier().name))
+        .findFirst().orElseThrow().location();
+    var identifierName = instructionDefinition.viamId + "::assembly";
     var funcIdentifier =
-        new vadl.viam.Identifier(identifier.name() + "::func", identifier.sourceLocation());
-    var behaivor = behaivorGenerator.getGraph(definition.expr, funcIdentifier.name());
+        new vadl.viam.Identifier(identifierName + "::func", identifierLoc);
+
+    var behaivor = behaviorGenerator.getGraph(definition.expr, funcIdentifier.name());
+
+    // FIXME: Add to cache? But how, because one assemby ast node might be used for multiple
+    // assembly in the VIAM.
 
     return new Assembly(
-        identifier,
+        new vadl.viam.Identifier(identifierName, identifierLoc),
         new Function(funcIdentifier, new Parameter[0], Type.string(), behaivor)
     );
   }
 
-  private Encoding visitEncoding(EncodingDefinition definition) {
+  private Encoding visitEncoding(EncodingDefinition definition,
+                                 InstructionDefinition instructionDefinition) {
     var fields = new ArrayList<Encoding.Field>();
     for (var item : definition.encodings.items) {
       var encodingDef = (EncodingDefinition.EncodingField) item;
-
+      var formatField = fetch(Objects.requireNonNull(definition.formatNode)
+          .getField(encodingDef.field.name)).orElseThrow();
       var identifier =
-          generateIdentifier(definition.viamId + "::" + encodingDef.field.name, encodingDef.field);
-      var formatField =
-          Arrays.stream(((Format) fetch(
-                  Objects.requireNonNull(definition.formatNode)).orElseThrow()).fields())
-              .filter(f -> f.identifier.name().equals(identifier.name())).findFirst().orElseThrow();
+          generateIdentifier(definition.viamId + "::encoding::" + encodingDef.field.name,
+              encodingDef.field);
 
       // FIXME: Maybe cache it in the AST after typechecking?
       var evaluated = constantEvaluator.eval(encodingDef.value);
@@ -352,9 +375,10 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
       fields.add(field);
     }
 
+    // FIXME: Add to cache?
 
     return new Encoding(
-        generateIdentifier(definition.viamId, definition.identifier()),
+        generateIdentifier(instructionDefinition.viamId + "::encoding", definition.identifier()),
         (Format) fetch(Objects.requireNonNull(definition.formatNode)).orElseThrow(),
         fields.toArray(new Encoding.Field[0])
     );
@@ -362,11 +386,12 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
 
   @Override
   public Optional<vadl.viam.Definition> visit(InstructionDefinition definition) {
-    var behaivor = behaivorGenerator.getInstructionGraph(definition);
+    var behaivor = behaviorGenerator.getInstructionGraph(definition);
 
     var assembly = visitAssembly(Objects.requireNonNull(definition.assemblyDefinition),
-        definition.identifier().name);
-    var encoding = visitEncoding(Objects.requireNonNull(definition.encodingDefinition));
+        definition);
+    var encoding =
+        visitEncoding(Objects.requireNonNull(definition.encodingDefinition), definition);
 
     var instruction = new Instruction(
         generateIdentifier(definition.viamId, definition.identifier()),

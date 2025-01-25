@@ -1699,10 +1699,6 @@ public class TypeChecker
     }
 
     // Handle register
-    if (!(expr.target instanceof Identifier)) {
-      System.out.println();
-    }
-
     var registerFile =
         Objects.requireNonNull(expr.symbolTable)
             .findAs(expr.target.path().pathToString(), RegisterFileDefinition.class);
@@ -1734,6 +1730,7 @@ public class TypeChecker
       }
 
       expr.type = Objects.requireNonNull(registerFile.type).resultType();
+      expr.computedTarget = registerFile;
       return null;
     }
 
@@ -1741,6 +1738,7 @@ public class TypeChecker
     var memDef = Objects.requireNonNull(expr.symbolTable)
         .findAs(expr.target.path().pathToString(), MemoryDefinition.class);
     if (memDef != null) {
+
       if (expr.argsIndices.size() != 1 || expr.argsIndices.get(0).size() != 1) {
         throw Diagnostic.error("Invalid Memory Usage", expr)
             .description("Memory access must have exactly one argument.")
@@ -1779,6 +1777,7 @@ public class TypeChecker
         callType = callBitsType.scaleBy(multiplier);
       }
 
+      expr.computedTarget = memDef;
       expr.type = callType;
       return null;
     }
@@ -1791,6 +1790,7 @@ public class TypeChecker
         counterDef.accept(this);
       }
       var counterType = counterDef.typeLiteral.type;
+      expr.computedTarget = counterDef;
       expr.type = counterType;
 
       if (!expr.argsIndices.isEmpty()) {
@@ -1856,6 +1856,7 @@ public class TypeChecker
         }
       }
 
+      expr.computedTarget = functionDef;
       expr.type = funcType.resultType();
       return null;
     }
@@ -1872,6 +1873,8 @@ public class TypeChecker
             .build();
       }
 
+      // Note: cannot set the computed type because builtins aren't a definition.
+      expr.computedBuiltIn = builtin;
       expr.type = builtin.returns(argTypes);
       return null;
     }
