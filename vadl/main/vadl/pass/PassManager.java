@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.dump.HtmlDumpPass;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Specification;
 
@@ -101,6 +103,7 @@ public class PassManager {
    * Run all the passes in the order which they have been added when the
    * {@link java.util.function.Predicate} matches.
    */
+  // TODO: Remove or rework predicate argument
   private void run(Specification viam, Predicate<PassKey> predicate) throws IOException {
     var affectedSteps = new ArrayList<PassStep>();
 
@@ -120,7 +123,7 @@ public class PassManager {
       // Wrapping the passResults into an unmodifiable map so a pass cannot modify
       // the results.
       var pass = step.pass();
-      var passResult = pass.execute(passResults, viam);
+      var passResult = execPass(pass, viam);
       pass.verification(viam, passResult);
 
       // we always store the pass result, even if the result is `null`
@@ -133,10 +136,30 @@ public class PassManager {
     }
   }
 
+
+  // executes the pass and dumps the VIAM if an exception occurs.
+  private @Nullable Object execPass(Pass pass, Specification viam) throws IOException {
+    try {
+      return pass.execute(passResults, viam);
+    } catch (Exception e) {
+      var config = pipeline.get(0).pass().configuration();
+      var passClassName = pass.getClass().getSimpleName();
+      // on an exception, we do an emergency dump
+      var htmlDumpPass = new HtmlDumpPass(HtmlDumpPass.Config
+          .from(config, "Exception During " + passClassName,
+              "This is a dump after exception occurred during the %s pass."
+                  .formatted(passClassName)));
+      htmlDumpPass.execute(passResults, viam);
+      throw e;
+    }
+  }
+
   /**
    * Run all the passes in the order which they have been added until the {@link Pass}
    * with the given {@code passKey} (inclusive).
    */
+  // TODO: Remove
+  @Deprecated
   public void runUntilInclusive(Specification spec, PassKey passKey) throws IOException {
     run(spec, passKey::equals);
   }
