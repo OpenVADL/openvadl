@@ -1,5 +1,6 @@
 package vadl.ast;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +21,9 @@ import vadl.utils.SourceLocation;
  */
 abstract class Definition extends Node {
   Annotations annotations = new Annotations();
+
+  @LazyInit
+  String viamId;
 
   Definition withAnnotations(Annotations annotations) {
     this.annotations = annotations;
@@ -302,8 +306,11 @@ class FormatDefinition extends Definition implements IdentifiableNode {
   List<AuxiliaryField> auxiliaryFields;
   SourceLocation loc;
 
+  record BitRange(int from, int to) {
+  }
+
   interface FormatField {
-    public Identifier identifier();
+    Identifier identifier();
 
     void prettyPrint(int indent, StringBuilder builder);
   }
@@ -317,6 +324,11 @@ class FormatDefinition extends Definition implements IdentifiableNode {
 
     @Nullable
     Type type;
+
+    // While the ranges are expressions in diffrent forms, once computed they are stored here to
+    // make them easier to process.
+    @Nullable
+    List<BitRange> computedRanges;
 
     public RangeFormatField(Identifier identifier, List<Expr> ranges,
                             @Nullable TypeLiteral typeLiteral) {
@@ -386,6 +398,10 @@ class FormatDefinition extends Definition implements IdentifiableNode {
   static class TypedFormatField extends Node implements FormatField {
     final Identifier identifier;
     final TypeLiteral typeLiteral;
+
+    // The range this field occupies in its parent format.
+    @Nullable
+    BitRange range;
 
     public TypedFormatField(Identifier identifier, TypeLiteral typeLiteral) {
       this.identifier = identifier;
@@ -587,25 +603,23 @@ class FormatDefinition extends Definition implements IdentifiableNode {
     this.loc = location;
   }
 
+  FormatField getField(String name) {
+    return fields.stream().filter(f -> f.identifier().name.equals(name)).findFirst().orElseThrow();
+  }
+
   @Nullable
   Type getFieldType(String name) {
-    for (var entry : fields) {
-      if (!entry.identifier().name.equals(name)) {
-        continue;
-      }
+    var field = getField(name);
 
-      if (entry instanceof TypedFormatField typedField) {
-        return typedField.typeLiteral.type;
-      } else if (entry instanceof RangeFormatField rangeField) {
-        return rangeField.type;
-      } else if (entry instanceof DerivedFormatField derivedField) {
-        return derivedField.expr.type;
-      } else {
-        throw new IllegalStateException("Unknown field type: " + entry.getClass().getSimpleName());
-      }
+    if (field instanceof TypedFormatField typedField) {
+      return typedField.typeLiteral.type;
+    } else if (field instanceof RangeFormatField rangeField) {
+      return rangeField.type;
+    } else if (field instanceof DerivedFormatField derivedField) {
+      return derivedField.expr.type;
+    } else {
+      throw new IllegalStateException("Unknown field type: " + field.getClass().getSimpleName());
     }
-
-    throw new IllegalStateException("Field not found %s".formatted(name));
   }
 
   @Override

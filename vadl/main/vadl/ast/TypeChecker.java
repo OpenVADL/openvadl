@@ -247,6 +247,7 @@ public class TypeChecker
 
     var bitWidth = bitsType.bitWidth();
     var bitsVerifier = new FormatBitsVerifier(bitWidth);
+    var nextOccupiedBit = bitWidth - 1;
 
     for (var field : definition.fields) {
       if (field instanceof FormatDefinition.TypedFormatField typedField) {
@@ -255,6 +256,9 @@ public class TypeChecker
           throw Diagnostic.error("Bits Type expected", typedField.typeLiteral)
               .build();
         }
+        typedField.range = new FormatDefinition.BitRange(nextOccupiedBit,
+            nextOccupiedBit - (fieldBitsType.bitWidth() - 1));
+        nextOccupiedBit -= fieldBitsType.bitWidth();
         bitsVerifier.addType(fieldBitsType);
 
       } else if (field instanceof FormatDefinition.RangeFormatField rangeField) {
@@ -264,6 +268,7 @@ public class TypeChecker
         }
 
         int fieldBitWidth = 0;
+        rangeField.computedRanges = new ArrayList<>();
         for (var range : rangeField.ranges) {
           range.accept(this);
 
@@ -286,6 +291,7 @@ public class TypeChecker
                 .build();
           }
           fieldBitWidth += rangeSize;
+          rangeField.computedRanges.add(new FormatDefinition.BitRange(from, to));
           bitsVerifier.addRange(from, to);
         }
 
@@ -330,6 +336,8 @@ public class TypeChecker
     for (var def : definition.definitions) {
       def.accept(this);
     }
+
+    // FIXME: Verify at least one programcounter
     return null;
   }
 
@@ -1055,7 +1063,7 @@ public class TypeChecker
 
   @Override
   public Void visit(MicroProcessorDefinition definition) {
-    throwUnimplemented(definition);
+    definition.definitions.forEach(def -> def.accept(this));
     return null;
   }
 
@@ -1691,10 +1699,6 @@ public class TypeChecker
     }
 
     // Handle register
-    if (!(expr.target instanceof Identifier)) {
-      System.out.println();
-    }
-
     var registerFile =
         Objects.requireNonNull(expr.symbolTable)
             .findAs(expr.target.path().pathToString(), RegisterFileDefinition.class);
@@ -1726,6 +1730,7 @@ public class TypeChecker
       }
 
       expr.type = Objects.requireNonNull(registerFile.type).resultType();
+      expr.computedTarget = registerFile;
       return null;
     }
 
@@ -1733,6 +1738,7 @@ public class TypeChecker
     var memDef = Objects.requireNonNull(expr.symbolTable)
         .findAs(expr.target.path().pathToString(), MemoryDefinition.class);
     if (memDef != null) {
+
       if (expr.argsIndices.size() != 1 || expr.argsIndices.get(0).size() != 1) {
         throw Diagnostic.error("Invalid Memory Usage", expr)
             .description("Memory access must have exactly one argument.")
@@ -1771,6 +1777,7 @@ public class TypeChecker
         callType = callBitsType.scaleBy(multiplier);
       }
 
+      expr.computedTarget = memDef;
       expr.type = callType;
       return null;
     }
@@ -1783,6 +1790,7 @@ public class TypeChecker
         counterDef.accept(this);
       }
       var counterType = counterDef.typeLiteral.type;
+      expr.computedTarget = counterDef;
       expr.type = counterType;
 
       if (!expr.argsIndices.isEmpty()) {
@@ -1848,6 +1856,7 @@ public class TypeChecker
         }
       }
 
+      expr.computedTarget = functionDef;
       expr.type = funcType.resultType();
       return null;
     }
@@ -1864,6 +1873,8 @@ public class TypeChecker
             .build();
       }
 
+      // Note: cannot set the computed type because builtins aren't a definition.
+      expr.computedBuiltIn = builtin;
       expr.type = builtin.returns(argTypes);
       return null;
     }

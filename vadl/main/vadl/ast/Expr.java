@@ -7,6 +7,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
+import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -1421,6 +1422,19 @@ final class SymbolExpr extends Expr implements IsSymExpr {
  */
 final class CallExpr extends Expr implements IsCallExpr {
   IsSymExpr target;
+
+  /**
+   * The resolved target definition being called.
+   * This can only be set in the typechecker and DOES NOT WORK FOR BUILTIN DEFINITIONS.
+   */
+  @Nullable
+  Definition computedTarget;
+
+  /**
+   * If the call points to a builtin this field is set instead of computedTarget.
+   */
+  @Nullable
+  BuiltInTable.BuiltIn computedBuiltIn;
 
   /**
    * A list of function arguments or register/memory indices.

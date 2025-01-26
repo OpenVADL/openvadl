@@ -1,6 +1,8 @@
 package vadl.ast;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -289,7 +291,20 @@ class SymbolTable {
    * @see ResolutionPass
    */
   static class SymbolCollector {
-    static void collectSymbols(SymbolTable symbols, Definition definition) {
+    Deque<String> viamPath;
+
+    public SymbolCollector(String fileName) {
+      this.viamPath = new ArrayDeque<>();
+    }
+
+    void collectSymbols(SymbolTable symbols, Definition definition) {
+      if (definition instanceof IdentifiableNode idNode) {
+        viamPath.offerLast(idNode.identifier().name);
+      } else {
+        viamPath.offerLast("unknown");
+      }
+      definition.viamId = String.join("::", viamPath);
+
       definition.symbolTable = symbols;
       if (definition instanceof InstructionSetDefinition isa) {
         symbols.defineSymbol(isa);
@@ -583,9 +598,11 @@ class SymbolTable {
           collectSymbols(symbols, asmLiteral.asmTypeDefinition);
         }
       }
+
+      viamPath.pollLast();
     }
 
-    static void collectSymbols(SymbolTable symbols, Statement stmt) {
+    void collectSymbols(SymbolTable symbols, Statement stmt) {
       if (stmt.symbolTable != null) {
         throw new IllegalStateException("Tried to populate already set symbol table " + stmt);
       }
@@ -645,7 +662,7 @@ class SymbolTable {
       }
     }
 
-    static void collectSymbols(SymbolTable symbols, Expr expr) {
+    void collectSymbols(SymbolTable symbols, Expr expr) {
       expr.symbolTable = symbols;
       if (expr instanceof LetExpr letExpr) {
         letExpr.symbolTable = symbols.createChild();

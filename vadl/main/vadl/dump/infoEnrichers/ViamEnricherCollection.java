@@ -15,6 +15,7 @@ import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.utils.SourceLocation;
 import vadl.viam.DefProp;
 import vadl.viam.Encoding;
 import vadl.viam.Format;
@@ -22,6 +23,7 @@ import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Parameter;
 import vadl.viam.ViamError;
+import vadl.viam.graph.Graph;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 
 /**
@@ -257,6 +259,29 @@ public class ViamEnricherCollection {
         entity.addInfo(info);
       });
 
+
+  public static InfoEnricher BEHAVIOR_NO_LOCATION_EXPANDABLE =
+      forType(DefinitionEntity.class, (entity, passResult) -> {
+        if (!(entity.origin() instanceof DefProp.WithBehavior withBehavior)) {
+          return;
+        }
+
+        var nodesWithoutSourceLocation = withBehavior.behaviors()
+            .stream().flatMap(Graph::getNodes)
+            .filter(n -> n.sourceLocation().equals(SourceLocation.INVALID_SOURCE_LOCATION))
+            .toList();
+
+        if (nodesWithoutSourceLocation.isEmpty()) {
+          return;
+        }
+
+        var info = InfoUtils.createTableExpandable(
+            "<span class=\"text-red-500 font-bold\">Nodes without Source Location</span>",
+            List.of(nodesWithoutSourceLocation)
+        );
+        entity.addInfo(info);
+      });
+
   /**
    * A list of all info enrichers for the default VIAM specification.
    */
@@ -269,7 +294,8 @@ public class ViamEnricherCollection {
       BEHAVIOR_SUPPLIER_MODAL,
       VERIFY_SUPPLIER_EXPANDABLE,
       SOURCE_CODE_SUPPLIER_EXPANDABLE,
-      RESOURCE_ACCESS_SUPPLIER_EXPANDABLE
+      RESOURCE_ACCESS_SUPPLIER_EXPANDABLE,
+      BEHAVIOR_NO_LOCATION_EXPANDABLE
   );
 
 }

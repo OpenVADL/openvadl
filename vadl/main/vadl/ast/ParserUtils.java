@@ -1,6 +1,8 @@
 package vadl.ast;
 
+import java.io.File;
 import java.math.BigInteger;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -587,6 +589,18 @@ class ParserUtils {
     }
     parser.errors.SemErr("Could not resolve module path: " + name);
     return null;
+  }
+
+  /**
+   * Return the basename of a uri.
+   * Example: /home/flo/abc.txt -> abc
+   *
+   * @param uri to extract the files basename
+   * @return the basename
+   */
+  static String baseName(URI uri) {
+    var name = new File(uri.getPath()).getName();
+    return name.contains(".") ? name.substring(0, name.lastIndexOf('.')) : name;
   }
 
   /**
