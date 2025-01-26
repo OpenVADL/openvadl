@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.HtmlDumpPass;
-import vadl.template.AbstractTemplateRenderingPass;
-import vadl.viam.passes.verification.ViamVerificationPass;
 
 /**
  * This class defines the order in which the {@link PassManager} should run them.
@@ -24,6 +22,7 @@ public final class PassOrder {
       = new ConcurrentHashMap<>();
 
   // the actual list of pass steps
+  // we use a linked list, as we add passes in between
   @SuppressWarnings("JdkObsolete")
   private final LinkedList<PassStep> order = new LinkedList<>();
 
@@ -106,30 +105,37 @@ public final class PassOrder {
   }
 
   /**
-   * Adds a new pass after each existing pass in the current pass order, excluding passes of
-   * types {@link AbstractTemplateRenderingPass} and {@link ViamVerificationPass}. The additional
-   * pass is determined by applying a provided function to each existing pass.
+   * Adds a new pass between all existing passes in the current pass order.
+   * The additional pass is determined by applying a provided function to each existing pass and
+   * its next pass.
+   * The last pass, that hasn't a next pass, is also passed to the creator
+   * with a next pass of {@code Optional.empty()}.
    *
-   * @param passCreator a function that takes an existing pass and returns an optional pass
-   *                    that should be added immediately after it. If the function returns
-   *                    an empty optional, no pass is added after that specific pass.
+   * @param passCreator a function that takes an existing pass and its next (optional) pass,
+   *                    and returns an optional pass that should be added between the given passes.
+   *                    If the function returns an empty optional, no pass is added.
    * @return the updated {@link PassOrder} instance, allowing for method chaining.
    */
-  public PassOrder addAfterEach(Function<Pass, Optional<Pass>> passCreator) {
+  public PassOrder addBetweenEach(BiFunction<Pass, Optional<Pass>, Optional<Pass>> passCreator) {
     var iterator = order.listIterator();
+    if (!iterator.hasNext()) {
+      return this;
+    }
 
     while (iterator.hasNext()) {
-      var currentPass = iterator.next();
-      if (currentPass.pass() instanceof AbstractTemplateRenderingPass
-          || currentPass.pass() instanceof ViamVerificationPass
-      ) {
-        // do not dump renderings or verifications
-        continue;
+      var current = iterator.next().pass();
+
+      Optional<Pass> next = Optional.empty();
+      if (iterator.hasNext()) {
+        // peek next element
+        next = Optional.of(iterator.next().pass());
+        iterator.previous();
       }
 
       passCreator
-          .apply(currentPass.pass())
+          .apply(current, next)
           .ifPresent(value -> iterator.add(createPassStep(null, value)));
+
     }
     return this;
   }

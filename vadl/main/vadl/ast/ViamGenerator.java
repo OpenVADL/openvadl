@@ -32,6 +32,7 @@ import vadl.viam.Specification;
 /**
  * The lowering that converts the AST to the VIAM.
  */
+@SuppressWarnings("OverloadMethodsDeclarationOrder")
 public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Definition>> {
 
   @LazyInit
@@ -39,9 +40,9 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
 
   private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
 
-  final private IdentityHashMap<Definition, Optional<vadl.viam.Definition>> definitionCache =
+  private final IdentityHashMap<Definition, Optional<vadl.viam.Definition>> definitionCache =
       new IdentityHashMap<>();
-  final private IdentityHashMap<FormatDefinition.FormatField, Format.Field>
+  private final IdentityHashMap<FormatDefinition.FormatField, Format.Field>
       formatFieldCache = new IdentityHashMap<>();
 
   @LazyInit
@@ -102,14 +103,11 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
   }
 
 
-//  private vadl.viam.Identifier generateIdentifier(Identifier identifier) {
-//    return new vadl.viam.Identifier(identifier.toString(), identifier.location());
-//  }
-
   /**
-   * Generate a new viam Identifier from an ast Identifier
+   * Generate a new viam Identifier from an ast Identifier.
    *
-   * @param viamId    often the viam identifier have a different name than the ast (prepended by their "path")
+   * @param viamId    often the viam identifier have a different name than the ast
+   *                  (prepended by their "path")
    * @param locatable the location of the identifier in the ast.
    * @return the new identifier.
    */

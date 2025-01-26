@@ -24,143 +24,6 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
-record ControlBlock(ControlNode firstNode, DirectionalNode lastNode) {
-}
-
-/**
- * Contains the nodes of a subgraph.
- * The root references the context causing AST Node.
- * The beginNode and endNode define the start and end node
- * of the subgraph. The sideEffects are all dependencies that may
- * cause side effects and those must be dependencies of the outer branch.
- * The result is the return expression node as depenency of the outer node.
- * <p>
- * All members are optional/nullable and must be checked before access.
- */
-class SubgraphContext {
-  private Node root;
-
-  @Nullable
-  private NodeList<SideEffectNode> sideEffects;
-
-  @Nullable
-  private ControlBlock controlBlock;
-
-  private SubgraphContext(Node root, @Nullable NodeList<SideEffectNode> sideEffects,
-                          @Nullable ControlBlock controlBlock) {
-    this.root = root;
-    this.sideEffects = sideEffects;
-    this.controlBlock = controlBlock;
-  }
-
-  static SubgraphContext of(Node root, Node... nodes) {
-    return SubgraphContext.of(root, List.of(nodes));
-  }
-
-  static SubgraphContext of(Node root, List<Node> nodes) {
-    var sideEffects = new NodeList<SideEffectNode>();
-    @Nullable ControlNode blockStart = null;
-    @Nullable DirectionalNode blockEnd = null;
-    SubgraphContext ctx = new SubgraphContext(root, null, null);
-
-    for (var node : nodes) {
-      if (node instanceof ControlNode controlNode) {
-        if (node.predecessor() == null && (!(node instanceof MergeNode))) {
-          if (blockStart != null && blockStart != node) {
-            throw new IllegalStateException(
-                "tried to add %s, but blockStart already set: %s @%s".formatted(node, blockStart,
-                    root.sourceLocation()));
-          }
-          blockStart = controlNode;
-        }
-
-        if ((node instanceof DirectionalNode directionalNode)
-            && directionalNode.successors().count() == 0) {
-          if (blockEnd != null && directionalNode.successors().count() == 0) {
-            throw new IllegalStateException(
-                "tried to add %s, but blockEnd already set: %s @%s".formatted(node, blockEnd,
-                    root.sourceLocation()));
-          }
-          blockEnd = directionalNode;
-        }
-
-      } else if (node instanceof SideEffectNode sideEffect) {
-        sideEffects.add(sideEffect);
-      } else {
-        throw new IllegalStateException(
-            "Nodes of this class cannot be inserted into a subgraph context: %s"
-                .formatted(node.getClass().getSimpleName()));
-      }
-    }
-
-    if ((blockStart == null) != (blockEnd == null)) {
-      throw new IllegalStateException(
-          "blockStart and blockEnd must be both set or not set @ " + root.sourceLocation());
-    }
-    if (blockStart != null) {
-      ctx.controlBlock = new ControlBlock(blockStart, blockEnd);
-    }
-
-    if (!sideEffects.isEmpty()) {
-      ctx.sideEffects = sideEffects;
-    }
-    return ctx;
-  }
-
-  SubgraphContext setSideEffects(NodeList<SideEffectNode> sideEffects) {
-    if (this.sideEffects != null) {
-      throw new IllegalStateException("SideEffects already set to: %s".formatted(this.sideEffects));
-    }
-    this.sideEffects = sideEffects;
-    return this;
-  }
-
-  ControlBlock controlBlock() {
-    return Objects.requireNonNull(controlBlock);
-  }
-
-  NodeList<SideEffectNode> sideEffects() {
-    return Objects.requireNonNull(sideEffects);
-  }
-
-  NodeList<SideEffectNode> sideEffectsOrEmptyList() {
-    return sideEffects == null ? new NodeList<SideEffectNode>() : sideEffects;
-  }
-
-  boolean hasControlBlock() {
-    return controlBlock != null;
-  }
-
-  boolean hasSideEffects() {
-    return !sideEffectsOrEmptyList().isEmpty();
-  }
-
-  SubgraphContext ensureNoControlBlock() {
-    if (hasControlBlock()) {
-      throw new IllegalStateException(
-          "expected control block to be null but was " + controlBlock + " @ " +
-              root.sourceLocation());
-    }
-    return this;
-  }
-
-  SubgraphContext ensureNoSideEffects() {
-    if (sideEffects != null) {
-      throw new IllegalStateException(
-          "expected sideEffects to be null but was " + sideEffects + " @ " + root.sourceLocation());
-    }
-    return this;
-  }
-
-  SubgraphContext ensureSideEffects() {
-    if (sideEffects == null || sideEffects.size() == 0) {
-      throw new IllegalStateException(
-          "expected sideEffects to exist, but it was " + sideEffects + " @ " +
-              root.sourceLocation());
-    }
-    return this;
-  }
-}
 
 class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
   private final ViamGenerator viamGenerator;
@@ -184,7 +47,8 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
   }
 
   Graph getInstructionGraph(InstructionDefinition definition) {
-    // FIXME: there should be a link to the generated definition but it's not ready yet so we cannot fetch it.
+    // FIXME: there should be a link to the generated definition but it's not ready yet so we cannot
+    //  fetch it.
     var graph = new Graph("%s Behavior".formatted(definition.identifier().name));
     currentGraph = graph;
 
@@ -523,5 +387,143 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
   public SubgraphContext visit(StatementList statement) {
     throw new RuntimeException(
         "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+  }
+}
+
+record ControlBlock(ControlNode firstNode, DirectionalNode lastNode) {
+}
+
+/**
+ * Contains the nodes of a subgraph.
+ * The root references the context causing AST Node.
+ * The beginNode and endNode define the start and end node
+ * of the subgraph. The sideEffects are all dependencies that may
+ * cause side effects and those must be dependencies of the outer branch.
+ * The result is the return expression node as depenency of the outer node.
+ *
+ * <p>All members are optional/nullable and must be checked before access.
+ */
+class SubgraphContext {
+  private Node root;
+
+  @Nullable
+  private NodeList<SideEffectNode> sideEffects;
+
+  @Nullable
+  private ControlBlock controlBlock;
+
+  private SubgraphContext(Node root, @Nullable NodeList<SideEffectNode> sideEffects,
+                          @Nullable ControlBlock controlBlock) {
+    this.root = root;
+    this.sideEffects = sideEffects;
+    this.controlBlock = controlBlock;
+  }
+
+  static SubgraphContext of(Node root, Node... nodes) {
+    return SubgraphContext.of(root, List.of(nodes));
+  }
+
+  static SubgraphContext of(Node root, List<Node> nodes) {
+    var sideEffects = new NodeList<SideEffectNode>();
+    @Nullable ControlNode blockStart = null;
+    @Nullable DirectionalNode blockEnd = null;
+    SubgraphContext ctx = new SubgraphContext(root, null, null);
+
+    for (var node : nodes) {
+      if (node instanceof ControlNode controlNode) {
+        if (node.predecessor() == null && (!(node instanceof MergeNode))) {
+          if (blockStart != null && blockStart != node) {
+            throw new IllegalStateException(
+                "tried to add %s, but blockStart already set: %s @%s".formatted(node, blockStart,
+                    root.sourceLocation()));
+          }
+          blockStart = controlNode;
+        }
+
+        if ((node instanceof DirectionalNode directionalNode)
+            && directionalNode.successors().count() == 0) {
+          if (blockEnd != null && directionalNode.successors().count() == 0) {
+            throw new IllegalStateException(
+                "tried to add %s, but blockEnd already set: %s @%s".formatted(node, blockEnd,
+                    root.sourceLocation()));
+          }
+          blockEnd = directionalNode;
+        }
+
+      } else if (node instanceof SideEffectNode sideEffect) {
+        sideEffects.add(sideEffect);
+      } else {
+        throw new IllegalStateException(
+            "Nodes of this class cannot be inserted into a subgraph context: %s"
+                .formatted(node.getClass().getSimpleName()));
+      }
+    }
+
+    if ((blockStart == null) != (blockEnd == null)) {
+      throw new IllegalStateException(
+          "blockStart and blockEnd must be both set or not set @ " + root.sourceLocation());
+    }
+    if (blockStart != null) {
+      ctx.controlBlock = new ControlBlock(blockStart, blockEnd);
+    }
+
+    if (!sideEffects.isEmpty()) {
+      ctx.sideEffects = sideEffects;
+    }
+    return ctx;
+  }
+
+  SubgraphContext setSideEffects(NodeList<SideEffectNode> sideEffects) {
+    if (this.sideEffects != null) {
+      throw new IllegalStateException("SideEffects already set to: %s".formatted(this.sideEffects));
+    }
+    this.sideEffects = sideEffects;
+    return this;
+  }
+
+  ControlBlock controlBlock() {
+    return Objects.requireNonNull(controlBlock);
+  }
+
+  NodeList<SideEffectNode> sideEffects() {
+    return Objects.requireNonNull(sideEffects);
+  }
+
+  NodeList<SideEffectNode> sideEffectsOrEmptyList() {
+    return sideEffects == null ? new NodeList<SideEffectNode>() : sideEffects;
+  }
+
+  boolean hasControlBlock() {
+    return controlBlock != null;
+  }
+
+  boolean hasSideEffects() {
+    return !sideEffectsOrEmptyList().isEmpty();
+  }
+
+  SubgraphContext ensureNoControlBlock() {
+    if (hasControlBlock()) {
+      throw new IllegalStateException(
+          "expected control block to be null but was " + controlBlock + " @ "
+              + root.sourceLocation());
+    }
+    return this;
+  }
+
+  SubgraphContext ensureNoSideEffects() {
+    if (sideEffects != null) {
+      throw new IllegalStateException(
+          "expected sideEffects to be null but was " + sideEffects + " @ " + root.sourceLocation());
+    }
+    return this;
+  }
+
+  SubgraphContext ensureSideEffects() {
+    if (sideEffects == null || sideEffects.size() == 0) {
+      throw new IllegalStateException(
+          "expected sideEffects to exist, but it was " + sideEffects + " @ "
+              + root.sourceLocation());
+    }
+    return this;
   }
 }

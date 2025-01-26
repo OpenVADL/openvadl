@@ -6,6 +6,7 @@ import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
@@ -63,6 +64,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.vdt.passes.VdtLoweringPass;
+import vadl.viam.Specification;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
@@ -90,14 +92,9 @@ public class PassOrders {
   public static PassOrder viam(GeneralConfiguration configuration) throws IOException {
     var order = new PassOrder();
 
-    if (configuration.doDump()) {
-      var config = HtmlDumpPass.Config.from(
-          configuration,
-          "VIAM Creation",
-          "Dump directly after the VIAM got created from the AST."
-      );
-      order.add(new HtmlDumpPass(config));
-    }
+    // this is just a pseudo pass to add the behavior to the HTML dump
+    // at the stage directly after the VIAM creation.
+    order.add(new ViamCreationPass(configuration));
 
     order.add(new ViamVerificationPass(configuration));
 
@@ -128,14 +125,10 @@ public class PassOrders {
     // verification after viam optimizations
     order.add(new ViamVerificationPass(configuration));
 
-    if (configuration.doDump()) {
-      var config = HtmlDumpPass.Config.from(
-          configuration,
-          "viamOptimizations",
-          "All common VIAM optimization that are required by most generators are executed."
-      );
-      order.add(new HtmlDumpPass(config));
-    }
+    addHtmlDump(order, configuration, "viamOptimizations",
+        "All common VIAM optimization that are required by most generators are executed.",
+        InstructionResourceAccessAnalysisPass.class
+    );
 
     return order;
   }
@@ -160,14 +153,9 @@ public class PassOrders {
     order.add(new PseudoInstructionArgumentReplacementPass(gcbConfiguration));
     order.add(new PseudoExpansionFunctionGeneratorPass(gcbConfiguration));
 
-    if (gcbConfiguration.doDump()) {
-      var config = HtmlDumpPass.Config.from(gcbConfiguration,
-          "gcbProcessing",
-          "Now the gcb produced all necessary encoding function for field accesses "
-              + "and normalized VIAM types to Cpp types."
-      );
-      order.add(new HtmlDumpPass(config));
-    }
+    addHtmlDump(order, gcbConfiguration, "gcbProcessing",
+        "Now the gcb produced all necessary encoding function for field accesses "
+            + "and normalized VIAM types to Cpp types.");
 
     return order;
   }
@@ -192,18 +180,10 @@ public class PassOrders {
     order.add(new CompensationPatternPass(configuration));
     order.add(new GenerateLinkerComponentsPass(configuration));
 
-    if (configuration.doDump()) {
-      addDumpBehaviorCollectionPasses(order, configuration,
-          IssVerificationPass.class,
-          IssConfiguration.class);
-      var config = HtmlDumpPass.Config.from(
-          configuration,
-          "lcbLlvmLowering",
-          "The LCB did ISA matching to and lowered common VIAM nodes to LLVM specific"
-              + "nodes."
-      );
-      order.add(new HtmlDumpPass(config));
-    }
+    addHtmlDump(order, configuration,
+        "lcbLlvmLowering",
+        "The LCB did ISA matching to and lowered common VIAM nodes to LLVM specific"
+            + "nodes.");
 
     order.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration));
@@ -381,27 +361,15 @@ public class PassOrders {
 
     addDecodePasses(order, config);
 
-    if (config.doDump()) {
-      // TODO: this should be set in the frontend that creates the scheduling
-      addDumpBehaviorCollectionPasses(order, config,
-          IssVerificationPass.class,
-          IssConfiguration.class);
-      order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Lowering Dump", """
-          This dump is executed after the iss transformation passes were executed.
-          """)));
-    }
+    addHtmlDump(order, config, "ISS Lowering Dump",
+        "This dump is executed after the iss transformation passes were executed.",
+        IssVerificationPass.class,
+        IssConfiguration.class);
 
     order.add(new ViamVerificationPass(config));
 
     // add iss template emitting passes to order
     addIssEmitPasses(order, config);
-
-    if (config.doDump()) {
-      order.add(new HtmlDumpPass(HtmlDumpPass.Config.from(config, "ISS Rendering Dump", """
-          This dump is executed after the iss got rendered passes were executed.
-          """)));
-    }
-
 
     return order;
   }
@@ -465,26 +433,7 @@ public class PassOrders {
     ;
   }
 
-  private static PassOrder addDumpBehaviorCollectionPasses(PassOrder order,
-                                                           GeneralConfiguration config,
-                                                           Class<?>... exceptions) {
-    if (!config.doDump()) {
-      return order;
-    }
-    order.addAfterEach(prev -> {
-      var dontRun = Streams.concat(Stream.of(
-          ViamVerificationPass.class,
-          AbstractTemplateRenderingPass.class
-      ), Stream.of(exceptions));
-      if (dontRun.anyMatch(a -> a.isInstance(prev))) {
-        // if previous is any of the dont run pass classes, don't add the collection behavior
-        return Optional.empty();
-      }
-      return Optional.of(new CollectBehaviorDotGraphPass(config));
-    });
-    return order;
-  }
-
+  // TODO: @mraschhofer write documentation
   private static void addDecodePasses(PassOrder order, IssConfiguration config) {
 
     // TODO: Add config params to switch between decoder implementations. For now we generate
@@ -497,6 +446,94 @@ public class PassOrders {
 
     // VDT Decode Passes
     order.add(new VdtLoweringPass(config));
+  }
+
+  /**
+   * Adds all necessary passes for a html dump of the VIAM if the config whishes to dump.
+   *
+   * @param order       into which the passes will be inserted.
+   * @param config      from which to decide if a dump is wanted.
+   * @param phase       is the name of the dump.
+   * @param description for the dump.
+   * @param exclusions  for which no behaivor graph should be collected.
+   * @return the modified passorder.
+   */
+  private static PassOrder addHtmlDump(PassOrder order, GeneralConfiguration config,
+                                       String phase, String description, Class<?>... exclusions) {
+
+    if (config.doDump()) {
+      addDumpBehaviorCollectionPasses(order, config, exclusions);
+      var htmlConfig = HtmlDumpPass.Config.from(config, phase, description);
+      order.add(new HtmlDumpPass(htmlConfig));
+    }
+
+    return order;
+  }
+
+  /**
+   * Adds a {@link CollectBehaviorDotGraphPass} after each existing pass in the pass order.
+   * This function is idempotent, so calling it on the same pass order will not add
+   * more behavior collection passes.
+   *
+   * @param order      to add collection passes to
+   * @param exceptions pass classes that don't change the behavior and therefore should not have
+   *                   behavior collection pass successor.
+   * @return the passed order
+   */
+  private static PassOrder addDumpBehaviorCollectionPasses(PassOrder order,
+                                                           GeneralConfiguration config,
+                                                           Class<?>... exceptions) {
+    if (!config.doDump()) {
+      return order;
+    }
+
+    var dontRun = Streams.concat(Stream.of(
+        ViamVerificationPass.class,
+        AbstractTemplateRenderingPass.class,
+        CollectBehaviorDotGraphPass.class
+    ), Stream.of(exceptions)).toList();
+
+    order.addBetweenEach((prev, next) -> {
+
+      if (dontRun.stream().anyMatch(a -> a.isInstance(prev))) {
+        // if previous is any of the dont run pass classes, don't add the collection behavior
+        return Optional.empty();
+      }
+
+      if (next.orElse(null) instanceof CollectBehaviorDotGraphPass) {
+        // don't add a collection pass, if the next one is already a collection pass.
+        return Optional.empty();
+      }
+
+      return Optional.of(new CollectBehaviorDotGraphPass(config));
+    });
+    return order;
+  }
+
+
+  /**
+   * A pseudo pass that indicates the first pass in the PassOrder.
+   * It is necessary to dump the behavior directly after creation,
+   * before any other pass manipulated the behavior.
+   *
+   * <p>This pass contains no logic.</p>
+   */
+  public static class ViamCreationPass extends Pass {
+
+    public ViamCreationPass(GeneralConfiguration configuration) {
+      super(configuration);
+    }
+
+    @Override
+    public PassName getName() {
+      return PassName.of("VIAM Creation (pseudo pass)");
+    }
+
+    @Nullable
+    @Override
+    public Object execute(PassResults passResults, Specification viam) throws IOException {
+      return null;
+    }
   }
 
 }
