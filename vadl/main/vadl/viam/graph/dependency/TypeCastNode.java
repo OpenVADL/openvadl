@@ -66,7 +66,7 @@ public class TypeCastNode extends UnaryNode implements Canonicalizable {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new TypeCastNode((ExpressionNode) value.copy(), type());
   }
 

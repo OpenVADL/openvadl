@@ -44,7 +44,7 @@ public class CppUpdateBitRangeNode extends ExpressionNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new CppUpdateBitRangeNode(this.type(), (ExpressionNode) value.copy(),
         (ExpressionNode) patch.copy(), field);
   }
@@ -78,5 +78,5 @@ public class CppUpdateBitRangeNode extends ExpressionNode {
     value = visitor.apply(this, value, ExpressionNode.class);
     patch = visitor.apply(this, patch, ExpressionNode.class);
   }
-  
+
 }

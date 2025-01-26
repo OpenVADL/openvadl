@@ -62,7 +62,7 @@ public class LetNode extends ExpressionNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LetNode(name, (ExpressionNode) expression.copy());
   }
 

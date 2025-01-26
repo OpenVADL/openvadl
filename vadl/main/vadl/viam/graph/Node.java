@@ -737,7 +737,11 @@ public abstract class Node implements WithSourceLocation {
 
   /**
    * Accepting method for the {@link GraphNodeVisitor}.
+   *
+   * @deprecated Using a visitor is sub optimal when working on graphs.
+   *     Use {@link vadl.javaannotations.DispatchFor} instead.
    */
+  @Deprecated
   public abstract <T extends GraphNodeVisitor> void accept(T visitor);
 
   private void verifyAllEdges() {

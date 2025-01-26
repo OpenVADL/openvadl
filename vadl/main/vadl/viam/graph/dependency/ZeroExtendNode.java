@@ -47,7 +47,7 @@ public class ZeroExtendNode extends UnaryNode implements Canonicalizable {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new ZeroExtendNode((ExpressionNode) value.copy(), type());
   }
 

@@ -30,7 +30,7 @@ public class LlvmLoadSD extends ReadMemNode implements LlvmNodeLowerable,
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmLoadSD((ExpressionNode) Objects.requireNonNull(address).copy(),
         memory,
         words);

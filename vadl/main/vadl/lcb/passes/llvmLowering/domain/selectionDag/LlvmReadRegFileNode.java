@@ -61,7 +61,7 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmReadRegFileNode(registerFile, (ExpressionNode) address().copy(), type(),
         staticCounterAccess());
   }

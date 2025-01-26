@@ -53,7 +53,7 @@ public class FieldRefNode extends ParamNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new FieldRefNode(formatField, (DataType) type());
   }
 

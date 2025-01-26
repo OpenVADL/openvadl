@@ -41,7 +41,7 @@ public class ConstantNode extends ExpressionNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new ConstantNode(constant);
   }
 

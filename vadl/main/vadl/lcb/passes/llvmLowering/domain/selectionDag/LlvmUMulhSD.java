@@ -38,7 +38,7 @@ public class LlvmUMulhSD extends BuiltInCall implements LlvmNodeLowerable {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmUMulhSD(
         new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         type());

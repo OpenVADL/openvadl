@@ -7,6 +7,7 @@ import vadl.viam.Constant;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * LLVM Node for a constant value.
@@ -34,7 +35,7 @@ public class LlvmConstantSD extends ConstantNode implements LlvmNodeLowerable {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmConstantSD(constant);
   }
 

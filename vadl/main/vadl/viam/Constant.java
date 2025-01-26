@@ -905,6 +905,12 @@ public abstract class Constant {
           .flatMapToInt(part -> StreamUtils.directionalRangeClosed(part.msb(), part.lsb()));
     }
 
+    /**
+     * Returns if the slice can be extracted from one consecutive slice of the value.
+     * E.g. {@code [4..1]} is continuous while {@code [2, 4..3]} is not.
+     *
+     * @return true if slice is continuous, otherwise false.
+     */
     public boolean isContinuous() {
       // this works because the parts are normalized
       return parts.size() == 1;

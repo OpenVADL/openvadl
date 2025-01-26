@@ -62,7 +62,7 @@ public class ReadMemNode extends ReadResourceNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new ReadMemNode(memory, words, (ExpressionNode) address().copy(), type());
   }
 

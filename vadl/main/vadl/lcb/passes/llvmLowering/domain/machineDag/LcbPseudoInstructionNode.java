@@ -31,7 +31,7 @@ public class LcbPseudoInstructionNode extends AbstractFunctionCallNode {
 
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LcbPseudoInstructionNode(
         new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         instruction);

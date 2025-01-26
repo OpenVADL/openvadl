@@ -84,7 +84,7 @@ public class ReadRegFileNode extends ReadResourceNode implements HasRegisterFile
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new ReadRegFileNode(registerFile, (ExpressionNode) address().copy(), type(),
         staticCounterAccess());
   }

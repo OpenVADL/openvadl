@@ -28,7 +28,9 @@ public abstract class ExpressionNode extends DependencyNode {
   public boolean isConstant() {
     return this instanceof ConstantNode;
   }
-
+  
+  @Override
+  public abstract ExpressionNode copy();
 
   /**
    * Creates a pretty-printed representation of the current expression node.

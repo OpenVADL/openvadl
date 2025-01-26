@@ -32,7 +32,7 @@ public class AssemblyRegisterNode extends BuiltInCall {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new AssemblyRegisterNode(
         new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()),
         this.type());

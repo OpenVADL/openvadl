@@ -29,7 +29,7 @@ public class LlvmFrameIndexSD extends ReadRegFileNode implements LlvmNodeLowerab
 
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmFrameIndexSD(registerFile(), (ExpressionNode) address().copy(), type(),
         staticCounterAccess());
   }

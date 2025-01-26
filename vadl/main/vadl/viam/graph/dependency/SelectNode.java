@@ -57,10 +57,10 @@ public class SelectNode extends ExpressionNode {
   }
 
   @Override
-  public Node copy() {
-    return new SelectNode((ExpressionNode) condition.copy(),
-        (ExpressionNode) trueCase.copy(),
-        (ExpressionNode) falseCase.copy());
+  public ExpressionNode copy() {
+    return new SelectNode(condition.copy(),
+        trueCase.copy(),
+        falseCase.copy());
   }
 
   @Override

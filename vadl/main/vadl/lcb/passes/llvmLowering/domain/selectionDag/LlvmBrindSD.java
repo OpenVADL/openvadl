@@ -37,7 +37,7 @@ public class LlvmBrindSD extends AbstractFunctionCallNode implements LlvmNodeLow
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmBrindSD(
         new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         type());

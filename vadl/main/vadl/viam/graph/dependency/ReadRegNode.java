@@ -90,7 +90,7 @@ public class ReadRegNode extends ReadResourceNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new ReadRegNode(register, type(), staticCounterAccess);
   }
 

@@ -59,7 +59,7 @@ public class FuncCallNode extends AbstractFunctionCallNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new FuncCallNode(
         new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()),
         function, type());

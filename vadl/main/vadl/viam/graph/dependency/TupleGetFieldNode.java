@@ -75,7 +75,7 @@ public class TupleGetFieldNode extends ExpressionNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new TupleGetFieldNode(index, (ExpressionNode) expression.copy(), type());
   }
 
