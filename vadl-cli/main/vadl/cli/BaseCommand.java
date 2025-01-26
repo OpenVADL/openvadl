@@ -23,7 +23,7 @@ import vadl.ast.ModelRemover;
 import vadl.ast.TypeChecker;
 import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
-import vadl.ast.ViamGenerator;
+import vadl.ast.ViamLowering;
 import vadl.configuration.GeneralConfiguration;
 import vadl.dump.ArtifactTracker;
 import vadl.error.DeferredDiagnosticStore;
@@ -190,7 +190,7 @@ public abstract class BaseCommand implements Callable<Integer> {
     var typeChecker = new TypeChecker();
     typeChecker.verify(ast);
     dumpTyped(ast);
-    var viamGenerator = new ViamGenerator();
+    var viamGenerator = new ViamLowering();
     var spec = viamGenerator.generate(ast);
     return spec;
   }

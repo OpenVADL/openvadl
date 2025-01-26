@@ -33,10 +33,10 @@ import vadl.viam.Specification;
  * The lowering that converts the AST to the VIAM.
  */
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
-public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Definition>> {
+public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Definition>> {
 
   @LazyInit
-  private BehaviorGenerator behaviorGenerator;
+  private BehaviorLowering behaviorLowering;
 
   private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
 
@@ -48,8 +48,8 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
   @LazyInit
   private vadl.viam.Specification currentSpecification;
 
-  public ViamGenerator() {
-    this.behaviorGenerator = new BehaviorGenerator(this);
+  public ViamLowering() {
+    this.behaviorLowering = new BehaviorLowering(this);
   }
 
   /**
@@ -345,14 +345,14 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
     var funcIdentifier =
         new vadl.viam.Identifier(identifierName + "::func", identifierLoc);
 
-    var behaivor = behaviorGenerator.getGraph(definition.expr, funcIdentifier.name());
+    var behavior = behaviorLowering.getGraph(definition.expr, funcIdentifier.name());
 
     // FIXME: Add to cache? But how, because one assemby ast node might be used for multiple
     // assembly in the VIAM.
 
     return new Assembly(
         new vadl.viam.Identifier(identifierName, identifierLoc),
-        new Function(funcIdentifier, new Parameter[0], Type.string(), behaivor)
+        new Function(funcIdentifier, new Parameter[0], Type.string(), behavior)
     );
   }
 
@@ -384,7 +384,7 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
 
   @Override
   public Optional<vadl.viam.Definition> visit(InstructionDefinition definition) {
-    var behaivor = behaviorGenerator.getInstructionGraph(definition);
+    var behavior = behaviorLowering.getInstructionGraph(definition);
 
     var assembly = visitAssembly(Objects.requireNonNull(definition.assemblyDefinition),
         definition);
@@ -393,7 +393,7 @@ public class ViamGenerator implements DefinitionVisitor<Optional<vadl.viam.Defin
 
     var instruction = new Instruction(
         generateIdentifier(definition.viamId, definition.identifier()),
-        behaivor,
+        behavior,
         assembly,
         encoding
     );

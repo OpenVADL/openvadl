@@ -291,19 +291,19 @@ class SymbolTable {
    * @see ResolutionPass
    */
   static class SymbolCollector {
-    Deque<String> vaimPath;
+    Deque<String> viamPath;
 
     public SymbolCollector(String fileName) {
-      this.vaimPath = new ArrayDeque<>();
+      this.viamPath = new ArrayDeque<>();
     }
 
     void collectSymbols(SymbolTable symbols, Definition definition) {
       if (definition instanceof IdentifiableNode idNode) {
-        vaimPath.offerLast(idNode.identifier().name);
+        viamPath.offerLast(idNode.identifier().name);
       } else {
-        vaimPath.offerLast("unknown");
+        viamPath.offerLast("unknown");
       }
-      definition.viamId = String.join("::", vaimPath);
+      definition.viamId = String.join("::", viamPath);
 
       definition.symbolTable = symbols;
       if (definition instanceof InstructionSetDefinition isa) {
@@ -599,7 +599,7 @@ class SymbolTable {
         }
       }
 
-      vaimPath.pollLast();
+      viamPath.pollLast();
     }
 
     void collectSymbols(SymbolTable symbols, Statement stmt) {

@@ -25,14 +25,14 @@ import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
 
-class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
-  private final ViamGenerator viamGenerator;
+class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
+  private final ViamLowering viamLowering;
 
   @Nullable
   private Graph currentGraph;
 
-  BehaviorGenerator(ViamGenerator generator) {
-    this.viamGenerator = generator;
+  BehaviorLowering(ViamLowering generator) {
+    this.viamLowering = generator;
   }
 
   Graph getGraph(Expr expr, String name) {
@@ -76,7 +76,7 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
     // Format field
     if (computedTarget instanceof FormatDefinition.TypedFormatField typedFormatField) {
       return new FieldRefNode(
-          viamGenerator.fetch(typedFormatField).orElseThrow(),
+          viamLowering.fetch(typedFormatField).orElseThrow(),
           (DataType) Objects.requireNonNull(expr.type));
     }
 
@@ -93,13 +93,13 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
     }
 
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(BinaryExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
@@ -131,19 +131,19 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
   @Override
   public ExpressionNode visit(IntegerLiteral expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(BinaryLiteral expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(BoolLiteral expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
@@ -156,37 +156,37 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
   @Override
   public ExpressionNode visit(PlaceholderExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(MacroInstanceExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(RangeExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(TypeLiteral expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(IdentifierPath expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(UnaryExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
@@ -204,13 +204,13 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
   @Override
   public ExpressionNode visit(IfExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(LetExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
@@ -223,68 +223,69 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
     }
 
     throw new IllegalArgumentException(
-        "The behaivor generator doesn't implement real casting yet.");
+        "The behavior generator doesn't implement real casting yet.");
   }
 
   @Override
   public ExpressionNode visit(SymbolExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(MacroMatchExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(MatchExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(ExtendIdExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(IdToStrExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(ExistsInExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(ExistsInThenExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(ForallThenExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(ForallExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
   public ExpressionNode visit(SequenceCallExpr expr) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
+
 
   @Override
   public SubgraphContext visit(AssignmentStatement statement) {
@@ -292,7 +293,7 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
 
     if (statement.target instanceof CallExpr callTarget) {
       if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
-        var regFile = viamGenerator.fetch(regFileTarget).orElseThrow();
+        var regFile = viamLowering.fetch(regFileTarget).orElseThrow();
         var address = callTarget.flatArgs().get(0).accept(this);
         var read = new WriteRegFileNode(
             (RegisterFile) regFile,
@@ -300,6 +301,7 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
             rightExpr,
             null,
             null);
+        read.setSourceLocation(statement.sourceLocation());
         Objects.requireNonNull(currentGraph).addWithInputs(read);
         return SubgraphContext.of(read, read);
       }
@@ -314,79 +316,79 @@ class BehaviorGenerator implements StatementVisitor<SubgraphContext>, ExprVisito
   @Override
   public SubgraphContext visit(BlockStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(CallStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(ForallStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(IfStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(InstructionCallStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(LetStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(LockStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(MacroInstanceStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(MacroMatchStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(MatchStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(PlaceholderStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(RaiseStatement statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 
   @Override
   public SubgraphContext visit(StatementList statement) {
     throw new RuntimeException(
-        "The behaivor generator doesn't implement yet: " + statement.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
   }
 }
 
