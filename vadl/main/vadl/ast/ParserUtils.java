@@ -599,7 +599,8 @@ class ParserUtils {
    * @return the basename
    */
   static String baseName(URI uri) {
-    return new File(uri.getPath()).getName().split("\\.")[0];
+    var name = new File(uri.getPath()).getName();
+    return name.contains(".") ? name.substring(0, name.lastIndexOf('.')) : name;
   }
 
   /**

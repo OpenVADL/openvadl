@@ -433,7 +433,7 @@ class SubgraphContext {
 
     for (var node : nodes) {
       if (node instanceof ControlNode controlNode) {
-        if (node.predecessor() == null && (!(node instanceof MergeNode))) {
+        if (node.predecessor() == null && !(node instanceof MergeNode)) {
           if (blockStart != null && blockStart != node) {
             throw new IllegalStateException(
                 "tried to add %s, but blockStart already set: %s @%s".formatted(node, blockStart,

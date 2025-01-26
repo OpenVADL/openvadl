@@ -96,6 +96,9 @@ public class PassOrders {
     // at the stage directly after the VIAM creation.
     order.add(new ViamCreationPass(configuration));
 
+    addHtmlDump(order, configuration, "VIAM Creation",
+        "Dump directly after frontend generated VIAM.");
+
     order.add(new ViamVerificationPass(configuration));
 
     order.add(new TypeCastEliminationPass(configuration));
@@ -455,7 +458,7 @@ public class PassOrders {
    * @param config      from which to decide if a dump is wanted.
    * @param phase       is the name of the dump.
    * @param description for the dump.
-   * @param exclusions  for which no behaivor graph should be collected.
+   * @param exclusions  for which no behavior graph should be collected.
    * @return the modified passorder.
    */
   private static PassOrder addHtmlDump(PassOrder order, GeneralConfiguration config,
