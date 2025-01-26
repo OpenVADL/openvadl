@@ -4,10 +4,10 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
+import java.util.stream.IntStream;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
@@ -16,6 +16,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.TupleType;
 import vadl.utils.Triple;
 import vadl.viam.Instruction;
 import vadl.viam.Register;
@@ -63,7 +64,7 @@ public class IssVarSsaAssignment extends Pass {
    *                       nodes to TcgVRefNodes.
    */
   public record Result(
-      Map<Instruction, Map<DependencyNode, TcgVRefNode>> varAssignments
+      Map<Instruction, Map<DependencyNode, List<TcgVRefNode>>> varAssignments
   ) {
   }
 
@@ -107,8 +108,9 @@ class IssTempVarAssigner {
 
   Tcg_32_64 targetSize;
   // key to tcgV cache to avoid duplicated TCGv
-  Map<Object, TcgVRefNode> tcgVCache = new HashMap<>();
-  Map<DependencyNode, TcgVRefNode> ssaAssignments = new HashMap<>();
+  // remove cache and just use ssaAssignments
+  Map<Object, List<TcgVRefNode>> tcgVCache = new HashMap<>();
+  Map<DependencyNode, List<TcgVRefNode>> ssaAssignments = new HashMap<>();
   Graph graph;
 
   IssTempVarAssigner(Tcg_32_64 targetSize, Graph graph) {
@@ -116,7 +118,7 @@ class IssTempVarAssigner {
     this.graph = graph;
   }
 
-  Map<DependencyNode, TcgVRefNode> run() {
+  Map<DependencyNode, List<TcgVRefNode>> run() {
     graph.getNodes(Set.of(ScheduledNode.class, InstrEndNode.class))
         .forEach(s -> s.inputs().forEach(dep -> assignDest((DependencyNode) dep)));
 
@@ -124,13 +126,18 @@ class IssTempVarAssigner {
     return ssaAssignments;
   }
 
+  /**
+   * Adds TCGv getters to start of instruction.
+   */
   private void insertRegisterTcgVGetters() {
     var startNode = getSingleNode(graph, StartNode.class);
 
-    for (var ref : ssaAssignments.values()) {
-      switch (ref.var().kind()) {
-        case REG, REG_FILE -> startNode.addAfter(TcgGetVar.from(ref));
-        default -> {
+    for (var refs : ssaAssignments.values()) {
+      for (var ref : refs) {
+        switch (ref.var().kind()) {
+          case REG, REG_FILE -> startNode.addAfter(TcgGetVar.from(ref));
+          default -> {
+          }
         }
       }
     }
@@ -149,7 +156,7 @@ class IssTempVarAssigner {
     ssaAssignments.put(dep, dest);
   }
 
-  private @Nullable TcgVRefNode destOf(DependencyNode dep) {
+  private List<TcgVRefNode> destOf(DependencyNode dep) {
     if (dep instanceof ReadRegNode regRead) {
       // even though we do not really define it, we declare it here.
       // as we know that the reg is not used before, we can do this safely.
@@ -158,14 +165,14 @@ class IssTempVarAssigner {
       // same as for ReadRegNode
       return getOrCreateRegFileVar(regFileRead.registerFile(), regFileRead.address(), false);
     } else if (dep instanceof ExpressionNode expr) {
-      return getOrCreateTmpVar(expr);
+      return getOrCreateTmpVars(expr);
     } else if (dep instanceof WriteRegNode regWrite) {
       return getOrCreateRegVar(regWrite.register());
     } else if (dep instanceof WriteRegFileNode regFileWrite) {
       return getOrCreateRegFileVar(regFileWrite.registerFile(), regFileWrite.address(), true);
     } else if (dep instanceof WriteMemNode) {
       // mems are no var/registers
-      return null;
+      return List.of();
     } else {
       throw new ViamGraphError("Unexpected scheduled dependency")
           .addContext(dep);
@@ -178,11 +185,19 @@ class IssTempVarAssigner {
    * @param expr The expression node.
    * @return The variable corresponding to the expression node.
    */
-  private TcgVRefNode getOrCreateTmpVar(ExpressionNode expr) {
-    return tcgVCache.computeIfAbsent(expr, k -> toNode(TcgV.tmp(
-        "tmp_" + TcgPassUtils.exprVarName(expr),
-        targetSize
-    )));
+  private List<TcgVRefNode> getOrCreateTmpVars(ExpressionNode expr) {
+    // determine number of return values from tuple
+    var numberOfResults = expr.type() instanceof TupleType tupleType ? tupleType.size() : 1;
+
+    // construct temporary variable(s) for expression node
+    return tcgVCache.computeIfAbsent(expr, k ->
+        IntStream.range(0, numberOfResults).boxed()
+            .map(i -> toNode(TcgV.tmp(
+                "tmp_" + TcgPassUtils.exprVarName(expr) + "_" + i,
+                targetSize
+            )))
+            .toList()
+    );
   }
 
   /**
@@ -191,12 +206,12 @@ class IssTempVarAssigner {
    * @param reg The register.
    * @return The variable corresponding to the register.
    */
-  private TcgVRefNode getOrCreateRegVar(Register reg) {
-    return tcgVCache.computeIfAbsent(reg, k -> toNode(TcgV.reg(
+  private List<TcgVRefNode> getOrCreateRegVar(Register reg) {
+    return tcgVCache.computeIfAbsent(reg, k -> List.of(toNode(TcgV.reg(
         "reg_" + reg.simpleName().toLowerCase(),
         targetSize,
         reg
-    )));
+    ))));
   }
 
   /**
@@ -206,18 +221,19 @@ class IssTempVarAssigner {
    * @param index   The index expression node.
    * @return The variable corresponding to the register file at the given index.
    */
-  private TcgVRefNode getOrCreateRegFileVar(RegisterFile regFile, ExpressionNode index,
-                                            boolean isDest) {
+  private List<TcgVRefNode> getOrCreateRegFileVar(RegisterFile regFile, ExpressionNode index,
+                                                  boolean isDest) {
     var key = Triple.of(regFile, index, isDest);
     var dest = isDest ? "_dest" : "";
-    return tcgVCache.computeIfAbsent(key, k -> toNode(TcgV.regFile(
-        "regfile_" + regFile.simpleName().toLowerCase() + "_" + TcgPassUtils.exprVarName(index)
-            + dest,
-        targetSize,
-        regFile,
-        index,
-        isDest
-    )));
+    return tcgVCache.computeIfAbsent(key, k -> List.of(
+        toNode(TcgV.regFile(
+            "regfile_" + regFile.simpleName().toLowerCase()
+                + "_" + TcgPassUtils.exprVarName(index) + dest,
+            targetSize,
+            regFile,
+            index,
+            isDest
+        ))));
   }
 
   private TcgVRefNode toNode(TcgV tcgV) {

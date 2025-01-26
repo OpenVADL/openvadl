@@ -21,11 +21,11 @@ public class TcgUnaryNopNode extends TcgUnaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgUnaryNopNode(dest.copy(), arg);
+    return new TcgUnaryNopNode(firstDest().copy(), arg);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgUnaryNopNode(dest, arg);
+    return new TcgUnaryNopNode(firstDest(), arg);
   }
 }

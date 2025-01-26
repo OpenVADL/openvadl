@@ -3,15 +3,15 @@ package vadl.iss.passes.tcgLowering.nodes;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 
 /**
  * Represents an abstract TCG (Tiny Code Generation) operation node.
@@ -21,37 +21,43 @@ import vadl.viam.graph.Node;
 public abstract class TcgOpNode extends TcgNode {
 
   @Input
-  TcgVRefNode dest;
+  private NodeList<TcgVRefNode> destinations;
   @DataValue
-  Tcg_32_64 width;
+  private Tcg_32_64 width;
 
-  public TcgOpNode(TcgVRefNode dest, Tcg_32_64 width) {
-    this.dest = dest;
+  public TcgOpNode(TcgVRefNode singleDest, Tcg_32_64 width) {
+    this.destinations = new NodeList<>(singleDest);
     this.width = width;
   }
 
-  public TcgOpNode(TcgVRefNode dest) {
-    this.dest = dest;
-    this.width = dest.var().width();
+  public TcgOpNode(NodeList<TcgVRefNode> destinations, Tcg_32_64 width) {
+    this.destinations = destinations;
+    this.width = width;
   }
 
   @Override
   public void verifyState() {
     super.verifyState();
 
-    ensure(dest.var().width() == width, "result variable width does not match");
+    for (var d : destinations) {
+      ensure(d.var().width() == width, "result variable width does not match");
+    }
   }
 
   public Tcg_32_64 width() {
     return width;
   }
 
-  public TcgVRefNode dest() {
-    return dest;
+  public TcgVRefNode firstDest() {
+    return destinations.get(0);
   }
 
-  public void setDest(TcgVRefNode res) {
-    this.dest = res;
+  public List<TcgVRefNode> destinations() {
+    return destinations;
+  }
+
+  public void setDest(NodeList<TcgVRefNode> res) {
+    this.destinations = res;
   }
 
   @Override
@@ -60,8 +66,8 @@ public abstract class TcgOpNode extends TcgNode {
   }
 
   @Override
-  public @Nullable TcgVRefNode definedVar() {
-    return dest;
+  public List<TcgVRefNode> definedVars() {
+    return destinations;
   }
 
   @Override
@@ -78,12 +84,13 @@ public abstract class TcgOpNode extends TcgNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    dest = visitor.apply(this, dest, TcgVRefNode.class);
+    destinations = destinations.stream().map((e) -> visitor.apply(this, e, TcgVRefNode.class))
+        .collect(Collectors.toCollection(NodeList::new));
   }
 
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
-    collection.add(dest);
+    collection.addAll(destinations);
   }
 }

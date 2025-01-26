@@ -4,12 +4,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
-import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 
 /**
  * A common superclass that represents a TCG operator with two source variables and one result.
@@ -42,12 +41,19 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
     this.arg2 = arg2;
   }
 
+  public TcgBinaryOpNode(NodeList<TcgVRefNode> destinations, TcgVRefNode arg1, TcgVRefNode arg2,
+                         Tcg_32_64 width) {
+    super(destinations, width);
+    this.arg1 = arg1;
+    this.arg2 = arg2;
+  }
+
   @Override
   public void verifyState() {
     super.verifyState();
 
-    ensure(arg1.var().width() == width, "argument 1 width does not match");
-    ensure(arg2.var().width() == width, "argument 2 width does not match");
+    ensure(arg1.var().width() == width(), "argument 1 width does not match");
+    ensure(arg2.var().width() == width(), "argument 2 width does not match");
   }
 
   public TcgVRefNode arg1() {
@@ -69,8 +75,8 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return tcgFunctionName() + "_" + width + "("
-        + dest.cCode() + ", "
+    return tcgFunctionName() + "_" + width() + "("
+        + firstDest().cCode() + ", "
         + arg1.cCode() + ", "
         + arg2.cCode()
         + ");";

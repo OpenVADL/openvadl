@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -96,7 +97,7 @@ class IssTcgConstantScheduler implements CfgTraverser {
   /**
    * Map of dependency nodes to their assigned TCG variables.
    */
-  Map<DependencyNode, TcgVRefNode> assignments;
+  Map<DependencyNode, List<TcgVRefNode>> assignments;
   /**
    * The start node of the instruction behavior graph.
    */
@@ -108,7 +109,7 @@ class IssTcgConstantScheduler implements CfgTraverser {
    * @param graph       The behavior graph of the instruction.
    * @param assignments The map of dependency nodes to TCG variable assignments.
    */
-  public IssTcgConstantScheduler(Graph graph, Map<DependencyNode, TcgVRefNode> assignments) {
+  public IssTcgConstantScheduler(Graph graph, Map<DependencyNode, List<TcgVRefNode>> assignments) {
     this.assignments = assignments;
     this.startNode = getSingleNode(graph, StartNode.class);
   }
@@ -133,34 +134,35 @@ class IssTcgConstantScheduler implements CfgTraverser {
       return;
     }
 
-    var tcgV = assignments.get(scheduledNode.node());
-    if (tcgV == null) {
+    var tcgVs = assignments.get(scheduledNode.node());
+    if (tcgVs == null || tcgVs.isEmpty()) {
       return;
     }
 
-    if (scheduledNode.node() instanceof ExpressionNode expressionNode) {
-      if (expressionNode instanceof ReadRegNode || expressionNode instanceof ReadRegFileNode) {
-        // Read register nodes are not real TCG operations; constants cannot be TCG variables.
-        return;
-      }
+    for (var tcgV : tcgVs) {
+      if (scheduledNode.node() instanceof ExpressionNode expressionNode) {
+        if (expressionNode instanceof ReadRegNode || expressionNode instanceof ReadRegFileNode) {
+          // Read register nodes are not real TCG operations; constants cannot be TCG variables.
+          return;
+        }
 
-      expressionNode.inputs()
-          .forEach(i ->
-              scheduleImmediateAtStart((ExpressionNode) i, tcgV.width())
-          );
-    } else if (scheduledNode.node() instanceof WriteResourceNode writeResourceNode) {
-      // The value might be a constant.
-      scheduleImmediateAtStart(writeResourceNode.value(), tcgV.width());
+        expressionNode.inputs()
+            .forEach(i ->
+                scheduleImmediateAtStart((ExpressionNode) i, tcgV.width())
+            );
+      } else if (scheduledNode.node() instanceof WriteResourceNode writeResourceNode) {
+        // The value might be a constant.
+        scheduleImmediateAtStart(writeResourceNode.value(), tcgV.width());
 
-      if (writeResourceNode instanceof WriteMemNode writeMemNode) {
-        // Only the address of a memory write can be a TCG variable.
-        scheduleImmediateAtStart(writeMemNode.address(), tcgV.width());
+        if (writeResourceNode instanceof WriteMemNode writeMemNode) {
+          // Only the address of a memory write can be a TCG variable.
+          scheduleImmediateAtStart(writeMemNode.address(), tcgV.width());
+        }
+      } else {
+        throw new ViamGraphError("Unexpected scheduled node at %s", dir)
+            .addContext(scheduledNode.node());
       }
-    } else {
-      throw new ViamGraphError("Unexpected scheduled node at %s", dir)
-          .addContext(scheduledNode.node());
     }
-
   }
 
   /**
@@ -179,7 +181,7 @@ class IssTcgConstantScheduler implements CfgTraverser {
     var constName = TcgPassUtils.exprVarName(expressionNode);
     var tcgV = TcgV.constant("const_" + constName, width, expressionNode);
     var refNode = requireNonNull(expressionNode.graph()).addWithInputs(new TcgVRefNode(tcgV));
-    assignments.put(expressionNode, refNode);
+    assignments.put(expressionNode, List.of(refNode));
     startNode.addAfter(TcgGetVar.from(refNode));
   }
 

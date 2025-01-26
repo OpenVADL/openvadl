@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
@@ -63,8 +62,8 @@ public class TcgSetIsJmp extends TcgNode {
   }
 
   @Override
-  public @Nullable TcgVRefNode definedVar() {
-    return null;
+  public List<TcgVRefNode> definedVars() {
+    return List.of();
   }
 
   @Override

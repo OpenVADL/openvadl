@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -115,7 +116,7 @@ class IssVariableAllocator {
    * @param graph The dependency graph of the instruction's behavior.
    */
   public IssVariableAllocator(Graph graph,
-                              Map<DependencyNode, TcgVRefNode> ssaAssignments) {
+                              Map<DependencyNode, List<TcgVRefNode>> ssaAssignments) {
     this.graph = graph;
     this.startNode = getSingleNode(graph, StartNode.class);
     this.livenessAnalysis = new LivenessAnalysis(ssaAssignments);
@@ -218,8 +219,8 @@ class IssVariableAllocator {
       Set<TcgVRefNode> liveOut = livenessAnalysis.getOutValue(node);
 
       // For each variable defined at this node, it interferes with all variables live-out
-      var def = node.definedVar();
-      if (def != null) {
+      var defs = node.definedVars();
+      for (var def : defs) {
         for (var live : liveOut) {
           infGraph.addEdge(def, live);
         }
@@ -259,13 +260,14 @@ class IssVariableAllocator {
  */
 class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
 
-  private final Map<DependencyNode, TcgVRefNode> tempAssignments;
+  private final Map<DependencyNode, List<TcgVRefNode>> tempAssignments;
   private final Map<RegisterFile, List<TcgVRefNode>> registerFileVars;
 
-  public LivenessAnalysis(Map<DependencyNode, TcgVRefNode> tempAssignments) {
+  public LivenessAnalysis(Map<DependencyNode, List<TcgVRefNode>> tempAssignments) {
     this.tempAssignments = tempAssignments;
     // collect all registerFileVariables to their respective registerFile
     this.registerFileVars = tempAssignments.values().stream()
+        .flatMap(Collection::stream)
         .filter(v -> v.var().kind() == TcgV.Kind.REG_FILE)
         .collect(Collectors.groupingBy(
             v -> (RegisterFile) requireNonNull(v.var().registerOrFile())));
@@ -312,11 +314,13 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
     // We have to assume that all registers and register files are used
     // after this instruciton. Thus we have to set them used at the end of the instruction.
     // We also use constants at the end, so they can't be reassigned
-    return tempAssignments.values().stream().filter(v ->
-        v.var().kind() == TcgV.Kind.REG
-            || v.var().kind() == TcgV.Kind.REG_FILE
-            || v.var().kind() == TcgV.Kind.CONST
-    ).collect(Collectors.toSet());
+    return tempAssignments.values().stream()
+        .flatMap(Collection::stream)
+        .filter(v ->
+            v.var().kind() == TcgV.Kind.REG
+                || v.var().kind() == TcgV.Kind.REG_FILE
+                || v.var().kind() == TcgV.Kind.CONST
+        ).collect(Collectors.toSet());
   }
 
   @Override
@@ -337,12 +341,11 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
    * @param node The control node to analyze.
    * @return The set of variables defined at the node.
    */
-  private Set<TcgVRefNode> defineVariables(ControlNode node) {
+  private List<TcgVRefNode> defineVariables(ControlNode node) {
     if (!(node instanceof TcgNode tcgNode)) {
-      return Set.of();
+      return List.of();
     }
-    var dest = tcgNode.definedVar();
-    return dest == null ? Set.of() : Set.of(dest);
+    return tcgNode.definedVars();
   }
 
   /**
@@ -351,9 +354,9 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
    * @param node The control node to analyze.
    * @return The set of variables used at the node.
    */
-  private Set<TcgVRefNode> usedVariables(ControlNode node) {
+  private List<TcgVRefNode> usedVariables(ControlNode node) {
     if (!(node instanceof TcgNode tcgNode)) {
-      return Set.of();
+      return List.of();
     }
 
     // get variables
@@ -370,7 +373,7 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
     // all variables of the same register file must be considered also used
     // as the concrete register file index is not known
 
-    return directlyUsedVars;
+    return directlyUsedVars.stream().toList();
   }
 
 }

@@ -5,6 +5,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -83,13 +84,13 @@ public class TcgBranchLoweringPass extends Pass {
  */
 class TcgBranchLoweringExecutor implements CfgTraverser {
 
-  Map<DependencyNode, TcgVRefNode> assignments;
+  Map<DependencyNode, List<TcgVRefNode>> assignments;
   @LazyInit
   StartNode startNode;
 
   Graph graph;
 
-  TcgBranchLoweringExecutor(Graph graph, Map<DependencyNode, TcgVRefNode> assignments) {
+  TcgBranchLoweringExecutor(Graph graph, Map<DependencyNode, List<TcgVRefNode>> assignments) {
     this.graph = graph;
     this.assignments = assignments;
   }
@@ -186,7 +187,8 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    */
   private TcgVRefNode getConstantVariable(Tcg_32_64 width, ExpressionNode constant) {
     if (assignments.containsKey(constant)) {
-      return assignments.get(constant);
+      // we know that there is only one destination
+      return assignments.get(constant).get(0);
     }
 
     var constVar = TcgV.constant("const_" + TcgPassUtils.exprVarName(constant), width, constant);
@@ -266,7 +268,11 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    */
   private TcgVRefNode varOf(ExpressionNode node) {
     node.ensure(isTcg(node), "Expected to be a tcg node");
-    return requireNonNull(assignments.get(node));
+    var dests = assignments.get(node);
+    node.ensure(dests != null && dests.size() == 1,
+        "Expected exactly one destination of expression, but got %s",
+        dests);
+    return dests.get(0);
   }
 
   private int labelCnt = 0;

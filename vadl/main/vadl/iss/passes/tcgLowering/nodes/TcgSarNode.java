@@ -21,13 +21,13 @@ public class TcgSarNode extends TcgBinaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgSarNode(dest.copy(TcgVRefNode.class),
+    return new TcgSarNode(firstDest().copy(TcgVRefNode.class),
         arg1.copy(TcgVRefNode.class),
         arg2.copy(TcgVRefNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgSarNode(dest, arg1, arg2);
+    return new TcgSarNode(firstDest(), arg1, arg2);
   }
 }

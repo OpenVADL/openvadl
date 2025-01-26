@@ -14,14 +14,17 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
+import vadl.iss.passes.opDecomposition.IssMul2Node;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGottoTb;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgLookupAndGotoPtr;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgMulNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOrNode;
@@ -136,7 +139,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   /**
    * Map of dependency nodes to their assigned TCG variables.
    */
-  Map<DependencyNode, TcgVRefNode> assignments;
+  Map<DependencyNode, List<TcgVRefNode>> assignments;
 
   /**
    * The scheduled node currently being processed.
@@ -155,7 +158,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    *
    * @param assignments The map of dependency nodes to their assigned TCG variables.
    */
-  public TcgOpLoweringExecutor(Map<DependencyNode, TcgVRefNode> assignments, Tcg_32_64 targetSize) {
+  public TcgOpLoweringExecutor(Map<DependencyNode, List<TcgVRefNode>> assignments,
+                               Tcg_32_64 targetSize) {
     this.assignments = assignments;
     this.targetSize = targetSize;
   }
@@ -240,9 +244,10 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * @return The assigned TCG variable.
    */
   private TcgVRefNode destOf(DependencyNode node) {
-    var tcgV = assignments.get(node);
-    node.ensure(tcgV != null, "Expected to be represented by a TCGv");
-    return tcgV;
+    var tcgVs = assignments.get(node);
+    node.ensure(tcgVs != null && tcgVs.size() == 1,
+        "Expected to be represented by a exact TCGv, but got %s", tcgVs);
+    return tcgVs.get(0);
   }
 
   private boolean isTcg(DependencyNode node) {
@@ -360,6 +365,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var src = destOf(toHandle.value());
     var fromSize = toHandle.value().type().asDataType().bitWidth();
     replaceCurrent(new TcgExtendNode(fromSize, TcgExtend.SIGN, dest, src));
+  }
+
+  @Handler
+  void handle(IssMul2Node toHandle) {
+    var dest = destOf(toHandle);
   }
 
   /**
@@ -506,8 +516,19 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(SliceNode toHandle) {
-    throw new ViamGraphError("Type SliceNode not yet implemented")
-        .addContext(toHandle);
+    var destVar = destOf(toHandle);
+    var srcVar = destOf(toHandle.value());
+    var bitSlice = toHandle.bitSlice();
+    if (!bitSlice.isContinuous()) {
+      // the current implementation can only extract a bitfield but not a
+      // combination of multiple bit fields
+      throw new UnsupportedOperationException("Non continuous slices are not yet implemented");
+    }
+
+    var pos = bitSlice.lsb();
+    var len = bitSlice.bitSize();
+    var node = new TcgExtractNode(destVar, srcVar, pos, len);
+    replaceCurrent(node);
   }
 
   /**
@@ -615,6 +636,18 @@ class BuiltInTcgLoweringExecutor {
             new TcgSubNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
 
+        .set(BuiltInTable.MUL, (ctx) -> out(
+            new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.SMULL, (ctx) -> out(
+            new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.SDIV, (ctx) -> out(
+            new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
         //// Logical ////
 
         .set(BuiltInTable.NOT, (ctx) -> out(
@@ -702,7 +735,7 @@ class BuiltInTcgLoweringExecutor {
    * @return A {@link BuiltInResult} containing the TCG nodes that replace the built-in call.
    */
   public static BuiltInResult lower(BuiltInCall call,
-                                    Map<DependencyNode, TcgVRefNode> assignments,
+                                    Map<DependencyNode, List<TcgVRefNode>> assignments,
                                     Tcg_32_64 targetSize) {
     var context = new Context(assignments, call, targetSize, new HashMap<>());
     var impl = impls.get(call.builtIn());
@@ -727,7 +760,7 @@ class BuiltInTcgLoweringExecutor {
    * Context for lowering a built-in function call.
    */
   private record Context(
-      Map<DependencyNode, TcgVRefNode> assignments,
+      Map<DependencyNode, List<TcgVRefNode>> assignments,
       BuiltInCall call,
       Tcg_32_64 targetSize,
       HashMap<Integer, TcgVRefNode> localTmps
@@ -738,9 +771,10 @@ class BuiltInTcgLoweringExecutor {
      * @return The destination TCG variable.
      */
     private TcgVRefNode dest() {
-      var dest = assignments.get(call);
-      call.ensure(dest != null, "Expected to be represented by a TCGv");
-      return dest;
+      var dests = assignments.get(call);
+      call.ensure(dests != null && dests.size() == 1,
+          "Expected to be represented by a TCGv, but got %s", dests);
+      return dests.get(0);
     }
 
     /**
@@ -752,9 +786,10 @@ class BuiltInTcgLoweringExecutor {
     private TcgVRefNode src(int index) {
       call.ensure(call.arguments().size() > index, "Tried to access arg %s", index);
       var arg = call.arguments().get(index);
-      var src = assignments.get(arg);
-      arg.ensure(src != null, "Expected to be represented by a TCGv");
-      return src;
+      var srcs = assignments.get(arg);
+      call.ensure(srcs != null && srcs.size() == 1,
+          "Expected to be represented by a TCGv, but got %s", srcs);
+      return srcs.get(0);
     }
 
     /**

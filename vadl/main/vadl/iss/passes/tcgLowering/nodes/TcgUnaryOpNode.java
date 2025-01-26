@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -40,7 +38,7 @@ public abstract class TcgUnaryOpNode extends TcgOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return tcgFunctionName() + "(" + dest.varName() + ", " + arg.varName() + ");";
+    return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg.varName() + ");";
   }
 
   @Override
