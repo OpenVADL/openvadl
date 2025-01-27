@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Specification;
@@ -144,6 +145,11 @@ public class PassManager {
     } catch (Exception e) {
       var config = pipeline.get(0).pass().configuration();
       var passClassName = pass.getClass().getSimpleName();
+      // collect latest graphs
+      var graphCollectPass = new CollectBehaviorDotGraphPass(pass.configuration());
+      var graphCollectResult = graphCollectPass.execute(passResults, viam);
+      passResults.add(PassKey.of("BehaviorCollectionOnException"), graphCollectPass, 0,
+          graphCollectResult);
       // on an exception, we do an emergency dump
       var htmlDumpPass = new HtmlDumpPass(HtmlDumpPass.Config
           .from(config, "Exception During " + passClassName,
