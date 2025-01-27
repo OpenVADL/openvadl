@@ -21,6 +21,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSubSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUDivSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulhSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmURemSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmXorSD;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
@@ -102,25 +103,9 @@ public class LcbBuiltInCallNodeReplacement
             .replaceAndDelete(
                 new LlvmMulSD(node.arguments(), ((TruncateNode) truncNode.get()).type()));
       }
-    } else if ((node.builtIn() == BuiltInTable.SUMULL || node.builtIn() == BuiltInTable.SUMULLS)
-        && node.type() instanceof BitsType bitsType) {
-      var hi = bitsType.bitWidth() - 1;
-      var lo = bitsType.bitWidth() / 2;
-
-      // Only replace if the parent is a slice node for the upper part.
-      // Example: SUMULL with return i64
-      // Then we need a SliceNode with 63-32 to lower to mulhs
-      var sliceNode = node.usages().findFirst().filter(x -> x instanceof SliceNode y
-          && y.bitSlice().lsb() == lo
-          && y.bitSlice().msb() == hi);
-      if (sliceNode.isPresent()) {
-        return sliceNode.get()
-            .replaceAndDelete(
-                new LlvmUMulhSD(node.arguments(), ((SliceNode) sliceNode.get()).type()));
-      }
     }
 
-    throw Diagnostic.error("Lowering to LLVM was not implemented", node.sourceLocation()).build();
+    return node.replaceAndDelete(new LlvmUnlowerableSD(node.arguments(), node.type()));
   }
 
   @Override

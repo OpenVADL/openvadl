@@ -21,9 +21,10 @@ public class LlvmUnlowerableNodeReplacement
   @Nullable
   @Override
   public LlvmUnlowerableSD visit(LlvmUnlowerableSD node) {
-    if (node.next() != null) {
-      visitApplicable(node.next());
+    for (var arg : node.arguments()) {
+      visitApplicable(arg);
     }
+
     return node;
   }
 
