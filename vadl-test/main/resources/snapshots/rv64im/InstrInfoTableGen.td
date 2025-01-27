@@ -1,4 +1,4 @@
-*
+/*
  * Node representing the frame index.
  * The method CPUDAGToDAGISel::SelectAddrFI is used to determine
  * if the specific register is a frame pointer.
@@ -4319,6 +4319,8 @@ def : Pat<(mul X:$rs1, X:$rs2),
 
 def : Pat<(mulhs X:$rs1, X:$rs2),
         (MULH X:$rs1, X:$rs2)>;
+
+
 
 
 def : Pat<(mulhu X:$rs1, X:$rs2),
