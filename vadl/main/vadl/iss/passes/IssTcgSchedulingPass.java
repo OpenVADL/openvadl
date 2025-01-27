@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -209,6 +210,13 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
       }
       return Optional.of(scheduleNode(readResourceNode));
     } else if (toProcess instanceof DependencyNode node) {
+      if (TcgPassUtils.isTcg(node)) {
+        // the node was already scheduled
+        return node.usages().filter(u -> u instanceof ScheduledNode)
+            .map(ScheduledNode.class::cast)
+            .findFirst();
+      }
+
       // In general, a node is scheduled if one of its inputs is scheduled
       var mustBeScheduled = toProcess.inputs()
           .anyMatch(n -> getResultOf(n).isPresent());

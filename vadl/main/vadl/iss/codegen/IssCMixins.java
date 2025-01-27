@@ -10,6 +10,7 @@ import vadl.viam.graph.Node;
 public interface IssCMixins {
 
   interface Invalid extends IssMul2 {
+
   }
 
   interface IssMul2 {

@@ -5,17 +5,13 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgBr;
 import vadl.iss.passes.tcgLowering.nodes.TcgBrCond;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
-import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -33,7 +29,6 @@ import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.passes.CfgTraverser;
 
@@ -62,14 +57,14 @@ public class TcgBranchLoweringPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var varAssignments = passResults.lastResultOf(IssVarSsaAssignment.class,
-        IssVarSsaAssignment.Result.class);
+    var varAssignments = passResults.lastResultOf(IssTcgContextPass.class,
+        IssTcgContextPass.Result.class);
 
     viam.isa().ifPresent(isa -> isa.ownInstructions()
         .forEach(instr ->
             new TcgBranchLoweringExecutor(
                 instr.behavior(),
-                requireNonNull(varAssignments.varAssignments().get(instr))
+                requireNonNull(varAssignments.tcgCtxs().get(instr)).assignment()
             ).run()
         ));
 
@@ -84,13 +79,13 @@ public class TcgBranchLoweringPass extends Pass {
  */
 class TcgBranchLoweringExecutor implements CfgTraverser {
 
-  Map<DependencyNode, List<TcgVRefNode>> assignments;
+  TcgCtx.Assignment assignments;
   @LazyInit
   StartNode startNode;
 
   Graph graph;
 
-  TcgBranchLoweringExecutor(Graph graph, Map<DependencyNode, List<TcgVRefNode>> assignments) {
+  TcgBranchLoweringExecutor(Graph graph, TcgCtx.Assignment assignments) {
     this.graph = graph;
     this.assignments = assignments;
   }
@@ -145,7 +140,6 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
 
     // produce 0 value node to compare to
     var constZero = getConstantVariable(
-        condVar.width(),
         new ConstantNode(Constant.Value.of(
             0,
             Type.bits(condVar.width().width)
@@ -182,19 +176,11 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Checks if a TCGv for the given constant already exists.
-   * If not, it returns a new constant and adds the constant creation to the instruction start.
+   * Returns the constant variable for a constant expression.
    */
-  private TcgVRefNode getConstantVariable(Tcg_32_64 width, ExpressionNode constant) {
-    if (assignments.containsKey(constant)) {
-      // we know that there is only one destination
-      return assignments.get(constant).get(0);
-    }
-
-    var constVar = TcgV.constant("const_" + TcgPassUtils.exprVarName(constant), width, constant);
-    var refNode = graph.addWithInputs(new TcgVRefNode(constVar));
-    startNode.addAfter(TcgGetVar.from(refNode));
-    return refNode;
+  private TcgVRefNode getConstantVariable(ExpressionNode constant) {
+    constant.ensure(!TcgPassUtils.isTcg(constant), "Node is not an immediate/constant but a TCG.");
+    return assignments.singleDestOf(constant);
   }
 
   /**
@@ -256,7 +242,7 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    * @return {@code true} if the node is associated with a TCG variable; {@code false} otherwise
    */
   private boolean isTcg(ExpressionNode node) {
-    return assignments.containsKey(node);
+    return TcgPassUtils.isTcg(node);
   }
 
   /**
@@ -268,11 +254,7 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    */
   private TcgVRefNode varOf(ExpressionNode node) {
     node.ensure(isTcg(node), "Expected to be a tcg node");
-    var dests = assignments.get(node);
-    node.ensure(dests != null && dests.size() == 1,
-        "Expected exactly one destination of expression, but got %s",
-        dests);
-    return dests.get(0);
+    return assignments.singleDestOf(node);
   }
 
   private int labelCnt = 0;

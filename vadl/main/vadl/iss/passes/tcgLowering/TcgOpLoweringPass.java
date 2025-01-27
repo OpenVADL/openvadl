@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.IssVarSsaAssignment;
+import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
@@ -52,6 +52,7 @@ import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
@@ -124,12 +125,12 @@ public class TcgOpLoweringPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var assignments = passResults.lastResultOf(IssVarSsaAssignment.class,
-        IssVarSsaAssignment.Result.class);
+    var assignments = passResults.lastResultOf(IssTcgContextPass.class,
+        IssTcgContextPass.Result.class);
 
     viam.isa().get().ownInstructions()
         .forEach(i ->
-            new TcgOpLoweringExecutor(requireNonNull(assignments.varAssignments().get(i)),
+            new TcgOpLoweringExecutor(requireNonNull(assignments.tcgCtxs().get(i)).assignment(),
                 configuration().targetSize())
                 .runOn(i.behavior()));
 
@@ -145,7 +146,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   /**
    * Map of dependency nodes to their assigned TCG variables.
    */
-  Map<DependencyNode, List<TcgVRefNode>> assignments;
+  TcgCtx.Assignment assignments;
 
   /**
    * The scheduled node currently being processed.
@@ -166,7 +167,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    *
    * @param assignments The map of dependency nodes to their assigned TCG variables.
    */
-  public TcgOpLoweringExecutor(Map<DependencyNode, List<TcgVRefNode>> assignments,
+  public TcgOpLoweringExecutor(TcgCtx.Assignment assignments,
                                Tcg_32_64 targetSize) {
     this.assignments = assignments;
     this.targetSize = targetSize;
@@ -185,6 +186,14 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     // lower all nodes
     var start = getSingleNode(graph, StartNode.class);
     traverseBranch(start);
+
+    // remove side effects from the end node (no longer needed there).
+    // it just makes the graph bloated.
+    var instrEndNode = getSingleNode(graph, InstrEndNode.class);
+    instrEndNode.replaceAndDelete(new InstrEndNode(new NodeList<>()));
+
+    // finally, delete all scheduled nodes
+    graph.deleteDanglingControlNodes();
   }
 
   /**
@@ -254,10 +263,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * @return The assigned TCG variable.
    */
   private TcgVRefNode singleDestOf(DependencyNode node) {
-    var tcgVs = assignments.get(node);
-    node.ensure(tcgVs != null && tcgVs.size() == 1,
-        "Expected to be represented by exact one TCGv, but got %s", tcgVs);
-    return tcgVs.get(0);
+    return assignments.singleDestOf(node);
   }
 
   /**
@@ -267,8 +273,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * @return The assigned TCG variable.
    */
   private List<TcgVRefNode> allDestOf(DependencyNode node) {
-    var tcgVs = assignments.get(node);
-    node.ensure(tcgVs != null && !tcgVs.isEmpty(),
+    var tcgVs = assignments.destOf(node);
+    node.ensure(!tcgVs.isEmpty(),
         "Expected to be represented by at least one TCGv, but got %s", tcgVs);
     return tcgVs;
   }
@@ -280,23 +286,18 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   private TcgVRefNode tmp(int i) {
     return localTmps.computeIfAbsent(i, k -> {
       var name = "tmp_l" + k + "_" + tmpCounter++;
-      return graph.addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize)));
+      return graph.addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize), null));
     });
   }
 
-  private final Map<Constant.Value, TcgVRefNode> localConsts = new HashMap<>();
-
   private TcgVRefNode constant(Constant.Value value) {
-    return localConsts.computeIfAbsent(value, v -> {
-      var constNode = graph.add(new ConstantNode(v));
-      var name = "const_c" + tmpCounter++;
-      return graph.add(new TcgVRefNode(TcgV.constant(name, targetSize, constNode)));
-    });
+    var constNode = graph.add(new ConstantNode(value));
+    return assignments.singleDestOf(constNode);
   }
 
 
   private boolean isTcg(DependencyNode node) {
-    return assignments.containsKey(node);
+    return TcgPassUtils.isTcg(node);
   }
 
   /**
@@ -316,7 +317,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       }
       // Finally replace the scheduled node by the last replacement
       var last = replacements[replacements.length - 1];
-      toReplace.replaceAndLinkAndDelete(last);
+      toReplace.replaceAndLink(last);
     }
   }
 
@@ -337,7 +338,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   void handle(InstrExitNode node) {
     if (isTcg(node.pcWrite())) {
       // if the pc is not statically defined, we must jump to the current PC
-      node.replaceAndLinkAndDelete(
+      node.replaceAndLink(
           new TcgLookupAndGotoPtr()
       );
     } else {
@@ -353,7 +354,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       }
 
       // Address jump to value
-      node.replaceAndLinkAndDelete(
+      node.replaceAndLink(
           new TcgGottoTb(pcWrite.value(), jmpSlot));
     }
   }
@@ -692,6 +693,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
 }
 
+
 /**
  * Represents the result of lowering a built-in function call to TCG nodes.
  *
@@ -856,7 +858,7 @@ class BuiltInTcgLoweringExecutor {
    * @return A {@link BuiltInResult} containing the TCG nodes that replace the built-in call.
    */
   public static BuiltInResult lower(BuiltInCall call,
-                                    Map<DependencyNode, List<TcgVRefNode>> assignments,
+                                    TcgCtx.Assignment assignments,
                                     Tcg_32_64 targetSize) {
     var context = new Context(assignments, call, targetSize, new HashMap<>());
     var impl = impls.get(call.builtIn());
@@ -881,7 +883,7 @@ class BuiltInTcgLoweringExecutor {
    * Context for lowering a built-in function call.
    */
   private record Context(
-      Map<DependencyNode, List<TcgVRefNode>> assignments,
+      TcgCtx.Assignment assignments,
       BuiltInCall call,
       Tcg_32_64 targetSize,
       HashMap<Integer, TcgVRefNode> localTmps
@@ -892,10 +894,7 @@ class BuiltInTcgLoweringExecutor {
      * @return The destination TCG variable.
      */
     private TcgVRefNode dest() {
-      var dests = assignments.get(call);
-      call.ensure(dests != null && dests.size() == 1,
-          "Expected to be represented by a TCGv, but got %s", dests);
-      return dests.get(0);
+      return assignments.singleDestOf(call);
     }
 
     /**
@@ -907,10 +906,7 @@ class BuiltInTcgLoweringExecutor {
     private TcgVRefNode src(int index) {
       call.ensure(call.arguments().size() > index, "Tried to access arg %s", index);
       var arg = call.arguments().get(index);
-      var srcs = assignments.get(arg);
-      call.ensure(srcs != null && srcs.size() == 1,
-          "Expected to be represented by a TCGv, but got %s", srcs);
-      return srcs.get(0);
+      return assignments.singleDestOf(arg);
     }
 
     /**
@@ -923,7 +919,7 @@ class BuiltInTcgLoweringExecutor {
     private TcgVRefNode tmp(int i) {
       return localTmps.computeIfAbsent(i, (k) -> {
         var name = "tmp_" + call.id + "_" + k;
-        return graph().addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize)));
+        return graph().addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize), null));
       });
     }
 

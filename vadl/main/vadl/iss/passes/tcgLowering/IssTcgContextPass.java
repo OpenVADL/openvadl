@@ -1,0 +1,62 @@
+package vadl.iss.passes.tcgLowering;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import vadl.configuration.IssConfiguration;
+import vadl.pass.Pass;
+import vadl.pass.PassName;
+import vadl.pass.PassResults;
+import vadl.viam.Instruction;
+import vadl.viam.Specification;
+
+/**
+ *
+ */
+public class IssTcgContextPass extends Pass {
+
+  // TODO: Update documentation
+
+  /**
+   *
+   */
+  public record Result(
+      Map<Instruction, TcgCtx> tcgCtxs
+  ) {
+  }
+
+  public IssTcgContextPass(IssConfiguration configuration) {
+    super(configuration);
+  }
+
+  @Override
+  public PassName getName() {
+    return PassName.of("ISS TCG Context Pass");
+  }
+
+  @Override
+  public IssConfiguration configuration() {
+    return (IssConfiguration) super.configuration();
+  }
+
+  @Override
+  public Result execute(PassResults passResults, Specification viam)
+      throws IOException {
+
+    var targetSize = configuration().targetSize();
+
+    var result = new Result(new HashMap<>());
+
+    // Process each instruction in the ISA
+    viam.isa().ifPresent(isa -> isa.ownInstructions()
+        .forEach(instr -> {
+              // Create context
+              var ctx = new TcgCtx(instr.behavior(), targetSize);
+              // Store the context
+              result.tcgCtxs.put(instr, ctx);
+            }
+        ));
+
+    return result;
+  }
+}

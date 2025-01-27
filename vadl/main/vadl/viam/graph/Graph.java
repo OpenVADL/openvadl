@@ -317,6 +317,15 @@ public class Graph {
   }
 
   /**
+   * Removes all control nodes that with no predecessor and no successor.
+   */
+  public void deleteDanglingControlNodes() {
+    getNodes(ControlNode.class)
+        .filter(c -> c.predecessor() == null && c.successors().findAny().isEmpty())
+        .forEach(Node::safeDelete);
+  }
+
+  /**
    * This method removes all unused dependencies from the graph.
    * Helpful if a pass manipulates the graph such that there are dependency nodes that
    * are not used by any other node (usage count = 0)
