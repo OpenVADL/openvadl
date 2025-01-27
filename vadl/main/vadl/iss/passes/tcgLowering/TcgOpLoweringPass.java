@@ -19,17 +19,20 @@ import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGottoTb;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgLookupAndGotoPtr;
+import vadl.iss.passes.tcgLowering.nodes.TcgMovCondNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgMul2Node;
 import vadl.iss.passes.tcgLowering.nodes.TcgMulNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOrNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgRemNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSarNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetCond;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetIsJmp;
@@ -46,6 +49,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
+import vadl.viam.Constant;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.ViamGraphError;
@@ -270,13 +274,23 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   // TODO: Refactor to use context instead
-  private Map<Integer, TcgVRefNode> localTmps = new HashMap<>();
+  private final Map<Integer, TcgVRefNode> localTmps = new HashMap<>();
   private int tmpCounter = 0;
 
   private TcgVRefNode tmp(int i) {
     return localTmps.computeIfAbsent(i, k -> {
       var name = "tmp_l" + k + "_" + tmpCounter++;
       return graph.addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize)));
+    });
+  }
+
+  private final Map<Constant.Value, TcgVRefNode> localConsts = new HashMap<>();
+
+  private TcgVRefNode constant(Constant.Value value) {
+    return localConsts.computeIfAbsent(value, v -> {
+      var constNode = graph.add(new ConstantNode(v));
+      var name = "const_c" + tmpCounter++;
+      return graph.add(new TcgVRefNode(TcgV.constant(name, targetSize, constNode)));
     });
   }
 
@@ -559,9 +573,19 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * @param toHandle The node to handle.
    * @throws UnsupportedOperationException Always thrown.
    */
+  // TODO: This should be moved to the branch lowering pass.
+  //   Currently all expressions are executed even if they are not required.
   @Handler
   void handle(SelectNode toHandle) {
-    throw new UnsupportedOperationException("Type SelectNode not yet implemented");
+    var dest = singleDestOf(toHandle);
+    var cond1Src = singleDestOf(toHandle.condition());
+    var cond2Src = constant(Constant.Value.of(true));
+    var trueSrc = singleDestOf(toHandle.trueCase());
+    var falseSrc = singleDestOf(toHandle.falseCase());
+
+    replaceCurrent(
+        new TcgMovCondNode(dest, cond1Src, cond2Src, trueSrc, falseSrc, TcgCondition.EQ)
+    );
   }
 
   /**
@@ -730,7 +754,19 @@ class BuiltInTcgLoweringExecutor {
         })
 
         .set(BuiltInTable.SDIV, (ctx) -> out(
-            new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
+            new TcgDivNode(true, ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.UDIV, (ctx) -> out(
+            new TcgDivNode(false, ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.SMOD, (ctx) -> out(
+            new TcgRemNode(true, ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.UMOD, (ctx) -> out(
+            new TcgRemNode(false, ctx.dest(), ctx.src(0), ctx.src(1))
         ))
 
         //// Logical ////
