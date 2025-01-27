@@ -862,12 +862,13 @@ public abstract class Constant {
     // cache the statistic summary for performance
     private final IntSummaryStatistics statistics;
 
+
     /**
      * The constructor of a BitSlice from an array of sub-ranges (parts).
      *
      * <p>The resulting BitSlice is normalized to the least necessary parts.</p>
      */
-    public BitSlice(Part[] parts) {
+    public BitSlice(Part... parts) {
       super(Type.bitSlice());
 
       ViamError.ensure(parts.length > 0,

@@ -19,7 +19,6 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
@@ -34,7 +33,8 @@ import vadl.viam.graph.dependency.FieldRefNode;
     include = {"vadl.viam", "vadl.iss"}
 )
 public class IssTranslateCodeGenerator implements CDefaultMixins.All,
-    CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads, CInvalidMixins.InstrCall {
+    CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads, CInvalidMixins.InstrCall,
+    IssCMixins.Invalid {
 
   private Instruction insn;
   private boolean generateInsnCount = false;
@@ -69,7 +69,7 @@ public class IssTranslateCodeGenerator implements CDefaultMixins.All,
     var generator = new IssTranslateCodeGenerator(def, generateInsnCount);
     return generator.fetch();
   }
-  
+
   private String fetch() {
 
     var name = insn.identifier.simpleName().toLowerCase();

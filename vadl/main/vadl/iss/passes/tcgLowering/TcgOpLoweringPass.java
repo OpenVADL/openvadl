@@ -14,7 +14,8 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.opDecomposition.IssMul2Node;
+import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
+import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
@@ -24,6 +25,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgGottoTb;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgLookupAndGotoPtr;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgMul2Node;
 import vadl.iss.passes.tcgLowering.nodes.TcgMulNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
@@ -146,6 +148,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @LazyInit
   ScheduledNode toReplace;
+  @LazyInit
+  Graph graph;
 
   Tcg_32_64 targetSize;
 
@@ -170,6 +174,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    * @param graph The graph to process.
    */
   void runOn(Graph graph) {
+    this.graph = graph;
     // first set jump, as later the info isn't available anymore
     setJmp(graph);
 
@@ -239,16 +244,42 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   /**
    * Retrieves the TCG variable assigned to the given dependency node.
+   * It requires that it has only a single destination.
    *
    * @param node The dependency node.
    * @return The assigned TCG variable.
    */
-  private TcgVRefNode destOf(DependencyNode node) {
+  private TcgVRefNode singleDestOf(DependencyNode node) {
     var tcgVs = assignments.get(node);
     node.ensure(tcgVs != null && tcgVs.size() == 1,
-        "Expected to be represented by a exact TCGv, but got %s", tcgVs);
+        "Expected to be represented by exact one TCGv, but got %s", tcgVs);
     return tcgVs.get(0);
   }
+
+  /**
+   * Retrieves all TCG variables assigned to the given dependency node.
+   *
+   * @param node The dependency node.
+   * @return The assigned TCG variable.
+   */
+  private List<TcgVRefNode> allDestOf(DependencyNode node) {
+    var tcgVs = assignments.get(node);
+    node.ensure(tcgVs != null && !tcgVs.isEmpty(),
+        "Expected to be represented by at least one TCGv, but got %s", tcgVs);
+    return tcgVs;
+  }
+
+  // TODO: Refactor to use context instead
+  private Map<Integer, TcgVRefNode> localTmps = new HashMap<>();
+  private int tmpCounter = 0;
+
+  private TcgVRefNode tmp(int i) {
+    return localTmps.computeIfAbsent(i, k -> {
+      var name = "tmp_l" + k + "_" + tmpCounter++;
+      return graph.addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize)));
+    });
+  }
+
 
   private boolean isTcg(DependencyNode node) {
     return assignments.containsKey(node);
@@ -322,9 +353,13 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(ExprSaveNode toHandle) {
-    var destVar = destOf(toHandle);
-    var srcVar = destOf(toHandle.value());
-    replaceCurrent(new TcgMoveNode(destVar, srcVar));
+    var destVar = singleDestOf(toHandle);
+    var srcVar = singleDestOf(toHandle.value());
+    if (destVar.equals(srcVar)) {
+      replaceCurrent();
+    } else {
+      replaceCurrent(new TcgMoveNode(destVar, srcVar));
+    }
   }
 
   /**
@@ -334,8 +369,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(TruncateNode toHandle) {
-    var dest = destOf(toHandle);
-    var src = destOf(toHandle.value());
+    var dest = singleDestOf(toHandle);
+    var src = singleDestOf(toHandle.value());
     replaceCurrent(new TcgTruncateNode(dest, src, toHandle.type().bitWidth()));
   }
 
@@ -346,8 +381,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(ZeroExtendNode toHandle) {
-    var dest = destOf(toHandle);
-    var src = destOf(toHandle.value());
+    var dest = singleDestOf(toHandle);
+    var src = singleDestOf(toHandle.value());
     // TODO: This must be either optimized earlier, or be fixed.
     //   the current solution isn't good.
     // Nothing to do; zero extension is implied in TCG operations
@@ -361,15 +396,36 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(SignExtendNode toHandle) {
-    var dest = destOf(toHandle);
-    var src = destOf(toHandle.value());
+    var dest = singleDestOf(toHandle);
+    var src = singleDestOf(toHandle.value());
     var fromSize = toHandle.value().type().asDataType().bitWidth();
     replaceCurrent(new TcgExtendNode(fromSize, TcgExtend.SIGN, dest, src));
   }
 
+  /**
+   * Translates the IssMul2 built-in into a TCG mul2 (unsigned or signed).
+   * It is special, as mul2 returns two results.
+   * The upper half and the lower half.
+   */
   @Handler
   void handle(IssMul2Node toHandle) {
-    var dest = destOf(toHandle);
+    var dests = allDestOf(toHandle);
+    var lowerHalfDest = dests.get(0);
+    var upperHalfDest = dests.get(1);
+
+    var arg1 = singleDestOf(toHandle.arg1());
+    var arg2 = singleDestOf(toHandle.arg2());
+
+    replaceCurrent(new TcgMul2Node(toHandle.kind(), lowerHalfDest, upperHalfDest, arg1, arg2));
+  }
+
+  @Handler
+  void handle(IssMulhNode toHandle) {
+    var hDest = singleDestOf(toHandle);
+    var lTmpTest = tmp(0);
+    var arg1 = singleDestOf(toHandle.arg1());
+    var arg2 = singleDestOf(toHandle.arg2());
+    replaceCurrent(new TcgMul2Node(toHandle.kind(), lTmpTest, hDest, arg1, arg2));
   }
 
   /**
@@ -414,8 +470,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(ReadMemNode toHandle) {
-    var dest = destOf(toHandle);
-    var src = destOf(toHandle.address());
+    var dest = singleDestOf(toHandle);
+    var src = singleDestOf(toHandle.address());
     var loadSize = Tcg_8_16_32_64.fromWidth(toHandle.type().bitWidth());
 
     // TODO: Don't hardcode this
@@ -433,8 +489,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(WriteRegFileNode toHandle) {
-    var destVar = destOf(toHandle);
-    var srcVar = destOf(toHandle.value());
+    var destVar = singleDestOf(toHandle);
+    var srcVar = singleDestOf(toHandle.value());
     if (destVar.equals(srcVar)) {
       replaceCurrent();
     } else {
@@ -449,8 +505,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(WriteRegNode toHandle) {
-    var destVar = destOf(toHandle);
-    var srcVar = destOf(toHandle.value());
+    var destVar = singleDestOf(toHandle);
+    var srcVar = singleDestOf(toHandle.value());
     if (destVar.width() != srcVar.width()) {
       replaceCurrent();
     } else {
@@ -465,8 +521,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(WriteMemNode toHandle) {
-    var addr = destOf(toHandle.address());
-    var value = destOf(toHandle.value());
+    var addr = singleDestOf(toHandle.address());
+    var value = singleDestOf(toHandle.value());
 
     var storeSize = Tcg_8_16_32_64.from(toHandle.value());
     // TODO: Don't hardcode this
@@ -516,8 +572,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(SliceNode toHandle) {
-    var destVar = destOf(toHandle);
-    var srcVar = destOf(toHandle.value());
+    var destVar = singleDestOf(toHandle);
+    var srcVar = singleDestOf(toHandle.value());
     var bitSlice = toHandle.bitSlice();
     if (!bitSlice.isContinuous()) {
       // the current implementation can only extract a bitfield but not a
@@ -539,7 +595,17 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(TupleGetFieldNode toHandle) {
-    throw new UnsupportedOperationException("Type TupleGetFieldNode not yet implemented");
+    var dest = singleDestOf(toHandle);
+    var srcs = allDestOf(toHandle.expression());
+    toHandle.ensure(toHandle.index() < srcs.size(), "Get tuple index out of bounds.");
+    var src = srcs.get(toHandle.index());
+
+    if (dest.equals(src)) {
+      // if dest equals src, we don't emit move
+      replaceCurrent();
+    } else {
+      replaceCurrent(new TcgMoveNode(dest, src));
+    }
   }
 
   //// Nodes that should never be handled ////
@@ -631,7 +697,6 @@ class BuiltInTcgLoweringExecutor {
             new TcgAddNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
 
-
         .set(BuiltInTable.SUB, (ctx) -> out(
             new TcgSubNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
@@ -640,9 +705,29 @@ class BuiltInTcgLoweringExecutor {
             new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
 
-        .set(BuiltInTable.SMULL, (ctx) -> out(
-            new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
-        ))
+        .set(BuiltInTable.SMULL, (ctx) -> {
+          ctx.call.ensure(ctx.call.type().asDataType().bitWidth() <= ctx.targetSize.width,
+              "Result does not fit. Should be decomposed before.");
+          return out(
+              new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
+          );
+        })
+
+        .set(BuiltInTable.SMULL, (ctx) -> {
+          ctx.call.ensure(ctx.call.type().asDataType().bitWidth() <= ctx.targetSize.width,
+              "Result does not fit. Should be decomposed before.");
+          return out(
+              new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
+          );
+        })
+
+        .set(BuiltInTable.SMULL, (ctx) -> {
+          ctx.call.ensure(ctx.call.type().asDataType().bitWidth() <= ctx.targetSize.width,
+              "Result does not fit. Should be decomposed before.");
+          return out(
+              new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
+          );
+        })
 
         .set(BuiltInTable.SDIV, (ctx) -> out(
             new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))

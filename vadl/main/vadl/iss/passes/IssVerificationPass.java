@@ -9,14 +9,18 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.error.DiagnosticBuilder;
 import vadl.error.DiagnosticList;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.ViamUtils;
 import vadl.viam.Counter;
+import vadl.viam.DefProp;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * A pass that verifies that all necessary information required to generate a QEMU ISS are present.
@@ -47,6 +51,9 @@ public class IssVerificationPass extends AbstractIssPass {
     checkRegisterFiles(viam, diagnostics);
     checkFormats(viam, diagnostics);
     checkMemory(viam, diagnostics);
+
+    // behavior checks
+    checkSlice(viam, diagnostics);
 
     if (!diagnostics.isEmpty()) {
       // if we found diagnostics, we throw them
@@ -227,6 +234,22 @@ public class IssVerificationPass extends AbstractIssPass {
       }
     }
 
+  }
+
+  // checks if all slices are not greater than 64 bit
+  private void checkSlice(Specification viam, List<DiagnosticBuilder> diagnostics) {
+    ViamUtils.findDefinitionsByFilter(viam, d -> d instanceof DefProp.WithBehavior)
+        .stream()
+        .map(DefProp.WithBehavior.class::cast)
+        .flatMap(b -> b.behaviors().stream())
+        .flatMap(b -> b.getNodes(SliceNode.class))
+        .filter(s -> s.bitSlice().bitSize() > 64)
+        .forEach(s -> {
+          diagnostics.add(error("Slice result greater than 64 bit", s)
+              .description("Currently the ISS requires slices to be less or equal 64 bit.")
+              .note("This is because the QEMU implementation only handles 64 bit.")
+          );
+        });
   }
 
   private int targetWidth(int thisWidth) {

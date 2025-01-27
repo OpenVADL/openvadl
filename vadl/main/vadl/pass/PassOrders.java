@@ -33,6 +33,7 @@ import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.passes.decode.qemu.QemuDecodeLoweringPass;
 import vadl.iss.passes.decode.qemu.QemuDecodeSymbolResolvingPass;
+import vadl.iss.passes.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
@@ -353,6 +354,7 @@ public class PassOrders {
     order
         .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config))
+        .add(new IssOpDecompositionPass(config))
         .add(new SideEffectSchedulingPass(config))
         .add(new IssSafeResourceReadPass(config))
         .add(new IssPcAccessConversionPass(config))

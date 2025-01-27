@@ -3,6 +3,7 @@ package vadl.iss.passes.tcgLowering.nodes;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.Input;
@@ -75,8 +76,10 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
+    var destArgs = destinations().stream().map(TcgVRefNode::cCode)
+        .collect(Collectors.joining(", "));
     return tcgFunctionName() + "_" + width() + "("
-        + firstDest().cCode() + ", "
+        + destArgs + ", "
         + arg1.cCode() + ", "
         + arg2.cCode()
         + ");";
