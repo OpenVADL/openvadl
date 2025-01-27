@@ -302,7 +302,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             null,
             null);
         read.setSourceLocation(statement.sourceLocation());
-        Objects.requireNonNull(currentGraph).addWithInputs(read);
+        read = Objects.requireNonNull(currentGraph).addWithInputs(read);
         return SubgraphContext.of(read, read);
       }
 
