@@ -128,7 +128,7 @@ public class TcgCtx {
 
     private TcgVRefNode createConstExprVar(ExpressionNode expr) {
       return toNode(TcgV.constant(
-          "const_" + TcgPassUtils.exprVarName(expr),
+          "const_" + TcgPassUtils.exprVarName(expr) + "_n" + expr.id,
           targetSize, expr
       ), expr);
     }

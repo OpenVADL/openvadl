@@ -24,7 +24,7 @@ class AbstractTestCaseExecutor:
     async def exec(self):
         raise NotImplementedError("This method must be implemented by the subclass")
 
-    async def compile_and_link(self, arch: str = "rv64i_zicsr", abi: str = "lp64"):
+    async def compile_and_link(self, arch: str = "rv64im_zicsr", abi: str = "lp64"):
         # build assembly source
         asm_source = self._tmp_file(f"asm-{self.spec.id}.s")
         self._build_assembly_test(self.spec.asm_core, asm_source)

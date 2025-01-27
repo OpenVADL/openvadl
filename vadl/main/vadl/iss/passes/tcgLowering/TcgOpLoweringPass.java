@@ -735,11 +735,13 @@ class BuiltInTcgLoweringExecutor {
           ctx.call.ensure(ctx.call.type().asDataType().bitWidth() <= ctx.targetSize.width,
               "Result does not fit. Should be decomposed before.");
           return out(
-              new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
+              new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
+              new TcgExtendNode(ctx.argWidth(1), TcgExtend.SIGN, ctx.tmp(1), ctx.src(1)),
+              new TcgMulNode(ctx.dest(), ctx.tmp(0), ctx.tmp(1))
           );
         })
 
-        .set(BuiltInTable.SMULL, (ctx) -> {
+        .set(BuiltInTable.UMULL, (ctx) -> {
           ctx.call.ensure(ctx.call.type().asDataType().bitWidth() <= ctx.targetSize.width,
               "Result does not fit. Should be decomposed before.");
           return out(
@@ -747,16 +749,19 @@ class BuiltInTcgLoweringExecutor {
           );
         })
 
-        .set(BuiltInTable.SMULL, (ctx) -> {
+        .set(BuiltInTable.SUMULL, (ctx) -> {
           ctx.call.ensure(ctx.call.type().asDataType().bitWidth() <= ctx.targetSize.width,
               "Result does not fit. Should be decomposed before.");
           return out(
-              new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
+              new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
+              new TcgMulNode(ctx.dest(), ctx.tmp(0), ctx.src(1))
           );
         })
 
         .set(BuiltInTable.SDIV, (ctx) -> out(
-            new TcgDivNode(true, ctx.dest(), ctx.src(0), ctx.src(1))
+            new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
+            new TcgExtendNode(ctx.argWidth(1), TcgExtend.SIGN, ctx.tmp(1), ctx.src(1)),
+            new TcgDivNode(true, ctx.dest(), ctx.tmp(0), ctx.tmp(1))
         ))
 
         .set(BuiltInTable.UDIV, (ctx) -> out(
@@ -764,7 +769,9 @@ class BuiltInTcgLoweringExecutor {
         ))
 
         .set(BuiltInTable.SMOD, (ctx) -> out(
-            new TcgRemNode(true, ctx.dest(), ctx.src(0), ctx.src(1))
+            new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
+            new TcgExtendNode(ctx.argWidth(1), TcgExtend.SIGN, ctx.tmp(1), ctx.src(1)),
+            new TcgRemNode(true, ctx.dest(), ctx.tmp(0), ctx.tmp(1))
         ))
 
         .set(BuiltInTable.UMOD, (ctx) -> out(
