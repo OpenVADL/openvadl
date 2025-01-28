@@ -19,9 +19,9 @@ public class IssLoweringTest extends AbstractTest {
   @Test
   void issLoweringTest() throws IOException, DuplicatedPassKeyException {
     var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), true));
+        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));
 
-    setupPassManagerAndRunSpec("sys/risc-v/rv64i.vadl",
+    setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
         PassOrders.iss(config)
     );
 

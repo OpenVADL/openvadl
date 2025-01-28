@@ -20,23 +20,22 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.SignExtendNode;
 
 /**
- * This pass manipulates the VIAM with hardcoded elements.
- * E.g. it adds an exception generation to {@code ECALL} instruction because
- * this is not yet supported in the VADL specification.
+ * This pass manipulates the VIAM with hardcoded elements in an early stage.
  */
-public class IssHardcodedTcgAddOnPass extends Pass {
+// TODO: Remove this once frontend is working
+public class IssHardcodedBehaviorAddOnPass extends Pass {
 
-  public IssHardcodedTcgAddOnPass(GeneralConfiguration configuration) {
+  public IssHardcodedBehaviorAddOnPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return PassName.of("ISS Hardcoded TCG Add-Ons");
+    return PassName.of("ISS Hardcoded Behavior Add-Ons");
   }
 
   List<Consumer<Instruction>> instrAddOns = List.of(
-      this::ecallAddExceptionRaise
+      this::mulwChangeSmullToMulBuiltin
   );
 
   @Override
@@ -51,18 +50,26 @@ public class IssHardcodedTcgAddOnPass extends Pass {
     return null;
   }
 
-
-  /*
-   * Add a tcg helper call to raise_exception in ecall. We do this as the current
-   * specification does not yet implement it, however, it is necessary for tests.
-   */
-  private void ecallAddExceptionRaise(Instruction instr) {
-    if (!instr.simpleName().equals("ECALL")) {
+  /* Changes the smull call in MULW to MUL. */
+  private void mulwChangeSmullToMulBuiltin(Instruction instr) {
+    if (!instr.simpleName().equals("MULW")) {
       return;
     }
 
-    var instrEnd = getSingleNode(instr.behavior(), InstrEndNode.class);
-    instrEnd.addBefore(new TcgGenException(0xb));
+    var smull = instr.behavior().getNodes(BuiltInCall.class)
+        .filter(b -> b.builtIn() == BuiltInTable.SMULL)
+        .findFirst().get();
+
+    var mulNew = new BuiltInCall(
+        BuiltInTable.MUL,
+        smull.arguments(),
+        Type.bits(32)
+    );
+    var signExtend = instr.behavior().addWithInputs(
+        new SignExtendNode(mulNew, Type.bits(64))
+    );
+    smull.replaceAndDelete(signExtend);
   }
-  
+
+
 }
