@@ -10,6 +10,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ public class IssRV64IInstrCountingTest extends QemuIssTest {
   private static final Logger log = LoggerFactory.getLogger(IssRV64IInstrCountingTest.class);
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> addi_count_ins() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("ADDI_" + id);
@@ -41,6 +43,7 @@ public class IssRV64IInstrCountingTest extends QemuIssTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> addiw() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("ADDIW_" + id);
@@ -56,6 +59,7 @@ public class IssRV64IInstrCountingTest extends QemuIssTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> lui() throws IOException {
     return runTestsWith((id) -> {
       var b = new RV64ITestBuilder("LUI_" + id);

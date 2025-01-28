@@ -12,12 +12,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.utility.MountableFile;
 
 public class IssCustomTests extends QemuIssTest {
 
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> customTests() {
     var qemuImage = generateIssSimulator("sys/risc-v/rv64i.vadl");
 

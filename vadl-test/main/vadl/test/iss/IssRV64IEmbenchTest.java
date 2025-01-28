@@ -2,6 +2,7 @@ package vadl.test.iss;
 
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.utility.MountableFile;
@@ -13,6 +14,7 @@ public class IssRV64IEmbenchTest extends QemuIssTest {
   private static final Logger log = LoggerFactory.getLogger(IssRV64IEmbenchTest.class);
 
   // TODO: Remove this (it is just for testing purposes)
+  @EnabledIfEnvironmentVariable(named = "test_embench_enabled", matches = "true")
   @Test
   void issLoweringTest() throws IOException, DuplicatedPassKeyException {
     var image = generateIssSimulator("sys/risc-v/rv64i.vadl");
