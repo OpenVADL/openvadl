@@ -11,6 +11,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAndSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmMulSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmOrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSDivSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSMulhSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSRemSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShlSD;
@@ -18,14 +19,19 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSraSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSubSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUDivSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulhSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmURemSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmXorSD;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
 
 /**
  * Replacement strategy for nodes.
@@ -85,9 +91,21 @@ public class LcbBuiltInCallNodeReplacement
       ensure(replaced.graph() != null, "graph must exist");
       replaced.arguments().add(replaced.graph().addWithInputs(newArg));
       return replaced;
-    } else {
-      throw Diagnostic.error("Lowering to LLVM was not implemented", node.sourceLocation()).build();
+    } else if ((node.builtIn() == BuiltInTable.SMULL || node.builtIn() == BuiltInTable.SMULLS)
+        && node.type() instanceof BitsType bitsType) {
+      var trunc = bitsType.bitWidth() / 2;
+
+      // Only replace when parent is a truncate node to the half bit width.
+      var truncNode = node.usages().findFirst().filter(x -> x instanceof TruncateNode y
+          && y.type().bitWidth() == trunc);
+      if (truncNode.isPresent()) {
+        return truncNode.get()
+            .replaceAndDelete(
+                new LlvmMulSD(node.arguments(), ((TruncateNode) truncNode.get()).type()));
+      }
     }
+
+    return node.replaceAndDelete(new LlvmUnlowerableSD(node.arguments(), node.type()));
   }
 
   @Override
