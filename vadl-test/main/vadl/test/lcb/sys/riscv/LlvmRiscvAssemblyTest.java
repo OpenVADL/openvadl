@@ -43,7 +43,7 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
         .map(File::getName);
   }
 
-  @EnabledIfEnvironmentVariable(named = "test.llvm.enabled", matches = "true")
+  @EnabledIfEnvironmentVariable(named = "test_llvm_enabled", matches = "true")
   @TestFactory
   List<DynamicTest> compileLlvm() throws IOException, DuplicatedPassKeyException {
     var target = getTarget();

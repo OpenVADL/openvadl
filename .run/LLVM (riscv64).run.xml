@@ -3,7 +3,7 @@
     <ExternalSystemSettings>
       <option name="env">
         <map>
-          <entry key="test.llvm.enabled" value="true" />
+          <entry key="test_llvm_enabled" value="true" />
         </map>
       </option>
       <option name="executionName" />

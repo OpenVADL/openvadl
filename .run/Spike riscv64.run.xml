@@ -3,7 +3,7 @@
     <ExternalSystemSettings>
       <option name="env">
         <map>
-          <entry key="test.spike.enabled" value="true" />
+          <entry key="test_spike_enabled" value="true" />
         </map>
       </option>
       <option name="executionName" />

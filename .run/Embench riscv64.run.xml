@@ -3,7 +3,7 @@
     <ExternalSystemSettings>
       <option name="env">
         <map>
-          <entry key="test.embench.enabled" value="true" />
+          <entry key="test_embench_enabled" value="true" />
         </map>
       </option>
       <option name="executionName" />
