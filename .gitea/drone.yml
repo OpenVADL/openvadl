@@ -127,6 +127,7 @@ steps:
       - name: docker
         path: /var/run/docker.sock
     environment:
+      isCI: true
       test.llvm.enabled: true
       test.embench.enabled: true
       test.spike.enabled: true
