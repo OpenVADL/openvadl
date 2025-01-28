@@ -15,6 +15,11 @@ import vadl.viam.Format;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
+import vadl.viam.asm.DirectiveMapping;
+import vadl.viam.asm.Modifier;
+import vadl.viam.asm.rules.BuiltinRule;
+import vadl.viam.asm.rules.NonTerminalRule;
+import vadl.viam.asm.rules.TerminalRule;
 
 /**
  * A {@link DumpEntitySupplier} that produces a {@link DefinitionEntity}s for each
@@ -145,6 +150,36 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
 
     // remove it from entities and add it as sub entity to the parent
     replaceAsSubEntityOfParent(fieldAccess);
+  }
+
+  @Override
+  public void visit(DirectiveMapping directive) {
+    // remove it from entities and add it as sub entity to the parent
+    replaceAsSubEntityOfParent(directive);
+  }
+
+  @Override
+  public void visit(Modifier modifier) {
+    // remove it from entities and add it as sub entity to the parent
+    replaceAsSubEntityOfParent(modifier);
+  }
+
+  @Override
+  public void visit(BuiltinRule builtinRule) {
+    // remove it from entities and add it as sub entity to the parent
+    replaceAsSubEntityOfParent(builtinRule);
+  }
+
+  @Override
+  public void visit(TerminalRule terminalRule) {
+    // remove it from entities and add it as sub entity to the parent
+    replaceAsSubEntityOfParent(terminalRule);
+  }
+
+  @Override
+  public void visit(NonTerminalRule nonTerminalRule) {
+    // remove it from entities and add it as sub entity to the parent
+    replaceAsSubEntityOfParent(nonTerminalRule);
   }
 
   /*

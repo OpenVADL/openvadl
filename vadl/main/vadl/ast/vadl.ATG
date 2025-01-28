@@ -1117,8 +1117,8 @@ PRODUCTIONS
     SYM_BRACE_CLOSE
   .
 
-  assemblyModifierDefinition<out AsmModifierDefinition modifier>            (. var start = loc(); .)
-  = stringLiteral<out Expr strLit>
+  assemblyModifierDefinition<out AsmModifierDefinition modifier>
+  = stringLiteral<out Expr strLit>                                          (. var start = loc(); .)
     SYM_ARROW
     assemblyIdentifier<out Identifier isaId>
     SYM_NAMESPACE
@@ -1135,8 +1135,8 @@ PRODUCTIONS
     SYM_BRACE_CLOSE
   .
 
-  assemblyDirectiveDefinition<out AsmDirectiveDefinition definition>        (. var start = loc(); .)
-  = stringLiteral<out Expr strLit>
+  assemblyDirectiveDefinition<out AsmDirectiveDefinition definition>
+  = stringLiteral<out Expr strLit>                                          (. var start = loc(); .)
     SYM_ARROW
     assemblyIdentifier<out Identifier id>                                   (. definition = new AsmDirectiveDefinition(strLit, id, start.join(loc())); .)
   .
@@ -1151,7 +1151,7 @@ PRODUCTIONS
        SYM_BRACE_CLOSE
      .
 
-  assemblyGrammarRuleDefinition<out AsmGrammarRuleDefinition rule>                          (. AsmGrammarTypeDefinition type = null; var start = loc(); .)
+  assemblyGrammarRuleDefinition<out AsmGrammarRuleDefinition rule>                          (. AsmGrammarTypeDefinition type = null; var start = lookaheadLoc(); .)
   = assemblyIdentifier<out Identifier id> [assemblyGrammarTypeDefinition<out type>]
     SYM_COLON
       assemblyGrammarAlternatives<.out AsmGrammarAlternativesDefinition alternatives.>
