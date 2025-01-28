@@ -39,7 +39,7 @@ public class SpikeRiscvImageProvider {
 
       var deleteOnExit = !doDebug;
 
-      if (Boolean.getBoolean(System.getenv("isCI")) && !deleteOnExit) {
+      if ("true".equals(System.getenv("isCI")) && !deleteOnExit) {
         throw new RuntimeException("It is not allowed to activate 'deleteOnExit' in the CI");
       }
 
