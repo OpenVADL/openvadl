@@ -122,6 +122,7 @@ steps:
     image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
     commands:
       - source .env.pipeline
+      - if grep -q -R -P 'ImageFromDockerfile\(.+, false\)' * ; then echo "It is not allowed to store images in the CI." && exit(1); fi
       - '[ "$SKIP_TESTS" = "1" ] || ./.gradlew test --tests at.ac.tuwien.complang.vadl.tests.OpenVADLTestSuite -i'
     volumes:
       - name: docker
