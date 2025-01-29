@@ -9,15 +9,15 @@ import org.testcontainers.utility.MountableFile;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.VadlFileUtils;
 
-public class IssRV64IEmbenchTest extends QemuIssTest {
+public class IssRV64IMEmbenchTest extends QemuIssTest {
 
-  private static final Logger log = LoggerFactory.getLogger(IssRV64IEmbenchTest.class);
+  private static final Logger log = LoggerFactory.getLogger(IssRV64IMEmbenchTest.class);
 
   // TODO: Remove this (it is just for testing purposes)
   @EnabledIfEnvironmentVariable(named = "test_embench_enabled", matches = "true")
   @Test
   void issLoweringTest() throws IOException, DuplicatedPassKeyException {
-    var image = generateIssSimulator("sys/risc-v/rv64i.vadl");
+    var image = generateIssSimulator("sys/risc-v/rv64im.vadl");
 
     // load embench from resources
     var embenchPath = VadlFileUtils.copyResourceDirToTempDir("embench", "embench");
@@ -25,7 +25,7 @@ public class IssRV64IEmbenchTest extends QemuIssTest {
     // build benchmarks for rv64i spike and run benchmarks in generated iss
     var runCommand = "chmod -R +x /work/embench "
         + "&& cd /work/embench "
-        + "&& bash ./build_spike-rv64i.sh "
+        + "&& bash ./build_spike-rv64im.sh "
         + "&& bash ./benchmark_qemu.sh qemu-system-vadl -nographic -M virt -bios";
 
     runContainer(image,
