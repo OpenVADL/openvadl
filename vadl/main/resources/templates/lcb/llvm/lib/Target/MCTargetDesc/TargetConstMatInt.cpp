@@ -3,10 +3,10 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include <cstdint>
 #include <bitset>
-#include "rv32imConstMatInt.h"
-#include "rv32imDAGToDAGISel.h"
-#include "rv32imRegisterInfo.h"
-#include "rv32imSubTarget.h"
+#include "[(${namespace})]ConstMatInt.h"
+#include "[(${namespace})]DAGToDAGISel.h"
+#include "[(${namespace})]RegisterInfo.h"
+#include "[(${namespace})]SubTarget.h"
 
 using namespace llvm;
 
