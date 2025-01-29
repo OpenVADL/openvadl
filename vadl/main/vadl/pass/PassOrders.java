@@ -24,7 +24,6 @@ import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
-import vadl.iss.passes.IssHardcodedBehaviorAddOnPass;
 import vadl.iss.passes.IssHardcodedTcgAddOnPass;
 import vadl.iss.passes.IssPcAccessConversionPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
@@ -354,8 +353,6 @@ public class PassOrders {
     order
         .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config))
-        // TODO: Remove this pass
-        .add(new IssHardcodedBehaviorAddOnPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new SideEffectSchedulingPass(config))
         .add(new IssSafeResourceReadPass(config))
