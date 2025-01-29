@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import org.testcontainers.utility.MountableFile;
+import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -45,6 +46,11 @@ public abstract class QemuIssTest extends DockerExecutionTest {
       new ConcurrentHashMap<>();
 
   private static final Logger log = LoggerFactory.getLogger(QemuIssTest.class);
+
+  @Override
+  public IssConfiguration getConfiguration(boolean doDump) {
+    return IssConfiguration.from(super.getConfiguration(doDump));
+  }
 
   /**
    * This will run the given specification and produces a working docker image that contains
@@ -205,12 +211,13 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
               // use redis cache for building (sccache allows remote caching)
               var cc = "sccache gcc";
-              redisCache.setupEnv(d);
 
               // TODO: update target name
               d.workDir("/qemu/build");
               // configure qemu with the new target from the specification
               d.run("../configure --cc='" + cc + "' --target-list=vadl-softmmu");
+              // setup redis cache endpoint environment variablef
+              redisCache.setupEnv(d);
               // build qemu with all cpu cores and print if cache was used
               d.run("make -j$(nproc) && sccache -s");
               // validate existence of generated qemu iss
