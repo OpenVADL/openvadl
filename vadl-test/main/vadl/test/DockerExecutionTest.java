@@ -237,7 +237,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
     try (GenericContainer<?> container = new GenericContainer<>(image)
         .withLogConsumer(new Slf4jLogConsumer(logger))
         .withNetwork(testNetwork)
-        .withStartupAttempts(0)) {
+        .withStartupAttempts(1)) {
       var modifiedContainer = containerModifier.apply(container);
       modifiedContainer.setStartupAttempts(1);
       modifiedContainer.start();
