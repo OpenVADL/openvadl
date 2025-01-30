@@ -156,6 +156,14 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         matched.put(MachineInstructionLabel.ADDI_32, List.of(instruction));
       } else if (findAddWithImmediate64Bit(behavior)) {
         matched.put(MachineInstructionLabel.ADDI_64, List.of(instruction));
+      } else if (findRR_OR_findRI(behavior, List.of(SDIV, SDIVS))) {
+        extend(matched, MachineInstructionLabel.SDIV, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(UDIV, UDIVS))) {
+        extend(matched, MachineInstructionLabel.UDIV, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(SMOD, SMODS))) {
+        extend(matched, MachineInstructionLabel.SMOD, instruction);
+      } else if (findRR_OR_findRI(behavior, List.of(UMOD, UMODS))) {
+        extend(matched, MachineInstructionLabel.UMOD, instruction);
       } else if (findRR_OR_findRI(behavior, SUB)) {
         extend(matched, MachineInstructionLabel.SUB, instruction);
       } else if (findRR_OR_findRI(behavior, List.of(SUBB, SUBSB))) {
@@ -182,14 +190,6 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         extend(matched, MachineInstructionLabel.XORI, instruction);
       } else if (findRR_Mul(behavior, List.of(MUL, MULS, SMULL, SMULLS))) {
         extend(matched, MachineInstructionLabel.MUL, instruction);
-      } else if (findRR_OR_findRI(behavior, List.of(SDIV, SDIVS))) {
-        extend(matched, MachineInstructionLabel.SDIV, instruction);
-      } else if (findRR_OR_findRI(behavior, List.of(UDIV, UDIVS))) {
-        extend(matched, MachineInstructionLabel.UDIV, instruction);
-      } else if (findRR_OR_findRI(behavior, List.of(SMOD, SMODS))) {
-        extend(matched, MachineInstructionLabel.SMOD, instruction);
-      } else if (findRR_OR_findRI(behavior, List.of(UMOD, UMODS))) {
-        extend(matched, MachineInstructionLabel.UMOD, instruction);
       } else if (findRR(behavior, List.of(LSL, LSLS))) {
         extend(matched, MachineInstructionLabel.SLL, instruction);
       } else if (findRI(behavior, List.of(LSL, LSLS))

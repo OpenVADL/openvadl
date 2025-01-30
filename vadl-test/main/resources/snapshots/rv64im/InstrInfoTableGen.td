@@ -4327,7 +4327,7 @@ def : Pat<(mulhu X:$rs1, X:$rs2),
         (MULHU X:$rs1, X:$rs2)>;
 
 
-def : Pat<(mulhs X:$rs1, X:$rs2),
+def : Pat<(mulh X:$rs1, X:$rs2),
         (MULW X:$rs1, X:$rs2)>;
 
 
