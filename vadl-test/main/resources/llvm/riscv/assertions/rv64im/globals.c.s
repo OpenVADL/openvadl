@@ -4,10 +4,14 @@
 	.type	main,@function
 main:                                   # @main
 # %bb.0:                                # %entry
-	ADDI sp,sp,-32
-	SD fp,24(sp)
-	SD ra,16(sp)
-	ADDI fp,sp,32
+	ADDI a0,zero,0
+	ADDI a0,a0,-32
+	ADD sp,sp,a0
+	SD fp,24(sp)                            # 8-byte Folded Spill
+	SD ra,16(sp)                            # 8-byte Folded Spill
+	ADDI a0,zero,0
+	ADDI a0,a0,32
+	ADD fp,sp,a0
 	ADDI a1,zero,0
 	SW a1,-20(fp)
 	LUI a0,%hi(a)
@@ -16,9 +20,11 @@ main:                                   # @main
 	LW a0,0(a0)
 	SW a0,-24(fp)
 	LW a0,-24(fp)
-	LD ra,16(sp)
-	LD fp,24(sp)
-	ADDI sp,sp,32
+	LD ra,16(sp)                            # 8-byte Folded Spill
+	LD fp,24(sp)                            # 8-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,32
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

@@ -4,10 +4,14 @@
 	.type	arg_spilling,@function
 arg_spilling:                           # @arg_spilling
 # %bb.0:                                # %entry
-	ADDI sp,sp,-64
-	SD fp,56(sp)
-	SD ra,48(sp)
-	ADDI fp,sp,64
+	ADDI t0,zero,0
+	ADDI t0,t0,-64
+	ADD sp,sp,t0
+	SD fp,56(sp)                            # 8-byte Folded Spill
+	SD ra,48(sp)                            # 8-byte Folded Spill
+	ADDI t0,zero,0
+	ADDI t0,t0,64
+	ADD fp,sp,t0
 	ADDI t0,a0,0
 	LD a0,0(fp)
                                         # kill: def $x6 killed $x17
@@ -44,9 +48,11 @@ arg_spilling:                           # @arg_spilling
 	ADD a0,a0,a1
 	LW a1,-52(fp)
 	ADD a0,a0,a1
-	LD ra,48(sp)
-	LD fp,56(sp)
-	ADDI sp,sp,64
+	LD ra,48(sp)                            # 8-byte Folded Spill
+	LD fp,56(sp)                            # 8-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,64
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	arg_spilling, .Lfunc_end0-arg_spilling
@@ -55,10 +61,14 @@ arg_spilling:                           # @arg_spilling
 	.type	arg_spilling_call,@function
 arg_spilling_call:                      # @arg_spilling_call
 # %bb.0:                                # %entry
-	ADDI sp,sp,-32
-	SD fp,24(sp)
-	SD ra,16(sp)
-	ADDI fp,sp,32
+	ADDI a0,zero,0
+	ADDI a0,a0,-32
+	ADD sp,sp,a0
+	SD fp,24(sp)                            # 8-byte Folded Spill
+	SD ra,16(sp)                            # 8-byte Folded Spill
+	ADDI a0,zero,0
+	ADDI a0,a0,32
+	ADD fp,sp,a0
 	ADDI a0,zero,9
 	SD a0,0(sp)
 	ADDI a0,zero,1
@@ -71,9 +81,11 @@ arg_spilling_call:                      # @arg_spilling_call
 	ADDI a7,zero,8
 	LUI ra,%hi(arg_spilling)
 	JALR ra,%lo(arg_spilling)(ra)
-	LD ra,16(sp)
-	LD fp,24(sp)
-	ADDI sp,sp,32
+	LD ra,16(sp)                            # 8-byte Folded Spill
+	LD fp,24(sp)                            # 8-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,32
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end1:
 	.size	arg_spilling_call, .Lfunc_end1-arg_spilling_call

@@ -4,27 +4,34 @@
 	.type	compdecomp,@function
 compdecomp:                             # @compdecomp
 # %bb.0:                                # %entry
-	ADDI sp,sp,-2047
-	ADDI sp,sp,-33
-	ADDI a2,sp,2047
-	ADDI a2,a2,25
-	SD fp,0(a2)
-	ADDI a2,sp,2047
-	ADDI a2,a2,17
-	SD ra,0(a2)
-	ADDI fp,sp,2047
-	ADDI fp,fp,33
+	LUI a2,0xfffff
+	ADDI a2,a2,2016
+	ADD sp,sp,a2
+	LUI a2,0x1
+	ADDI a2,a2,-2024
+	ADD a2,sp,a2
+	SD fp,0(a2)                             # 8-byte Folded Spill
+	LUI a2,0x1
+	ADDI a2,a2,-2032
+	ADD a2,sp,a2
+	SD ra,0(a2)                             # 8-byte Folded Spill
+	LUI a2,0x1
+	ADDI a2,a2,-2016
+	ADD fp,sp,a2
                                         # kill: def $x12 killed $x11
 	SD a0,-24(fp)
 	SW a1,-28(fp)
-	ADDI a0,sp,2047
-	ADDI a0,a0,17
-	LD ra,0(a0)
-	ADDI a0,sp,2047
-	ADDI a0,a0,25
-	LD fp,0(a0)
-	ADDI sp,sp,2047
-	ADDI sp,sp,33
+	LUI a0,0x1
+	ADDI a0,a0,-2032
+	ADD a0,sp,a0
+	LD ra,0(a0)                             # 8-byte Folded Spill
+	LUI a0,0x1
+	ADDI a0,a0,-2024
+	ADD a0,sp,a0
+	LD fp,0(a0)                             # 8-byte Folded Spill
+	LUI a0,0x1
+	ADDI a0,a0,-2016
+	ADD sp,sp,a0
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	compdecomp, .Lfunc_end0-compdecomp
