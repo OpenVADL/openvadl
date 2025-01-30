@@ -596,6 +596,7 @@ public abstract class Constant {
      * The resulting type is the same as this type, the result is truncated on overflow.
      */
     public Constant.Value lsl(Constant.Value other) {
+      other = other.trivialCastTo(Type.unsignedInt(other.type().bitWidth()));
       ensure(other.type().getClass() == UIntType.class,
           "LSL shift argument must be an unsigned integer.");
 
