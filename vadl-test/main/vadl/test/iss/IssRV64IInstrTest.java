@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -216,186 +217,223 @@ public class IssRV64IInstrTest extends QemuIssTest {
 // Test methods using helper functions
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> add() throws IOException {
     return testBinaryRegRegInstruction("add", "ADD");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> sub() throws IOException {
     return testBinaryRegRegInstruction("sub", "SUB");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> and() throws IOException {
     return testBinaryRegRegInstruction("and", "AND");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> or() throws IOException {
     return testBinaryRegRegInstruction("or", "OR");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> xor() throws IOException {
     return testBinaryRegRegInstruction("xor", "XOR");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> slt() throws IOException {
     return testBinaryRegRegInstruction("slt", "SLT");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> sltu() throws IOException {
     return testBinaryRegRegInstruction("sltu", "SLTU");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> addi() throws IOException {
     return testBinaryRegImmInstruction("addi", "ADDI");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> andi() throws IOException {
     return testBinaryRegImmInstruction("andi", "ANDI");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> ori() throws IOException {
     return testBinaryRegImmInstruction("ori", "ORI");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> xori() throws IOException {
     return testBinaryRegImmInstruction("xori", "XORI");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> slti() throws IOException {
     return testBinaryRegImmInstruction("slti", "SLTI");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> sltiu() throws IOException {
     return testBinaryRegImmInstruction("sltiu", "SLTIU");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> slli() throws IOException {
     return testShiftImmInstruction("slli", "SLLI");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> srli() throws IOException {
     return testShiftImmInstruction("srli", "SRLI");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> srai() throws IOException {
     return testShiftImmInstruction("srai", "SRAI");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> lb() throws IOException {
     return testLoadInstruction("lb", "LB", "sb", 8);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> lh() throws IOException {
     return testLoadInstruction("lh", "LH", "sh", 16);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> lw() throws IOException {
     return testLoadInstruction("lw", "LW", "sw", 32);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> ld() throws IOException {
     return testLoadInstruction("ld", "LD", "sd", 64);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> lbu() throws IOException {
     return testLoadInstruction("lbu", "LBU", "sb", 8);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> lhu() throws IOException {
     return testLoadInstruction("lhu", "LHU", "sh", 16);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> lwu() throws IOException {
     return testLoadInstruction("lwu", "LWU", "sw", 32);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> sb() throws IOException {
     return testStoreInstruction("sb", "SB", "lb", 8);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> sh() throws IOException {
     return testStoreInstruction("sh", "SH", "lh", 16);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> sw() throws IOException {
     return testStoreInstruction("sw", "SW", "lw", 32);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> sd() throws IOException {
     return testStoreInstruction("sd", "SD", "ld", 64);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> beq() throws IOException {
     return testEqualityBranchInstruction("beq", "BEQ", true);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> bne() throws IOException {
     return testEqualityBranchInstruction("bne", "BNE", false);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> blt() throws IOException {
     return testRelationalBranchInstruction("blt", "BLT", true, false);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> bge() throws IOException {
     return testRelationalBranchInstruction("bge", "BGE", false, false);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> bltu() throws IOException {
     return testRelationalBranchInstruction("bltu", "BLTU", true, true);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> bgeu() throws IOException {
     return testRelationalBranchInstruction("bgeu", "BGEU", false, true);
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> addw() throws IOException {
     return testBinaryRegRegInstruction("addw", "ADDW");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> subw() throws IOException {
     return testBinaryRegRegInstruction("subw", "SUBW");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> addiw() throws IOException {
     return testBinaryRegImmInstruction("addiw", "ADDIW");
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> sllw() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("SLLW_" + id);
@@ -410,6 +448,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> srlw() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("SRLW_" + id);
@@ -424,6 +463,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> sraw() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("SRAW_" + id);
@@ -438,6 +478,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> slliw() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("SLLIW_" + id);
@@ -451,6 +492,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> srliw() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("SRLIW_" + id);
@@ -464,6 +506,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> sraiw() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("SRAIW_" + id);
@@ -480,6 +523,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
 // The following instructions are unique and might not fit into the above helpers, so we'll keep them as is.
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> lui() throws IOException {
     return runTestsWith((id) -> {
       var b = new RV64ITestBuilder("LUI_" + id);
@@ -491,6 +535,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> auipc() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("AUIPC_" + id);
@@ -502,6 +547,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> jal() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("JAL_" + id);
@@ -519,6 +565,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> jalr() throws IOException {
     return runTestsWith(id -> {
       var b = new RV64ITestBuilder("JALR_" + id);
@@ -549,5 +596,4 @@ public class IssRV64IInstrTest extends QemuIssTest {
         .toList();
     return runQemuInstrTests(image, testCases);
   }
-
 }
