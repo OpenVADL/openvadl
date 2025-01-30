@@ -4,10 +4,14 @@
 	.type	count,@function
 count:                                  # @count
 # %bb.0:                                # %entry
-	ADDI sp,sp,-32
-	SW fp,28(sp)
-	SW ra,24(sp)
-	ADDI fp,sp,32
+	ADDI a1,zero,0
+	ADDI a1,a1,-32
+	ADD sp,sp,a1
+	SW fp,28(sp)                            # 4-byte Folded Spill
+	SW ra,24(sp)                            # 4-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,32
+	ADD fp,sp,a1
 	SW a0,-12(fp)
 	ADDI a0,zero,0
 	SW a0,-16(fp)
@@ -33,9 +37,11 @@ count:                                  # @count
 	JAL zero,.LBB0_1
 .LBB0_4:                                # %for.end
 	LW a0,-16(fp)
-	LW ra,24(sp)
-	LW fp,28(sp)
-	ADDI sp,sp,32
+	LW ra,24(sp)                            # 4-byte Folded Spill
+	LW fp,28(sp)                            # 4-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,32
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	count, .Lfunc_end0-count

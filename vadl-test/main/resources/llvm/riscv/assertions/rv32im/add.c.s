@@ -4,18 +4,24 @@
 	.type	constant_return,@function
 constant_return:                        # @constant_return
 # %bb.0:                                # %entry
-	ADDI sp,sp,-16
-	SW fp,12(sp)
-	SW ra,8(sp)
-	ADDI fp,sp,16
+	ADDI a2,zero,0
+	ADDI a2,a2,-16
+	ADD sp,sp,a2
+	SW fp,12(sp)                            # 4-byte Folded Spill
+	SW ra,8(sp)                             # 4-byte Folded Spill
+	ADDI a2,zero,0
+	ADDI a2,a2,16
+	ADD fp,sp,a2
 	SW a0,-12(fp)
 	SW a1,-16(fp)
 	LW a0,-12(fp)
 	LW a1,-16(fp)
 	ADD a0,a0,a1
-	LW ra,8(sp)
-	LW fp,12(sp)
-	ADDI sp,sp,16
+	LW ra,8(sp)                             # 4-byte Folded Spill
+	LW fp,12(sp)                            # 4-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,16
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	constant_return, .Lfunc_end0-constant_return

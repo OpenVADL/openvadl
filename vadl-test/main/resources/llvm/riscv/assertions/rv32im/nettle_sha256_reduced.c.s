@@ -4,10 +4,14 @@
 	.type	_nettle_sha256_compress,@function
 _nettle_sha256_compress:                # @_nettle_sha256_compress
 # %bb.0:                                # %entry
-	ADDI sp,sp,-144
-	SW fp,140(sp)
-	SW ra,136(sp)
-	ADDI fp,sp,144
+	ADDI a3,zero,0
+	ADDI a3,a3,-144
+	ADD sp,sp,a3
+	SW fp,140(sp)                           # 4-byte Folded Spill
+	SW ra,136(sp)                           # 4-byte Folded Spill
+	ADDI a3,zero,0
+	ADDI a3,a3,144
+	ADD fp,sp,a3
 	SW a0,-12(fp)
 	SW a1,-16(fp)
 	SW a2,-20(fp)
@@ -70,9 +74,11 @@ _nettle_sha256_compress:                # @_nettle_sha256_compress
 	LW a1,0(a0)
 	ADD a1,a1,a2
 	SW a1,0(a0)
-	LW ra,136(sp)
-	LW fp,140(sp)
-	ADDI sp,sp,144
+	LW ra,136(sp)                           # 4-byte Folded Spill
+	LW fp,140(sp)                           # 4-byte Folded Spill
+	ADDI a0,zero,0
+	ADDI a0,a0,144
+	ADD sp,sp,a0
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	_nettle_sha256_compress, .Lfunc_end0-_nettle_sha256_compress

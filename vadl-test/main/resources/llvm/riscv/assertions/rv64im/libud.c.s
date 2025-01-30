@@ -4,10 +4,14 @@
 	.type	ludcmp,@function
 ludcmp:                                 # @ludcmp
 # %bb.0:                                # %entry
-	ADDI sp,sp,-448
-	SD fp,440(sp)
-	SD ra,432(sp)
-	ADDI fp,sp,448
+	ADDI a2,zero,0
+	ADDI a2,a2,-448
+	ADD sp,sp,a2
+	SD fp,440(sp)                           # 8-byte Folded Spill
+	SD ra,432(sp)                           # 8-byte Folded Spill
+	ADDI a2,zero,0
+	ADDI a2,a2,448
+	ADD fp,sp,a2
                                         # kill: def $x12 killed $x11
                                         # kill: def $x12 killed $x10
 	SW a0,-20(fp)
@@ -416,9 +420,11 @@ ludcmp:                                 # @ludcmp
 	JAL zero,.LBB0_31
 .LBB0_38:                               # %for.end96
 	ADDI a0,zero,0
-	LD ra,432(sp)
-	LD fp,440(sp)
-	ADDI sp,sp,448
+	LD ra,432(sp)                           # 8-byte Folded Spill
+	LD fp,440(sp)                           # 8-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,448
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	ludcmp, .Lfunc_end0-ludcmp

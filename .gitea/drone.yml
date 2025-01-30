@@ -122,11 +122,13 @@ steps:
     image: c2.complang.tuwien.ac.at:5000/vadl-ci:f7222374638bccc355ba51bfcc2b17e9561204a4
     commands:
       - source .env.pipeline
+      - if grep -R -P 'ImageFromDockerfile\(.+, false\)' *; then (exit 1); fi
       - '[ "$SKIP_TESTS" = "1" ] || ./.gradlew test --tests at.ac.tuwien.complang.vadl.tests.OpenVADLTestSuite -i'
     volumes:
       - name: docker
         path: /var/run/docker.sock
     environment:
+      isCI: true
       test.llvm.enabled: true
       test.embench.enabled: true
       test.spike.enabled: true

@@ -4,10 +4,14 @@
 	.type	jpegdct,@function
 jpegdct:                                # @jpegdct
 # %bb.0:                                # %entry
-	ADDI sp,sp,-128
-	SD fp,120(sp)
-	SD ra,112(sp)
-	ADDI fp,sp,128
+	ADDI a2,zero,0
+	ADDI a2,a2,-128
+	ADD sp,sp,a2
+	SD fp,120(sp)                           # 8-byte Folded Spill
+	SD ra,112(sp)                           # 8-byte Folded Spill
+	ADDI a2,zero,0
+	ADDI a2,a2,128
+	ADD fp,sp,a2
 	SD a0,-24(fp)
 	SD a1,-32(fp)
 	ADDI a0,zero,1
@@ -123,14 +127,14 @@ jpegdct:                                # @jpegdct
 	LW a1,-40(fp)
 	ADD a0,a0,a1
 	ADDI a4,zero,32
-	SD a4,-116(fp)
+	SD a4,-116(fp)                          # 8-byte Folded Spill
 	SLL a0,a0,a4
 	SRA a0,a0,a4
 	LH a1,-88(fp)
 	ADDI a2,zero,1
 	SLLI a2,a2,32
 	ADDI a2,a2,-1
-	SD a2,-108(fp)
+	SD a2,-108(fp)                          # 8-byte Folded Spill
 	AND a1,a1,a2
 	SRA a1,a0,a1
 	LD a0,-24(fp)
@@ -152,7 +156,7 @@ jpegdct:                                # @jpegdct
 	LW a1,-44(fp)
 	ADD a0,a0,a1
 	ADDI a1,zero,48
-	SD a1,-100(fp)
+	SD a1,-100(fp)                          # 8-byte Folded Spill
 	SLL a0,a0,a1
 	SRA a0,a0,a1
 	LD a3,-32(fp)
@@ -354,9 +358,11 @@ jpegdct:                                # @jpegdct
 	SD a0,-24(fp)
 	JAL zero,.LBB0_1
 .LBB0_12:                               # %for.end239
-	LD ra,112(sp)
-	LD fp,120(sp)
-	ADDI sp,sp,128
+	LD ra,112(sp)                           # 8-byte Folded Spill
+	LD fp,120(sp)                           # 8-byte Folded Spill
+	ADDI a0,zero,0
+	ADDI a0,a0,128
+	ADD sp,sp,a0
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	jpegdct, .Lfunc_end0-jpegdct

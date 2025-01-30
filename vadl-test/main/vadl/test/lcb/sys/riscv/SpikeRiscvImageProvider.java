@@ -24,6 +24,8 @@ public class SpikeRiscvImageProvider {
    *                            compiler.
    * @param spikeTarget         is the ISA for spike to run the executable.
    * @param doDebug             if the flag is {@code true} then the image will not be deleted.
+   * @throws RuntimeException when the {@code isCI} environment variable and {@code doDebug} are
+   *                          activated.
    */
   public static ImageFromDockerfile image(DockerExecutionTest.RedisCache redisCache,
                                           String pathDockerFile,
@@ -34,8 +36,15 @@ public class SpikeRiscvImageProvider {
                                           boolean doDebug) {
     var image = images.get(target);
     if (image == null) {
+
+      var deleteOnExit = !doDebug;
+
+      if ("true".equals(System.getenv("isCI")) && !deleteOnExit) {
+        throw new RuntimeException("It is not allowed to activate 'deleteOnExit' in the CI");
+      }
+
       var img = redisCache.setupEnv(new ImageFromDockerfile("tc_spike_riscv"
-          + target, !doDebug)
+          + target, deleteOnExit)
           .withDockerfile(Paths.get(pathDockerFile))
           .withBuildArg("TARGET", target)
           .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)

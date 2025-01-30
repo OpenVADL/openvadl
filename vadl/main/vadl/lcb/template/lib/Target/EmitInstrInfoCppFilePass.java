@@ -8,12 +8,14 @@ import static vadl.viam.ViamError.unwrap;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+import jdk.jshell.Diag;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
@@ -26,6 +28,7 @@ import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -164,12 +167,25 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  private Instruction getAddition(Map<MachineInstructionLabel, List<Instruction>> isaMatches) {
+  private Instruction getAdditionRI(Map<MachineInstructionLabel, List<Instruction>> isaMatches) {
     var add64 = isaMatches.get(MachineInstructionLabel.ADDI_64);
 
     if (add64 == null) {
       var instructions = isaMatches.get(MachineInstructionLabel.ADDI_32);
       ensureNonNull(instructions, "instructions with addition and immediate exist");
+      return ensurePresent(instructions.stream().findFirst(),
+          "There must be at least one instruction");
+    } else {
+      return ensurePresent(add64.stream().findFirst(), "There must be at least one instruction");
+    }
+  }
+
+  private Instruction getAdditionRR(Map<MachineInstructionLabel, List<Instruction>> isaMatches) {
+    var add64 = isaMatches.get(MachineInstructionLabel.ADD_64);
+
+    if (add64 == null) {
+      var instructions = isaMatches.get(MachineInstructionLabel.ADD_32);
+      ensureNonNull(instructions, "instructions with addition exist");
       return ensurePresent(instructions.stream().findFirst(),
           "There must be at least one instruction");
     } else {
@@ -190,9 +206,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private int getImmBitSize(IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-                            Instruction addition) {
-    var fields = fieldUsages.getImmediates(addition.format());
-    verifyInstructionHasOnlyOneImm(addition, fields);
+                            Instruction additionRI) {
+    var fields = fieldUsages.getImmediates(additionRI.format());
+    verifyInstructionHasOnlyOneImm(additionRI, fields);
     return ensurePresent(fields.stream().findFirst(), "already checked that it is present").size();
   }
 
@@ -212,6 +228,17 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   }
 
+  private RegisterFile getRegisterClassFromInstruction(Instruction instruction) {
+    return
+        ensurePresent(
+            instruction.behavior()
+                .getNodes(ReadRegFileNode.class)
+                .map(ReadRegFileNode::registerFile)
+                .findFirst(), () -> Diagnostic.error(
+                "Expected that the instruction has at least one register file",
+                instruction.sourceLocation()));
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
@@ -223,7 +250,19 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var fieldUsages =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);
-    var addition = getAddition(isaMatches);
+    var additionRI = getAdditionRI(isaMatches);
+    var additionRR = getAdditionRR(isaMatches);
+    var additionRegisterFile = getRegisterClassFromInstruction(additionRR);
+    // Integer of the index of the zero register in the register file.
+    var zeroRegisterIndex =
+        ensurePresent(
+            Arrays.stream(additionRegisterFile.constraints()).filter(x -> x.value().intValue() == 0)
+                .map(
+                    RegisterFile.Constraint::address)
+                .map(Constant.Value::intValue)
+                .findFirst(),
+            () -> Diagnostic.error("Cannot find a zero register for the register file",
+                additionRegisterFile.sourceLocation()));
     var jump = getJump(specification, pseudoMatches);
 
     var map = new HashMap<String, Object>();
@@ -231,8 +270,11 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put("copyPhysInstructions", getMovInstructions(isaMatches));
     map.put("storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches));
     map.put("loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches));
-    map.put("additionImmInstruction", addition);
-    map.put("additionImmSize", getImmBitSize(fieldUsages, addition));
+    map.put("additionImm", additionRI);
+    map.put("addition", additionRR);
+    map.put("additionRegisterFile", additionRegisterFile);
+    map.put("additionImmSize", getImmBitSize(fieldUsages, additionRI));
+    map.put("zeroRegisterIndex", zeroRegisterIndex);
     map.put("branchInstructions", getBranchInstructions(specification, passResults, fieldUsages));
     map.put("instructionSizes", instructionSizes(specification));
     map.put("jumpInstruction", jump);
@@ -247,6 +289,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
     return map;
   }
+
 
   private Instruction getBranchInstruction(Specification specification,
                                            PassResults passResults,

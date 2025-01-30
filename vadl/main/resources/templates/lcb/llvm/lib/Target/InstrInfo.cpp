@@ -1,6 +1,7 @@
 #include "[(${namespace})]InstrInfo.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
 #include "[(${namespace})]RegisterInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -19,6 +20,7 @@
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "Utils/ImmediateUtils.h"
+#include "MCTargetDesc/[(${namespace})]ConstMatInt.h"
 #include <math.h>
 #include <iostream>
 
@@ -125,6 +127,13 @@ void [(${namespace})]InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, Mach
         DL = MBBI->getDebugLoc();
     }
 
+    MachineFunction *MF = MBB.getParent();
+    MachineFrameInfo &MFI = MF->getFrameInfo();
+
+    MachineMemOperand *MMO = MF->getMachineMemOperand(
+    MachinePointerInfo::getFixedStack(*MF, FrameIndex), MachineMemOperand::MOStore,
+    MFI.getObjectSize(FrameIndex), MFI.getObjectAlign(FrameIndex));
+
     [# th:each="r : ${storeStackSlotInstructions}" ]
       if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
       {
@@ -132,6 +141,7 @@ void [(${namespace})]InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, Mach
               .addFrameIndex( FrameIndex )
               .addReg( SrcReg, getKillRegState( IsKill ) )
               .addImm( 0 )
+              .addMemOperand(MMO)
               ;
 
           return; // success
@@ -153,6 +163,13 @@ void [(${namespace})]InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, Mac
         DL = MBBI->getDebugLoc();
     }
 
+      MachineFunction *MF = MBB.getParent();
+      MachineFrameInfo &MFI = MF->getFrameInfo();
+
+      MachineMemOperand *MMO = MF->getMachineMemOperand(
+      MachinePointerInfo::getFixedStack(*MF, FrameIndex), MachineMemOperand::MOStore,
+      MFI.getObjectSize(FrameIndex), MFI.getObjectAlign(FrameIndex));
+
     [# th:each="r : ${loadStackSlotInstructions}" ]
     if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
     {
@@ -160,6 +177,7 @@ void [(${namespace})]InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, Mac
           .addReg( DestReg, RegState::Define )
           .addFrameIndex( FrameIndex )
           .addImm( 0 )
+          .addMemOperand(MMO)
           ;
 
         return; // success
@@ -195,24 +213,44 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
         return false; // success
     }
 
-    auto parts = splitNumber(Val);
+    auto Seq = [(${namespace})]MatInt::generateInstSeq(Val);
+    Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::[(${additionRegisterFile.identifier.simpleName()})]RegClass);
 
-    // First define the destination register
-    BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImmInstruction.identifier.simpleName()})]))
-        .addReg(DestReg, RegState::Define)
-        .addReg(SrcReg)
-        .addImm(Val >= 0 ? parts.at(0) : parts.at(0) * -1)
-        .setMIFlag(Flag);
-
-    // Then add the remaining values
-    for (auto v = ++parts.begin(); v != parts.end(); ++v)
-    {
-      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImmInstruction.identifier.simpleName()})]))
-        .addReg(DestReg)
-        .addReg(DestReg)
-        .addImm(Val >= 0 ? *v : (*v) * -1)
+    if(Seq.size() == 1) {
+      // If the sequence contains only instruction then it is ADDI.
+      // In that case, we need to reset the scratch register.
+      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImm.identifier.simpleName()})]))
+        .addReg(ScratchReg, RegState::Define)
+        .addReg([(${namespace})]::[(${additionRegisterFile.identifier.simpleName()})][(${zeroRegisterIndex})])
+        .addImm(0)
         .setMIFlag(Flag);
     }
+
+    for ([(${namespace})]MatInt::Inst &Inst : Seq) {
+      auto desc = get(Inst.getOpcode());
+
+      if(desc.getNumOperands() == 2) {
+        // LUI
+        // Then we need to set ScratchRegister as RegState::Define
+        BuildMI(MBB, MBBI, DL, get(Inst.getOpcode()))
+          .addReg(ScratchReg, RegState::Define)
+          .addImm(Inst.getImm())
+          .setMIFlag(Flag);
+      }
+      else if(desc.getNumOperands() == 3) {
+        // ADDI or SLLI do not redefine the value in the ScratchRegister.
+        BuildMI(MBB, MBBI, DL, get(Inst.getOpcode()), ScratchReg)
+          .addReg(ScratchReg)
+          .addImm(Inst.getImm())
+          .setMIFlag(Flag);
+      }
+    }
+
+    // Finally, add ScratchRegister to DestReg.
+    BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${addition.identifier.simpleName()})]), DestReg)
+      .addReg(SrcReg, RegState::Kill)
+      .addReg(ScratchReg, RegState::Kill)
+      .setMIFlag(Flag);
 
     return false; // success
 }

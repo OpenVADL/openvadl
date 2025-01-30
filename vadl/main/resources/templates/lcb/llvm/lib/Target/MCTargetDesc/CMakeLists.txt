@@ -9,6 +9,7 @@ add_llvm_component_library(LLVM[(${namespace})]Desc
           [(${namespace})]ELFObjectWriter.cpp
           [(${namespace})]MCCodeEmitter.cpp
           [(${namespace})]MCInstExpander.cpp
+          [(${namespace})]ConstMatInt.cpp
           AsmUtils.cpp
 
           LINK_COMPONENTS

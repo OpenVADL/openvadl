@@ -4,10 +4,14 @@
 	.type	if_eq,@function
 if_eq:                                  # @if_eq
 # %bb.0:                                # %entry
-	ADDI sp,sp,-32
-	SD fp,24(sp)
-	SD ra,16(sp)
-	ADDI fp,sp,32
+	ADDI a2,zero,0
+	ADDI a2,a2,-32
+	ADD sp,sp,a2
+	SD fp,24(sp)                            # 8-byte Folded Spill
+	SD ra,16(sp)                            # 8-byte Folded Spill
+	ADDI a2,zero,0
+	ADDI a2,a2,32
+	ADD fp,sp,a2
                                         # kill: def $x12 killed $x11
                                         # kill: def $x12 killed $x10
 	SW a0,-24(fp)
@@ -26,9 +30,11 @@ if_eq:                                  # @if_eq
 	JAL zero,.LBB0_3
 .LBB0_3:                                # %return
 	LW a0,-20(fp)
-	LD ra,16(sp)
-	LD fp,24(sp)
-	ADDI sp,sp,32
+	LD ra,16(sp)                            # 8-byte Folded Spill
+	LD fp,24(sp)                            # 8-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,32
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	if_eq, .Lfunc_end0-if_eq

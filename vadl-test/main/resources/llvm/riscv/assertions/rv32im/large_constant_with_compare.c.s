@@ -4,10 +4,14 @@
 	.type	main,@function
 main:                                   # @main
 # %bb.0:                                # %entry
-	ADDI sp,sp,-16
-	SW fp,12(sp)
-	SW ra,8(sp)
-	ADDI fp,sp,16
+	ADDI a0,zero,0
+	ADDI a0,a0,-16
+	ADD sp,sp,a0
+	SW fp,12(sp)                            # 4-byte Folded Spill
+	SW ra,8(sp)                             # 4-byte Folded Spill
+	ADDI a0,zero,0
+	ADDI a0,a0,16
+	ADD fp,sp,a0
 	ADDI a0,zero,0
 	SW a0,-12(fp)
 	ADDI a0,zero,1
@@ -15,9 +19,11 @@ main:                                   # @main
 	LW a0,-16(fp)
 	XORI a0,a0,1
 	SLTU a0,zero,a0
-	LW ra,8(sp)
-	LW fp,12(sp)
-	ADDI sp,sp,16
+	LW ra,8(sp)                             # 4-byte Folded Spill
+	LW fp,12(sp)                            # 4-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,16
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
