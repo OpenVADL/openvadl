@@ -7,6 +7,10 @@ import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * Represents an ISS intermediate multiplication node that returns only
+ * the upper half of the multiplication result.
+ */
 public class IssMulhNode extends IssBinaryNode {
 
   @DataValue

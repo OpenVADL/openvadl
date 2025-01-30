@@ -25,6 +25,14 @@ public class TcgExtractNode extends TcgUnaryOpNode {
   @DataValue
   private int len;
 
+  /**
+   * Construct a TCG extract node.
+   *
+   * @param dest of result
+   * @param t1   source variable
+   * @param pos  offset (from lsb) where to start extraction
+   * @param len  of extraction (from lsb)
+   */
   public TcgExtractNode(TcgVRefNode dest,
                         TcgVRefNode t1, int pos, int len) {
     super(dest, t1);
@@ -47,8 +55,8 @@ public class TcgExtractNode extends TcgUnaryOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg.varName() + ", " + pos +
-        ", "
+    return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg.varName() + ", " + pos
+        + ", "
         + len + ");";
   }
 

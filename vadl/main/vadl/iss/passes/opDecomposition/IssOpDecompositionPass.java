@@ -33,6 +33,17 @@ import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
+/**
+ * This pass splits certain operations in the behavior into multiple nodes, depending on the
+ * context.
+ * Most of the new nodes are ISS intermediate nodes, such as {@link IssMulhNode}.
+ * For example, if a result of an operation node exceeds the target size, we cannot
+ * handle it in QEMU, so we must split the operation into multiple smaller sized ones.
+ * If the context allows it, we might also replace it by a non-equivalent alternative node.
+ * E.g. if there is a long multiplication (such as {@code SMULL}) and the result is only used
+ * by a slice or truncate that takes the upper or lower half, we can directly replace it
+ * by a {@link IssMulhNode} or a normal {@code MUL} built-in call.
+ */
 public class IssOpDecompositionPass extends Pass {
   public IssOpDecompositionPass(IssConfiguration configuration) {
     super(configuration);
@@ -51,9 +62,10 @@ public class IssOpDecompositionPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    viam.mip().get().isa().ownInstructions()
+    viam.mip().ifPresent(m -> m.isa().ownInstructions()
         .forEach(i -> new OpDecomposer(i.behavior(), configuration().targetSize())
-            .decompose());
+            .decompose())
+    );
 
     return null;
   }

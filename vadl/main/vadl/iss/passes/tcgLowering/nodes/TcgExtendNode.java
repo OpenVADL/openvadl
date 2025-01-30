@@ -54,9 +54,8 @@ public class TcgExtendNode extends TcgUnaryOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg.varName() + ", " +
-        fromSize +
-        ");";
+    return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg.varName() + ", "
+        + fromSize + ");";
   }
 
   @Override

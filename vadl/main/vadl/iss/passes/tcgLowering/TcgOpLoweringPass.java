@@ -425,22 +425,22 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   @Handler
   void handle(IssMul2Node toHandle) {
     var dests = allDestOf(toHandle);
-    var lowerHalfDest = dests.get(0);
-    var upperHalfDest = dests.get(1);
+    var loDest = dests.get(0);
+    var hiDest = dests.get(1);
 
     var arg1 = singleDestOf(toHandle.arg1());
     var arg2 = singleDestOf(toHandle.arg2());
 
-    replaceCurrent(new TcgMul2Node(toHandle.kind(), lowerHalfDest, upperHalfDest, arg1, arg2));
+    replaceCurrent(new TcgMul2Node(toHandle.kind(), loDest, hiDest, arg1, arg2));
   }
 
   @Handler
   void handle(IssMulhNode toHandle) {
-    var hDest = singleDestOf(toHandle);
-    var lTmpTest = tmp(0);
+    var hiDest = singleDestOf(toHandle);
+    var loTmpTest = tmp(0);
     var arg1 = singleDestOf(toHandle.arg1());
     var arg2 = singleDestOf(toHandle.arg2());
-    replaceCurrent(new TcgMul2Node(toHandle.kind(), lTmpTest, hDest, arg1, arg2));
+    replaceCurrent(new TcgMul2Node(toHandle.kind(), loTmpTest, hiDest, arg1, arg2));
   }
 
   /**

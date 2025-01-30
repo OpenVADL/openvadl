@@ -6,6 +6,10 @@ import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
+/**
+ * Represent the {@code tcg_gen_div} and {@code tcg_gen_divu} TCG operations.
+ * Depending on {@link #isSigned()} the former or latter is the correct.
+ */
 public class TcgDivNode extends TcgBinaryOpNode {
 
   @DataValue

@@ -42,6 +42,9 @@ public abstract class TcgBinaryOpNode extends TcgOpNode {
     this.arg2 = arg2;
   }
 
+  /**
+   * Constructs a binary tcg node with multiple destinations.
+   */
   public TcgBinaryOpNode(NodeList<TcgVRefNode> destinations, TcgVRefNode arg1, TcgVRefNode arg2,
                          Tcg_32_64 width) {
     super(destinations, width);

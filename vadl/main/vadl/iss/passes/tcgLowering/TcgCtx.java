@@ -26,6 +26,11 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
+/**
+ * The TCG context is associated with an instruction.
+ * It holds all necessary information required across multiple passes.
+ * Most importantly the {@link Assignment}.
+ */
 public class TcgCtx {
 
   private final Graph graph;
@@ -33,6 +38,9 @@ public class TcgCtx {
 
   private final Assignment assignment;
 
+  /**
+   * Constructs a new TCG context with a new assignment.
+   */
   public TcgCtx(Graph graph, Tcg_32_64 targetSize) {
     this.graph = graph;
     this.targetSize = targetSize;
@@ -43,6 +51,16 @@ public class TcgCtx {
     return assignment;
   }
 
+  /**
+   * The assignment is a mapping of dependency nodes to TCG variable reference nodes.
+   * Passes, like the {@link TcgOpLoweringPass} require the assignment to produce
+   * sequential code.
+   * Most of those assignments are not fixed, but temporary.
+   * So if a node does not yet have an assignment when it is requested,
+   * a TCGv is created and a reference node added to the graph.
+   * There are multiple kinds of TCGv, namely {@code reg,regfile,tmp,const}.
+   * The kind of the TCGv depends on the dependency node passed to the request.
+   */
   @DispatchFor(value = DependencyNode.class,
       include = {"vadl.iss", "vadl.viam"},
       returnType = List.class
@@ -58,18 +76,35 @@ public class TcgCtx {
       this.tcgVCache = new HashMap<>();
     }
 
-    public List<TcgVRefNode> destOf(DependencyNode node) {
-      return AssignmentDispatcher.dispatch(this, node);
-    }
 
+    /**
+     * Retrieve the TCGv reference node for the given dependency node.
+     * If the dependency node has multiple return values (e.i. a tuple), this
+     * method will throw an exception.
+     */
     public TcgVRefNode singleDestOf(DependencyNode node) {
       var dest = destOf(node);
       node.ensure(dest.size() == 1, "Expected exactly one destination variable, got %s", dest);
       return dest.get(0);
     }
 
+    /**
+     * Get all tcg variables used in the assignment.
+     */
     public Stream<TcgVRefNode> tcgVariables() {
       return assignments.values().stream().flatMap(Collection::stream).distinct();
+    }
+
+    /**
+     * Retrieve the TCGv reference nodes for the given dependency node.
+     * As a node may result in a tuple, it may have multiple destination TCGvs.
+     * Therefore, the method returns a list of TCGv reference nodes.
+     *
+     * <p>If you know that there must be exactly one destination TCGv, use the
+     * {@link #singleDestOf(DependencyNode)} instead.
+     */
+    public List<TcgVRefNode> destOf(DependencyNode node) {
+      return AssignmentDispatcher.dispatch(this, node);
     }
 
     @Handler

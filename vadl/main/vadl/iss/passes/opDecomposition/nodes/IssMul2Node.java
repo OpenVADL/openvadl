@@ -6,6 +6,13 @@ import vadl.types.TupleType;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * The ISS Mul2 node represents a long multiplication that returns a tuple of two integers.
+ * The first one holds the lower half of the multiplication, while the second one is the upper
+ * half.
+ * We need this as long multiplication tends to exceed the maximum supported result size of
+ * 64bit. So we have to split it into two smaller results.
+ */
 public class IssMul2Node extends IssBinaryNode {
 
   @DataValue
@@ -14,7 +21,6 @@ public class IssMul2Node extends IssBinaryNode {
 
   public IssMul2Node(ExpressionNode arg1, ExpressionNode arg2, IssMulKind kind,
                      TupleType resultType) {
-    // TODO: Don't hardcode this
     super(arg1, arg2, resultType);
     this.kind = kind;
   }

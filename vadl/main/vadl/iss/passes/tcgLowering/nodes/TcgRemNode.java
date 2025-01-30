@@ -5,6 +5,10 @@ import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
+/**
+ * Represents the {@code tcg_gen_rem} and {@code tcg_gen_remu} TCG operations.
+ * The actual one is determined by the {@link #isSigned()} field.
+ */
 public class TcgRemNode extends TcgBinaryOpNode {
 
   @DataValue

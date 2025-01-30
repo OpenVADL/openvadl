@@ -7,6 +7,9 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * An ISS expression with exactly two arguments.
+ */
 public abstract class IssBinaryNode extends IssExprNode {
 
   @Input
@@ -15,6 +18,9 @@ public abstract class IssBinaryNode extends IssExprNode {
   @Input
   private ExpressionNode arg2;
 
+  /**
+   * The constructor of the binary ISS expression. It takes two arguments and a type of the result.
+   */
   public IssBinaryNode(ExpressionNode arg1, ExpressionNode arg2, Type type) {
     super(type);
     this.arg1 = arg1;

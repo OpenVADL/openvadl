@@ -11,14 +11,13 @@ import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
 /**
- *
+ * This pass does nothing except for instantiating a TCG context and returns it a pass result.
  */
+// TODO: Add it to the viam as extension instead (as soon as extensions are implemented).
 public class IssTcgContextPass extends Pass {
-
-  // TODO: Update documentation
-
+  
   /**
-   *
+   * The pass result that holds a tcg context for every instruction.
    */
   public record Result(
       Map<Instruction, TcgCtx> tcgCtxs

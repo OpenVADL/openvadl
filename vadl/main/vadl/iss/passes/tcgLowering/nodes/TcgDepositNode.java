@@ -30,6 +30,9 @@ public class TcgDepositNode extends TcgBinaryOpNode {
   @DataValue
   private int len;
 
+  /**
+   * Constructs a TCG deposit node.
+   */
   public TcgDepositNode(TcgVRefNode dest,
                         TcgVRefNode t1, TcgVRefNode t2, int pos, int len) {
     super(dest, t1, t2);

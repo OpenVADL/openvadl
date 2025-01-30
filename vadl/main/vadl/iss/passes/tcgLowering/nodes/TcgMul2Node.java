@@ -6,11 +6,21 @@ import vadl.iss.passes.opDecomposition.nodes.IssMulKind;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.NodeList;
 
+/**
+ * Represents the {@code tcg_gen_muls2}, {@code tcg_gen_mulsu2} and {@code tcg_gen_mulu2}
+ * TCG operations.
+ * The exact variant is determined by the {@link IssMulKind}.
+ * The operation has two result destinations, one for the upper half and one for the lower
+ * half of the result.
+ */
 public class TcgMul2Node extends TcgBinaryOpNode {
 
   @DataValue
   private IssMulKind kind;
 
+  /**
+   * Constructs a TCG mul2 node.
+   */
   public TcgMul2Node(IssMulKind kind, TcgVRefNode lowerHalfDest, TcgVRefNode upperHalfDest,
                      TcgVRefNode arg1, TcgVRefNode arg2) {
     super(new NodeList<TcgVRefNode>(lowerHalfDest, upperHalfDest), arg1, arg2,

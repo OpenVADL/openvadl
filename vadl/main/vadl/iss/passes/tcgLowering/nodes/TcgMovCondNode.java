@@ -11,6 +11,11 @@ import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
+/**
+ * Represents the {@code tcg_gen_movcond} TCG operation.
+ * If the condition {@code c1 cond c2} is satisfied, {@code dest} is assigned
+ * to {@code v1}, otherwise to {@code v2}.
+ */
 public class TcgMovCondNode extends TcgOpNode {
 
   @Input
@@ -28,6 +33,9 @@ public class TcgMovCondNode extends TcgOpNode {
   @DataValue
   TcgCondition cond;
 
+  /**
+   * Constructs the {@link TcgMovCondNode}.
+   */
   public TcgMovCondNode(TcgVRefNode dest, TcgVRefNode c1, TcgVRefNode c2, TcgVRefNode v1,
                         TcgVRefNode v2,
                         TcgCondition cond) {

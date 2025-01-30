@@ -6,6 +6,9 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
 /**
+ * Represents a TCG operation that has one result destination that holds the
+ * upper half of the multiplication result.
+ *
  * @deprecated This is currently deprecated as there is no tcg_gen_mulsh / muluh. We
  *     might want to contribute to QEMU to add those TCG ops.
  *     For now, we use the mulu2 and muls2 operations instead.
