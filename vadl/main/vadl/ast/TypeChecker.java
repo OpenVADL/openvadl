@@ -959,6 +959,11 @@ public class TypeChecker
 
   private void visitAsmLocalVarUsage(AsmGrammarLiteralDefinition enclosingAsmLiteral,
                                      AsmGrammarLocalVarDefinition localVar) {
+    if (!enclosingAsmLiteral.parameters.isEmpty()) {
+      throw Diagnostic.error("Local variable with parameters.", enclosingAsmLiteral)
+          .note("Usage of a local variable cannot have parameters.").build();
+    }
+
     if (localVar.asmType == null) {
       localVar.accept(this);
     }

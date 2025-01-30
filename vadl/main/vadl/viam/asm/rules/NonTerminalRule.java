@@ -13,6 +13,13 @@ public class NonTerminalRule extends GrammarRule {
 
   Alternatives alternatives;
 
+  /**
+   * Creates a new NonTerminalRule.
+   *
+   * @param identifier   the identifier of the rule
+   * @param alternatives the alternatives of the rule
+   * @param location     the source location of the rule
+   */
   public NonTerminalRule(Identifier identifier, Alternatives alternatives,
                          SourceLocation location) {
     super(identifier);

@@ -13,6 +13,17 @@ import vadl.viam.Relocation;
 public class Modifier extends Definition {
   Relocation relocation;
 
+  /**
+   * Create a new asm modifier.
+   * <p>
+   * Sets the identifier of the definition superclass,
+   * the related relocation and the source location.
+   * </p>
+   *
+   * @param identifier the name of the modifier
+   * @param relocation the relocation to be used
+   * @param location   the source location of the modifier
+   */
   public Modifier(Identifier identifier, Relocation relocation, SourceLocation location) {
     super(identifier);
     this.relocation = relocation;

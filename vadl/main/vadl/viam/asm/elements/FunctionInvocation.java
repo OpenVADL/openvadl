@@ -8,13 +8,21 @@ import javax.annotation.Nullable;
  */
 public class FunctionInvocation implements GrammarElement {
   @Nullable
-  String attributeOrLocalVar;
+  AssignTo assignToElement;
+  // TODO: store reference to Function instead of the function name
   String functionName;
   List<GrammarElement> parameters;
 
-  public FunctionInvocation(@Nullable String attributeOrLocalVar, String functionName,
+  /**
+   * Creates a new FunctionInvocation.
+   *
+   * @param assignToElement the element that stores the result of the invocation
+   * @param functionName    the invoked function's name
+   * @param parameters      the parameters of the invocation
+   */
+  public FunctionInvocation(@Nullable AssignTo assignToElement, String functionName,
                             List<GrammarElement> parameters) {
-    this.attributeOrLocalVar = attributeOrLocalVar;
+    this.assignToElement = assignToElement;
     this.functionName = functionName;
     this.parameters = parameters;
   }

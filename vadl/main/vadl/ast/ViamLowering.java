@@ -35,15 +35,18 @@ import vadl.viam.asm.DirectiveMapping;
 import vadl.viam.asm.Modifier;
 import vadl.viam.asm.elements.Alternative;
 import vadl.viam.asm.elements.Alternatives;
+import vadl.viam.asm.elements.AssignTo;
+import vadl.viam.asm.elements.AssignToAttribute;
+import vadl.viam.asm.elements.AssignToLocalVar;
 import vadl.viam.asm.elements.FunctionInvocation;
 import vadl.viam.asm.elements.GrammarElement;
 import vadl.viam.asm.elements.Group;
 import vadl.viam.asm.elements.LocalVarDefinition;
-import vadl.viam.asm.elements.LocalVarInvocation;
+import vadl.viam.asm.elements.LocalVarUse;
 import vadl.viam.asm.elements.Option;
 import vadl.viam.asm.elements.Repetition;
 import vadl.viam.asm.elements.RuleInvocation;
-import vadl.viam.asm.elements.StringLiteralUsage;
+import vadl.viam.asm.elements.StringLiteralUse;
 import vadl.viam.asm.rules.BuiltinRule;
 import vadl.viam.asm.rules.GrammarRule;
 import vadl.viam.asm.rules.NonTerminalRule;
@@ -158,10 +161,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(ApplicationBinaryInterfaceDefinition definition) {
-    // FIXME: uncomment
-//    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-//        definition.getClass().getSimpleName()));
-    return Optional.empty();
+    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
+        definition.getClass().getSimpleName()));
   }
 
   @Override
@@ -264,7 +265,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     Graph semanticPredicate = null;
     var semPredExpr = elements.get(0).semanticPredicate;
     if (semanticPredicateAppliesToAlternatives && semPredExpr != null) {
-      // FIXME: is getGraph correct? and what is the name of the semantic predicate?
       semanticPredicate = behaviorLowering.getGraph(semPredExpr, "semanticPredicate");
     }
     var grammarElements =
@@ -291,22 +291,24 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       return new Group(alternatives);
     }
 
-    String attributeOrLocalVar = null;
+    AssignTo assignTo = null;
     if (definition.attribute != null) {
-      attributeOrLocalVar = definition.attribute.name;
+      assignTo = definition.isAttributeLocalVar
+          ? new AssignToLocalVar(definition.attribute.name)
+          : new AssignToAttribute(definition.attribute.name);
     }
 
     if (definition.localVar != null) {
-      if (definition.localVar.asmLiteral.id != null
-          && definition.localVar.asmLiteral.id.name.equals("null")) {
-        return new LocalVarDefinition(definition.localVar.id.name, null);
+      GrammarElement literal = null;
+      if (definition.localVar.asmLiteral.id == null
+          || !definition.localVar.asmLiteral.id.name.equals("null")) {
+        literal = visitAsmLiteral(assignTo, definition.localVar.asmLiteral);
       }
-      var literal = visitAsmLiteral(attributeOrLocalVar, definition.localVar.asmLiteral);
       return new LocalVarDefinition(definition.localVar.id.name, literal);
     }
 
     if (definition.asmLiteral != null) {
-      return visitAsmLiteral(attributeOrLocalVar, definition.asmLiteral);
+      return visitAsmLiteral(assignTo, definition.asmLiteral);
     }
 
     return null;
@@ -324,31 +326,34 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Nullable
-  private GrammarElement visitAsmLiteral(@Nullable String attributeOrLocalVar,
+  private GrammarElement visitAsmLiteral(@Nullable AssignTo assignToElement,
                                          AsmGrammarLiteralDefinition definition) {
     if (definition.stringLiteral != null) {
       var stringValue = ((StringLiteral) definition.stringLiteral).value;
-      return new StringLiteralUsage(attributeOrLocalVar, stringValue);
+      return new StringLiteralUse(assignToElement, stringValue);
     }
 
     Objects.requireNonNull(definition.id);
     var invocationSymbolOrigin = definition.symbolTable().resolveNode(definition.id.name);
 
     if (invocationSymbolOrigin instanceof AsmGrammarLocalVarDefinition) {
-      return new LocalVarInvocation(attributeOrLocalVar, definition.id.name);
+      return new LocalVarUse(assignToElement, definition.id.name);
     }
 
-    if (invocationSymbolOrigin instanceof FunctionDefinition function) {
+    if (invocationSymbolOrigin instanceof FunctionDefinition functionDefinition) {
+      // TODO: store reference to function instead of function identifier
+      //       once function lowering is supported
+      // var function = fetch(functionDefinition).orElseThrow();
       var parameters = definition.parameters.stream()
           .map(param -> visitAsmLiteral(null, param)).toList();
-      // TODO: get lowered function
-      return new FunctionInvocation(attributeOrLocalVar, definition.id.name, parameters);
+      return new FunctionInvocation(assignToElement, definition.id.name, parameters);
     }
 
-    if (invocationSymbolOrigin instanceof AsmGrammarRuleDefinition) {
+    if (invocationSymbolOrigin instanceof AsmGrammarRuleDefinition ruleDefinition) {
+      var rule = (GrammarRule) fetch(ruleDefinition).orElseThrow();
       var parameters = definition.parameters.stream()
           .map(param -> visitAsmLiteral(null, param)).toList();
-      return new RuleInvocation(attributeOrLocalVar, definition.id.name, parameters);
+      return new RuleInvocation(assignToElement, rule, parameters);
     }
 
     return null;
@@ -497,10 +502,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(FunctionDefinition definition) {
-    // FIXME: uncomment
-//    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-//        definition.getClass().getSimpleName()));
-    return Optional.empty();
+    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
+        definition.getClass().getSimpleName()));
   }
 
   @Override

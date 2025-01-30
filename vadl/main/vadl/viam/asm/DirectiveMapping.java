@@ -12,6 +12,18 @@ import vadl.viam.Identifier;
 public class DirectiveMapping extends Definition {
   AsmDirective directive;
 
+  /**
+   * Creates a new directive mapping.
+   *
+   * <p>
+   * Sets the identifier of the definition superclass,
+   * the related AsmDirective and the source location.
+   * </p>
+   *
+   * @param identifier the identifier of the directive
+   * @param directive  the directive to be mapped to
+   * @param location   the source location of the directive mapping
+   */
   public DirectiveMapping(Identifier identifier, AsmDirective directive, SourceLocation location) {
     super(identifier);
     this.directive = directive;

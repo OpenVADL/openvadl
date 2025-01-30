@@ -15,6 +15,15 @@ public class AssemblyDescription extends Definition {
   private final List<GrammarRule> rules;
   private final List<Definition> commonDefinitions;
 
+  /**
+   * Creates a new Assembly Description definition.
+   *
+   * @param identifier        the identifier of the definition
+   * @param modifiers         the modifiers of the definition
+   * @param directives        the directives of the definition
+   * @param rules             the rules of the definition
+   * @param commonDefinitions the common definitions of the definition
+   */
   public AssemblyDescription(Identifier identifier, List<Modifier> modifiers,
                              List<DirectiveMapping> directives, List<GrammarRule> rules,
                              List<Definition> commonDefinitions) {
