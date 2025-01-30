@@ -4,10 +4,14 @@
 	.type	ludcmp,@function
 ludcmp:                                 # @ludcmp
 # %bb.0:                                # %entry
-	ADDI sp,sp,-432
-	SW fp,428(sp)
-	SW ra,424(sp)
-	ADDI fp,sp,432
+	ADDI a2,zero,0
+	ADDI a2,a2,-432
+	ADD sp,sp,a2
+	SW fp,428(sp)                           # 4-byte Folded Spill
+	SW ra,424(sp)                           # 4-byte Folded Spill
+	ADDI a2,zero,0
+	ADDI a2,a2,432
+	ADD fp,sp,a2
 	SW a0,-12(fp)
 	SW a1,-16(fp)
 	ADDI a0,zero,0
@@ -396,9 +400,11 @@ ludcmp:                                 # @ludcmp
 	JAL zero,.LBB0_31
 .LBB0_38:                               # %for.end96
 	ADDI a0,zero,0
-	LW ra,424(sp)
-	LW fp,428(sp)
-	ADDI sp,sp,432
+	LW ra,424(sp)                           # 4-byte Folded Spill
+	LW fp,428(sp)                           # 4-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,432
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	ludcmp, .Lfunc_end0-ludcmp

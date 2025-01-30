@@ -4,10 +4,14 @@
 	.type	recursion,@function
 recursion:                              # @recursion
 # %bb.0:                                # %entry
-	ADDI sp,sp,-16
-	SW fp,12(sp)
-	SW ra,8(sp)
-	ADDI fp,sp,16
+	ADDI a1,zero,0
+	ADDI a1,a1,-16
+	ADD sp,sp,a1
+	SW fp,12(sp)                            # 4-byte Folded Spill
+	SW ra,8(sp)                             # 4-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,16
+	ADD fp,sp,a1
 	SW a0,-16(fp)
 	LW a0,-16(fp)
 	ADDI a1,zero,1
@@ -26,9 +30,11 @@ recursion:                              # @recursion
 	JAL zero,.LBB0_3
 .LBB0_3:                                # %return
 	LW a0,-12(fp)
-	LW ra,8(sp)
-	LW fp,12(sp)
-	ADDI sp,sp,16
+	LW ra,8(sp)                             # 4-byte Folded Spill
+	LW fp,12(sp)                            # 4-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,16
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	recursion, .Lfunc_end0-recursion

@@ -4,10 +4,14 @@
 	.type	jpegdct,@function
 jpegdct:                                # @jpegdct
 # %bb.0:                                # %entry
-	ADDI sp,sp,-80
-	SW fp,76(sp)
-	SW ra,72(sp)
-	ADDI fp,sp,80
+	ADDI a2,zero,0
+	ADDI a2,a2,-80
+	ADD sp,sp,a2
+	SW fp,76(sp)                            # 4-byte Folded Spill
+	SW ra,72(sp)                            # 4-byte Folded Spill
+	ADDI a2,zero,0
+	ADDI a2,a2,80
+	ADD fp,sp,a2
 	SW a0,-12(fp)
 	SW a1,-16(fp)
 	ADDI a0,zero,1
@@ -135,7 +139,7 @@ jpegdct:                                # @jpegdct
 	LW a1,-28(fp)
 	ADD a0,a0,a1
 	ADDI a1,zero,16
-	SW a1,-80(fp)
+	SW a1,-80(fp)                           # 4-byte Folded Spill
 	SLL a0,a0,a1
 	SRA a0,a0,a1
 	LW a2,-16(fp)
@@ -327,9 +331,11 @@ jpegdct:                                # @jpegdct
 	SW a0,-12(fp)
 	JAL zero,.LBB0_1
 .LBB0_12:                               # %for.end239
-	LW ra,72(sp)
-	LW fp,76(sp)
-	ADDI sp,sp,80
+	LW ra,72(sp)                            # 4-byte Folded Spill
+	LW fp,76(sp)                            # 4-byte Folded Spill
+	ADDI a0,zero,0
+	ADDI a0,a0,80
+	ADD sp,sp,a0
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	jpegdct, .Lfunc_end0-jpegdct

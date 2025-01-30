@@ -28,5 +28,3 @@ docker run -e TARGET=$SPEC_NAME --rm -v $WORK_DIR/outputs:/output -t update_asse
 
 cd $CURR_DIR # Go back to the original folder
 cp $WORK_DIR/outputs/* assertions/$SPEC_NAME
-
-rm -r $WORK_DIR

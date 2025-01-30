@@ -4,10 +4,14 @@
 	.type	if_eq,@function
 if_eq:                                  # @if_eq
 # %bb.0:                                # %entry
-	ADDI sp,sp,-32
-	SW fp,28(sp)
-	SW ra,24(sp)
-	ADDI fp,sp,32
+	ADDI a2,zero,0
+	ADDI a2,a2,-32
+	ADD sp,sp,a2
+	SW fp,28(sp)                            # 4-byte Folded Spill
+	SW ra,24(sp)                            # 4-byte Folded Spill
+	ADDI a2,zero,0
+	ADDI a2,a2,32
+	ADD fp,sp,a2
 	SW a0,-16(fp)
 	SW a1,-20(fp)
 	LW a0,-16(fp)
@@ -24,9 +28,11 @@ if_eq:                                  # @if_eq
 	JAL zero,.LBB0_3
 .LBB0_3:                                # %return
 	LW a0,-12(fp)
-	LW ra,24(sp)
-	LW fp,28(sp)
-	ADDI sp,sp,32
+	LW ra,24(sp)                            # 4-byte Folded Spill
+	LW fp,28(sp)                            # 4-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,32
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	if_eq, .Lfunc_end0-if_eq

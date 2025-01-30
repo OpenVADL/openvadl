@@ -4,14 +4,20 @@
 	.type	foo,@function
 foo:                                    # @foo
 # %bb.0:                                # %entry
-	ADDI sp,sp,-16
-	SW fp,12(sp)
-	SW ra,8(sp)
-	ADDI fp,sp,16
 	ADDI a0,zero,0
-	LW ra,8(sp)
-	LW fp,12(sp)
-	ADDI sp,sp,16
+	ADDI a0,a0,-16
+	ADD sp,sp,a0
+	SW fp,12(sp)                            # 4-byte Folded Spill
+	SW ra,8(sp)                             # 4-byte Folded Spill
+	ADDI a0,zero,0
+	ADDI a0,a0,16
+	ADD fp,sp,a0
+	ADDI a0,zero,0
+	LW ra,8(sp)                             # 4-byte Folded Spill
+	LW fp,12(sp)                            # 4-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,16
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
@@ -20,15 +26,21 @@ foo:                                    # @foo
 	.type	constant_return,@function
 constant_return:                        # @constant_return
 # %bb.0:                                # %entry
-	ADDI sp,sp,-16
-	SW fp,12(sp)
-	SW ra,8(sp)
-	ADDI fp,sp,16
+	ADDI a0,zero,0
+	ADDI a0,a0,-16
+	ADD sp,sp,a0
+	SW fp,12(sp)                            # 4-byte Folded Spill
+	SW ra,8(sp)                             # 4-byte Folded Spill
+	ADDI a0,zero,0
+	ADDI a0,a0,16
+	ADD fp,sp,a0
 	LUI ra,%hi(foo)
 	JALR ra,%lo(foo)(ra)
-	LW ra,8(sp)
-	LW fp,12(sp)
-	ADDI sp,sp,16
+	LW ra,8(sp)                             # 4-byte Folded Spill
+	LW fp,12(sp)                            # 4-byte Folded Spill
+	ADDI a1,zero,0
+	ADDI a1,a1,16
+	ADD sp,sp,a1
 	JALR zero,0(ra)
 .Lfunc_end1:
 	.size	constant_return, .Lfunc_end1-constant_return
