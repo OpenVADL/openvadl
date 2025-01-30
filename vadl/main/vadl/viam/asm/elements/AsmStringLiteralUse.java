@@ -5,12 +5,12 @@ import javax.annotation.Nullable;
 /**
  * Represents the usage of a string literal in a grammar rule.
  */
-public class StringLiteralUse implements GrammarElement {
+public class AsmStringLiteralUse implements AsmGrammarElement {
   @Nullable
-  AssignTo assignToElement;
+  AsmAssignTo assignToElement;
   String value;
 
-  public StringLiteralUse(@Nullable AssignTo assignToElement, String value) {
+  public AsmStringLiteralUse(@Nullable AsmAssignTo assignToElement, String value) {
     this.assignToElement = assignToElement;
     this.value = value;
   }

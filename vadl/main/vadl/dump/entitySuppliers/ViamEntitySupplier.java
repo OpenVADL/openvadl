@@ -15,11 +15,11 @@ import vadl.viam.Format;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
-import vadl.viam.asm.DirectiveMapping;
-import vadl.viam.asm.Modifier;
-import vadl.viam.asm.rules.BuiltinRule;
-import vadl.viam.asm.rules.NonTerminalRule;
-import vadl.viam.asm.rules.TerminalRule;
+import vadl.viam.asm.AsmDirectiveMapping;
+import vadl.viam.asm.AsmModifier;
+import vadl.viam.asm.rules.AsmBuiltinRule;
+import vadl.viam.asm.rules.AsmNonTerminalRule;
+import vadl.viam.asm.rules.AsmTerminalRule;
 
 /**
  * A {@link DumpEntitySupplier} that produces a {@link DefinitionEntity}s for each
@@ -153,31 +153,31 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
   }
 
   @Override
-  public void visit(DirectiveMapping directive) {
+  public void visit(AsmDirectiveMapping directive) {
     // remove it from entities and add it as sub entity to the parent
     replaceAsSubEntityOfParent(directive);
   }
 
   @Override
-  public void visit(Modifier modifier) {
+  public void visit(AsmModifier modifier) {
     // remove it from entities and add it as sub entity to the parent
     replaceAsSubEntityOfParent(modifier);
   }
 
   @Override
-  public void visit(BuiltinRule builtinRule) {
+  public void visit(AsmBuiltinRule builtinRule) {
     // remove it from entities and add it as sub entity to the parent
     replaceAsSubEntityOfParent(builtinRule);
   }
 
   @Override
-  public void visit(TerminalRule terminalRule) {
+  public void visit(AsmTerminalRule terminalRule) {
     // remove it from entities and add it as sub entity to the parent
     replaceAsSubEntityOfParent(terminalRule);
   }
 
   @Override
-  public void visit(NonTerminalRule nonTerminalRule) {
+  public void visit(AsmNonTerminalRule nonTerminalRule) {
     // remove it from entities and add it as sub entity to the parent
     replaceAsSubEntityOfParent(nonTerminalRule);
   }

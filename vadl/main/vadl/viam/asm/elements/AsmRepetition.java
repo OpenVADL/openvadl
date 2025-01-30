@@ -6,12 +6,12 @@ import vadl.viam.graph.Graph;
 /**
  * Represents a repetition block ({@code {}}) in a grammar rule.
  */
-public class Repetition implements GrammarElement {
+public class AsmRepetition implements AsmGrammarElement {
   @Nullable
   Graph semanticPredicate;
-  Alternatives alternatives;
+  AsmAlternatives alternatives;
 
-  public Repetition(@Nullable Graph semanticPredicate, Alternatives alternatives) {
+  public AsmRepetition(@Nullable Graph semanticPredicate, AsmAlternatives alternatives) {
     this.semanticPredicate = semanticPredicate;
     this.alternatives = alternatives;
   }

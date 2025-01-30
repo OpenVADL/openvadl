@@ -6,8 +6,8 @@ import vadl.viam.Identifier;
 /**
  * A rule for which a parsing function already exists in LLVM.
  */
-public class BuiltinRule extends GrammarRule {
-  public BuiltinRule(Identifier identifier) {
+public class AsmBuiltinRule extends AsmGrammarRule {
+  public AsmBuiltinRule(Identifier identifier) {
     super(identifier);
   }
 

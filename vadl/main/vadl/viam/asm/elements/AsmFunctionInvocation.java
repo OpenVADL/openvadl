@@ -6,12 +6,12 @@ import javax.annotation.Nullable;
 /**
  * Represents the invocation of a vadl function invocation in a grammar rule.
  */
-public class FunctionInvocation implements GrammarElement {
+public class AsmFunctionInvocation implements AsmGrammarElement {
   @Nullable
-  AssignTo assignToElement;
+  AsmAssignTo assignToElement;
   // TODO: store reference to Function instead of the function name
   String functionName;
-  List<GrammarElement> parameters;
+  List<AsmGrammarElement> parameters;
 
   /**
    * Creates a new FunctionInvocation.
@@ -20,8 +20,8 @@ public class FunctionInvocation implements GrammarElement {
    * @param functionName    the invoked function's name
    * @param parameters      the parameters of the invocation
    */
-  public FunctionInvocation(@Nullable AssignTo assignToElement, String functionName,
-                            List<GrammarElement> parameters) {
+  public AsmFunctionInvocation(@Nullable AsmAssignTo assignToElement, String functionName,
+                               List<AsmGrammarElement> parameters) {
     this.assignToElement = assignToElement;
     this.functionName = functionName;
     this.parameters = parameters;

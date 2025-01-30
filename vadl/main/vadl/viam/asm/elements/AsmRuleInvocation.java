@@ -2,16 +2,16 @@ package vadl.viam.asm.elements;
 
 import java.util.List;
 import javax.annotation.Nullable;
-import vadl.viam.asm.rules.GrammarRule;
+import vadl.viam.asm.rules.AsmGrammarRule;
 
 /**
  * Represents the invocation of another grammar rule in a grammar rule.
  */
-public class RuleInvocation implements GrammarElement {
+public class AsmRuleInvocation implements AsmGrammarElement {
   @Nullable
-  AssignTo assignToElement;
-  GrammarRule rule;
-  List<GrammarElement> parameters;
+  AsmAssignTo assignToElement;
+  AsmGrammarRule rule;
+  List<AsmGrammarElement> parameters;
 
   /**
    * Creates a new RuleInvocation.
@@ -20,8 +20,8 @@ public class RuleInvocation implements GrammarElement {
    * @param rule            the invoked rule
    * @param parameters      the parameters of the invocation
    */
-  public RuleInvocation(@Nullable AssignTo assignToElement, GrammarRule rule,
-                        List<GrammarElement> parameters) {
+  public AsmRuleInvocation(@Nullable AsmAssignTo assignToElement, AsmGrammarRule rule,
+                           List<AsmGrammarElement> parameters) {
     this.assignToElement = assignToElement;
     this.rule = rule;
     this.parameters = parameters;

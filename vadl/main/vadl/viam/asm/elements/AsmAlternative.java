@@ -8,14 +8,12 @@ import vadl.viam.graph.Graph;
  * Represents a single alternative in a grammar rule.
  * Contains a list of grammar elements and an optional semantic predicate.
  */
-public class Alternative implements GrammarElement {
-  // FIXME: is semantic predicate really a graph?
-  // actually needed is a lowering of an Expr to CPP code
+public class AsmAlternative implements AsmGrammarElement {
   @Nullable
   Graph semanticPredicate;
-  List<GrammarElement> elements;
+  List<AsmGrammarElement> elements;
 
-  public Alternative(@Nullable Graph semanticPredicate, List<GrammarElement> elements) {
+  public AsmAlternative(@Nullable Graph semanticPredicate, List<AsmGrammarElement> elements) {
     this.semanticPredicate = semanticPredicate;
     this.elements = elements;
   }

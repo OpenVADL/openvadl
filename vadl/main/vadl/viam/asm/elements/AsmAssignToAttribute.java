@@ -3,9 +3,9 @@ package vadl.viam.asm.elements;
 /**
  * Represents the assignment of a value to an attribute in a grammar rule.
  */
-public class AssignToAttribute extends AssignTo {
+public class AsmAssignToAttribute extends AsmAssignTo {
 
-  public AssignToAttribute(String assignToName) {
+  public AsmAssignToAttribute(String assignToName) {
     super(assignToName);
   }
 }

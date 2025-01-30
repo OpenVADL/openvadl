@@ -6,10 +6,10 @@ import java.util.List;
  * Represents a choice of different alternatives in a grammar rule.
  * It contains a list of single alternatives.
  */
-public class Alternatives implements GrammarElement {
-  List<Alternative> alternatives;
+public class AsmAlternatives implements AsmGrammarElement {
+  List<AsmAlternative> alternatives;
 
-  public Alternatives(List<Alternative> alternatives) {
+  public AsmAlternatives(List<AsmAlternative> alternatives) {
     this.alternatives = alternatives;
   }
 }

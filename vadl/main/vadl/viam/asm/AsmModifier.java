@@ -10,7 +10,7 @@ import vadl.viam.Relocation;
  * Defines a name to be used to reference a relocation
  * of the instruction set architecture in the assembly language.
  */
-public class Modifier extends Definition {
+public class AsmModifier extends Definition {
   Relocation relocation;
 
   /**
@@ -24,7 +24,7 @@ public class Modifier extends Definition {
    * @param relocation the relocation to be used
    * @param location   the source location of the modifier
    */
-  public Modifier(Identifier identifier, Relocation relocation, SourceLocation location) {
+  public AsmModifier(Identifier identifier, Relocation relocation, SourceLocation location) {
     super(identifier);
     this.relocation = relocation;
     setSourceLocation(location);

@@ -9,7 +9,7 @@ import vadl.viam.Identifier;
 /**
  * Introduces a new name in the assembly language for a directive.
  */
-public class DirectiveMapping extends Definition {
+public class AsmDirectiveMapping extends Definition {
   AsmDirective directive;
 
   /**
@@ -24,7 +24,8 @@ public class DirectiveMapping extends Definition {
    * @param directive  the directive to be mapped to
    * @param location   the source location of the directive mapping
    */
-  public DirectiveMapping(Identifier identifier, AsmDirective directive, SourceLocation location) {
+  public AsmDirectiveMapping(Identifier identifier, AsmDirective directive,
+                             SourceLocation location) {
     super(identifier);
     this.directive = directive;
     setSourceLocation(location);

@@ -7,10 +7,10 @@ package vadl.viam.asm.elements;
  * both represented by the {@code Alternatives} class.
  * </p>
  */
-public class Group implements GrammarElement {
-  Alternatives alternatives;
+public class AsmGroup implements AsmGrammarElement {
+  AsmAlternatives alternatives;
 
-  public Group(Alternatives alternatives) {
+  public AsmGroup(AsmAlternatives alternatives) {
     this.alternatives = alternatives;
   }
 }

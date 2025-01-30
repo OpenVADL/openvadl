@@ -1,18 +1,18 @@
 package vadl.viam;
 
 import java.util.List;
-import vadl.viam.asm.DirectiveMapping;
-import vadl.viam.asm.Modifier;
-import vadl.viam.asm.rules.GrammarRule;
+import vadl.viam.asm.AsmDirectiveMapping;
+import vadl.viam.asm.AsmModifier;
+import vadl.viam.asm.rules.AsmGrammarRule;
 
 /**
  * An Assembly Description definition of a VADL specification.
  */
 public class AssemblyDescription extends Definition {
 
-  private final List<Modifier> modifiers;
-  private final List<DirectiveMapping> directives;
-  private final List<GrammarRule> rules;
+  private final List<AsmModifier> modifiers;
+  private final List<AsmDirectiveMapping> directives;
+  private final List<AsmGrammarRule> rules;
   private final List<Definition> commonDefinitions;
 
   /**
@@ -24,8 +24,8 @@ public class AssemblyDescription extends Definition {
    * @param rules             the rules of the definition
    * @param commonDefinitions the common definitions of the definition
    */
-  public AssemblyDescription(Identifier identifier, List<Modifier> modifiers,
-                             List<DirectiveMapping> directives, List<GrammarRule> rules,
+  public AssemblyDescription(Identifier identifier, List<AsmModifier> modifiers,
+                             List<AsmDirectiveMapping> directives, List<AsmGrammarRule> rules,
                              List<Definition> commonDefinitions) {
     super(identifier);
     this.modifiers = modifiers;
@@ -39,15 +39,15 @@ public class AssemblyDescription extends Definition {
     visitor.visit(this);
   }
 
-  public List<Modifier> modifiers() {
+  public List<AsmModifier> modifiers() {
     return modifiers;
   }
 
-  public List<DirectiveMapping> directives() {
+  public List<AsmDirectiveMapping> directives() {
     return directives;
   }
 
-  public List<GrammarRule> rules() {
+  public List<AsmGrammarRule> rules() {
     return rules;
   }
 
