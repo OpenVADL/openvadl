@@ -14,12 +14,15 @@ import vadl.utils.Pair;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Abstract base class responsible for generating C code from a given function's expression nodes.
@@ -66,6 +69,12 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
 
   @Handler
   protected abstract void handle(CGenContext<Node> ctx, FieldRefNode toHandle);
+
+  @Handler
+  protected abstract void handle(CGenContext<Node> ctx, ConstantNode toHandle);
+
+  @Handler
+  protected abstract void handle(CGenContext<Node> ctx, ZeroExtendNode toHandle);
 
   public String genReturnExpression() {
     var returnNode = getSingleNode(function.behavior(), ReturnNode.class);

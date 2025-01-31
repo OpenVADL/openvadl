@@ -9,12 +9,15 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.viam.Format;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Produce a pure function that allows to access format field references.
@@ -108,6 +111,21 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
 
     // Reference the function parameter
     ctx.wr(fieldName);
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, ConstantNode toHandle) {
+    throwNotAllowed(toHandle, "Constant node accesses");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, ZeroExtendNode toHandle) {
+    throwNotAllowed(toHandle, "Zero extend node accesses");
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
+    throwNotAllowed(toHandle, "Zero extend node accesses");
   }
 
   @Override

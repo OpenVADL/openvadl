@@ -82,6 +82,7 @@ public class IssRV64MInstrTest extends IssInstrTest {
   }
 
   @TestFactory
+  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> divuByMinusOne() throws IOException {
     return testDivRemByCustom(10, "divu", BigInteger.ONE.negate(), "DIVU_BY_MINUS_ONE");
   }

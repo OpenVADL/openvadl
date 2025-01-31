@@ -1,29 +1,67 @@
 package vadl.lcb.codegen.expansion;
 
-import java.io.StringWriter;
+import static java.util.Objects.requireNonNull;
+import static vadl.error.DiagUtils.throwNotAllowed;
+import static vadl.utils.GraphUtils.getNodes;
+import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
+import static vadl.viam.ViamError.ensurePresent;
+
+import com.google.common.collect.Streams;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import vadl.cppCodeGen.FunctionCodeGenerator;
+import vadl.cppCodeGen.SymbolTable;
+import vadl.cppCodeGen.context.CGenContext;
+import vadl.cppCodeGen.context.CNodeContext;
+import vadl.cppCodeGen.context.CNodeWithBaggageContext;
 import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.VariantKind;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
-import vadl.gcb.passes.pseudo.PseudoExpansionCodeGeneratorVisitor;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
-import vadl.lcb.codegen.LcbGenericCodeGenerator;
+import vadl.utils.Pair;
 import vadl.viam.Format;
+import vadl.viam.Function;
+import vadl.viam.Identifier;
+import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.Relocation;
 import vadl.viam.ViamError;
+import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadMemNode;
+import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
- * Generates functions which expands {@link PseudoInstruction} in LLVM.
+ * A {@link PseudoInstruction} contains one or multiple {@link Instruction}. This generator
+ * creates the CPP code which creates the code to expand the pseudo instruction.
  */
-public class PseudoExpansionCodeGenerator extends LcbGenericCodeGenerator {
+public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
+  private static final String FIELD = "field";
+  private static final String INSTRUCTION = "instruction";
+  private static final String INSTRUCTION_SYMBOL = "instructionSymbol";
+
   private final String namespace;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, CppFunction> immediateDecodings;
-  private final Map<Format.Field, List<VariantKind>> variants;
+  private final Map<Format.Field, List<VariantKind>> immVariants;
   private final List<CompilerRelocation> relocations;
   private final PseudoInstruction pseudoInstruction;
+  private final SymbolTable symbolTable;
+
 
   /**
    * Constructor.
@@ -32,32 +70,322 @@ public class PseudoExpansionCodeGenerator extends LcbGenericCodeGenerator {
                                       IdentifyFieldUsagePass.ImmediateDetectionContainer
                                           fieldUsages,
                                       Map<Format.Field, CppFunction> immediateDecodings,
-                                      Map<Format.Field, List<VariantKind>> variants,
+                                      Map<Format.Field, List<VariantKind>> immVariants,
                                       List<CompilerRelocation> relocations,
-                                      PseudoInstruction pseudoInstruction) {
+                                      PseudoInstruction pseudoInstruction,
+                                      Function function) {
+    super(function);
     this.namespace = namespace;
     this.fieldUsages = fieldUsages;
     this.immediateDecodings = immediateDecodings;
-    this.variants = variants;
+    this.immVariants = immVariants;
     this.relocations = relocations;
     this.pseudoInstruction = pseudoInstruction;
+    this.symbolTable = new SymbolTable();
   }
 
   @Override
-  protected String generateFunctionBody(CppFunction function) {
-    var writer = new StringWriter();
-    var instrCallNodes = function.behavior().getNodes(InstrCallNode.class).toList();
+  protected void handle(CGenContext<Node> ctx, ReadRegNode toHandle) {
+    throwNotAllowed(toHandle, "Register reads");
+  }
 
-    if (instrCallNodes.isEmpty()) {
-      throw new ViamError("For the function is an InstrCallNode required.");
+  @Override
+  protected void handle(CGenContext<Node> ctx, ReadRegFileNode toHandle) {
+    throwNotAllowed(toHandle, "Register reads");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, ReadMemNode toHandle) {
+    throwNotAllowed(toHandle, "Memory reads");
+  }
+
+  @Override
+  public void handle(CNodeContext ctx, FuncParamNode toHandle) {
+    var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
+    var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
+
+    var pseudoInstructionIndex =
+        getOperandIndexFromPseudoInstruction(field, toHandle,
+            toHandle.parameter().identifier);
+
+    var usage = fieldUsages.getFieldUsages(field.format()).get(field);
+    ensure(usage != null, "usage must not be null");
+
+    switch (usage) {
+      case IMMEDIATE -> {
+        var argumentSymbol = symbolTable.getNextVariable();
+        ctx.ln(
+            "const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));",
+            argumentSymbol,
+            pseudoInstructionIndex);
+
+        var argumentImmSymbol = symbolTable.getNextVariable();
+        var variants = immVariants.get(field);
+        ensure(variants != null, () -> Diagnostic.error(
+                String.format("Variant must exist for the field '%s' but it doesn't.",
+                    field.identifier.lower()),
+                field.sourceLocation())
+            .note(
+                "The compiler generator tries to lower an immediate in the "
+                    + "pseudo expansion. To do so it requires to generate variants for immediates. "
+                    + "It seems like that that this variants was not generated.")
+        );
+        var variant =
+            ensurePresent(
+                requireNonNull(variants).stream().filter(VariantKind::isImmediate)
+                    .findFirst(),
+                () -> Diagnostic.error("Expected a variant for an immediate. But haven't "
+                        + "found any",
+                    toHandle.sourceLocation()));
+        ctx.ln(
+            "MCOperand %s = MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, "
+                + "Ctx));",
+            argumentImmSymbol, namespace, argumentSymbol, namespace,
+            requireNonNull(variant.value()));
+        ctx.ln(String.format("%s.addOperand(%s);",
+            instructionSymbol,
+            argumentImmSymbol));
+      }
+      case REGISTER -> ctx.ln(
+          "%s.addOperand(instruction.getOperand(%d));", instructionSymbol,
+          pseudoInstructionIndex);
+      default -> throw new ViamError("not supported");
+    }
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, FieldAccessRefNode toHandle) {
+    throwNotAllowed(toHandle, "Format field accesses");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
+    throwNotAllowed(toHandle, "field ref accesses");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, ConstantNode toHandle) {
+    var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
+    var instruction = ((CNodeWithBaggageContext) ctx).get(INSTRUCTION, Instruction.class);
+    var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
+
+    var usage = fieldUsages.getFieldUsages(field.format()).get(field);
+    ensure(usage != null, "usage must not be null");
+    switch (usage) {
+      case IMMEDIATE -> {
+        var decodingFunction = immediateDecodings.get(field);
+        ensure(decodingFunction != null, "decodingFunction must not be null");
+        var decodingFunctionName = decodingFunction.functionName().lower();
+        context.ln("%s.addOperand(MCOperand::createImm(%s(%s)));",
+            instructionSymbol,
+            decodingFunctionName,
+            toHandle.constant().asVal().intValue());
+      }
+      case REGISTER -> {
+        // We know that `field` is used as a register index.
+        // But we don't know which register file.
+        // We look for the `field` in the machine instruction's behavior and return the usages.
+        var registerFiles = instruction.behavior().getNodes(FieldRefNode.class)
+            .filter(x -> x.formatField().equals(field))
+            .flatMap(
+                fieldRefNode -> fieldRefNode.usages().filter(y -> y instanceof HasRegisterFile))
+            .map(x -> ((HasRegisterFile) x).registerFile())
+            .distinct()
+            .toList();
+
+        ensure(registerFiles.size() == 1,
+            () -> Diagnostic.error("Found multiple or none register files for this field.",
+                    field.sourceLocation())
+                .note(
+                    "The pseudo instruction expansion requires one register file to detect "
+                        + "the register file name. In this particular case is the field used by "
+                        + "multiple register files or none and we don't know which name to use.")
+        );
+
+        var registerFile =
+            ensurePresent(registerFiles.stream().findFirst(), "Expected one register file");
+
+        context.ln("%s.addOperand(MCOperand::createReg(%s::%s%s));",
+            instructionSymbol,
+            namespace,
+            registerFile.identifier.simpleName(),
+            toHandle.constant().asVal().intValue());
+      }
+      default -> throw Diagnostic.error("Cannot generate cpp code for this argument",
+          field.sourceLocation()).build();
+    }
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
+    var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
+    var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
+    var relocation = (Relocation) toHandle.function();
+
+    var relocationArgument =
+        ensurePresent(Arrays.stream(toHandle.function().parameters()).findFirst(),
+            () -> Diagnostic.error("Function does not have a parameter in pseudo instruction",
+                toHandle.sourceLocation()));
+    var pseudoInstructionIndex =
+        getOperandIndexFromPseudoInstruction(field, toHandle, relocationArgument.identifier);
+
+    var argumentSymbol = symbolTable.getNextVariable();
+    var argumentRelocationSymbol = symbolTable.getNextVariable();
+    var elfRelocation =
+        relocations.stream().filter(x -> x.relocation() == relocation)
+            .findFirst();
+    ensure(elfRelocation.isPresent(), "elfRelocation must exist");
+    var variant = elfRelocation.get().variantKind().value();
+
+    ctx.ln(
+            "const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));",
+            argumentSymbol,
+            pseudoInstructionIndex)
+        .ln(
+            "MCOperand %s = "
+                + "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));",
+            argumentRelocationSymbol, namespace, argumentSymbol, namespace, variant)
+        .ln(String.format("%s.addOperand(%s);",
+            instructionSymbol,
+            argumentRelocationSymbol));
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, ZeroExtendNode toHandle) {
+    throwNotAllowed(toHandle, "field ref accesses");
+  }
+
+  /**
+   * Trying to get the index from {@code pseudoInstruction.parameters} based on the given
+   * {@code parameter}. This index is important because it is the index of the pseudo instruction's
+   * operands which will be used for the pseudo instruction's expansion.
+   * For example, you have pseudo instruction {@code X(arg1, arg2) } which has two arguments. You
+   * have to know that {@code arg2} has index {@code 1} to correctly map it to a machine
+   * instruction later.
+   */
+  private int getOperandIndexFromPseudoInstruction(Format.Field field,
+                                                   ExpressionNode argument,
+                                                   Identifier parameter) {
+    for (int i = 0; i < pseudoInstruction.parameters().length; i++) {
+      if (parameter.simpleName()
+          .equals(pseudoInstruction.parameters()[i].identifier.simpleName())) {
+        return i;
+      }
     }
 
-    writer.write("std::vector< MCInst > result;\n");
-    var visitor =
-        new PseudoExpansionCodeGeneratorVisitor(writer, namespace, fieldUsages,
-            immediateDecodings, variants, relocations, pseudoInstruction);
-    instrCallNodes.forEach(visitor::visit);
-    writer.write("return result");
-    return writer.toString();
+    throw Diagnostic.error(
+            String.format("Cannot assign field '%s' because the field is not a field.",
+                field.identifier.simpleName()),
+            parameter.sourceLocation())
+        .locationDescription(argument.sourceLocation(), "Trying to match this argument.")
+        .locationDescription(field.sourceLocation(), "Trying to assign this field.")
+        .locationDescription(pseudoInstruction.sourceLocation(),
+            "This pseudo instruction is affected.")
+        .help("The parameter '%s' must match any pseudo instruction's parameter names",
+            parameter.simpleName())
+        .build();
+  }
+
+  @Override
+  public String genFunctionDefinition() {
+    var nodes = getNodes(function.behavior(), InstrCallNode.class);
+
+    context.ln(genFunctionSignature())
+        .ln("{")
+        .tabIn()
+        .ln("std::vector< MCInst > result;");
+
+    for (var node : nodes) {
+      var sym = symbolTable.getNextVariable();
+      context.ln("MCInst %s = MCInst();", sym)
+          .ln("%s.setOpcode(%s::%s);", sym, namespace, node.target().identifier.simpleName());
+      writeInstructionCall(context, node, sym);
+      context.ln("result.push_back(%s);", sym);
+    }
+
+    context.ln("return result;")
+        .tabOut()
+        .ln("}");
+
+    return builder.toString();
+  }
+
+  private void writeInstructionCall(CNodeContext context,
+                                    InstrCallNode instrCallNode,
+                                    String instructionSymbol) {
+    var pairs =
+        Streams.zip(instrCallNode.getParamFields().stream(), instrCallNode.arguments().stream(),
+            Pair::of).toList();
+
+    var reorderedPairs = reorderParameters(instrCallNode.target().format(), pairs);
+
+    reorderedPairs.forEach(pair -> {
+      /*
+        pseudo instruction CALL( symbol : Bits<32> ) =
+         {
+              LUI{ rd = 1 as Bits5, imm = hi20( symbol ) }
+              ...
+         }
+
+         E.g. rd is the field and 1 is the argument.
+      */
+
+      var field = pair.left();
+      var argument = pair.right();
+
+      var newContext = new CNodeWithBaggageContext(context)
+          .put(FIELD, field)
+          .put(INSTRUCTION, instrCallNode.target())
+          .put(INSTRUCTION_SYMBOL, instructionSymbol);
+
+      if (argument instanceof ConstantNode cn) {
+        handle(newContext, cn);
+      } else if (argument instanceof FuncCallNode fn) {
+        ensure(fn.function() instanceof Relocation,
+            () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()));
+        handle(newContext, fn);
+      } else if (argument instanceof FuncParamNode fn) {
+        handle(newContext, fn);
+      } else if (argument instanceof ZeroExtendNode zn) {
+        handle(newContext, zn);
+      } else {
+        throw Diagnostic.error("Not implemented for this node type.", argument.sourceLocation())
+            .build();
+      }
+    });
+  }
+
+  /**
+   * The order of the parameters is not necessarily the order in which the expansion should happen.
+   * This function looks at the {@link Format} and reorders the list to the same
+   * order.
+   */
+  private List<Pair<Format.Field, ExpressionNode>> reorderParameters(
+      Format format,
+      List<Pair<Format.Field, ExpressionNode>> pairs) {
+    var result = new ArrayList<Pair<Format.Field, ExpressionNode>>();
+    var lookup = pairs.stream().collect(Collectors.toMap(Pair::left, Pair::right));
+    var usages = fieldUsages.getFieldUsages(format).keySet();
+    // The `fieldsSortedByLsbDesc` returns all fields from the format.
+    // However, we are only interested in the registers and immediates.
+    // That's why we filter with `contains`. `fieldUsages` only stores REGISTER and IMMEDIATE.
+    var order = format.fieldsSortedByLsbDesc().filter(usages::contains).toList();
+
+    for (var item : order) {
+      var l = ensureNonNull(lookup.get(item),
+          () -> Diagnostic.error("Cannot find format's field in pseudo instruction",
+              item.sourceLocation()));
+      result.add(Pair.of(item, l));
+    }
+
+    return result;
+  }
+
+  @Override
+  public String genFunctionSignature() {
+    return "std::vector<MCInst> %sMCInstExpander::%s_%s_%s".formatted(namespace,
+        namespace.toUpperCase(),
+        pseudoInstruction.identifier.simpleName(), function.simpleName())
+        + "(const MCInst& instruction) const";
   }
 }

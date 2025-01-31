@@ -16,12 +16,15 @@ import vadl.types.Type;
  */
 public abstract class CGenContext<T> {
 
-  private final Consumer<String> writer;
+  protected String prefix = "";
+  protected final Consumer<String> writer;
 
   public CGenContext(
-      Consumer<String> writer
+      Consumer<String> writer,
+      String prefix
   ) {
     this.writer = writer;
+    this.prefix = prefix;
   }
 
   /**
@@ -41,10 +44,26 @@ public abstract class CGenContext<T> {
   public abstract String genToString(T entity);
 
   /**
+   * Enters tab mode and every following write is tabbed until {@code tabOut} is called.
+   */
+  public CGenContext<T> tabIn() {
+    prefix = "\t";
+    return this;
+  }
+
+  /**
+   * Exits tab mode and every following write is not tabbed anymore.
+   */
+  public CGenContext<T> tabOut() {
+    prefix = "";
+    return this;
+  }
+
+  /**
    * Write C code to generation context.
    */
   public CGenContext<T> wr(String str) {
-    writer.accept(str);
+    writer.accept(prefix + str);
     return this;
   }
 
@@ -56,7 +75,19 @@ public abstract class CGenContext<T> {
    */
   @FormatMethod
   public CGenContext<T> wr(String fmt, Object... args) {
-    wr(String.format(fmt, args));
+    wr(String.format(prefix + fmt, args));
+    return this;
+  }
+
+  /**
+   * Write C code to generation context with a newline.
+   *
+   * @param fmt  A string format
+   * @param args Arguments for placeholders in the format string
+   */
+  @FormatMethod
+  public CGenContext<T> ln(String fmt, Object... args) {
+    wr(String.format(prefix + fmt + '\n', args));
     return this;
   }
 
@@ -64,7 +95,7 @@ public abstract class CGenContext<T> {
    * Write C code to generation context and end with a new line.
    */
   public CGenContext<T> ln(String str) {
-    wr(str + "\n");
+    wr(prefix + str + "\n");
     return this;
   }
 
@@ -72,7 +103,7 @@ public abstract class CGenContext<T> {
    * Write a new line to the generation context.
    */
   public CGenContext<T> ln() {
-    wr("\n");
+    wr(prefix + "\n");
     return this;
   }
 
