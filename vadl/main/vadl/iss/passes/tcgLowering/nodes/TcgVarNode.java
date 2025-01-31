@@ -5,7 +5,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -42,8 +41,8 @@ public abstract class TcgVarNode extends TcgNode {
   }
 
   @Override
-  public @Nullable TcgVRefNode definedVar() {
-    return null;
+  public List<TcgVRefNode> definedVars() {
+    return List.of();
   }
 
   @Override

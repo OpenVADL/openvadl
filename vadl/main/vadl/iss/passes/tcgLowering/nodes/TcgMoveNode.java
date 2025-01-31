@@ -1,7 +1,6 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.graph.Node;
 
 
@@ -17,18 +16,18 @@ public class TcgMoveNode extends TcgUnaryOpNode {
 
   @Override
   public String tcgFunctionName() {
-    return "tcg_gen_mov_" + dest.width();
+    return "tcg_gen_mov_" + firstDest().width();
   }
 
 
   @Override
   public Node copy() {
-    return new TcgMoveNode(dest.copy(TcgVRefNode.class), arg.copy(TcgVRefNode.class));
+    return new TcgMoveNode(firstDest().copy(TcgVRefNode.class), arg.copy(TcgVRefNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgMoveNode(dest, arg);
+    return new TcgMoveNode(firstDest(), arg);
   }
 
 }

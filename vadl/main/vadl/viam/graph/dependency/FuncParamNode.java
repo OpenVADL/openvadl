@@ -37,7 +37,7 @@ public class FuncParamNode extends ParamNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new FuncParamNode(parameter);
   }
 

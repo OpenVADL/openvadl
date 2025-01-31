@@ -49,7 +49,7 @@ public class FieldAccessRefNode extends ParamNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new FieldAccessRefNode(fieldAccess, type());
   }
 

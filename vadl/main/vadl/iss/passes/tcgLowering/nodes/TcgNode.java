@@ -1,10 +1,9 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.DirectionalNode;
@@ -26,7 +25,7 @@ public abstract class TcgNode extends DirectionalNode {
 
   public abstract Set<TcgVRefNode> usedVars();
 
-  public abstract @Nullable TcgVRefNode definedVar();
+  public abstract List<TcgVRefNode> definedVars();
 
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {

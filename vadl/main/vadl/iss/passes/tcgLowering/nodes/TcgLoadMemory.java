@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_8_16_32_64;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
@@ -60,8 +59,8 @@ public class TcgLoadMemory extends TcgOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return "tcg_gen_qemu_ld_" + width
-        + "(" + dest().varName()
+    return "tcg_gen_qemu_ld_" + width()
+        + "(" + firstDest().varName()
         + "," + addr().varName()
         + ", 0"
         + ", " + tcgMemOp()
@@ -70,12 +69,12 @@ public class TcgLoadMemory extends TcgOpNode {
 
   @Override
   public Node copy() {
-    return new TcgLoadMemory(size, extendMode, dest, addr);
+    return new TcgLoadMemory(size, extendMode, firstDest(), addr);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgLoadMemory(size, extendMode, dest, addr);
+    return new TcgLoadMemory(size, extendMode, firstDest(), addr);
   }
 
   /**

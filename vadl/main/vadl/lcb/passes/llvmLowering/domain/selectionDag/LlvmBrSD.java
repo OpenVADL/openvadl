@@ -33,7 +33,7 @@ public class LlvmBrSD extends ExpressionNode implements LlvmNodeLowerable {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmBrSD(
         (ExpressionNode) bb.copy());
   }

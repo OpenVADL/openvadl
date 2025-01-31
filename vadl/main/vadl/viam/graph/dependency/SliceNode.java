@@ -48,6 +48,9 @@ public class SliceNode extends ExpressionNode {
     return (DataType) super.type();
   }
 
+  public void setSlice(Constant.BitSlice slice) {
+    this.slice = slice;
+  }
 
   @Override
   public void verifyState() {
@@ -87,7 +90,7 @@ public class SliceNode extends ExpressionNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new SliceNode((ExpressionNode) value.copy(), slice, type());
   }
 

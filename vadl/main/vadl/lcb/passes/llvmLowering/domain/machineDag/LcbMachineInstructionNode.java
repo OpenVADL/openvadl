@@ -40,7 +40,7 @@ public class LcbMachineInstructionNode extends AbstractFunctionCallNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LcbMachineInstructionNode(
         new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         outputInstructionName);

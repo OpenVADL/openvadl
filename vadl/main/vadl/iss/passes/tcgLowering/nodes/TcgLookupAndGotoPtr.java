@@ -5,9 +5,7 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * TcgLookupAndGotoPtr is representing a TCG (Tiny Code Generation)
@@ -30,8 +28,8 @@ public class TcgLookupAndGotoPtr extends TcgNode {
   }
 
   @Override
-  public @Nullable TcgVRefNode definedVar() {
-    return null;
+  public List<TcgVRefNode> definedVars() {
+    return List.of();
   }
 
   @Override

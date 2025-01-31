@@ -10,6 +10,7 @@ import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
 /**
@@ -60,7 +61,7 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmFieldAccessRefNode(fieldAccess, type(), llvmType, usage);
   }
 

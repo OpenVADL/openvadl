@@ -47,7 +47,7 @@ public class SignExtendNode extends UnaryNode implements Canonicalizable {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new SignExtendNode((ExpressionNode) value.copy(), type());
   }
 

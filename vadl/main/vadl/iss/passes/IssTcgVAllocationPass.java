@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,8 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.DataFlowAnalysis;
 import vadl.iss.passes.nodes.TcgVRefNode;
+import vadl.iss.passes.tcgLowering.IssTcgContextPass;
+import vadl.iss.passes.tcgLowering.TcgCtx;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
@@ -72,15 +75,15 @@ public class IssTcgVAllocationPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var tmpAssignments = passResults.lastResultOf(IssVarSsaAssignment.class,
-        IssVarSsaAssignment.Result.class).varAssignments();
+    var tcgCtxs = passResults.lastResultOf(IssTcgContextPass.class,
+        IssTcgContextPass.Result.class).tcgCtxs();
 
     // Process each instruction in the ISA
     viam.isa().ifPresent(isa -> isa.ownInstructions()
         .forEach(instr -> {
-              var temps = requireNonNull(tmpAssignments.get(instr));
+              var tcgCtx = requireNonNull(tcgCtxs.get(instr));
               // Allocate variables for the instruction's behavior
-              new IssVariableAllocator(instr.behavior(), temps)
+              new IssVariableAllocator(instr.behavior(), tcgCtx.assignment())
                   .assignFinalVariables();
             }
         ));
@@ -107,6 +110,7 @@ class IssVariableAllocator {
   private final StartNode startNode;
   // the integer just represents some non-specific TCGv
   private final Map<TcgVRefNode, Integer> allocationMap;
+  private final TcgCtx.Assignment initialAssignment;
   private final LivenessAnalysis livenessAnalysis;
 
   /**
@@ -115,10 +119,11 @@ class IssVariableAllocator {
    * @param graph The dependency graph of the instruction's behavior.
    */
   public IssVariableAllocator(Graph graph,
-                              Map<DependencyNode, TcgVRefNode> ssaAssignments) {
+                              TcgCtx.Assignment ssaAssignments) {
     this.graph = graph;
     this.startNode = getSingleNode(graph, StartNode.class);
     this.livenessAnalysis = new LivenessAnalysis(ssaAssignments);
+    this.initialAssignment = ssaAssignments;
     this.allocationMap = new HashMap<>();
   }
 
@@ -135,6 +140,10 @@ class IssVariableAllocator {
    */
   void assignFinalVariables() {
 
+    // this schedules non temporary variables, e.i.:
+    // reg, regfile, const
+    initializeFixedVariables();
+
     // perform liveness analysis
     livenessAnalysis.analyze(graph);
 
@@ -142,6 +151,17 @@ class IssVariableAllocator {
     allocateColoring(interferenceGraph);
 
     updateFinalAssignments();
+  }
+
+  /**
+   * Initializes all variable at start of instruction.
+   * This is required to build a valid inference graph.
+   */
+  private void initializeFixedVariables() {
+    initialAssignment.tcgVariables()
+        .filter(v -> v.var().kind() != TcgV.Kind.TMP)
+        .sorted(Comparator.comparing(v -> v.var().kind()))
+        .forEach(v -> startNode.addAfter(TcgGetVar.from(v)));
   }
 
   private void updateFinalAssignments() {
@@ -218,8 +238,8 @@ class IssVariableAllocator {
       Set<TcgVRefNode> liveOut = livenessAnalysis.getOutValue(node);
 
       // For each variable defined at this node, it interferes with all variables live-out
-      var def = node.definedVar();
-      if (def != null) {
+      var defs = node.definedVars();
+      for (var def : defs) {
         for (var live : liveOut) {
           infGraph.addEdge(def, live);
         }
@@ -259,13 +279,13 @@ class IssVariableAllocator {
  */
 class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
 
-  private final Map<DependencyNode, TcgVRefNode> tempAssignments;
+  private final TcgCtx.Assignment tempAssignments;
   private final Map<RegisterFile, List<TcgVRefNode>> registerFileVars;
 
-  public LivenessAnalysis(Map<DependencyNode, TcgVRefNode> tempAssignments) {
+  public LivenessAnalysis(TcgCtx.Assignment tempAssignments) {
     this.tempAssignments = tempAssignments;
     // collect all registerFileVariables to their respective registerFile
-    this.registerFileVars = tempAssignments.values().stream()
+    this.registerFileVars = tempAssignments.tcgVariables()
         .filter(v -> v.var().kind() == TcgV.Kind.REG_FILE)
         .collect(Collectors.groupingBy(
             v -> (RegisterFile) requireNonNull(v.var().registerOrFile())));
@@ -312,11 +332,13 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
     // We have to assume that all registers and register files are used
     // after this instruciton. Thus we have to set them used at the end of the instruction.
     // We also use constants at the end, so they can't be reassigned
-    return tempAssignments.values().stream().filter(v ->
-        v.var().kind() == TcgV.Kind.REG
-            || v.var().kind() == TcgV.Kind.REG_FILE
-            || v.var().kind() == TcgV.Kind.CONST
-    ).collect(Collectors.toSet());
+    var endFlow = tempAssignments.tcgVariables()
+        .filter(v ->
+            v.var().kind() == TcgV.Kind.REG
+                || v.var().kind() == TcgV.Kind.REG_FILE
+                || v.var().kind() == TcgV.Kind.CONST
+        ).collect(Collectors.toSet());
+    return endFlow;
   }
 
   @Override
@@ -337,12 +359,11 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
    * @param node The control node to analyze.
    * @return The set of variables defined at the node.
    */
-  private Set<TcgVRefNode> defineVariables(ControlNode node) {
+  private List<TcgVRefNode> defineVariables(ControlNode node) {
     if (!(node instanceof TcgNode tcgNode)) {
-      return Set.of();
+      return List.of();
     }
-    var dest = tcgNode.definedVar();
-    return dest == null ? Set.of() : Set.of(dest);
+    return tcgNode.definedVars();
   }
 
   /**
@@ -351,9 +372,9 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
    * @param node The control node to analyze.
    * @return The set of variables used at the node.
    */
-  private Set<TcgVRefNode> usedVariables(ControlNode node) {
+  private List<TcgVRefNode> usedVariables(ControlNode node) {
     if (!(node instanceof TcgNode tcgNode)) {
-      return Set.of();
+      return List.of();
     }
 
     // get variables
@@ -370,7 +391,7 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
     // all variables of the same register file must be considered also used
     // as the concrete register file index is not known
 
-    return directlyUsedVars;
+    return directlyUsedVars.stream().toList();
   }
 
 }
@@ -423,6 +444,17 @@ class InterferenceGraph {
   public Set<TcgVRefNode> getVariables() {
     return adjacencyList.keySet();
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for (Map.Entry<TcgVRefNode, Set<TcgVRefNode>> entry : adjacencyList.entrySet()) {
+      sb.append(entry.getKey()).append(" -> ")
+          .append(entry.getValue()).append("\n");
+    }
+    return sb.toString();
+  }
+
 }
 
 /**

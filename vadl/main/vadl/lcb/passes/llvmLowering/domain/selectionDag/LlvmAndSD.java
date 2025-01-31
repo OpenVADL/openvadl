@@ -37,7 +37,7 @@ public class LlvmAndSD extends BuiltInCall implements LlvmNodeLowerable {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmAndSD(new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         type());
   }

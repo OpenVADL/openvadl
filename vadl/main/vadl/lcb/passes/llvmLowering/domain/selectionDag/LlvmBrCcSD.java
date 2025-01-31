@@ -49,7 +49,7 @@ public class LlvmBrCcSD extends ExpressionNode implements LlvmNodeLowerable {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmBrCcSD(condition,
         (ExpressionNode) first.copy(),
         (ExpressionNode) second.copy(),

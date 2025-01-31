@@ -1,6 +1,8 @@
 package vadl.iss.passes;
 
+import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -27,5 +29,9 @@ public class TcgPassUtils {
     } else {
       return "n" + expr.id;
     }
+  }
+
+  public static boolean isTcg(DependencyNode node) {
+    return node.usages().anyMatch(u -> u instanceof ScheduledNode);
   }
 }

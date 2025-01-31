@@ -43,9 +43,9 @@ public class LlvmUnlowerableSD extends BuiltInCall {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmUnlowerableSD(
-        new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
+        new NodeList<>(args.stream().map(ExpressionNode::copy).toList()),
         type());
   }
 

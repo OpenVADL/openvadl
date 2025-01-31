@@ -862,12 +862,13 @@ public abstract class Constant {
     // cache the statistic summary for performance
     private final IntSummaryStatistics statistics;
 
+
     /**
      * The constructor of a BitSlice from an array of sub-ranges (parts).
      *
      * <p>The resulting BitSlice is normalized to the least necessary parts.</p>
      */
-    public BitSlice(Part[] parts) {
+    public BitSlice(Part... parts) {
       super(Type.bitSlice());
 
       ViamError.ensure(parts.length > 0,
@@ -905,6 +906,12 @@ public abstract class Constant {
           .flatMapToInt(part -> StreamUtils.directionalRangeClosed(part.msb(), part.lsb()));
     }
 
+    /**
+     * Returns if the slice can be extracted from one consecutive slice of the value.
+     * E.g. {@code [4..1]} is continuous while {@code [2, 4..3]} is not.
+     *
+     * @return true if slice is continuous, otherwise false.
+     */
     public boolean isContinuous() {
       // this works because the parts are normalized
       return parts.size() == 1;

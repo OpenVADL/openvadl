@@ -316,6 +316,38 @@ public class Graph {
     node.id().turnDeleted();
   }
 
+  /**
+   * Removes all control nodes that with no predecessor and no successor.
+   */
+  public void deleteDanglingControlNodes() {
+    getNodes(ControlNode.class)
+        .filter(c -> c.predecessor() == null && c.successors().findAny().isEmpty())
+        .forEach(Node::safeDelete);
+  }
+
+  /**
+   * This method removes all unused dependencies from the graph.
+   * Helpful if a pass manipulates the graph such that there are dependency nodes that
+   * are not used by any other node (usage count = 0)
+   */
+  public void deleteUnusedDependencies() {
+    getNodes(DependencyNode.class)
+        .filter(n -> n.usageCount() == 0)
+        .forEach(this::deleteIfUnusedRecursively);
+  }
+
+  // recursive implementation of #deleteUnusedDependencies
+  private void deleteIfUnusedRecursively(Node node) {
+    if (node.usageCount() != 0) {
+      return;
+    }
+    if (node.isDeleted()) {
+      return;
+    }
+    node.safeDelete();
+    node.inputs().forEach(this::deleteIfUnusedRecursively);
+  }
+
   // helper method to add node to graph
   private <T extends Node> T addSimpleInternal(T node) {
     node.ensure(node.isUninitialized(), "node is not uninitialized");
@@ -514,4 +546,5 @@ public class Graph {
         .filter(x -> x.usageCount() == 0)
         .toList();
   }
+
 }

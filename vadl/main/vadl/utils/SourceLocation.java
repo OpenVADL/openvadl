@@ -54,6 +54,10 @@ public record SourceLocation(
     return !this.uri.equals(INVALID_MEMORY);
   }
 
+  public SourceLocation orDefault(SourceLocation defaultLocation) {
+    return isValid() ? this : defaultLocation;
+  }
+
 
   /**
    * Joins this source location with another source location.

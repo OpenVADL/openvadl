@@ -33,8 +33,8 @@ public class TcgGenException extends TcgNode {
   }
 
   @Override
-  public @Nullable TcgVRefNode definedVar() {
-    return null;
+  public List<TcgVRefNode> definedVars() {
+    return List.of();
   }
 
   @Override

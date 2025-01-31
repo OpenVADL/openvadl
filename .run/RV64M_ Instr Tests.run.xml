@@ -1,15 +1,15 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="RV64I: Embench Test" type="GradleRunConfiguration" factoryName="Gradle" folderName="ISS">
+  <configuration default="false" name="RV64M: Instr Tests" type="GradleRunConfiguration" factoryName="Gradle" folderName="ISS">
     <ExternalSystemSettings>
       <option name="env">
         <map>
-          <entry key="test_embench_enabled" value="true" />
+          <entry key="test_iss_enabled" value="true" />
         </map>
       </option>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/.." />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="-PopenVadl.tests=IssRV64IEmbenchTest -PnoXtendCompile -i" />
+      <option name="scriptParameters" value="-PopenVadl.tests=IssRV64MInstrTest -PnoXtendCompile -i" />
       <option name="taskDescriptions">
         <list />
       </option>

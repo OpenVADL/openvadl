@@ -47,7 +47,7 @@ public class TruncateNode extends UnaryNode implements Canonicalizable {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new TruncateNode((ExpressionNode) value.copy(), type());
   }
 

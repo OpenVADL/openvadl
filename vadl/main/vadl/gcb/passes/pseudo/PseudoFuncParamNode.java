@@ -4,6 +4,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
@@ -46,7 +47,7 @@ public class PseudoFuncParamNode extends FuncParamNode {
 
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new PseudoFuncParamNode(parameter, index);
   }
 

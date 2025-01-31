@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
-import vadl.iss.passes.tcgLowering.TcgV;
-import vadl.iss.passes.tcgLowering.Tcg_8_16_32;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
@@ -39,13 +37,13 @@ public class TcgExtendNode extends TcgUnaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgExtendNode(fromSize, extend, dest.copy(TcgVRefNode.class),
+    return new TcgExtendNode(fromSize, extend, firstDest().copy(TcgVRefNode.class),
         arg.copy(TcgVRefNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgExtendNode(fromSize, extend, dest, arg);
+    return new TcgExtendNode(fromSize, extend, firstDest(), arg);
   }
 
   @Override
@@ -56,7 +54,8 @@ public class TcgExtendNode extends TcgUnaryOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return tcgFunctionName() + "(" + dest.varName() + ", " + arg.varName() + ", " + fromSize + ");";
+    return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg.varName() + ", "
+        + fromSize + ");";
   }
 
   @Override

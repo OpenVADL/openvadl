@@ -1,5 +1,6 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
+import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.viam.graph.Node;
 
@@ -20,12 +21,17 @@ public class TcgUnaryNopNode extends TcgUnaryOpNode {
   }
 
   @Override
+  public String cCode(Function<Node, String> nodeToCCode) {
+    return "";
+  }
+
+  @Override
   public Node copy() {
-    return new TcgUnaryNopNode(dest.copy(), arg);
+    return new TcgUnaryNopNode(firstDest().copy(), arg);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgUnaryNopNode(dest, arg);
+    return new TcgUnaryNopNode(firstDest(), arg);
   }
 }

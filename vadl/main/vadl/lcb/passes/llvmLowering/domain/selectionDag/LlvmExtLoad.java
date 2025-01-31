@@ -30,7 +30,7 @@ public class LlvmExtLoad extends ReadMemNode implements LlvmNodeLowerable,
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmExtLoad((ExpressionNode) Objects.requireNonNull(address).copy(),
         memory,
         words);

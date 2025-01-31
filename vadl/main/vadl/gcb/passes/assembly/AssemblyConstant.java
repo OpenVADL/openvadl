@@ -7,6 +7,7 @@ import vadl.viam.Function;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * A predefined node for the assembly's {@link Function#behavior()}.
@@ -137,7 +138,7 @@ public class AssemblyConstant extends ConstantNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new AssemblyConstant((Constant.Str) constant);
   }
 

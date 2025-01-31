@@ -91,16 +91,15 @@ public abstract class DirectionalNode extends ControlNode {
    * After:
    * X ---> Replacement ---> Y
    * }</pre>
-   * After linking, this node is deleted.
+   * After linking, this node is NOT deleted.
    *
    * @param replacement The replacement of the current node
    */
-  public void replaceAndLinkAndDelete(DirectionalNode replacement) {
+  public void replaceAndLink(DirectionalNode replacement) {
     replace(replacement);
     var next = this.next();
     setNext(null);
     replacement.setNext(next);
-    safeDelete();
   }
 
   public ControlNode next() {

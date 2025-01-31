@@ -11,9 +11,13 @@ import vadl.iss.passes.tcgLowering.nodes.TcgGenException;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.BuiltInTable;
+import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.InstrEndNode;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.SignExtendNode;
 
 /**
  * This pass manipulates the VIAM with hardcoded elements.
@@ -60,6 +64,5 @@ public class IssHardcodedTcgAddOnPass extends Pass {
     var instrEnd = getSingleNode(instr.behavior(), InstrEndNode.class);
     instrEnd.addBefore(new TcgGenException(0xb));
   }
-
-
+  
 }

@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgCondition;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
@@ -38,9 +37,9 @@ public class TcgSetCond extends TcgBinaryOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return tcgFunctionName() + "_" + width + "("
+    return tcgFunctionName() + "_" + width() + "("
         + cond.cCode() + ", "
-        + dest.varName() + ", "
+        + firstDest().varName() + ", "
         + arg1.varName() + ", "
         + arg2.varName()
         + ");";
@@ -48,13 +47,13 @@ public class TcgSetCond extends TcgBinaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgSetCond(dest.copy(TcgVRefNode.class), arg1.copy(TcgVRefNode.class),
+    return new TcgSetCond(firstDest().copy(TcgVRefNode.class), arg1.copy(TcgVRefNode.class),
         arg2.copy(TcgVRefNode.class), cond);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgSetCond(dest, arg1, arg2, cond);
+    return new TcgSetCond(firstDest(), arg1, arg2, cond);
   }
 
   @Override

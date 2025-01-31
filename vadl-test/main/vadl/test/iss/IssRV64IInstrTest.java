@@ -5,8 +5,6 @@ import static vadl.test.TestUtils.arbitraryUnsignedInt;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.function.Function;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import org.junit.jupiter.api.DynamicTest;
@@ -18,16 +16,31 @@ import org.slf4j.LoggerFactory;
 /**
  * Tests the RV64I instructions set.
  */
-public class IssRV64IInstrTest extends QemuIssTest {
+public class IssRV64IInstrTest extends IssInstrTest {
 
+  private static final String VADL_SPEC = "sys/risc-v/rv64im.vadl";
   private static final int TESTS_PER_INSTRUCTION = 50;
-  private static final Logger log = LoggerFactory.getLogger(IssRV64IInstrTest.class);
+  private static final Logger log = LoggerFactory.getLogger(IssRV64MInstrTest.class);
+
+  @Override
+  int getTestPerInstruction() {
+    return TESTS_PER_INSTRUCTION;
+  }
+
+  @Override
+  String getVadlSpec() {
+    return VADL_SPEC;
+  }
+
+  AsmTestBuilder getBuilder(String testNamePrefix, int id) {
+    return new RV64ITestBuilder(testNamePrefix + "_" + id);
+  }
 
   // Helper methods
   private Stream<DynamicTest> testBinaryRegRegInstruction(String instruction, String testNamePrefix)
       throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64ITestBuilder(testNamePrefix + "_" + id);
+      var b = getBuilder(testNamePrefix, id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
       b.fillReg(regSrc1, 64);
@@ -41,7 +54,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   private Stream<DynamicTest> testBinaryRegImmInstruction(String instruction, String testNamePrefix)
       throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64ITestBuilder(testNamePrefix + "_" + id);
+      var b = getBuilder(testNamePrefix, id);
       var regSrc = b.anyTempReg().sample();
       b.fillReg(regSrc, 64);
       var imm = arbitrarySignedInt(12).sample();
@@ -54,7 +67,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
   private Stream<DynamicTest> testShiftImmInstruction(String instruction, String testNamePrefix)
       throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64ITestBuilder(testNamePrefix + "_" + id);
+      var b = getBuilder(testNamePrefix, id);
       var regSrc = b.anyTempReg().sample();
       b.fillReg(regSrc, 64);
       var shamt = arbitraryUnsignedInt(6).sample();
@@ -68,7 +81,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
                                                   String storeInstruction, int dataSize)
       throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64ITestBuilder(testNamePrefix + "_" + id);
+      var b = getBuilder(testNamePrefix, id);
       var storeReg = b.anyTempReg().sample();
       b.fillReg(storeReg, dataSize);
       var addrReg = b.anyTempReg().sample();
@@ -84,7 +97,7 @@ public class IssRV64IInstrTest extends QemuIssTest {
                                                    String loadInstruction, int dataSize)
       throws IOException {
     return runTestsWith(id -> {
-      var b = new RV64ITestBuilder(testNamePrefix + "_" + id);
+      var b = getBuilder(testNamePrefix, id);
       var storeReg = b.anyTempReg().sample();
       b.fillReg(storeReg, dataSize);
       var addrReg = b.anyTempReg().sample();
@@ -585,15 +598,4 @@ public class IssRV64IInstrTest extends QemuIssTest {
     });
   }
 
-  @SafeVarargs
-  private Stream<DynamicTest> runTestsWith(
-      Function<Integer, IssTestUtils.TestSpec>... generators) throws IOException {
-    var image = generateIssSimulator("sys/risc-v/rv64i.vadl");
-    var testCases = Stream.of(generators)
-        .flatMap(genFunc -> IntStream.range(0, TESTS_PER_INSTRUCTION)
-            .mapToObj(genFunc::apply)
-        )
-        .toList();
-    return runQemuInstrTests(image, testCases);
-  }
 }

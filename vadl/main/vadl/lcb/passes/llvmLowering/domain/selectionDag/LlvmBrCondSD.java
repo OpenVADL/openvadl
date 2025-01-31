@@ -38,7 +38,7 @@ public class LlvmBrCondSD extends ExpressionNode implements LlvmNodeLowerable {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmBrCondSD((ExpressionNode) condition.copy(), (ExpressionNode) immOffset.copy());
   }
 

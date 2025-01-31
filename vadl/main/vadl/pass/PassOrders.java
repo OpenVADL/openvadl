@@ -26,14 +26,14 @@ import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssHardcodedTcgAddOnPass;
 import vadl.iss.passes.IssPcAccessConversionPass;
-import vadl.iss.passes.IssTcgConstantSchedulingPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
-import vadl.iss.passes.IssVarSsaAssignment;
 import vadl.iss.passes.IssVerificationPass;
 import vadl.iss.passes.decode.qemu.QemuDecodeLoweringPass;
 import vadl.iss.passes.decode.qemu.QemuDecodeSymbolResolvingPass;
+import vadl.iss.passes.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
+import vadl.iss.passes.tcgLowering.IssTcgContextPass;
 import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
 import vadl.iss.template.hw.EmitIssVirtCPass;
@@ -353,13 +353,13 @@ public class PassOrders {
     order
         .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config))
+        .add(new IssOpDecompositionPass(config))
         .add(new SideEffectSchedulingPass(config))
         .add(new IssSafeResourceReadPass(config))
         .add(new IssPcAccessConversionPass(config))
         .add(new IssTcgSchedulingPass(config))
-        .add(new IssVarSsaAssignment(config))
+        .add(new IssTcgContextPass(config))
         .add(new TcgBranchLoweringPass(config))
-        .add(new IssTcgConstantSchedulingPass(config))
         .add(new TcgOpLoweringPass(config))
         .add(new IssHardcodedTcgAddOnPass(config))
         .add(new IssTcgVAllocationPass(config))

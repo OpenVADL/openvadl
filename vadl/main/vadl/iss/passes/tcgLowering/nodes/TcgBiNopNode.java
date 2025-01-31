@@ -27,11 +27,11 @@ public class TcgBiNopNode extends TcgBinaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgBiNopNode(dest.copy(), arg1.copy(), arg2.copy());
+    return new TcgBiNopNode(firstDest().copy(), arg1.copy(), arg2.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgBiNopNode(dest, arg1, arg2);
+    return new TcgBiNopNode(firstDest(), arg1, arg2);
   }
 }

@@ -27,7 +27,7 @@ public class IssStaticPcRegNode extends ExpressionNode {
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new IssStaticPcRegNode(pc);
   }
 

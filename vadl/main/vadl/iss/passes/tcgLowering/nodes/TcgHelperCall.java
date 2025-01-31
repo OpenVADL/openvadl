@@ -79,8 +79,11 @@ public class TcgHelperCall extends TcgNode {
   }
 
   @Override
-  public @Nullable TcgVRefNode definedVar() {
-    return result;
+  public List<TcgVRefNode> definedVars() {
+    if (result == null) {
+      return List.of();
+    }
+    return List.of(result);
   }
 
   @Override

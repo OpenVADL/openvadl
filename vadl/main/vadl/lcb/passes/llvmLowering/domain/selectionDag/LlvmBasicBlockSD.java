@@ -12,6 +12,7 @@ import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
 /**
@@ -48,7 +49,7 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
   }
 
   @Override
-  public Node copy() {
+  public ExpressionNode copy() {
     return new LlvmBasicBlockSD(fieldAccess, type(), llvmType);
   }
 

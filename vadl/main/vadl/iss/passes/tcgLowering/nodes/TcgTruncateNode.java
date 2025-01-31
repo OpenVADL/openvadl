@@ -3,7 +3,6 @@ package vadl.iss.passes.tcgLowering.nodes;
 import java.util.List;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
@@ -34,7 +33,7 @@ public class TcgTruncateNode extends TcgUnaryOpNode {
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
     return tcgFunctionName() + "("
-        + dest.varName()
+        + firstDest().varName()
         + ", " + arg.varName()
         + ", " + bitWidth
         + ");";
@@ -42,12 +41,13 @@ public class TcgTruncateNode extends TcgUnaryOpNode {
 
   @Override
   public Node copy() {
-    return new TcgTruncateNode(dest.copy(TcgVRefNode.class), arg.copy(TcgVRefNode.class), bitWidth);
+    return new TcgTruncateNode(firstDest().copy(TcgVRefNode.class), arg.copy(TcgVRefNode.class),
+        bitWidth);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgTruncateNode(dest, arg, bitWidth);
+    return new TcgTruncateNode(firstDest(), arg, bitWidth);
   }
 
   @Override
