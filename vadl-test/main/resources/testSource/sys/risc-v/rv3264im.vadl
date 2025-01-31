@@ -130,7 +130,7 @@ instruction set architecture RV3264I = {
 
   model WtypeInstr (name : Id, op : BinOp, funct3 : Bin, funct7 : Bin, lhsTy : Id, rhsTy : Id) : IsaDefs = {
     instruction $name : Rtype =                        // 3 register operand instructions word
-      X(rd) := (((X(rs1) as $lhsTy) $op (X(rs2) as $rhsTy)) as SInt) as SIntR
+      X(rd) := (((X(rs1) as $lhsTy) $op (X(rs2) as $rhsTy)) as SIntW) as SIntR
     encoding $name = { opcode = 0b011'1011, funct3 = $funct3, funct7 = $funct7}
     assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
     }
@@ -427,12 +427,6 @@ instruction set architecture RV3264IM extending RV3264I = {
   constant MLen2   = MLen  * 2
   constant MLen2_1 = MLen2 - 1
 
-  constant TopBitSet = ((1 as Regs) << (MLen - 1)) as Regs
-  constant AllOnes = (- (1 as SIntR)) as Regs
-
-  function isOverflow (dividend : Regs, divisor : Regs) -> Bool =
-    (dividend = TopBitSet) & (divisor = AllOnes)
-
   model MtypeInstr (name : Id, funct3 : Bin, lhsTy : Id, rhsTy : Id, resEx : Ex) : IsaDefs = {
     instruction $name : Rtype =                        // multiply instructions
       let result = (X(rs1) as $lhsTy) * (X(rs2) as $rhsTy) in
@@ -441,25 +435,28 @@ instruction set architecture RV3264IM extending RV3264I = {
     assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
     }
 
-// +-------------------------+-----------+---------+-----------|---------+----------+----------+
-// |  Condition              |  Dividend | Divisor |    DIV    |   DIVU  |    REM   |   REMU   |
-// +-------------------------+-----------+---------+-----------|---------+----------+----------+
-// | Division by zero        |     *     |     0   |  AllOnes  | AllOnes | dividend | dividend |
-// | Overflow (signed only)  | TopBitSet |    -1   | TopBitSet |    -    |     0    |     -    |
-// +-------------------------+-----------+---------+-----------|---------+----------+----------+
+// +-------------------------+----------+---------+---------|---------+----------+----------+
+// |  Condition              | Dividend | Divisor |   DIV   |   DIVU  |    REM   |   REMU   |
+// +-------------------------+----------+---------+---------|---------+----------+----------+
+// | Division by zero        |     *    |     0   | AllOnes | AllOnes | dividend | dividend |
+// | Overflow (signed only)  |  MinInt  |    -1   |  MinInt |    -    |     0    |     -    |
+// +-------------------------+----------+---------+---------|---------+----------+----------+
 
   model DivModInstr (name : Id, opName : Id, funct3 : Bin, opCode : Bin, opTy : Id, sign : Id) : IsaDefs = {
     instruction $name : Rtype =                        // division and remainder instructions
       let dividend = X(rs1) as $opTy in let divisor = X(rs2) as $opTy in
-        X(rd) :=  if divisor = (0 as $opTy)
-                    then match : Ex ($opName = div => AllOnes; _  => dividend)
-                  else match : Ex ($sign = SInt =>
-                    if isOverflow (dividend, divisor)
-                      then match : Ex ($opName = div => TopBitSet; _  => 0)
-                      else VADL::$opName(dividend, divisor) as SIntR
-                    ; _  =>
-                           VADL::$opName(dividend, divisor) as SIntR
-                    )
+        let AllOnes = (- (1 as SIntR)) as $opTy in
+          let result =
+            if divisor = (0 as $opTy)
+              then match : Ex ($opName = div => AllOnes; _  => dividend)
+              else match : Ex ($sign = SInt =>
+                let MinInt = ((1 as Regs) << ((match : Id ($opTy = SIntW => WLen; _  => MLen)) - 1)) as $opTy in
+                  if (dividend = MinInt) & (divisor = AllOnes)       // check for overflow
+                    then match : Ex ($opName = div => MinInt; _  => 0)
+                    else VADL::$opName(dividend, divisor)
+                ; _ =>   VADL::$opName(dividend, divisor)
+                ) in
+            X(rd) :=  (result as SInt) as Regs
       encoding $name = { opcode = $opCode, funct3 = $funct3, funct7 = 0b000'0001}
       assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
     }
