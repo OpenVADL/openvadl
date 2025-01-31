@@ -124,13 +124,10 @@ public class TcgOpLoweringPass extends Pass {
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
-
-    var assignments = passResults.lastResultOf(IssTcgContextPass.class,
-        IssTcgContextPass.Result.class);
-
+    
     viam.isa().get().ownInstructions()
         .forEach(i ->
-            new TcgOpLoweringExecutor(requireNonNull(assignments.tcgCtxs().get(i)).assignment(),
+            new TcgOpLoweringExecutor(i.expectExtension(TcgCtx.class).assignment(),
                 configuration().targetSize())
                 .runOn(i.behavior()));
 
