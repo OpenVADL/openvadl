@@ -129,9 +129,10 @@ steps:
         path: /var/run/docker.sock
     environment:
       isCI: true
-      test.llvm.enabled: true
-      test.embench.enabled: true
-      test.spike.enabled: true
+      test_llvm_enabled: true
+      test_embench_enabled: true
+      test_spike_enabled: true
+      test_iss_enabled: true
 
 trigger:
   ref:
