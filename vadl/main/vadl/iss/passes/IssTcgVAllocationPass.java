@@ -51,17 +51,6 @@ import vadl.viam.graph.dependency.DependencyNode;
  */
 public class IssTcgVAllocationPass extends Pass {
 
-  /**
-   * Represents the result of the variable allocation pass.
-   *
-   * <p>Contains a mapping from each instruction to a mapping of its dependency nodes
-   * to their assigned TcgV variables.
-   */
-  public record Result(
-      Map<Instruction, Map<DependencyNode, TcgV>> varAssignments
-  ) {
-  }
-
   public IssTcgVAllocationPass(GeneralConfiguration configuration) {
     super(configuration);
   }
@@ -75,17 +64,13 @@ public class IssTcgVAllocationPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var tcgCtxs = passResults.lastResultOf(IssTcgContextPass.class,
-        IssTcgContextPass.Result.class).tcgCtxs();
-
     // Process each instruction in the ISA
     viam.isa().ifPresent(isa -> isa.ownInstructions()
-        .forEach(instr -> {
-              var tcgCtx = requireNonNull(tcgCtxs.get(instr));
-              // Allocate variables for the instruction's behavior
-              new IssVariableAllocator(instr.behavior(), tcgCtx.assignment())
-                  .assignFinalVariables();
-            }
+        .forEach(instr ->
+            // Allocate variables for the instruction's behavior
+            new IssVariableAllocator(instr.behavior(),
+                instr.expectExtension(TcgCtx.class).assignment())
+                .assignFinalVariables()
         ));
     return null;
   }

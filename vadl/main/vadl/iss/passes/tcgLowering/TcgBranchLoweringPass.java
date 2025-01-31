@@ -57,14 +57,11 @@ public class TcgBranchLoweringPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var varAssignments = passResults.lastResultOf(IssTcgContextPass.class,
-        IssTcgContextPass.Result.class);
-
     viam.isa().ifPresent(isa -> isa.ownInstructions()
         .forEach(instr ->
             new TcgBranchLoweringExecutor(
                 instr.behavior(),
-                requireNonNull(varAssignments.tcgCtxs().get(instr)).assignment()
+                instr.expectExtension(TcgCtx.class).assignment()
             ).run()
         ));
 

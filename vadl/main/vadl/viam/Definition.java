@@ -19,17 +19,29 @@ import vadl.viam.graph.Graph;
  * Use the {@link #ensure(boolean, String, Object...)} method to check for conditions that
  * must be met. It will throw an error with the definition as context if the condition is not true.
  * </p>
+ *
+ * <p>All definitions may have {@link Annotation} attached to it.</p>
+ *
+ * <p>All definitions may have {@link DefinitionExtension} attached to it.
+ * Those definition extensions are added by passes that want to directly associate
+ * information to specific definitions. </p>
  */
 public abstract class Definition implements WithSourceLocation {
 
   public final Identifier identifier;
   private SourceLocation sourceLocation = SourceLocation.INVALID_SOURCE_LOCATION;
 
-  private final Map<Class<? extends Annotation>, Annotation> annotations;
+  // lazily constructed, as most definitions don't have annotations
+  @SuppressWarnings("rawtypes")
+  @Nullable
+  private Map<Class<? extends Annotation>, Annotation> annotations;
+  // lazily constructed, as most definitions don't have extensions
+  @SuppressWarnings("rawtypes")
+  @Nullable
+  private Map<Class<? extends DefinitionExtension>, DefinitionExtension> extensions;
 
   public Definition(Identifier identifier) {
     this.identifier = identifier;
-    this.annotations = new HashMap<>();
   }
 
   @Override
@@ -71,6 +83,9 @@ public abstract class Definition implements WithSourceLocation {
    * @see vadl.viam.passes.verification.ViamVerifier
    */
   public void verify() {
+    if (annotations == null) {
+      return;
+    }
     for (Annotation<?> annotation : annotations.values()) {
       // verify all annotations of the definition
       annotation.verify();
@@ -93,6 +108,25 @@ public abstract class Definition implements WithSourceLocation {
 
   public abstract void accept(DefinitionVisitor visitor);
 
+
+  // lazy construction of annotation map
+  @SuppressWarnings("rawtypes")
+  private Map<Class<? extends Annotation>, Annotation> getAnnotations() {
+    if (annotations == null) {
+      annotations = new HashMap<>();
+    }
+    return annotations;
+  }
+
+  // lazy construction of extension map
+  @SuppressWarnings("rawtypes")
+  private Map<Class<? extends DefinitionExtension>, DefinitionExtension> getExtensions() {
+    if (extensions == null) {
+      extensions = new HashMap<>();
+    }
+    return extensions;
+  }
+
   /**
    * Adds an annotation to this definition, ensuring that there is no existing
    * annotation of the same type.
@@ -102,6 +136,7 @@ public abstract class Definition implements WithSourceLocation {
    */
   public <T extends Definition> void addAnnotation(Annotation<T> annotation) {
     var clazz = annotation.getClass();
+    var annotations = getAnnotations();
     ensure(!annotations.containsKey(clazz),
         "Expected no annotation of type %s", clazz);
     ensure(annotation.parentDefinitionClass().isInstance(this),
@@ -121,9 +156,13 @@ public abstract class Definition implements WithSourceLocation {
    */
   @Nullable
   public <T extends Annotation<?>> T annotation(Class<T> annotationClass) {
-    var anno = annotations.get(annotationClass);
+    var anno = getAnnotations().get(annotationClass);
+    if (anno == null) {
+      return null;
+    }
     ensure(annotationClass.isInstance(anno), "Expected annotation of type %s, but found %s",
         annotationClass, anno);
+    //noinspection unchecked
     return (T) anno;
   }
 
@@ -147,7 +186,67 @@ public abstract class Definition implements WithSourceLocation {
    * @return true if the annotation of the specified type exists, false otherwise
    */
   public boolean hasAnnotation(Class<? extends Annotation<?>> annotationClass) {
-    return annotations.containsKey(annotationClass);
+    return getAnnotations().containsKey(annotationClass);
+  }
+
+  /**
+   * Adds an extension to this definition, ensuring that there is no existing
+   * extension of the same type.
+   * If the operation succeeds, the extension's definition is set to this instance.
+   *
+   * @param extension to be added
+   */
+  public <T extends Definition> void attachExtension(DefinitionExtension<T> extension) {
+    var clazz = extension.getClass();
+    var extensions = getExtensions();
+    ensure(!extensions.containsKey(clazz),
+        "Extension of type %s does already exist on this definition", clazz);
+    ensure(extension.extendsDefClass().isInstance(this),
+        "Extension is incompatible with definition. Extension can be added to %s",
+        extension.extendsDefClass());
+    //noinspection unchecked
+    extension.setExtendingDefinition((T) this);
+    extensions.put(clazz, extension);
+  }
+
+  /**
+   * Retrieves the extension of the specified type if it exists.
+   *
+   * @param <T>            the type of the extension
+   * @param extensionClass the class object corresponding to the extension type
+   * @return the extension of the specified type, or null if it does not exist
+   */
+  @Nullable
+  public <T extends DefinitionExtension<?>> T extension(Class<T> extensionClass) {
+    var anno = getExtensions().get(extensionClass);
+    if (anno == null) {
+      return null;
+    }
+    //noinspection unchecked
+    return (T) anno;
+  }
+
+  /**
+   * Retrieves the extension of the specified type and ensures that it exists.
+   *
+   * @param <T>            the type of the extension
+   * @param extensionClass the class object corresponding to the extension type
+   * @return the extension of the specified type
+   */
+  public <T extends DefinitionExtension<?>> T expectExtension(Class<T> extensionClass) {
+    var anno = extension(extensionClass);
+    ensure(anno != null, "Expected extension of type %s, but found none", extensionClass);
+    return anno;
+  }
+
+  /**
+   * Checks if the definition has an extension of the specified type.
+   *
+   * @param extensionClass the class object corresponding to the extension type
+   * @return true if the extension of the specified type exists, false otherwise
+   */
+  public boolean hasExtension(Class<? extends DefinitionExtension<?>> extensionClass) {
+    return getExtensions().containsKey(extensionClass);
   }
 
 }
