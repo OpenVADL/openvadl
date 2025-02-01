@@ -149,6 +149,19 @@ public interface IsaMatchingUtils {
         }));
   }
 
+
+  default Map<PseudoInstructionLabel, List<PseudoInstruction>> createPseudoLabelMap(
+      Specification specification) {
+    return specification.isa()
+        .map(isa -> isa.ownPseudoInstructions().stream())
+        .orElse(Stream.empty())
+        .filter(instruction -> instruction.hasExtension(PseudoInstructionCtx.class))
+        .collect(Collectors.groupingBy(entry -> {
+          var ext = ensureNonNull(entry.extension(PseudoInstructionCtx.class), "must not be null");
+          return ext.label();
+        }));
+  }
+
   /**
    * The {@link IsaMachineInstructionMatchingPass} computes a hashmap with the instruction label as
    * a key and all the matched instructions as value. But we want to know whether a certain

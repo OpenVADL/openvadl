@@ -245,8 +245,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var isaMatches = ((IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
         IsaMachineInstructionMatchingPass.class)).labels();
     var pseudoMatches =
-        (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
-            IsaPseudoInstructionMatchingPass.class);
+        ((IsaPseudoInstructionMatchingPass.Result) passResults.lastResultOf(
+            IsaPseudoInstructionMatchingPass.class)).labels();
     var fieldUsages =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);

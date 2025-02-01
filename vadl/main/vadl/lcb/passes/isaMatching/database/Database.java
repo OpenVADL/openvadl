@@ -35,22 +35,12 @@ public class Database {
         (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
-    var labelledPseudoInstructions = ensureNonNull(
-        (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
+    var labelingPseudoResult = ensureNonNull(
+        (IsaPseudoInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions",
-            viam.sourceLocation()));
-
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     this.labelledMachineInstructions = labelingResult.labels();
-    this.labelledPseudoInstructions = labelledPseudoInstructions;
-  }
-
-  /**
-   * Constructor for {@link Database}.
-   */
-  public Database(Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstruction) {
-    this.labelledMachineInstructions = labelledMachineInstruction;
-    this.labelledPseudoInstructions = Collections.emptyMap();
+    this.labelledPseudoInstructions = labelingPseudoResult.labels();
   }
 
   /**

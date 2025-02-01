@@ -122,8 +122,8 @@ public class LlvmLoweringPass extends Pass {
         (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
-    var labelledPseudoInstructions = ensureNonNull(
-        (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
+    var labelingResultPseudo = ensureNonNull(
+        (IsaPseudoInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
@@ -148,7 +148,7 @@ public class LlvmLoweringPass extends Pass {
     var machineRecords = generateRecordsForMachineInstructions(viam, abi, machineStrategies,
         labelingResult);
     var pseudoRecords = pseudoInstructions(viam, abi, pseudoStrategies,
-        labelingResult, labelledPseudoInstructions);
+        labelingResult, labelingResultPseudo);
 
     return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
   }
@@ -192,14 +192,13 @@ public class LlvmLoweringPass extends Pass {
       Abi abi,
       List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
-      Map<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions) {
+      IsaPseudoInstructionMatchingPass.Result labelledPseudoInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
-    var flipped = flipPseudoInstructions(labelledPseudoInstructions);
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .forEach(pseudo -> {
           for (var strategy : pseudoStrategies) {
-            var label = flipped.get(pseudo);
+            var label = labelledPseudoInstructions.reverse().get(pseudo);
             if (!strategy.isApplicable(label)) {
               continue;
             }

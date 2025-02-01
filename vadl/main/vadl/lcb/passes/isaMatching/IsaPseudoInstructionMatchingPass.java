@@ -41,6 +41,12 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
     return new PassName("IsaPseudoInstructionMatchingPass");
   }
 
+  public record Result(Map<PseudoInstructionLabel, List<PseudoInstruction>> labels,
+                       Map<PseudoInstruction, PseudoInstructionLabel> reverse) {
+
+  }
+
+
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam)
@@ -51,27 +57,28 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
         ((FunctionInlinerPass.Output) passResults
             .lastResultOf(FunctionInlinerPass.class)).behaviors();
     Objects.requireNonNull(uninlined);
-    var flipped = flipIsaMatching(createLabelMap(viam));
-    Map<PseudoInstructionLabel, List<PseudoInstruction>> pseudoInstructionMatched =
-        new HashMap<>();
+    var supportedMachineInstructions =
+        (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
+            IsaMachineInstructionMatchingPass.class);
 
     var isa = viam.isa().orElse(null);
     if (isa == null) {
-      return pseudoInstructionMatched;
+      return new Result(Collections.emptyMap(), Collections.emptyMap());
     }
 
     isa.ownPseudoInstructions().forEach(pseudoInstruction -> {
-      if (findUnconditionalJump(flipped, pseudoInstruction)) {
-        pseudoInstructionMatched.put(PseudoInstructionLabel.J, List.of(pseudoInstruction));
-      } else if (findLi(flipped, pseudoInstruction)) {
-        pseudoInstructionMatched.put(PseudoInstructionLabel.LI, List.of(pseudoInstruction));
+      if (findUnconditionalJump(supportedMachineInstructions.reverse(), pseudoInstruction)) {
+        pseudoInstruction.attachExtension(new PseudoInstructionCtx(PseudoInstructionLabel.J));
+      } else if (findLi(supportedMachineInstructions.reverse(), pseudoInstruction)) {
+        pseudoInstruction.attachExtension(new PseudoInstructionCtx(PseudoInstructionLabel.LI));
       }
     });
 
-    return Collections.unmodifiableMap(pseudoInstructionMatched);
+    var labels = createPseudoLabelMap(viam);
+    return new Result(labels, flipIsaMatching(labels));
   }
 
-  private boolean findLi(IdentityHashMap<Instruction, MachineInstructionLabel> flipped,
+  private boolean findLi(Map<Instruction, MachineInstructionLabel> flipped,
                          PseudoInstruction pseudoInstruction) {
     if (pseudoInstruction.behavior().getNodes(InstrCallNode.class).count() != 2) {
       return false;
@@ -89,7 +96,7 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
   }
 
   private boolean findUnconditionalJump(
-      IdentityHashMap<Instruction, MachineInstructionLabel> flipped,
+      Map<Instruction, MachineInstructionLabel> flipped,
       PseudoInstruction pseudoInstruction) {
     if (pseudoInstruction.behavior().getNodes(InstrCallNode.class).count() != 1) {
       return false;
