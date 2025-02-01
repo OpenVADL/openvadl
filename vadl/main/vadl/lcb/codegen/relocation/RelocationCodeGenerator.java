@@ -21,6 +21,10 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SliceNode;
 
+/**
+ * Code generator to generate the extraction of immediates and updating of immediates in a
+ * binary machine instruction.
+ */
 @DispatchFor(
     value = ExpressionNode.class,
     context = CNodeContext.class,

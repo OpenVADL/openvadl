@@ -73,8 +73,8 @@ public interface CDefaultMixins {
     }
 
     /**
-     * Generates and returns the C++ function signature for the function. Does not modify the internal
-     * state of the code generator.
+     * Generates and returns the C++ function signature for the function. Does not modify the
+     * internal state of the code generator.
      *
      * @return the generated C++ function signature
      */
@@ -85,7 +85,8 @@ public interface CDefaultMixins {
           .map(p -> Pair.of(p.simpleName(), requireNonNull(p.type().asDataType().fittingCppType())))
           .toList();
 
-      function.ensure(returnType != null, "No fitting Cpp type found for return type %s", returnType);
+      function.ensure(returnType != null, "No fitting Cpp type found for return type %s",
+          returnType);
       function.ensure(function.behavior().isPureFunction(), "Function is not pure.");
 
       var cppArgsString = cppArgs.stream().map(
