@@ -12,13 +12,11 @@ import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppClassImplName;
 import vadl.cppCodeGen.model.CppFunction;
-import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.cppCodeGen.model.CppFunctionName;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
-import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
@@ -53,8 +51,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   }
 
   record RenderedPseudoInstruction(CppClassImplName classImpl,
-                                   CppFunctionName header,
-                                   CppFunctionCode code,
+                                   String header,
+                                   String code,
                                    PseudoInstruction pseudoInstruction) {
 
   }
@@ -85,21 +83,24 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       List<CompilerRelocation> relocations,
       PassResults passResults,
       PseudoInstruction pseudoInstruction) {
+    var function = ensureNonNull(cppFunctions.get(pseudoInstruction), "cpp function must exist)");
+
     var codeGen =
         new PseudoExpansionCodeGenerator(lcbConfiguration().processorName().value(),
             fieldUsages,
             ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults),
             variants,
             relocations,
-            pseudoInstruction);
-    var function = cppFunctions.get(pseudoInstruction);
+            pseudoInstruction,
+            function);
+
+    var renderedFunction = codeGen.genFunctionDefinition();
     var classPrefix = new CppClassImplName(specification.simpleName() + "MCInstExpander");
     ensureNonNull(function, "a function must exist");
     return new RenderedPseudoInstruction(
         classPrefix,
-        function.functionName(),
-        codeGen.generateFunction(classPrefix, function,
-            new LcbGenericCodeGenerator.Options(true, false)),
+        pseudoInstruction.identifier.lower() + "_" + function.identifier.simpleName(),
+        renderedFunction,
         pseudoInstruction);
   }
 

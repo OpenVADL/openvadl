@@ -68,8 +68,7 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
 
     return Stream.of(abi.returnSequence(), abi.callSequence())
         .map(x -> new RenderedPseudoInstruction(
-            ensureNonNull(cppFunctions.get(x), "cppFunction must exist")
-                .functionName().lower(),
+                ensureNonNull(cppFunctions.get(x), "cppFunction must exist").identifier.lower(),
             x
         ))
         .toList();

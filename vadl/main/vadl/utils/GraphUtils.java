@@ -1,5 +1,6 @@
 package vadl.utils;
 
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -15,7 +16,6 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.TypeCastNode;
@@ -26,6 +26,18 @@ import vadl.viam.graph.dependency.WriteRegNode;
  */
 public class GraphUtils {
 
+  /**
+   * Searches for a node of the nodeClass.
+   * The found node is returned.
+   *
+   * @param graph     The graph to search in.
+   * @param nodeClass The node types class.
+   * @param <T>       The type of node.
+   * @return The found nodes of type T.
+   */
+  public static <T extends Node> List<T> getNodes(Graph graph, Class<T> nodeClass) {
+    return graph.getNodes(nodeClass).toList();
+  }
 
   /**
    * Searches for a node of the nodeClass and ensures that there is exactly one such

@@ -148,7 +148,8 @@ public class PseudoExpansionCodeGeneratorVisitor extends GenericCppCodeGenerator
         lowerExpression(instrCallNode.target(), sym, field, cn);
       } else if (argument instanceof FuncCallNode fn) {
         ensure(fn.function() instanceof Relocation,
-            () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()));        /*
+            () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()));
+        /*
          pseudo instruction CALL( symbol : Bits<32> ) =
          {
               LUI{ rd = 1 as Bits5, imm = hi20( symbol ) }

@@ -11,7 +11,7 @@ import vadl.viam.graph.Node;
  */
 public class CNodeContext extends CGenContext<Node> {
 
-  private BiConsumer<CNodeContext, Node> dispatch;
+  protected BiConsumer<CNodeContext, Node> dispatch;
 
   /**
    * Construct a new code generation context for {@link Node}s.
@@ -21,10 +21,24 @@ public class CNodeContext extends CGenContext<Node> {
    */
   public CNodeContext(Consumer<String> writer,
                       BiConsumer<CNodeContext, Node> dispatch) {
-    super(writer);
+    super(writer, "");
     this.dispatch = dispatch;
   }
 
+
+  /**
+   * Construct a new code generation context for {@link Node}s.
+   *
+   * @param writer   The writer that handles string passed by handlers.
+   * @param prefix   The string which should be emitted before writing to {@code writer}.
+   * @param dispatch The dispatch method used when requesting generation of some node.
+   */
+  public CNodeContext(Consumer<String> writer,
+                      String prefix,
+                      BiConsumer<CNodeContext, Node> dispatch) {
+    super(writer, prefix);
+    this.dispatch = dispatch;
+  }
 
   @Override
   public CGenContext<Node> gen(Node entity) {

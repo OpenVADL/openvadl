@@ -77,7 +77,8 @@ public class DummyAbiPass extends Pass {
             .get();
 
     var x = new PseudoInstruction(
-        new Identifier("RESERVED_PSEUDO_RET", retInstruction.identifier.sourceLocation()),
+        new Identifier(List.of(viam.identifier.simpleName().toUpperCase(), "RESERVED_PSEUDO_RET"),
+            retInstruction.identifier.sourceLocation()),
         retInstruction.parameters(),
         retInstruction.behavior().copy(),
         retInstruction.assembly());
@@ -101,7 +102,8 @@ public class DummyAbiPass extends Pass {
             .get();
 
     var x = new PseudoInstruction(
-        new Identifier("RESERVED_PSEUDO_CALL", callInstruction.identifier.sourceLocation()),
+        new Identifier(List.of(viam.identifier.simpleName().toUpperCase(), "RESERVED_PSEUDO_CALL"),
+            callInstruction.identifier.sourceLocation()),
         callInstruction.parameters(),
         callInstruction.behavior().copy(),
         callInstruction.assembly());
@@ -183,7 +185,7 @@ public class DummyAbiPass extends Pass {
         new Abi.RegisterRef(registerFile, 26, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 27, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 1, Abi.Alignment.NO_ALIGNMENT)
-        );
+    );
   }
 
   private List<Abi.RegisterRef> getCallerSaved(RegisterFile registerFile) {

@@ -11,6 +11,7 @@ import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ReturnNode;

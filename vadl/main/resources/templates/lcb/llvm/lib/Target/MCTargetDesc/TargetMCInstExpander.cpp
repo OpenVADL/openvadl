@@ -67,7 +67,7 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCIns
     [# th:each="instruction : ${pseudoInstructions}" ]
       case [(${namespace})]::[(${instruction.pseudoInstruction.identifier.simpleName})]:
       {
-        MCIExpansion = [(${instruction.header.identifier.lower()})](MCI);
+        MCIExpansion = [(${instruction.header})](MCI);
         return true;
       }
     [/]
@@ -116,6 +116,6 @@ const int64_t [(${namespace})]MCInstExpander::MCOperandToInt64(const MCOperand &
 
 [# th:each="instruction : ${pseudoInstructions}" ]
 
-[(${instruction.code.value()})]
+[(${instruction.code})]
 
 [/]

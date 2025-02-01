@@ -9,7 +9,6 @@ import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppGenericType;
 import vadl.cppCodeGen.model.CppParameter;
 import vadl.cppCodeGen.model.CppType;
-import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
