@@ -71,15 +71,6 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
   @Handler
   protected abstract void handle(CGenContext<Node> ctx, FieldRefNode toHandle);
 
-  @Handler
-  protected abstract void handle(CGenContext<Node> ctx, ConstantNode toHandle);
-
-  @Handler
-  protected abstract void handle(CGenContext<Node> ctx, ZeroExtendNode toHandle);
-
-  @Handler
-  protected abstract void handle(CGenContext<Node> ctx, SliceNode toHandle);
-
   public String genReturnExpression() {
     var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
     return context.genToString(returnNode.value());

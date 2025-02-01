@@ -50,17 +50,17 @@ public class RelocationCodeGenerator extends FunctionCodeGenerator {
   }
 
   @Override
-  protected void handle(CGenContext<Node> ctx, ConstantNode toHandle) {
+  public void handle(CGenContext<Node> ctx, ConstantNode toHandle) {
 
   }
 
   @Override
-  protected void handle(CGenContext<Node> ctx, ZeroExtendNode toHandle) {
+  public void handle(CGenContext<Node> ctx, ZeroExtendNode toHandle) {
 
   }
 
   @Override
-  protected void handle(CGenContext<Node> ctx, SliceNode toHandle) {
+  public void handle(CGenContext<Node> ctx, SliceNode toHandle) {
     var parts = toHandle.bitSlice().parts().toList();
     ctx.wr("(");
 
@@ -72,11 +72,11 @@ public class RelocationCodeGenerator extends FunctionCodeGenerator {
 
       var part = parts.get(i);
       var bitWidth = ((BitsType) toHandle.value().type()).bitWidth();
-        ctx.wr(
-            String.format("project_range<%d, %d>(std::bitset<%d>(", part.lsb(), part.msb(),
-                bitWidth));
-         handle(toHandle.value());
-        ctx.wr(String.format(")) << %d", acc));
+      ctx.wr(
+          String.format("project_range<%d, %d>(std::bitset<%d>(", part.lsb(), part.msb(),
+              bitWidth));
+      ctx.gen(toHandle.value());
+      ctx.wr(String.format(")) << %d", acc));
 
       acc += part.msb() - part.lsb() + 1;
     }
