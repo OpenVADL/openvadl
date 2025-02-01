@@ -1,17 +1,22 @@
 package vadl.cppCodeGen.mixins;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
+import static vadl.utils.GraphUtils.getSingleNode;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.javaannotations.Handler;
-import vadl.types.BuiltInTable;
+import vadl.utils.Pair;
+import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ReturnNode;
@@ -41,6 +46,71 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface All extends AllDependencies, AllControl {
 
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface Utils {
+    /**
+     * Get the context.
+     */
+    CNodeContext context();
+
+    /**
+     * Get the function. It is used to get the function for the default implementations.
+     */
+    Function function();
+
+    /**
+     * Get the string builder.
+     */
+    StringBuilder builder();
+
+    /**
+     * Generate the name for the function.
+     */
+    default String genFunctionName() {
+      return function().simpleName();
+    }
+
+    /**
+     * Generates and returns the C++ function signature for the function. Does not modify the internal
+     * state of the code generator.
+     *
+     * @return the generated C++ function signature
+     */
+    default String genFunctionSignature() {
+      var function = function();
+      var returnType = function.returnType().asDataType().fittingCppType();
+      var cppArgs = Stream.of(function.parameters())
+          .map(p -> Pair.of(p.simpleName(), requireNonNull(p.type().asDataType().fittingCppType())))
+          .toList();
+
+      function.ensure(returnType != null, "No fitting Cpp type found for return type %s", returnType);
+      function.ensure(function.behavior().isPureFunction(), "Function is not pure.");
+
+      var cppArgsString = cppArgs.stream().map(
+          s -> CppTypeMap.getCppTypeNameByVadlType(s.right())
+              + " " + s.left()
+      ).collect(Collectors.joining(", "));
+
+      return CppTypeMap.getCppTypeNameByVadlType(returnType)
+          + " %s(%s)".formatted(genFunctionName(), cppArgsString);
+    }
+
+    /**
+     * Generates and returns the C++ code for the function, including its signature and body.
+     *
+     * @return the generated C++ function code
+     */
+    default String genFunctionDefinition() {
+      var returnNode = getSingleNode(function().behavior(), ReturnNode.class);
+      context().wr(genFunctionSignature())
+          .wr(" {\n")
+          .wr("\treturn ")
+          .gen(returnNode.value())
+          .wr(";\n}");
+      return builder().toString();
+    }
   }
 
 

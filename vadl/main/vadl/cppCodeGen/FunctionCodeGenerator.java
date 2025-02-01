@@ -35,7 +35,8 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
     context = CNodeContext.class,
     include = "vadl.viam"
 )
-public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpressions {
+public abstract class FunctionCodeGenerator
+    implements CDefaultMixins.AllExpressions, CDefaultMixins.Utils {
 
   protected final Function function;
   protected final CNodeContext context;
@@ -76,45 +77,20 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
     return context.genToString(returnNode.value());
   }
 
-  /**
-   * Generates and returns the C++ code for the function, including its signature and body.
-   *
-   * @return the generated C++ function code
-   */
-  public String genFunctionDefinition() {
-    var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
-    context.wr(genFunctionSignature())
-        .wr(" {\n")
-        .wr("\treturn ")
-        .gen(returnNode.value())
-        .wr(";\n}");
-    return builder.toString();
+  @Override
+  public CNodeContext context() {
+    return context;
   }
 
-  /**
-   * Generates and returns the C++ function signature for the function. Does not modify the internal
-   * state of the code generator.
-   *
-   * @return the generated C++ function signature
-   */
-  public String genFunctionSignature() {
-    var returnType = function.returnType().asDataType().fittingCppType();
-    var cppArgs = Stream.of(function.parameters())
-        .map(p -> Pair.of(p.simpleName(), requireNonNull(p.type().asDataType().fittingCppType())))
-        .toList();
-
-    function.ensure(returnType != null, "No fitting Cpp type found for return type %s", returnType);
-    function.ensure(function.behavior().isPureFunction(), "Function is not pure.");
-
-    var cppArgsString = cppArgs.stream().map(
-        s -> CppTypeMap.getCppTypeNameByVadlType(s.right())
-            + " " + s.left()
-    ).collect(Collectors.joining(", "));
-
-    return CppTypeMap.getCppTypeNameByVadlType(returnType)
-        + " %s(%s)".formatted(function.simpleName(), cppArgsString);
+  @Override
+  public Function function() {
+    return function;
   }
 
+  @Override
+  public StringBuilder builder() {
+    return builder;
+  }
 }
 
 

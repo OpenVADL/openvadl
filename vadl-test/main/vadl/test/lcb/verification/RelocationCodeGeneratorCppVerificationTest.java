@@ -156,15 +156,20 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     var normalisedImmediateExtractionFunction =
         cppNormalisedImmediateExtraction.byFunction(immField.extractFunction());
 
-    //var extractionFunctionCodeGenerator = new LcbGenericCodeGenerator();
     var extractionFunctionCodeGenerator =
         new RelocationCodeGenerator(normalisedImmediateExtractionFunction);
-    var relocationOverrideFunctionCodeGenerator = new LcbGenericCodeGenerator();
+    var relocationOverrideFunctionCodeGenerator =
+        new RelocationCodeGenerator(relocation.fieldUpdateFunction());
 
-    var extractionFunctionName = immField.extractFunction().identifier.lower();
-    var relocationFunctionName = relocation.fieldUpdateFunction().identifier.lower();
+    var extractionFunctionName = extractionFunctionCodeGenerator.genFunctionName();
+    var relocationFunctionName = relocationOverrideFunctionCodeGenerator.genFunctionName();
 
-    String cppCode = MessageFormat.format("""
+    var extractionCppFunction =
+        extractionFunctionCodeGenerator.genFunctionDefinition();
+    var relocationOverrideCppFunction =
+        relocationOverrideFunctionCodeGenerator.genFunctionDefinition();
+
+    String cppCode = String.format("""
             #include <cstdint>
             #include <iostream>
             #include <bitset>
@@ -199,14 +204,14 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             }
 
             // Extraction Function
-            {0} 
+            %s
 
             // Relocation Function
-            {1}
+            %s
 
             int main() {
-              {2} expected = {3};
-              auto actual = {4}({5}({6}, {7}));
+              %s expected = %s;
+              auto actual = %s(%s(%s, %s));
               if(actual == expected) {
                 std::cout << "ok" << std::endl;
                 return 0;
@@ -216,9 +221,8 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
               }
             }
             """,
-        extractionFunctionCodeGenerator.genFunctionDefinition(),
-        relocationOverrideFunctionCodeGenerator.generateFunction(
-            relocation.fieldUpdateFunction()).value(),
+        extractionCppFunction,
+        relocationOverrideCppFunction,
         CppTypeMap.getCppTypeNameByVadlType(normalisedImmediateExtractionFunction.returnType()),
         updatedValue,
         extractionFunctionName,

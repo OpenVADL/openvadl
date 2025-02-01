@@ -1,4 +1,4 @@
-package vadl.cppCodeGen.model;
+package vadl.cppCodeGen.model.nodes;
 
 
 import java.util.List;
@@ -15,7 +15,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 /**
  * This node indicates that a value should be updated.
  * Note that the semantic of this node is that it returns not only the updated value but the
- * application of the slice .
+ * application of the slice.
  */
 public class CppUpdateBitRangeNode extends ExpressionNode {
   // Destination value
@@ -45,8 +45,8 @@ public class CppUpdateBitRangeNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new CppUpdateBitRangeNode(this.type(), (ExpressionNode) value.copy(),
-        (ExpressionNode) patch.copy(), field);
+    return new CppUpdateBitRangeNode(this.type(), value.copy(),
+        patch.copy(), field);
   }
 
   @Override
