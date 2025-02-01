@@ -50,6 +50,7 @@ public class Database {
     this.labelledMachineInstructions = labelingResult.labels();
     this.labelledPseudoInstructions = Collections.emptyMap();
   }
+
   /**
    * Run the given {@link Query} and return the matched {@link Instruction} and
    * {@link PseudoInstruction} wrapped by {@link QueryResult}.

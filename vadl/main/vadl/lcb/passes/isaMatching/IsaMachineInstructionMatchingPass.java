@@ -111,6 +111,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     return new PassName("IsaMachineInstructionMatchingPass");
   }
 
+  /**
+   * Result of the pass.
+   */
   public record Result(Map<MachineInstructionLabel, List<Instruction>> labels,
                        Map<Instruction, MachineInstructionLabel> reverse) {
 

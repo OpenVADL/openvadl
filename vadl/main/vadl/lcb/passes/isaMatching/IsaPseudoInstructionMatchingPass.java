@@ -41,6 +41,9 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
     return new PassName("IsaPseudoInstructionMatchingPass");
   }
 
+  /**
+  * Result of the pass.
+*/
   public record Result(Map<PseudoInstructionLabel, List<PseudoInstruction>> labels,
                        Map<PseudoInstruction, PseudoInstructionLabel> reverse) {
 

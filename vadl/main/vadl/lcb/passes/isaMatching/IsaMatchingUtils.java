@@ -137,6 +137,9 @@ public interface IsaMatchingUtils {
     return writesRegFiles.get(0).registerFile().resultType() == resultType;
   }
 
+  /**
+   * Create a map from the specification with {@link MachineInstructionLabel}.
+   */
   default Map<MachineInstructionLabel, List<Instruction>> createLabelMap(
       Specification specification) {
     return specification.isa()
@@ -149,7 +152,9 @@ public interface IsaMatchingUtils {
         }));
   }
 
-
+  /**
+   * Create a map from the specification with {@link PseudoInstructionLabel}.
+   */
   default Map<PseudoInstructionLabel, List<PseudoInstruction>> createPseudoLabelMap(
       Specification specification) {
     return specification.isa()
