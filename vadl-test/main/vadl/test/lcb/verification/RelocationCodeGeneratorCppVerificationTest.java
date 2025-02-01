@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -19,6 +20,7 @@ import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
+import vadl.lcb.codegen.relocation.RelocationCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -154,13 +156,15 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     var normalisedImmediateExtractionFunction =
         cppNormalisedImmediateExtraction.byFunction(immField.extractFunction());
 
-    var extractionFunctionCodeGenerator = new LcbGenericCodeGenerator();
+    //var extractionFunctionCodeGenerator = new LcbGenericCodeGenerator();
+    var extractionFunctionCodeGenerator =
+        new RelocationCodeGenerator(normalisedImmediateExtractionFunction);
     var relocationOverrideFunctionCodeGenerator = new LcbGenericCodeGenerator();
 
     var extractionFunctionName = immField.extractFunction().identifier.lower();
     var relocationFunctionName = relocation.fieldUpdateFunction().identifier.lower();
 
-    String cppCode = String.format("""
+    String cppCode = MessageFormat.format("""
             #include <cstdint>
             #include <iostream>
             #include <bitset>
@@ -195,14 +199,14 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             }
 
             // Extraction Function
-            %s
+            {0} 
 
             // Relocation Function
-            %s
+            {1}
 
             int main() {
-              %s expected = %d;
-              auto actual = %s(%s(%s, %s));
+              {2} expected = {3};
+              auto actual = {4}({5}({6}, {7}));
               if(actual == expected) {
                 std::cout << "ok" << std::endl;
                 return 0;
@@ -212,8 +216,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
               }
             }
             """,
-        extractionFunctionCodeGenerator.generateFunction(normalisedImmediateExtractionFunction)
-            .value(),
+        extractionFunctionCodeGenerator.genFunctionDefinition(),
         relocationOverrideFunctionCodeGenerator.generateFunction(
             relocation.fieldUpdateFunction()).value(),
         CppTypeMap.getCppTypeNameByVadlType(normalisedImmediateExtractionFunction.returnType()),

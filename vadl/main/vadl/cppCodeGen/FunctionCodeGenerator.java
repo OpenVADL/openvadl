@@ -22,6 +22,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -75,6 +76,9 @@ public abstract class FunctionCodeGenerator implements CDefaultMixins.AllExpress
 
   @Handler
   protected abstract void handle(CGenContext<Node> ctx, ZeroExtendNode toHandle);
+
+  @Handler
+  protected abstract void handle(CGenContext<Node> ctx, SliceNode toHandle);
 
   public String genReturnExpression() {
     var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
