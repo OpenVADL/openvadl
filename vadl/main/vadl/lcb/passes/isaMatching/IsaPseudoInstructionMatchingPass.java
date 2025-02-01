@@ -51,10 +51,7 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
         ((FunctionInlinerPass.Output) passResults
             .lastResultOf(FunctionInlinerPass.class)).behaviors();
     Objects.requireNonNull(uninlined);
-    Map<MachineInstructionLabel, List<Instruction>> machineInstructionMatched =
-        (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
-            IsaMachineInstructionMatchingPass.class);
-    var flipped = flipIsaMatching(machineInstructionMatched);
+    var flipped = flipIsaMatching(createLabelMap(viam));
     Map<PseudoInstructionLabel, List<PseudoInstruction>> pseudoInstructionMatched =
         new HashMap<>();
 

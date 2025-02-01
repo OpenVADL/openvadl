@@ -56,8 +56,9 @@ public class EmitConstMatIntCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     final var labelledInstructions =
         ensureNonNull(
-            (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
-                IsaMachineInstructionMatchingPass.class), "labelling must be present");
+            (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
+                IsaMachineInstructionMatchingPass.class), "labelling must be present")
+            .labels();
     final var addi =
         ensurePresent(
             Objects.requireNonNull(labelledInstructions)

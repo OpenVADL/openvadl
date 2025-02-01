@@ -74,10 +74,11 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
     var addressSequence = abi.addressSequence();
     var labelledMachineInstructions = ensureNonNull(
-        (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+        (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions",
-            specification.sourceLocation()));
+            specification.sourceLocation()))
+        .labels();
     var hasCMove32 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_32);
     var hasCMove64 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_64);
     var conditionalMove = getConditionalMove(hasCMove32, hasCMove64, labelledMachineInstructions);

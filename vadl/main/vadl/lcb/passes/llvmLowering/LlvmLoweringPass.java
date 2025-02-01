@@ -118,8 +118,8 @@ public class LlvmLoweringPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var labelledMachineInstructions = ensureNonNull(
-        (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+    var labelingResult = ensureNonNull(
+        (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     var labelledPseudoInstructions = ensureNonNull(
@@ -146,27 +146,23 @@ public class LlvmLoweringPass extends Pass {
             new LlvmPseudoInstructionLoweringDefaultStrategyImpl(machineStrategies));
 
     var machineRecords = generateRecordsForMachineInstructions(viam, abi, machineStrategies,
-        labelledMachineInstructions);
+        labelingResult);
     var pseudoRecords = pseudoInstructions(viam, abi, pseudoStrategies,
-        labelledMachineInstructions, labelledPseudoInstructions);
+        labelingResult, labelledPseudoInstructions);
 
     return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
   }
 
 
   private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
-      Specification viam, Abi abi, List<LlvmInstructionLoweringStrategy> strategies,
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
+      Specification viam, Abi abi,
+      List<LlvmInstructionLoweringStrategy> strategies,
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
-
-    // We flip it because we need to know the label for the instruction to
-    // apply one of the different lowering strategies.
-    // A strategy knows whether it can lower it by the label.
-    var instructionLookup = flipMachineInstructions(labelledMachineInstructions);
 
     viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
         .forEach(instruction -> {
-          var instructionLabel = instructionLookup.get(instruction);
+          var instructionLabel = labelledMachineInstructions.reverse().get(instruction);
 
           for (var strategy : strategies) {
             if (!strategy.isApplicable(instructionLabel)) {
@@ -192,8 +188,10 @@ public class LlvmLoweringPass extends Pass {
   }
 
   private IdentityHashMap<PseudoInstruction, LlvmLoweringRecord> pseudoInstructions(
-      Specification viam, Abi abi, List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
+      Specification viam,
+      Abi abi,
+      List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Map<PseudoInstructionLabel, List<PseudoInstruction>> labelledPseudoInstructions) {
     var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
     var flipped = flipPseudoInstructions(labelledPseudoInstructions);

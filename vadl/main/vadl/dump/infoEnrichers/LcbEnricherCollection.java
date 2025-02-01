@@ -11,6 +11,7 @@ import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.lcb.passes.isaMatching.MachineInstructionCtx;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -35,17 +36,18 @@ public class LcbEnricherCollection {
           return;
         }
 
-        var labels =
-            (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastNullableResultOf(
-                IsaMachineInstructionMatchingPass.class);
-        if (labels != null && definitionEntity.origin() instanceof Instruction instruction) {
-          var flipped = LlvmLoweringPass.flipMachineInstructions(labels);
-          var label =
-              Optional.ofNullable(flipped.get(instruction)).map(Enum::name).orElse("No label");
-          var info = Info.Tag.of("Instruction Label", label);
-          definitionEntity.addInfo(info);
+        if (definitionEntity.origin() instanceof Instruction instruction) {
+          if (instruction.hasExtension(MachineInstructionCtx.class)) {
+            var label =
+                Optional.ofNullable(
+                        instruction.extension(
+                            MachineInstructionCtx.class))
+                    .map(MachineInstructionCtx::label)
+                    .map(Enum::name).orElse("No label");
+            var info = Info.Tag.of("Instruction Label", label);
+            definitionEntity.addInfo(info);
+          }
         }
-
       });
 
   /**

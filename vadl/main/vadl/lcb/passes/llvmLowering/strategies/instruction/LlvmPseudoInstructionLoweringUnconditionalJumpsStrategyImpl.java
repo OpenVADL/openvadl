@@ -7,14 +7,13 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
@@ -59,7 +58,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
   public Optional<LlvmLoweringPseudoRecord> lower(
       Abi abi,
       PseudoInstruction pseudo,
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions) {
     var tableGenRecord = super.lower(abi, pseudo, labelledMachineInstructions);
 
     if (tableGenRecord.isPresent()) {

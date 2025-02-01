@@ -242,8 +242,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var isaMatches = (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
-        IsaMachineInstructionMatchingPass.class);
+    var isaMatches = ((IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
+        IsaMachineInstructionMatchingPass.class)).labels();
     var pseudoMatches =
         (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class);

@@ -31,29 +31,35 @@ public class Database {
    * {@link IsaPseudoInstructionMatchingPass} to have labelled instructions and pseudo instructions.
    */
   public Database(PassResults passResults, Specification viam) {
-    var labelledMachineInstructions = ensureNonNull(
-        (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+    var labelingResult = ensureNonNull(
+        (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions",
-            viam.sourceLocation()));
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     var labelledPseudoInstructions = ensureNonNull(
         (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions",
             viam.sourceLocation()));
 
-    this.labelledMachineInstructions = labelledMachineInstructions;
+    this.labelledMachineInstructions = labelingResult.labels();
     this.labelledPseudoInstructions = labelledPseudoInstructions;
   }
 
   /**
-   * Constructor for {@link Instruction}.
+   * Constructor for {@link Database}.
    */
   public Database(Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstruction) {
     this.labelledMachineInstructions = labelledMachineInstruction;
     this.labelledPseudoInstructions = Collections.emptyMap();
   }
 
+  /**
+   * Constructor for {@link Database}.
+   */
+  public Database(IsaMachineInstructionMatchingPass.Result labelingResult) {
+    this.labelledMachineInstructions = labelingResult.labels();
+    this.labelledPseudoInstructions = Collections.emptyMap();
+  }
   /**
    * Run the given {@link Query} and return the matched {@link Instruction} and
    * {@link PseudoInstruction} wrapped by {@link QueryResult}.

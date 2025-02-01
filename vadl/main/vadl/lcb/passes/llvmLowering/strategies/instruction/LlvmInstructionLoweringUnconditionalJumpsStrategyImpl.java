@@ -4,10 +4,10 @@ import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.JAL;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
@@ -38,7 +38,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
 
   @Override
   public Optional<LlvmLoweringRecord> lower(
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph uninlinedBehavior,
       Abi abi) {
@@ -105,7 +105,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

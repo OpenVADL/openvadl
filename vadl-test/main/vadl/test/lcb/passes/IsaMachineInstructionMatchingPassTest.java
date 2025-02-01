@@ -73,8 +73,8 @@ public class IsaMachineInstructionMatchingPassTest extends AbstractLcbTest {
 
     // When
     var matchings =
-        (Map<MachineInstructionLabel, List<Instruction>>) passManager.getPassResults()
-            .lastResultOf(IsaMachineInstructionMatchingPass.class);
+        ((IsaMachineInstructionMatchingPass.Result) passManager.getPassResults()
+            .lastResultOf(IsaMachineInstructionMatchingPass.class)).labels();
 
     // Then
     Assertions.assertNotNull(matchings);
