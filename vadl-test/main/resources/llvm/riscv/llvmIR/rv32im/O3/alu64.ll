@@ -363,7 +363,6 @@ define i64 @add_hi_zero_lo_negone(i64 %0) {
 }
 
 define i64 @add_lo_negone(i64 %0) {
-; RV32I-LABEL: add_lo_negone:
 ; CHECK-LABEL: add_lo_negone: # @add_lo_negone
 ; CHECK-LABEL: # %bb.0:
 ; CHECK-NEXT: XORI a2,a0,0
