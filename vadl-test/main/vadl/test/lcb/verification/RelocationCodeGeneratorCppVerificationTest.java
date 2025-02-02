@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -19,6 +20,7 @@ import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
+import vadl.lcb.codegen.relocation.RelocationCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -154,11 +156,18 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     var normalisedImmediateExtractionFunction =
         cppNormalisedImmediateExtraction.byFunction(immField.extractFunction());
 
-    var extractionFunctionCodeGenerator = new LcbGenericCodeGenerator();
-    var relocationOverrideFunctionCodeGenerator = new LcbGenericCodeGenerator();
+    var extractionFunctionCodeGenerator =
+        new RelocationCodeGenerator(normalisedImmediateExtractionFunction);
+    var relocationOverrideFunctionCodeGenerator =
+        new RelocationCodeGenerator(relocation.fieldUpdateFunction());
 
-    var extractionFunctionName = immField.extractFunction().identifier.lower();
-    var relocationFunctionName = relocation.fieldUpdateFunction().identifier.lower();
+    var extractionFunctionName = extractionFunctionCodeGenerator.genFunctionName();
+    var relocationFunctionName = relocationOverrideFunctionCodeGenerator.genFunctionName();
+
+    var extractionCppFunction =
+        extractionFunctionCodeGenerator.genFunctionDefinition();
+    var relocationOverrideCppFunction =
+        relocationOverrideFunctionCodeGenerator.genFunctionDefinition();
 
     String cppCode = String.format("""
             #include <cstdint>
@@ -201,7 +210,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             %s
 
             int main() {
-              %s expected = %d;
+              %s expected = %s;
               auto actual = %s(%s(%s, %s));
               if(actual == expected) {
                 std::cout << "ok" << std::endl;
@@ -212,10 +221,8 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
               }
             }
             """,
-        extractionFunctionCodeGenerator.generateFunction(normalisedImmediateExtractionFunction)
-            .value(),
-        relocationOverrideFunctionCodeGenerator.generateFunction(
-            relocation.fieldUpdateFunction()).value(),
+        extractionCppFunction,
+        relocationOverrideCppFunction,
         CppTypeMap.getCppTypeNameByVadlType(normalisedImmediateExtractionFunction.returnType()),
         updatedValue,
         extractionFunctionName,

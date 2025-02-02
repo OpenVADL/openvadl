@@ -88,7 +88,7 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
   }
 
   @Override
-  public void handle(CNodeContext ctx, FuncParamNode toHandle) {
+  public void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
     // Explicit parameters are not allowed. The only parameter is the implicit format field access.
     throwNotAllowed(toHandle, "Function parameters");
   }
@@ -111,21 +111,6 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
 
     // Reference the function parameter
     ctx.wr(fieldName);
-  }
-
-  @Override
-  protected void handle(CGenContext<Node> ctx, ConstantNode toHandle) {
-    throwNotAllowed(toHandle, "Constant node accesses");
-  }
-
-  @Override
-  protected void handle(CGenContext<Node> ctx, ZeroExtendNode toHandle) {
-    throwNotAllowed(toHandle, "Zero extend node accesses");
-  }
-
-  @Override
-  public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
-    throwNotAllowed(toHandle, "Zero extend node accesses");
   }
 
   @Override

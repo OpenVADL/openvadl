@@ -5,7 +5,7 @@ import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
 import java.io.StringWriter;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
+import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
 import vadl.cppCodeGen.passes.typeNormalization.CppSignExtendNode;
 import vadl.cppCodeGen.passes.typeNormalization.CppTruncateNode;
 import vadl.cppCodeGen.passes.typeNormalization.CppZeroExtendNode;

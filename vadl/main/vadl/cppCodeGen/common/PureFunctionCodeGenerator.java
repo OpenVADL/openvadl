@@ -50,22 +50,7 @@ public class PureFunctionCodeGenerator extends FunctionCodeGenerator {
   }
 
   @Override
-  protected void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
+  public void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
     throwNotAllowed(toHandle, "Format field accesses");
-  }
-
-  @Override
-  protected void handle(CGenContext<Node> ctx, ConstantNode toHandle) {
-    throwNotAllowed(toHandle, "Constant node accesses");
-  }
-
-  @Override
-  protected void handle(CGenContext<Node> ctx, ZeroExtendNode toHandle) {
-    throwNotAllowed(toHandle, "Zero extend node accesses");
-  }
-
-  @Override
-  public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
-    throwNotAllowed(toHandle, "Func call node accesses");
   }
 }

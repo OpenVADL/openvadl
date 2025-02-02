@@ -1,17 +1,22 @@
 package vadl.cppCodeGen.mixins;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.cppCodeGen.CppTypeMap.getCppTypeNameByVadlType;
+import static vadl.utils.GraphUtils.getSingleNode;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.javaannotations.Handler;
-import vadl.types.BuiltInTable;
+import vadl.utils.Pair;
+import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ReturnNode;
@@ -43,6 +48,72 @@ public interface CDefaultMixins {
 
   }
 
+  @SuppressWarnings("MissingJavadocType")
+  interface Utils {
+    /**
+     * Get the context.
+     */
+    CNodeContext context();
+
+    /**
+     * Get the function. It is used to get the function for the default implementations.
+     */
+    Function function();
+
+    /**
+     * Get the string builder.
+     */
+    StringBuilder builder();
+
+    /**
+     * Generate the name for the function.
+     */
+    default String genFunctionName() {
+      return function().simpleName();
+    }
+
+    /**
+     * Generates and returns the C++ function signature for the function. Does not modify the
+     * internal state of the code generator.
+     *
+     * @return the generated C++ function signature
+     */
+    default String genFunctionSignature() {
+      var function = function();
+      var returnType = function.returnType().asDataType().fittingCppType();
+      var cppArgs = Stream.of(function.parameters())
+          .map(p -> Pair.of(p.simpleName(), requireNonNull(p.type().asDataType().fittingCppType())))
+          .toList();
+
+      function.ensure(returnType != null, "No fitting Cpp type found for return type %s",
+          returnType);
+      function.ensure(function.behavior().isPureFunction(), "Function is not pure.");
+
+      var cppArgsString = cppArgs.stream().map(
+          s -> CppTypeMap.getCppTypeNameByVadlType(s.right())
+              + " " + s.left()
+      ).collect(Collectors.joining(", "));
+
+      return CppTypeMap.getCppTypeNameByVadlType(returnType)
+          + " %s(%s)".formatted(genFunctionName(), cppArgsString);
+    }
+
+    /**
+     * Generates and returns the C++ code for the function, including its signature and body.
+     *
+     * @return the generated C++ function code
+     */
+    default String genFunctionDefinition() {
+      var returnNode = getSingleNode(function().behavior(), ReturnNode.class);
+      context().wr(genFunctionSignature())
+          .wr(" {\n")
+          .wr("\treturn ")
+          .gen(returnNode.value())
+          .wr(";\n}");
+      return builder().toString();
+    }
+  }
+
 
   ///  CONTROL HANDLERS ///
 
@@ -55,7 +126,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Scheduled {
     @Handler
-    default void impl(CGenContext<Node> ctx, ScheduledNode node) {
+    default void handle(CGenContext<Node> ctx, ScheduledNode node) {
       ctx.gen(node.node()).ln(";");
       ctx.gen(node.next());
     }
@@ -64,7 +135,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface InstrExit {
     @Handler
-    default void impl(CGenContext<Node> ctx, InstrExitNode node) {
+    default void handle(CGenContext<Node> ctx, InstrExitNode node) {
       ctx.ln("return;");
     }
   }
@@ -74,7 +145,7 @@ public interface CDefaultMixins {
 
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
-    default void impl(CGenContext<Node> ctx, IfNode node) {
+    default void handle(CGenContext<Node> ctx, IfNode node) {
       ctx.wr("if (")
           .gen(node.condition())
           .ln(") { ")
@@ -88,7 +159,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Begin {
     @Handler
-    default void impl(CGenContext<Node> ctx, BeginNode node) {
+    default void handle(CGenContext<Node> ctx, BeginNode node) {
       ctx.gen(node.next());
     }
   }
@@ -96,7 +167,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Start {
     @Handler
-    default void impl(CGenContext<Node> ctx, StartNode node) {
+    default void handle(CGenContext<Node> ctx, StartNode node) {
       ctx.gen(node.next());
     }
   }
@@ -104,7 +175,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Merge {
     @Handler
-    default void impl(CGenContext<Node> ctx, MergeNode node) {
+    default void handle(CGenContext<Node> ctx, MergeNode node) {
       ctx.gen(node.next());
     }
   }
@@ -112,7 +183,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface BranchEnd {
     @Handler
-    default void impl(CGenContext<Node> ctx, BranchEndNode node) {
+    default void handle(CGenContext<Node> ctx, BranchEndNode node) {
       // nothing
     }
   }
@@ -120,7 +191,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Return {
     @Handler
-    default void impl(CGenContext<Node> ctx, ReturnNode node) {
+    default void handle(CGenContext<Node> ctx, ReturnNode node) {
       ctx.wr("return ").gen(node.value()).ln(";");
     }
   }
@@ -128,7 +199,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface InstrEnd {
     @Handler
-    default void impl(CGenContext<Node> ctx, InstrEndNode node) {
+    default void handle(CGenContext<Node> ctx, InstrEndNode node) {
       // nothing
     }
   }
@@ -163,7 +234,7 @@ public interface CDefaultMixins {
   interface SignExtend {
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
-    default void impl(CGenContext<Node> ctx, SignExtendNode node) {
+    default void handle(CGenContext<Node> ctx, SignExtendNode node) {
       // Use the built-in VADL library functions.
       // Generators must include the vadl-builtins.h header file.
       var srcType = node.value().type().asDataType();
@@ -177,7 +248,7 @@ public interface CDefaultMixins {
   interface ZeroExtend {
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
-    default void impl(CGenContext<Node> ctx, ZeroExtendNode node) {
+    default void handle(CGenContext<Node> ctx, ZeroExtendNode node) {
       var type = node.type().fittingCppType();
       node.ensure(type != null, "Nodes type cannot fit in a c/c++ type.");
       ctx.wr("extract" + type.bitWidth() + "(");
@@ -190,7 +261,7 @@ public interface CDefaultMixins {
   interface Truncate {
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
-    default void impl(CGenContext<Node> ctx, TruncateNode node) {
+    default void handle(CGenContext<Node> ctx, TruncateNode node) {
       var type = node.type().fittingCppType();
       node.ensure(type != null, "Nodes type cannot fit in a c/c++ type.");
       ctx.wr("(("
@@ -205,7 +276,7 @@ public interface CDefaultMixins {
   interface Constant {
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
-    default void impl(CGenContext<Node> ctx, ConstantNode constant) {
+    default void handle(CGenContext<Node> ctx, ConstantNode constant) {
       var fittingCppType = constant.type().asDataType().fittingCppType();
       constant.ensure(fittingCppType != null, "No fitting cpp type");
       var cppType = getCppTypeNameByVadlType(fittingCppType);
@@ -216,7 +287,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Slice {
     @Handler
-    default void handle(CNodeContext ctx, SliceNode toHandle) {
+    default void handle(CGenContext<Node> ctx, SliceNode toHandle) {
       throw new UnsupportedOperationException("Type SliceNode not yet implemented");
     }
   }
@@ -224,7 +295,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Select {
     @Handler
-    default void handle(CNodeContext ctx, SelectNode toHandle) {
+    default void handle(CGenContext<Node> ctx, SelectNode toHandle) {
       throw new UnsupportedOperationException("Type SelectNode not yet implemented");
     }
   }
@@ -232,7 +303,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface TupleAccess {
     @Handler
-    default void handle(CNodeContext ctx, TupleGetFieldNode toHandle) {
+    default void handle(CGenContext<Node> ctx, TupleGetFieldNode toHandle) {
       throw new UnsupportedOperationException("Type TupleGetFieldNode not yet implemented");
     }
   }
@@ -240,7 +311,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface LetNode {
     @Handler
-    default void handle(CNodeContext ctx, vadl.viam.graph.dependency.LetNode toHandle) {
+    default void handle(CGenContext<Node> ctx, vadl.viam.graph.dependency.LetNode toHandle) {
       ctx.gen(toHandle.expression());
     }
   }
@@ -266,7 +337,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface FuncParam {
     @Handler
-    default void handle(CNodeContext ctx, FuncParamNode toHandle) {
+    default void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
       ctx.wr(toHandle.parameter().simpleName());
     }
   }

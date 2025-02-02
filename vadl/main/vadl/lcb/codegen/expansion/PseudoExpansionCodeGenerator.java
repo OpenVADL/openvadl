@@ -100,7 +100,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   }
 
   @Override
-  public void handle(CNodeContext ctx, FuncParamNode toHandle) {
+  public void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
     var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
     var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
 
@@ -164,7 +164,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   }
 
   @Override
-  protected void handle(CGenContext<Node> ctx, ConstantNode toHandle) {
+  public void handle(CGenContext<Node> ctx, ConstantNode toHandle) {
     var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
     var instruction = ((CNodeWithBaggageContext) ctx).get(INSTRUCTION, Instruction.class);
     var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
@@ -248,11 +248,6 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
         .ln(String.format("%s.addOperand(%s);",
             instructionSymbol,
             argumentRelocationSymbol));
-  }
-
-  @Override
-  protected void handle(CGenContext<Node> ctx, ZeroExtendNode toHandle) {
-    throwNotAllowed(toHandle, "field ref accesses");
   }
 
   /**

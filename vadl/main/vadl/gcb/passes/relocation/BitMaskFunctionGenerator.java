@@ -3,7 +3,7 @@ package vadl.gcb.passes.relocation;
 import java.math.BigInteger;
 import java.util.List;
 import vadl.cppCodeGen.model.CppFunction;
-import vadl.cppCodeGen.model.CppUpdateBitRangeNode;
+import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
