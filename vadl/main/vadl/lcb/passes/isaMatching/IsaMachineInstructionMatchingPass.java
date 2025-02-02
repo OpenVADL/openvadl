@@ -69,6 +69,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -371,10 +372,17 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
           .stream()
           .findFirst();
 
-      return matched.isPresent() && writesExactlyOneRegisterClass(behavior);
+      return matched.isPresent()
+          && writesExactlyOneRegisterClass(behavior)
+          // does not access PC
+          && !hasAccessToPc(behavior);
     }
 
     return false;
+  }
+
+  private boolean hasAccessToPc(UninlinedGraph behavior) {
+    return behavior.getNodes(ReadRegNode.class).anyMatch(x -> x.staticCounterAccess() != null);
   }
 
   private boolean findAdd32Bit(UninlinedGraph behavior) {
