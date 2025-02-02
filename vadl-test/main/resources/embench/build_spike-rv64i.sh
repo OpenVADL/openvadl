@@ -2,7 +2,7 @@
 
 cd $(realpath $(dirname "$0"))
 
-arch="rv64im"
+arch="rv64i"
 abi="lp64"
 
 cflags="-march=$arch -mabi=$abi"
