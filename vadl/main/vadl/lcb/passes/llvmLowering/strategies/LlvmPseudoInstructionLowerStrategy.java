@@ -15,6 +15,7 @@ import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -81,10 +82,8 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
   public Optional<LlvmLoweringPseudoRecord> lower(
       Abi abi,
       PseudoInstruction pseudo,
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions) {
+      IsaMachineInstructionMatchingPass.Result supportedInstructions) {
     var patterns = new ArrayList<TableGenPattern>();
-    var flippedInstructions =
-        LlvmLoweringPass.flipMachineInstructions(labelledMachineInstructions);
 
     var uses = new ArrayList<RegisterRef>();
     var defs = new ArrayList<RegisterRef>();
@@ -199,7 +198,7 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
                 });
           });
 
-      var label = flippedInstructions.get(callNode.target());
+      var label = supportedInstructions.reverse().get(callNode.target());
 
       // Skip not supported instructions
       if (label == null) {
@@ -211,7 +210,7 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
           continue;
         }
 
-        var tableGenRecord = strategy.lower(labelledMachineInstructions,
+        var tableGenRecord = strategy.lower(supportedInstructions,
             pseudo,
             callNode.target(),
             instructionBehavior,

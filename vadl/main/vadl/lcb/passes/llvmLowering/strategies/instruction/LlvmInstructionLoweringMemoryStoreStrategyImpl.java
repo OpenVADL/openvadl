@@ -5,11 +5,11 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
@@ -59,7 +59,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

@@ -51,8 +51,9 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var labelledInstructions =
         ensureNonNull(
-            (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
-                IsaMachineInstructionMatchingPass.class), "labelling must be present");
+            (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
+                IsaMachineInstructionMatchingPass.class), "labelling must be present")
+            .labels();
     var lui =
         ensurePresent(
             Objects.requireNonNull(labelledInstructions)

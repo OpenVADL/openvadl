@@ -62,8 +62,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         GenerateTableGenMachineInstructionRecordPass.class);
     var tableGenPseudoRecords = (List<TableGenPseudoInstruction>) passResults.lastResultOf(
         GenerateTableGenPseudoInstructionRecordPass.class);
-    var labelledMachineInstructions = (Map<MachineInstructionLabel, List<Instruction>>)
-        passResults.lastResultOf(IsaMachineInstructionMatchingPass.class);
+    var labelledMachineInstructions = ((IsaMachineInstructionMatchingPass.Result)
+        passResults.lastResultOf(IsaMachineInstructionMatchingPass.class)).labels();
 
     var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
     var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);

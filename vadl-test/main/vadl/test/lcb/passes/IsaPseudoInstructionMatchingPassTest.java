@@ -37,8 +37,8 @@ public class IsaPseudoInstructionMatchingPassTest extends AbstractLcbTest {
 
     // When
     var matchings =
-        (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passManager.getPassResults()
-            .lastResultOf(IsaPseudoInstructionMatchingPass.class);
+        ((IsaPseudoInstructionMatchingPass.Result) passManager.getPassResults()
+            .lastResultOf(IsaPseudoInstructionMatchingPass.class)).labels();
 
     // Then
     Assertions.assertNotNull(matchings);

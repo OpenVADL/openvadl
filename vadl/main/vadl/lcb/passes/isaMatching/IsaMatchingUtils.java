@@ -1,14 +1,19 @@
 package vadl.lcb.passes.isaMatching;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterFile;
+import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -132,6 +137,35 @@ public interface IsaMatchingUtils {
     return writesRegFiles.get(0).registerFile().resultType() == resultType;
   }
 
+  /**
+   * Create a map from the specification with {@link MachineInstructionLabel}.
+   */
+  default Map<MachineInstructionLabel, List<Instruction>> createLabelMap(
+      Specification specification) {
+    return specification.isa()
+        .map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
+        .filter(instruction -> instruction.hasExtension(MachineInstructionCtx.class))
+        .collect(Collectors.groupingBy(entry -> {
+          var ext = ensureNonNull(entry.extension(MachineInstructionCtx.class), "must not be null");
+          return ext.label();
+        }));
+  }
+
+  /**
+   * Create a map from the specification with {@link PseudoInstructionLabel}.
+   */
+  default Map<PseudoInstructionLabel, List<PseudoInstruction>> createPseudoLabelMap(
+      Specification specification) {
+    return specification.isa()
+        .map(isa -> isa.ownPseudoInstructions().stream())
+        .orElse(Stream.empty())
+        .filter(instruction -> instruction.hasExtension(PseudoInstructionCtx.class))
+        .collect(Collectors.groupingBy(entry -> {
+          var ext = ensureNonNull(entry.extension(PseudoInstructionCtx.class), "must not be null");
+          return ext.label();
+        }));
+  }
 
   /**
    * The {@link IsaMachineInstructionMatchingPass} computes a hashmap with the instruction label as

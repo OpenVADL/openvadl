@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -22,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
@@ -257,7 +257,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * @param unmodifiedBehavior          is the uninlined graph in the case of {@link Instruction}.
    */
   public Optional<LlvmLoweringRecord> lower(
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
       Abi abi) {
@@ -271,7 +271,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Lower a pseudo instruction.
    */
   public Optional<LlvmLoweringRecord> lower(
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       PseudoInstruction pseudoInstruction,
       Instruction instruction,
       Graph unmodifiedBehavior,
@@ -289,7 +289,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * If it is not lowerable then return {@link Optional#empty()}.
    */
   protected Optional<LlvmLoweringRecord> lowerInstruction(
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
       Abi abi) {
@@ -472,7 +472,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   protected abstract List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,

@@ -31,26 +31,23 @@ public class Database {
    * {@link IsaPseudoInstructionMatchingPass} to have labelled instructions and pseudo instructions.
    */
   public Database(PassResults passResults, Specification viam) {
-    var labelledMachineInstructions = ensureNonNull(
-        (Map<MachineInstructionLabel, List<Instruction>>) passResults.lastResultOf(
+    var labelingResult = ensureNonNull(
+        (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions",
-            viam.sourceLocation()));
-    var labelledPseudoInstructions = ensureNonNull(
-        (Map<PseudoInstructionLabel, List<PseudoInstruction>>) passResults.lastResultOf(
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
+    var labelingPseudoResult = ensureNonNull(
+        (IsaPseudoInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions",
-            viam.sourceLocation()));
-
-    this.labelledMachineInstructions = labelledMachineInstructions;
-    this.labelledPseudoInstructions = labelledPseudoInstructions;
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
+    this.labelledMachineInstructions = labelingResult.labels();
+    this.labelledPseudoInstructions = labelingPseudoResult.labels();
   }
 
   /**
-   * Constructor for {@link Instruction}.
+   * Constructor for {@link Database}.
    */
-  public Database(Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstruction) {
-    this.labelledMachineInstructions = labelledMachineInstruction;
+  public Database(IsaMachineInstructionMatchingPass.Result labelingResult) {
+    this.labelledMachineInstructions = labelingResult.labels();
     this.labelledPseudoInstructions = Collections.emptyMap();
   }
 

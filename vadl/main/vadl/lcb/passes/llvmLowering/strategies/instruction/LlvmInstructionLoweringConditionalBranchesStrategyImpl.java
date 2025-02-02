@@ -15,14 +15,13 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
@@ -45,7 +44,6 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -71,7 +69,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
 
   @Override
   public Optional<LlvmLoweringRecord> lower(
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph uninlinedBehavior,
       Abi abi) {
@@ -88,7 +86,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   private LlvmLoweringRecord createIntermediateResult(
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Instruction instruction,
       Graph visitedGraph,
       Abi abi) {
@@ -129,14 +127,13 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       Abi abi) {
-    var flipped = LlvmLoweringPass.flipMachineInstructions(supportedInstructions);
-    var label = flipped.get(instruction);
+    var label = supportedInstructions.reverse().get(instruction);
 
     ArrayList<TableGenPattern> alternatives = new ArrayList<>();
     if (label != BEQ && label != BNEQ) {
@@ -170,19 +167,20 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
             instruction.sourceLocation()));
     var register = (ReadRegFileNode) brcc.first();
     var llvmRegisterNode =
-        new LlvmReadRegFileNode(register.registerFile(), (ExpressionNode) register.address().copy(),
+        new LlvmReadRegFileNode(register.registerFile(),
+        register.address().copy(),
             register.type(), register.staticCounterAccess());
     var registerFile = register.registerFile();
     var zeroRegister = getZeroRegister(registerFile);
 
     var selector = new Graph("selector");
     selector.addWithInputs(new LlvmBrCondSD(llvmRegisterNode,
-        (ExpressionNode) brcc.immOffset().copy()));
+        brcc.immOffset().copy()));
     var machine = new Graph("machine");
     machine.addWithInputs(new LcbMachineInstructionNode(new NodeList<>(
-        (ExpressionNode) llvmRegisterNode.copy(),
+        llvmRegisterNode.copy(),
         zeroRegister,
-        (ExpressionNode) brcc.immOffset().copy()
+        brcc.immOffset().copy()
     ), instruction));
 
     return new TableGenSelectionWithOutputPattern(selector, machine);

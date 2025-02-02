@@ -12,6 +12,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
@@ -65,7 +66,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
 
   @Override
   protected Optional<LlvmLoweringRecord> lowerInstruction(
-      Map<MachineInstructionLabel, List<Instruction>> labelledMachineInstructions,
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
       Abi abi) {
@@ -109,7 +110,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
@@ -134,8 +135,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
 
 
   private static @Nonnull TableGenPseudoInstExpansionPattern generateIndirectCall(
-      Map<MachineInstructionLabel,
-          List<Instruction>> supportedInstructions,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Abi abi,
       TableGenInstructionRegisterFileOperand inputRegister) {
     var selector = new Graph("selector");
@@ -176,7 +176,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   private static @Nonnull TableGenPseudoInstExpansionPattern generateBranchIndirect(
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       TableGenInstructionRegisterFileOperand inputRegister) {
     /*
     let isCall = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
@@ -189,13 +189,6 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     var selector = new Graph("selector");
     var ref = (ReadRegFileNode) inputRegister.reference().copy();
     var address = (FieldRefNode) ref.address().copy();
-    /*
-    selector.addWithInputs(new LlvmBrindSD(new NodeList<>(new LlvmReadRegFileNode(
-        inputRegister.registerFile(), address, inputRegister.formatField().type(),
-        ref.staticCounterAccess()
-    )),
-        Type.dummy()));
-     */
 
     var database = new Database(supportedInstructions);
     var jalr =
@@ -232,7 +225,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
 
   @Nonnull
   private TableGenPattern generateBranchIndirectWithAdd(
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       TableGenInstructionRegisterFileOperand inputRegister) {
     var database = new Database(supportedInstructions);
     var jalr =
@@ -262,8 +255,8 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
 
     var machine = new Graph("machine");
     machine.addWithInputs(new LcbMachineInstructionNode(
-        new NodeList<>((LlvmReadRegFileNode) llvmRegister.copy(),
-            (LlvmFieldAccessRefNode) fieldRef.copy()),
+        new NodeList<>(llvmRegister.copy(),
+            fieldRef.copy()),
         new OutputInstructionName("PseudoBRIND")));
 
     return new TableGenSelectionWithOutputPattern(selector, machine);

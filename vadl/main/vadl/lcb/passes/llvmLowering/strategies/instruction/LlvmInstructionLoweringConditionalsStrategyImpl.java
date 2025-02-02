@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
@@ -61,7 +62,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
   @Override
   protected List<TableGenPattern> generatePatternVariations(
       Instruction instruction,
-      Map<MachineInstructionLabel, List<Instruction>> supportedInstructions,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Graph behavior,
       List<TableGenInstructionOperand> inputOperands,
       List<TableGenInstructionOperand> outputOperands,
@@ -69,13 +70,12 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       Abi abi) {
     var result = new ArrayList<TableGenPattern>();
 
-    var flipped = LlvmLoweringPass.flipMachineInstructions(supportedInstructions);
-    var label = flipped.get(instruction);
+    var label = supportedInstructions.reverse().get(instruction);
 
-    var lti = getFirst(instruction, supportedInstructions, MachineInstructionLabel.LTIU);
-    var ltu = getFirst(instruction, supportedInstructions, MachineInstructionLabel.LTU);
-    var xor = getFirst(instruction, supportedInstructions, MachineInstructionLabel.XOR);
-    var xori = getFirst(instruction, supportedInstructions, MachineInstructionLabel.XORI);
+    var lti = getFirst(instruction, supportedInstructions.labels(), MachineInstructionLabel.LTIU);
+    var ltu = getFirst(instruction, supportedInstructions.labels(), MachineInstructionLabel.LTU);
+    var xor = getFirst(instruction, supportedInstructions.labels(), MachineInstructionLabel.XOR);
+    var xori = getFirst(instruction, supportedInstructions.labels(), MachineInstructionLabel.XORI);
 
     if (label == MachineInstructionLabel.LTS) {
       // We use the `patterns` from `LTS` because it has two registers in the `patterns`.
