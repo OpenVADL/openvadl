@@ -14,6 +14,8 @@ class Builtins {
       "executable",
       "halt",
       "firmware",
+      "laidin",
+      "laideq",
 
       // TODO Legacy functions, only needed for compatibility with old vadl files
       "VADL::mod", // Required by rv3264im, verify if necessary

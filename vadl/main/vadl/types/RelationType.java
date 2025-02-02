@@ -12,15 +12,22 @@ import java.util.stream.Collectors;
 public class RelationType extends Type {
 
   private final List<Class<? extends Type>> argTypeClass;
+  private final boolean hasVarArgs;
   private final Class<? extends Type> resultTypeClass;
 
-  protected RelationType(List<Class<? extends Type>> argTypes, Class<? extends Type> resultType) {
+  protected RelationType(List<Class<? extends Type>> argTypes, boolean hasVarArgs,
+                         Class<? extends Type> resultType) {
     this.argTypeClass = argTypes;
+    this.hasVarArgs = hasVarArgs;
     this.resultTypeClass = resultType;
   }
 
   public List<Class<? extends Type>> argTypeClasses() {
     return argTypeClass;
+  }
+
+  public boolean hasVarArgs() {
+    return hasVarArgs;
   }
 
   public Class<? extends Type> resultTypeClass() {

@@ -361,4 +361,17 @@ public class AsmLL1CheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
+
+  @Test
+  void asmBuiltInUsage() {
+    var prog = """
+          grammar = {
+            RuleA : ?( laidin(2,"A","B","C") ) "A" | "A";
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+  }
 }
