@@ -1,5 +1,11 @@
 package vadl.viam;
 
+import vadl.viam.asm.AsmDirectiveMapping;
+import vadl.viam.asm.AsmModifier;
+import vadl.viam.asm.rules.AsmBuiltinRule;
+import vadl.viam.asm.rules.AsmNonTerminalRule;
+import vadl.viam.asm.rules.AsmTerminalRule;
+
 /**
  * DefinitionVisitor is an interface that defines the visit methods for all types of
  * definitions in a VADL specification.
@@ -43,6 +49,18 @@ public interface DefinitionVisitor {
   void visit(Abi abi);
 
   void visit(MicroProcessor microProcessor);
+
+  void visit(AssemblyDescription assemblyDescription);
+
+  void visit(AsmDirectiveMapping directive);
+
+  void visit(AsmModifier modifier);
+
+  void visit(AsmBuiltinRule builtinRule);
+
+  void visit(AsmTerminalRule terminalRule);
+
+  void visit(AsmNonTerminalRule nonTerminalRule);
 
   /**
    * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor
@@ -246,6 +264,54 @@ public interface DefinitionVisitor {
       }
       afterTraversal(microProcessor);
     }
+
+    @Override
+    public void visit(AssemblyDescription assemblyDescription) {
+      beforeTraversal(assemblyDescription);
+      for (var directive : assemblyDescription.directives()) {
+        directive.accept(this);
+      }
+      for (var modifier : assemblyDescription.modifiers()) {
+        modifier.accept(this);
+      }
+      for (var rule : assemblyDescription.rules()) {
+        rule.accept(this);
+      }
+      for (var definition : assemblyDescription.commonDefinitions()) {
+        definition.accept(this);
+      }
+      afterTraversal(assemblyDescription);
+    }
+
+    @Override
+    public void visit(AsmDirectiveMapping directive) {
+      beforeTraversal(directive);
+      afterTraversal(directive);
+    }
+
+    @Override
+    public void visit(AsmModifier modifier) {
+      beforeTraversal(modifier);
+      afterTraversal(modifier);
+    }
+
+    @Override
+    public void visit(AsmBuiltinRule builtinRule) {
+      beforeTraversal(builtinRule);
+      afterTraversal(builtinRule);
+    }
+
+    @Override
+    public void visit(AsmTerminalRule terminalRule) {
+      beforeTraversal(terminalRule);
+      afterTraversal(terminalRule);
+    }
+
+    @Override
+    public void visit(AsmNonTerminalRule nonTerminalRule) {
+      beforeTraversal(nonTerminalRule);
+      afterTraversal(nonTerminalRule);
+    }
   }
 
   /**
@@ -350,6 +416,36 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(MicroProcessor microProcessor) {
+
+    }
+
+    @Override
+    public void visit(AssemblyDescription assemblyDescription) {
+
+    }
+
+    @Override
+    public void visit(AsmDirectiveMapping directive) {
+
+    }
+
+    @Override
+    public void visit(AsmModifier modifier) {
+
+    }
+
+    @Override
+    public void visit(AsmBuiltinRule builtinRule) {
+
+    }
+
+    @Override
+    public void visit(AsmTerminalRule terminalRule) {
+
+    }
+
+    @Override
+    public void visit(AsmNonTerminalRule nonTerminalRule) {
 
     }
   }
