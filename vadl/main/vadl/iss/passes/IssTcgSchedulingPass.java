@@ -28,10 +28,13 @@ import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.GraphProcessor;
 
@@ -85,6 +88,8 @@ public class IssTcgSchedulingPass extends Pass {
 class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements CfgTraverser {
 
   private Counter.RegisterCounter pc;
+  @LazyInit
+  private Graph graph;
 
   @LazyInit
   private ControlNode currentRootUser;
@@ -123,6 +128,9 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
   static void runOn(Graph graph, Counter.RegisterCounter pc) {
     var start = getSingleNode(graph, StartNode.class);
     new IssTcgScheduler(pc).traverseBranch(start);
+
+    // unschedule unnecessary conditions again
+    unscheduleConditions(graph);
   }
 
   /**
@@ -267,6 +275,70 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
               + "be compile-time annotated (immediates): %s",
           writeResourceNode.address()
       );
+    }
+  }
+
+  /**
+   * This will check for all conditions (of if/select nodes),
+   * if it can be omitted to place them as TCG instruction.
+   */
+  private static void unscheduleConditions(Graph graph) {
+    graph.getNodes(Set.of(IfNode.class, SelectNode.class))
+        .map(n -> n instanceof IfNode ifNode
+            ? ifNode.condition()
+            : ((SelectNode) n).condition()
+        )
+        .filter(BuiltInCall.class::isInstance)
+        .map(BuiltInCall.class::cast)
+        .forEach(IssTcgScheduler::unscheduleCondition);
+  }
+
+  /**
+   * This will unschedule the condition of the if/select node, if it can be
+   * directly checked in the TCG brcond/movcond op.
+   * This optimizes unnecessary setconds and moves in the resulting TCG ops.
+   */
+  private static void unscheduleCondition(BuiltInCall cond) {
+    if (TcgPassUtils.conditionOf(cond.builtIn()) == null) {
+      // can not be expressed by tcg condition
+      return;
+    }
+    var condScheduleNode = cond.usages()
+        .filter(t -> t instanceof ScheduledNode)
+        .map(ScheduledNode.class::cast)
+        .findAny().orElse(null);
+
+    if (condScheduleNode == null) {
+      // it isn't even scheduled, so we can't unscheduled it anyway
+      return;
+    }
+
+    // we can handle the condition directly in the brcond tcg instruction
+    // so we want to unschedule the condition if possible.
+    // it is possible if the condition is not used as input by others than the scheduled node
+    // and write nodes that use it as condition only.
+    var mustBeTcg = cond.usages()
+        // ignore scheduled node
+        .filter(t -> !(t instanceof ScheduledNode))
+        // ignore if nodes and select node usages
+        .filter(t -> !(t instanceof IfNode || t instanceof SelectNode))
+        // ignore writes where it is not used as address or value (e.i. as condition only)
+        .anyMatch(t -> {
+          if (!(t instanceof WriteResourceNode write)) {
+            // it has some other user -> required to be TCGv
+            return true;
+          }
+          if (write.value() == cond) {
+            // it is used as value -> required to be TCGv
+            return true;
+          }
+          // if it is the address -> required to be TCGv, otherwise not.
+          return write.hasAddress() && write.address() == cond;
+        });
+
+    if (!mustBeTcg) {
+      // we can unschedule the node
+      condScheduleNode.replaceByNothingAndDelete();
     }
   }
 }

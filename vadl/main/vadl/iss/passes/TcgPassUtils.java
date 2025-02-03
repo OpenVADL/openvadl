@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.control.ScheduledNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -60,6 +61,8 @@ public class TcgPassUtils {
       return TcgCondition.GTU;
     } else if (builtIn == BuiltInTable.UGEQ) {
       return TcgCondition.GEU;
+    } else if (builtIn == BuiltInTable.AND) {
+      return TcgCondition.TSTNE;
     } else {
       return null;
     }

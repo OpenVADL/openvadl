@@ -124,7 +124,7 @@ public class TcgOpLoweringPass extends Pass {
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
-    
+
     viam.isa().get().ownInstructions()
         .forEach(i ->
             new TcgOpLoweringExecutor(i.expectExtension(TcgCtx.class).assignment(),
@@ -575,15 +575,32 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   //   Currently all expressions are executed even if they are not required.
   @Handler
   void handle(SelectNode toHandle) {
+    // determine if condition can be expressed by tcg condition
+    var tcgCond = toHandle.condition() instanceof BuiltInCall builtInCall
+        ? TcgPassUtils.conditionOf(builtInCall.builtIn())
+        : null;
+
+
     var dest = singleDestOf(toHandle);
-    var cond1Src = singleDestOf(toHandle.condition());
-    var cond2Src = constant(Constant.Value.of(true));
     var trueSrc = singleDestOf(toHandle.trueCase());
     var falseSrc = singleDestOf(toHandle.falseCase());
 
-    replaceCurrent(
-        new TcgMovCondNode(dest, cond1Src, cond2Src, trueSrc, falseSrc, TcgCondition.EQ)
-    );
+    TcgMovCondNode movCondNode;
+    if (tcgCond != null) {
+      // integrate test in tcg condition
+      var condCall = (BuiltInCall) toHandle.condition();
+      var cond1Src = singleDestOf(condCall.arguments().get(0));
+      var cond2Src = singleDestOf(condCall.arguments().get(1));
+      movCondNode = new TcgMovCondNode(dest, cond1Src, cond2Src, trueSrc, falseSrc, tcgCond);
+    } else {
+      // use tcg condition as argument to test
+      var cond1Src = singleDestOf(toHandle.condition());
+      var cond2Src = constant(Constant.Value.of(true));
+      movCondNode =
+          new TcgMovCondNode(dest, cond1Src, cond2Src, trueSrc, falseSrc, TcgCondition.EQ);
+    }
+
+    replaceCurrent(movCondNode);
   }
 
   /**

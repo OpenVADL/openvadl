@@ -1,6 +1,5 @@
 package vadl.iss.passes.tcgLowering;
 
-import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -104,15 +103,11 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
 
     var ifNode = (IfNode) splitNode;
 
-    if (!isTcg(ifNode.condition())) {
+    if (!isCondTcg(ifNode.condition())) {
       // if the condition is immediate, we emit C-If construct
       // and no TCG operations
       return CfgTraverser.super.traverseControlSplit(ifNode);
     }
-
-    // unschedule if condition if possible.
-    // e.i.: if the condition can be moved to the brcond branch
-    unscheduleIfCondition(ifNode);
 
     return buildControlSequence(ifNode);
   }
@@ -278,58 +273,16 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * This will unschedule the condition of the if node, if it can be
-   * directly checked in the TCG brcond.
-   * This optimizes unnecessary cond and moves in the resulting TCG ops.
+   * Check if the condition is a TCG.
+   * If might not be scheduled due to optimization, eventhough it depends
+   * on TCG arguments.
    */
-  private void unscheduleIfCondition(IfNode ifNode) {
-    if (!(ifNode.condition() instanceof BuiltInCall condCall)) {
-      // the condition is no built-in call
-      return;
+  public boolean isCondTcg(ExpressionNode node) {
+    if (node instanceof BuiltInCall builtInCall) {
+      // it is TCG if an argument is TCG.
+      return builtInCall.arguments().stream().anyMatch(this::isTcg);
     }
-    var tcgCondition = TcgPassUtils.conditionOf(condCall.builtIn());
-    if (tcgCondition == null) {
-      // the condition built-in cannot be mapped to a tcg condition
-      return;
-    }
-
-    var condScheduleNode = condCall.usages()
-        .filter(t -> t instanceof ScheduledNode)
-        .map(ScheduledNode.class::cast)
-        .findAny().orElse(null);
-    if (condScheduleNode == null) {
-      // it isn't even scheduled, so we can't unscheduled it anyway
-      return;
-    }
-
-    // we can handle the condition directly in the brcond tcg instruction
-    // so we want to unschedule the condition if possible.
-    // it is possible if the condition is not used as input by others than the scheduled node
-    // and write nodes that use it as condition only.
-    var mustBeTcg = condCall.usages()
-        // ignore scheduled node
-        .filter(t -> !(t instanceof ScheduledNode))
-        // ignore control if nodes
-        .filter(t -> !(t instanceof IfNode))
-        // ignore writes where it is not used as address or value (e.i. as condition only)
-        .anyMatch(t -> {
-          if (!(t instanceof WriteResourceNode write)) {
-            // it has some other user -> required to be TCGv
-            return true;
-          }
-          if (write.value() == condCall) {
-            // it is used as value -> required to be TCGv
-            return true;
-          }
-          // if it is the address -> required to be TCGv, otherwise not.
-          return write.hasAddress() && write.address() == condCall;
-        });
-
-    if (!mustBeTcg) {
-      // we can unschedule the node
-      condScheduleNode.replaceByNothingAndDelete();
-    }
-
+    return isTcg(node);
   }
 
   /**
