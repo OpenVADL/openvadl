@@ -13,7 +13,6 @@ public class IssRV64IMEmbenchTest extends QemuIssTest {
 
   private static final Logger log = LoggerFactory.getLogger(IssRV64IMEmbenchTest.class);
 
-  // TODO: Remove this (it is just for testing purposes)
   @EnabledIfEnvironmentVariable(named = "test_embench_enabled", matches = "true")
   @Test
   void issLoweringTest() throws IOException, DuplicatedPassKeyException {

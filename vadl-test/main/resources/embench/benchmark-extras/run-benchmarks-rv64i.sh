@@ -4,7 +4,7 @@ set -e
 cd $(realpath $(dirname "$0"))
 
 # QEMU
-../build_spike-rv64i.sh --cpu-mhz 100
+../build_spike-rv64i.sh --cpu-mhz 500
 echo "Benchmarking qemu..."
 ./run-benchmark.sh "rv64i-qemu"       ./benchmark_qemu.sh       "qemu-system-riscv64" -nographic -M spike -bios
 echo "Benchmarking open-vadl..."
