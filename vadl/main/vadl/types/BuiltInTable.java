@@ -5,6 +5,7 @@ import static vadl.types.Type.constructDataType;
 
 import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -15,6 +16,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import org.slf4j.Logger;
+import vadl.ast.ConstantType;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
@@ -1014,6 +1016,31 @@ public class BuiltInTable {
           .returns(Type.string())
           .build();
 
+  /**
+   * Checks if the token at lookahead {@code n} in the AsmParser is equal to a string {@code s}.
+   *
+   * <p>{@code function LaIdEq(n: Constant,s: String) -> Bool}
+   */
+  public static final BuiltIn LA_ID_EQ =
+      func("LaIdEq", null, Type.relation(ConstantType.class, StringType.class, BoolType.class))
+          .takesDefault()
+          .noCompute()
+          .returns(Type.bool())
+          .build();
+
+  /**
+   * Checks if the token at lookahead {@code n} in the AsmParser is any of the strings in {@code s}.
+   *
+   * <p>{@code function LaIdEq(n: Constant,s: String...) -> Bool}
+   */
+  public static final BuiltIn LA_ID_IN =
+      func("LaIdIn", null,
+          Type.relation(List.of(ConstantType.class, StringType.class), true, BoolType.class))
+          .takesDefault()
+          .noCompute()
+          .returns(Type.bool())
+          .build();
+
   /// // FIELDS /////
 
   public static final List<BuiltIn> BUILT_INS = List.of(
@@ -1126,8 +1153,12 @@ public class BuiltInTable {
       BINARY,
       DECIMAL,
       HEX,
-      OCTAL
+      OCTAL,
 
+      // ASM PARSER FUNCTIONS
+
+      LA_ID_IN,
+      LA_ID_EQ
   );
 
   public static final HashSet<BuiltIn> commutative = new HashSet<>(List.of(
@@ -1216,18 +1247,43 @@ public class BuiltInTable {
      * @return true if argument types are correct, false otherwise
      */
     public boolean takes(List<Type> argTypes) {
+
+      if (this.signature().hasVarArgs()) {
+        if (argTypes.size() < argTypeClasses().size()) {
+          return false;
+        }
+
+        // check first n-1 args
+        var firstN1Args = argTypes.subList(0, argTypeClasses().size() - 1);
+        var firstN1ArgTypeClasses = argTypeClasses().subList(0, argTypeClasses().size() - 1);
+        if (!argsCompatible(firstN1Args, firstN1ArgTypeClasses)) {
+          return false;
+        }
+
+        // check varArgs arg
+        var varArgsType = argTypeClasses().get(argTypeClasses().size() - 1);
+        var varArgs = argTypes.subList(argTypeClasses().size() - 1, argTypes.size());
+        var varArgsTypeClasses = Collections.nCopies(varArgs.size(), varArgsType);
+        return argsCompatible(varArgs, varArgsTypeClasses);
+      }
+
       if (argTypeClasses().size() != argTypes.size()) {
         // if the number of arguments is not correct, this can't be true
         return false;
       }
 
+      return argsCompatible(argTypes, argTypeClasses());
+    }
+
+    private boolean argsCompatible(List<Type> argTypes,
+                                   List<? extends Class<? extends Type>> argTypeClasses) {
       // we check certain properties that must match for ALL built-ins.
-      // basically, if the argument type class is another type class than the
+      // basically, if the argument type class is another type class then the
       // parameter's one, and there is no way to trivially cast the argument type
-      // to an constructed type of the parameter type, we return false.
+      // to a constructed type of the parameter type, we return false.
       // otherwise true.
       // overrides should further constraint the properties of the given types.
-      return Streams.zip(argTypes.stream(), argTypeClasses().stream(),
+      return Streams.zip(argTypes.stream(), argTypeClasses.stream(),
           (argType, argTypeClass) -> {
             if (argType.getClass() == argTypeClass) {
               // if the class is the same, we know that the argument type is correct
@@ -1250,7 +1306,6 @@ public class BuiltInTable {
           }
       ).allMatch(p -> p);
     }
-
 
     /**
      * Returns the result type of the built-in when called with the given argument types.
