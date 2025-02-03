@@ -24,6 +24,10 @@ public enum TcgCondition {
     return "TCG_COND_" + this.name();
   }
 
+  /**
+   * Returns the negated TCG condition.
+   * E.g., LT -> GE.
+   */
   public TcgCondition not() {
     return switch (this) {
       case EQ -> NE;

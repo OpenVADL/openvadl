@@ -369,6 +369,11 @@ public class Graph {
   }
 
 
+  /**
+   * Verifies this graph and its nodes.
+   * This must be called in the {@link Definition#verify()} method of all
+   * definitions that contain a graph.
+   */
   public void verify() {
     verifyNodes();
   }

@@ -772,21 +772,34 @@ class BuiltInTcgLoweringExecutor {
           );
         })
 
-        .set(BuiltInTable.SDIV, (ctx) -> out(
-            new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
-            new TcgExtendNode(ctx.argWidth(1), TcgExtend.SIGN, ctx.tmp(1), ctx.src(1)),
-            new TcgDivNode(true, ctx.dest(), ctx.tmp(0), ctx.tmp(1))
-        ))
+        .set(BuiltInTable.SDIV, (ctx) -> {
+          // TODO: move this to normalization pass. This should be handled in a much earlier state
+          if (ctx.argWidth(0) == 64) {
+            return out(new TcgDivNode(true, ctx.dest(), ctx.src(0), ctx.src(1)));
+          } else {
+            return out(
+                new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
+                new TcgExtendNode(ctx.argWidth(1), TcgExtend.SIGN, ctx.tmp(1), ctx.src(1)),
+                new TcgDivNode(true, ctx.dest(), ctx.tmp(0), ctx.tmp(1))
+            );
+          }
+        })
 
         .set(BuiltInTable.UDIV, (ctx) -> out(
             new TcgDivNode(false, ctx.dest(), ctx.src(0), ctx.src(1))
         ))
 
-        .set(BuiltInTable.SMOD, (ctx) -> out(
-            new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
-            new TcgExtendNode(ctx.argWidth(1), TcgExtend.SIGN, ctx.tmp(1), ctx.src(1)),
-            new TcgRemNode(true, ctx.dest(), ctx.tmp(0), ctx.tmp(1))
-        ))
+        .set(BuiltInTable.SMOD, (ctx) -> {
+          if (ctx.argWidth(0) == 64) {
+            return out(new TcgRemNode(true, ctx.dest(), ctx.src(0), ctx.src(1)));
+          } else {
+            return out(
+                new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
+                new TcgExtendNode(ctx.argWidth(1), TcgExtend.SIGN, ctx.tmp(1), ctx.src(1)),
+                new TcgRemNode(true, ctx.dest(), ctx.tmp(0), ctx.tmp(1))
+            );
+          }
+        })
 
         .set(BuiltInTable.UMOD, (ctx) -> out(
             new TcgRemNode(false, ctx.dest(), ctx.src(0), ctx.src(1))

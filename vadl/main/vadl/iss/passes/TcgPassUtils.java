@@ -40,6 +40,11 @@ public class TcgPassUtils {
   }
 
 
+  /**
+   * Returns a {@link TcgCondition} for a given {@link vadl.types.BuiltInTable.BuiltIn}, if
+   * there exists one, otherwise it returns null.
+   * E.g., on the SLTH built-in it returns LT.
+   */
   public static @Nullable TcgCondition conditionOf(BuiltInTable.BuiltIn builtIn) {
     if (builtIn == BuiltInTable.EQU) {
       return TcgCondition.EQ;

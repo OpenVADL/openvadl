@@ -88,8 +88,6 @@ public class IssTcgSchedulingPass extends Pass {
 class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements CfgTraverser {
 
   private Counter.RegisterCounter pc;
-  @LazyInit
-  private Graph graph;
 
   @LazyInit
   private ControlNode currentRootUser;
