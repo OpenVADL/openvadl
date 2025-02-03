@@ -152,8 +152,8 @@ static void gen_set_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num, T
 static void gen_goto_tb(DisasContext *ctx, int8_t n, target_ulong target_pc)
 {
     if (n >= 0 && translator_use_goto_tb(&ctx->base, target_pc)) {
-        tcg_gen_movi_i64(cpu_pc, (int64_t) target_pc);
         tcg_gen_goto_tb(n);
+        tcg_gen_movi_i64(cpu_pc, (int64_t) target_pc);
         tcg_gen_exit_tb(ctx->base.tb, n);
     } else {
         tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
