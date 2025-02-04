@@ -147,8 +147,7 @@ public class InfoUtils {
                 // Render the graph
                 d3.select('#graph-%s')
                     .graphviz()
-                    .width('100%%')
-                    .height('100%%')
+                    .fit(true)
                     .renderDot(dotString);
         
                 // Highlight the active button
@@ -165,7 +164,7 @@ public class InfoUtils {
     // add the body with the empty graph container and the dot graph script
     info.body = """
         <div class="flex flex-col h-full">
-            <div id="graph-%s" class="flex-grow rounded-md flex items-center justify-center">
+            <div id="graph-%s" class="graph-container flex-grow rounded-md flex items-center justify-center">
                 <!-- Graph will render here -->
             </div>
             <div class="flex px-4 pt-4 justify-between">

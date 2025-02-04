@@ -195,7 +195,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .filter(p -> !(p.pass() instanceof CollectBehaviorDotGraphPass))
         .toList();
 
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy - hh:mm")
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         .withZone(ZoneId.systemDefault());
     var renderDate = formatter.format(Instant.now());
 
