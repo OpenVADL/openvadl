@@ -10,7 +10,6 @@ import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
-import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.viam.Constant;
 
@@ -106,30 +105,8 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       return new ConstantValue(val, type);
     }
 
-    var builtIns = BuiltInTable.builtIns()
-        .filter(b -> b.signature().argTypeClasses().size() == 2)
-        .filter(b -> Objects.equals(b.operator(), expr.operator().symbol))
-        .toList();
 
-    // Sometimes there are a singed and unsigned version of builtin operation
-    var builtIn = switch (builtIns.size()) {
-      case 0 -> throw new IllegalStateException(
-          "Couldn't get any matching builtin for %s".formatted(expr.operator));
-      case 1 -> builtIns.get(0);
-      case 2 -> {
-        var singed = leftVal.type().getClass() == SIntType.class;
-        builtIns = builtIns.stream()
-            .filter(b -> (b.signature().argTypeClasses().get(0) == SIntType.class) == singed)
-            .toList();
-        if (builtIns.size() != 1) {
-          throw new IllegalStateException("Couldn't find a builtin function");
-        }
-        yield builtIns.get(0);
-      }
-      default -> throw new IllegalStateException(
-          "Too many matching builtin (%d) for %s".formatted(builtIns.size(), expr.operator));
-    };
-
+    var builtIn = AstUtils.getBinOpBuiltIn(expr);
     var val = builtIn
         .compute(List.of(leftVal.toViamConstant(), rightVal.toViamConstant()))
         .orElseThrow();

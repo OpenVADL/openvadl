@@ -1,11 +1,15 @@
 package vadl.ast;
 
+
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
+import vadl.types.SIntType;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.viam.Constant;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
@@ -21,8 +25,12 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
 class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
@@ -36,13 +44,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   Graph getGraph(Expr expr, String name) {
-    var exprNode = expr.accept(this);
+    var exprNode = fetch(expr);
 
     // FIXME: Should we set the parent here too?
     var graph = new Graph(name);
     ControlNode endNode = graph.addWithInputs(new ReturnNode(exprNode));
-    graph.add(new StartNode(endNode));
-
+    endNode.setSourceLocation(expr.sourceLocation());
+    ControlNode startNode = graph.add(new StartNode(endNode));
+    startNode.setSourceLocation(expr.sourceLocation());
     return graph;
   }
 
@@ -56,6 +65,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var sideEffects = stmtCtx.sideEffects();
 
     var end = graph.add(new InstrEndNode(sideEffects));
+    end.setSourceLocation(definition.sourceLocation());
 
     ControlNode startSuccessor = end;
     if (stmtCtx.hasControlBlock()) {
@@ -63,9 +73,23 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       controlBlock.lastNode().setNext(end);
       startSuccessor = controlBlock.firstNode();
     }
-    graph.add(new StartNode(startSuccessor));
+    var start = new StartNode(startSuccessor);
+    start.setSourceLocation(definition.sourceLocation());
+    graph.add(start);
 
     return graph;
+  }
+
+  private static BuiltInCall produceNeqToZero(ExpressionNode node) {
+    var constNode = new ConstantNode(Constant.Value.of(0, (DataType) node.type()));
+    constNode.setSourceLocation(node.sourceLocation());
+    return BuiltInCall.of(BuiltInTable.NEQ, node, constNode);
+  }
+
+  private ExpressionNode fetch(Expr expr) {
+    var result = expr.accept(this);
+    result.setSourceLocationIfNotSet(expr.sourceLocation());
+    return result;
   }
 
   @Override
@@ -98,8 +122,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(BinaryExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    var builtin = AstUtils.getBinOpBuiltIn(expr);
+    var left = fetch(expr.left);
+    var right = fetch(expr.right);
+    return new BuiltInCall(builtin, new NodeList<>(left, right), Objects.requireNonNull(expr.type));
   }
 
   @Override
@@ -191,14 +217,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(CallExpr expr) {
-    var args = expr.flatArgs().stream().map(a -> a.accept(this)).toList();
+    var args = expr.flatArgs().stream().map(this::fetch).toList();
 
     if (expr.computedBuiltIn != null) {
       return new BuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
           Objects.requireNonNull(expr.type));
     }
 
-    throw new IllegalStateException("cannot handle many calls yet");
+    if (expr.computedTarget instanceof RegisterFileDefinition) {
+      var regFile = (RegisterFile) viamLowering.fetch(expr.computedTarget).orElseThrow();
+      var type = (DataType) Objects.requireNonNull(expr.type);
+      return new ReadRegFileNode(regFile, args.get(0), type, null);
+    }
+
+    throw new IllegalStateException("Cannot handle call to %s yet".formatted(expr.computedTarget));
   }
 
   @Override
@@ -220,6 +252,47 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new ConstantNode(
           Constant.Value.of(constType.getValue().longValueExact(),
               (DataType) Objects.requireNonNull(expr.type)));
+    }
+
+    // check the different rules and apply them accordingly
+    var source = fetch(expr.value);
+    var sourceType = (DataType) Objects.requireNonNull(expr.value.type);
+    var targetType = (DataType) Objects.requireNonNull(expr.type);
+    if (sourceType.isTrivialCastTo(targetType)) {
+      // match 1. rule: same bit representation
+      // -> no casting needs to be applied
+      return source;
+    }
+    if (targetType.getClass() == vadl.types.BoolType.class) {
+      // match 2. rule: target type is bool
+      // -> produce != 0 call
+      //return new BuiltInCall
+      return produceNeqToZero(source);
+    }
+    if (targetType.bitWidth() < sourceType.bitWidth()) {
+      // match 3. rule: cast type bit-width is smaller than source type
+      // -> create TruncateNode
+      return new TruncateNode(source, targetType);
+    }
+    if (sourceType.getClass() == SIntType.class) {
+      // match 4.
+      // rule: source type is a signed integer
+      // -> create sign extend node
+      return new SignExtendNode(source, targetType);
+    }
+    if (sourceType.getClass() == BitsType.class
+        && targetType.getClass() == SIntType.class) {
+      // match 5.
+      // rule: source type is a bits type and target type is SInt
+      // -> create sign extend node
+      return new SignExtendNode(source, targetType);
+    }
+    if (targetType.getClass() == UIntType.class
+        || targetType.getClass() == BitsType.class
+        || targetType.getClass() == SIntType.class
+    ) {
+      // match 5. rule: cast type is one of sint, uint, or bits
+      return new ZeroExtendNode(source, targetType);
     }
 
     throw new IllegalArgumentException(
@@ -289,7 +362,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(AssignmentStatement statement) {
-    var rightExpr = statement.valueExpression.accept(this);
+    var rightExpr = fetch(statement.valueExpression);
 
     if (statement.target instanceof CallExpr callTarget) {
       if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
