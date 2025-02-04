@@ -1,0 +1,59 @@
+define signext i32 @square(i32 %a) nounwind {
+; CHECK-LABEL: square: # @square
+; CHECK-LABEL: # %bb.0:
+; CHECK: MUL a0,a0,a0
+; CHECK-NEXT: JALR zero,0(ra)
+  %1 = mul i32 %a, %a
+  ret i32 %1
+}
+
+define signext i32 @mul(i32 %a, i32 %b) nounwind {
+; CHECK-LABEL: mul: # @mul
+; CHECK-LABEL: # %bb.0:
+; CHECK: MUL a0,a0,a1
+; CHECK-NEXT: JALR zero,0(ra)
+  %1 = mul i32 %a, %b
+  ret i32 %1
+}
+
+define signext i32 @mul_constant(i32 %a) nounwind {
+; CHECK-LABEL: mul_constant: # @mul_constant
+; CHECK-LABEL: # %bb.0:
+; CHECK: ADDI a1,zero,5
+; CHECK-NEXT: MUL a0,a0,a1
+; CHECK-NEXT: JALR zero,0(ra)
+  %1 = mul i32 %a, 5
+  ret i32 %1
+}
+
+define i32 @mul_pow2(i32 %a) nounwind {
+; CHECK-LABEL: mul_pow2: # @mul_pow2
+; CHECK-LABEL: # %bb.0:
+; CHECK-NEXT: SLLI a0,a0,3
+; CHECK-NEXT: JALR zero,0(ra)
+  %1 = mul i32 %a, 8
+  ret i32 %1
+}
+
+define i64 @mul64(i64 %a, i64 %b) nounwind {
+; CHECK-LABEL: mul64: # @mul64
+; CHECK-LABEL: # %bb.0:
+; CHECK-NEXT: ADDI a4,zero,0
+; CHECK-NEXT: ADDI a4,a4,-16
+; CHECK-NEXT: ADD sp,sp,a4
+; CHECK-NEXT: SW a3,12(sp) # 4-byte Folded Spill
+; CHECK-NEXT: ADDI a3,a1,0
+; CHECK-NEXT: LW a1,12(sp) # 4-byte Folded Reload
+; CHECK: MUL a4,a0,a1
+; CHECK-NEXT: MULHU a1,a0,a2
+; CHECK-NEXT: ADD a1,a1,a4
+; CHECK-NEXT: MUL a3,a3,a2
+; CHECK-NEXT: ADD a1,a1,a3
+; CHECK-NEXT: MUL a0,a0,a2
+; CHECK-NEXT: ADDI a2,zero,0
+; CHECK-NEXT: ADDI a2,a2,16
+; CHECK-NEXT: ADD sp,sp,a2
+; CHECK-NEXT: JALR zero,0(ra)
+  %1 = mul i64 %a, %b
+  ret i64 %1
+}

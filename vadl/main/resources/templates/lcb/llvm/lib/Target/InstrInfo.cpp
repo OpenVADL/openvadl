@@ -167,14 +167,13 @@ void [(${namespace})]InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, Mac
       MachineFrameInfo &MFI = MF->getFrameInfo();
 
       MachineMemOperand *MMO = MF->getMachineMemOperand(
-      MachinePointerInfo::getFixedStack(*MF, FrameIndex), MachineMemOperand::MOStore,
+      MachinePointerInfo::getFixedStack(*MF, FrameIndex), MachineMemOperand::MOLoad,
       MFI.getObjectSize(FrameIndex), MFI.getObjectAlign(FrameIndex));
 
     [# th:each="r : ${loadStackSlotInstructions}" ]
     if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
     {
-        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ) )
-          .addReg( DestReg, RegState::Define )
+        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ), DestReg )
           .addFrameIndex( FrameIndex )
           .addImm( 0 )
           .addMemOperand(MMO)
