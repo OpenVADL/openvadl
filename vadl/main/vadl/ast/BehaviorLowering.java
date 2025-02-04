@@ -11,6 +11,7 @@ import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
+import vadl.viam.Counter;
 import vadl.viam.Format;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
@@ -29,6 +30,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -115,6 +117,18 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new FieldAccessRefNode(
           (Format.FieldAccess) viamLowering.fetch(derivedFormatField).orElseThrow(),
           (DataType) Objects.requireNonNull(expr.type));
+    }
+
+    // Registers and counters
+    if (computedTarget instanceof CounterDefinition counterDefinition) {
+      if (counterDefinition.kind == CounterDefinition.CounterKind.PROGRAM) {
+        var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
+
+        // FIXME: Fill in the null here correctly
+        return new ReadRegNode(counter.registerRef(), (DataType) Objects.requireNonNull(expr.type),
+            null);
+      }
+      throw new IllegalStateException("Unsupported counter kind: " + counterDefinition.kind);
     }
 
     // Builtin Call
