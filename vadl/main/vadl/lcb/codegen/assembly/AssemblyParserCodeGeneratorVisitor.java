@@ -18,6 +18,22 @@ import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.ViamError;
+import vadl.viam.asm.AsmGrammarVisitor;
+import vadl.viam.asm.elements.AsmAlternative;
+import vadl.viam.asm.elements.AsmAlternatives;
+import vadl.viam.asm.elements.AsmAssignToAttribute;
+import vadl.viam.asm.elements.AsmAssignToLocalVar;
+import vadl.viam.asm.elements.AsmFunctionInvocation;
+import vadl.viam.asm.elements.AsmGroup;
+import vadl.viam.asm.elements.AsmLocalVarDefinition;
+import vadl.viam.asm.elements.AsmLocalVarUse;
+import vadl.viam.asm.elements.AsmOption;
+import vadl.viam.asm.elements.AsmRepetition;
+import vadl.viam.asm.elements.AsmRuleInvocation;
+import vadl.viam.asm.elements.AsmStringLiteralUse;
+import vadl.viam.asm.rules.AsmBuiltinRule;
+import vadl.viam.asm.rules.AsmNonTerminalRule;
+import vadl.viam.asm.rules.AsmTerminalRule;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -31,7 +47,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * Generates the cpp code for assembly parsing.
  */
 public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor implements
-    AssemblyVisitor {
+    AssemblyVisitor, AsmGrammarVisitor {
 
   private final String namespace;
   private final SymbolTable symbolTable;
@@ -245,5 +261,80 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
     writer.write("""
         return ParsedValue<NoData>(NoData());
         """);
+  }
+
+  @Override
+  public void visit(AsmBuiltinRule rule) {
+
+  }
+
+  @Override
+  public void visit(AsmNonTerminalRule rule) {
+
+  }
+
+  @Override
+  public void visit(AsmTerminalRule rule) {
+
+  }
+
+  @Override
+  public void visit(AsmAlternative element) {
+
+  }
+
+  @Override
+  public void visit(AsmAlternatives element) {
+
+  }
+
+  @Override
+  public void visit(AsmAssignToAttribute element) {
+
+  }
+
+  @Override
+  public void visit(AsmAssignToLocalVar element) {
+
+  }
+
+  @Override
+  public void visit(AsmFunctionInvocation element) {
+
+  }
+
+  @Override
+  public void visit(AsmGroup element) {
+
+  }
+
+  @Override
+  public void visit(AsmLocalVarDefinition element) {
+
+  }
+
+  @Override
+  public void visit(AsmLocalVarUse element) {
+
+  }
+
+  @Override
+  public void visit(AsmOption element) {
+
+  }
+
+  @Override
+  public void visit(AsmRepetition element) {
+
+  }
+
+  @Override
+  public void visit(AsmRuleInvocation element) {
+
+  }
+
+  @Override
+  public void visit(AsmStringLiteralUse element) {
+
   }
 }

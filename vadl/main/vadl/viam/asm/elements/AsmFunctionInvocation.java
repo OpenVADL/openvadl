@@ -2,28 +2,20 @@ package vadl.viam.asm.elements;
 
 import java.util.List;
 import javax.annotation.Nullable;
+import vadl.viam.asm.AsmGrammarVisitor;
 
 /**
  * Represents the invocation of a vadl function invocation in a grammar rule.
+ *
+ * @param functionName TODO: store reference to Function instead of the function name
  */
-public class AsmFunctionInvocation implements AsmGrammarElement {
-  @Nullable
-  AsmAssignTo assignToElement;
-  // TODO: store reference to Function instead of the function name
-  String functionName;
-  List<AsmGrammarElement> parameters;
+public record AsmFunctionInvocation(@Nullable AsmAssignTo assignToElement,
+                                    String functionName,
+                                    List<AsmGrammarElement> parameters)
+    implements AsmGrammarElement {
 
-  /**
-   * Creates a new FunctionInvocation.
-   *
-   * @param assignToElement the element that stores the result of the invocation
-   * @param functionName    the invoked function's name
-   * @param parameters      the parameters of the invocation
-   */
-  public AsmFunctionInvocation(@Nullable AsmAssignTo assignToElement, String functionName,
-                               List<AsmGrammarElement> parameters) {
-    this.assignToElement = assignToElement;
-    this.functionName = functionName;
-    this.parameters = parameters;
+  @Override
+  public void accept(AsmGrammarVisitor visitor) {
+    visitor.visit(this);
   }
 }
