@@ -69,7 +69,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   private final IdentityHashMap<Definition, Optional<vadl.viam.Definition>> definitionCache =
       new IdentityHashMap<>();
-  private final IdentityHashMap<FormatDefinition.FormatField, Format.Field>
+  private final IdentityHashMap<FormatDefinition.FormatField, vadl.viam.Definition>
       formatFieldCache = new IdentityHashMap<>();
 
   @LazyInit
@@ -124,7 +124,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @param field for which we want to find the corresponding viam node.
    * @return the viam node.
    */
-  Optional<vadl.viam.Format.Field> fetch(FormatDefinition.FormatField field) {
+  Optional<vadl.viam.Definition> fetch(FormatDefinition.FormatField field) {
     // FIXME: Try to evaluate the format if it hasn't been seen before.
     var result = Optional.ofNullable(formatFieldCache.get(field));
     result.ifPresent(f -> f.setSourceLocationIfNotSet(field.sourceLocation()));
@@ -519,10 +519,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
                 fieldDefinition.identifier()),
             (BitsType) Objects.requireNonNull(typedField.typeLiteral.type),
-            new Constant.BitSlice(new Constant.BitSlice.Part[] {
-                new Constant.BitSlice.Part(
-                    Objects.requireNonNull(typedField.range).from(),
-                    Objects.requireNonNull(typedField.range).to())}),
+            new Constant.BitSlice(new Constant.BitSlice.Part(
+                Objects.requireNonNull(typedField.range).from(),
+                Objects.requireNonNull(typedField.range).to())),
             format
         );
         formatFieldCache.put(typedField, field);
@@ -546,7 +545,40 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       }
 
       if (fieldDefinition instanceof FormatDefinition.DerivedFormatField derivedField) {
-        // FIXME: Implement this and figure out what the predicate does here?
+        var identifier =
+            generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
+                fieldDefinition.identifier());
+
+        var accessName = identifier.name() + "::decode";
+        var accessGraph =
+            behaviorLowering.getGraph(derivedField.expr, accessName);
+        var access =
+            new Function(generateIdentifier(accessName, derivedField.identifier), new Parameter[0],
+                Objects.requireNonNull(derivedField.expr.type), accessGraph);
+
+        // FIXME: Add encoding from language
+        @Nullable Function encoding = null;
+
+
+        // FIXME: Add real predicates
+        var predicateName = identifier.name() + "::predicate";
+        var predicateGraph =
+            behaviorLowering.getGraph(new BoolLiteral(true, SourceLocation.INVALID_SOURCE_LOCATION),
+                predicateName);
+
+        // FIXME: This is stupid, both link to each other, so I must create them after each other.
+        var predicate = new Function(generateIdentifier(predicateName, derivedField.identifier),
+            new Parameter[0], Type.bool(), predicateGraph);
+        var parameter = new Parameter(
+            new vadl.viam.Identifier("doesnotexist", SourceLocation.INVALID_SOURCE_LOCATION),
+            Objects.requireNonNull(derivedField.expr.type));
+        parameter.setParent(predicate);
+        predicate.setParameters(new Parameter[] {parameter});
+
+
+        var field = new Format.FieldAccess(identifier, access, encoding, predicate);
+        fieldAccesses.add(field);
+        formatFieldCache.put(derivedField, field);
         continue;
       }
 
@@ -555,7 +587,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
 
     format.setFields(fields.toArray(new Format.Field[0]));
-    format.setFieldAccesses(fieldAccesses.toArray(new Format.FieldAccess[0]));
+    format.setFieldAccesses(
+        fieldAccesses.toArray(fieldAccesses.toArray(new Format.FieldAccess[0])));
     return Optional.of(format);
   }
 
@@ -604,7 +637,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var fields = new ArrayList<Encoding.Field>();
     for (var item : definition.encodings.items) {
       var encodingDef = (EncodingDefinition.EncodingField) item;
-      var formatField = fetch(Objects.requireNonNull(definition.formatNode)
+      var formatField = (Format.Field) fetch(Objects.requireNonNull(definition.formatNode)
           .getField(encodingDef.field.name)).orElseThrow();
       var identifier =
           generateIdentifier(definition.viamId + "::encoding::" + encodingDef.field.name,

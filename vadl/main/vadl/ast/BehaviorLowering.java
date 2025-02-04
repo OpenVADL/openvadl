@@ -11,6 +11,7 @@ import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
+import vadl.viam.Format;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -25,6 +26,7 @@ import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -101,7 +103,17 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Format field
     if (computedTarget instanceof FormatDefinition.TypedFormatField typedFormatField) {
       return new FieldRefNode(
-          viamLowering.fetch(typedFormatField).orElseThrow(),
+          (Format.Field) viamLowering.fetch(typedFormatField).orElseThrow(),
+          (DataType) Objects.requireNonNull(expr.type));
+    }
+    if (computedTarget instanceof FormatDefinition.RangeFormatField rangeFormatField) {
+      return new FieldRefNode(
+          (Format.Field) viamLowering.fetch(rangeFormatField).orElseThrow(),
+          (DataType) Objects.requireNonNull(expr.type));
+    }
+    if (computedTarget instanceof FormatDefinition.DerivedFormatField derivedFormatField) {
+      return new FieldAccessRefNode(
+          (Format.FieldAccess) viamLowering.fetch(derivedFormatField).orElseThrow(),
           (DataType) Objects.requireNonNull(expr.type));
     }
 
@@ -118,7 +130,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator doesn't implement yet: %s (%s)".formatted(
+            expr.getClass().getSimpleName(), expr.name));
   }
 
   @Override
@@ -169,8 +182,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(BoolLiteral expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    return new ConstantNode(Constant.Value.of(true));
   }
 
   @Override
