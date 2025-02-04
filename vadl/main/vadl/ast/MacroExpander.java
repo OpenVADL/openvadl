@@ -447,7 +447,7 @@ class MacroExpander
   @Override
   public Definition visit(MemoryDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    return new MemoryDefinition(id, definition.addressType, definition.dataType,
+    return new MemoryDefinition(id, definition.addressTypeLiteral, definition.dataTypeLiteral,
         copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }

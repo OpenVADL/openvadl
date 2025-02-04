@@ -351,11 +351,11 @@ public class TypeChecker
 
   @Override
   public Void visit(MemoryDefinition definition) {
-    definition.addressType.accept(this);
-    definition.dataType.accept(this);
+    definition.addressTypeLiteral.accept(this);
+    definition.dataTypeLiteral.accept(this);
     definition.type = Type.concreteRelation(
-        List.of(Objects.requireNonNull(definition.addressType.type)),
-        Objects.requireNonNull(definition.dataType.type));
+        List.of(Objects.requireNonNull(definition.addressTypeLiteral.type)),
+        Objects.requireNonNull(definition.dataTypeLiteral.type));
     return null;
   }
 

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -112,6 +113,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
 
     var result = definition.accept(this);
+    result.ifPresent(value -> value.setSourceLocationIfNotSet(definition.sourceLocation()));
     definitionCache.put(definition, result);
     return result;
   }
@@ -123,9 +125,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @return the viam node.
    */
   Optional<vadl.viam.Format.Field> fetch(FormatDefinition.FormatField field) {
-
     // FIXME: Try to evaluate the format if it hasn't been seen before.
-    return Optional.ofNullable(formatFieldCache.get(field));
+    var result = Optional.ofNullable(formatFieldCache.get(field));
+    result.ifPresent(f -> f.setSourceLocationIfNotSet(field.sourceLocation()));
+    return result;
   }
 
 
@@ -435,14 +438,31 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(ConstantDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    // Do nothing on purpose.
+    // Constants are folded in the lowering and are not translated to VIAM.
+    return Optional.empty();
   }
 
   @Override
   public Optional<vadl.viam.Definition> visit(CounterDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var identifier = generateIdentifier(definition.viamId, definition.identifier().location());
+    // FIXME: WHAT ARE THESE PARAMETERS?
+    var reg = new Register(identifier,
+        (DataType) Objects.requireNonNull(definition.typeLiteral.type),
+        Register.AccessKind.FULL,
+        Register.AccessKind.FULL,
+        null,
+        new Register[] {});
+
+    Map<CounterDefinition.CounterKind, Counter.Kind> kinds =
+        Map.of(CounterDefinition.CounterKind.PROGRAM, Counter.Kind.PROGRAM_COUNTER,
+            CounterDefinition.CounterKind.GROUP, Counter.Kind.GROUP_COUNTER);
+    var kind = Objects.requireNonNull(kinds.get(definition.kind));
+    var counter = new Counter.RegisterCounter(identifier,
+        reg,
+        Counter.Position.NEXT, //FIXME: read this from, annotation or somewhere?
+        kind);
+    return Optional.of(counter);
   }
 
   @Override
@@ -683,8 +703,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(MemoryDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    return Optional.of(new Memory(identifier,
+        (DataType) Objects.requireNonNull(definition.addressTypeLiteral.type),
+        (DataType) Objects.requireNonNull(definition.dataTypeLiteral.type)));
   }
 
   @Override

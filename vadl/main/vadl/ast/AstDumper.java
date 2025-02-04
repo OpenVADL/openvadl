@@ -124,7 +124,8 @@ public class AstDumper
   @Override
   public Void visit(MemoryDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier(), definition.addressType, definition.dataType);
+    dumpChildren(definition.identifier(), definition.addressTypeLiteral,
+        definition.dataTypeLiteral);
     return null;
   }
 

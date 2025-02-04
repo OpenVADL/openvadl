@@ -13,6 +13,7 @@ import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 
 /**
  * The Definition nodes inside the AST.
@@ -309,7 +310,7 @@ class FormatDefinition extends Definition implements IdentifiableNode {
   record BitRange(int from, int to) {
   }
 
-  interface FormatField {
+  interface FormatField extends WithSourceLocation {
     Identifier identifier();
 
     void prettyPrint(int indent, StringBuilder builder);
@@ -889,18 +890,18 @@ class CounterDefinition extends Definition implements IdentifiableNode {
 
 class MemoryDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
-  TypeLiteral addressType;
-  TypeLiteral dataType;
+  TypeLiteral addressTypeLiteral;
+  TypeLiteral dataTypeLiteral;
   SourceLocation loc;
 
   @Nullable
   ConcreteRelationType type;
 
-  public MemoryDefinition(IdentifierOrPlaceholder identifier, TypeLiteral addressType,
-                          TypeLiteral dataType, SourceLocation loc) {
+  public MemoryDefinition(IdentifierOrPlaceholder identifier, TypeLiteral addressTypeLiteral,
+                          TypeLiteral dataTypeLiteral, SourceLocation loc) {
     this.identifier = identifier;
-    this.addressType = addressType;
-    this.dataType = dataType;
+    this.addressTypeLiteral = addressTypeLiteral;
+    this.dataTypeLiteral = dataTypeLiteral;
     this.loc = loc;
   }
 
@@ -926,9 +927,9 @@ class MemoryDefinition extends Definition implements IdentifiableNode {
     builder.append("memory ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    addressType.prettyPrint(indent, builder);
+    addressTypeLiteral.prettyPrint(indent, builder);
     builder.append(" -> ");
-    dataType.prettyPrint(indent, builder);
+    dataTypeLiteral.prettyPrint(indent, builder);
     builder.append("\n");
   }
 
@@ -954,16 +955,16 @@ class MemoryDefinition extends Definition implements IdentifiableNode {
     MemoryDefinition that = (MemoryDefinition) o;
     return annotations.equals(that.annotations)
         && identifier.equals(that.identifier)
-        && addressType.equals(that.addressType)
-        && dataType.equals(that.dataType);
+        && addressTypeLiteral.equals(that.addressTypeLiteral)
+        && dataTypeLiteral.equals(that.dataTypeLiteral);
   }
 
   @Override
   public int hashCode() {
     int result = annotations.hashCode();
     result = 31 * result + identifier.hashCode();
-    result = 31 * result + addressType.hashCode();
-    result = 31 * result + dataType.hashCode();
+    result = 31 * result + addressTypeLiteral.hashCode();
+    result = 31 * result + dataTypeLiteral.hashCode();
     return result;
   }
 }

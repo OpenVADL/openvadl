@@ -332,8 +332,8 @@ class SymbolTable {
         collectSymbols(symbols, registerFile.typeLiteral.resultType());
       } else if (definition instanceof MemoryDefinition memory) {
         symbols.defineSymbol(memory);
-        collectSymbols(symbols, memory.addressType);
-        collectSymbols(symbols, memory.dataType);
+        collectSymbols(symbols, memory.addressTypeLiteral);
+        collectSymbols(symbols, memory.dataTypeLiteral);
       } else if (definition instanceof UsingDefinition using) {
         symbols.defineSymbol(using);
         collectSymbols(symbols, using.typeLiteral);
