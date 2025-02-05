@@ -19,6 +19,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
@@ -142,6 +143,11 @@ public class IssTranslateCodeGenerator implements CDefaultMixins.All,
   @Handler
   void handle(CGenContext<Node> ctx, TcgVRefNode toHandle) {
     ctx.wr(toHandle.cCode());
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
+    throw new UnsupportedOperationException("Type AsmBuiltInCall not allowed");
   }
 
 }

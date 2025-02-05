@@ -14,6 +14,7 @@ import vadl.utils.Pair;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -71,6 +72,9 @@ public abstract class FunctionCodeGenerator
 
   @Handler
   protected abstract void handle(CGenContext<Node> ctx, FieldRefNode toHandle);
+
+  @Handler
+  protected abstract void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle);
 
   public String genReturnExpression() {
     var returnNode = getSingleNode(function.behavior(), ReturnNode.class);

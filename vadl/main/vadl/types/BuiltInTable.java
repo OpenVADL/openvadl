@@ -1192,6 +1192,11 @@ public class BuiltInTable {
       NEQ
   ));
 
+  public static List<BuiltIn> ASM_PARSER_BUILT_INS = List.of(
+      LA_ID_EQ,
+      LA_ID_IN
+  );
+
   public static Stream<BuiltIn> builtIns() {
     return BUILT_INS.stream();
   }

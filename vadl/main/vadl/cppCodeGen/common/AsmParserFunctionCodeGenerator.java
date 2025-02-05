@@ -7,26 +7,22 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
-import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
- * Produce a pure function that does not access any entities except parameters.
+ * Produce a function that can access special functions of the asm parser.
  */
-public class PureFunctionCodeGenerator extends FunctionCodeGenerator {
-
+public class AsmParserFunctionCodeGenerator extends FunctionCodeGenerator {
   /**
-   * Creates a new pure function code generator for the specified function.
+   * Creates a new asm parser function code generator for the specified function.
    *
    * @param function the function for which code should be generated
    */
-  public PureFunctionCodeGenerator(Function function) {
+  public AsmParserFunctionCodeGenerator(Function function) {
     super(function);
   }
 
@@ -57,6 +53,6 @@ public class PureFunctionCodeGenerator extends FunctionCodeGenerator {
 
   @Override
   public void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
-    throwNotAllowed(toHandle, "Asm builtin calls");
+    // TODO: Call handwritten functions of RecursiveDescentParser
   }
 }

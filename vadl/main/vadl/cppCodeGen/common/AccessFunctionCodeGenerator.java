@@ -9,6 +9,7 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.viam.Format;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -96,6 +97,11 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
   @Override
   protected void handle(CGenContext<Node> ctx, FieldAccessRefNode toHandle) {
     throwNotAllowed(toHandle, "Format field accesses");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
+    throwNotAllowed(toHandle, "Asm builtin calls");
   }
 
   /**
