@@ -2054,7 +2054,7 @@ public class TypeChecker
   @Override
   public Void visit(LetStatement statement) {
     if (statement.identifiers.size() == 1) {
-      statement.valueExpression.accept(this);
+      statement.valueExpr.accept(this);
       statement.body.accept(this);
       return null;
     }

@@ -841,7 +841,7 @@ class MacroExpander
 
   @Override
   public Statement visit(LetStatement letStatement) {
-    var valueExpression = expandExpr(letStatement.valueExpression);
+    var valueExpression = expandExpr(letStatement.valueExpr);
     var body = letStatement.body.accept(this);
     return new LetStatement(letStatement.identifiers, valueExpression, body,
         copyLoc(letStatement.location));

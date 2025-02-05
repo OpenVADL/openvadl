@@ -612,7 +612,7 @@ class SymbolTable {
           collectSymbols(symbols, inner);
         }
       } else if (stmt instanceof LetStatement let) {
-        collectSymbols(symbols, let.valueExpression);
+        collectSymbols(symbols, let.valueExpr);
         var child = symbols.createChild();
         for (var identifier : let.identifiers) {
           child.defineSymbol(identifier.name, let);
@@ -1022,7 +1022,7 @@ class SymbolTable {
           resolveSymbols(inner);
         }
       } else if (stmt instanceof LetStatement let) {
-        resolveSymbols(let.valueExpression);
+        resolveSymbols(let.valueExpr);
         resolveSymbols(let.body);
       } else if (stmt instanceof IfStatement ifStmt) {
         resolveSymbols(ifStmt.condition);

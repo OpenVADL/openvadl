@@ -854,7 +854,7 @@ public class AstDumper
   @Override
   public Void visit(LetStatement letStatement) {
     dumpNode(letStatement);
-    dumpChildren(letStatement.valueExpression, letStatement.body);
+    dumpChildren(letStatement.valueExpr, letStatement.body);
     return null;
   }
 

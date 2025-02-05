@@ -1,6 +1,7 @@
 package vadl.ast;
 
 
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -13,6 +14,7 @@ import vadl.types.UIntType;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Format;
+import vadl.viam.Memory;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -29,17 +31,23 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
 class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
   private final ViamLowering viamLowering;
+
+  private final IdentityHashMap<Expr, ExpressionNode> expressionCache = new IdentityHashMap<>();
+  //private IdentityHashMap<Statement, SubgraphContext> statementCache = new IdentityHashMap<>();
 
   @Nullable
   private Graph currentGraph;
@@ -91,9 +99,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return BuiltInCall.of(BuiltInTable.NEQ, node, constNode);
   }
 
+
   private ExpressionNode fetch(Expr expr) {
+    if (expressionCache.containsKey(expr)) {
+      return expressionCache.get(expr);
+    }
+
     var result = expr.accept(this);
     result.setSourceLocationIfNotSet(expr.sourceLocation());
+    expressionCache.put(expr, result);
     return result;
   }
 
@@ -131,6 +145,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       throw new IllegalStateException("Unsupported counter kind: " + counterDefinition.kind);
     }
 
+    // Let statement and expression
+    if (computedTarget instanceof LetStatement letStatement) {
+      return new LetNode(new LetNode.Name(expr.name, expr.sourceLocation()),
+          fetch(letStatement.valueExpr));
+    }
+    if (computedTarget instanceof LetExpr letExpr) {
+      return new LetNode(new LetNode.Name(expr.name, expr.sourceLocation()),
+          fetch(letExpr.valueExpr));
+    }
+
     // Builtin Call
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
@@ -144,8 +168,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     throw new RuntimeException(
-        "The behavior generator doesn't implement yet: %s (%s)".formatted(
-            expr.getClass().getSimpleName(), expr.name));
+        "The behavior generator cannot resolve yet identifier '%s' which points to %s".formatted(
+            expr.name,
+            computedTarget == null ? "null" : computedTarget.getClass().getSimpleName()));
   }
 
   @Override
@@ -259,6 +284,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var regFile = (RegisterFile) viamLowering.fetch(expr.computedTarget).orElseThrow();
       var type = (DataType) Objects.requireNonNull(expr.type);
       return new ReadRegFileNode(regFile, args.get(0), type, null);
+    }
+
+    if (expr.computedTarget instanceof MemoryDefinition memoryDefinition) {
+      var words = 1;
+      if (expr.target instanceof SymbolExpr targetSymbol) {
+        words = new ConstantEvaluator().eval(targetSymbol.size).value().intValueExact();
+      }
+      var memory = (Memory) viamLowering.fetch(memoryDefinition).orElseThrow();
+      return new ReadMemNode(memory, words, args.get(0),
+          (DataType) Objects.requireNonNull(expr.type));
     }
 
     throw new IllegalStateException("Cannot handle call to %s yet".formatted(expr.computedTarget));
@@ -393,23 +428,39 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(AssignmentStatement statement) {
-    var rightExpr = fetch(statement.valueExpression);
+    var value = fetch(statement.valueExpression);
 
     if (statement.target instanceof CallExpr callTarget) {
+      // Register Write
       if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
         var regFile = viamLowering.fetch(regFileTarget).orElseThrow();
         var address = callTarget.flatArgs().get(0).accept(this);
-        var read = new WriteRegFileNode(
+        var write = new WriteRegFileNode(
             (RegisterFile) regFile,
             address,
-            rightExpr,
+            value,
             null,
             null);
-        read.setSourceLocation(statement.sourceLocation());
-        read = Objects.requireNonNull(currentGraph).addWithInputs(read);
-        return SubgraphContext.of(read, read);
+        write.setSourceLocation(statement.sourceLocation());
+        write = Objects.requireNonNull(currentGraph).addWithInputs(write);
+        return SubgraphContext.of(write, write);
       }
 
+      // Memory Write
+      if (callTarget.computedTarget instanceof MemoryDefinition memoryTarget) {
+        var memory = (Memory) viamLowering.fetch(memoryTarget).orElseThrow();
+        var words = 1;
+        if (callTarget.target instanceof SymbolExpr targetSymbol) {
+          words = new ConstantEvaluator().eval(targetSymbol.size).value().intValueExact();
+        }
+        var address = callTarget.flatArgs().get(0).accept(this);
+        var write = new WriteMemNode(memory, words, address, value);
+        write = Objects.requireNonNull(currentGraph).addWithInputs(write);
+        return SubgraphContext.of(write, write);
+      }
+
+      throw new IllegalStateException(
+          "Call target not yet implemented " + callTarget.computedTarget);
     } else if (statement.target instanceof Identifier identifierExpr) {
       throw new IllegalStateException("Identifier target not yet implemented" + statement.target);
     }
@@ -449,8 +500,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(LetStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    // The bounded variable is already resolved, so just return the body
+    return statement.body.accept(this);
   }
 
   @Override
