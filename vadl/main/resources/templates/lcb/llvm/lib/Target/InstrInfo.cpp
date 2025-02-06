@@ -212,6 +212,16 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
         return false; // success
     }
 
+    // Quick Check to avoid a register allocation
+    if(DestReg == SrcReg && Val >= [(${additionImmLowestValue})] && Val <= [(${additionImmHighestValue})]) {
+      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImm.identifier.simpleName()})]))
+            .addReg(DestReg)
+            .addReg(SrcReg)
+            .addImm(Val)
+            .setMIFlag(Flag);
+        return false; // success
+    }
+
     auto Seq = [(${namespace})]MatInt::generateInstSeq(Val);
     Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::[(${additionRegisterFile.identifier.simpleName()})]RegClass);
 

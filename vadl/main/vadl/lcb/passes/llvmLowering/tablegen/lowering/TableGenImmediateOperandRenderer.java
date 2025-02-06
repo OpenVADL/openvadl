@@ -1,7 +1,9 @@
 package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 
+import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.types.BitsType;
 
 /**
  * Utility class for mapping into tablegen.
@@ -14,13 +16,9 @@ public final class TableGenImmediateOperandRenderer {
   public static String lower(TableGenImmediateRecord operand) {
     var rawType = operand.rawType();
     int highestPossibleValue =
-        (int) (rawType.isSigned()
-            ? Math.pow(2, (double) operand.formatFieldBitSize() - 1)
-            : Math.pow(2, operand.formatFieldBitSize())) - 1;
+        GenerateValueRangeImmediatePass.highestPossibleValue(operand.formatFieldBitSize(), rawType);
     int lowestPossibleValue =
-        rawType.isSigned()
-            ? (int) (-1 * Math.pow(2, (double) operand.formatFieldBitSize() - 1))
-            : 0;
+        GenerateValueRangeImmediatePass.lowestPossibleValue(operand.formatFieldBitSize(), rawType);
     return String.format("""
             class %s<ValueType ty> : Operand<ty>
             {
