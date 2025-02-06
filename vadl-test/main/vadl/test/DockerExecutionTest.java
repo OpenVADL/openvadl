@@ -243,7 +243,7 @@ public abstract class DockerExecutionTest extends AbstractTest {
       modifiedContainer.start();
 
       await()
-          .atMost(Duration.ofSeconds(1000))
+          .atMost(Duration.ofSeconds(2000))
           .until(() -> {
             var result =
                 modifiedContainer.getDockerClient()

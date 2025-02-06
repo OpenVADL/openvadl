@@ -16,9 +16,7 @@ define i64 @addi(i64 %a) nounwind {
 define i64 @slti(i64 %a) nounwind {
 ; CHECK-LABEL: slti: # @slti
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a2,zero,0
-; CHECK-NEXT: ADDI a2,a2,-16
-; CHECK-NEXT: ADD  sp,sp,a2
+; CHECK-NEXT: ADDI sp,sp,-16
 ; CHECK: SLT a2,a1,zero
 ; CHECK-NEXT: SW a2,4(sp) # 4-byte Folded Spill
   %1 = icmp slt i64 %a, 2
@@ -29,9 +27,7 @@ define i64 @slti(i64 %a) nounwind {
 define i64 @sltiu(i64 %a) nounwind {
 ; CHECK-LABEL: sltiu: # @sltiu
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a2,zero,0
-; CHECK-NEXT: ADDI a2,a2,-16
-; CHECK-NEXT: ADD sp,sp,a2
+; CHECK-NEXT: ADDI sp,sp,-16
 ; CHECK: SLTIU a2,a0,3
 ; CHECK-NEXT: ADDI a0,zero,0
 ; CHECK-NEXT: SW a0,8(sp) # 4-byte Folded Spill
@@ -43,9 +39,7 @@ define i64 @sltiu(i64 %a) nounwind {
 ; CHECK-LABEL: .LBB2_2:
 ; CHECK-NEXT: LW a1,8(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: LW a0,12(sp) # 4-byte Folded Reload
-; CHECK-NEXT: ADDI a2,zero,0
-; CHECK-NEXT: ADDI a2,a2,16
-; CHECK-NEXT: ADD sp,sp,a2
+; CHECK-NEXT: ADDI sp,sp,16
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = icmp ult i64 %a, 3
   %2 = zext i1 %1 to i64
@@ -124,9 +118,7 @@ define i64 @srai(i64 %a) nounwind {
 define i64 @add(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: add: # @add
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a4,zero,0
-; CHECK-NEXT: ADDI a4,a4,-16
-; CHECK-NEXT: ADD sp,sp,a4
+; CHECK-NEXT: ADDI sp,sp,-16
 ; CHECK-NEXT: SW a2,12(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: ADDI a2,a0,0
 ; CHECK-NEXT: LW a0,12(sp) # 4-byte Folded Reload
@@ -134,9 +126,7 @@ define i64 @add(i64 %a, i64 %b) nounwind {
 ; CHECK-NEXT: ADD a0,a2,a0
 ; CHECK-NEXT: SLTU a2,a0,a2
 ; CHECK-NEXT: ADD a1,a1,a2
-; CHECK-NEXT: ADDI a2,zero,0
-; CHECK-NEXT: ADDI a2,a2,16
-; CHECK-NEXT: ADD sp,sp,a2
+; CHECK-NEXT: ADDI sp,sp,16
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = add i64 %a, %b
   ret i64 %1
@@ -168,9 +158,7 @@ define i64 @sll(i64 %a, i64 %b) nounwind {
 define i64 @slt(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: slt: # @slt
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a4,zero,0
-; CHECK-NEXT: ADDI a4,a4,-16
-; CHECK-NEXT: ADD sp,sp,a4
+; CHECK-NEXT: ADDI sp,sp,-16
 ; CHECK: SLT a4,a1,a3
 ; CHECK-NEXT: SW a4,8(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: SLTU a0,a0,a2
@@ -182,9 +170,7 @@ define i64 @slt(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: .LBB12_2:
 ; CHECK-NEXT: LW a0,12(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: ADDI a1,zero,0
-; CHECK-NEXT: ADDI a2,zero,0
-; CHECK-NEXT: ADDI a2,a2,16
-; CHECK-NEXT: ADD sp,sp,a2
+; CHECK-NEXT: ADDI sp,sp,16
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = icmp slt i64 %a, %b
   %2 = zext i1 %1 to i64
