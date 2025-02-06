@@ -374,4 +374,37 @@ public class AsmLL1CheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
   }
+
+  @Test
+  void conflictInExpandedInstructionRule() {
+    var prog = """
+          grammar = {
+            A : (Register @operand) @instruction;
+            B : (Register @operand) @instruction;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  void conflictInExpandedInstructionRuleResolvedByRewriting() {
+    var prog = """
+          grammar = {
+            Inst : (
+              ?(laideq(0,"r1")) A
+              | B
+            ) @instruction ;
+        
+            A : Register @operand ;
+            B : Register @operand ;
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
+  }
 }

@@ -198,8 +198,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     definition.annotations.annotations().forEach(
         annotation -> {
           // annotations of the form [ A = B ]
-          if (annotation.expr() instanceof BinaryExpr binaryExpr &&
-              binaryExpr.operator() == Operator.Equal) {
+          if (annotation.expr() instanceof BinaryExpr binaryExpr
+              && binaryExpr.operator() == Operator.Equal) {
 
             if (binaryExpr.left instanceof Identifier annoId) {
               var annoName = annoId.name;
