@@ -13,4 +13,9 @@ package vadl.iss.passes.tcgLowering;
 public enum TcgExtend {
   SIGN,
   ZERO;
+
+  public static TcgExtend fromBoolean(boolean value) {
+    return value ? SIGN : ZERO;
+  }
+
 }

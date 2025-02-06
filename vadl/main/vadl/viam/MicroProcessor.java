@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -47,6 +48,10 @@ public class MicroProcessor extends Definition {
   @Nullable
   public Function stop() {
     return stop;
+  }
+
+  public Stream<Instruction> instructions() {
+    return isa.ownInstructions().stream();
   }
 
   @Override

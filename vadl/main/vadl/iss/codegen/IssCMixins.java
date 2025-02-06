@@ -3,6 +3,7 @@ package vadl.iss.codegen;
 import static vadl.error.DiagUtils.throwNotAllowed;
 
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.iss.passes.nodes.IssExtractNode;
 import vadl.iss.passes.opDecomposition.nodes.IssExprNode;
 import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
@@ -17,18 +18,46 @@ public interface IssCMixins {
   /**
    * Bundles all Invalid ISS node mixins.
    */
-  interface Invalid extends IssMul2 {
+  interface Invalid extends IssExpr {
 
   }
 
   /**
-   * The invalid ISS MUL2 mixin.
+   * Bundles all valid ISS node mixins.
    */
-  interface IssMul2 {
+  interface Default extends IssExtract {
+  }
+
+  /**
+   * The invalid ISS Expr Node mixin.
+   */
+  interface IssExpr {
 
     @Handler
-    default void impl(CGenContext<Node> ctx, IssExprNode node) {
+    default void impl(CGenContext<Node> ctx,
+                      vadl.iss.passes.opDecomposition.nodes.IssExprNode node) {
       throwNotAllowed(node, "IssExprNode");
+    }
+
+  }
+
+  /**
+   * The ISS extract node rendering.
+   */
+  interface IssExtract {
+
+
+    /**
+     * Implements the C code representation of the {@link IssExtractNode}.
+     */
+    @Handler
+    default void impl(CGenContext<Node> ctx,
+                      IssExtractNode node) {
+      var sign = node.isSigned() ? "s" : "u";
+      ctx.wr("VADL_" + sign + "extract(")
+          .gen(node.value())
+          .wr("," + node.fromWidth())
+          .wr(")");
     }
 
   }

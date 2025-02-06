@@ -38,6 +38,15 @@ import vadl.viam.passes.CfgTraverser;
  * The {@code TcgBranchLoweringPass} class implements a compiler pass that lowers high-level
  * branch constructs into low-level TCG (Tiny Code Generator) instructions
  * suitable for code generation.
+ *
+ * <p>From paper: At this stage, branches within the instruction are represented in the control
+ * flow using if-else nodes.
+ * However, TCG implements jumps within a TB using goto-like operations, such as
+ * {@code set_label, br} and {@code brcond}.
+ * This pass analyzes which if-else control flow must be converted into TCG operations—specifically,
+ * those where the condition expression was previously scheduled as a TCG operation.
+ * These control flow structures are then transformed into a linear sequence of TCG operations
+ * using labels and conditional branching.</p>
  */
 public class TcgBranchLoweringPass extends Pass {
 

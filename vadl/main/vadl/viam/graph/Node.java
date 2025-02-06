@@ -824,6 +824,19 @@ public abstract class Node implements WithSourceLocation {
   }
 
   /**
+   * Throws a {@link vadl.viam.ViamError} with the context of this node.
+   */
+  @FormatMethod
+  @Contract("_, _ -> fail")
+  public final void fail(@FormatString String format,
+                         @Nullable Object... args) {
+    throw new ViamGraphError(format, args)
+        .addContext(this)
+        .addContext(this.graph)
+        .shrinkStacktrace(1);
+  }
+
+  /**
    * Ensures that the given object is not null. If the object is null, an exception is thrown
    * with the specified message.
    *

@@ -1,5 +1,7 @@
 package vadl.viam.graph.dependency;
 
+import java.util.List;
+import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.graph.Canonicalizable;
@@ -15,8 +17,20 @@ import vadl.viam.graph.Node;
  */
 public class SignExtendNode extends UnaryNode implements Canonicalizable {
 
+  @DataValue
+  private final int fromBitWidth;
+
   public SignExtendNode(ExpressionNode value, DataType type) {
+    this(value, value.type().asDataType().bitWidth(), type);
+  }
+
+  public SignExtendNode(ExpressionNode value, int fromBitWidth, DataType type) {
     super(value, type);
+    this.fromBitWidth = fromBitWidth;
+  }
+
+  public int fromBitWidth() {
+    return fromBitWidth;
   }
 
   @Override
@@ -64,5 +78,11 @@ public class SignExtendNode extends UnaryNode implements Canonicalizable {
       return new ConstantNode(constant.signExtend(this.type()));
     }
     return this;
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(fromBitWidth);
   }
 }

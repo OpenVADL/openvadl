@@ -48,6 +48,13 @@ import vadl.viam.graph.dependency.DependencyNode;
  *   <li>Assigning registers to variables using graph coloring.
  *   <li>Updating the TCGv assignments on TcgNodes based on the allocation.
  * </ul>
+ *
+ * <p>From paper: To minimize the number of temporary TCG variables,
+ * a variable allocation pass is applied to the TCG CFG.
+ * First, the live ranges of previously created temporary variables are determined.
+ * Then, graph coloring is used to compute an optimized TCG variable assignment.
+ * The primary goal is to maximize the reuse of written registers,
+ * reducing unnecessary temporary allocations.</p>
  */
 public class IssTcgVAllocationPass extends Pass {
 
