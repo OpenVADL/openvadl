@@ -82,7 +82,7 @@ public class GenerateValueRangeImmediatePass extends Pass {
    */
   private BitsType getType(Instruction instruction, Format.Field field) {
     var accessType = instruction.behavior().getNodes(FieldAccessRefNode.class)
-        .filter(fieldAccessRefNode -> fieldAccessRefNode.fieldAccess().fieldRef() == field)
+        .filter(fieldAccessRefNode -> fieldAccessRefNode.fieldAccess().fieldRef().equals(field))
         .findFirst()
         .map(x -> (BitsType) x.fieldAccess().type());
 
