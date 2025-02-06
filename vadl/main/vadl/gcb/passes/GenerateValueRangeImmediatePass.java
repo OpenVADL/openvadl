@@ -14,6 +14,9 @@ import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 
+/**
+ * This pass generates the ranges for immediates.
+ */
 public class GenerateValueRangeImmediatePass extends Pass {
   public GenerateValueRangeImmediatePass(GeneralConfiguration configuration) {
     super(configuration);
