@@ -7,9 +7,11 @@ import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -1192,10 +1194,13 @@ public class BuiltInTable {
       NEQ
   ));
 
-  public static List<BuiltIn> ASM_PARSER_BUILT_INS = List.of(
-      LA_ID_EQ,
-      LA_ID_IN
-  );
+  public static Set<BuiltIn> ASM_PARSER_BUILT_INS =
+      Collections.newSetFromMap(new IdentityHashMap<>());
+
+  static {
+    ASM_PARSER_BUILT_INS.add(LA_ID_EQ);
+    ASM_PARSER_BUILT_INS.add(LA_ID_IN);
+  }
 
   public static Stream<BuiltIn> builtIns() {
     return BUILT_INS.stream();
