@@ -1,17 +1,16 @@
 package vadl.viam.asm.elements;
 
 import javax.annotation.Nullable;
+import vadl.viam.asm.AsmGrammarVisitor;
 
 /**
  * Represents the usage of a local variable in a grammar rule.
  */
-public class AsmLocalVarUse implements AsmGrammarElement {
-  @Nullable
-  AsmAssignTo assignToElement;
-  String invokedLocalVar;
+public record AsmLocalVarUse(@Nullable AsmAssignTo assignToElement,
+                             String invokedLocalVar) implements AsmGrammarElement {
 
-  public AsmLocalVarUse(@Nullable AsmAssignTo assignToElement, String invokedLocalVar) {
-    this.assignToElement = assignToElement;
-    this.invokedLocalVar = invokedLocalVar;
+  @Override
+  public void accept(AsmGrammarVisitor visitor) {
+    visitor.visit(this);
   }
 }

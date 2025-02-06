@@ -1,17 +1,16 @@
 package vadl.viam.asm.elements;
 
 import javax.annotation.Nullable;
+import vadl.viam.asm.AsmGrammarVisitor;
 
 /**
  * Represents the usage of a string literal in a grammar rule.
  */
-public class AsmStringLiteralUse implements AsmGrammarElement {
-  @Nullable
-  AsmAssignTo assignToElement;
-  String value;
+public record AsmStringLiteralUse(@Nullable AsmAssignTo assignToElement,
+                                  String value) implements AsmGrammarElement {
 
-  public AsmStringLiteralUse(@Nullable AsmAssignTo assignToElement, String value) {
-    this.assignToElement = assignToElement;
-    this.value = value;
+  @Override
+  public void accept(AsmGrammarVisitor visitor) {
+    visitor.visit(this);
   }
 }

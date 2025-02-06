@@ -34,6 +34,7 @@ import vadl.viam.ViamError;
 import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -161,6 +162,11 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   @Override
   protected void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
     throwNotAllowed(toHandle, "field ref accesses");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
+    throwNotAllowed(toHandle, "Asm builtin calls");
   }
 
   @Override

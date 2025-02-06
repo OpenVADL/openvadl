@@ -59,6 +59,7 @@ import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
@@ -691,6 +692,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(TcgVRefNode toHandle) {
+    throw failShouldNotHappen(toHandle);
+  }
+
+  @Handler
+  void handle(AsmBuiltInCall toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 

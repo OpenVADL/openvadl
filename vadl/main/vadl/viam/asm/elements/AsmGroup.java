@@ -1,5 +1,7 @@
 package vadl.viam.asm.elements;
 
+import vadl.viam.asm.AsmGrammarVisitor;
+
 /**
  * Represents a sub-group of elements ({@code ()}) in a grammar rule.
  * <p>
@@ -7,10 +9,10 @@ package vadl.viam.asm.elements;
  * both represented by the {@code Alternatives} class.
  * </p>
  */
-public class AsmGroup implements AsmGrammarElement {
-  AsmAlternatives alternatives;
+public record AsmGroup(AsmAlternatives alternatives) implements AsmGrammarElement {
 
-  public AsmGroup(AsmAlternatives alternatives) {
-    this.alternatives = alternatives;
+  @Override
+  public void accept(AsmGrammarVisitor visitor) {
+    visitor.visit(this);
   }
 }

@@ -3,6 +3,7 @@ package vadl.viam.asm.rules;
 import vadl.utils.SourceLocation;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Identifier;
+import vadl.viam.asm.AsmGrammarVisitor;
 import vadl.viam.asm.elements.AsmAlternatives;
 
 /**
@@ -11,7 +12,7 @@ import vadl.viam.asm.elements.AsmAlternatives;
  */
 public class AsmNonTerminalRule extends AsmGrammarRule {
 
-  AsmAlternatives alternatives;
+  private final AsmAlternatives alternatives;
 
   /**
    * Creates a new NonTerminalRule.
@@ -27,8 +28,17 @@ public class AsmNonTerminalRule extends AsmGrammarRule {
     this.setSourceLocation(location);
   }
 
+  public AsmAlternatives getAlternatives() {
+    return alternatives;
+  }
+
   @Override
   public void accept(DefinitionVisitor visitor) {
+    visitor.visit(this);
+  }
+
+  @Override
+  public void accept(AsmGrammarVisitor visitor) {
     visitor.visit(this);
   }
 }

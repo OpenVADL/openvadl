@@ -21,6 +21,7 @@ import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -220,6 +221,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var args = expr.flatArgs().stream().map(this::fetch).toList();
 
     if (expr.computedBuiltIn != null) {
+      if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
+        return new AsmBuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
+            Objects.requireNonNull(expr.type));
+      }
       return new BuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
           Objects.requireNonNull(expr.type));
     }

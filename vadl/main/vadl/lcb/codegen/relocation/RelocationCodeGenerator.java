@@ -12,6 +12,7 @@ import vadl.javaannotations.Handler;
 import vadl.types.BitsType;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -80,6 +81,11 @@ public class RelocationCodeGenerator
   @Handler
   protected void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
     throwNotAllowed(toHandle, "Format field accesses");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
+    throwNotAllowed(toHandle, "Asm builtin calls");
   }
 
   @Handler

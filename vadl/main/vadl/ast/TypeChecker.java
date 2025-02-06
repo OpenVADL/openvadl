@@ -20,9 +20,11 @@ import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
+import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.types.asmTypes.VoidAsmType;
 import vadl.utils.Pair;
+import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
 
 /**
@@ -578,9 +580,46 @@ public class TypeChecker
       }
     }
 
+    expandAsmInstructionRule(definition.rules);
+
     var ll1Checker = new AsmLL1Checker();
     ll1Checker.verify(definition.rules);
     return null;
+  }
+
+  /**
+   * Expand the builtin rule "Instruction"
+   * to be an alternative over all rules with type @instruction.
+   * <p>
+   * This needs to happen before the grammar is checked for LL(1) conflicts.
+   * </p>
+   */
+  private void expandAsmInstructionRule(List<AsmGrammarRuleDefinition> rules) {
+    var instructionRule = rules.stream()
+        .filter(rule -> rule.isBuiltinRule && rule.identifier().name.equals("Instruction"))
+        .findFirst().orElseThrow(() -> new IllegalStateException("Instruction rule not found."));
+
+    var invalidLoc = SourceLocation.INVALID_SOURCE_LOCATION;
+
+    var instructionRuleAlternatives = rules.stream()
+        .filter(rule -> rule.asmType == InstructionAsmType.instance()
+            && !List.of("Statement", "Instruction").contains(rule.identifier().name))
+        .map(rule -> {
+
+          var asmLiteral = new AsmGrammarLiteralDefinition(
+              new Identifier(rule.identifier().name, invalidLoc),
+              new ArrayList<>(), null, null, invalidLoc);
+          asmLiteral.symbolTable = rule.symbolTable();
+
+          var element = new AsmGrammarElementDefinition(null, null, false, asmLiteral,
+              null, null, null, null, null, invalidLoc);
+          element.symbolTable = rule.symbolTable();
+          return List.of(element);
+        }).toList();
+
+    instructionRule.alternatives =
+        new AsmGrammarAlternativesDefinition(instructionRuleAlternatives, invalidLoc);
+    instructionRule.isBuiltinRule = false;
   }
 
   @Override
