@@ -82,7 +82,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var stmtCtx = definition.behavior.accept(this);
     var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
-    var end = graph.add(new InstrEndNode(sideEffects));
+    var end = graph.addWithInputs(new InstrEndNode(sideEffects));
     end.setSourceLocation(definition.sourceLocation());
 
     ControlNode startSuccessor = end;
@@ -93,7 +93,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
     var start = new StartNode(startSuccessor);
     start.setSourceLocation(definition.sourceLocation());
-    graph.add(start);
+    graph.addWithInputs(start);
 
     return graph;
   }
@@ -311,6 +311,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public ExpressionNode visit(CallExpr expr) {
     var args = expr.flatArgs().stream().map(this::fetch).toList();
 
+    // Builtin
     if (expr.computedBuiltIn != null) {
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
         return new AsmBuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
@@ -320,12 +321,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           Objects.requireNonNull(expr.type));
     }
 
+    // Register file read
     if (expr.computedTarget instanceof RegisterFileDefinition) {
       var regFile = (RegisterFile) viamLowering.fetch(expr.computedTarget).orElseThrow();
       var type = (DataType) Objects.requireNonNull(expr.type);
       return new ReadRegFileNode(regFile, args.get(0), type, null);
     }
 
+    // Memory read
     if (expr.computedTarget instanceof MemoryDefinition memoryDefinition) {
       var words = 1;
       if (expr.target instanceof SymbolExpr targetSymbol) {
@@ -334,6 +337,36 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var memory = (Memory) viamLowering.fetch(memoryDefinition).orElseThrow();
       return new ReadMemNode(memory, words, args.get(0),
           (DataType) Objects.requireNonNull(expr.type));
+    }
+
+    // Program counter read
+    if (expr.computedTarget instanceof CounterDefinition counterDefinition) {
+      // Calls like PC.next are translated to PC + 8 (if address is 8)
+      var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
+      var counterType = (DataType) Objects.requireNonNull(counterDefinition.typeLiteral.type);
+
+      // FIXME: Set the correct last argument
+      var regRead = new ReadRegNode(counter.registerRef(),
+          (DataType) Objects.requireNonNull(expr.type),
+          null);
+
+      // FIXME: Why devided by 8?
+      // What about bytes that aren't 8 bits?
+      var scale =
+          counterType.bitWidth() / 8;
+
+      int offset = 0;
+      for (var subcall : expr.subCalls) {
+        var subcallName = subcall.id().name;
+        if (subcallName.equals("next")) {
+          offset += scale;
+        } else {
+          throw new IllegalStateException("unknown subcall: " + subcallName);
+        }
+      }
+
+      var constant = new ConstantNode(Constant.Value.of(offset, counterType));
+      return new BuiltInCall(BuiltInTable.ADD, new NodeList<>(constant, regRead), counterType);
     }
 
     throw new IllegalStateException("Cannot handle call to %s yet".formatted(expr.computedTarget));
