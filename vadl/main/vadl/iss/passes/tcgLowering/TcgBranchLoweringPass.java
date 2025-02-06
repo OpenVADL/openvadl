@@ -1,6 +1,5 @@
 package vadl.iss.passes.tcgLowering;
 
-import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -27,9 +26,12 @@ import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.MergeNode;
+import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.CfgTraverser;
 
 /**
@@ -101,7 +103,7 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
 
     var ifNode = (IfNode) splitNode;
 
-    if (!isTcg(ifNode.condition())) {
+    if (!isCondTcg(ifNode.condition())) {
       // if the condition is immediate, we emit C-If construct
       // and no TCG operations
       return CfgTraverser.super.traverseControlSplit(ifNode);
@@ -131,22 +133,8 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
       ifNode.addBefore(new TcgGenLabel(endLabel));
     }
 
-    // TODO: here we have potential to optimize the branch by using a branch condition
-    // instead of the result of the condition.
-    var condVar = varOf(ifNode.condition());
-
-    // produce 0 value node to compare to
-    var constZero = getConstantVariable(
-        new ConstantNode(Constant.Value.of(
-            0,
-            Type.bits(condVar.width().width)
-        )));
-
-    // check if !condition by check if condition value is 0.
-    // if !condition, we branch to the elseLabel.
-    var condition = TcgCondition.EQ;
     var tcgBranchNode = ifNode.addBefore(
-        new TcgBrCond(condVar, constZero, condition, elseLabel)
+        buildBrCondToElse(ifNode, elseLabel)
     );
 
     // emit the true branch
@@ -170,6 +158,48 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
         tcgBranchNode,
         (MergeNode) ifBranchEnd.usages().findFirst().get()
     );
+  }
+
+  /**
+   * Builds the brcond op for if node to jump to else label.
+   * If the condition can directly be computed in the brcond (in most cases true),
+   * it will not use the TCGv of the condition expression.
+   * Otherwise, it will compare the condition expression variable to constant 0.
+   */
+  private TcgBrCond buildBrCondToElse(IfNode ifNode, TcgLabel elseLabel) {
+    var condFromBuiltIn = ifNode.condition() instanceof BuiltInCall builtInCall
+        ? TcgPassUtils.conditionOf(builtInCall.builtIn())
+        : null;
+
+    if (condFromBuiltIn != null) {
+      // we directly compute the branch condition in brcond, instead of
+      // creating a variable for it.
+
+      // first we negate the condition as we jump to the else branch
+      var condNegated = condFromBuiltIn.not();
+
+      // get variables of lhs and rhs and return brcond
+      var condCall = (BuiltInCall) ifNode.condition();
+      var lhsVar = varOf(condCall.arguments().get(0));
+      var rhsVar = varOf(condCall.arguments().get(1));
+      return new TcgBrCond(lhsVar, rhsVar, condNegated, elseLabel);
+    } else {
+      // we cannot make the condition directly in the brcond op.
+      // so we compare the result with eq 0 -> branch to else if cond false.
+      var condVar = varOf(ifNode.condition());
+
+      // produce 0 value node to compare to
+      var constZero = getConstantVariable(
+          new ConstantNode(Constant.Value.of(
+              0,
+              Type.bits(condVar.width().width)
+          )));
+
+      // check if !condition by check if condition value is 0.
+      // if !condition, we branch to the elseLabel.
+      var condition = TcgCondition.EQ;
+      return new TcgBrCond(condVar, constZero, condition, elseLabel);
+    }
   }
 
   /**
@@ -240,6 +270,19 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    */
   private boolean isTcg(ExpressionNode node) {
     return TcgPassUtils.isTcg(node);
+  }
+
+  /**
+   * Check if the condition is a TCG.
+   * If might not be scheduled due to optimization, eventhough it depends
+   * on TCG arguments.
+   */
+  public boolean isCondTcg(ExpressionNode node) {
+    if (node instanceof BuiltInCall builtInCall) {
+      // it is TCG if an argument is TCG.
+      return builtInCall.arguments().stream().anyMatch(this::isTcg);
+    }
+    return isTcg(node);
   }
 
   /**
