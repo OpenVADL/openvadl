@@ -13,7 +13,7 @@ import vadl.viam.Instruction;
  * ranges the instruction's immediates have.
  */
 public class ValueRangeCtx extends DefinitionExtension<Instruction> {
-  private final Map<Format.Field, ValueRange> ranges;
+  private final IdentityHashMap<Format.Field, ValueRange> ranges;
 
   public ValueRangeCtx() {
     this.ranges = new IdentityHashMap<>();
