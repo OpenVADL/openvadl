@@ -19,12 +19,15 @@ import jdk.jshell.Diag;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
+import vadl.gcb.passes.ValueRange;
+import vadl.gcb.passes.ValueRangeCtx;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
+import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -251,6 +254,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);
     var additionRI = getAdditionRI(isaMatches);
+    var additionRIValueRange = valueRange(additionRI);
     var additionRR = getAdditionRR(isaMatches);
     var additionRegisterFile = getRegisterClassFromInstruction(additionRR);
     // Integer of the index of the zero register in the register file.
@@ -271,6 +275,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put("storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches));
     map.put("loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches));
     map.put("additionImm", additionRI);
+    map.put("additionImmHighestValue", additionRIValueRange.highest());
+    map.put("additionImmLowestValue", additionRIValueRange.lowest());
     map.put("addition", additionRR);
     map.put("additionRegisterFile", additionRegisterFile);
     map.put("additionImmSize", getImmBitSize(fieldUsages, additionRI));
@@ -290,6 +296,12 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     return map;
   }
 
+  private ValueRange valueRange(Instruction instruction) {
+    var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class),
+        () -> Diagnostic.error("Has no extension value range", instruction.sourceLocation()));
+    return ensurePresent(ctx.getFirst(),
+        () -> Diagnostic.error("Has no value range", instruction.sourceLocation()));
+  }
 
   private Instruction getBranchInstruction(Specification specification,
                                            PassResults passResults,

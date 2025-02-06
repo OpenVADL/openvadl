@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="LLVM (riscv32)" type="GradleRunConfiguration" factoryName="Gradle" folderName="LCB">
+  <configuration default="false" name="LLVM FileCheck (riscv32)" type="GradleRunConfiguration" factoryName="Gradle" folderName="LCB">
     <ExternalSystemSettings>
       <option name="env">
         <map>
@@ -9,7 +9,7 @@
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/.." />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="-Dtest.llvm=true -PopenVadl.tests=LlvmRiscv32AssemblyTest -PnoXtendCompile -i" />
+      <option name="scriptParameters" value="-Dtest.llvm=true -PopenVadl.tests=LlvmRiscv32FileCheckTest -PnoXtendCompile -i" />
       <option name="taskDescriptions">
         <list />
       </option>

@@ -14,6 +14,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
+import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
@@ -147,6 +148,7 @@ public class PassOrders {
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
+    order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
     order.add(new CppTypeNormalizationForEncodingsPass(gcbConfiguration));
