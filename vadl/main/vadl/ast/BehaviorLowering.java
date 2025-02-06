@@ -1,6 +1,7 @@
 package vadl.ast;
 
 
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
@@ -11,16 +12,19 @@ import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.utils.Pair;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Format;
 import vadl.viam.Memory;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ReturnNode;
@@ -40,6 +44,7 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
@@ -75,14 +80,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     currentGraph = graph;
 
     var stmtCtx = definition.behavior.accept(this);
-    var sideEffects = stmtCtx.sideEffects();
+    var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
     var end = graph.add(new InstrEndNode(sideEffects));
     end.setSourceLocation(definition.sourceLocation());
 
     ControlNode startSuccessor = end;
     if (stmtCtx.hasControlBlock()) {
-      var controlBlock = stmtCtx.controlBlock();
+      var controlBlock = Objects.requireNonNull(stmtCtx.controlBlock());
       controlBlock.lastNode().setNext(end);
       startSuccessor = controlBlock.firstNode();
     }
@@ -91,6 +96,38 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     graph.add(start);
 
     return graph;
+  }
+
+  private <T extends vadl.viam.graph.Node> T addToGraph(T node) {
+    if (!node.isActive()) {
+      return Objects.requireNonNull(currentGraph).addWithInputs(node);
+    }
+    return node;
+  }
+
+  private Pair<BeginNode, BranchEndNode> buildBranch(@Nullable Statement stmt) {
+    if (stmt == null) {
+      var endNode = addToGraph(new BranchEndNode(new NodeList<>()));
+      var beginNode = addToGraph(new BeginNode(endNode));
+      return new Pair<>(beginNode, endNode);
+    }
+
+    var branchCtx = stmt.accept(this);
+
+    var endNode = addToGraph(new BranchEndNode(branchCtx.sideEffectsOrEmptyList()));
+
+    BeginNode beginNode;
+    if (branchCtx.controlBlock() != null) {
+      beginNode = new BeginNode(branchCtx.controlBlock().firstNode());
+      branchCtx.controlBlock().lastNode().setNext(endNode);
+    } else {
+      beginNode = new BeginNode(endNode);
+    }
+    beginNode = addToGraph(beginNode);
+
+    endNode.setSourceLocation(stmt.sourceLocation());
+    beginNode.setSourceLocation(stmt.sourceLocation());
+    return new Pair<>(beginNode, endNode);
   }
 
   private static BuiltInCall produceNeqToZero(ExpressionNode node) {
@@ -263,8 +300,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(UnaryExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    var value = fetch(expr.operand);
+    return new BuiltInCall(
+        Objects.requireNonNull(expr.computedTarget),
+        new NodeList<>(value),
+        Objects.requireNonNull(expr.type));
   }
 
   @Override
@@ -443,7 +483,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             null);
         write.setSourceLocation(statement.sourceLocation());
         write = Objects.requireNonNull(currentGraph).addWithInputs(write);
-        return SubgraphContext.of(write, write);
+        return SubgraphContext.of(statement, write);
       }
 
       // Memory Write
@@ -456,12 +496,22 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var address = callTarget.flatArgs().get(0).accept(this);
         var write = new WriteMemNode(memory, words, address, value);
         write = Objects.requireNonNull(currentGraph).addWithInputs(write);
-        return SubgraphContext.of(write, write);
+        return SubgraphContext.of(statement, write);
       }
 
       throw new IllegalStateException(
           "Call target not yet implemented " + callTarget.computedTarget);
     } else if (statement.target instanceof Identifier identifierExpr) {
+      var computedTarget = Objects.requireNonNull(identifierExpr.symbolTable)
+          .requireAs(identifierExpr, vadl.ast.Node.class);
+
+      if (computedTarget instanceof CounterDefinition counterDefinition) {
+        var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
+        // FIXME: Replace the null;
+        var write = new WriteRegNode(counter.registerRef(), value, null);
+        return SubgraphContext.of(statement, write);
+      }
+
       throw new IllegalStateException("Identifier target not yet implemented" + statement.target);
     }
 
@@ -470,8 +520,38 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(BlockStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    List<vadl.viam.graph.Node> nodes = new ArrayList<>();
+    @Nullable ControlNode firstNode = null;
+    @Nullable DirectionalNode lastNode = null;
+
+    for (var stmt : statement.statements) {
+      var stmtCtx = stmt.accept(this);
+
+      if (stmtCtx.hasControlBlock()) {
+        if (firstNode == null) {
+          firstNode = Objects.requireNonNull(stmtCtx.controlBlock()).firstNode();
+        }
+
+        if (lastNode != null) {
+          // link previous stmt with current stmt
+          lastNode.setNext(Objects.requireNonNull(stmtCtx.controlBlock()).firstNode());
+        }
+        lastNode = Objects.requireNonNull(stmtCtx.controlBlock()).lastNode();
+      }
+      nodes.addAll(stmtCtx.sideEffectsOrEmptyList());
+    }
+
+    if ((firstNode == null) != (lastNode == null)) {
+      throw new IllegalStateException(
+          "first and last node must be both null or not null @ " + statement);
+    }
+
+    if (firstNode != null) {
+      nodes.add(firstNode);
+      nodes.add(lastNode);
+    }
+
+    return SubgraphContext.of(statement, nodes);
   }
 
   @Override
@@ -488,8 +568,18 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(IfStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var condition = fetch(statement.condition);
+
+    var ifPair = buildBranch(statement.thenStmt);
+    var elsePair = buildBranch(statement.elseStmt);
+    var ifStart = ifPair.left();
+    var ifEnd = ifPair.right();
+    var elseStart = elsePair.left();
+    var elseEnd = elsePair.right();
+
+    var mergeNode = addToGraph(new MergeNode(new NodeList<>(ifEnd, elseEnd)));
+    var ifNode = addToGraph(new IfNode(condition, ifStart, elseStart));
+    return SubgraphContext.of(statement, ifNode, mergeNode);
   }
 
   @Override
@@ -576,11 +666,11 @@ class SubgraphContext {
     this.controlBlock = controlBlock;
   }
 
-  static SubgraphContext of(Node root, Node... nodes) {
+  static SubgraphContext of(Node root, vadl.viam.graph.Node... nodes) {
     return SubgraphContext.of(root, List.of(nodes));
   }
 
-  static SubgraphContext of(Node root, List<Node> nodes) {
+  static SubgraphContext of(Node root, List<vadl.viam.graph.Node> nodes) {
     var sideEffects = new NodeList<SideEffectNode>();
     @Nullable ControlNode blockStart = null;
     @Nullable DirectionalNode blockEnd = null;
@@ -638,12 +728,14 @@ class SubgraphContext {
     return this;
   }
 
+  @Nullable
   ControlBlock controlBlock() {
-    return Objects.requireNonNull(controlBlock);
+    return controlBlock;
   }
 
+  @Nullable
   NodeList<SideEffectNode> sideEffects() {
-    return Objects.requireNonNull(sideEffects);
+    return sideEffects;
   }
 
   NodeList<SideEffectNode> sideEffectsOrEmptyList() {

@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.function.BinaryOperator;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
-import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
@@ -199,15 +198,10 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       };
     }
 
-    // Concrete types (with fixed bit width) are evaluated with the builtin functions.
-    var computeFunc = switch (expr.unOp().operator) {
-      case NEGATIVE -> BuiltInTable.NEG;
-      case COMPLEMENT, LOG_NOT -> BuiltInTable.NOT;
-    };
-
     return ConstantValue.fromViam(
         (
-            (Constant.Value) computeFunc.compute(List.of(innerVal.toViamConstant())).get()
+            (Constant.Value) Objects.requireNonNull(expr.computedTarget)
+                .compute(List.of(innerVal.toViamConstant())).get()
         ).castTo((DataType) innerVal.type())
     );
   }

@@ -1666,6 +1666,7 @@ public class TypeChecker
 
     switch (expr.unOp().operator) {
       case NEGATIVE -> {
+        expr.computedTarget = BuiltInTable.NEG;
         if (!(innerType instanceof BitsType) && !(innerType instanceof ConstantType)) {
           throw Diagnostic
               .error("Type Mismatch", expr)
@@ -1674,6 +1675,7 @@ public class TypeChecker
         }
       }
       case COMPLEMENT -> {
+        expr.computedTarget = BuiltInTable.NOT;
         if (!(innerType instanceof BitsType)) {
           throw Diagnostic
               .error("Type Mismatch", expr)
@@ -1682,6 +1684,7 @@ public class TypeChecker
         }
       }
       case LOG_NOT -> {
+        expr.computedTarget = BuiltInTable.NOT;
         if (!innerType.equals(Type.bool())) {
           throw Diagnostic
               .error("Type Mismatch: expected `Bool`, got `%s`".formatted(innerType), expr)

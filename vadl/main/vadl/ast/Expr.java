@@ -348,6 +348,13 @@ class UnaryExpr extends Expr {
   IsUnOp operator;
   Expr operand;
 
+  /**
+   * The builtin that will be called.
+   * Set by the typechecker.
+   */
+  @Nullable
+  BuiltInTable.BuiltIn computedTarget;
+
   UnaryExpr(IsUnOp operator, Expr operand) {
     this.operator = operator;
     this.operand = operand;
