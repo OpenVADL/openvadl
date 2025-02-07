@@ -22,6 +22,9 @@ import vadl.viam.Constant;
 class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
 
+  // FIXME: There should be a cache here to avoid needlessly re-evaluating expressions
+  // With that also verify that there is only one instance to keep the cache between typechecking
+  // and lowering etc.
   public ConstantValue eval(Expr expr) {
     // A simple optimization that avoids unneeded traversing the tree.
     if (expr.type instanceof ConstantType) {

@@ -26,7 +26,6 @@ import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
-import vadl.viam.Parameter;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
@@ -71,6 +70,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       new IdentityHashMap<>();
   private final IdentityHashMap<FormatDefinition.FormatField, vadl.viam.Definition>
       formatFieldCache = new IdentityHashMap<>();
+  private final IdentityHashMap<Parameter, vadl.viam.Parameter>
+      parameterCache = new IdentityHashMap<>();
+
 
   @LazyInit
   private vadl.viam.Specification currentSpecification;
@@ -128,6 +130,19 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // FIXME: Try to evaluate the format if it hasn't been seen before.
     var result = Optional.ofNullable(formatFieldCache.get(field));
     result.ifPresent(f -> f.setSourceLocationIfNotSet(field.sourceLocation()));
+    return result;
+  }
+
+  /**
+   * Fetch from the cache the format field node or evaluate it.
+   *
+   * @param parameter for which we want to find the corresponding viam node.
+   * @return the viam node.
+   */
+  Optional<vadl.viam.Parameter> fetch(Parameter parameter) {
+    // FIXME: Try to evaluate the format if it hasn't been seen before.
+    var result = Optional.ofNullable(parameterCache.get(parameter));
+    result.ifPresent(f -> f.setSourceLocationIfNotSet(parameter.sourceLocation()));
     return result;
   }
 
@@ -553,7 +568,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         var accessGraph =
             behaviorLowering.getGraph(derivedField.expr, accessName);
         var access =
-            new Function(generateIdentifier(accessName, derivedField.identifier), new Parameter[0],
+            new Function(generateIdentifier(accessName, derivedField.identifier),
+                new vadl.viam.Parameter[0],
                 Objects.requireNonNull(derivedField.expr.type), accessGraph);
 
         // FIXME: Add encoding from language
@@ -568,12 +584,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
         // FIXME: This is stupid, both link to each other, so I must create them after each other.
         var predicate = new Function(generateIdentifier(predicateName, derivedField.identifier),
-            new Parameter[0], Type.bool(), predicateGraph);
-        var parameter = new Parameter(
+            new vadl.viam.Parameter[0], Type.bool(), predicateGraph);
+        var parameter = new vadl.viam.Parameter(
             new vadl.viam.Identifier("doesnotexist", SourceLocation.INVALID_SOURCE_LOCATION),
             Objects.requireNonNull(derivedField.expr.type));
         parameter.setParent(predicate);
-        predicate.setParameters(new Parameter[] {parameter});
+        predicate.setParameters(new vadl.viam.Parameter[] {parameter});
 
 
         var field = new Format.FieldAccess(identifier, access, encoding, predicate);
@@ -594,8 +610,23 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(FunctionDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    var parameters = new ArrayList<vadl.viam.Parameter>();
+    for (var parameter : definition.params) {
+      var viamParameter = new vadl.viam.Parameter(
+          generateIdentifier(parameter.name.name, parameter.name.location()),
+          Objects.requireNonNull(parameter.typeLiteral.type));
+      parameterCache.put(parameter, viamParameter);
+      parameters.add(viamParameter);
+    }
+    var behaivor = behaviorLowering.getGraph(definition.expr, "behaviour");
+
+    return Optional.of(
+        new Function(identifier,
+            parameters.toArray(new vadl.viam.Parameter[0]),
+            Objects.requireNonNull(definition.retType.type),
+            behaivor)
+    );
   }
 
   @Override
@@ -628,7 +659,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     return new Assembly(
         new vadl.viam.Identifier(identifierName, identifierLoc),
-        new Function(funcIdentifier, new Parameter[0], Type.string(), behavior)
+        new Function(funcIdentifier, new vadl.viam.Parameter[0], Type.string(), behavior)
     );
   }
 

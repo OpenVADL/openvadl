@@ -35,6 +35,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
@@ -50,6 +51,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 
 class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
   private final ViamLowering viamLowering;
+  private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
 
   private final IdentityHashMap<Expr, ExpressionNode> expressionCache = new IdentityHashMap<>();
   //private IdentityHashMap<Statement, SubgraphContext> statementCache = new IdentityHashMap<>();
@@ -153,6 +155,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var computedTarget = Objects.requireNonNull(expr.symbolTable).resolveNode(expr.name);
 
+    // Constant
+    if (computedTarget instanceof ConstantDefinition constant) {
+      var value = constantEvaluator.eval(constant.value).toViamConstant();
+      return new ConstantNode(value);
+    }
+
     // Format field
     if (computedTarget instanceof FormatDefinition.TypedFormatField typedFormatField) {
       return new FieldRefNode(
@@ -190,6 +198,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (computedTarget instanceof LetExpr letExpr) {
       return new LetNode(new LetNode.Name(expr.name, expr.sourceLocation()),
           fetch(letExpr.valueExpr));
+    }
+
+    // Parameter of a function
+    if (computedTarget instanceof Parameter parameter) {
+      var param = viamLowering.fetch(parameter).orElseThrow();
+      return new FuncParamNode(param);
     }
 
     // Builtin Call
@@ -332,7 +346,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedTarget instanceof MemoryDefinition memoryDefinition) {
       var words = 1;
       if (expr.target instanceof SymbolExpr targetSymbol) {
-        words = new ConstantEvaluator().eval(targetSymbol.size).value().intValueExact();
+        words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
       }
       var memory = (Memory) viamLowering.fetch(memoryDefinition).orElseThrow();
       return new ReadMemNode(memory, words, args.get(0),
@@ -524,7 +538,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var memory = (Memory) viamLowering.fetch(memoryTarget).orElseThrow();
         var words = 1;
         if (callTarget.target instanceof SymbolExpr targetSymbol) {
-          words = new ConstantEvaluator().eval(targetSymbol.size).value().intValueExact();
+          words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
         }
         var address = callTarget.flatArgs().get(0).accept(this);
         var write = new WriteMemNode(memory, words, address, value);
