@@ -454,6 +454,30 @@ public class PassOrders {
   }
 
   /**
+   * TEMPORARY passorder to develop the asm parser generator.
+   * WILL be a part of the LCB.
+   */
+  public static PassOrder temporaryAsmParserGen(LcbConfiguration configuration)
+      throws IOException {
+    var order = viam(configuration);
+    order.add(
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCAsmInfoCppFilePass(configuration));
+    order.add(
+        new vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCAsmInfoHeaderFilePass(configuration));
+    order.add(
+        new vadl.lcb.template.lib.Target.AsmParser.EmitAsmRecursiveDescentParserHeaderFilePass(
+            configuration));
+    order.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParserCppFilePass(configuration));
+    // order.add(
+    //    new vadl.lcb.template.lib.Target.AsmParser.EmitAsmParserCMakeFilePass(configuration));
+    order.add(new vadl.lcb.template.lib.Target.AsmParser.EmitAsmRecursiveDescentParserCppFilePass(
+        configuration));
+    //  order.add(
+    //    new vadl.lcb.template.lib.Target.MCTargetDesc.EmitAsmUtilsCppFilePass(configuration));
+    return order;
+  }
+
+  /**
    * Adds all necessary passes for a html dump of the VIAM if the config whishes to dump.
    *
    * @param order       into which the passes will be inserted.

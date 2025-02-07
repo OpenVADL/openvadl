@@ -10,7 +10,8 @@ import picocli.CommandLine.Command;
 @Command(mixinStandardHelpOptions = true,
     name = "OpenVADL",
     description = "The OpenVadl CLI tool.",
-    subcommands = {CheckCommand.class, IssCommand.class, LcbCommand.class})
+    subcommands = {CheckCommand.class, IssCommand.class, LcbCommand.class,
+        DEVELOPAsmParserCommand.class})
 public class Main implements Runnable {
   @Override
   public void run() {
