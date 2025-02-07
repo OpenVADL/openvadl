@@ -330,7 +330,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // Builtin Call
     if (expr.computedBuiltIn != null) {
-     var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var args = expr.flatArgs().stream().map(this::fetch).toList();
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
         return new AsmBuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
             Objects.requireNonNull(expr.type));
@@ -418,8 +418,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(LetExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    // The bounded variable is already resolved and it's usages will be turned into a let-node.
+    // So just return the expr.
+    return fetch(expr);
   }
 
   @Override
@@ -661,7 +662,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(LetStatement statement) {
-    // The bounded variable is already resolved, so just return the body
+    // The bounded variable is already resolved and it's usages will be turned into a let-node.
+    // So just return the body.
     return statement.body.accept(this);
   }
 
