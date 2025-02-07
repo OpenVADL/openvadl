@@ -44,12 +44,22 @@ public class Specification extends Definition {
   }
 
   /**
-   * Returns the instruction set architecture of the specification.
+   * Returns the ABI of the specification.
    */
   public Optional<Abi> abi() {
     return definitions()
         .filter(Abi.class::isInstance)
         .map(Abi.class::cast)
+        .findFirst();
+  }
+
+  /**
+   * Returns the assembly description of the specification.
+   */
+  public Optional<AssemblyDescription> assemblyDescription() {
+    return definitions()
+        .filter(AssemblyDescription.class::isInstance)
+        .map(AssemblyDescription.class::cast)
         .findFirst();
   }
 

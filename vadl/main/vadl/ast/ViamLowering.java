@@ -257,7 +257,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .filter(x -> x.toString().equals(definition.builtinDirective.name)).findFirst()
         .orElseThrow();
     var id = ((StringLiteral) definition.stringLiteral).value;
-    return Optional.of(new AsmDirectiveMapping(generateIdentifier(id, definition), directive,
+    return Optional.of(new AsmDirectiveMapping(generateIdentifier(id, definition), id, directive,
         definition.sourceLocation()));
   }
 

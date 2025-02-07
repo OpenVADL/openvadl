@@ -11,7 +11,7 @@ import vadl.viam.Relocation;
  * of the instruction set architecture in the assembly language.
  */
 public class AsmModifier extends Definition {
-  Relocation relocation;
+  private final Relocation relocation;
 
   /**
    * Create a new asm modifier.
@@ -28,6 +28,10 @@ public class AsmModifier extends Definition {
     super(identifier);
     this.relocation = relocation;
     setSourceLocation(location);
+  }
+
+  public Relocation getRelocation() {
+    return relocation;
   }
 
   @Override

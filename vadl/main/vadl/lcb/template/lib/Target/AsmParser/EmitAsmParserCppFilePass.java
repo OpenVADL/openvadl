@@ -10,9 +10,8 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
-import vadl.viam.Instruction;
+import vadl.viam.AssemblyDescription;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
 /**
@@ -61,11 +60,17 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    //TODO: kper; add alias directives
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         CommonVarNames.INSTRUCTIONS, mapInstructions(specification.isa()),
-        CommonVarNames.ALIASES, List.of()
+        CommonVarNames.ALIASES, directiveMappings(specification.assemblyDescription())
     );
+  }
+
+  private List<AliasDirective> directiveMappings(Optional<AssemblyDescription> asmDescription) {
+    return asmDescription.map(
+        asmDesc -> asmDesc.directives().stream().map(
+            d -> new AliasDirective(d.getAlias(), d.getDirective().getAsmName())).toList()
+    ).orElse(List.of());
   }
 }
