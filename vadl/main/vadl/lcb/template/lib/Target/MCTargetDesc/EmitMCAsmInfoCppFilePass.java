@@ -10,6 +10,7 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.asm.AsmDirectiveMapping;
 
 /**
  * This file contains the implementation for general assembly info.
@@ -62,10 +63,10 @@ public class EmitMCAsmInfoCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private boolean asmAlignmentIsInBytes(Specification specification) {
+
     return specification.assemblyDescription()
-        .map(asmDesc -> asmDesc.directives().stream().anyMatch(
-            directiveMapping -> directiveMapping.getDirective() != AsmDirective.ALIGN_POW2
-                && directiveMapping.getDirective() != AsmDirective.ALIGN32_POW2)
+        .map(asmDesc -> asmDesc.directives().stream()
+            .noneMatch(AsmDirectiveMapping::getAlignmentIsInBytes)
         ).orElse(true);
   }
 }

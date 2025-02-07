@@ -70,7 +70,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
   private List<AliasDirective> directiveMappings(Optional<AssemblyDescription> asmDescription) {
     return asmDescription.map(
         asmDesc -> asmDesc.directives().stream().map(
-            d -> new AliasDirective(d.getAlias(), d.getDirective().getAsmName())).toList()
+            d -> new AliasDirective(d.getAlias(), d.getTarget())).toList()
     ).orElse(List.of());
   }
 }

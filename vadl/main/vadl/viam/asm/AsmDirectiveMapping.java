@@ -11,7 +11,8 @@ import vadl.viam.Identifier;
  */
 public class AsmDirectiveMapping extends Definition {
   private final String alias;
-  private final AsmDirective directive;
+  private final String target;
+  private final boolean alignmentIsInBytes;
 
   /**
    * Creates a new directive mapping.
@@ -22,14 +23,16 @@ public class AsmDirectiveMapping extends Definition {
    * </p>
    *
    * @param identifier the identifier of the directive
-   * @param directive  the directive to be mapped to
+   * @param alias      the alias of the directive
+   * @param target     the original directive
    * @param location   the source location of the directive mapping
    */
-  public AsmDirectiveMapping(Identifier identifier, String alias,
-                             AsmDirective directive, SourceLocation location) {
+  public AsmDirectiveMapping(Identifier identifier, String alias, String target,
+                             boolean alignmentIsInBytes, SourceLocation location) {
     super(identifier);
     this.alias = alias;
-    this.directive = directive;
+    this.target = target;
+    this.alignmentIsInBytes = alignmentIsInBytes;
     setSourceLocation(location);
   }
 
@@ -37,8 +40,12 @@ public class AsmDirectiveMapping extends Definition {
     return alias;
   }
 
-  public AsmDirective getDirective() {
-    return directive;
+  public String getTarget() {
+    return target;
+  }
+
+  public boolean getAlignmentIsInBytes() {
+    return alignmentIsInBytes;
   }
 
   @Override
