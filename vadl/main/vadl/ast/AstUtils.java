@@ -40,7 +40,7 @@ class AstUtils {
         };
 
         builtIns = builtIns.stream()
-            .filter(b -> (b.signature().argTypeClasses().equals(targetArgs)))
+            .filter(b -> b.signature().argTypeClasses().equals(targetArgs))
             .toList();
         if (builtIns.size() != 1) {
           throw new IllegalStateException("Couldn't find a builtin function");

@@ -16,6 +16,7 @@ import vadl.utils.Pair;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Format;
+import vadl.viam.Function;
 import vadl.viam.Memory;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
@@ -35,13 +36,16 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
@@ -323,10 +327,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(CallExpr expr) {
-    var args = expr.flatArgs().stream().map(this::fetch).toList();
 
-    // Builtin
+    // Builtin Call
     if (expr.computedBuiltIn != null) {
+     var args = expr.flatArgs().stream().map(this::fetch).toList();
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
         return new AsmBuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
             Objects.requireNonNull(expr.type));
@@ -335,8 +339,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           Objects.requireNonNull(expr.type));
     }
 
+    // Function Call
+    if (expr.computedTarget instanceof FunctionDefinition functionDefinition) {
+      var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
+      return new FuncCallNode(new NodeList<>(args), function, Objects.requireNonNull(expr.type));
+    }
+
     // Register file read
     if (expr.computedTarget instanceof RegisterFileDefinition) {
+      var args = expr.flatArgs().stream().map(this::fetch).toList();
       var regFile = (RegisterFile) viamLowering.fetch(expr.computedTarget).orElseThrow();
       var type = (DataType) Objects.requireNonNull(expr.type);
       return new ReadRegFileNode(regFile, args.get(0), type, null);
@@ -344,6 +356,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // Memory read
     if (expr.computedTarget instanceof MemoryDefinition memoryDefinition) {
+      var args = expr.flatArgs().stream().map(this::fetch).toList();
       var words = 1;
       if (expr.target instanceof SymbolExpr targetSymbol) {
         words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
@@ -383,13 +396,24 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new BuiltInCall(BuiltInTable.ADD, new NodeList<>(constant, regRead), counterType);
     }
 
+    // Slicing
+    if (expr.flatArgs().size() == 1 && expr.flatArgs().get(0) instanceof RangeExpr rangeExpr) {
+      var value = fetch((Expr) expr.target);
+      var from = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+      var to = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+      var slice = new Constant.BitSlice(new Constant.BitSlice.Part(from, to));
+      return new SliceNode(value, slice, (DataType) Objects.requireNonNull(expr.type));
+    }
+
     throw new IllegalStateException("Cannot handle call to %s yet".formatted(expr.computedTarget));
   }
 
   @Override
   public ExpressionNode visit(IfExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    var condition = fetch(expr.condition);
+    var consequence = fetch(expr.thenExpr);
+    var contradiction = fetch(expr.elseExpr);
+    return new SelectNode(condition, consequence, contradiction);
   }
 
   @Override

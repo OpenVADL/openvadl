@@ -621,12 +621,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
     var behaivor = behaviorLowering.getGraph(definition.expr, "behaviour");
 
-    return Optional.of(
-        new Function(identifier,
-            parameters.toArray(new vadl.viam.Parameter[0]),
-            Objects.requireNonNull(definition.retType.type),
-            behaivor)
-    );
+    var function = new Function(identifier,
+        parameters.toArray(new vadl.viam.Parameter[0]),
+        Objects.requireNonNull(definition.retType.type),
+        behaivor);
+
+    parameters.forEach(p -> p.setParent(function));
+
+    return Optional.of(function);
   }
 
   @Override
