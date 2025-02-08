@@ -34,6 +34,11 @@ public class InstructionAsmType implements AsmType {
   }
 
   @Override
+  public String toCppTypeString(String prefix) {
+    return "NoData";
+  }
+
+  @Override
   public boolean canBeCastTo(AsmType to) {
     return to == this || to == VoidAsmType.instance() || to == StatementsAsmType.instance();
   }

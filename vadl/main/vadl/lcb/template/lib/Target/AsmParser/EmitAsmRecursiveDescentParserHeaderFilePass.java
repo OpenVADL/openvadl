@@ -5,13 +5,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.lcb.codegen.assembly.ParserGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -60,13 +56,14 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
                                                 Specification specification) {
     var composedStructs = composedStructs(specification);
     var singleFieldStructs = singleFieldStructs(specification);
-    var instructions = instructions(specification);
-    var constants = constants(specification);
-    var parsingResults = Stream.concat(constants, instructions).toList();
+    //var instructions = instructions(specification);
+    //var constants = constants(specification);
+    //var parsingResults = Stream.concat(constants, instructions).toList();
+    var grammarRules = grammarRules(specification);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         "formats", Stream.concat(composedStructs, singleFieldStructs).toList(),
-        "parsingResults", parsingResults);
+        "parsingResults", grammarRules);
   }
 
   @Nonnull
@@ -97,6 +94,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         .sorted(Comparator.comparing(ParserGenerator.FieldStructEnumeration::structName));
   }
 
+  /*
   @Nonnull
   private static Stream<ParsingResultRecord> instructions(
       Specification specification) {
@@ -127,5 +125,17 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
       final Function<? super T, Object> keyExtractor) {
     Map<Object, Boolean> seen = new ConcurrentHashMap<>();
     return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+  }
+  */
+
+  private Stream<ParsingResultRecord> grammarRules(Specification specification) {
+    return specification.assemblyDescription().map(
+        asmDesc -> asmDesc.rules().stream().map(
+            rule -> new ParsingResultRecord(
+                rule.getAsmType().toCppTypeString(specification.simpleName()),
+                rule.simpleName().trim(), rule.simpleName()
+            )
+        )
+    ).orElse(Stream.empty());
   }
 }

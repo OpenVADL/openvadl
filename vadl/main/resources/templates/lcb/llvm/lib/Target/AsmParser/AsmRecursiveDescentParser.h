@@ -52,6 +52,8 @@ struct mnemonic {
     ParsedValue<[(${namespace})]ParsedOperand> mnemonic;
 };
 
+// TODO: generate structs
+
 [# th:each="format : ${formats}" ]
 struct [(${format.structName})] {
 [# th:each="field : ${format.fieldNames}" ]
@@ -65,14 +67,14 @@ class [(${namespace})]AsmRecursiveDescentParser {
     MCAsmParser &Parser;
     OperandVector &Operands;
 
-//private:
-    /*
+private:
+
     [# th:each="pr : ${parsingResults}" ]
-    RuleParsingResult<[(${pr.type})]> <[(${namespace})]AsmRecursiveDescentParser::[(${pr.functionName})](); // [(${pr.comment})]
+    RuleParsingResult<[(${pr.type})]> [(${pr.functionName})]();
     [/]
-    */
-    // «visitor.resultType( AsmType.String )» Literal(std::string toParse);
-    // «visitor.resultType( AsmType.Expression )» BuiltinExpression();
+
+    RuleParsingResult<StringRef> Literal(std::string toParse);
+    RuleParsingResult<const MCExpr*> BuiltinExpression();
 
 public:
     [(${namespace})]AsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)

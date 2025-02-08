@@ -657,15 +657,18 @@ public class TypeChecker
               new Identifier(rule.identifier().name, invalidLoc),
               new ArrayList<>(), null, null, invalidLoc);
           asmLiteral.symbolTable = rule.symbolTable();
+          asmLiteral.asmType = InstructionAsmType.instance();
 
           var element = new AsmGrammarElementDefinition(null, null, false, asmLiteral,
               null, null, null, null, null, invalidLoc);
           element.symbolTable = rule.symbolTable();
+          element.asmType = InstructionAsmType.instance();
           return List.of(element);
         }).toList();
 
     instructionRule.alternatives =
         new AsmGrammarAlternativesDefinition(instructionRuleAlternatives, invalidLoc);
+    instructionRule.alternatives.asmType = InstructionAsmType.instance();
     instructionRule.isBuiltinRule = false;
   }
 

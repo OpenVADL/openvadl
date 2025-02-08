@@ -34,6 +34,11 @@ public class ModifierAsmType implements AsmType {
   }
 
   @Override
+  public String toCppTypeString(String prefix) {
+    return prefix + "MCExpr::VariantKind";
+  }
+
+  @Override
   public boolean canBeCastTo(AsmType to) {
     return to == this || to == VoidAsmType.instance();
   }

@@ -30,6 +30,11 @@ public class SymbolAsmType implements AsmType {
   }
 
   @Override
+  public String toCppTypeString(String prefix) {
+    return "StringRef";
+  }
+
+  @Override
   public boolean canBeCastTo(AsmType to) {
     return to == this || to == VoidAsmType.instance() || to == OperandAsmType.instance();
   }

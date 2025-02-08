@@ -102,4 +102,16 @@ public interface AsmType {
     throw new UnsupportedOperationException(
         "This AsmType does not have an corresponding VADL type.");
   }
+
+  /**
+   * Get the string representation of the corresponding CPP type.
+   *
+   * @param prefix prefix which might be added to the CPP type string
+   * @return the corresponding CPP type string
+   * @throws UnsupportedOperationException if there is no CPP type for this AsmType
+   */
+  default String toCppTypeString(String prefix) {
+    throw new UnsupportedOperationException(
+        "This AsmType does not have an corresponding VADL type.");
+  }
 }

@@ -34,6 +34,11 @@ public class RegisterAsmType implements AsmType {
   }
 
   @Override
+  public String toCppTypeString(String prefix) {
+    return "uint64_t";
+  }
+
+  @Override
   public boolean canBeCastTo(AsmType to) {
     return to == this || to == VoidAsmType.instance() || to == OperandAsmType.instance();
   }
