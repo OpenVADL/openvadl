@@ -147,7 +147,13 @@ public class InfoUtils {
                 // Render the graph
                 d3.select('#graph-%s')
                     .graphviz()
-                    .fit(true)
+                    .attributer((datum, _index, _nodes) => {
+                      if (datum.tag == "svg") {
+                         datum.attributes.width = '100%%';
+                         datum.attributes.height = '100%%';
+                         datum.attributes.viewBox = null;
+                      }
+                    })
                     .renderDot(dotString);
         
                 // Highlight the active button
