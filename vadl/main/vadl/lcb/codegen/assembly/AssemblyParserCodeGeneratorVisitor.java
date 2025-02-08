@@ -289,7 +289,26 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmBuiltinRule rule) {
-    writer.write("//Builtin: " + rule.simpleName() + "\n");
+    if (!rule.simpleName().equals("Expression")) {
+      throw new ViamError("Unknown AsmParser builtin: " + rule.simpleName());
+    }
+    var tempVar = symbolTable.getNextVariable();
+
+    writer.write(StringSubstitutor.replace("""
+        RuleParsingResult<${type}> ${namespace}AsmRecursiveDescentParser::${ruleName}() {
+            RuleParsingResult<${type}> ${tempVar} = BuiltinExpression();
+            if(!${tempVar}.Success) {
+                return RuleParsingResult<${type}>(${tempVar}.getError());
+            }
+            // TODO: save value if needed?
+            return RuleParsingResult<${type}>(${tempVar});
+          }
+        """, Map.of(
+        "type", rule.getAsmType().toCppTypeString(namespace),
+        CommonVarNames.NAMESPACE, namespace,
+        "ruleName", rule.simpleName(),
+        "tempVar", tempVar
+    )));
   }
 
   @Override
@@ -309,7 +328,7 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
         RuleParsingResult<${type}> ${namespace}AsmRecursiveDescentParser::${ruleName}() {
             auto tok = Lexer.getTok();
             if(tok.getKind() != ${token}) {
-              return RuleParsingResult<${resultType}>(tok.getLoc(),
+              return RuleParsingResult<${type}>(tok.getLoc(),
                 "Expected ${ruleName}, but got '" + tok.getString() + "'");
             } else {
               Lexer.Lex();
