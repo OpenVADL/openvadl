@@ -74,10 +74,12 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
                                                 Specification specification) {
     var lexes = lexes(specification);
     var instructions = instructions(specification);
+    var grammarRules = grammarRules(specification);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         "lexParsingResults", lexes,
-        "instructionResults", instructions);
+        "instructionResults", instructions,
+        "grammarRules", grammarRules);
   }
 
   @Nonnull
@@ -115,5 +117,18 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
               ParserGenerator.generateInstructionName(instruction), writer.toString());
         })
         .toList();
+  }
+
+  private Stream<String> grammarRules(Specification specification) {
+    return specification.assemblyDescription()
+        .map(asmDesc -> asmDesc.rules().stream())
+        .orElse(Stream.empty())
+        .map(rule -> {
+          var writer = new StringWriter();
+          var visitor = new AssemblyParserCodeGeneratorVisitor(specification.simpleName(), writer);
+
+          visitor.visit(rule);
+          return writer.toString();
+        });
   }
 }

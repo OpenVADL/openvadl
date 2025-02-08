@@ -9,12 +9,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.apache.commons.text.StringSubstitutor;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.gcb.passes.assembly.visitors.AssemblyVisitor;
+import vadl.lcb.template.CommonVarNames;
 import vadl.types.BuiltInTable;
+import vadl.types.asmTypes.ConstantAsmType;
+import vadl.types.asmTypes.StringAsmType;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.ViamError;
@@ -32,6 +36,7 @@ import vadl.viam.asm.elements.AsmRepetition;
 import vadl.viam.asm.elements.AsmRuleInvocation;
 import vadl.viam.asm.elements.AsmStringLiteralUse;
 import vadl.viam.asm.rules.AsmBuiltinRule;
+import vadl.viam.asm.rules.AsmGrammarRule;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
 import vadl.viam.asm.rules.AsmTerminalRule;
 import vadl.viam.graph.control.ReturnNode;
@@ -51,6 +56,7 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   private final String namespace;
   private final SymbolTable symbolTable;
+  @Nullable
   private final Instruction instruction;
   private final ArrayDeque<String> operands = new ArrayDeque<>();
 
@@ -62,6 +68,16 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
     super(writer);
     this.namespace = namespace;
     this.instruction = instruction;
+    symbolTable = new SymbolTable("VAR_");
+  }
+
+  /**
+   * Constructor.
+   */
+  public AssemblyParserCodeGeneratorVisitor(String namespace, StringWriter writer) {
+    super(writer);
+    this.namespace = namespace;
+    this.instruction = null;
     symbolTable = new SymbolTable("VAR_");
   }
 
@@ -87,6 +103,9 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(BuiltInCall node) {
+    if (instruction == null) {
+      return;
+    }
     for (var arg : node.arguments()) {
       visit(arg);
     }
@@ -264,18 +283,47 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   }
 
   @Override
-  public void visit(AsmBuiltinRule rule) {
+  public void visit(AsmGrammarRule rule) {
+    rule.accept(this);
+  }
 
+  @Override
+  public void visit(AsmBuiltinRule rule) {
+    writer.write("//Builtin: " + rule.simpleName() + "\n");
   }
 
   @Override
   public void visit(AsmNonTerminalRule rule) {
-
+    writer.write("//NonTerminal: " + rule.simpleName() + "\n");
   }
 
   @Override
   public void visit(AsmTerminalRule rule) {
 
+    var dataAction = rule.getAsmType() == ConstantAsmType.instance() ? "tok.getIntVal()" :
+        (rule.getAsmType() == StringAsmType.instance() ? "tok.getString()" : "NoData()");
+
+    var token = ParserGenerator.getLlvmTokenKind(rule.simpleName());
+
+    writer.write(StringSubstitutor.replace("""
+        RuleParsingResult<${type}> ${namespace}AsmRecursiveDescentParser::${ruleName}() {
+            auto tok = Lexer.getTok();
+            if(tok.getKind() != ${token}) {
+              return RuleParsingResult<${resultType}>(tok.getLoc(),
+                "Expected ${ruleName}, but got '" + tok.getString() + "'");
+            } else {
+              Lexer.Lex();
+              return RuleParsingResult<${type}>(ParsedValue<${type}>(${dataAction},
+                tok.getLoc(), tok.getEndLoc()));
+            }
+          }
+        """, Map.of(
+        "type", rule.getAsmType().toCppTypeString(namespace),
+        CommonVarNames.NAMESPACE, namespace,
+        "ruleName", rule.simpleName(),
+        "token", token,
+        "dataAction", dataAction
+    )));
   }
 
   @Override

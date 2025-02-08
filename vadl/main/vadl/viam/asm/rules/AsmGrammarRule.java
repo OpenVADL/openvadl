@@ -22,5 +22,5 @@ public abstract class AsmGrammarRule extends Definition {
     return asmType;
   }
 
-  abstract void accept(AsmGrammarVisitor visitor);
+  public abstract void accept(AsmGrammarVisitor visitor);
 }

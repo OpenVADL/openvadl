@@ -13,6 +13,7 @@ import vadl.viam.asm.elements.AsmRepetition;
 import vadl.viam.asm.elements.AsmRuleInvocation;
 import vadl.viam.asm.elements.AsmStringLiteralUse;
 import vadl.viam.asm.rules.AsmBuiltinRule;
+import vadl.viam.asm.rules.AsmGrammarRule;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
 import vadl.viam.asm.rules.AsmTerminalRule;
 
@@ -20,6 +21,8 @@ import vadl.viam.asm.rules.AsmTerminalRule;
  * Interface for visiting all classes of the asm grammar.
  */
 public interface AsmGrammarVisitor {
+  void visit(AsmGrammarRule rule);
+
   void visit(AsmBuiltinRule rule);
 
   void visit(AsmNonTerminalRule rule);

@@ -19,10 +19,16 @@ using namespace llvm;
 namespace llvm {
 
   RuleParsingResult<NoData> [(${namespace})]AsmRecursiveDescentParser::ParseStatement() {
+    //return Statement();
     return RuleParsingResult<NoData>(ParsedValue<NoData>(NoData {}));
   }
 
   RuleParsingResult<uint64_t /* UInt<64> */> [(${namespace})]AsmRecursiveDescentParser::ParseRegister() {
+    //return Register();
     return RuleParsingResult<uint64_t>(ParsedValue<uint64_t>(0));
   }
+
+[# th:each="rule : ${grammarRules}" ]
+  [(${rule})]
+[/]
 }
