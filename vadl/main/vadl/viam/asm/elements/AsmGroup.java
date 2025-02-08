@@ -1,5 +1,6 @@
 package vadl.viam.asm.elements;
 
+import vadl.types.asmTypes.AsmType;
 import vadl.viam.asm.AsmGrammarVisitor;
 
 /**
@@ -9,7 +10,8 @@ import vadl.viam.asm.AsmGrammarVisitor;
  * both represented by the {@code Alternatives} class.
  * </p>
  */
-public record AsmGroup(AsmAlternatives alternatives) implements AsmGrammarElement {
+public record AsmGroup(AsmAlternatives alternatives,
+                       AsmType asmType) implements AsmGrammarElement {
 
   @Override
   public void accept(AsmGrammarVisitor visitor) {

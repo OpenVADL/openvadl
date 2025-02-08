@@ -1,5 +1,6 @@
 package vadl.viam.asm.rules;
 
+import vadl.types.asmTypes.AsmType;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Identifier;
 import vadl.viam.asm.AsmGrammarVisitor;
@@ -11,8 +12,8 @@ public class AsmTerminalRule extends AsmGrammarRule {
 
   private final String value;
 
-  public AsmTerminalRule(Identifier identifier, String value) {
-    super(identifier);
+  public AsmTerminalRule(Identifier identifier, String value, AsmType asmType) {
+    super(identifier, asmType);
     this.value = value;
   }
 

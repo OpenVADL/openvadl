@@ -1,5 +1,6 @@
 package vadl.viam.asm.rules;
 
+import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Identifier;
@@ -22,8 +23,8 @@ public class AsmNonTerminalRule extends AsmGrammarRule {
    * @param location     the source location of the rule
    */
   public AsmNonTerminalRule(Identifier identifier, AsmAlternatives alternatives,
-                            SourceLocation location) {
-    super(identifier);
+                            AsmType asmType, SourceLocation location) {
+    super(identifier, asmType);
     this.alternatives = alternatives;
     this.setSourceLocation(location);
   }

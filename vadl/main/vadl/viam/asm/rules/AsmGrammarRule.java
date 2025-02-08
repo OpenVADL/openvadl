@@ -1,5 +1,6 @@
 package vadl.viam.asm.rules;
 
+import vadl.types.asmTypes.AsmType;
 import vadl.viam.Definition;
 import vadl.viam.Identifier;
 import vadl.viam.asm.AsmGrammarVisitor;
@@ -10,8 +11,15 @@ import vadl.viam.asm.AsmGrammarVisitor;
  */
 public abstract class AsmGrammarRule extends Definition {
 
-  public AsmGrammarRule(Identifier identifier) {
+  private final AsmType asmType;
+
+  public AsmGrammarRule(Identifier identifier, AsmType asmType) {
     super(identifier);
+    this.asmType = asmType;
+  }
+
+  public AsmType getAsmType() {
+    return asmType;
   }
 
   abstract void accept(AsmGrammarVisitor visitor);

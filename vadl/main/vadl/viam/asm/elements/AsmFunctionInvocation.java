@@ -2,6 +2,7 @@ package vadl.viam.asm.elements;
 
 import java.util.List;
 import javax.annotation.Nullable;
+import vadl.types.asmTypes.AsmType;
 import vadl.viam.asm.AsmGrammarVisitor;
 
 /**
@@ -11,7 +12,8 @@ import vadl.viam.asm.AsmGrammarVisitor;
  */
 public record AsmFunctionInvocation(@Nullable AsmAssignTo assignToElement,
                                     String functionName,
-                                    List<AsmGrammarElement> parameters)
+                                    List<AsmGrammarElement> parameters,
+                                    AsmType asmType)
     implements AsmGrammarElement {
 
   @Override
