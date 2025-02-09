@@ -16,7 +16,8 @@ import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.common.AccessFunctionCodeGenerator;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
@@ -112,10 +113,13 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
   TestCase render(String testName,
                   int sample,
-                  CppFunction accessFunction,
-                  CppFunction encodingFunction) {
-    var decodeFunction = new LcbGenericCodeGenerator().generateFunction(accessFunction);
-    var encodeFunction = new LcbGenericCodeGenerator().generateFunction(encodingFunction);
+                  GcbFieldAccessCppFunction accessFunction,
+                  GcbFieldAccessCppFunction encodingFunction) {
+    var decodeFunctionGenerator = new AccessFunctionCodeGenerator(accessFunction);
+    var encodeFunctionGenerator = new AccessFunctionCodeGenerator(encodingFunction);
+
+    var decodeFunction = decodeFunctionGenerator.genReturnExpression();
+    var encodeFunction = encodeFunctionGenerator.genReturnExpression();
     String expectedReturnType =
         CppTypeMap.getCppTypeNameByVadlType(encodingFunction.returnType());
 
@@ -168,8 +172,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
               }
             }
             """,
-        decodeFunction.value(),
-        encodeFunction.value(),
+        decodeFunction,
+        encodeFunction,
         expectedReturnType,
         sample,
         encodingFunction.identifier.lower(),

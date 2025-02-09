@@ -3,7 +3,7 @@ package vadl.gcb.passes.typeNormalization;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
 import vadl.utils.Pair;
@@ -18,6 +18,7 @@ import vadl.viam.Specification;
  * extraction.
  */
 public class CppTypeNormalizationForImmediateExtractionPass extends CppTypeNormalizationPass {
+
   public CppTypeNormalizationForImmediateExtractionPass(GcbConfiguration gcbConfiguration) {
     super(gcbConfiguration);
   }
@@ -28,17 +29,17 @@ public class CppTypeNormalizationForImmediateExtractionPass extends CppTypeNorma
   }
 
   @Override
-  protected Stream<Pair<Format.Field, Function>> getApplicable(Specification viam) {
+  protected Stream<Pair<Format.FieldAccess, Function>> getApplicable(Specification viam) {
     return viam.isa()
         .map(x -> x.ownFormats().stream())
         .orElse(Stream.empty())
-        .flatMap(x -> Arrays.stream(x.fields()))
-        .map(field -> new Pair<>(field, field.extractFunction()))
+        .flatMap(x -> x.fieldAccesses().stream())
+        .map(fieldAccess -> new Pair<>(fieldAccess, fieldAccess.fieldRef().extractFunction()))
         .distinct();
   }
 
   @Override
-  protected CppFunction liftFunction(Function function) {
-    return makeTypesCppConform(function);
+  protected GcbFieldAccessCppFunction liftFunction(Format.FieldAccess fieldAccess) {
+    return createGcbFieldAccessCppFunction(fieldAccess.accessFunction(), fieldAccess);
   }
 }

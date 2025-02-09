@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.model.CppClassImplName;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.viam.Function;
 import vadl.viam.ViamError;
@@ -29,7 +29,7 @@ public class LcbGenericCodeGenerator {
    * Returns the function header of a {@link Function}.
    * For example: int testFunction(int param1, int param2)
    */
-  public String generateFunctionHeader(CppFunction function) {
+  public String generateFunctionHeader(GcbFieldAccessCppFunction function) {
     return generateFunctionHeader(function, new Options(false, false));
   }
 
@@ -37,7 +37,7 @@ public class LcbGenericCodeGenerator {
    * Returns the function header of a {@link Function}.
    * For example: int testFunction(int param1, int param2)
    */
-  public String generateFunctionHeader(CppFunction function, Options options) {
+  public String generateFunctionHeader(GcbFieldAccessCppFunction function, Options options) {
     var name = function.functionName().lower();
     var isConst = options.isConst();
     var isStatic = options.isStatic();
@@ -58,7 +58,7 @@ public class LcbGenericCodeGenerator {
    * Returns the function header of a {@link Function}.
    * For example: int testFunction(int param1, int param2)
    */
-  public String generateFunctionHeader(CppClassImplName classImplName, CppFunction function,
+  public String generateFunctionHeader(CppClassImplName classImplName, GcbFieldAccessCppFunction function,
                                        Options options) {
     var name = function.functionName().lower();
     var isConst = options.isConst();
@@ -75,7 +75,7 @@ public class LcbGenericCodeGenerator {
         + (isConst ? " const" : "");
   }
 
-  protected String generateFunctionBody(CppFunction function) {
+  protected String generateFunctionBody(GcbFieldAccessCppFunction function) {
     var writer = new StringWriter();
     var returnNode = function.behavior().getNodes(ReturnNode.class).findFirst();
 
@@ -90,7 +90,7 @@ public class LcbGenericCodeGenerator {
   /**
    * Generate a cpp function from the given {@link Function}.
    */
-  public CppFunctionCode generateFunction(CppFunction function) {
+  public CppFunctionCode generateFunction(GcbFieldAccessCppFunction function) {
     return new CppFunctionCode(generateFunctionHeader(function) + " {\n"
         + generateFunctionBody(function) + ";\n}");
   }
@@ -98,7 +98,7 @@ public class LcbGenericCodeGenerator {
   /**
    * Generate a cpp function from the given {@link Function}.
    */
-  public CppFunctionCode generateFunction(CppFunction function, Options options) {
+  public CppFunctionCode generateFunction(GcbFieldAccessCppFunction function, Options options) {
     return new CppFunctionCode(generateFunctionHeader(function, options) + " {\n"
         + generateFunctionBody(function) + ";\n}");
   }
@@ -107,7 +107,7 @@ public class LcbGenericCodeGenerator {
    * Generate a cpp function from the given {@link Function}. It will prepend
    * {@link CppClassImplName} to the function name.
    */
-  public CppFunctionCode generateFunction(CppClassImplName classImplName, CppFunction function,
+  public CppFunctionCode generateFunction(CppClassImplName classImplName, GcbFieldAccessCppFunction function,
                                           Options options) {
     return new CppFunctionCode(generateFunctionHeader(classImplName, function, options)
         + " {\n"

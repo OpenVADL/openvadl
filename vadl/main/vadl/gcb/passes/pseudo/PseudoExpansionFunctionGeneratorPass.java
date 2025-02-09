@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
+import vadl.lcb.passes.pseudo.AbstractPseudoExpansionFunctionGeneratorPass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;

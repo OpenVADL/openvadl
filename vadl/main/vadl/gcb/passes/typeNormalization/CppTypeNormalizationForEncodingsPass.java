@@ -4,7 +4,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.error.Diagnostic;
 import vadl.pass.PassName;
@@ -30,11 +30,11 @@ public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPa
   }
 
   @Override
-  protected Stream<Pair<Format.Field, Function>> getApplicable(Specification viam) {
+  protected Stream<Pair<Format.FieldAccess, Function>> getApplicable(Specification viam) {
     return viam.isa()
         .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(x -> x.fieldAccesses().stream())
-        .map(fieldAccess -> new Pair<>(fieldAccess.fieldRef(),
+        .map(fieldAccess -> new Pair<>(fieldAccess,
             ensureNonNull(fieldAccess.encoding(),
                 () -> Diagnostic.error(
                     "Encoding must not be null. Maybe it does not exist or was not generated?",
@@ -43,7 +43,7 @@ public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPa
   }
 
   @Override
-  protected CppFunction liftFunction(Function function) {
-    return makeTypesCppConform(function);
+  protected GcbFieldAccessCppFunction liftFunction(Format.FieldAccess fieldAccess) {
+    return createGcbFieldAccessCppFunction(fieldAccess.accessFunction(), fieldAccess);
   }
 }

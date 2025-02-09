@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.cppCodeGen.model.CppFunctionName;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
@@ -37,7 +37,7 @@ public abstract class AbstractEmitImmediateFilePass extends LcbTemplateRendering
     var decodeFunctionNames = decodeFunctions
         .values()
         .stream()
-        .map(CppFunction::functionName)
+        .map(GcbFieldAccessCppFunction::functionName)
         .map(CppFunctionName::lower)
         .sorted()
         .toList();

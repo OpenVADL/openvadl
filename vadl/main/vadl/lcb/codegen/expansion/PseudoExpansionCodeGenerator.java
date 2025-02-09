@@ -18,7 +18,7 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.context.CNodeWithBaggageContext;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
@@ -57,7 +57,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
 
   private final String namespace;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
-  private final Map<Format.Field, CppFunction> immediateDecodings;
+  private final Map<Format.Field, GcbFieldAccessCppFunction> immediateDecodings;
   private final Map<Format.Field, List<VariantKind>> immVariants;
   private final List<CompilerRelocation> relocations;
   private final PseudoInstruction pseudoInstruction;
@@ -70,7 +70,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   public PseudoExpansionCodeGenerator(String namespace,
                                       IdentifyFieldUsagePass.ImmediateDetectionContainer
                                           fieldUsages,
-                                      Map<Format.Field, CppFunction> immediateDecodings,
+                                      Map<Format.Field, GcbFieldAccessCppFunction> immediateDecodings,
                                       Map<Format.Field, List<VariantKind>> immVariants,
                                       List<CompilerRelocation> relocations,
                                       PseudoInstruction pseudoInstruction,

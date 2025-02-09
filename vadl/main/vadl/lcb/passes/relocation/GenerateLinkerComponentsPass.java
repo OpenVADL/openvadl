@@ -98,7 +98,7 @@ public class GenerateLinkerComponentsPass extends Pass {
                   var updateFieldFunction =
                       BitMaskFunctionGenerator.generateUpdateFunction(format, field);
                   var cppConformRelocation =
-                      CppTypeNormalizationPass.makeTypesCppConform(relocation);
+                      CppTypeNormalizationPass.createGcbRelocationCppFunction(relocation);
 
                   if (!alreadySeen.contains(field)) {
                     var concrete =

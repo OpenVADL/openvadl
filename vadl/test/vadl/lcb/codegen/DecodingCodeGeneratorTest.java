@@ -4,7 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
@@ -20,9 +21,11 @@ class DecodingCodeGeneratorTest extends AbstractTest {
         createIdentifier("parameterValue"), Type.unsignedInt(32)
     )));
     graph.addWithInputs(returnNode);
-    var function = new CppFunction(createIdentifier("functionNameValue"),
+    var function = new GcbFieldAccessCppFunction(createIdentifier("functionNameValue"),
         new Parameter[] {new Parameter(createIdentifier("parameterValue"), Type.unsignedInt(32))},
-        Type.signedInt(32), graph);
+        Type.signedInt(32), graph,
+        createFieldAccess("test", createFunction("test", DataType.bool()))
+    );
 
     // When
     String code = new LcbGenericCodeGenerator().generateFunction(function).value();

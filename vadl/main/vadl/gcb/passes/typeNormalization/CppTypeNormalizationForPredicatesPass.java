@@ -2,7 +2,7 @@ package vadl.gcb.passes.typeNormalization;
 
 import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
 import vadl.utils.Pair;
@@ -26,16 +26,16 @@ public class CppTypeNormalizationForPredicatesPass extends CppTypeNormalizationP
   }
 
   @Override
-  protected Stream<Pair<Format.Field, Function>> getApplicable(Specification viam) {
+  protected Stream<Pair<Format.FieldAccess, Function>> getApplicable(Specification viam) {
     return viam.isa()
         .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(x -> x.fieldAccesses().stream())
         .filter(x -> x.encoding() != null)
-        .map(fieldAccess -> new Pair<>(fieldAccess.fieldRef(), fieldAccess.predicate()));
+        .map(fieldAccess -> new Pair<>(fieldAccess, fieldAccess.predicate()));
   }
 
   @Override
-  protected CppFunction liftFunction(Function function) {
-    return makeTypesCppConform(function);
+  protected GcbFieldAccessCppFunction liftFunction(Format.FieldAccess fieldAccess) {
+    return createGcbFieldAccessCppFunction(fieldAccess.predicate(), fieldAccess);
   }
 }

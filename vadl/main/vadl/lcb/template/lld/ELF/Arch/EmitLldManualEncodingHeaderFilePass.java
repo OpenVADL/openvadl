@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.common.UpdateFieldRelocationFunctionCodeGenerator;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
@@ -48,8 +49,11 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
             .stream()
             .map(x -> x.get(0)) // only consider one relocation because we do not need duplication
             .sorted(Comparator.comparing(o -> o.elfRelocationName().value()))
-            .map(elfRelocation -> new LcbGenericCodeGenerator().generateFunction(
-                elfRelocation.fieldUpdateFunction()))
+            .map(elfRelocation -> {
+              var generator = new UpdateFieldRelocationFunctionCodeGenerator(
+                  elfRelocation.fieldUpdateFunction());
+              return generator.genReturnExpression();
+            })
             .toList());
   }
 }

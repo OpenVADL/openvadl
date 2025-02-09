@@ -11,8 +11,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppClassImplName;
-import vadl.cppCodeGen.model.CppFunction;
-import vadl.cppCodeGen.model.CppFunctionName;
+import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
@@ -62,7 +62,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
    */
   private List<RenderedPseudoInstruction> pseudoInstructions(
       Specification specification,
-      Map<PseudoInstruction, CppFunction> cppFunctions,
+      Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
       List<CompilerRelocation> relocations,
@@ -77,7 +77,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
 
   private @Nonnull RenderedPseudoInstruction renderPseudoInstruction(
       Specification specification,
-      Map<PseudoInstruction, CppFunction> cppFunctions,
+      Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
       List<CompilerRelocation> relocations,
@@ -107,7 +107,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   private List<RenderedPseudoInstruction> compilerInstructions(
       Abi abi,
       Specification specification,
-      Map<PseudoInstruction, CppFunction> cppFunctions,
+      Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
       List<CompilerRelocation> relocations,
@@ -128,7 +128,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var cppFunctionsForPseudoInstructions =
-        (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
+        (IdentityHashMap<PseudoInstruction, GcbExpandPseudoInstructionCppFunction>) passResults.lastResultOf(
             PseudoExpansionFunctionGeneratorPass.class);
     var cppFunctions = cppFunctionsForPseudoInstructions.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
-import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -45,9 +45,8 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
             .map(x -> (RelocationLowerable) x)
             .sorted(Comparator.comparing(o -> o.elfRelocationName().value()))
             .map(relocation -> {
-              var generator = new LcbGenericCodeGenerator();
-              return generator.generateFunction(
-                  relocation.valueRelocation());
+              var generator = new ValueRelocationFunctionCodeGenerator(relocation.valueRelocation());
+              return generator.genReturnExpression();
             }).toList());
   }
 }

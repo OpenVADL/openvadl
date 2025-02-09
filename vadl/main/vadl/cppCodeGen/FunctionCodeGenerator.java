@@ -1,30 +1,22 @@
 package vadl.cppCodeGen;
 
-import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
-import vadl.utils.Pair;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
-import vadl.viam.graph.dependency.SliceNode;
-import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Abstract base class responsible for generating C code from a given function's expression nodes.
@@ -36,12 +28,9 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
     context = CNodeContext.class,
     include = "vadl.viam"
 )
-public abstract class FunctionCodeGenerator
+public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerator
     implements CDefaultMixins.AllExpressions, CDefaultMixins.Utils {
-
-  protected final Function function;
   protected final CNodeContext context;
-  protected final StringBuilder builder;
 
   /**
    * Creates a new code generator for the specified function.
@@ -49,8 +38,7 @@ public abstract class FunctionCodeGenerator
    * @param function the function for which code should be generated
    */
   public FunctionCodeGenerator(Function function) {
-    this.function = function;
-    this.builder = new StringBuilder();
+    super(function);
     this.context = new CNodeContext(
         builder::append,
         (ctx, node)
@@ -84,16 +72,6 @@ public abstract class FunctionCodeGenerator
   @Override
   public CNodeContext context() {
     return context;
-  }
-
-  @Override
-  public Function function() {
-    return function;
-  }
-
-  @Override
-  public StringBuilder builder() {
-    return builder;
   }
 }
 

@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -50,7 +51,7 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   private List<RenderedPseudoInstruction> pseudoInstructions(
       Specification specification,
       PassResults passResults,
-      Map<PseudoInstruction, CppFunction> cppFunctions
+      Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions
   ) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
         .map(x -> new RenderedPseudoInstruction(
@@ -61,14 +62,14 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<RenderedPseudoInstruction> compilerInstructions(
-      Map<PseudoInstruction, CppFunction> cppFunctions,
+      Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       Specification specification) {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
 
     return Stream.of(abi.returnSequence(), abi.callSequence())
         .map(x -> new RenderedPseudoInstruction(
-                ensureNonNull(cppFunctions.get(x), "cppFunction must exist").identifier.lower(),
+            ensureNonNull(cppFunctions.get(x), "cppFunction must exist").identifier.lower(),
             x
         ))
         .toList();
@@ -78,7 +79,7 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var cppFunctionsForPseudoInstructions =
-        (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
+        (IdentityHashMap<PseudoInstruction, GcbExpandPseudoInstructionCppFunction>) passResults.lastResultOf(
             PseudoExpansionFunctionGeneratorPass.class);
     var cppFunctions = cppFunctionsForPseudoInstructions.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

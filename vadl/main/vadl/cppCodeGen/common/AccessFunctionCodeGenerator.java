@@ -7,7 +7,9 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.viam.Format;
+import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -71,6 +73,18 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
     this.fieldAccess = fieldAccess;
     this.functionName = functionName == null ? function.simpleName() : functionName;
     this.fieldName = fieldName == null ? fieldAccess.fieldRef().simpleName() : fieldName;
+  }
+
+  /**
+   * Creates a new pure function code generator for the given function. The function will
+   * have the name as defined in {@code gcbFieldAccessCppFunction}. The field to access
+   * will be the specified field.
+   */
+  public AccessFunctionCodeGenerator(GcbFieldAccessCppFunction gcbFieldAccessCppFunction) {
+    super(gcbFieldAccessCppFunction);
+    this.fieldAccess = gcbFieldAccessCppFunction.fieldAccess();
+    this.functionName = function().simpleName();
+    this.fieldName = fieldAccess.fieldRef().simpleName();
   }
 
   @Override

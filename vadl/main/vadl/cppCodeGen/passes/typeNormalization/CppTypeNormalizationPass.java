@@ -12,7 +12,8 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.GcbConfiguration;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
+import vadl.cppCodeGen.model.GcbValueRelocationCppFunction;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
@@ -22,7 +23,6 @@ import vadl.utils.Pair;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Function;
-import vadl.viam.Identifier;
 import vadl.viam.Parameter;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
@@ -52,24 +52,29 @@ public abstract class CppTypeNormalizationPass extends Pass {
    * A container for storing the result of {@link CppTypeNormalizationPass}.
    */
   public static class NormalisedTypeResult {
-    private final IdentityHashMap<Function, CppFunction> functions = new IdentityHashMap<>();
-    private final IdentityHashMap<Format.Field, CppFunction> fields = new IdentityHashMap<>();
+    private final IdentityHashMap<Function, GcbFieldAccessCppFunction> functions =
+        new IdentityHashMap<>();
+    private final IdentityHashMap<Format.Field, GcbFieldAccessCppFunction> fields =
+        new IdentityHashMap<>();
+    private final IdentityHashMap<Format.FieldAccess, GcbFieldAccessCppFunction> fieldAccesses =
+        new IdentityHashMap<>();
 
-    private void add(Function key, Format.Field key2, CppFunction value) {
+    private void add(Function key, Format.FieldAccess key2, GcbFieldAccessCppFunction value) {
       functions.put(key, value);
-      fields.put(key2, value);
+      fields.put(key2.fieldRef(), value);
+      fieldAccesses.put(key2, value);
     }
 
     @Nullable
-    public CppFunction byFunction(Function key) {
+    public GcbFieldAccessCppFunction byFunction(Function key) {
       return functions.get(key);
     }
 
-    public Collection<Map.Entry<Function, CppFunction>> functions() {
+    public Collection<Map.Entry<Function, GcbFieldAccessCppFunction>> functions() {
       return functions.entrySet();
     }
 
-    public Collection<Map.Entry<Format.Field, CppFunction>> fields() {
+    public Collection<Map.Entry<Format.Field, GcbFieldAccessCppFunction>> fields() {
       return fields.entrySet();
     }
   }
@@ -77,12 +82,12 @@ public abstract class CppTypeNormalizationPass extends Pass {
   /**
    * Get a list of functions on which the pass should be applied on.
    */
-  protected abstract Stream<Pair<Format.Field, Function>> getApplicable(Specification viam);
+  protected abstract Stream<Pair<Format.FieldAccess, Function>> getApplicable(Specification viam);
 
   /**
-   * Converts a given {@code function} into a {@link CppFunction} which has cpp conforming types.
+   * Converts a given {@code function} into a {@link GcbFieldAccessCppFunction} which has cpp conforming types.
    */
-  protected abstract CppFunction liftFunction(Function function);
+  protected abstract GcbFieldAccessCppFunction liftFunction(Format.FieldAccess fieldAccess);
 
   @Nullable
   @Override
@@ -93,7 +98,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
     getApplicable(viam).forEach(pair -> {
       var field = pair.left();
       var function = pair.right();
-      var cppFunction = liftFunction(function);
+      var cppFunction = liftFunction(field);
       results.add(function, field, cppFunction);
     });
 
@@ -123,41 +128,39 @@ public abstract class CppTypeNormalizationPass extends Pass {
   ));
 
   /**
-   * Changes the function so that all vadl types conform to CPP types
+   * Changes the function so that all VADL types conform to CPP types
    * which simplifies the code generation.
    * All the non-conforming types will be upcasted to next higher bit size. The name of the
-   * {@link CppFunction} is taken from {@code function.identifier}.
+   * {@link GcbFieldAccessCppFunction} is taken from {@code function.identifier}.
    */
-  public static CppFunction makeTypesCppConform(Function function) {
-    return makeTypesCppConform(function, function.identifier);
-  }
-
-  /**
-   * Changes the function so that all vadl types conform to CPP types
-   * which simplifies the code generation.
-   * All the non-conforming types will be upcasted to next higher bit size. The name of the
-   * {@link CppFunction} is determined by the parameter {@code newName}.
-   */
-  public static CppFunction makeTypesCppConform(Function function, Identifier newName) {
-    var liftedParameters = getParameters(function);
-    return makeTypesCppConformWithParamType(newName, function, liftedParameters);
-  }
-
-  /**
-   * Changes the function so that all vadl types conform to CPP types
-   * which simplifies the code generation.
-   * All the non-conforming types will be upcasted to next higher bit size except the parameter
-   * type.
-   */
-  public static CppFunction makeTypesCppConformWithParamType(
-      Identifier newName,
-      Function function,
-      List<Parameter> liftedParameters) {
+  public static GcbFieldAccessCppFunction createGcbFieldAccessCppFunction(
+      Function function, Format.FieldAccess fieldAccess) {
     var liftedResultTy = getResultTy(function);
     updateGraph(function.behavior());
+    var liftedParameters = getParameters(function);
 
     // We updated the old function's graph, so just take it for the new function.
-    return new CppFunction(newName,
+    return new GcbFieldAccessCppFunction(function.identifier,
+        liftedParameters.toArray(Parameter[]::new),
+        liftedResultTy,
+        function.behavior(),
+        fieldAccess);
+  }
+
+  /**
+   * Changes the function so that all VADL types conform to CPP types
+   * which simplifies the code generation.
+   * All the non-conforming types will be upcasted to next higher bit size. The name of the
+   * {@link GcbValueRelocationCppFunction} is taken from {@code function.identifier}.
+   */
+  public static GcbValueRelocationCppFunction createGcbRelocationCppFunction(
+      Function function) {
+    var liftedResultTy = getResultTy(function);
+    updateGraph(function.behavior());
+    var liftedParameters = getParameters(function);
+
+    // We updated the old function's graph, so just take it for the new function.
+    return new GcbValueRelocationCppFunction(function.identifier,
         liftedParameters.toArray(Parameter[]::new),
         liftedResultTy,
         function.behavior());
