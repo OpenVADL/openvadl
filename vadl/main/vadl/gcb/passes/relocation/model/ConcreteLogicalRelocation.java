@@ -1,8 +1,7 @@
 package vadl.gcb.passes.relocation.model;
 
-import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
-import vadl.cppCodeGen.model.GcbValueRelocationCppFunction;
+import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.viam.Format;
 import vadl.viam.Relocation;
@@ -14,7 +13,7 @@ import vadl.viam.Relocation;
 public class ConcreteLogicalRelocation extends LogicalRelocation implements RelocationLowerable {
   // This is the function which computes the value for the
   // relocation.
-  protected final GcbValueRelocationCppFunction valueRelocation;
+  protected final GcbImmediateExtractionCppFunction valueRelocation;
   // This is the function which updates the value in the format.
   protected final GcbUpdateFieldRelocationCppFunction fieldUpdateFunction;
 
@@ -22,7 +21,7 @@ public class ConcreteLogicalRelocation extends LogicalRelocation implements Relo
    * Constructor.
    */
   public ConcreteLogicalRelocation(Relocation originalRelocation,
-                                   GcbValueRelocationCppFunction valueRelocation,
+                                   GcbImmediateExtractionCppFunction valueRelocation,
                                    Format format,
                                    Format.Field field,
                                    GcbUpdateFieldRelocationCppFunction fieldUpdateFunction,
@@ -33,7 +32,7 @@ public class ConcreteLogicalRelocation extends LogicalRelocation implements Relo
   }
 
   @Override
-  public GcbValueRelocationCppFunction valueRelocation() {
+  public GcbImmediateExtractionCppFunction valueRelocation() {
     return valueRelocation;
   }
 

@@ -44,6 +44,7 @@ public class CppTypeNormalizationForEncodingsPass extends CppTypeNormalizationPa
 
   @Override
   protected GcbFieldAccessCppFunction liftFunction(Format.FieldAccess fieldAccess) {
-    return createGcbFieldAccessCppFunction(fieldAccess.accessFunction(), fieldAccess);
+    return createGcbFieldAccessCppFunction(ensureNonNull(fieldAccess.encoding(), () ->
+        Diagnostic.error("must not be null", fieldAccess.sourceLocation())), fieldAccess);
   }
 }

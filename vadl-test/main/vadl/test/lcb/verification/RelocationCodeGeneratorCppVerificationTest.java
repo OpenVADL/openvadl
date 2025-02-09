@@ -4,7 +4,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -14,13 +13,14 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.cppCodeGen.CppTypeMap;
+import vadl.cppCodeGen.common.UpdateFieldRelocationFunctionCodeGenerator;
+import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
+import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
-import vadl.lcb.codegen.LcbGenericCodeGenerator;
-import vadl.lcb.codegen.relocation.RelocationCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -48,13 +48,18 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     // Move files into Docker Context
     {
       VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
+      VadlFileUtils.copyFile(Path.of(
+              "../../open-vadl/vadl/main/resources/templates/common/vadl-builtins.h"
+          ),
+          Path.of(configuration.outputPath() + "/vadl-builtins.h")
+      );
       VadlFileUtils.copyDirectory(
           Path.of(
               "../../open-vadl/vadl-test/main/resources/images/encodingCodeGeneratorCppVerification/"),
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 
-    var image = new ImageFromDockerfile()
+    var image = new ImageFromDockerfile("relocationodeverification", false)
         .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile"));
 
     return generateInputs(testSetup, image, configuration.outputPath());
@@ -114,6 +119,10 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
       });
     }
 
+    // Add vadl-builtin
+    copyMappings.add(new Pair<>(path.toString() + "/vadl-builtins.h",
+        "/vadl-builtins.h"));
+
     runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(image,
         copyMappings,
         path + "/result.csv",
@@ -154,12 +163,12 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     // TODO handle encoding.
 
     var normalisedImmediateExtractionFunction =
-        cppNormalisedImmediateExtraction.byFunction(immField.extractFunction());
+        new GcbImmediateExtractionCppFunction(immField.extractFunction());
 
     var extractionFunctionCodeGenerator =
-        new RelocationCodeGenerator(normalisedImmediateExtractionFunction);
+        new ValueRelocationFunctionCodeGenerator(normalisedImmediateExtractionFunction);
     var relocationOverrideFunctionCodeGenerator =
-        new RelocationCodeGenerator(relocation.fieldUpdateFunction());
+        new UpdateFieldRelocationFunctionCodeGenerator(relocation.fieldUpdateFunction());
 
     var extractionFunctionName = extractionFunctionCodeGenerator.genFunctionName();
     var relocationFunctionName = relocationOverrideFunctionCodeGenerator.genFunctionName();
@@ -175,6 +184,9 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             #include <bitset>
             #include <vector>
             #include <tuple>
+                        
+            // Imported by manual copy mapping
+            #include "/vadl-builtins.h"
 
             template<int start, int end, std::size_t N>
             std::bitset<N> project_range(std::bitset<N> bits)
@@ -223,7 +235,8 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
             """,
         extractionCppFunction,
         relocationOverrideCppFunction,
-        CppTypeMap.getCppTypeNameByVadlType(normalisedImmediateExtractionFunction.returnType()),
+        CppTypeMap.getCppTypeNameByVadlType(
+            normalisedImmediateExtractionFunction.returnType().asDataType().fittingCppType()),
         updatedValue,
         extractionFunctionName,
         relocationFunctionName,

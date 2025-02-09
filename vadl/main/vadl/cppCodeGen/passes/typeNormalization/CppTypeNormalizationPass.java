@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
-import vadl.cppCodeGen.model.GcbValueRelocationCppFunction;
+import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
@@ -134,7 +134,8 @@ public abstract class CppTypeNormalizationPass extends Pass {
    * {@link GcbFieldAccessCppFunction} is taken from {@code function.identifier}.
    */
   public static GcbFieldAccessCppFunction createGcbFieldAccessCppFunction(
-      Function function, Format.FieldAccess fieldAccess) {
+      Function function,
+      Format.FieldAccess fieldAccess) {
     var liftedResultTy = getResultTy(function);
     updateGraph(function.behavior());
     var liftedParameters = getParameters(function);
@@ -151,16 +152,16 @@ public abstract class CppTypeNormalizationPass extends Pass {
    * Changes the function so that all VADL types conform to CPP types
    * which simplifies the code generation.
    * All the non-conforming types will be upcasted to next higher bit size. The name of the
-   * {@link GcbValueRelocationCppFunction} is taken from {@code function.identifier}.
+   * {@link GcbImmediateExtractionCppFunction} is taken from {@code function.identifier}.
    */
-  public static GcbValueRelocationCppFunction createGcbRelocationCppFunction(
+  public static GcbImmediateExtractionCppFunction createGcbRelocationCppFunction(
       Function function) {
     var liftedResultTy = getResultTy(function);
     updateGraph(function.behavior());
     var liftedParameters = getParameters(function);
 
     // We updated the old function's graph, so just take it for the new function.
-    return new GcbValueRelocationCppFunction(function.identifier,
+    return new GcbImmediateExtractionCppFunction(function.identifier,
         liftedParameters.toArray(Parameter[]::new),
         liftedResultTy,
         function.behavior());

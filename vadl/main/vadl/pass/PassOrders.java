@@ -60,6 +60,7 @@ import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPa
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
+import vadl.lcb.template.lib.Target.EmitVadlBuiltinHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
@@ -191,6 +192,7 @@ public class PassOrders {
         "The LCB did ISA matching to and lowered common VIAM nodes to LLVM specific"
             + "nodes.");
 
+    order.add(new EmitVadlBuiltinHeaderFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));

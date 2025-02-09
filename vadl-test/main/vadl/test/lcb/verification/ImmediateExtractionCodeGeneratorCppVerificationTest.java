@@ -13,20 +13,16 @@ import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
+import vadl.cppCodeGen.common.GcbAccessOrExtractionFunctionCodeGenerator;
+import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
-import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.test.AbstractTest;
 import vadl.test.lcb.AbstractLcbTest;
 import vadl.utils.Pair;
 import vadl.utils.VadlFileUtils;
@@ -128,15 +124,13 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
       Long instruction,
       int fieldBitSize,
       CppTypeNormalizationPass.NormalisedTypeResult cppNormalisedImmediateExtraction) {
-    var extractionFunctionCodeGenerator = new LcbGenericCodeGenerator();
-
     var extractFunction =
-        cppNormalisedImmediateExtraction.byFunction(fieldAccess.fieldRef().extractFunction());
-
-    var extractionFunctionCode = extractionFunctionCodeGenerator.generateFunction(extractFunction);
-
-    var extractionFunctionName =
-        fieldAccess.fieldRef().extractFunction().identifier.lower();
+        new GcbImmediateExtractionCppFunction(fieldAccess.fieldRef().extractFunction());
+    var extractionFunctionCodeGenerator =
+        new GcbAccessOrExtractionFunctionCodeGenerator(extractFunction,
+            fieldAccess, extractFunction.identifier.lower(), fieldAccess.fieldRef().simpleName());
+    var extractionFunctionCode = extractionFunctionCodeGenerator.genFunctionDefinition();
+    var extractionFunctionName = extractionFunctionCodeGenerator.genFunctionName();
 
     String cppCode = String.format("""
             #include <cstdint>
@@ -193,7 +187,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
               }
             }
             """,
-        extractionFunctionCode.value(),
+        extractionFunctionCode,
         imm,
         fieldAccess.fieldRef().bitSlice().stream()
             .mapToObj(String::valueOf)

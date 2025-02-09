@@ -43,12 +43,6 @@ public class CppTypeNormalizationForDecodingsPass extends CppTypeNormalizationPa
     return createGcbFieldAccessCppFunction(fieldAccess.accessFunction(), fieldAccess);
   }
 
-  private static List<Parameter> getParameters(Function function) {
-    return Arrays.stream(function.parameters())
-        .map(CppTypeNormalizationForDecodingsPass::upcast)
-        .toList();
-  }
-
   private static Parameter upcast(Parameter parameter) {
     return new Parameter(parameter.identifier,
         upcast(parameter.type()), parameter.parent());

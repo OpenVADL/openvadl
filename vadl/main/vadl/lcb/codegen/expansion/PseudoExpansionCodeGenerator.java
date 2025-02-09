@@ -44,6 +44,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -98,6 +99,11 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   @Override
   protected void handle(CGenContext<Node> ctx, ReadMemNode toHandle) {
     throwNotAllowed(toHandle, "Memory reads");
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, SliceNode toHandle) {
+    throwNotAllowed(toHandle, "Slice node");
   }
 
   @Override

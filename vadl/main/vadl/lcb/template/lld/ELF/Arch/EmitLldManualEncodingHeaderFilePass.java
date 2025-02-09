@@ -52,7 +52,7 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
             .map(elfRelocation -> {
               var generator = new UpdateFieldRelocationFunctionCodeGenerator(
                   elfRelocation.fieldUpdateFunction());
-              return generator.genReturnExpression();
+              return generator.genFunctionDefinition();
             })
             .toList());
   }

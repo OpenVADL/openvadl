@@ -17,6 +17,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * Abstract base class responsible for generating C code from a given function's expression nodes.
@@ -63,6 +64,9 @@ public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerato
 
   @Handler
   protected abstract void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle);
+
+  @Handler
+  public abstract void handle(CGenContext<Node> ctx, SliceNode toHandle);
 
   public String genReturnExpression() {
     var returnNode = getSingleNode(function.behavior(), ReturnNode.class);

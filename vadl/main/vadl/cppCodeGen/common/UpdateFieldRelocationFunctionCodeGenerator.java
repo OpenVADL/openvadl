@@ -3,10 +3,13 @@ package vadl.cppCodeGen.common;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.util.stream.Collectors;
+import javax.sql.rowset.CachedRowSet;
 import vadl.cppCodeGen.AbstractFunctionCodeGenerator;
+import vadl.cppCodeGen.AbstractRelocationCodeGenerator;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
+import vadl.cppCodeGen.mixins.CRelocationMixins;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
 import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
 import vadl.javaannotations.DispatchFor;
@@ -15,6 +18,7 @@ import vadl.types.BitsType;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
  * Produce a pure function that generates relocations.
@@ -24,7 +28,8 @@ import vadl.viam.graph.dependency.ExpressionNode;
     context = CNodeContext.class,
     include = "vadl.cppCodeGen.model.nodes"
 )
-public class UpdateFieldRelocationFunctionCodeGenerator extends AbstractFunctionCodeGenerator {
+public class UpdateFieldRelocationFunctionCodeGenerator extends AbstractRelocationCodeGenerator
+    implements CRelocationMixins {
   protected final String functionName;
   protected final CNodeContext context;
 
@@ -34,7 +39,7 @@ public class UpdateFieldRelocationFunctionCodeGenerator extends AbstractFunction
   public UpdateFieldRelocationFunctionCodeGenerator(
       GcbUpdateFieldRelocationCppFunction gcbUpdateFieldRelocationCppFunction) {
     super(gcbUpdateFieldRelocationCppFunction);
-    this.functionName = function.simpleName();
+    this.functionName = function.identifier.lower();
     this.context = new CNodeContext(
         builder::append,
         (ctx, node)
@@ -43,29 +48,9 @@ public class UpdateFieldRelocationFunctionCodeGenerator extends AbstractFunction
     );
   }
 
-  @Handler
-  public void handle(CGenContext<Node> ctx, CppUpdateBitRangeNode toHandle) {
-    var bitWidth = ((BitsType) toHandle.type()).bitWidth();
-    ctx.wr("set_bits(");
-
-    // Inst
-    ctx.wr(String.format("std::bitset<%d>(", bitWidth));
-    ctx.gen(toHandle.value);
-    ctx.wr("), ");
-
-    // New value
-    ctx.wr(String.format("std::bitset<%d>(", bitWidth));
-    ctx.gen(toHandle.patch);
-    ctx.wr(")");
-
-    // Parts
-    ctx.wr(", std::vector<int> { ");
-    ctx.wr(toHandle.field.bitSlice()
-        .stream()
-        .mapToObj(String::valueOf)
-        .collect(Collectors.joining(", ")));
-    ctx.wr(" } ");
-    ctx.wr(").to_ulong()");
+  @Override
+  public void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
+    ctx.wr(toHandle.parameter().simpleName());
   }
 
   @Override
@@ -76,7 +61,7 @@ public class UpdateFieldRelocationFunctionCodeGenerator extends AbstractFunction
     function.ensure(function.behavior().isPureFunction(), "Function is not pure.");
 
     return CppTypeMap.getCppTypeNameByVadlType(returnType)
-        + " %s(%s)".formatted(functionName, "");
+        + " %s(%s)".formatted(functionName, genFunctionParameters(function.parameters()));
   }
 
   public String genReturnExpression() {
@@ -87,5 +72,10 @@ public class UpdateFieldRelocationFunctionCodeGenerator extends AbstractFunction
   @Override
   public CNodeContext context() {
     return context;
+  }
+
+  @Override
+  public String genFunctionName() {
+    return functionName;
   }
 }

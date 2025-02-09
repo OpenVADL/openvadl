@@ -2,16 +2,13 @@ package vadl.cppCodeGen.common;
 
 import static vadl.utils.GraphUtils.getSingleNode;
 
-import java.util.stream.Collectors;
-import vadl.cppCodeGen.AbstractFunctionCodeGenerator;
+import vadl.cppCodeGen.AbstractRelocationCodeGenerator;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
-import vadl.cppCodeGen.model.GcbValueRelocationCppFunction;
-import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
+import vadl.cppCodeGen.mixins.CRelocationMixins;
+import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.javaannotations.DispatchFor;
-import vadl.javaannotations.Handler;
-import vadl.types.BitsType;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -25,7 +22,8 @@ import vadl.viam.graph.dependency.FuncParamNode;
     context = CNodeContext.class,
     include = "vadl.cppCodeGen.model.nodes"
 )
-public class ValueRelocationFunctionCodeGenerator extends AbstractFunctionCodeGenerator {
+public class ValueRelocationFunctionCodeGenerator extends AbstractRelocationCodeGenerator
+    implements CRelocationMixins {
   protected final String functionName;
   protected final Options options;
   protected final CNodeContext context;
@@ -42,9 +40,9 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractFunctionCodeGe
    * Creates a new pure function code generator for the specified function.
    */
   public ValueRelocationFunctionCodeGenerator(
-      GcbValueRelocationCppFunction gcbValueRelocationCppFunction) {
+      GcbImmediateExtractionCppFunction gcbValueRelocationCppFunction) {
     super(gcbValueRelocationCppFunction);
-    this.functionName = function.simpleName();
+    this.functionName = function.identifier.lower();
     this.options = new Options(false, false);
     this.context = new CNodeContext(
         builder::append,
@@ -58,10 +56,10 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractFunctionCodeGe
    * Creates a new pure function code generator for the specified function.
    */
   public ValueRelocationFunctionCodeGenerator(
-      GcbValueRelocationCppFunction gcbValueRelocationCppFunction,
+      GcbImmediateExtractionCppFunction gcbValueRelocationCppFunction,
       Options options) {
     super(gcbValueRelocationCppFunction);
-    this.functionName = function.simpleName();
+    this.functionName = function.identifier.lower();
     this.options = options;
     this.context = new CNodeContext(
         builder::append,
@@ -76,31 +74,6 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractFunctionCodeGe
     ctx.wr(toHandle.parameter().simpleName());
   }
 
-  @Handler
-  public void handle(CGenContext<Node> ctx, CppUpdateBitRangeNode toHandle) {
-    var bitWidth = ((BitsType) toHandle.type()).bitWidth();
-    ctx.wr("set_bits(");
-
-    // Inst
-    ctx.wr(String.format("std::bitset<%d>(", bitWidth));
-    ctx.gen(toHandle.value);
-    ctx.wr("), ");
-
-    // New value
-    ctx.wr(String.format("std::bitset<%d>(", bitWidth));
-    ctx.gen(toHandle.patch);
-    ctx.wr(")");
-
-    // Parts
-    ctx.wr(", std::vector<int> { ");
-    ctx.wr(toHandle.field.bitSlice()
-        .stream()
-        .mapToObj(String::valueOf)
-        .collect(Collectors.joining(", ")));
-    ctx.wr(" } ");
-    ctx.wr(").to_ulong()");
-  }
-
   @Override
   public String genFunctionSignature() {
     var returnType = function.returnType().asDataType().fittingCppType();
@@ -111,9 +84,8 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractFunctionCodeGe
     var isConst = options.isConst();
     var isStatic = options.isStatic();
 
-
     return (isStatic ? "static " : "") + CppTypeMap.getCppTypeNameByVadlType(returnType)
-        + " %s(%s)".formatted(functionName, "")
+        + " %s(%s)".formatted(functionName, genFunctionParameters(function.parameters()))
         + (isConst ? " const" : "");
   }
 
@@ -125,5 +97,10 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractFunctionCodeGe
   @Override
   public CNodeContext context() {
     return context;
+  }
+
+  @Override
+  public String genFunctionName() {
+    return functionName;
   }
 }
