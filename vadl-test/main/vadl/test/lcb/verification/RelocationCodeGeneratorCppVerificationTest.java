@@ -160,7 +160,6 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     // Finally, we update the instructionWord with the given updatedValue and
     // apply the extraction function.
     // The result of the extraction function must be the updatedValue.
-    // TODO handle encoding.
 
     var normalisedImmediateExtractionFunction =
         new GcbImmediateExtractionCppFunction(immField.extractFunction());

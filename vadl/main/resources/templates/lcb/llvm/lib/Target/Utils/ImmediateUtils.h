@@ -2,6 +2,7 @@
 #define LLVM_LIB_TARGET_[(${namespace})]_UTILS_IMMEDIATEUTILS_H
 
 #include "llvm/Support/ErrorHandling.h"
+#include "../../vadl-builtins.h"
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
@@ -28,16 +29,16 @@ std::bitset<N> project_range(std::bitset<N> bits)
 }
 
 [# th:each="function : ${decodeFunctions}" ]
-static [(${function.value()})]
+static [(${function})]
 [/]
 
 [# th:each="function : ${encodeFunctions}" ]
-static [(${function.value()})]
+static [(${function})]
 [/]
 
 
 [# th:each="function : ${predicateFunctions}" ]
-static [(${function.value()})]
+static [(${function})]
 [/]
 
 namespace

@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.common.UpdateFieldRelocationFunctionCodeGenerator;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
-import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
