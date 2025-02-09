@@ -56,6 +56,8 @@ public class TypeChecker
     }
   }
 
+  // FIXME: Add a cache like with fetch()
+
   private void throwUnimplemented(Node node) {
     throw new RuntimeException(
         "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
@@ -335,6 +337,10 @@ public class TypeChecker
 
   @Override
   public Void visit(InstructionSetDefinition definition) {
+    if (definition.extendingNode != null) {
+      definition.extendingNode.accept(this);
+    }
+
     for (var def : definition.definitions) {
       def.accept(this);
     }
@@ -540,7 +546,8 @@ public class TypeChecker
 
   @Override
   public Void visit(ImportDefinition importDefinition) {
-    throwUnimplemented(importDefinition);
+    // Do nothing on purpose.
+    // The symboltable should have already resolved everything.
     return null;
   }
 
@@ -1187,54 +1194,71 @@ public class TypeChecker
   public Void visit(Identifier expr) {
 
     var origin = Objects.requireNonNull(expr.symbolTable).requireAs(expr, Node.class);
+
+    if (origin instanceof ConstantDefinition constDef) {
+      if (constDef.value.type == null) {
+        constDef.accept(this);
+      }
+      expr.type = constDef.value.type;
+      return null;
+    }
+
+    if (origin instanceof FormatDefinition.RangeFormatField field) {
+      // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
+      expr.type = field.type;
+      return null;
+    }
+
+    if (origin instanceof FormatDefinition.TypedFormatField field) {
+      // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
+      expr.type = field.typeLiteral.type;
+      return null;
+    }
+
+    if (origin instanceof FormatDefinition.DerivedFormatField field) {
+      if (field.expr.type == null) {
+        field.expr.accept(this);
+      }
+      expr.type = field.expr.type;
+      return null;
+    }
+
+    if (origin instanceof Parameter parameter) {
+      expr.type = parameter.typeLiteral.type;
+      return null;
+    }
+
+    if (origin instanceof CounterDefinition counter) {
+      if (counter.typeLiteral.type == null) {
+        counter.accept(this);
+      }
+      expr.type = Objects.requireNonNull(counter.typeLiteral.type);
+      return null;
+    }
+
+    if (origin instanceof LetStatement letStatement) {
+      // No need to check because this can only be the case if we are inside the let statement.
+      expr.type = Objects.requireNonNull(letStatement.getTypeOf(expr.name));
+      return null;
+    }
+
+    if (origin instanceof FunctionDefinition functionDefinition) {
+      // It's a call without arguments
+      if (functionDefinition.type == null) {
+        functionDefinition.accept(this);
+      }
+
+      if (!functionDefinition.params.isEmpty()) {
+        throw Diagnostic.error("Invalid Function Call", expr)
+            .description("Expected %s arguments but got `%s`", functionDefinition.params.size(), 0)
+            .build();
+      }
+      expr.type = functionDefinition.retType.type;
+      return null;
+    }
+
     if (origin != null) {
-      if (origin instanceof ConstantDefinition constDef) {
-        if (constDef.value.type == null) {
-          constDef.accept(this);
-        }
-        expr.type = constDef.value.type;
-        return null;
-      }
-
-      if (origin instanceof FormatDefinition.RangeFormatField field) {
-        // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
-        expr.type = field.type;
-        return null;
-      }
-
-      if (origin instanceof FormatDefinition.TypedFormatField field) {
-        // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
-        expr.type = field.typeLiteral.type;
-        return null;
-      }
-
-      if (origin instanceof FormatDefinition.DerivedFormatField field) {
-        if (field.expr.type == null) {
-          field.expr.accept(this);
-        }
-        expr.type = field.expr.type;
-        return null;
-      }
-
-      if (origin instanceof Parameter parameter) {
-        expr.type = parameter.typeLiteral.type;
-        return null;
-      }
-
-      if (origin instanceof CounterDefinition counter) {
-        if (counter.typeLiteral.type == null) {
-          counter.accept(this);
-        }
-        expr.type = Objects.requireNonNull(counter.typeLiteral.type);
-        return null;
-      }
-
-      if (origin instanceof LetStatement letStatement) {
-        // No need to check because this can only be the case if we are inside the let statement.
-        expr.type = Objects.requireNonNull(letStatement.getTypeOf(expr.name));
-        return null;
-      }
-
+      // It's not a builtin but we don't handle it yet.
       throw new RuntimeException("Don't handle class " + origin.getClass().getName());
     }
 

@@ -45,13 +45,11 @@ public interface TestFrontend {
      * before running the tests. This is currently done in the old vadl project.</p>
      */
     @Nullable
-    public static Provider globalProvider;
+    public static Provider globalProvider = new OpenVadlTestFrontend.Provider();
 
     /**
      * Creates a new instance of the {@link TestFrontend}.
      */
     public abstract TestFrontend createFrontend();
   }
-
-
 }

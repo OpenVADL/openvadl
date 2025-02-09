@@ -32,10 +32,15 @@ public class Specification extends Definition {
    * Returns the instruction set architecture of the specification.
    */
   public Optional<InstructionSetArchitecture> isa() {
-    return definitions()
+    // TODO: remove this method completely
+    var isaDef = definitions()
         .filter(InstructionSetArchitecture.class::isInstance)
         .map(InstructionSetArchitecture.class::cast)
         .findFirst();
+    if (isaDef.isEmpty()) {
+      return mip().map(MicroProcessor::isa);
+    }
+    return isaDef;
   }
 
   /**

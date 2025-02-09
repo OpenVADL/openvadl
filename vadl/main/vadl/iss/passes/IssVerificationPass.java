@@ -9,7 +9,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.error.DiagnosticBuilder;
 import vadl.error.DiagnosticList;
 import vadl.pass.PassName;
@@ -62,14 +61,16 @@ public class IssVerificationPass extends AbstractIssPass {
     return null;
   }
 
+  @SuppressWarnings("UnusedVariable")
+  @Deprecated
   private void checkMipExists(Specification viam, List<DiagnosticBuilder> diagnostics) {
-    if (viam.isa().isEmpty()) {
-      diagnostics.add(
-          error("No Micro Processor Definition found",
-              viam.identifier.sourceLocation())
-              .help("Add a `instruction set architecture` definition to your specification.")
-      );
-    }
+    //    if (viam.isa().isEmpty()) {
+    //      diagnostics.add(
+    //          error("No Micro Processor Definition found",
+    //              viam.identifier.sourceLocation())
+    //              .help("Add a `instruction set architecture` definition to your specification.")
+    //      );
+    //    }
   }
 
   private void checkProgramCounter(Specification viam, List<DiagnosticBuilder> diagnostics) {

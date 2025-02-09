@@ -19,6 +19,14 @@ public class FuncCallNode extends AbstractFunctionCallNode {
   @DataValue
   protected Function function;
 
+  public FuncCallNode(Function function, NodeList<ExpressionNode> args, Type type) {
+    super(args, type);
+    this.function = function;
+  }
+
+
+  // TODO: Remove this constructor
+  @Deprecated
   public FuncCallNode(NodeList<ExpressionNode> args, Function function, Type type) {
     super(args, type);
     this.function = function;

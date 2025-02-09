@@ -13,9 +13,10 @@ public class MicroProcessor extends Definition {
 
   private final InstructionSetArchitecture isa;
 
+  @Nullable
   private final Abi abi;
 
-
+  @Nullable
   private final Function start;
 
   @Nullable
@@ -24,8 +25,8 @@ public class MicroProcessor extends Definition {
   /**
    * Constructs the microprocessor.
    */
-  public MicroProcessor(Identifier identifier, InstructionSetArchitecture isa, Abi abi,
-                        Function start, @Nullable Function stop) {
+  public MicroProcessor(Identifier identifier, InstructionSetArchitecture isa, @Nullable Abi abi,
+                        @Nullable Function start, @Nullable Function stop) {
     super(identifier);
     this.isa = isa;
     this.abi = abi;
@@ -33,7 +34,19 @@ public class MicroProcessor extends Definition {
     this.stop = stop;
   }
 
+  /**
+   * Returns the abi and throws if the abi isn't set.
+   *
+   * @return the abi.
+   */
   public Abi abi() {
+    if (abi == null) {
+      throw new IllegalStateException("abi must be set");
+    }
+    return abi;
+  }
+
+  public @Nullable Abi abiNullable() {
     return abi;
   }
 
@@ -41,7 +54,19 @@ public class MicroProcessor extends Definition {
     return isa;
   }
 
+  /**
+   * Returns the start and throws if it isn't set.
+   *
+   * @return the start.
+   */
   public Function start() {
+    if (start == null) {
+      throw new IllegalStateException("start must be set");
+    }
+    return start;
+  }
+
+  public @Nullable Function startNullable() {
     return start;
   }
 

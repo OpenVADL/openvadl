@@ -18,7 +18,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import org.hamcrest.Factory;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -65,7 +64,7 @@ public class RegisterTest extends AbstractTest {
     runAndAssumeFailure(testSource, failureMessage);
   }
 
-  @Factory
+  @TestFactory
   public Stream<DynamicTest> testRegfile() {
     var spec = runAndGetViamSpecification("unit/register/valid_regfile.vadl");
 

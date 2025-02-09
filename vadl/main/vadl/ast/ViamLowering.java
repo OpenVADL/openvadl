@@ -4,11 +4,13 @@ package vadl.ast;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
@@ -25,7 +27,9 @@ import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
+import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Memory;
+import vadl.viam.MicroProcessor;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
@@ -156,7 +160,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @return the new identifier.
    */
   private vadl.viam.Identifier generateIdentifier(String viamId, WithSourceLocation locatable) {
-    return new vadl.viam.Identifier(viamId, locatable.sourceLocation());
+    var parts = viamId.split("::");
+    return new vadl.viam.Identifier(parts, locatable.sourceLocation());
   }
 
 
@@ -181,8 +186,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(ApplicationBinaryInterfaceDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    // FIXME: Generate ABI
+    return Optional.empty();
   }
 
   @Override
@@ -461,7 +466,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(CounterDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier().location());
-    // FIXME: WHAT ARE THESE PARAMETERS?
+
+    // FIXME: Further research for the parameters (probably don't apply to counter)
     var reg = new Register(identifier,
         (DataType) Objects.requireNonNull(definition.typeLiteral.type),
         Register.AccessKind.FULL,
@@ -475,7 +481,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var kind = Objects.requireNonNull(kinds.get(definition.kind));
     var counter = new Counter.RegisterCounter(identifier,
         reg,
-        Counter.Position.NEXT, //FIXME: read this from, annotation or somewhere?
+        Counter.Position.CURRENT, //FIXME: read this from, annotation or somewhere?
         kind);
     return Optional.of(counter);
   }
@@ -582,14 +588,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             behaviorLowering.getGraph(new BoolLiteral(true, SourceLocation.INVALID_SOURCE_LOCATION),
                 predicateName);
 
-        // FIXME: This is stupid, both link to each other, so I must create them after each other.
-        var predicate = new Function(generateIdentifier(predicateName, derivedField.identifier),
-            new vadl.viam.Parameter[0], Type.bool(), predicateGraph);
         var parameter = new vadl.viam.Parameter(
-            new vadl.viam.Identifier("doesnotexist", SourceLocation.INVALID_SOURCE_LOCATION),
+            new vadl.viam.Identifier(fieldDefinition.identifier().name,
+                SourceLocation.INVALID_SOURCE_LOCATION),
             Objects.requireNonNull(derivedField.expr.type));
-        parameter.setParent(predicate);
-        predicate.setParameters(new vadl.viam.Parameter[] {parameter});
+        var predicate = new Function(
+            generateIdentifier(predicateName, derivedField.identifier),
+            new vadl.viam.Parameter[] {parameter}, Type.bool(), predicateGraph
+        );
 
 
         var field = new Format.FieldAccess(identifier, access, encoding, predicate);
@@ -621,14 +627,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
     var behaivor = behaviorLowering.getGraph(definition.expr, "behaviour");
 
-    var function = new Function(identifier,
+    return Optional.of(new Function(identifier,
         parameters.toArray(new vadl.viam.Parameter[0]),
         Objects.requireNonNull(definition.retType.type),
-        behaivor);
-
-    parameters.forEach(p -> p.setParent(function));
-
-    return Optional.of(function);
+        behaivor));
   }
 
   @Override
@@ -639,8 +641,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(ImportDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    // Do nothing on purpose.
+    // The symboltable should have already resolved everything.
+    return Optional.empty();
   }
 
   private Assembly visitAssembly(AssemblyDefinition definition,
@@ -709,10 +712,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return Optional.of(instruction);
   }
 
-  @Override
-  public Optional<vadl.viam.Definition> visit(InstructionSetDefinition definition) {
-    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+  private InstructionSetArchitecture visitIsa(InstructionSetDefinition definition) {
+    var identifier = generateIdentifier(definition.identifier().name, definition.identifier());
 
+    // FIXME: make this togroup instead of toList
     var allDefinitions =
         definition.definitions.stream().map(this::fetch).flatMap(Optional::stream).toList();
     var formats = filterAndCastToInstance(allDefinitions, Format.class);
@@ -728,7 +731,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .findFirst().orElse(null);
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
 
-    return Optional.of(new vadl.viam.InstructionSetArchitecture(
+    return new vadl.viam.InstructionSetArchitecture(
         identifier,
         currentSpecification,
         formats,
@@ -740,7 +743,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         registerFiles,
         programCounter,
         memories
-    ));
+    );
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(InstructionSetDefinition definition) {
+    // The ISA isn't directly lowered when we visit it.
+    // This is because there can be multiple ISAs in the AST but only one in the VIAM and the
+    // selection and lowering is driven by the MicroprocessorDefinition.
+    return Optional.empty();
   }
 
   @Override
@@ -783,8 +794,57 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(MicroProcessorDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    // create emtpy list of ast definitions
+    // for each isa in mip add definitions to definition list
+    // create new isa ast node with list of definitions
+    // visitIsa on created isa ast node
+    var isa = visitIsa(mergeIsa(definition.implementedIsaNodes));
+    return Optional.of(new MicroProcessor(identifier, isa, null, null, null));
+  }
+
+  private InstructionSetDefinition mergeIsa(List<InstructionSetDefinition> definitions) {
+
+    Set<InstructionSetDefinition> processedIsas =
+        Collections.newSetFromMap(new IdentityHashMap<>());
+    var nodeList = new ArrayList<Definition>();
+
+    for (var definition : definitions) {
+      mergeInto(definition, nodeList, processedIsas);
+    }
+
+    var identifier = findIsaIdentifier(definitions);
+    var location = findIsaLocation(definitions);
+
+    // create new isa ast node
+    return new InstructionSetDefinition(identifier, null, nodeList, location);
+  }
+
+  private void mergeInto(InstructionSetDefinition definition, List<Definition> nodeCollection,
+                         Set<InstructionSetDefinition> processedIsas) {
+    // check if ISA was already added
+    if (processedIsas.contains(definition)) {
+      return;
+    }
+
+    var extending = definition.extendingNode;
+    if (extending != null) {
+      mergeInto(extending, nodeCollection, processedIsas);
+    }
+
+    // add all definition nodes to node collection
+    nodeCollection.addAll(definition.definitions);
+    processedIsas.add(definition);
+  }
+
+  private Identifier findIsaIdentifier(List<InstructionSetDefinition> definitions) {
+    // FIXME: If more than 1 isas, use some other identifier (from target annotation)
+    return definitions.get(0).identifier();
+  }
+
+  private SourceLocation findIsaLocation(List<InstructionSetDefinition> definitions) {
+    // FIXME: If more than 1 isas, use some other location (or invalid location)
+    return definitions.get(0).sourceLocation();
   }
 
   @Override

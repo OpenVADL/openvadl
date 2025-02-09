@@ -256,12 +256,15 @@ public interface DefinitionVisitor {
     @Override
     public void visit(MicroProcessor microProcessor) {
       beforeTraversal(microProcessor);
-      var start = microProcessor.start();
-      start.accept(this);
+      var start = microProcessor.startNullable();
+      if (start != null) {
+        start.accept(this);
+      }
       var stop = microProcessor.stop();
       if (stop != null) {
         stop.accept(this);
       }
+      microProcessor.isa().accept(this);
       afterTraversal(microProcessor);
     }
 

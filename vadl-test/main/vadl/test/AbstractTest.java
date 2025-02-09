@@ -250,7 +250,11 @@ public abstract class AbstractTest {
     var success = frontend.runSpecification(testSource.toUri());
     if (!success) {
       var logs = frontend.getLogAsString();
-      var errorLogs = logs.substring(logs.indexOf(" error: "));
+      var errorIndex = logs.indexOf(" error: ");
+      var errorLogs = logs;
+      if (errorIndex != -1) {
+        errorLogs = errorLogs.substring(errorIndex);
+      }
 
       System.out.println(
           "Test source: ---------------\n" + testSourceToString(testSource.toUri())
@@ -314,8 +318,8 @@ public abstract class AbstractTest {
    * Sets the PassManager and runs the provided specification with the pass order.
    *
    * @deprecated Use {@link #setupPassManagerAndRunSpec(String, PassOrder)} instead and use the
-   *     {@link PassOrder#untilFirst(Class)} method instead.
-   *     <pre>{@code
+   * {@link PassOrder#untilFirst(Class)} method instead.
+   * <pre>{@code
    *                                      var config = getConfiguration(false);
    *                                      var setup = setupPassManagerAndRunSpec(
    *                                          "sys/risc-v/rv64i.vadl",

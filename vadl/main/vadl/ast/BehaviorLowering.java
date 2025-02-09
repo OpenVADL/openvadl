@@ -70,7 +70,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   Graph getGraph(Expr expr, String name) {
     var exprNode = fetch(expr);
 
-    // FIXME: Should we set the parent here too?
     var graph = new Graph(name);
     ControlNode endNode = graph.addWithInputs(new ReturnNode(exprNode));
     endNode.setSourceLocation(expr.sourceLocation());
@@ -80,8 +79,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   Graph getInstructionGraph(InstructionDefinition definition) {
-    // FIXME: there should be a link to the generated definition but it's not ready yet so we cannot
-    //  fetch it.
     var graph = new Graph("%s Behavior".formatted(definition.identifier().name));
     currentGraph = graph;
 
@@ -187,7 +184,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       if (counterDefinition.kind == CounterDefinition.CounterKind.PROGRAM) {
         var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
 
-        // FIXME: Fill in the null here correctly
         return new ReadRegNode(counter.registerRef(), (DataType) Objects.requireNonNull(expr.type),
             null);
       }
@@ -196,11 +192,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // Let statement and expression
     if (computedTarget instanceof LetStatement letStatement) {
-      return new LetNode(new LetNode.Name(expr.name, expr.sourceLocation()),
+      return new LetNode(new LetNode.Name(expr.name, letStatement.sourceLocation()),
           fetch(letStatement.valueExpr));
     }
     if (computedTarget instanceof LetExpr letExpr) {
-      return new LetNode(new LetNode.Name(expr.name, expr.sourceLocation()),
+      return new LetNode(new LetNode.Name(expr.name, letExpr.sourceLocation()),
           fetch(letExpr.valueExpr));
     }
 
@@ -208,6 +204,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (computedTarget instanceof Parameter parameter) {
       var param = viamLowering.fetch(parameter).orElseThrow();
       return new FuncParamNode(param);
+    }
+
+    // Function call without arguments (and no parenthesis)
+    if (computedTarget instanceof FunctionDefinition functionDefinition) {
+      var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
+      return new FuncCallNode(function, new NodeList<>(), Objects.requireNonNull(expr.type));
     }
 
     // Builtin Call
@@ -372,12 +374,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
       var counterType = (DataType) Objects.requireNonNull(counterDefinition.typeLiteral.type);
 
-      // FIXME: Set the correct last argument
       var regRead = new ReadRegNode(counter.registerRef(),
-          (DataType) Objects.requireNonNull(expr.type),
-          null);
+          (DataType) Objects.requireNonNull(expr.type), null);
 
-      // FIXME: Why devided by 8?
+      // FIXME: Properly divide by memory bit width (8 bits for one byte is quite common)
       // What about bytes that aren't 8 bits?
       var scale =
           counterType.bitWidth() / 8;
@@ -579,7 +579,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       if (computedTarget instanceof CounterDefinition counterDefinition) {
         var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
-        // FIXME: Replace the null;
         var write = new WriteRegNode(counter.registerRef(), value, null);
         return SubgraphContext.of(statement, write);
       }

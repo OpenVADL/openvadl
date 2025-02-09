@@ -44,6 +44,7 @@ public class VadlParser {
         new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
     var ast = parse(parser);
     ast.fileUri = path.toUri();
+
     return ast;
   }
 
