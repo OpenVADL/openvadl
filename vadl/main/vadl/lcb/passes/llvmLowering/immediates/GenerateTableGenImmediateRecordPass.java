@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
-import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
