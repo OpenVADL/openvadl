@@ -45,7 +45,7 @@ public class BaseInfoFunctionProvider {
               new ValueRelocationFunctionCodeGenerator.Options(
                   false, true
               ));
-          var function = new CppFunctionCode(generator.genReturnExpression());
+          var function = new CppFunctionCode(generator.genFunctionDefinition());
           return new BaseInfoRecord(
               relocation.valueRelocation().identifier.lower(),
               function,

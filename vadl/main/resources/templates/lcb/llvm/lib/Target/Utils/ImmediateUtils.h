@@ -2,7 +2,7 @@
 #define LLVM_LIB_TARGET_[(${namespace})]_UTILS_IMMEDIATEUTILS_H
 
 #include "llvm/Support/ErrorHandling.h"
-#include "../../vadl-builtins.h"
+#include "vadl-builtins.h"
 #include <cstdint>
 #include <unordered_map>
 #include <vector>

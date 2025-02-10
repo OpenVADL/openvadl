@@ -2,6 +2,7 @@
 #define LLVM_LIB_TARGET_[(${namespace})]_MCTARGETDESC_[(${namespace})]BASEINFO_H
 
 #include "llvm/Support/ErrorHandling.h"
+#include "vadl-builtins.h"
 #include <cstdint>
 
 class [(${namespace})]BaseInfo
