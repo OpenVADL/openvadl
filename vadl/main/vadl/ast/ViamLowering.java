@@ -358,15 +358,32 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private AsmGrammarElement visitAsmElement(AsmGrammarElementDefinition definition) {
 
     if (definition.optionAlternatives != null) {
-      var semanticPredicate = potentialSemanticPredicate(definition.optionAlternatives);
+      var semPredGraph = potentialSemanticPredicate(definition.optionAlternatives);
+      Function semPredFunction = null;
+      if (semPredGraph != null) {
+        semPredFunction = new Function(
+            generateIdentifier("semanticPredicate", definition.optionAlternatives.sourceLocation()),
+            new Parameter[0], Type.bool(), semPredGraph);
+      }
+      var firstTokens =
+          Objects.requireNonNull(definition.optionAlternatives.enclosingBlockFirstTokens);
       var alternatives = visitAsmAlternatives(definition.optionAlternatives, true);
-      return new AsmOption(semanticPredicate, alternatives);
+      return new AsmOption(semPredFunction, firstTokens, alternatives);
     }
 
     if (definition.repetitionAlternatives != null) {
-      var semanticPredicate = potentialSemanticPredicate(definition.repetitionAlternatives);
+      var semPredGraph = potentialSemanticPredicate(definition.repetitionAlternatives);
+      Function semPredFunction = null;
+      if (semPredGraph != null) {
+        semPredFunction = new Function(
+            generateIdentifier("semanticPredicate",
+                definition.repetitionAlternatives.sourceLocation()),
+            new Parameter[0], Type.bool(), semPredGraph);
+      }
+      var firstTokens =
+          Objects.requireNonNull(definition.repetitionAlternatives.enclosingBlockFirstTokens);
       var alternatives = visitAsmAlternatives(definition.repetitionAlternatives, true);
-      return new AsmRepetition(semanticPredicate, alternatives);
+      return new AsmRepetition(semPredFunction, firstTokens, alternatives);
     }
 
     if (definition.groupAlternatives != null) {
@@ -385,7 +402,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       AsmGrammarElement literal = null;
       if (definition.localVar.asmLiteral.id == null
           || !definition.localVar.asmLiteral.id.name.equals("null")) {
-        literal = visitAsmLiteral(assignTo, definition.localVar.asmLiteral);
+        literal = visitAsmLiteral(new AsmAssignToLocalVar(definition.localVar.id.name),
+            definition.localVar.asmLiteral);
       }
       return new AsmLocalVarDefinition(definition.localVar.id.name, literal,
           requireNonNull(definition.asmType));

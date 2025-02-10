@@ -128,12 +128,14 @@ public class AsmLL1Checker {
 
   private void verifyOptionOrRepetitionElement(AsmGrammarAlternativesDefinition alternatives,
                                                List<AsmGrammarElementDefinition> successors) {
+    var expected = firstSetComputer.visit(alternatives);
     var expectedTokensAfter = expectedTokens(successors);
+    alternatives.enclosingBlockFirstTokens = expected;
 
     if (alternatives.alternatives.size() == 1) {
       var firstElement = alternatives.alternatives.get(0).get(0);
       if (firstElement.semanticPredicate != null) {
-        var expected = firstSetComputer.visit(alternatives);
+
         if (getOverlappingTokens(expected, expectedTokensAfter).isEmpty()) {
           throw Diagnostic.error("Misplaced semantic predicate.", firstElement)
               .note("There is no LL(1) conflict here.").build();

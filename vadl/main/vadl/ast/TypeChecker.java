@@ -864,6 +864,7 @@ public class TypeChecker
 
     if (definition.localVar != null) {
       definition.localVar.accept(this);
+      definition.asmType = definition.localVar.asmType;
     }
 
     visitAsmLiteral(definition);

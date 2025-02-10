@@ -9,6 +9,7 @@
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "vadl-builtins.h"
 #include <sstream>
 #include <set>
 
@@ -48,7 +49,5 @@ namespace llvm {
     }
   }
 
-[# th:each="rule : ${grammarRules}" ]
-  [(${rule})]
-[/]
+[(${grammarRules})]
 }

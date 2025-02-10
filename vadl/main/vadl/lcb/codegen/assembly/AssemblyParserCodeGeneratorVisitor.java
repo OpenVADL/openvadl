@@ -8,6 +8,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.text.StringSubstitutor;
@@ -21,9 +22,11 @@ import vadl.types.BuiltInTable;
 import vadl.types.asmTypes.ConstantAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.viam.Constant;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.ViamError;
 import vadl.viam.asm.AsmGrammarVisitor;
+import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmAlternatives;
 import vadl.viam.asm.elements.AsmAssignToAttribute;
@@ -63,6 +66,7 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   private final ArrayDeque<String> operands = new ArrayDeque<>();
 
   private String parserCompareFunction = "equals_insensitive";
+  private String currentRuleTypeString = "invalid";
 
   /**
    * Constructor.
@@ -298,20 +302,22 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmBuiltinRule rule) {
+    // TODO: attribute handling
     if (!rule.simpleName().equals("Expression")) {
       throw new ViamError("Unknown AsmParser builtin: " + rule.simpleName());
     }
     var tempVar = symbolTable.getNextVariable();
 
     writer.write(StringSubstitutor.replace("""
-        RuleParsingResult<${type}> ${namespace}AsmRecursiveDescentParser::${ruleName}() {
+          RuleParsingResult<${type}> ${namespace}AsmRecursiveDescentParser::${ruleName}() {
             RuleParsingResult<${type}> ${tempVar} = BuiltinExpression();
             if(!${tempVar}.Success) {
                 return RuleParsingResult<${type}>(${tempVar}.getError());
             }
-            // TODO: save value if needed?
+        
             return RuleParsingResult<${type}>(${tempVar});
           }
+        
         """, Map.of(
         "type", rule.getAsmType().toCppTypeString(namespace),
         CommonVarNames.NAMESPACE, namespace,
@@ -322,10 +328,14 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmNonTerminalRule rule) {
-    writer.write(String.format("RuleParsingResult<%s> %sAsmRecursiveDescentParser::%s() {\n",
-        rule.getAsmType().toCppTypeString(namespace), namespace, rule.simpleName()));
+    // TODO: attribute handling
+    var type = rule.getAsmType().toCppTypeString(namespace);
+    this.currentRuleTypeString = type;
+
+    writer.write(String.format("  RuleParsingResult<%s> %sAsmRecursiveDescentParser::%s() {\n",
+        type, namespace, rule.simpleName()));
     rule.getAlternatives().accept(this);
-    writer.write("  }\n");
+    writer.write("  }\n\n");
   }
 
   @Override
@@ -337,7 +347,7 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
     var token = ParserGenerator.getLlvmTokenKind(rule.simpleName());
 
     writer.write(StringSubstitutor.replace("""
-        RuleParsingResult<${type}> ${namespace}AsmRecursiveDescentParser::${ruleName}() {
+          RuleParsingResult<${type}> ${namespace}AsmRecursiveDescentParser::${ruleName}() {
             auto tok = Lexer.getTok();
             if(tok.getKind() != ${token}) {
               return RuleParsingResult<${type}>(tok.getLoc(),
@@ -348,6 +358,7 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
                 tok.getLoc(), tok.getEndLoc()));
             }
           }
+        
         """, Map.of(
         "type", rule.getAsmType().toCppTypeString(namespace),
         CommonVarNames.NAMESPACE, namespace,
@@ -359,11 +370,13 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmAlternative element) {
+    // TODO: attribute handling
     element.elements().forEach(e -> e.accept(this));
   }
 
   @Override
   public void visit(AsmAlternatives element) {
+    // TODO: attribute handling
     var alternatives = element.alternatives();
     if (alternatives.size() == 1) {
       alternatives.get(0).accept(this);
@@ -385,23 +398,26 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   }
 
   private String getAlternativeGuard(AsmAlternative alternative) {
-    String condition;
-    if (alternative.semanticPredicateFunction() != null) {
-      var functionCodeGenerator =
-          new AsmParserFunctionCodeGenerator(alternative.semanticPredicateFunction());
-      condition = functionCodeGenerator.genReturnExpression();
-    } else {
-      condition = alternative.firstTokens().stream().map(asmtoken ->
-          asmtoken.getStringLiteral() != null
-              ? String.format("Lexer.getTok().getString().%s(\"%s\")",
-              parserCompareFunction,
-              asmtoken.getStringLiteral())
-              : String.format("Lexer.getTok().getKind() == %s",
-              ParserGenerator.getLlvmTokenKind(asmtoken.getRuleName()))
-      ).collect(Collectors.joining(" || "));
+    return "if (" +
+        getGuardCondition(alternative.semanticPredicate(), alternative.firstTokens()) +
+        ") {\n";
+  }
+
+  private String getGuardCondition(@Nullable Function semanticPredicateFunction,
+                                   Set<AsmToken> firstTokens) {
+    if (semanticPredicateFunction != null) {
+      var functionCodeGenerator = new AsmParserFunctionCodeGenerator(semanticPredicateFunction);
+      return functionCodeGenerator.genReturnExpression();
     }
 
-    return "if (" + condition + ") {\n";
+    return firstTokens.stream().map(asmtoken ->
+        asmtoken.getStringLiteral() != null
+            ? String.format("Lexer.getTok().getString().%s(\"%s\")",
+            parserCompareFunction,
+            asmtoken.getStringLiteral())
+            : String.format("Lexer.getTok().getKind() == %s",
+            ParserGenerator.getLlvmTokenKind(asmtoken.getRuleName()))
+    ).collect(Collectors.joining(" || "));
   }
 
   private String alternativesErrorMessage(AsmAlternatives alternatives) {
@@ -427,41 +443,83 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmFunctionInvocation element) {
-
+    // TODO: attribute handling
+    // print function with PureFunctionGenerator
+    // parse function arguments into tempVars
+    // call function with tempVars
   }
 
   @Override
   public void visit(AsmGroup element) {
-
+    // TODO: attribute handling
+    element.alternatives().accept(this);
   }
 
   @Override
   public void visit(AsmLocalVarDefinition element) {
-
+    if (element.asmLiteral() == null) {
+      writer.write(String.format("RuleParsingResult<NoData> %s;\n", element.localVarName()));
+      return;
+    }
+    element.asmLiteral().accept(this);
   }
 
   @Override
   public void visit(AsmLocalVarUse element) {
-
+    // TODO: attribute handling
   }
 
   @Override
   public void visit(AsmOption element) {
-
+    // TODO: attribute handling
+    writer.write(
+        "if (" + getGuardCondition(element.semanticPredicate(), element.firstTokens()) + ") {\n");
+    element.alternatives().accept(this);
+    writer.write("}\n");
   }
 
   @Override
   public void visit(AsmRepetition element) {
-
+    // TODO: attribute handling
+    writer.write("while (" + getGuardCondition(element.semanticPredicate(), element.firstTokens()) +
+        ") {\n");
+    element.alternatives().accept(this);
+    writer.write("}\n");
   }
 
   @Override
   public void visit(AsmRuleInvocation element) {
-
+    // TODO: attribute handling
+    var tempVar = symbolTable.getNextVariable();
+    writer.write(StringSubstitutor.replace("""
+          RuleParsingResult<type> ${tempVar} = ${ruleName}();
+          if(!${tempVar}.Success) {
+              return RuleParsingResult<${ruleType}>(${tempVar}.getError());
+          }
+        """, Map.of(
+        "tempVar", tempVar,
+        "ruleName", element.rule().simpleName(),
+        "type", element.asmType().toCppTypeString(namespace),
+        "ruleType", currentRuleTypeString
+    )));
   }
 
   @Override
   public void visit(AsmStringLiteralUse element) {
-
+    // TODO: attribute handling
+    if (element.value().trim().isEmpty()) {
+      return;
+    }
+    var tempVar = symbolTable.getNextVariable();
+    writer.write(StringSubstitutor.replace("""
+          RuleParsingResult<StringRef> ${tempVar} = Literal("${stringLiteral}");
+          if(!${tempVar}.Success) {
+              return RuleParsingResult<${ruleType}>(${tempVar}.getError());
+          }
+        """, Map.of(
+        "tempVar", tempVar,
+        "stringLiteral", element.value(),
+        "ruleType", currentRuleTypeString
+    )));
   }
 }

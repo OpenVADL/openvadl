@@ -120,21 +120,20 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
         .toList();
   }
 
-  private Stream<String> grammarRules(Specification specification) {
+  private String grammarRules(Specification specification) {
     var parserCaseSensitive = specification.assemblyDescription()
         .map(asmDesc -> asmDesc.annotation(AsmParserCaseSensitive.class))
         .map(AsmParserCaseSensitive::isCaseSensitive).orElse(false);
 
-    return specification.assemblyDescription()
+    var writer = new StringWriter();
+    var visitor = new AssemblyParserCodeGeneratorVisitor(specification.simpleName(),
+        parserCaseSensitive, writer);
+
+    specification.assemblyDescription()
         .map(asmDesc -> asmDesc.rules().stream())
         .orElse(Stream.empty())
-        .map(rule -> {
-          var writer = new StringWriter();
-          var visitor = new AssemblyParserCodeGeneratorVisitor(
-              specification.simpleName(), parserCaseSensitive, writer);
+        .forEach(visitor::visit);
 
-          visitor.visit(rule);
-          return writer.toString();
-        });
+    return writer.toString();
   }
 }

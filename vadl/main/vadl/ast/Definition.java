@@ -4501,6 +4501,8 @@ class AsmGrammarAlternativesDefinition extends Definition {
   AsmType asmType;
   @Nullable
   List<Set<AsmToken>> alternativesFirstTokens;
+  @Nullable
+  Set<AsmToken> enclosingBlockFirstTokens;
 
   public AsmGrammarAlternativesDefinition(List<List<AsmGrammarElementDefinition>> alternatives,
                                           SourceLocation loc) {
