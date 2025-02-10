@@ -47,6 +47,13 @@ public class VadlFileUtils {
   }
 
   /**
+   * Copy a file from {@code source} to {@code target}.
+   */
+  public static void copyFile(Path source, Path target) throws IOException {
+    Files.copy(source, target);
+  }
+
+  /**
    * Copy a directory from {@code source} to {@code target}.
    */
   public static void copyDirectory(Path source, Path target) throws IOException {

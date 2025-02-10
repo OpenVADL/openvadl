@@ -11,13 +11,12 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppClassImplName;
-import vadl.cppCodeGen.model.CppFunction;
-import vadl.cppCodeGen.model.CppFunctionName;
+import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
-import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
+import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -62,7 +61,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
    */
   private List<RenderedPseudoInstruction> pseudoInstructions(
       Specification specification,
-      Map<PseudoInstruction, CppFunction> cppFunctions,
+      Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
       List<CompilerRelocation> relocations,
@@ -77,13 +76,14 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
 
   private @Nonnull RenderedPseudoInstruction renderPseudoInstruction(
       Specification specification,
-      Map<PseudoInstruction, CppFunction> cppFunctions,
+      Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
       List<CompilerRelocation> relocations,
       PassResults passResults,
       PseudoInstruction pseudoInstruction) {
-    var function = ensureNonNull(cppFunctions.get(pseudoInstruction), "cpp function must exist)");
+    var function = ensureNonNull(cppFunctions.get(pseudoInstruction),
+        "cpp function must exist)");
 
     var codeGen =
         new PseudoExpansionCodeGenerator(lcbConfiguration().processorName().value(),
@@ -107,7 +107,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   private List<RenderedPseudoInstruction> compilerInstructions(
       Abi abi,
       Specification specification,
-      Map<PseudoInstruction, CppFunction> cppFunctions,
+      Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
       List<CompilerRelocation> relocations,
@@ -128,8 +128,9 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var cppFunctionsForPseudoInstructions =
-        (IdentityHashMap<PseudoInstruction, CppFunction>) passResults.lastResultOf(
-            PseudoExpansionFunctionGeneratorPass.class);
+        (IdentityHashMap<PseudoInstruction, GcbExpandPseudoInstructionCppFunction>)
+            passResults.lastResultOf(
+                PseudoExpansionFunctionGeneratorPass.class);
     var cppFunctions = cppFunctionsForPseudoInstructions.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(

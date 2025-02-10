@@ -19,7 +19,6 @@ import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
-import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
@@ -57,9 +56,11 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
+import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
+import vadl.lcb.template.lib.Target.EmitVadlBuiltinHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
@@ -157,7 +158,6 @@ public class PassOrders {
     order.add(new AssemblyReplacementNodePass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
     order.add(new PseudoInstructionArgumentReplacementPass(gcbConfiguration));
-    order.add(new PseudoExpansionFunctionGeneratorPass(gcbConfiguration));
 
     addHtmlDump(order, gcbConfiguration, "gcbProcessing",
         "Now the gcb produced all necessary encoding function for field accesses "
@@ -176,6 +176,8 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
     order.add(new DummyAnnotationPass(configuration));
 
+    order.add(new PseudoExpansionFunctionGeneratorPass(configuration));
+
     order.add(new IsaMachineInstructionMatchingPass(configuration));
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new GenerateRegisterClassesPass(configuration));
@@ -191,6 +193,7 @@ public class PassOrders {
         "The LCB did ISA matching to and lowered common VIAM nodes to LLVM specific"
             + "nodes.");
 
+    order.add(new EmitVadlBuiltinHeaderFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));

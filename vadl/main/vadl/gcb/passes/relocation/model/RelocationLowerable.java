@@ -1,6 +1,7 @@
 package vadl.gcb.passes.relocation.model;
 
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
+import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
@@ -27,12 +28,12 @@ public interface RelocationLowerable {
   /**
    * Get the cpp function for changing a value for a relocation.
    */
-  CppFunction valueRelocation();
+  GcbImmediateExtractionCppFunction valueRelocation();
 
   /**
    * Get the cpp function for updating a field in a format.
    */
-  CppFunction fieldUpdateFunction();
+  GcbUpdateFieldRelocationCppFunction fieldUpdateFunction();
 
   /**
    * Get the ELF name.

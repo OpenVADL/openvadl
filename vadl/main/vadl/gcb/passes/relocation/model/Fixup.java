@@ -1,6 +1,6 @@
 package vadl.gcb.passes.relocation.model;
 
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 
 /**
@@ -29,7 +29,7 @@ public class Fixup {
     return lowerable;
   }
 
-  public CppFunction valueRelocation() {
+  public GcbImmediateExtractionCppFunction valueRelocation() {
     return lowerable.valueRelocation();
   }
 

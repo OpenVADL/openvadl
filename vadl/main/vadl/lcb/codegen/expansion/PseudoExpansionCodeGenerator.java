@@ -18,7 +18,7 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.context.CNodeWithBaggageContext;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
@@ -44,6 +44,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -57,7 +58,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
 
   private final String namespace;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
-  private final Map<Format.Field, CppFunction> immediateDecodings;
+  private final Map<Format.Field, GcbFieldAccessCppFunction> immediateDecodings;
   private final Map<Format.Field, List<VariantKind>> immVariants;
   private final List<CompilerRelocation> relocations;
   private final PseudoInstruction pseudoInstruction;
@@ -70,7 +71,8 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   public PseudoExpansionCodeGenerator(String namespace,
                                       IdentifyFieldUsagePass.ImmediateDetectionContainer
                                           fieldUsages,
-                                      Map<Format.Field, CppFunction> immediateDecodings,
+                                      Map<Format.Field, GcbFieldAccessCppFunction>
+                                          immediateDecodings,
                                       Map<Format.Field, List<VariantKind>> immVariants,
                                       List<CompilerRelocation> relocations,
                                       PseudoInstruction pseudoInstruction,
@@ -98,6 +100,11 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   @Override
   protected void handle(CGenContext<Node> ctx, ReadMemNode toHandle) {
     throwNotAllowed(toHandle, "Memory reads");
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, SliceNode toHandle) {
+    throwNotAllowed(toHandle, "Slice node");
   }
 
   @Override
@@ -293,7 +300,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
 
     context.ln(genFunctionSignature())
         .ln("{")
-        .tabIn()
+        .spacedIn()
         .ln("std::vector< MCInst > result;");
 
     for (var node : nodes) {
@@ -305,7 +312,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     }
 
     context.ln("return result;")
-        .tabOut()
+        .spaceOut()
         .ln("}");
 
     return builder.toString();

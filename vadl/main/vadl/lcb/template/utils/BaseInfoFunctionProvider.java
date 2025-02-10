@@ -6,10 +6,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
-import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassResults;
 
@@ -41,10 +41,11 @@ public class BaseInfoFunctionProvider {
         .map(x -> (RelocationLowerable) x)
         .sorted(Comparator.comparing(o -> o.elfRelocationName().value()))
         .map(relocation -> {
-          var generator = new LcbGenericCodeGenerator();
-          var function = generator.generateFunction(
-              relocation.valueRelocation(),
-              new LcbGenericCodeGenerator.Options(false, true));
+          var generator = new ValueRelocationFunctionCodeGenerator(relocation.valueRelocation(),
+              new ValueRelocationFunctionCodeGenerator.Options(
+                  false, true
+              ));
+          var function = new CppFunctionCode(generator.genFunctionDefinition());
           return new BaseInfoRecord(
               relocation.valueRelocation().identifier.lower(),
               function,

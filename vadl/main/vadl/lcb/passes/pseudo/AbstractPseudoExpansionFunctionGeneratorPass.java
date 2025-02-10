@@ -1,14 +1,14 @@
-package vadl.gcb.passes.pseudo;
+package vadl.lcb.passes.pseudo;
 
 import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.cppCodeGen.model.CppFunction;
 import vadl.cppCodeGen.model.CppGenericType;
 import vadl.cppCodeGen.model.CppParameter;
 import vadl.cppCodeGen.model.CppType;
+import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
@@ -21,7 +21,7 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 
 /**
- * The {@link PseudoExpansionCodeGenerator} requires a function to generate the expansion.
+ * The {@code PseudoExpansionCodeGenerator} requires a function to generate the expansion.
  * However, we only have a {@link Graph} as behavior. This pass wraps the graph to a
  * {@link Function}.
  */
@@ -32,7 +32,8 @@ public abstract class AbstractPseudoExpansionFunctionGeneratorPass extends Pass 
   }
 
   /**
-   * Get the instructions for which {@link CppFunction} should be generated.
+   * Get the instructions for which {@link GcbExpandPseudoInstructionCppFunction} should be
+   * generated.
    */
   protected abstract Stream<Pair<PseudoInstruction, Graph>> getApplicable(
       PassResults passResults,
@@ -41,7 +42,7 @@ public abstract class AbstractPseudoExpansionFunctionGeneratorPass extends Pass 
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var result = new IdentityHashMap<PseudoInstruction, CppFunction>();
+    var result = new IdentityHashMap<PseudoInstruction, GcbExpandPseudoInstructionCppFunction>();
 
     getApplicable(passResults, viam)
         .forEach(x -> {
@@ -50,7 +51,8 @@ public abstract class AbstractPseudoExpansionFunctionGeneratorPass extends Pass 
           var param = new CppParameter(new Identifier("instruction",
               SourceLocation.INVALID_SOURCE_LOCATION),
               ty);
-          var function = new CppFunction(pseudoInstruction.identifier.append("expand"),
+          var function = new GcbExpandPseudoInstructionCppFunction(
+              pseudoInstruction.identifier.append("expand"),
               new Parameter[] {param},
               new CppGenericType("std::vector", new CppType("MCInst", false, false)),
               pseudoInstruction.behavior());

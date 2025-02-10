@@ -16,11 +16,11 @@ import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.common.GcbAccessOrExtractionFunctionCodeGenerator;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
-import vadl.lcb.codegen.LcbGenericCodeGenerator;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
 import vadl.utils.Pair;
@@ -36,6 +36,11 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     // Move files into Docker Context
     {
       VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
+      VadlFileUtils.copyFile(Path.of(
+              "../../open-vadl/vadl/main/resources/templates/common/vadl-builtins.h"
+          ),
+          Path.of(configuration.outputPath() + "/vadl-builtins.h")
+      );
       VadlFileUtils.copyDirectory(
           Path.of(
               "../../open-vadl/vadl-test/main/resources/images/encodingCodeGeneratorCppVerification/"),
@@ -98,6 +103,10 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
       });
     }
 
+    // Add vadl-builtin
+    copyMappings.add(new Pair<>(path.toString() + "/vadl-builtins.h",
+        "/vadl-builtins.h"));
+
     runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(image,
         copyMappings,
         path + "/result.csv",
@@ -112,19 +121,31 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
   TestCase render(String testName,
                   int sample,
-                  CppFunction accessFunction,
-                  CppFunction encodingFunction) {
-    var decodeFunction = new LcbGenericCodeGenerator().generateFunction(accessFunction);
-    var encodeFunction = new LcbGenericCodeGenerator().generateFunction(encodingFunction);
+                  GcbFieldAccessCppFunction accessFunction,
+                  GcbFieldAccessCppFunction encodingFunction) {
+    var decodeFunctionGenerator =
+        new GcbAccessOrExtractionFunctionCodeGenerator(accessFunction, accessFunction.fieldAccess(),
+            accessFunction.identifier.lower(),
+            accessFunction.fieldAccess().fieldRef().simpleName());
+    var encodeFunctionGenerator =
+        new GcbAccessOrExtractionFunctionCodeGenerator(encodingFunction, encodingFunction.fieldAccess(),
+            encodingFunction.identifier.lower(),
+            encodingFunction.fieldAccess().fieldRef().simpleName());
+
+    var decodeFunction = decodeFunctionGenerator.genFunctionDefinition();
+    var encodeFunction = encodeFunctionGenerator.genFunctionDefinition();
     String expectedReturnType =
-        CppTypeMap.getCppTypeNameByVadlType(encodingFunction.returnType());
+        CppTypeMap.getCppTypeNameByVadlType(CppTypeMap.upcast(encodingFunction.returnType()));
 
     String cppCode = String.format("""
             #include <cstdint>
             #include <iostream>
             #include <bitset>
             #include <vector>
-
+                        
+            // Imported by manual copy mapping
+            #include "/vadl-builtins.h"
+                        
             template<int start, int end, std::size_t N>
             std::bitset<N> project_range(std::bitset<N> bits)
             {
@@ -168,8 +189,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
               }
             }
             """,
-        decodeFunction.value(),
-        encodeFunction.value(),
+        decodeFunction,
+        encodeFunction,
         expectedReturnType,
         sample,
         encodingFunction.identifier.lower(),

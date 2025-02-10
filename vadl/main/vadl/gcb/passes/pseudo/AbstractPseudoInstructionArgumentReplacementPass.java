@@ -31,7 +31,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
  * In the example below, {@code NOP} has one {@link Instruction} with
  * two registers and an immediate. This pass will copy the behavior
  * of {@code ADDI} and replace the arguments and returns the applied graph.
- * This applied graph will be used in the {@link PseudoExpansionFunctionGeneratorPass}
+ * This applied graph will be used in the {@code PseudoExpansionFunctionGeneratorPass}
  * for the expansion of pseudo instructions.
  * <code>
  * pseudo instruction NOP =

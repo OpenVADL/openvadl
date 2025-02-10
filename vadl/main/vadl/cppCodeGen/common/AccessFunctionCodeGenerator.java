@@ -7,7 +7,9 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.viam.Format;
+import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -18,6 +20,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -28,18 +31,6 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
   protected final Format.FieldAccess fieldAccess;
   protected final String functionName;
   protected final String fieldName;
-
-  /**
-   * Creates a new pure function code generator for the specified function.
-   *
-   * @param fieldAccess The field fieldAccess for which the function should be generated
-   */
-  public AccessFunctionCodeGenerator(Format.FieldAccess fieldAccess) {
-    super(fieldAccess.accessFunction());
-    this.fieldAccess = fieldAccess;
-    this.functionName = function.simpleName();
-    this.fieldName = fieldAccess.fieldRef().simpleName();
-  }
 
   /**
    * Creates a new pure function code generator for the specified function. The function will be
@@ -73,6 +64,28 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
     this.fieldName = fieldName == null ? fieldAccess.fieldRef().simpleName() : fieldName;
   }
 
+  /**
+   * Creates a new pure function code generator for the specified function. The function will be
+   * named with the specified name. The field to access will be the specified field.
+   *
+   * @param accessOrExtractionFunction The access function to access a field which is not equivalent
+   *                                   to {@code FieldAccess#accessFunction} or an extraction
+   *                                   function.
+   * @param fieldAccess                The field fieldAccess for which the function should be
+   *                                   generated.
+   * @param functionName               The name of the access function to generate
+   * @param fieldName                  The name of the field to access
+   */
+  public AccessFunctionCodeGenerator(Function accessOrExtractionFunction,
+                                     Format.FieldAccess fieldAccess,
+                                     @Nullable String functionName,
+                                     @Nullable String fieldName) {
+    super(accessOrExtractionFunction);
+    this.fieldAccess = fieldAccess;
+    this.functionName = functionName == null ? function.simpleName() : functionName;
+    this.fieldName = fieldName == null ? fieldAccess.fieldRef().simpleName() : fieldName;
+  }
+
   @Override
   protected void handle(CGenContext<Node> ctx, ReadRegNode toHandle) {
     throwNotAllowed(toHandle, "Register reads");
@@ -86,6 +99,11 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
   @Override
   protected void handle(CGenContext<Node> ctx, ReadMemNode toHandle) {
     throwNotAllowed(toHandle, "Memory reads");
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, SliceNode toHandle) {
+    throwNotAllowed(toHandle, "Slice node reads");
   }
 
   @Override

@@ -33,76 +33,76 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
 
     Assertions.assertLinesMatch("""
         uint32_t RV64IM_Btype_ABSOLUTE_imm(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Btype_RELATIVE_imm(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Ftype_ABSOLUTE_sft(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Ftype_RELATIVE_sft(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Itype_ABSOLUTE_imm(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Itype_RELATIVE_imm(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Jtype_ABSOLUTE_imm(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Jtype_RELATIVE_imm(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Stype_ABSOLUTE_imm(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Stype_RELATIVE_imm(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Utype_ABSOLUTE_imm(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_Utype_RELATIVE_imm(uint32_t input) {
-        return input;
+           return input;
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-        return ((uint32_t) ((symbol) + (2048)) >> (12));
+           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-        return ((uint32_t) ((symbol) + (2048)) >> (12));
+           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-        return ((uint32_t) ((symbol) + (2048)) >> (12));
+           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-        return ((uint32_t) ((symbol) + (2048)) >> (12));
+           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-        return ((uint32_t) ((symbol) + (2048)) >> (12));
+           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-        return ((uint32_t) ((symbol) + (2048)) >> (12));
+           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-        return ((int16_t) symbol);
+           return ((int16_t) (symbol));
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-        return ((int16_t) symbol);
+           return ((int16_t) (symbol));
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-        return ((int16_t) symbol);
+           return ((int16_t) (symbol));
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-        return ((int16_t) symbol);
+           return ((int16_t) (symbol));
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-        return ((int16_t) symbol);
+           return ((int16_t) (symbol));
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-        return ((int16_t) symbol);
+           return ((int16_t) (symbol));
         }
         """.trim().lines(), output);
   }

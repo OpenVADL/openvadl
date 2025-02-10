@@ -12,6 +12,7 @@ import vadl.cppCodeGen.context.CNodeContext;
 import vadl.javaannotations.Handler;
 import vadl.utils.Pair;
 import vadl.viam.Function;
+import vadl.viam.Parameter;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.BeginNode;
@@ -81,21 +82,30 @@ public interface CDefaultMixins {
     default String genFunctionSignature() {
       var function = function();
       var returnType = function.returnType().asDataType().fittingCppType();
-      var cppArgs = Stream.of(function.parameters())
-          .map(p -> Pair.of(p.simpleName(), requireNonNull(p.type().asDataType().fittingCppType())))
-          .toList();
 
       function.ensure(returnType != null, "No fitting Cpp type found for return type %s",
           returnType);
       function.ensure(function.behavior().isPureFunction(), "Function is not pure.");
 
-      var cppArgsString = cppArgs.stream().map(
+      return CppTypeMap.getCppTypeNameByVadlType(returnType)
+          + " %s(%s)".formatted(genFunctionName(), genFunctionParameters(function.parameters()));
+    }
+
+    /**
+     * Generate the parameters for the given {@code parameters}. It will change the type
+     * if its type is not a valid CPP type.
+     *
+     * @return a comma seperated string with the parameter types and names.
+     */
+    default String genFunctionParameters(Parameter[] parameters) {
+      var cppArgs = Stream.of(parameters)
+          .map(p -> Pair.of(p.simpleName(), requireNonNull(p.type().asDataType().fittingCppType())))
+          .toList();
+
+      return cppArgs.stream().map(
           s -> CppTypeMap.getCppTypeNameByVadlType(s.right())
               + " " + s.left()
       ).collect(Collectors.joining(", "));
-
-      return CppTypeMap.getCppTypeNameByVadlType(returnType)
-          + " %s(%s)".formatted(genFunctionName(), cppArgsString);
     }
 
     /**
@@ -107,7 +117,7 @@ public interface CDefaultMixins {
       var returnNode = getSingleNode(function().behavior(), ReturnNode.class);
       context().wr(genFunctionSignature())
           .wr(" {\n")
-          .wr("\treturn ")
+          .wr("   return ")
           .gen(returnNode.value())
           .wr(";\n}");
       return builder().toString();

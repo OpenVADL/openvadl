@@ -14,6 +14,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -58,5 +59,10 @@ public class PureFunctionCodeGenerator extends FunctionCodeGenerator {
   @Override
   public void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
     throwNotAllowed(toHandle, "Asm builtin calls");
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, SliceNode toHandle) {
+    throwNotAllowed(toHandle, "Slice node reads");
   }
 }

@@ -29,106 +29,107 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
     Assertions.assertLinesMatch("""
         #ifndef LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
         #define LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
-        
+               
         #include "llvm/Support/ErrorHandling.h"
+        #include "vadl-builtins.h"
         #include <cstdint>
         #include <unordered_map>
         #include <vector>
         #include <stdio.h>
         #include <bitset>
-        
+               
         // "__extension__" suppresses warning
         __extension__ typedef          __int128 int128_t;
         __extension__ typedef unsigned __int128 uint128_t;
-        
+               
         template<int start, int end, std::size_t N>
         std::bitset<N> project_range(std::bitset<N> bits)
         {
             std::bitset<N> result;
             size_t result_index = 0; // Index for the new bitset
-        
+               
             // Extract bits from the range [start, end]
             for (size_t i = start; i <= end; ++i) {
               result[result_index] = bits[i];
             result_index++;
             }
-        
+               
             return result;
         }
-        
-        
+               
+               
         static int64_t RV64IM_Btype_immS_decode(uint16_t param) {
-        return (((int64_t) param)) << (1);
+           return VADL_lsl(VADL_sextract(param, 12), 64, ((uint64_t) 0x0000000000000001 ), 64);
         }
         static int64_t RV64IM_Itype_immS_decode(uint16_t param) {
-        return ((int64_t) param);
+           return VADL_sextract(param, 12);
         }
         static int64_t RV64IM_Jtype_immS_decode(uint32_t param) {
-        return (((int64_t) param)) << (1);
+           return VADL_lsl(VADL_sextract(param, 20), 64, ((uint64_t) 0x0000000000000001 ), 64);
         }
         static int64_t RV64IM_Stype_immS_decode(uint16_t param) {
-        return ((int64_t) param);
+           return VADL_sextract(param, 12);
         }
         static int64_t RV64IM_Utype_immUp_decode(uint32_t param) {
-        return (((int64_t) param)) << (12);
+           return VADL_lsl(VADL_sextract(param, 20), 64, ((uint64_t) 0x000000000000000c ), 64);
         }
         static uint8_t RV64IM_Ftype_shamt_decode(uint8_t param) {
-        return param;
+           return param;
         }
         static uint8_t RV64IM_Rtype_shamt_decode(uint8_t param) {
-        return param;
+           return param;
         }
-        
-        
-        
+               
+               
+               
         static uint16_t RV64IM_Btype_immS_encoding(int64_t immS) {
-        return (project_range<1, 12>(std::bitset<64>(immS)) << 0).to_ulong();
+           return (project_range<1, 12>(std::bitset<64>(immS)) << 0).to_ulong();
         }
         static uint16_t RV64IM_Itype_immS_encoding(int64_t immS) {
-        return (project_range<0, 11>(std::bitset<64>(immS)) << 0).to_ulong();
+           return (project_range<0, 11>(std::bitset<64>(immS)) << 0).to_ulong();
         }
         static uint16_t RV64IM_Stype_immS_encoding(int64_t immS) {
-        return (project_range<0, 11>(std::bitset<64>(immS)) << 0).to_ulong();
+           return (project_range<0, 11>(std::bitset<64>(immS)) << 0).to_ulong();
         }
         static uint32_t RV64IM_Jtype_immS_encoding(int64_t immS) {
-        return (project_range<1, 20>(std::bitset<64>(immS)) << 0).to_ulong();
+           return (project_range<1, 20>(std::bitset<64>(immS)) << 0).to_ulong();
         }
         static uint32_t RV64IM_Utype_immUp_encoding(int64_t immUp) {
-        return (project_range<12, 31>(std::bitset<64>(immUp)) << 0).to_ulong();
+           return (project_range<12, 31>(std::bitset<64>(immUp)) << 0).to_ulong();
         }
         static uint8_t RV64IM_Ftype_shamt_encoding(uint8_t shamt) {
-        return (project_range<0, 5>(std::bitset<6>(shamt)) << 0).to_ulong();
+           return (project_range<0, 5>(std::bitset<6>(shamt)) << 0).to_ulong();
         }
         static uint8_t RV64IM_Rtype_shamt_encoding(uint8_t shamt) {
-        return (project_range<0, 4>(std::bitset<5>(shamt)) << 0).to_ulong();
+           return (project_range<0, 4>(std::bitset<5>(shamt)) << 0).to_ulong();
         }
-        
-        
-        
-        
+               
+               
+               
+               
         static bool RV64IM_Btype_immS_predicate(int64_t immS_decode) {
-        return 1;
+           return ((bool) 0x1 );
         }
         static bool RV64IM_Ftype_shamt_predicate(uint8_t shamt_decode) {
-        return 1;
+           return ((bool) 0x1 );
         }
         static bool RV64IM_Itype_immS_predicate(int64_t immS_decode) {
-        return 1;
+           return ((bool) 0x1 );
         }
         static bool RV64IM_Jtype_immS_predicate(int64_t immS_decode) {
-        return 1;
+           return ((bool) 0x1 );
         }
         static bool RV64IM_Rtype_shamt_predicate(uint8_t shamt_decode) {
-        return 1;
+           return ((bool) 0x1 );
         }
         static bool RV64IM_Stype_immS_predicate(int64_t immS_decode) {
-        return 1;
+           return ((bool) 0x1 );
         }
         static bool RV64IM_Utype_immUp_predicate(int64_t immUp_decode) {
-        return 1;
+           return ((bool) 0x1 );
         }
-        
-        
+               
+               
         namespace
         {
             class ImmediateUtils
@@ -147,7 +148,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                               , IK_RV64IM_Utype_immUp_decode
                              \s
                             };
-        
+               
                 static uint64_t applyDecoding(const uint64_t value, rv64imImmediateKind kind)
                 {
                     switch (kind)
@@ -175,10 +176,10 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                     }
                 }
             };
-        
+               
         } // end of anonymous namespace
-        
-        #endif // LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
+               
+        #endif // LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H 
         """.trim().lines(), output);
   }
 }

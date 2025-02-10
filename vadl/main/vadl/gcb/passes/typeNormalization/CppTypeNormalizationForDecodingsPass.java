@@ -1,16 +1,13 @@
 package vadl.gcb.passes.typeNormalization;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
-import vadl.cppCodeGen.model.CppFunction;
+import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.pass.PassName;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Function;
-import vadl.viam.Parameter;
 import vadl.viam.Specification;
 
 /**
@@ -30,27 +27,16 @@ public class CppTypeNormalizationForDecodingsPass extends CppTypeNormalizationPa
   }
 
   @Override
-  protected Stream<Pair<Format.Field, Function>> getApplicable(Specification viam) {
+  protected Stream<Pair<Format.FieldAccess, Function>> getApplicable(Specification viam) {
     return viam.isa()
         .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(x -> x.fieldAccesses().stream())
-        .map(x -> new Pair<>(x.fieldRef(), x.accessFunction()));
+        .map(x -> new Pair<>(x, x.accessFunction()));
   }
 
   @Override
-  protected CppFunction liftFunction(Function function) {
+  protected GcbFieldAccessCppFunction liftFunction(Format.FieldAccess fieldAccess) {
     // LLVM's decoder requires uint64_t parameters.
-    return makeTypesCppConformWithParamType(function.identifier, function, getParameters(function));
-  }
-
-  private static List<Parameter> getParameters(Function function) {
-    return Arrays.stream(function.parameters())
-        .map(CppTypeNormalizationForDecodingsPass::upcast)
-        .toList();
-  }
-
-  private static Parameter upcast(Parameter parameter) {
-    return new Parameter(parameter.identifier,
-        upcast(parameter.type()), parameter.parent());
+    return createGcbFieldAccessCppFunction(fieldAccess.accessFunction(), fieldAccess);
   }
 }
