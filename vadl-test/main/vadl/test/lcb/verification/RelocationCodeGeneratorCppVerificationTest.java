@@ -59,7 +59,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 
-    var image = new ImageFromDockerfile("relocationodeverification", false)
+    var image = new ImageFromDockerfile()
         .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile"));
 
     return generateInputs(testSetup, image, configuration.outputPath());
