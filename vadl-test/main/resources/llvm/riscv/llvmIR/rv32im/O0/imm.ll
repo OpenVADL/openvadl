@@ -1,3 +1,5 @@
+; RUN: $LLC -mtriple=rv32im -O0 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
+
 define signext i32 @zero() nounwind {
   ; CHECK-LABEL: zero: # @zero
   ; CHECK: ADDI a0,zero,0

@@ -1,3 +1,5 @@
+; RUN: $LLC -mtriple=rv32im -O3 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
+
 define i32 @indirectbr(ptr %target) nounwind {
   ; CHECK-LABEL: indirectbr: # @indirectbr
   ; CHECK-LABEL: # %bb.0:

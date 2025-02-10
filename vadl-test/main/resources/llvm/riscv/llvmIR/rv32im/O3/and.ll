@@ -1,4 +1,5 @@
-; RUN: FileCheck %s
+; RUN: $LLC -mtriple=rv32im -O3 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
+
 define i32 @and32_0x7ff(i32 %x) {
 ; CHECK-LABEL: and32_0x7ff: # @and32_0x7ff
 ; CHECK:         ANDI a0,a0,2047

@@ -1,3 +1,5 @@
+; RUN: $LLC -mtriple=rv32im -O3 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
+
 define signext i32 @square(i32 %a) nounwind {
 ; CHECK-LABEL: square: # @square
 ; CHECK-LABEL: # %bb.0:
