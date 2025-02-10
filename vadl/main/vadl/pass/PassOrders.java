@@ -19,7 +19,7 @@ import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
-import vadl.gcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
+import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
