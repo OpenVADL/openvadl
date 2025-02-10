@@ -290,352 +290,352 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_CALL_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::LUI);
-        		a.addOperand(MCOperand::createReg(processorNameValue::X1));
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi, Ctx));
-        		a.addOperand(c);
-        		result.push_back(a);
-        		MCInst d = MCInst();
-        		d.setOpcode(processorNameValue::JALR);
-        		d.addOperand(MCOperand::createReg(processorNameValue::X1));
-        		d.addOperand(MCOperand::createReg(processorNameValue::X1));
-        		const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(0));
-        		MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo, Ctx));
-        		d.addOperand(f);
-        		result.push_back(d);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::LUI);
+              a.addOperand(MCOperand::createReg(processorNameValue::X1));
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi, Ctx));
+              a.addOperand(c);
+              result.push_back(a);
+              MCInst d = MCInst();
+              d.setOpcode(processorNameValue::JALR);
+              d.addOperand(MCOperand::createReg(processorNameValue::X1));
+              d.addOperand(MCOperand::createReg(processorNameValue::X1));
+              const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(0));
+              MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo, Ctx));
+              d.addOperand(f);
+              result.push_back(d);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_TAIL_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::AUIPC);
-        		a.addOperand(MCOperand::createReg(processorNameValue::X6));
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi, Ctx));
-        		a.addOperand(c);
-        		result.push_back(a);
-        		MCInst d = MCInst();
-        		d.setOpcode(processorNameValue::JALR);
-        		d.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		d.addOperand(MCOperand::createReg(processorNameValue::X6));
-        		const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(0));
-        		MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo, Ctx));
-        		d.addOperand(f);
-        		result.push_back(d);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::AUIPC);
+              a.addOperand(MCOperand::createReg(processorNameValue::X6));
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi, Ctx));
+              a.addOperand(c);
+              result.push_back(a);
+              MCInst d = MCInst();
+              d.setOpcode(processorNameValue::JALR);
+              d.addOperand(MCOperand::createReg(processorNameValue::X0));
+              d.addOperand(MCOperand::createReg(processorNameValue::X6));
+              const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(0));
+              MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo, Ctx));
+              d.addOperand(f);
+              result.push_back(d);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_RET_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::JALR);
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X1));
-        		a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::JALR);
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X1));
+              a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_J_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::JAL);
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Jtype_imm, Ctx));
-        		a.addOperand(c);
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::JAL);
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Jtype_imm, Ctx));
+              a.addOperand(c);
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_NOP_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::ADDI);
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::ADDI);
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_MOV_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::ADDI);
-        		a.addOperand(instruction.getOperand(0));
-        		a.addOperand(instruction.getOperand(1));
-        		a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::ADDI);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(instruction.getOperand(1));
+              a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_NOT_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::XORI);
-        		a.addOperand(instruction.getOperand(0));
-        		a.addOperand(instruction.getOperand(1));
-        		a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(4095)));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::XORI);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(instruction.getOperand(1));
+              a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(4095)));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_NEG_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::SUB);
-        		a.addOperand(instruction.getOperand(0));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		a.addOperand(instruction.getOperand(1));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::SUB);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(instruction.getOperand(1));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_SNEZ_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::SLTU);
-        		a.addOperand(instruction.getOperand(0));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		a.addOperand(instruction.getOperand(1));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::SLTU);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(instruction.getOperand(1));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_SLTZ_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::SLT);
-        		a.addOperand(instruction.getOperand(0));
-        		a.addOperand(instruction.getOperand(1));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::SLT);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(instruction.getOperand(1));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_SGTZ_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::SLT);
-        		a.addOperand(instruction.getOperand(0));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		a.addOperand(instruction.getOperand(1));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::SLT);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(instruction.getOperand(1));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_BEQZ_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::BEQ);
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
-        		a.addOperand(c);
-        		a.addOperand(instruction.getOperand(0));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::BEQ);
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+              a.addOperand(c);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_BNEZ_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::BNE);
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
-        		a.addOperand(c);
-        		a.addOperand(instruction.getOperand(0));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::BNE);
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+              a.addOperand(c);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_BLEZ_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::BGE);
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
-        		a.addOperand(c);
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		a.addOperand(instruction.getOperand(0));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::BGE);
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+              a.addOperand(c);
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(instruction.getOperand(0));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_BGEZ_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::BGE);
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
-        		a.addOperand(c);
-        		a.addOperand(instruction.getOperand(0));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::BGE);
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+              a.addOperand(c);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_BLTZ_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::BLT);
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
-        		a.addOperand(c);
-        		a.addOperand(instruction.getOperand(0));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::BLT);
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+              a.addOperand(c);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_BGTZ_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::BLT);
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
-        		a.addOperand(c);
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		a.addOperand(instruction.getOperand(0));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::BLT);
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_Btype_imm, Ctx));
+              a.addOperand(c);
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(instruction.getOperand(0));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_LLA_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::LUI);
-        		a.addOperand(instruction.getOperand(0));
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi, Ctx));
-        		a.addOperand(c);
-        		result.push_back(a);
-        		MCInst d = MCInst();
-        		d.setOpcode(processorNameValue::ADDI);
-        		d.addOperand(instruction.getOperand(0));
-        		d.addOperand(instruction.getOperand(0));
-        		const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(1));
-        		MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo, Ctx));
-        		d.addOperand(f);
-        		result.push_back(d);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::LUI);
+              a.addOperand(instruction.getOperand(0));
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi, Ctx));
+              a.addOperand(c);
+              result.push_back(a);
+              MCInst d = MCInst();
+              d.setOpcode(processorNameValue::ADDI);
+              d.addOperand(instruction.getOperand(0));
+              d.addOperand(instruction.getOperand(0));
+              const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(1));
+              MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo, Ctx));
+              d.addOperand(f);
+              result.push_back(d);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_LI_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::LUI);
-        		a.addOperand(instruction.getOperand(0));
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi, Ctx));
-        		a.addOperand(c);
-        		result.push_back(a);
-        		MCInst d = MCInst();
-        		d.setOpcode(processorNameValue::ADDI);
-        		d.addOperand(instruction.getOperand(0));
-        		d.addOperand(instruction.getOperand(0));
-        		const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(1));
-        		MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo, Ctx));
-        		d.addOperand(f);
-        		result.push_back(d);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::LUI);
+              a.addOperand(instruction.getOperand(0));
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi, Ctx));
+              a.addOperand(c);
+              result.push_back(a);
+              MCInst d = MCInst();
+              d.setOpcode(processorNameValue::ADDI);
+              d.addOperand(instruction.getOperand(0));
+              d.addOperand(instruction.getOperand(0));
+              const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(1));
+              MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo, Ctx));
+              d.addOperand(f);
+              result.push_back(d);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_RESERVED_PSEUDO_RET_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::JALR);
-        		a.addOperand(MCOperand::createReg(processorNameValue::X0));
-        		a.addOperand(MCOperand::createReg(processorNameValue::X1));
-        		a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
-        		result.push_back(a);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::JALR);
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X1));
+              a.addOperand(MCOperand::createImm(RV64IM_Itype_immS_decode(0)));
+              result.push_back(a);
+              return result;
         }
                 
                 
                 
         std::vector<MCInst> processorNameValueMCInstExpander::PROCESSORNAMEVALUE_RESERVED_PSEUDO_CALL_expand(const MCInst& instruction) const
         {
-        		std::vector< MCInst > result;
-        		MCInst a = MCInst();
-        		a.setOpcode(processorNameValue::LUI);
-        		a.addOperand(MCOperand::createReg(processorNameValue::X1));
-        		const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
-        		MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi, Ctx));
-        		a.addOperand(c);
-        		result.push_back(a);
-        		MCInst d = MCInst();
-        		d.setOpcode(processorNameValue::JALR);
-        		d.addOperand(MCOperand::createReg(processorNameValue::X1));
-        		d.addOperand(MCOperand::createReg(processorNameValue::X1));
-        		const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(0));
-        		MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo, Ctx));
-        		d.addOperand(f);
-        		result.push_back(d);
-        		return result;
+              std::vector< MCInst > result;
+              MCInst a = MCInst();
+              a.setOpcode(processorNameValue::LUI);
+              a.addOperand(MCOperand::createReg(processorNameValue::X1));
+              const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(0));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_RV64IM_hi, Ctx));
+              a.addOperand(c);
+              result.push_back(a);
+              MCInst d = MCInst();
+              d.setOpcode(processorNameValue::JALR);
+              d.addOperand(MCOperand::createReg(processorNameValue::X1));
+              d.addOperand(MCOperand::createReg(processorNameValue::X1));
+              const MCExpr* e = MCOperandToMCExpr(instruction.getOperand(0));
+              MCOperand f = MCOperand::createExpr(processorNameValueMCExpr::create(e, processorNameValueMCExpr::VariantKind::VK_RV64IM_lo, Ctx));
+              d.addOperand(f);
+              result.push_back(d);
+              return result;
         }
         """.trim().lines(), output);
   }

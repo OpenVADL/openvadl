@@ -300,7 +300,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
 
     context.ln(genFunctionSignature())
         .ln("{")
-        .tabIn()
+        .spacedIn()
         .ln("std::vector< MCInst > result;");
 
     for (var node : nodes) {
@@ -312,7 +312,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     }
 
     context.ln("return result;")
-        .tabOut()
+        .spaceOut()
         .ln("}");
 
     return builder.toString();

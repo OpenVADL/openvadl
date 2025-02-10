@@ -46,15 +46,15 @@ public abstract class CGenContext<T> {
   /**
    * Enters tab mode and every following write is tabbed until {@code tabOut} is called.
    */
-  public CGenContext<T> tabIn() {
-    prefix = "\t";
+  public CGenContext<T> spacedIn() {
+    prefix = "   ";
     return this;
   }
 
   /**
    * Exits tab mode and every following write is not tabbed anymore.
    */
-  public CGenContext<T> tabOut() {
+  public CGenContext<T> spaceOut() {
     prefix = "";
     return this;
   }

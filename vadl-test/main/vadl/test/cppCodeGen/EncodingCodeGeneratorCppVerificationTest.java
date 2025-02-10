@@ -135,7 +135,7 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     var decodeFunction = decodeFunctionGenerator.genFunctionDefinition();
     var encodeFunction = encodeFunctionGenerator.genFunctionDefinition();
     String expectedReturnType =
-        CppTypeMap.getCppTypeNameByVadlType(encodingFunction.returnType());
+        CppTypeMap.getCppTypeNameByVadlType(CppTypeMap.upcast(encodingFunction.returnType()));
 
     String cppCode = String.format("""
             #include <cstdint>
