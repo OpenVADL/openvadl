@@ -17,6 +17,7 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.utils.GraphUtils;
 import vadl.viam.Specification;
+import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.graph.control.ReturnNode;
 
 /**
@@ -120,12 +121,17 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
   }
 
   private Stream<String> grammarRules(Specification specification) {
+    var parserCaseSensitive = specification.assemblyDescription()
+        .map(asmDesc -> asmDesc.annotation(AsmParserCaseSensitive.class))
+        .map(AsmParserCaseSensitive::isCaseSensitive).orElse(false);
+
     return specification.assemblyDescription()
         .map(asmDesc -> asmDesc.rules().stream())
         .orElse(Stream.empty())
         .map(rule -> {
           var writer = new StringWriter();
-          var visitor = new AssemblyParserCodeGeneratorVisitor(specification.simpleName(), writer);
+          var visitor = new AssemblyParserCodeGeneratorVisitor(
+              specification.simpleName(), parserCaseSensitive, writer);
 
           visitor.visit(rule);
           return writer.toString();

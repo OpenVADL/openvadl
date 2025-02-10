@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
+import vadl.viam.asm.AsmToken;
 
 
 /**
@@ -45,6 +46,7 @@ public class AsmLL1Checker {
                                   boolean isInOptionOrRepetition) {
     HashSet<AsmToken> previousAlternativesTokens = new HashSet<>();
     Set<AsmToken> allAlternativesTokens = new HashSet<>();
+    entity.alternativesFirstTokens = new ArrayList<>(entity.alternatives.size());
 
     for (var alternative : entity.alternatives) {
       allAlternativesTokens.addAll(expectedTokensForConflict(alternative));
@@ -53,6 +55,7 @@ public class AsmLL1Checker {
     for (var alternative : entity.alternatives) {
 
       var expected = expectedTokens(alternative);
+      entity.alternativesFirstTokens.add(expected);
 
       var firstElement = alternative.get(0);
       if (!(entity.alternatives.size() == 1 && isInOptionOrRepetition)
@@ -228,58 +231,6 @@ public class AsmLL1Checker {
           .note("Contents of [...] or {...} must not be deletable.")
           .build();
     }
-  }
-}
-
-class AsmToken {
-  String ruleName;
-  @Nullable
-  String stringLiteral;
-
-  public AsmToken(String ruleName, @Nullable String stringLiteral) {
-    this.ruleName = ruleName;
-    this.stringLiteral = stringLiteral;
-  }
-
-  @Override
-  public String toString() {
-    if (stringLiteral != null) {
-      return '"' + stringLiteral + '"';
-    }
-    return ruleName;
-  }
-
-  /**
-   * An AsmToken with ruleName=IDENTIFIER and stringLiteral=null
-   * is equal to an AsmToken with ruleName=IDENTIFIER and stringLiteral="something"
-   * since the parser cannot decide which alternative to choose.
-   *
-   * @param o the other AsmToken
-   * @return whether the two AsmTokens are equal from the AsmParsers viewpoint
-   */
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    AsmToken that = (AsmToken) o;
-
-    if (ruleName.equals(that.ruleName)) {
-      if (stringLiteral == null || that.stringLiteral == null) {
-        return true;
-      }
-      return stringLiteral.equals(that.stringLiteral);
-    }
-
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(ruleName);
   }
 }
 

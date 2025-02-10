@@ -42,6 +42,7 @@ import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
+import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmAlternatives;
 import vadl.viam.asm.elements.AsmAssignTo;
@@ -325,21 +326,32 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
                                                boolean isWithinOptionOrRepetition) {
     var alternatives = definition.alternatives;
     var semanticPredicateApplies = !isWithinOptionOrRepetition || alternatives.size() != 1;
-    return new AsmAlternatives(alternatives.stream()
-        .map(alternative -> visitAsmAlternative(alternative, semanticPredicateApplies)).toList(),
-        requireNonNull(definition.asmType));
+    requireNonNull(definition.alternativesFirstTokens);
+
+    List<AsmAlternative> asmAlternatives = new ArrayList<>(alternatives.size());
+    for (int i = 0; i < alternatives.size(); i++) {
+      asmAlternatives.add(visitAsmAlternative(alternatives.get(i),
+          definition.alternativesFirstTokens.get(i), semanticPredicateApplies));
+    }
+    return new AsmAlternatives(asmAlternatives, requireNonNull(definition.asmType));
   }
 
   private AsmAlternative visitAsmAlternative(List<AsmGrammarElementDefinition> elements,
+                                             Set<AsmToken> firstTokens,
                                              boolean semanticPredicateAppliesToAlternatives) {
-    Graph semanticPredicate = null;
+    Function semPredFunction = null;
     var semPredExpr = elements.get(0).semanticPredicate;
+
     if (semanticPredicateAppliesToAlternatives && semPredExpr != null) {
-      semanticPredicate = behaviorLowering.getGraph(semPredExpr, "semanticPredicate");
+      var semanticPredicateGraph = behaviorLowering.getGraph(semPredExpr, "semanticPredicate");
+      semPredFunction =
+          new Function(generateIdentifier("semanticPredicate", semPredExpr.sourceLocation()),
+              new Parameter[0], Type.bool(), semanticPredicateGraph);
     }
+
     var grammarElements =
         elements.stream().map(this::visitAsmElement).filter(Objects::nonNull).toList();
-    return new AsmAlternative(semanticPredicate, grammarElements);
+    return new AsmAlternative(semPredFunction, firstTokens, grammarElements);
   }
 
   @Nullable

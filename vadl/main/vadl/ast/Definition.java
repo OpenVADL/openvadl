@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.ConcreteRelationType;
@@ -14,6 +15,7 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
+import vadl.viam.asm.AsmToken;
 import vadl.utils.WithSourceLocation;
 
 /**
@@ -4497,6 +4499,8 @@ class AsmGrammarAlternativesDefinition extends Definition {
 
   @Nullable
   AsmType asmType;
+  @Nullable
+  List<Set<AsmToken>> alternativesFirstTokens;
 
   public AsmGrammarAlternativesDefinition(List<List<AsmGrammarElementDefinition>> alternatives,
                                           SourceLocation loc) {

@@ -167,7 +167,7 @@ public class ParserGenerator {
       case "GREATERGREATER" -> "AsmToken::GreaterGreater";
       case "AT" -> "AsmToken::At";
       case "MINUSGREATER" -> "AsmToken::MinusGreater";
-      default -> throw new RuntimeException("Unknown terminal rule name " + ruleName);
+      default -> throw new ViamError("Unknown terminal rule name " + ruleName);
     };
   }
 }

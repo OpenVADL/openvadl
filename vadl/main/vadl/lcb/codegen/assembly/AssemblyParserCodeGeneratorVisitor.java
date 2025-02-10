@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.text.StringSubstitutor;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
+import vadl.cppCodeGen.common.AsmParserFunctionCodeGenerator;
 import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.gcb.passes.assembly.visitors.AssemblyVisitor;
 import vadl.lcb.template.CommonVarNames;
@@ -51,6 +52,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 /**
  * Generates the cpp code for assembly parsing.
  */
+@SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
 public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorVisitor implements
     AssemblyVisitor, AsmGrammarVisitor {
 
@@ -59,6 +61,8 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   @Nullable
   private final Instruction instruction;
   private final ArrayDeque<String> operands = new ArrayDeque<>();
+
+  private String parserCompareFunction = "equals_insensitive";
 
   /**
    * Constructor.
@@ -74,10 +78,15 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   /**
    * Constructor.
    */
-  public AssemblyParserCodeGeneratorVisitor(String namespace, StringWriter writer) {
+  public AssemblyParserCodeGeneratorVisitor(String namespace,
+                                            boolean isParserCaseSensitive,
+                                            StringWriter writer) {
     super(writer);
     this.namespace = namespace;
     this.instruction = null;
+    if (isParserCaseSensitive) {
+      parserCompareFunction = "equals";
+    }
     symbolTable = new SymbolTable("VAR_");
   }
 
@@ -313,7 +322,10 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmNonTerminalRule rule) {
-    writer.write("//NonTerminal: " + rule.simpleName() + "\n");
+    writer.write(String.format("RuleParsingResult<%s> %sAsmRecursiveDescentParser::%s() {\n",
+        rule.getAsmType().toCppTypeString(namespace), namespace, rule.simpleName()));
+    rule.getAlternatives().accept(this);
+    writer.write("  }\n");
   }
 
   @Override
@@ -347,12 +359,60 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmAlternative element) {
-
+    element.elements().forEach(e -> e.accept(this));
   }
 
   @Override
   public void visit(AsmAlternatives element) {
+    var alternatives = element.alternatives();
+    if (alternatives.size() == 1) {
+      alternatives.get(0).accept(this);
+      return;
+    }
+    writer.write(getAlternativeGuard(alternatives.get(0)));
+    alternatives.get(0).accept(this);
+    writer.write("} ");
+    for (int i = 1; i < alternatives.size(); i++) {
+      writer.write("else " + getAlternativeGuard(alternatives.get(i)));
+      alternatives.get(i).accept(this);
+      writer.write("} ");
+    }
 
+    writer.write("else {\n");
+    writer.write(String.format("return RuleParsingResult<%s>(Lexer.getTok().getLoc(),\"%s\")\n",
+        element.asmType().toCppTypeString(namespace), alternativesErrorMessage(element)));
+    writer.write("} \n");
+  }
+
+  private String getAlternativeGuard(AsmAlternative alternative) {
+    String condition;
+    if (alternative.semanticPredicateFunction() != null) {
+      var functionCodeGenerator =
+          new AsmParserFunctionCodeGenerator(alternative.semanticPredicateFunction());
+      condition = functionCodeGenerator.genReturnExpression();
+    } else {
+      condition = alternative.firstTokens().stream().map(asmtoken ->
+          asmtoken.getStringLiteral() != null
+              ? String.format("Lexer.getTok().getString().%s(\"%s\")",
+              parserCompareFunction,
+              asmtoken.getStringLiteral())
+              : String.format("Lexer.getTok().getKind() == %s",
+              ParserGenerator.getLlvmTokenKind(asmtoken.getRuleName()))
+      ).collect(Collectors.joining(" || "));
+    }
+
+    return "if (" + condition + ") {\n";
+  }
+
+  private String alternativesErrorMessage(AsmAlternatives alternatives) {
+    var expectedTokens = alternatives.alternatives().stream().flatMap(
+        alternative -> alternative.firstTokens().stream()
+    ).map(
+        token -> token.getStringLiteral() != null
+            ? '"' + token.getStringLiteral() + '"'
+            : token.getRuleName()
+    ).collect(Collectors.joining(", "));
+    return "No alternative matched. Expected one of " + expectedTokens;
   }
 
   @Override
