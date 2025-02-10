@@ -265,7 +265,7 @@ public interface CDefaultMixins {
       var srcType = node.value().type().asDataType();
       ctx.wr("VADL_uextract(")
           .gen(node.value())
-          .wr("), %s)", srcType.bitWidth());
+          .wr(", %s)", srcType.bitWidth());
     }
   }
 
@@ -284,7 +284,7 @@ public interface CDefaultMixins {
       var bitWidth = node.type().bitWidth();
       ctx.wr("VADL_uextract(")
           .gen(node.value())
-          .wr("), %s)", bitWidth);
+          .wr(", %s)", bitWidth);
     }
   }
 
