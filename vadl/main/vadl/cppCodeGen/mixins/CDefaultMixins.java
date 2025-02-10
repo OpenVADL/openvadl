@@ -117,7 +117,7 @@ public interface CDefaultMixins {
       var returnNode = getSingleNode(function().behavior(), ReturnNode.class);
       context().wr(genFunctionSignature())
           .wr(" {\n")
-          .wr("\treturn ")
+          .wr("   return ")
           .gen(returnNode.value())
           .wr(";\n}");
       return builder().toString();
