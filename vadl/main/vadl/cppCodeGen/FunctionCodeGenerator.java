@@ -65,6 +65,7 @@ public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerato
   @Handler
   protected abstract void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle);
 
+  @Override
   @Handler
   public abstract void handle(CGenContext<Node> ctx, SliceNode toHandle);
 

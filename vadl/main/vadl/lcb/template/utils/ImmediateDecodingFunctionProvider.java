@@ -16,7 +16,8 @@ public class ImmediateDecodingFunctionProvider {
   /**
    * Get the decoding functions.
    */
-  public static Map<Format.Field, GcbFieldAccessCppFunction> generateDecodeFunctions(PassResults passResults) {
+  public static Map<Format.Field, GcbFieldAccessCppFunction> generateDecodeFunctions(
+      PassResults passResults) {
     return ((CppTypeNormalizationPass.NormalisedTypeResult)
         passResults.lastResultOf(CppTypeNormalizationForDecodingsPass.class))
         .fields()

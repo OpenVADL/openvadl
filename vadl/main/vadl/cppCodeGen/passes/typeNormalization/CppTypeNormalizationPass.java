@@ -85,7 +85,8 @@ public abstract class CppTypeNormalizationPass extends Pass {
   protected abstract Stream<Pair<Format.FieldAccess, Function>> getApplicable(Specification viam);
 
   /**
-   * Converts a given {@code function} into a {@link GcbFieldAccessCppFunction} which has cpp conforming types.
+   * Converts a given {@code function} into a {@link GcbFieldAccessCppFunction} which has
+   * cpp conforming types.
    */
   protected abstract GcbFieldAccessCppFunction liftFunction(Format.FieldAccess fieldAccess);
 

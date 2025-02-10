@@ -28,5 +28,6 @@ public abstract class AbstractFunctionCodeGenerator
     return builder;
   }
 
+  @Override
   public abstract CNodeContext context();
 }

@@ -79,8 +79,9 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var cppFunctionsForPseudoInstructions =
-        (IdentityHashMap<PseudoInstruction, GcbExpandPseudoInstructionCppFunction>) passResults.lastResultOf(
-            PseudoExpansionFunctionGeneratorPass.class);
+        (IdentityHashMap<PseudoInstruction, GcbExpandPseudoInstructionCppFunction>)
+            passResults.lastResultOf(
+                PseudoExpansionFunctionGeneratorPass.class);
     var cppFunctions = cppFunctionsForPseudoInstructions.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     var pseudoInstructions =

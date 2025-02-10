@@ -1,7 +1,5 @@
 package vadl.gcb.passes.typeNormalization;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
@@ -10,7 +8,6 @@ import vadl.pass.PassName;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Function;
-import vadl.viam.Parameter;
 import vadl.viam.Specification;
 
 /**
@@ -41,10 +38,5 @@ public class CppTypeNormalizationForDecodingsPass extends CppTypeNormalizationPa
   protected GcbFieldAccessCppFunction liftFunction(Format.FieldAccess fieldAccess) {
     // LLVM's decoder requires uint64_t parameters.
     return createGcbFieldAccessCppFunction(fieldAccess.accessFunction(), fieldAccess);
-  }
-
-  private static Parameter upcast(Parameter parameter) {
-    return new Parameter(parameter.identifier,
-        upcast(parameter.type()), parameter.parent());
   }
 }

@@ -14,7 +14,13 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
+/**
+ * Code generation mixins for relocations.
+ */
 public interface CRelocationMixins extends CDefaultMixins.Utils {
+  /**
+   * Generate code for {@link CppUpdateBitRangeNode}.
+   */
   @Handler
   default void handle(CGenContext<Node> ctx, CppUpdateBitRangeNode toHandle) {
     var bitWidth = ((BitsType) toHandle.type()).bitWidth();
@@ -40,6 +46,9 @@ public interface CRelocationMixins extends CDefaultMixins.Utils {
     ctx.wr(").to_ulong()");
   }
 
+  /**
+   * Generate code for {@link SignExtendNode}.
+   */
   default void visit(CGenContext<Node> ctx, CppSignExtendNode toHandle) {
     ctx.gen((SignExtendNode) toHandle);
 
@@ -48,6 +57,9 @@ public interface CRelocationMixins extends CDefaultMixins.Utils {
     }
   }
 
+  /**
+   * Generate code for {@link ZeroExtendNode}.
+   */
   default void visit(CGenContext<Node> ctx, CppZeroExtendNode toHandle) {
     ctx.gen((ZeroExtendNode) toHandle);
 
@@ -56,6 +68,9 @@ public interface CRelocationMixins extends CDefaultMixins.Utils {
     }
   }
 
+  /**
+   * Generate code for {@link TruncateNode}.
+   */
   default void visit(CGenContext<Node> ctx, TruncateNode toHandle) {
     if (toHandle.type() instanceof BoolType) {
       ctx.wr("((" + CppTypeMap.getCppTypeNameByVadlType(toHandle.type()) + ") ");
@@ -68,6 +83,10 @@ public interface CRelocationMixins extends CDefaultMixins.Utils {
     }
   }
 
+  /**
+   * Generate an expression which bitmasks a value. It will create "1"
+   * for the given size.
+   */
   default String generateBitmask(int size) {
     return String.format("((1UL << %d) - 1)", size);
   }

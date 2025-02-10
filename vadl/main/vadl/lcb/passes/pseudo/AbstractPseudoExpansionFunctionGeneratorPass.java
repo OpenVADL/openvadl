@@ -5,10 +5,10 @@ import java.util.IdentityHashMap;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
 import vadl.cppCodeGen.model.CppGenericType;
 import vadl.cppCodeGen.model.CppParameter;
 import vadl.cppCodeGen.model.CppType;
+import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
 import vadl.pass.Pass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
@@ -32,7 +32,8 @@ public abstract class AbstractPseudoExpansionFunctionGeneratorPass extends Pass 
   }
 
   /**
-   * Get the instructions for which {@link GcbExpandPseudoInstructionCppFunction} should be generated.
+   * Get the instructions for which {@link GcbExpandPseudoInstructionCppFunction} should be
+   * generated.
    */
   protected abstract Stream<Pair<PseudoInstruction, Graph>> getApplicable(
       PassResults passResults,

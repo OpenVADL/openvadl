@@ -29,10 +29,11 @@ public class GcbAccessOrExtractionFunctionCodeGenerator extends AccessFunctionCo
   /**
    * Constructor.
    */
-  public GcbAccessOrExtractionFunctionCodeGenerator(GcbImmediateExtractionCppFunction extractionFunction,
-                                                    Format.FieldAccess fieldAccess,
-                                                    String functionName,
-                                                    String fieldName) {
+  public GcbAccessOrExtractionFunctionCodeGenerator(
+      GcbImmediateExtractionCppFunction extractionFunction,
+      Format.FieldAccess fieldAccess,
+      String functionName,
+      String fieldName) {
     super(extractionFunction, fieldAccess, functionName, fieldName);
   }
 

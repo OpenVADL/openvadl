@@ -71,7 +71,8 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   public PseudoExpansionCodeGenerator(String namespace,
                                       IdentifyFieldUsagePass.ImmediateDetectionContainer
                                           fieldUsages,
-                                      Map<Format.Field, GcbFieldAccessCppFunction> immediateDecodings,
+                                      Map<Format.Field, GcbFieldAccessCppFunction>
+                                          immediateDecodings,
                                       Map<Format.Field, List<VariantKind>> immVariants,
                                       List<CompilerRelocation> relocations,
                                       PseudoInstruction pseudoInstruction,

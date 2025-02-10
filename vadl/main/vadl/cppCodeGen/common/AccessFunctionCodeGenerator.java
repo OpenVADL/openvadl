@@ -71,7 +71,8 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
    * @param accessOrExtractionFunction The access function to access a field which is not equivalent
    *                                   to {@code FieldAccess#accessFunction} or an extraction
    *                                   function.
-   * @param fieldAccess                The field fieldAccess for which the function should be generated
+   * @param fieldAccess                The field fieldAccess for which the function should be
+   *                                   generated.
    * @param functionName               The name of the access function to generate
    * @param fieldName                  The name of the field to access
    */

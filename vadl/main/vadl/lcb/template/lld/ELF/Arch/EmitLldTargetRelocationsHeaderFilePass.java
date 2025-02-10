@@ -45,7 +45,8 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
             .map(x -> (RelocationLowerable) x)
             .sorted(Comparator.comparing(o -> o.elfRelocationName().value()))
             .map(relocation -> {
-              var generator = new ValueRelocationFunctionCodeGenerator(relocation.valueRelocation());
+              var generator =
+                  new ValueRelocationFunctionCodeGenerator(relocation.valueRelocation());
               return generator.genFunctionDefinition();
             }).toList());
   }
