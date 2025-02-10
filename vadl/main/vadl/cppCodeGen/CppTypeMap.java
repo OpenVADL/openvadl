@@ -104,6 +104,34 @@ public class CppTypeMap {
       default:
         throw new RuntimeException(String.format("not implemented: type %s", bitWidth));
     }
+  }
 
+  /**
+   * Upcast the given type to the next fitting bit size.
+   */
+  public static BitsType upcast(Type type) {
+    if (type instanceof BitsType cast) {
+      return cast.withBitWidth(nextFittingBitSize(cast.bitWidth()));
+    } else {
+      throw new RuntimeException("Non bits type are not supported");
+    }
+  }
+
+  private static int nextFittingBitSize(int old) {
+    if (old == 1) {
+      return 1;
+    } else if (old > 1 && old <= 8) {
+      return 8;
+    } else if (old > 8 && old <= 16) {
+      return 16;
+    } else if (old > 16 && old <= 32) {
+      return 32;
+    } else if (old > 32 && old <= 64) {
+      return 64;
+    } else if (old > 64 && old <= 128) {
+      return 128;
+    }
+
+    throw new RuntimeException("Types with more than 128 bits are not supported");
   }
 }

@@ -54,4 +54,12 @@ public abstract class AbstractRelocationCodeGenerator extends AbstractFunctionCo
     ctx.wr(").to_ulong()");
   }
 
+  /**
+   * Generate an expression which bitmasks a value. It will create "1"
+   * for the given size.
+   */
+  private String generateBitmask(int size) {
+    return String.format("((1UL << %d) - 1)", size);
+  }
+
 }

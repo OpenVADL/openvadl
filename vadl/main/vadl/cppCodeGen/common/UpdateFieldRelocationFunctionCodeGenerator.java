@@ -1,22 +1,13 @@
 package vadl.cppCodeGen.common;
 
-import static vadl.utils.GraphUtils.getSingleNode;
-
-import java.util.stream.Collectors;
-import javax.sql.rowset.CachedRowSet;
-import vadl.cppCodeGen.AbstractFunctionCodeGenerator;
 import vadl.cppCodeGen.AbstractRelocationCodeGenerator;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CRelocationMixins;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
-import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
 import vadl.javaannotations.DispatchFor;
-import vadl.javaannotations.Handler;
-import vadl.types.BitsType;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
@@ -62,11 +53,6 @@ public class UpdateFieldRelocationFunctionCodeGenerator extends AbstractRelocati
 
     return CppTypeMap.getCppTypeNameByVadlType(returnType)
         + " %s(%s)".formatted(functionName, genFunctionParameters(function.parameters()));
-  }
-
-  public String genReturnExpression() {
-    var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
-    return context.genToString(returnNode.value());
   }
 
   @Override

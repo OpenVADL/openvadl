@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
@@ -47,7 +48,7 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
           var llvmType = ValueType.from(originalType);
 
           if (llvmType.isEmpty()) {
-            var upcastedType = CppTypeNormalizationPass.upcast(originalType);
+            var upcastedType = CppTypeMap.upcast(originalType);
             var upcastedValueType =
                 ensurePresent(ValueType.from(upcastedType), () -> Diagnostic.error(
                     "Compiler generator was not able to change the type to the architecture's "

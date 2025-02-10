@@ -1,18 +1,11 @@
 package vadl.cppCodeGen.mixins;
 
 import java.util.stream.Collectors;
-import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
-import vadl.cppCodeGen.passes.typeNormalization.CppSignExtendNode;
-import vadl.cppCodeGen.passes.typeNormalization.CppZeroExtendNode;
 import vadl.javaannotations.Handler;
 import vadl.types.BitsType;
-import vadl.types.BoolType;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.SignExtendNode;
-import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Code generation mixins for relocations.
@@ -44,50 +37,5 @@ public interface CRelocationMixins extends CDefaultMixins.Utils {
         .collect(Collectors.joining(", ")));
     ctx.wr(" } ");
     ctx.wr(").to_ulong()");
-  }
-
-  /**
-   * Generate code for {@link SignExtendNode}.
-   */
-  default void visit(CGenContext<Node> ctx, CppSignExtendNode toHandle) {
-    ctx.gen((SignExtendNode) toHandle);
-
-    if (toHandle.originalType() instanceof BitsType bitsType) {
-      ctx.wr(" & " + generateBitmask(bitsType.bitWidth()));
-    }
-  }
-
-  /**
-   * Generate code for {@link ZeroExtendNode}.
-   */
-  default void visit(CGenContext<Node> ctx, CppZeroExtendNode toHandle) {
-    ctx.gen((ZeroExtendNode) toHandle);
-
-    if (toHandle.originalType() instanceof BitsType bitsType) {
-      ctx.wr(" & " + generateBitmask(bitsType.bitWidth()));
-    }
-  }
-
-  /**
-   * Generate code for {@link TruncateNode}.
-   */
-  default void visit(CGenContext<Node> ctx, TruncateNode toHandle) {
-    if (toHandle.type() instanceof BoolType) {
-      ctx.wr("((" + CppTypeMap.getCppTypeNameByVadlType(toHandle.type()) + ") ");
-      ctx.gen(toHandle);
-      ctx.wr(" & 0x1)");
-    } else {
-      ctx.wr("((" + CppTypeMap.getCppTypeNameByVadlType(toHandle.type()) + ") ");
-      ctx.gen(toHandle);
-      ctx.wr(")");
-    }
-  }
-
-  /**
-   * Generate an expression which bitmasks a value. It will create "1"
-   * for the given size.
-   */
-  default String generateBitmask(int size) {
-    return String.format("((1UL << %d) - 1)", size);
   }
 }
