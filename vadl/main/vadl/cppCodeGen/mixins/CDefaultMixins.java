@@ -10,6 +10,7 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.javaannotations.Handler;
+import vadl.types.DataType;
 import vadl.utils.Pair;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
@@ -259,11 +260,12 @@ public interface CDefaultMixins {
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx, ZeroExtendNode node) {
-      var type = node.type().fittingCppType();
-      node.ensure(type != null, "Nodes type cannot fit in a c/c++ type.");
-      ctx.wr("extract" + type.bitWidth() + "(");
-      ctx.gen(node.value());
-      ctx.wr(", 0, " + node.type().bitWidth() + ")");
+      // Use the built-in VADL library functions.
+      // Generators must include the vadl-builtins.h header file.
+      var srcType = node.value().type().asDataType();
+      ctx.wr("VADL_uextract(")
+          .gen(node.value())
+          .wr(", %s)", srcType.bitWidth());
     }
   }
 
@@ -272,13 +274,17 @@ public interface CDefaultMixins {
     @Handler
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx, TruncateNode node) {
-      var type = node.type().fittingCppType();
-      node.ensure(type != null, "Nodes type cannot fit in a c/c++ type.");
-      ctx.wr("(("
-          + getCppTypeNameByVadlType(type)
-          + ") (");
-      ctx.gen(node.value());
-      ctx.wr("))");
+      // Use the built-in VADL library functions.
+      // Generators must include the vadl-builtins.h header file.
+
+      // Datatype must not be boolean because when it should be already replaced by a
+      // check.
+      node.ensure(node.type() != DataType.bool(),
+          "Truncation to boolean is not allowed");
+      var bitWidth = node.type().bitWidth();
+      ctx.wr("VADL_uextract(")
+          .gen(node.value())
+          .wr(", %s)", bitWidth);
     }
   }
 

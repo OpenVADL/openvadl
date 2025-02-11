@@ -480,7 +480,6 @@ public abstract class DockerExecutionTest extends AbstractTest {
 
             Objects.requireNonNull(cmd.getHostConfig())
                 .withMounts(List.of(mount));
-            cmd.withName("open-vadl-test-cache-" + network.getId());
           })
           // we need this custom network, because other containers must access
           // the redis cache with the given hostname/alias
