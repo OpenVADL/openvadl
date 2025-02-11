@@ -1,3 +1,5 @@
+; RUN: $LLC -mtriple=rv32im -O0 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
+
 ; Register-immediate instructions
 
 define i64 @addi(i64 %a) nounwind {

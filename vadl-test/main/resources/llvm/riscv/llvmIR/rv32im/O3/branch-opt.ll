@@ -1,4 +1,5 @@
-; RUN: FileCheck %s
+; RUN: $LLC -mtriple=rv32im -O3 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
+
 define void @u_case1_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL: u_case1_a:
 ; CHECK:       # %bb.0:

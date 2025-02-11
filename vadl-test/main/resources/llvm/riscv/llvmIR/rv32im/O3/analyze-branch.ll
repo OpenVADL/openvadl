@@ -1,3 +1,5 @@
+; RUN: $LLC -mtriple=rv32im -O3 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
+
 declare void @test_true()
 declare void @test_false()
 

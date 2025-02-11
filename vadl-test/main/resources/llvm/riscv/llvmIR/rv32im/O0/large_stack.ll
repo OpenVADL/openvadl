@@ -1,4 +1,4 @@
-; RUN: FileCheck %s
+; RUN: $LLC -mtriple=rv32im -O0 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
 
 define void @smalltest() {
 ; CHECK-LABEL: smalltest: # @smalltest
