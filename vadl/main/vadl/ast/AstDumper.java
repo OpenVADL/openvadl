@@ -255,7 +255,7 @@ public class AstDumper
   @Override
   public Void visit(RelocationDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier, definition.resultType, definition.expr);
+    dumpChildren(definition.identifier, definition.resultTypeLiteral, definition.expr);
     return null;
   }
 

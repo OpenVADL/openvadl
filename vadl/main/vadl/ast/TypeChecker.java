@@ -406,13 +406,45 @@ public class TypeChecker
 
   @Override
   public Void visit(PseudoInstructionDefinition definition) {
-    throwUnimplemented(definition);
+    // Check the parameters
+    definition.params.forEach(param -> param.typeLiteral.accept(this));
+
+    // Check the statements
+    definition.statements.forEach(stmt -> stmt.accept(this));
+
+    // Verify the existenc of a matching assemblyDefinition
+    if (definition.assemblyDefinition == null) {
+      throw Diagnostic.error("Missing Assembly", definition.identifier())
+          .description("Every pseudo instruction needs an matching assembly definition.")
+          .build();
+    }
+
     return null;
   }
 
   @Override
   public Void visit(RelocationDefinition definition) {
-    throwUnimplemented(definition);
+    // Check the parameter
+    for (var param : definition.params) {
+      param.typeLiteral.accept(this);
+    }
+
+    definition.resultTypeLiteral.accept(this);
+    definition.expr.accept(this);
+
+    // Verify the types are compatible
+    var definedType = Objects.requireNonNull(definition.resultTypeLiteral.type);
+    definition.expr = wrapImplicitCast(definition.expr, definedType);
+    var actualType = Objects.requireNonNull(definition.expr.type);
+    if (!definedType.equals(actualType)) {
+      throw Diagnostic.error("Type Missmatch", definition.expr)
+          .description("Expected %s but got %s", definedType, actualType)
+          .build();
+    }
+
+    var argTypes = definition.params.stream().map(p -> p.typeLiteral.type).toList();
+    var retType = definition.resultTypeLiteral.type;
+    definition.type = Type.concreteRelation(argTypes, retType);
     return null;
   }
 
@@ -465,9 +497,7 @@ public class TypeChecker
     definition.retType.accept(this);
     definition.expr.accept(this);
 
-    var argTypes = definition.params.stream().map(p -> p.typeLiteral.type).toList();
     var retType = Objects.requireNonNull(definition.retType.type);
-
     definition.expr = wrapImplicitCast(definition.expr, retType);
     var exprType = Objects.requireNonNull(definition.expr.type);
 
@@ -478,6 +508,7 @@ public class TypeChecker
           .build();
     }
 
+    var argTypes = definition.params.stream().map(p -> p.typeLiteral.type).toList();
     definition.type = Type.concreteRelation(argTypes, retType);
     return null;
   }
@@ -1236,6 +1267,12 @@ public class TypeChecker
       return null;
     }
 
+    if (origin instanceof LetExpr letExpr) {
+      // No need to check because this can only be the case if we are inside the let statement.
+      expr.type = Objects.requireNonNull(letExpr.valueExpr.type);
+      return null;
+    }
+
     if (origin instanceof LetStatement letStatement) {
       // No need to check because this can only be the case if we are inside the let statement.
       expr.type = Objects.requireNonNull(letStatement.getTypeOf(expr.name));
@@ -1250,7 +1287,8 @@ public class TypeChecker
 
       if (!functionDefinition.params.isEmpty()) {
         throw Diagnostic.error("Invalid Function Call", expr)
-            .description("Expected %s arguments but got `%s`", functionDefinition.params.size(), 0)
+            .description("Expected `%s` arguments but got `%s`", functionDefinition.params.size(),
+                0)
             .build();
       }
       expr.type = functionDefinition.retType.type;
@@ -1769,12 +1807,11 @@ public class TypeChecker
       return null;
     }
 
-    // Handle register
-    var registerFile =
-        Objects.requireNonNull(expr.symbolTable)
-            .findAs(expr.target.path().pathToString(), RegisterFileDefinition.class);
+    var callTarget = Objects.requireNonNull(expr.symbolTable)
+        .findAs(expr.target.path().pathToString(), Definition.class);
 
-    if (registerFile != null) {
+    // Handle register
+    if (callTarget instanceof RegisterFileDefinition registerFile) {
       if (expr.argsIndices.size() != 1 || expr.argsIndices.get(0).size() != 1) {
         throw Diagnostic.error("Invalid Register Usage", expr)
             .description("A register call must have exactly one argument.")
@@ -1806,10 +1843,7 @@ public class TypeChecker
     }
 
     // Handle memory
-    var memDef = Objects.requireNonNull(expr.symbolTable)
-        .findAs(expr.target.path().pathToString(), MemoryDefinition.class);
-    if (memDef != null) {
-
+    if (callTarget instanceof MemoryDefinition memDef) {
       if (expr.argsIndices.size() != 1 || expr.argsIndices.get(0).size() != 1) {
         throw Diagnostic.error("Invalid Memory Usage", expr)
             .description("Memory access must have exactly one argument.")
@@ -1854,9 +1888,7 @@ public class TypeChecker
     }
 
     // Handle Counter
-    var counterDef = Objects.requireNonNull(expr.symbolTable)
-        .findAs(expr.target.path().pathToString(), CounterDefinition.class);
-    if (counterDef != null) {
+    if (callTarget instanceof CounterDefinition counterDef) {
       if (counterDef.typeLiteral.type == null) {
         counterDef.accept(this);
       }
@@ -1892,9 +1924,7 @@ public class TypeChecker
     }
 
     // User defined functions
-    var functionDef = Objects.requireNonNull(expr.symbolTable)
-        .findAs(expr.target.path().pathToString(), FunctionDefinition.class);
-    if (functionDef != null) {
+    if (callTarget instanceof FunctionDefinition functionDef) {
       if (functionDef.type == null) {
         functionDef.accept(this);
       }
@@ -1904,7 +1934,7 @@ public class TypeChecker
       var actualArgCount = expr.flatArgs().size();
       if (expectedArgCount != actualArgCount) {
         throw Diagnostic.error("Invalid Function Call", expr)
-            .description("Expected %s arguments but got `%s`", expectedArgCount, actualArgCount)
+            .description("Expected `%s` arguments but got `%s`", expectedArgCount, actualArgCount)
             .build();
       }
 
@@ -1932,6 +1962,47 @@ public class TypeChecker
       return null;
     }
 
+    // Relocation call (similar to function)
+    if (callTarget instanceof RelocationDefinition relocationDef) {
+      if (relocationDef.type == null) {
+        relocationDef.accept(this);
+      }
+
+      var relocationType = Objects.requireNonNull(relocationDef.type);
+      var expectedArgCount = relocationType.argTypes().size();
+      var actualArgCount = expr.flatArgs().size();
+      if (expectedArgCount != actualArgCount) {
+        throw Diagnostic.error("Invalid Function Call", expr)
+            .description("Expected %s arguments but got `%s`", expectedArgCount, actualArgCount)
+            .build();
+      }
+
+      // NOTE: This code is so cursed because we are retaining the structure of the code rather than
+      // the semantic in the AST.
+      int argCount = 0;
+      for (var i = 0; i < expr.argsIndices.size(); i++) {
+        for (var j = 0; j < expr.argsIndices.get(i).size(); j++) {
+          var argNode = expr.argsIndices.get(i).get(j);
+          argNode.accept(this);
+          expr.argsIndices.get(i)
+              .set(j, wrapImplicitCast(argNode, relocationType.argTypes().get(argCount)));
+          argNode = expr.argsIndices.get(i).get(j);
+          if (!Objects.requireNonNull(argNode.type)
+              .equals(relocationType.argTypes().get(argCount))) {
+            throw Diagnostic.error("Type Mismatch", argNode)
+                .description("Expected %s but got `%s`", relocationType.argTypes(), argNode)
+                .build();
+          }
+          argCount++;
+        }
+      }
+
+      expr.computedTarget = relocationDef;
+      expr.type = relocationType.resultType();
+      return null;
+    }
+
+
     // Builtin function
     var builtin = getBuiltIn(expr.target.path().pathToString());
     if (builtin != null) {
@@ -1950,9 +2021,12 @@ public class TypeChecker
       return null;
     }
 
+    var description = callTarget == null
+        ? "No callable object with that name exists"
+        : "Cannot call a `%s`".formatted(callTarget);
     throw Diagnostic.error("Unknown callable `%s`".formatted(expr.target.path().pathToString()),
             expr.location)
-        .description("No function, builtin or register file with that name exists.")
+        .description("%s", description)
         .build();
   }
 
@@ -1960,10 +2034,11 @@ public class TypeChecker
   @Override
   public Void visit(IfExpr expr) {
     expr.condition.accept(this);
+    expr.condition = wrapImplicitCast(expr.condition, Type.bool());
     var condType = Objects.requireNonNull(expr.condition.type);
     if (condType != Type.bool()) {
       throw Diagnostic.error("Type Mismatch", expr.condition)
-          .description("Expected %s but got `%s`", condType, condType)
+          .description("Expected %s but got `%s`", Type.bool(), condType)
           .build();
     }
 
@@ -1993,7 +2068,9 @@ public class TypeChecker
 
   @Override
   public Void visit(LetExpr expr) {
-    throwUnimplemented(expr);
+    expr.valueExpr.accept(this);
+    expr.body.accept(this);
+    expr.type = expr.body.type;
     return null;
   }
 
@@ -2092,10 +2169,11 @@ public class TypeChecker
   @Override
   public Void visit(IfStatement statement) {
     statement.condition.accept(this);
+    statement.condition = wrapImplicitCast(statement.condition, Type.bool());
     var condType = Objects.requireNonNull(statement.condition.type);
     if (condType != Type.bool()) {
       throw Diagnostic.error("Type Mismatch", statement.condition)
-          .description("Expected %s but got `%s`", condType, condType)
+          .description("Expected `%s` but got `%s`", Type.bool(), condType)
           .build();
     }
 
@@ -2173,7 +2251,88 @@ public class TypeChecker
 
   @Override
   public Void visit(InstructionCallStatement statement) {
-    throwUnimplemented(statement);
+    // FIXME: Is that true?
+    // Ok my assumption is that when we point to an instruction we are gonna need named arguments
+    // and if we call an pseudo instruction we take unnamed (positional) arguments
+
+    if (statement.instrDef instanceof InstructionDefinition instrDef) {
+      // FIXME fetch it
+      //instrDef.accept(this);
+
+      if (!statement.unnamedArguments.isEmpty()) {
+        var loc = statement.unnamedArguments.get(0).location()
+            .join(statement.unnamedArguments.get(statement.unnamedArguments.size() - 1).location());
+        throw Diagnostic.error("Invalid Arguments", loc)
+            .description("Calls to instructions only accept named arguments")
+            .build();
+      }
+
+      // Implicit cast and check the arguments
+      for (var i = 0; i < statement.namedArguments.size(); i++) {
+        var format = Objects.requireNonNull(instrDef.formatNode);
+
+        var arg = statement.namedArguments.get(i);
+        var targetType = Objects.requireNonNull(format.getFieldType(arg.name().name));
+
+        arg.value().accept(this);
+
+        statement.namedArguments.set(i,
+            new InstructionCallStatement.NamedArgument(arg.name(),
+                wrapImplicitCast(arg.value(), targetType)));
+        arg = statement.namedArguments.get(i);
+        var actualType = Objects.requireNonNull(arg.value().type);
+
+        if (!targetType.equals(actualType)) {
+          throw Diagnostic.error("Type Mismatch", arg.location())
+              .description("Expected `%s` but got `%s`", targetType, actualType)
+              .build();
+        }
+      }
+
+
+    } else if (statement.instrDef instanceof PseudoInstructionDefinition pseudoDef) {
+      // FIXME fetch it
+      //pseudoDef.accept(this);
+
+      if (!statement.namedArguments.isEmpty()) {
+        var loc = statement.namedArguments.get(0).location()
+            .join(statement.namedArguments.get(statement.namedArguments.size() - 1).location());
+        throw Diagnostic.error("Invalid Arguments", loc)
+            .description("Calls to pseudo instructions only accept unnamed (positional) arguments")
+            .build();
+      }
+
+      // Check the argument and parameter count
+      var paramCount = pseudoDef.params.size();
+      var argCount = statement.unnamedArguments.size();
+      if (paramCount != argCount) {
+        throw Diagnostic.error("Arguments Mismatch", statement.location())
+            .description("Expected %s arguments but got %s", paramCount, argCount)
+            .build();
+      }
+
+      // Implicit cast and check the arguments
+      for (var i = 0; i < statement.unnamedArguments.size(); i++) {
+        var targetType = Objects.requireNonNull(pseudoDef.params.get(i).typeLiteral.type);
+        var arg = statement.unnamedArguments.get(i);
+        arg.accept(this);
+        statement.unnamedArguments.set(i,
+            wrapImplicitCast(arg, targetType));
+        arg = statement.unnamedArguments.get(i);
+        var actualType = Objects.requireNonNull(statement.unnamedArguments.get(i).type);
+
+        if (!targetType.equals(actualType)) {
+          throw Diagnostic.error("Type Mismatch", arg.location())
+              .description("Expected `%s` but got `%s`", targetType, actualType)
+              .build();
+        }
+      }
+
+    } else {
+      throw new IllegalStateException("Unknown instruction definition");
+    }
+
+
     return null;
   }
 

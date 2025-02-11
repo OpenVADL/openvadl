@@ -490,7 +490,7 @@ class MacroExpander
   @Override
   public Definition visit(RelocationDefinition definition) {
     return new RelocationDefinition(definition.identifier, expandParams(definition.params),
-        definition.resultType, expandExpr(definition.expr), copyLoc(definition.loc)
+        definition.resultTypeLiteral, expandExpr(definition.expr), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 

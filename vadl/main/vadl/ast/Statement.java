@@ -668,8 +668,12 @@ final class InstructionCallStatement extends Statement {
   List<Expr> unnamedArguments;
   SourceLocation loc;
 
+  /**
+   * The instruction or pseudo instruction to which it points.
+   * Set by the symboltable.
+   */
   @Nullable
-  Definition instrNode;
+  Definition instrDef;
 
   InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
                            List<Expr> unnamedArguments, SourceLocation loc) {
@@ -741,6 +745,9 @@ final class InstructionCallStatement extends Statement {
   }
 
   record NamedArgument(Identifier name, Expr value) {
+    public SourceLocation location() {
+      return name.location().join(value().location());
+    }
   }
 }
 

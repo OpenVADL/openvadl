@@ -124,6 +124,12 @@ public class DiagnosticPrinter {
       System.out.printf("    │ %sThe location was lost.\n", Ansi.Reset);
       return;
     }
+    if (location.location().begin().line() < 1) {
+      System.out.printf("    │ %sThe location was corrupted (lines must be greater 1).\n",
+          Ansi.Reset);
+      return;
+    }
+
     if (location.location().begin().line() != location.location().end().line()) {
       System.out.printf("    │ %sMultiline preview not yet implemented\n", Ansi.Reset);
       return;

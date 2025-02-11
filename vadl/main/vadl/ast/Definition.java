@@ -1226,6 +1226,13 @@ class PseudoInstructionDefinition extends Definition implements IdentifiableNode
   List<InstructionCallStatement> statements;
   SourceLocation loc;
 
+  /**
+   * The matching assembly definition.
+   * Set by the symboltable.
+   */
+  @Nullable
+  AssemblyDefinition assemblyDefinition;
+
   PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
                               List<Parameter> params, List<InstructionCallStatement> statements,
                               SourceLocation loc) {
@@ -1314,15 +1321,18 @@ class PseudoInstructionDefinition extends Definition implements IdentifiableNode
 class RelocationDefinition extends Definition implements IdentifiableNode {
   Identifier identifier;
   List<Parameter> params;
-  TypeLiteral resultType;
+  TypeLiteral resultTypeLiteral;
   Expr expr;
   SourceLocation loc;
 
-  RelocationDefinition(Identifier identifier, List<Parameter> params, TypeLiteral resultType,
+  @Nullable
+  ConcreteRelationType type;
+
+  RelocationDefinition(Identifier identifier, List<Parameter> params, TypeLiteral resultTypeLiteral,
                        Expr expr, SourceLocation loc) {
     this.identifier = identifier;
     this.params = params;
-    this.resultType = resultType;
+    this.resultTypeLiteral = resultTypeLiteral;
     this.expr = expr;
     this.loc = loc;
   }
@@ -1351,7 +1361,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode {
     builder.append(" ");
     Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" -> ");
-    resultType.prettyPrint(0, builder);
+    resultTypeLiteral.prettyPrint(0, builder);
     if (isBlockLayout(expr)) {
       builder.append(" =\n");
       expr.prettyPrint(indent + 1, builder);
@@ -1385,7 +1395,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode {
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(identifier, that.identifier)
         && Objects.equals(params, that.params)
-        && Objects.equals(resultType, that.resultType)
+        && Objects.equals(resultTypeLiteral, that.resultTypeLiteral)
         && Objects.equals(expr, that.expr);
   }
 
@@ -1394,7 +1404,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(identifier);
     result = 31 * result + Objects.hashCode(params);
-    result = 31 * result + Objects.hashCode(resultType);
+    result = 31 * result + Objects.hashCode(resultTypeLiteral);
     result = 31 * result + Objects.hashCode(expr);
     return result;
   }

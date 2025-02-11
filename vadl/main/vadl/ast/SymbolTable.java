@@ -375,6 +375,7 @@ class SymbolTable {
         pseudo.symbolTable = symbols.createChild();
         for (var param : pseudo.params) {
           pseudo.symbolTable.defineSymbol(param);
+          collectSymbols(symbols, param.typeLiteral);
         }
         for (InstructionCallStatement statement : pseudo.statements) {
           collectSymbols(pseudo.symbolTable, statement);
@@ -382,7 +383,7 @@ class SymbolTable {
       } else if (definition instanceof RelocationDefinition relocation) {
         symbols.defineSymbol(relocation);
         relocation.symbolTable = symbols.createChild();
-        collectSymbols(symbols, relocation.resultType);
+        collectSymbols(symbols, relocation.resultTypeLiteral);
         for (Parameter param : relocation.params) {
           relocation.symbolTable.defineSymbol(param);
           collectSymbols(symbols, param.typeLiteral);
@@ -819,6 +820,13 @@ class SymbolTable {
           if (pseudoInstr != null) {
             assembly.instructionNodes.add(pseudoInstr);
             assembly.symbolTable().extendBy(pseudoInstr.symbolTable());
+            if (pseudoInstr.assemblyDefinition != null) {
+              assembly.symbolTable().reportError(
+                  "Encoding for %s pseudo instruction is already defined".formatted(
+                      identifier),
+                  identifier.location());
+            }
+            pseudoInstr.assemblyDefinition = assembly;
           } else {
             var instr =
                 assembly.symbolTable().findAs((Identifier) identifier, InstructionDefinition.class);
@@ -1053,7 +1061,7 @@ class SymbolTable {
             instructionCall.symbolTable().findAs(instructionCall.id(), InstructionDefinition.class);
         var format = instructionCall.symbolTable().findInstructionFormat(instructionCall.id());
         if (format != null) {
-          instructionCall.instrNode = instr;
+          instructionCall.instrDef = instr;
           for (var namedArgument : instructionCall.namedArguments) {
             FormatDefinition.FormatField foundField = null;
             for (var field : format.fields) {
@@ -1074,7 +1082,7 @@ class SymbolTable {
               instructionCall.symbolTable()
                   .findAs(instructionCall.id(), PseudoInstructionDefinition.class);
           if (pseudoInstr != null) {
-            instructionCall.instrNode = pseudoInstr;
+            instructionCall.instrDef = pseudoInstr;
             for (var namedArgument : instructionCall.namedArguments) {
               Parameter foundParam = null;
               for (var param : pseudoInstr.params) {

@@ -897,8 +897,23 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(PseudoInstructionDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    var parameters = definition.params.stream()
+        .map(p -> new vadl.viam.Parameter(
+            generateIdentifier(p.name.name, p.name.location()),
+            Objects.requireNonNull(p.typeLiteral.type)))
+        .toArray(vadl.viam.Parameter[]::new);
+
+    //var graph = behaviorLowering.getPseudoInstructionGraph(definition);
+    //var assembly = fetch(definition.assemblyDefinition).orElseThrow();
+
+    throw new RuntimeException();
+//    return Optional.of(new PseudoInstruction(
+//        identifier,
+//        parameters,
+//        //graph,
+//        assembly
+//    ));
   }
 
   @Override
@@ -927,8 +942,19 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(RelocationDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    var parameters = definition.params.stream()
+        .map(p -> new vadl.viam.Parameter(generateIdentifier(p.name.name, p.name.location()),
+            Objects.requireNonNull(p.typeLiteral.type)))
+        .toArray(vadl.viam.Parameter[]::new);
+    var graph = behaviorLowering.getGraph(definition.expr, identifier.name() + "::behavior");
+
+    return Optional.of(
+        new Relocation(
+            identifier,
+            parameters,
+            Objects.requireNonNull(definition.resultTypeLiteral.type),
+            graph));
   }
 
   @Override
