@@ -42,6 +42,12 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * A pass that ensures safe resource reads in the Instruction Set Simulator (ISS).
  * This pass modifies the instruction behaviors to prevent unsafe concurrent
  * resource reads and writes.
+ *
+ * <p>From paper: To ensure that writes do not occur before reads to the same resource,
+ * potentially conflicting reads must be scheduled before any writes to that resource.
+ * Since register file indices and memory addresses are not statically known,
+ * all reads to these resources must be conservatively treated as potential conflicts
+ * with all writes to the same resource.</p>
  */
 public class IssSafeResourceReadPass extends Pass {
 

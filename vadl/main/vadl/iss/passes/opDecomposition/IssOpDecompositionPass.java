@@ -43,6 +43,15 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * E.g. if there is a long multiplication (such as {@code SMULL}) and the result is only used
  * by a slice or truncate that takes the upper or lower half, we can directly replace it
  * by a {@link IssMulhNode} or a normal {@code MUL} built-in call.
+ *
+ * <p>From paper: While the VADL specification allows arbitrary bit widths,
+ * QEMU imposes a 64-bit limit for most operations. This becomes problematic when an instruction
+ * specification requires types larger than 64 bits. For example, the MULH instruction in the
+ * RV64IM specification performs a long multiplication of two 64-bit values and extracts the
+ * upper half of the 128-bit result.
+ * To handle such cases, the Operation Decomposition pass splits these operations into multiple
+ * logically equivalent operations that only accept and return values with a maximum
+ * size of 64 bits.</p>
  */
 public class IssOpDecompositionPass extends Pass {
   public IssOpDecompositionPass(IssConfiguration configuration) {

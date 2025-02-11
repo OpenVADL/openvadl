@@ -127,12 +127,6 @@ public class HandlerProcessor extends AbstractProcessor {
         collectHandlerMethods(handlerClass, baseType, dispatchForData.returnType,
             dispatchForData.contextTypes);
 
-    if (handlerMethods.isEmpty()) {
-      messager.printMessage(Diagnostic.Kind.WARNING,
-          "No valid @Handler methods found in " + handlerClass.getSimpleName(), handlerClass);
-      return;
-    }
-
     // Collect all non-abstract subclasses of baseType within vadl.* package
     Set<TypeElement> allSubTypes = collectAllSubTypes(baseType, roundEnv, includePackages);
 

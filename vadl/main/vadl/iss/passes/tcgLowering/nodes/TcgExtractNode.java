@@ -3,6 +3,7 @@ package vadl.iss.passes.tcgLowering.nodes;
 import java.util.List;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
+import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;
 
@@ -20,60 +21,70 @@ import vadl.viam.graph.Node;
 public class TcgExtractNode extends TcgUnaryOpNode {
 
   @DataValue
-  private int pos;
+  private final int offset;
 
   @DataValue
-  private int len;
+  private final int len;
+
+  @DataValue
+  private final TcgExtend extendMode;
 
   /**
    * Construct a TCG extract node.
    *
-   * @param dest of result
-   * @param t1   source variable
-   * @param pos  offset (from lsb) where to start extraction
-   * @param len  of extraction (from lsb)
+   * @param dest   of result
+   * @param t1     source variable
+   * @param offset offset (from lsb) where to start extraction
+   * @param len    of extraction (from lsb)
    */
   public TcgExtractNode(TcgVRefNode dest,
-                        TcgVRefNode t1, int pos, int len) {
+                        TcgVRefNode t1, int offset, int len, TcgExtend extendMode) {
     super(dest, t1);
-    this.pos = pos;
+    this.offset = offset;
     this.len = len;
+    this.extendMode = extendMode;
   }
 
   public int pos() {
-    return pos;
+    return offset;
   }
 
   public int len() {
     return len;
   }
 
+  public TcgExtend signed() {
+    return extendMode;
+  }
+
   @Override
   public String tcgFunctionName() {
-    return "tcg_gen_extract_" + width();
+    var sign = extendMode == TcgExtend.SIGN ? "s" : "";
+    return "tcg_gen_" + sign + "extract_" + width();
   }
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg.varName() + ", " + pos
+    return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg.varName() + ", " + offset
         + ", "
         + len + ");";
   }
 
   @Override
   public TcgExtractNode copy() {
-    return new TcgExtractNode(firstDest().copy(), arg.copy(), pos, len);
+    return new TcgExtractNode(firstDest().copy(), arg.copy(), offset, len, extendMode);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgExtractNode(firstDest(), arg, pos, len);
+    return new TcgExtractNode(firstDest(), arg, offset, len, extendMode);
   }
 
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(pos);
+    collection.add(offset);
     collection.add(len);
+    collection.add(extendMode);
   }
 }

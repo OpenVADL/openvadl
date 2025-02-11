@@ -29,6 +29,17 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * It separates side effects that modify the program counter (PC) from other side effects.
  * Non-PC side effects are scheduled at the beginning of branches, while PC updates are scheduled
  * immediately before the branch ends.
+ *
+ * <p>From paper: The VIAM behavior graph represents expressions and side effects using a
+ * dependency graph.
+ * However, since TCG ops execute sequentially, this dependency graph must be scheduled.
+ * The first step in this process is scheduling side effects, such as register writes.
+ * Additionally, the pass analyzes whether a side effect causes an instruction exit by modifying
+ * the program counter.
+ * Non-exit side effects are scheduled at the start of the control flow branch,
+ * while program counter manipulations are placed immediately before the branch end.
+ * This ensures that a jump out of the instruction does not occur
+ * before all other side effects have been applied.</p>
  */
 public class SideEffectSchedulingPass extends Pass {
 

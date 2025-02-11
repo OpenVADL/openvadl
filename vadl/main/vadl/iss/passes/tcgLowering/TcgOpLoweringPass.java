@@ -12,6 +12,7 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.TcgPassUtils;
+import vadl.iss.passes.nodes.IssExtractNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
@@ -40,8 +41,6 @@ import vadl.iss.passes.tcgLowering.nodes.TcgShlNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgShrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgStoreMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgSubNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgTruncateNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgUnaryNopNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgXorNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -86,6 +85,13 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * A pass that lowers high-level operations to TCG (Tiny Code Generator) operations.
  * It processes instructions and transforms them into TCG nodes,
  * which can be used for code generation.
+ *
+ * <p>From paper: The scheduled dependency nodes are lowered into control nodes,
+ * each corresponding to one or more TCG operations.
+ * During this process, a node retrieves its destination and input TCG variables from a context
+ * that generates variables on demand and attaches them to the dependency node.
+ * Once lowering is complete, all dependency nodes are removed from the graph.
+ * The resulting structure is a CFG consisting of TCG op nodes in SSA form.</p>
  */
 public class TcgOpLoweringPass extends Pass {
 
@@ -376,15 +382,32 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
+   * Handles the {@link IssExtractNode} by generating a {@code (s)extract} operation.
+   */
+  @Handler
+  void handle(IssExtractNode toHandle) {
+    var dest = singleDestOf(toHandle);
+    var src = singleDestOf(toHandle.value());
+    // TODO: Support toWidth of other than target size.
+    //    If the mode is signed, it must be sign extended until the target width, but not more than
+    //    that.
+    toHandle.ensure(
+        toHandle.extendMode() == TcgExtend.ZERO || toHandle.toWidth() == targetSize.width,
+        "Signed extract to other width than targetSize is not yet supported. "
+            + "Special case for signed extract.");
+    replaceCurrent(
+        new TcgExtractNode(dest, src, 0, toHandle.fromWidth(), toHandle.extendMode()));
+  }
+
+  /**
    * Handles the {@link TruncateNode} by generating a TCG truncate operation.
    *
    * @param toHandle The node to handle.
    */
   @Handler
   void handle(TruncateNode toHandle) {
-    var dest = singleDestOf(toHandle);
-    var src = singleDestOf(toHandle.value());
-    replaceCurrent(new TcgTruncateNode(dest, src, toHandle.type().bitWidth()));
+    toHandle.fail(
+        "Shouldn't exist at this point. The ExtractNormalizationPass should have replaced it.");
   }
 
   /**
@@ -394,12 +417,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(ZeroExtendNode toHandle) {
-    var dest = singleDestOf(toHandle);
-    var src = singleDestOf(toHandle.value());
-    // TODO: This must be either optimized earlier, or be fixed.
-    //   the current solution isn't good.
-    // Nothing to do; zero extension is implied in TCG operations
-    replaceCurrent(new TcgUnaryNopNode(dest, src));
+    toHandle.fail(
+        "Shouldn't exist at this point. The ExtractNormalizationPass should have replaced it.");
   }
 
   /**
@@ -409,10 +428,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(SignExtendNode toHandle) {
-    var dest = singleDestOf(toHandle);
-    var src = singleDestOf(toHandle.value());
-    var fromSize = toHandle.value().type().asDataType().bitWidth();
-    replaceCurrent(new TcgExtendNode(fromSize, TcgExtend.SIGN, dest, src));
+    toHandle.fail(
+        "Shouldn't exist at this point. The ExtractNormalizationPass should have replaced it.");
   }
 
   /**
@@ -623,7 +640,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
     var pos = bitSlice.lsb();
     var len = bitSlice.bitSize();
-    var node = new TcgExtractNode(destVar, srcVar, pos, len);
+    var node = new TcgExtractNode(destVar, srcVar, pos, len, TcgExtend.ZERO);
     replaceCurrent(node);
   }
 
@@ -755,9 +772,7 @@ class BuiltInTcgLoweringExecutor {
           ctx.call.ensure(ctx.call.type().asDataType().bitWidth() <= ctx.targetSize.width,
               "Result does not fit. Should be decomposed before.");
           return out(
-              new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
-              new TcgExtendNode(ctx.argWidth(1), TcgExtend.SIGN, ctx.tmp(1), ctx.src(1)),
-              new TcgMulNode(ctx.dest(), ctx.tmp(0), ctx.tmp(1))
+              new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
           );
         })
 
@@ -773,39 +788,21 @@ class BuiltInTcgLoweringExecutor {
           ctx.call.ensure(ctx.call.type().asDataType().bitWidth() <= ctx.targetSize.width,
               "Result does not fit. Should be decomposed before.");
           return out(
-              new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
-              new TcgMulNode(ctx.dest(), ctx.tmp(0), ctx.src(1))
+              new TcgMulNode(ctx.dest(), ctx.src(0), ctx.src(1))
           );
         })
 
-        .set(BuiltInTable.SDIV, (ctx) -> {
-          // TODO: move this to normalization pass. This should be handled in a much earlier state
-          if (ctx.argWidth(0) == 64) {
-            return out(new TcgDivNode(true, ctx.dest(), ctx.src(0), ctx.src(1)));
-          } else {
-            return out(
-                new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
-                new TcgExtendNode(ctx.argWidth(1), TcgExtend.SIGN, ctx.tmp(1), ctx.src(1)),
-                new TcgDivNode(true, ctx.dest(), ctx.tmp(0), ctx.tmp(1))
-            );
-          }
-        })
+        .set(BuiltInTable.SDIV, (ctx) -> out(
+            new TcgDivNode(true, ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
 
         .set(BuiltInTable.UDIV, (ctx) -> out(
             new TcgDivNode(false, ctx.dest(), ctx.src(0), ctx.src(1))
         ))
 
-        .set(BuiltInTable.SMOD, (ctx) -> {
-          if (ctx.argWidth(0) == 64) {
-            return out(new TcgRemNode(true, ctx.dest(), ctx.src(0), ctx.src(1)));
-          } else {
-            return out(
-                new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
-                new TcgExtendNode(ctx.argWidth(1), TcgExtend.SIGN, ctx.tmp(1), ctx.src(1)),
-                new TcgRemNode(true, ctx.dest(), ctx.tmp(0), ctx.tmp(1))
-            );
-          }
-        })
+        .set(BuiltInTable.SMOD, (ctx) -> out(
+            new TcgRemNode(true, ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
 
         .set(BuiltInTable.UMOD, (ctx) -> out(
             new TcgRemNode(false, ctx.dest(), ctx.src(0), ctx.src(1))
@@ -883,8 +880,7 @@ class BuiltInTcgLoweringExecutor {
 
         // when doing an arithmatic shift right, we must sign extend the source value
         .set(BuiltInTable.ASR, (ctx) -> out(
-            new TcgExtendNode(ctx.argWidth(0), TcgExtend.SIGN, ctx.tmp(0), ctx.src(0)),
-            new TcgSarNode(ctx.dest(), ctx.tmp(0), ctx.src(1))
+            new TcgSarNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
 
         .build();
@@ -956,15 +952,12 @@ class BuiltInTcgLoweringExecutor {
      * @param i refers to a specific temporary
      * @return a new temp tcgV
      */
+    @SuppressWarnings("UnusedMethod")
     private TcgVRefNode tmp(int i) {
       return localTmps.computeIfAbsent(i, (k) -> {
         var name = "tmp_" + call.id + "_" + k;
         return graph().addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize), null));
       });
-    }
-
-    private int argWidth(int i) {
-      return call.arguments().get(i).type().asDataType().bitWidth();
     }
 
 

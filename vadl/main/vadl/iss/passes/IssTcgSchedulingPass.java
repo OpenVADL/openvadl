@@ -43,6 +43,18 @@ import vadl.viam.passes.GraphProcessor;
  * operations for an Instruction Set Simulator (ISS).
  * It ensures that instructions are correctly scheduled
  * for translation, considering control flow and dependencies.
+ *
+ * <p>From paper: Before lowering to TCG operations,
+ * it must be determined which expressions are evaluated during TCG translation and which
+ * are executed at runtime when the translated TCG code is executed.
+ * Expressions evaluated at runtime must be converted into TCG operations and scheduled accordingly.
+ * This includes all expressions that depend on the CPU state or memory, such as register reads.
+ * Conversely, expressions that depend only on immediate values, such as format field values,
+ * can be computed at translation time and represented as constant TCG variables.
+ * These expressions do not require scheduling, as their dependencies can be directly translated
+ * into C expressions.
+ * After this pass, all dependency nodes corresponding to TCG operations are correctly scheduled.
+ * </p>
  */
 public class IssTcgSchedulingPass extends Pass {
 
