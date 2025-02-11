@@ -69,41 +69,41 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
            return input;
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
+           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32), 20);
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
+           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32), 20);
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
+           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32), 20);
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
+           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32), 20);
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
+           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32), 20);
         }
         uint32_t RV64IM_hi(uint32_t symbol) {
-           return ((uint32_t) (VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32)));
+           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint32_t) 0x0000000c ), 32), 20);
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-           return ((int16_t) (symbol));
+           return VADL_uextract(symbol, 12);
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-           return ((int16_t) (symbol));
+           return VADL_uextract(symbol, 12);
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-           return ((int16_t) (symbol));
+           return VADL_uextract(symbol, 12);
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-           return ((int16_t) (symbol));
+           return VADL_uextract(symbol, 12);
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-           return ((int16_t) (symbol));
+           return VADL_uextract(symbol, 12);
         }
         int16_t RV64IM_lo(uint32_t symbol) {
-           return ((int16_t) (symbol));
-        }
+           return VADL_uextract(symbol, 12);
+        } 
         """.trim().lines(), output);
   }
 }
