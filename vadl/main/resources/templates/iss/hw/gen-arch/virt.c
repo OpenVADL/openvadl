@@ -88,7 +88,7 @@ static void virt_machine_init(MachineState *machine)
 
     mc->init = virt_machine_init;
     mc->default_cpus = 1;
-    mc->default_cpu_type = TYPE_VADL_CPU,
+    mc->default_cpu_type = TYPE_[(${gen_arch_upper})]_CPU,
     mc->min_cpus = mc->default_cpus;
     mc->max_cpus = mc->default_cpus;
     mc->no_floppy = 1;
@@ -99,7 +99,7 @@ static void virt_machine_init(MachineState *machine)
 }
 
 static void virt_machine_instance_init(Object *obj) {
-    VADLVirtMachineState *m_state = VADL_VIRT_MACHINE(obj);
+    [(${gen_arch_upper})]VirtMachineState *m_state = [(${gen_arch_upper})]_VIRT_MACHINE(obj);
 
     // nothing to do
 }

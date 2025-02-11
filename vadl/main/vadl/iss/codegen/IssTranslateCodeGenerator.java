@@ -4,6 +4,7 @@ import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.utils.GraphUtils.getSingleNode;
 
+import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
@@ -38,20 +39,20 @@ public class IssTranslateCodeGenerator implements CDefaultMixins.All,
     IssCMixins.Default, IssCMixins.Invalid {
 
   private Instruction insn;
-  private boolean generateInsnCount = false;
+  private boolean generateInsnCount;
   private StringBuilder builder;
   private CNodeContext ctx;
+  private String targetName;
 
   /**
    * Constructs IssTranslateCodeGenerator.
-   *
-   * @param generateInsnCount used to determine if the iss generates add instruction for special
-   *                          cpu register (QEMU)
    */
-  public IssTranslateCodeGenerator(Instruction instr, boolean generateInsnCount) {
+  public IssTranslateCodeGenerator(Instruction instr,
+                                   IssConfiguration configuration) {
     this.insn = instr;
-    this.generateInsnCount = generateInsnCount;
+    this.generateInsnCount = configuration.isInsnCounting();
     this.builder = new StringBuilder();
+    this.targetName = configuration.targetName();
     this.ctx = new CNodeContext(
         builder::append,
         (ctx, node)
@@ -62,12 +63,10 @@ public class IssTranslateCodeGenerator implements CDefaultMixins.All,
 
   /**
    * The static entry point to get the translation function for a given instruction.
-   *
-   * @param generateInsnCount used to determine if the iss generates add instruction for special
-   *                          cpu register (QEMU)
    */
-  public static String fetch(Instruction def, boolean generateInsnCount) {
-    var generator = new IssTranslateCodeGenerator(def, generateInsnCount);
+  public static String fetch(Instruction def,
+                             IssConfiguration configuration) {
+    var generator = new IssTranslateCodeGenerator(def, configuration);
     return generator.fetch();
   }
 
@@ -81,7 +80,7 @@ public class IssTranslateCodeGenerator implements CDefaultMixins.All,
     ctx.wr(name);
     ctx.ln(" *a) {");
 
-    ctx.wr("trace_vadl_instr_trans(__func__);");
+    ctx.wr("trace_" + this.targetName.toLowerCase() + "_instr_trans(__func__);");
 
     if (generateInsnCount) {
       //Add separate add instruction after each that increments special cpu_insn_count flag in

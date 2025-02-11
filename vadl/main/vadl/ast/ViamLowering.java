@@ -832,7 +832,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           .orElseThrow();
     }
 
-    return Optional.of(new MicroProcessor(identifier, isa, null, start, null));
+    return Optional.of(new MicroProcessor(identifier, isa, null, start, null, null));
   }
 
   private InstructionSetDefinition mergeIsa(List<InstructionSetDefinition> definitions) {

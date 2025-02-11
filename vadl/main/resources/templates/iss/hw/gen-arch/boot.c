@@ -61,8 +61,6 @@ target_ulong [(${gen_arch_lower})]_load_firmware(const char *firmware_filename,
         return firmware_end;
     }
 
-    qemu_printf("[VADL] failed to load_elf_ram, will try to load_image_targphys_as\n");
-
     firmware_size = load_image_targphys_as(firmware_filename,
                                            firmware_load_addr,
                                            current_machine->ram_size, NULL);

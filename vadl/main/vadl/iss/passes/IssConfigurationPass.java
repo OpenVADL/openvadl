@@ -29,9 +29,9 @@ public class IssConfigurationPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
     var configuration = configuration();
-    // TODO: Determine actual architecture name
 
-    configuration.setArchitectureName("vadl");
+    var isaName = viam.mip().get().targetName().toLowerCase();
+    configuration.setTargetName(isaName);
 
     viam.isa().ifPresent(isa -> {
       var targetSize = requireNonNull(isa.pc()).registerResource().resultType().bitWidth();

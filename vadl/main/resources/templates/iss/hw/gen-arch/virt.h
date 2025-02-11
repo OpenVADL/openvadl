@@ -23,7 +23,7 @@ struct [(${gen_arch_upper})]VirtMachineState {
 
   /*< public >*/
   Notifier machine_ready;
-  VADLCPU cpu;
+  [(${gen_arch_upper})]CPU cpu;
 };
 
 enum {

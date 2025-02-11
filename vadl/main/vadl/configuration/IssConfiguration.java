@@ -10,7 +10,7 @@ import vadl.iss.passes.tcgLowering.Tcg_32_64;
 public class IssConfiguration extends GeneralConfiguration {
 
   // is set by the IssConfigurationPass
-  private String architectureName;
+  private String targetName;
   private boolean insnCount;
   private Tcg_32_64 targetSize;
 
@@ -19,7 +19,7 @@ public class IssConfiguration extends GeneralConfiguration {
    */
   public IssConfiguration(GeneralConfiguration generalConfig) {
     super(generalConfig);
-    architectureName = "unknown";
+    targetName = "unknown";
     insnCount = false;
     targetSize = Tcg_32_64.i64;
   }
@@ -28,11 +28,11 @@ public class IssConfiguration extends GeneralConfiguration {
    * Constructs IssConfiguration.
    *
    * @param insnCount used to determine if the iss generates add instruction for special
-   *                            cpu register (QEMU)
+   *                  cpu register (QEMU)
    */
   public IssConfiguration(GeneralConfiguration generalConfig, boolean insnCount) {
     super(generalConfig);
-    this.architectureName = "unknown";
+    this.targetName = "unknown";
     this.insnCount = insnCount;
     targetSize = Tcg_32_64.i64;
 
@@ -46,16 +46,16 @@ public class IssConfiguration extends GeneralConfiguration {
     return new IssConfiguration(generalConfig, insnCounting);
   }
 
-  public String architectureName() {
-    return architectureName;
+  public String targetName() {
+    return targetName;
   }
 
   public Tcg_32_64 targetSize() {
     return targetSize;
   }
 
-  public void setArchitectureName(String architectureName) {
-    this.architectureName = architectureName;
+  public void setTargetName(String targetName) {
+    this.targetName = targetName;
   }
 
   public boolean isInsnCounting() {
