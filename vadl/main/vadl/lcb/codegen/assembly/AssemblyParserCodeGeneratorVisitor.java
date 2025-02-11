@@ -335,7 +335,9 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
     writer.write(String.format("  RuleParsingResult<%s> %sAsmRecursiveDescentParser::%s() {\n",
         type, namespace, rule.simpleName()));
     rule.getAlternatives().accept(this);
-    writer.write("  }\n\n");
+    writer.write(
+        String.format("    return RuleParsingResult<%s>(TODO_GET_RESULT_VAR_NAME);\n  }\n\n",
+            type));
   }
 
   @Override
@@ -377,30 +379,36 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   @Override
   public void visit(AsmAlternatives element) {
     // TODO: attribute handling
+    var alternativesResultVar = symbolTable.getNextVariable();
     var alternatives = element.alternatives();
     if (alternatives.size() == 1) {
       alternatives.get(0).accept(this);
       return;
     }
+    writer.write(
+        String.format("std::optional<RuleParsingResult<%s>> %s;\n",
+            element.asmType().toCppTypeString(namespace), alternativesResultVar));
     writer.write(getAlternativeGuard(alternatives.get(0)));
     alternatives.get(0).accept(this);
+    writer.write(String.format("%s = TODO_GET_SINGLE_ALT_RESULT_VAR;\n", alternativesResultVar));
     writer.write("} ");
     for (int i = 1; i < alternatives.size(); i++) {
       writer.write("else " + getAlternativeGuard(alternatives.get(i)));
       alternatives.get(i).accept(this);
+      writer.write(String.format("%s = TODO_GET_SINGLE_ALT_RESULT_VAR;\n", alternativesResultVar));
       writer.write("} ");
     }
 
     writer.write("else {\n");
-    writer.write(String.format("return RuleParsingResult<%s>(Lexer.getTok().getLoc(),\"%s\")\n",
+    writer.write(String.format("return RuleParsingResult<%s>(Lexer.getTok().getLoc(),\"%s\");\n",
         element.asmType().toCppTypeString(namespace), alternativesErrorMessage(element)));
     writer.write("} \n");
   }
 
   private String getAlternativeGuard(AsmAlternative alternative) {
-    return "if (" +
-        getGuardCondition(alternative.semanticPredicate(), alternative.firstTokens()) +
-        ") {\n";
+    return "if ("
+        + getGuardCondition(alternative.semanticPredicate(), alternative.firstTokens())
+        + ") {\n";
   }
 
   private String getGuardCondition(@Nullable Function semanticPredicateFunction,
@@ -481,8 +489,8 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   @Override
   public void visit(AsmRepetition element) {
     // TODO: attribute handling
-    writer.write("while (" + getGuardCondition(element.semanticPredicate(), element.firstTokens()) +
-        ") {\n");
+    writer.write("while (" + getGuardCondition(element.semanticPredicate(), element.firstTokens())
+        + ") {\n");
     element.alternatives().accept(this);
     writer.write("}\n");
   }
@@ -492,7 +500,7 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
     // TODO: attribute handling
     var tempVar = symbolTable.getNextVariable();
     writer.write(StringSubstitutor.replace("""
-          RuleParsingResult<type> ${tempVar} = ${ruleName}();
+          RuleParsingResult<${type}> ${tempVar} = ${ruleName}();
           if(!${tempVar}.Success) {
               return RuleParsingResult<${ruleType}>(${tempVar}.getError());
           }

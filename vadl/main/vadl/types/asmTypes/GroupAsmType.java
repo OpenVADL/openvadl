@@ -1,6 +1,7 @@
 package vadl.types.asmTypes;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -9,14 +10,14 @@ import java.util.Objects;
  */
 public class GroupAsmType implements AsmType {
 
-  List<AsmType> subtypes;
+  Map<String, AsmType> subtypeMap;
 
-  public GroupAsmType(List<AsmType> subtypes) {
-    this.subtypes = subtypes;
+  public GroupAsmType(Map<String, AsmType> subtypeMap) {
+    this.subtypeMap = subtypeMap;
   }
 
-  public List<AsmType> getSubtypes() {
-    return subtypes;
+  public Map<String, AsmType> getSubtypeMap() {
+    return subtypeMap;
   }
 
   @Override
@@ -25,7 +26,18 @@ public class GroupAsmType implements AsmType {
   }
 
   @Override
+  public String toCppTypeString(String prefix) {
+    if (subtypeMap.isEmpty()) {
+      return "NoData";
+    }
+    return subtypeMap.keySet().stream()
+        .reduce("", (acc, type) -> acc + type);
+  }
+
+  @Override
   public boolean canBeCastTo(AsmType to) {
+
+    var subtypes = subtypeMap.values().stream().toList();
 
     if (subtypes.size() == 1 && subtypes.get(0) == to) {
       return true;
@@ -61,33 +73,20 @@ public class GroupAsmType implements AsmType {
     }
 
     GroupAsmType that = (GroupAsmType) o;
-    if (subtypes.size() != that.subtypes.size()) {
-      return false;
-    }
-
-    boolean equal = true;
-    for (int i = 0; i < subtypes.size(); i++) {
-      equal &= subtypes.get(0).equals(that.subtypes.get(0));
-    }
-    return equal;
+    return Arrays.equals(subtypeMap.values().toArray(), that.subtypeMap.values().toArray());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(subtypes);
+    return Objects.hash(subtypeMap.values());
   }
 
   @Override
   public String toString() {
     var nameWithSubtypes = new StringBuilder("@").append(name()).append("(");
 
-    for (int i = 0; i < subtypes.size(); i++) {
-      nameWithSubtypes.append(subtypes.get(i));
-      if (i != subtypes.size() - 1) {
-        nameWithSubtypes.append(", ");
-      }
-    }
-    nameWithSubtypes.append(")");
+    subtypeMap.values().forEach(sub -> nameWithSubtypes.append(sub.toString()).append(", "));
+    nameWithSubtypes.replace(nameWithSubtypes.length() - 2, nameWithSubtypes.length() - 1, ")");
 
     return nameWithSubtypes.toString();
   }

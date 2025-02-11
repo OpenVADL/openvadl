@@ -46,13 +46,22 @@ public:
     }
 };
 
+/*
 struct NoData{};
 
 struct mnemonic {
     ParsedValue<[(${namespace})]ParsedOperand> mnemonic;
 };
+*/
 
-// TODO: generate structs
+[# th:each="struct : ${parsedValueStructs}" ]
+struct [(${struct.getName()})] {
+  [# th:each="field : ${struct.getFields()}" ]
+  ParsedValue<[(${field.cppTypeString()})]> [(${field.name()})];
+  [/]
+};
+
+[/]
 
 [# th:each="format : ${formats}" ]
 struct [(${format.structName})] {

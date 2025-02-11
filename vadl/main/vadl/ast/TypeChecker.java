@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -779,7 +780,7 @@ public class TypeChecker
           "Typechecker found an AsmGrammarAlternative without elements.");
     }
 
-    var groupSubtypes = new ArrayList<AsmType>();
+    var groupSubtypeMap = new LinkedHashMap<String, AsmType>();
     var alreadyAssignedAttributes = new HashMap<String, AsmGrammarElementDefinition>();
 
     for (var element : elements) {
@@ -791,7 +792,7 @@ public class TypeChecker
           element.accept(this);
         }
 
-        appendToAsmGroupType(element, groupSubtypes, alreadyAssignedAttributes);
+        appendToAsmGroupType(element, groupSubtypeMap, alreadyAssignedAttributes);
       } else {
         element.accept(this);
       }
@@ -801,20 +802,20 @@ public class TypeChecker
       return elementsToConsider.get(0).asmType;
     }
 
-    return new GroupAsmType(groupSubtypes);
+    return new GroupAsmType(groupSubtypeMap);
   }
 
   private void appendToAsmGroupType(AsmGrammarElementDefinition element,
-                                    List<AsmType> groupSubtypes,
+                                    Map<String, AsmType> groupSubtypeMap,
                                     Map<String, AsmGrammarElementDefinition> assignedAttributes) {
-    // these two if statements are mutually exclusive:
+    // the following two if statements are mutually exclusive:
     // grammar syntax does not allow for an element to be assigned to an attribute
     // and be of GroupAsmType at the same time
 
     // consider elements which are assigned to an attribute
     if (element.attribute != null && !element.isAttributeLocalVar
         && !element.isWithinRepetitionBlock) {
-      groupSubtypes.add(element.asmType);
+      groupSubtypeMap.put(element.attribute.name, element.asmType);
 
       var otherElement = assignedAttributes.put(element.attribute.name, element);
       if (otherElement != null) {
@@ -831,7 +832,7 @@ public class TypeChecker
     // ignore the type of repetition blocks
     if (element.repetitionAlternatives == null
         && element.asmType instanceof GroupAsmType elementAsmType) {
-      groupSubtypes.addAll(elementAsmType.getSubtypes());
+      groupSubtypeMap.putAll(elementAsmType.getSubtypeMap());
     }
   }
 
