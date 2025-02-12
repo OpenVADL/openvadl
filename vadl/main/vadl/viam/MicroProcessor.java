@@ -11,6 +11,8 @@ import javax.annotation.Nullable;
  */
 public class MicroProcessor extends Definition {
 
+  private final String targetName;
+
   private final InstructionSetArchitecture isa;
 
   @Nullable
@@ -26,12 +28,18 @@ public class MicroProcessor extends Definition {
    * Constructs the microprocessor.
    */
   public MicroProcessor(Identifier identifier, InstructionSetArchitecture isa, @Nullable Abi abi,
-                        @Nullable Function start, @Nullable Function stop) {
+                        @Nullable Function start, @Nullable Function stop,
+                        @Nullable String targetName) {
     super(identifier);
     this.isa = isa;
     this.abi = abi;
     this.start = start;
     this.stop = stop;
+    if (targetName != null) {
+      this.targetName = targetName;
+    } else {
+      this.targetName = isa.simpleName();
+    }
   }
 
   /**
@@ -77,6 +85,10 @@ public class MicroProcessor extends Definition {
 
   public Stream<Instruction> instructions() {
     return isa.ownInstructions().stream();
+  }
+
+  public String targetName() {
+    return targetName;
   }
 
   @Override

@@ -11,11 +11,9 @@ import vadl.utils.VadlFileUtils;
 
 public class IssRV64IMEmbenchTest extends QemuIssTest {
 
-  private static final Logger log = LoggerFactory.getLogger(IssRV64IMEmbenchTest.class);
-
   @EnabledIfEnvironmentVariable(named = "test_embench_enabled", matches = "true")
   @Test
-  void issLoweringTest() throws IOException, DuplicatedPassKeyException {
+  void rv64imEmbenchTest() throws IOException, DuplicatedPassKeyException {
     var image = generateIssSimulator("sys/risc-v/rv64im.vadl");
 
     // load embench from resources
@@ -25,7 +23,7 @@ public class IssRV64IMEmbenchTest extends QemuIssTest {
     var runCommand = "chmod -R +x /work/embench "
         + "&& cd /work/embench "
         + "&& bash ./build_spike-rv64im.sh "
-        + "&& bash ./benchmark_qemu.sh qemu-system-vadl -nographic -M virt -bios";
+        + "&& bash ./benchmark_qemu.sh qemu-system-rv64im -nographic -M virt -bios";
 
     runContainer(image,
         container -> container

@@ -119,7 +119,7 @@ static void [(${gen_arch_lower})]_cpu_dump_state(CPUState *cs, FILE *f, int flag
 
 static void [(${gen_arch_lower})]_cpu_set_pc(CPUState *cs, vaddr value)
 {
-    trace_vadl_cpu_call(__func__);
+    trace_[(${gen_arch_lower})]_cpu_call(__func__);
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
 
     cpu->env.[(${gen_arch_upper})]_PC = value;
@@ -130,7 +130,7 @@ static void [(${gen_arch_lower})]_cpu_do_interrupt(CPUState *cs)
     trace_[(${gen_arch_lower})]_cpu_call(__func__);
 
     [(${gen_arch_upper})]CPU *cpu      = [(${gen_arch_upper})]_CPU(cs);
-    CPUVADLState *env = &cpu->env;
+    CPU[(${gen_arch_upper})]State *env = &cpu->env;
 
     // if the interrupt flag (MSB) is not set, it is an exception (sync) not an interrupt (async)
     bool async = !!(cs->exception_index & [(${gen_arch_upper})]_EXCP_INT_FLAG);

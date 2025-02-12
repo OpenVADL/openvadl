@@ -99,7 +99,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         }
 
         // generate iss image from the output path
-        return getIssImage(issOutputPath);
+        return getIssImage(issOutputPath, configuration);
       } catch (IOException | DuplicatedPassKeyException e) {
         throw new RuntimeException(e);
       }
@@ -197,11 +197,16 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * @param generatedIssSources the path to the generated ISS/QEMU sources.
    * @return a new image that builds the ISS at build time.
    */
-  private ImageFromDockerfile getIssImage(Path generatedIssSources
+  private ImageFromDockerfile getIssImage(Path generatedIssSources,
+                                          IssConfiguration configuration
   ) {
 
     // get redis cache for faster compilation using sccache
     var redisCache = getRunningRedisCache();
+
+    var targetName = configuration.targetName().toLowerCase();
+    var softmmuTarget = targetName + "-softmmu";
+    var qemuBin = "qemu-system-" + targetName;
 
     var dockerImage = new ImageFromDockerfile()
         .withDockerfileFromBuilder(d -> {
@@ -215,19 +220,19 @@ public abstract class QemuIssTest extends DockerExecutionTest {
               // TODO: update target name
               d.workDir("/qemu/build");
               // configure qemu with the new target from the specification
-              d.run("../configure --cc='" + cc + "' --target-list=vadl-softmmu");
+              d.run("../configure --cc='" + cc + "' --target-list=" + softmmuTarget);
               // setup redis cache endpoint environment variablef
               redisCache.setupEnv(d);
               // build qemu with all cpu cores and print if cache was used
               d.run("make -j$(nproc) && sccache -s");
               // validate existence of generated qemu iss
-              d.run("qemu-system-vadl --version");
+              d.run(qemuBin + " --version");
 
               d.workDir("/work");
 
               d.copy("/scripts", "/scripts");
               d.run("ls /scripts");
-              d.cmd("python3 /scripts/bare_metal_runner.py /qemu/build/qemu-system-vadl");
+              d.cmd("python3 /scripts/bare_metal_runner.py /qemu/build/" + qemuBin);
 
               d.build();
             }

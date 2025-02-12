@@ -285,5 +285,5 @@ static const TranslatorOps [(${gen_arch_lower})]_tr_ops = {
 void gen_intermediate_code(CPUState *cs, TranslationBlock *tb, int *max_insns,
                            vaddr pc, void *host_pc) {
     DisasContext ctx;
-    translator_loop(cs, tb, max_insns, pc, host_pc, &vadl_tr_ops, &ctx.base);
+    translator_loop(cs, tb, max_insns, pc, host_pc, &[(${gen_arch_lower})]_tr_ops, &ctx.base);
 }

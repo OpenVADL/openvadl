@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.cppCodeGen.formatting.ClangFormatter;
 import vadl.cppCodeGen.formatting.CodeFormatter;
 import vadl.iss.codegen.QemuClangFormatter;
 import vadl.pass.PassName;
@@ -21,7 +20,7 @@ import vadl.viam.Specification;
  * <p>It overrides the {@link #getOutputPath()} and uses the {@link #issTemplatePath()}
  * to determine the output location.
  * This is done by replacing all occurrences of {@code gen-arch} in the path, by the
- * {@link IssConfiguration#architectureName()}.
+ * {@link IssConfiguration#targetName()}.
  *
  * <p>All subclasses must provide the {@link #issTemplatePath()} that defines the
  * path inside the {@code resource/templates/iss} directory.
@@ -73,16 +72,16 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     // however, if the path includes the generated architecture name, the template paths
     // use `gen-arch`, which must be replaced by the actual architecture name.
     return templatePath
-        .replaceAll("gen-arch", configuration().architectureName());
+        .replaceAll("gen-arch", configuration().targetName());
   }
 
   @Override
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = new HashMap<String, Object>();
-    vars.put("gen_arch", configuration().architectureName().toLowerCase());
-    vars.put("gen_arch_upper", configuration().architectureName().toUpperCase());
-    vars.put("gen_arch_lower", configuration().architectureName().toLowerCase());
+    vars.put("gen_arch", configuration().targetName().toLowerCase());
+    vars.put("gen_arch_upper", configuration().targetName().toUpperCase());
+    vars.put("gen_arch_lower", configuration().targetName().toLowerCase());
     vars.put("register_files", mapRegFiles(specification));
     vars.put("registers", mapRegs(specification));
     vars.put("insn_count", configuration().isInsnCounting());

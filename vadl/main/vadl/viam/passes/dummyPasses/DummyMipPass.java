@@ -42,7 +42,7 @@ public class DummyMipPass extends Pass {
     var isa = viam.isa().orElse(null);
     var abi = viam.abi().orElse(null);
 
-    if (isa == null || abi == null) {
+    if (isa == null) {
       // if there is no isa nor abi, we just do nothing
       return null;
     }
@@ -53,6 +53,7 @@ public class DummyMipPass extends Pass {
         isa,
         abi,
         startFunc(ident),
+        null,
         null
     );
     // enabled HTIF

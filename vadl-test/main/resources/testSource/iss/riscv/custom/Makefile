@@ -13,7 +13,7 @@ ABI = lp64
 ASFLAGS = -march=$(ARCH) -mabi=$(ABI)
 LDFLAGS = -T link.ld
 
-QEMU=qemu-system-vadl
+QEMU=qemu-system-rv64im
 QMACHINE = virt
 QFLAGS = -nographic -M $(QMACHINE)
 

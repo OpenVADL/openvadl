@@ -21,7 +21,7 @@ public class IssCustomTests extends QemuIssTest {
   @TestFactory
   @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> customTests() {
-    var qemuImage = generateIssSimulator("sys/risc-v/rv64i.vadl");
+    var qemuImage = generateIssSimulator("sys/risc-v/rv64im.vadl");
 
     // Find test source directory and results directory
     var testSources = getTestSourcePath("iss/riscv/custom");
