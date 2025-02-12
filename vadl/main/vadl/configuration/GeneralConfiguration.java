@@ -8,6 +8,7 @@ import java.nio.file.Path;
 public class GeneralConfiguration {
   private final Path outputPath;
   private final boolean doDump;
+  private boolean dryRun = false;
 
 
   public GeneralConfiguration(Path outputPath, boolean doDump) {
@@ -27,4 +28,11 @@ public class GeneralConfiguration {
     return doDump;
   }
 
+  public boolean isDryRun() {
+    return dryRun;
+  }
+
+  public void setDryRun(boolean dryRun) {
+    this.dryRun = dryRun;
+  }
 }
