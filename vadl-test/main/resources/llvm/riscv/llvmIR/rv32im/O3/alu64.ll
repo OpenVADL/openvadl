@@ -79,9 +79,8 @@ define i64 @andi(i64 %a) nounwind {
 define i64 @slli(i64 %a) nounwind {
 ; CHECK-LABEL: slli: # @slli
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a2,zero,25
-; CHECK-NEXT: SRL a2,a0,a2
 ; CHECK-NEXT: SLLI a1,a1,7
+; CHECK-NEXT: SRLI a2,a0,25
 ; CHECK-NEXT: OR a1,a1,a2
 ; CHECK-NEXT: SLLI a0,a0,7
 ; CHECK-NEXT: JALR zero,0(ra)
@@ -92,9 +91,8 @@ define i64 @slli(i64 %a) nounwind {
 define i64 @srli(i64 %a) nounwind {
 ; CHECK-LABEL: srli: # @srli
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a2,zero,24
-; CHECK-NEXT: SLL a2,a1,a2
 ; CHECK-NEXT: SRLI a0,a0,8
+; CHECK-NEXT: SLLI a2,a1,24
 ; CHECK-NEXT: OR a0,a0,a2
 ; CHECK-NEXT: SRLI a1,a1,8
 ; CHECK-NEXT: JALR zero,0(ra)
@@ -105,9 +103,8 @@ define i64 @srli(i64 %a) nounwind {
 define i64 @srai(i64 %a) nounwind {
 ; CHECK-LABEL: srai: # @srai
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a2,zero,23
-; CHECK-NEXT: SLL a2,a1,a2
 ; CHECK-NEXT: SRLI a0,a0,9
+; CHECK-NEXT: SLLI a2,a1,23
 ; CHECK-NEXT: OR a0,a0,a2
 ; CHECK-NEXT: SRAI a1,a1,9
 ; CHECK-NEXT: JALR zero,0(ra)
@@ -250,8 +247,7 @@ define signext i32 @addiw(i32 signext %a) nounwind {
 define signext i32 @slliw(i32 signext %a) nounwind {
 ; CHECK-LABEL: slliw: # @slliw
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a1,zero,17
-; CHECK-NEXT: SLL a0,a0,a1
+; CHECK-NEXT: SLLI a0,a0,17
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = shl i32 %a, 17
   ret i32 %1
@@ -278,9 +274,9 @@ define signext i32 @sraiw(i32 %a) nounwind {
 define i64 @sraiw_i64(i64 %a) nounwind {
 ; CHECK-LABEL: sraiw_i64: # @sraiw_i64
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a1,zero,31
-; CHECK-NEXT: SRA a1,a0,a1
-; CHECK-NEXT: SRAI a0,a0,9
+; CHECK-NEXT: SRAI a2,a0,9
+; CHECK-NEXT: SRAI a1,a0,31
+; CHECK-NEXT: ADDI a0,a2,0
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = shl i64 %a, 32
   %2 = ashr i64 %1, 41
