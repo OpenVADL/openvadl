@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.function.BinaryOperator;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
-import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
@@ -23,6 +22,9 @@ import vadl.viam.Constant;
 class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
 
+  // FIXME: There should be a cache here to avoid needlessly re-evaluating expressions
+  // With that also verify that there is only one instance to keep the cache between typechecking
+  // and lowering etc.
   public ConstantValue eval(Expr expr) {
     // A simple optimization that avoids unneeded traversing the tree.
     if (expr.type instanceof ConstantType) {
@@ -199,15 +201,10 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       };
     }
 
-    // Concrete types (with fixed bit width) are evaluated with the builtin functions.
-    var computeFunc = switch (expr.unOp().operator) {
-      case NEGATIVE -> BuiltInTable.NEG;
-      case COMPLEMENT, LOG_NOT -> BuiltInTable.NOT;
-    };
-
     return ConstantValue.fromViam(
         (
-            (Constant.Value) computeFunc.compute(List.of(innerVal.toViamConstant())).get()
+            (Constant.Value) Objects.requireNonNull(expr.computedTarget)
+                .compute(List.of(innerVal.toViamConstant())).get()
         ).castTo((DataType) innerVal.type())
     );
   }

@@ -1,9 +1,9 @@
 package vadl.viam;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 
@@ -40,6 +40,7 @@ public class PseudoInstruction extends Definition implements DefProp.WithBehavio
     this.behavior = behavior;
     this.assembly = assembly;
 
+    Arrays.stream(this.parameters).forEach(p -> p.setParent(this));
     behavior.setParentDefinition(this);
   }
 

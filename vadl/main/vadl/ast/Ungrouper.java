@@ -558,7 +558,7 @@ public class Ungrouper
 
   @Override
   public Statement visit(LetStatement letStatement) {
-    letStatement.valueExpression = letStatement.valueExpression.accept(this);
+    letStatement.valueExpr = letStatement.valueExpr.accept(this);
     letStatement.body = letStatement.body.accept(this);
     return letStatement;
   }

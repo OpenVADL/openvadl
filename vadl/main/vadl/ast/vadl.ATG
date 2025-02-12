@@ -949,10 +949,10 @@ PRODUCTIONS
   = embeddedSource (. source = t.val.substring(3, t.val.length() - 3); .)
   .
 
-  cpuFunctionDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  cpuFunctionDefinition<out Definition def> (. var start = lookaheadLoc(); Identifier ident = null;.)
   =                                         (. CpuFunctionDefinition.BehaviorKind kind = null; IsId stopWithRef = null; .)
-  ( START                                   (. kind = CpuFunctionDefinition.BehaviorKind.START; .)
-  | STOP                                    (. kind = CpuFunctionDefinition.BehaviorKind.STOP; .)
+  ( START                                   (. ident = new Identifier(t.val, loc()); kind = CpuFunctionDefinition.BehaviorKind.START; .)
+  | STOP                                    (. ident = new Identifier(t.val, loc()); kind = CpuFunctionDefinition.BehaviorKind.STOP; .)
     [ WITH referenceLiteral<out stopWithRef> ]
     /* TODO Verify if "redirect" is needed - "redirect is unstable and must not be used"
     | REDIRECT
@@ -962,7 +962,7 @@ PRODUCTIONS
     */
   )
     SYM_EQ
-    expression<out Expr expr, BIN_OPS>      (. def = new CpuFunctionDefinition(kind, stopWithRef, expr, start.join(loc())); .)
+    expression<out Expr expr, BIN_OPS>      (. def = new CpuFunctionDefinition(ident, kind, stopWithRef, expr, start.join(loc())); .)
   .
 
   cpuProcessDefinition<out Definition def> (. var start = lookaheadLoc(); .)

@@ -19,6 +19,7 @@ import vadl.viam.Specification;
  * The execution of the passes happens in the same order as they were inserted.
  */
 public class PassManager {
+
   private static final Logger logger = LoggerFactory.getLogger(PassManager.class);
   /**
    * Stores the results of the passes.
@@ -84,7 +85,7 @@ public class PassManager {
    *                                    was added.
    */
   public void add(PassStep passStep) throws DuplicatedPassKeyException {
-    logger.atDebug().log("Adding pass with key: {}", passStep.key().value());
+    logger.debug("Adding pass with key: {}", passStep.key().value());
     if (hasDuplicatedPassKey(passStep.key())) {
       throw new DuplicatedPassKeyException(passStep.key());
     }
@@ -120,7 +121,7 @@ public class PassManager {
     for (var step : affectedSteps) {
       @SuppressWarnings("VariableDeclarationUsageDistance")
       var startTime = System.currentTimeMillis();
-      logger.atDebug().log("Running pass with key: {}", step.key());
+      logger.debug("Running pass with key: {}", step.key());
       // Wrapping the passResults into an unmodifiable map so a pass cannot modify
       // the results.
       var pass = step.pass();
@@ -128,11 +129,11 @@ public class PassManager {
       pass.verification(viam, passResult);
 
       // we always store the pass result, even if the result is `null`
-      logger.atDebug().log("Storing result of pass with key: {}", step.key());
+      logger.debug("Storing result of pass with key: {}", step.key());
       var duration = System.currentTimeMillis() - startTime;
       passResults.add(step.key(), pass, duration, passResult);
 
-      logger.atDebug().log("Pass completed: {} -- {} ms", step.key(),
+      logger.debug("Pass completed: {} -- {} ms", step.key(),
           duration);
     }
   }

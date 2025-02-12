@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import vadl.types.ConcreteRelationType;
@@ -54,6 +55,7 @@ public class Function extends Definition implements DefProp.WithBehavior, DefPro
     this.parameters = parameters;
 
     behavior.setParentDefinition(this);
+    Arrays.stream(parameters).forEach(p -> p.setParent(this));
   }
 
   @Override

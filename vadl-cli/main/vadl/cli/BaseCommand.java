@@ -206,6 +206,7 @@ public abstract class BaseCommand implements Callable<Integer> {
 
   abstract PassOrder passOrder(GeneralConfiguration configuration) throws IOException;
 
+  @SuppressWarnings("EmptyCatch")
   @Override
   public Integer call() {
     int returnVal = 0;
@@ -222,12 +223,37 @@ public abstract class BaseCommand implements Callable<Integer> {
     } catch (DiagnosticList d) {
       new DiagnosticPrinter().print(d);
       returnVal = 1;
-    } catch (DuplicatedPassKeyException e) {
-      throw new RuntimeException(e);
-    } catch (IOException e) {
-      // FIXME: I don't think we should ever get this here, this should have been converted into
-      // Diagnostic way earlier with more meaning, like when this error occured.
-      throw new RuntimeException(e);
+    } catch (RuntimeException | IOException | DuplicatedPassKeyException e) {
+      System.out.println("""
+                                       ___ ___    _   ___ _  _      \s
+                                      / __| _ \\  /_\\ / __| || |   \s
+                                     | (__|   / / _ \\\\__ \\ __ |  \s  
+                                      \\___|_|_\\/_/ \\_\\___/_||_| \s
+                                                                    \s
+                                   🔥 The vadl compiler crashed 🔥  \s
+          
+          This shouldn't have happened, please open an issue with the stacktrace below at:
+          https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/new
+          """);
+
+      if (!ArtifactTracker.getDumpPaths().isEmpty()) {
+        var dumpMessage = "\nBefore the crash, the following dumps were generated:";
+        System.out.println(dumpMessage);
+        for (var path : ArtifactTracker.getDumpPaths()) {
+          System.out.printf("\t- %s\n", path);
+        }
+        System.out.println("");
+      }
+
+      // Dirty hack to avoid stdout and stderr getting mixed in IntelliJ (flushing wasn't enough).
+      try {
+        System.out.flush();
+        Thread.sleep(10);
+      } catch (InterruptedException ignored) {
+        // ignored
+      }
+      e.printStackTrace();
+      return 1;
     }
 
     if (!DeferredDiagnosticStore.isEmpty()) {
@@ -240,7 +266,7 @@ public abstract class BaseCommand implements Callable<Integer> {
           ? "\nThe following artifacts were generated:"
           : "\nEven though some errors occurred, the following artifacts were generated:";
       System.out.println(artifactMessage);
-      for (var path : ArtifactTracker.getDumpPaths()) {
+      for (var path : ArtifactTracker.getArtifactPathsPaths()) {
         System.out.printf("\t- %s\n", path);
       }
     }

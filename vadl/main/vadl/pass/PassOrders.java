@@ -383,8 +383,10 @@ public class PassOrders {
 
     order.add(new ViamVerificationPass(config));
 
-    // add iss template emitting passes to order
-    addIssEmitPasses(order, config);
+    if (!config.isDryRun()) {
+      // add iss template emitting passes to order
+      addIssEmitPasses(order, config);
+    }
 
     return order;
   }

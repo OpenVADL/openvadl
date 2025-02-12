@@ -151,8 +151,6 @@ public class Format extends Definition implements DefProp.WithType {
       this.type = type;
       this.bitSlice = bitSlice;
       this.parentFormat = parentFormat;
-
-      verify();
     }
 
     public Constant.BitSlice bitSlice() {

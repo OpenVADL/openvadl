@@ -144,14 +144,14 @@ final class BlockStatement extends Statement {
  */
 final class LetStatement extends Statement {
   List<Identifier> identifiers;
-  Expr valueExpression;
+  Expr valueExpr;
   Statement body;
   SourceLocation location;
 
-  LetStatement(List<Identifier> identifiers, Expr valueExpression, Statement body,
+  LetStatement(List<Identifier> identifiers, Expr valueExpr, Statement body,
                SourceLocation location) {
     this.identifiers = identifiers;
-    this.valueExpression = valueExpression;
+    this.valueExpr = valueExpr;
     this.body = body;
     this.location = location;
   }
@@ -163,7 +163,7 @@ final class LetStatement extends Statement {
    */
   @Nullable
   Type getTypeOf(String name) {
-    var valType = valueExpression.type;
+    var valType = valueExpr.type;
     if (identifiers.size() == 1) {
       return valType;
     }
@@ -195,7 +195,7 @@ final class LetStatement extends Statement {
       identifier.prettyPrint(indent, builder);
     }
     builder.append(" = ");
-    valueExpression.prettyPrint(indent + 1, builder);
+    valueExpr.prettyPrint(indent + 1, builder);
     builder.append(" in\n");
     body.prettyPrint(indent + 1, builder);
   }
@@ -210,13 +210,13 @@ final class LetStatement extends Statement {
     }
     var that = (LetStatement) obj;
     return Objects.equals(this.identifiers, that.identifiers)
-        && Objects.equals(this.valueExpression, that.valueExpression)
+        && Objects.equals(this.valueExpr, that.valueExpr)
         && Objects.equals(this.body, that.body);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(identifiers, valueExpression, body);
+    return Objects.hash(identifiers, valueExpr, body);
   }
 
   @Override
@@ -668,8 +668,12 @@ final class InstructionCallStatement extends Statement {
   List<Expr> unnamedArguments;
   SourceLocation loc;
 
+  /**
+   * The instruction or pseudo instruction to which it points.
+   * Set by the symboltable.
+   */
   @Nullable
-  Definition instrNode;
+  Definition instrDef;
 
   InstructionCallStatement(IdentifierOrPlaceholder id, List<NamedArgument> namedArguments,
                            List<Expr> unnamedArguments, SourceLocation loc) {
@@ -741,6 +745,9 @@ final class InstructionCallStatement extends Statement {
   }
 
   record NamedArgument(Identifier name, Expr value) {
+    public SourceLocation location() {
+      return name.location().join(value().location());
+    }
   }
 }
 

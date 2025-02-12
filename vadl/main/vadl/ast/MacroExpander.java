@@ -447,7 +447,7 @@ class MacroExpander
   @Override
   public Definition visit(MemoryDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    return new MemoryDefinition(id, definition.addressType, definition.dataType,
+    return new MemoryDefinition(id, definition.addressTypeLiteral, definition.dataTypeLiteral,
         copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
@@ -490,7 +490,7 @@ class MacroExpander
   @Override
   public Definition visit(RelocationDefinition definition) {
     return new RelocationDefinition(definition.identifier, expandParams(definition.params),
-        definition.resultType, expandExpr(definition.expr), copyLoc(definition.loc)
+        definition.resultTypeLiteral, expandExpr(definition.expr), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 
@@ -708,7 +708,7 @@ class MacroExpander
 
   @Override
   public Definition visit(CpuFunctionDefinition definition) {
-    return new CpuFunctionDefinition(definition.kind, definition.stopWithReference,
+    return new CpuFunctionDefinition(definition.id, definition.kind, definition.stopWithReference,
         expandExpr(definition.expr), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
@@ -841,7 +841,7 @@ class MacroExpander
 
   @Override
   public Statement visit(LetStatement letStatement) {
-    var valueExpression = expandExpr(letStatement.valueExpression);
+    var valueExpression = expandExpr(letStatement.valueExpr);
     var body = letStatement.body.accept(this);
     return new LetStatement(letStatement.identifiers, valueExpression, body,
         copyLoc(letStatement.location));

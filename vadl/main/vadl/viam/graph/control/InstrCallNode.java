@@ -74,6 +74,11 @@ public class InstrCallNode extends DirectionalNode {
     return arguments;
   }
 
+  public ExpressionNode getArgument(Format.Field field) {
+    var index = paramFields.indexOf(field);
+    return arguments.get(index);
+  }
+
   @Override
   public void verifyState() {
     ensure(paramFields.size() == arguments.size(),

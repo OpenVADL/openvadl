@@ -53,6 +53,15 @@ public abstract class Definition implements WithSourceLocation {
     this.sourceLocation = sourceLocation;
   }
 
+  /**
+   * Sets the source location of the node if it wasn't already set.
+   */
+  public void setSourceLocationIfNotSet(SourceLocation sourceLocation) {
+    if (this.sourceLocation.equals(SourceLocation.INVALID_SOURCE_LOCATION)) {
+      this.sourceLocation = sourceLocation;
+    }
+  }
+
 
   public String simpleName() {
     return identifier.simpleName();

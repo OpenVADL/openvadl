@@ -1,8 +1,12 @@
 package vadl.ast;
 
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
@@ -10,13 +14,24 @@ import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.utils.Pair;
 import vadl.viam.Constant;
+import vadl.viam.Counter;
+import vadl.viam.Definition;
+import vadl.viam.Format;
+import vadl.viam.Function;
+import vadl.viam.Instruction;
+import vadl.viam.Memory;
 import vadl.viam.RegisterFile;
+import vadl.viam.Relocation;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ReturnNode;
@@ -25,17 +40,31 @@ import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
 class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
   private final ViamLowering viamLowering;
+  private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
+
+  private final IdentityHashMap<Expr, ExpressionNode> expressionCache = new IdentityHashMap<>();
+  //private IdentityHashMap<Statement, SubgraphContext> statementCache = new IdentityHashMap<>();
 
   @Nullable
   private Graph currentGraph;
@@ -47,7 +76,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   Graph getGraph(Expr expr, String name) {
     var exprNode = fetch(expr);
 
-    // FIXME: Should we set the parent here too?
     var graph = new Graph(name);
     ControlNode endNode = graph.addWithInputs(new ReturnNode(exprNode));
     endNode.setSourceLocation(expr.sourceLocation());
@@ -57,28 +85,84 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   Graph getInstructionGraph(InstructionDefinition definition) {
-    // FIXME: there should be a link to the generated definition but it's not ready yet so we cannot
-    //  fetch it.
     var graph = new Graph("%s Behavior".formatted(definition.identifier().name));
     currentGraph = graph;
 
     var stmtCtx = definition.behavior.accept(this);
-    var sideEffects = stmtCtx.sideEffects();
+    var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
-    var end = graph.add(new InstrEndNode(sideEffects));
+    var end = graph.addWithInputs(new InstrEndNode(sideEffects));
     end.setSourceLocation(definition.sourceLocation());
 
     ControlNode startSuccessor = end;
     if (stmtCtx.hasControlBlock()) {
-      var controlBlock = stmtCtx.controlBlock();
+      var controlBlock = Objects.requireNonNull(stmtCtx.controlBlock());
       controlBlock.lastNode().setNext(end);
       startSuccessor = controlBlock.firstNode();
     }
     var start = new StartNode(startSuccessor);
     start.setSourceLocation(definition.sourceLocation());
-    graph.add(start);
+    graph.addWithInputs(start);
 
     return graph;
+  }
+
+  Graph getInstructionPseudoGraph(PseudoInstructionDefinition definition) {
+    var graph = new Graph("%s Behavior".formatted(definition.identifier().name));
+    currentGraph = graph;
+
+    var end = graph.addWithInputs(new InstrEndNode(new NodeList<>()));
+    end.setSourceLocation(definition.sourceLocation());
+
+    var calls = definition.statements.stream()
+        .map(s -> (InstrCallNode) Objects.requireNonNull(s.accept(this).controlBlock()).firstNode())
+        .toList();
+
+    ControlNode curr = end;
+    for (int i = calls.size() - 1; i >= 0; i--) {
+      var call = calls.get(i);
+      call.setNext(curr);
+      curr = call;
+    }
+
+    var start = new StartNode(curr);
+    start.setSourceLocation(definition.sourceLocation());
+    graph.addWithInputs(start);
+
+    return graph;
+  }
+
+
+  private <T extends vadl.viam.graph.Node> T addToGraph(T node) {
+    if (!node.isActive()) {
+      return Objects.requireNonNull(currentGraph).addWithInputs(node);
+    }
+    return node;
+  }
+
+  private Pair<BeginNode, BranchEndNode> buildBranch(@Nullable Statement stmt) {
+    if (stmt == null) {
+      var endNode = addToGraph(new BranchEndNode(new NodeList<>()));
+      var beginNode = addToGraph(new BeginNode(endNode));
+      return new Pair<>(beginNode, endNode);
+    }
+
+    var branchCtx = stmt.accept(this);
+
+    var endNode = addToGraph(new BranchEndNode(branchCtx.sideEffectsOrEmptyList()));
+
+    BeginNode beginNode;
+    if (branchCtx.controlBlock() != null) {
+      beginNode = new BeginNode(branchCtx.controlBlock().firstNode());
+      branchCtx.controlBlock().lastNode().setNext(endNode);
+    } else {
+      beginNode = new BeginNode(endNode);
+    }
+    beginNode = addToGraph(beginNode);
+
+    endNode.setSourceLocation(stmt.sourceLocation());
+    beginNode.setSourceLocation(stmt.sourceLocation());
+    return new Pair<>(beginNode, endNode);
   }
 
   private static BuiltInCall produceNeqToZero(ExpressionNode node) {
@@ -87,9 +171,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return BuiltInCall.of(BuiltInTable.NEQ, node, constNode);
   }
 
+
   private ExpressionNode fetch(Expr expr) {
+    if (expressionCache.containsKey(expr)) {
+      return expressionCache.get(expr);
+    }
+
     var result = expr.accept(this);
     result.setSourceLocationIfNotSet(expr.sourceLocation());
+    expressionCache.put(expr, result);
     return result;
   }
 
@@ -98,11 +188,60 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var computedTarget = Objects.requireNonNull(expr.symbolTable).resolveNode(expr.name);
 
+    // Constant
+    if (computedTarget instanceof ConstantDefinition constant) {
+      var value = constantEvaluator.eval(constant.value).toViamConstant();
+      return new ConstantNode(value);
+    }
+
     // Format field
     if (computedTarget instanceof FormatDefinition.TypedFormatField typedFormatField) {
       return new FieldRefNode(
-          viamLowering.fetch(typedFormatField).orElseThrow(),
+          (Format.Field) viamLowering.fetch(typedFormatField).orElseThrow(),
           (DataType) Objects.requireNonNull(expr.type));
+    }
+    if (computedTarget instanceof FormatDefinition.RangeFormatField rangeFormatField) {
+      return new FieldRefNode(
+          (Format.Field) viamLowering.fetch(rangeFormatField).orElseThrow(),
+          (DataType) Objects.requireNonNull(expr.type));
+    }
+    if (computedTarget instanceof FormatDefinition.DerivedFormatField derivedFormatField) {
+      return new FieldAccessRefNode(
+          (Format.FieldAccess) viamLowering.fetch(derivedFormatField).orElseThrow(),
+          (DataType) Objects.requireNonNull(expr.type));
+    }
+
+    // Registers and counters
+    if (computedTarget instanceof CounterDefinition counterDefinition) {
+      if (counterDefinition.kind == CounterDefinition.CounterKind.PROGRAM) {
+        var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
+
+        return new ReadRegNode(counter.registerRef(), (DataType) Objects.requireNonNull(expr.type),
+            null);
+      }
+      throw new IllegalStateException("Unsupported counter kind: " + counterDefinition.kind);
+    }
+
+    // Let statement and expression
+    if (computedTarget instanceof LetStatement letStatement) {
+      return new LetNode(new LetNode.Name(expr.name, letStatement.sourceLocation()),
+          fetch(letStatement.valueExpr));
+    }
+    if (computedTarget instanceof LetExpr letExpr) {
+      return new LetNode(new LetNode.Name(expr.name, letExpr.sourceLocation()),
+          fetch(letExpr.valueExpr));
+    }
+
+    // Parameter of a function
+    if (computedTarget instanceof Parameter parameter) {
+      var param = viamLowering.fetch(parameter).orElseThrow();
+      return new FuncParamNode(param);
+    }
+
+    // Function call without arguments (and no parenthesis)
+    if (computedTarget instanceof FunctionDefinition functionDefinition) {
+      var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
+      return new FuncCallNode(function, new NodeList<>(), Objects.requireNonNull(expr.type));
     }
 
     // Builtin Call
@@ -118,7 +257,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+        "The behavior generator cannot resolve yet identifier '%s' which points to %s".formatted(
+            expr.name,
+            computedTarget == null ? "null" : computedTarget.getClass().getSimpleName()));
   }
 
   @Override
@@ -163,20 +304,18 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(BinaryLiteral expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    return new ConstantNode(Constant.Value.fromInteger(expr.number,
+        (DataType) Objects.requireNonNull(expr.type)));
   }
 
   @Override
   public ExpressionNode visit(BoolLiteral expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    return new ConstantNode(Constant.Value.of(true));
   }
 
   @Override
   public ExpressionNode visit(StringLiteral expr) {
     return new ConstantNode(
-        //Constant.Value.of(expr.value, (DataType) Objects.requireNonNull(expr.type)));
         new Constant.Str(expr.value));
   }
 
@@ -212,15 +351,19 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(UnaryExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    var value = fetch(expr.operand);
+    return new BuiltInCall(
+        Objects.requireNonNull(expr.computedTarget),
+        new NodeList<>(value),
+        Objects.requireNonNull(expr.type));
   }
 
   @Override
   public ExpressionNode visit(CallExpr expr) {
-    var args = expr.flatArgs().stream().map(this::fetch).toList();
 
+    // Builtin Call
     if (expr.computedBuiltIn != null) {
+      var args = expr.flatArgs().stream().map(this::fetch).toList();
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
         return new AsmBuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
             Objects.requireNonNull(expr.type));
@@ -229,10 +372,75 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           Objects.requireNonNull(expr.type));
     }
 
+    // Function Call
+    if (expr.computedTarget instanceof FunctionDefinition functionDefinition) {
+      var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
+      return new FuncCallNode(new NodeList<>(args), function, Objects.requireNonNull(expr.type));
+    }
+
+    // Relocation Call (similar to function call)
+    if (expr.computedTarget instanceof RelocationDefinition relocationDefinition) {
+      var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var relocation = (Relocation) viamLowering.fetch(relocationDefinition).orElseThrow();
+      return new FuncCallNode(new NodeList<>(args), relocation, Objects.requireNonNull(expr.type));
+    }
+
+    // Register file read
     if (expr.computedTarget instanceof RegisterFileDefinition) {
+      var args = expr.flatArgs().stream().map(this::fetch).toList();
       var regFile = (RegisterFile) viamLowering.fetch(expr.computedTarget).orElseThrow();
       var type = (DataType) Objects.requireNonNull(expr.type);
       return new ReadRegFileNode(regFile, args.get(0), type, null);
+    }
+
+    // Memory read
+    if (expr.computedTarget instanceof MemoryDefinition memoryDefinition) {
+      var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var words = 1;
+      if (expr.target instanceof SymbolExpr targetSymbol) {
+        words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
+      }
+      var memory = (Memory) viamLowering.fetch(memoryDefinition).orElseThrow();
+      return new ReadMemNode(memory, words, args.get(0),
+          (DataType) Objects.requireNonNull(expr.type));
+    }
+
+    // Program counter read
+    if (expr.computedTarget instanceof CounterDefinition counterDefinition) {
+      // Calls like PC.next are translated to PC + 8 (if address is 8)
+      var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
+      var counterType = (DataType) Objects.requireNonNull(counterDefinition.typeLiteral.type);
+
+      var regRead = new ReadRegNode(counter.registerRef(),
+          (DataType) Objects.requireNonNull(expr.type), null);
+
+      // FIXME: Properly divide by memory bit width (8 bits for one byte is quite common)
+      // What about bytes that aren't 8 bits?
+      var scale =
+          counterType.bitWidth() / 8;
+
+      int offset = 0;
+      for (var subcall : expr.subCalls) {
+        var subcallName = subcall.id().name;
+        if (subcallName.equals("next")) {
+          offset += scale;
+        } else {
+          throw new IllegalStateException("unknown subcall: " + subcallName);
+        }
+      }
+
+      var constant = new ConstantNode(Constant.Value.of(offset, counterType));
+      return new BuiltInCall(BuiltInTable.ADD, new NodeList<>(constant, regRead), counterType);
+    }
+
+    // Slicing
+    if (expr.flatArgs().size() == 1 && expr.flatArgs().get(0) instanceof RangeExpr rangeExpr) {
+      var value = fetch((Expr) expr.target);
+      var from = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+      var to = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+      var slice = new Constant.BitSlice(new Constant.BitSlice.Part(from, to));
+      return new SliceNode(value, slice, (DataType) Objects.requireNonNull(expr.type));
     }
 
     throw new IllegalStateException("Cannot handle call to %s yet".formatted(expr.computedTarget));
@@ -240,14 +448,17 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(IfExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    var condition = fetch(expr.condition);
+    var consequence = fetch(expr.thenExpr);
+    var contradiction = fetch(expr.elseExpr);
+    return new SelectNode(condition, consequence, contradiction);
   }
 
   @Override
   public ExpressionNode visit(LetExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    // The bounded variable is already resolved and it's usages will be turned into a let-node.
+    // So just return the expr.
+    return fetch(expr.body);
   }
 
   @Override
@@ -367,24 +578,49 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(AssignmentStatement statement) {
-    var rightExpr = fetch(statement.valueExpression);
+    var value = fetch(statement.valueExpression);
 
     if (statement.target instanceof CallExpr callTarget) {
+      // Register Write
       if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
         var regFile = viamLowering.fetch(regFileTarget).orElseThrow();
         var address = callTarget.flatArgs().get(0).accept(this);
-        var read = new WriteRegFileNode(
+        var write = new WriteRegFileNode(
             (RegisterFile) regFile,
             address,
-            rightExpr,
+            value,
             null,
             null);
-        read.setSourceLocation(statement.sourceLocation());
-        read = Objects.requireNonNull(currentGraph).addWithInputs(read);
-        return SubgraphContext.of(read, read);
+        write.setSourceLocation(statement.sourceLocation());
+        write = Objects.requireNonNull(currentGraph).addWithInputs(write);
+        return SubgraphContext.of(statement, write);
       }
 
+      // Memory Write
+      if (callTarget.computedTarget instanceof MemoryDefinition memoryTarget) {
+        var memory = (Memory) viamLowering.fetch(memoryTarget).orElseThrow();
+        var words = 1;
+        if (callTarget.target instanceof SymbolExpr targetSymbol) {
+          words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
+        }
+        var address = callTarget.flatArgs().get(0).accept(this);
+        var write = new WriteMemNode(memory, words, address, value);
+        write = Objects.requireNonNull(currentGraph).addWithInputs(write);
+        return SubgraphContext.of(statement, write);
+      }
+
+      throw new IllegalStateException(
+          "Call target not yet implemented " + callTarget.computedTarget);
     } else if (statement.target instanceof Identifier identifierExpr) {
+      var computedTarget = Objects.requireNonNull(identifierExpr.symbolTable)
+          .requireAs(identifierExpr, vadl.ast.Node.class);
+
+      if (computedTarget instanceof CounterDefinition counterDefinition) {
+        var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
+        var write = new WriteRegNode(counter.registerRef(), value, null);
+        return SubgraphContext.of(statement, write);
+      }
+
       throw new IllegalStateException("Identifier target not yet implemented" + statement.target);
     }
 
@@ -393,8 +629,38 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(BlockStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    List<vadl.viam.graph.Node> nodes = new ArrayList<>();
+    @Nullable ControlNode firstNode = null;
+    @Nullable DirectionalNode lastNode = null;
+
+    for (var stmt : statement.statements) {
+      var stmtCtx = stmt.accept(this);
+
+      if (stmtCtx.hasControlBlock()) {
+        if (firstNode == null) {
+          firstNode = Objects.requireNonNull(stmtCtx.controlBlock()).firstNode();
+        }
+
+        if (lastNode != null) {
+          // link previous stmt with current stmt
+          lastNode.setNext(Objects.requireNonNull(stmtCtx.controlBlock()).firstNode());
+        }
+        lastNode = Objects.requireNonNull(stmtCtx.controlBlock()).lastNode();
+      }
+      nodes.addAll(stmtCtx.sideEffectsOrEmptyList());
+    }
+
+    if ((firstNode == null) != (lastNode == null)) {
+      throw new IllegalStateException(
+          "first and last node must be both null or not null @ " + statement);
+    }
+
+    if (firstNode != null) {
+      nodes.add(firstNode);
+      nodes.add(lastNode);
+    }
+
+    return SubgraphContext.of(statement, nodes);
   }
 
   @Override
@@ -411,20 +677,48 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(IfStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var condition = fetch(statement.condition);
+
+    var ifPair = buildBranch(statement.thenStmt);
+    var elsePair = buildBranch(statement.elseStmt);
+    var ifStart = ifPair.left();
+    var ifEnd = ifPair.right();
+    var elseStart = elsePair.left();
+    var elseEnd = elsePair.right();
+
+    var mergeNode = addToGraph(new MergeNode(new NodeList<>(ifEnd, elseEnd)));
+    var ifNode = addToGraph(new IfNode(condition, ifStart, elseStart));
+    return SubgraphContext.of(statement, ifNode, mergeNode);
   }
 
   @Override
   public SubgraphContext visit(InstructionCallStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    if (statement.instrDef instanceof PseudoInstructionDefinition) {
+      throw new IllegalStateException("The behavior generator doesn't implement yet");
+    }
+
+    var target =
+        (Instruction) viamLowering.fetch(Objects.requireNonNull(statement.instrDef)).orElseThrow();
+    var fieldMap = Arrays.stream(target.encoding().nonEncodedFormatFields())
+        .collect(Collectors.toMap(Definition::simpleName, f -> f));
+
+    var argExprs = new NodeList<ExpressionNode>();
+    var fields = new ArrayList<Format.Field>();
+
+    for (var arg : statement.namedArguments) {
+      fields.add(fieldMap.get(arg.name().name));
+      argExprs.add(fetch(arg.value()));
+    }
+    var call = new InstrCallNode(target, fields, argExprs);
+    call = addToGraph(call);
+    return SubgraphContext.of(statement, call);
   }
 
   @Override
   public SubgraphContext visit(LetStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    // The bounded variable is already resolved and it's usages will be turned into a let-node.
+    // So just return the body.
+    return statement.body.accept(this);
   }
 
   @Override
@@ -499,11 +793,11 @@ class SubgraphContext {
     this.controlBlock = controlBlock;
   }
 
-  static SubgraphContext of(Node root, Node... nodes) {
+  static SubgraphContext of(Node root, vadl.viam.graph.Node... nodes) {
     return SubgraphContext.of(root, List.of(nodes));
   }
 
-  static SubgraphContext of(Node root, List<Node> nodes) {
+  static SubgraphContext of(Node root, List<vadl.viam.graph.Node> nodes) {
     var sideEffects = new NodeList<SideEffectNode>();
     @Nullable ControlNode blockStart = null;
     @Nullable DirectionalNode blockEnd = null;
@@ -561,12 +855,14 @@ class SubgraphContext {
     return this;
   }
 
+  @Nullable
   ControlBlock controlBlock() {
-    return Objects.requireNonNull(controlBlock);
+    return controlBlock;
   }
 
+  @Nullable
   NodeList<SideEffectNode> sideEffects() {
-    return Objects.requireNonNull(sideEffects);
+    return sideEffects;
   }
 
   NodeList<SideEffectNode> sideEffectsOrEmptyList() {

@@ -13,6 +13,7 @@ import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 
 /**
  * The Definition nodes inside the AST.
@@ -309,7 +310,7 @@ class FormatDefinition extends Definition implements IdentifiableNode {
   record BitRange(int from, int to) {
   }
 
-  interface FormatField {
+  interface FormatField extends WithSourceLocation {
     Identifier identifier();
 
     void prettyPrint(int indent, StringBuilder builder);
@@ -889,18 +890,18 @@ class CounterDefinition extends Definition implements IdentifiableNode {
 
 class MemoryDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
-  TypeLiteral addressType;
-  TypeLiteral dataType;
+  TypeLiteral addressTypeLiteral;
+  TypeLiteral dataTypeLiteral;
   SourceLocation loc;
 
   @Nullable
   ConcreteRelationType type;
 
-  public MemoryDefinition(IdentifierOrPlaceholder identifier, TypeLiteral addressType,
-                          TypeLiteral dataType, SourceLocation loc) {
+  public MemoryDefinition(IdentifierOrPlaceholder identifier, TypeLiteral addressTypeLiteral,
+                          TypeLiteral dataTypeLiteral, SourceLocation loc) {
     this.identifier = identifier;
-    this.addressType = addressType;
-    this.dataType = dataType;
+    this.addressTypeLiteral = addressTypeLiteral;
+    this.dataTypeLiteral = dataTypeLiteral;
     this.loc = loc;
   }
 
@@ -926,9 +927,9 @@ class MemoryDefinition extends Definition implements IdentifiableNode {
     builder.append("memory ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    addressType.prettyPrint(indent, builder);
+    addressTypeLiteral.prettyPrint(indent, builder);
     builder.append(" -> ");
-    dataType.prettyPrint(indent, builder);
+    dataTypeLiteral.prettyPrint(indent, builder);
     builder.append("\n");
   }
 
@@ -954,16 +955,16 @@ class MemoryDefinition extends Definition implements IdentifiableNode {
     MemoryDefinition that = (MemoryDefinition) o;
     return annotations.equals(that.annotations)
         && identifier.equals(that.identifier)
-        && addressType.equals(that.addressType)
-        && dataType.equals(that.dataType);
+        && addressTypeLiteral.equals(that.addressTypeLiteral)
+        && dataTypeLiteral.equals(that.dataTypeLiteral);
   }
 
   @Override
   public int hashCode() {
     int result = annotations.hashCode();
     result = 31 * result + identifier.hashCode();
-    result = 31 * result + addressType.hashCode();
-    result = 31 * result + dataType.hashCode();
+    result = 31 * result + addressTypeLiteral.hashCode();
+    result = 31 * result + dataTypeLiteral.hashCode();
     return result;
   }
 }
@@ -1225,6 +1226,13 @@ class PseudoInstructionDefinition extends Definition implements IdentifiableNode
   List<InstructionCallStatement> statements;
   SourceLocation loc;
 
+  /**
+   * The matching assembly definition.
+   * Set by the symboltable.
+   */
+  @Nullable
+  AssemblyDefinition assemblyDefinition;
+
   PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
                               List<Parameter> params, List<InstructionCallStatement> statements,
                               SourceLocation loc) {
@@ -1313,15 +1321,18 @@ class PseudoInstructionDefinition extends Definition implements IdentifiableNode
 class RelocationDefinition extends Definition implements IdentifiableNode {
   Identifier identifier;
   List<Parameter> params;
-  TypeLiteral resultType;
+  TypeLiteral resultTypeLiteral;
   Expr expr;
   SourceLocation loc;
 
-  RelocationDefinition(Identifier identifier, List<Parameter> params, TypeLiteral resultType,
+  @Nullable
+  ConcreteRelationType type;
+
+  RelocationDefinition(Identifier identifier, List<Parameter> params, TypeLiteral resultTypeLiteral,
                        Expr expr, SourceLocation loc) {
     this.identifier = identifier;
     this.params = params;
-    this.resultType = resultType;
+    this.resultTypeLiteral = resultTypeLiteral;
     this.expr = expr;
     this.loc = loc;
   }
@@ -1350,7 +1361,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode {
     builder.append(" ");
     Parameter.prettyPrintMultiple(indent, params, builder);
     builder.append(" -> ");
-    resultType.prettyPrint(0, builder);
+    resultTypeLiteral.prettyPrint(0, builder);
     if (isBlockLayout(expr)) {
       builder.append(" =\n");
       expr.prettyPrint(indent + 1, builder);
@@ -1384,7 +1395,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode {
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(identifier, that.identifier)
         && Objects.equals(params, that.params)
-        && Objects.equals(resultType, that.resultType)
+        && Objects.equals(resultTypeLiteral, that.resultTypeLiteral)
         && Objects.equals(expr, that.expr);
   }
 
@@ -1393,7 +1404,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(identifier);
     result = 31 * result + Objects.hashCode(params);
-    result = 31 * result + Objects.hashCode(resultType);
+    result = 31 * result + Objects.hashCode(resultTypeLiteral);
     result = 31 * result + Objects.hashCode(expr);
     return result;
   }
@@ -3422,15 +3433,18 @@ class SourceDefinition extends Definition implements IdentifiableNode {
 
 }
 
-class CpuFunctionDefinition extends Definition {
+class CpuFunctionDefinition extends Definition implements IdentifiableNode {
+  Identifier id;
   BehaviorKind kind;
   @Nullable
   IsId stopWithReference;
   Expr expr;
   SourceLocation loc;
 
-  CpuFunctionDefinition(BehaviorKind kind, @Nullable IsId stopWithReference, Expr expr,
+  CpuFunctionDefinition(Identifier id, BehaviorKind kind, @Nullable IsId stopWithReference,
+                        Expr expr,
                         SourceLocation loc) {
+    this.id = id;
     this.kind = kind;
     this.stopWithReference = stopWithReference;
     this.expr = expr;
@@ -3487,6 +3501,11 @@ class CpuFunctionDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(kind, stopWithReference, expr);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return id;
   }
 
   enum BehaviorKind {
