@@ -119,11 +119,10 @@ define zeroext i32 @mulhu(i32 zeroext %a, i32 zeroext %b) nounwind {
 define i32 @mulhsu(i32 %a, i32 %b) nounwind {
 ; CHECK-LABEL: mulhsu: # @mulhsu
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a2,zero,31
-; CHECK-NEXT: SRA a2,a1,a2
-; CHECK-NEXT: MULHU a1,a0,a1
-; CHECK-NEXT: MUL a0,a0,a2
-; CHECK-NEXT: ADD a0,a1,a0
+; CHECK-NEXT: MULHU a2,a0,a1
+; CHECK-NEXT: SRAI a1,a1,31
+; CHECK-NEXT: MUL a0,a0,a1
+; CHECK-NEXT: ADD a0,a2,a0
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = zext i32 %a to i64
   %2 = sext i32 %b to i64

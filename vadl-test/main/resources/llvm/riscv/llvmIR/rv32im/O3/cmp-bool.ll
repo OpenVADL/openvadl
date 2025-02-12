@@ -2,11 +2,11 @@
 
 define void @bool_eq(i1 zeroext %a, i1 zeroext %b, ptr nocapture %c) nounwind {
 ; CHECK-LABEL: bool_eq:
+; CHECK: ADDI sp,sp,-16
 ; CHECK: BNE a0,a1,.LBB0_2
 ; CHECK-NEXT: # %bb.1: # %if.then
-; CHECK-NEXT: JALR ra,0(ra)
+; CHECK-NEXT: JALR ra,0(a2)
 ; CHECK-NEXT: .LBB0_2: # %if.end
-; CHECK: JALR zero,0(ra)
 entry:
   %0 = xor i1 %a, %b
   br i1 %0, label %if.end, label %if.then
@@ -21,11 +21,10 @@ if.end:
 
 define void @bool_ne(i1 zeroext %a, i1 zeroext %b, ptr nocapture %c) nounwind {
 ; CHECK-LABEL: bool_ne:
-; CHECK: BEQ a0,a1,.LBB0_2
+; CHECK: BEQ a0,a1,.LBB1_2
 ; CHECK-NEXT: # %bb.1: # %if.then
-; CHECK-NEXT: JALR ra,0(ra)
-; CHECK-NEXT: .LBB0_2: # %if.end
-; CHECK: JALR zero,0(ra)
+; CHECK-NEXT: JALR ra,0(a2)
+; CHECK-NEXT: .LBB1_2: # %if.end
 entry:
   %cmp = xor i1 %a, %b
   br i1 %cmp, label %if.then, label %if.end
