@@ -285,7 +285,7 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   $IShftInstr (SRAI ; >> ; 0b101 ; 0b01       ; SInt)  // shift right arithmetic immediate
 
 
-  relocation hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
+  relocation hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 ) >> 12 ) as UInt<20>
   relocation lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
 
