@@ -490,8 +490,35 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(CpuFunctionDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    return Optional.of(produceFunction(
+        definition,
+        List.of(),
+        definition.expr,
+        requireNonNull(definition.expr.type)
+    ));
+  }
+
+  private <T extends Definition & IdentifiableNode> Function produceFunction(
+      T definition,
+      List<Parameter> params,
+      Expr expr,
+      Type returnType
+  ) {
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    var parameters = new ArrayList<vadl.viam.Parameter>();
+    for (var parameter : params) {
+      var viamParameter = new vadl.viam.Parameter(
+          generateIdentifier(parameter.name.name, parameter.name.location()),
+          requireNonNull(parameter.typeLiteral.type));
+      parameterCache.put(parameter, viamParameter);
+      parameters.add(viamParameter);
+    }
+    var behaivor = behaviorLowering.getGraph(expr, "behaviour");
+
+    return new Function(identifier,
+        parameters.toArray(new vadl.viam.Parameter[0]),
+        returnType,
+        behaivor);
   }
 
   @Override
@@ -618,21 +645,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(FunctionDefinition definition) {
-    var identifier = generateIdentifier(definition.viamId, definition.identifier());
-    var parameters = new ArrayList<vadl.viam.Parameter>();
-    for (var parameter : definition.params) {
-      var viamParameter = new vadl.viam.Parameter(
-          generateIdentifier(parameter.name.name, parameter.name.location()),
-          requireNonNull(parameter.typeLiteral.type));
-      parameterCache.put(parameter, viamParameter);
-      parameters.add(viamParameter);
-    }
-    var behaivor = behaviorLowering.getGraph(definition.expr, "behaviour");
-
-    return Optional.of(new Function(identifier,
-        parameters.toArray(new vadl.viam.Parameter[0]),
-        requireNonNull(definition.retType.type),
-        behaivor));
+    return Optional.of(
+        produceFunction(
+            definition,
+            definition.params,
+            definition.expr,
+            requireNonNull(definition.retType.type)
+        )
+    );
   }
 
   @Override
@@ -803,7 +823,16 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // create new isa ast node with list of definitions
     // visitIsa on created isa ast node
     var isa = visitIsa(mergeIsa(definition.implementedIsaNodes));
-    return Optional.of(new MicroProcessor(identifier, isa, null, null, null));
+    var startDef = definition.definitions.stream()
+        .filter(d -> (d instanceof CpuFunctionDefinition funcDef) && funcDef.kind
+            == CpuFunctionDefinition.BehaviorKind.START).findFirst().orElse(null);
+    Function start = null;
+    if (startDef != null) {
+      start = (Function) fetch(startDef)
+          .orElseThrow();
+    }
+
+    return Optional.of(new MicroProcessor(identifier, isa, null, start, null));
   }
 
   private InstructionSetDefinition mergeIsa(List<InstructionSetDefinition> definitions) {

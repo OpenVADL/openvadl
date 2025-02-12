@@ -3433,15 +3433,18 @@ class SourceDefinition extends Definition implements IdentifiableNode {
 
 }
 
-class CpuFunctionDefinition extends Definition {
+class CpuFunctionDefinition extends Definition implements IdentifiableNode {
+  Identifier id;
   BehaviorKind kind;
   @Nullable
   IsId stopWithReference;
   Expr expr;
   SourceLocation loc;
 
-  CpuFunctionDefinition(BehaviorKind kind, @Nullable IsId stopWithReference, Expr expr,
+  CpuFunctionDefinition(Identifier id, BehaviorKind kind, @Nullable IsId stopWithReference,
+                        Expr expr,
                         SourceLocation loc) {
+    this.id = id;
     this.kind = kind;
     this.stopWithReference = stopWithReference;
     this.expr = expr;
@@ -3498,6 +3501,11 @@ class CpuFunctionDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(kind, stopWithReference, expr);
+  }
+
+  @Override
+  public Identifier identifier() {
+    return id;
   }
 
   enum BehaviorKind {

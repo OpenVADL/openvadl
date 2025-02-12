@@ -14,6 +14,7 @@ import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.StringType;
 import vadl.types.Type;
@@ -1163,7 +1164,19 @@ public class TypeChecker
 
   @Override
   public Void visit(CpuFunctionDefinition definition) {
-    throwUnimplemented(definition);
+    if (definition.kind == CpuFunctionDefinition.BehaviorKind.START) {
+      definition.expr.accept(this);
+      var exprType = Objects.requireNonNull(definition.expr.type);
+      // FIXME: the type must fit into the memory index (address).
+      if (!(exprType instanceof DataType)) {
+        throw Diagnostic.error("Type mismatch", definition.expr)
+            .description("Expected typ of DataType but got %s", exprType)
+            .build();
+      }
+    } else {
+      throw new IllegalStateException("Not implemented behavior kind: " + definition.kind);
+    }
+
     return null;
   }
 

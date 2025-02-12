@@ -250,6 +250,7 @@ public abstract class BaseCommand implements Callable<Integer> {
         System.out.flush();
         Thread.sleep(10);
       } catch (InterruptedException ignored) {
+        // ignored
       }
       e.printStackTrace();
       return 1;
@@ -265,7 +266,7 @@ public abstract class BaseCommand implements Callable<Integer> {
           ? "\nThe following artifacts were generated:"
           : "\nEven though some errors occurred, the following artifacts were generated:";
       System.out.println(artifactMessage);
-      for (var path : ArtifactTracker.getDumpPaths()) {
+      for (var path : ArtifactTracker.getArtifactPathsPaths()) {
         System.out.printf("\t- %s\n", path);
       }
     }

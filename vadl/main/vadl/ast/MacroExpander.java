@@ -708,7 +708,7 @@ class MacroExpander
 
   @Override
   public Definition visit(CpuFunctionDefinition definition) {
-    return new CpuFunctionDefinition(definition.kind, definition.stopWithReference,
+    return new CpuFunctionDefinition(definition.id, definition.kind, definition.stopWithReference,
         expandExpr(definition.expr), copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }

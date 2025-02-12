@@ -304,7 +304,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(BinaryLiteral expr) {
-    return new ConstantNode(Constant.Value.of(expr.number.intValueExact(),
+    return new ConstantNode(Constant.Value.fromInteger(expr.number,
         (DataType) Objects.requireNonNull(expr.type)));
   }
 
@@ -316,7 +316,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @Override
   public ExpressionNode visit(StringLiteral expr) {
     return new ConstantNode(
-        //Constant.Value.of(expr.value, (DataType) Objects.requireNonNull(expr.type)));
         new Constant.Str(expr.value));
   }
 
