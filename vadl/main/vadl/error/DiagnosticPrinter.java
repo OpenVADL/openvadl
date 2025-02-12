@@ -111,56 +111,59 @@ public class DiagnosticPrinter {
   }
 
   private void printSourcePreview(Diagnostic.LabeledLocation location, boolean isPrimary) {
-    List<String> lines;
+    List<String> lines = new ArrayList<>();
+    boolean supressPreview = false;
+
     try {
       lines = getFileLines(location.location().uri());
     } catch (IOException | IllegalArgumentException e) {
-      System.out.printf("    │ %sNo Preview available: Could not find the file '%s'\n", Ansi.Reset,
+      System.out.printf("    │ %sNo Preview available: Could not find the file '%s'", Ansi.Reset,
           location.location().uri());
-      return;
+      supressPreview = true;
     }
 
     if (location.location().equals(SourceLocation.INVALID_SOURCE_LOCATION)) {
-      System.out.printf("    │ %sThe location was lost.\n", Ansi.Reset);
-      return;
+      System.out.printf("    │ %sThe location was lost.", Ansi.Reset);
+      supressPreview = true;
     }
     if (location.location().begin().line() < 1) {
-      System.out.printf("    │ %sThe location was corrupted (lines must be greater 1).\n",
+      System.out.printf("    │ %sThe location was corrupted (lines must be greater 1).",
           Ansi.Reset);
-      return;
-    }
-
-    if (location.location().begin().line() != location.location().end().line()) {
-      System.out.printf("    │ %sMultiline preview not yet implemented\n", Ansi.Reset);
-      return;
+      supressPreview = true;
     }
 
     // Printing the Source line
-    System.out.printf("%s%3d", Ansi.Reset, location.location().begin().line());
-    System.out.printf(" %s│%s ", Ansi.Cyan, Ansi.Reset);
-    System.out.printf("%s\n", lines.get(location.location().begin().line() - 1));
+    if (!supressPreview) {
+      if (location.location().begin().line() != location.location().end().line()) {
+        System.out.printf("    │ %sMultiline preview not yet implemented", Ansi.Reset);
+      } else {
+        System.out.printf("%s%3d", Ansi.Reset, location.location().begin().line());
+        System.out.printf(" %s│%s ", Ansi.Cyan, Ansi.Reset);
+        System.out.printf("%s\n", lines.get(location.location().begin().line() - 1));
 
-    // Printing the highlighting
-    var highlightLength =
-        location.location().end().column() - location.location().begin().column() + 1;
-    var highlight = isPrimary
-        ? Ansi.Red + "^".repeat(highlightLength) + Ansi.Reset
-        : Ansi.Lightblue + "^".repeat(highlightLength) + Ansi.Reset;
-    var padding = " ".repeat(location.location().begin().column() - 1);
-    System.out.printf("    %s│ %s%s%s ", Ansi.Cyan, padding, highlight, Ansi.Reset);
+        // Printing the underlininng
+        var highlightLength =
+            location.location().end().column() - location.location().begin().column() + 1;
+        var highlight = isPrimary
+            ? Ansi.Red + "^".repeat(highlightLength) + Ansi.Reset
+            : Ansi.Lightblue + "^".repeat(highlightLength) + Ansi.Reset;
+        var padding = " ".repeat(location.location().begin().column() - 1);
+        System.out.printf("    %s│ %s%s%s ", Ansi.Cyan, padding, highlight, Ansi.Reset);
 
-    // Print the inline messages
-    for (int i = 0; i < location.labels().size(); i++) {
-      var label = location.labels().get(i);
+        // Print the inline messages
+        for (int i = 0; i < location.labels().size(); i++) {
+          var label = location.labels().get(i);
 
-      var prefix = "    %s│ %s%s".formatted(Ansi.Cyan, Ansi.Reset,
-          " ".repeat(location.location().end().column() + 1));
+          var prefix = "    %s│ %s%s".formatted(Ansi.Cyan, Ansi.Reset,
+              " ".repeat(location.location().end().column() + 1));
 
-      if (i > 0) {
-        System.out.print(prefix);
+          if (i > 0) {
+            System.out.print(prefix);
+          }
+          int startCol = 6 + location.location().end().column();
+          printMessage(label, prefix, 80 - startCol);
+        }
       }
-      int startCol = 6 + location.location().end().column();
-      printMessage(label, prefix, 80 - startCol);
     }
 
     if (location.labels().isEmpty()) {
@@ -234,7 +237,7 @@ public class DiagnosticPrinter {
 
     return builder.toString();
   }
-
+  
   static class Ansi {
     static String Reset = "\033[0m";
     static String Bold = "\033[01m";
