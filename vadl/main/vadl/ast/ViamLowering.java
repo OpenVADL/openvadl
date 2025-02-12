@@ -944,8 +944,13 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(RelocationDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
     var parameters = definition.params.stream()
-        .map(p -> new vadl.viam.Parameter(generateIdentifier(p.name.name, p.name.location()),
-            Objects.requireNonNull(p.typeLiteral.type)))
+        .map(p -> {
+          var viamParam =
+              new vadl.viam.Parameter(generateIdentifier(p.name.name, p.name.location()),
+                  Objects.requireNonNull(p.typeLiteral.type));
+          parameterCache.put(p, viamParam);
+          return viamParam;
+        })
         .toArray(vadl.viam.Parameter[]::new);
     var graph = behaviorLowering.getGraph(definition.expr, identifier.name() + "::behavior");
 
