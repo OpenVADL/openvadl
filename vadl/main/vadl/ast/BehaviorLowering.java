@@ -2,9 +2,11 @@ package vadl.ast;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
@@ -15,10 +17,13 @@ import vadl.types.UIntType;
 import vadl.utils.Pair;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
+import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Function;
+import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.RegisterFile;
+import vadl.viam.Relocation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.BeginNode;
@@ -26,6 +31,7 @@ import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ReturnNode;
@@ -100,6 +106,32 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     return graph;
   }
+
+  Graph getInstructionPseudoGraph(PseudoInstructionDefinition definition) {
+    var graph = new Graph("%s Behavior".formatted(definition.identifier().name));
+    currentGraph = graph;
+
+    var end = graph.addWithInputs(new InstrEndNode(new NodeList<>()));
+    end.setSourceLocation(definition.sourceLocation());
+
+    var calls = definition.statements.stream()
+        .map(s -> (InstrCallNode) Objects.requireNonNull(s.accept(this).controlBlock()).firstNode())
+        .toList();
+
+    ControlNode curr = end;
+    for (int i = calls.size() - 1; i >= 0; i--) {
+      var call = calls.get(i);
+      call.setNext(curr);
+      curr = call;
+    }
+
+    var start = new StartNode(curr);
+    start.setSourceLocation(definition.sourceLocation());
+    graph.addWithInputs(start);
+
+    return graph;
+  }
+
 
   private <T extends vadl.viam.graph.Node> T addToGraph(T node) {
     if (!node.isActive()) {
@@ -348,6 +380,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new FuncCallNode(new NodeList<>(args), function, Objects.requireNonNull(expr.type));
     }
 
+    // Relocation Call (similar to function call)
+    if (expr.computedTarget instanceof RelocationDefinition relocationDefinition) {
+      var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var relocation = (Relocation) viamLowering.fetch(relocationDefinition).orElseThrow();
+      return new FuncCallNode(new NodeList<>(args), relocation, Objects.requireNonNull(expr.type));
+    }
+
     // Register file read
     if (expr.computedTarget instanceof RegisterFileDefinition) {
       var args = expr.flatArgs().stream().map(this::fetch).toList();
@@ -420,7 +459,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public ExpressionNode visit(LetExpr expr) {
     // The bounded variable is already resolved and it's usages will be turned into a let-node.
     // So just return the expr.
-    return fetch(expr);
+    return fetch(expr.body);
   }
 
   @Override
@@ -655,8 +694,25 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(InstructionCallStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    if (statement.instrDef instanceof PseudoInstructionDefinition) {
+      throw new IllegalStateException("The behavior generator doesn't implement yet");
+    }
+
+    var target =
+        (Instruction) viamLowering.fetch(Objects.requireNonNull(statement.instrDef)).orElseThrow();
+    var fieldMap = Arrays.stream(target.encoding().nonEncodedFormatFields())
+        .collect(Collectors.toMap(Definition::simpleName, f -> f));
+
+    var argExprs = new NodeList<ExpressionNode>();
+    var fields = new ArrayList<Format.Field>();
+
+    for (var arg : statement.namedArguments) {
+      fields.add(fieldMap.get(arg.name().name));
+      argExprs.add(fetch(arg.value()));
+    }
+    var call = new InstrCallNode(target, fields, argExprs);
+    call = addToGraph(call);
+    return SubgraphContext.of(statement, call);
   }
 
   @Override
