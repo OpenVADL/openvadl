@@ -66,9 +66,8 @@ define i64 @sext_i1_to_i64(i1 %a) nounwind {
 define i16 @sext_i8_to_i16(i8 %a) nounwind {
 ; CHECK-LABEL: sext_i8_to_i16:
 ; CHECK-NEXT: # %bb.0:
-; CHECK-NEXT: ADDI a1,zero,24
-; CHECK-NEXT: SLL a0,a0,a1
-; CHECK-NEXT: SRA a0,a0,a1
+; CHECK-NEXT: SLLI a0,a0,24
+; CHECK-NEXT: SRAI a0,a0,24
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = sext i8 %a to i16
   ret i16 %1
@@ -77,9 +76,8 @@ define i16 @sext_i8_to_i16(i8 %a) nounwind {
 define i32 @sext_i8_to_i32(i8 %a) nounwind {
 ; CHECK-LABEL: sext_i8_to_i32:
 ; CHECK-NEXT: # %bb.0:
-; CHECK-NEXT: ADDI a1,zero,24
-; CHECK-NEXT: SLL a0,a0,a1
-; CHECK-NEXT: SRA a0,a0,a1
+; CHECK-NEXT: SLLI a0,a0,24
+; CHECK-NEXT: SRAI a0,a0,24
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = sext i8 %a to i32
   ret i32 %1
