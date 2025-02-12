@@ -2269,9 +2269,11 @@ public class TypeChecker
 
       // Implicit cast and check the arguments
       for (var i = 0; i < statement.namedArguments.size(); i++) {
+        // TODO: Check all format fields that arne't part of the ecoding
         var format = Objects.requireNonNull(instrDef.formatNode);
 
         var arg = statement.namedArguments.get(i);
+        // FIXME: better error
         var targetType = Objects.requireNonNull(format.getFieldType(arg.name().name));
 
         arg.value().accept(this);
