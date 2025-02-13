@@ -38,6 +38,11 @@ public class OperandsAsmType implements AsmType {
   }
 
   @Override
+  public String toCppTypeString(String prefix) {
+    return "std:list<" + prefix + "ParsedOperand>";
+  }
+
+  @Override
   public String toString() {
     return "@" + name();
   }

@@ -7,6 +7,7 @@ import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,7 +20,9 @@ import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.gcb.passes.assembly.visitors.AssemblyVisitor;
 import vadl.lcb.template.CommonVarNames;
 import vadl.types.BuiltInTable;
+import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.ConstantAsmType;
+import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.viam.Constant;
 import vadl.viam.Function;
@@ -29,9 +32,11 @@ import vadl.viam.asm.AsmGrammarVisitor;
 import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmAlternatives;
+import vadl.viam.asm.elements.AsmAssignTo;
 import vadl.viam.asm.elements.AsmAssignToAttribute;
 import vadl.viam.asm.elements.AsmAssignToLocalVar;
 import vadl.viam.asm.elements.AsmFunctionInvocation;
+import vadl.viam.asm.elements.AsmGrammarElement;
 import vadl.viam.asm.elements.AsmGroup;
 import vadl.viam.asm.elements.AsmLocalVarDefinition;
 import vadl.viam.asm.elements.AsmLocalVarUse;
@@ -68,6 +73,9 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   private String parserCompareFunction = "equals_insensitive";
   private String currentRuleTypeString = "invalid";
 
+  private Map<AsmGrammarElement, String> elementVarName = new HashMap<>();
+  private SymbolTable grammarElementSymbolTable = new SymbolTable("ELEM_");
+
   /**
    * Constructor.
    */
@@ -92,6 +100,11 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
       parserCompareFunction = "equals";
     }
     symbolTable = new SymbolTable("VAR_");
+  }
+
+  private String varName(AsmGrammarElement element) {
+    return elementVarName.computeIfAbsent(element,
+        key -> grammarElementSymbolTable.getNextVariable());
   }
 
   @Override
@@ -302,7 +315,6 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmBuiltinRule rule) {
-    // TODO: attribute handling
     if (!rule.simpleName().equals("Expression")) {
       throw new ViamError("Unknown AsmParser builtin: " + rule.simpleName());
     }
@@ -315,7 +327,7 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
                 return RuleParsingResult<${type}>(${tempVar}.getError());
             }
         
-            return RuleParsingResult<${type}>(${tempVar});
+            return ${tempVar};
           }
         
         """, Map.of(
@@ -328,16 +340,16 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmNonTerminalRule rule) {
-    // TODO: attribute handling
     var type = rule.getAsmType().toCppTypeString(namespace);
     this.currentRuleTypeString = type;
 
     writer.write(String.format("  RuleParsingResult<%s> %sAsmRecursiveDescentParser::%s() {\n",
         type, namespace, rule.simpleName()));
     rule.getAlternatives().accept(this);
-    writer.write(
-        String.format("    return RuleParsingResult<%s>(TODO_GET_RESULT_VAR_NAME);\n  }\n\n",
-            type));
+
+    var resultVar = writeCastIfNecessary(rule.getAlternatives().asmType(), rule.getAsmType(),
+        varName(rule.getAlternatives()));
+    writer.write(String.format("    return RuleParsingResult<%s>(%s);\n  }\n\n", type, resultVar));
   }
 
   @Override
@@ -372,37 +384,72 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmAlternative element) {
-    // TODO: attribute handling
+
+    var elementCount =
+        element.elements().stream().filter(e -> !(e instanceof AsmLocalVarDefinition)).count();
+
+    if (elementCount > 1 && element.asmType() instanceof GroupAsmType groupAsmType) {
+      groupAsmType.getSubtypeMap().forEach((attribute, type) -> writer.write(
+          String.format("  ParsedValue<%s> %s;\n", type.toCppTypeString(namespace), attribute)));
+    }
+
     element.elements().forEach(e -> e.accept(this));
+
+    if (elementCount == 1) {
+      // if the alternative contains only one element
+      // the type of the alternative is just the type of the single element
+      writer.write(
+          String.format("ParsedValue<%s> %s = %s;\n", element.asmType().toCppTypeString(namespace),
+              varName(element), varName(element.elements().get(0))));
+    } else if (element.asmType() instanceof GroupAsmType groupType) {
+      writeAlternativeGroupStruct(groupType, varName(element));
+    } else {
+      throw new ViamError(
+          "Alternative with more than one element and AsmType that is not GroupAsmType.");
+    }
   }
 
   @Override
   public void visit(AsmAlternatives element) {
-    // TODO: attribute handling
     var alternativesResultVar = symbolTable.getNextVariable();
+    var type = element.asmType().toCppTypeString(namespace);
     var alternatives = element.alternatives();
+
     if (alternatives.size() == 1) {
       alternatives.get(0).accept(this);
+      writer.write(String.format("ParsedValue<%s> %s = %s;\n",
+          type, varName(element), varName(alternatives.get(0))));
       return;
     }
+
     writer.write(
         String.format("std::optional<RuleParsingResult<%s>> %s;\n",
-            element.asmType().toCppTypeString(namespace), alternativesResultVar));
+            type, alternativesResultVar));
     writer.write(getAlternativeGuard(alternatives.get(0)));
     alternatives.get(0).accept(this);
-    writer.write(String.format("%s = TODO_GET_SINGLE_ALT_RESULT_VAR;\n", alternativesResultVar));
+    writer.write(String.format("%s = %s;\n", alternativesResultVar, varName(alternatives.get(0))));
     writer.write("} ");
+
     for (int i = 1; i < alternatives.size(); i++) {
       writer.write("else " + getAlternativeGuard(alternatives.get(i)));
       alternatives.get(i).accept(this);
-      writer.write(String.format("%s = TODO_GET_SINGLE_ALT_RESULT_VAR;\n", alternativesResultVar));
+      writer.write(
+          String.format("%s = %s;\n", alternativesResultVar, varName(alternatives.get(i))));
       writer.write("} ");
     }
 
-    writer.write("else {\n");
-    writer.write(String.format("return RuleParsingResult<%s>(Lexer.getTok().getLoc(),\"%s\");\n",
-        element.asmType().toCppTypeString(namespace), alternativesErrorMessage(element)));
-    writer.write("} \n");
+    writer.write(StringSubstitutor.replace("""
+        else {
+          return RuleParsingResult<${ruleType}>(Lexer.getTok().getLoc(), "${error}");
+        }
+        
+        ParsedValue<${type}> ${elementVar} = ${alternativeResult}.value();
+        """, Map.of(
+        "ruleType", currentRuleTypeString,
+        "error", alternativesErrorMessage(element),
+        "elementVar", varName(element),
+        "alternativeResult", alternativesResultVar
+    )));
   }
 
   private String getAlternativeGuard(AsmAlternative alternative) {
@@ -433,62 +480,95 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
         alternative -> alternative.firstTokens().stream()
     ).map(
         token -> token.getStringLiteral() != null
-            ? '"' + token.getStringLiteral() + '"'
+            ? "'" + token.getStringLiteral() + "'"
             : token.getRuleName()
     ).collect(Collectors.joining(", "));
-    return "No alternative matched. Expected one of " + expectedTokens;
+    return "No alternative matched. Expected one of {" + expectedTokens + "}.";
   }
 
   @Override
   public void visit(AsmAssignToAttribute element) {
-
+    writer.write(String.format(" %s", element.getAssignToName()));
   }
 
   @Override
   public void visit(AsmAssignToLocalVar element) {
-
+    writer.write(String.format(" %s", element.getAssignToName()));
   }
 
   @Override
   public void visit(AsmFunctionInvocation element) {
-    // TODO: attribute handling
     // print function with PureFunctionGenerator
     // parse function arguments into tempVars
     // call function with tempVars
+
+    var tempVar = symbolTable.getNextVariable();
+    // TODO: cast
+    //var resultVar = writeCastIfNecessary(ruleType, resultType, tempVar);
+    writer.write(
+        String.format("  //TODO: Function invocation, with result stored in: %s\n", tempVar));
+    writeAssignToIfNotNull(
+        element.assignToElement(), tempVar);
+    // TODO: writeToElementVar(element.asmType(), varName(element),resultVar);
   }
 
   @Override
   public void visit(AsmGroup element) {
-    // TODO: attribute handling
     element.alternatives().accept(this);
+
+    var resultVar = writeCastIfNecessary(element.alternatives().asmType(), element.asmType(),
+        varName(element.alternatives()));
+    writer.write(String.format("ParsedValue<%s> %s = %s;\n",
+        element.asmType().toCppTypeString(namespace), varName(element), resultVar));
   }
 
   @Override
   public void visit(AsmLocalVarDefinition element) {
-    if (element.asmLiteral() == null) {
-      writer.write(String.format("RuleParsingResult<NoData> %s;\n", element.localVarName()));
-      return;
+    writer.write(String.format("RuleParsingResult<NoData> %s;\n", element.localVarName()));
+
+    if (element.asmLiteral() != null) {
+      element.asmLiteral().accept(this);
+      // TODO: cast if necessary
+      writer.write(
+          String.format("%s = %s;\n", element.localVarName(), varName(element.asmLiteral())));
     }
-    element.asmLiteral().accept(this);
   }
 
   @Override
   public void visit(AsmLocalVarUse element) {
-    // TODO: attribute handling
+    // FIXME: is there a cast possible here?
+    writeAssignToIfNotNull(
+        element.assignToElement(), element.invokedLocalVar());
+    // TODO: writeToElementVar(element.asmType(), ); ?
   }
 
   @Override
   public void visit(AsmOption element) {
-    // TODO: attribute handling
-    writer.write(
-        "if (" + getGuardCondition(element.semanticPredicate(), element.firstTokens()) + ") {\n");
+    var tempVar = symbolTable.getNextVariable();
+    var type = element.alternatives().asmType();
+
+    writer.write(StringSubstitutor.replace("""
+          ParsedValue<${type}> ${tempVar};
+          if (${condition}) {
+        """, Map.of(
+        "type", type.toCppTypeString(namespace),
+        "tempVar", tempVar,
+        "condition", getGuardCondition(element.semanticPredicate(), element.firstTokens())
+    )));
     element.alternatives().accept(this);
-    writer.write("}\n");
+    writer.write(StringSubstitutor.replace("""
+          ${tempVar} = ${altResultVar};
+          }
+          ${optionElemVar} = ${tempVar};
+        """, Map.of(
+        "tempVar", tempVar,
+        "altResultVar", varName(element.alternatives()),
+        "optionElemVar", varName(element)
+    )));
   }
 
   @Override
   public void visit(AsmRepetition element) {
-    // TODO: attribute handling
     writer.write("while (" + getGuardCondition(element.semanticPredicate(), element.firstTokens())
         + ") {\n");
     element.alternatives().accept(this);
@@ -497,28 +577,38 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmRuleInvocation element) {
-    // TODO: attribute handling
+
     var tempVar = symbolTable.getNextVariable();
+    var resultType = element.asmType();
+    var ruleType = element.rule().getAsmType();
+
     writer.write(StringSubstitutor.replace("""
-          RuleParsingResult<${type}> ${tempVar} = ${ruleName}();
+          RuleParsingResult<${ruleType}> ${tempVar} = ${ruleName}();
           if(!${tempVar}.Success) {
-              return RuleParsingResult<${ruleType}>(${tempVar}.getError());
+              return RuleParsingResult<${currentRuleType}>(${tempVar}.getError());
           }
         """, Map.of(
         "tempVar", tempVar,
         "ruleName", element.rule().simpleName(),
-        "type", element.asmType().toCppTypeString(namespace),
-        "ruleType", currentRuleTypeString
+        "ruleType", ruleType.toCppTypeString(namespace),
+        "currentRuleType", currentRuleTypeString,
+        "elementVar", varName(element)
     )));
+
+    var resultVar = writeCastIfNecessary(ruleType, resultType, tempVar);
+    writeAssignToIfNotNull(element.assignToElement(), resultVar);
+    writeToElementVar(resultType, varName(element), resultVar);
   }
 
   @Override
   public void visit(AsmStringLiteralUse element) {
-    // TODO: attribute handling
     if (element.value().trim().isEmpty()) {
       return;
     }
+
     var tempVar = symbolTable.getNextVariable();
+    var type = element.asmType();
+
     writer.write(StringSubstitutor.replace("""
           RuleParsingResult<StringRef> ${tempVar} = Literal("${stringLiteral}");
           if(!${tempVar}.Success) {
@@ -527,7 +617,56 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
         """, Map.of(
         "tempVar", tempVar,
         "stringLiteral", element.value(),
-        "ruleType", currentRuleTypeString
+        "ruleType", currentRuleTypeString,
+        "elementVar", varName(element)
     )));
+
+    var resultVar = writeCastIfNecessary(StringAsmType.instance(), type, tempVar);
+    writeAssignToIfNotNull(element.assignToElement(), resultVar);
+    writeToElementVar(type, varName(element), resultVar);
+  }
+
+  private void writeAssignToIfNotNull(@Nullable AsmAssignTo assignTo,
+                                      String tempVar) {
+    if (assignTo != null) {
+      assignTo.accept(this);
+      if (assignTo.getIsWithinRepetition()) {
+        writer.write(String.format(".Value.insert(%s);\n", tempVar));
+      } else {
+        writer.write(String.format(" = %s.getParsed();\n", tempVar));
+      }
+    }
+  }
+
+  private String writeCastIfNecessary(AsmType from, AsmType to, String curValueVar) {
+    if (from == to) {
+      return curValueVar;
+    }
+
+    var tempVar = symbolTable.getNextVariable();
+    // TODO: all types of casts (refer to AsmType canBeCastTo methods)
+
+    writer.write(String.format("  //TODO CAST: FROM %s TO %s, stored in %s\n", from, to, tempVar));
+    return tempVar;
+  }
+
+  private void writeToElementVar(AsmType type, String elementVar, String curValueVar) {
+    writer.write(
+        String.format("ParsedValue<%s> %s = %s;\n", type.toCppTypeString(namespace), elementVar,
+            curValueVar));
+  }
+
+  private void writeAlternativeGroupStruct(GroupAsmType type, String resultVar) {
+    var tempVar = symbolTable.getNextVariable();
+    var typeString = type.toCppTypeString(namespace);
+
+    writer.write(typeString + " " + tempVar + " = {\n");
+    type.getSubtypeMap().keySet().forEach(
+        attribute -> writer.write(attribute + ",\n")
+    );
+    writer.write("};\n");
+
+    writer.write(String.format("ParsedValue<%s> %s = ParsedValue<%s>(%s);\n",
+        typeString, resultVar, typeString, tempVar));
   }
 }

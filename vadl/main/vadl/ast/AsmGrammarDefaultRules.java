@@ -99,7 +99,7 @@ public class AsmGrammarDefaultRules {
         terminalRuleTypeString("AT", "@", false),
         terminalRuleTypeString("MINUSGREATER", "->", false),
         terminalRule("EOL", "[\\r(\\r\\n)]", true, VoidAsmType.instance()),
-        nonTerminalRule("Statement", InstructionAsmType.instance(), false, instructionRule(),
+        nonTerminalRule("Statement", null, false, instructionRule(),
             ruleReference("EOL", VoidAsmType.instance())),
         nonTerminalRule("Register", RegisterAsmType.instance(),
             false, ruleReference("IDENTIFIER", StringAsmType.instance())),
@@ -225,18 +225,28 @@ public class AsmGrammarDefaultRules {
     negLiteral.asmType = ConstantAsmType.instance();
 
     var negCallElement = new AsmGrammarElementDefinition(
-        null, null, false, negLiteral,
+        null, new Identifier("val", SourceLocation.INVALID_SOURCE_LOCATION), false, negLiteral,
         null, null, null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
     );
     negCallElement.asmType = ConstantAsmType.instance();
 
+    var minusNegCallGroupElement = new AsmGrammarElementDefinition(null, null, false, null,
+        new AsmGrammarAlternativesDefinition(
+            List.of(List.of(ruleReference("MINUS", StringAsmType.instance()), negCallElement)),
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        null, null, null,
+        new AsmGrammarTypeDefinition(
+            new Identifier("constant", SourceLocation.INVALID_SOURCE_LOCATION),
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+
     var integerAlternatives = new AsmGrammarAlternativesDefinition(
         List.of(
             List.of(ruleReference("INTEGER", ConstantAsmType.instance())),
-            List.of(ruleReference("MINUS", StringAsmType.instance()), negCallElement)
+            List.of(minusNegCallGroupElement)
         ), SourceLocation.INVALID_SOURCE_LOCATION
     );
-    integerAlternatives.asmType = ConstantAsmType.instance();
 
     var rule = new AsmGrammarRuleDefinition(
         new Identifier("Integer", SourceLocation.INVALID_SOURCE_LOCATION),
@@ -246,15 +256,13 @@ public class AsmGrammarDefaultRules {
             SourceLocation.INVALID_SOURCE_LOCATION),
         integerAlternatives, SourceLocation.INVALID_SOURCE_LOCATION);
 
-    // by setting the asmType we can avoid checking the default rules in the typechecker
-    rule.asmType = ConstantAsmType.instance();
     return rule;
   }
 
   private static AsmGrammarElementDefinition instructionRule() {
     var instructionElement = ruleReference("Instruction", InstructionAsmType.instance());
     instructionElement.attribute =
-        new Identifier("instruction", SourceLocation.INVALID_SOURCE_LOCATION);
+        new Identifier("inst", SourceLocation.INVALID_SOURCE_LOCATION);
     return instructionElement;
   }
 

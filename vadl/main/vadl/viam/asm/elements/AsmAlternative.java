@@ -3,6 +3,7 @@ package vadl.viam.asm.elements;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
+import vadl.types.asmTypes.AsmType;
 import vadl.viam.Function;
 import vadl.viam.asm.AsmGrammarVisitor;
 import vadl.viam.asm.AsmToken;
@@ -13,6 +14,8 @@ import vadl.viam.asm.AsmToken;
  */
 public record AsmAlternative(@Nullable Function semanticPredicate,
                              Set<AsmToken> firstTokens,
+                             AsmType asmType,
+                             boolean isWithinRepetition,
                              List<AsmGrammarElement> elements) implements AsmGrammarElement {
 
   @Override

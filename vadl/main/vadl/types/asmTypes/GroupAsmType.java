@@ -73,7 +73,14 @@ public class GroupAsmType implements AsmType {
     }
 
     GroupAsmType that = (GroupAsmType) o;
-    return Arrays.equals(subtypeMap.values().toArray(), that.subtypeMap.values().toArray());
+    boolean equal = true;
+    if (subtypeMap.size() != that.subtypeMap.size()) {
+      return false;
+    }
+    for (int i = 0; i < subtypeMap.size(); i++) {
+      equal &= subtypeMap.values().toArray()[i].equals(that.subtypeMap.values().toArray()[i]);
+    }
+    return equal;
   }
 
   @Override
@@ -85,8 +92,14 @@ public class GroupAsmType implements AsmType {
   public String toString() {
     var nameWithSubtypes = new StringBuilder("@").append(name()).append("(");
 
-    subtypeMap.values().forEach(sub -> nameWithSubtypes.append(sub.toString()).append(", "));
-    nameWithSubtypes.replace(nameWithSubtypes.length() - 2, nameWithSubtypes.length() - 1, ")");
+    var subtypes = subtypeMap.values().toArray();
+    for (int i = 0; i < subtypes.length; i++) {
+      nameWithSubtypes.append(subtypes[i]);
+      if (i != subtypes.length - 1) {
+        nameWithSubtypes.append(", ");
+      }
+    }
+    nameWithSubtypes.append(")");
 
     return nameWithSubtypes.toString();
   }

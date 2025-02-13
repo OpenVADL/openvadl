@@ -7,8 +7,8 @@ import vadl.viam.asm.AsmGrammarVisitor;
  */
 public class AsmAssignToAttribute extends AsmAssignTo {
 
-  public AsmAssignToAttribute(String assignToName) {
-    super(assignToName);
+  public AsmAssignToAttribute(String assignToName, boolean isWithinRepetition) {
+    super(assignToName, isWithinRepetition);
   }
 
   @Override

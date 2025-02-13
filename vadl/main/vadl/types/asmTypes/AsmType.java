@@ -112,6 +112,6 @@ public interface AsmType {
    */
   default String toCppTypeString(String prefix) {
     throw new UnsupportedOperationException(
-        "This AsmType does not have an corresponding VADL type.");
+        "This AsmType does not have an corresponding CPP type.");
   }
 }

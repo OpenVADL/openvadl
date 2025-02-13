@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.viam.asm.AsmToken;
@@ -248,8 +249,17 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
     }
 
     Set<AsmToken> firstSet;
-    if (entity.isTerminalRule || entity.isBuiltinRule) {
+    if (entity.isTerminalRule) {
       firstSet = new HashSet<>(List.of(new AsmToken(ruleName, null)));
+    } else if (entity.isBuiltinRule) {
+      if (entity.identifier().name.equals("Expression")) {
+        firstSet = new HashSet<>(
+            Stream.of("LPAREN", "DOT", "MINUS", "PLUS", "EXCLAIM", "TILDE", "INTEGER", "STRING",
+                "IDENTIFIER").map(s -> new AsmToken(s, null)).toList()
+        );
+      } else {
+        throw Diagnostic.error("Unknown builtin: " + entity.identifier().name, entity).build();
+      }
     } else {
       firstSet = entity.alternatives.accept(this);
     }

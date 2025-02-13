@@ -19,6 +19,7 @@ import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
 import vadl.viam.Assembly;
@@ -317,27 +318,32 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
 
     return Optional.of(
-        new AsmNonTerminalRule(id, visitAsmAlternatives(definition.alternatives, false),
+        new AsmNonTerminalRule(id, visitAsmAlternatives(definition.alternatives, false, false),
             definition.asmType, definition.sourceLocation())
     );
   }
 
   private AsmAlternatives visitAsmAlternatives(AsmGrammarAlternativesDefinition definition,
-                                               boolean isWithinOptionOrRepetition) {
+                                               boolean isWithinOptionOrRepetition,
+                                               boolean isWithinRepetition) {
     var alternatives = definition.alternatives;
     var semanticPredicateApplies = !isWithinOptionOrRepetition || alternatives.size() != 1;
     requireNonNull(definition.alternativesFirstTokens);
 
     List<AsmAlternative> asmAlternatives = new ArrayList<>(alternatives.size());
+    var asmType = requireNonNull(definition.asmType);
     for (int i = 0; i < alternatives.size(); i++) {
       asmAlternatives.add(visitAsmAlternative(alternatives.get(i),
-          definition.alternativesFirstTokens.get(i), semanticPredicateApplies));
+          definition.alternativesFirstTokens.get(i), asmType, isWithinRepetition,
+          semanticPredicateApplies));
     }
-    return new AsmAlternatives(asmAlternatives, requireNonNull(definition.asmType));
+    return new AsmAlternatives(asmAlternatives, asmType);
   }
 
   private AsmAlternative visitAsmAlternative(List<AsmGrammarElementDefinition> elements,
                                              Set<AsmToken> firstTokens,
+                                             AsmType alternativeAsmType,
+                                             boolean isWithinRepetition,
                                              boolean semanticPredicateAppliesToAlternatives) {
     Function semPredFunction = null;
     var semPredExpr = elements.get(0).semanticPredicate;
@@ -350,12 +356,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
 
     var grammarElements =
-        elements.stream().map(this::visitAsmElement).filter(Objects::nonNull).toList();
-    return new AsmAlternative(semPredFunction, firstTokens, grammarElements);
+        elements.stream().map(def -> visitAsmElement(def, isWithinRepetition))
+            .filter(Objects::nonNull).toList();
+    return new AsmAlternative(semPredFunction, firstTokens, alternativeAsmType, isWithinRepetition,
+        grammarElements);
   }
 
   @Nullable
-  private AsmGrammarElement visitAsmElement(AsmGrammarElementDefinition definition) {
+  private AsmGrammarElement visitAsmElement(AsmGrammarElementDefinition definition,
+                                            boolean isWithinRepetition) {
 
     if (definition.optionAlternatives != null) {
       var semPredGraph = potentialSemanticPredicate(definition.optionAlternatives);
@@ -367,7 +376,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       }
       var firstTokens =
           Objects.requireNonNull(definition.optionAlternatives.enclosingBlockFirstTokens);
-      var alternatives = visitAsmAlternatives(definition.optionAlternatives, true);
+      var alternatives = visitAsmAlternatives(definition.optionAlternatives, true, false);
       return new AsmOption(semPredFunction, firstTokens, alternatives);
     }
 
@@ -382,27 +391,28 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       }
       var firstTokens =
           Objects.requireNonNull(definition.repetitionAlternatives.enclosingBlockFirstTokens);
-      var alternatives = visitAsmAlternatives(definition.repetitionAlternatives, true);
+      var alternatives = visitAsmAlternatives(definition.repetitionAlternatives, true, true);
       return new AsmRepetition(semPredFunction, firstTokens, alternatives);
     }
 
     if (definition.groupAlternatives != null) {
-      var alternatives = visitAsmAlternatives(definition.groupAlternatives, false);
+      var alternatives = visitAsmAlternatives(definition.groupAlternatives, false, false);
       return new AsmGroup(alternatives, requireNonNull(definition.asmType));
     }
 
     AsmAssignTo assignTo = null;
     if (definition.attribute != null) {
       assignTo = definition.isAttributeLocalVar
-          ? new AsmAssignToLocalVar(definition.attribute.name)
-          : new AsmAssignToAttribute(definition.attribute.name);
+          ? new AsmAssignToLocalVar(definition.attribute.name, isWithinRepetition)
+          : new AsmAssignToAttribute(definition.attribute.name, isWithinRepetition);
     }
 
     if (definition.localVar != null) {
       AsmGrammarElement literal = null;
       if (definition.localVar.asmLiteral.id == null
           || !definition.localVar.asmLiteral.id.name.equals("null")) {
-        literal = visitAsmLiteral(new AsmAssignToLocalVar(definition.localVar.id.name),
+        literal = visitAsmLiteral(
+            new AsmAssignToLocalVar(definition.localVar.id.name, isWithinRepetition),
             definition.localVar.asmLiteral);
       }
       return new AsmLocalVarDefinition(definition.localVar.id.name, literal,

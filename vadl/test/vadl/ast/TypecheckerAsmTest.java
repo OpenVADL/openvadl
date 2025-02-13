@@ -70,7 +70,7 @@ public class TypecheckerAsmTest {
               mnemonic = 'ADD' @operand
               rd   = Register  @operand
               rs1  = Register  @operand
-                 ( rs2 = Register   @operand
+                 ( ?(laidin(0,"r1","r2")) rs2 = Register   @operand
                  | imm = Expression @operand
                  )
               ) @instruction

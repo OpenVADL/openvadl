@@ -739,7 +739,7 @@ public class TypeChecker
     return null;
   }
 
-  private static void preprocessAlternativesElements(AsmGrammarAlternativesDefinition definition) {
+  private void preprocessAlternativesElements(AsmGrammarAlternativesDefinition definition) {
     definition.alternatives.forEach(elements -> {
       for (int i = 0; i < elements.size(); i++) {
         var element = elements.get(i);
@@ -815,24 +815,51 @@ public class TypeChecker
     // consider elements which are assigned to an attribute
     if (element.attribute != null && !element.isAttributeLocalVar
         && !element.isWithinRepetitionBlock) {
-      groupSubtypeMap.put(element.attribute.name, element.asmType);
-
-      var otherElement = assignedAttributes.put(element.attribute.name, element);
-      if (otherElement != null) {
-        throw Diagnostic.error(
-                "Found multiple assignments to attribute %s in a grammar rule."
-                    .formatted(element.attribute.name), element.sourceLocation())
-            .locationDescription(otherElement,
-                "Attribute %s has already been assigned to here.", element.attribute.name)
-            .build();
+      if (groupSubtypeMap.containsKey(element.attribute.name)) {
+        throw Diagnostic.error("Found multiple assignments to attribute.", element)
+            .description("Attribute %s has already been assigned to.",
+                element.attribute.name).build();
       }
+      groupSubtypeMap.put(element.attribute.name, element.asmType);
+      assignedAttributes.put(element.attribute.name, element);
     }
 
     // flatten nested GroupAsmTypes from group and option blocks
     // ignore the type of repetition blocks
-    if (element.repetitionAlternatives == null
-        && element.asmType instanceof GroupAsmType elementAsmType) {
-      groupSubtypeMap.putAll(elementAsmType.getSubtypeMap());
+    if (element.optionAlternatives != null || element.groupAlternatives != null) {
+      if (element.asmType instanceof GroupAsmType elementAsmType) {
+        elementAsmType.getSubtypeMap().keySet().forEach(
+            key -> throwErrorOnNestedMultipleAttributeAssignment(element, groupSubtypeMap, key)
+        );
+        groupSubtypeMap.putAll(elementAsmType.getSubtypeMap());
+      } else {
+
+        var alternatives = element.optionAlternatives != null ? element.optionAlternatives :
+            element.groupAlternatives;
+        Objects.requireNonNull(alternatives);
+
+        var attribute = alternatives.alternatives.get(0).stream().filter(
+            e -> e.localVar == null && e.semanticPredicate == null
+        ).findFirst().map(e -> e.attribute);
+
+        if (attribute.isPresent()) {
+          throwErrorOnNestedMultipleAttributeAssignment(element, groupSubtypeMap,
+              attribute.get().name);
+          groupSubtypeMap.put(attribute.get().name, element.asmType);
+        }
+      }
+    }
+  }
+
+  private void throwErrorOnNestedMultipleAttributeAssignment(AsmGrammarElementDefinition element,
+                                                             Map<String, AsmType> groupSubtypeMap,
+                                                             String attributeToBeAdded) {
+    if (groupSubtypeMap.containsKey(attributeToBeAdded)) {
+      throw Diagnostic.error("Found invalid attribute assignment.", element)
+          .description(
+              "Attribute %s assigned in this block is already assigned in enclosing block.",
+              attributeToBeAdded)
+          .build();
     }
   }
 

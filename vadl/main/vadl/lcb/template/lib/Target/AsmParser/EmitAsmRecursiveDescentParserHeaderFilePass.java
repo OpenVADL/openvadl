@@ -198,7 +198,6 @@ class ParsedValueStruct {
 class StructGenerator implements AsmGrammarVisitor {
 
   HashSet<ParsedValueStruct> generatedStructs = new HashSet<>();
-  HashSet<AsmType> alreadyGeneratedTypes = new HashSet<>();
   private String namespace = "";
 
   Stream<ParsedValueStruct> getAllStructs(String namespace, List<AsmGrammarRule> rules) {
@@ -208,24 +207,19 @@ class StructGenerator implements AsmGrammarVisitor {
   }
 
   private void generateStructIfNecessary(AsmType type) {
-    if (alreadyGeneratedTypes.contains(type)) {
-      return;
-    }
-
     if (!(type instanceof GroupAsmType groupType)) {
       return;
     }
 
     var structName = groupType.toCppTypeString(namespace);
     if (generatedStructs.stream().anyMatch(s -> s.getName().equals(structName))) {
-      throw new ViamError("Struct with name " + structName + " already exists");
+      return;
     }
 
     var struct =
         new ParsedValueStruct(namespace, groupType.toCppTypeString(namespace),
             groupType.getSubtypeMap());
     generatedStructs.add(struct);
-    alreadyGeneratedTypes.add(type);
   }
 
   @Override
