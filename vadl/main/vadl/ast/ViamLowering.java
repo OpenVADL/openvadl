@@ -352,7 +352,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       var semanticPredicateGraph = behaviorLowering.getGraph(semPredExpr, "semanticPredicate");
       semPredFunction =
           new Function(generateIdentifier("semanticPredicate", semPredExpr.sourceLocation()),
-              new Parameter[0], Type.bool(), semanticPredicateGraph);
+              new vadl.viam.Parameter[0], Type.bool(), semanticPredicateGraph);
     }
 
     var grammarElements =
@@ -372,7 +372,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       if (semPredGraph != null) {
         semPredFunction = new Function(
             generateIdentifier("semanticPredicate", definition.optionAlternatives.sourceLocation()),
-            new Parameter[0], Type.bool(), semPredGraph);
+            new vadl.viam.Parameter[0], Type.bool(), semPredGraph);
       }
       var firstTokens =
           Objects.requireNonNull(definition.optionAlternatives.enclosingBlockFirstTokens);
@@ -387,7 +387,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         semPredFunction = new Function(
             generateIdentifier("semanticPredicate",
                 definition.repetitionAlternatives.sourceLocation()),
-            new Parameter[0], Type.bool(), semPredGraph);
+            new vadl.viam.Parameter[0], Type.bool(), semPredGraph);
       }
       var firstTokens =
           Objects.requireNonNull(definition.repetitionAlternatives.enclosingBlockFirstTokens);

@@ -15,8 +15,8 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
-import vadl.viam.asm.AsmToken;
 import vadl.utils.WithSourceLocation;
+import vadl.viam.asm.AsmToken;
 
 /**
  * The Definition nodes inside the AST.
