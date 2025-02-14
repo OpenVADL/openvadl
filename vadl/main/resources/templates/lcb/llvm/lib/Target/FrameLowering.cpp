@@ -23,7 +23,7 @@ void [(${namespace})]FrameLowering::anchor() {}
     : TargetFrameLowering(StackGrowsDown,
       Align(16) /*=StackAlignment*/,
       0 /*=LocalAreaOffset*/,
-      Align(16) /*=TransientStackAlignment*/,
+      Align(16) /*=TransientStackAlignment*/
                           ),
       STI(STI)
 {
