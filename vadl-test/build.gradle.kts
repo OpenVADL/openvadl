@@ -21,6 +21,7 @@ dependencies {
     implementation("org.hamcrest:hamcrest:2.2")
     implementation("org.yaml:snakeyaml:2.2")
     implementation("net.jqwik:jqwik:1.9.0")
+    implementation("ch.qos.logback:logback-classic:1.5.6")
 
     implementation("org.awaitility:awaitility:4.2.1")
     implementation("org.testcontainers:testcontainers:1.20.0")

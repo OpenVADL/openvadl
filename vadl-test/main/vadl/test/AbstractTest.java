@@ -49,6 +49,9 @@ public abstract class AbstractTest {
   private static TestFrontend.Provider frontendProvider;
   private static Path testSourceRootPath;
 
+  // @TestFactory won't trigger beforeAll, so we must call it manually from `beforeEach`.
+  private static boolean beforeAllRan = false;
+
   private TestFrontend testFrontend;
 
   // directory of the current test (used to emit files)
@@ -60,6 +63,11 @@ public abstract class AbstractTest {
    */
   @BeforeAll
   public static synchronized void beforeAll() throws URISyntaxException, IOException {
+    if (beforeAllRan) {
+      return;
+    }
+    beforeAllRan = true;
+
     // check if global provider is set
     var globalFrontendProvider = TestFrontend.Provider.globalProvider;
     if (globalFrontendProvider == null) {
@@ -194,7 +202,10 @@ public abstract class AbstractTest {
    * Creates a new test frontend for every test execution.
    */
   @BeforeEach
-  public void beforeEach() {
+  public void beforeEach() throws URISyntaxException, IOException {
+    if (!beforeAllRan) {
+      beforeAll();
+    }
     testFrontend = frontendProvider.createFrontend();
   }
 
@@ -318,15 +329,15 @@ public abstract class AbstractTest {
    * Sets the PassManager and runs the provided specification with the pass order.
    *
    * @deprecated Use {@link #setupPassManagerAndRunSpec(String, PassOrder)} instead and use the
-   * {@link PassOrder#untilFirst(Class)} method instead.
-   * <pre>{@code
-   *                                      var config = getConfiguration(false);
-   *                                      var setup = setupPassManagerAndRunSpec(
-   *                                          "sys/risc-v/rv64i.vadl",
-   *                                          PassOrders.viam(config)
-   *                                             .untilFirst(SideEffectConditionResolvingPass.class)
-   *                                      );
-   *                                         }</pre>
+   *     {@link PassOrder#untilFirst(Class)} method instead.
+   *     <pre>{@code
+   *                                                              var config = getConfiguration(false);
+   *                                                              var setup = setupPassManagerAndRunSpec(
+   *                                                                  "sys/risc-v/rv64i.vadl",
+   *                                                                  PassOrders.viam(config)
+   *                                                                     .untilFirst(SideEffectConditionResolvingPass.class)
+   *                                                              );
+   *                                                                 }</pre>
    */
   @Deprecated
   public TestSetup setupPassManagerAndRunSpecUntil(String specPath,
