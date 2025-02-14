@@ -1,7 +1,6 @@
 package vadl.viam.asm.elements;
 
 import vadl.types.asmTypes.AsmType;
-import vadl.viam.asm.AsmGrammarVisitor;
 
 /**
  * Represents a sub-group of elements ({@code ()}) in a grammar rule.
@@ -12,9 +11,4 @@ import vadl.viam.asm.AsmGrammarVisitor;
  */
 public record AsmGroup(AsmAlternatives alternatives,
                        AsmType asmType) implements AsmGrammarElement {
-
-  @Override
-  public void accept(AsmGrammarVisitor visitor) {
-    visitor.visit(this);
-  }
 }

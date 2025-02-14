@@ -2,7 +2,6 @@ package vadl.viam.asm.elements;
 
 import java.util.List;
 import vadl.types.asmTypes.AsmType;
-import vadl.viam.asm.AsmGrammarVisitor;
 
 /**
  * Represents a choice of different alternatives in a grammar rule.
@@ -10,9 +9,4 @@ import vadl.viam.asm.AsmGrammarVisitor;
  */
 public record AsmAlternatives(List<AsmAlternative> alternatives, AsmType asmType)
     implements AsmGrammarElement {
-
-  @Override
-  public void accept(AsmGrammarVisitor visitor) {
-    visitor.visit(this);
-  }
 }

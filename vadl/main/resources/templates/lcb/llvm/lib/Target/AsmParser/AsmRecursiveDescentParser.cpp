@@ -20,13 +20,11 @@ using namespace llvm;
 namespace llvm {
 
   RuleParsingResult<NoData> [(${namespace})]AsmRecursiveDescentParser::ParseStatement() {
-    //return Statement();
-    return RuleParsingResult<NoData>(ParsedValue<NoData>(NoData {}));
+    return Statement();
   }
 
   RuleParsingResult<uint64_t> [(${namespace})]AsmRecursiveDescentParser::ParseRegister() {
-    //return Register();
-    return RuleParsingResult<uint64_t>(ParsedValue<uint64_t>(0));
+    return Register();
   }
 
   RuleParsingResult<StringRef> [(${namespace})]AsmRecursiveDescentParser::Literal(std::string toParse) {

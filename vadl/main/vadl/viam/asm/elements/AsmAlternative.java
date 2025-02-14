@@ -5,7 +5,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.types.asmTypes.AsmType;
 import vadl.viam.Function;
-import vadl.viam.asm.AsmGrammarVisitor;
 import vadl.viam.asm.AsmToken;
 
 /**
@@ -17,9 +16,4 @@ public record AsmAlternative(@Nullable Function semanticPredicate,
                              AsmType asmType,
                              boolean isWithinRepetition,
                              List<AsmGrammarElement> elements) implements AsmGrammarElement {
-
-  @Override
-  public void accept(AsmGrammarVisitor visitor) {
-    visitor.visit(this);
-  }
 }

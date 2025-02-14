@@ -63,14 +63,6 @@ struct [(${struct.getName()})] {
 
 [/]
 
-[# th:each="format : ${formats}" ]
-struct [(${format.structName})] {
-[# th:each="field : ${format.fieldNames}" ]
-  ParsedValue<[(${namespace})]ParsedOperand> [(${field})];
-[/]
-};
-[/]
-
 class [(${namespace})]AsmRecursiveDescentParser {
     MCAsmLexer &Lexer;
     MCAsmParser &Parser;
