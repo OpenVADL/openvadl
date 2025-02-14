@@ -8,6 +8,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,6 +17,7 @@ import org.apache.commons.text.StringSubstitutor;
 import vadl.cppCodeGen.GenericCppCodeGeneratorVisitor;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.common.AsmParserFunctionCodeGenerator;
+import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.gcb.passes.assembly.visitors.AssemblyVisitor;
 import vadl.lcb.template.CommonVarNames;
@@ -73,8 +75,9 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   private String parserCompareFunction = "equals_insensitive";
   private String currentRuleTypeString = "invalid";
 
-  private Map<AsmGrammarElement, String> elementVarName = new HashMap<>();
-  private SymbolTable grammarElementSymbolTable = new SymbolTable("ELEM_");
+  private final Map<AsmGrammarElement, String> elementVarName = new HashMap<>();
+  private final SymbolTable grammarElementSymbolTable = new SymbolTable("ELEM_");
+  private final Set<String> functionDefinitions = new HashSet<>();
 
   /**
    * Constructor.
@@ -311,6 +314,7 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
   @Override
   public void visit(AsmGrammarRule rule) {
     rule.accept(this);
+    functionDefinitions.forEach(writer::write);
   }
 
   @Override
@@ -498,18 +502,33 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmFunctionInvocation element) {
-    // print function with PureFunctionGenerator
-    // parse function arguments into tempVars
-    // call function with tempVars
+    var functionGenerator = new PureFunctionCodeGenerator(element.function());
+    functionDefinitions.add(functionGenerator.genFunctionDefinition());
 
+    var paramVars = new ArrayList<String>();
+    element.parameters().forEach(
+        parameter -> {
+          parameter.accept(this);
+          paramVars.add(varName(parameter) + ".Value");
+        }
+    );
+
+    var functionReturnType = AsmType.getAsmTypeFromOperationalType(element.function().returnType());
     var tempVar = symbolTable.getNextVariable();
-    // TODO: cast
-    //var resultVar = writeCastIfNecessary(ruleType, resultType, tempVar);
-    writer.write(
-        String.format("  //TODO: Function invocation, with result stored in: %s\n", tempVar));
+
+    writer.write(StringSubstitutor.replace("""
+        ParsedValue<${type}> ${tempVar} = ParsedValue<${type}>(${functionName}(${params}));
+        """, Map.of(
+        "type", functionReturnType.toCppTypeString(namespace),
+        "tempVar", tempVar,
+        "functionName", element.function().simpleName(),
+        "params", String.join(", ", paramVars)
+    )));
+
+    var resultVar = writeCastIfNecessary(functionReturnType, element.asmType(), tempVar);
     writeAssignToIfNotNull(
         element.assignToElement(), tempVar);
-    // TODO: writeToElementVar(element.asmType(), varName(element),resultVar);
+    writeToElementVar(element.asmType(), varName(element), resultVar);
   }
 
   @Override
@@ -524,13 +543,18 @@ public class AssemblyParserCodeGeneratorVisitor extends GenericCppCodeGeneratorV
 
   @Override
   public void visit(AsmLocalVarDefinition element) {
-    writer.write(String.format("RuleParsingResult<NoData> %s;\n", element.localVarName()));
+
 
     if (element.asmLiteral() != null) {
+      writer.write(
+          String.format("RuleParsingResult<%s> %s;\n", element.asmType().toCppTypeString(namespace),
+              element.localVarName()));
       element.asmLiteral().accept(this);
       // TODO: cast if necessary
       writer.write(
           String.format("%s = %s;\n", element.localVarName(), varName(element.asmLiteral())));
+    } else {
+      writer.write(String.format("RuleParsingResult<NoData> %s;\n", element.localVarName()));
     }
   }
 

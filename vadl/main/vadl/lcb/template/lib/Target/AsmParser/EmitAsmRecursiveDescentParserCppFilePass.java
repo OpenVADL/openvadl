@@ -73,16 +73,28 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var lexes = lexes(specification);
-    var instructions = instructions(specification);
+    // var lexes = lexes(specification);
+    // var instructions = instructions(specification);
     var grammarRules = grammarRules(specification);
+    var compareFunction = stringCompareFunction(specification);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        "lexParsingResults", lexes,
-        "instructionResults", instructions,
-        "grammarRules", grammarRules);
+        // "lexParsingResults", lexes,
+        // "instructionResults", instructions,
+        "grammarRules", grammarRules,
+        "compareFunction", compareFunction
+    );
   }
 
+  private String stringCompareFunction(Specification specification) {
+    var isCaseSensitive = specification.assemblyDescription()
+        .map(asmDesc -> asmDesc.annotation(AsmParserCaseSensitive.class))
+        .map(AsmParserCaseSensitive::isCaseSensitive).orElse(false);
+
+    return isCaseSensitive ? "equals" : "equals_insensitive";
+  }
+
+  /*
   @Nonnull
   private static List<RuleParsingResultForLex> lexes(Specification specification) {
     return specification.isa()
@@ -119,6 +131,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
         })
         .toList();
   }
+  */
 
   private String grammarRules(Specification specification) {
     var parserCaseSensitive = specification.assemblyDescription()

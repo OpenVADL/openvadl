@@ -4,9 +4,13 @@ import static vadl.error.DiagUtils.throwNotAllowed;
 
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.error.Diagnostic;
+import vadl.types.BuiltInTable;
+import vadl.types.StringType;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -58,7 +62,43 @@ public class AsmParserFunctionCodeGenerator extends FunctionCodeGenerator {
   }
 
   @Override
+  public void handle(CGenContext<Node> ctx, ConstantNode toHandle) {
+    if (toHandle.type() == StringType.string()) {
+      ctx.wr("\"%s\"", toHandle.constant().toString());
+    } else {
+      ctx.wr(toHandle.constant().asVal().decimal());
+    }
+  }
+
+  @Override
   public void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
-    // TODO: Call handwritten functions of RecursiveDescentParser
+    if (toHandle.asmBuiltIn() == BuiltInTable.LA_ID_EQ) {
+      ctx.wr("builtin_asm_laideq(");
+      toHandle.arguments().forEach(arg -> {
+        handle(ctx, (ConstantNode) arg);
+        if (arg != toHandle.arguments().get(toHandle.arguments().size() - 1)) {
+          ctx.wr(",");
+        }
+      });
+      ctx.wr(")");
+    } else if (toHandle.asmBuiltIn() == BuiltInTable.LA_ID_IN) {
+      ctx.wr("builtin_asm_laidin(");
+      var lookaheadArg = (ConstantNode) toHandle.arguments().get(0);
+      ctx.wr(lookaheadArg.constant().asVal().decimal());
+
+      // create vector from strings arguments
+      ctx.wr(", std::vector<string>{");
+      toHandle.arguments().stream().skip(1).forEach(
+          arg -> {
+            handle(ctx, (ConstantNode) arg);
+            if (arg != toHandle.arguments().get(toHandle.arguments().size() - 1)) {
+              ctx.wr(",");
+            }
+          }
+      );
+      ctx.wr("})");
+    } else {
+      throw Diagnostic.error("Unknown AsmBuiltin.", toHandle.sourceLocation()).build();
+    }
   }
 }

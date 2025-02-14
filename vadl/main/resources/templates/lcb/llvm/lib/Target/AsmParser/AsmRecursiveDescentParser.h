@@ -85,6 +85,9 @@ private:
     RuleParsingResult<StringRef> Literal(std::string toParse);
     RuleParsingResult<const MCExpr*> BuiltinExpression();
 
+    bool builtin_asm_laidin(uint64_t lookahead, const std::vector<string>& compareStrings);
+    bool builtin_asm_laideq(uint64_t lookahead, const string compareString);
+
 public:
     [(${namespace})]AsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
         : Lexer(lexer), Parser(parser), Operands(operands) {

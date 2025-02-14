@@ -454,12 +454,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
 
     if (invocationSymbolOrigin instanceof FunctionDefinition functionDefinition) {
-      // TODO: store reference to function instead of function identifier
-      //       once function lowering is supported
-      // var function = fetch(functionDefinition).orElseThrow();
+      var function = (Function) fetch(functionDefinition).orElseThrow();
       var parameters = definition.parameters.stream()
           .map(param -> visitAsmLiteral(null, param)).toList();
-      return new AsmFunctionInvocation(assignToElement, definition.id.name, parameters,
+      return new AsmFunctionInvocation(assignToElement, function, parameters,
           definition.asmType);
     }
 

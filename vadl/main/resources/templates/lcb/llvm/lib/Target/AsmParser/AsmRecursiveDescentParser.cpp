@@ -49,5 +49,26 @@ namespace llvm {
     }
   }
 
+  bool [(${namespace})]AsmRecursiveDescentParser::builtin_asm_laidin(uint64_t lookahead, const std::vector<string>& compareStrings) {
+    AsmToken* tok;
+    MutableArrayRef<AsmToken> Buf(tok, lookahead);
+    size_t ReadCount = peekTokens(Buf, true);
+
+    for (size_t i = 0; i < compareStrings.size(); i++) {
+      if (tok[lookahead].getString().[(${compareFunction})](compareStrings[i])) {
+          return true;
+      }
+    }
+    return false;
+  }
+
+  bool [(${namespace})]AsmRecursiveDescentParser::builtin_asm_laideq(uint64_t lookahead, const string compareString) {
+      AsmToken* tok;
+      MutableArrayRef<AsmToken> Buf(tok ,lookahead);
+      size_t ReadCount = peekTokens(Buf, true);
+
+      return tok[lookahead].getString().[(${compareFunction})](compareString);
+  }
+
 [(${grammarRules})]
 }

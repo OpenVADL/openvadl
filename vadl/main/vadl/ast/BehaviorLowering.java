@@ -298,8 +298,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(IntegerLiteral expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    // FIXME: is this correct?
+    return new ConstantNode(Constant.Value.fromInteger(expr.number,
+        ((ConstantType) Objects.requireNonNull(expr.type)).closestBits()));
   }
 
   @Override
