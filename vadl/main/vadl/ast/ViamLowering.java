@@ -967,8 +967,16 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    // TODO: Support recursive sub registers
+    var reg = new Register(
+        generateIdentifier(definition.viamId, definition.identifier()),
+        requireNonNull(definition.type),
+        Register.AccessKind.FULL,
+        Register.AccessKind.FULL,
+        null,
+        new Register[] {}
+    );
+    return Optional.of(reg);
   }
 
   @Override
