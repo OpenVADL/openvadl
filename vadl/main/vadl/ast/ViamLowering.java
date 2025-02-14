@@ -171,7 +171,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * A simple helper util that returns a copy of the list casted to the class provided.
    */
   private <T, U> List<T> filterAndCastToInstance(List<U> values, Class<T> type) {
-    return values.stream().filter(type::isInstance).map(type::cast).toList();
+    return values.stream().filter(type::isInstance).map(type::cast)
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   @Override
@@ -740,7 +741,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // FIXME: make this togroup instead of toList
     var allDefinitions =
-        definition.definitions.stream().map(this::fetch).flatMap(Optional::stream).toList();
+        definition.definitions.stream().map(this::fetch).flatMap(Optional::stream)
+            .toList();
     var formats = filterAndCastToInstance(allDefinitions, Format.class);
     var functions = filterAndCastToInstance(allDefinitions, Function.class);
     var relocations = filterAndCastToInstance(allDefinitions, Relocation.class);
@@ -753,6 +755,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .map(v -> (Counter) v)
         .findFirst().orElse(null);
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
+
+    // Add programCounter to registers if it is a register.
+    // The register list is the owner of the PC register itself.
+    if (programCounter != null && programCounter.registerResource() instanceof Register pcReg) {
+      registers.add(pcReg);
+    }
 
     return new vadl.viam.InstructionSetArchitecture(
         identifier,
