@@ -61,7 +61,8 @@ public class AsmGrammarDefaultRules {
     return new ArrayList<>(List.of(
         terminalRuleTypeString("IDENTIFIER", "[a-zA-Z_.][a-zA-Z0-9_$.@]*", false),
         terminalRuleTypeString("STRING", "\\\".*\\\"", false),
-        terminalRuleTypeString("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+", false),
+        terminalRule("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+", false,
+            ConstantAsmType.instance()),
         terminalRuleTypeString("COLON", ":", false),
         terminalRuleTypeString("PLUS", "+", true),
         terminalRuleTypeString("MINUS", "-", false),
@@ -99,7 +100,7 @@ public class AsmGrammarDefaultRules {
         terminalRuleTypeString("AT", "@", false),
         terminalRuleTypeString("MINUSGREATER", "->", false),
         terminalRule("EOL", "[\\r(\\r\\n)]", true, VoidAsmType.instance()),
-        nonTerminalRule("Statement", null, false, instructionRule(),
+        nonTerminalRule("Statement", InstructionAsmType.instance(), false, instructionRule(),
             ruleReference("EOL", VoidAsmType.instance())),
         nonTerminalRule("Register", RegisterAsmType.instance(),
             false, ruleReference("IDENTIFIER", StringAsmType.instance())),
@@ -197,15 +198,18 @@ public class AsmGrammarDefaultRules {
     );
     alternativesDefinition.asmType = ruleType;
 
+    AsmGrammarTypeDefinition typeDef = null;
+    if (ruleType != null) {
+      typeDef = new AsmGrammarTypeDefinition(new Identifier(ruleType.name(),
+          SourceLocation.INVALID_SOURCE_LOCATION),
+          SourceLocation.INVALID_SOURCE_LOCATION);
+    }
+
     var rule = new AsmGrammarRuleDefinition(
-        new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
-        null,
-        alternativesDefinition,
-        SourceLocation.INVALID_SOURCE_LOCATION
+        new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION), typeDef,
+        alternativesDefinition, SourceLocation.INVALID_SOURCE_LOCATION
     );
 
-    // by setting the asmType we can avoid checking the default rules in the typechecker
-    rule.asmType = ruleType;
     rule.isBuiltinRule = isBuiltinRule;
     return rule;
   }

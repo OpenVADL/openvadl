@@ -17,8 +17,16 @@ import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.ConstantAsmType;
+import vadl.types.asmTypes.ExpressionAsmType;
 import vadl.types.asmTypes.GroupAsmType;
+import vadl.types.asmTypes.InstructionAsmType;
+import vadl.types.asmTypes.ModifierAsmType;
+import vadl.types.asmTypes.OperandAsmType;
+import vadl.types.asmTypes.RegisterAsmType;
+import vadl.types.asmTypes.StatementsAsmType;
 import vadl.types.asmTypes.StringAsmType;
+import vadl.types.asmTypes.SymbolAsmType;
+import vadl.types.asmTypes.VoidAsmType;
 import vadl.viam.Function;
 import vadl.viam.ViamError;
 import vadl.viam.asm.AsmToken;
@@ -116,14 +124,14 @@ public class AssemblyParserCodeGenerator {
   void handle(CAsmContext ctx, AsmNonTerminalRule rule) {
     var type = rule.getAsmType().toCppTypeString(namespace);
     this.currentRuleTypeString = type;
-    ctx.spacedIn();
     ctx.ln("RuleParsingResult<%s> %sAsmRecursiveDescentParser::%s() {", type, namespace,
         rule.simpleName());
+    ctx.spacedIn();
 
     ctx.gen(rule.getAlternatives());
 
     var resultVar = writeCastIfNecessary(ctx, rule.getAlternatives().asmType(), rule.getAsmType(),
-        varName(rule.getAlternatives()));
+        varName(rule.getAlternatives()), false);
     ctx.ln("return RuleParsingResult<%s>(%s);", type, resultVar);
     ctx.spaceOut();
     ctx.ln("}");
@@ -256,12 +264,12 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmAssignToAttribute element) {
-    ctx.wr(" %s", element.getAssignToName());
+    ctx.wr("%s", element.getAssignToName());
   }
 
   @Handler
   void handle(CAsmContext ctx, AsmAssignToLocalVar element) {
-    ctx.wr(" %s", element.getAssignToName());
+    ctx.wr("%s", element.getAssignToName());
   }
 
   @Handler
@@ -284,9 +292,9 @@ public class AssemblyParserCodeGenerator {
     ctx.ln("ParsedValue<%s> %s = ParsedValue<%s>(%s(%s));",
         type, tempVar, type, element.function().simpleName(), String.join(", ", paramVars));
 
-    var resultVar = writeCastIfNecessary(ctx, functionReturnType, element.asmType(), tempVar);
-    writeAssignToIfNotNull(ctx,
-        element.assignToElement(), tempVar);
+    var resultVar =
+        writeCastIfNecessary(ctx, functionReturnType, element.asmType(), tempVar, false);
+    writeAssignToIfNotNull(ctx, element.assignToElement(), tempVar);
     writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
   }
 
@@ -295,30 +303,27 @@ public class AssemblyParserCodeGenerator {
     ctx.gen(element.alternatives());
 
     var resultVar = writeCastIfNecessary(ctx, element.alternatives().asmType(), element.asmType(),
-        varName(element.alternatives()));
-    ctx.ln("ParsedValue<%s> %s = %s;", element.asmType().toCppTypeString(namespace),
-        varName(element), resultVar);
+        varName(element.alternatives()), false);
+    writeAssignToIfNotNull(ctx, element.assignTo(), resultVar);
+    writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
   }
 
   @Handler
   void handle(CAsmContext ctx, AsmLocalVarDefinition element) {
-    // TODO: RuleParsingResult or ParsedValue?
     if (element.asmLiteral() != null) {
-      ctx.ln("RuleParsingResult<%s> %s;", element.asmType().toCppTypeString(namespace),
-          element.localVarName());
       ctx.gen(element.asmLiteral());
       // TODO: cast if necessary
-      ctx.ln("%s = %s;", element.localVarName(), varName(element.asmLiteral()));
+      ctx.ln("ParsedValue<%s> %s = %s;", element.asmType().toCppTypeString(namespace),
+          element.localVarName(), varName(element.asmLiteral()));
     } else {
-      ctx.ln("RuleParsingResult<NoData> %s;\n", element.localVarName());
+      ctx.ln("ParsedValue<NoData> %s;\n", element.localVarName());
     }
   }
 
   @Handler
   void handle(CAsmContext ctx, AsmLocalVarUse element) {
     // FIXME: is there a cast possible here?
-    writeAssignToIfNotNull(ctx,
-        element.assignToElement(), element.invokedLocalVar());
+    writeAssignToIfNotNull(ctx, element.assignToElement(), element.invokedLocalVar());
     // TODO: writeToElementVar(element.asmType(), ); ?
   }
 
@@ -361,7 +366,7 @@ public class AssemblyParserCodeGenerator {
     ctx.spaceOut();
     ctx.ln("}");
 
-    var resultVar = writeCastIfNecessary(ctx, ruleType, resultType, tempVar);
+    var resultVar = writeCastIfNecessary(ctx, ruleType, resultType, tempVar, true);
     writeAssignToIfNotNull(ctx, element.assignToElement(), resultVar);
     writeToElementVar(ctx, resultType, varName(element), resultVar);
   }
@@ -382,7 +387,7 @@ public class AssemblyParserCodeGenerator {
     ctx.spaceOut();
     ctx.ln("}");
 
-    var resultVar = writeCastIfNecessary(ctx, StringAsmType.instance(), type, tempVar);
+    var resultVar = writeCastIfNecessary(ctx, StringAsmType.instance(), type, tempVar, true);
     writeAssignToIfNotNull(ctx, element.assignToElement(), resultVar);
     writeToElementVar(ctx, type, varName(element), resultVar);
   }
@@ -426,24 +431,11 @@ public class AssemblyParserCodeGenerator {
     if (assignTo != null) {
       ctx.gen(assignTo);
       if (assignTo.getIsWithinRepetition()) {
-        ctx.ln(".Value.insert(%s);", tempVar);
+        ctx.ln(".Value.push_back(%s.Value);", tempVar);
       } else {
-        ctx.ln(" = %s.getParsed();", tempVar);
+        ctx.ln(" = %s;", tempVar);
       }
     }
-  }
-
-  private String writeCastIfNecessary(CAsmContext ctx, AsmType from, AsmType to,
-                                      String curValueVar) {
-    if (from == to) {
-      return curValueVar;
-    }
-
-    var tempVar = symbolTable.getNextVariable();
-    // TODO: all types of casts (refer to AsmType canBeCastTo methods)
-
-    ctx.ln("// TODO CAST: FROM %s TO %s, stored in %s", from, to, tempVar);
-    return tempVar;
   }
 
   private void writeToElementVar(CAsmContext ctx, AsmType type, String elementVar,
@@ -456,13 +448,239 @@ public class AssemblyParserCodeGenerator {
     var typeString = type.toCppTypeString(namespace);
 
     ctx.ln("%s %s = {", typeString, tempVar);
-
+    ctx.spacedIn();
     type.getSubtypeMap().keySet().forEach(
         attribute -> ctx.ln(attribute + ", ")
     );
+    ctx.spaceOut();
     ctx.ln("};");
 
     ctx.ln("ParsedValue<%s> %s = ParsedValue<%s>(%s);",
         typeString, resultVar, typeString, tempVar);
+  }
+
+  /**
+   * Writes a cast from one AsmType to another.
+   * A cast is necessary if {@code from} and {@code to} parameters are not the same.
+   * In the case they are the same, the method just returns the {@code curValueVar}.
+   *
+   * @param ctx         the context to write the generated code to
+   * @param from        the AsmType to cast from
+   * @param to          the AsmType to cast to
+   * @param curValueVar the variable holding the value to be cast
+   * @return the variable holding the cast value
+   */
+  private String writeCastIfNecessary(CAsmContext ctx, AsmType from, AsmType to,
+                                      String curValueVar, boolean isRuleParsingResult) {
+
+
+    var paredValueVar = symbolTable.getNextVariable();
+    if (isRuleParsingResult) {
+      ctx.ln("ParsedValue<%s> %s = %s.getParsed();", from.toCppTypeString(namespace), paredValueVar,
+          curValueVar);
+      curValueVar = paredValueVar;
+    }
+
+    if (from == to) {
+      return isRuleParsingResult ? paredValueVar : curValueVar;
+    }
+
+    var tempVar = symbolTable.getNextVariable();
+    var destination = "ParsedValue<" + to.toCppTypeString(namespace) + "> " + tempVar;
+    var loc = curValueVar + ".S, " + curValueVar + ".E";
+
+    if (from instanceof GroupAsmType fromGroupType) {
+
+      var subTypeMap = fromGroupType.getSubtypeMap();
+      var keys = subTypeMap.keySet().stream().toList();
+      var subTypes = subTypeMap.values().stream().toList();
+
+      // (@operand, @operand, ...) to @instruction
+      // push operands to the operand vector to be used in AsmParser::MatchAndEmitInstruction()
+      if (to == InstructionAsmType.instance()
+          && subTypes.stream().allMatch(val -> val == OperandAsmType.instance())) {
+        ctx.ln("Operands.push_back(std::make_unique<%sParsedOperand>(%s.Value.mnemonic.Value));",
+            namespace, curValueVar);
+        String finalCurValueVar = curValueVar;
+        keys.forEach(
+            attribute -> {
+              if (!attribute.equals("mnemonic")) {
+                ctx.ln("Operands.push_back(std::make_unique<%sParsedOperand>(%s.Value.%s.Value));",
+                    namespace, finalCurValueVar, attribute);
+              }
+            }
+        );
+        ctx.ln("%s = ParsedValue<NoData>(NoData());", destination);
+        return tempVar;
+      }
+
+      // (@modifier @expression) to @operand
+      if (to == OperandAsmType.instance() && subTypeMap.size() == 2
+          && subTypes.get(0) == ModifierAsmType.instance()
+          && subTypes.get(1) == ExpressionAsmType.instance()) {
+        var modifier = curValueVar + ".Value." + keys.get(0) + ".Value";
+        var expr = curValueVar + ".Value." + keys.get(1) + ".Value";
+        var modifiedExpr = symbolTable.getNextVariable();
+        ctx.ln(
+            "const MCExpr* %s = %sMCExpr::create(%s, %s, Parser.getContext());",
+            modifiedExpr, namespace, expr, modifier);
+        ctx.ln(
+            "SMLoc S = %s.S.getPointer() < %s.S.getPointer() ? %s.S : %s.S;",
+            modifier, expr, modifier, expr);
+        ctx.ln(
+            "SMLoc E = %s.E.getPointer() < %s.E.getPointer() ? %s.E : %s.E;",
+            modifier, expr, modifier, expr);
+        ctx.ln("%s(%sParsedOperand::CreateImm(%s, S, E))", destination, namespace, modifiedExpr);
+        return tempVar;
+      }
+
+      // (@instruction, @instruction, ...) to @statements
+      if (to == StatementsAsmType.instance() &&
+          subTypes.stream().allMatch(subtype -> subtype == InstructionAsmType.instance())) {
+        ctx.wr("ParsedValue<std::vector<NoData>> %s (std::vector<NoData>{", tempVar);
+        String finalCurValueVar = curValueVar;
+        keys.forEach(key -> ctx.wr("%s.Value.%s.Value", finalCurValueVar, key));
+        ctx.ln("});");
+        return tempVar;
+      }
+
+      // (@operand, @operand, ...) to @operands
+      if (to == OperandAsmType.instance() &&
+          subTypes.stream().allMatch(val -> val == OperandAsmType.instance())) {
+        ctx.wr("ParsedValue<std::vector<%sParsedOperand>> %s (std::vector<%sParsedOperand>{",
+            namespace, tempVar, namespace);
+        String finalCurValueVar = curValueVar;
+        keys.forEach(key -> ctx.wr("%s.Value.%s.Value", finalCurValueVar, key));
+        ctx.ln("};");
+        return tempVar;
+      }
+
+      // (@type) to @type
+      if (subTypes.size() == 1 && subTypes.get(0) == to) {
+        ctx.ln("%s = %s.Value.%s", destination, curValueVar, keys.get(0));
+        return tempVar;
+      }
+    }
+
+    if (from == ConstantAsmType.instance()) {
+      // to @operand
+      if (to == OperandAsmType.instance()) {
+        var expr = symbolTable.getNextVariable();
+        ctx.ln("const MCExpr* %s = MCConstantExpr::create(%s.Value, Parser.getContext());", expr,
+            curValueVar);
+        ctx.ln("%s(%sParsedOperand::CreateImm(%s, %s));", destination, namespace, expr, loc);
+        return tempVar;
+      }
+
+      // to @register
+      if (to == RegisterAsmType.instance()) {
+        ctx.ln("%s(%s.Value, %s);", destination, curValueVar, loc);
+        return tempVar;
+      }
+    }
+
+    if (from == StringAsmType.instance()) {
+      // to @operand
+      if (to == OperandAsmType.instance()) {
+        ctx.ln("%s(%sParsedOperand::CreateToken(%s.value,%s));", destination, namespace,
+            curValueVar, loc);
+        return tempVar;
+      }
+
+      // to @symbol
+      if (to == SymbolAsmType.instance()) {
+        ctx.ln("%s = %s;", destination, curValueVar);
+        return tempVar;
+      }
+
+      // to @register
+      if (to == RegisterAsmType.instance()) {
+        var regNoVar = symbolTable.getNextVariable();
+        ctx.ln("unsigned %s;", regNoVar);
+        ctx.ln("if(!AsmUtils::MatchRegNo(%s.Value, %s)) {", curValueVar, regNoVar);
+        ctx.spacedIn();
+        ctx.ln("return RuleParsingResult<%s>(%s.S,\"Could not convert data into register because" +
+                " '\" %s.Value \"' is not a valid register\");", currentRuleTypeString, curValueVar,
+            curValueVar);
+        ctx.spaceOut();
+        ctx.ln("}");
+        ctx.ln("%s(%s, %s);", destination, regNoVar, loc);
+        return tempVar;
+      }
+
+      // to @modifier
+      if (to == ModifierAsmType.instance()) {
+        var modifier = symbolTable.getNextVariable();
+        ctx.ln("%sMCExpr::VariantKind %s;", namespace, modifier);
+        ctx.ln("if(!AsmUtils::MatchCustomModifier(%s.Value, %s)) {", curValueVar, modifier);
+        ctx.spacedIn();
+        ctx.ln("return RuleParsingResult<%s>(%s.S,\"Could not convert data into modifier because" +
+                " '\" %s.Value \"' is not a valid modifier\");", currentRuleTypeString, curValueVar,
+            curValueVar);
+        ctx.spaceOut();
+        ctx.ln("}");
+        ctx.ln("%s(%s, %s);", destination, modifier, loc);
+        return tempVar;
+      }
+    }
+
+    if (from == RegisterAsmType.instance()) {
+      // to @operand
+      if (to == OperandAsmType.instance()) {
+        ctx.ln(
+            "%s(%sParsedOperand::CreateReg(%s.Value, %sParsedOperand::RegisterKind::rk_IntReg, %s));",
+            destination, namespace, curValueVar, namespace, loc);
+        return tempVar;
+      }
+    }
+
+    if (from == ExpressionAsmType.instance()) {
+      // to @operand
+      if (to == OperandAsmType.instance()) {
+        ctx.ln("%s(%sParsedOperand::CreateImm(%s.value,%s));", destination, namespace, curValueVar,
+            loc);
+        return tempVar;
+      }
+    }
+
+    if (from == SymbolAsmType.instance()) {
+      // to @operand
+      if (to == OperandAsmType.instance()) {
+        var symbol = symbolTable.getNextVariable();
+        var expr = symbolTable.getNextVariable();
+        ctx.ln("const MCSymbol* %s = Parser.getContext().getOrCreateSymbol(%s.Value);", symbol,
+            curValueVar);
+        ctx.ln("const MCExpr* %s = MCSymbolRefExpr::create(%s, Parser.getContext());", expr,
+            symbol);
+        ctx.ln("%s(%sParsedOperand::CreateImm(%s,%s));", destination, namespace, expr, loc);
+        return tempVar;
+      }
+    }
+
+    if (from == OperandAsmType.instance()) {
+      // to @operands
+      if (to == OperandAsmType.instance()) {
+        ctx.ln("ParsedValue<std::vector<%sParsedOperand>> %s" +
+                "(std::vector<%sParsedOperand>{ %s.Value });",
+            namespace, tempVar, namespace, curValueVar);
+        return tempVar;
+      }
+    }
+
+    if (from == InstructionAsmType.instance()) {
+      // to @statements
+      if (to == StatementsAsmType.instance()) {
+        ctx.ln("ParsedValue<std::vector<NoData>> %s " +
+            "(std::vector<NoData>{ %s.Value });", tempVar, curValueVar);
+        return tempVar;
+      }
+    }
+
+    if (to == VoidAsmType.instance()) {
+      ctx.ln("ParsedValue<NoData> %s = ParsedValue<NoData>(NoData());", tempVar);
+      return tempVar;
+    }
+
+    throw new ViamError("Unknown AsmType cast in asm parser from " + from + " to " + to);
   }
 }

@@ -12,6 +12,8 @@
 #include "vadl-builtins.h"
 #include <sstream>
 #include <set>
+#include <vector>
+#include <string>
 
 using namespace llvm;
 

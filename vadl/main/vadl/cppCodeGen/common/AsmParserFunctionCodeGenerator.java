@@ -87,7 +87,7 @@ public class AsmParserFunctionCodeGenerator extends FunctionCodeGenerator {
       ctx.wr(lookaheadArg.constant().asVal().decimal());
 
       // create vector from strings arguments
-      ctx.wr(", std::vector<string>{");
+      ctx.wr(", std::vector<std::string>{");
       toHandle.arguments().stream().skip(1).forEach(
           arg -> {
             handle(ctx, (ConstantNode) arg);

@@ -395,16 +395,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       return new AsmRepetition(semPredFunction, firstTokens, alternatives);
     }
 
-    if (definition.groupAlternatives != null) {
-      var alternatives = visitAsmAlternatives(definition.groupAlternatives, false, false);
-      return new AsmGroup(alternatives, requireNonNull(definition.asmType));
-    }
 
     AsmAssignTo assignTo = null;
     if (definition.attribute != null) {
       assignTo = definition.isAttributeLocalVar
           ? new AsmAssignToLocalVar(definition.attribute.name, isWithinRepetition)
           : new AsmAssignToAttribute(definition.attribute.name, isWithinRepetition);
+    }
+
+    if (definition.groupAlternatives != null) {
+      var alternatives = visitAsmAlternatives(definition.groupAlternatives, false, false);
+      return new AsmGroup(assignTo, alternatives, requireNonNull(definition.asmType));
     }
 
     if (definition.localVar != null) {

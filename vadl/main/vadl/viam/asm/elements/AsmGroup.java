@@ -1,5 +1,6 @@
 package vadl.viam.asm.elements;
 
+import javax.annotation.Nullable;
 import vadl.types.asmTypes.AsmType;
 
 /**
@@ -9,6 +10,7 @@ import vadl.types.asmTypes.AsmType;
  * both represented by the {@code Alternatives} class.
  * </p>
  */
-public record AsmGroup(AsmAlternatives alternatives,
+public record AsmGroup(@Nullable AsmAssignTo assignTo,
+                       AsmAlternatives alternatives,
                        AsmType asmType) implements AsmGrammarElement {
 }

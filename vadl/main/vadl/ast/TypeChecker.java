@@ -688,6 +688,12 @@ public class TypeChecker
 
   @Override
   public Void visit(AsmGrammarRuleDefinition definition) {
+    if (definition.isBuiltinRule) {
+      definition.asmType =
+          getAsmTypeFromAsmTypeDefinition(Objects.requireNonNull(definition.asmTypeDefinition));
+      return null;
+    }
+
     if (!asmRuleInvocationChain.add(definition.identifier().name)) {
       var cycle =
           String.join(" -> ", asmRuleInvocationChain) + " -> " + definition.identifier().name;
@@ -1013,7 +1019,9 @@ public class TypeChecker
   public Void visit(AsmGrammarLiteralDefinition definition) {
 
     if (definition.stringLiteral != null) {
-      visitAsmStringLiteralUsage(definition);
+      if (definition.asmType == null) {
+        visitAsmStringLiteralUsage(definition);
+      }
       return null;
     }
 

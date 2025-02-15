@@ -44,6 +44,9 @@ public class GroupAsmType implements AsmType {
     }
 
     if (to == InstructionAsmType.instance()) {
+      if (subtypes.isEmpty()) {
+        return false;
+      }
       return subtypes.stream().allMatch(subtype -> subtype == OperandAsmType.instance());
     }
 
@@ -53,10 +56,16 @@ public class GroupAsmType implements AsmType {
     }
 
     if (to == StatementsAsmType.instance()) {
+      if (subtypes.isEmpty()) {
+        return false;
+      }
       return subtypes.stream().allMatch(subtype -> subtype == InstructionAsmType.instance());
     }
 
     if (to == OperandsAsmType.instance()) {
+      if (subtypes.isEmpty()) {
+        return false;
+      }
       return subtypes.stream().allMatch(subtype -> subtype == OperandAsmType.instance());
     }
 
