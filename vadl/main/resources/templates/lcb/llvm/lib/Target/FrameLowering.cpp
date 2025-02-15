@@ -20,9 +20,10 @@ using namespace llvm;
 void [(${namespace})]FrameLowering::anchor() {}
 
 [(${namespace})]FrameLowering::[(${namespace})]FrameLowering(const [(${namespace})]Subtarget &STI)
-    : TargetFrameLowering(StackGrowsDown, Align(16) /*=StackAlignment*/
-                          ,
-                          0 /*=LocalAreaOffset*/
+    : TargetFrameLowering(StackGrowsDown,
+      Align(16) /*=StackAlignment*/,
+      0 /*=LocalAreaOffset*/,
+      Align(16) /*=TransientStackAlignment*/
                           ),
       STI(STI)
 {
