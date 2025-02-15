@@ -57,6 +57,7 @@ import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
 import vadl.viam.Constant;
 import vadl.viam.Constant.BitSlice.Part;
+import vadl.vdt.utils.NumberUtils;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
@@ -605,26 +606,11 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
    */
   private DataType getInsnWordType() {
     var maxWidth = stats.getMaxInstructionWidth();
-    int bitWidth = fittingPowerOfTwo(maxWidth);
-
-    var resultType = BitsType.bits(bitWidth).fittingCppType();
-
-    if (resultType == null) {
-      // For every instruction format > 128 bit, throw a diagnostic. In the future the ISS decoder
-      // may be adapted to handle arbitrary instruction widths.
-      final List<Diagnostic> diagnostics = getFormats(getInstructions(tree))
-          .stream()
-          .filter(f -> f.type().bitWidth() > 128)
-          .map(f ->
-              error("Instructions of more than 128 bit are currently not supported by the "
-                  + "decoder generator.", f)
-                  .help("Reduce the width of the instruction format."))
-          .map(DiagnosticBuilder::build)
-          .toList();
-      throw new DiagnosticList(diagnostics);
+    var insnType = BitsType.bits(NumberUtils.fittingPowerOfTwo(maxWidth)).fittingCppType();
+    if (insnType == null) {
+      throw new IllegalArgumentException(
+          "Instruction word too wide: " + maxWidth + " bits");
     }
-
-    return resultType;
+    return insnType;
   }
-
 }
