@@ -1,7 +1,6 @@
 package vadl.vdt.target.hw;
 
 import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
-import static vadl.vdt.utils.NumberUtils.fittingPowerOfTwo;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -23,7 +22,7 @@ import vadl.vdt.utils.codegen.StringBuilderAppendable;
  * Generate a self-contained Chisel module for decoding instructions to control signals used for
  * hardware generation.
  */
-public class HardwareDecisionTreeCodeGenerator implements Visitor<Void> {
+public class HardwareIrregularDecoderGenerator implements Visitor<Void> {
 
   private final CodeGeneratorAppendable appendable = new StringBuilderAppendable();
   private final Map<String, Integer> instructions = new HashMap<>();
@@ -73,8 +72,8 @@ public class HardwareDecisionTreeCodeGenerator implements Visitor<Void> {
         // Make sure idx 0 is not used, as it will indicate an invalid instruction
         .forEach(i -> instructions.put(insns.get(i), i + 1));
 
-    int signalsWidth =
-        BigInteger.valueOf(fittingPowerOfTwo(stats.getNumberOfLeafNodes())).bitLength();
+    // + 1 for the default value '0'
+    int signalsWidth = BigInteger.valueOf(stats.getNumberOfLeafNodes() + 1).bitLength();
     appendable
         .append("val output = IO(Output(UInt(").append(signalsWidth).append(".W)))")
         .newLine().newLine();
