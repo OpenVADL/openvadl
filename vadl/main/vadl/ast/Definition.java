@@ -4689,9 +4689,7 @@ class AsmGrammarElementDefinition extends Definition {
     }
     if (attribute != null) {
       attribute.prettyPrint(indent, builder);
-      if (asmLiteral != null) {
-        builder.append(" ").append(symbol()).append(" ");
-      }
+      builder.append(" ").append(symbol()).append(" ");
     }
     if (asmLiteral != null) {
       asmLiteral.prettyPrint(0, builder);

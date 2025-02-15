@@ -808,9 +808,6 @@ public class TypeChecker
   private void appendToAsmGroupType(AsmGrammarElementDefinition element,
                                     Map<String, AsmType> groupSubtypeMap,
                                     Map<String, AsmGrammarElementDefinition> assignedAttributes) {
-    // the following two if statements are mutually exclusive:
-    // grammar syntax does not allow for an element to be assigned to an attribute
-    // and be of GroupAsmType at the same time
 
     // consider elements which are assigned to an attribute
     if (element.attribute != null && !element.isAttributeLocalVar
@@ -824,21 +821,20 @@ public class TypeChecker
       assignedAttributes.put(element.attribute.name, element);
     }
 
-    // flatten nested GroupAsmTypes from group and option blocks
-    // ignore the type of repetition blocks
-    if (element.optionAlternatives != null || element.groupAlternatives != null) {
+    // flatten nested GroupAsmTypes from option blocks
+    // repetition blocks do not have a type,
+    // because their attributes always reference the enclosing block
+    if (element.optionAlternatives != null) {
       if (element.asmType instanceof GroupAsmType elementAsmType) {
         elementAsmType.getSubtypeMap().keySet().forEach(
             key -> throwErrorOnNestedMultipleAttributeAssignment(element, groupSubtypeMap, key)
         );
         groupSubtypeMap.putAll(elementAsmType.getSubtypeMap());
       } else {
-
-        var alternatives = element.optionAlternatives != null ? element.optionAlternatives :
-            element.groupAlternatives;
-        Objects.requireNonNull(alternatives);
-
-        var attribute = alternatives.alternatives.get(0).stream().filter(
+        // this case appears for option blocks with one attributed element like: [attr = some @type]
+        // type of option block is lifted from @GroupAsmType(@type) to @type
+        // so to flatten we need to get the name of this one attribute
+        var attribute = element.optionAlternatives.alternatives.get(0).stream().filter(
             e -> e.localVar == null && e.semanticPredicate == null
         ).findFirst().map(e -> e.attribute);
 

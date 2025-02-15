@@ -199,7 +199,7 @@ public class AsmGrammarTests {
             A@instruction:
               (
                 "Literal" Expression @expression
-                (Register Register) @operand
+                op = (Register Register) @operand
               )
             ;
           }

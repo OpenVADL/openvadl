@@ -379,8 +379,8 @@ public class AsmLL1CheckerTest {
   void conflictInExpandedInstructionRule() {
     var prog = """
           grammar = {
-            A : (Register @operand) @instruction;
-            B : (Register @operand) @instruction;
+            A : inst = (Register @operand) @instruction;
+            B : inst = (Register @operand) @instruction;
           }
         """;
     var ast = Assertions.assertDoesNotThrow(
@@ -393,7 +393,7 @@ public class AsmLL1CheckerTest {
   void conflictInExpandedInstructionRuleResolvedByRewriting() {
     var prog = """
           grammar = {
-            Inst : (
+            Inst : inst = (
               ?(laideq(0,"r1")) A
               | B
             ) @instruction ;

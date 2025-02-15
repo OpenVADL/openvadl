@@ -66,7 +66,7 @@ public class TypecheckerAsmTest {
     var prog = """
           grammar = {
             AddInstruction :
-              (
+              inst = (
               mnemonic = 'ADD' @operand
               rd   = Register  @operand
               rs1  = Register  @operand
@@ -91,7 +91,7 @@ public class TypecheckerAsmTest {
     var prog = """
           grammar = {
             JalrInstruction : var tmp = null @operand
-              (
+              inst = (
               mnemonic = 'JALR' @operand
               tmp = Register @operand
               [ COMMA rs1 = tmp
@@ -116,7 +116,7 @@ public class TypecheckerAsmTest {
           grammar = {
             A @instruction:
               Integer @operand
-              (mod=Identifier@modifier val=Expression) @operand
+              op2 = (mod=Identifier@modifier val=Expression) @operand
             ;
           }
         """;
@@ -134,7 +134,7 @@ public class TypecheckerAsmTest {
           grammar = {
             A @instruction:
               Integer @operand
-              (Register | Integer @register) @operand
+              op2 = (Register | Integer @register) @operand
             ;
           }
         """;

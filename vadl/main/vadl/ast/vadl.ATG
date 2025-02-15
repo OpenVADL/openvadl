@@ -1178,12 +1178,13 @@ PRODUCTIONS
       assemblyLocalVarDeclaration<out localVar>
     | assemblyIdentifier<out id>
         [ ( SYM_PLUS_EQ  (. isPlusEq = true; .)  | SYM_EQ)
-          assemblyGrammarLiteral<out asmLiteral>
+            ( assemblyGrammarLiteral<out asmLiteral>
+             | assemblyGrammarGroup<out groupAlternatives> )
           | SYM_LT assemblyParameterList<out params>  SYM_GT
-        ] [assemblyGrammarTypeDefinition<out type>]                  (. if(asmLiteral == null){ asmLiteral = new AsmGrammarLiteralDefinition(id, params, null, type, start.join(loc()));
-                                                                        id = null; type = null; } .)
+        ] [assemblyGrammarTypeDefinition<out type>]                  (. if(asmLiteral == null && groupAlternatives == null) {
+                                                                          asmLiteral = new AsmGrammarLiteralDefinition(id, params, null, type, start.join(loc()));
+                                                                          id = null; type = null; } .)
     | assemblyGrammarGroup<out groupAlternatives>
-      [assemblyGrammarTypeDefinition<out type>]
     | assemblyGrammarOptional<out optionAlternatives>
     | assemblyGrammarRepetition<out repetitionAlternatives>
     | SYM_QUESTION SYM_PAREN_OPEN

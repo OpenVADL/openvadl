@@ -230,7 +230,8 @@ public class AsmGrammarDefaultRules {
     );
     negCallElement.asmType = ConstantAsmType.instance();
 
-    var minusNegCallGroupElement = new AsmGrammarElementDefinition(null, null, false, null,
+    var minusNegCallGroupElement = new AsmGrammarElementDefinition(null,
+        new Identifier("dec", SourceLocation.INVALID_SOURCE_LOCATION), false, null,
         new AsmGrammarAlternativesDefinition(
             List.of(List.of(ruleReference("MINUS", StringAsmType.instance()), negCallElement)),
             SourceLocation.INVALID_SOURCE_LOCATION),
