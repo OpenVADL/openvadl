@@ -29,7 +29,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
     Assertions.assertLinesMatch("""
         #ifndef LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
         #define LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
-               
+                
         #include "llvm/Support/ErrorHandling.h"
         #include "vadl-builtins.h"
         #include <cstdint>
@@ -37,27 +37,27 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         #include <vector>
         #include <stdio.h>
         #include <bitset>
-               
+                
         // "__extension__" suppresses warning
         __extension__ typedef          __int128 int128_t;
         __extension__ typedef unsigned __int128 uint128_t;
-               
+                
         template<int start, int end, std::size_t N>
         std::bitset<N> project_range(std::bitset<N> bits)
         {
             std::bitset<N> result;
             size_t result_index = 0; // Index for the new bitset
-               
+                
             // Extract bits from the range [start, end]
             for (size_t i = start; i <= end; ++i) {
               result[result_index] = bits[i];
             result_index++;
             }
-               
+                
             return result;
         }
-               
-               
+                
+                
         static int64_t RV64IM_Btype_immS_decode(uint16_t param) {
            return VADL_lsl(VADL_sextract(param, 12), 64, ((uint64_t) 0x0000000000000001 ), 64);
         }
@@ -79,9 +79,9 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static uint8_t RV64IM_Rtype_shamt_decode(uint8_t param) {
            return param;
         }
-               
-               
-               
+                
+                
+                
         static uint16_t RV64IM_Btype_immS_encoding(int64_t immS) {
            return (project_range<1, 12>(std::bitset<64>(immS)) << 0).to_ulong();
         }
@@ -103,10 +103,10 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static uint8_t RV64IM_Rtype_shamt_encoding(uint8_t shamt) {
            return (project_range<0, 4>(std::bitset<5>(shamt)) << 0).to_ulong();
         }
-               
-               
-               
-               
+                
+                
+                
+                
         static bool RV64IM_Btype_immS_predicate(int64_t immS_decode) {
            return ((bool) 0x1 );
         }
@@ -128,8 +128,8 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static bool RV64IM_Utype_immUp_predicate(int64_t immUp_decode) {
            return ((bool) 0x1 );
         }
-               
-               
+                
+                
         namespace
         {
             class ImmediateUtils
@@ -148,7 +148,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                               , IK_RV64IM_Utype_immUp_decode
                              \s
                             };
-               
+                
                 static uint64_t applyDecoding(const uint64_t value, rv64imImmediateKind kind)
                 {
                     switch (kind)
@@ -176,10 +176,10 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                     }
                 }
             };
-               
+                
         } // end of anonymous namespace
-               
-        #endif // LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H 
+                
+        #endif // LLVM_LIB_TARGET_rv64im_UTILS_IMMEDIATEUTILS_H
         """.trim().lines(), output);
   }
 }
