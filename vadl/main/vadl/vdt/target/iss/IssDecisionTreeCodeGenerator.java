@@ -39,6 +39,7 @@ import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
+import vadl.vdt.utils.NumberUtils;
 import vadl.viam.Format;
 
 /**
@@ -391,29 +392,11 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
    */
   private DataType getInsnWordType(Node tree) {
     var maxWidth = statistics(tree).getMaxInstructionWidth();
-    var insnType = BitsType.bits(fittingPowerOfTwo(maxWidth)).fittingCppType();
+    var insnType = BitsType.bits(NumberUtils.fittingPowerOfTwo(maxWidth)).fittingCppType();
     if (insnType == null) {
       throw new IllegalArgumentException(
           "Instruction word too wide: " + maxWidth + " bits");
     }
     return insnType;
-  }
-
-  /**
-   * Find the smallest power of two that is greater or equal to n.
-   *
-   * @param n the input number
-   * @return the smallest fitting power of two
-   */
-  private int fittingPowerOfTwo(int n) {
-    final BigInteger bigN = BigInteger.valueOf(n);
-    if (bigN.compareTo(BigInteger.ZERO) <= 0) {
-      throw new IllegalArgumentException("Input must be a positive integer");
-    }
-    if (bigN.getLowestSetBit() == bigN.bitLength() - 1) {
-      // n is already a power of two
-      return n;
-    }
-    return BigInteger.ONE.shiftLeft(bigN.bitLength()).intValue();
   }
 }
