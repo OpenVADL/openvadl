@@ -9,4 +9,6 @@ instruction set architecture RV64I extending RV3264I = {}
 
 application binary interface ABI for RV64I = {}
 
-micro processor CPU implements RV64I with ABI = {}
+micro processor CPU implements RV64I with ABI = {
+  start = 0x80000000
+}
