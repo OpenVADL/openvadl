@@ -981,12 +981,19 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterFileDefinition definition) {
-    // FIXME: Add proper constraints
+    var addrType = (DataType) requireNonNull(definition.type).argTypes().get(0);
+    var resultType = (DataType) requireNonNull(definition.type).resultType();
+
+    // FIXME: Add proper constraints. This is currently only temporarily hardcoded to
+    //    fix the riscv iss simulation.
+    var zeroConstraint = new RegisterFile.Constraint(Constant.Value.of(0, addrType),
+        Constant.Value.of(0, resultType));
+
     var regFile = new RegisterFile(
         generateIdentifier(definition.viamId, definition.identifier()),
-        (DataType) requireNonNull(definition.type).argTypes().get(0),
-        (DataType) requireNonNull(definition.type).resultType(),
-        new RegisterFile.Constraint[0]
+        addrType,
+        resultType,
+        new RegisterFile.Constraint[] {zeroConstraint}
     );
     return Optional.of(regFile);
   }
