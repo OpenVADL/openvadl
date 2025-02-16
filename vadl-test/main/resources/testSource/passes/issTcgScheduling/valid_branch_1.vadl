@@ -24,3 +24,8 @@ instruction set architecture ValidBranch = {
   , ENC: Bits<8>
   }
 }
+
+application binary interface TestAbi for ValidBranch = {}
+
+micro processor Test implements ValidBranch with TestAbi = {
+}

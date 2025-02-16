@@ -9,7 +9,7 @@ import vadl.configuration.IssConfiguration;
  * readable, especially when using the {@link #issDefault(String, IssConfiguration)}
  * constructor.
  *
- * @see vadl.pass.PassOrder#iss
+ * @see vadl.pass.PassOrders#iss(IssConfiguration)
  */
 public class IssDefaultRenderingPass extends IssTemplateRenderingPass {
 

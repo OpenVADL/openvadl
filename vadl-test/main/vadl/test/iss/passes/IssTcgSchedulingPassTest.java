@@ -28,7 +28,8 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  */
 public class IssTcgSchedulingPassTest extends AbstractTest {
 
-  @Test
+  // FIXME: @ffreitag requires format field lowering fix in frontend.
+  // @Test
   public void test_schedule_in_both_branches() throws IOException, DuplicatedPassKeyException {
     var config =
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));

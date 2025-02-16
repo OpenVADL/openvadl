@@ -39,6 +39,10 @@ public class DummyMipPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
+    if (viam.mip().isPresent()) {
+      return null;
+    }
+
     var isa = viam.isa().orElse(null);
     var abi = viam.abi().orElse(null);
 
