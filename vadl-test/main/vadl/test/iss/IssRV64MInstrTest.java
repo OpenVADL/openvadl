@@ -28,127 +28,106 @@ public class IssRV64MInstrTest extends IssInstrTest {
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> mul() throws IOException {
     return testBinaryRegRegInstruction("mul", "MUL");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> mulh() throws IOException {
     return testBinaryRegRegInstruction("mulh", "MULH");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> mulhu() throws IOException {
     return testBinaryRegRegInstruction("mulhu", "MULHU");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> mulhsu() throws IOException {
     return testBinaryRegRegInstruction("mulhsu", "MULHSU");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> div() throws IOException {
     return testBinaryRegRegInstruction("div", "DIV");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> divByZero() throws IOException {
     return testDivRemByCustom(10, "div", BigInteger.ZERO, "DIV_BY_ZERO");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> divByMinusOne() throws IOException {
     return testDivRemByCustom(10, "div", BigInteger.ONE.negate(), "DIV_BY_MINUS_ONE");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> divu() throws IOException {
     return testBinaryRegRegInstruction("divu", "DIVU");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> divuByZero() throws IOException {
     return testDivRemByCustom(10, "divu", BigInteger.ZERO, "DIVU_BY_ZERO");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> divuByMinusOne() throws IOException {
     return testDivRemByCustom(10, "divu", BigInteger.ONE.negate(), "DIVU_BY_MINUS_ONE");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> rem() throws IOException {
     return testBinaryRegRegInstruction("rem", "REM");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> remByZero() throws IOException {
     return testDivRemByCustom(10, "rem", BigInteger.ZERO, "REM_BY_ZERO");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> remByMinusOne() throws IOException {
     return testDivRemByCustom(10, "rem", BigInteger.ONE.negate(), "REM_BY_MINUS_ONE");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> remu() throws IOException {
     return testBinaryRegRegInstruction("remu", "REMU");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> remuByZero() throws IOException {
     return testDivRemByCustom(10, "remu", BigInteger.ZERO, "REMU_BY_ZERO");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> remuByMinusOne() throws IOException {
     return testDivRemByCustom(10, "remu", BigInteger.ONE.negate(), "REMU_BY_MINUS_ONE");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> mulw() throws IOException {
     return testBinaryRegRegInstructionW("mulw", "MULW");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> divw() throws IOException {
     return testBinaryRegRegInstructionW("divw", "DIVW");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> divuw() throws IOException {
     return testBinaryRegRegInstructionW("divuw", "DIVUW");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> remw() throws IOException {
     return testBinaryRegRegInstructionW("remw", "REMW");
   }
 
   @TestFactory
-  @EnabledIfEnvironmentVariable(named = "test_iss_enabled", matches = "true")
   Stream<DynamicTest> remuw() throws IOException {
     return testBinaryRegRegInstructionW("remuw", "REMUW");
   }

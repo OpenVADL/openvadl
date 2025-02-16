@@ -10,8 +10,7 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.VadlFileUtils;
 
 public class IssRV64IMEmbenchTest extends QemuIssTest {
-
-  @EnabledIfEnvironmentVariable(named = "test_embench_enabled", matches = "true")
+  
   @Test
   void rv64imEmbenchTest() throws IOException, DuplicatedPassKeyException {
     var image = generateIssSimulator("sys/risc-v/rv64im.vadl");
