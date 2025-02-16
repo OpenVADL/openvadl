@@ -39,6 +39,7 @@ import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
 import vadl.viam.asm.elements.AsmAlternative;
@@ -840,7 +841,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           .orElseThrow();
     }
 
-    return Optional.of(new MicroProcessor(identifier, isa, null, start, null, null));
+    var mip = new MicroProcessor(identifier, isa, null, start, null, null);
+
+    // FIXME: Remove this, once annotation framework is supported
+    mip.addAnnotation(new EnableHtifAnno());
+
+    return Optional.of(mip);
   }
 
   private InstructionSetDefinition mergeIsa(List<InstructionSetDefinition> definitions) {
