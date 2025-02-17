@@ -22,16 +22,18 @@ using namespace llvm;
 namespace llvm {
 
   RuleParsingResult<NoData> [(${namespace})]AsmRecursiveDescentParser::ParseStatement() {
-    return Statement();
+    // return Statement();
+    return RuleParsingResult<NoData>(ParsedValue<NoData>(NoData {}));
   }
 
   RuleParsingResult<uint64_t> [(${namespace})]AsmRecursiveDescentParser::ParseRegister() {
-    return Register();
+    // return Register();
+    return RuleParsingResult<uint64_t>(ParsedValue<uint64_t>(0));
   }
 
   RuleParsingResult<StringRef> [(${namespace})]AsmRecursiveDescentParser::Literal(std::string toParse) {
     auto tok = Lexer.getTok();
-    if(!tok.getString().«compareFunction»(toParse))
+    if(!tok.getString().[(${compareFunction})](toParse))
     {
       return RuleParsingResult<StringRef>(tok.getLoc(), "Expected '" + toParse + "', but got '" + tok.getString() + "'");
     } else {

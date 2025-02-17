@@ -117,7 +117,6 @@ public class AssemblyParserCodeGenerator {
   @Handler
   void handle(CAsmContext ctx, AsmGrammarRule rule) {
     ctx.gen(rule);
-    ctx.ln();
   }
 
   @Handler
@@ -136,6 +135,7 @@ public class AssemblyParserCodeGenerator {
     ctx.spaceOut();
     ctx.ln("}");
     ctx.spaceOut();
+    ctx.ln();
   }
 
   @Handler
@@ -160,6 +160,7 @@ public class AssemblyParserCodeGenerator {
     ctx.spaceOut();
     ctx.ln("}");
     ctx.spaceOut();
+    ctx.ln();
   }
 
   @Handler
@@ -192,6 +193,7 @@ public class AssemblyParserCodeGenerator {
     ctx.spaceOut();
     ctx.ln("}");
     ctx.spaceOut();
+    ctx.ln();
   }
 
   @Handler
@@ -264,12 +266,12 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmAssignToAttribute element) {
-    ctx.wr("%s", element.getAssignToName());
+    // Handled in writeAssignToIfNotNull
   }
 
   @Handler
   void handle(CAsmContext ctx, AsmAssignToLocalVar element) {
-    ctx.wr("%s", element.getAssignToName());
+    // Handled in writeAssignToIfNotNull
   }
 
   @Handler
@@ -300,31 +302,39 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmGroup element) {
+    ctx.ln("ParsedValue<%s> %s;", element.asmType().toCppTypeString(namespace), varName(element));
+    ctx.ln("{");
+    ctx.spacedIn();
+
     ctx.gen(element.alternatives());
 
     var resultVar = writeCastIfNecessary(ctx, element.alternatives().asmType(), element.asmType(),
         varName(element.alternatives()), false);
     writeAssignToIfNotNull(ctx, element.assignTo(), resultVar);
     writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
+    ctx.ln("%s = %s;", varName(element), resultVar);
+
+    ctx.spaceOut();
+    ctx.ln("}");
+    ctx.ln();
   }
 
   @Handler
   void handle(CAsmContext ctx, AsmLocalVarDefinition element) {
+    ctx.ln("ParsedValue<%s> %s;", element.asmType().toCppTypeString(namespace),
+        element.localVarName());
+
     if (element.asmLiteral() != null) {
       ctx.gen(element.asmLiteral());
-      // TODO: cast if necessary
-      ctx.ln("ParsedValue<%s> %s = %s;", element.asmType().toCppTypeString(namespace),
-          element.localVarName(), varName(element.asmLiteral()));
-    } else {
-      ctx.ln("ParsedValue<NoData> %s;\n", element.localVarName());
     }
   }
 
   @Handler
   void handle(CAsmContext ctx, AsmLocalVarUse element) {
-    // FIXME: is there a cast possible here?
-    writeAssignToIfNotNull(ctx, element.assignToElement(), element.invokedLocalVar());
-    // TODO: writeToElementVar(element.asmType(), ); ?
+    var resultVar = writeCastIfNecessary(ctx, element.invokedLocalVarType(), element.asmType(),
+        element.invokedLocalVar(), false);
+    writeAssignToIfNotNull(ctx, element.assignToElement(), resultVar);
+    writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
   }
 
   @Handler
@@ -429,11 +439,10 @@ public class AssemblyParserCodeGenerator {
   private void writeAssignToIfNotNull(CAsmContext ctx, @Nullable AsmAssignTo assignTo,
                                       String tempVar) {
     if (assignTo != null) {
-      ctx.gen(assignTo);
-      if (assignTo.getIsWithinRepetition()) {
-        ctx.ln(".Value.push_back(%s.Value);", tempVar);
+      if (assignTo.isPlusEqualsAssignment()) {
+        ctx.ln("%s.Value.push_back(%s.Value);", assignTo.getAssignToName(), tempVar);
       } else {
-        ctx.ln(" = %s;", tempVar);
+        ctx.ln("%s = %s;", assignTo.getAssignToName(), tempVar);
       }
     }
   }
@@ -535,8 +544,8 @@ public class AssemblyParserCodeGenerator {
       }
 
       // (@instruction, @instruction, ...) to @statements
-      if (to == StatementsAsmType.instance() &&
-          subTypes.stream().allMatch(subtype -> subtype == InstructionAsmType.instance())) {
+      if (to == StatementsAsmType.instance()
+          && subTypes.stream().allMatch(subtype -> subtype == InstructionAsmType.instance())) {
         ctx.wr("ParsedValue<std::vector<NoData>> %s (std::vector<NoData>{", tempVar);
         String finalCurValueVar = curValueVar;
         keys.forEach(key -> ctx.wr("%s.Value.%s.Value", finalCurValueVar, key));
@@ -545,8 +554,8 @@ public class AssemblyParserCodeGenerator {
       }
 
       // (@operand, @operand, ...) to @operands
-      if (to == OperandAsmType.instance() &&
-          subTypes.stream().allMatch(val -> val == OperandAsmType.instance())) {
+      if (to == OperandAsmType.instance()
+          && subTypes.stream().allMatch(val -> val == OperandAsmType.instance())) {
         ctx.wr("ParsedValue<std::vector<%sParsedOperand>> %s (std::vector<%sParsedOperand>{",
             namespace, tempVar, namespace);
         String finalCurValueVar = curValueVar;
@@ -599,9 +608,9 @@ public class AssemblyParserCodeGenerator {
         ctx.ln("unsigned %s;", regNoVar);
         ctx.ln("if(!AsmUtils::MatchRegNo(%s.Value, %s)) {", curValueVar, regNoVar);
         ctx.spacedIn();
-        ctx.ln("return RuleParsingResult<%s>(%s.S,\"Could not convert data into register because" +
-                " '\" %s.Value \"' is not a valid register\");", currentRuleTypeString, curValueVar,
-            curValueVar);
+        ctx.ln("return RuleParsingResult<%s>(%s.S,\"Could not convert data into register"
+                + "because '\" %s.Value \"' is not a valid register\");",
+            currentRuleTypeString, curValueVar, curValueVar);
         ctx.spaceOut();
         ctx.ln("}");
         ctx.ln("%s(%s, %s);", destination, regNoVar, loc);
@@ -614,9 +623,9 @@ public class AssemblyParserCodeGenerator {
         ctx.ln("%sMCExpr::VariantKind %s;", namespace, modifier);
         ctx.ln("if(!AsmUtils::MatchCustomModifier(%s.Value, %s)) {", curValueVar, modifier);
         ctx.spacedIn();
-        ctx.ln("return RuleParsingResult<%s>(%s.S,\"Could not convert data into modifier because" +
-                " '\" %s.Value \"' is not a valid modifier\");", currentRuleTypeString, curValueVar,
-            curValueVar);
+        ctx.ln("return RuleParsingResult<%s>(%s.S,\"Could not convert data into modifier because"
+                + " '\" %s.Value \"' is not a valid modifier\");",
+            currentRuleTypeString, curValueVar, curValueVar);
         ctx.spaceOut();
         ctx.ln("}");
         ctx.ln("%s(%s, %s);", destination, modifier, loc);
@@ -627,8 +636,8 @@ public class AssemblyParserCodeGenerator {
     if (from == RegisterAsmType.instance()) {
       // to @operand
       if (to == OperandAsmType.instance()) {
-        ctx.ln(
-            "%s(%sParsedOperand::CreateReg(%s.Value, %sParsedOperand::RegisterKind::rk_IntReg, %s));",
+        ctx.ln("%s(%sParsedOperand::CreateReg("
+                + "%s.Value, %sParsedOperand::RegisterKind::rk_IntReg, %s));",
             destination, namespace, curValueVar, namespace, loc);
         return tempVar;
       }
@@ -660,8 +669,8 @@ public class AssemblyParserCodeGenerator {
     if (from == OperandAsmType.instance()) {
       // to @operands
       if (to == OperandAsmType.instance()) {
-        ctx.ln("ParsedValue<std::vector<%sParsedOperand>> %s" +
-                "(std::vector<%sParsedOperand>{ %s.Value });",
+        ctx.ln("ParsedValue<std::vector<%sParsedOperand>> %s"
+                + "(std::vector<%sParsedOperand>{ %s.Value });",
             namespace, tempVar, namespace, curValueVar);
         return tempVar;
       }
@@ -670,8 +679,8 @@ public class AssemblyParserCodeGenerator {
     if (from == InstructionAsmType.instance()) {
       // to @statements
       if (to == StatementsAsmType.instance()) {
-        ctx.ln("ParsedValue<std::vector<NoData>> %s " +
-            "(std::vector<NoData>{ %s.Value });", tempVar, curValueVar);
+        ctx.ln("ParsedValue<std::vector<NoData>> %s "
+            + "(std::vector<NoData>{ %s.Value });", tempVar, curValueVar);
         return tempVar;
       }
     }

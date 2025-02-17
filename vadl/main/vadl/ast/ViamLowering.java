@@ -450,8 +450,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     requireNonNull(definition.id);
     var invocationSymbolOrigin = definition.symbolTable().resolveNode(definition.id.name);
 
-    if (invocationSymbolOrigin instanceof AsmGrammarLocalVarDefinition) {
-      return new AsmLocalVarUse(assignToElement, definition.id.name, definition.asmType);
+    if (invocationSymbolOrigin instanceof AsmGrammarLocalVarDefinition localVarDefinition) {
+      requireNonNull(localVarDefinition.asmType);
+      return new AsmLocalVarUse(assignToElement, definition.id.name,
+          localVarDefinition.asmType, definition.asmType);
     }
 
     if (invocationSymbolOrigin instanceof FunctionDefinition functionDefinition) {

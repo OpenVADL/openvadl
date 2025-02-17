@@ -7,4 +7,9 @@ public class AsmAssignToLocalVar extends AsmAssignTo {
   public AsmAssignToLocalVar(String assignToName, boolean isWithinRepetition) {
     super(assignToName, isWithinRepetition);
   }
+
+  @Override
+  public boolean isPlusEqualsAssignment() {
+    return false;
+  }
 }

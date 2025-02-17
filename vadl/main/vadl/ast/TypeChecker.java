@@ -24,7 +24,6 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
-import vadl.types.asmTypes.VoidAsmType;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
@@ -919,7 +918,7 @@ public class TypeChecker
     }
 
     // actions that depend on the resolved asm type of this element
-    updateLocalVarIfNecessary(definition);
+    validateLocalVarAssignment(definition);
     validateAttributeAsmType(definition);
 
     return null;
@@ -962,7 +961,7 @@ public class TypeChecker
     }
   }
 
-  private void updateLocalVarIfNecessary(AsmGrammarElementDefinition definition) {
+  private void validateLocalVarAssignment(AsmGrammarElementDefinition definition) {
     if (definition.attribute != null && definition.isAttributeLocalVar) {
       var localVarDefinition = (AsmGrammarLocalVarDefinition) definition.symbolTable()
           .resolveNode(definition.attribute.name);
@@ -970,7 +969,19 @@ public class TypeChecker
         throw buildIllegalStateException(definition,
             "Assigning to unknown local variable %s.".formatted(definition.attribute.name));
       }
-      localVarDefinition.asmType = definition.asmType;
+
+      Objects.requireNonNull(definition.asmType);
+      Objects.requireNonNull(localVarDefinition.asmType);
+      if (localVarDefinition.asmType != definition.asmType) {
+        throw Diagnostic.error("Type Mismatch", definition)
+            .locationDescription(localVarDefinition, "Local variable %s is "
+                    + "defined with AsmType %s.",
+                definition.attribute.name, localVarDefinition.asmType)
+            .locationDescription(definition, "Local variable %s is "
+                    + "updated with another AsmType %s.",
+                definition.attribute.name, definition.asmType)
+            .build();
+      }
     }
   }
 
@@ -1161,7 +1172,14 @@ public class TypeChecker
   @Override
   public Void visit(AsmGrammarLocalVarDefinition definition) {
     if (definition.asmLiteral.id != null && definition.asmLiteral.id.name.equals("null")) {
-      definition.asmType = VoidAsmType.instance();
+      if (definition.asmLiteral.asmTypeDefinition != null) {
+        definition.asmType =
+            getAsmTypeFromAsmTypeDefinition(definition.asmLiteral.asmTypeDefinition);
+      } else {
+        throw Diagnostic.error("Local variable without AsmType", definition)
+            .note("Local variables declarations with value 'null' must have an AsmType.")
+            .build();
+      }
       return null;
     }
 
