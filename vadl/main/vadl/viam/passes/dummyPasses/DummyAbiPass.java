@@ -57,6 +57,7 @@ public class DummyAbiPass extends Pass {
         new Abi.RegisterRef(registerFile, 2, Abi.Alignment.HALF_WORD),
         new Abi.RegisterRef(registerFile, 8, Abi.Alignment.WORD),
         new Abi.RegisterRef(registerFile, 3, Abi.Alignment.WORD),
+        new Abi.RegisterRef(registerFile, 4, Abi.Alignment.WORD),
         aliases,
         callerSaved,
         calleeSaved,
@@ -171,7 +172,6 @@ public class DummyAbiPass extends Pass {
 
   private List<Abi.RegisterRef> getCalleeSaved(RegisterFile registerFile) {
     return List.of(
-        //new Abi.RegisterRef(registerFile, 2, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 1, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 3, Abi.Alignment.NO_ALIGNMENT),
         new Abi.RegisterRef(registerFile, 4, Abi.Alignment.NO_ALIGNMENT),
