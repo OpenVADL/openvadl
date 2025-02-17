@@ -20,22 +20,18 @@ rm -r ../src/statemate
 #rm -r ../src/aha-mont64
 #rm -r ../src/crc32
 #rm -r ../src/edn
-#rm -r ../src/sglib-combined
-
 #rm -r ../src/huffbench
-#rm -r ../src/matmult-int
 #rm -r ../src/md5sum
-
+#rm -r ../src/matmult-int
 rm -r ../src/minver
 rm -r ../src/nbody
-
 #rm -r ../src/nettle-aes
-
 #rm -r ../src/nettle-sha256
-rm -r ../src/nsichneu
-#rm -r ../src/picojpeg
+#rm -r ../src/nsichneu
+rm -r ../src/picojpeg
 #rm -r ../src/primecount
 #rm -r ../src/qrduino
+#rm -r ../src/sglib-combined
 rm -r ../src/slre
 rm -r ../src/st
 #rm -r ../src/tarfind
