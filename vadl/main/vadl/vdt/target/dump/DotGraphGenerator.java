@@ -22,15 +22,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.NotImplementedException;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.utils.Pair;
+import vadl.vdt.impl.katsumi.tree.MultiDecisionNode;
+import vadl.vdt.impl.katsumi.tree.SingleDecisionNode;
 import vadl.vdt.impl.theiling.InnerNodeImpl;
-import vadl.vdt.impl.theiling.LeafNodeImpl;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
+import vadl.vdt.model.impl.LeafNodeImpl;
 
 /**
  * Generates a simple dot graph from a VDT.
@@ -142,5 +145,21 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
     var name = node.instruction().source().simpleName();
     var leafNode = "    %d [label=\"%s\"];\n".formatted(id, name);
     return Pair.of(id, List.of(leafNode));
+  }
+
+  /**
+   * Handler for {@link MultiDecisionNode}.
+   *
+   * @param node the inner node
+   * @return the text representations
+   */
+  @Handler
+  public Pair<Integer, List<CharSequence>> handle(MultiDecisionNode node) {
+    throw new NotImplementedException("Not implemented");
+  }
+
+  @Handler
+  public Pair<Integer, List<CharSequence>> handle(SingleDecisionNode node) {
+    throw new NotImplementedException("Not implemented");
   }
 }

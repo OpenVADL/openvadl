@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.impl.theiling;
+package vadl.vdt.model.impl;
 
 import javax.annotation.Nullable;
 import vadl.vdt.model.LeafNode;
