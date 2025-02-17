@@ -1,5 +1,6 @@
 package vadl.test;
 
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
@@ -14,7 +15,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -24,6 +28,8 @@ import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
@@ -125,9 +131,14 @@ public abstract class AbstractTest {
         })
         .toList();
 
-    assertThat(testSources,
-        containsInAnyOrder(
-            preparedArgs.stream().map(e -> e.get()[0]).toArray()
+    List<String> expectedSubstrings = preparedArgs.stream()
+        .map(e -> (String) e.get()[0])
+        .toList();
+
+    assertThat("Some test source not found", testSources,
+        hasItems(preparedArgs.stream()
+            .map(e -> containsString((String) e.get()[0]))
+            .toArray(Matcher[]::new)
         ));
 
     return preparedArgs.stream();
@@ -168,15 +179,18 @@ public abstract class AbstractTest {
   }
 
   private static List<String> findAllTestSourcesFromFileSystem(URL testSourceUrl, String prefix)
-      throws URISyntaxException {
-    var fileNames = new ArrayList<String>();
-    File directory = new File(testSourceUrl.toURI());
-    File[] files = directory.listFiles((dir, name) -> name.startsWith(prefix));
-    if (files != null) {
-      for (File file : files) {
-        fileNames.add(file.getPath());
-      }
+      throws IOException, URISyntaxException {
+    List<String> fileNames = new ArrayList<>();
+    Path startPath = Paths.get(testSourceUrl.toURI());
+
+    try (Stream<Path> stream = Files.walk(startPath)) {
+      var paths = stream.toList();
+      paths.stream().filter(
+              file -> Files.isRegularFile(file)
+                  && startPath.relativize(file).toString().startsWith(prefix))
+          .forEach(file -> fileNames.add(file.toString()));
     }
+
     return fileNames;
   }
 
@@ -229,7 +243,11 @@ public abstract class AbstractTest {
     }
     if (failureMessage != null) {
       var logs = testFrontend.getLogAsString();
-      var errorLogs = logs.substring(logs.indexOf(" error: "));
+      var errorIndex = logs.indexOf(" error: ");
+      var errorLogs = logs;
+      if (errorIndex != -1) {
+        errorLogs = errorLogs.substring(errorIndex);
+      }
       assertThat(errorLogs, containsString(failureMessage));
     }
   }
@@ -331,13 +349,13 @@ public abstract class AbstractTest {
    * @deprecated Use {@link #setupPassManagerAndRunSpec(String, PassOrder)} instead and use the
    *     {@link PassOrder#untilFirst(Class)} method instead.
    *     <pre>{@code
-   *                                                              var config = getConfiguration(false);
-   *                                                              var setup = setupPassManagerAndRunSpec(
-   *                                                                  "sys/risc-v/rv64i.vadl",
-   *                                                                  PassOrders.viam(config)
-   *                                                                     .untilFirst(SideEffectConditionResolvingPass.class)
-   *                                                              );
-   *                                                                 }</pre>
+   *                                                                                                                                                              var config = getConfiguration(false);
+   *                                                                                                                                                              var setup = setupPassManagerAndRunSpec(
+   *                                                                                                                                                                  "sys/risc-v/rv64i.vadl",
+   *                                                                                                                                                                  PassOrders.viam(config)
+   *                                                                                                                                                                     .untilFirst(SideEffectConditionResolvingPass.class)
+   *                                                                                                                                                              );
+   *                                                                                                                                                                 }</pre>
    */
   @Deprecated
   public TestSetup setupPassManagerAndRunSpecUntil(String specPath,

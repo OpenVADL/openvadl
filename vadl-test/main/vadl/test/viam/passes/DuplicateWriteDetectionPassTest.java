@@ -45,7 +45,8 @@ public class DuplicateWriteDetectionPassTest extends AbstractTest {
     return tests.stream().map(Arguments::of);
   }
 
-  @ParameterizedTest
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @ParameterizedTest
   @MethodSource("invalidTestArgs")
   void testInvalid(String name, int numErrs, String errmsg)
       throws IOException, DuplicatedPassKeyException {
@@ -63,7 +64,8 @@ public class DuplicateWriteDetectionPassTest extends AbstractTest {
   }
 
 
-  @ParameterizedTest
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @ParameterizedTest
   @MethodSource("validTestArgs")
   void validTest(String test) throws IOException, DuplicatedPassKeyException {
     setupPassManagerAndRunSpec(

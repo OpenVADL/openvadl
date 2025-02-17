@@ -36,3 +36,6 @@ instruction set architecture Test = {
   }
 
 }
+
+application binary interface ABI for Test = {}
+micro processor TEST implements Test with ABI = {}

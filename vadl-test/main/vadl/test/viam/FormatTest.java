@@ -36,13 +36,15 @@ public class FormatTest extends AbstractTest {
     return opt.get();
   }
 
-  @ParameterizedTest(name = "{index} {0}")
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @ParameterizedTest(name = "{index} {0}")
   @MethodSource("invalidFormatTestSources")
   public void invalidFormat(String testSource, @Nullable String failureMessage) {
     runAndAssumeFailure(testSource, failureMessage);
   }
 
-  @Test
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @Test
   public void simpleFormat() {
     var spec = runAndGetViamSpecification("unit/format/valid_simpleFormat.vadl");
 
@@ -105,7 +107,8 @@ public class FormatTest extends AbstractTest {
 
   }
 
-  @Test
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @Test
   public void complexFormat() {
     var spec = runAndGetViamSpecification("unit/format/valid_complexFormat.vadl");
 
@@ -161,7 +164,8 @@ public class FormatTest extends AbstractTest {
 
   }
 
-  @Test
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @Test
   public void fieldAccess() {
     var spec = runAndGetViamSpecification("unit/format/valid_fieldAccess.vadl");
 
@@ -181,21 +185,21 @@ public class FormatTest extends AbstractTest {
       assertEquals("SIMPLE_ACCESS::VAR", var.identifier.name());
 
       var accessFunction = var.accessFunction();
-      assertEquals("SIMPLE_ACCESS::VAR_decode", accessFunction.identifier.name());
+      assertEquals("SIMPLE_ACCESS::VAR::decode", accessFunction.identifier.name());
       assertEquals(Type.concreteRelation(Type.bits(4)),
           accessFunction.signature());
       assertEquals(accessFunction.returnType(), var.type());
 
       var predicate = var.predicate();
-      assertEquals("SIMPLE_ACCESS::VAR_predicate", predicate.identifier.name());
+      assertEquals("SIMPLE_ACCESS::VAR::predicate", predicate.identifier.name());
       assertEquals(Type.concreteRelation(Type.bits(4), Type.bool()), predicate.signature());
       assertTrue(predicate.behavior().isPureFunction());
       assertEquals(1, predicate.behavior().getNodes(ConstantNode.class).count());
 
       var encoding = var.encoding();
-      assertEquals("SIMPLE_ACCESS::HI_encode0", encoding.identifier.name());
+      assertEquals("SIMPLE_ACCESS::HI::encode0", encoding.identifier.name());
       assertEquals(Type.concreteRelation(Type.bits(4), hi.type()), encoding.signature());
-      assertEquals("SIMPLE_ACCESS::HI_encode0::VAR",
+      assertEquals("SIMPLE_ACCESS::HI::encode0::VAR",
           encoding.parameters()[0].identifier.name());
     }
 

@@ -26,35 +26,35 @@ public class Rv3264imTest extends AbstractTest {
 
   void testRv32i(Specification spec) {
     var rv32i = findDefinitionByNameIn("RV32I", spec, InstructionSetArchitecture.class);
-    findDefinitionByNameIn("RV32I::ADD", spec, Instruction.class);
+    findDefinitionByNameIn("RV3264I::ADD", spec, Instruction.class);
 
     assertThrows(AssertionFailedError.class,
-        () -> findDefinitionByNameIn("RV32I::DIVU", spec, Instruction.class));
+        () -> findDefinitionByNameIn("RV3264IM::DIVU", spec, Instruction.class));
     assertEquals(Type.bits(32), Objects.requireNonNull(rv32i.pc()).registerResource().type());
   }
 
   void testRv32im(Specification spec) {
     var rv32im = findDefinitionByNameIn("RV32IM", spec, InstructionSetArchitecture.class);
 
-    findDefinitionByNameIn("RV32IM::ADD", spec, Instruction.class);
-    findDefinitionByNameIn("RV32IM::DIVU", spec, Instruction.class);
+    findDefinitionByNameIn("RV3264I::ADD", spec, Instruction.class);
+    findDefinitionByNameIn("RV3264IM::DIVU", spec, Instruction.class);
     assertEquals(Type.bits(32), Objects.requireNonNull(rv32im.pc()).registerResource().type());
   }
 
   void testRv64i(Specification spec) {
     var rv64i = findDefinitionByNameIn("RV64I", spec, InstructionSetArchitecture.class);
 
-    findDefinitionByNameIn("RV64I::ADD", spec, Instruction.class);
+    findDefinitionByNameIn("RV3264I::ADD", spec, Instruction.class);
     assertThrows(AssertionFailedError.class,
-        () -> findDefinitionByNameIn("RV64I::DIVU", spec, Instruction.class));
+        () -> findDefinitionByNameIn("RV3264IM::DIVU", spec, Instruction.class));
     assertEquals(Type.bits(64), Objects.requireNonNull(rv64i.pc()).registerResource().type());
   }
 
   void testRv64im(Specification spec) {
     var rv64im = findDefinitionByNameIn("RV64IM", spec, InstructionSetArchitecture.class);
 
-    findDefinitionByNameIn("RV64IM::ADD", spec, Instruction.class);
-    findDefinitionByNameIn("RV64IM::DIVU", spec, Instruction.class);
+    findDefinitionByNameIn("RV3264I::ADD", spec, Instruction.class);
+    findDefinitionByNameIn("RV3264IM::DIVU", spec, Instruction.class);
     assertEquals(Type.bits(64), Objects.requireNonNull(rv64im.pc()).registerResource().type());
   }
 

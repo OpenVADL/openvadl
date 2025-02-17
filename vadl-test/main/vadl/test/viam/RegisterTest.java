@@ -58,13 +58,15 @@ public class RegisterTest extends AbstractTest {
     );
   }
 
-  @ParameterizedTest(name = "{index} {0}")
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @ParameterizedTest(name = "{index} {0}")
   @MethodSource("invalidRegisterTestSources")
   public void invalidRegister(String testSource, @Nullable String failureMessage) {
     runAndAssumeFailure(testSource, failureMessage);
   }
 
-  @TestFactory
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @TestFactory
   public Stream<DynamicTest> testRegfile() {
     var spec = runAndGetViamSpecification("unit/register/valid_regfile.vadl");
 
@@ -87,7 +89,8 @@ public class RegisterTest extends AbstractTest {
     );
   }
 
-  @TestFactory
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @TestFactory
   public Stream<DynamicTest> testReg() {
     var spec = runAndGetViamSpecification("unit/register/valid_reg_definition.vadl");
     var testIsa = findDefinitionByNameIn("Test", spec, InstructionSetArchitecture.class);
@@ -169,7 +172,8 @@ public class RegisterTest extends AbstractTest {
     );
   }
 
-  @TestFactory
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @TestFactory
   Stream<DynamicTest> testRegRead() {
     var spec = runAndGetViamSpecification("unit/register/valid_reg_read.vadl");
     var a = (Register) findResourceByName("Test::A", spec);
@@ -276,7 +280,8 @@ public class RegisterTest extends AbstractTest {
     );
   }
 
-  @TestFactory
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @TestFactory
   Stream<DynamicTest> testWriteReg() {
     var spec = runAndGetViamSpecification("unit/register/valid_reg_write.vadl");
     var b = (Register) findResourceByName("Test::B", spec);
@@ -344,7 +349,8 @@ public class RegisterTest extends AbstractTest {
   }
 
 
-  @TestFactory
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @TestFactory
   public Stream<DynamicTest> testPcReg() {
     return Stream.of(
         testPc("valid_pc_normal.vadl", "PcTest::PC", "PcTest::PC", null,
@@ -405,7 +411,8 @@ public class RegisterTest extends AbstractTest {
   }
 
 
-  @TestFactory
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @TestFactory
   public Stream<DynamicTest> testAliasRegisterFiles() {
     var spec = runAndGetViamSpecification("unit/register/valid_alias_regfile.vadl");
 

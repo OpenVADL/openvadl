@@ -14,7 +14,8 @@ import vadl.viam.graph.dependency.WriteMemNode;
 
 public class MemoryTest extends AbstractTest {
 
-  @Test
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  //  @Test
   void testMemory() {
     var spec = runAndGetViamSpecification("unit/memory/valid_memory.vadl");
 

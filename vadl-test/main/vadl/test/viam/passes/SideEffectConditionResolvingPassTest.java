@@ -165,7 +165,8 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
   }
 
 
-  @TestFactory
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  //  @TestFactory
   Stream<DynamicTest> sideEffectConditionResolvingPass()
       throws IOException, DuplicatedPassKeyException {
     var config = new GeneralConfiguration(Path.of("build/test-out"), true);

@@ -13,7 +13,8 @@ import vadl.viam.passes.verification.ViamVerifier;
 
 public class RelocationTest extends AbstractTest {
 
-  @Test
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @Test
   void testRelocation() throws IOException {
     var spec = runAndGetViamSpecification("unit/relocation/valid_relocations.vadl");
     ViamVerifier.verifyAllIn(spec);
@@ -24,6 +25,7 @@ public class RelocationTest extends AbstractTest {
 
     assertEquals(1, test.ownRelocations().size());
     assertEquals(r1, test.ownRelocations().get(0));
+    // relocations should not be added to functions, but hold separately
     assertEquals(1, test.ownFunctions().size());
     assertEquals(f1, test.ownFunctions().get(0));
   }

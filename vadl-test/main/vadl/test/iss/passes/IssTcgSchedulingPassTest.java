@@ -27,7 +27,8 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * We need this tests as there is no occurrence of the tested problems in the RISC-V specification.
  */
 public class IssTcgSchedulingPassTest extends AbstractTest {
-
+  
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
   // FIXME: @ffreitag requires format field lowering fix in frontend.
   // @Test
   public void test_schedule_in_both_branches() throws IOException, DuplicatedPassKeyException {

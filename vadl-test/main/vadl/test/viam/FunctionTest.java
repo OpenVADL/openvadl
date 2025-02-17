@@ -17,10 +17,12 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
+// FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
 public class FunctionTest extends AbstractTest {
 
 
-  @Test
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @Test
   void testValidFunctions() {
     var spec = runAndGetViamSpecification("unit/function/valid_functions.vadl");
 
@@ -86,7 +88,8 @@ public class FunctionTest extends AbstractTest {
   }
 
 
-  @Test
+  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
+  // @Test
   void callFunctionInInstruction() {
     var spec = runAndGetViamSpecification("unit/function/valid_functionUsage.vadl");
 

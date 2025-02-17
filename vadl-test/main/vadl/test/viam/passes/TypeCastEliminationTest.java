@@ -12,8 +12,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.MethodSource;
-import vadl.configuration.GeneralConfiguration;
-import vadl.pass.PassResults;
 import vadl.test.AbstractTest;
 import vadl.test.TestFrontend;
 import vadl.types.BuiltInTable;
@@ -31,10 +29,9 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
-import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 import vadl.viam.passes.verification.ViamVerifier;
 
-public class TypeCastEliminationPassTest extends AbstractTest {
+public class TypeCastEliminationTest extends AbstractTest {
 
   private static TestFrontend validFrontend;
 
@@ -43,10 +40,6 @@ public class TypeCastEliminationPassTest extends AbstractTest {
     validFrontend =
         runViamSpecificationWithNewFrontend(
             "passes/typeCastElimination/valid_type_cast_elimination.vadl");
-    // execute type cast elimination
-    new TypeCastEliminationPass(
-        new GeneralConfiguration(createDirectory().toAbsolutePath(), false)).execute(
-        PassResults.empty(), validFrontend.getViam());
     ViamVerifier.verifyAllIn(validFrontend.getViam());
   }
 

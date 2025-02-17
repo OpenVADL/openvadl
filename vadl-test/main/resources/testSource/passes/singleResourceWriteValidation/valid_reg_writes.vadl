@@ -31,3 +31,6 @@ instruction set architecture ValidRegWrites = {
   , ENC: Bits<8>
   }
 }
+
+application binary interface ABI for ValidRegWrites = {}
+micro processor TEST implements ValidRegWrites with ABI = {}

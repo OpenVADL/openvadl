@@ -17,3 +17,6 @@ instruction set architecture RegSingleBranch = {
   , TWO: Bits<16>
   }
 }
+
+application binary interface ABI for RegSingleBranch = {}
+micro processor TEST implements RegSingleBranch with ABI = {}

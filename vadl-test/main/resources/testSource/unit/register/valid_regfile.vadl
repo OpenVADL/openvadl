@@ -10,3 +10,6 @@ instruction set architecture Test = {
   register file Y: Index -> Regs
 
 }
+
+application binary interface ABI for Test = {}
+micro processor TEST implements Test with ABI = {}
