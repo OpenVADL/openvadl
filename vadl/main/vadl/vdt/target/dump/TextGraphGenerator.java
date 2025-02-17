@@ -20,8 +20,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.NotImplementedException;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
+import vadl.vdt.impl.katsumi.tree.MultiDecisionNode;
+import vadl.vdt.impl.katsumi.tree.SingleDecisionNode;
 import vadl.vdt.impl.theiling.InnerNodeImpl;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
@@ -115,5 +118,21 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
     }
 
     return result;
+  }
+
+  /**
+   * Handler for {@link MultiDecisionNode}.
+   *
+   * @param node the inner node
+   * @return the text representations
+   */
+  @Handler
+  public List<StringBuilder> handle(MultiDecisionNode node) {
+    throw new NotImplementedException("Not implemented");
+  }
+
+  @Handler
+  public List<StringBuilder> handle(SingleDecisionNode node) {
+    throw new NotImplementedException("Not implemented");
   }
 }
