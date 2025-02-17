@@ -28,6 +28,7 @@ import java.util.Set;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import vadl.vdt.model.DecodeTreeGenerator;
 import vadl.vdt.model.Node;
+import vadl.vdt.model.impl.LeafNodeImpl;
 import vadl.vdt.utils.Bit;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;

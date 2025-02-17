@@ -84,7 +84,12 @@ public class AbstractDecisionTreeTest {
       // Prepare a dummy instruction with a unique name
       var id = Identifier.noLocation(name);
       var behaviour = new Graph("mock");
-      var source = new vadl.viam.Instruction(id, behaviour, null, null);
+      var source = new vadl.viam.Instruction(id, behaviour, null, null) {
+        @Override
+        public String toString() {
+          return name;
+        }
+      };
 
       // Prepare the bit pattern
       final PBit[] bits = new PBit[insn.length()];

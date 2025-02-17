@@ -23,11 +23,27 @@ package vadl.vdt.utils;
  * an instruction is augmented with relevant information for decoding, such as the width of the
  * instruction and the fixed bit pattern that represents the instruction.
  */
-public record Instruction(vadl.viam.Instruction source, int width, BitPattern pattern) {
+public class Instruction {
 
-  public static Instruction from(vadl.viam.Instruction insn) {
-    BitPattern pattern = PatternUtils.toFixedBitPattern(insn);
-    return new Instruction(insn, pattern.width(), pattern);
+  private final vadl.viam.Instruction source;
+  private final int width;
+  private final BitPattern pattern;
+
+  public Instruction(vadl.viam.Instruction source, int width, BitPattern pattern) {
+    this.source = source;
+    this.width = width;
+    this.pattern = pattern;
   }
 
+  public vadl.viam.Instruction source() {
+    return source;
+  }
+
+  public int width() {
+    return width;
+  }
+
+  public BitPattern pattern() {
+    return pattern;
+  }
 }
