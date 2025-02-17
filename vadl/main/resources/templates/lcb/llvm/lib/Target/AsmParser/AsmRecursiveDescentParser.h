@@ -46,14 +46,15 @@ public:
     }
 };
 
-/*
+
 struct NoData{};
 
+/*
 struct mnemonic {
     ParsedValue<[(${namespace})]ParsedOperand> mnemonic;
 };
 */
-
+/*
 [# th:each="struct : ${parsedValueStructs}" ]
 struct [(${struct.getName()})] {
   [# th:each="field : ${struct.getFields()}" ]
@@ -62,7 +63,7 @@ struct [(${struct.getName()})] {
 };
 
 [/]
-
+*/
 class [(${namespace})]AsmRecursiveDescentParser {
     MCAsmLexer &Lexer;
     MCAsmParser &Parser;
@@ -70,15 +71,16 @@ class [(${namespace})]AsmRecursiveDescentParser {
 
 private:
 
+/*
     [# th:each="pr : ${parsingResults}" ]
     RuleParsingResult<[(${pr.type})]> [(${pr.functionName})]();
     [/]
-
+*/
     RuleParsingResult<StringRef> Literal(std::string toParse);
     RuleParsingResult<const MCExpr*> BuiltinExpression();
 
-    bool builtin_asm_laidin(uint64_t lookahead, const std::vector<string>& compareStrings);
-    bool builtin_asm_laideq(uint64_t lookahead, const string compareString);
+    bool builtin_asm_laidin(uint64_t lookahead, const std::vector<std::string>& compareStrings);
+    bool builtin_asm_laideq(uint64_t lookahead, const std::string compareString);
 
 public:
     [(${namespace})]AsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
