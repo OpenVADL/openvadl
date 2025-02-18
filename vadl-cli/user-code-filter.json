@@ -1,0 +1,11 @@
+{
+  "rules": [
+    {"includeClasses": "**"},
+    {"excludeClasses": "org.apache.maven.**"},
+    {"excludeClasses": "org.junit.**"},
+    {"excludeClasses": "java.**"},
+    {"excludeClasses": "jdk.internal.**"},
+    {"excludeClasses": "sun.**"},
+    {"excludeClasses": "com.sun.**"}
+  ]
+}
