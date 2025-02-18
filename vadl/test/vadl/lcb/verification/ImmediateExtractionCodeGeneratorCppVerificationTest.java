@@ -47,7 +47,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationTest extends Abstrac
       VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
       VadlFileUtils.copyDirectory(
           Path.of(
-              "../../open-vadl/vadl-test/main/resources/images/encodingCodeGeneratorCppVerification/"),
+              "test/resources/images/encodingCodeGeneratorCppVerification/"),
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 
