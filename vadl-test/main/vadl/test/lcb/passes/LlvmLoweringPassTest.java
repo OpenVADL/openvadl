@@ -94,7 +94,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Btype_immAsLabel",
+            new TableGenInstructionOperand(DUMMY_NODE, "RV3264I_Btype_immAsLabel",
                 "imm")),
         List.of(),
         List.of(
@@ -104,9 +104,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 condCode.name().toLowerCase())),
         // We have the same pattern twice because we have to selectors which emit the same
         // machine instruction.
-        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)",
                 machineInstruction),
-            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+            String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)",
                 machineInstruction)
         ),
         createBranchFlags(),
@@ -120,7 +120,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Btype_immAsLabel",
+            new TableGenInstructionOperand(DUMMY_NODE, "RV3264I_Btype_immAsLabel",
                 "imm")),
         List.of(),
         List.of(
@@ -134,13 +134,13 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 inverseCondCode.name().toLowerCase())),
         // We have the same pattern twice because we have to selectors which emit the same
         // machine instruction.
-        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)",
                 machineInstruction),
-            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+            String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)",
                 machineInstruction),
-            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+            String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)",
                 machineInstruction),
-            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+            String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)",
                 machineInstruction)
         ),
         createBranchFlags(),
@@ -165,9 +165,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
             "(brcond X:$rs1, bb:$imm)"),
         // We have the same pattern twice because we have to selectors which emit the same
         // machine instruction.
-        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)",
                 machineInstruction),
-            String.format("(%s X:$rs1, X:$rs2, RV64IM_Btype_immAsLabel:$imm)",
+            String.format("(%s X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)",
                 machineInstruction),
             String.format("(%s X:$rs1, X0, bb:$imm)", machineInstruction)
         ),
@@ -181,16 +181,16 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        List.of(String.format("(add X:$rs1, %s:$%s)", "RV64IM_Itype_immAsInt64",
+        List.of(String.format("(add X:$rs1, %s:$%s)", "RV3264I_Itype_immAsInt64",
                 "imm"),
-            String.format("(add AddrFI:$rs1, %s:$%s)", "RV64IM_Itype_immAsInt64",
+            String.format("(add AddrFI:$rs1, %s:$%s)", "RV3264I_Itype_immAsInt64",
                 "imm")
         ),
         List.of(String.format("(%s X:$rs1, %s:$%s)", "ADDI",
-                "RV64IM_Itype_immAsInt64",
+                "RV3264I_Itype_immAsInt64",
                 "imm"),
             String.format("(%s AddrFI:$rs1, %s:$%s)", "ADDI",
-                "RV64IM_Itype_immAsInt64",
+                "RV3264I_Itype_immAsInt64",
                 "imm")
         ),
         createEmptyFlags(),
@@ -258,22 +258,22 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
             new TableGenInstructionOperand(DUMMY_NODE, "X", "rs2"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Stype_immAsInt64", "imm")),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV3264I_Stype_immAsInt64", "imm")),
         List.of(),
-        List.of(String.format("(%s X:$rs2, (add X:$rs1, RV64IM_Stype_immAsInt64:$imm))",
+        List.of(String.format("(%s X:$rs2, (add X:$rs1, RV3264I_Stype_immAsInt64:$imm))",
                 dagNode),
             String.format("(%s X:$rs2, X:$rs1)",
                 dagNode),
-            String.format("(%s X:$rs2, (add AddrFI:$rs1, RV64IM_Stype_immAsInt64:$imm))",
+            String.format("(%s X:$rs2, (add AddrFI:$rs1, RV3264I_Stype_immAsInt64:$imm))",
                 dagNode),
             String.format("(%s X:$rs2, AddrFI:$rs1)",
                 dagNode)
         ),
-        List.of(String.format("(%s X:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)",
+        List.of(String.format("(%s X:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm)",
                 machineInstruction),
             String.format("(%s X:$rs1, X:$rs2, (i64 0))",
                 machineInstruction),
-            String.format("(%s AddrFI:$rs1, X:$rs2, RV64IM_Stype_immAsInt64:$imm)",
+            String.format("(%s AddrFI:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm)",
                 machineInstruction),
             String.format("(%s AddrFI:$rs1, X:$rs2, (i64 0))",
                 machineInstruction)
@@ -289,20 +289,20 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
       String machineInstruction) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV3264I_Itype_immAsInt64", "imm")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        List.of(String.format("(%s (%s (add X:$rs1, RV64IM_Itype_immAsInt64:$imm)))",
+        List.of(String.format("(%s (%s (add X:$rs1, RV3264I_Itype_immAsInt64:$imm)))",
                 typeNode, dagNode),
             String.format("(%s (%s X:$rs1))", typeNode, dagNode),
-            String.format("(%s (%s (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)))",
+            String.format("(%s (%s (add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)))",
                 typeNode, dagNode),
             String.format("(%s (%s AddrFI:$rs1))", typeNode, dagNode)
         ),
-        List.of(String.format("(%s X:$rs1, RV64IM_Itype_immAsInt64:$imm)",
+        List.of(String.format("(%s X:$rs1, RV3264I_Itype_immAsInt64:$imm)",
                 machineInstruction),
             String.format("(%s X:$rs1, (i64 0))",
                 machineInstruction),
-            String.format("(%s AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)",
+            String.format("(%s AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)",
                 machineInstruction),
             String.format("(%s AddrFI:$rs1, (i64 0))",
                 machineInstruction)
@@ -320,28 +320,28 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
       String machineInstruction) {
     return new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV3264I_Itype_immAsInt64", "imm")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
-        List.of(String.format("(%s (%s (add X:$rs1, RV64IM_Itype_immAsInt64:$imm)))",
+        List.of(String.format("(%s (%s (add X:$rs1, RV3264I_Itype_immAsInt64:$imm)))",
                 typeNode, dagNode),
             String.format("(%s (%s X:$rs1))", typeNode, dagNode),
             String.format("(%s (%s X:$rs1))", typeNode, extNode),
-            String.format("(%s (%s (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)))",
+            String.format("(%s (%s (add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)))",
                 typeNode, dagNode),
-            String.format("(%s (%s (add AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)))", typeNode,
+            String.format("(%s (%s (add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)))", typeNode,
                 extNode),
             String.format("(%s (%s AddrFI:$rs1))", typeNode, dagNode),
             String.format("(%s (%s AddrFI:$rs1))", typeNode, extNode)
         ),
-        List.of(String.format("(%s X:$rs1, RV64IM_Itype_immAsInt64:$imm)",
+        List.of(String.format("(%s X:$rs1, RV3264I_Itype_immAsInt64:$imm)",
                 machineInstruction),
             String.format("(%s X:$rs1, (i64 0))",
                 machineInstruction),
             String.format("(%s X:$rs1, (i64 0))",
                 machineInstruction),
-            String.format("(%s AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)",
+            String.format("(%s AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)",
                 machineInstruction),
-            String.format("(%s AddrFI:$rs1, RV64IM_Itype_immAsInt64:$imm)",
+            String.format("(%s AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)",
                 machineInstruction),
             String.format("(%s AddrFI:$rs1, (i64 0))",
                 machineInstruction),
@@ -388,9 +388,9 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("ADDI",
         createTestOutputAddI());
     expectedResults.put("ORI",
-        createTestOutputRI("RV64IM_Itype_immAsInt64", "imm", "or", "ORI"));
+        createTestOutputRI("RV3264I_Itype_immAsInt64", "imm", "or", "ORI"));
     expectedResults.put("ANDI",
-        createTestOutputRI("RV64IM_Itype_immAsInt64", "imm", "and", "ANDI"));
+        createTestOutputRI("RV3264I_Itype_immAsInt64", "imm", "and", "ANDI"));
     /*
     CONDITIONALS
      */
@@ -399,10 +399,10 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
     expectedResults.put("SLTU",
         createTestOutputRR_ForLessThanUnsigned());
     expectedResults.put("SLTI",
-        createTestOutputRIWithConditional("RV64IM_Itype_immAsInt64", "imm",
+        createTestOutputRIWithConditional("RV3264I_Itype_immAsInt64", "imm",
             LlvmCondCode.SETLT, "SLTI"));
     expectedResults.put("SLTIU",
-        createTestOutputRIWithConditionalWithImmediate("RV64IM_Itype_immAsInt64", "imm",
+        createTestOutputRIWithConditionalWithImmediate("RV3264I_Itype_immAsInt64", "imm",
             LlvmCondCode.SETULT, "SLTIU",
             LlvmCondCode.SETNE, "SLTU"));
     /*
@@ -425,12 +425,12 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
      */
     expectedResults.put("JALR", new TestOutput(
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rs1"),
-            new TableGenInstructionOperand(DUMMY_NODE, "RV64IM_Itype_immAsInt64", "imm")),
+            new TableGenInstructionOperand(DUMMY_NODE, "RV3264I_Itype_immAsInt64", "imm")),
         List.of(new TableGenInstructionOperand(DUMMY_NODE, "X", "rd")),
         List.of("(target_call X:$rs1)",
             "(brind X:$rs1)",
-            "(brind (add X:$rs1, RV64IM_Itype_immAsInt64:$imm))"),
-        List.of("(PseudoBRIND X:$rs1, 0)", "(PseudoBRIND X:$rs1, RV64IM_Itype_immAsInt64:$imm)"),
+            "(brind (add X:$rs1, RV3264I_Itype_immAsInt64:$imm))"),
+        List.of("(PseudoBRIND X:$rs1, 0)", "(PseudoBRIND X:$rs1, RV3264I_Itype_immAsInt64:$imm)"),
         new LlvmLoweringPass.Flags(false, false, false, false, false, false, false, false, false),
         false
     ));
