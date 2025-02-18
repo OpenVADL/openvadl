@@ -81,7 +81,7 @@ class CanonicalizationPassTest extends AbstractTest {
     viam.add(isa);
 
     // When
-    var pass = new CanonicalizationPass(createConfiguration());
+    var pass = new CanonicalizationPass(getConfiguration(false));
     pass.execute(new PassResults(), viam);
 
     assertThat(behavior.getNodes().count(), equalTo(1L));

@@ -1,5 +1,7 @@
 package vadl.lcb.codegen.docker;
 
+import static vadl.TestUtils.*;
+
 import java.util.stream.Stream;
 import org.junit.jupiter.params.provider.Arguments;
 import vadl.AbstractTest;

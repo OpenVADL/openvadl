@@ -41,7 +41,7 @@ public class BuiltinCTest extends DockerExecutionTest {
   int counter = 0;
 
   @BeforeEach
-  void beforeEach() {
+  public void beforeEach() {
     counter = 0;
   }
 

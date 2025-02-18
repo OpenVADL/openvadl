@@ -1,6 +1,7 @@
 package vadl.viam.matching.impl;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static vadl.TestUtils.*;
 
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;

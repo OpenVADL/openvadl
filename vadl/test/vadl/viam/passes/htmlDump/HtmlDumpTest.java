@@ -24,8 +24,6 @@ public class HtmlDumpTest extends AbstractTest {
 
   @Test
   void dumpTest() throws IOException {
-    var config = createConfiguration();
-
     var spec = new Specification(Identifier.noLocation("Hello world"));
     var graph = new Graph("Hello Graph");
     var end = graph.addWithInputs(new ReturnNode(
