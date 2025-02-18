@@ -85,8 +85,9 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var function = ensureNonNull(cppFunctions.get(pseudoInstruction),
         "cpp function must exist)");
 
+    var base = lcbConfiguration().processorName();
     var codeGen =
-        new PseudoExpansionCodeGenerator(lcbConfiguration().processorName().value(),
+        new PseudoExpansionCodeGenerator(base,
             fieldUsages,
             ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults),
             variants,
