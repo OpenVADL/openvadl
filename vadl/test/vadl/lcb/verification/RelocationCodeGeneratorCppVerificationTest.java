@@ -49,7 +49,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
     {
       VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
       VadlFileUtils.copyFile(Path.of(
-              "test/resources/templates/common/vadl-builtins.h"
+              "main/resources/templates/common/vadl-builtins.h"
           ),
           Path.of(configuration.outputPath() + "/vadl-builtins.h")
       );
