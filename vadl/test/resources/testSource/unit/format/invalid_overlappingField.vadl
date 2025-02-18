@@ -1,0 +1,5 @@
+// field slices do overlap (bit 3)
+format BYTE_SLICE : Bits<8> =
+  { HI  [7..3]
+  , LO  [3..0]
+  }
