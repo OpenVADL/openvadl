@@ -231,7 +231,7 @@ public abstract class BaseCommand implements Callable<Integer> {
                                       \\___|_|_\\/_/ \\_\\___/_||_| \s
                                                                     \s
                                    🔥 The vadl compiler crashed 🔥  \s
-          
+                    
           This shouldn't have happened, please open an issue with the stacktrace below at:
           https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/new
           """);
@@ -258,7 +258,12 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     if (!DeferredDiagnosticStore.isEmpty()) {
       new DiagnosticPrinter().print(DeferredDiagnosticStore.getAll());
-      returnVal = 1;
+
+      // Only exit abnormally if any diagnostic message is an error.
+      if (DeferredDiagnosticStore.getAll().stream()
+          .anyMatch(diagnostic -> diagnostic.level == Diagnostic.Level.ERROR)) {
+        returnVal = 1;
+      }
     }
 
     if (!ArtifactTracker.getArtifactPathsPaths().isEmpty()) {
