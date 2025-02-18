@@ -5,15 +5,15 @@ import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
-import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.library.Architectures;
 import org.junit.jupiter.api.Test;
 
-@AnalyzeClasses(importOptions = {ImportOption.DoNotIncludeTests.class, ImportOption.DoNotIncludeJars.class})
 public class ArchitectureTest {
-  //  @Test
+  @Test
   void shouldComplyWithArchitectureDesign() {
     JavaClasses jc = new ClassFileImporter()
+        .withImportOption(
+            new ImportOption.DoNotIncludeTests())
         .importPackages("vadl");
     Architectures.LayeredArchitecture layeredArchitecture = layeredArchitecture()
         .consideringOnlyDependenciesInLayers()
