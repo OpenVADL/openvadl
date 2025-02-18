@@ -48,7 +48,7 @@ public class LlvmLoweringPassPseudoInstructionTest extends AbstractLcbTest {
     expectedResults.put("CALL", new TestOutput(Collections.emptyList(), Collections.emptyList(),
         Collections.emptyList(), Collections.emptyList(), getPseudoFlagsCall()));
     expectedResults.put("J", new TestOutput(Collections.emptyList(), Collections.emptyList(),
-        List.of("(br bb:$imm)"), List.of("(J RV64IM_Jtype_immAsLabel:$imm)"),
+        List.of("(br bb:$imm)"), List.of("(J RV3264I_Jtype_immAsLabel:$imm)"),
         new LlvmLoweringPass.Flags(
             true, true, false, false, true, false, false, false, true)));
     expectedResults.put("MOV",

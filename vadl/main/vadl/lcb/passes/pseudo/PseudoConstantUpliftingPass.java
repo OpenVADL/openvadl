@@ -4,16 +4,12 @@ import java.io.IOException;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.error.DeferredDiagnosticStore;
-import vadl.error.Diagnostic;
 import vadl.gcb.passes.pseudo.AbstractPseudoInstructionArgumentReplacementPass;
 import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
+import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbConstantNodeReplacement;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.types.BitsType;
-import vadl.types.SIntType;
-import vadl.viam.Constant;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -48,11 +44,7 @@ public class PseudoConstantUpliftingPass extends Pass {
       var behaviorWithAppliedArguments =
           appliedArguments.appliedGraph().get(pseudoInstruction);
       if (behaviorWithAppliedArguments != null) {
-        behaviorWithAppliedArguments
-            .getNodes(InstrCallNode.class)
-            .map(instrCallNode -> instrCallNode.target().behavior())
-            .flatMap(graph -> graph.getNodes(ConstantNode.class))
-            .forEach(constantNode -> {
+        /*
               if (constantNode.type() instanceof BitsType bitsType) {
                 if (bitsType.bitWidth() <= 32) {
                   var ty = bitsType.withBitWidth(32);
@@ -67,7 +59,12 @@ public class PseudoConstantUpliftingPass extends Pass {
                       constantNode.sourceLocation()).build();
                 }
               }
-            });
+               */
+        behaviorWithAppliedArguments
+            .getNodes(InstrCallNode.class)
+            .map(instrCallNode -> instrCallNode.target().behavior())
+            .flatMap(graph -> graph.getNodes(ConstantNode.class))
+            .forEach(LcbConstantNodeReplacement::updateConstant);
       }
     }
 

@@ -3806,10 +3806,10 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(add X:$rs1, (i32 0)),
+def : Pat<(add X:$rs1, (i64 0)),
         (MOV X:$rs1)>;
 
-def : Pat<(add AddrFI:$rs1, (i32 0)),
+def : Pat<(add AddrFI:$rs1, (i64 0)),
         (MOV AddrFI:$rs1)>;
 
 
@@ -3865,11 +3865,11 @@ let AddedComplexity = 0;
 
 let Pattern = [];
 
-let Uses = [  ];
+let Uses = [ X0 ];
 let Defs = [ X0 ];
 }
 
-def : Pat<(add (i64 0), (i32 0)),
+def : Pat<(add (i64 0), (i64 0)),
         (NOP )>;
 
 
@@ -3899,7 +3899,7 @@ let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(xor X:$rs1, (i32 4095)),
+def : Pat<(xor X:$rs1, (i64 4095)),
         (NOT X:$rs1)>;
 
 
@@ -4533,10 +4533,10 @@ def : Pat<(br bb:$imm),
 
 
 
-def : Pat<(add X:$rs1, (i32 0)),
+def : Pat<(add X:$rs1, (i64 0)),
         (MOV X:$rs1)>;
 
-def : Pat<(add AddrFI:$rs1, (i32 0)),
+def : Pat<(add AddrFI:$rs1, (i64 0)),
         (MOV AddrFI:$rs1)>;
 
 
@@ -4544,11 +4544,11 @@ def : Pat<(sub (i64 0), X:$rs1),
         (NEG X:$rs1)>;
 
 
-def : Pat<(add (i64 0), (i32 0)),
+def : Pat<(add (i64 0), (i64 0)),
         (NOP )>;
 
 
-def : Pat<(xor X:$rs1, (i32 4095)),
+def : Pat<(xor X:$rs1, (i64 4095)),
         (NOT X:$rs1)>;
 
 

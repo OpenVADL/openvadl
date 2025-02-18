@@ -6,9 +6,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
-import vadl.types.BitsType;
 import vadl.types.DataType;
-import vadl.types.SIntType;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -26,35 +24,11 @@ public class LcbConstantNodeReplacement
     this.replacer = replacer;
   }
 
-  @Nullable
-  @Override
-  public ConstantNode visit(ConstantNode node) {
-    // Upcast it to a higher type because TableGen is not able to cast implicitly.
-
-    if (node.type() instanceof SIntType type) {
-      if (type.bitWidth() < 32) {
-        node.setType(type.withBitWidth(32));
-      } else if (type.bitWidth() < 64) {
-        node.setType(type.withBitWidth(32));
-      } else {
-        DeferredDiagnosticStore.add(
-            Diagnostic.error("Higher than 64 bits is not supported", node.sourceLocation()));
-      }
-    }
-
-    if (node.constant().type() instanceof SIntType type) {
-      if (type.bitWidth() < 32) {
-        node.constant().setType(type.withBitWidth(32));
-      } else if (type.bitWidth() < 64) {
-        node.constant().setType(type.withBitWidth(32));
-      } else {
-        DeferredDiagnosticStore.add(
-            Diagnostic.error("Higher than 64 bits is not supported", node.sourceLocation()));
-      }
-    }
-
-    return node;
-    /*
+  /**
+   * This method looks at the usages of the given {@code node} and updates the type
+   * based on the type of the usage. This is necessary because TableGen cannot cast implicitly.
+   */
+  public static ConstantNode updateConstant(ConstantNode node) {
     var types = node.usages()
         .filter(x -> x instanceof ExpressionNode)
         .map(x -> {
@@ -84,9 +58,13 @@ public class LcbConstantNodeReplacement
     var type = types.stream().findFirst().get();
     node.setType(type);
     node.constant().setType(type);
-
     return node;
-     */
+  }
+
+  @Nullable
+  @Override
+  public ConstantNode visit(ConstantNode node) {
+    return updateConstant(node);
   }
 
   @Override
