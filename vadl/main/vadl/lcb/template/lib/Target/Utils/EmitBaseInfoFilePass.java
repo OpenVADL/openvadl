@@ -48,7 +48,8 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
         .filter(distinctByKey(x -> x.valueRelocation().functionName().lower()))
         .toList();
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "isBigEndian", false,
         "relocations", relocations,
         "mos", mos

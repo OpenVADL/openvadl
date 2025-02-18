@@ -6,22 +6,17 @@ import javax.annotation.Nullable;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.cppCodeGen.context.CNodeContext;
-import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SliceNode;
-import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Produce a pure function that allows to access format field references.

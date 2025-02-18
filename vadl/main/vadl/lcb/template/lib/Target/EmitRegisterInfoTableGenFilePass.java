@@ -43,7 +43,8 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .distinct()
         .toList();
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "registerFiles", registerClasses,
         "registers", Stream.concat(output.registers().stream(), registersFromClasses.stream()));
   }

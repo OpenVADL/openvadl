@@ -3,7 +3,6 @@ package vadl.lcb.passes.llvmLowering.tablegen.lowering;
 
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.types.BitsType;
 
 /**
  * Utility class for mapping into tablegen.

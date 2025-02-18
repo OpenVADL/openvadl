@@ -9,7 +9,6 @@ import static vadl.types.BuiltInTable.UMULL;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.error.Diagnostic;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;

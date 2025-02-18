@@ -6,7 +6,6 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import vadl.configuration.LcbConfiguration;
@@ -18,7 +17,6 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
-import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
@@ -74,7 +72,8 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
         () -> Diagnostic.error("Cannot find a zero constraint", registerFile.sourceLocation()));
     var zeroRegister = registerFile.identifier.simpleName() + zero.address().intValue();
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "lui", lui.identifier.simpleName(),
         "zeroRegister", zeroRegister,
         "stackPointerType",

@@ -1,7 +1,6 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import java.util.List;
-import javax.annotation.Nullable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.types.BuiltInTable;

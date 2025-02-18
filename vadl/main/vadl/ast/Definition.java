@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.ConcreteRelationType;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
@@ -971,13 +972,16 @@ class MemoryDefinition extends Definition implements IdentifiableNode {
 
 class RegisterDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
-  TypeLiteral type;
+  TypeLiteral typeLiteral;
   SourceLocation loc;
 
-  public RegisterDefinition(IdentifierOrPlaceholder identifier, TypeLiteral type,
+  @Nullable
+  DataType type;
+
+  public RegisterDefinition(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral,
                             SourceLocation location) {
     this.identifier = identifier;
-    this.type = type;
+    this.typeLiteral = typeLiteral;
     this.loc = location;
   }
 
@@ -1003,7 +1007,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode {
     builder.append("register ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    type.prettyPrint(indent, builder);
+    typeLiteral.prettyPrint(indent, builder);
     builder.append("\n");
   }
 
@@ -1029,14 +1033,14 @@ class RegisterDefinition extends Definition implements IdentifiableNode {
     RegisterDefinition that = (RegisterDefinition) o;
     return annotations.equals(that.annotations)
         && identifier.equals(that.identifier)
-        && type.equals(that.type);
+        && typeLiteral.equals(that.typeLiteral);
   }
 
   @Override
   public int hashCode() {
     int result = annotations.hashCode();
     result = 31 * result + identifier.hashCode();
-    result = 31 * result + type.hashCode();
+    result = 31 * result + typeLiteral.hashCode();
     return result;
   }
 }

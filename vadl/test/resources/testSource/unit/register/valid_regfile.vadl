@@ -1,0 +1,15 @@
+
+instruction set architecture Test = {
+
+  using Index = Bits<5>
+  using Regs  = Bits<32>
+
+  register file X: Index -> Regs
+
+  [ Y(2) = 0 ]
+  register file Y: Index -> Regs
+
+}
+
+application binary interface ABI for Test = {}
+micro processor TEST implements Test with ABI = {}

@@ -1,0 +1,33 @@
+// Double write on register in sibling branches
+// which results in potentially doubled writes with certain conditions
+
+instruction set architecture RegDualBranch = {
+
+  memory X: Bits<8> -> Bits<32>
+
+  instruction TEST: TMP = {
+    if (F1 = 2) then {
+      X(F1 + F2) := 1
+    }
+
+    if (F1 = 3) then {
+      if (F1 = 4) then {
+        X(F1 + F2) := 2
+      }
+    }
+
+  }
+
+  encoding TEST = { ENC = 1 }
+  assembly TEST = ""
+
+  format TMP: Bits<32> =
+  { F1: Bits<8>
+  , F2: Bits<8>
+  , F3: Bits<8>
+  , ENC: Bits<8>
+  }
+}
+
+application binary interface ABI for RegDualBranch = {}
+micro processor TEST implements RegDualBranch with ABI = {}

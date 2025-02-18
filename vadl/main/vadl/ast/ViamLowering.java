@@ -39,6 +39,7 @@ import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
 import vadl.viam.asm.elements.AsmAlternative;
@@ -171,7 +172,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * A simple helper util that returns a copy of the list casted to the class provided.
    */
   private <T, U> List<T> filterAndCastToInstance(List<U> values, Class<T> type) {
-    return values.stream().filter(type::isInstance).map(type::cast).toList();
+    return values.stream().filter(type::isInstance).map(type::cast)
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   @Override
@@ -740,7 +742,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // FIXME: make this togroup instead of toList
     var allDefinitions =
-        definition.definitions.stream().map(this::fetch).flatMap(Optional::stream).toList();
+        definition.definitions.stream().map(this::fetch).flatMap(Optional::stream)
+            .toList();
     var formats = filterAndCastToInstance(allDefinitions, Format.class);
     var functions = filterAndCastToInstance(allDefinitions, Function.class);
     var relocations = filterAndCastToInstance(allDefinitions, Relocation.class);
@@ -753,6 +756,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .map(v -> (Counter) v)
         .findFirst().orElse(null);
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
+
+    // Add programCounter to registers if it is a register.
+    // The register list is the owner of the PC register itself.
+    if (programCounter != null && programCounter.registerResource() instanceof Register pcReg) {
+      registers.add(pcReg);
+    }
 
     return new vadl.viam.InstructionSetArchitecture(
         identifier,
@@ -832,7 +841,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           .orElseThrow();
     }
 
-    return Optional.of(new MicroProcessor(identifier, isa, null, start, null, null));
+    var mip = new MicroProcessor(identifier, isa, null, start, null, null);
+
+    // FIXME: Remove this, once annotation framework is supported
+    mip.addAnnotation(new EnableHtifAnno());
+
+    return Optional.of(mip);
   }
 
   private InstructionSetDefinition mergeIsa(List<InstructionSetDefinition> definitions) {
@@ -959,18 +973,33 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    // TODO: Support recursive sub registers
+    var reg = new Register(
+        generateIdentifier(definition.viamId, definition.identifier()),
+        requireNonNull(definition.type),
+        Register.AccessKind.FULL,
+        Register.AccessKind.FULL,
+        null,
+        new Register[] {}
+    );
+    return Optional.of(reg);
   }
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterFileDefinition definition) {
-    // FIXME: Add proper constraints
+    var addrType = (DataType) requireNonNull(definition.type).argTypes().get(0);
+    var resultType = (DataType) requireNonNull(definition.type).resultType();
+
+    // FIXME: Add proper constraints. This is currently only temporarily hardcoded to
+    //    fix the riscv iss simulation.
+    var zeroConstraint = new RegisterFile.Constraint(Constant.Value.of(0, addrType),
+        Constant.Value.of(0, resultType));
+
     var regFile = new RegisterFile(
         generateIdentifier(definition.viamId, definition.identifier()),
-        (DataType) requireNonNull(definition.type).argTypes().get(0),
-        (DataType) requireNonNull(definition.type).resultType(),
-        new RegisterFile.Constraint[0]
+        addrType,
+        resultType,
+        new RegisterFile.Constraint[] {zeroConstraint}
     );
     return Optional.of(regFile);
   }

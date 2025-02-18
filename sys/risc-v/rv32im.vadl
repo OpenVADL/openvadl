@@ -1,8 +1,0 @@
-// SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
-// SPDX-License-Identifier: Apache-2.0
-
-// RISC-V 32 I instruction set
-
-import rv3264im::RV3264IM
-
-instruction set architecture RV32IM extending RV3264IM = {}

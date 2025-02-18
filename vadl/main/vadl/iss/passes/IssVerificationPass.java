@@ -64,13 +64,13 @@ public class IssVerificationPass extends AbstractIssPass {
   @SuppressWarnings("UnusedVariable")
   @Deprecated
   private void checkMipExists(Specification viam, List<DiagnosticBuilder> diagnostics) {
-    //    if (viam.isa().isEmpty()) {
-    //      diagnostics.add(
-    //          error("No Micro Processor Definition found",
-    //              viam.identifier.sourceLocation())
-    //              .help("Add a `instruction set architecture` definition to your specification.")
-    //      );
-    //    }
+    if (viam.mip().isEmpty()) {
+      diagnostics.add(
+          error("No Processor Definition found",
+              viam)
+              .help("Add a `processor` definition to your specification.")
+      );
+    }
   }
 
   private void checkProgramCounter(Specification viam, List<DiagnosticBuilder> diagnostics) {

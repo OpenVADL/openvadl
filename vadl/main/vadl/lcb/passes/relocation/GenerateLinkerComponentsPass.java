@@ -46,7 +46,7 @@ public class GenerateLinkerComponentsPass extends Pass {
   }
 
   /**
-   * Output for this pass.
+   * Output for this pass32.
    */
   public record Output(
       List<VariantKind> variantKinds,

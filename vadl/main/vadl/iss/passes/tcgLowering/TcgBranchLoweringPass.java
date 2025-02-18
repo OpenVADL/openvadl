@@ -26,12 +26,10 @@ import vadl.viam.graph.control.ControlSplitNode;
 import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.MergeNode;
-import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.CfgTraverser;
 
 /**

@@ -39,7 +39,8 @@ public class EmitFrameLoweringCppFilePass extends LcbTemplateRenderingPass {
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
     var returnAddress =
         renderRegister(abi.returnAddress().registerFile(), abi.returnAddress().addr());
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "hasFramePointer", abi.hasFramePointer(),
         "framePointer", framePointer,
         "stackPointer", stackPointer,

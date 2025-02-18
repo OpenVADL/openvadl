@@ -34,7 +34,8 @@ public class EmitClangTargetCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         CommonVarNames.REGISTERS, extractRegisters(specification));
   }
 

@@ -67,7 +67,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       List<CompilerRelocation> relocations,
       PassResults passResults) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
-        .map(pseudoInstruction -> renderPseudoInstruction(specification, cppFunctions, fieldUsages,
+        .map(pseudoInstruction -> renderPseudoInstruction(cppFunctions, fieldUsages,
             variants,
             relocations,
             passResults, pseudoInstruction))
@@ -75,7 +75,6 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private @Nonnull RenderedPseudoInstruction renderPseudoInstruction(
-      Specification specification,
       Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
@@ -85,8 +84,9 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var function = ensureNonNull(cppFunctions.get(pseudoInstruction),
         "cpp function must exist)");
 
+    var base = lcbConfiguration().processorName();
     var codeGen =
-        new PseudoExpansionCodeGenerator(lcbConfiguration().processorName().value(),
+        new PseudoExpansionCodeGenerator(base,
             fieldUsages,
             ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults),
             variants,
@@ -95,7 +95,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             function);
 
     var renderedFunction = codeGen.genFunctionDefinition();
-    var classPrefix = new CppClassImplName(specification.simpleName() + "MCInstExpander");
+    var classPrefix = new CppClassImplName(
+        lcbConfiguration().processorName().value().toLowerCase() + "MCInstExpander");
     ensureNonNull(function, "a function must exist");
     return new RenderedPseudoInstruction(
         classPrefix,
@@ -106,14 +107,13 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
 
   private List<RenderedPseudoInstruction> compilerInstructions(
       Abi abi,
-      Specification specification,
       Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
       List<CompilerRelocation> relocations,
       PassResults passResults) {
     return Stream.of(abi.returnSequence(), abi.callSequence())
-        .map(pseudoInstruction -> renderPseudoInstruction(specification,
+        .map(pseudoInstruction -> renderPseudoInstruction(
             cppFunctions,
             fieldUsages,
             variants,
@@ -144,9 +144,10 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         pseudoInstructions(specification, cppFunctions, fieldUsages, variants, relocations,
             passResults);
     var compilerInstructions =
-        compilerInstructions(abi, specification, cppFunctions, fieldUsages, variants, relocations,
+        compilerInstructions(abi, cppFunctions, fieldUsages, variants, relocations,
             passResults);
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "pseudoInstructions",
         Stream.concat(pseudoInstructions.stream(),
             compilerInstructions.stream()).toList()

@@ -136,7 +136,8 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
               immOperand.get(0).immediateOperand().rawEncoderMethod());
         })
         .toList();
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "instructions", printableInstructions,
         "instructionWithEncodedImmediate", Stream.concat(machineInstructionsWithImmediate.stream(),
             machineInstructionsWithLabel.stream()).toList());

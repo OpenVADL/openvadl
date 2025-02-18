@@ -1,6 +1,8 @@
 package vadl.lcb.tablegen.lowering;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static vadl.TestUtils.createAssembly;
+import static vadl.TestUtils.createIdentifier;
 
 import java.util.Collections;
 import org.junit.jupiter.api.Test;

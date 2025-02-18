@@ -11,7 +11,7 @@ import vadl.utils.WithSourceLocation;
  * <p>Diagnostics can hold a lot of information making them quite powerful, but also cumbersome to
  * create since often not all of their features are needed.
  */
-public class DiagnosticBuilder {
+public class DiagnosticBuilder extends Throwable {
   private final Diagnostic diagnostic;
 
   /**

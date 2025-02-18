@@ -4,7 +4,6 @@ import static vadl.error.Diagnostic.error;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.codegen.IssTranslateCodeGenerator;
 import vadl.iss.template.IssTemplateRenderingPass;

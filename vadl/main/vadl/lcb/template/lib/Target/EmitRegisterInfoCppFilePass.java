@@ -87,7 +87,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     var tableGenMachineInstructions = (List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class);
     var constraints = getConstraints(specification);
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "constraints", constraints,
         "framePointer", abi.framePointer(),
         "returnAddress", abi.returnAddress(),

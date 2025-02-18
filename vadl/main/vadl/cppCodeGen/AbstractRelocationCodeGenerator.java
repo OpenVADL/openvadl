@@ -8,7 +8,6 @@ import vadl.cppCodeGen.mixins.CRelocationMixins;
 import vadl.types.BitsType;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**

@@ -27,6 +27,10 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
     testAnnotationProcessor(project(":java-annotations"))
+    // Helps getting test files small and concise
+    testImplementation("org.apache.velocity:velocity-engine-core:2.3")
+    testImplementation("net.jqwik:jqwik:1.9.0")
+    testImplementation("org.yaml:snakeyaml:2.2")
 }
 
 sourceSets {

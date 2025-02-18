@@ -1,6 +1,5 @@
 package vadl.gcb.passes.typeNormalization;
 
-import java.util.Arrays;
 import java.util.stream.Stream;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;

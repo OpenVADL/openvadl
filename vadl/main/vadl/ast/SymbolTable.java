@@ -323,7 +323,7 @@ class SymbolTable {
         collectSymbols(symbols, counter.typeLiteral);
       } else if (definition instanceof RegisterDefinition register) {
         symbols.defineSymbol(register);
-        collectSymbols(symbols, register.type);
+        collectSymbols(symbols, register.typeLiteral);
       } else if (definition instanceof RegisterFileDefinition registerFile) {
         symbols.defineSymbol(registerFile);
         for (var argType : registerFile.typeLiteral.argTypes()) {

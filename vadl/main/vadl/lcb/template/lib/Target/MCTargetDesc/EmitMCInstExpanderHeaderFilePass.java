@@ -86,7 +86,8 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
     var pseudoInstructions =
         pseudoInstructions(specification, passResults, cppFunctions);
     var compilerInstructions = compilerInstructions(cppFunctions, specification);
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(), "pseudoInstructions",
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(), "pseudoInstructions",
         Stream.concat(pseudoInstructions.stream(),
             compilerInstructions.stream()).toList()
     );

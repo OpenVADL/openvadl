@@ -415,16 +415,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var regRead = new ReadRegNode(counter.registerRef(),
           (DataType) Objects.requireNonNull(expr.type), null);
 
-      // FIXME: Properly divide by memory bit width (8 bits for one byte is quite common)
-      // What about bytes that aren't 8 bits?
-      var scale =
-          counterType.bitWidth() / 8;
+      // FIXME: @ffreitag this is currently hardcoded as was wrong before.
+      //  It must add the instruction width in bytes.
+      // This width is obtained by the format type of the current instruction
+      var instrWidth = 32;
+      // The byte is defined by the "word" that is returned by the main memory definition.
+      // So essentially the return type in the relation type of the memory definition.
+      var byteWidth = 8;
+      var instrWidthInByte = instrWidth / byteWidth;
 
       int offset = 0;
       for (var subcall : expr.subCalls) {
         var subcallName = subcall.id().name;
         if (subcallName.equals("next")) {
-          offset += scale;
+          offset += instrWidthInByte;
         } else {
           throw new IllegalStateException("unknown subcall: " + subcallName);
         }

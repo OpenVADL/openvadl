@@ -4,12 +4,9 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
@@ -17,7 +14,6 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
-import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
@@ -84,7 +80,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var conditionalMove = getConditionalMove(hasCMove32, hasCMove64, labelledMachineInstructions);
 
     var map = new HashMap<String, Object>();
-    map.put(CommonVarNames.NAMESPACE, specification.simpleName());
+    map.put(CommonVarNames.NAMESPACE, lcbConfiguration().processorName().value().toLowerCase());
     map.put("registerFiles", registerFiles);
     map.put("framePointer", framePointer);
     map.put("stackPointer", stackPointer);

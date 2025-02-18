@@ -41,7 +41,8 @@ public class EmitAsmBackendCppFilePass extends LcbTemplateRenderingPass {
         GenerateLinkerComponentsPass.class);
     var fixups = output.fixups();
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "is64Bit", abi.stackPointer().registerFile().resultType().bitWidth() == 64,
         "fixups", fixups);
   }

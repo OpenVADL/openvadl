@@ -1,6 +1,7 @@
 package vadl.viam.passes.algebraic_simplication.rules.impl;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static vadl.TestUtils.createIdentifier;
 
 import java.util.List;
 import java.util.stream.Stream;

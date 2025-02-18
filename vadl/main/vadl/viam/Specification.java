@@ -99,10 +99,10 @@ public class Specification extends Definition {
    * @return A stream of {@link Format} objects representing the format definitions.
    */
   public Stream<Format> findAllFormats() {
-    var innerFormats = definitions.stream()
-        .filter(InstructionSetArchitecture.class::isInstance)
-        .map(InstructionSetArchitecture.class::cast)
-        .flatMap(i -> i.ownFormats().stream());
+    var innerFormats = isa().map(
+            i -> i.ownFormats().stream()
+        ).orElse(Stream.empty());
+
     return Stream.concat(formats(), innerFormats);
   }
 

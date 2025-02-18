@@ -368,7 +368,15 @@ public class TypeChecker
 
   @Override
   public Void visit(RegisterDefinition definition) {
-    throwUnimplemented(definition);
+    definition.typeLiteral.accept(this);
+    if (!(definition.typeLiteral.type instanceof DataType regType)) {
+      var type = definition.typeLiteral.type;
+      throw Diagnostic.error("Invalid Type", definition)
+          .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
+          .note("Type was %s.", type == null ? "unknown" : type)
+          .build();
+    }
+    definition.type = regType;
     return null;
   }
 
@@ -1305,6 +1313,14 @@ public class TypeChecker
             .build();
       }
       expr.type = functionDefinition.retType.type;
+      return null;
+    }
+
+    if (origin instanceof RegisterDefinition registerDefinition) {
+      if (registerDefinition.type == null) {
+        registerDefinition.accept(this);
+      }
+      expr.type = Objects.requireNonNull(registerDefinition.type);
       return null;
     }
 

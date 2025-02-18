@@ -1,7 +1,6 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
-import java.util.Set;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.graph.Node;

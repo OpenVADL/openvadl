@@ -1,7 +1,5 @@
 package vadl.viam.graph;
 
-import static vadl.viam.ViamError.ensure;
-
 import java.util.List;
 import javax.annotation.Nullable;
 

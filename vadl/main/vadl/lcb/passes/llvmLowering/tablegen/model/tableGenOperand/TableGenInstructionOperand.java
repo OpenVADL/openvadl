@@ -6,7 +6,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
  * An {@link TableGenInstruction} has list of operands for inputs and outputs.

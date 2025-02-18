@@ -132,7 +132,7 @@ public class AstDumper
   @Override
   public Void visit(RegisterDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier(), definition.type);
+    dumpChildren(definition.identifier(), definition.typeLiteral);
     return null;
   }
 

@@ -39,7 +39,8 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
     var elfRelocations = output.elfRelocations();
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "functions", elfRelocations.stream()
             .filter(x -> x instanceof RelocationLowerable)
             .map(x -> (RelocationLowerable) x)

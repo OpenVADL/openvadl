@@ -29,7 +29,6 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
-import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
 /**
@@ -113,7 +112,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                 ))
             .toList();
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "returnAddress", abi.returnAddress(),
         "addi", addi,
         "stackPointerRegister", abi.stackPointer(),

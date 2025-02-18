@@ -12,7 +12,6 @@ import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;

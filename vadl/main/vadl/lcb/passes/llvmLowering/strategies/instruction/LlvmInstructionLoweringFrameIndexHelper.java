@@ -5,7 +5,6 @@ import static vadl.viam.ViamError.ensureNonNull;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;

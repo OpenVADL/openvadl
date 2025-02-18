@@ -45,7 +45,8 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
         specification.registerFiles()
             .map(x -> new RegisterClass(x.identifier.simpleName()))
             .toList();
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         CommonVarNames.REGISTERS_CLASSES, registerFiles,
         "registers",
         specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))

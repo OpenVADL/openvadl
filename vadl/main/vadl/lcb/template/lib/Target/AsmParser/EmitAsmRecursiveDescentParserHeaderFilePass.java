@@ -53,7 +53,8 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
     var instructions = instructions(specification);
     var constants = constants(specification);
     var parsingResults = Stream.concat(constants, instructions).toList();
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "formats", Stream.concat(composedStructs, singleFieldStructs).toList(),
         "parsingResults", parsingResults);
   }

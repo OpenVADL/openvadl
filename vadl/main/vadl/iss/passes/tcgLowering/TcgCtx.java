@@ -19,7 +19,6 @@ import vadl.viam.Instruction;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
