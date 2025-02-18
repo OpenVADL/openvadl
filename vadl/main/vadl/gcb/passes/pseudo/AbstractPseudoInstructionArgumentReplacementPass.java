@@ -128,7 +128,7 @@ public abstract class AbstractPseudoInstructionArgumentReplacementPass extends P
                 // {
                 //     JALR{ rs1 = 1 as Bits5, rd = 0 as Bits5, imm = 0 as Bits12 }
                 // }
-                if(argument instanceof ConstantNode constantNode) {
+                if (argument instanceof ConstantNode constantNode) {
                   checkIfRegisterIndexHasConstraintForValue(occurrence, constantNode.constant());
                 }
                 occurrence.replaceAndDelete(argument.copy());

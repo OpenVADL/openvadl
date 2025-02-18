@@ -52,9 +52,10 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
         void processornamevalueFrameLowering::anchor() {}
                 
         processornamevalueFrameLowering::processornamevalueFrameLowering(const processornamevalueSubtarget &STI)
-            : TargetFrameLowering(StackGrowsDown, Align(16) /*=StackAlignment*/
-                                  ,
-                                  0 /*=LocalAreaOffset*/
+            : TargetFrameLowering(StackGrowsDown,
+              Align(16) /*=StackAlignment*/,
+              0 /*=LocalAreaOffset*/,
+              Align(16) /*=TransientStackAlignment*/
                                   ),
               STI(STI)
         {

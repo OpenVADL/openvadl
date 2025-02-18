@@ -308,7 +308,8 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     for (var node : nodes) {
       var sym = symbolTable.getNextVariable();
       context.ln("MCInst %s = MCInst();", sym)
-          .ln("%s.setOpcode(%s::%s);", sym, processorName.value(), node.target().identifier.simpleName());
+          .ln("%s.setOpcode(%s::%s);", sym, processorName.value(),
+              node.target().identifier.simpleName());
       writeInstructionCall(context, node, sym);
       context.ln("result.push_back(%s);", sym);
     }
