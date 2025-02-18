@@ -38,7 +38,7 @@ public abstract class LlvmRiscvFileCheckTest extends AbstractLcbTest {
   private static Stream<String> inputFilesFromCFile(String target, int optLevel) {
     return Arrays.stream(
             Objects.requireNonNull(
-                new File("../../open-vadl/vadl-test/main/resources/llvm/riscv/llvmIR/" + target + "/O"
+                new File("test/resources/llvm/riscv/llvmIR/" + target + "/O"
                     + optLevel)
                     .listFiles()))
         .filter(File::isFile)
@@ -67,7 +67,7 @@ public abstract class LlvmRiscvFileCheckTest extends AbstractLcbTest {
     // Move Dockerfile into Docker Context
     {
       var inputStream = new FileInputStream(
-          "../../open-vadl/vadl-test/main/resources/images/spike_" + getTarget() + "/Dockerfile");
+          "test/resources/images/spike_" + getTarget() + "/Dockerfile");
       var outputStream = new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
       inputStream.transferTo(outputStream);
       outputStream.close();
@@ -87,7 +87,7 @@ public abstract class LlvmRiscvFileCheckTest extends AbstractLcbTest {
               List.of(
                   Pair.of(
                       Path.of(
-                          "../../open-vadl/vadl-test/main/resources/llvm/riscv/llvmIR/" + target
+                          "test/resources/llvm/riscv/llvmIR/" + target
                               + "/O" + optLevel),
                       "/src/inputs")
               ),

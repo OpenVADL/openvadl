@@ -33,7 +33,7 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
     Files.createDirectories(Path.of(configuration.outputPath() + "/lcb/embench"));
     {
       var inputStream = new FileInputStream(
-          "../../open-vadl/vadl-test/main/resources/images/spike_rv32im/Dockerfile");
+          "test/resources/images/spike_rv32im/Dockerfile");
       var outputStream =
           new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
       inputStream.transferTo(outputStream);
@@ -43,7 +43,7 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
     // Copy embench
     {
       var input = new File(
-          "../../open-vadl/vadl-test/main/resources/embench");
+          "test/resources/embench");
       var output = new File(configuration.outputPath() + "/lcb/embench");
       FileUtils.copyDirectory(input, output);
     }

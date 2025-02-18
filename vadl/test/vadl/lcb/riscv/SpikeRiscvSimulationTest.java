@@ -32,7 +32,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
 
   private static Stream<String> inputFilesFromCFile() {
     return Arrays.stream(
-            Objects.requireNonNull(new File("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike")
+            Objects.requireNonNull(new File("test/resources/llvm/riscv/spike")
                 .listFiles()))
         .filter(File::isFile)
         .map(File::getName);
@@ -62,7 +62,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
     // Move Dockerfile into Docker Context
     {
       var inputStream = new FileInputStream(
-          "../../open-vadl/vadl-test/main/resources/images/spike_" + getTarget() + "/Dockerfile");
+          "test/resources/images/spike_" + getTarget() + "/Dockerfile");
       var outputStream = new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
       inputStream.transferTo(outputStream);
       outputStream.close();
@@ -76,7 +76,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
       runContainerAndCopyInputIntoContainer(cachedImage,
-          List.of(Pair.of(Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
+          List.of(Pair.of(Path.of("test/resources/llvm/riscv/spike"),
               "/src/inputs")),
           Map.of(
               "OPT_LEVEL", optLevel + "",

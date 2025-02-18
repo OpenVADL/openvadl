@@ -58,7 +58,7 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
     // Move Dockerfile into Docker Context
     {
       var inputStream = new FileInputStream(
-          "../../open-vadl/vadl-test/main/resources/images/spike_" + getTarget() + "/Dockerfile");
+          "test/resources/images/spike_" + getTarget() + "/Dockerfile");
       var outputStream = new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
       inputStream.transferTo(outputStream);
       outputStream.close();
@@ -77,10 +77,10 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
       runContainerAndCopyInputIntoContainer(cachedImage,
           List.of(
               Pair.of(
-                  Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/c"),
+                  Path.of("test/resources/llvm/riscv/c"),
                   "/src/inputs"),
               Pair.of(
-                  Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/assertions/"
+                  Path.of("test/resources/llvm/riscv/assertions/"
                       + getTarget()),
                   "/assertions")
           ),

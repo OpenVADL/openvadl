@@ -1,5 +1,6 @@
 package vadl.cppCodeGen;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -36,13 +37,13 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     {
       VadlFileUtils.createDirectories(configuration, "encoding", "inputs");
       VadlFileUtils.copyFile(Path.of(
-              "../../open-vadl/vadl/main/resources/templates/common/vadl-builtins.h"
+              "main/resources/templates/common/vadl-builtins.h"
           ),
           Path.of(configuration.outputPath() + "/vadl-builtins.h")
       );
       VadlFileUtils.copyDirectory(
           Path.of(
-              "../../open-vadl/vadl-test/main/resources/images/encodingCodeGeneratorCppVerification/"),
+              "test/resources/images/encodingCodeGeneratorCppVerification/"),
           Path.of(configuration.outputPath() + "/encoding/"));
     }
 
@@ -127,7 +128,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
             accessFunction.identifier.lower(),
             accessFunction.fieldAccess().fieldRef().simpleName());
     var encodeFunctionGenerator =
-        new GcbAccessOrExtractionFunctionCodeGenerator(encodingFunction, encodingFunction.fieldAccess(),
+        new GcbAccessOrExtractionFunctionCodeGenerator(encodingFunction,
+            encodingFunction.fieldAccess(),
             encodingFunction.identifier.lower(),
             encodingFunction.fieldAccess().fieldRef().simpleName());
 

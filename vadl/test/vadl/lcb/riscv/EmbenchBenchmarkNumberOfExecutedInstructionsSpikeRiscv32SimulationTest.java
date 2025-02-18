@@ -38,7 +38,7 @@ public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationT
     Files.createDirectories(Path.of(configuration.outputPath() + "/lcb/embench"));
     {
       var inputStream = new FileInputStream(
-          "../../open-vadl/vadl-test/main/resources/images/spike_rv32im/Dockerfile");
+          "test/resources/images/spike_rv32im/Dockerfile");
       var outputStream =
           new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
       inputStream.transferTo(outputStream);
@@ -48,7 +48,7 @@ public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationT
     // Copy embench
     {
       var input = new File(
-          "../../open-vadl/vadl-test/main/resources/embench");
+          "test/main/resources/embench");
       var output = new File(configuration.outputPath() + "/lcb/embench");
       FileUtils.copyDirectory(input, output);
     }
@@ -60,7 +60,7 @@ public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationT
         .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget));
 
     runContainerAndCopyInputIntoContainer(image,
-        List.of(Pair.of(Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
+        List.of(Pair.of(Path.of("test/resources/llvm/riscv/spike"),
             "/src/inputs")),
         Map.of(
             "LLVM_PARALLEL_COMPILE_JOBS", "4",
