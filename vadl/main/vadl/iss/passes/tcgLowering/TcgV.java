@@ -3,13 +3,11 @@ package vadl.iss.passes.tcgLowering;
 import static vadl.viam.ViamError.ensure;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Resource;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.LetNode;
 
 /**
  * The TcgV class represents a variable in the context of the QEMU ISS (TCG).

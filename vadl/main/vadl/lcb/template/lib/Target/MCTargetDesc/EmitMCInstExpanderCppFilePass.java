@@ -67,7 +67,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       List<CompilerRelocation> relocations,
       PassResults passResults) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
-        .map(pseudoInstruction -> renderPseudoInstruction(specification, cppFunctions, fieldUsages,
+        .map(pseudoInstruction -> renderPseudoInstruction(cppFunctions, fieldUsages,
             variants,
             relocations,
             passResults, pseudoInstruction))
@@ -75,7 +75,6 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private @Nonnull RenderedPseudoInstruction renderPseudoInstruction(
-      Specification specification,
       Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
@@ -108,14 +107,13 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
 
   private List<RenderedPseudoInstruction> compilerInstructions(
       Abi abi,
-      Specification specification,
       Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Map<Format.Field, List<VariantKind>> variants,
       List<CompilerRelocation> relocations,
       PassResults passResults) {
     return Stream.of(abi.returnSequence(), abi.callSequence())
-        .map(pseudoInstruction -> renderPseudoInstruction(specification,
+        .map(pseudoInstruction -> renderPseudoInstruction(
             cppFunctions,
             fieldUsages,
             variants,
@@ -146,7 +144,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         pseudoInstructions(specification, cppFunctions, fieldUsages, variants, relocations,
             passResults);
     var compilerInstructions =
-        compilerInstructions(abi, specification, cppFunctions, fieldUsages, variants, relocations,
+        compilerInstructions(abi, cppFunctions, fieldUsages, variants, relocations,
             passResults);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),

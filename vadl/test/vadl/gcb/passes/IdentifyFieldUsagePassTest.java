@@ -5,9 +5,9 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.gcb.AbstractGcbTest;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.gcb.AbstractGcbTest;
 import vadl.viam.Format;
 
 public class IdentifyFieldUsagePassTest extends AbstractGcbTest {

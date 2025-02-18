@@ -3,13 +3,13 @@ package vadl.lcb;
 import java.io.IOException;
 import java.util.List;
 import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.AbstractCppCodeGenTest;
 import vadl.gcb.valuetypes.ProcessorName;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.cppCodeGen.AbstractCppCodeGenTest;
 
 public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
 

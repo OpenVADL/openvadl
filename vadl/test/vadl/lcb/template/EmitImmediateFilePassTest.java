@@ -3,10 +3,10 @@ package vadl.lcb.template;
 import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.lcb.AbstractLcbTest;
 
 public class EmitImmediateFilePassTest extends AbstractLcbTest {
   @Test

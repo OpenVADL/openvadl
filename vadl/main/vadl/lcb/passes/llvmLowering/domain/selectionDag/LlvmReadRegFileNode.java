@@ -2,14 +2,12 @@ package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionIndexedRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
 import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.RegisterFile;

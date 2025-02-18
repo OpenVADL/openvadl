@@ -7,15 +7,12 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SliceNode;
-import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * Produce a pure function that does not access any entities except parameters.

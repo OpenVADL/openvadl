@@ -7,19 +7,16 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import org.junit.jupiter.api.Test;
+import vadl.AbstractTest;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.AbstractTest;
 import vadl.types.BuiltInTable;
 import vadl.viam.Instruction;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 

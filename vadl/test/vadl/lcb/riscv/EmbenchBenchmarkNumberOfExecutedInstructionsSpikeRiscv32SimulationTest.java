@@ -15,8 +15,8 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
-import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.lcb.AbstractLcbTest;
+import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
 public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationTest

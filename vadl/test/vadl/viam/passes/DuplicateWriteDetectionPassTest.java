@@ -10,10 +10,10 @@ import java.io.IOException;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import vadl.AbstractTest;
 import vadl.error.DiagnosticList;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.AbstractTest;
 
 public class DuplicateWriteDetectionPassTest extends AbstractTest {
 

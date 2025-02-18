@@ -3,11 +3,8 @@ package vadl.cppCodeGen.mixins;
 import static vadl.error.DiagUtils.throwNotAllowed;
 
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.error.Diagnostic;
 import vadl.javaannotations.Handler;
-import vadl.utils.SourceLocation;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;

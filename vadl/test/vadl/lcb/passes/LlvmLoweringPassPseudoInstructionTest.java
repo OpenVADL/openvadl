@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenMachineInstructionPrinterVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPatternPrinterVisitor;
@@ -16,7 +17,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPa
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.lcb.AbstractLcbTest;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;

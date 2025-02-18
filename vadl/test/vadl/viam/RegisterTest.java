@@ -8,9 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static vadl.TestUtils.findDefinitionByNameIn;
-import static vadl.TestUtils.findFormatByName;
-import static vadl.TestUtils.findResourceByName;
 import static vadl.utils.GraphUtils.getSingleLeafNode;
 import static vadl.utils.GraphUtils.getSingleNode;
 

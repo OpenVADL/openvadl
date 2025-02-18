@@ -18,10 +18,10 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import org.testcontainers.utility.MountableFile;
+import vadl.DockerExecutionTest;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.DockerExecutionTest;
 
 /**
  * The test class to build and run tests on the QEMU ISS.

@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.opentest4j.AssertionFailedError;
+import vadl.AbstractTest;
 import vadl.TestUtils;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.AbstractTest;
 import vadl.types.Type;
 
 /**

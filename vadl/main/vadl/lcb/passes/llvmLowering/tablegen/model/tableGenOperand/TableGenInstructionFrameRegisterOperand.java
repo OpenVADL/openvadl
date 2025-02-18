@@ -1,7 +1,6 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Register;
 import vadl.viam.graph.Node;

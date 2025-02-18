@@ -16,8 +16,8 @@ import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
-import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.lcb.AbstractLcbTest;
+import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
 public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {

@@ -2,11 +2,11 @@ package vadl.gcb;
 
 import java.io.IOException;
 import vadl.configuration.GcbConfiguration;
+import vadl.cppCodeGen.AbstractCppCodeGenTest;
 import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.cppCodeGen.AbstractCppCodeGenTest;
 
 public abstract class AbstractGcbTest extends AbstractCppCodeGenTest {
 

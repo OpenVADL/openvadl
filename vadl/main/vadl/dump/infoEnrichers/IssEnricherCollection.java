@@ -1,6 +1,5 @@
 package vadl.dump.infoEnrichers;
 
-import static java.util.Objects.requireNonNull;
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.ArrayList;
@@ -9,8 +8,6 @@ import java.util.stream.Collectors;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
-import vadl.iss.passes.IssTcgVAllocationPass;
-import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.viam.Instruction;
 import vadl.viam.graph.dependency.ReadResourceNode;

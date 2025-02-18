@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;

@@ -8,4 +8,3 @@ rootProject.name = "open-vadl"
 include("vadl")
 include("java-annotations")
 include("vadl-cli")
-include("vadl-test")

@@ -3,7 +3,6 @@ package vadl.dump.infoEnrichers;
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import vadl.dump.Info;
@@ -13,7 +12,6 @@ import vadl.dump.entities.DefinitionEntity;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionCtx;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionCtx;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;

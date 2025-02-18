@@ -5,11 +5,11 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import vadl.AbstractTest;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.AbstractTest;
 
 public class IssLoweringTest extends AbstractTest {
 

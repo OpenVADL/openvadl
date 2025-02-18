@@ -7,7 +7,6 @@ import static vadl.TestUtils.findDefinitionByNameIn;
 import java.io.IOException;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.TestFactory;
 import vadl.AbstractTest;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;

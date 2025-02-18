@@ -3,7 +3,10 @@ package vadl.gcb.passes.encodingGeneration.strategies.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static vadl.TestUtils.*;
+import static vadl.TestUtils.createField;
+import static vadl.TestUtils.createFieldAccess;
+import static vadl.TestUtils.createFormat;
+import static vadl.TestUtils.createFunctionWithoutParam;
 
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;

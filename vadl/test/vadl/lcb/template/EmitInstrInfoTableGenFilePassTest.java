@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
+import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.template.lib.Target.EmitInstrInfoTableGenFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.template.AbstractTemplateRenderingPass;
-import vadl.lcb.AbstractLcbTest;
 
 public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   @Test

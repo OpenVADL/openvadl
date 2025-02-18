@@ -1,9 +1,0 @@
-// encoding function does not use VAR but LO
-format SIMPLE_ACCESS : Bits<8> =
-  { HI  : Bits<2>
-  , LO  : Bits<6>
-  , VAR = HI as Bits<4>
-  : encode
-    { HI => LO as Bits<2>
-    }
-  }

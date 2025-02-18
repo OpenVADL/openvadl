@@ -5,10 +5,10 @@ import java.nio.charset.Charset;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;
+import vadl.lcb.AbstractLcbTest;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.template.AbstractTemplateRenderingPass;
-import vadl.lcb.AbstractLcbTest;
 
 public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest {
   @Test

@@ -4,10 +4,8 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import com.google.common.collect.Streams;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

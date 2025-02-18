@@ -1,7 +1,6 @@
 package vadl.gcb.passes;
 
 import java.util.IdentityHashMap;
-import java.util.Map;
 import java.util.Optional;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;

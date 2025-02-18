@@ -4,10 +4,10 @@ import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.lcb.AbstractLcbTest;
 
 public class GenerateRegisterClassesPassTest extends AbstractLcbTest {
 

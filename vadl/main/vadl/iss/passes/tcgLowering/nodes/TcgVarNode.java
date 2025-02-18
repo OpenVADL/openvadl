@@ -2,7 +2,6 @@ package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.Input;

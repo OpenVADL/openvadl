@@ -21,7 +21,6 @@ import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgDivNode;
-import vadl.iss.passes.tcgLowering.nodes.TcgExtendNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGottoTb;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;

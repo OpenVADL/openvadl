@@ -2,7 +2,6 @@ package vadl.gcb.passes.relocation;
 
 import java.math.BigInteger;
 import java.util.List;
-import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
 import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
 import vadl.utils.SourceLocation;

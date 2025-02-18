@@ -1,6 +1,7 @@
 package vadl.lcb.codegen.docker;
 
-import static vadl.TestUtils.*;
+import static vadl.TestUtils.createFieldWithParent;
+import static vadl.TestUtils.createFunction;
 
 import java.util.stream.Stream;
 import org.junit.jupiter.params.provider.Arguments;

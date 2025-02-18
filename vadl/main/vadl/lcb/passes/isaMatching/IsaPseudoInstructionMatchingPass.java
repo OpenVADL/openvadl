@@ -4,7 +4,6 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;

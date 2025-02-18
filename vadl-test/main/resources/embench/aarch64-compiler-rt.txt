@@ -1,8 +1,0 @@
-Taken from llvm commit 26fbdff458ed8a829f732074c06f289b92867a82
-
-Originally in subdirectory `llvm/compiler-rt/lib/builtins`
-
-Changes:
-- all files in subdirectories deleted
-- CMakeLists.txt deleted
-- Custom Makefile added

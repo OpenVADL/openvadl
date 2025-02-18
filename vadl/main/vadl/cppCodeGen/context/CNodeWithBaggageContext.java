@@ -4,9 +4,6 @@ import static vadl.viam.ViamError.ensureNonNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import javax.annotation.Nullable;
 import vadl.viam.graph.Node;
 
 /**

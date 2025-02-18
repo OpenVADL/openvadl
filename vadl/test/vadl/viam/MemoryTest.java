@@ -1,7 +1,5 @@
 package vadl.viam;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Assertions;
 import vadl.AbstractTest;
 import vadl.TestUtils;

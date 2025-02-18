@@ -4,7 +4,6 @@ import static vadl.error.DiagUtils.throwNotAllowed;
 
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.nodes.IssExtractNode;
-import vadl.iss.passes.opDecomposition.nodes.IssExprNode;
 import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
 

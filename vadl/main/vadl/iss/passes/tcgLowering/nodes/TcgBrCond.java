@@ -6,7 +6,6 @@ import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgCondition;
 import vadl.iss.passes.tcgLowering.TcgLabel;
-import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;

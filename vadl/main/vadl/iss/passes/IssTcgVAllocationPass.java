@@ -15,7 +15,6 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.iss.DataFlowAnalysis;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.tcgLowering.IssTcgContextPass;
 import vadl.iss.passes.tcgLowering.TcgCtx;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
@@ -23,7 +22,6 @@ import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
@@ -31,7 +29,6 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
-import vadl.viam.graph.dependency.DependencyNode;
 
 /**
  * A pass that performs variable allocation for the Instruction Set Simulator (ISS).
