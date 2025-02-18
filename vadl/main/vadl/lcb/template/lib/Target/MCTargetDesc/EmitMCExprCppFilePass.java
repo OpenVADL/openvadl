@@ -58,7 +58,8 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
 
     var baseInfos = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "immediates", wrapped,
         "variantKinds", output.variantKinds(),
         "baseInfos", baseInfos

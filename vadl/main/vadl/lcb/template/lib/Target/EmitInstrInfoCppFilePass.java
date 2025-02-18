@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
-import jdk.jshell.Diag;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
@@ -27,7 +26,6 @@ import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
-import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -270,7 +268,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var jump = getJump(specification, pseudoMatches);
 
     var map = new HashMap<String, Object>();
-    map.put(CommonVarNames.NAMESPACE, specification.simpleName());
+    map.put(CommonVarNames.NAMESPACE, lcbConfiguration().processorName().value().toLowerCase());
     map.put("copyPhysInstructions", getMovInstructions(isaMatches));
     map.put("storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches));
     map.put("loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches));

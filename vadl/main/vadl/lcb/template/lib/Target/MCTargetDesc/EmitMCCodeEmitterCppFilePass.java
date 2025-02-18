@@ -123,7 +123,8 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
       }
     }
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "immediates", immediates,
         "variantUpdates", result,
         "syms", resultSym);

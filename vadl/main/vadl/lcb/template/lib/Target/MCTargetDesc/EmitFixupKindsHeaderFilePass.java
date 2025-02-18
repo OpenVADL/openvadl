@@ -37,7 +37,8 @@ public class EmitFixupKindsHeaderFilePass extends LcbTemplateRenderingPass {
         GenerateLinkerComponentsPass.class);
     var fixups = output.fixups();
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "fixups", fixups);
   }
 }

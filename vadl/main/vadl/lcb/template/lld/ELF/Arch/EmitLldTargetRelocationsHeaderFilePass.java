@@ -39,7 +39,8 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
     var relocations = output.elfRelocations();
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "relocations", relocations.stream()
             .filter(x -> x instanceof RelocationLowerable)
             .map(x -> (RelocationLowerable) x)

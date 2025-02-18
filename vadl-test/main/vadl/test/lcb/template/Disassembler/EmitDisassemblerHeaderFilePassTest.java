@@ -30,12 +30,12 @@ public class EmitDisassemblerHeaderFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        #ifndef LLVM_LIB_TARGET_rv64im_DISASSEMBLER_rv64imDISASSEMBLER_H
-        #define LLVM_LIB_TARGET_rv64im_DISASSEMBLER_rv64imDISASSEMBLER_H
+        #ifndef LLVM_LIB_TARGET_processornamevalue_DISASSEMBLER_processornamevalueDISASSEMBLER_H
+        #define LLVM_LIB_TARGET_processornamevalue_DISASSEMBLER_processornamevalueDISASSEMBLER_H
                 
-        #include "MCTargetDesc/rv64imMCTargetDesc.h"
-        #include "TargetInfo/rv64imTargetInfo.h"
-        #include "Utils/rv64imBaseInfo.h"
+        #include "MCTargetDesc/processornamevalueMCTargetDesc.h"
+        #include "TargetInfo/processornamevalueTargetInfo.h"
+        #include "Utils/processornamevalueBaseInfo.h"
         #include "llvm/CodeGen/Register.h"
         #include "llvm/MC/MCContext.h"
         #include "llvm/MC/MCDisassembler/MCDisassembler.h"
@@ -52,10 +52,10 @@ public class EmitDisassemblerHeaderFilePassTest extends AbstractLcbTest {
                 
         namespace llvm
         {
-            class rv64imDisassembler : public MCDisassembler
+            class processornamevalueDisassembler : public MCDisassembler
             {
             public:
-                rv64imDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool isBigEndian);
+                processornamevalueDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool isBigEndian);
                 
                 DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CStream) const override;
                 
@@ -64,7 +64,7 @@ public class EmitDisassemblerHeaderFilePassTest extends AbstractLcbTest {
             };
         } // end llvm namespace
                 
-        #endif
+        #endif 
         """.trim().lines(), output);
   }
 }

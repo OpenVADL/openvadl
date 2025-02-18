@@ -99,7 +99,8 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "immediates",
         extractImmediates(passResults),
         "instructionSize", getInstructionSize(specification),

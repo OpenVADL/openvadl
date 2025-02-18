@@ -30,112 +30,112 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        #include "rv64imDisassembler.h"
+        #include "processornamevalueDisassembler.h"
         #include <iostream>
         #include "Utils/ImmediateUtils.h"
-        
+                
         #define DEBUG_TYPE "disassembler"
-        
+                
         using namespace llvm;
-        
-        rv64imDisassembler::rv64imDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool isBigEndian) : MCDisassembler(STI, Ctx), IsBigEndian(isBigEndian)
+                
+        processornamevalueDisassembler::processornamevalueDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool isBigEndian) : MCDisassembler(STI, Ctx), IsBigEndian(isBigEndian)
         {
         }
-        
+                
         /* == Register Classes == */
-        
+                
         static const unsigned XDecoderTable[] = {
          \s
-            rv64im::X0,
-            rv64im::X1,
-            rv64im::X2,
-            rv64im::X3,
-            rv64im::X4,
-            rv64im::X5,
-            rv64im::X6,
-            rv64im::X7,
-            rv64im::X8,
-            rv64im::X9,
-            rv64im::X10,
-            rv64im::X11,
-            rv64im::X12,
-            rv64im::X13,
-            rv64im::X14,
-            rv64im::X15,
-            rv64im::X16,
-            rv64im::X17,
-            rv64im::X18,
-            rv64im::X19,
-            rv64im::X20,
-            rv64im::X21,
-            rv64im::X22,
-            rv64im::X23,
-            rv64im::X24,
-            rv64im::X25,
-            rv64im::X26,
-            rv64im::X27,
-            rv64im::X28,
-            rv64im::X29,
-            rv64im::X30,
-            rv64im::X31
+            processornamevalue::X0,
+            processornamevalue::X1,
+            processornamevalue::X2,
+            processornamevalue::X3,
+            processornamevalue::X4,
+            processornamevalue::X5,
+            processornamevalue::X6,
+            processornamevalue::X7,
+            processornamevalue::X8,
+            processornamevalue::X9,
+            processornamevalue::X10,
+            processornamevalue::X11,
+            processornamevalue::X12,
+            processornamevalue::X13,
+            processornamevalue::X14,
+            processornamevalue::X15,
+            processornamevalue::X16,
+            processornamevalue::X17,
+            processornamevalue::X18,
+            processornamevalue::X19,
+            processornamevalue::X20,
+            processornamevalue::X21,
+            processornamevalue::X22,
+            processornamevalue::X23,
+            processornamevalue::X24,
+            processornamevalue::X25,
+            processornamevalue::X26,
+            processornamevalue::X27,
+            processornamevalue::X28,
+            processornamevalue::X29,
+            processornamevalue::X30,
+            processornamevalue::X31
          \s
         };
-        
-        
+                
+                
         /* == Immediate Decoding == */
-        
-        DecodeStatus RV64IM_Btype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+                
+        DecodeStatus RV3264I_Btype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
-            Imm = RV64IM_Btype_immS_decode(Imm);
+            Imm = RV3264I_Btype_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus RV64IM_Ftype_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264I_Ftype_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 63;
-            Imm = RV64IM_Ftype_shamt_decode(Imm);
+            Imm = RV3264I_Ftype_shamt_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus RV64IM_Itype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264I_Itype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
-            Imm = RV64IM_Itype_immS_decode(Imm);
+            Imm = RV3264I_Itype_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus RV64IM_Jtype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264I_Jtype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 1048575;
-            Imm = RV64IM_Jtype_immS_decode(Imm);
+            Imm = RV3264I_Jtype_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus RV64IM_Rtype_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264I_Rtype_shamt_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 31;
-            Imm = RV64IM_Rtype_shamt_decode(Imm);
+            Imm = RV3264I_Rtype_shamt_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus RV64IM_Stype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264I_Stype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
-            Imm = RV64IM_Stype_immS_decode(Imm);
+            Imm = RV3264I_Stype_immS_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        DecodeStatus RV64IM_Utype_immUp_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
+        DecodeStatus RV3264I_Utype_immUp_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 1048575;
-            Imm = RV64IM_Utype_immUp_decode(Imm);
+            Imm = RV3264I_Utype_immUp_decode(Imm);
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-        
-        
-        
+                
+                
+                
         static DecodeStatus DecodeXRegisterClass
             ( MCInst &Inst
             , uint64_t RegNo
@@ -146,29 +146,29 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
             // check if register number is in range
             if( RegNo >= 32)
                 return MCDisassembler::Fail;
-        
+                
             // access custom generated decoder table in register info
             Register reg = XDecoderTable[RegNo];
-        
+                
             // check if decoded register is valid
-            if( reg == rv64im::NoRegister )
+            if( reg == processornamevalue::NoRegister )
                 return MCDisassembler::Fail;
-        
+                
             Inst.addOperand( MCOperand::createReg(reg) );
             return MCDisassembler::Success;
         }
-        
-        
-        #include "rv64imGenDisassemblerTables.inc"
-        
-        DecodeStatus rv64imDisassembler::getInstruction(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CS) const
+                
+                
+        #include "processornamevalueGenDisassemblerTables.inc"
+                
+        DecodeStatus processornamevalueDisassembler::getInstruction(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CS) const
         {
             if (Bytes.size() < 4)
             {
                 Size = 0;
                 return MCDisassembler::Fail;
             }
-        
+                
             uint32_t Instr;
            \s
            \s
@@ -181,21 +181,21 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
                     Instr = support::endian::read32le(Bytes.data());
                 }
            \s
-        
+                
             auto Result = decodeInstruction(DecoderTable32, MI, Instr, Address, this, STI);
             Size = 4;
             return Result;
         }
-        
-        static MCDisassembler *createrv64imDisassembler(const Target &T, const MCSubtargetInfo &STI, MCContext &Ctx)
+                
+        static MCDisassembler *createprocessornamevalueDisassembler(const Target &T, const MCSubtargetInfo &STI, MCContext &Ctx)
         {
-            return new rv64imDisassembler(STI, Ctx, rv64imBaseInfo::IsBigEndian());
+            return new processornamevalueDisassembler(STI, Ctx, processornamevalueBaseInfo::IsBigEndian());
         }
-        
-        extern "C" void LLVMInitializerv64imDisassembler()
+                
+        extern "C" void LLVMInitializeprocessornamevalueDisassembler()
         {
             // Register Target Disassembler
-            TargetRegistry::RegisterMCDisassembler(getTherv64imTarget(), createrv64imDisassembler);
+            TargetRegistry::RegisterMCDisassembler(getTheprocessornamevalueTarget(), createprocessornamevalueDisassembler);
         }
         """.trim().lines(), output);
   }

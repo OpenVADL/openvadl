@@ -55,7 +55,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     //TODO: kper; add alias directives
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         CommonVarNames.INSTRUCTIONS, mapInstructions(specification.isa()),
         CommonVarNames.PSEUDO_INSTRUCTIONS, mapPseudoInstructions(specification.isa()),
         CommonVarNames.ALIASES, List.of()

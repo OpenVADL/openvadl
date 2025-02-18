@@ -39,7 +39,8 @@ public class EmitInstPrinterHeaderFilePass extends LcbTemplateRenderingPass {
     var registerFiles =
         specification.registerFiles().map(x -> new RegisterClass(x.identifier.simpleName()))
             .toList();
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         CommonVarNames.REGISTERS_CLASSES, registerFiles);
   }
 }

@@ -95,7 +95,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             function);
 
     var renderedFunction = codeGen.genFunctionDefinition();
-    var classPrefix = new CppClassImplName(specification.simpleName() + "MCInstExpander");
+    var classPrefix = new CppClassImplName(
+        lcbConfiguration().processorName().value().toLowerCase() + "MCInstExpander");
     ensureNonNull(function, "a function must exist");
     return new RenderedPseudoInstruction(
         classPrefix,
@@ -146,7 +147,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var compilerInstructions =
         compilerInstructions(abi, specification, cppFunctions, fieldUsages, variants, relocations,
             passResults);
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "pseudoInstructions",
         Stream.concat(pseudoInstructions.stream(),
             compilerInstructions.stream()).toList()

@@ -35,7 +35,8 @@ public class EmitELFObjectWriterCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var container = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "fixups", container.fixups());
   }
 }

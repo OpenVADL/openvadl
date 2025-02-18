@@ -40,7 +40,8 @@ public abstract class AbstractEmitImmediateFilePass extends LcbTemplateRendering
         .sorted()
         .toList();
 
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         "decodeFunctions",
         decodeFunctions.values().stream().map(x ->
                 new GcbAccessOrExtractionFunctionCodeGenerator(x,

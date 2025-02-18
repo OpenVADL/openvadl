@@ -58,6 +58,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
+import vadl.lcb.passes.pseudo.PseudoConstantUpliftingPass;
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
@@ -178,6 +179,7 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
     order.add(new DummyAnnotationPass(configuration));
 
+    order.add(new PseudoConstantUpliftingPass(configuration));
     order.add(new PseudoExpansionFunctionGeneratorPass(configuration));
 
     order.add(new IsaMachineInstructionMatchingPass(configuration));

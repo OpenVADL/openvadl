@@ -103,7 +103,7 @@ public class EmitConstMatIntCppFilePass extends LcbTemplateRenderingPass {
     final int luiFormatSize = lui.format().type().bitWidth();
 
     var map = new HashMap<String, Object>();
-    map.put(CommonVarNames.NAMESPACE, specification.simpleName());
+    map.put(CommonVarNames.NAMESPACE, lcbConfiguration().processorName().value().toLowerCase());
     map.put("addi", addi.identifier.simpleName());
     map.put("lui", lui.identifier.simpleName());
     map.put("luiRawEncoderMethod", rawEncoderMethodForLui(passResults, lui));

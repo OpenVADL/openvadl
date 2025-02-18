@@ -3,11 +3,9 @@ package vadl.lcb.template.lib.Target;
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.Abi;
 import vadl.viam.Specification;
 
 /**
@@ -36,6 +34,7 @@ public class EmitVadlBuiltinHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName());
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase());
   }
 }

@@ -30,64 +30,64 @@ public class EmitRegisterInfoHeaderFilePassTest extends AbstractLcbTest {
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        #ifndef LLVM_LIB_TARGET_rv64im_rv64imREGISTERINFO_H
-        #define LLVM_LIB_TARGET_rv64im_rv64imREGISTERINFO_H
-        
+        #ifndef LLVM_LIB_TARGET_processornamevalue_processornamevalueREGISTERINFO_H
+        #define LLVM_LIB_TARGET_processornamevalue_processornamevalueREGISTERINFO_H
+                
         #include "llvm/CodeGen/TargetRegisterInfo.h"
         #include <string>
-        
+                
         #define GET_REGINFO_HEADER
-        #include "rv64imGenRegisterInfo.inc"
-        
+        #include "processornamevalueGenRegisterInfo.inc"
+                
         namespace llvm
         {
-            struct rv64imRegisterInfo : public rv64imGenRegisterInfo
+            struct processornamevalueRegisterInfo : public processornamevalueGenRegisterInfo
             {
                 // virtual anchor method to decrease link time as the vtable
                 virtual void anchor();
-        
-                rv64imRegisterInfo();
-        
+                
+                processornamevalueRegisterInfo();
+                
                 const uint32_t *getCallPreservedMask(const MachineFunction &MF, CallingConv::ID) const override;
-        
+                
                 const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = nullptr) const override;
-        
+                
                 BitVector getReservedRegs(const MachineFunction &MF) const override;
-        
+                
                 bool requiresRegisterScavenging(const MachineFunction &MF) const override
                 {
                     return true;
                 }
-        
+                
                 bool requiresFrameIndexScavenging(const MachineFunction &MF) const override
                 {
                     return true;
                 }
-        
+                
                 bool trackLivenessAfterRegAlloc(const MachineFunction &) const override
                 {
                     return true;
                 }
-        
+                
                 bool useFPForScavengingIndex(const MachineFunction &MF) const override
                 {
                     return false;
                 }
-        
+                
                 bool eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                                          unsigned FIOperandNum,
                                          RegScavenger *RS = nullptr) const override;
-        
+                
                \s
                 static unsigned X(unsigned index);
                \s
-        
+                
                 static unsigned registerOpcodeLookup(std::string className, unsigned index);
                 Register getFrameRegister(const MachineFunction &MF) const override;
             };
         } // end namespace llvm
-        
-        #endif // LLVM_LIB_TARGET_rv64im_rv64imREGISTERINFO_H
+                
+        #endif // LLVM_LIB_TARGET_processornamevalue_processornamevalueREGISTERINFO_H
         """.trim().lines(), output);
   }
 }

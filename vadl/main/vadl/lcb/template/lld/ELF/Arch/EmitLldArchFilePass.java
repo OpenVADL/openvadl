@@ -45,7 +45,8 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
             GenerateLinkerComponentsPass.class);
     var relocations = output.elfRelocations();
     var elfInfo = createElfInfo();
-    return Map.of(CommonVarNames.NAMESPACE, specification.simpleName(),
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase(),
         CommonVarNames.MAX_INSTRUCTION_WORDSIZE, elfInfo.maxInstructionWordSize(),
         CommonVarNames.IS_BIG_ENDIAN, elfInfo.isBigEndian(),
         CommonVarNames.RELOCATIONS, relocations);
