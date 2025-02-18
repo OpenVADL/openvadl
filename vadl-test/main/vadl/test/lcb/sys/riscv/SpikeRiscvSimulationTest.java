@@ -39,13 +39,11 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
         .map(File::getName);
   }
 
-  @EnabledIfEnvironmentVariable(named = "test_spike_enabled", matches = "true")
   @TestFactory
   List<DynamicTest> testSpikeOptLevel0() throws IOException, DuplicatedPassKeyException {
     return run(0);
   }
 
-  @EnabledIfEnvironmentVariable(named = "test_spike_enabled", matches = "true")
   @TestFactory
   List<DynamicTest> testSpikeOptLevel3() throws IOException, DuplicatedPassKeyException {
     return run(3);
