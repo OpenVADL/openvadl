@@ -1,4 +1,4 @@
-; RUN: $LLC -mtriple=rv32im -O3 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
+; RUN: /src/llvm-final/build/bin/llc -mtriple=rv32im -O3 -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
 define i32 @and32_0x7ff(i32 %x) {
 ; CHECK-LABEL: and32_0x7ff: # @and32_0x7ff

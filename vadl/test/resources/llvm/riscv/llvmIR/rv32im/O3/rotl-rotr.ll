@@ -1,4 +1,4 @@
-; RUN: $LLC -mtriple=rv32im -O3 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
+; RUN: /src/llvm-final/build/bin/llc -mtriple=rv32im -O3 -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
 ; These IR sequences are idioms for rotates. If rotate instructions are
 ; supported, they will be turned into ISD::ROTL or ISD::ROTR.
