@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  * Keep in mind that the test framework has a special harness that hides additional
  * instructions so the expected insn_count is always larger than the instructions actually
  * executed.
- * See vadl-test/main/resources/scripts/iss_qemu/test_case_executer_v1.py
+ * See vadl/test/resources/scripts/iss_qemu/test_case_executer_v1.py
  */
 public class IssRV64IInstrCountingTest extends QemuIssTest {
   private static final int TESTS_PER_INSTRUCTION = 1;

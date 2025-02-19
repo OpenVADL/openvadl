@@ -6,8 +6,6 @@ The `open-vadl` project includes multiple Gradle modules.
 
 - `vadl` is the main module that contains all the logic of OpenVADL
 - `vadl-cli` implements the CLI for OpenVADL users. It uses the `vadl` module as a library
-- `vadl-test` contains integration tests that require a frontend to be executed.
-  See [README.md](./vadl-test/README.md)
 - `java-annotations` provides Java (!) annotations (e.g. `@Input`) that are used in the VIAM.
   Additionally it provides `errorprone` bug detectors, that statically check if certain properties
   in the VIAM are correctly implemented.

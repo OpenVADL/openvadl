@@ -39,8 +39,13 @@ graalvmNative {
         enabled.set(true)
 
         // TODO: Add this again, after we used our own reflect package
-        // callerFilterFiles.from("${projectDir}/user-code-filter.json")
-        // accessFilterFiles.from("${projectDir}/user-code-filter.json")
+//        callerFilterFiles.from("${projectDir}/user-code-filter.json")
+//        accessFilterFiles.from("${projectDir}/user-code-filter.json")
+        modes {
+            conditional {
+                userCodeFilterPath.set("${projectDir}/user-code-filter.json")
+            }
+        }
 
         metadataCopy {
             inputTaskNames.add("run")

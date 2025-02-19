@@ -1,0 +1,275 @@
+{
+  "resources":{
+  "includes":[{
+    "pattern":"\\QMETA-INF/services/org.slf4j.spi.SLF4JServiceProvider\\E"
+  }, {
+    "pattern":"\\Qlogback.xml\\E"
+  }, {
+    "pattern":"\\Qorg/thymeleaf/thymeleaf.properties\\E"
+  }, {
+    "pattern":"\\Qtemplates/common/vadl-builtins.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/htmlDump/index.html\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/configs/devices/gen-arch-softmmu/default.mak\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/configs/targets/gen-arch-softmmu.mak\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/hw/Kconfig\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/hw/gen-arch/Kconfig\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/hw/gen-arch/boot.c\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/hw/gen-arch/boot.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/hw/gen-arch/meson.build\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/hw/gen-arch/virt.c\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/hw/gen-arch/virt.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/hw/meson.build\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/include/disas/dis-asm.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/include/sysemu/arch_init.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/meson.build\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/Kconfig\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/Kconfig\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/cpu-bits.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/cpu-param.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/cpu-qom.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/cpu.c\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/cpu.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/helper.c\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/helper.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/insn-access.c\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/insn-access.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/insn.decode\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/machine.c\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/meson.build\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/trace-events\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/trace.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/translate.c\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/vadl-builtins.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/gen-arch/vdt-decode.c\\E"
+  }, {
+    "pattern":"\\Qtemplates/iss/target/meson.build\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/LcbMakeFile\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/clang/lib/Basic/CMakeLists.txt\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/clang/lib/Basic/Targets.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/clang/lib/Basic/Targets/ClangTarget.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/clang/lib/Basic/Targets/ClangTarget.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/clang/lib/CodeGen/CMakeLists.txt\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/clang/lib/CodeGen/CodeGenModule.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/clang/lib/CodeGen/TargetInfo.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/clang/lib/CodeGen/Targets/Target.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/clang/lib/Driver/Toolchains/Clang.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/lld/ELF/Arch/ImmediateUtils.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/lld/ELF/Arch/Target.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/lld/ELF/Arch/TargetManualEncoding.hpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/lld/ELF/Arch/TargetRelocations.hpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/lld/ELF/CMakeLists.txt\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/lld/ELF/Driver.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/lld/ELF/Target.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/lld/ELF/Target.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/include/llvm/BinaryFormat/ELF.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/include/llvm/BinaryFormat/ELFRelocs/Target.def\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/include/llvm/Object/ELFObjectFile.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/include/llvm/TargetParser/Triple.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Object/ELF.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/AsmParser/AsmParsedOperand.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/AsmParser/AsmParsedOperand.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/AsmParser/AsmParser.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/AsmParser/AsmRecursiveDescentParser.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/AsmParser/AsmRecursiveDescentParser.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/AsmParser/CMakeLists.txt\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/AsmPrinter.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/AsmPrinter.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/CMakeLists.txt\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/CallingConv.td\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/DAGToDAGISel.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/DAGToDAGISel.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/Disassembler/CMakeLists.txt\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/Disassembler/TargetDisassembler.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/Disassembler/TargetDisassembler.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/ExpandPseudo.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/ExpandPseudo.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/FrameLowering.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/FrameLowering.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/ISelLowering.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/ISelLowering.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/InstrInfo.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/InstrInfo.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/InstrInfo.td\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCInstLower.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCInstLower.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/AsmBackend.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/AsmBackend.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/AsmStreamer.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/AsmStreamer.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/AsmUtils.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/AsmUtils.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/CMakeLists.txt\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/MCTargetDesc.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/MCTargetDesc.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetConstMatInt.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetConstMatInt.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetELFObjectWriter.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetELFObjectWriter.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetELFStreamer.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetELFStreamer.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetFixupKinds.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetInstPrinter.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetInstPrinter.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetMCAsmInfo.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetMCAsmInfo.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetMCCodeEmitter.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetMCCodeEmitter.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetMCExpr.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetMCExpr.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetMCInstExpander.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetMCInstExpander.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MCTargetDesc/TargetStreamer.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/MachineFunctionInfo.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/PassConfig.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/PassConfig.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/RegisterInfo.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/RegisterInfo.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/RegisterInfo.td\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/SubTarget.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/SubTarget.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/Target.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/Target.td\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/TargetInfo/CMakeLists.txt\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/TargetInfo/TargetInfo.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/TargetInfo/TargetInfo.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/TargetMachine.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/TargetMachine.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/TargetObjectFile.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/TargetObjectFile.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/Utils/BaseInfo.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/Target/Utils/ImmediateUtils.h\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/lib/TargetParser/Triple.cpp\\E"
+  }, {
+    "pattern":"\\Qtemplates/lcb/llvm/utils/benchmark/src/benchmark_register.h\\E"
+  }]},
+  "bundles":[]
+}
