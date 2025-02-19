@@ -165,7 +165,11 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
                               Writer writer) throws IOException {
     var ctx = new Context();
     // Map the variables into thymeleaf's context
-    createVariables(passResults, viam).forEach(ctx::setVariable);
+    var vars = createVariables(passResults, viam);
+    // check if variables have correct type.
+    // for rendering, only primitive types, maps, and lists are valid.
+    VariableChecker.checkVariables(vars);
+    vars.forEach(ctx::setVariable);
     templateEngine.process(getTemplatePath(), ctx, writer);
     writer.flush();
     writer.close();

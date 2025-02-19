@@ -436,12 +436,13 @@ public class PassOrders {
         .add(new EmitIssCpuHeaderPass(config))
         // target/gen-arch/cpu.c
         .add(new EmitIssCpuSourcePass(config))
+        // TODO: Remove old QEMU decode tree generation
         // target/gen-arch/insn.decode
-        .add(new EmitIssInsnDecodePass(config))
+        // .add(new EmitIssInsnDecodePass(config))
         // target/gen-arch/insn-access.h
-        .add(new EmitIssInsnAccessHeaderPass(config))
+        // .add(new EmitIssInsnAccessHeaderPass(config))
         // target/gen-arch/insn-access.c
-        .add(new EmitIssInsnAccessFunctionPass(config))
+        // .add(new EmitIssInsnAccessFunctionPass(config))
         // target/gen-arch/vdt-decode.c
         .add(new EmitIssDecodeTreePass(config))
         // target/gen-arch/translate.c
