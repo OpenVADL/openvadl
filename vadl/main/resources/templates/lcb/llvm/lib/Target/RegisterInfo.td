@@ -21,12 +21,12 @@ def [(${register.name})] : Register<"[(${register.name})]">
 }
 [/]
 
-[# th:each="registerFile : ${registerFiles}" ]
-def [(${registerFile.name})] : RegisterClass
-< /* namespace = */ "[(${registerFile.namespace.value()})]"
-, /* regTypes  = */  [  [(${registerFile.regTypesString()})] ]
-, /* alignment = */ [(${registerFile.alignment})]
+[# th:each="wrapped : ${registerFiles}" ]
+def [(${wrapped.registerFile.name})] : RegisterClass
+< /* namespace = */ "[(${wrapped.registerFile.namespace.value()})]"
+, /* regTypes  = */  [  [(${wrapped.registerFile.regTypesString()})] ]
+, /* alignment = */ [(${wrapped.registerFile.alignment})]
 , /* regList   = */
-  ( add [(${registerFile.registerString()})] )
+  ( add [(${wrapped.allocationSequence})] )
 >;
 [/]

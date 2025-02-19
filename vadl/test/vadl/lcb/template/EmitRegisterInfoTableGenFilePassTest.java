@@ -632,7 +632,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         , /* regTypes  = */  [  i64 ]
         , /* alignment = */ 32
         , /* regList   = */
-          ( add X10, X11, X12, X13, X14, X15, X16, X17, X5, X6, X7, X28, X29, X30, X31, X1, X3, X4, X8, X9, X18, X19, X20, X21, X22, X23, X24, X25, X26, X27, X0, X2 )
+          ( add X10, X11, X12, X13, X14, X15, X16, X17, X5, X6, X7, X28, X29, X30, X31, X9, X18, X19, X20, X21, X22, X23, X24, X25, X26, X27, X1, X3, X4, X8, X0, X2 )
         >;
         """.trim().lines(), output);
   }
