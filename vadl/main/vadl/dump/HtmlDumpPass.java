@@ -22,6 +22,7 @@ import vadl.dump.infoEnrichers.IssEnricherCollection;
 import vadl.dump.infoEnrichers.LcbEnricherCollection;
 import vadl.dump.infoEnrichers.VdtEnricherCollection;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
+import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -189,10 +190,22 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .collect(Collectors.groupingBy(DumpEntity::tocKey))
         .entrySet().stream()
         .sorted(Comparator.comparingInt(a -> a.getKey().rank()))
+        .map(e -> Map.of(
+            "key", e.getKey().renderObj(),
+            "value", e.getValue().stream().map(DumpEntity::renderObj).toList()
+        ))
         .toList();
 
+    var renderEntities = entities.stream()
+        .map(DumpEntity::renderObj)
+        .toList();
+
+    var passDumps = findAllPassDumps(passResults);
+
+    AtomicInteger i = new AtomicInteger(1);
     var passList = passResults.executedPasses().stream()
         .filter(p -> !(p.pass() instanceof CollectBehaviorDotGraphPass))
+        .map(e -> mapPassResult(e, i.getAndIncrement(), passDumps.containsKey(e.passKey().value())))
         .toList();
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -204,8 +217,8 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         "Specification (%s) - at %s".formatted(specification.identifier.name(), config.phase),
         "description", config.description,
         "passes", passList,
-        "passDumps", findAllPassDumps(passResults),
-        "entries", entities,
+        "passDumps", passDumps,
+        "entries", renderEntities,
         "toc", tocMapList,
         "renderDatetime", renderDate
     );
@@ -238,12 +251,31 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
   /**
    * Find all pass keys that were dumped directly after execution.
    */
-  private static Map<PassKey, Path> findAllPassDumps(PassResults passResults) {
+  private static Map<String, String> findAllPassDumps(PassResults passResults) {
     return passResults.executedPasses().stream()
         .filter(p -> p.pass() instanceof HtmlDumpPass)
         .map(p -> (Result) p.result())
         .filter(Objects::nonNull)
-        .collect(Collectors.toMap((r) -> r.lastPass, (r) -> r.emittedFile));
+        .collect(Collectors.toMap((r) -> r.lastPass != null ? r.lastPass.value() : null,
+            (r) -> r.emittedFile.toString()));
+  }
+
+  private static Map<String, Object> mapPassResult(PassResults.SingleResult singleResult, int nr,
+                                                   boolean hasLink) {
+    return Map.of(
+        "nr", nr,
+        "passKey", singleResult.passKey().value(),
+        "pass", mapPass(singleResult.pass()),
+        "duration", singleResult.durationMs(),
+        "hasLink", hasLink
+    );
+  }
+
+  private static Map<String, Object> mapPass(Pass pass) {
+    return Map.of(
+        "name", pass.getName().value(),
+        "className", pass.getClass().getName()
+    );
   }
 
 }

@@ -1,7 +1,9 @@
 package vadl.dump;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.dump.entities.DefinitionEntity;
@@ -39,6 +41,18 @@ public abstract class DumpEntity {
   public DumpEntity addSubEntity(@Nullable String name, DumpEntity subEntity) {
     subEntities.add(new Sub(name, subEntity));
     return this;
+  }
+
+  public Map<String, Object> renderObj() {
+    var map = new HashMap<String, Object>();
+    map.put("name", name());
+    map.put("cssId", cssId());
+    map.put("tocKey", tocKey().renderObj());
+    map.put("subEntities", subEntities.stream().map(Sub::renderObj).toList());
+    map.put("tagInfos", tagInfos().stream().map(Info.Tag::renderObj).toList());
+    map.put("modalInfos", modalInfos().stream().map(Info.Modal::renderObj).toList());
+    map.put("expandableInfos", expandableInfos().stream().map(Info.Expandable::renderObj).toList());
+    return map;
   }
 
   /**
@@ -100,6 +114,13 @@ public abstract class DumpEntity {
       return rank;
     }
 
+    public Map<String, Object> renderObj() {
+      var map = new HashMap<String, Object>();
+      map.put("name", name);
+      map.put("rank", rank);
+      return map;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) {
@@ -134,6 +155,13 @@ public abstract class DumpEntity {
     public Sub(@Nullable String name, DumpEntity subEntity) {
       this.name = name;
       this.subEntity = subEntity;
+    }
+
+    public Map<String, Object> renderObj() {
+      var map = new HashMap<String, Object>();
+      map.put("name", name);
+      map.put("subEntity", subEntity.renderObj());
+      return map;
     }
   }
 

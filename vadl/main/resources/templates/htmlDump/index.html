@@ -69,13 +69,7 @@
         <div id="passes-body" aria-labelledby="passes-heading"
              class="hidden">
             <th:block th:each="singlePass,iter : ${passes}">
-                <a th:if="${passDumps.get(singlePass.passKey) != null}" th:href="${passDumps.get(singlePass.passKey)}">
-                    <div th:replace="~{this :: pass(${singlePass}, ${iter.index + 1}, ${true})}"></div>
-                </a>
-                <th:block th:if="${passDumps.get(singlePass.passKey) == null}">
-                    <div th:replace="~{this :: pass(${singlePass}, ${iter.index + 1}, ${false})}"></div>
-                </th:block>
-
+                <div th:replace="~{this :: pass(${singlePass}, ${singlePass.nr}, ${singlePass.hasLink})}"></div>
             </th:block>
         </div>
     </div>
@@ -85,12 +79,12 @@
 
         <h4 class="text-md font-semibold tracking-wide text-gray-900">[[${number}]]</h4>
         <div>
-            <h4 class="text-md font-semibold tracking-wide text-gray-900">[[${singlePass.pass.name.value}]] ([[${singlePass.durationMs}]] ms)</h4>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">[[${singlePass.pass.name}]] ([[${singlePass.durationMs}]] ms)</h4>
             <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
                 <span class="text-gray-500 font-medium text-sm">Key</span>
-                <span class="badge text-blue-800 text-sm">[[${singlePass.passKey.value}]]</span>
+                <span class="badge text-blue-800 text-sm">[[${singlePass.passKey}]]</span>
                 <span class="text-gray-500 font-medium text-sm">Class</span>
-                <span class="badge text-blue-800 text-sm">[[${singlePass.pass.class.name}]]</span>
+                <span class="badge text-blue-800 text-sm">[[${singlePass.pass.className}]]</span>
             </div>
         </div>
         <i th:if="${hasLink}" class="fa-solid fa-book-open ml-auto mr-5"></i>
