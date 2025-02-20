@@ -80,6 +80,7 @@ public class EmitRegisterInfoCppFilePassTest extends AbstractLcbTest {
             markSuperRegs(Reserved, processornamevalue::X8); // frame pointer
             markSuperRegs(Reserved, processornamevalue::X2); // stack pointer
             markSuperRegs(Reserved, processornamevalue::X3); // global pointer
+            markSuperRegs(Reserved, processornamevalue::X4); // thread pointer
                 
            \s
             markSuperRegs(Reserved,  processornamevalue::X0);

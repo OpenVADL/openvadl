@@ -1,4 +1,4 @@
-; RUN: $LLC -mtriple=rv32im -O0 -verify-machineinstrs < $INPUT | $FILECHECK $INPUT
+; RUN: /src/llvm-final/build/bin/llc -mtriple=rv32im -O0 -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
 ; Register-immediate instructions
 
@@ -149,7 +149,7 @@ define i64 @sll(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: # %bb.0:
 ; CHECK: LUI ra,%hi(__ashldi3)
 ; CHECK-NEXT: JALR ra,%lo(__ashldi3)(ra)
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: LW ra,12(sp)
   %1 = shl i64 %a, %b
   ret i64 %1
 }
@@ -191,7 +191,7 @@ define i64 @srl(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: # %bb.0:
 ; CHECK: LUI ra,%hi(__lshrdi3)
 ; CHECK-NEXT: JALR ra,%lo(__lshrdi3)(ra)
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: LW ra,12(sp)
   %1 = lshr i64 %a, %b
   ret i64 %1
 }
@@ -201,7 +201,7 @@ define i64 @sra(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: # %bb.0:
 ; CHECK: LUI ra,%hi(__ashrdi3)
 ; CHECK-NEXT: JALR ra,%lo(__ashrdi3)(ra)
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: LW ra,12(sp)
   %1 = ashr i64 %a, %b
   ret i64 %1
 }

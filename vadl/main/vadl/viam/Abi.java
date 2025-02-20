@@ -52,6 +52,7 @@ public class Abi extends Definition {
   private final RegisterRef stackPointer;
   private final RegisterRef globalPointer;
   private final RegisterRef framePointer;
+  private final RegisterRef threadPointer;
 
 
   private final Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases;
@@ -71,6 +72,7 @@ public class Abi extends Definition {
              RegisterRef stackPointer,
              RegisterRef framePointer,
              RegisterRef globalPointer,
+             RegisterRef threadPointer,
              Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases,
              List<RegisterRef> callerSaved,
              List<RegisterRef> calleeSaved,
@@ -85,6 +87,7 @@ public class Abi extends Definition {
     this.stackPointer = stackPointer;
     this.framePointer = framePointer;
     this.globalPointer = globalPointer;
+    this.threadPointer = threadPointer;
     this.aliases = aliases;
     this.callerSaved = callerSaved;
     this.calleeSaved = calleeSaved;
@@ -115,6 +118,10 @@ public class Abi extends Definition {
 
   public RegisterRef globalPointer() {
     return globalPointer;
+  }
+
+  public RegisterRef threadPointer() {
+    return threadPointer;
   }
 
   public Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases() {

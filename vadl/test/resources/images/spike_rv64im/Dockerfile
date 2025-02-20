@@ -1,4 +1,4 @@
-FROM kper1337/riscv64-spike-lcb-test@sha256:3acaa5ace6c5d96a7eeff66b5849ceb06b1c21d44dee9148573ad7e71aa0bb8e
+FROM kper1337/riscv64-spike-lcb-test@sha256:ed00c3c0bbe6df23e0a7d5a9e7a2fcee8593d15b2b584d1d4cd237d9512b92ad
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
 ARG UPSTREAM_BUILD_TARGET
