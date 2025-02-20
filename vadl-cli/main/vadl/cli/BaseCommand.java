@@ -209,6 +209,12 @@ public abstract class BaseCommand implements Callable<Integer> {
   @SuppressWarnings("EmptyCatch")
   @Override
   public Integer call() {
+    if (!input.toFile().exists()) {
+      System.out.printf("\033[01m\033[31merror:\033[0m\033[01m Cannot find file: %s\033[0m\n",
+          input);
+      return 1;
+    }
+
     int returnVal = 0;
     try {
       var viam = parseToVIAM();
@@ -218,10 +224,10 @@ public abstract class BaseCommand implements Callable<Integer> {
       passManager.run(viam);
 
     } catch (Diagnostic d) {
-      new DiagnosticPrinter().print(d);
+      System.out.println(new DiagnosticPrinter().toString(d));
       returnVal = 1;
     } catch (DiagnosticList d) {
-      new DiagnosticPrinter().print(d);
+      System.out.println(new DiagnosticPrinter().toString(d));
       returnVal = 1;
     } catch (RuntimeException | IOException | DuplicatedPassKeyException e) {
       System.out.println("""
@@ -257,7 +263,7 @@ public abstract class BaseCommand implements Callable<Integer> {
     }
 
     if (!DeferredDiagnosticStore.isEmpty()) {
-      new DiagnosticPrinter().print(DeferredDiagnosticStore.getAll());
+      System.out.println(new DiagnosticPrinter().toString(DeferredDiagnosticStore.getAll()));
 
       // Only exit abnormally if any diagnostic message is an error.
       if (DeferredDiagnosticStore.getAll().stream()

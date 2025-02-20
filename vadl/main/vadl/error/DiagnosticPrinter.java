@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import vadl.utils.SourceLocation;
 
 /**
@@ -17,63 +18,94 @@ import vadl.utils.SourceLocation;
  */
 public class DiagnosticPrinter {
 
-  Map<Path, List<String>> fileCache = new HashMap<>();
+  private final PrinterColors colors;
+  private final Map<Path, List<String>> fileLineCache = new HashMap<>();
+
+  public DiagnosticPrinter() {
+    this(true);
+  }
+
+  public DiagnosticPrinter(boolean enableColors) {
+    colors = enableColors ? new AnsiColors() : new NoColors();
+  }
+
 
   /**
-   * Prints a list of diagnostics to stdout.
+   * Prints a list of diagnostics into a string.
    *
    * @param diagnosticList to print.
    */
-  public void print(List<Diagnostic> diagnosticList) {
-    for (var item : diagnosticList) {
-      print(item);
-    }
+  public String toString(List<Diagnostic> diagnosticList) {
+    StringBuilder builder = new StringBuilder();
+    diagnosticList.forEach(d -> toString(d, builder));
+    return builder.toString();
   }
 
   /**
-   * Prints a list of diagnostics to stdout.
+   * Prints a list of diagnostics into a string.
    *
    * @param diagnosticList to print.
    */
-  public void print(DiagnosticList diagnosticList) {
-    print(diagnosticList.items);
+  public String toString(DiagnosticList diagnosticList) {
+    return toString(diagnosticList.items);
   }
 
   /**
-   * Prints an error to stdout.
+   * Prints a diagnostic into a string.
    *
    * @param diagnostic to print.
    */
-  public void print(Diagnostic diagnostic) {
-    printHeader(diagnostic);
-
-    printMultiSourcePreview(diagnostic);
-
-    for (var message : diagnostic.messages) {
-      System.out.print("    ");
-      printMessage(message, "    ", 80 - 4);
-    }
-    System.out.printf("%s\n\n", Ansi.Reset);
+  public String toString(Diagnostic diagnostic) {
+    var builder = new StringBuilder();
+    toString(diagnostic, builder);
+    return builder.toString();
   }
 
-  private void printHeader(Diagnostic diagnostic) {
+  /**
+   * Prints a diagnostic into a string.
+   *
+   * @param diagnostic to print.
+   */
+  private void toString(Diagnostic diagnostic, StringBuilder builder) {
+    printHeader(diagnostic, builder);
+    printMultiSourcePreview(diagnostic, builder);
+    builder.append(indentBy(messageBlock(diagnostic.messages), "     "));
+    builder.append("\n");
+  }
+
+  /**
+   * Prints the header which includes the type of diagnostic that was thrown.
+   *
+   * @param diagnostic for which the header should be printed.
+   */
+  private void printHeader(Diagnostic diagnostic, StringBuilder builder) {
     switch (diagnostic.level) {
-      case ERROR ->
-          System.out.printf("%s%serror:%s%s %s%s\n", Ansi.Bold, Ansi.Red, Ansi.Reset, Ansi.Bold,
-              diagnostic.reason, Ansi.Reset);
+      case ERROR -> builder.append(
+          "%s%serror:%s%s %s%s\n".formatted(colors.bold(), colors.red(), colors.reset(),
+              colors.bold(),
+              diagnostic.reason, colors.reset()));
       case WARNING ->
-          System.out.printf("%s%swarning:%s%s %s%s\n", Ansi.Bold, Ansi.Yellow, Ansi.Reset,
-              Ansi.Bold,
-              diagnostic.reason, Ansi.Reset);
+          builder.append("%s%swarning:%s%s %s%s\n".formatted(colors.bold(), colors.yellow(),
+              colors.reset(),
+              colors.bold(),
+              diagnostic.reason, colors.reset()));
       default -> throw new IllegalStateException();
     }
   }
 
-  private void printMultiSourcePreview(Diagnostic diagnostic) {
+  /**
+   * Print all (one or more) previews of the diagnostic.
+   *
+   * <p>A single diagnostic has one but possible multiple locations attached with it. This
+   * method prints all of them, including the locations that arose from macro expansions.
+   *
+   * @param diagnostic to print.
+   */
+  private void printMultiSourcePreview(Diagnostic diagnostic, StringBuilder builder) {
     // Print preview header
-    System.out.printf("    %s╭──[%s]\n", Ansi.Cyan,
-        diagnostic.multiLocation.primaryLocation().location().toIDEString());
-    System.out.println("    │");
+    builder.append("     %s╭──[%s]\n".formatted(colors.cyan(),
+        diagnostic.multiLocation.primaryLocation().location().toIDEString()));
+    builder.append("     │\n");
 
     // TODO: Sort them accordig to their line number in the future
     var allSnippets = new ArrayList<>(diagnostic.multiLocation.secondaryLocations());
@@ -88,174 +120,490 @@ public class DiagnosticPrinter {
       // Delimiter in multilocation
       if (i > 0) {
         var previous = allSnippets.get(i - 1);
-        printSourceDelimiter(previous.location(), snippet.location());
+        builder.append("\n");
+        builder.append(sourceDelimiter(previous.location(), snippet.location()));
       }
 
-      printSourcePreview(snippet, snippet.equals(diagnostic.multiLocation.primaryLocation()));
+      printExpandedSourcePreview(snippet,
+          snippet.equals(diagnostic.multiLocation.primaryLocation()), builder);
     }
-    System.out.printf("    %s│ %s\n", Ansi.Cyan, Ansi.Reset);
+    builder.append("\n     %s│ %s\n".formatted(colors.cyan(), colors.reset()));
   }
 
-  private void printSourceDelimiter(SourceLocation previous,
-                                    SourceLocation next) {
-    if (!previous.uri()
-        .equals(next.uri())) {
-      // This is so unusual that we print the location evertime
-      System.out.printf("    %s⋮\n", Ansi.Cyan);
-      System.out.printf("    ╭─ %s\n", next.toIDEString());
+  /**
+   * Print the delimiter between two source previews (within a multipreview).
+   *
+   * @param previous location preceding the delimiter.
+   * @param next     location following the delimiter.
+   */
+  private String sourceDelimiter(SourceLocation previous,
+                                 SourceLocation next) {
+    if (!previous.uri().equals(next.uri())) {
+      // This is so unusual that we print the location everytime
+      var message = "     %s⋮\n".formatted(colors.cyan());
+      message += "     ╭─ %s\n".formatted(next.toIDEString());
+      return message;
     } else if (next.begin().line() == previous.end().line() + 1) {
-      System.out.printf("    %s│\n", Ansi.Cyan);
+      return "     %s│\n".formatted(colors.cyan());
     } else {
-      System.out.printf("    %s⋮\n", Ansi.Cyan);
+      return "     %s⋮\n".formatted(colors.cyan());
     }
   }
 
-  private void printSourcePreview(Diagnostic.LabeledLocation location, boolean isPrimary) {
-    List<String> lines = new ArrayList<>();
-    boolean supressPreview = false;
+  /**
+   * Print a location and the chain of expansions from which it originated.
+   *
+   * @param location  to print.
+   * @param isPrimary whether it's the main reason of the diagnostic.
+   * @param builder   into which the preview will be printed.
+   */
+  private void printExpandedSourcePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
+                                          StringBuilder builder) {
+    // Print the original preview
+    printSourcePreview(location, isPrimary, builder);
 
+    // Print also the chain/stack of the location from which this error was expanded form
+    var last = location.location();
+    var next = location.location().expandedFrom();
+    while (next != null) {
+      builder.append("\n");
+      builder.append(sourceDelimiter(last, next));
+      printSourcePreview(
+          new Diagnostic.LabeledLocation(
+              next,
+              List.of(
+                  new Diagnostic.Message(Diagnostic.MsgType.PLAIN, "from this model invocation"))),
+          false, builder);
+      last = next;
+      next = next.expandedFrom();
+    }
+  }
+
+  /**
+   * Print a single source location preview (with inline messages) into a string builder.
+   *
+   * @param location  to print.
+   * @param isPrimary indicating the priority.
+   * @param builder   into which will be printed.
+   */
+  private void printSourcePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
+                                  StringBuilder builder) {
+    List<String> lines;
     try {
       lines = getFileLines(location.location().uri());
     } catch (IOException | IllegalArgumentException e) {
-      System.out.printf("    │ %sNo Preview available: Could not find the file '%s'", Ansi.Reset,
-          location.location().uri());
-      supressPreview = true;
+      var previewError = "No Preview available: Could not find the file '%s'".formatted(
+          location.location().uri()
+      );
+      var prefix = "     %s│%s    ".formatted(colors.cyan(), colors.reset());
+      var text = "%s%s%s\n%s".formatted(colors.yellow(), previewError, colors.reset(),
+          messageBlock(location));
+      builder.append(indentBy(text, prefix));
+      return;
     }
 
     if (location.location().equals(SourceLocation.INVALID_SOURCE_LOCATION)) {
-      System.out.printf("    │ %sThe location was lost.", Ansi.Reset);
-      supressPreview = true;
+      var previewError = "No Preview available: The location was lost.";
+      var prefix = "     %s│%s    ".formatted(colors.cyan(), colors.reset());
+      var text = "%s%s%s\n%s".formatted(colors.yellow(), previewError, colors.reset(),
+          messageBlock(location));
+      builder.append(indentBy(text, prefix));
+      return;
     }
-    if (location.location().begin().line() < 1) {
-      System.out.printf("    │ %sThe location was corrupted (lines must be greater 1).",
-          Ansi.Reset);
-      supressPreview = true;
+
+
+    if (location.location().begin().line() < 1
+        || location.location().begin().column() < 1
+        || location.location().end().line() > lines.size()
+        || location.location().end().line() < location.location().begin().line()
+    ) {
+      var previewError =
+          "No Preview available: The location was corrupted "
+              + "(line or column are out of the range) %s".formatted(location.location());
+      var prefix = "     %s│%s    ".formatted(colors.cyan(), colors.reset());
+      var text = "%s%s%s\n%s".formatted(colors.yellow(), previewError, colors.reset(),
+          messageBlock(location));
+      builder.append(indentBy(text, prefix));
+      return;
     }
 
     // Printing the Source line
-    if (!supressPreview) {
-      if (location.location().begin().line() != location.location().end().line()) {
-        System.out.printf("    │ %sMultiline preview not yet implemented", Ansi.Reset);
-      } else {
-        System.out.printf("%s%3d", Ansi.Reset, location.location().begin().line());
-        System.out.printf(" %s│%s ", Ansi.Cyan, Ansi.Reset);
-        System.out.printf("%s\n", lines.get(location.location().begin().line() - 1));
-
-        // Printing the underlininng
-        var highlightLength =
-            location.location().end().column() - location.location().begin().column() + 1;
-        var highlight = isPrimary
-            ? Ansi.Red + "^".repeat(highlightLength) + Ansi.Reset
-            : Ansi.Lightblue + "^".repeat(highlightLength) + Ansi.Reset;
-        var padding = " ".repeat(location.location().begin().column() - 1);
-        System.out.printf("    %s│ %s%s%s ", Ansi.Cyan, padding, highlight, Ansi.Reset);
-
-        // Print the inline messages
-        for (int i = 0; i < location.labels().size(); i++) {
-          var label = location.labels().get(i);
-
-          var prefix = "    %s│ %s%s".formatted(Ansi.Cyan, Ansi.Reset,
-              " ".repeat(location.location().end().column() + 1));
-
-          if (i > 0) {
-            System.out.print(prefix);
-          }
-          int startCol = 6 + location.location().end().column();
-          printMessage(label, prefix, 80 - startCol);
-        }
-      }
+    if (location.location().begin().line() != location.location().end().line()) {
+      printMultiLinePreview(location, isPrimary, lines, builder);
+    } else {
+      printSingleLinePreview(location, isPrimary, lines, builder);
     }
-
-    if (location.labels().isEmpty()) {
-      System.out.println();
-    }
-
-
-    if (location.location().expandedFrom() != null) {
-      printSourceDelimiter(location.location(), location.location().expandedFrom());
-      printSourcePreview(
-          new Diagnostic.LabeledLocation(
-              location.location().expandedFrom(),
-              List.of(
-                  new Diagnostic.Message(Diagnostic.MsgType.PLAIN, "from this model invocation"))),
-          false);
-    }
-
   }
 
 
-  private void printMessage(Diagnostic.Message message, String prefix, int maxWidth) {
+  /**
+   * Prints a multi line preview, with highlighting and inline messages to the provided builder.
+   *
+   * @param location  to be printed.
+   * @param isPrimary indicates the importance of the error.
+   * @param lines     cache.
+   * @param builder   to be printed to.
+   */
+  private void printMultiLinePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
+                                     List<String> lines, StringBuilder builder) {
+
+    var numLines = location.location().end().line() - location.location().begin().line() + 1;
+
+    // For multiline segments up until 7 lines we print everything,
+    // Otherwise we only print the first 3 and last 3 lines.
+    if (numLines < 8) {
+      for (int i = location.location().begin().line(); i <= location.location().end().line(); i++) {
+        // Print the line number, guard and actual line
+        builder.append("%s%4d".formatted(colors.reset(), i));
+        builder.append(
+            " %s│%s>%s ".formatted(colors.cyan(), isPrimary ? colors.red() : colors.lightblue(),
+                colors.reset()));
+        builder.append(lines.get(i - 1));
+        builder.append("\n");
+      }
+    } else {
+      for (int i = location.location().begin().line(); i <= location.location().begin().line() + 2;
+           i++) {
+        // Print the line number, guard and actual line
+        builder.append("%s%4d".formatted(colors.reset(), i));
+        builder.append(" %s│%s>%s ".formatted(colors.cyan(), colors.red(), colors.reset()));
+        builder.append(lines.get(i - 1));
+        builder.append("\n");
+      }
+      builder.append(
+          "    %s⋮%s  %d lines omitted here...\n".formatted(colors.cyan(), colors.reset(),
+              numLines - 6));
+      for (int i = location.location().end().line() - 2; i <= location.location().end().line();
+           i++) {
+        // Print the line number, guard and actual line
+        builder.append("%s%4d".formatted(colors.reset(), i));
+        builder.append(" %s│%s>%s ".formatted(colors.cyan(), colors.red(), colors.reset()));
+        builder.append(lines.get(i - 1));
+        builder.append("\n");
+      }
+    }
+
+    var prefix = "     %s│%s    ".formatted(colors.cyan(), colors.reset());
+    builder.append(indentBy(messageBlock(location), prefix));
+  }
+
+  /**
+   * Prints a single line preview, with highlighting and inline messages to the provided builder.
+   *
+   * @param location  to be printed.
+   * @param isPrimary indicates the importance of the error.
+   * @param lines     cache.
+   * @param builder   to be printed to.
+   */
+  private void printSingleLinePreview(Diagnostic.LabeledLocation location, boolean isPrimary,
+                                      List<String> lines, StringBuilder builder) {
+
+    // Print the line number, guard and actual line
+    builder.append("%s%4d".formatted(colors.reset(), location.location().begin().line()));
+    builder.append(" %s│%s ".formatted(colors.cyan(), colors.reset()));
+    builder.append(lines.get(location.location().begin().line() - 1));
+    builder.append("\n");
+
+    // Print the underlining
+    var highlightLength =
+        location.location().end().column() - location.location().begin().column() + 1;
+    var highlightPadding = isPrimary
+        ? colors.red() + "^".repeat(highlightLength) + colors.reset()
+        : colors.lightblue() + "-".repeat(highlightLength) + colors.reset();
+    var nonHighlightPadding = " ".repeat(highlightLength);
+    var padding = "     %s│%s ".formatted(colors.cyan(), colors.reset())
+        + " ".repeat(location.location().begin().column() - 1);
+
+    // Generate the complete block, with highlighting and messages.
+    var textBlock = messageBlock(location);
+    var highlightedBlock =
+        indentFirstBy(textBlock, highlightPadding + " ", nonHighlightPadding + " ");
+    var completedBlock = indentBy(highlightedBlock, padding);
+
+    builder.append(completedBlock);
+  }
+
+  private String messageBlock(Diagnostic.LabeledLocation location) {
+    return messageBlock(location.labels());
+  }
+
+  private String messageBlock(List<Diagnostic.Message> messages) {
+    var builder = new StringJoiner("\n");
+    messages.forEach(m -> builder.add(messageLine(m)));
+    return builder.toString();
+  }
+
+  private String messageLine(Diagnostic.Message message) {
     var label = switch (message.type()) {
       case PLAIN -> "";
       case NOTE -> "note: ";
       case HELP -> "help: ";
     };
 
-    String indentPrefix = prefix + " ".repeat(label.length());
-    var text =
-        indentLines(wrapLines(message.content(), maxWidth - label.length()), indentPrefix);
-    System.out.printf("%s%s%s%s\n", Ansi.Bold, label, Ansi.Reset, text);
+    return "%s%s%s%s".formatted(colors.bold(), label, colors.reset(), message.content());
   }
 
+  /**
+   * Indents all lines but uses a different indent string for the first line.
+   *
+   * @param text        to indent.
+   * @param firstPrefix to indent the first line with.
+   * @param otherPrefix to indent the other lines with.
+   * @return the indented string (text block).
+   */
+  private String indentFirstBy(String text, String firstPrefix, String otherPrefix) {
+    return firstPrefix + text.replaceAll("\n", "\n" + otherPrefix);
+  }
+
+  /**
+   * Indents all lines in a multiline string with the provided prefix.
+   *
+   * @param text   to indent.
+   * @param prefix to indent with.
+   * @return the indented string (text block).
+   */
+  private String indentBy(String text, String prefix) {
+    return prefix + text.replaceAll("\n", "\n" + prefix);
+  }
+
+  /**
+   * Get all lines fo a file.
+   *
+   * @param uri of the file to load
+   * @return list of lines.
+   * @throws IOException if the file doesn't exist.
+   */
   private List<String> getFileLines(URI uri) throws IOException {
     var path = new File(uri).toPath();
-    if (fileCache.containsKey(path)) {
-      return fileCache.get(path);
+    if (fileLineCache.containsKey(path)) {
+      return fileLineCache.get(path);
     }
 
     var lines = Files.readAllLines(new File(uri).toPath(), Charset.defaultCharset());
-    fileCache.put(path, lines);
+    fileLineCache.put(path, lines);
     return lines;
   }
 
-  private String indentLines(String text, String prefix) {
-    return text.replaceAll("\n", "\n" + prefix);
+  @SuppressWarnings("UnusedMethod")
+  private interface PrinterColors {
+    String reset();
+
+    String bold();
+
+    String underline();
+
+    String black();
+
+    String red();
+
+    String green();
+
+    String orange();
+
+    String blue();
+
+    String purple();
+
+    String cyan();
+
+    String lightgrey();
+
+    String darkgrey();
+
+    String lightred();
+
+    String lightgreen();
+
+    String yellow();
+
+    String lightblue();
+
+    String pink();
+
+    String lightcyan();
   }
 
-  private String wrapLines(String text, int maxWidth) {
-    int lastWhitespace = 0;
-    int width = 0;
-    var builder = new StringBuilder(text);
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      width += 1;
-      if (c == '\n') {
-        width = 0;
-        lastWhitespace = 0;
-      }
-
-      if (c == ' ') {
-        lastWhitespace = i;
-      }
-
-      if (width >= maxWidth && lastWhitespace > 0) {
-        builder.replace(lastWhitespace, lastWhitespace + 1, "\n");
-        width = 0;
-        lastWhitespace = 0;
-      }
+  private static class AnsiColors implements PrinterColors {
+    @Override
+    public String reset() {
+      return "\033[0m";
     }
 
-    return builder.toString();
+    @Override
+    public String bold() {
+      return "\033[01m";
+    }
+
+    @Override
+    public String underline() {
+      return "\033[04m";
+    }
+
+    @Override
+    public String black() {
+      return "\033[30m";
+    }
+
+    @Override
+    public String red() {
+      return "\033[31m";
+    }
+
+    @Override
+    public String green() {
+      return "\033[32m";
+    }
+
+    @Override
+    public String orange() {
+      return "\033[33m";
+    }
+
+    @Override
+    public String blue() {
+      return "\033[34m";
+    }
+
+    @Override
+    public String purple() {
+      return "\033[35m";
+    }
+
+    @Override
+    public String cyan() {
+      return "\033[36m";
+    }
+
+    @Override
+    public String lightgrey() {
+      return "\033[37m";
+    }
+
+    @Override
+    public String darkgrey() {
+      return "\033[90m";
+    }
+
+    @Override
+    public String lightred() {
+      return "\033[91m";
+    }
+
+    @Override
+    public String lightgreen() {
+      return "\033[92m";
+    }
+
+    @Override
+    public String yellow() {
+      return "\033[93m";
+    }
+
+    @Override
+    public String lightblue() {
+      return "\033[94m";
+    }
+
+    @Override
+    public String pink() {
+      return "\033[95m";
+    }
+
+    @Override
+    public String lightcyan() {
+      return "\033[96m";
+    }
   }
-  
-  static class Ansi {
-    static String Reset = "\033[0m";
-    static String Bold = "\033[01m";
-    static String Underline = "\033[04m";
-    static String Black = "\033[30m";
-    static String Red = "\033[31m";
-    static String Green = "\033[32m";
-    static String Orange = "\033[33m";
-    static String Blue = "\033[34m";
-    static String Purple = "\033[35m";
-    static String Cyan = "\033[36m";
-    static String Lightgrey = "\033[37m";
-    static String Darkgrey = "\033[90m";
-    static String Lightred = "\033[91m";
-    static String Lightgreen = "\033[92m";
-    static String Yellow = "\033[93m";
-    static String Lightblue = "\033[94m";
-    static String Pink = "\033[95m";
-    static String Lightcyan = "\033[96m";
+
+  private static class NoColors implements PrinterColors {
+    @Override
+    public String reset() {
+      return "";
+    }
+
+    @Override
+    public String bold() {
+      return "";
+    }
+
+    @Override
+    public String underline() {
+      return "";
+    }
+
+    @Override
+    public String black() {
+      return "";
+    }
+
+    @Override
+    public String red() {
+      return "";
+    }
+
+    @Override
+    public String green() {
+      return "";
+    }
+
+    @Override
+    public String orange() {
+      return "";
+    }
+
+    @Override
+    public String blue() {
+      return "";
+    }
+
+    @Override
+    public String purple() {
+      return "";
+    }
+
+    @Override
+    public String cyan() {
+      return "";
+    }
+
+    @Override
+    public String lightgrey() {
+      return "";
+    }
+
+    @Override
+    public String darkgrey() {
+      return "";
+    }
+
+    @Override
+    public String lightred() {
+      return "";
+    }
+
+    @Override
+    public String lightgreen() {
+      return "";
+    }
+
+    @Override
+    public String yellow() {
+      return "";
+    }
+
+    @Override
+    public String lightblue() {
+      return "";
+    }
+
+    @Override
+    public String pink() {
+      return "";
+    }
+
+    @Override
+    public String lightcyan() {
+      return "";
+    }
   }
 }
