@@ -35,7 +35,7 @@ int main() {
             182.0, 184.0, 186.0, 188.0, 190.0, 192.0, 194.0, 196.0, 198.0, 200.0
    };
 
-    double MeanA = 0.0, MeanB = 0.0;
+    double MeanA = 10.0, MeanB = 10.0;
     for (int i = 0; i < MAX; i++) {
         MeanA += ArrayA[i];
         MeanB += ArrayB[i];
