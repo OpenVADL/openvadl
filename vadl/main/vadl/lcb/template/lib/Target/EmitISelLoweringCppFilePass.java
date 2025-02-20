@@ -17,9 +17,11 @@ import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterFile;
@@ -81,18 +83,19 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().processorName().value().toLowerCase());
-    map.put("registerFiles", registerFiles);
+    map.put("registerFiles", registerFiles.stream().map(this::mapRegisterFile).toList());
     map.put("framePointer", framePointer);
     map.put("stackPointer", stackPointer);
     map.put("stackPointerByteSize", abi.stackPointer().registerFile().resultType().bitWidth() / 8);
     map.put("argumentRegisterClasses",
         abi.argumentRegisters().stream().map(Abi.RegisterRef::registerFile).distinct()
-            .map(LlvmRegisterFile::new).toList());
-    map.put("argumentRegisters", abi.argumentRegisters());
+            .map(LlvmRegisterFile::new).map(this::mapLlvmRegisterClass).toList());
+    map.put("argumentRegisters",
+        abi.argumentRegisters().stream().map(Abi.RegisterRef::render).toList());
     map.put("stackPointerBitWidth", abi.stackPointer().registerFile().resultType().bitWidth());
     map.put("stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
-    map.put("addressSequence", addressSequence);
+    map.put("addressSequence", addressSequence.simpleName());
     map.put("hasCMove32", hasCMove32);
     map.put("hasCMove64", hasCMove64);
     map.put("conditionalMove", conditionalMove);
@@ -100,8 +103,15 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     return map;
   }
 
-  record BranchInstruction(String instructionName, String isdName) {
+  record BranchInstruction(String instructionName, String isdName) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "instructionName", instructionName,
+          "isdName", isdName
+      );
+    }
   }
 
   private List<BranchInstruction> getBranchInstructions(Database database) {
@@ -137,5 +147,23 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     }
 
     return null;
+  }
+
+  private Map<String, Object> mapLlvmRegisterClass(LlvmRegisterFile registerFile) {
+    return Map.of(
+        "name", registerFile.simpleName(),
+        "resultWidth", registerFile.resultType().bitWidth(),
+        "llvmResultType", registerFile.llvmResultType()
+    );
+  }
+
+  private Map<String, Object> mapRegisterFile(TableGenRegisterClass registerFile) {
+    return Map.of(
+        "name", registerFile.name(),
+        "regTypes", registerFile.regTypes(),
+        "registerFileRef", Map.of(
+            "name", registerFile.registerFileRef().simpleName()
+        )
+    );
   }
 }

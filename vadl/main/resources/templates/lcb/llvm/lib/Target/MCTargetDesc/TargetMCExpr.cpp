@@ -91,7 +91,7 @@ void [(${namespace})]MCExpr::visitUsedExpr(MCStreamer &Streamer) const
 {
     return StringSwitch<[(${namespace})]MCExpr::VariantKind>(name)
     [# th:each="vk : ${variantKinds}" ]
-          .Case("[(${vk.human()})]", [(${vk.value()})])
+          .Case("[(${vk.human})]", [(${vk.value})])
     [/]
           .Default(VK_Invalid);
 }
@@ -101,8 +101,8 @@ StringRef [(${namespace})]MCExpr::getVariantKindName(VariantKind Kind)
     switch (Kind)
     {
     [# th:each="vk : ${variantKinds}" ]
-      case [(${vk.value()})]:
-      return "[(${vk.human()})]";
+      case [(${vk.value})]:
+      return "[(${vk.human})]";
     [/]
     default : llvm_unreachable("Invalid symbol kind");
     }
@@ -113,7 +113,7 @@ bool [(${namespace})]MCExpr::isInternalImmExpr() const
     switch(Kind)
     {
     [# th:each="imm : ${immediates}" ]
-      case [(${imm.record.variantKind().value()})]:
+      case [(${imm.variantKind.value})]:
         return true;
     [/]
       default:
@@ -152,9 +152,9 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
     int64_t resultValue = Value;
 
     [# th:each="bi : ${baseInfos}" ]
-      if(Kind == [(${bi.variantKind().value()})])
+      if(Kind == [(${bi.variantKind.value})])
       {
-        resultValue = [(${namespace})]BaseInfo::[(${bi.functionName()})](resultValue);
+        resultValue = [(${namespace})]BaseInfo::[(${bi.functionName})](resultValue);
       }
     [/]
 

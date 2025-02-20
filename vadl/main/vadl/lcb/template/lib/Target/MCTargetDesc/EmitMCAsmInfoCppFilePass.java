@@ -6,6 +6,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Specification;
 
 /**
@@ -30,8 +31,15 @@ public class EmitMCAsmInfoCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCAsmInfo.cpp";
   }
 
-  record AssemblyDescription(String commentString, boolean alignmentInBytes) {
+  record AssemblyDescription(String commentString, boolean alignmentInBytes) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "commentString", commentString,
+          "alignmentInBytes", alignmentInBytes
+      );
+    }
   }
 
   @Override

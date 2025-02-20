@@ -10,6 +10,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Specification;
 
 /**
@@ -33,8 +34,15 @@ public class EmitMCCodeEmitterHeaderFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCCodeEmitter.h";
   }
 
-  record Aggregate(String encodeWrapper, String encode) {
+  record Aggregate(String encodeWrapper, String encode) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "encodeWrapper", encodeWrapper,
+          "encode", encode
+      );
+    }
   }
 
   @Override

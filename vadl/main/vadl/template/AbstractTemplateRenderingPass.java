@@ -168,7 +168,13 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
     var vars = createVariables(passResults, viam);
     // check if variables have correct type.
     // for rendering, only primitive types, maps, and lists are valid.
-    VariableChecker.checkVariables(vars);
+    try {
+      vars = VariableChecker.checkVariables(vars);
+    } catch (IllegalRenderTypeException e) {
+      log.error("Illegal render type during rendering of {} in {}", getTemplatePath(),
+          this.getClass().getSimpleName(), e);
+      throw new RuntimeException(e);
+    }
     vars.forEach(ctx::setVariable);
     templateEngine.process(getTemplatePath(), ctx, writer);
     writer.flush();

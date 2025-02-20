@@ -70,8 +70,8 @@ def ADJCALLSTACKDOWN : Instruction
     let Namespace = "[(${namespace})]";
     let isPseudo = 1;
     let isCodeGenOnly = 1;
-    let Defs = [ [(${stackPointerRegister.render()})] ]; // stack pointer
-    let Uses = [ [(${stackPointerRegister.render()})] ]; // stack pointer
+    let Defs = [ [(${stackPointerRegister})] ]; // stack pointer
+    let Uses = [ [(${stackPointerRegister})] ]; // stack pointer
 }
 
 /*
@@ -86,8 +86,8 @@ def ADJCALLSTACKUP : Instruction
     let Namespace = "[(${namespace})]";
     let isPseudo = 1;
     let isCodeGenOnly = 1;
-    let Defs = [ [(${stackPointerRegister.render()})] ]; // stack pointer
-    let Uses = [ [(${stackPointerRegister.render()})] ]; // stack pointer
+    let Defs = [ [(${stackPointerRegister})] ]; // stack pointer
+    let Uses = [ [(${stackPointerRegister})] ]; // stack pointer
 }
 
 def RESERVED_PSEUDO_RET : Instruction
@@ -152,8 +152,8 @@ def vadl_imm64 : ImmLeaf<i64, [{ return true; }]>, Operand<i64>
 }
 
 [#th:block th:each="registerFile : ${registerFiles}" ]
-[#th:block th:if="${registerFile.resultType.bitWidth() == 32}"]
-def SelectCC_[(${registerFile.identifier.simpleName()})]: Instruction {
+[#th:block th:if="${registerFile.resultWidth == 32}"]
+def SelectCC_[(${registerFile.name})]: Instruction {
     field bits<32> Inst;
     // SoftFail is a field the disassembler can use to provide a way for
     // instructions to not match without killing the whole decode process. It is
@@ -167,10 +167,10 @@ def SelectCC_[(${registerFile.identifier.simpleName()})]: Instruction {
 
     let Namespace = "[(${namespace})]";
 
-    dag OutOperandList = (outs [(${registerFile.identifier.simpleName()})]:$dst);
-    dag InOperandList = (ins [(${registerFile.identifier.simpleName()})]:$lhs, [(${registerFile.identifier.simpleName()})]:$rhs, vadl_imm32:$imm, [(${registerFile.identifier.simpleName()})]:$truev, [(${registerFile.identifier.simpleName()})]:$falsev);
-    let Pattern = [ (set [(${registerFile.identifier.simpleName()})]:$dst, (target_selectcc [(${registerFile.identifier.simpleName()})]:$lhs, [(${registerFile.identifier.simpleName()})]:$rhs,
-                (i32 vadl_imm32:$imm), [(${registerFile.identifier.simpleName()})]:$truev, [(${registerFile.identifier.simpleName()})]:$falsev)) ];
+    dag OutOperandList = (outs [(${registerFile.name})]:$dst);
+    dag InOperandList = (ins [(${registerFile.name})]:$lhs, [(${registerFile.name})]:$rhs, vadl_imm32:$imm, [(${registerFile.name})]:$truev, [(${registerFile.name})]:$falsev);
+    let Pattern = [ (set [(${registerFile.name})]:$dst, (target_selectcc [(${registerFile.name})]:$lhs, [(${registerFile.name})]:$rhs,
+                (i32 vadl_imm32:$imm), [(${registerFile.name})]:$truev, [(${registerFile.name})]:$falsev)) ];
 
     let TSFlags{4-0} = 0;
     let usesCustomInserter = 1;
@@ -178,8 +178,8 @@ def SelectCC_[(${registerFile.identifier.simpleName()})]: Instruction {
     let isCodeGenOnly = 1;
 }
 [/th:block]
-[#th:block th:if="${registerFile.resultType.bitWidth() == 64}"]
-def SelectCC_[(${registerFile.identifier.simpleName()})]: Instruction {
+[#th:block th:if="${registerFile.resultWidth == 64}"]
+def SelectCC_[(${registerFile.name})]: Instruction {
     field bits<64> Inst;
     // SoftFail is a field the disassembler can use to provide a way for
     // instructions to not match without killing the whole decode process. It is
@@ -193,10 +193,10 @@ def SelectCC_[(${registerFile.identifier.simpleName()})]: Instruction {
 
     let Namespace = "[(${namespace})]";
 
-    dag OutOperandList = (outs [(${registerFile.identifier.simpleName()})]:$dst);
-    dag InOperandList = (ins [(${registerFile.identifier.simpleName()})]:$lhs, [(${registerFile.identifier.simpleName()})]:$rhs, vadl_imm64:$imm, [(${registerFile.identifier.simpleName()})]:$truev, [(${registerFile.identifier.simpleName()})]:$falsev);
-    let Pattern = [ (set [(${registerFile.identifier.simpleName()})]:$dst, (target_selectcc [(${registerFile.identifier.simpleName()})]:$lhs, [(${registerFile.identifier.simpleName()})]:$rhs,
-                (i64 vadl_imm64:$imm), [(${registerFile.identifier.simpleName()})]:$truev, [(${registerFile.identifier.simpleName()})]:$falsev)) ];
+    dag OutOperandList = (outs [(${registerFile.name})]:$dst);
+    dag InOperandList = (ins [(${registerFile.name})]:$lhs, [(${registerFile.name})]:$rhs, vadl_imm64:$imm, [(${registerFile.name})]:$truev, [(${registerFile.name})]:$falsev);
+    let Pattern = [ (set [(${registerFile.name})]:$dst, (target_selectcc [(${registerFile.name})]:$lhs, [(${registerFile.name})]:$rhs,
+                (i64 vadl_imm64:$imm), [(${registerFile.name})]:$truev, [(${registerFile.name})]:$falsev)) ];
 
     let TSFlags{4-0} = 0;
     let usesCustomInserter = 1;
@@ -215,7 +215,7 @@ def SelectCC_[(${registerFile.identifier.simpleName()})]: Instruction {
 [/]
 
 def : Pat<([(${stackPointerType})] AddrFI:$rs1),
-  ([(${addi.identifier.simpleName()})] AddrFI:$rs1, ([(${stackPointerType})] 0))>;
+  ([(${addi})] AddrFI:$rs1, ([(${stackPointerType})] 0))>;
 
 [# th:each="pseudo : ${pseudos}" ]
 [(${pseudo})]

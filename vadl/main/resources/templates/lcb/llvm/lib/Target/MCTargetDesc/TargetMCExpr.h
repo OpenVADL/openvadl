@@ -13,7 +13,7 @@ namespace llvm
         enum VariantKind
         {
             [# th:each="vk, iterStat : ${variantKinds}" ]
-            [#th:block th:if="${!iterStat.first}"],[/th:block] [(${vk.value()})]
+            [#th:block th:if="${!iterStat.first}"],[/th:block] [(${vk.value})]
             [/]
         };
 

@@ -54,9 +54,9 @@ MCOperand [(${namespace})]InstPrinter::adjustImmediateOp
         switch(OpCode)
         {
           [# th:each="instruction : ${instructionWithEncodedImmediate}" ]
-          case [(${namespace})]::[(${instruction.identifier().simpleName()})]:
+          case [(${namespace})]::[(${instruction.identifier})]:
           {
-            auto newOp = [(${instruction.rawEncoderMethod()})](value);
+            auto newOp = [(${instruction.rawEncoderMethod})](value);
             return MCOperand::createImm(newOp);
           }
           [/]
@@ -88,7 +88,7 @@ std::string [(${namespace})]InstPrinter::instToString(const MCInst *MI, uint64_t
         [#th:block th:each="instruction : ${instructions}" ]
             case [(${namespace})]::[(${instruction.name})]:
             {
-                [(${instruction.code.value()})]
+                [(${instruction.code.value})]
                 break;
             }
         [/th:block]

@@ -39,10 +39,11 @@ public class EmitClangTargetCppFilePass extends LcbTemplateRenderingPass {
         CommonVarNames.REGISTERS, extractRegisters(specification));
   }
 
-  private List<Register> extractRegisters(Specification specification) {
+  private List<Map<String, String>> extractRegisters(Specification specification) {
     return specification.isa()
         .map(x -> x.ownRegisters().stream())
         .orElseGet(Stream::empty)
+        .map(x -> Map.of("name", x.simpleName()))
         .toList();
   }
 }

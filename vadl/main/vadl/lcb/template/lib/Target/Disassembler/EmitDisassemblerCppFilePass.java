@@ -14,6 +14,7 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Format;
 import vadl.viam.Specification;
@@ -48,8 +49,18 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
    */
   public static final String WRAPPER = "wrapper";
 
-  record Immediate(String wrapperName, String decodeMethodName, int bitWidth, long mask) {
+  record Immediate(String wrapperName, String decodeMethodName, int bitWidth, long mask) implements
+      Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "wrapperName", wrapperName,
+          "decodeMethodName", decodeMethodName,
+          "bitWidth", bitWidth,
+          "mask", mask
+      );
+    }
   }
 
   private List<RegisterUtils.RegisterClass> extractRegisterClasses(Specification specification,

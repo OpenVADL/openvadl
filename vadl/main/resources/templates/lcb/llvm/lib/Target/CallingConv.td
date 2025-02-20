@@ -4,7 +4,7 @@
 
 def CSR_[(${namespace})] : CalleeSavedRegs<(add
 [#th:block th:each="r, iterStat : ${calleeRegisters}" ]
-[(${r.render()})][#th:block th:if="${!iterStat.last}"],[/th:block]
+[(${r})][#th:block th:if="${!iterStat.last}"],[/th:block]
 [/th:block]
 )>;
 

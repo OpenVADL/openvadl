@@ -23,6 +23,7 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
@@ -52,8 +53,19 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   record RenderedPseudoInstruction(CppClassImplName classImpl,
                                    String header,
                                    String code,
-                                   PseudoInstruction pseudoInstruction) {
+                                   PseudoInstruction pseudoInstruction) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "header", header,
+          "code", code,
+          "classImpl", classImpl,
+          "pseudoInstruction", Map.of(
+              "name", pseudoInstruction.simpleName()
+          )
+      );
+    }
   }
 
   /**
@@ -146,6 +158,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var compilerInstructions =
         compilerInstructions(abi, cppFunctions, fieldUsages, variants, relocations,
             passResults);
+
+
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         "pseudoInstructions",

@@ -49,9 +49,9 @@ namespace llvm
         std::string instToString(const MCInst *MI, uint64_t Address) const;
 
         [#th:block th:each="registerClass, iterStat : ${registerClasses}" ]
-        std::string getRegisterNameFrom[(${registerClass.simpleName})]ByIndex(unsigned RegIndex) const
+        std::string getRegisterNameFrom[(${registerClass})]ByIndex(unsigned RegIndex) const
         {
-            return AsmUtils::getRegisterNameFrom[(${registerClass.simpleName})]ByIndex(RegIndex);
+            return AsmUtils::getRegisterNameFrom[(${registerClass})]ByIndex(RegIndex);
         }
         [/th:block]
     };

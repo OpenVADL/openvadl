@@ -27,6 +27,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.types.SIntType;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
@@ -69,8 +70,20 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
                                RegisterFile registerFile,
                                MachineInstructionIndices machineInstructionIndices,
                                long minValue,
-                               long maxValue) {
+                               long maxValue) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "minValue", minValue,
+          "maxValue", maxValue,
+          "predicateMethodName", predicateMethodName,
+          "machineInstructionLabel", machineInstructionLabel.name(),
+          "machineInstructionIndices", machineInstructionIndices,
+          "instruction", instruction.simpleName(),
+          "registerFile", registerFile.simpleName()
+      );
+    }
   }
 
   @Override
@@ -90,11 +103,11 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         "constraints", constraints,
-        "framePointer", abi.framePointer(),
-        "returnAddress", abi.returnAddress(),
-        "stackPointer", abi.stackPointer(),
-        "globalPointer",
-        abi.globalPointer(), "frameIndexEliminations",
+        "framePointer", abi.framePointer().render(),
+        "returnAddress", abi.returnAddress().render(),
+        "stackPointer", abi.stackPointer().render(),
+        "globalPointer", abi.globalPointer().render(),
+        "frameIndexEliminations",
         getEliminateFrameIndexEntries(instructionLabels, uninlined,
             tableGenMachineInstructions).stream()
             .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
@@ -103,8 +116,15 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
             .toList());
   }
 
-  record ReservedRegister(String registerFile, int index) {
+  record ReservedRegister(String registerFile, int index) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "registerFile", registerFile,
+          "index", index
+      );
+    }
   }
 
   private List<ReservedRegister> getConstraints(Specification specification) {
@@ -133,8 +153,17 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
    *                         to offset the indexImm by the number of output operands in the
    *                         machine instructions to eliminate the frame index.
    */
-  record MachineInstructionIndices(int indexFI, int indexImm, int relativeDistance) {
+  record MachineInstructionIndices(int indexFI, int indexImm, int relativeDistance)
+      implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "indexFI", indexFI,
+          "indexImm", indexImm,
+          "relativeDistance", relativeDistance
+      );
+    }
   }
 
   private List<FrameIndexElimination> getEliminateFrameIndexEntries(

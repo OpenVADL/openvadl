@@ -37,7 +37,7 @@ const MCFixupKindInfo &[(${namespace})]AsmBackend::getFixupKindInfo
         //
         // name                 offset     bits     flags
         [#th:block th:each="fixup, iterStat : ${fixups}" ]
-            (MCFixupKindInfo) { .Name="[(${fixup.name().value()})]", .TargetOffset=0, .TargetSize=0, .Flags=[#th:block th:text="${fixup.kind().isRelative()} ? 'MCFixupKindInfo::FKF_IsPCRel' : '0'" /]}[#th:block th:if="${!iterStat.last}"],[/th:block]
+            (MCFixupKindInfo) { .Name="[(${fixup.name})]", .TargetOffset=0, .TargetSize=0, .Flags=[#th:block th:text="${fixup.kind.isRelative} ? 'MCFixupKindInfo::FKF_IsPCRel' : '0'" /]}[#th:block th:if="${!iterStat.last}"],[/th:block]
         [/th:block]
     };
 
@@ -69,7 +69,7 @@ bool [(${namespace})]AsmBackend::shouldForceRelocation
         default:
             return false;
         [#th:block th:each="fixup : ${fixups}" ]
-            case [(${namespace})]::[(${fixup.name().value()})]:
+            case [(${namespace})]::[(${fixup.name})]:
         [/th:block]
             return true;
     }
@@ -147,8 +147,8 @@ static uint64_t adjustFixupValue
         case MCFixupKind::FK_Data_8:
             return Value;
         [#th:block th:each="fixup, iterStat : ${fixups}" ]
-         case [(${namespace})]::[(${fixup.name().value()})]:
-                    return [(${namespace})]BaseInfo::[(${fixup.valueRelocation().functionName().lower()})]( Value );
+         case [(${namespace})]::[(${fixup.name})]:
+                    return [(${namespace})]BaseInfo::[(${fixup.valueRelocationName})]( Value );
         [/th:block]
     }
 }

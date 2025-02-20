@@ -1,5 +1,6 @@
 package vadl.gcb.passes.relocation.model;
 
+import java.util.Map;
 import java.util.Objects;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.viam.Format;
@@ -57,5 +58,13 @@ public class LogicalRelocation extends CompilerRelocation {
   @Override
   public int hashCode() {
     return Objects.hash(kind, format);
+  }
+
+  @Override
+  public Map<String, Object> renderObj() {
+    var obj = super.renderObj();
+    obj.put("variantKind", variantKind);
+    obj.put("name", identifier.simpleName());
+    return obj;
   }
 }

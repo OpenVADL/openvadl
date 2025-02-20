@@ -38,8 +38,8 @@ unsigned [(${namespace})]ELFObjectWriter::getRelocType(MCContext &Ctx, const MCV
     case FK_Data_8:
         return ELF::R_[(${namespace})]_64;
     [# th:each="fx : ${fixups}" ]
-    case [(${namespace})]::[(${fx.name().value()})]:
-        return ELF::[(${fx.relocationLowerable().elfRelocationName().value()})];
+    case [(${namespace})]::[(${fx.name})]:
+        return ELF::[(${fx.elfRelocationName})];
     [/]
     }
 

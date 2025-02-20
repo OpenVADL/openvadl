@@ -16,6 +16,7 @@ import vadl.lcb.codegen.assembly.ParserGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.types.BuiltInTable;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -41,8 +42,17 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         + "/AsmParser/AsmRecursiveDescentParser.h";
   }
 
-  record ParsingResultRecord(String type, String functionName, String comment) {
+  record ParsingResultRecord(String type, String functionName, String comment) implements
+      Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "type", type,
+          "functionName", functionName,
+          "comment", comment
+      );
+    }
   }
 
   @Override

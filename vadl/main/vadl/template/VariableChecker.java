@@ -10,7 +10,8 @@ import vadl.utils.Pair;
 
 class VariableChecker {
 
-  static void checkVariables(Map<String, Object> variables) throws IllegalRenderTypeException {
+  static Map<String, Object> checkVariables(Map<String, Object> variables)
+      throws IllegalRenderTypeException {
     var entriesToPut = new ArrayList<Pair<String, Object>>();
     for (Map.Entry<String, Object> entry : variables.entrySet()) {
       var newVal = check(entry.getValue());
@@ -25,6 +26,7 @@ class VariableChecker {
     for (var entry : entriesToPut) {
       variables.put(entry.left(), entry.right());
     }
+    return variables;
   }
 
   private static @Nullable Object check(@Nullable Object object) throws IllegalRenderTypeException {

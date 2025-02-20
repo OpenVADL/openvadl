@@ -225,8 +225,8 @@ std::string AsmUtils::formatExpr(const MCExpr *Expr, uint8_t Radix, const MCAsmI
 std::string AsmUtils::FormatModifier(const [(${namespace})]MCExpr::VariantKind VariantKind)
 {
     [# th:each="fm : ${formatModifiers}" ]
-    if(VariantKind == [(${namespace})]MCExpr::VariantKind::[(${fm.variantKind().value()})]) {
-      return "[(${fm.relocation().identifier.simpleName()})]";
+    if(VariantKind == [(${namespace})]MCExpr::VariantKind::[(${fm.variantKind.value})]) {
+      return "[(${fm.relocation.name})]";
     }
     [/]
 
@@ -239,7 +239,7 @@ std::string AsmUtils::getRegisterName( unsigned RegNo )
   {
   [# th:each="rg : ${registers}" ]
   case [(${namespace})]::[(${rg.name})]:
-      return "[(${rg.getAsmName()})]";
+      return "[(${rg.getAsmName})]";
   [/]
   }
 }
@@ -294,11 +294,11 @@ bool AsmUtils::evaluateConstantImm(const MCOperand *MCOp, int64_t &Imm)
 
 
 [# th:each="rg : ${registerClasses}" ]
-std::string AsmUtils::getRegisterNameFrom[(${rg.registerFile.identifier.simpleName()})]ByIndex( unsigned RegIndex ) {
+std::string AsmUtils::getRegisterNameFrom[(${rg.registerFile.name})]ByIndex( unsigned RegIndex ) {
     const int registers[] =
     {
         [# th:each="reg, iterStat : ${rg.registers}" ]
-        [(${namespace})]::[(${reg.name()})][#th:block th:if="${!iterStat.last}"],[/th:block]
+        [(${namespace})]::[(${reg.name})][#th:block th:if="${!iterStat.last}"],[/th:block]
       [/]
     };
 

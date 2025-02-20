@@ -49,11 +49,11 @@ MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr *Expr)
         switch (targetKind)
         {
         [# th:each="fx : ${variantUpdates}" ]
-          case ([(${namespace})]MCExpr::VariantKind::[(${fx.kind().value()})]):
+          case ([(${namespace})]MCExpr::VariantKind::[(${fx.kind})]):
           {
             [# th:each="i : ${fx.instructions}" ]
-             if(Opcode == [(${namespace})]::[(${i.instruction.identifier.simpleName()})] && OpNo == [(${i.opNo})]) {
-               return MCFixupKind([(${namespace})]::[(${i.fixup.name().value()})]);
+             if(Opcode == [(${namespace})]::[(${i.instrName})] && OpNo == [(${i.opNo})]) {
+               return MCFixupKind([(${namespace})]::[(${i.fixupName})]);
              }
             [/]
           }
@@ -69,8 +69,8 @@ MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr *Expr)
     else if (kind == MCExpr::ExprKind::SymbolRef)
     {
         [# th:each="i : ${syms}" ]
-             if(Opcode == [(${namespace})]::[(${i.instruction.identifier.simpleName()})] && OpNo == [(${i.opNo})]) {
-              return MCFixupKind([(${namespace})]::[(${i.fixup.name().value()})]);
+             if(Opcode == [(${namespace})]::[(${i.instrName})] && OpNo == [(${i.opNo})]) {
+              return MCFixupKind([(${namespace})]::[(${i.fixupName})]);
              }
         [/]
         return MCFixupKind::FK_NONE;

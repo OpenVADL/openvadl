@@ -1,6 +1,7 @@
 package vadl.lcb.template.lib.Target.AsmParser;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -8,6 +9,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.PseudoInstruction;
@@ -34,20 +36,25 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
         + "AsmParser.cpp";
   }
 
-  record AliasDirective(String alias, String target) {
+  record AliasDirective(String alias, String target) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "alias", alias,
+          "target", target
+      );
+    }
   }
 
-  private List<Instruction> mapInstructions(Optional<InstructionSetArchitecture> isa) {
+  private List<Map<String, Object>> mapInstructions(Optional<InstructionSetArchitecture> isa) {
     return isa
         .map(InstructionSetArchitecture::ownInstructions)
-        .orElse(List.of());
-  }
-
-  private List<PseudoInstruction> mapPseudoInstructions(Optional<InstructionSetArchitecture> isa) {
-    return isa
-        .map(InstructionSetArchitecture::ownPseudoInstructions)
-        .orElse(List.of());
+        .orElse(List.of())
+        .stream()
+        .map(i -> Map.of(
+            "name", (Object) i.simpleName()
+        )).toList();
   }
 
 
@@ -58,7 +65,6 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         CommonVarNames.INSTRUCTIONS, mapInstructions(specification.isa()),
-        CommonVarNames.PSEUDO_INSTRUCTIONS, mapPseudoInstructions(specification.isa()),
         CommonVarNames.ALIASES, List.of()
     );
   }

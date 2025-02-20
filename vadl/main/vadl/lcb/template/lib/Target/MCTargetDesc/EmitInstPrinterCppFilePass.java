@@ -24,6 +24,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
@@ -49,13 +50,27 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "InstPrinter.cpp";
   }
 
-  record PrintableInstruction(String name, CppFunctionCode code) {
+  record PrintableInstruction(String name, CppFunctionCode code) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "code", code
+      );
+    }
   }
 
   record InstructionWithImmediate(Identifier identifier,
-                                  String rawEncoderMethod) {
+                                  String rawEncoderMethod) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "identifier", identifier.simpleName(),
+          "rawEncoderMethod", rawEncoderMethod
+      );
+    }
   }
 
   @Override

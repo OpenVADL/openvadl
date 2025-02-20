@@ -11,6 +11,7 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Specification;
 
@@ -34,8 +35,15 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
         + "CallingConv.td";
   }
 
-  record AssignToReg(String type, String registerRefs) {
+  record AssignToReg(String type, String registerRefs) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "type", type,
+          "registerRefs", registerRefs
+      );
+    }
   }
 
   @Override
@@ -45,7 +53,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        "calleeRegisters", abi.calleeSaved(),
+        "calleeRegisters", abi.calleeSaved().stream().map(Abi.RegisterRef::render).toList(),
         "functionRegisterType", getFuncArgsAssignToReg(abi).type,
         "functionRegisters", getFuncArgsAssignToReg(abi),
         "returnRegisters", getReturnAssignToReg(abi));
