@@ -163,21 +163,28 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_32));
       } else if (findAddWithImmediate64Bit(behavior)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_64));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(SDIV, SDIVS))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+          List.of(SDIV, SDIVS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SDIV));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(UDIV, UDIVS))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+          List.of(UDIV, UDIVS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UDIV));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(SMOD, SMODS))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+          List.of(SMOD, SMODS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SMOD));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(UMOD, UMODS))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+          List.of(UMOD, UMODS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UMOD));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, SUB)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUB));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(SUBB, SUBSB))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+          List.of(SUBB, SUBSB))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUBB));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(SUBC, SUBSC))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+          List.of(SUBC, SUBSC))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUBC));
-      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(AND, ANDS))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
+          List.of(AND, ANDS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.AND));
       } else if (findRR(behavior, List.of(OR, ORS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.OR));
