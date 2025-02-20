@@ -6,11 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
@@ -21,9 +19,19 @@ import vadl.utils.Pair;
 public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
 
   @Test
-  void testEmbench() throws IOException, DuplicatedPassKeyException {
+  void O0() throws DuplicatedPassKeyException, IOException {
+    testEmbench(0);
+  }
+
+  @Test
+  void O3() throws DuplicatedPassKeyException, IOException {
+    testEmbench(3);
+  }
+
+  void testEmbench(int optLevel) throws IOException, DuplicatedPassKeyException {
     var target = "rv32im";
     var upstreamBuildTarget = "RISCV";
+    var doDebug = false;
     var configuration = new LcbConfiguration(getConfiguration(false),
         new ProcessorName(target));
 
@@ -49,17 +57,18 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
     }
 
     var redisCache = getRunningRedisCache();
-    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_embench_spike_riscv32")
-        .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
-        .withBuildArg("TARGET", target)
-        .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget));
+    var cachedImage =
+        EmbenchImageProvider.image(redisCache,
+            configuration.outputPath() + "/lcb/Dockerfile",
+            target, upstreamBuildTarget
+            , doDebug);
 
-    runContainerAndCopyInputIntoContainer(image,
+    runContainerAndCopyInputIntoContainer(cachedImage,
         List.of(Pair.of(Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
             "/src/inputs")),
         Map.of(
             "LLVM_PARALLEL_COMPILE_JOBS", "4",
             "LLVM_PARALLEL_LINK_JOBS", "2"),
-        "sh /src/embench/benchmark-extras/run-benchmarks-spike-clang-lcb.sh");
+        "sh /src/embench/benchmark-extras/run-benchmarks-spike-clang-lcb-O" + optLevel + ".sh");
   }
 }
