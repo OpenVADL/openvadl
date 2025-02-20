@@ -21,9 +21,9 @@ void [(${namespace})]FrameLowering::anchor() {}
 
 [(${namespace})]FrameLowering::[(${namespace})]FrameLowering(const [(${namespace})]Subtarget &STI)
     : TargetFrameLowering(StackGrowsDown,
-      Align(16) /*=StackAlignment*/,
+      Align([(${stackAlignment})]) /*=StackAlignment*/,
       0 /*=LocalAreaOffset*/,
-      Align(16) /*=TransientStackAlignment*/
+      Align([(${transientStackAlignment})]) /*=TransientStackAlignment*/
                           ),
       STI(STI)
 {
