@@ -60,8 +60,7 @@ public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
     var cachedImage =
         EmbenchImageProvider.image(redisCache,
             configuration.outputPath() + "/lcb/Dockerfile",
-            target, upstreamBuildTarget
-            , doDebug);
+            target, upstreamBuildTarget, doDebug);
 
     runContainerAndCopyInputIntoContainer(cachedImage,
         List.of(Pair.of(Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
