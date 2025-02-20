@@ -59,8 +59,8 @@ public interface IsaMatchingUtils {
    */
   default boolean findRegisterRegisterOrRegisterImmediateOrImmediateRegister(
       UninlinedGraph behavior, BuiltInTable.BuiltIn builtin) {
-    return findRR(behavior, List.of(builtin)) ||
-        findRegisterImmediateOrImmediateRegister(behavior, List.of(builtin));
+    return findRR(behavior, List.of(builtin))
+      || findRegisterImmediateOrImmediateRegister(behavior, List.of(builtin));
   }
 
   /**
@@ -70,8 +70,8 @@ public interface IsaMatchingUtils {
    */
   default boolean findRegisterRegisterOrRegisterImmediateOrImmediateRegister(
       UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
-    return findRR(behavior, builtins) ||
-        findRegisterImmediateOrImmediateRegister(behavior, builtins);
+    return findRR(behavior, builtins)
+        || findRegisterImmediateOrImmediateRegister(behavior, builtins);
   }
 
   /**
