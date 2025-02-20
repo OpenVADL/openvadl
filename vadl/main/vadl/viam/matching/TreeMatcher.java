@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import vadl.viam.graph.Node;
 
@@ -11,6 +13,26 @@ import vadl.viam.graph.Node;
  * This class tries to match the given {@link Matcher} on a given {@link List} of {@link Node}.
  */
 public class TreeMatcher {
+  /**
+   * Returns the a {@link List} of {@link Node} when {@code nodes} matches the given
+   * {@link Matcher}. The method will run every matcher and not stop until the first was found.
+   *
+   * @param supplier gives the {@link TreeMatcher} a fresh stream for every run.
+   * @param matchers a set of {@link Matcher} which is checked for every {@link Node} given by
+   *                 the {@code supplier}.
+   * @return a {@link List} of {@link Node} where each node matches the {@link Matcher}.
+   */
+  public static List<Node> matches(Supplier<Stream<Node>> supplier, Set<Matcher> matchers) {
+    // This arraylist stores all the nodes which were returned successfully by the matcher.
+    var result = new ArrayList<Node>();
+
+    for (var matcher : matchers) {
+      result.addAll(matches(supplier.get(), matcher));
+    }
+
+    return result;
+  }
+
   /**
    * Returns the a {@link List} of {@link Node} when {@code nodes} matches the given
    * {@link Matcher}.

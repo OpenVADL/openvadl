@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.types.BuiltInTable;
@@ -19,6 +20,7 @@ import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.matching.Matcher;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
 import vadl.viam.matching.impl.AnyReadRegFileMatcher;
@@ -55,8 +57,10 @@ public interface IsaMatchingUtils {
    * {@code behavior} or find the pattern with {@code builtin} as root and register-immediate as
    * children in the {@code behavior}.
    */
-  default boolean findRR_OR_findRI(UninlinedGraph behavior, BuiltInTable.BuiltIn builtin) {
-    return findRR(behavior, List.of(builtin)) || findRI(behavior, List.of(builtin));
+  default boolean findRegisterRegisterOrRegisterImmediateOrImmediateRegister(
+      UninlinedGraph behavior, BuiltInTable.BuiltIn builtin) {
+    return findRR(behavior, List.of(builtin)) ||
+        findRegisterImmediateOrImmediateRegister(behavior, List.of(builtin));
   }
 
   /**
@@ -64,8 +68,10 @@ public interface IsaMatchingUtils {
    * {@code behavior} or find the pattern with one of {@code builtins} as root and
    * register-immediate as children in the {@code behavior}.
    */
-  default boolean findRR_OR_findRI(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
-    return findRR(behavior, builtins) || findRI(behavior, builtins);
+  default boolean findRegisterRegisterOrRegisterImmediateOrImmediateRegister(
+      UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
+    return findRR(behavior, builtins) ||
+        findRegisterImmediateOrImmediateRegister(behavior, builtins);
   }
 
   /**
@@ -85,15 +91,22 @@ public interface IsaMatchingUtils {
 
   /**
    * Find register-immediate instructions when it matches one of the given
-   * {@link BuiltInTable.BuiltIn}.
+   * {@link BuiltInTable.BuiltIn}. Looking for the operands is commutative.
    * Also, it must only write one register result.
    */
-  default boolean findRI(UninlinedGraph behavior, List<BuiltInTable.BuiltIn> builtins) {
-    var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-        new BuiltInMatcher(builtins, List.of(
-            new AnyChildMatcher(new AnyReadRegFileMatcher()),
-            new AnyChildMatcher(new FieldAccessRefMatcher())
-        )));
+  default boolean findRegisterImmediateOrImmediateRegister(UninlinedGraph behavior,
+                                                           List<BuiltInTable.BuiltIn> builtins) {
+    var matcher = new BuiltInMatcher(builtins, List.of(
+        new AnyChildMatcher(new AnyReadRegFileMatcher()),
+        new AnyChildMatcher(new FieldAccessRefMatcher())
+    ));
+    Set<Matcher> matchers = Set.of(
+        matcher,
+        matcher.swapOperands()
+    );
+    var matched = TreeMatcher.matches(() -> behavior.getNodes(BuiltInCall.class).map(x -> x),
+        matchers
+    );
 
     return !matched.isEmpty() && writesExactlyOneRegisterClass(behavior);
   }

@@ -76,6 +76,7 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.matching.Matcher;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
 import vadl.viam.matching.impl.AnyConstantValueMatcher;
@@ -162,21 +163,21 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_32));
       } else if (findAddWithImmediate64Bit(behavior)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_64));
-      } else if (findRR_OR_findRI(behavior, List.of(SDIV, SDIVS))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(SDIV, SDIVS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SDIV));
-      } else if (findRR_OR_findRI(behavior, List.of(UDIV, UDIVS))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(UDIV, UDIVS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UDIV));
-      } else if (findRR_OR_findRI(behavior, List.of(SMOD, SMODS))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(SMOD, SMODS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SMOD));
-      } else if (findRR_OR_findRI(behavior, List.of(UMOD, UMODS))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(UMOD, UMODS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UMOD));
-      } else if (findRR_OR_findRI(behavior, SUB)) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, SUB)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUB));
-      } else if (findRR_OR_findRI(behavior, List.of(SUBB, SUBSB))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(SUBB, SUBSB))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUBB));
-      } else if (findRR_OR_findRI(behavior, List.of(SUBC, SUBSC))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(SUBC, SUBSC))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUBC));
-      } else if (findRR_OR_findRI(behavior, List.of(AND, ANDS))) {
+      } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, List.of(AND, ANDS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.AND));
       } else if (findRR(behavior, List.of(OR, ORS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.OR));
@@ -184,11 +185,11 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MULHS));
       } else if (findRR_MultiplicationHigh(behavior, Set.of(UMULL, UMULLS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MULHU));
-      } else if (findRI(behavior, List.of(OR, ORS))) {
+      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(OR, ORS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ORI));
       } else if (findRR(behavior, List.of(XOR, XORS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.XOR));
-      } else if (findRI(behavior, List.of(XOR, XORS))) {
+      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(XOR, XORS))) {
         // Here is an exception:
         // Usually, it is good enough to group RR and RI together.
         // However, when generating alternative patterns for conditionals,
@@ -198,7 +199,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MUL));
       } else if (findRR(behavior, List.of(LSL, LSLS))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLL));
-      } else if (findRI(behavior, List.of(LSL, LSLS))
+      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(LSL, LSLS))
           /* the `hasNot` constraints are to differentiate between `SLLI` and `SLLIW` */
           && hasNot(behavior, TruncateNode.class)
           && hasNot(behavior, SignExtendNode.class)) {
@@ -237,9 +238,9 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTS));
       } else if (findRR(behavior, List.of(ULTH))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTU));
-      } else if (findRI(behavior, List.of(SLTH))) {
+      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(SLTH))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTI));
-      } else if (findRI(behavior, List.of(ULTH))) {
+      } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(ULTH))) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTIU));
       } else if (findWriteMem(behavior)) {
         instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.STORE_MEM));
@@ -416,10 +417,19 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   private boolean findAddWithImmediate(UninlinedGraph behavior, int bitWidth) {
-    var matched = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-            new BuiltInMatcher(List.of(ADD, ADDS),
-                List.of(new AnyChildMatcher(new AnyReadRegFileMatcher()),
-                    new AnyChildMatcher(new FieldAccessRefMatcher()))))
+    var matcher =
+        new BuiltInMatcher(List.of(ADD, ADDS),
+            List.of(new AnyChildMatcher(new AnyReadRegFileMatcher()),
+                new AnyChildMatcher(new FieldAccessRefMatcher())));
+
+    // We use a set because we want to allow commutativity.
+    Set<Matcher> matchers = Set.of(
+        matcher,
+        matcher.swapOperands()
+    );
+
+    var matched = TreeMatcher.matches(
+            () -> behavior.getNodes(BuiltInCall.class).map(x -> x), matchers)
         .stream()
         .map(x -> ((BuiltInCall) x).type())
         .filter(ty -> ty instanceof BitsType && ((BitsType) ty).bitWidth() == bitWidth)
@@ -457,11 +467,20 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
             .filter(x -> x.register().equals(pcRegister.registerRef()))
             .toList();
     var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
-    var inputRegister = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-        new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
-            new AnyChildMatcher(new AnyReadRegFileMatcher()),
-            new AnyNodeMatcher()
-        )));
+
+    var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
+        new AnyChildMatcher(new AnyReadRegFileMatcher()),
+        new AnyNodeMatcher()
+    ));
+    Set<Matcher> matchers = Set.of(
+        matcher,
+        matcher.swapOperands()
+    );
+
+    var inputRegister = TreeMatcher.matches(
+        () -> behavior.getNodes(BuiltInCall.class).map(x -> x),
+        matchers
+    );
 
     return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
   }
@@ -476,11 +495,18 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
             .filter(x -> x.register().equals(pcRegister.registerRef()))
             .toList();
     var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
-    var inputRegister = TreeMatcher.matches(behavior.getNodes(BuiltInCall.class).map(x -> x),
-        new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
-            new AnyChildMatcher(new IsReadRegMatcher(pcRegister.registerRef())),
-            new AnyNodeMatcher()
-        )));
+
+    var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
+        new AnyChildMatcher(new IsReadRegMatcher(pcRegister.registerRef())),
+        new AnyNodeMatcher()
+    ));
+    Set<Matcher> matchers = Set.of(
+        matcher,
+        matcher.swapOperands()
+    );
+    var inputRegister = TreeMatcher.matches(() -> behavior.getNodes(BuiltInCall.class).map(x -> x),
+        matchers
+    );
 
     return writesPc.size() == 1 && writesRegFile.size() == 1 && !inputRegister.isEmpty();
   }
