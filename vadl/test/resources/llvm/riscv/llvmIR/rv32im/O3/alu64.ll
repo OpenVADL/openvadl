@@ -142,8 +142,12 @@ define i64 @sub(i64 %a, i64 %b) nounwind {
 define i64 @sll(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: sll: # @sll
 ; CHECK-LABEL: # %bb.0:
+; CHECK-NEXT: ADDI sp,sp,-16
+; CHECK-NEXT: SW ra,12(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: LUI ra,%hi(__ashldi3)
 ; CHECK-NEXT: JALR ra,%lo(__ashldi3)(ra)
+; CHECK-NEXT: LW ra,12(sp) # 4-byte Folded Reload
+; CHECK-NEXT: ADDI sp,sp,16
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = shl i64 %a, %b
   ret i64 %1
@@ -196,8 +200,12 @@ define i64 @xor(i64 %a, i64 %b) nounwind {
 define i64 @srl(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: srl: # @srl
 ; CHECK-LABEL: # %bb.0:
+; CHECK-NEXT: ADDI sp,sp,-16
+; CHECK-NEXT: SW ra,12(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: LUI ra,%hi(__lshrdi3)
 ; CHECK-NEXT: JALR ra,%lo(__lshrdi3)(ra)
+; CHECK-NEXT: LW ra,12(sp) # 4-byte Folded Reload
+; CHECK-NEXT: ADDI sp,sp,16
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = lshr i64 %a, %b
   ret i64 %1
@@ -206,8 +214,12 @@ define i64 @srl(i64 %a, i64 %b) nounwind {
 define i64 @sra(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: sra: # @sra
 ; CHECK-LABEL: # %bb.0:
+; CHECK-NEXT: ADDI sp,sp,-16
+; CHECK-NEXT: SW ra,12(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: LUI ra,%hi(__ashrdi3)
 ; CHECK-NEXT: JALR ra,%lo(__ashrdi3)(ra)
+; CHECK-NEXT: LW ra,12(sp) # 4-byte Folded Reload
+; CHECK-NEXT: ADDI sp,sp,16
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = ashr i64 %a, %b
   ret i64 %1
