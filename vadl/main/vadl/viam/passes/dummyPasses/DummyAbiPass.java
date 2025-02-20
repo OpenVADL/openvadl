@@ -65,7 +65,9 @@ public class DummyAbiPass extends Pass {
         returnRegisters,
         returnSequence,
         callSequence,
-        addressSequence));
+        addressSequence,
+        Abi.Alignment.DOUBLE_WORD,
+        Abi.Alignment.DOUBLE_WORD));
 
     return null;
   }

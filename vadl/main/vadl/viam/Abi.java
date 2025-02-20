@@ -15,13 +15,17 @@ public class Abi extends Definition {
   public enum Alignment {
     NO_ALIGNMENT(-1),
     HALF_WORD(4),
-    WORD(8);
+    WORD(8),
+    DOUBLE_WORD(16);
 
-    @SuppressWarnings("unused")
     private final int byteAlignment;
 
     Alignment(int byteAlignment) {
       this.byteAlignment = byteAlignment;
+    }
+
+    public String inBytes() {
+      return byteAlignment + "";
     }
   }
 
@@ -64,6 +68,15 @@ public class Abi extends Definition {
   private final PseudoInstruction callSequence;
   private final PseudoInstruction addressSequence;
 
+  private final Alignment stackAlignment;
+
+  /**
+   * This property is stricter than `stackAlignment` because it
+   * enforces the alignment at *all* times. This is e.g. also
+   * for RISC-V required.
+   */
+  private final Alignment transientStackAlignment;
+
   /**
    * Constructor.
    */
@@ -80,7 +93,9 @@ public class Abi extends Definition {
              List<RegisterRef> returnRegisters,
              PseudoInstruction returnSequence,
              PseudoInstruction callSequence,
-             PseudoInstruction addressSequence
+             PseudoInstruction addressSequence,
+             Alignment stackAlignment,
+             Alignment transientStackAlignment
   ) {
     super(identifier);
     this.returnAddress = returnAddress;
@@ -96,6 +111,8 @@ public class Abi extends Definition {
     this.returnSequence = returnSequence;
     this.callSequence = callSequence;
     this.addressSequence = addressSequence;
+    this.stackAlignment = stackAlignment;
+    this.transientStackAlignment = transientStackAlignment;
   }
 
   @Override
@@ -158,5 +175,13 @@ public class Abi extends Definition {
 
   public PseudoInstruction addressSequence() {
     return addressSequence;
+  }
+
+  public Alignment stackAlignment() {
+    return stackAlignment;
+  }
+
+  public Alignment transientStackAlignment() {
+    return transientStackAlignment;
   }
 }
