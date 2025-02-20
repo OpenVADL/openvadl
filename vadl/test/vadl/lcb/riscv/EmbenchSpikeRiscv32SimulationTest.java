@@ -19,12 +19,12 @@ import vadl.utils.Pair;
 public class EmbenchSpikeRiscv32SimulationTest extends AbstractLcbTest {
 
   @Test
-  void O0() throws DuplicatedPassKeyException, IOException {
+  void runO0() throws DuplicatedPassKeyException, IOException {
     testEmbench(0);
   }
 
   @Test
-  void O3() throws DuplicatedPassKeyException, IOException {
+  void runO3() throws DuplicatedPassKeyException, IOException {
     testEmbench(3);
   }
 
