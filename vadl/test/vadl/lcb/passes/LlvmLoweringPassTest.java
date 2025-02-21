@@ -3,6 +3,7 @@ package vadl.lcb.passes;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
@@ -475,7 +476,7 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
                 .lastResultOf(LlvmLoweringPass.class);
 
     // Then
-    return spec.isa().map(x -> x.ownInstructions().stream())
+    var assertions = spec.isa().map(x -> x.ownInstructions().stream())
         .orElse(Stream.empty())
         .filter(x -> expectedResults.containsKey(x.identifier.simpleName()))
         .map(t -> DynamicTest.dynamicTest(t.identifier.simpleName(), () -> {
@@ -512,5 +513,20 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
           // Flags
           Assertions.assertEquals(expectedTestOutput.flags(), res.flags());
         }));
+
+    return Stream.concat(assertions, Stream.of(verifyNoMore(llvmResults)));
+  }
+
+  DynamicTest verifyNoMore(LlvmLoweringPass.LlvmLoweringPassResult llvmResults) {
+    // Tests if all are covered by `expectedResults`, so didn't forget a pattern.
+
+    var actual = llvmResults.machineInstructionRecords().keySet().stream()
+        .map(x -> x.identifier.simpleName())
+        .sorted()
+        .collect(Collectors.toList());
+    var asserted = expectedResults.keySet().stream().sorted().toList();
+
+    return DynamicTest.dynamicTest("verifyNoMore",
+        () -> Assertions.assertEquals(asserted, actual));
   }
 }
