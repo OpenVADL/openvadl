@@ -143,7 +143,6 @@ public class AssemblyParserCodeGenerator {
     ctx.ln("return RuleParsingResult<%s>(%s);", type, resultVar);
     ctx.spaceOut();
     ctx.ln("}");
-    ctx.spaceOut();
     ctx.ln();
   }
 
