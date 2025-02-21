@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import vadl.lcb.AbstractLcbTest;
-import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
@@ -17,13 +17,14 @@ public class GenerateRegisterClassesPassTest extends AbstractLcbTest {
       throws IOException, DuplicatedPassKeyException {
     // Given
     var setup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
-        new PassKey(GenerateRegisterClassesPass.class.getName()));
+        new PassKey(GenerateTableGenRegistersPass.class.getName()));
     var passManager = setup.passManager();
     var spec = setup.specification();
 
     // When
-    var generatedRegisterClasses = (GenerateRegisterClassesPass.Output) passManager.getPassResults()
-        .lastResultOf(GenerateRegisterClassesPass.class);
+    var generatedRegisterClasses =
+        (GenerateTableGenRegistersPass.Output) passManager.getPassResults()
+            .lastResultOf(GenerateTableGenRegistersPass.class);
 
     // Then
     var rg = generatedRegisterClasses.registerClasses().stream().filter(x -> x.name().equals(name))
@@ -74,19 +75,21 @@ public class GenerateRegisterClassesPassTest extends AbstractLcbTest {
       throws IOException, DuplicatedPassKeyException {
     // Given
     var setup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
-        new PassKey(GenerateRegisterClassesPass.class.getName()));
+        new PassKey(GenerateTableGenRegistersPass.class.getName()));
     var passManager = setup.passManager();
     var spec = setup.specification();
 
     // When
-    var generatedRegisterClasses = (GenerateRegisterClassesPass.Output) passManager.getPassResults()
-        .lastResultOf(GenerateRegisterClassesPass.class);
+    var generatedRegisterClasses =
+        (GenerateTableGenRegistersPass.Output) passManager.getPassResults()
+            .lastResultOf(GenerateTableGenRegistersPass.class);
 
     // Then
     var rg = generatedRegisterClasses.registerClasses().stream().filter(x -> x.name().equals(name))
         .findFirst();
     Assertions.assertTrue(rg.isPresent());
-    var x = rg.get().registers().stream().filter(y -> y.name().equals(reg)).findFirst();
+    var x = rg.get().registers().stream().filter(y -> y.compilerRegister().name().equals(reg))
+        .findFirst();
     Assertions.assertTrue(x.isPresent(), "Register was not found");
   }
 }

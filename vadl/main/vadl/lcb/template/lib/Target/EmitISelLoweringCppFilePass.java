@@ -16,7 +16,7 @@ import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
-import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -66,8 +66,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi = (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var registerFiles = ((GenerateRegisterClassesPass.Output) passResults.lastResultOf(
-        GenerateRegisterClassesPass.class)).registerClasses();
+    var registerFiles = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+        GenerateTableGenRegistersPass.class)).registerClasses();
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
     var addressSequence = abi.addressSequence();

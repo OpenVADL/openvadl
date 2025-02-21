@@ -1,5 +1,6 @@
 package vadl.viam;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import vadl.utils.Pair;
@@ -26,6 +27,14 @@ public class Abi extends Definition {
 
     public String inBytes() {
       return byteAlignment + "";
+    }
+
+    public int byteAlignment() {
+      return byteAlignment;
+    }
+
+    public int bitAlignment() {
+      return byteAlignment() * 8;
     }
   }
 
@@ -77,6 +86,8 @@ public class Abi extends Definition {
    */
   private final Alignment transientStackAlignment;
 
+  private final Map<RegisterFile, Abi.Alignment> registerFileAlignment;
+
   /**
    * Constructor.
    */
@@ -95,7 +106,8 @@ public class Abi extends Definition {
              PseudoInstruction callSequence,
              PseudoInstruction addressSequence,
              Alignment stackAlignment,
-             Alignment transientStackAlignment
+             Alignment transientStackAlignment,
+             Map<RegisterFile, Abi.Alignment> registerFileAlignment
   ) {
     super(identifier);
     this.returnAddress = returnAddress;
@@ -113,6 +125,7 @@ public class Abi extends Definition {
     this.addressSequence = addressSequence;
     this.stackAlignment = stackAlignment;
     this.transientStackAlignment = transientStackAlignment;
+    this.registerFileAlignment = registerFileAlignment;
   }
 
   @Override
@@ -183,5 +196,9 @@ public class Abi extends Definition {
 
   public Alignment transientStackAlignment() {
     return transientStackAlignment;
+  }
+
+  public Map<RegisterFile, Alignment> registerFileAlignment() {
+    return registerFileAlignment;
   }
 }

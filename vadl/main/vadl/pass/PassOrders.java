@@ -14,6 +14,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
+import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
@@ -47,9 +48,9 @@ import vadl.iss.template.target.EmitIssTranslatePass;
 import vadl.lcb.passes.DummyAnnotationPass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
-import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
@@ -144,6 +145,7 @@ public class PassOrders {
     var order = viam(gcbConfiguration);
 
     order.add(new DummyAbiPass(gcbConfiguration));
+    order.add(new GenerateCompilerRegistersPass(gcbConfiguration));
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
@@ -179,7 +181,7 @@ public class PassOrders {
 
     order.add(new IsaMachineInstructionMatchingPass(configuration));
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
-    order.add(new GenerateRegisterClassesPass(configuration));
+    order.add(new GenerateTableGenRegistersPass(configuration));
     order.add(new LlvmLoweringPass(configuration));
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));
     order.add(new GenerateTableGenPseudoInstructionRecordPass(configuration));
