@@ -127,7 +127,7 @@ def RESERVED_PSEUDO_CALL : Instruction
     let isCodeGenOnly = 1;
     let mayLoad       = 0;
     let mayStore      = 0;
-    let Defs = [ [(${returnAddress.render()})] ];
+    let Defs = [ [(${returnAddress})] ];
     let Uses = [];
 }
 

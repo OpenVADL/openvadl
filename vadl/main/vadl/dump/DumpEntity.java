@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.dump.entities.DefinitionEntity;
+import vadl.template.Renderable;
 
 /**
  * The dump entity is an element that is rendered in the HTML dump.
@@ -22,7 +23,7 @@ import vadl.dump.entities.DefinitionEntity;
  * The {@link TocKey} defines the group/name of the TOC (such as 'Functions') and the
  * rank.</p>
  */
-public abstract class DumpEntity {
+public abstract class DumpEntity implements Renderable {
 
   private List<Sub> subEntities = new ArrayList<>();
   private List<Info> infos = new ArrayList<Info>();
@@ -43,6 +44,7 @@ public abstract class DumpEntity {
     return this;
   }
 
+  @Override
   public Map<String, Object> renderObj() {
     var map = new HashMap<String, Object>();
     map.put("name", name());
@@ -97,7 +99,7 @@ public abstract class DumpEntity {
    * group belongs to.
    * The smaller the rank the higher it is visible in the TOC.
    */
-  public static class TocKey {
+  public static class TocKey implements Renderable {
     private String name;
     private int rank;
 
@@ -114,6 +116,7 @@ public abstract class DumpEntity {
       return rank;
     }
 
+    @Override
     public Map<String, Object> renderObj() {
       var map = new HashMap<String, Object>();
       map.put("name", name);
@@ -147,7 +150,7 @@ public abstract class DumpEntity {
    * The sub entity of a dump entity. It holds the actual entity and a name that
    * is rendered above the nested entity box.
    */
-  public static class Sub {
+  public static class Sub implements Renderable {
     @Nullable
     public String name;
     public DumpEntity subEntity;
@@ -157,6 +160,7 @@ public abstract class DumpEntity {
       this.subEntity = subEntity;
     }
 
+    @Override
     public Map<String, Object> renderObj() {
       var map = new HashMap<String, Object>();
       map.put("name", name);

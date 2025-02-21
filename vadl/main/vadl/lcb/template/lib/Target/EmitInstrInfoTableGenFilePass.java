@@ -115,7 +115,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-//        "returnAddress", abi.returnAddress(),
+        "returnAddress", abi.returnAddress().render(),
         "addi", addi.simpleName(),
         "stackPointerRegister", abi.stackPointer().render(),
         "stackPointerType",
