@@ -1,9 +1,8 @@
-package vadl.lcb.passes.llvmLowering.strategies.instruction;
+package vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals;
 
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -29,21 +28,17 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
 
 /**
- * Lowering of conditionals into TableGen.
+ * Lowering of less-than-signed conditionals into TableGen.
  */
-public class LlvmInstructionLoweringConditionalsStrategyImpl
+public class LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl
     extends LlvmInstructionLoweringStrategy {
 
   private final Set<MachineInstructionLabel> supported =
-      Set.of(MachineInstructionLabel.LTS,
-          MachineInstructionLabel.LTU,
-          MachineInstructionLabel.LTIU);
+      Set.of(MachineInstructionLabel.LTS);
 
-  public LlvmInstructionLoweringConditionalsStrategyImpl(
+  public LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl(
       ValueType architectureType) {
     super(architectureType);
   }
@@ -69,35 +64,27 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
       Abi abi) {
     var result = new ArrayList<TableGenPattern>();
 
-    var label = supportedInstructions.reverse().get(instruction);
-
+    /*
+     * Get the instructions to generate new instructions patterns for `instruction`/
+     */
     var lti = getFirst(instruction, supportedInstructions.labels(), MachineInstructionLabel.LTIU);
-    var ltu = getFirst(instruction, supportedInstructions.labels(), MachineInstructionLabel.LTU);
     var xor = getFirst(instruction, supportedInstructions.labels(), MachineInstructionLabel.XOR);
     var xori = getFirst(instruction, supportedInstructions.labels(), MachineInstructionLabel.XORI);
 
-    if (label == MachineInstructionLabel.LTS) {
-      // We use the `patterns` from `LTS` because it has two registers in the `patterns`.
-      eq(lti, xor, patterns, result);
-      gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETGT);
-      leqOrUleq(xori, patterns, result, BuiltInTable.SLEQ);
-    } else if (label == MachineInstructionLabel.LTU) {
-      neq(ltu, xor, patterns, result);
-      uge(xori, patterns, result);
-      gtOrUgt(instruction, patterns, result, BuiltInTable.SGTH, LlvmCondCode.SETUGT);
-      leqOrUleq(xori, patterns, result, BuiltInTable.ULEQ);
-    } else if (label == MachineInstructionLabel.LTIU) {
-      neqWithImmediate(ltu, xori, patterns, result);
-    }
+    eq(lti, xor, patterns, result);
+    gt(patterns, result);
+    leq(xori, patterns, result);
+    geq(xori, patterns, result);
 
     return result;
   }
 
-  private void gtOrUgt(Instruction lt,
-                       List<TableGenPattern> patterns,
-                       List<TableGenPattern> result,
-                       BuiltInTable.BuiltIn builtIn,
-                       LlvmCondCode condCode) {
+  /**
+   * This function will iterate over all the patterns and tries to find register-register. It sets
+   * the builtin to {@link BuiltInTable#SGTH}. It then copies the pattern swaps the arguments.
+   */
+  private void gt(List<TableGenPattern> patterns,
+                  List<TableGenPattern> result) {
     /*
               def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
                   (SLT X:$rs1, X:$rs2)>;
@@ -106,16 +93,6 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
 
               def : Pat< (setcc X:$rs1, X:$rs2, SETGT ),
                   (SLT X:$rs2, X:$rs1)>;
-
-              or
-
-              def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
-                  (SLTU X:$rs1, X:$rs2)>;
-
-                  to
-
-              def : Pat< (setcc X:$rs1, X:$rs2, SETUGT ),
-                  (SLTU X:$rs2, X:$rs1)>;
     */
 
     for (var pattern : patterns) {
@@ -132,18 +109,17 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         if (setcc.arguments().size() > 2
             && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
             && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
-          setcc.setBuiltIn(builtIn);
+          setcc.setBuiltIn(BuiltInTable.SGTH);
           setcc.arguments().set(2,
-              new ConstantNode(new Constant.Str(condCode.name())));
+              new ConstantNode(new Constant.Str(LlvmCondCode.SETGT.name())));
         } else {
           // Otherwise, stop and go to next pattern.
           continue;
         }
 
-        // Change machine instruction to immediate
+        // Change machine instruction
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setOutputInstruction(lt);
               // Swap the operands
               Collections.reverse(node.arguments());
             });
@@ -163,7 +139,14 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
             instruction.sourceLocation()));
   }
 
-  private void eq(Instruction basePattern,
+  /**
+   * This method iterates over the given patterns. When a pattern is register-register. It sets the
+   * condition to {@link BuiltInTable#EQU} then construct a new pattern. The machine instruction
+   * will be replaced by {@code sltiu} and {@code xor}. The second parameter of {@code sltiu}
+   * will be {@code 1}. Logically it means that we check whether the two registers are equal. If
+   * they are then the result of the XOR operation is zero. So to be equal, it must be less than 1.
+   */
+  private void eq(Instruction sltiu,
                   Instruction xor,
                   List<TableGenPattern> patterns,
                   List<TableGenPattern> result) {
@@ -201,7 +184,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         // Change machine instruction to immediate
         outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
             .forEach(node -> {
-              node.setOutputInstruction(basePattern);
+              node.setOutputInstruction(sltiu);
 
               var newArgs = new LcbMachineInstructionNode(node.arguments(), xor);
               node.setArgs(
@@ -213,11 +196,64 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
     }
   }
 
+  /**
+   * Goes over all patterns and tries to find a register-register pattern.
+   * It sets the builtin to {@link BuiltInTable#SGEQ}.
+   * It then wraps {@code xori} over the {@code slt} pattern.
+   */
+  private void geq(Instruction xori,
+                   List<TableGenPattern> patterns,
+                   List<TableGenPattern> result) {
+    /*
+              def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
+                  (SLT X:$rs1, X:$rs2)>;
 
-  private void leqOrUleq(Instruction xori,
-                         List<TableGenPattern> patterns,
-                         List<TableGenPattern> result,
-                         BuiltInTable.BuiltIn builtIn) {
+                  to
+
+              def : Pat< ( setcc X:$rs1, X:$rs2, SETGE ),
+                   ( XORI ( SLT X:$rs1, X:$rs2 ), 1 ) >;
+               */
+    for (var pattern : patterns) {
+      var copy = pattern.copy();
+
+      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
+        // Change condition code
+        var setcc = ensurePresent(
+            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
+                .findFirst(),
+            () -> Diagnostic.error("No setcc node was found", pattern.selector()
+                .sourceLocation()));
+        // Only RR and not RI should be replaced here.
+        if (setcc.arguments().size() > 2
+            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
+            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
+          setcc.setBuiltIn(BuiltInTable.SGEQ);
+          setcc.arguments().set(2,
+              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
+        } else {
+          // Otherwise, stop and go to next pattern.
+          continue;
+        }
+
+        var machineInstruction =
+            outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
+        var newMachineInstruction = new LcbMachineInstructionNode(
+            new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))), xori);
+        outputPattern.machine().addWithInputs(newMachineInstruction);
+
+        result.add(outputPattern);
+      }
+    }
+  }
+
+  /**
+   * Goes over all patterns and tries to find a register-register pattern.
+   * It sets the builtin to {@link BuiltInTable#SLEQ}.
+   * It then wraps {@code xori} over the {@code slt} pattern.
+   */
+  private void leq(Instruction xori,
+                   List<TableGenPattern> patterns,
+                   List<TableGenPattern> result) {
     /*
               def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
                   (SLT X:$rs1, X:$rs2)>;
@@ -241,7 +277,7 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         if (setcc.arguments().size() > 2
             && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
             && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
-          setcc.setBuiltIn(builtIn);
+          setcc.setBuiltIn(BuiltInTable.SLEQ);
           setcc.arguments().set(2,
               new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
         } else {
@@ -255,193 +291,6 @@ public class LlvmInstructionLoweringConditionalsStrategyImpl
         var newMachineInstruction = new LcbMachineInstructionNode(
             new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))), xori);
         outputPattern.machine().addWithInputs(newMachineInstruction);
-
-        result.add(outputPattern);
-      }
-    }
-  }
-
-  private void uge(Instruction xori,
-                   List<TableGenPattern> patterns,
-                   List<TableGenPattern> result) {
-    /*
-              def : Pat<(setcc X:$rs1, X:$rs2, SETLTU),
-                  (SLTU X:$rs1, X:$rs2)>;
-
-                  to
-
-              def : Pat< ( setcc X:$rs1, X:$rs2, SETUGE ),
-                   ( XORI ( SLTU X:$rs1, X:$rs2 ), 1 ) >;
-               */
-    for (var pattern : patterns) {
-      var copy = pattern.copy();
-
-      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
-        // Change condition code
-        var setcc = ensurePresent(
-            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
-                .findFirst(),
-            () -> Diagnostic.error("No setcc node was found", pattern.selector()
-                .sourceLocation()));
-        // Only RR and not RI should be replaced here.
-        if (setcc.arguments().size() > 2
-            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
-            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
-          setcc.setBuiltIn(BuiltInTable.UGEQ);
-          setcc.arguments().set(2,
-              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
-        } else {
-          // Otherwise, stop and go to next pattern.
-          continue;
-        }
-
-        var machineInstruction =
-            outputPattern.machine().getNodes(LcbMachineInstructionNode.class).findFirst().get();
-        var newMachineInstruction = new LcbMachineInstructionNode(
-            new NodeList<>(machineInstruction, new ConstantNode(new Constant.Str("1"))), xori);
-        outputPattern.machine().addWithInputs(newMachineInstruction);
-
-        result.add(outputPattern);
-      }
-    }
-  }
-
-  private void neq(Instruction basePattern,
-                   Instruction xor,
-                   List<TableGenPattern> patterns,
-                   List<TableGenPattern> result) {
-    /*
-              def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
-                  (SLT X:$rs1, X:$rs2)>;
-
-                  to
-
-              def : Pat< ( setcc X:$rs1, X:$rs2, SETNE ),
-                  ( SLTU X0, ( XOR X:$rs1, X:$rs2 ) ) >;
-               */
-    for (var pattern : patterns) {
-      var copy = pattern.copy();
-
-      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
-        // Change condition code
-        var setcc = ensurePresent(
-            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
-                .findFirst(),
-            () -> Diagnostic.error("No setcc node was found", pattern.selector()
-                .sourceLocation()));
-        // Only RR and not RI should be replaced here.
-        if (setcc.arguments().size() > 2
-            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
-            && setcc.arguments().get(1) instanceof LlvmReadRegFileNode) {
-          setcc.setBuiltIn(BuiltInTable.NEQ);
-          setcc.arguments().set(2,
-              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
-        } else {
-          // Otherwise, stop and go to next pattern.
-          continue;
-        }
-
-        // Change machine instruction to immediate
-        outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
-            .forEach(node -> {
-              node.setOutputInstruction(basePattern);
-
-              var registerFile =
-                  ensurePresent(
-                      xor.behavior().getNodes(ReadRegFileNode.class).map(
-                              ReadRegFileNode::registerFile)
-                          .findFirst(),
-                      () -> Diagnostic.error("Cannot find a register", xor.sourceLocation()));
-
-              var zeroConstraint =
-                  ensurePresent(
-                      Arrays.stream(registerFile.constraints())
-                          .filter(x -> x.value().intValue() == 0)
-                          .findFirst(),
-                      () -> Diagnostic.error("Cannot find zero register for register file",
-                          registerFile.sourceLocation()));
-              // Cannot construct a `ReadReg` because this register does not really exist.
-              // (for the VIAM spec)
-              var zeroRegister = new ConstantNode(
-                  new Constant.Str(
-                      registerFile.simpleName() + zeroConstraint.address().intValue()));
-
-              var newArgs = new LcbMachineInstructionNode(node.arguments(), xor);
-              node.setArgs(
-                  new NodeList<>(zeroRegister, newArgs));
-            });
-
-        result.add(outputPattern);
-      }
-    }
-  }
-
-
-  private void neqWithImmediate(Instruction machineInstructionToBeEmitted,
-                                Instruction xori,
-                                List<TableGenPattern> patterns,
-                                List<TableGenPattern> result) {
-    /*
-              def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
-                  (SLT X:$rs1, X:$rs2)>;
-
-                  to
-
-              def : Pat< ( setcc X:$rs1, RV64IM_Itype_immAsInt64:$imm, SETNE ),
-                  (SLTU X0, (XORI X:$rs1, RV64IM_Itype_immAsInt64:$imm) ) >;
-               */
-
-    for (var pattern : patterns) {
-      var copy = pattern.copy();
-
-      if (copy instanceof TableGenSelectionWithOutputPattern outputPattern) {
-        // Change condition code
-        var setcc = ensurePresent(
-            outputPattern.selector().getNodes(LlvmSetccSD.class).toList().stream()
-                .findFirst(),
-            () -> Diagnostic.error("No setcc node was found", pattern.selector()
-                .sourceLocation()));
-        // Only RR and not RI should be replaced here.
-        if (setcc.arguments().size() > 2
-            && setcc.arguments().get(0) instanceof LlvmReadRegFileNode
-            && setcc.arguments().get(1) instanceof FieldAccessRefNode) {
-          setcc.setBuiltIn(BuiltInTable.NEQ);
-          setcc.arguments().set(2,
-              new ConstantNode(new Constant.Str(setcc.llvmCondCode().name())));
-        } else {
-          // Otherwise, stop and go to next pattern.
-          continue;
-        }
-
-        // Change machine instruction to immediate
-        outputPattern.machine().getNodes(LcbMachineInstructionNode.class)
-            .forEach(node -> {
-              node.setOutputInstruction(machineInstructionToBeEmitted);
-
-              var registerFile =
-                  ensurePresent(
-                      xori.behavior().getNodes(ReadRegFileNode.class).map(
-                              ReadRegFileNode::registerFile)
-                          .findFirst(),
-                      () -> Diagnostic.error("Cannot find a register", xori.sourceLocation()));
-
-              var zeroConstraint =
-                  ensurePresent(
-                      Arrays.stream(registerFile.constraints())
-                          .filter(x -> x.value().intValue() == 0)
-                          .findFirst(),
-                      () -> Diagnostic.error("Cannot find zero register for register file",
-                          registerFile.sourceLocation()));
-              // Cannot construct a `ReadReg` because this register does not really exist.
-              // (for the VIAM spec)
-              var zeroRegister = new ConstantNode(
-                  new Constant.Str(
-                      registerFile.simpleName() + zeroConstraint.address().intValue()));
-
-              var newArgs = new LcbMachineInstructionNode(node.arguments(), xori);
-              node.setArgs(
-                  new NodeList<>(zeroRegister, newArgs));
-            });
 
         result.add(outputPattern);
       }

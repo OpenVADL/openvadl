@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.utils.SourceLocation;
 
 class ParserUtils {
@@ -556,6 +558,8 @@ class ParserUtils {
         var ast = VadlParser.parse(modulePath, macroOverrides);
         parser.macroTable.importFrom(ast, importedSymbols);
         return new ImportDefinition(ast, importedSymbols, fileId, filePath, args, loc);
+      } catch (DiagnosticList | Diagnostic e) {
+        throw e;
       } catch (Exception e) {
         parser.errors.SemErr("Error during module evaluation - " + e);
       }

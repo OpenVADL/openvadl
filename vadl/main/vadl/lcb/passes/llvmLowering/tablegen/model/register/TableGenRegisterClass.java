@@ -19,8 +19,4 @@ public record TableGenRegisterClass(ProcessorName namespace,
   public String regTypesString() {
     return regTypes.stream().map(ValueType::getLlvmType).collect(Collectors.joining(", "));
   }
-
-  public String registerString() {
-    return registers.stream().map(TableGenRegister::name).collect(Collectors.joining(", "));
-  }
 }

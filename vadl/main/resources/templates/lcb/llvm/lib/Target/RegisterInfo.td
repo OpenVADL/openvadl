@@ -1,9 +1,9 @@
 [# th:each="register, iterStat : ${registers}" ]
 def [(${register.name})] : Register<"[(${register.name})]">
 {
-    let Namespace = "[(${register.namespace.value})]";
+    let Namespace = "[(${register.namespace.value()})]";
     let AsmName = "[(${register.asmName})]";
-    let AltNames = [ [(${register.altNamesString})]  ];
+    let AltNames = [ [(${register.altNamesString()})]  ];
     let Aliases = [ ];
     let SubRegs = [ ];
     let SubRegIndices = [ ];
@@ -21,12 +21,12 @@ def [(${register.name})] : Register<"[(${register.name})]">
 }
 [/]
 
-[# th:each="registerFile : ${registerFiles}" ]
-def [(${registerFile.name})] : RegisterClass
-< /* namespace = */ "[(${registerFile.namespace})]"
-, /* regTypes  = */  [  [(${registerFile.regTypesString})] ]
-, /* alignment = */ [(${registerFile.alignment})]
+[# th:each="wrapped : ${registerFiles}" ]
+def [(${wrapped.registerFile.name})] : RegisterClass
+< /* namespace = */ "[(${wrapped.registerFile.namespace.value()})]"
+, /* regTypes  = */  [  [(${wrapped.registerFile.regTypesString()})] ]
+, /* alignment = */ [(${wrapped.registerFile.alignment})]
 , /* regList   = */
-  ( add [(${registerFile.registerString})] )
+  ( add [(${wrapped.allocationSequence})] )
 >;
 [/]

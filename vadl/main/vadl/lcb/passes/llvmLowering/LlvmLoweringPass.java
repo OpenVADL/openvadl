@@ -21,7 +21,6 @@ import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
-import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDivisionAndRemainderStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringIndirectJumpStrategyImpl;
@@ -30,6 +29,9 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweri
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringUnconditionalJumpsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -134,7 +136,10 @@ public class LlvmLoweringPass extends Pass {
     var machineStrategies =
         List.of(new LlvmInstructionLoweringAddImmediateStrategyImpl(architectureType),
             new LlvmInstructionLoweringDivisionAndRemainderStrategyImpl(architectureType),
-            new LlvmInstructionLoweringConditionalsStrategyImpl(architectureType),
+            new LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl(architectureType),
+            new LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl(architectureType),
+            new LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrategyImpl(
+                architectureType),
             new LlvmInstructionLoweringUnconditionalJumpsStrategyImpl(architectureType),
             new LlvmInstructionLoweringConditionalBranchesStrategyImpl(architectureType),
             new LlvmInstructionLoweringIndirectJumpStrategyImpl(architectureType),

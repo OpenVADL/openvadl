@@ -65,4 +65,18 @@ public class BuiltInMatcher implements Matcher {
 
     return false;
   }
+
+  @Override
+  public Matcher swapOperands() {
+    if (this.matchers.size() != 2) {
+      throw new RuntimeException("BuiltinMatcher has not the expected number of operands");
+    }
+
+    var matchers = this.matchers.stream().toList();
+    var first = matchers.get(0);
+    var second = matchers.get(1);
+
+    // Swap
+    return new BuiltInMatcher(builtIns, List.of(second, first));
+  }
 }

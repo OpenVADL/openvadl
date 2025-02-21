@@ -96,6 +96,10 @@ public class VadlParser {
     try {
       parser.Parse();
       parser.ast.passTimings.add(new PassTimings(System.nanoTime(), "Syntax parsing"));
+    } catch (Diagnostic e) {
+      errors.add(e);
+    } catch (DiagnosticList e) {
+      errors.addAll(e.items);
     } catch (Exception e) {
       errors.add(Diagnostic.error("Exception caught during parsing: " + e,
           SourceLocation.INVALID_SOURCE_LOCATION).build());
