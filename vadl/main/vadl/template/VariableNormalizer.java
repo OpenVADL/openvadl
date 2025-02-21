@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.ClassUtils;
 import vadl.utils.Pair;
@@ -75,7 +76,8 @@ class VariableNormalizer {
   }
 
   private static Object normalizeAndCheck(List<?> map) {
-    return map.stream().map(VariableNormalizer::normalizeAndCheck).toList();
+    return map.stream().map(VariableNormalizer::normalizeAndCheck)
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 }
 
