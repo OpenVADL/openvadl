@@ -4422,6 +4422,9 @@ def : Pat<(setcc X:$rs1, X:$rs2, SETGT),
 def : Pat<(setcc X:$rs1, X:$rs2, SETLE),
         (XORI (SLT X:$rs2, X:$rs1), 1)>;
 
+def : Pat<(setcc X:$rs1, X:$rs2, SETGE),
+        (XORI (SLT X:$rs1, X:$rs2), 1)>;
+
 
 def : Pat<(setcc X:$rs1, RV3264I_Itype_immAsInt64:$imm, SETLT),
         (SLTI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
