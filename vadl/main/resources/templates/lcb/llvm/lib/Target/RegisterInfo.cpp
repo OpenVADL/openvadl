@@ -30,7 +30,7 @@ using namespace llvm;
 void [(${namespace})]RegisterInfo::anchor() {}
 
 [(${namespace})]RegisterInfo::[(${namespace})]RegisterInfo()
-    : [(${namespace})]GenRegisterInfo( [(${namespace})]::[(${returnAddress.render()})] )
+    : [(${namespace})]GenRegisterInfo( [(${namespace})]::[(${returnAddress})] )
 {
 }
 
@@ -45,10 +45,10 @@ BitVector [(${namespace})]RegisterInfo::getReservedRegs(const MachineFunction &M
 {
     BitVector Reserved(getNumRegs());
 
-    markSuperRegs(Reserved, [(${namespace})]::[(${framePointer.render()})]); // frame pointer
-    markSuperRegs(Reserved, [(${namespace})]::[(${stackPointer.render()})]); // stack pointer
-    markSuperRegs(Reserved, [(${namespace})]::[(${globalPointer.render()})]); // global pointer
-    markSuperRegs(Reserved, [(${namespace})]::[(${threadPointer.render()})]); // thread pointer
+    markSuperRegs(Reserved, [(${namespace})]::[(${framePointer})]); // frame pointer
+    markSuperRegs(Reserved, [(${namespace})]::[(${stackPointer})]); // stack pointer
+    markSuperRegs(Reserved, [(${namespace})]::[(${globalPointer})]); // global pointer
+    markSuperRegs(Reserved, [(${namespace})]::[(${threadPointer})]); // thread pointer
 
     [# th:each="constraint : ${constraints}" ]
     markSuperRegs(Reserved,  [(${namespace})]::[(${constraint.registerFile})][(${constraint.index})]);
@@ -60,7 +60,7 @@ BitVector [(${namespace})]RegisterInfo::getReservedRegs(const MachineFunction &M
 }
 
 [# th:each="fe : ${frameIndexEliminations}" ]
-bool eliminateFrameIndex[(${fe.instruction.identifier.simpleName()})]
+bool eliminateFrameIndex[(${fe.instruction})]
     ( MachineBasicBlock::iterator II
     , int SPAdj
     , unsigned FIOperandNum
@@ -101,7 +101,7 @@ bool eliminateFrameIndex[(${fe.instruction.identifier.simpleName()})]
     // try to generate a scratch register and adjust frame register with given offset
     //
 
-    Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::[(${fe.registerFile.identifier.simpleName()})]RegClass);
+    Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::[(${fe.registerFile})]RegClass);
     if(TII->adjustReg(MBB, II, DL, ScratchReg, FrameReg, Offset) == false) // MachineInstr::MIFlag Flag
     {
         // the scratch register can properly be manipulated and used as address register.
@@ -147,9 +147,9 @@ bool [(${namespace})]RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterat
     switch (MI.getOpcode())
     {
         [# th:each="fe : ${frameIndexEliminations}" ]
-        case [(${namespace})]::[(${fe.instruction.identifier.simpleName()})]:
+        case [(${namespace})]::[(${fe.instruction})]:
         {
-          error = eliminateFrameIndex[(${fe.instruction.identifier.simpleName()})](II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
+          error = eliminateFrameIndex[(${fe.instruction})](II, SPAdj, FIOperandNum, FrameReg, FrameIndexOffset, RS);
           break;
         }
         [/]
@@ -180,7 +180,7 @@ bool [(${namespace})]RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterat
 Register [(${namespace})]RegisterInfo::getFrameRegister(const MachineFunction &MF) const
 {
     const TargetFrameLowering *TFI = getFrameLowering(MF);
-    return TFI->hasFP(MF) ? [(${namespace})]::[(${framePointer.render()})] /* FP */ : [(${namespace})]::[(${stackPointer.render()})] /* SP */;
+    return TFI->hasFP(MF) ? [(${namespace})]::[(${framePointer})] /* FP */ : [(${namespace})]::[(${stackPointer})] /* SP */;
 }
 
 const uint32_t * [(${namespace})]RegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/
@@ -192,7 +192,7 @@ const uint32_t * [(${namespace})]RegisterInfo::getCallPreservedMask(const Machin
 }
 
 [# th:each="registerClass : ${registerClasses}" ]
-/*static*/ unsigned [(${namespace})]RegisterInfo::[(${registerClass.registerFile.identifier.simpleName()})](unsigned index)
+/*static*/ unsigned [(${namespace})]RegisterInfo::[(${registerClass.registerFile.name})](unsigned index)
 {
   switch (index)
   {

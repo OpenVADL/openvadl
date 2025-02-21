@@ -60,9 +60,23 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        "immediates", wrapped,
+        "immediates", wrapped.stream().map(this::map).toList(),
         "variantKinds", output.variantKinds(),
-        "baseInfos", baseInfos
+        "baseInfos", baseInfos.stream().map(this::map).toList()
     );
   }
+
+  private Map<String, Object> map(Wrapper wrapper) {
+    return Map.of(
+        "variantKind", wrapper.record.variantKind()
+    );
+  }
+
+  private Map<String, Object> map(BaseInfoFunctionProvider.BaseInfoRecord obj) {
+    return Map.of(
+        "variantKind", obj.variantKind(),
+        "functionName", obj.functionName()
+    );
+  }
+
 }

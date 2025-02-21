@@ -3,9 +3,11 @@ package vadl.lcb.codegen.assembly;
 import static vadl.viam.ViamError.ensure;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.gcb.passes.assembly.AssemblyRegisterNode;
+import vadl.template.Renderable;
 import vadl.types.BuiltInTable;
 import vadl.types.BuiltInTable.BuiltIn;
 import vadl.viam.Format;
@@ -56,7 +58,15 @@ public class ParserGenerator {
   /**
    * The recursive descent parser has a {@code struct} for every assembly operand combination.
    */
-  public record FieldStructEnumeration(String structName, List<String> fieldNames) {
+  public record FieldStructEnumeration(String structName, List<String> fieldNames) implements
+      Renderable {
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "structName", structName,
+          "fieldNames", fieldNames
+      );
+    }
   }
 
   /**

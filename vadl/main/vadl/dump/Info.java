@@ -1,5 +1,7 @@
 package vadl.dump;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
@@ -34,6 +36,8 @@ public abstract sealed class Info permits Info.Expandable, Info.Modal, Info.Tag 
   public final int id() {
     return id;
   }
+
+  public abstract Map<String, Object> renderObj();
 
 
   /**
@@ -72,6 +76,18 @@ public abstract sealed class Info permits Info.Expandable, Info.Modal, Info.Tag 
     public static Tag of(String name, String value, @Nullable String link) {
       return new Tag(name, value, link);
     }
+
+    @Override
+    public Map<String, Object> renderObj() {
+      var map = new HashMap<String, Object>();
+      map.put("id", id());
+      map.put("name", name);
+      map.put("value", value);
+      if (link != null) {
+        map.put("link", link);
+      }
+      return map;
+    }
   }
 
   /**
@@ -106,6 +122,18 @@ public abstract sealed class Info permits Info.Expandable, Info.Modal, Info.Tag 
 
     public Expandable(String title, String body) {
       this(title, body, null);
+    }
+
+    @Override
+    public Map<String, Object> renderObj() {
+      var map = new HashMap<String, Object>();
+      map.put("id", id());
+      map.put("title", title);
+      map.put("body", body);
+      if (jsOnFirstOpen != null) {
+        map.put("jsOnFirstOpen", jsOnFirstOpen);
+      }
+      return map;
     }
   }
 
@@ -146,6 +174,19 @@ public abstract sealed class Info permits Info.Expandable, Info.Modal, Info.Tag 
       this.modalTitle = modalTitle;
       this.body = body;
       this.jsOnFirstOpen = jsOnFirstOpen;
+    }
+
+    @Override
+    public Map<String, Object> renderObj() {
+      var map = new HashMap<String, Object>();
+      map.put("id", id());
+      map.put("title", title);
+      map.put("modalTitle", modalTitle);
+      map.put("body", body);
+      if (jsOnFirstOpen != null) {
+        map.put("jsOnFirstOpen", jsOnFirstOpen);
+      }
+      return map;
     }
   }
 

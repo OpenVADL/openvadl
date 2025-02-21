@@ -7,6 +7,7 @@ import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.lib.Target.EmitInstrInfoCppFilePass;
 import vadl.lcb.template.utils.BaseInfoFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -46,6 +47,7 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
         .filter(x -> x instanceof RelocationLowerable)
         .map(x -> (RelocationLowerable) x)
         .filter(distinctByKey(x -> x.valueRelocation().functionName().lower()))
+        .map(this::map)
         .toList();
 
     return Map.of(CommonVarNames.NAMESPACE,
@@ -53,6 +55,12 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
         "isBigEndian", false,
         "relocations", relocations,
         "mos", mos
+    );
+  }
+
+  private Map<String, Object> map(RelocationLowerable obj) {
+    return Map.of(
+        "valueRelocationNameLower", obj.valueRelocation().functionName().lower()
     );
   }
 }

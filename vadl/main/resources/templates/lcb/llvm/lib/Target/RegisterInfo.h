@@ -47,7 +47,7 @@ namespace llvm
                                  RegScavenger *RS = nullptr) const override;
 
         [# th:each="rg : ${registerClasses}" ]
-        static unsigned [(${rg.identifier.simpleName()})](unsigned index);
+        static unsigned [(${rg})](unsigned index);
         [/]
 
         static unsigned registerOpcodeLookup(std::string className, unsigned index);

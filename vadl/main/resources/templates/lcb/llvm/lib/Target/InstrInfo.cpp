@@ -39,17 +39,17 @@ const MCInstrDesc &[(${namespace})]InstrInfo::getBrCond([(${namespace})]CC::Cond
   default:
     llvm_unreachable("Unknown condition code!");
   case [(${namespace})]CC::COND_EQ:
-    return get([(${namespace})]::[(${beq.identifier.simpleName()})]);
+    return get([(${namespace})]::[(${beq})]);
   case [(${namespace})]CC::COND_NE:
-    return get([(${namespace})]::[(${bne.identifier.simpleName()})]);
+    return get([(${namespace})]::[(${bne})]);
   case [(${namespace})]CC::COND_LT:
-    return get([(${namespace})]::[(${blt.identifier.simpleName()})]);
+    return get([(${namespace})]::[(${blt})]);
   case [(${namespace})]CC::COND_GE:
-    return get([(${namespace})]::[(${bge.identifier.simpleName()})]);
+    return get([(${namespace})]::[(${bge})]);
   case [(${namespace})]CC::COND_LTU:
-    return get([(${namespace})]::[(${bltu.identifier.simpleName()})]);
+    return get([(${namespace})]::[(${bltu})]);
   case [(${namespace})]CC::COND_GEU:
-    return get([(${namespace})]::[(${bgeu.identifier.simpleName()})]);
+    return get([(${namespace})]::[(${bgeu})]);
   }
 }
 
@@ -57,17 +57,17 @@ static [(${namespace})]CC::CondCode getCondFromBranchOpc(unsigned Opc) {
   switch (Opc) {
   default:
     return [(${namespace})]CC::COND_INVALID;
-  case [(${namespace})]::[(${beq.identifier.simpleName()})]:
+  case [(${namespace})]::[(${beq})]:
     return [(${namespace})]CC::COND_EQ;
-  case [(${namespace})]::[(${bne.identifier.simpleName()})]:
+  case [(${namespace})]::[(${bne})]:
     return [(${namespace})]CC::COND_NE;
-  case [(${namespace})]::[(${blt.identifier.simpleName()})]:
+  case [(${namespace})]::[(${blt})]:
     return [(${namespace})]CC::COND_LT;
-  case [(${namespace})]::[(${bge.identifier.simpleName()})]:
+  case [(${namespace})]::[(${bge})]:
     return [(${namespace})]CC::COND_GE;
-  case [(${namespace})]::[(${bltu.identifier.simpleName()})]:
+  case [(${namespace})]::[(${bltu})]:
     return [(${namespace})]CC::COND_LTU;
-  case [(${namespace})]::[(${bgeu.identifier.simpleName()})]:
+  case [(${namespace})]::[(${bgeu})]:
     return [(${namespace})]CC::COND_GEU;
   }
 }
@@ -99,10 +99,10 @@ static [(${namespace})]CC::CondCode getCondFromBranchOpc(unsigned Opc) {
 void [(${namespace})]InstrInfo::copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, const DebugLoc &DL, MCRegister DestReg, MCRegister SrcReg, bool KillSrc) const
 {
   [# th:each="r : ${copyPhysInstructions}" ]
-  if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.contains( DestReg )
-                && [(${namespace})]::[(${r.srcRegisterFile.identifier.simpleName()})]RegClass.contains( SrcReg ) )
+  if ( [(${namespace})]::[(${r.destRegisterFile})]RegClass.contains( DestReg )
+                && [(${namespace})]::[(${r.srcRegisterFile})]RegClass.contains( SrcReg ) )
     {
-        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ) )
+        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction})] ) )
             .addReg( DestReg, RegState::Define )
             .addReg( SrcReg, getKillRegState( KillSrc ) )
             .addImm( 0 )
@@ -135,9 +135,9 @@ void [(${namespace})]InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB, Mach
     MFI.getObjectSize(FrameIndex), MFI.getObjectAlign(FrameIndex));
 
     [# th:each="r : ${storeStackSlotInstructions}" ]
-      if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
+      if ( [(${namespace})]::[(${r.destRegisterFile})]RegClass.hasSubClassEq(RC) )
       {
-          BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ) )
+          BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction})] ) )
               .addFrameIndex( FrameIndex )
               .addReg( SrcReg, getKillRegState( IsKill ) )
               .addImm( 0 )
@@ -171,9 +171,9 @@ void [(${namespace})]InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, Mac
       MFI.getObjectSize(FrameIndex), MFI.getObjectAlign(FrameIndex));
 
     [# th:each="r : ${loadStackSlotInstructions}" ]
-    if ( [(${namespace})]::[(${r.destRegisterFile.identifier.simpleName()})]RegClass.hasSubClassEq(RC) )
+    if ( [(${namespace})]::[(${r.destRegisterFile})]RegClass.hasSubClassEq(RC) )
     {
-        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction.identifier.simpleName()})] ), DestReg )
+        BuildMI( MBB, MBBI, DL, get( [(${namespace})]::[(${r.instruction})] ), DestReg )
           .addFrameIndex( FrameIndex )
           .addImm( 0 )
           .addMemOperand(MMO)
@@ -214,7 +214,7 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
 
     // Quick Check to avoid a register allocation
     if(DestReg == SrcReg && Val >= [(${additionImmLowestValue})] && Val <= [(${additionImmHighestValue})]) {
-      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImm.identifier.simpleName()})]))
+      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImm})]))
             .addReg(DestReg, RegState::Define)
             .addReg(SrcReg)
             .addImm(Val)
@@ -223,14 +223,14 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
     }
 
     auto Seq = [(${namespace})]MatInt::generateInstSeq(Val);
-    Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::[(${additionRegisterFile.identifier.simpleName()})]RegClass);
+    Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::[(${additionRegisterFile})]RegClass);
 
     if(Seq.size() == 1) {
       // If the sequence contains only instruction then it is ADDI.
       // In that case, we need to reset the scratch register.
-      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImm.identifier.simpleName()})]))
+      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImm})]))
         .addReg(ScratchReg, RegState::Define)
-        .addReg([(${namespace})]::[(${additionRegisterFile.identifier.simpleName()})][(${zeroRegisterIndex})])
+        .addReg([(${namespace})]::[(${additionRegisterFile})][(${zeroRegisterIndex})])
         .addImm(0)
         .setMIFlag(Flag);
     }
@@ -256,7 +256,7 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
     }
 
     // Finally, add ScratchRegister to DestReg.
-    BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${addition.identifier.simpleName()})]), DestReg)
+    BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${addition})]), DestReg)
       .addReg(SrcReg, RegState::Kill)
       .addReg(ScratchReg, RegState::Kill)
       .setMIFlag(Flag);
@@ -385,7 +385,7 @@ unsigned [(${namespace})]InstrInfo::insertBranch(
 
   // Unconditional branch.
   if (Cond.empty()) {
-    MachineInstr &MI = *BuildMI(&MBB, DL, get([(${namespace})]::[(${jumpInstruction.identifier.simpleName()})])).addMBB(TBB);
+    MachineInstr &MI = *BuildMI(&MBB, DL, get([(${namespace})]::[(${jumpInstruction})])).addMBB(TBB);
     if (BytesAdded)
       *BytesAdded += getInstSizeInBytes(MI);
     return 1;
@@ -403,7 +403,7 @@ unsigned [(${namespace})]InstrInfo::insertBranch(
     return 1;
 
   // Two-way conditional branch.
-  MachineInstr &MI = *BuildMI(&MBB, DL, get([(${namespace})]::[(${jumpInstruction.identifier.simpleName()})])).addMBB(FBB);
+  MachineInstr &MI = *BuildMI(&MBB, DL, get([(${namespace})]::[(${jumpInstruction})])).addMBB(FBB);
   if (BytesAdded)
     *BytesAdded += getInstSizeInBytes(MI);
   return 2;

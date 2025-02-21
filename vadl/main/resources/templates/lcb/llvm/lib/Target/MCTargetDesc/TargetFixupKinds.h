@@ -12,7 +12,7 @@ namespace llvm
 
                     [#th:block th:if="${fixups.size > 0}" ]
                         [#th:block th:each="fixup, iterStat : ${fixups}" ]
-                            [(${fixup.name().value()})] [#th:block th:if="${iterStat.first}"] = FirstTargetFixupKind[/th:block],
+                            [(${fixup.name})] [#th:block th:if="${iterStat.first}"] = FirstTargetFixupKind[/th:block],
                         [/th:block]
 
                          // Marker

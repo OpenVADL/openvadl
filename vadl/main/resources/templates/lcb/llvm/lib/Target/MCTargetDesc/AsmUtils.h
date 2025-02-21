@@ -36,7 +36,7 @@ namespace llvm
             static std::string getRegisterName( unsigned RegNo );
 
             [# th:each="rg : ${registerClasses}" ]
-            static std::string getRegisterNameFrom[(${rg.simpleName()})]ByIndex( unsigned RegIndex );
+            static std::string getRegisterNameFrom[(${rg.simpleName})]ByIndex( unsigned RegIndex );
             [/]
     };
 
@@ -58,7 +58,7 @@ namespace llvm
                 {
                     switch(MCOp.getReg()) {
                     [# th:each="rg : ${registers}" ]
-                      case [(${namespace})]::[(${rg.name()})]: return [(${rg.index()})];
+                      case [(${namespace})]::[(${rg.name})]: return [(${rg.index})];
                     [/]
                     /*
                     switch( MCOp.getReg() )

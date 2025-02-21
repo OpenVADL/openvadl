@@ -14,6 +14,7 @@ import vadl.lcb.codegen.assembly.ParserGenerator;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.utils.GraphUtils;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.ReturnNode;
@@ -42,15 +43,30 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
   /**
    * The parser has methods for lexes which are used.
    */
-  record RuleParsingResultForLex(AssemblyConstant.TokenKind kind, String functionName) {
+  record RuleParsingResultForLex(AssemblyConstant.TokenKind kind, String functionName) implements
+      Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "kind", kind.name(),
+          "functionName", functionName
+      );
+    }
   }
 
   /**
    * Every instruction has a method in the parser which parses the assembly.
    */
-  record RuleParsingResultWhenInstruction(String functionName, String body) {
+  record RuleParsingResultWhenInstruction(String functionName, String body) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "functionName", functionName,
+          "body", body
+      );
+    }
   }
 
   @Override

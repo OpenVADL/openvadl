@@ -29,6 +29,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
+import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 
 /**
@@ -114,15 +115,22 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        "returnAddress", abi.returnAddress(),
-        "addi", addi,
-        "stackPointerRegister", abi.stackPointer(),
+        "returnAddress", abi.returnAddress().render(),
+        "addi", addi.simpleName(),
+        "stackPointerRegister", abi.stackPointer().render(),
         "stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType(),
         "immediates", renderedImmediates,
         "instructions", renderedTableGenMachineRecords,
         "pseudos", renderedTableGenPseudoRecords,
         "patterns", renderedPatterns,
-        "registerFiles", specification.registerFiles().toList());
+        "registerFiles", specification.registerFiles().map(this::map).toList());
+  }
+
+  private Map<String, Object> map(RegisterFile obj) {
+    return Map.of(
+        "resultWidth", obj.resultType().bitWidth(),
+        "name", obj.simpleName()
+    );
   }
 }

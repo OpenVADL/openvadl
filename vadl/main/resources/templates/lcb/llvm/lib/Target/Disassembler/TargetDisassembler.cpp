@@ -12,7 +12,7 @@ using namespace llvm;
 
 /* == Register Classes == */
 [#th:block th:each="registerClass : ${registerClasses}" ]
-static const unsigned [(${registerClass.registerFile.identifier.simpleName()})]DecoderTable[] = {
+static const unsigned [(${registerClass.registerFile.name})]DecoderTable[] = {
   [#th:block th:each="register, iterStat : ${registerClass.registers}" ]
     [(${namespace})]::[(${register.name})][#th:block th:if="${!iterStat.last}"],[/th:block]
   [/th:block]
@@ -31,7 +31,7 @@ DecodeStatus [(${immediate.wrapperName})](MCInst &Inst, uint64_t Imm, int64_t Ad
 [/th:block]
 
 [#th:block th:each="registerClass : ${registerClasses}" ]
-static DecodeStatus Decode[(${registerClass.registerFile.identifier.simpleName()})]RegisterClass
+static DecodeStatus Decode[(${registerClass.registerFile.name})]RegisterClass
     ( MCInst &Inst
     , uint64_t RegNo
     , uint64_t Address
@@ -43,7 +43,7 @@ static DecodeStatus Decode[(${registerClass.registerFile.identifier.simpleName()
         return MCDisassembler::Fail;
 
     // access custom generated decoder table in register info
-    Register reg = [(${registerClass.registerFile.identifier.simpleName()})]DecoderTable[RegNo];
+    Register reg = [(${registerClass.registerFile.name})]DecoderTable[RegNo];
 
     // check if decoded register is valid
     if( reg == [(${namespace})]::NoRegister )

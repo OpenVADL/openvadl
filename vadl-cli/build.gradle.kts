@@ -27,6 +27,8 @@ application {
 graalvmNative {
     binaries {
         named("main") {
+            // required to include templates
+            resources.autodetect()
             imageName.set("openvadl")
             mainClass.set(application.mainClass)
             buildArgs.addAll("-O4", "--gc=epsilon") // Use -0b for faster dev builds, -O4 for production

@@ -12,6 +12,7 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 
 /**
  * Helper class for baseInfo.
@@ -23,8 +24,16 @@ public class BaseInfoFunctionProvider {
   public record BaseInfoRecord(
       String functionName,
       CppFunctionCode relocation,
-      VariantKind variantKind) {
+      VariantKind variantKind) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "functionName", functionName,
+          "relocation", relocation,
+          "variantKind", variantKind
+      );
+    }
   }
 
   /**

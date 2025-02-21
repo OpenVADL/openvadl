@@ -1,6 +1,9 @@
 package vadl.gcb.passes.relocation.model;
 
+import java.util.HashMap;
+import java.util.Map;
 import vadl.cppCodeGen.model.VariantKind;
+import vadl.template.Renderable;
 import vadl.viam.Format;
 import vadl.viam.Relocation;
 
@@ -8,7 +11,7 @@ import vadl.viam.Relocation;
  * {@link CompilerRelocation} is a super class to hold
  * both {@link LogicalRelocation} and {@link GeneratedRelocation}.
  */
-public abstract class CompilerRelocation {
+public abstract class CompilerRelocation implements Renderable {
   protected final CompilerRelocation.Kind kind;
   protected final Format format;
   protected final Format.Field immediate;
@@ -21,7 +24,7 @@ public abstract class CompilerRelocation {
    * More concretely, it is relative when reads from the PC.
    * A relocation is absolute when the patched value overwrites the previous value.
    */
-  public enum Kind {
+  public enum Kind implements Renderable {
     RELATIVE,
     ABSOLUTE;
 
@@ -30,6 +33,14 @@ public abstract class CompilerRelocation {
      */
     public boolean isRelative() {
       return this == RELATIVE;
+    }
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", this.name(),
+          "isRelative", this.isRelative()
+      );
     }
   }
 
@@ -91,5 +102,16 @@ public abstract class CompilerRelocation {
 
   public VariantKind variantKind() {
     return variantKindRef;
+  }
+
+  @Override
+  public Map<String, Object> renderObj() {
+    var obj = new HashMap<String, Object>();
+    obj.put("kind", kind().name());
+    obj.put("elfRelocationName", elfRelocationName());
+    obj.put("relocation", Map.of(
+        "name", relocation().simpleName()
+    ));
+    return obj;
   }
 }

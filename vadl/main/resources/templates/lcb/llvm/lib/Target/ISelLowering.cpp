@@ -25,7 +25,7 @@ void [(${namespace})]TargetLowering::anchor() {}
 {
     // Set up the register classes defined by register files
     [# th:each="rg : ${registerFiles}" ] [# th:each="ty : ${rg.regTypes}" ]
-      addRegisterClass(MVT::[(${ty.getLlvmType()})], &[(${namespace})]::[(${rg.name})]RegClass);
+      addRegisterClass(MVT::[(${ty.getLlvmType})], &[(${namespace})]::[(${rg.name})]RegClass);
     [/] [/]
 
     setStackPointerRegisterToSaveRestore([(${namespace})]::[(${stackPointer})]);
@@ -119,7 +119,7 @@ static SDValue unpackFromRegLoc(SelectionDAG &DAG, SDValue Chain, const CCValAss
 
     [# th:each="rg : ${registerFiles}" ]
     [# th:each="ty : ${rg.regTypes}" ]
-      if(RegVT.getSimpleVT().SimpleTy == MVT::[(${ty.getLlvmType()})])  {
+      if(RegVT.getSimpleVT().SimpleTy == MVT::[(${ty.llvmType})])  {
         const unsigned VReg = RegInfo.createVirtualRegister(&[(${namespace})]::[(${rg.name})]RegClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
         SDValue ArgIn = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
@@ -268,21 +268,21 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         [(${namespace})]MachineFunctionInfo *RVFI = MF.getInfo<[(${namespace})]MachineFunctionInfo>();
 
         [#th:block th:each="cl : ${argumentRegisterClasses}" ]
-        const MCPhysReg Arg[(${cl.identifier.simpleName()})]s[] =
+        const MCPhysReg Arg[(${cl.name})]s[] =
         {
           // We only support currently one register class for all the argument registers.
           [#th:block th:each="rg, iterStat : ${argumentRegisters}" ]
-            [(${namespace})]::[(${rg.render()})][#th:block th:if="${!iterStat.last}"],[/th:block]
+            [(${namespace})]::[(${rg})][#th:block th:if="${!iterStat.last}"],[/th:block]
           [/th:block]
         };
         [/th:block]
 
         [#th:block th:each="cl : ${argumentRegisterClasses}" ]
-          unsigned [(${cl.identifier.simpleName()})]LenInBytes = [(${cl.resultType.bitWidth / 8})];
-          MVT [(${cl.identifier.simpleName()})]LenVT = MVT::[(${cl.llvmResultType()})];
-          ArrayRef<MCPhysReg> [(${cl.identifier.simpleName()})]ArgRegs = makeArrayRef(Arg[(${cl.identifier.simpleName()})]s);
-          unsigned [(${cl.identifier.simpleName()})]Idx = CCInfo.getFirstUnallocated( [(${cl.identifier.simpleName()})]ArgRegs);
-          const TargetRegisterClass *[(${cl.identifier.simpleName()})]RC = &[(${namespace})]::[(${cl.identifier.simpleName()})]RegClass;
+          unsigned [(${cl.name})]LenInBytes = [(${cl.resultWidth / 8})];
+          MVT [(${cl.name})]LenVT = MVT::[(${cl.llvmResultType})];
+          ArrayRef<MCPhysReg> [(${cl.name})]ArgRegs = makeArrayRef(Arg[(${cl.name})]s);
+          unsigned [(${cl.name})]Idx = CCInfo.getFirstUnallocated( [(${cl.name})]ArgRegs);
+          const TargetRegisterClass *[(${cl.name})]RC = &[(${namespace})]::[(${cl.name})]RegClass;
         [/th:block]
 
         // Offset of the first variable argument from stack pointer, and size of
@@ -295,7 +295,7 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         // stack and we don't need to save any argregs.
         if (
           [#th:block th:each="cl, iterStat : ${argumentRegisterClasses}" ]
-          [(${cl.identifier.simpleName()})]ArgRegs.size() == [(${cl.identifier.simpleName()})]Idx [#th:block th:if="${!iterStat.last}"]&&[/th:block]
+          [(${cl.name})]ArgRegs.size() == [(${cl.name})]Idx [#th:block th:if="${!iterStat.last}"]&&[/th:block]
           [/th:block]
         )
         {
@@ -306,7 +306,7 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         {
             VarArgsSaveSize = 0;
             [#th:block th:each="cl : ${argumentRegisterClasses}" ]
-              VarArgsSaveSize += [(${cl.identifier.simpleName()})]LenInBytes * ( [(${cl.identifier.simpleName()})]ArgRegs.size() - [(${cl.identifier.simpleName()})]Idx);
+              VarArgsSaveSize += [(${cl.name})]LenInBytes * ( [(${cl.name})]ArgRegs.size() - [(${cl.name})]Idx);
             [/th:block]
             VaArgOffset = -VarArgsSaveSize; // TODO: @chochrainer check if CCInfo.getStackSize() is needed
         }
@@ -326,12 +326,12 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         //
         // Copy the integer registers that may have been used for passing varargs
         // to the vararg save area.
-        for (unsigned I = [(${cl.identifier.simpleName()})]Idx; I < [(${cl.identifier.simpleName()})]ArgRegs.size(); ++I, VaArgOffset += [(${cl.identifier.simpleName()})]LenInBytes)
+        for (unsigned I = [(${cl.name})]Idx; I < [(${cl.name})]ArgRegs.size(); ++I, VaArgOffset += [(${cl.name})]LenInBytes)
         {
-            const Register Reg = RegInfo.createVirtualRegister( [(${cl.identifier.simpleName()})]RC);
-            RegInfo.addLiveIn( [(${cl.identifier.simpleName()})]ArgRegs[I], Reg);
-            SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, Reg, [(${cl.identifier.simpleName()})]LenVT);
-            FI = MFI.CreateFixedObject( [(${cl.identifier.simpleName()})]LenInBytes, VaArgOffset, true);
+            const Register Reg = RegInfo.createVirtualRegister( [(${cl.name})]RC);
+            RegInfo.addLiveIn( [(${cl.name})]ArgRegs[I], Reg);
+            SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, Reg, [(${cl.name})]LenVT);
+            FI = MFI.CreateFixedObject( [(${cl.name})]LenInBytes, VaArgOffset, true);
             SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
             SDValue Store = DAG.getStore(Chain, DL, ArgValue, PtrOff, MachinePointerInfo::getFixedStack(MF, FI));
             cast<StoreSDNode>(Store.getNode())
@@ -583,7 +583,7 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
     case CodeModel::Small:
     {
         SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
-        return SDValue(DAG.getMachineNode([(${namespace})]::[(${addressSequence.identifier.simpleName()})], DL, Ty, Addr), 0);
+        return SDValue(DAG.getMachineNode([(${namespace})]::[(${addressSequence})], DL, Ty, Addr), 0);
     }
     }
 }
@@ -776,7 +776,7 @@ MachineBasicBlock *
     default:
         llvm_unreachable("Unexpected instr type to insert");
     [# th:each="rg : ${registerFiles}" ]
-      case [(${namespace})]::SelectCC_[(${rg.registerFileRef.identifier.simpleName()})]:
+      case [(${namespace})]::SelectCC_[(${rg.registerFileRef.name})]:
       // To "insert" a SELECT instruction, we actually have to insert the triangle
       // control-flow pattern.  The incoming instruction knows the destination vreg
       // to set, the condition code register to branch on, the true/false values to

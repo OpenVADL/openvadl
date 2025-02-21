@@ -7,6 +7,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Specification;
 
@@ -32,8 +33,14 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
   }
 
 
-  record RegisterClass(String simpleName) {
+  record RegisterClass(String simpleName) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "simpleName", simpleName
+      );
+    }
   }
 
   @Override
@@ -50,6 +57,9 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
         CommonVarNames.REGISTERS_CLASSES, registerFiles,
         "registers",
         specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
-            .flatMap(x -> x.registers().stream()).toList());
+            .flatMap(x -> x.registers().stream())
+            .toList());
   }
+
+
 }

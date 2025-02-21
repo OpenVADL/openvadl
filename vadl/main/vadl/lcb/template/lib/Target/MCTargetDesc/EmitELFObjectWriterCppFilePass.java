@@ -3,6 +3,7 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.relocation.model.Fixup;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -37,6 +38,13 @@ public class EmitELFObjectWriterCppFilePass extends LcbTemplateRenderingPass {
         GenerateLinkerComponentsPass.class);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        "fixups", container.fixups());
+        "fixups", container.fixups().stream().map(this::mapFixup).toList());
+  }
+
+  private Map<String, Object> mapFixup(Fixup fixup) {
+    return Map.of(
+        "name", fixup.name().value(),
+        "elfRelocationName", fixup.relocationLowerable().elfRelocationName().value()
+    );
   }
 }

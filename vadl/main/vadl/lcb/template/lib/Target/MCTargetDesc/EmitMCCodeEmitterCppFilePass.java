@@ -21,6 +21,7 @@ import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
@@ -55,8 +56,15 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
    */
   public static final String WRAPPER = "wrapper";
 
-  record Aggregate(String encodeWrapper, String encode) {
+  record Aggregate(String encodeWrapper, String encode) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "encodeWrapper", encodeWrapper,
+          "encode", encode
+      );
+    }
   }
 
   record TargetVariantUpdate(VariantKind kind, List<TargetInstructionUpdate> instructions) {
@@ -126,8 +134,8 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         "immediates", immediates,
-        "variantUpdates", result,
-        "syms", resultSym);
+        "variantUpdates", result.stream().map(this::mapTargetVariantUpdate).toList(),
+        "syms", resultSym.stream().map(this::mapTargetInstructionUpdate).toList());
   }
 
   private List<TargetInstructionUpdate> instructionUpdates(
@@ -178,5 +186,20 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
         .stream()
         .map(f -> new Aggregate(f.identifier.append(WRAPPER).lower(), f.identifier.lower()))
         .toList();
+  }
+
+  private Map<String, Object> mapTargetVariantUpdate(TargetVariantUpdate update) {
+    return Map.of(
+        "kind", update.kind.value(),
+        "instructions", update.instructions.stream().map(this::mapTargetInstructionUpdate).toList()
+    );
+  }
+
+  private Map<String, Object> mapTargetInstructionUpdate(TargetInstructionUpdate update) {
+    return Map.of(
+        "instrName", update.instruction.simpleName(),
+        "opNo", update.opNo,
+        "fixupName", update.fixup.name().value()
+    );
   }
 }

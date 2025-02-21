@@ -37,6 +37,6 @@ public class EmitMCTargetDescCppFilePass extends LcbTemplateRenderingPass {
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        "returnAddress", abi.returnAddress());
+        "returnAddress", abi.returnAddress().render());
   }
 }

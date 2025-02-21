@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import vadl.template.Renderable;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.RegisterFile;
@@ -22,12 +23,22 @@ public class RegisterUtils {
    * @param name  of the register.
    * @param alias of the register.
    */
-  public record Register(int index, String name, Optional<String> alias) {
+  public record Register(int index, String name, Optional<String> alias) implements Renderable {
     /**
      * Return {@code alias} or {@code name} if {@code alias} is {@code null}.
      */
     public String getAsmName() {
       return alias.orElse(name);
+    }
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "index", index,
+          "name", name,
+          "alias", alias.orElse(""),
+          "getAsmName", getAsmName()
+      );
     }
   }
 
@@ -35,8 +46,18 @@ public class RegisterUtils {
    * Wrapper class for {@link RegisterFile} because the {@link RegisterFile} does
    * not specify the individual registers.
    */
-  public record RegisterClass(RegisterFile registerFile, List<Register> registers) {
+  public record RegisterClass(RegisterFile registerFile, List<Register> registers) implements
+      Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "registerFile", Map.of(
+              "name", registerFile.simpleName()
+          ),
+          "registers", registers
+      );
+    }
   }
 
 

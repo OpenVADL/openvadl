@@ -1,6 +1,8 @@
 package vadl.lcb.codegen.model.llvm;
 
+import java.util.Map;
 import java.util.Optional;
+import vadl.template.Renderable;
 import vadl.types.BitsType;
 import vadl.types.SIntType;
 import vadl.types.Type;
@@ -9,7 +11,7 @@ import vadl.types.UIntType;
 /**
  * LLVM types which can be used.
  */
-public enum ValueType {
+public enum ValueType implements Renderable {
   I8("i8", "Int8", "Int8"),
   I16("i16", "Int16", "Int16"),
   I32("i32", "Int32", "Int32"),
@@ -88,10 +90,6 @@ public enum ValueType {
     return Optional.empty();
   }
 
-  public String getFancyName() {
-    return fancyName;
-  }
-
   public String getLlvmType() {
     return llvmType;
   }
@@ -120,5 +118,15 @@ public enum ValueType {
     int bitwith = getBitwidth();
     Type type = Type.signedInt(bitwith);
     return ValueType.from(type).get();
+  }
+
+  @Override
+  public Map<String, Object> renderObj() {
+    return Map.of(
+        "llvmType", llvmType,
+        "fancyName", fancyName,
+        "tableGen", tableGen,
+        "getLlvmType", getLlvmType()
+    );
   }
 }

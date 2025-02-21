@@ -3,6 +3,7 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.relocation.model.Fixup;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -39,6 +40,12 @@ public class EmitFixupKindsHeaderFilePass extends LcbTemplateRenderingPass {
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        "fixups", fixups);
+        "fixups", fixups.stream().map(this::map).toList());
+  }
+
+  private Map<String, Object> map(Fixup obj) {
+    return Map.of(
+        "name", obj.name().value()
+    );
   }
 }

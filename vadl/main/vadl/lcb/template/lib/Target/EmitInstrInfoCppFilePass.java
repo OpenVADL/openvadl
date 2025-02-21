@@ -29,6 +29,7 @@ import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
@@ -221,12 +222,27 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     );
   }
 
-  record BranchInstruction(String name, /* size of the immediate */ int bitWidth) {
+  record BranchInstruction(String name, /* size of the immediate */ int bitWidth) implements
+      Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "bitWidth", bitWidth
+      );
+    }
   }
 
-  record InstructionSize(String name, /* format size */ int byteSize) {
+  record InstructionSize(String name, /* format size */ int byteSize) implements Renderable {
 
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "byteSize", byteSize
+      );
+    }
   }
 
   private RegisterFile getRegisterClassFromInstruction(Instruction instruction) {
@@ -269,27 +285,36 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().processorName().value().toLowerCase());
-    map.put("copyPhysInstructions", getMovInstructions(isaMatches));
-    map.put("storeStackSlotInstructions", getStoreMemoryInstructions(isaMatches));
-    map.put("loadStackSlotInstructions", getLoadMemoryInstructions(isaMatches));
-    map.put("additionImm", additionRI);
+    map.put("copyPhysInstructions",
+        getMovInstructions(isaMatches).stream().map(this::map).toList());
+    map.put("storeStackSlotInstructions",
+        getStoreMemoryInstructions(isaMatches).stream().map(this::map).toList());
+    map.put("loadStackSlotInstructions",
+        getLoadMemoryInstructions(isaMatches).stream().map(this::map).toList());
+    map.put("additionImm", additionRI.simpleName());
     map.put("additionImmHighestValue", additionRIValueRange.highest());
     map.put("additionImmLowestValue", additionRIValueRange.lowest());
-    map.put("addition", additionRR);
-    map.put("additionRegisterFile", additionRegisterFile);
+    map.put("addition", additionRR.simpleName());
+    map.put("additionRegisterFile", additionRegisterFile.simpleName());
     map.put("additionImmSize", getImmBitSize(fieldUsages, additionRI));
     map.put("zeroRegisterIndex", zeroRegisterIndex);
     map.put("branchInstructions", getBranchInstructions(specification, passResults, fieldUsages));
     map.put("instructionSizes", instructionSizes(specification));
-    map.put("jumpInstruction", jump);
-    map.put("beq", getBranchInstruction(specification, passResults, MachineInstructionLabel.BEQ));
-    map.put("bne", getBranchInstruction(specification, passResults, MachineInstructionLabel.BNEQ));
-    map.put("blt", getBranchInstruction(specification, passResults, MachineInstructionLabel.BSLTH));
-    map.put("bge", getBranchInstruction(specification, passResults, MachineInstructionLabel.BSGEQ));
+    map.put("jumpInstruction", jump.simpleName());
+    map.put("beq",
+        getBranchInstruction(specification, passResults, MachineInstructionLabel.BEQ).simpleName());
+    map.put("bne", getBranchInstruction(specification, passResults,
+        MachineInstructionLabel.BNEQ).simpleName());
+    map.put("blt", getBranchInstruction(specification, passResults,
+        MachineInstructionLabel.BSLTH).simpleName());
+    map.put("bge", getBranchInstruction(specification, passResults,
+        MachineInstructionLabel.BSGEQ).simpleName());
     map.put("bltu",
-        getBranchInstruction(specification, passResults, MachineInstructionLabel.BULTH));
+        getBranchInstruction(specification, passResults,
+            MachineInstructionLabel.BULTH).simpleName());
     map.put("bgeu",
-        getBranchInstruction(specification, passResults, MachineInstructionLabel.BUGEQ));
+        getBranchInstruction(specification, passResults,
+            MachineInstructionLabel.BUGEQ).simpleName());
 
     return map;
   }
@@ -383,5 +408,27 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
       branchInstructions.add(
           new BranchInstruction(machineInstruction.identifier.simpleName(), bitWidth));
     }
+  }
+
+  private Map<String, Object> map(CopyPhysRegInstruction obj) {
+    return Map.of(
+        "destRegisterFile", obj.destRegisterFile.simpleName(),
+        "srcRegisterFile", obj.srcRegisterFile.simpleName(),
+        "instruction", obj.instruction.simpleName()
+    );
+  }
+
+  private Map<String, Object> map(StoreRegSlot obj) {
+    return Map.of(
+        "destRegisterFile", obj.destRegisterFile.simpleName(),
+        "instruction", obj.instruction.simpleName()
+    );
+  }
+
+  private Map<String, Object> map(LoadRegSlot obj) {
+    return Map.of(
+        "destRegisterFile", obj.destRegisterFile.simpleName(),
+        "instruction", obj.instruction.simpleName()
+    );
   }
 }
