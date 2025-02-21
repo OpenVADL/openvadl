@@ -78,11 +78,13 @@ public class LlvmLoweringPassTest extends AbstractLcbTest {
         List.of("(setcc X:$rs1, X:$rs2, SETLT)",
             "(setcc X:$rs1, X:$rs2, SETEQ)",
             "(setcc X:$rs1, X:$rs2, SETGT)",
-            "(setcc X:$rs1, X:$rs2, SETLE)"),
+            "(setcc X:$rs1, X:$rs2, SETLE)",
+            "(setcc X:$rs1, X:$rs2, SETGE)"),
         List.of("(SLT X:$rs1, X:$rs2)",
             "(SLTIU (XOR X:$rs1, X:$rs2), 1)",
             "(SLT X:$rs2, X:$rs1)",
-            "(XORI (SLT X:$rs2, X:$rs1), 1)"),
+            "(XORI (SLT X:$rs2, X:$rs1), 1)",
+            "(XORI (SLT X:$rs1, X:$rs2), 1)"),
         createEmptyFlags(),
         false
     );
