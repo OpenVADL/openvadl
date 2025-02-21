@@ -57,7 +57,6 @@ import vadl.viam.asm.rules.AsmTerminalRule;
     context = CAsmContext.class,
     include = "vadl.viam.asm"
 )
-@SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
 public class AssemblyParserCodeGenerator {
 
   private final CAsmContext ctx;
