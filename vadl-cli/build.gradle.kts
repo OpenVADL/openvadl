@@ -34,30 +34,6 @@ graalvmNative {
             buildArgs.addAll("-O4", "--gc=epsilon") // Use -0b for faster dev builds, -O4 for production
         }
     }
-
-    agent {
-        enabled.set(true)
-
-        // TODO: Add this again, after we used our own reflect package
-//        callerFilterFiles.from("${projectDir}/user-code-filter.json")
-//        accessFilterFiles.from("${projectDir}/user-code-filter.json")
-        modes {
-            conditional {
-                userCodeFilterPath.set("${projectDir}/user-code-filter.json")
-            }
-        }
-
-        metadataCopy {
-            inputTaskNames.add("run")
-            outputDirectories.add("main/resources/META-INF/native-image/vadl")
-            mergeWithExisting.set(true)
-        }
-    }
-}
-
-task<Exec>("collectNativeMetadata") {
-    workingDir = rootDir
-    commandLine("bash", "scripts/collect-native-metadata.sh")
 }
 
 tasks.startScripts {
