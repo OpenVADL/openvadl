@@ -36,7 +36,7 @@ rm -r ../src/cubic
 #rm -r ../src/st
 #rm -r ../src/tarfind
 #rm -r ../src/ud
-rm -r ../src/wikisort
+#rm -r ../src/wikisort
 
 ../build_spike-lcb-O3.sh
 ./run-benchmark.sh "rv32-spike" ./benchmark_spike.sh
