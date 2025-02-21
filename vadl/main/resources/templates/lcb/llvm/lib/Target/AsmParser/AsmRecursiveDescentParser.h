@@ -50,9 +50,9 @@ public:
 struct NoData{};
 
 [# th:each="struct : ${parsedValueStructs}" ]
-struct [(${struct.getName()})] {
-  [# th:each="field : ${struct.getFields()}" ]
-  ParsedValue<[(${field.cppTypeString()})]> [(${field.name()})];
+struct [(${struct.name})] {
+  [# th:each="field : ${struct.fields}" ]
+  ParsedValue<[(${field.cppTypeString})]> [(${field.name})];
   [/]
 };
 

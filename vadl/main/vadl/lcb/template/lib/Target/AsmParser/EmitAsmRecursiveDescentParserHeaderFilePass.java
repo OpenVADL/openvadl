@@ -79,7 +79,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         "parsedValueStructs", parsedValueStructs);
   }
 
-  private Stream<ParsingResultRecord> grammarRules(Specification specification) {
+  private List<ParsingResultRecord> grammarRules(Specification specification) {
     return specification.assemblyDescription().map(
         asmDesc -> asmDesc.rules().stream().map(
             rule -> new ParsingResultRecord(
@@ -87,24 +87,39 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
                 rule.simpleName().trim(), rule.simpleName()
             )
         )
-    ).orElse(Stream.empty());
+    ).orElse(Stream.empty()).toList();
   }
 
-  private Stream<ParsedValueStruct> parsedValueStructs(
+  private List<ParsedValueStruct> parsedValueStructs(
       Specification specification) {
     return specification.assemblyDescription().map(
         asmDesc -> new StructGenerator().getAllStructs(specification.simpleName(), asmDesc.rules())
-    ).orElse(Stream.empty());
+    ).orElse(Stream.empty()).toList();
   }
 }
 
 
-class ParsedValueStruct {
+class ParsedValueStruct implements Renderable {
   private final String name;
   private final Stream<StructField> fields;
 
-  record StructField(String name, String cppTypeString) {
+  @Override
+  public Map<String, Object> renderObj() {
+    return Map.of(
+        "name", name,
+        "fields", fields.toList()
+    );
+  }
 
+  record StructField(String name, String cppTypeString) implements Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "cppTypeString", cppTypeString
+      );
+    }
   }
 
   public String getName() {
