@@ -22,13 +22,21 @@ using namespace llvm;
 namespace llvm {
 
   RuleParsingResult<NoData> [(${namespace})]AsmRecursiveDescentParser::ParseStatement() {
-    // return Statement();
+[# th:if="${asmDescriptionExists}"]
+    return Statement();
+[/]
+[# th:unless="${asmDescriptionExists}"]
     return RuleParsingResult<NoData>(ParsedValue<NoData>(NoData {}));
+[/]
   }
 
   RuleParsingResult<uint64_t> [(${namespace})]AsmRecursiveDescentParser::ParseRegister() {
-    // return Register();
+[# th:if="${asmDescriptionExists}"]
+    return Register();
+[/]
+[# th:unless="${asmDescriptionExists}"]
     return RuleParsingResult<uint64_t>(ParsedValue<uint64_t>(0));
+[/]
   }
 
   RuleParsingResult<StringRef> [(${namespace})]AsmRecursiveDescentParser::Literal(std::string toParse) {
@@ -51,7 +59,7 @@ namespace llvm {
     }
   }
 
-  bool [(${namespace})]AsmRecursiveDescentParser::builtin_asm_laidin(uint64_t lookahead, const std::vector<std::string>& compareStrings) {
+  bool [(${namespace})]AsmRecursiveDescentParser::VADL_asmparser_laidin(uint64_t lookahead, const std::vector<std::string>& compareStrings) {
     AsmToken* tok;
     MutableArrayRef<AsmToken> Buf(tok, lookahead);
     size_t ReadCount = Lexer.peekTokens(Buf, true);
@@ -64,15 +72,13 @@ namespace llvm {
     return false;
   }
 
-  bool [(${namespace})]AsmRecursiveDescentParser::builtin_asm_laideq(uint64_t lookahead, const std::string compareString) {
+  bool [(${namespace})]AsmRecursiveDescentParser::VADL_asmparser_laideq(uint64_t lookahead, const std::string compareString) {
       AsmToken* tok;
       MutableArrayRef<AsmToken> Buf(tok ,lookahead);
       size_t ReadCount = Lexer.peekTokens(Buf, true);
 
       return tok[lookahead].getString().[(${compareFunction})](compareString);
   }
-}
-/*
+
 [(${grammarRules})]
 }
-*/

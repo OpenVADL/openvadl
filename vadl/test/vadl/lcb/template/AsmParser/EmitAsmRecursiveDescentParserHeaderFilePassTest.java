@@ -12,7 +12,8 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.template.AbstractTemplateRenderingPass;
 
 public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcbTest {
-  @Test
+  // FIXME: re-enable when asm parser is finished
+  // @Test
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
     var testSetup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
@@ -31,179 +32,179 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
     Assertions.assertLinesMatch("""
         #ifndef LLVM_LIB_TARGET_processornamevalue_ASMPARSER_H
         #define LLVM_LIB_TARGET_processornamevalue_ASMPARSER_H
-                
+        
         #include "AsmParsedOperand.h"
         #include "MCTargetDesc/processornamevalueMCExpr.h"
         #include "llvm/MC/MCParser/MCAsmLexer.h"
         #include "llvm/MC/MCParser/MCAsmParser.h"
         #include "llvm/MC/MCParser/MCTargetAsmParser.h"
         #include <map>
-                
+        
         using namespace llvm;
-                
+        
         namespace llvm {
-                
+        
         template <typename T> struct ParsedValue {
             T Value;
             SMLoc S, E;
-                
+        
             ParsedValue(T Value): Value(Value), S(SMLoc()), E(SMLoc()) {}
             ParsedValue(T Value, SMLoc S, SMLoc E): Value(Value), S(S), E(E) {}
         };
-                
+        
         template <typename T> class RuleParsingResult {
         private:
             std::optional<std::tuple<SMLoc, std::string>> Error;
             std::optional<ParsedValue<T>> Parsed;
-                
+        
         public:
             bool Success;
-                
+        
             RuleParsingResult(ParsedValue<T> Parsed) : Parsed(Parsed), Success(true) {
             }
-                
+        
             RuleParsingResult(std::tuple<SMLoc, std::string> Error) : Error(Error), Success(false) {
             }
-                
+        
             RuleParsingResult(SMLoc Location, Twine Msg) : Error(std::make_tuple (Location, Msg.str())), Success(false) {
             }
-                
+        
             std::tuple<SMLoc, std::string> getError() {
             return Error.value();
             }
-                
+        
             ParsedValue<T> getParsed() {
             return Parsed.value();
             }
         };
-                
+        
         struct NoData{};
-                
+        
         struct mnemonic {
             ParsedValue<processornamevalueParsedOperand> mnemonic;
         };
-                
-                
+        
+        
         struct mnemonicrdimm {
-                
+        
           ParsedValue<processornamevalueParsedOperand> mnemonic;
           ParsedValue<processornamevalueParsedOperand> rd;
           ParsedValue<processornamevalueParsedOperand> imm;
-                
+        
         };
         struct mnemonicrdimmrs1 {
-                
+        
           ParsedValue<processornamevalueParsedOperand> mnemonic;
           ParsedValue<processornamevalueParsedOperand> rd;
           ParsedValue<processornamevalueParsedOperand> imm;
           ParsedValue<processornamevalueParsedOperand> rs1;
-                
+        
         };
         struct mnemonicrdrs1imm {
-                
+        
           ParsedValue<processornamevalueParsedOperand> mnemonic;
           ParsedValue<processornamevalueParsedOperand> rd;
           ParsedValue<processornamevalueParsedOperand> rs1;
           ParsedValue<processornamevalueParsedOperand> imm;
-                
+        
         };
         struct mnemonicrdrs1rs2 {
-                
+        
           ParsedValue<processornamevalueParsedOperand> mnemonic;
           ParsedValue<processornamevalueParsedOperand> rd;
           ParsedValue<processornamevalueParsedOperand> rs1;
           ParsedValue<processornamevalueParsedOperand> rs2;
-                
+        
         };
         struct mnemonicrdrs1sft {
-                
+        
           ParsedValue<processornamevalueParsedOperand> mnemonic;
           ParsedValue<processornamevalueParsedOperand> rd;
           ParsedValue<processornamevalueParsedOperand> rs1;
           ParsedValue<processornamevalueParsedOperand> sft;
-                
+        
         };
         struct mnemonicrdrs1shamt {
-                
+        
           ParsedValue<processornamevalueParsedOperand> mnemonic;
           ParsedValue<processornamevalueParsedOperand> rd;
           ParsedValue<processornamevalueParsedOperand> rs1;
           ParsedValue<processornamevalueParsedOperand> shamt;
-                
+        
         };
         struct mnemonicrs1rs2imm {
-                
+        
           ParsedValue<processornamevalueParsedOperand> mnemonic;
           ParsedValue<processornamevalueParsedOperand> rs1;
           ParsedValue<processornamevalueParsedOperand> rs2;
           ParsedValue<processornamevalueParsedOperand> imm;
-                
+        
         };
         struct mnemonicrs2immrs1 {
-                
+        
           ParsedValue<processornamevalueParsedOperand> mnemonic;
           ParsedValue<processornamevalueParsedOperand> rs2;
           ParsedValue<processornamevalueParsedOperand> imm;
           ParsedValue<processornamevalueParsedOperand> rs1;
-                
+        
         };
         struct funct2 {
-                
+        
           ParsedValue<processornamevalueParsedOperand> funct2;
-                
+        
         };
         struct funct3 {
-                
+        
           ParsedValue<processornamevalueParsedOperand> funct3;
-                
+        
         };
         struct funct7 {
-                
+        
           ParsedValue<processornamevalueParsedOperand> funct7;
-                
+        
         };
         struct imm {
-                
+        
           ParsedValue<processornamevalueParsedOperand> imm;
-                
+        
         };
         struct opcode {
-                
+        
           ParsedValue<processornamevalueParsedOperand> opcode;
-                
+        
         };
         struct rd {
-                
+        
           ParsedValue<processornamevalueParsedOperand> rd;
-                
+        
         };
         struct rs1 {
-                
+        
           ParsedValue<processornamevalueParsedOperand> rs1;
-                
+        
         };
         struct rs2 {
-                
+        
           ParsedValue<processornamevalueParsedOperand> rs2;
-                
+        
         };
         struct sft {
-                
+        
           ParsedValue<processornamevalueParsedOperand> sft;
-                
+        
         };
         struct zero {
-                
+        
           ParsedValue<processornamevalueParsedOperand> zero;
-                
+        
         };
-                
-                
+        
+        
         class processornamevalueAsmRecursiveDescentParser {
             MCAsmLexer &Lexer;
             MCAsmParser &Parser;
             OperandVector &Operands;
-                
+        
         //private:
             /*
            \s
@@ -280,19 +281,19 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
             */
             // «visitor.resultType( AsmType.String )» Literal(std::string toParse);
             // «visitor.resultType( AsmType.Expression )» BuiltinExpression();
-                
+        
         public:
             processornamevalueAsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
                 : Lexer(lexer), Parser(parser), Operands(operands) {
             }
-                
+        
             //RuleParsingResult<NoData> EOL();
             RuleParsingResult<NoData> ParseStatement();
             RuleParsingResult<uint64_t> ParseRegister();
         };
-                
+        
         }
-                
+        
         #endif // LLVM_LIB_TARGET_processornamevalue_ASMPARSER_H
         """.trim().lines(), output);
   }

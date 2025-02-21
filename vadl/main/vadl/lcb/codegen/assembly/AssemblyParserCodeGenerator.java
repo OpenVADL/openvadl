@@ -13,6 +13,8 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.common.AsmParserFunctionCodeGenerator;
 import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.cppCodeGen.context.CAsmContext;
+import vadl.error.DeferredDiagnosticStore;
+import vadl.error.Diagnostic;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.types.asmTypes.AsmType;
@@ -27,6 +29,7 @@ import vadl.types.asmTypes.StatementsAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.types.asmTypes.SymbolAsmType;
 import vadl.types.asmTypes.VoidAsmType;
+import vadl.utils.SourceLocation;
 import vadl.viam.Function;
 import vadl.viam.ViamError;
 import vadl.viam.asm.AsmToken;
@@ -57,6 +60,7 @@ import vadl.viam.asm.rules.AsmTerminalRule;
     context = CAsmContext.class,
     include = "vadl.viam.asm"
 )
+@SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
 public class AssemblyParserCodeGenerator {
 
   private final CAsmContext ctx;
@@ -120,6 +124,12 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmNonTerminalRule rule) {
+    if (rule.simpleName().equals("Instruction")
+        && rule.getAlternatives().alternatives().isEmpty()) {
+      handleEmptyInstructionRule(ctx);
+      return;
+    }
+
     var type = rule.getAsmType().toCppTypeString(namespace);
     this.currentRuleTypeString = type;
     ctx.ln("RuleParsingResult<%s> %sAsmRecursiveDescentParser::%s() {", type, namespace,
@@ -135,6 +145,20 @@ public class AssemblyParserCodeGenerator {
     ctx.ln("}");
     ctx.spaceOut();
     ctx.ln();
+  }
+
+  private void handleEmptyInstructionRule(CAsmContext ctx) {
+    ctx.ln("RuleParsingResult<NoData> %sAsmRecursiveDescentParser::Instruction() {", namespace);
+    ctx.spacedIn();
+    ctx.ln("return RuleParsingResult<NoData>(ParsedValue<NoData>(NoData {}));");
+    ctx.spaceOut();
+    ctx.ln("}");
+    ctx.ln();
+
+    DeferredDiagnosticStore.add(Diagnostic.warning(
+        "There are no instructions defined in the assembly description grammar."
+            + "The generated assembler will not be able to parse any instructions.",
+        SourceLocation.INVALID_SOURCE_LOCATION));
   }
 
   @Handler
@@ -203,7 +227,8 @@ public class AssemblyParserCodeGenerator {
     if (elementCount > 1 && element.asmType() instanceof GroupAsmType groupAsmType) {
       groupAsmType.getSubtypeMap().forEach(
           (attribute, type) ->
-              ctx.ln("ParsedValue<%s> %s;", type.toCppTypeString(namespace), attribute));
+              ctx.ln("std::optional<ParsedValue<%s>> %s;", type.toCppTypeString(namespace),
+                  attribute));
     }
 
     element.elements().forEach(ctx::gen);
@@ -234,7 +259,7 @@ public class AssemblyParserCodeGenerator {
       return;
     }
 
-    ctx.ln("std::optional<RuleParsingResult<%s>> %s;",
+    ctx.ln("std::optional<ParsedValue<%s>> %s;",
         type, alternativesResultVar);
     ctx.ln(getAlternativeGuard(alternatives.get(0)));
     ctx.spacedIn();
@@ -301,7 +326,9 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmGroup element) {
-    ctx.ln("ParsedValue<%s> %s;", element.asmType().toCppTypeString(namespace), varName(element));
+    var tempVar = symbolTable.getNextVariable();
+    var type = element.asmType().toCppTypeString(namespace);
+    ctx.ln("std::optional<ParsedValue<%s>> %s;", type, tempVar);
     ctx.ln("{");
     ctx.spacedIn();
 
@@ -309,12 +336,17 @@ public class AssemblyParserCodeGenerator {
 
     var resultVar = writeCastIfNecessary(ctx, element.alternatives().asmType(), element.asmType(),
         varName(element.alternatives()), false);
-    writeAssignToIfNotNull(ctx, element.assignTo(), resultVar);
-    writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
-    ctx.ln("%s = %s;", varName(element), resultVar);
 
+    if (element.isEnclosingAlternativeOfAsmGroupType()) {
+      writeAssignToIfNotNull(ctx, element.assignTo(), resultVar);
+    }
+
+    writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
+    ctx.ln("%s = %s;", tempVar, resultVar);
     ctx.spaceOut();
     ctx.ln("}");
+
+    ctx.ln("ParsedValue<%s> %s = %s.value();", type, varName(element), tempVar);
     ctx.ln();
   }
 
@@ -458,7 +490,7 @@ public class AssemblyParserCodeGenerator {
     ctx.ln("%s %s = {", typeString, tempVar);
     ctx.spacedIn();
     type.getSubtypeMap().keySet().forEach(
-        attribute -> ctx.ln(attribute + ", ")
+        attribute -> ctx.ln(attribute + ".value(), ")
     );
     ctx.spaceOut();
     ctx.ln("};");
@@ -565,7 +597,7 @@ public class AssemblyParserCodeGenerator {
 
       // (@type) to @type
       if (subTypes.size() == 1 && subTypes.get(0) == to) {
-        ctx.ln("%s = %s.Value.%s", destination, curValueVar, keys.get(0));
+        ctx.ln("%s = %s.Value.%s;", destination, curValueVar, keys.get(0));
         return tempVar;
       }
     }
@@ -590,7 +622,7 @@ public class AssemblyParserCodeGenerator {
     if (from == StringAsmType.instance()) {
       // to @operand
       if (to == OperandAsmType.instance()) {
-        ctx.ln("%s(%sParsedOperand::CreateToken(%s.value,%s));", destination, namespace,
+        ctx.ln("%s(%sParsedOperand::CreateToken(%s.Value,%s));", destination, namespace,
             curValueVar, loc);
         return tempVar;
       }
@@ -608,7 +640,7 @@ public class AssemblyParserCodeGenerator {
         ctx.ln("if(!AsmUtils::MatchRegNo(%s.Value, %s)) {", curValueVar, regNoVar);
         ctx.spacedIn();
         ctx.ln("return RuleParsingResult<%s>(%s.S,\"Could not convert data into register"
-                + "because '\" %s.Value \"' is not a valid register\");",
+                + "because '\" + %s.Value + \"' is not a valid register\");",
             currentRuleTypeString, curValueVar, curValueVar);
         ctx.spaceOut();
         ctx.ln("}");
@@ -623,7 +655,7 @@ public class AssemblyParserCodeGenerator {
         ctx.ln("if(!AsmUtils::MatchCustomModifier(%s.Value, %s)) {", curValueVar, modifier);
         ctx.spacedIn();
         ctx.ln("return RuleParsingResult<%s>(%s.S,\"Could not convert data into modifier because"
-                + " '\" %s.Value \"' is not a valid modifier\");",
+                + " '\" +  %s.Value + \"' is not a valid modifier\");",
             currentRuleTypeString, curValueVar, curValueVar);
         ctx.spaceOut();
         ctx.ln("}");
@@ -645,7 +677,7 @@ public class AssemblyParserCodeGenerator {
     if (from == ExpressionAsmType.instance()) {
       // to @operand
       if (to == OperandAsmType.instance()) {
-        ctx.ln("%s(%sParsedOperand::CreateImm(%s.value,%s));", destination, namespace, curValueVar,
+        ctx.ln("%s(%sParsedOperand::CreateImm(%s.Value,%s));", destination, namespace, curValueVar,
             loc);
         return tempVar;
       }

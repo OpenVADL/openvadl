@@ -39,6 +39,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
     var compareFunction = stringCompareFunction(specification);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
+        "asmDescriptionExists", specification.assemblyDescription().isPresent(),
         "grammarRules", grammarRules,
         "compareFunction", compareFunction
     );

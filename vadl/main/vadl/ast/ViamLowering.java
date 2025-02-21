@@ -20,6 +20,7 @@ import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
+import vadl.types.asmTypes.GroupAsmType;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
 import vadl.viam.Assembly;
@@ -356,7 +357,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
 
     var grammarElements =
-        elements.stream().map(def -> visitAsmElement(def, isWithinRepetition))
+        elements.stream().map(def -> visitAsmElement(def, isWithinRepetition,
+                alternativeAsmType instanceof GroupAsmType))
             .filter(Objects::nonNull).toList();
     return new AsmAlternative(semPredFunction, firstTokens, alternativeAsmType, isWithinRepetition,
         grammarElements);
@@ -364,7 +366,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Nullable
   private AsmGrammarElement visitAsmElement(AsmGrammarElementDefinition definition,
-                                            boolean isWithinRepetition) {
+                                            boolean isWithinRepetition,
+                                            boolean isAlternativeOfAsmGroupType) {
 
     if (definition.optionAlternatives != null) {
       var semPredGraph = potentialSemanticPredicate(definition.optionAlternatives);
@@ -405,7 +408,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     if (definition.groupAlternatives != null) {
       var alternatives = visitAsmAlternatives(definition.groupAlternatives, false, false);
-      return new AsmGroup(assignTo, alternatives, requireNonNull(definition.asmType));
+      return new AsmGroup(assignTo, alternatives, isAlternativeOfAsmGroupType,
+          requireNonNull(definition.asmType));
     }
 
     if (definition.localVar != null) {

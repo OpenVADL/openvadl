@@ -31,7 +31,7 @@ public class GroupAsmType implements AsmType {
       return "NoData";
     }
     return subtypeMap.keySet().stream()
-        .reduce("", (acc, type) -> acc + type);
+        .reduce("struct_", (acc, type) -> acc + type);
   }
 
   @Override

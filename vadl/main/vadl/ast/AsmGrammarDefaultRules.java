@@ -10,6 +10,7 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.ConstantAsmType;
 import vadl.types.asmTypes.ExpressionAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
+import vadl.types.asmTypes.OperandAsmType;
 import vadl.types.asmTypes.RegisterAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.types.asmTypes.SymbolAsmType;
@@ -28,7 +29,7 @@ public class AsmGrammarDefaultRules {
   /**
    * The name of the built-in function that negates a 64-bit integer.
    */
-  public static final String BUILTIN_ASM_NEG = "builtin_asm_neg";
+  public static final String BUILTIN_ASM_NEG = "VADL_asmparser_neg";
 
   private static final HashMap<AsmGrammarRuleDefinition, Pattern> patternCache = new HashMap<>();
 
@@ -104,7 +105,8 @@ public class AsmGrammarDefaultRules {
             ruleReference("EOL", VoidAsmType.instance())),
         nonTerminalRule("Register", RegisterAsmType.instance(),
             false, ruleReference("IDENTIFIER", StringAsmType.instance())),
-        nonTerminalRule("ImmediateOperand", null, false, ruleReference("Expression")),
+        nonTerminalRule("ImmediateOperand", OperandAsmType.instance(), false,
+            ruleReference("Expression")),
         nonTerminalRule("Identifier", null, false, ruleReference("IDENTIFIER")),
         nonTerminalRule("Expression", ExpressionAsmType.instance(), true,
             ruleReference("Expression")),

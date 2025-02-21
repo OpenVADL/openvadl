@@ -12,5 +12,6 @@ import vadl.types.asmTypes.AsmType;
  */
 public record AsmGroup(@Nullable AsmAssignTo assignTo,
                        AsmAlternatives alternatives,
+                       boolean isEnclosingAlternativeOfAsmGroupType,
                        AsmType asmType) implements AsmGrammarElement {
 }

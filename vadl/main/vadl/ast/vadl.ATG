@@ -1084,7 +1084,7 @@ PRODUCTIONS
 
   assemblyDescriptionDefinition<out AsmDescriptionDefinition asmDescription>    (. List<AsmModifierDefinition> modifiers = new ArrayList<>(); var start = lookaheadLoc(); .)
   = ASSEMBLY DESCRIPTION                                                        (. List<AsmDirectiveDefinition> directives = new ArrayList<>(); .)
-    assemblyIdentifier<out Identifier id>                                       (. List<AsmGrammarRuleDefinition> rules = null; var commonDefs = new ArrayList<Definition>(); .)
+    assemblyIdentifier<out Identifier id>                                       (. List<AsmGrammarRuleDefinition> rules = new ArrayList<>(); var commonDefs = new ArrayList<Definition>(); .)
     FOR
     assemblyIdentifier<out Identifier abi>
     SYM_EQ

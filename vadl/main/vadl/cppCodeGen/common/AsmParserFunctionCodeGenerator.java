@@ -73,7 +73,7 @@ public class AsmParserFunctionCodeGenerator extends FunctionCodeGenerator {
   @Override
   public void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
     if (toHandle.asmBuiltIn() == BuiltInTable.LA_ID_EQ) {
-      ctx.wr("builtin_asm_laideq(");
+      ctx.wr("VADL_asmparser_laideq(");
       toHandle.arguments().forEach(arg -> {
         handle(ctx, (ConstantNode) arg);
         if (arg != toHandle.arguments().get(toHandle.arguments().size() - 1)) {
@@ -82,7 +82,7 @@ public class AsmParserFunctionCodeGenerator extends FunctionCodeGenerator {
       });
       ctx.wr(")");
     } else if (toHandle.asmBuiltIn() == BuiltInTable.LA_ID_IN) {
-      ctx.wr("builtin_asm_laidin(");
+      ctx.wr("VADL_asmparser_laidin(");
       var lookaheadArg = (ConstantNode) toHandle.arguments().get(0);
       ctx.wr(lookaheadArg.constant().asVal().decimal());
 
