@@ -12,7 +12,54 @@ The `open-vadl` project includes multiple Gradle modules.
 
 ## Getting Started
 
-To get started, please read the introduction in [our wiki](https://ea.complang.tuwien.ac.at/vadl/open-vadl/wiki/Home).
+For example, you can create the iss (Instruction Set Simulator) for a minimal risc-v example with:
+
+```bash
+./gradlew run --args="iss ../sys/risc-v/rv64im.vadl"
+```
+
+**Note:** `gradlew run` doesn't execute in the project root, requiring to prepend supplied paths with `..` (like in the
+example above).
+
+To get a description of the complete usage, you can run: `./gradlew run --args="--help"`
+
+## Building
+
+You can build and run in two steps with
+
+```bash
+./gradlew installDist
+```
+
+Which will create an executable script at: `vadl-cli/build/install/openvadl/bin/openvadl`.
+
+To build a [GraalVM Native Image](https://www.graalvm.org/latest/reference-manual/native-image/) you first need to set
+`$JAVA_HOME` to point to your GraalVM installation.
+With that you can run:
+
+```bash
+./gradlew nativeCompile
+```
+
+Which will create an executable at: `vadl-cli/build/native/nativeCompile/openvadl`
+
+## Run all tests
+
+To run all tests you need to have docker running on your system.
+
+```bash
+./gradlew test
+```
+
+**Note:** The tests are quite resource intensive (especially on memory and disk space) so make sure docker has enough
+available, otherwise the tests might fail.
+
+Expect the tests to run a long time (up to an hour isn't unrealistic).
+
+## Documentation
+
+Some detailed documentation about the implementation can be found
+in [our wiki](https://ea.complang.tuwien.ac.at/vadl/open-vadl/wiki/Home).
 
 ## Development
 
