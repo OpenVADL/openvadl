@@ -56,3 +56,4 @@ bin/
 
 ### Generated VADL Files ###
 /output/
+/vadl-cli/output/

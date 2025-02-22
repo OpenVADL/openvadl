@@ -6,11 +6,15 @@ import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Comparator;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -45,6 +49,7 @@ public class IssCommand extends BaseCommand {
   private static String QEMU_VERSION = "9.0.3";
   private static String QEMU_DOWNLOAD_URL =
       "https://github.com/qemu/qemu/archive/refs/tags/v" + QEMU_VERSION + ".tar.gz";
+  private static String QEMU_SHA256_CHECKSUM = "e9G8+p+nv31UJz4HvCWCHVC89AT3bMcxRC6GSW9oykc=";
 
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
@@ -65,13 +70,13 @@ public class IssCommand extends BaseCommand {
   private boolean setup() {
     try {
       return init();
-    } catch (IOException e) {
+    } catch (IOException | NoSuchAlgorithmException e) {
       System.err.println("Error: " + e.getMessage());
       return false;
     }
   }
 
-  private boolean init() throws IOException {
+  private boolean init() throws IOException, NoSuchAlgorithmException {
     if (!init) {
       return true;
     }
@@ -83,11 +88,17 @@ public class IssCommand extends BaseCommand {
 
     System.out.println("Downloading QEMU " + QEMU_VERSION + "...");
     var archive = issOutputPath.resolve("qemu-" + QEMU_VERSION + ".tar.gz");
-    downloadFile(QEMU_DOWNLOAD_URL, archive);
-    System.out.println("Extracting QEMU...");
-    extractTarXz(archive, issOutputPath);
-    Files.deleteIfExists(archive);
-    System.out.println("QEMU " + QEMU_VERSION + " is ready, generating ISS...");
+    try {
+      downloadFile(QEMU_DOWNLOAD_URL, archive);
+      System.out.println("Verifying QEMU checksum...");
+      testChecksum(archive);
+      System.out.println("Extracting QEMU...");
+      extractTarXz(archive, issOutputPath);
+      System.out.println("QEMU " + QEMU_VERSION + " is ready, generating ISS...");
+    } finally {
+      // always delete downloaded archive
+      Files.deleteIfExists(archive);
+    }
     return true;
   }
 
@@ -167,6 +178,16 @@ public class IssCommand extends BaseCommand {
       }
     } else {
       throw new IOException("Failed to download file: HTTP " + responseCode);
+    }
+  }
+
+  private void testChecksum(Path archive) throws IOException, NoSuchAlgorithmException {
+    var progressBar = new ProgressBar(Files.size(archive));
+    var checksum =
+        Utils.calculateSHA256Checksum(archive, progressBar::update);
+    progressBar.complete();
+    if (!QEMU_SHA256_CHECKSUM.equals(checksum)) {
+      throw new IOException("Checksum does not match. Downloaded QEMU source code is corrupted.");
     }
   }
 
