@@ -31,8 +31,6 @@ import vadl.iss.passes.IssPcAccessConversionPass;
 import vadl.iss.passes.IssTcgSchedulingPass;
 import vadl.iss.passes.IssTcgVAllocationPass;
 import vadl.iss.passes.IssVerificationPass;
-import vadl.iss.passes.decode.qemu.QemuDecodeLoweringPass;
-import vadl.iss.passes.decode.qemu.QemuDecodeSymbolResolvingPass;
 import vadl.iss.passes.opDecomposition.IssOpDecompositionPass;
 import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.IssTcgContextPass;
@@ -43,12 +41,9 @@ import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
 import vadl.iss.template.target.EmitIssCpuSourcePass;
+import vadl.iss.template.target.EmitIssDecodeTreePass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
-import vadl.iss.template.target.decode.qemu.EmitIssInsnAccessFunctionPass;
-import vadl.iss.template.target.decode.qemu.EmitIssInsnAccessHeaderPass;
-import vadl.iss.template.target.decode.qemu.EmitIssInsnDecodePass;
-import vadl.iss.template.target.decode.vdt.EmitIssDecodeTreePass;
 import vadl.lcb.passes.DummyAnnotationPass;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
@@ -436,13 +431,6 @@ public class PassOrders {
         .add(new EmitIssCpuHeaderPass(config))
         // target/gen-arch/cpu.c
         .add(new EmitIssCpuSourcePass(config))
-        // TODO: Remove old QEMU decode tree generation
-        // target/gen-arch/insn.decode
-        // .add(new EmitIssInsnDecodePass(config))
-        // target/gen-arch/insn-access.h
-        // .add(new EmitIssInsnAccessHeaderPass(config))
-        // target/gen-arch/insn-access.c
-        // .add(new EmitIssInsnAccessFunctionPass(config))
         // target/gen-arch/vdt-decode.c
         .add(new EmitIssDecodeTreePass(config))
         // target/gen-arch/translate.c
@@ -453,16 +441,13 @@ public class PassOrders {
     ;
   }
 
-  // TODO: @mraschhofer write documentation
+  /**
+   * Adds all necessary passes for generating the VDT.
+   *
+   * @param order  into which the passes will be inserted.
+   * @param config from which to decide if a dump is wanted.
+   */
   private static void addDecodePasses(PassOrder order, IssConfiguration config) {
-
-    // TODO: Add config params to switch between decoder implementations. For now we generate
-    // code for both. The implementation used by the ISS is determined by the linking of the
-    // generated resources.
-
-    // QEMU Decode Passes
-    order.add(new QemuDecodeLoweringPass(config));
-    order.add(new QemuDecodeSymbolResolvingPass(config));
 
     // VDT Decode Passes
     order.add(new VdtLoweringPass(config));
