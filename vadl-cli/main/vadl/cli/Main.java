@@ -17,8 +17,14 @@ public class Main implements Runnable {
     new CommandLine(new Main()).usage(System.out);
   }
 
+  /**
+   * Entry method for the openvadl CLI application.
+   */
   public static void main(String[] args) {
-    int exitCode = new CommandLine(new Main()).execute(args);
+    int exitCode =
+        new CommandLine(new Main())
+            .setCaseInsensitiveEnumValuesAllowed(true)
+            .execute(args);
     System.exit(exitCode);
   }
 }

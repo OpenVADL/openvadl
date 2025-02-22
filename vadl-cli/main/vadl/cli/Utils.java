@@ -2,12 +2,15 @@ package vadl.cli;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.NoSuchElementException;
+import java.util.Scanner;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -33,6 +36,22 @@ class Utils {
     return Base64.getEncoder().encodeToString(hashBytes);
   }
 
+  /**
+   * Prompts the user with a message and returns true if the user confirms positively.
+   *
+   * @param message The message to display to the user.
+   * @return true if the user inputs 'y' or 'yes' (case-insensitive), false otherwise.
+   */
+  static boolean getUserConfirmation(String message) throws IOException {
+    Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8);
+    System.out.print(message + " (y/n): ");
+    try {
+      String input = scanner.nextLine().trim().toLowerCase();
+      return input.equals("y") || input.equals("yes");
+    } catch (Exception e) {
+      throw new IOException(e.getMessage(), e);
+    }
+  }
 }
 
 class ProgressBar {

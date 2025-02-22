@@ -195,8 +195,9 @@ public abstract class BaseCommand implements Callable<Integer> {
     return spec;
   }
 
-  // lazy evaluated config
-  @LazyInit
+  // lazy evaluated config, do NOT use this directly.
+  // use getConfig() instead.
+  @Nullable
   private GeneralConfiguration config;
 
   /**

@@ -42,14 +42,17 @@ public class IssCommand extends BaseCommand {
       description = "Don't emit generated files.")
   boolean dryRun;
 
-  @CommandLine.Option(names = {"--init"},
+  @CommandLine.Option(
+      names = "--init",
       description = "Download and prepare QEMU before generating ISS.")
-  boolean init;
+  private boolean init;
 
   private static String QEMU_VERSION = "9.0.3";
   private static String QEMU_DOWNLOAD_URL =
       "https://github.com/qemu/qemu/archive/refs/tags/v" + QEMU_VERSION + ".tar.gz";
   private static String QEMU_SHA256_CHECKSUM = "e9G8+p+nv31UJz4HvCWCHVC89AT3bMcxRC6GSW9oykc=";
+  // used to show progress bar when downloading
+  private static int QEMU_TAR_BYTE_SIZE = 38119749;
 
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
@@ -80,10 +83,19 @@ public class IssCommand extends BaseCommand {
     if (!init) {
       return true;
     }
+
+    // by setting this variable using the command line, we could support
+    // QEMU initialization without user interaction.
+    var force = false;
     var config = getConfig();
     var issOutputPath = config.outputPath().resolve("iss");
-    if (!createOutputDirectory(issOutputPath)) {
+    if (!createOutputDirectory(issOutputPath, force)) {
       return true;
+    }
+
+    if (!force && !checkUserSourceTrust()) {
+      // abort complete execution if the user does not trust the QEMU source
+      return false;
     }
 
     System.out.println("Downloading QEMU " + QEMU_VERSION + "...");
@@ -102,17 +114,28 @@ public class IssCommand extends BaseCommand {
     return true;
   }
 
+  // check if the user trusts the download URL
+  private boolean checkUserSourceTrust() throws IOException {
+    if (!Utils.getUserConfirmation(
+        "OpenVADL is about to download QEMU from the following URL:\n" + QEMU_DOWNLOAD_URL
+            + "\nDo you trust this source?")) {
+      System.out.println("Download aborted by the user.");
+      return false;
+    }
+    return true;
+  }
+
   // returns true if we should continue, otherwise false
-  private boolean createOutputDirectory(Path issOutputPath) throws IOException {
+  private boolean createOutputDirectory(Path issOutputPath, boolean force) throws IOException {
     if (Files.exists(issOutputPath)) {
       if (isEmptyDirectory(issOutputPath)) {
         // an empty directory does not contain a project yet
         return true;
       }
+
       if (!isValidQemuDirectory(issOutputPath)) {
         System.out.println("Warning: output/iss exists but does not contain a valid QEMU project.");
-        System.out.print("Do you want to overwrite and re-download? (y/N): ");
-        if (!confirmUserInput()) {
+        if (!force && !Utils.getUserConfirmation("Do you want to overwrite and re-download?")) {
           System.out.println("Aborting.");
           return false;
         }
@@ -145,12 +168,6 @@ public class IssCommand extends BaseCommand {
     }
   }
 
-  private boolean confirmUserInput() throws IOException {
-    byte[] input = new byte[1];
-    System.in.read(input);
-    return input[0] == 'y' || input[0] == 'Y';
-  }
-
   private void downloadFile(String fileURL, Path savePath) throws IOException {
     URL url = new URL(fileURL);
     HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
@@ -162,6 +179,8 @@ public class IssCommand extends BaseCommand {
 
     if (responseCode == HttpURLConnection.HTTP_OK) {
       int contentLength = httpConn.getContentLength();
+      // fallback to QEMU_TAR_BYTE_SIZE
+      contentLength = contentLength == -1 ? QEMU_TAR_BYTE_SIZE : contentLength;
       ProgressBar progressBar = new ProgressBar(contentLength);
 
       try (InputStream inputStream = httpConn.getInputStream();
@@ -182,10 +201,10 @@ public class IssCommand extends BaseCommand {
   }
 
   private void testChecksum(Path archive) throws IOException, NoSuchAlgorithmException {
-    var progressBar = new ProgressBar(Files.size(archive));
+    // var progressBar = new ProgressBar(Files.size(archive));
     var checksum =
-        Utils.calculateSHA256Checksum(archive, progressBar::update);
-    progressBar.complete();
+        Utils.calculateSHA256Checksum(archive, null);
+    // progressBar.complete();
     if (!QEMU_SHA256_CHECKSUM.equals(checksum)) {
       throw new IOException("Checksum does not match. Downloaded QEMU source code is corrupted.");
     }
