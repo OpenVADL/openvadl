@@ -175,7 +175,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * A simple helper util that returns a copy of the list casted to the class provided.
    */
   private <T, U> List<T> filterAndCastToInstance(List<U> values, Class<T> type) {
-    return values.stream().filter(type::isInstance).map(type::cast)
+    return values.stream().filter(v -> v.getClass().equals(type)).map(type::cast)
         .collect(Collectors.toCollection(ArrayList::new));
   }
 
@@ -775,6 +775,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(InstructionDefinition definition) {
+    fetch(Objects.requireNonNull(definition.formatNode));
     var behavior = behaviorLowering.getInstructionGraph(definition);
 
     var assembly = visitAssembly(requireNonNull(definition.assemblyDefinition),

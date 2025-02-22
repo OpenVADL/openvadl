@@ -2,14 +2,14 @@ package vadl.viam;
 
 import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.TestUtils;
 import vadl.viam.passes.verification.ViamVerifier;
 
 public class RelocationTest extends AbstractTest {
 
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // @Test
+  @Test
   void testRelocation() throws IOException {
     var spec = runAndGetViamSpecification("unit/relocation/valid_relocations.vadl");
     ViamVerifier.verifyAllIn(spec);

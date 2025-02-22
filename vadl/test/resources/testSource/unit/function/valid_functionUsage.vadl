@@ -17,3 +17,8 @@ instruction set architecture FunctionCallTest = {
   assembly FuncCallTest = ( " " )
 
 }
+
+application binary interface ABI for FunctionCallTest = {}
+micro processor CPU implements FunctionCallTest with ABI = {
+  start = 0x80000000
+}

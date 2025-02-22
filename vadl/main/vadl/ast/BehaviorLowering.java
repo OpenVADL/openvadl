@@ -22,6 +22,7 @@ import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
+import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Relocation;
 import vadl.viam.graph.Graph;
@@ -228,7 +229,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           (DataType) Objects.requireNonNull(expr.type));
     }
 
-    // Registers and counters
+    // Register
+    if (computedTarget instanceof RegisterDefinition registerDefinition) {
+      var register = (Register) viamLowering.fetch(registerDefinition).orElseThrow();
+      return new ReadRegNode(
+          register,
+          (DataType) Objects.requireNonNull(expr.type),
+          null);
+    }
+
+    // Counters
     if (computedTarget instanceof CounterDefinition counterDefinition) {
       if (counterDefinition.kind == CounterDefinition.CounterKind.PROGRAM) {
         var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
@@ -606,7 +616,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var value = fetch(statement.valueExpression);
 
     if (statement.target instanceof CallExpr callTarget) {
-      // Register Write
+      // Register File Write
       if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
         var regFile = viamLowering.fetch(regFileTarget).orElseThrow();
         var address = callTarget.flatArgs().get(0).accept(this);
@@ -637,16 +647,25 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       throw new IllegalStateException(
           "Call target not yet implemented " + callTarget.computedTarget);
     } else if (statement.target instanceof Identifier identifierExpr) {
-      var computedTarget = Objects.requireNonNull(identifierExpr.symbolTable)
-          .requireAs(identifierExpr, vadl.ast.Node.class);
+      var computedTarget = Objects.requireNonNull(Objects.requireNonNull(identifierExpr.symbolTable)
+          .requireAs(identifierExpr, vadl.ast.Node.class));
 
+      // Register Write
+      if (computedTarget instanceof RegisterDefinition registerDefinition) {
+        var register = (Register) viamLowering.fetch(registerDefinition).orElseThrow();
+        var write = new WriteRegNode(register, value, null);
+        return SubgraphContext.of(statement, write);
+      }
+
+      // Counter (also register) Write
       if (computedTarget instanceof CounterDefinition counterDefinition) {
         var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
         var write = new WriteRegNode(counter.registerRef(), value, null);
         return SubgraphContext.of(statement, write);
       }
 
-      throw new IllegalStateException("Identifier target not yet implemented" + statement.target);
+      throw new IllegalStateException("Identifier targeting %s not yet implemented".formatted(
+          computedTarget.getClass().getSimpleName()));
     }
 
     throw new IllegalStateException("unknown target expression: " + statement.target);
