@@ -1,4 +1,4 @@
-package vadl.iss.template.target.decode.vdt;
+package vadl.iss.template.target;
 
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
