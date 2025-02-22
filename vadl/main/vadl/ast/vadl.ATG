@@ -285,8 +285,8 @@ PRODUCTIONS
   | modelTypeDefinition<out def>
   .
 
-  instructionsetDefinition<out InstructionSetDefinition isaDef> (. macroTable = macroTable.createChild(); .)
-  = INSTRUCTION SET ARCHITECTURE                                (. var startLocation = loc(); .)
+  instructionsetDefinition<out InstructionSetDefinition isaDef> (. macroTable = macroTable.createChild(); var startLocation = lookaheadLoc();.)
+  = INSTRUCTION SET ARCHITECTURE
     identifier<out Identifier identifier>                       (. Identifier extending = null; .)
     [
       EXTENDING
@@ -351,16 +351,16 @@ PRODUCTIONS
   | operationDefinition<out def>
   .
 
-  constantDefinition<out ConstantDefinition def> (. TypeLiteral type = null; .)
-  = CONSTANT                                     (. var startLocation = loc(); .)
+  constantDefinition<out ConstantDefinition def> (. TypeLiteral type = null; var startLocation = lookaheadLoc(); .)
+  = CONSTANT
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     [ SYM_COLON typeLiteral<out type> ]
     SYM_EQ
     expression<out Expr expr, BIN_OPS>           (. def = new ConstantDefinition(id, type, expr, startLocation.join(loc())); .)
   .
 
-  formatDefinition<out FormatDefinition def>
-  = FORMAT                                                       (. var startLoc = loc(); .)
+  formatDefinition<out FormatDefinition def>                     (. var startLoc = lookaheadLoc(); .)
+  = FORMAT
   identifierOrPlaceholder<out IdentifierOrPlaceholder id>        (. var fields = new ArrayList<FormatDefinition.FormatField>();.)
   SYM_COLON typeLiteral<out TypeLiteral type>                    (. var auxFields = new ArrayList<FormatDefinition.AuxiliaryField>();.)
   [
@@ -426,25 +426,25 @@ PRODUCTIONS
     expression<out Expr expr, BIN_OPS> (. field = new FormatDefinition.DerivedFormatField(id, expr); .)
   .
 
-  counterDefinition<out CounterDefinition def>  (. CounterDefinition.CounterKind kind = null; .)
+  counterDefinition<out CounterDefinition def>  (. CounterDefinition.CounterKind kind = null; var startLocation = lookaheadLoc(); .)
   = ( PROGRAM                                   (. kind = PROGRAM; .)
     | GROUP                                     (. kind = GROUP; .)
-    )                                           (. var startLocation = loc(); .)
+    )
     COUNTER
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON typeLiteral<out TypeLiteral type> (. def = new CounterDefinition(kind, id, type, startLocation.join(loc())); .)
   .
 
-  instructionDefinition<out InstructionDefinition def>                      (. var startLocation = loc(); .)
+  instructionDefinition<out InstructionDefinition def>                      (. var startLocation = lookaheadLoc(); .)
   = INSTRUCTION identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON identifierOrPlaceholder<out IdentifierOrPlaceholder formatId>
     SYM_EQ statement<out Statement behavior>                                (. def = new InstructionDefinition(id, formatId, behavior, startLocation.join(loc())); .)
   .
 
-  pseudoInstructionDefinition<out Definition def>            (. PseudoInstructionDefinition.PseudoInstrKind kind = null; .)
+  pseudoInstructionDefinition<out Definition def>            (. PseudoInstructionDefinition.PseudoInstrKind kind = null;  var startLocation = lookaheadLoc(); .)
   = ( PSEUDO                                                 (. kind = PseudoInstructionDefinition.PseudoInstrKind.PSEUDO; .)
     | COMPILER_KW                                            (. kind = PseudoInstructionDefinition.PseudoInstrKind.COMPILER; .)
-    )                                                        (. var start = loc(); .)
+    )
     INSTRUCTION
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>  (. List<Parameter> params = new ArrayList<>(); .)
     [ parameters<out params> ]
@@ -453,17 +453,17 @@ PRODUCTIONS
     {
       instructionCallStmt<out InstructionCallStatement stmt> (. stmts.add(stmt); .)
     }
-    SYM_BRACE_CLOSE                                          (. def = new PseudoInstructionDefinition(id, kind, params, stmts, start.join(loc())); .)
+    SYM_BRACE_CLOSE                                          (. def = new PseudoInstructionDefinition(id, kind, params, stmts, startLocation.join(loc())); .)
   .
 
-  relocationDefinition<out Definition def>
-  = RELOCATION                         (. var start = loc(); .)
+  relocationDefinition<out Definition def>    (. var startLocation = lookaheadLoc(); .)
+  = RELOCATION
     identifier<out Identifier id>
     parameters<.out List<Parameter> params.>
     SYM_ARROW
     typeLiteral<out TypeLiteral resultType>
     SYM_EQ
-    expression<out Expr expr, BIN_OPS> (. def = new RelocationDefinition(id, params, resultType, expr, start.join(loc())); .)
+    expression<out Expr expr, BIN_OPS>        (. def = new RelocationDefinition(id, params, resultType, expr, startLocation.join(loc())); .)
   .
 
   identifierOrPlaceholder<out IdentifierOrPlaceholder id> (. id = DUMMY_ID; .)
@@ -471,12 +471,12 @@ PRODUCTIONS
   | macroReplacement<out Node node>                       (. id = castId(this, node); .)
   .
 
-  encodingDefinition<out EncodingDefinition def>
-  = ENCODING         (. var startLocation = loc(); .)
+  encodingDefinition<out EncodingDefinition def>                        (. var startLocation = lookaheadLoc(); .)
+  = ENCODING
     identifierOrPlaceholder<out IdentifierOrPlaceholder instrId>
     SYM_EQ SYM_BRACE_OPEN
     encodingDefinitionList<out EncodingDefinition.EncsNode encodings>
-    SYM_BRACE_CLOSE  (. def = new EncodingDefinition(instrId, encodings, startLocation.join(loc())); .)
+    SYM_BRACE_CLOSE                                                     (. def = new EncodingDefinition(instrId, encodings, startLocation.join(loc())); .)
   .
 
   encodingDefinitionList<out EncodingDefinition.EncsNode encs> (. var start = lookaheadLoc(); var entries = new ArrayList<IsEncs>(); .)
@@ -501,7 +501,7 @@ PRODUCTIONS
     expression<out Expr expr, BIN_OPS> (. enc = new EncodingDefinition.EncodingField(id, expr); .)
   .
 
-  assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var start = loc(); .)
+  assemblyDefinition<out AssemblyDefinition def>                        (. List<IdentifierOrPlaceholder> ids = new ArrayList<>(); var start = lookaheadLoc(); .)
   = ASSEMBLY
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>             (. ids.add(id); .)
     {
@@ -516,22 +516,21 @@ PRODUCTIONS
   = string                                               (. lit = new StringLiteral(t.val, loc()); .)
   .
 
-  memoryDefinition<out MemoryDefinition def>
-  = MEMORY                                    (. var startLocation = loc(); .)
+  memoryDefinition<out MemoryDefinition def>                (. var startLocation = lookaheadLoc(); .)
+  = MEMORY
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON typeLiteral<out TypeLiteral t1>
-    SYM_ARROW typeLiteral<out TypeLiteral t2> (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
+    SYM_ARROW typeLiteral<out TypeLiteral t2>               (. def = new MemoryDefinition(id, t1, t2, startLocation.join(t2.location())); .)
   .
 
-  registerDefinition<out RegisterDefinition def>
-  = REGISTER                                          (. var startLocation = loc(); .)
+  registerDefinition<out RegisterDefinition def>            (. var startLocation = lookaheadLoc(); .)
+  = REGISTER
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    SYM_COLON typeLiteral<out TypeLiteral t1>         (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
+    SYM_COLON typeLiteral<out TypeLiteral t1>               (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
   .
 
-  registerFileDefinition<out Definition def>
-  = REGISTER                                                   (. var startLocation = loc(); .)
-    FILE
+  registerFileDefinition<out Definition def>                          (. var startLocation = lookaheadLoc(); .)
+  = REGISTER FILE
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON
     relationType<out RegisterFileDefinition.RelationTypeLiteral type> (. def = new RegisterFileDefinition(id, type, startLocation.join(loc())); .)
@@ -547,11 +546,11 @@ PRODUCTIONS
     typeLiteral<out TypeLiteral resultType>                  (. type = new RegisterFileDefinition.RelationTypeLiteral(argTypes, resultType); .)
   .
 
-  aliasDefinition<out Definition def>
-  = ALIAS                                             (. var startLocation = loc(); AliasDefinition.AliasKind kind = null;
+  aliasDefinition<out Definition def>                 (. var startLocation = lookaheadLoc(); AliasDefinition.AliasKind kind = null;
                                                          TypeLiteral aliasType = null; TypeLiteral targetType = null;
                                                          IdentifierOrPlaceholder id = null;
                                                       .)
+  = ALIAS
     (
       REGISTER                                        (. kind = AliasDefinition.AliasKind.REGISTER; .)
       [ FILE                                          (. kind = AliasDefinition.AliasKind.REGISTER_FILE; .) ]
@@ -575,15 +574,15 @@ PRODUCTIONS
     callOrBinaryExpression<out Expr value, false>     (. def = new AliasDefinition(id, kind, aliasType, targetType, value, startLocation.join(loc())); .)
   .
 
-  usingDefinition<out Definition def>
-  = USING                             (. var start = loc(); .)
+  usingDefinition<out Definition def>                         (. var start = lookaheadLoc(); .)
+  = USING
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_EQ
-    typeLiteral<out TypeLiteral type> (. def = new UsingDefinition(id, type, start.join(loc())); .)
+    typeLiteral<out TypeLiteral type>                         (. def = new UsingDefinition(id, type, start.join(loc())); .)
   .
 
-  functionDefinition<out Definition def>
-  = FUNCTION                           (. var start = loc(); List<Parameter> params = new ArrayList<>(); .)
+  functionDefinition<out Definition def> (. var start = lookaheadLoc(); List<Parameter> params = new ArrayList<>(); .)
+  = FUNCTION
     identifierOrPlaceholder<out IdentifierOrPlaceholder name>
     [ parameters<out params> ]
     SYM_ARROW
@@ -608,8 +607,8 @@ PRODUCTIONS
     typeLiteral<out TypeLiteral type> (. param = new Parameter(name, type); .)
   .
 
-  enumerationDefinition<out Definition def> (. TypeLiteral enumType = null; .)
-  = ENUMERATION                             (. var start = loc(); .)
+  enumerationDefinition<out Definition def> (. var start = lookaheadLoc(); TypeLiteral enumType = null; .)
+  = ENUMERATION
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     [ SYM_COLON typeLiteral<out enumType> ]
     SYM_EQ                                  (. var entries = new ArrayList<EnumerationDefinition.Entry>(); .)
@@ -638,15 +637,15 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                         (. def = new EnumerationDefinition(id, enumType, entries, start.join(loc())); .)
   .
 
-  exceptionDefinition<out Definition def>
-  = EXCEPTION                          (. var start = loc(); .)
+  exceptionDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  = EXCEPTION
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_EQ
     statement<out Statement statement> (. def = new ExceptionDefinition(id, statement, start.join(loc())); .)
   .
 
-  recordDefinition<out RecordTypeDefinition def>
-  = RECORD                          (. var start = loc(); .)
+  recordDefinition<out RecordTypeDefinition def> (. var start = lookaheadLoc(); .)
+  = RECORD
     identifier<out Identifier recordName>
     SYM_PAREN_OPEN
     identifier<out Identifier paramName>
@@ -662,16 +661,16 @@ PRODUCTIONS
                                        macroTable.defineSymbol(def); .)
   .
 
-  modelTypeDefinition<out ModelTypeDefinition def>
-  = MODEL_TYPE                              (. var start = loc(); .)
+  modelTypeDefinition<out ModelTypeDefinition def> (. var start = lookaheadLoc(); .)
+  = MODEL_TYPE
     identifier<out Identifier name>
     SYM_EQ
     projectionType<out ProjectionType type> (. def = new ModelTypeDefinition(name, type, start.join(loc()));
                                                macroTable.defineSymbol(def); .)
   .
 
-  importDefinition<out Definition def>     (. var importPaths = new ArrayList<IsId>(); Identifier fileId = null; StringLiteral filePath = null; .)
-  = IMPORT                                 (. var start = loc(); .)
+  importDefinition<out Definition def>     (. var start = lookaheadLoc(); var importPaths = new ArrayList<IsId>(); Identifier fileId = null; StringLiteral filePath = null; .)
+  = IMPORT
     ( identifier<out fileId>
     | stringLiteral<out filePath>
     )                                      (. var segments = new ArrayList<Identifier>(); .)
@@ -710,11 +709,11 @@ PRODUCTIONS
     ]                                      (. def = importModules(this, fileId, filePath, importedSymbols(segments, symbolList), args, start.join(loc())); .)
   .
 
-  processDefinition<out Definition def>
-  = PROCESS                       (. var start = loc();
-                                     List<TemplateParam> templateParams = new ArrayList<>();
-                                     List<Parameter> inputs = new ArrayList<>();
-                                     List<Parameter> outputs = new ArrayList<>(); .)
+  processDefinition<out Definition def>   (. var start = lookaheadLoc();
+                                             List<TemplateParam> templateParams = new ArrayList<>();
+                                             List<Parameter> inputs = new ArrayList<>();
+                                             List<Parameter> outputs = new ArrayList<>(); .)
+    = PROCESS
     identifierOrPlaceholder<out IdentifierOrPlaceholder name>
     [ processTemplateParameters<.out templateParams.> ]
     [ parameters<.out inputs.> ]
@@ -744,8 +743,8 @@ PRODUCTIONS
     SYM_GT
   .
 
-  operationDefinition<out Definition def>
-  = OPERATION                       (. var start = loc(); .)
+  operationDefinition<out Definition def>  (. var start = lookaheadLoc(); .)
+  = OPERATION
     identifierOrPlaceholder<out IdentifierOrPlaceholder name>
     SYM_EQ
     SYM_BRACE_OPEN                  (. var resources = new ArrayList<IsId>(); .)
@@ -759,8 +758,8 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                 (. def = new OperationDefinition(name, resources, start.join(loc())); .)
   .
 
-  groupDefinition<out Definition def>     (. TypeLiteral type = null; .)
-  = GROUP                                 (. var start = loc(); .)
+  groupDefinition<out Definition def>     (.  var start = lookaheadLoc(); TypeLiteral type = null; .)
+  = GROUP
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     [
       SYM_COLON
@@ -770,8 +769,8 @@ PRODUCTIONS
     groupSequence<out Group.Sequence seq> (. def = new GroupDefinition(id, type, seq, start.join(loc())); .)
   .
 
-  groupSequence<out Group.Sequence seq> (. var groups = new ArrayList<Group>(); .)
-  = group<out Group group>              (. var start = loc(); groups.add(group); .)
+  groupSequence<out Group.Sequence seq> (. var groups = new ArrayList<Group>(); var start = lookaheadLoc(); .)
+  = group<out Group group>              (. groups.add(group); .)
     {
       SYM_DOT
       group<out group>                  (. groups.add(group); .)
@@ -784,8 +783,8 @@ PRODUCTIONS
   | groupPermutation<out group>
   .
 
-  groupLiteral<out Group group>
-  = identifierPath<out IsId path>                       (. var start = loc(); Expr size = null; .)
+  groupLiteral<out Group group>                         (. var start = lookaheadLoc(); Expr size = null; .)
+  = identifierPath<out IsId path>
     [
       SYM_LT
       expression<out size, BIN_OPS_EXCEPT_GT>
@@ -797,8 +796,8 @@ PRODUCTIONS
     ]                                                   (. group = new Group.Literal(path, size, start.join(loc())); .)
   .
 
-  groupAlternative<out Group group>
-  = SYM_PAREN_OPEN                        (. var start = loc(); var sequences = new ArrayList<Group.Sequence>(); .)
+  groupAlternative<out Group group>       (. var start = lookaheadLoc(); var sequences = new ArrayList<Group.Sequence>(); .)
+  = SYM_PAREN_OPEN
     groupSequence<out Group.Sequence seq> (. sequences.add(seq); .)
     {
       SYM_BINOR
@@ -807,8 +806,8 @@ PRODUCTIONS
     SYM_PAREN_CLOSE                       (. group = new Group.Alternative(sequences, start.join(loc())); .)
   .
 
-  groupPermutation<out Group group>
-  = SYM_BRACE_OPEN                        (. var start = loc(); var sequences = new ArrayList<Group.Sequence>(); .)
+  groupPermutation<out Group group>       (. var start = lookaheadLoc(); var sequences = new ArrayList<Group.Sequence>(); .)
+  = SYM_BRACE_OPEN
     groupSequence<out Group.Sequence seq> (. sequences.add(seq); .)
     {
       SYM_COMMA
@@ -819,10 +818,8 @@ PRODUCTIONS
 
   // -- ABI DEFINITIONS-----------------------------------------------------------------------------------------------
 
-  applicationBinaryInterfaceDefinition<out Definition def>
-  = APPLICATION                                 (. var start = loc(); .)
-    BINARY
-    INTERFACE
+  applicationBinaryInterfaceDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  = APPLICATION  BINARY INTERFACE
     identifier<out Identifier id>
     FOR
     identifierPath<out IsId isaPath>
@@ -893,8 +890,8 @@ PRODUCTIONS
 
 
   // -- CPU DEFINITIONS-----------------------------------------------------------------------------------------------
-  microProcessorDefinition<out Definition def>
-  = MICRO                                  (. var start = loc(); .)
+  microProcessorDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  = MICRO
     PROCESSOR
     identifier<out Identifier id>
     IMPLEMENTS                             (. var implementedIsas = new ArrayList<IsId>(); .)
@@ -929,20 +926,20 @@ PRODUCTIONS
                                        } .)
   .
 
-  patchDefinition<out Definition def>
-  = PATCH                                (. var start = loc(); .)
+  patchDefinition<out Definition def>     (. var start = lookaheadLoc(); .)
+  = PATCH
     identifier<out Identifier generator>
     identifier<out Identifier handle>
-    SYM_EQ                               (. IsId reference = null; String source = null; .)
+    SYM_EQ                                (. IsId reference = null; String source = null; .)
     ( identifierPath<out reference>
-    | sourceLiteral<out source> )        (. def = new PatchDefinition(generator, handle, reference, source, start.join(loc())); .)
+    | sourceLiteral<out source> )         (. def = new PatchDefinition(generator, handle, reference, source, start.join(loc())); .)
   .
 
-  sourceDefinition<out Definition def>
-  = SOURCE                           (. var start = loc(); .)
+  sourceDefinition<out Definition def>  (. var start = lookaheadLoc(); .)
+  = SOURCE
     identifier<out Identifier id>
     SYM_EQ
-    sourceLiteral<out String source> (. def = new SourceDefinition(id, source, start.join(loc())); .)
+    sourceLiteral<out String source>    (. def = new SourceDefinition(id, source, start.join(loc())); .)
   .
 
   sourceLiteral<out String source>
@@ -978,9 +975,8 @@ PRODUCTIONS
 
   // -- MiA DEFINITIONS-----------------------------------------------------------------------------------------------
 
-  microArchitectureDefinition<out Definition def>
-  = MICRO                                 (. var start = loc(); .)
-    ARCHITECTURE
+  microArchitectureDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  = MICRO ARCHITECTURE
     identifier<out Identifier id>
     IMPLEMENTS
     identifierPath<out IsId processor>
@@ -1046,24 +1042,24 @@ PRODUCTIONS
     statement<out Statement stmt>            (. def = new PortBehaviorDefinition(id, kind, inputs, outputs, stmt, start.join(loc())); .)
   .
 
-  pipelineDefinition<out Definition def>
-  = PIPELINE                      (. var start = loc(); .)
+  pipelineDefinition<out Definition def>  (. var start = lookaheadLoc(); .)
+  = PIPELINE
     identifier<out Identifier id> (. List<Parameter> outputs = List.of(); .)
     [ SYM_ARROW parameters<out outputs> ]
     SYM_EQ
     statement<out Statement stmt> (. def = new PipelineDefinition(id, outputs, stmt, start.join(loc())); .)
   .
 
-  stageDefinition<out Definition def>
-  = STAGE                         (. var start = loc(); .)
+  stageDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  = STAGE
     identifier<out Identifier id> (. List<Parameter> outputs = List.of(); .)
     [ SYM_ARROW parameters<out outputs> ]
     SYM_EQ
     statement<out Statement stmt> (. def = new StageDefinition(id, outputs, stmt, start.join(loc())); .)
   .
 
-  cacheDefinition<out Definition def>
-  = CACHE                                   (. var start = loc(); .)
+  cacheDefinition<out Definition def>       (. var start = lookaheadLoc(); .)
+  = CACHE
     identifier<out Identifier id>
     SYM_COLON
     typeLiteral<out TypeLiteral sourceType>
@@ -1071,22 +1067,22 @@ PRODUCTIONS
     typeLiteral<out TypeLiteral targetType> (. def = new CacheDefinition(id, sourceType, targetType, start.join(loc())); .)
   .
 
-  logicDefinition<out Definition def>
-  = LOGIC                         (. var start = loc(); .)
+  logicDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  = LOGIC
     identifier<out Identifier id> (. def = new LogicDefinition(id, start.join(loc())); .)
   .
 
-  signalDefinition<out Definition def>
-  = SIGNAL                            (. var start = loc(); .)
+  signalDefinition<out Definition def>  (. var start = lookaheadLoc(); .)
+  = SIGNAL
     identifier<out Identifier id>
     SYM_COLON
-    typeLiteral<out TypeLiteral type> (. def = new SignalDefinition(id, type, start.join(loc())); .)
+    typeLiteral<out TypeLiteral type>   (. def = new SignalDefinition(id, type, start.join(loc())); .)
   .
 
 
   // -- ASM DEFINITIONS-----------------------------------------------------------------------------------------------
 
-  assemblyDescriptionDefinition<out AsmDescriptionDefinition asmDescription>    (. List<AsmModifierDefinition> modifiers = new ArrayList<>(); var start = loc(); .)
+  assemblyDescriptionDefinition<out AsmDescriptionDefinition asmDescription>    (. List<AsmModifierDefinition> modifiers = new ArrayList<>(); var start = lookaheadLoc(); .)
   = ASSEMBLY DESCRIPTION                                                        (. List<AsmDirectiveDefinition> directives = new ArrayList<>(); .)
     assemblyIdentifier<out Identifier id>                                       (. List<AsmGrammarRuleDefinition> rules = null; var commonDefs = new ArrayList<Definition>(); .)
     FOR
@@ -1117,8 +1113,8 @@ PRODUCTIONS
     SYM_BRACE_CLOSE
   .
 
-  assemblyModifierDefinition<out AsmModifierDefinition modifier>
-  = stringLiteral<out Expr strLit>                                          (. var start = loc(); .)
+  assemblyModifierDefinition<out AsmModifierDefinition modifier>            (. var start = lookaheadLoc(); .)
+  = stringLiteral<out Expr strLit>
     SYM_ARROW
     assemblyIdentifier<out Identifier isaId>
     SYM_NAMESPACE
@@ -1135,8 +1131,8 @@ PRODUCTIONS
     SYM_BRACE_CLOSE
   .
 
-  assemblyDirectiveDefinition<out AsmDirectiveDefinition definition>
-  = stringLiteral<out Expr strLit>                                          (. var start = loc(); .)
+  assemblyDirectiveDefinition<out AsmDirectiveDefinition definition>        (. var start = lookaheadLoc(); .)
+  = stringLiteral<out Expr strLit>
     SYM_ARROW
     assemblyIdentifier<out Identifier id>                                   (. definition = new AsmDirectiveDefinition(strLit, id, start.join(loc())); .)
   .
@@ -1158,11 +1154,11 @@ PRODUCTIONS
     SYM_SEMICOLON                                                                           (. rule = new AsmGrammarRuleDefinition(id, type, alternatives, start.join(loc())); .)
   .
 
-  assemblyGrammarTypeDefinition<out AsmGrammarTypeDefinition type>    (. var start = loc(); .)
+  assemblyGrammarTypeDefinition<out AsmGrammarTypeDefinition type>    (. var start = lookaheadLoc(); .)
   = SYM_AT assemblyIdentifier<out Identifier id>                      (. type = new AsmGrammarTypeDefinition(id, start.join(loc())); .)
   .
 
-  assemblyGrammarAlternatives<.out AsmGrammarAlternativesDefinition alternatives.>        (. var altList = new ArrayList<List<AsmGrammarElementDefinition>>(); var start = loc(); .)
+  assemblyGrammarAlternatives<.out AsmGrammarAlternativesDefinition alternatives.>        (. var altList = new ArrayList<List<AsmGrammarElementDefinition>>(); var start = lookaheadLoc(); .)
   = assemblyGrammarElements<.out List<AsmGrammarElementDefinition> first.>                (. altList.add(first);.)
     {SYM_BINOR assemblyGrammarElements<.out List<AsmGrammarElementDefinition> other.>     (. altList.add(other); .)
     }                                                                                     (. alternatives = new AsmGrammarAlternativesDefinition(altList, start.join(loc())); .)
@@ -1174,7 +1170,7 @@ PRODUCTIONS
     }
   .
 
-  assemblyGrammarElement<out AsmGrammarElementDefinition element>    (. AsmGrammarLocalVarDefinition localVar = null; Identifier id = null; Boolean isPlusEq = false; var start = loc();
+  assemblyGrammarElement<out AsmGrammarElementDefinition element>    (. AsmGrammarLocalVarDefinition localVar = null; Identifier id = null; Boolean isPlusEq = false; var start = lookaheadLoc();
                                                                         List<AsmGrammarLiteralDefinition> params = new ArrayList<>(); AsmGrammarLiteralDefinition asmLiteral = null;
                                                                         AsmGrammarAlternativesDefinition groupAlternatives = null; AsmGrammarAlternativesDefinition optionAlternatives = null;
                                                                         AsmGrammarAlternativesDefinition repetitionAlternatives = null;AsmGrammarTypeDefinition type = null; Expr semanticPred = null; .)
@@ -1199,8 +1195,8 @@ PRODUCTIONS
                                                                                     optionAlternatives, repetitionAlternatives, semanticPred, type, start.join(loc())); .)
   .
 
-  assemblyLocalVarDeclaration<out AsmGrammarLocalVarDefinition localVar>
-  = VAR                                                                 (. var start = loc(); .)
+  assemblyLocalVarDeclaration<out AsmGrammarLocalVarDefinition localVar> (. var start = lookaheadLoc(); .)
+  = VAR
     assemblyIdentifier<out Identifier id>
     SYM_EQ
     assemblyGrammarLiteral<out AsmGrammarLiteralDefinition asmLiteral>  (. localVar = new AsmGrammarLocalVarDefinition(id, asmLiteral, start.join(loc())); .)
@@ -1261,7 +1257,7 @@ PRODUCTIONS
   | forallStatement<out statement>
   .
 
-  blockStatement<out BlockStatement block>     (. var start = loc(); .)
+  blockStatement<out BlockStatement block>     (. var start = lookaheadLoc(); .)
   = SYM_BRACE_OPEN
     statementList<.out List<Statement> stmts.>
     SYM_BRACE_CLOSE                            (. block = new BlockStatement(stmts, start.join(loc())); .)
@@ -1283,8 +1279,8 @@ PRODUCTIONS
     ]                                           (. if (statement.equals(DUMMY_STAT)) statement = new CallStatement(target); .)
   .
 
-  instructionCallStmt<out InstructionCallStatement statement> (. var namedArguments = new ArrayList<InstructionCallStatement.NamedArgument>(); .)
-  = identifierOrPlaceholder<out IdentifierOrPlaceholder id>   (. var start = loc(); .)
+  instructionCallStmt<out InstructionCallStatement statement> (. var start = lookaheadLoc(); var namedArguments = new ArrayList<InstructionCallStatement.NamedArgument>(); .)
+  = identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     [
       SYM_BRACE_OPEN
       identifier<out Identifier argName>
@@ -1309,8 +1305,8 @@ PRODUCTIONS
     ]                                                         (. statement = new InstructionCallStatement(id, namedArguments, unnamedArguments, start.join(loc())); .)
   .
 
-  letStatement<out Statement letStatement>
-  = LET                                 (. var start = loc(); var identifiers = new ArrayList<Identifier>(); .)
+  letStatement<out Statement letStatement> (. var start = lookaheadLoc(); var identifiers = new ArrayList<Identifier>(); .)
+  = LET
     identifier<out Identifier id>       (. identifiers.add(id); .)
     {
       SYM_COMMA
@@ -1327,7 +1323,7 @@ PRODUCTIONS
     statement<out Statement body>       (. letStatement = new LetStatement(identifiers, valueExpr, body, start.join(loc())); .)
   .
 
-  ifStatement<out Statement ifStatement> (. Statement elseStmt = null; var start = loc(); .)
+  ifStatement<out Statement ifStatement> (. Statement elseStmt = null; var start = lookaheadLoc(); .)
   = IF_KW expression<out Expr condition, BIN_OPS>
     THEN statement<out Statement thenStmt>
     [ IF (la.kind == _ELSE)
@@ -1335,13 +1331,13 @@ PRODUCTIONS
     ]                                    (. ifStatement = new IfStatement(condition, thenStmt, elseStmt, start.join(loc())); .)
   .
 
-  raiseStatement<out Statement raise>
-  = RAISE                              (. var start = loc(); .)
+  raiseStatement<out Statement raise>  (. var start = lookaheadLoc(); .)
+  = RAISE
     statement<out Statement statement> (. raise = new RaiseStatement(statement, start.join(loc())); .)
   .
 
-  matchStatement<out Statement match>
-  = MATCH                                   (. var start = loc(); .)
+  matchStatement<out Statement match>       (. var start = lookaheadLoc(); .)
+  = MATCH
     expression<out Expr candidate, BIN_OPS> (. var cases = new ArrayList<MatchStatement.Case>(); .)
     WITH                                    (. var patterns = new ArrayList<Expr>(); .)
     SYM_BRACE_OPEN                          (. Expr pattern; .)
@@ -1388,11 +1384,11 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                         (. match = new MatchStatement(candidate, cases, defaultResult, start.join(loc())); .)
   .
 
-  lockStatement<out Statement lock>
-  = LOCK (. var start = loc(); .)
+  lockStatement<out Statement lock>         (. var start = lookaheadLoc(); .)
+  = LOCK
     callOrBinaryExpression<out Expr expr, false>
     SYM_IN
-    statement<out Statement statement> (. lock = new LockStatement(expr, statement, start.join(loc())); .)
+    statement<out Statement statement>      (. lock = new LockStatement(expr, statement, start.join(loc())); .)
   .
 
   forallStatement<out Statement forall> (. var start = lookaheadLoc(); .)
@@ -1613,8 +1609,8 @@ PRODUCTIONS
     [ SYM_RANGE expression<out Expr to, BIN_OPS> (. expr = new RangeExpr(expr, to); .) ]
   .
 
-  letExpression<out Expr expr>
-  = LET                                 (. var start = loc(); var identifiers = new ArrayList<Identifier>(); .)
+  letExpression<out Expr expr>          (. var start = lookaheadLoc(); var identifiers = new ArrayList<Identifier>(); .)
+  = LET
     identifier<out Identifier id>       (. identifiers.add(id); .)
     {
       SYM_COMMA
@@ -1631,15 +1627,15 @@ PRODUCTIONS
     expression<out Expr body, BIN_OPS>  (. expr = new LetExpr(identifiers, valueExpr, body, start.join(loc())); .)
   .
 
-  ifExpression<out Expr expr, boolean[] allowedElseOps>
-  = IF_KW                                              (. var startLoc = loc(); .)
+  ifExpression<out Expr expr, boolean[] allowedElseOps>   (. var startLoc = lookaheadLoc(); .)
+  = IF_KW
     expression<out Expr condition, BIN_OPS>
     THEN expression<out Expr thenExpr, BIN_OPS>
-    ELSE expression<out Expr elseExpr, allowedElseOps> (. expr = new IfExpr(condition, thenExpr, elseExpr, startLoc.join(loc())); .)
+    ELSE expression<out Expr elseExpr, allowedElseOps>    (. expr = new IfExpr(condition, thenExpr, elseExpr, startLoc.join(loc())); .)
   .
 
-  matchExpression<out Expr expr>
-  = MATCH                                     (. var start = loc(); .)
+  matchExpression<out Expr expr>              (. var start = lookaheadLoc(); .)
+  = MATCH
     expression<out Expr candidate, BIN_OPS>
     WITH
     SYM_BRACE_OPEN                            (. var cases = new ArrayList<MatchExpr.Case>();  .)
@@ -1667,8 +1663,8 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                           (. expr = new MatchExpr(candidate, cases, defaultResult, start.join(loc())); .)
   .
 
-  existsExpression<out Expr expr>                   (. expr = DUMMY_EXPR; .)
-  = EXISTS                                          (. var start = loc(); .)
+  existsExpression<out Expr expr>                   (. expr = DUMMY_EXPR; var start = lookaheadLoc(); .)
+  = EXISTS
     ( IF (la.kind == _SYM_IN)
       SYM_IN
       operationsList<.out List<IsId> operations.>   (. expr = new ExistsInExpr(operations, start.join(loc())); .)
@@ -1696,8 +1692,8 @@ PRODUCTIONS
     SYM_BRACE_CLOSE
   .
 
-  forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = DUMMY_EXPR; .)
-  = FORALL                                                    (. var start = loc(); .)
+  forallExpression<out Expr forallExpr, boolean[] allowedOps> (. forallExpr = DUMMY_EXPR; var start = lookaheadLoc(); .)
+  = FORALL
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_IN
     (                                                         (. var indices = new ArrayList<ForallThenExpr.Index>(); .)
@@ -1850,20 +1846,20 @@ PRODUCTIONS
     )                             (. body = expandNode(this, body); .)
   .
 
-  extendId<out Node body>
-  = EXTEND_ID                               (. var start = loc(); .)
+  extendId<out Node body>                   (. var start = lookaheadLoc(); .)
+  = EXTEND_ID
     groupedExpression<out GroupedExpr expr> (. body = new ExtendIdExpr(expr, start.join(loc())); .)
   .
 
-  idToStr<out Node body>
-  = ID_TO_STR       (. var start = loc(); .)
+  idToStr<out Node body> (. var start = lookaheadLoc(); .)
+  = ID_TO_STR
     SYM_PAREN_OPEN
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_PAREN_CLOSE (. body = new IdToStrExpr(id, start.join(loc())); .)
   .
 
-  macroMatch<out Node node>
-  = MATCH                                             (. var start = loc(); .)
+  macroMatch<out Node node>                           (. var start = lookaheadLoc(); .)
+  = MATCH
     SYM_COLON
     basicSyntaxType<out SyntaxType type>
     SYM_PAREN_OPEN                                    (. var choices = new ArrayList<MacroMatch.Choice>(); .)
@@ -1900,8 +1896,8 @@ PRODUCTIONS
   .
 
   /// Parses the longest macro expression (either instance or placeholder) from the parser.
-  maximumMacroExpr<out Node node>                 (. node = null; .)
-  = SYM_DOLLAR                                    (. var segments = new ArrayList<String>(); var startLoc = loc();.)
+  maximumMacroExpr<out Node node>                 (. node = null; var startLoc = lookaheadLoc(); .)
+  = SYM_DOLLAR                                    (. var segments = new ArrayList<String>(); .)
     identifier<out Identifier id>                 (. var macro = macroTable.getMacro(id.name);
                                                      var paramType = paramSyntaxType(this, id.name);
                                                      segments.add(id.name); .)
@@ -1927,8 +1923,8 @@ PRODUCTIONS
     ]                                             (. node = Objects.requireNonNullElse(node, createPlaceholder(paramType, segments, startLoc.join(loc()))); .)
   .
 
-  macroDef<out ModelDefinition def>
-  = MODEL                                   (. var startLoc = loc(); .)
+  macroDef<out ModelDefinition def>         (. var startLoc = lookaheadLoc(); .)
+  = MODEL
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_PAREN_OPEN                          (. var params = new ArrayList<MacroParam>(); .)
     [
