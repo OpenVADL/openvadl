@@ -277,9 +277,7 @@ public class TypeChecker
         for (var range : rangeField.ranges) {
           range.accept(this);
 
-          // FIXME: This should be so much more elegant
-          int from;
-          int to;
+          int from, to;
           if (range instanceof RangeExpr rangeExpr) {
             from = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
             to = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
@@ -1296,29 +1294,48 @@ public class TypeChecker
     return null;
   }
 
-  @Override
-  public Void visit(Identifier expr) {
+  /**
+   * Identifiers and IdentifierPaths are quite similar in what they do and how they should be
+   * handled.
+   *
+   * @param expr is the identifier.
+   */
+  private void visitIdentifiable(Expr expr) {
+    Node origin;
+    String innerName;
+    String fullName;
 
-    var origin = Objects.requireNonNull(expr.symbolTable).requireAs(expr, Node.class);
+    if (expr instanceof Identifier identifier) {
+      origin = Objects.requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
+      innerName = identifier.name;
+      fullName = identifier.name;
+    } else if (expr instanceof IdentifierPath path) {
+      origin = Objects.requireNonNull(expr.symbolTable).findAs(path, Node.class);
+      var segments = path.pathToSegments();
+      innerName = segments.get(segments.size() - 1);
+      fullName = path.pathToString();
+    } else {
+      throw new IllegalStateException();
+    }
 
     if (origin instanceof ConstantDefinition constDef) {
       if (constDef.value.type == null) {
         constDef.accept(this);
       }
       expr.type = constDef.value.type;
-      return null;
+      return;
     }
 
     if (origin instanceof FormatDefinition.RangeFormatField field) {
       // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
       expr.type = field.type;
-      return null;
+      return;
     }
 
     if (origin instanceof FormatDefinition.TypedFormatField field) {
       // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
       expr.type = field.typeLiteral.type;
-      return null;
+      return;
     }
 
     if (origin instanceof FormatDefinition.DerivedFormatField field) {
@@ -1326,12 +1343,12 @@ public class TypeChecker
         field.expr.accept(this);
       }
       expr.type = field.expr.type;
-      return null;
+      return;
     }
 
     if (origin instanceof Parameter parameter) {
       expr.type = parameter.typeLiteral.type;
-      return null;
+      return;
     }
 
     if (origin instanceof CounterDefinition counter) {
@@ -1339,19 +1356,19 @@ public class TypeChecker
         counter.accept(this);
       }
       expr.type = Objects.requireNonNull(counter.typeLiteral.type);
-      return null;
+      return;
     }
 
     if (origin instanceof LetExpr letExpr) {
       // No need to check because this can only be the case if we are inside the let statement.
       expr.type = Objects.requireNonNull(letExpr.valueExpr.type);
-      return null;
+      return;
     }
 
     if (origin instanceof LetStatement letStatement) {
       // No need to check because this can only be the case if we are inside the let statement.
-      expr.type = Objects.requireNonNull(letStatement.getTypeOf(expr.name));
-      return null;
+      expr.type = Objects.requireNonNull(letStatement.getTypeOf(innerName));
+      return;
     }
 
     if (origin instanceof FunctionDefinition functionDefinition) {
@@ -1367,7 +1384,7 @@ public class TypeChecker
             .build();
       }
       expr.type = functionDefinition.retType.type;
-      return null;
+      return;
     }
 
     if (origin instanceof RegisterDefinition registerDefinition) {
@@ -1375,7 +1392,7 @@ public class TypeChecker
         registerDefinition.accept(this);
       }
       expr.type = Objects.requireNonNull(registerDefinition.type);
-      return null;
+      return;
     }
 
     if (origin != null) {
@@ -1387,17 +1404,22 @@ public class TypeChecker
     // arguments.
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
-        .filter(b -> b.name().toLowerCase().equals(expr.name))
+        .filter(b -> b.name().toLowerCase().equals(innerName))
         .toList();
 
     if (matchingBuiltins.size() == 1) {
       expr.type = matchingBuiltins.get(0).returns(List.of());
-      return null;
+      return;
     }
 
     // The symbol resolver should have caught that
-    throw new IllegalStateException("Cannot find symbol %s".formatted(expr.name));
+    throw new IllegalStateException("Cannot find symbol %s".formatted(fullName));
+  }
 
+  @Override
+  public Void visit(Identifier expr) {
+    visitIdentifiable(expr);
+    return null;
   }
 
   private void visitLogicalBinaryExpression(BinaryExpr expr) {
@@ -1800,7 +1822,7 @@ public class TypeChecker
 
   @Override
   public Void visit(IdentifierPath expr) {
-    throwUnimplemented(expr);
+    visitIdentifiable(expr);
     return null;
   }
 

@@ -183,12 +183,29 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return result;
   }
 
-  @Override
-  public ExpressionNode visit(Identifier expr) {
 
-    var computedTarget = Objects.requireNonNull(expr.symbolTable).resolveNode(expr.name);
+  /**
+   * Identifier and IdentifierPath are quite similar in what they do, so let's resolve both here.
+   */
+  private ExpressionNode visitIdentifyable(Expr expr) {
 
-    // Constant
+    Node computedTarget;
+    String innerName;
+    String fullName;
+
+    if (expr instanceof Identifier identifier) {
+      computedTarget = Objects.requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
+      innerName = identifier.name;
+      fullName = identifier.name;
+    } else if (expr instanceof IdentifierPath path) {
+      computedTarget = Objects.requireNonNull(expr.symbolTable).findAs(path, Node.class);
+      var segments = path.pathToSegments();
+      innerName = segments.get(segments.size() - 1);
+      fullName = path.pathToString();
+    } else {
+      throw new IllegalStateException();
+    }    // Constant
+
     if (computedTarget instanceof ConstantDefinition constant) {
       var value = constantEvaluator.eval(constant.value).toViamConstant();
       return new ConstantNode(value);
@@ -224,11 +241,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // Let statement and expression
     if (computedTarget instanceof LetStatement letStatement) {
-      return new LetNode(new LetNode.Name(expr.name, letStatement.sourceLocation()),
+      return new LetNode(new LetNode.Name(innerName, letStatement.sourceLocation()),
           fetch(letStatement.valueExpr));
     }
     if (computedTarget instanceof LetExpr letExpr) {
-      return new LetNode(new LetNode.Name(expr.name, letExpr.sourceLocation()),
+      return new LetNode(new LetNode.Name(innerName, letExpr.sourceLocation()),
           fetch(letExpr.valueExpr));
     }
 
@@ -247,7 +264,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Builtin Call
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
-        .filter(b -> b.name().toLowerCase().equals(expr.name))
+        .filter(b -> b.name().toLowerCase().equals(innerName))
         .toList();
 
     if (matchingBuiltins.size() == 1) {
@@ -258,8 +275,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     throw new RuntimeException(
         "The behavior generator cannot resolve yet identifier '%s' which points to %s".formatted(
-            expr.name,
+            fullName,
             computedTarget == null ? "null" : computedTarget.getClass().getSimpleName()));
+  }
+
+  @Override
+  public ExpressionNode visit(Identifier expr) {
+    return visitIdentifyable(expr);
   }
 
   @Override
@@ -345,8 +367,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(IdentifierPath expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    return visitIdentifyable(expr);
   }
 
   @Override

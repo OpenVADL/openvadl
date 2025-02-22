@@ -1305,6 +1305,12 @@ final class IdentifierPath extends Expr implements IsId {
     return sb.toString();
   }
 
+  //  @Override
+  public List<String> pathToSegments() {
+    // FIXME: There must be a better solution
+    return List.of(pathToString().split("::"));
+  }
+
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     var isFirst = true;
