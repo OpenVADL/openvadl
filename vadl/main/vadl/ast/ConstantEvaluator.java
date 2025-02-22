@@ -43,9 +43,13 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       return eval(constantDefinition.value);
     }
 
+    if (origin instanceof FunctionDefinition functionDefinition) {
+      return eval(functionDefinition.expr);
+    }
+
     throw new RuntimeException(
         "Constant evaluator cannot evaluate identifier with origin of %s yet.".formatted(
-            expr.getClass().getSimpleName()));
+            origin.getClass().getSimpleName()));
   }
 
   private static final Map<Operator, BinaryOperator<BigInteger>> BinOpFuncs = new HashMap<>();
