@@ -106,7 +106,7 @@ class OpDecomposer {
   // Handle decomposition of umull and smull call.
   // This will replace it by a call to mul2 which returns two values (upper and lower bits).
   private void replaceLongMul(BuiltInCall call) {
-    if (call.type().asDataType().bitWidth() <= 64) {
+    if (call.type().asDataType().bitWidth() <= targetSize.width) {
       return;
     }
 
