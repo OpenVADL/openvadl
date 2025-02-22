@@ -195,13 +195,20 @@ public abstract class BaseCommand implements Callable<Integer> {
     return spec;
   }
 
+  // lazy evaluated config
+  @LazyInit
+  private GeneralConfiguration config;
+
   /**
    * Generate a general configuration from the arguments.
    *
    * @return the configuration.
    */
-  private GeneralConfiguration parseConfig() {
-    return new GeneralConfiguration(output, dump);
+  protected GeneralConfiguration getConfig() {
+    if (config == null) {
+      config = new GeneralConfiguration(output, dump);
+    }
+    return config;
   }
 
   abstract PassOrder passOrder(GeneralConfiguration configuration) throws IOException;
@@ -218,7 +225,7 @@ public abstract class BaseCommand implements Callable<Integer> {
     int returnVal = 0;
     try {
       var viam = parseToVIAM();
-      var passOrder = passOrder(parseConfig());
+      var passOrder = passOrder(getConfig());
       var passManager = new PassManager();
       passManager.add(passOrder);
       passManager.run(viam);
@@ -237,7 +244,7 @@ public abstract class BaseCommand implements Callable<Integer> {
                                       \\___|_|_\\/_/ \\_\\___/_||_| \s
                                                                     \s
                                    🔥 The vadl compiler crashed 🔥  \s
-                    
+          
           This shouldn't have happened, please open an issue with the stacktrace below at:
           https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/new
           """);
