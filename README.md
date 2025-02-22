@@ -15,11 +15,8 @@ The `open-vadl` project includes multiple Gradle modules.
 For example, you can create the iss (Instruction Set Simulator) for a minimal risc-v example with:
 
 ```bash
-./gradlew run --args="iss ../sys/risc-v/rv64im.vadl"
+./gradlew run --args="iss sys/risc-v/rv64im.vadl"
 ```
-
-**Note:** `gradlew run` doesn't execute in the project root, requiring to prepend supplied paths with `..` (like in the
-example above).
 
 To get a description of the complete usage, you can run: `./gradlew run --args="--help"`
 

@@ -88,6 +88,7 @@ subprojects {
     }
 
     tasks.withType<JavaExec> {
+        workingDir = rootProject.projectDir
         outputs.upToDateWhen { false }
     }
 
