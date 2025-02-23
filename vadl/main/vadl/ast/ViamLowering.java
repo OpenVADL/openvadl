@@ -607,7 +607,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(FormatDefinition definition) {
     var format =
         new Format(generateIdentifier(definition.viamId, definition.identifier()),
-            (BitsType) requireNonNull(definition.type.type));
+            (BitsType) requireNonNull(definition.typeLiteral.type));
 
     var fields = new ArrayList<Format.Field>();
     var fieldAccesses = new ArrayList<Format.FieldAccess>();

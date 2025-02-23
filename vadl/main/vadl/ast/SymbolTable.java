@@ -381,7 +381,7 @@ class SymbolTable {
       } else if (definition instanceof FormatDefinition format) {
         format.symbolTable = symbols.createChild();
         symbols.defineSymbol(format);
-        collectSymbols(symbols, format.type);
+        collectSymbols(symbols, format.typeLiteral);
         for (FormatDefinition.FormatField field : format.fields) {
           format.symbolTable().defineSymbol(field.identifier().name, (Node) field);
 

@@ -305,7 +305,7 @@ class ConstantDefinition extends Definition implements IdentifiableNode {
 
 class FormatDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
-  TypeLiteral type;
+  TypeLiteral typeLiteral;
   List<FormatField> fields;
   List<AuxiliaryField> auxiliaryFields;
   SourceLocation loc;
@@ -597,11 +597,11 @@ class FormatDefinition extends Definition implements IdentifiableNode {
     PREDICATE, ENCODE
   }
 
-  public FormatDefinition(IdentifierOrPlaceholder identifier, TypeLiteral type,
+  public FormatDefinition(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral,
                           List<FormatField> fields, List<AuxiliaryField> auxiliaryFields,
                           SourceLocation location) {
     this.identifier = identifier;
-    this.type = type;
+    this.typeLiteral = typeLiteral;
     this.fields = fields;
     this.auxiliaryFields = auxiliaryFields;
     this.loc = location;
@@ -648,7 +648,7 @@ class FormatDefinition extends Definition implements IdentifiableNode {
     builder.append("format ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    type.prettyPrint(indent, builder);
+    typeLiteral.prettyPrint(indent, builder);
 
     if (fields.isEmpty()) {
       builder.append("\n");
@@ -701,7 +701,7 @@ class FormatDefinition extends Definition implements IdentifiableNode {
     FormatDefinition that = (FormatDefinition) o;
     return annotations.equals(that.annotations)
         && identifier.equals(that.identifier)
-        && type.equals(that.type)
+        && typeLiteral.equals(that.typeLiteral)
         && fields.equals(that.fields)
         && auxiliaryFields.equals(that.auxiliaryFields);
   }
@@ -710,7 +710,7 @@ class FormatDefinition extends Definition implements IdentifiableNode {
   public int hashCode() {
     int result = annotations.hashCode();
     result = 31 * result + identifier.hashCode();
-    result = 31 * result + type.hashCode();
+    result = 31 * result + typeLiteral.hashCode();
     result = 31 * result + fields.hashCode();
     result = 31 * result + auxiliaryFields.hashCode();
     return result;

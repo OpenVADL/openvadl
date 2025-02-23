@@ -78,7 +78,7 @@ public class AstDumper
   @Override
   public Void visit(FormatDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.identifier(), definition.type);
+    dumpChildren(definition.identifier(), definition.typeLiteral);
     this.indent++;
     for (var field : definition.fields) {
       if (field instanceof FormatDefinition.RangeFormatField f) {
