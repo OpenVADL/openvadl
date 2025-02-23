@@ -71,9 +71,6 @@ import vadl.viam.graph.Graph;
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Definition>> {
 
-  @LazyInit
-  private BehaviorLowering behaviorLowering;
-
   private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
 
   private final IdentityHashMap<Definition, Optional<vadl.viam.Definition>> definitionCache =
@@ -86,10 +83,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @LazyInit
   private vadl.viam.Specification currentSpecification;
-
-  public ViamLowering() {
-    this.behaviorLowering = new BehaviorLowering(this);
-  }
 
   /**
    * Generates a VIAM specification from an AST.
@@ -350,7 +343,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var semPredExpr = elements.get(0).semanticPredicate;
 
     if (semanticPredicateAppliesToAlternatives && semPredExpr != null) {
-      var semanticPredicateGraph = behaviorLowering.getGraph(semPredExpr, "semanticPredicate");
+      var semanticPredicateGraph = new BehaviorLowering(this).getGraph(semPredExpr, "semanticPredicate");
       semPredFunction =
           new Function(generateIdentifier("semanticPredicate", semPredExpr.sourceLocation()),
               new vadl.viam.Parameter[0], Type.bool(), semanticPredicateGraph);
@@ -437,7 +430,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var semPredExpr = definition.alternatives.get(0).get(0).semanticPredicate;
 
     if (definition.alternatives.size() == 1 && semPredExpr != null) {
-      semanticPredicate = behaviorLowering.getGraph(semPredExpr, "semanticPredicate");
+      semanticPredicate = new BehaviorLowering(this).getGraph(semPredExpr, "semanticPredicate");
     }
     return semanticPredicate;
   }
@@ -569,7 +562,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       parameterCache.put(parameter, viamParameter);
       parameters.add(viamParameter);
     }
-    var behaivor = behaviorLowering.getGraph(expr, "behaviour");
+    var behaivor = new BehaviorLowering(this).getGraph(expr, "behaviour");
 
     return new Function(identifier,
         parameters.toArray(new vadl.viam.Parameter[0]),
@@ -657,7 +650,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
         var accessName = identifier.name() + "::decode";
         var accessGraph =
-            behaviorLowering.getGraph(derivedField.expr, accessName);
+            new BehaviorLowering(this).getGraph(derivedField.expr, accessName);
         var access =
             new Function(generateIdentifier(accessName, derivedField.identifier),
                 new vadl.viam.Parameter[0],
@@ -670,7 +663,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         // FIXME: Add real predicates
         var predicateName = identifier.name() + "::predicate";
         var predicateGraph =
-            behaviorLowering.getGraph(new BoolLiteral(true, SourceLocation.INVALID_SOURCE_LOCATION),
+            new BehaviorLowering(this).getGraph(
+                new BoolLiteral(true, SourceLocation.INVALID_SOURCE_LOCATION),
                 predicateName);
 
         var parameter = new vadl.viam.Parameter(
@@ -736,7 +730,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var funcIdentifier =
         new vadl.viam.Identifier(identifierName + "::func", identifierLoc);
 
-    var behavior = behaviorLowering.getGraph(definition.expr, funcIdentifier.name());
+    var behavior = new BehaviorLowering(this).getGraph(definition.expr, funcIdentifier.name());
 
     // FIXME: Add to cache? But how, because one assemby ast node might be used for multiple
     // assembly in the VIAM.
@@ -776,7 +770,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(InstructionDefinition definition) {
     fetch(Objects.requireNonNull(definition.formatNode));
-    var behavior = behaviorLowering.getInstructionGraph(definition);
+    var behavior = new BehaviorLowering(this).getInstructionGraph(definition);
 
     var assembly = visitAssembly(requireNonNull(definition.assemblyDefinition),
         definition);
@@ -1009,7 +1003,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         })
         .toArray(vadl.viam.Parameter[]::new);
 
-    var graph = behaviorLowering.getInstructionPseudoGraph(definition);
+    var graph = new BehaviorLowering(this).getInstructionPseudoGraph(definition);
     var assembly = visitAssembly(requireNonNull(definition.assemblyDefinition), definition);
 
     return Optional.of(new PseudoInstruction(
@@ -1071,7 +1065,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           return viamParam;
         })
         .toArray(vadl.viam.Parameter[]::new);
-    var graph = behaviorLowering.getGraph(definition.expr, identifier.name() + "::behavior");
+    var graph =
+        new BehaviorLowering(this).getGraph(definition.expr, identifier.name() + "::behavior");
 
     return Optional.of(
         new Relocation(

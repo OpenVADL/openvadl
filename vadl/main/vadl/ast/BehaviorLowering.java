@@ -1,6 +1,7 @@
 package vadl.ast;
 
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -60,6 +61,12 @@ import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
+/**
+ * Lowers statements and expressions into viam behaivor graph.
+ *
+ * <p> Because the caches this class holds are delicate, create a new instance for every graph you
+ * generate.
+ */
 class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
   private final ViamLowering viamLowering;
   private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
@@ -67,7 +74,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   private final IdentityHashMap<Expr, ExpressionNode> expressionCache = new IdentityHashMap<>();
   //private IdentityHashMap<Statement, SubgraphContext> statementCache = new IdentityHashMap<>();
 
-  @Nullable
+  @LazyInit
   private Graph currentGraph;
 
   BehaviorLowering(ViamLowering generator) {
