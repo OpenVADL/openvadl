@@ -388,13 +388,24 @@ public class Graph {
    */
   private void ensureInputsAdded(Node node) {
     for (var input : node.inputList()) {
-      if (!input.isActiveIn(this)) {
+      if (!input.isActive()) {
         throw new ViamGraphError(
             "Failed to add `%s` as its input node `%s` is not yet initialized. %s",
             node, input, "You might want use Graph#addWithInputs()")
             .addContext(node)
             .addContext(this)
             .addLocation(sourceLocation)
+            .addContext("inputNode", input)
+            .shrinkStacktrace(1);
+      }
+      if (!(input.graph() == this)) {
+        throw new ViamGraphError(
+            "Failed to add `%s` as its input node `%s` is part on another graph `%s`.",
+            node, input, input.graph() == null ? null : input.graph().name)
+            .addContext(node)
+            .addContext(this)
+            .addContext("inputNode", input)
+            .addContext("graphOfInput", requireNonNull(input.graph()))
             .shrinkStacktrace(1);
       }
     }
