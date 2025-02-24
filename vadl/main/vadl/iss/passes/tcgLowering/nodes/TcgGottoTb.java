@@ -55,15 +55,22 @@ public class TcgGottoTb extends TcgNode {
   @DataValue
   private JmpSlot jmpSlot;
 
+  @DataValue
+  private boolean isBranch;
+
 
   /**
    * Constructs a TcgGottoTbAbs node for TCG IR generation.
    *
    * @param targetPc The expression node representing the target program counter (PC) value.
+   * @param isBranch Is used to determine if the pc_save must be restored or not.
+   *                 If this is from a branching instruction, we must restore the pc_save,
+   *                 as there might be other instruction exits that require the original pc_save.
    */
-  public TcgGottoTb(ExpressionNode targetPc, JmpSlot jmpSlot) {
+  public TcgGottoTb(ExpressionNode targetPc, JmpSlot jmpSlot, boolean isBranch) {
     this.targetPc = targetPc;
     this.jmpSlot = jmpSlot;
+    this.isBranch = isBranch;
   }
 
   public ExpressionNode targetPc() {
@@ -76,7 +83,8 @@ public class TcgGottoTb extends TcgNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return "gen_goto_tb(ctx, " + jmpSlot.code + ", " + nodeToCCode.apply(targetPc) + ");";
+    return "gen_goto_tb(ctx, " + jmpSlot.code + ", " + nodeToCCode.apply(targetPc) + ", " +
+        isBranch + ");";
   }
 
   @Override
@@ -91,12 +99,12 @@ public class TcgGottoTb extends TcgNode {
 
   @Override
   public Node copy() {
-    return new TcgGottoTb(targetPc.copy(ExpressionNode.class), jmpSlot);
+    return new TcgGottoTb(targetPc.copy(ExpressionNode.class), jmpSlot, isBranch);
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgGottoTb(targetPc, jmpSlot);
+    return new TcgGottoTb(targetPc, jmpSlot, isBranch);
   }
 
   @Override
@@ -109,6 +117,7 @@ public class TcgGottoTb extends TcgNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(jmpSlot);
+    collection.add(isBranch);
   }
 
   @Override

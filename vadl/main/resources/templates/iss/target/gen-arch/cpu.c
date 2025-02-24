@@ -48,6 +48,10 @@ static void [(${gen_arch_lower})]_cpu_realizefn(DeviceState *dev, Error **errp)
     qemu_init_vcpu(cs);
     cpu_reset(cs);
     vcc->parent_realize(dev, errp);
+
+#ifndef CONFIG_USER_ONLY
+    cs->tcg_cflags |= CF_PCREL;
+#endif
 }
 
 static void [(${gen_arch_lower})]_cpu_reset(DeviceState *dev)
