@@ -164,9 +164,6 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   // indicates whether jump slot 1 is already
   // used by some branch (instr exit)
   boolean isJumpSlotTaken = false;
-  // true if this instruction is chained with the next
-  // instruction using the isJmp=DISAS_CHAIN flag.
-  boolean isChaining = false;
 
   /**
    * Constructs a new {@code TcgOpLoweringExecutor} with the given variable assignments.
@@ -227,7 +224,6 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       // by setting the jmp type to chain.
       // the tcg_stop_tb method will take care about the instruction chaining.
       instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.CHAIN));
-      this.isChaining = true;
     } else {
       // if the jump is unconditional we must exit the tb loop anyway
       instrEnd.addBefore(new TcgSetIsJmp(TcgSetIsJmp.Type.NORETURN));
@@ -360,12 +356,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
         jmpSlot = TcgGottoTb.JmpSlot.BRANCH_OUT;
       }
 
-      // this is a conditional branch instruction if the isJmp flag is set to
-      // DISAS_CHAIN.
-      var isBranch = this.isChaining;
       // Address jump to value
       node.replaceAndLink(
-          new TcgGottoTb(pcWrite.value(), jmpSlot, isBranch));
+          new TcgGottoTb(pcWrite.value(), jmpSlot));
     }
   }
 

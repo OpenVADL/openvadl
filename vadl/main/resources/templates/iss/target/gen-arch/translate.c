@@ -40,20 +40,6 @@ typedef struct DisasContext {
   CPU[(${gen_arch_upper})]State *env;
 
   target_ulong pc_curr;
-  /*
-   * For CF_PCREL, the full value of cpu_pc is not known
-   * (although the page offset is known).  For convenience, the
-   * translation loop uses the full virtual address that triggered
-   * the translation, from base.pc_start through pc_curr.
-   * For efficiency, we do not update cpu_pc for every instruction.
-   * Instead, pc_save has the value of pc_curr at the time of the
-   * last update to cpu_pc, which allows us to compute the addend
-   * needed to bring cpu_pc current: pc_curr - pc_save.
-   * If cpu_pc now contains the destination of an indirect branch,
-   * pc_save contains -1 to indicate that relative updates are no
-   * longer possible.
-   */
-  target_ulong pc_save;
 
   [# th:each="reg_file, iterState : ${register_files}"] // constraint value constants
   [# th:each="constraint, iterState : ${reg_file.constraints}"]
@@ -161,20 +147,8 @@ static void gen_set_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num, T
 }
 [/]
 
-static void gen_pc_set(TCGv target, DisasContext *ctx,
-                             target_ulong dest)
-{
-    assert(ctx->pc_save != -1);
-    if (tb_cflags(ctx->base.tb) & CF_PCREL) {
-        tcg_gen_addi_tl(target, cpu_pc, dest - ctx->pc_save);
-    } else {
-        tcg_gen_movi_tl(target, dest);
-    }
-}
-
-static void gen_update_pc(DisasContext *ctx, target_ulong dest) {
-    gen_pc_set(cpu_pc, ctx, dest);
-    ctx->pc_save = dest;
+static void gen_update_pc(DisasContext *ctx, target_ulong pc) {
+    tcg_gen_movi_tl(cpu_pc, pc);
 }
 
 
@@ -183,43 +157,21 @@ static void gen_update_pc(DisasContext *ctx, target_ulong dest) {
  * which is one of 0, 1 or -1. 0,1 are valid jumps slots, while -1 indicates a forced
  * move to cpu_pc with a tcg_gen_lookup_and_goto_ptr call.
  */
-static void gen_goto_tb(DisasContext *ctx, int8_t n, target_ulong target_pc, bool branch)
+static void gen_goto_tb(DisasContext *ctx, int8_t n, target_ulong target_pc)
 {
-    target_ulong orig_pc_save = ctx->pc_save;
-
     if (n >= 0 && translator_use_goto_tb(&ctx->base, target_pc)) {
-        /*
-         * For pcrel, the pc must always be up-to-date on entry to
-         * the linked TB, so that it can use simple additions for all
-         * further adjustments.  For !pcrel, the linked TB is compiled
-         * to know its full virtual address, so we can delay the
-         * update to pc to the unlinked path.  A long chain of links
-         * can thus avoid many updates to the PC.
-         */
-        if (tb_cflags(ctx->base.tb) & CF_PCREL) {
-            gen_update_pc(ctx, target_pc);
-            tcg_gen_goto_tb(n);
-        } else {
-            tcg_gen_goto_tb(n);
-            gen_update_pc(ctx, target_pc);
-        }
+        tcg_gen_goto_tb(n);
+        gen_update_pc(ctx, target_pc);
         tcg_gen_exit_tb(ctx->base.tb, n);
     } else {
         gen_update_pc(ctx, target_pc);
         tcg_gen_lookup_and_goto_ptr();
     }
-
     ctx->base.is_jmp = DISAS_NORETURN;
-
-    if (branch) {
-      // if this is just a branch and not an unconditional jump, we must restore the pc_save
-      // that is overridden by the gen_update_pc.
-      ctx->pc_save = orig_pc_save;
-    }
 }
 
 static void generate_exception(DisasContext *ctx, int excp) {
-	gen_update_pc(ctx, ctx->pc_curr);
+	tcg_gen_movi_tl(cpu_pc, ctx->base.pc_next);
 	gen_helper_raise_exception(tcg_env, tcg_constant_i32(excp));
 	ctx->base.is_jmp = DISAS_NORETURN;
 }
@@ -280,7 +232,6 @@ static void [(${gen_arch_lower})]_tr_init_disas_context(DisasContextBase *db, CP
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
 
     ctx->env = env;
-    ctx->pc_save = ctx->base.pc_first;
     [# th:each="reg_file, iterState : ${register_files}"]
     [# th:each="constraint, iterState : ${reg_file.constraints}"]
     ctx->const[(${reg_file.name_lower})][(${constraint.value})] = tcg_constant_i[(${reg_file.value_width})]([(${constraint.value})]);
@@ -319,11 +270,8 @@ static void [(${gen_arch_lower})]_tr_tb_stop(DisasContextBase *db, CPUState *cpu
     switch (db->is_jmp) {
     		case DISAS_TOO_MANY:
     		case DISAS_CHAIN:
-    			// jump to subsequent instruction.
-    			// this is only the case if the instruction was a conditional branch instruction.
-    			// therefore we have to set the pc_save to -1, as no concrete last pc is known.
-    			gen_goto_tb(ctx, 0, db->pc_next, true);
-    			ctx->pc_save = -1;
+    			// jump to subsequent instruction
+    			gen_goto_tb(ctx, 0, db->pc_next);
     			break;
     		case DISAS_NORETURN:
     			// default behavior
