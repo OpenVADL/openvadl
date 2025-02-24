@@ -130,8 +130,9 @@ class SymbolTable {
     // FIXME: I don't think the namespace prefix should be in here
     var symbol = root.resolveSymbol(name);
     if (symbol == null) {
-      root.resolveSymbol("VADL::" + name);
+      symbol = root.resolveSymbol("VADL::" + name);
     }
+
     if (symbol instanceof BuiltInSymbol) {
       return symbol;
     }
@@ -142,7 +143,6 @@ class SymbolTable {
   Symbol resolveSymbolPath(List<String> path) {
     // The vadl namespace is a pseudo namespace and points to the root and its buitlin functions
     if (path.size() == 2 && path.get(0).equalsIgnoreCase("vadl")) {
-      // FIXME: I don't think the namespace prefix should be in here
       return resolveBuiltinSymbol(path.get(1));
     }
 

@@ -2119,6 +2119,20 @@ public class TypeChecker
       expr.flatArgs().forEach(this::check);
       var argTypes = Objects.requireNonNull(expr.flatArgs().stream().map(v -> v.type)).toList();
 
+      // If the function is also a binary operation, we instead type check it as if it were a binary
+      // operation which has some special type rules.
+      if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
+        var operator = Objects.requireNonNull(Operator.fromString(builtin.operator()));
+        var fakeBinExpr = new BinaryExpr(expr.flatArgs().get(0), new BinOp(operator, expr.location),
+            expr.flatArgs().get(1));
+        check(fakeBinExpr);
+
+        // Set type and arguments since they might have been wraped in type casts
+        expr.setFlatArgs(List.of(fakeBinExpr.left, fakeBinExpr.right));
+        expr.type = fakeBinExpr.type;
+        return null;
+      }
+
       if (!builtin.takes(argTypes)) {
         throw Diagnostic.error("Type Mismatch", expr)
             .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
