@@ -59,7 +59,7 @@ public class Abi extends Definition {
   private final RegisterRef threadPointer;
 
 
-  private final Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases;
+  private final Map<Pair<RegisterFile, Integer>, List<RegisterAlias>> aliases;
   private final List<RegisterRef> callerSaved;
   private final List<RegisterRef> calleeSaved;
   private final List<RegisterRef> argumentRegisters;
@@ -86,7 +86,7 @@ public class Abi extends Definition {
              RegisterRef framePointer,
              RegisterRef globalPointer,
              RegisterRef threadPointer,
-             Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases,
+             Map<Pair<RegisterFile, Integer>, List<RegisterAlias>> aliases,
              List<RegisterRef> callerSaved,
              List<RegisterRef> calleeSaved,
              List<RegisterRef> argumentRegisters,
@@ -141,7 +141,7 @@ public class Abi extends Definition {
     return threadPointer;
   }
 
-  public Map<Pair<RegisterFile, Integer>, RegisterAlias> aliases() {
+  public Map<Pair<RegisterFile, Integer>, List<RegisterAlias>> aliases() {
     return aliases;
   }
 

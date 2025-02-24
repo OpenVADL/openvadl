@@ -148,13 +148,17 @@ public class GenerateRegisterClassesPass extends Pass {
                                                      LcbConfiguration configuration, int bitWidth,
                                                      int addr) {
     var name = registerFile.identifier.simpleName() + addr;
-    var alias = Optional.ofNullable(abi.aliases().get(Pair.of(registerFile, addr)));
-    var altNames = alias.map(
-        registerAlias -> String.join(", ", wrapInQuotes(registerAlias.value()),
-            wrapInQuotes(registerFile.identifier.simpleName() + addr))).stream().toList();
-    var reg = new TableGenRegister(configuration.processorName(), name,
-        alias.orElse(new Abi.RegisterAlias(registerFile.identifier.simpleName() + addr))
-            .value(),
+    var aliases = Optional.ofNullable(abi.aliases().get(Pair.of(registerFile, addr)));
+
+    ArrayList<String> altNames = new ArrayList<>();
+    aliases.orElse(List.of()).forEach(regAlias -> altNames.add(wrapInQuotes(regAlias.value())));
+    altNames.add(wrapInQuotes(registerFile.identifier.simpleName() + addr));
+
+    var asmName =
+        aliases.map(regAliases -> regAliases.isEmpty() ? null : regAliases.get(0).value())
+            .orElse(new Abi.RegisterAlias(registerFile.identifier.simpleName() + addr).value());
+
+    var reg = new TableGenRegister(configuration.processorName(), name, asmName,
         altNames, bitWidth - 1, addr, Optional.of(addr));
     return reg;
   }
