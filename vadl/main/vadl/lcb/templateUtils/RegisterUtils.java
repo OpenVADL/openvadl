@@ -1,5 +1,6 @@
 package vadl.lcb.templateUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,16 +20,20 @@ public class RegisterUtils {
   /**
    * Represents a single register in a register class.
    *
-   * @param index of the register in the file.
-   * @param name  of the register.
-   * @param alias of the register.
+   * @param index   of the register in the file.
+   * @param name    of the register.
+   * @param aliases of the register.
    */
-  public record Register(int index, String name, Optional<String> alias) implements Renderable {
+  public record Register(int index, String name, List<String> aliases) implements Renderable {
+
     /**
-     * Return {@code alias} or {@code name} if {@code alias} is {@code null}.
+     * Return the first {@code alias} or {@code name} if {@code aliases} is empty.
      */
     public String getAsmName() {
-      return alias.orElse(name);
+      if (!aliases.isEmpty()) {
+        return aliases.get(0);
+      }
+      return name;
     }
 
     @Override
@@ -36,7 +41,7 @@ public class RegisterUtils {
       return Map.of(
           "index", index,
           "name", name,
-          "alias", alias.orElse(""),
+          "alias", !aliases.isEmpty() ? aliases.get(0) : "",
           "getAsmName", getAsmName()
       );
     }
@@ -67,15 +72,19 @@ public class RegisterUtils {
   @Nonnull
   public static RegisterClass getRegisterClass(
       RegisterFile registerFile,
-      @Nullable Map<Pair<RegisterFile, Integer>, Abi.RegisterAlias> aliases) {
+      @Nullable Map<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>> aliases) {
     return new RegisterClass(registerFile,
         IntStream.range(0, (int) Math.pow(2, registerFile.addressType().bitWidth()))
             .mapToObj(i -> {
               var name = registerFile.identifier.simpleName() + i;
-              Optional<Abi.RegisterAlias> alias =
-                  aliases != null ? Optional.ofNullable(aliases.get(Pair.of(registerFile, i))) :
-                      Optional.empty();
-              return new Register(i, name, alias.map(Abi.RegisterAlias::value));
+
+              List<String> aliasesNames = new ArrayList<>();
+              if (aliases != null) {
+                Optional.ofNullable(aliases.get(Pair.of(registerFile, i))).ifPresent(
+                    regAliases -> regAliases.forEach(regAlias -> aliasesNames.add(regAlias.value()))
+                );
+              }
+              return new Register(i, name, aliasesNames);
             }).toList());
   }
 }

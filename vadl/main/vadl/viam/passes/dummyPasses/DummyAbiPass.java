@@ -134,41 +134,42 @@ public class DummyAbiPass extends Pass {
     );
   }
 
-  private Map<Pair<RegisterFile, Integer>, Abi.RegisterAlias> getAliases(
+  private Map<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>> getAliases(
       RegisterFile registerFile) {
-    var map = new HashMap<Pair<RegisterFile, Integer>, Abi.RegisterAlias>();
-    map.put(Pair.of(registerFile, 0), new Abi.RegisterAlias("zero"));
-    map.put(Pair.of(registerFile, 1), new Abi.RegisterAlias("ra"));
-    map.put(Pair.of(registerFile, 2), new Abi.RegisterAlias("sp"));
-    map.put(Pair.of(registerFile, 3), new Abi.RegisterAlias("gp"));
-    map.put(Pair.of(registerFile, 4), new Abi.RegisterAlias("tp"));
-    map.put(Pair.of(registerFile, 8), new Abi.RegisterAlias("fp"));
-    map.put(Pair.of(registerFile, 9), new Abi.RegisterAlias("s1"));
-    map.put(Pair.of(registerFile, 10), new Abi.RegisterAlias("a0"));
-    map.put(Pair.of(registerFile, 11), new Abi.RegisterAlias("a1"));
-    map.put(Pair.of(registerFile, 12), new Abi.RegisterAlias("a2"));
-    map.put(Pair.of(registerFile, 13), new Abi.RegisterAlias("a3"));
-    map.put(Pair.of(registerFile, 14), new Abi.RegisterAlias("a4"));
-    map.put(Pair.of(registerFile, 15), new Abi.RegisterAlias("a5"));
-    map.put(Pair.of(registerFile, 16), new Abi.RegisterAlias("a6"));
-    map.put(Pair.of(registerFile, 17), new Abi.RegisterAlias("a7"));
-    map.put(Pair.of(registerFile, 18), new Abi.RegisterAlias("s2"));
-    map.put(Pair.of(registerFile, 19), new Abi.RegisterAlias("s3"));
-    map.put(Pair.of(registerFile, 20), new Abi.RegisterAlias("s4"));
-    map.put(Pair.of(registerFile, 21), new Abi.RegisterAlias("s5"));
-    map.put(Pair.of(registerFile, 22), new Abi.RegisterAlias("s6"));
-    map.put(Pair.of(registerFile, 23), new Abi.RegisterAlias("s7"));
-    map.put(Pair.of(registerFile, 24), new Abi.RegisterAlias("s8"));
-    map.put(Pair.of(registerFile, 25), new Abi.RegisterAlias("s9"));
-    map.put(Pair.of(registerFile, 26), new Abi.RegisterAlias("s10"));
-    map.put(Pair.of(registerFile, 27), new Abi.RegisterAlias("s11"));
-    map.put(Pair.of(registerFile, 5), new Abi.RegisterAlias("t0"));
-    map.put(Pair.of(registerFile, 6), new Abi.RegisterAlias("t1"));
-    map.put(Pair.of(registerFile, 7), new Abi.RegisterAlias("t2"));
-    map.put(Pair.of(registerFile, 28), new Abi.RegisterAlias("t3"));
-    map.put(Pair.of(registerFile, 29), new Abi.RegisterAlias("t4"));
-    map.put(Pair.of(registerFile, 30), new Abi.RegisterAlias("t5"));
-    map.put(Pair.of(registerFile, 31), new Abi.RegisterAlias("t6"));
+    var map = new HashMap<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>>();
+    map.put(Pair.of(registerFile, 0), List.of(new Abi.RegisterAlias("zero")));
+    map.put(Pair.of(registerFile, 1), List.of(new Abi.RegisterAlias("ra")));
+    map.put(Pair.of(registerFile, 2), List.of(new Abi.RegisterAlias("sp")));
+    map.put(Pair.of(registerFile, 3), List.of(new Abi.RegisterAlias("gp")));
+    map.put(Pair.of(registerFile, 4), List.of(new Abi.RegisterAlias("tp")));
+    map.put(Pair.of(registerFile, 8),
+        List.of(new Abi.RegisterAlias("fp"), new Abi.RegisterAlias("s0")));
+    map.put(Pair.of(registerFile, 9), List.of(new Abi.RegisterAlias("s1")));
+    map.put(Pair.of(registerFile, 10), List.of(new Abi.RegisterAlias("a0")));
+    map.put(Pair.of(registerFile, 11), List.of(new Abi.RegisterAlias("a1")));
+    map.put(Pair.of(registerFile, 12), List.of(new Abi.RegisterAlias("a2")));
+    map.put(Pair.of(registerFile, 13), List.of(new Abi.RegisterAlias("a3")));
+    map.put(Pair.of(registerFile, 14), List.of(new Abi.RegisterAlias("a4")));
+    map.put(Pair.of(registerFile, 15), List.of(new Abi.RegisterAlias("a5")));
+    map.put(Pair.of(registerFile, 16), List.of(new Abi.RegisterAlias("a6")));
+    map.put(Pair.of(registerFile, 17), List.of(new Abi.RegisterAlias("a7")));
+    map.put(Pair.of(registerFile, 18), List.of(new Abi.RegisterAlias("s2")));
+    map.put(Pair.of(registerFile, 19), List.of(new Abi.RegisterAlias("s3")));
+    map.put(Pair.of(registerFile, 20), List.of(new Abi.RegisterAlias("s4")));
+    map.put(Pair.of(registerFile, 21), List.of(new Abi.RegisterAlias("s5")));
+    map.put(Pair.of(registerFile, 22), List.of(new Abi.RegisterAlias("s6")));
+    map.put(Pair.of(registerFile, 23), List.of(new Abi.RegisterAlias("s7")));
+    map.put(Pair.of(registerFile, 24), List.of(new Abi.RegisterAlias("s8")));
+    map.put(Pair.of(registerFile, 25), List.of(new Abi.RegisterAlias("s9")));
+    map.put(Pair.of(registerFile, 26), List.of(new Abi.RegisterAlias("s10")));
+    map.put(Pair.of(registerFile, 27), List.of(new Abi.RegisterAlias("s11")));
+    map.put(Pair.of(registerFile, 5), List.of(new Abi.RegisterAlias("t0")));
+    map.put(Pair.of(registerFile, 6), List.of(new Abi.RegisterAlias("t1")));
+    map.put(Pair.of(registerFile, 7), List.of(new Abi.RegisterAlias("t2")));
+    map.put(Pair.of(registerFile, 28), List.of(new Abi.RegisterAlias("t3")));
+    map.put(Pair.of(registerFile, 29), List.of(new Abi.RegisterAlias("t4")));
+    map.put(Pair.of(registerFile, 30), List.of(new Abi.RegisterAlias("t5")));
+    map.put(Pair.of(registerFile, 31), List.of(new Abi.RegisterAlias("t6")));
     return map;
   }
 

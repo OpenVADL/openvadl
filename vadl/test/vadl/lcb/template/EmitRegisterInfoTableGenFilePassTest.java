@@ -376,7 +376,7 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
         {
             let Namespace = "processorNameValue";
             let AsmName = "fp";
-            let AltNames = [ "fp", "X8"  ];
+            let AltNames = [ "fp", "s0", "X8"  ];
             let Aliases = [ ];
             let SubRegs = [ ];
             let SubRegIndices = [ ];
@@ -624,9 +624,9 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
            \s
             let isArtificial = 0;
         }
-                
-                
-                
+        
+        
+        
         def X : RegisterClass
         < /* namespace = */ "processorNameValue"
         , /* regTypes  = */  [  i64 ]
