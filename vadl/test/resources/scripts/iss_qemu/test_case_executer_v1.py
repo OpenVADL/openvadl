@@ -53,7 +53,7 @@ class QMPTestCaseExecutor(AbstractTestCaseExecutor):
                                 result_regs: list[str]) -> dict[str, str]:
         instance_name = f"{prefix}-{self.spec.id}"
         qemu_executer = QEMUExecuter(instance_name,
-                                     qemu_exec)
+                                     qemu_exec, self.spec.qemu_args)
 
         self.test_result.qemu_log[instance_name] = qemu_executer.logs
 
