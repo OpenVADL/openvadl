@@ -9,7 +9,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * Represents a static program counter (PC) register in an expression tree.
- * In the TCG generation context, we can get the current PC from {@code ctx->base.pc_next},
+ * In the TCG generation context, we can get the current PC from {@code ctx->pc_curr},
  * so a read to the PC cpu register (TCGv) is not necessary.
  */
 public class IssStaticPcRegNode extends ExpressionNode {

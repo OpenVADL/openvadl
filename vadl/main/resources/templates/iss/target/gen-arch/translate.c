@@ -38,6 +38,9 @@ typedef struct DisasContext {
   DisasContextBase base;
 
   CPU[(${gen_arch_upper})]State *env;
+
+  target_ulong pc_curr;
+
   [# th:each="reg_file, iterState : ${register_files}"] // constraint value constants
   [# th:each="constraint, iterState : ${reg_file.constraints}"]
   TCGv const[(${reg_file.name_lower})][(${constraint.value})];
@@ -144,6 +147,11 @@ static void gen_set_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num, T
 }
 [/]
 
+static void gen_update_pc(DisasContext *ctx, target_ulong pc) {
+    tcg_gen_movi_tl(cpu_pc, pc);
+}
+
+
 /*
  * Jumps to the given target_pc and sets is_jmp to NORETURN. n indicates the jump slot
  * which is one of 0, 1 or -1. 0,1 are valid jumps slots, while -1 indicates a forced
@@ -153,10 +161,10 @@ static void gen_goto_tb(DisasContext *ctx, int8_t n, target_ulong target_pc)
 {
     if (n >= 0 && translator_use_goto_tb(&ctx->base, target_pc)) {
         tcg_gen_goto_tb(n);
-        tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
+        gen_update_pc(ctx, target_pc);
         tcg_gen_exit_tb(ctx->base.tb, n);
     } else {
-        tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
+        gen_update_pc(ctx, target_pc);
         tcg_gen_lookup_and_goto_ptr();
     }
     ctx->base.is_jmp = DISAS_NORETURN;
@@ -246,7 +254,9 @@ static void [(${gen_arch_lower})]_tr_insn_start(DisasContextBase *db, CPUState *
 static void [(${gen_arch_lower})]_tr_translate_insn(DisasContextBase *db, CPUState *cpu)
 {
     DisasContext *ctx = container_of(db, DisasContext, base);
+    target_ulong pc = db->pc_next;
 
+    ctx->pc_curr = pc;
     // translate current insn
     translate(ctx);
     // increment program counter
