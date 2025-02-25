@@ -341,6 +341,27 @@ def collect_data(benchmarks, remnant):
     # Otherwise failure return
     return [], []
 
+def find_built_benchmarks():
+    """Enumerate all the built benchmarks in alphabetical order.  The benchmarks are
+       found in the 'bd' subdirectory of the root directory.  Set up global
+       parameters for the source and build benchmark directories.
+
+       Return the list of benchmarks."""
+    gp['benchdir'] = os.path.join(gp['rootdir'], 'src')
+    gp['bd_benchdir'] = os.path.join(gp['bd'], 'src')
+    dirlist = os.listdir(gp['benchdir'])
+
+    benchmarks = []
+
+    for bench in dirlist:
+        abs_b = os.path.join(gp['bd_benchdir'], bench)
+        if os.path.isdir(abs_b):
+            benchmarks.append(bench)
+
+    benchmarks.sort()
+
+    return benchmarks
+
 
 def main():
     """Main program driving measurement of benchmark size"""
@@ -360,7 +381,7 @@ def main():
     validate_args(args)
 
     # Find the benchmarks
-    benchmarks = find_benchmarks()
+    benchmarks = find_built_benchmarks()
     log_benchmarks(benchmarks)
 
     # Collect the speed data for the benchmarks. Pass any remaining args.
