@@ -10,8 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
-import vadl.lcb.passes.llvmLowering.GenerateRegisterClassesPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegister;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -62,8 +61,8 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var output = ((GenerateRegisterClassesPass.Output) passResults.lastResultOf(
-        GenerateRegisterClassesPass.class));
+    var output = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
+        GenerateTableGenRegistersPass.class));
     var abi = (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var registerClasses = output.registerClasses();
 
@@ -96,23 +95,16 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     both.addAll(calleeSaved);
     var specials =
         registerClass.registers().stream().map(
-                TableGenRegister::name).filter(x -> !both.contains(x))
+                register -> register.compilerRegister().name()).filter(x -> !both.contains(x))
             .toList();
     var allocationSeq =
         Stream.concat(callerSaved.stream(), Stream.concat(calleeSaved.stream(), specials.stream()))
             .collect(
                 Collectors.joining(", "));
 
-    // We need to define every register separately.
-    // But not only the registers in the register files but also
-    // the registers like PC and so on.
-    var registers =
-        Stream.concat(output.registers().stream(),
-            registerClasses.stream().flatMap(x -> x.registers().stream())).toList();
-
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        "registers", registers,
+        "registers", output.registers(),
         "registerFiles", List.of(
             new WrappedRegisterFile(registerClass, allocationSeq)
         ));

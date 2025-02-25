@@ -8,7 +8,7 @@ def [(${register.name})] : Register<"[(${register.name})]">
     let SubRegs = [ ];
     let SubRegIndices = [ ];
     let RegAltNameIndices = [];
-    let DwarfNumbers = [ [(${iterStat.index})] ];
+    let DwarfNumbers = [ [(${register.dwarfNumber})] ];
     list<int> CostPerUse = [0];
     let CoveredBySubRegs = 0;
     [#th:block th:if="${register.hwEncodingMsb != 0}"]

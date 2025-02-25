@@ -52,6 +52,9 @@ public class DummyAbiPass extends Pass {
     var callSequence = getCallSequence(viam);
     var addressSequence = getAddressSequence(viam);
 
+    var registerFileAlignment = new HashMap<RegisterFile, Abi.Alignment>();
+    registerFileAlignment.put(registerFile, Abi.Alignment.HALF_WORD);
+
     viam.add(new Abi(new Identifier("dummyAbi", SourceLocation.INVALID_SOURCE_LOCATION),
         new Abi.RegisterRef(registerFile, 1, Abi.Alignment.WORD),
         new Abi.RegisterRef(registerFile, 2, Abi.Alignment.HALF_WORD),
@@ -67,7 +70,9 @@ public class DummyAbiPass extends Pass {
         callSequence,
         addressSequence,
         Abi.Alignment.DOUBLE_WORD,
-        Abi.Alignment.DOUBLE_WORD));
+        Abi.Alignment.DOUBLE_WORD,
+        registerFileAlignment
+    ));
 
     return null;
   }
