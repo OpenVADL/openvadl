@@ -26,9 +26,7 @@ static void [(${gen_arch_lower})]_cpu_disas_set_info(CPUState *cpu, disassemble_
 
 static void [(${gen_arch_lower})]_cpu_init(Object *obj)
 {
-  CPUState *cs = CPU(obj);
-  [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(obj);
-  CPU[(${gen_arch_upper})]State *env = &cpu->env;
+  // TODO: CPU initialize work
 }
 
 // Realize function that sets up the CPU
@@ -50,16 +48,18 @@ static void [(${gen_arch_lower})]_cpu_realizefn(DeviceState *dev, Error **errp)
     vcc->parent_realize(dev, errp);
 }
 
-static void [(${gen_arch_lower})]_cpu_reset(DeviceState *dev)
+static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
 {
     trace_[(${gen_arch_lower})]_cpu_call(__func__);
-    CPUState *cs = CPU(dev);
-    [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(dev);
-    [(${gen_arch_upper})]CPUClass *vcc = [(${gen_arch_upper})]_CPU_GET_CLASS(dev);
+    CPUState *cs = CPU(obj);
+    [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
+    [(${gen_arch_upper})]CPUClass *vcc = [(${gen_arch_upper})]_CPU_GET_CLASS(obj);
     CPU[(${gen_arch_upper})]State *env = &cpu->env;
     int i;
 
-    vcc->parent_reset(dev);
+    if (vcc->parent_phases.hold) {
+        vcc->parent_phases.hold(obj, type);
+    }
 
     [# th:each="reg_file, iterState : ${register_files}"]
     for(int i=0; i < [(${reg_file["size"]})]; i++){
@@ -190,10 +190,12 @@ static bool [(${gen_arch_lower})]_cpu_exec_interrupt(CPUState *cs, int interrupt
     return false;
 }
 
-static void [(${gen_arch_lower})]_cpu_exec_halt(CPUState *cs)
+static bool [(${gen_arch_lower})]_cpu_exec_halt(CPUState *cs)
 {
     trace_[(${gen_arch_lower})]_cpu_call(__func__);
-    // TODO: Later
+    // TODO: Handle stuff that must be done when CPU is in halted state
+    return [(${gen_arch_lower})]_cpu_has_work(cs);
+
 }
 
 static void [(${gen_arch_lower})]_cpu_restore_state_to_opc(CPUState *cs, const TranslationBlock *tb, const uint64_t *data) {
@@ -251,9 +253,10 @@ static void [(${gen_arch_lower})]_cpu_class_init(ObjectClass *oc, void *data)
     [(${gen_arch_upper})]CPUClass *vcc = [(${gen_arch_upper})]_CPU_CLASS(oc);
     CPUClass *cc = CPU_CLASS(oc);
     DeviceClass *dc = DEVICE_CLASS(oc);
+    ResettableClass *rc = RESETTABLE_CLASS(oc);
 
     device_class_set_parent_realize(dc, [(${gen_arch_lower})]_cpu_realizefn, &vcc->parent_realize);
-    device_class_set_parent_reset(dc, [(${gen_arch_lower})]_cpu_reset, &vcc->parent_reset);
+    resettable_class_set_parent_phases(rc, NULL, [(${gen_arch_lower})]_cpu_reset_hold, NULL, &vcc->parent_phases);
 
     cc->class_by_name = [(${gen_arch_lower})]_cpu_class_by_name;
 

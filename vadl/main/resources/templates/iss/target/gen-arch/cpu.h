@@ -68,7 +68,7 @@ struct [(${gen_arch_upper})]CPUClass {
 
   /*< public >*/
   DeviceRealize parent_realize;
-  DeviceReset   parent_reset;
+  ResettablePhases parent_phases;
 };
 
 static inline int cpu_interrupts_enabled(CPU[(${gen_arch_upper})]State *env)
