@@ -1,7 +1,7 @@
 # RISCV64 toolchain
 FROM jozott/riscv-toolchain:medany-rv32i-rv32im-rv32impriv-rv64i-rv64im-rv64impriv
 
-ARG QEMU_VERSION="9.0.3"
+ARG QEMU_VERSION="9.2.2"
 ENV QEMU_RELEASE="https://github.com/qemu/qemu/archive/refs/tags/v$QEMU_VERSION.tar.gz"
 ENV QEMU_DIR=/qemu
 ENV PATH=$QEMU_DIR/build:$PATH
@@ -24,7 +24,7 @@ RUN apt update &&  \
     netcat \
     qemu-system
 
-RUN pip install pyyaml qemu.qmp
+RUN pip install pyyaml qemu.qmp tomli
 
 # download qemu into the current directory
 RUN curl -L $QEMU_RELEASE | tar -xvz --strip-components=1
