@@ -9,7 +9,8 @@ import vadl.viam.ViamError;
  * {@link vadl.lcb.passes.isaMatching.database.Database}.
  */
 public enum MachineInstructionLabelGroup {
-  BRANCH_INSTRUCTIONS;
+  BRANCH_INSTRUCTIONS,
+  MEMORY_INSTRUCTIONS;
 
   public static final Set<MachineInstructionLabel> branchMachineInstructions = Set.of(
       MachineInstructionLabel.BEQ,
@@ -24,12 +25,20 @@ public enum MachineInstructionLabelGroup {
       MachineInstructionLabel.BNEQ
   );
 
+
+  public static final Set<MachineInstructionLabel> memoryMachineInstructions = Set.of(
+      MachineInstructionLabel.LOAD_MEM,
+      MachineInstructionLabel.STORE_MEM
+  );
+
   /**
    * Return the set of instructions based on the value in the enum.
    */
   public final Set<MachineInstructionLabel> labels() {
     if (this == BRANCH_INSTRUCTIONS) {
       return branchMachineInstructions;
+    } else if (this == MEMORY_INSTRUCTIONS) {
+      return memoryMachineInstructions;
     }
 
     throw new ViamError("not supported");

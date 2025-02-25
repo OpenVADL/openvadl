@@ -7,9 +7,13 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticBuilder;
+import vadl.gcb.passes.ValueRange;
+import vadl.gcb.passes.ValueRangeCtx;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
@@ -100,6 +104,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("hasCMove64", hasCMove64);
     map.put("conditionalMove", conditionalMove);
     map.put("branchInstructions", getBranchInstructions(new Database(passResults, specification)));
+    map.put("memoryInstructions", getMemoryInstructions(new Database(passResults, specification)));
     return map;
   }
 
@@ -114,10 +119,38 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  record MemoryInstruction(String instructionName, ValueRange offsetValueRange)
+      implements Renderable {
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "instructionName", instructionName,
+          "minValue", offsetValueRange.lowest(),
+          "maxValue", offsetValueRange.highest()
+      );
+    }
+  }
+
+  private List<MemoryInstruction> getMemoryInstructions(Database database) {
+    var queryResult = database.run(new Query.Builder().machineInstructionLabelGroup(
+        MachineInstructionLabelGroup.MEMORY_INSTRUCTIONS).build());
+    return queryResult.machineInstructions().stream().map(instruction -> {
+      Supplier<DiagnosticBuilder> error =
+          () -> Diagnostic.error("Memory instruction requires a value range",
+              instruction.sourceLocation());
+
+      var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class), error);
+      var valueRange = ensurePresent(ctx.getFirst(), error);
+
+      return new MemoryInstruction(instruction.simpleName(), valueRange);
+    }).toList();
+  }
+
   private List<BranchInstruction> getBranchInstructions(Database database) {
     var queryResult = database.run(new Query.Builder().machineInstructionLabelGroup(
         MachineInstructionLabelGroup.BRANCH_INSTRUCTIONS).build());
     var flipped = database.flipMachineInstructions();
+
 
     return queryResult.machineInstructions().stream().map(instruction -> {
       var machineInstructionLabel = ensureNonNull(flipped.get(instruction),
