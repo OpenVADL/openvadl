@@ -10,7 +10,8 @@ import vadl.viam.ViamError;
  */
 public enum MachineInstructionLabelGroup {
   BRANCH_INSTRUCTIONS,
-  MEMORY_INSTRUCTIONS;
+  MEMORY_INSTRUCTIONS,
+  CONDITIONAL_INSTRUCTIONS;
 
   public static final Set<MachineInstructionLabel> branchMachineInstructions = Set.of(
       MachineInstructionLabel.BEQ,
@@ -25,6 +26,14 @@ public enum MachineInstructionLabelGroup {
       MachineInstructionLabel.BNEQ
   );
 
+  public static final Set<MachineInstructionLabel> conditionalInstructions = Set.of(
+      MachineInstructionLabel.EQ,
+      MachineInstructionLabel.NEQ,
+      MachineInstructionLabel.LTI,
+      MachineInstructionLabel.LTIU,
+      MachineInstructionLabel.LTS,
+      MachineInstructionLabel.LTU
+  );
 
   public static final Set<MachineInstructionLabel> memoryMachineInstructions = Set.of(
       MachineInstructionLabel.LOAD_MEM,
@@ -39,6 +48,8 @@ public enum MachineInstructionLabelGroup {
       return branchMachineInstructions;
     } else if (this == MEMORY_INSTRUCTIONS) {
       return memoryMachineInstructions;
+    } else if (this == CONDITIONAL_INSTRUCTIONS) {
+      return conditionalInstructions;
     }
 
     throw new ViamError("not supported");

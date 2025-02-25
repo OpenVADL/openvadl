@@ -849,6 +849,10 @@ void [(${namespace})]TargetLowering::ReplaceNodeResults(SDNode *N,
     }
 }
 
+bool [(${namespace})]TargetLowering::isLegalICmpImmediate(int64_t Imm) const {
+  return Imm >= [(${conditionalValueRangeLowest})] && Imm <= [(${conditionalValueRangeHighest})];
+}
+
 bool [(${namespace})]TargetLowering::isLegalAddImmediate(int64_t Imm) const {
   return Imm >= [(${addImmediateInstruction.minValue})] && Imm <= [(${addImmediateInstruction.maxValue})];
 }

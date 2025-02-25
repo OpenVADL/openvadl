@@ -85,6 +85,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var hasCMove64 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_64);
     var conditionalMove = getConditionalMove(hasCMove32, hasCMove64, labelledMachineInstructions);
     var database = new Database(passResults, specification);
+    var conditionalValueRange = getValueRangeCompareInstructions(database);
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().processorName().value().toLowerCase());
@@ -107,6 +108,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("addImmediateInstruction", getAddImmediate(database));
     map.put("branchInstructions", getBranchInstructions(database));
     map.put("memoryInstructions", getMemoryInstructions(database));
+    map.put("conditionalValueRangeLowest", conditionalValueRange.lowest());
+    map.put("conditionalValueRangeHighest", conditionalValueRange.highest());
     return map;
   }
 
@@ -124,6 +127,42 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var valueRange = ensurePresent(valueRangeCtx.getFirst(), error);
 
     return new ISelInstruction(instruction.simpleName(), valueRange);
+  }
+
+  /**
+   * LLVM needs a method to check whether an immediate fits into a conditional instruction.
+   * However, it does not provide an instruction. Therefore, this must be the smallest/highest
+   * range across all compares.
+   */
+  private ValueRange getValueRangeCompareInstructions(Database database) {
+    var queryResult = database.run(
+        new Query.Builder().machineInstructionLabelGroup(
+            MachineInstructionLabelGroup.CONDITIONAL_INSTRUCTIONS).build());
+
+    var smallest = Integer.MAX_VALUE;
+    var highest = Integer.MIN_VALUE;
+
+    for (var instruction : queryResult.machineInstructions()) {
+      var valueRangeCtx = instruction.extension(ValueRangeCtx.class);
+
+      // The group `MachineInstructionLabelGroup.CONDITIONAL_INSTRUCTIONS` might also
+      // have instructions without immediates. Therefore, it is ok that there is no value range.
+      if (valueRangeCtx != null && !valueRangeCtx.ranges().isEmpty()) {
+        var valueRange = ensurePresent(valueRangeCtx.getFirst(),
+            () -> Diagnostic.error("Conditional instruction requires a value range",
+                instruction.sourceLocation()));
+
+        if (valueRange.lowest() < smallest) {
+          smallest = valueRange.lowest();
+        }
+
+        if (valueRange.highest() > highest) {
+          highest = valueRange.highest();
+        }
+      }
+    }
+
+    return new ValueRange(smallest, highest);
   }
 
   record BranchInstruction(String instructionName, String isdName) implements Renderable {

@@ -84,7 +84,7 @@ namespace llvm
             bool isLegalAddressingMode(const DataLayout &DL, const AddrMode &AM, Type *Ty,
                                          unsigned AS,
                                          Instruction *I = nullptr) const override;
-            //bool isLegalICmpImmediate(int64_t Imm) const override;
+            bool isLegalICmpImmediate(int64_t Imm) const override;
             bool isLegalAddImmediate(int64_t Imm) const override;
 
 
