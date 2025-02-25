@@ -125,7 +125,7 @@ static TCGv dest_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num)
     assert(reg_num < [(${reg_file["size"]})]);
     [# th:each="constraint, iterState : ${reg_file.constraints}"]
     // TODO: This should be temporary instead
-    if (reg_num == [(${constraint.index})]) return tcg_temp_new_i64();
+    if (reg_num == [(${constraint.index})]) return tcg_temp_new();
     [/]
     return cpu_[(${reg_file.name_lower})][reg_num];
 }
@@ -153,7 +153,7 @@ static void gen_goto_tb(DisasContext *ctx, int8_t n, target_ulong target_pc)
 {
     if (n >= 0 && translator_use_goto_tb(&ctx->base, target_pc)) {
         tcg_gen_goto_tb(n);
-        tcg_gen_movi_i64(cpu_pc, (int64_t) target_pc);
+        tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
         tcg_gen_exit_tb(ctx->base.tb, n);
     } else {
         tcg_gen_movi_tl(cpu_pc, (int64_t) target_pc);
@@ -163,7 +163,7 @@ static void gen_goto_tb(DisasContext *ctx, int8_t n, target_ulong target_pc)
 }
 
 static void generate_exception(DisasContext *ctx, int excp) {
-	tcg_gen_movi_i64(cpu_pc, ctx->base.pc_next);
+	tcg_gen_movi_tl(cpu_pc, ctx->base.pc_next);
 	gen_helper_raise_exception(tcg_env, tcg_constant_i32(excp));
 	ctx->base.is_jmp = DISAS_NORETURN;
 }
@@ -210,7 +210,7 @@ static void translate(DisasContext *ctx)
     if(!decode_insn(ctx, insn)) {
         error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04llx , insn: 0x%04x\n", ctx->base.pc_next, insn);
 
-        tcg_gen_movi_i64(cpu_pc, ctx->base.pc_next);
+        tcg_gen_movi_tl(cpu_pc, ctx->base.pc_next);
         gen_helper_unsupported(tcg_env);
         ctx->base.is_jmp = DISAS_NORETURN;
     }

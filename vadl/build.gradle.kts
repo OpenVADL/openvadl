@@ -58,6 +58,27 @@ tasks.withType<Checkstyle> {
 tasks.test {
     useJUnitPlatform()
     jvmArgs("--enable-preview")
+
+    // A collection to track failed tests
+    val failedTests = mutableListOf<String>()
+
+    afterTest(KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
+        if (result.resultType == TestResult.ResultType.FAILURE) {
+            val failedTest = "${desc.className}::${desc.name}"
+            logger.debug("Adding $failedTest to failedTests...")
+            failedTests.add(failedTest)
+        }
+    }))
+
+    afterSuite(KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
+        if (desc.parent == null) { // Matches the outermost suite
+            if (failedTests.isNotEmpty()) {
+                val failedList = failedTests.joinToString(separator = "\t\n") { "- $it" }
+                logger.lifecycle("Failed tests:\n\t$failedList")
+            }
+        }
+    }))
+
 }
 
 // Register the custom task with your configuration
