@@ -84,6 +84,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var hasCMove32 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_32);
     var hasCMove64 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_64);
     var conditionalMove = getConditionalMove(hasCMove32, hasCMove64, labelledMachineInstructions);
+    var database = new Database(passResults, specification);
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().processorName().value().toLowerCase());
@@ -103,9 +104,26 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("hasCMove32", hasCMove32);
     map.put("hasCMove64", hasCMove64);
     map.put("conditionalMove", conditionalMove);
-    map.put("branchInstructions", getBranchInstructions(new Database(passResults, specification)));
-    map.put("memoryInstructions", getMemoryInstructions(new Database(passResults, specification)));
+    map.put("addImmediateInstruction", getAddImmediate(database));
+    map.put("branchInstructions", getBranchInstructions(database));
+    map.put("memoryInstructions", getMemoryInstructions(database));
     return map;
+  }
+
+  private ISelInstruction getAddImmediate(Database database) {
+    var queryResult = database.run(
+        new Query.Builder().machineInstructionLabel(MachineInstructionLabel.ADDI_64)
+            .or(new Query.Builder().machineInstructionLabel(MachineInstructionLabel.ADDI_32)
+                .build()).build());
+
+    var instruction = queryResult.firstMachineInstruction();
+    Supplier<DiagnosticBuilder> error =
+        () -> Diagnostic.error("Addition-Register-Immediate requires a value range",
+            instruction.sourceLocation());
+    var valueRangeCtx = ensureNonNull(instruction.extension(ValueRangeCtx.class), error);
+    var valueRange = ensurePresent(valueRangeCtx.getFirst(), error);
+
+    return new ISelInstruction(instruction.simpleName(), valueRange);
   }
 
   record BranchInstruction(String instructionName, String isdName) implements Renderable {
@@ -119,7 +137,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  record MemoryInstruction(String instructionName, ValueRange offsetValueRange)
+  record ISelInstruction(String instructionName, ValueRange offsetValueRange)
       implements Renderable {
     @Override
     public Map<String, Object> renderObj() {
@@ -131,7 +149,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  private List<MemoryInstruction> getMemoryInstructions(Database database) {
+  private List<ISelInstruction> getMemoryInstructions(Database database) {
     var queryResult = database.run(new Query.Builder().machineInstructionLabelGroup(
         MachineInstructionLabelGroup.MEMORY_INSTRUCTIONS).build());
     return queryResult.machineInstructions().stream().map(instruction -> {
@@ -142,7 +160,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
       var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class), error);
       var valueRange = ensurePresent(ctx.getFirst(), error);
 
-      return new MemoryInstruction(instruction.simpleName(), valueRange);
+      return new ISelInstruction(instruction.simpleName(), valueRange);
     }).toList();
   }
 

@@ -849,6 +849,9 @@ void [(${namespace})]TargetLowering::ReplaceNodeResults(SDNode *N,
     }
 }
 
+bool [(${namespace})]TargetLowering::isLegalAddImmediate(int64_t Imm) const {
+  return Imm >= [(${addImmediateInstruction.minValue})] && Imm <= [(${addImmediateInstruction.maxValue})];
+}
 
 bool [(${namespace})]TargetLowering::isLegalAddressingMode(const DataLayout &DL,
                                                 const AddrMode &AM, Type *Ty,
