@@ -238,16 +238,21 @@ public class TypeChecker
   }
 
   @Nullable
-  private static BuiltInTable.BuiltIn getBuiltIn(String name) {
+  private static BuiltInTable.BuiltIn getBuiltIn(String name, List<Type> argTypes) {
     // FIXME: Namespace should be propper resolved and not that hacky
     if (name.startsWith("VADL::")) {
       name = name.substring("VADL::".length());
     }
 
-    // FIXME: THIS IS A TEMPORARY HACK! Propper selection should happen based on types.
-    var hackyRewrites = Map.of("div", "sdiv", "mod", "smod");
-    if (hackyRewrites.containsKey(name)) {
-      name = hackyRewrites.get(name);
+    // FIXME: We decided that in the future this behaivor will be removed and only the
+    //  signed/unsigned versions are available.
+    // Discussion: https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/287#issuecomment-23771
+
+    // There are some pseudo functions that will get resolved to either the signed or unsinged one.
+    var pseudoRewrites = Map.of("div", List.of("sdiv", "udiv"), "mod", List.of("smod", "umod"));
+    if (pseudoRewrites.containsKey(name)) {
+      var singed = argTypes.stream().anyMatch(t -> t instanceof SIntType);
+      name = pseudoRewrites.get(name).get(singed ? 0 : 1);
     }
 
     String finalBuiltinName = name;
@@ -329,7 +334,8 @@ public class TypeChecker
         for (var range : rangeField.ranges) {
           range.accept(this);
 
-          int from, to;
+          int from;
+          int to;
           if (range instanceof RangeExpr rangeExpr) {
             from = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
             to = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
@@ -433,7 +439,7 @@ public class TypeChecker
   @Override
   public Void visit(RegisterFileDefinition definition) {
     definition.typeLiteral.argTypes().forEach(this::check);
-    definition.typeLiteral.resultType().accept(this);
+    check(definition.typeLiteral.resultType());
     definition.type = Type.concreteRelation(
         definition.typeLiteral.argTypes().stream().map(arg -> arg.type).toList(),
         Objects.requireNonNull(definition.typeLiteral.resultType().type));
@@ -1678,7 +1684,7 @@ public class TypeChecker
   public Void visit(GroupedExpr expr) {
     // Arithmetic grouping
     if (expr.expressions.size() == 1) {
-      expr.expressions.get(0).accept(this);
+      check(expr.expressions.get(0));
       expr.type = expr.expressions.get(0).type;
       return null;
     }
@@ -2125,11 +2131,10 @@ public class TypeChecker
 
 
     // Builtin function
-    var builtin = getBuiltIn(expr.target.path().pathToString());
+    expr.flatArgs().forEach(this::check);
+    var argTypes = Objects.requireNonNull(expr.flatArgs().stream().map(v -> v.type)).toList();
+    var builtin = getBuiltIn(expr.target.path().pathToString(), argTypes);
     if (builtin != null) {
-      expr.flatArgs().forEach(this::check);
-      var argTypes = Objects.requireNonNull(expr.flatArgs().stream().map(v -> v.type)).toList();
-
       // FIXME: Find a better solution that is universal enough for binary operations and builtin
       // functions.
 
@@ -2163,6 +2168,7 @@ public class TypeChecker
         expr.type = fakeBinExpr.type;
       }
 
+      argTypes = Objects.requireNonNull(expr.flatArgs().stream().map(v -> v.type)).toList();
       if (!builtin.takes(argTypes)) {
         throw Diagnostic.error("Type Mismatch", expr)
             .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
@@ -2426,7 +2432,7 @@ public class TypeChecker
         // FIXME: better error
         var targetType = Objects.requireNonNull(format.getFieldType(arg.name().name));
 
-        arg.value().accept(this);
+        check(arg.value());
 
         statement.namedArguments.set(i,
             new InstructionCallStatement.NamedArgument(arg.name(),

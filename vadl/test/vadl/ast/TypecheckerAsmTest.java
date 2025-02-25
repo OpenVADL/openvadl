@@ -524,7 +524,7 @@ public class TypecheckerAsmTest {
     var prog = """
           grammar = {
             A :
-              ?(VADL::ssatadd(2,1)) Integer
+              ?(VADL::add(2,1)) Integer
               | Integer
             ;
           }

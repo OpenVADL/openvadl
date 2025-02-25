@@ -64,7 +64,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
 /**
  * Lowers statements and expressions into viam behaivor graph.
  *
- * <p> Because the caches this class holds are delicate, create a new instance for every graph you
+ * <p>Because the caches this class holds are delicate, create a new instance for every graph you
  * generate.
  */
 class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {

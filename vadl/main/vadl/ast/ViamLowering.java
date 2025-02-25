@@ -343,7 +343,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var semPredExpr = elements.get(0).semanticPredicate;
 
     if (semanticPredicateAppliesToAlternatives && semPredExpr != null) {
-      var semanticPredicateGraph = new BehaviorLowering(this).getGraph(semPredExpr, "semanticPredicate");
+      var semanticPredicateGraph = new BehaviorLowering(this)
+          .getGraph(semPredExpr, "semanticPredicate");
       semPredFunction =
           new Function(generateIdentifier("semanticPredicate", semPredExpr.sourceLocation()),
               new vadl.viam.Parameter[0], Type.bool(), semanticPredicateGraph);
