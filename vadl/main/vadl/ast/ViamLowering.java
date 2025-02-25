@@ -19,6 +19,8 @@ import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.types.asmTypes.AsmType;
+import vadl.types.asmTypes.GroupAsmType;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
 import vadl.viam.Assembly;
@@ -42,6 +44,7 @@ import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
+import vadl.viam.asm.AsmToken;
 import vadl.viam.asm.elements.AsmAlternative;
 import vadl.viam.asm.elements.AsmAlternatives;
 import vadl.viam.asm.elements.AsmAssignTo;
@@ -257,8 +260,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .filter(x -> x.toString().equals(definition.builtinDirective.name)).findFirst()
         .orElseThrow();
     var id = ((StringLiteral) definition.stringLiteral).value;
-    return Optional.of(new AsmDirectiveMapping(generateIdentifier(id, definition), directive,
-        definition.sourceLocation()));
+    var alignmentIsInBytes =
+        directive != AsmDirective.ALIGN_POW2 && directive != AsmDirective.ALIGN32_POW2;
+    return Optional.of(
+        new AsmDirectiveMapping(generateIdentifier(id, definition), id, directive.getAsmName(),
+            alignmentIsInBytes, definition.sourceLocation()));
   }
 
   @Override
@@ -299,77 +305,123 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(AsmGrammarRuleDefinition definition) {
-    var id = generateIdentifier(definition.viamId, definition.identifier());
+    var id = generateIdentifier(definition.identifier().name, definition.identifier());
+    requireNonNull(definition.asmType);
     if (definition.isTerminalRule) {
       var literal =
           requireNonNull(definition.alternatives.alternatives.get(0).get(0).asmLiteral);
       var stringValue = requireNonNull((StringLiteral) literal.stringLiteral).value;
-      return Optional.of(new AsmTerminalRule(id, stringValue));
+      return Optional.of(new AsmTerminalRule(id, stringValue, definition.asmType));
     }
 
     if (definition.isBuiltinRule) {
-      return Optional.of(new AsmBuiltinRule(id));
+      return Optional.of(new AsmBuiltinRule(id, definition.asmType));
     }
 
     return Optional.of(
-        new AsmNonTerminalRule(id, visitAsmAlternatives(definition.alternatives, false),
-            definition.sourceLocation())
+        new AsmNonTerminalRule(id, visitAsmAlternatives(definition.alternatives, false, false),
+            definition.asmType, definition.sourceLocation())
     );
   }
 
   private AsmAlternatives visitAsmAlternatives(AsmGrammarAlternativesDefinition definition,
-                                               boolean isWithinOptionOrRepetition) {
+                                               boolean isWithinOptionOrRepetition,
+                                               boolean isWithinRepetition) {
     var alternatives = definition.alternatives;
     var semanticPredicateApplies = !isWithinOptionOrRepetition || alternatives.size() != 1;
-    return new AsmAlternatives(alternatives.stream()
-        .map(alternative -> visitAsmAlternative(alternative, semanticPredicateApplies)).toList());
+    requireNonNull(definition.alternativesFirstTokens);
+
+    List<AsmAlternative> asmAlternatives = new ArrayList<>(alternatives.size());
+    var asmType = requireNonNull(definition.asmType);
+    for (int i = 0; i < alternatives.size(); i++) {
+      asmAlternatives.add(visitAsmAlternative(alternatives.get(i),
+          definition.alternativesFirstTokens.get(i), asmType, isWithinRepetition,
+          semanticPredicateApplies));
+    }
+    return new AsmAlternatives(asmAlternatives, asmType);
   }
 
   private AsmAlternative visitAsmAlternative(List<AsmGrammarElementDefinition> elements,
+                                             Set<AsmToken> firstTokens,
+                                             AsmType alternativeAsmType,
+                                             boolean isWithinRepetition,
                                              boolean semanticPredicateAppliesToAlternatives) {
-    Graph semanticPredicate = null;
+    Function semPredFunction = null;
     var semPredExpr = elements.get(0).semanticPredicate;
+
     if (semanticPredicateAppliesToAlternatives && semPredExpr != null) {
-      semanticPredicate = behaviorLowering.getGraph(semPredExpr, "semanticPredicate");
+      var semanticPredicateGraph = behaviorLowering.getGraph(semPredExpr, "semanticPredicate");
+      semPredFunction =
+          new Function(generateIdentifier("semanticPredicate", semPredExpr.sourceLocation()),
+              new vadl.viam.Parameter[0], Type.bool(), semanticPredicateGraph);
     }
+
     var grammarElements =
-        elements.stream().map(this::visitAsmElement).filter(Objects::nonNull).toList();
-    return new AsmAlternative(semanticPredicate, grammarElements);
+        elements.stream().map(def -> visitAsmElement(def, isWithinRepetition,
+                alternativeAsmType instanceof GroupAsmType))
+            .filter(Objects::nonNull).toList();
+    return new AsmAlternative(semPredFunction, firstTokens, alternativeAsmType, isWithinRepetition,
+        grammarElements);
   }
 
   @Nullable
-  private AsmGrammarElement visitAsmElement(AsmGrammarElementDefinition definition) {
+  private AsmGrammarElement visitAsmElement(AsmGrammarElementDefinition definition,
+                                            boolean isWithinRepetition,
+                                            boolean isAlternativeOfAsmGroupType) {
+
     if (definition.optionAlternatives != null) {
-      var semanticPredicate = potentialSemanticPredicate(definition.optionAlternatives);
-      var alternatives = visitAsmAlternatives(definition.optionAlternatives, true);
-      return new AsmOption(semanticPredicate, alternatives);
+      var semPredGraph = potentialSemanticPredicate(definition.optionAlternatives);
+      Function semPredFunction = null;
+      if (semPredGraph != null) {
+        semPredFunction = new Function(
+            generateIdentifier("semanticPredicate", definition.optionAlternatives.sourceLocation()),
+            new vadl.viam.Parameter[0], Type.bool(), semPredGraph);
+      }
+      var firstTokens =
+          Objects.requireNonNull(definition.optionAlternatives.enclosingBlockFirstTokens);
+      var alternatives = visitAsmAlternatives(definition.optionAlternatives, true, false);
+      return new AsmOption(semPredFunction, firstTokens, alternatives);
     }
 
     if (definition.repetitionAlternatives != null) {
-      var semanticPredicate = potentialSemanticPredicate(definition.repetitionAlternatives);
-      var alternatives = visitAsmAlternatives(definition.repetitionAlternatives, true);
-      return new AsmRepetition(semanticPredicate, alternatives);
+      var semPredGraph = potentialSemanticPredicate(definition.repetitionAlternatives);
+      Function semPredFunction = null;
+      if (semPredGraph != null) {
+        semPredFunction = new Function(
+            generateIdentifier("semanticPredicate",
+                definition.repetitionAlternatives.sourceLocation()),
+            new vadl.viam.Parameter[0], Type.bool(), semPredGraph);
+      }
+      var firstTokens =
+          Objects.requireNonNull(definition.repetitionAlternatives.enclosingBlockFirstTokens);
+      var alternatives = visitAsmAlternatives(definition.repetitionAlternatives, true, true);
+      return new AsmRepetition(semPredFunction, firstTokens, alternatives);
     }
 
-    if (definition.groupAlternatives != null) {
-      var alternatives = visitAsmAlternatives(definition.groupAlternatives, false);
-      return new AsmGroup(alternatives);
-    }
 
     AsmAssignTo assignTo = null;
     if (definition.attribute != null) {
       assignTo = definition.isAttributeLocalVar
-          ? new AsmAssignToLocalVar(definition.attribute.name)
-          : new AsmAssignToAttribute(definition.attribute.name);
+          ? new AsmAssignToLocalVar(definition.attribute.name, isWithinRepetition)
+          : new AsmAssignToAttribute(definition.attribute.name, isWithinRepetition);
+    }
+
+    if (definition.groupAlternatives != null) {
+      var alternatives = visitAsmAlternatives(definition.groupAlternatives, false, false);
+      return new AsmGroup(assignTo, alternatives, isAlternativeOfAsmGroupType,
+          requireNonNull(definition.asmType));
     }
 
     if (definition.localVar != null) {
       AsmGrammarElement literal = null;
       if (definition.localVar.asmLiteral.id == null
           || !definition.localVar.asmLiteral.id.name.equals("null")) {
-        literal = visitAsmLiteral(assignTo, definition.localVar.asmLiteral);
+        literal = visitAsmLiteral(
+            new AsmAssignToLocalVar(definition.localVar.id.name, isWithinRepetition),
+            definition.localVar.asmLiteral);
       }
-      return new AsmLocalVarDefinition(definition.localVar.id.name, literal);
+      return new AsmLocalVarDefinition(definition.localVar.id.name, literal,
+          requireNonNull(definition.asmType));
     }
 
     if (definition.asmLiteral != null) {
@@ -393,32 +445,34 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Nullable
   private AsmGrammarElement visitAsmLiteral(@Nullable AsmAssignTo assignToElement,
                                             AsmGrammarLiteralDefinition definition) {
+    requireNonNull(definition.asmType);
     if (definition.stringLiteral != null) {
       var stringValue = ((StringLiteral) definition.stringLiteral).value;
-      return new AsmStringLiteralUse(assignToElement, stringValue);
+      return new AsmStringLiteralUse(assignToElement, stringValue, definition.asmType);
     }
 
     requireNonNull(definition.id);
     var invocationSymbolOrigin = definition.symbolTable().resolveNode(definition.id.name);
 
-    if (invocationSymbolOrigin instanceof AsmGrammarLocalVarDefinition) {
-      return new AsmLocalVarUse(assignToElement, definition.id.name);
+    if (invocationSymbolOrigin instanceof AsmGrammarLocalVarDefinition localVarDefinition) {
+      requireNonNull(localVarDefinition.asmType);
+      return new AsmLocalVarUse(assignToElement, definition.id.name,
+          localVarDefinition.asmType, definition.asmType);
     }
 
     if (invocationSymbolOrigin instanceof FunctionDefinition functionDefinition) {
-      // TODO: store reference to function instead of function identifier
-      //       once function lowering is supported
-      // var function = fetch(functionDefinition).orElseThrow();
+      var function = (Function) fetch(functionDefinition).orElseThrow();
       var parameters = definition.parameters.stream()
           .map(param -> visitAsmLiteral(null, param)).toList();
-      return new AsmFunctionInvocation(assignToElement, definition.id.name, parameters);
+      return new AsmFunctionInvocation(assignToElement, function, parameters,
+          definition.asmType);
     }
 
     if (invocationSymbolOrigin instanceof AsmGrammarRuleDefinition ruleDefinition) {
       var rule = (AsmGrammarRule) fetch(ruleDefinition).orElseThrow();
       var parameters = definition.parameters.stream()
           .map(param -> visitAsmLiteral(null, param)).toList();
-      return new AsmRuleInvocation(assignToElement, rule, parameters);
+      return new AsmRuleInvocation(assignToElement, rule, parameters, definition.asmType);
     }
 
     return null;

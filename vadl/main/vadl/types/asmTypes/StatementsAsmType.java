@@ -36,6 +36,11 @@ public class StatementsAsmType implements AsmType {
   }
 
   @Override
+  public String toCppTypeString(String prefix) {
+    return "std::vector<NoData>";
+  }
+
+  @Override
   public String toString() {
     return "@" + name();
   }

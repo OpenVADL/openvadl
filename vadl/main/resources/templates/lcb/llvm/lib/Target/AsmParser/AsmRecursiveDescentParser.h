@@ -46,18 +46,16 @@ public:
     }
 };
 
+
 struct NoData{};
 
-struct mnemonic {
-    ParsedValue<[(${namespace})]ParsedOperand> mnemonic;
+[# th:each="struct : ${parsedValueStructs}" ]
+struct [(${struct.name})] {
+  [# th:each="field : ${struct.fields}" ]
+  ParsedValue<[(${field.cppTypeString})]> [(${field.name})];
+  [/]
 };
 
-[# th:each="format : ${formats}" ]
-struct [(${format.structName})] {
-[# th:each="field : ${format.fieldNames}" ]
-  ParsedValue<[(${namespace})]ParsedOperand> [(${field})];
-[/]
-};
 [/]
 
 class [(${namespace})]AsmRecursiveDescentParser {
@@ -65,21 +63,24 @@ class [(${namespace})]AsmRecursiveDescentParser {
     MCAsmParser &Parser;
     OperandVector &Operands;
 
-//private:
-    /*
+private:
+
+
     [# th:each="pr : ${parsingResults}" ]
-    RuleParsingResult<[(${pr.type})]> <[(${namespace})]AsmRecursiveDescentParser::[(${pr.functionName})](); // [(${pr.comment})]
+    RuleParsingResult<[(${pr.type})]> [(${pr.functionName})]();
     [/]
-    */
-    // «visitor.resultType( AsmType.String )» Literal(std::string toParse);
-    // «visitor.resultType( AsmType.Expression )» BuiltinExpression();
+
+    RuleParsingResult<StringRef> Literal(std::string toParse);
+    RuleParsingResult<const MCExpr*> BuiltinExpression();
+
+    bool VADL_asmparser_laidin(uint64_t lookahead, const std::vector<std::string>& compareStrings);
+    bool VADL_asmparser_laideq(uint64_t lookahead, const std::string compareString);
 
 public:
     [(${namespace})]AsmRecursiveDescentParser(MCAsmLexer &lexer, MCAsmParser &parser, OperandVector& operands)
         : Lexer(lexer), Parser(parser), Operands(operands) {
     }
 
-    //RuleParsingResult<NoData> EOL();
     RuleParsingResult<NoData> ParseStatement();
     RuleParsingResult<uint64_t> ParseRegister();
 };

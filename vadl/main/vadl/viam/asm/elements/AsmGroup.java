@@ -1,6 +1,7 @@
 package vadl.viam.asm.elements;
 
-import vadl.viam.asm.AsmGrammarVisitor;
+import javax.annotation.Nullable;
+import vadl.types.asmTypes.AsmType;
 
 /**
  * Represents a sub-group of elements ({@code ()}) in a grammar rule.
@@ -9,10 +10,8 @@ import vadl.viam.asm.AsmGrammarVisitor;
  * both represented by the {@code Alternatives} class.
  * </p>
  */
-public record AsmGroup(AsmAlternatives alternatives) implements AsmGrammarElement {
-
-  @Override
-  public void accept(AsmGrammarVisitor visitor) {
-    visitor.visit(this);
-  }
+public record AsmGroup(@Nullable AsmAssignTo assignTo,
+                       AsmAlternatives alternatives,
+                       boolean isEnclosingAlternativeOfAsmGroupType,
+                       AsmType asmType) implements AsmGrammarElement {
 }

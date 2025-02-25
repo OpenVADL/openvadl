@@ -118,4 +118,56 @@ public class ParserGenerator {
   private static String mapToName(FieldAccessRefNode node) {
     return node.fieldAccess().identifier.simpleName();
   }
+
+  /**
+   * Get the llvm lexer token for a vadl builtin rule.
+   *
+   * @param ruleName the name of the builtin rule
+   * @return the corresponding llvm lexer token
+   */
+  public static String getLlvmTokenKind(String ruleName) {
+    return switch (ruleName) {
+      case "IDENTIFIER" -> "AsmToken::Identifier";
+      case "STRING" -> "AsmToken::String";
+      case "INTEGER" -> "AsmToken::Integer";
+      case "EOL" -> "AsmToken::EndOfStatement";
+      case "COLON" -> "AsmToken::Colon";
+      case "PLUS" -> "AsmToken::Plus";
+      case "MINUS" -> "AsmToken::Minus";
+      case "TILDE" -> "AsmToken::Tilde";
+      case "SLASH" -> "AsmToken::Slash";
+      case "BACKSLASH" -> "AsmToken::BackSlash";
+      case "LPAREN" -> "AsmToken::LParen";
+      case "RPAREN" -> "AsmToken::RParen";
+      case "LBRAC" -> "AsmToken::LBrac";
+      case "RBRAC" -> "AsmToken::RBrac";
+      case "LCURLY" -> "AsmToken::LCurly";
+      case "RCURLY" -> "AsmToken::RCurly";
+      case "STAR" -> "AsmToken::Star";
+      case "DOT" -> "AsmToken::Dot";
+      case "COMMA" -> "AsmToken::Comma";
+      case "DOLLAR" -> "AsmToken::Dollar";
+      case "EQUAL" -> "AsmToken::Equal";
+      case "EQUALEQUAL" -> "AsmToken::EqualEqual";
+      case "PIPE" -> "AsmToken::Pipe";
+      case "PIPEPIPE" -> "AsmToken::PipePipe";
+      case "CARET" -> "AsmToken::Caret";
+      case "AMP" -> "AsmToken::Amp";
+      case "AMPAMP" -> "AsmToken::AmpAmp";
+      case "EXCLAIM" -> "AsmToken::Exclaim";
+      case "EXCLAIMEQUAL" -> "AsmToken::ExclaimEqual";
+      case "PERCENT" -> "AsmToken::Percent";
+      case "HASH" -> "AsmToken::Hash";
+      case "LESS" -> "AsmToken::Less";
+      case "LESSEQUAL" -> "AsmToken::LessEqual";
+      case "LESSLESS" -> "AsmToken::LessLess";
+      case "LESSGREATER" -> "AsmToken::LessGreater";
+      case "GREATER" -> "AsmToken::Greater";
+      case "GREATEREQUAL" -> "AsmToken::GreaterEqual";
+      case "GREATERGREATER" -> "AsmToken::GreaterGreater";
+      case "AT" -> "AsmToken::At";
+      case "MINUSGREATER" -> "AsmToken::MinusGreater";
+      default -> throw new ViamError("Unknown terminal rule name " + ruleName);
+    };
+  }
 }

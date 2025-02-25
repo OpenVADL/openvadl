@@ -1084,7 +1084,7 @@ PRODUCTIONS
 
   assemblyDescriptionDefinition<out AsmDescriptionDefinition asmDescription>    (. List<AsmModifierDefinition> modifiers = new ArrayList<>(); var start = lookaheadLoc(); .)
   = ASSEMBLY DESCRIPTION                                                        (. List<AsmDirectiveDefinition> directives = new ArrayList<>(); .)
-    assemblyIdentifier<out Identifier id>                                       (. List<AsmGrammarRuleDefinition> rules = null; var commonDefs = new ArrayList<Definition>(); .)
+    assemblyIdentifier<out Identifier id>                                       (. List<AsmGrammarRuleDefinition> rules = new ArrayList<>(); var commonDefs = new ArrayList<Definition>(); .)
     FOR
     assemblyIdentifier<out Identifier abi>
     SYM_EQ
@@ -1178,12 +1178,13 @@ PRODUCTIONS
       assemblyLocalVarDeclaration<out localVar>
     | assemblyIdentifier<out id>
         [ ( SYM_PLUS_EQ  (. isPlusEq = true; .)  | SYM_EQ)
-          assemblyGrammarLiteral<out asmLiteral>
+            ( assemblyGrammarLiteral<out asmLiteral>
+             | assemblyGrammarGroup<out groupAlternatives> )
           | SYM_LT assemblyParameterList<out params>  SYM_GT
-        ] [assemblyGrammarTypeDefinition<out type>]                  (. if(asmLiteral == null){ asmLiteral = new AsmGrammarLiteralDefinition(id, params, null, type, start.join(loc()));
-                                                                        id = null; type = null; } .)
+        ] [assemblyGrammarTypeDefinition<out type>]                  (. if(asmLiteral == null && groupAlternatives == null) {
+                                                                          asmLiteral = new AsmGrammarLiteralDefinition(id, params, null, type, start.join(loc()));
+                                                                          id = null; type = null; } .)
     | assemblyGrammarGroup<out groupAlternatives>
-      [assemblyGrammarTypeDefinition<out type>]
     | assemblyGrammarOptional<out optionAlternatives>
     | assemblyGrammarRepetition<out repetitionAlternatives>
     | SYM_QUESTION SYM_PAREN_OPEN

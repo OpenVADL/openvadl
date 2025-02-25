@@ -31,6 +31,11 @@ public class OperandAsmType implements AsmType {
   }
 
   @Override
+  public String toCppTypeString(String prefix) {
+    return prefix + "ParsedOperand";
+  }
+
+  @Override
   public boolean canBeCastTo(AsmType to) {
     return to == this || to == VoidAsmType.instance() || to == InstructionAsmType.instance()
         || to == OperandsAsmType.instance();

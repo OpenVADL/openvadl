@@ -10,7 +10,9 @@ import vadl.viam.Identifier;
  * Introduces a new name in the assembly language for a directive.
  */
 public class AsmDirectiveMapping extends Definition {
-  AsmDirective directive;
+  private final String alias;
+  private final String target;
+  private final boolean alignmentIsInBytes;
 
   /**
    * Creates a new directive mapping.
@@ -21,14 +23,29 @@ public class AsmDirectiveMapping extends Definition {
    * </p>
    *
    * @param identifier the identifier of the directive
-   * @param directive  the directive to be mapped to
+   * @param alias      the alias of the directive
+   * @param target     the original directive
    * @param location   the source location of the directive mapping
    */
-  public AsmDirectiveMapping(Identifier identifier, AsmDirective directive,
-                             SourceLocation location) {
+  public AsmDirectiveMapping(Identifier identifier, String alias, String target,
+                             boolean alignmentIsInBytes, SourceLocation location) {
     super(identifier);
-    this.directive = directive;
+    this.alias = alias;
+    this.target = target;
+    this.alignmentIsInBytes = alignmentIsInBytes;
     setSourceLocation(location);
+  }
+
+  public String getAlias() {
+    return alias;
+  }
+
+  public String getTarget() {
+    return target;
+  }
+
+  public boolean getAlignmentIsInBytes() {
+    return alignmentIsInBytes;
   }
 
   @Override

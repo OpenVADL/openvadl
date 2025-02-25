@@ -25,6 +25,20 @@ public class AsmBuiltInCall extends AbstractFunctionCallNode {
     this.asmBuiltIn = asmBuiltIn;
   }
 
+  /**
+   * Update the asm builtin by the given value.
+   */
+  public void setAsmBuiltIn(BuiltIn asmBuiltIn) {
+    this.asmBuiltIn = asmBuiltIn;
+  }
+
+  /**
+   * Gets the asm {@link BuiltIn}.
+   */
+  public BuiltIn asmBuiltIn() {
+    return this.asmBuiltIn;
+  }
+
   @Override
   public ExpressionNode copy() {
     return new AsmBuiltInCall(asmBuiltIn,

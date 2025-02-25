@@ -5,12 +5,20 @@ package vadl.viam.asm.elements;
  */
 public abstract class AsmAssignTo implements AsmGrammarElement {
   private final String assignToName;
+  private final boolean isWithinRepetition;
 
-  public AsmAssignTo(String assignToName) {
+  public AsmAssignTo(String assignToName, boolean isWithinRepetition) {
     this.assignToName = assignToName;
+    this.isWithinRepetition = isWithinRepetition;
   }
 
   public String getAssignToName() {
     return assignToName;
   }
+
+  public boolean getIsWithinRepetition() {
+    return isWithinRepetition;
+  }
+
+  public abstract boolean isPlusEqualsAssignment();
 }

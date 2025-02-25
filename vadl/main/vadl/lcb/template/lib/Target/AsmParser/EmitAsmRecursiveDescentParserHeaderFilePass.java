@@ -1,25 +1,38 @@
 package vadl.lcb.template.lib.Target.AsmParser;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.assembly.AssemblyConstant;
-import vadl.lcb.codegen.assembly.ParserGenerator;
+import vadl.cppCodeGen.context.CAsmContext;
+import vadl.javaannotations.DispatchFor;
+import vadl.javaannotations.Handler;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
-import vadl.types.BuiltInTable;
+import vadl.types.asmTypes.AsmType;
+import vadl.types.asmTypes.GroupAsmType;
 import vadl.viam.Specification;
-import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.asm.elements.AsmAlternative;
+import vadl.viam.asm.elements.AsmAlternatives;
+import vadl.viam.asm.elements.AsmAssignToAttribute;
+import vadl.viam.asm.elements.AsmAssignToLocalVar;
+import vadl.viam.asm.elements.AsmFunctionInvocation;
+import vadl.viam.asm.elements.AsmGrammarElement;
+import vadl.viam.asm.elements.AsmGroup;
+import vadl.viam.asm.elements.AsmLocalVarDefinition;
+import vadl.viam.asm.elements.AsmLocalVarUse;
+import vadl.viam.asm.elements.AsmOption;
+import vadl.viam.asm.elements.AsmRepetition;
+import vadl.viam.asm.elements.AsmRuleInvocation;
+import vadl.viam.asm.elements.AsmStringLiteralUse;
+import vadl.viam.asm.rules.AsmBuiltinRule;
+import vadl.viam.asm.rules.AsmGrammarRule;
+import vadl.viam.asm.rules.AsmNonTerminalRule;
+import vadl.viam.asm.rules.AsmTerminalRule;
 
 /**
  * This file includes the definitions for the asm parser.
@@ -58,74 +71,196 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var composedStructs = composedStructs(specification);
-    var singleFieldStructs = singleFieldStructs(specification);
-    var instructions = instructions(specification);
-    var constants = constants(specification);
-    var parsingResults = Stream.concat(constants, instructions).toList();
+    var grammarRules = grammarRules(specification);
+    var parsedValueStructs = parsedValueStructs(specification);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        "formats", Stream.concat(composedStructs, singleFieldStructs).toList(),
-        "parsingResults", parsingResults);
+        "parsingResults", grammarRules,
+        "parsedValueStructs", parsedValueStructs);
   }
 
-  @Nonnull
-  private static Stream<ParserGenerator.FieldStructEnumeration> composedStructs(
+  private List<ParsingResultRecord> grammarRules(Specification specification) {
+    return specification.assemblyDescription().map(
+        asmDesc -> asmDesc.rules().stream().map(
+            rule -> new ParsingResultRecord(
+                rule.getAsmType().toCppTypeString(specification.simpleName()),
+                rule.simpleName().trim(), rule.simpleName()
+            )
+        )
+    ).orElse(Stream.empty()).toList();
+  }
+
+  private List<ParsedValueStruct> parsedValueStructs(
       Specification specification) {
-    return specification.isa()
-        .map(isa -> isa.ownInstructions().stream())
-        .orElse(Stream.empty())
-        .flatMap(
-            instruction -> instruction.assembly().function().behavior().getNodes(BuiltInCall.class))
-        .filter(node -> node.builtIn() == BuiltInTable.CONCATENATE_STRINGS)
-        .map(ParserGenerator::mapParserRecord)
-        .distinct()
-        .sorted(Comparator.comparing(ParserGenerator.FieldStructEnumeration::structName));
+    return specification.assemblyDescription().map(
+        asmDesc -> new StructGenerator().getAllStructs(specification.simpleName(), asmDesc.rules())
+    ).orElse(Stream.empty()).toList();
+  }
+}
+
+
+class ParsedValueStruct implements Renderable {
+  private final String name;
+  private final Stream<StructField> fields;
+
+  @Override
+  public Map<String, Object> renderObj() {
+    return Map.of(
+        "name", name,
+        "fields", fields.toList()
+    );
   }
 
-  @Nonnull
-  private static Stream<ParserGenerator.FieldStructEnumeration> singleFieldStructs(
-      Specification specification) {
-    return specification.isa()
-        .map(isa -> isa.ownFormats().stream())
-        .orElse(Stream.empty())
-        .flatMap(format -> Arrays.stream(format.fields()))
-        .map(field -> new ParserGenerator.FieldStructEnumeration(
-            ParserGenerator.generateStructName(List.of(field)),
-            Stream.of(field).map(ParserGenerator::generateFieldName).toList()))
-        .distinct()
-        .sorted(Comparator.comparing(ParserGenerator.FieldStructEnumeration::structName));
+  record StructField(String name, String cppTypeString) implements Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "cppTypeString", cppTypeString
+      );
+    }
   }
 
-  @Nonnull
-  private static Stream<ParsingResultRecord> instructions(
-      Specification specification) {
-    return specification.isa()
-        .map(isa -> isa.ownInstructions().stream())
-        .orElse(Stream.empty())
-        .map(instruction -> new ParsingResultRecord("NoData",
-            ParserGenerator.generateInstructionName(instruction), instruction.simpleName()));
+  public String getName() {
+    return name;
   }
 
-  @Nonnull
-  private static Stream<ParsingResultRecord> constants(
-      Specification specification) {
-    return
-        specification.isa()
-            .map(isa -> isa.ownInstructions().stream())
-            .orElse(Stream.empty())
-            .flatMap(instruction -> instruction.assembly().function().behavior().getNodes(
-                AssemblyConstant.class))
-            .sorted(Comparator.comparing(AssemblyConstant::kind)) // Sort by something
-            .map(assemblyConstant -> new ParsingResultRecord("StringRef",
-                ParserGenerator.generateConstantName(assemblyConstant),
-                assemblyConstant.constant().toString()))
-            .filter(distinctByKeyClass(x -> x.functionName));
+  public Stream<StructField> getFields() {
+    return fields;
   }
 
-  public static <T> Predicate<T> distinctByKeyClass(
-      final Function<? super T, Object> keyExtractor) {
-    Map<Object, Boolean> seen = new ConcurrentHashMap<>();
-    return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+  public ParsedValueStruct(String namespace, String name, Map<String, AsmType> fieldWithAsmType) {
+    this.name = name;
+    fields = fieldWithAsmType.entrySet().stream().map(
+        entry -> new StructField(entry.getKey(), entry.getValue().toCppTypeString(namespace))
+    );
+  }
+}
+
+@DispatchFor(
+    value = AsmGrammarElement.class,
+    context = CAsmContext.class,
+    include = "vadl.viam.asm"
+)
+class StructGenerator {
+
+  private final CAsmContext ctx;
+  private final StringBuilder builder;
+
+  HashSet<ParsedValueStruct> generatedStructs = new HashSet<>();
+  private String namespace = "";
+
+  public StructGenerator() {
+    this.builder = new StringBuilder();
+    this.ctx = new CAsmContext(builder::append, (ctx, element)
+        -> StructGeneratorDispatcher.dispatch(this, ctx, element));
+  }
+
+  Stream<ParsedValueStruct> getAllStructs(String namespace, List<AsmGrammarRule> rules) {
+    this.namespace = namespace;
+    rules.forEach(ctx::gen);
+    return generatedStructs.stream();
+  }
+
+  private void generateStructIfNecessary(AsmType type) {
+    if (!(type instanceof GroupAsmType groupType)) {
+      return;
+    }
+
+    var structName = groupType.toCppTypeString(namespace);
+    if (generatedStructs.stream().anyMatch(s -> s.getName().equals(structName))) {
+      return;
+    }
+
+    var struct =
+        new ParsedValueStruct(namespace, groupType.toCppTypeString(namespace),
+            groupType.getSubtypeMap());
+    generatedStructs.add(struct);
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmGrammarRule rule) {
+    ctx.gen(rule);
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmNonTerminalRule rule) {
+    ctx.gen(rule.getAlternatives());
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmBuiltinRule rule) {
+    // Do nothing because AsmType of builtin rules is never GroupAsmType
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmTerminalRule rule) {
+    // Do nothing because AsmType of terminal rules is never GroupAsmType
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmAlternative element) {
+    element.elements().forEach(ctx::gen);
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmAlternatives element) {
+    generateStructIfNecessary(element.asmType());
+    element.alternatives().forEach(ctx::gen);
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmAssignToAttribute element) {
+    // Do nothing because LHS of assignment does not have an AsmType
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmAssignToLocalVar element) {
+    // Do nothing because LHS of assignment does not have an AsmType
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmFunctionInvocation element) {
+    // Do nothing because AsmType of function invocation is never GroupAsmType
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmGroup element) {
+    generateStructIfNecessary(element.asmType());
+    ctx.gen(element.alternatives());
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmLocalVarDefinition element) {
+    generateStructIfNecessary(element.asmType());
+    if (element.asmLiteral() != null) {
+      ctx.gen(element.asmLiteral());
+    }
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmLocalVarUse element) {
+    generateStructIfNecessary(element.asmType());
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmOption element) {
+    ctx.gen(element.alternatives());
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmRepetition element) {
+    ctx.gen(element.alternatives());
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmRuleInvocation element) {
+    generateStructIfNecessary(element.asmType());
+  }
+
+  @Handler
+  void handle(CAsmContext ctx, AsmStringLiteralUse element) {
+    // Do nothing because AsmType of string literals is never GroupAsmType
   }
 }

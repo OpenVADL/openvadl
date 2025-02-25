@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.ConcreteRelationType;
@@ -15,6 +16,7 @@ import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
+import vadl.viam.asm.AsmToken;
 
 /**
  * The Definition nodes inside the AST.
@@ -4497,6 +4499,10 @@ class AsmGrammarAlternativesDefinition extends Definition {
 
   @Nullable
   AsmType asmType;
+  @Nullable
+  List<Set<AsmToken>> alternativesFirstTokens;
+  @Nullable
+  Set<AsmToken> enclosingBlockFirstTokens;
 
   public AsmGrammarAlternativesDefinition(List<List<AsmGrammarElementDefinition>> alternatives,
                                           SourceLocation loc) {
@@ -4683,9 +4689,7 @@ class AsmGrammarElementDefinition extends Definition {
     }
     if (attribute != null) {
       attribute.prettyPrint(indent, builder);
-      if (asmLiteral != null) {
-        builder.append(" ").append(symbol()).append(" ");
-      }
+      builder.append(" ").append(symbol()).append(" ");
     }
     if (asmLiteral != null) {
       asmLiteral.prettyPrint(0, builder);

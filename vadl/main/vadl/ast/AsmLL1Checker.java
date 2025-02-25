@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
+import vadl.viam.asm.AsmToken;
 
 
 /**
@@ -45,6 +47,7 @@ public class AsmLL1Checker {
                                   boolean isInOptionOrRepetition) {
     HashSet<AsmToken> previousAlternativesTokens = new HashSet<>();
     Set<AsmToken> allAlternativesTokens = new HashSet<>();
+    entity.alternativesFirstTokens = new ArrayList<>(entity.alternatives.size());
 
     for (var alternative : entity.alternatives) {
       allAlternativesTokens.addAll(expectedTokensForConflict(alternative));
@@ -53,6 +56,7 @@ public class AsmLL1Checker {
     for (var alternative : entity.alternatives) {
 
       var expected = expectedTokens(alternative);
+      entity.alternativesFirstTokens.add(expected);
 
       var firstElement = alternative.get(0);
       if (!(entity.alternatives.size() == 1 && isInOptionOrRepetition)
@@ -125,12 +129,14 @@ public class AsmLL1Checker {
 
   private void verifyOptionOrRepetitionElement(AsmGrammarAlternativesDefinition alternatives,
                                                List<AsmGrammarElementDefinition> successors) {
+    var expected = firstSetComputer.visit(alternatives);
     var expectedTokensAfter = expectedTokens(successors);
+    alternatives.enclosingBlockFirstTokens = expected;
 
     if (alternatives.alternatives.size() == 1) {
       var firstElement = alternatives.alternatives.get(0).get(0);
       if (firstElement.semanticPredicate != null) {
-        var expected = firstSetComputer.visit(alternatives);
+
         if (getOverlappingTokens(expected, expectedTokensAfter).isEmpty()) {
           throw Diagnostic.error("Misplaced semantic predicate.", firstElement)
               .note("There is no LL(1) conflict here.").build();
@@ -231,58 +237,6 @@ public class AsmLL1Checker {
   }
 }
 
-class AsmToken {
-  String ruleName;
-  @Nullable
-  String stringLiteral;
-
-  public AsmToken(String ruleName, @Nullable String stringLiteral) {
-    this.ruleName = ruleName;
-    this.stringLiteral = stringLiteral;
-  }
-
-  @Override
-  public String toString() {
-    if (stringLiteral != null) {
-      return '"' + stringLiteral + '"';
-    }
-    return ruleName;
-  }
-
-  /**
-   * An AsmToken with ruleName=IDENTIFIER and stringLiteral=null
-   * is equal to an AsmToken with ruleName=IDENTIFIER and stringLiteral="something"
-   * since the parser cannot decide which alternative to choose.
-   *
-   * @param o the other AsmToken
-   * @return whether the two AsmTokens are equal from the AsmParsers viewpoint
-   */
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    AsmToken that = (AsmToken) o;
-
-    if (ruleName.equals(that.ruleName)) {
-      if (stringLiteral == null || that.stringLiteral == null) {
-        return true;
-      }
-      return stringLiteral.equals(that.stringLiteral);
-    }
-
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(ruleName);
-  }
-}
-
 class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
 
   private final HashMap<String, Set<AsmToken>> firstSetCache = new HashMap<>();
@@ -295,8 +249,17 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
     }
 
     Set<AsmToken> firstSet;
-    if (entity.isTerminalRule || entity.isBuiltinRule) {
+    if (entity.isTerminalRule) {
       firstSet = new HashSet<>(List.of(new AsmToken(ruleName, null)));
+    } else if (entity.isBuiltinRule) {
+      if (entity.identifier().name.equals("Expression")) {
+        firstSet = new HashSet<>(
+            Stream.of("LPAREN", "DOT", "MINUS", "PLUS", "EXCLAIM", "TILDE", "INTEGER", "STRING",
+                "IDENTIFIER").map(s -> new AsmToken(s, null)).toList()
+        );
+      } else {
+        throw Diagnostic.error("Unknown builtin: " + entity.identifier().name, entity).build();
+      }
     } else {
       firstSet = entity.alternatives.accept(this);
     }

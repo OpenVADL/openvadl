@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,6 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
-import vadl.types.asmTypes.VoidAsmType;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
@@ -657,15 +657,18 @@ public class TypeChecker
               new Identifier(rule.identifier().name, invalidLoc),
               new ArrayList<>(), null, null, invalidLoc);
           asmLiteral.symbolTable = rule.symbolTable();
+          asmLiteral.asmType = InstructionAsmType.instance();
 
           var element = new AsmGrammarElementDefinition(null, null, false, asmLiteral,
               null, null, null, null, null, invalidLoc);
           element.symbolTable = rule.symbolTable();
+          element.asmType = InstructionAsmType.instance();
           return List.of(element);
         }).toList();
 
     instructionRule.alternatives =
         new AsmGrammarAlternativesDefinition(instructionRuleAlternatives, invalidLoc);
+    instructionRule.alternatives.asmType = InstructionAsmType.instance();
     instructionRule.isBuiltinRule = false;
   }
 
@@ -684,6 +687,12 @@ public class TypeChecker
 
   @Override
   public Void visit(AsmGrammarRuleDefinition definition) {
+    if (definition.isBuiltinRule) {
+      definition.asmType =
+          getAsmTypeFromAsmTypeDefinition(Objects.requireNonNull(definition.asmTypeDefinition));
+      return null;
+    }
+
     if (!asmRuleInvocationChain.add(definition.identifier().name)) {
       var cycle =
           String.join(" -> ", asmRuleInvocationChain) + " -> " + definition.identifier().name;
@@ -735,7 +744,7 @@ public class TypeChecker
     return null;
   }
 
-  private static void preprocessAlternativesElements(AsmGrammarAlternativesDefinition definition) {
+  private void preprocessAlternativesElements(AsmGrammarAlternativesDefinition definition) {
     definition.alternatives.forEach(elements -> {
       for (int i = 0; i < elements.size(); i++) {
         var element = elements.get(i);
@@ -776,7 +785,7 @@ public class TypeChecker
           "Typechecker found an AsmGrammarAlternative without elements.");
     }
 
-    var groupSubtypes = new ArrayList<AsmType>();
+    var groupSubtypeMap = new LinkedHashMap<String, AsmType>();
     var alreadyAssignedAttributes = new HashMap<String, AsmGrammarElementDefinition>();
 
     for (var element : elements) {
@@ -788,7 +797,7 @@ public class TypeChecker
           element.accept(this);
         }
 
-        appendToAsmGroupType(element, groupSubtypes, alreadyAssignedAttributes);
+        appendToAsmGroupType(element, groupSubtypeMap, alreadyAssignedAttributes);
       } else {
         element.accept(this);
       }
@@ -798,37 +807,60 @@ public class TypeChecker
       return elementsToConsider.get(0).asmType;
     }
 
-    return new GroupAsmType(groupSubtypes);
+    return new GroupAsmType(groupSubtypeMap);
   }
 
   private void appendToAsmGroupType(AsmGrammarElementDefinition element,
-                                    List<AsmType> groupSubtypes,
+                                    Map<String, AsmType> groupSubtypeMap,
                                     Map<String, AsmGrammarElementDefinition> assignedAttributes) {
-    // these two if statements are mutually exclusive:
-    // grammar syntax does not allow for an element to be assigned to an attribute
-    // and be of GroupAsmType at the same time
 
     // consider elements which are assigned to an attribute
     if (element.attribute != null && !element.isAttributeLocalVar
         && !element.isWithinRepetitionBlock) {
-      groupSubtypes.add(element.asmType);
-
-      var otherElement = assignedAttributes.put(element.attribute.name, element);
-      if (otherElement != null) {
-        throw Diagnostic.error(
-                "Found multiple assignments to attribute %s in a grammar rule."
-                    .formatted(element.attribute.name), element.sourceLocation())
-            .locationDescription(otherElement,
-                "Attribute %s has already been assigned to here.", element.attribute.name)
-            .build();
+      if (groupSubtypeMap.containsKey(element.attribute.name)) {
+        throw Diagnostic.error("Found multiple assignments to attribute.", element)
+            .description("Attribute %s has already been assigned to.",
+                element.attribute.name).build();
       }
+      groupSubtypeMap.put(element.attribute.name, element.asmType);
+      assignedAttributes.put(element.attribute.name, element);
     }
 
-    // flatten nested GroupAsmTypes from group and option blocks
-    // ignore the type of repetition blocks
-    if (element.repetitionAlternatives == null
-        && element.asmType instanceof GroupAsmType elementAsmType) {
-      groupSubtypes.addAll(elementAsmType.getSubtypes());
+    // flatten nested GroupAsmTypes from option blocks
+    // repetition blocks do not have a type,
+    // because their attributes always reference the enclosing block
+    if (element.optionAlternatives != null) {
+      if (element.asmType instanceof GroupAsmType elementAsmType) {
+        elementAsmType.getSubtypeMap().keySet().forEach(
+            key -> throwErrorOnNestedMultipleAttributeAssignment(element, groupSubtypeMap, key)
+        );
+        groupSubtypeMap.putAll(elementAsmType.getSubtypeMap());
+      } else {
+        // this case appears for option blocks with one attributed element like: [attr = some @type]
+        // type of option block is lifted from @GroupAsmType(@type) to @type
+        // so to flatten we need to get the name of this one attribute
+        var attribute = element.optionAlternatives.alternatives.get(0).stream().filter(
+            e -> e.localVar == null && e.semanticPredicate == null
+        ).findFirst().map(e -> e.attribute);
+
+        if (attribute.isPresent()) {
+          throwErrorOnNestedMultipleAttributeAssignment(element, groupSubtypeMap,
+              attribute.get().name);
+          groupSubtypeMap.put(attribute.get().name, element.asmType);
+        }
+      }
+    }
+  }
+
+  private void throwErrorOnNestedMultipleAttributeAssignment(AsmGrammarElementDefinition element,
+                                                             Map<String, AsmType> groupSubtypeMap,
+                                                             String attributeToBeAdded) {
+    if (groupSubtypeMap.containsKey(attributeToBeAdded)) {
+      throw Diagnostic.error("Found invalid attribute assignment.", element)
+          .description(
+              "Attribute %s assigned in this block is already assigned in enclosing block.",
+              attributeToBeAdded)
+          .build();
     }
   }
 
@@ -861,6 +893,7 @@ public class TypeChecker
 
     if (definition.localVar != null) {
       definition.localVar.accept(this);
+      definition.asmType = definition.localVar.asmType;
     }
 
     visitAsmLiteral(definition);
@@ -885,7 +918,7 @@ public class TypeChecker
     }
 
     // actions that depend on the resolved asm type of this element
-    updateLocalVarIfNecessary(definition);
+    validateLocalVarAssignment(definition);
     validateAttributeAsmType(definition);
 
     return null;
@@ -928,7 +961,7 @@ public class TypeChecker
     }
   }
 
-  private void updateLocalVarIfNecessary(AsmGrammarElementDefinition definition) {
+  private void validateLocalVarAssignment(AsmGrammarElementDefinition definition) {
     if (definition.attribute != null && definition.isAttributeLocalVar) {
       var localVarDefinition = (AsmGrammarLocalVarDefinition) definition.symbolTable()
           .resolveNode(definition.attribute.name);
@@ -936,7 +969,19 @@ public class TypeChecker
         throw buildIllegalStateException(definition,
             "Assigning to unknown local variable %s.".formatted(definition.attribute.name));
       }
-      localVarDefinition.asmType = definition.asmType;
+
+      Objects.requireNonNull(definition.asmType);
+      Objects.requireNonNull(localVarDefinition.asmType);
+      if (localVarDefinition.asmType != definition.asmType) {
+        throw Diagnostic.error("Type Mismatch", definition)
+            .locationDescription(localVarDefinition, "Local variable %s is "
+                    + "defined with AsmType %s.",
+                definition.attribute.name, localVarDefinition.asmType)
+            .locationDescription(definition, "Local variable %s is "
+                    + "updated with another AsmType %s.",
+                definition.attribute.name, definition.asmType)
+            .build();
+      }
     }
   }
 
@@ -985,7 +1030,9 @@ public class TypeChecker
   public Void visit(AsmGrammarLiteralDefinition definition) {
 
     if (definition.stringLiteral != null) {
-      visitAsmStringLiteralUsage(definition);
+      if (definition.asmType == null) {
+        visitAsmStringLiteralUsage(definition);
+      }
       return null;
     }
 
@@ -1125,7 +1172,14 @@ public class TypeChecker
   @Override
   public Void visit(AsmGrammarLocalVarDefinition definition) {
     if (definition.asmLiteral.id != null && definition.asmLiteral.id.name.equals("null")) {
-      definition.asmType = VoidAsmType.instance();
+      if (definition.asmLiteral.asmTypeDefinition != null) {
+        definition.asmType =
+            getAsmTypeFromAsmTypeDefinition(definition.asmLiteral.asmTypeDefinition);
+      } else {
+        throw Diagnostic.error("Local variable without AsmType", definition)
+            .note("Local variables declarations with value 'null' must have an AsmType.")
+            .build();
+      }
       return null;
     }
 

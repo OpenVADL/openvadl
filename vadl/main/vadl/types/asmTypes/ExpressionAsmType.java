@@ -31,6 +31,11 @@ public class ExpressionAsmType implements AsmType {
   }
 
   @Override
+  public String toCppTypeString(String prefix) {
+    return "const MCExpr*";
+  }
+
+  @Override
   public boolean canBeCastTo(AsmType to) {
     return to == this || to == VoidAsmType.instance() || to == OperandAsmType.instance();
   }

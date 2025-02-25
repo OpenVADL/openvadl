@@ -36,6 +36,11 @@ public class VoidAsmType implements AsmType {
   }
 
   @Override
+  public String toCppTypeString(String prefix) {
+    return "NoData";
+  }
+
+  @Override
   public boolean canBeCastTo(AsmType to) {
     return to == this;
   }

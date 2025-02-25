@@ -10,6 +10,7 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.ConstantAsmType;
 import vadl.types.asmTypes.ExpressionAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
+import vadl.types.asmTypes.OperandAsmType;
 import vadl.types.asmTypes.RegisterAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.types.asmTypes.SymbolAsmType;
@@ -28,7 +29,7 @@ public class AsmGrammarDefaultRules {
   /**
    * The name of the built-in function that negates a 64-bit integer.
    */
-  public static final String BUILTIN_ASM_NEG = "builtin_asm_neg";
+  public static final String BUILTIN_ASM_NEG = "VADL_asmparser_neg";
 
   private static final HashMap<AsmGrammarRuleDefinition, Pattern> patternCache = new HashMap<>();
 
@@ -61,7 +62,8 @@ public class AsmGrammarDefaultRules {
     return new ArrayList<>(List.of(
         terminalRuleTypeString("IDENTIFIER", "[a-zA-Z_.][a-zA-Z0-9_$.@]*", false),
         terminalRuleTypeString("STRING", "\\\".*\\\"", false),
-        terminalRuleTypeString("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+", false),
+        terminalRule("INTEGER", "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+", false,
+            ConstantAsmType.instance()),
         terminalRuleTypeString("COLON", ":", false),
         terminalRuleTypeString("PLUS", "+", true),
         terminalRuleTypeString("MINUS", "-", false),
@@ -100,19 +102,21 @@ public class AsmGrammarDefaultRules {
         terminalRuleTypeString("MINUSGREATER", "->", false),
         terminalRule("EOL", "[\\r(\\r\\n)]", true, VoidAsmType.instance()),
         nonTerminalRule("Statement", InstructionAsmType.instance(), false, instructionRule(),
-            ruleReference("EOL")),
+            ruleReference("EOL", VoidAsmType.instance())),
         nonTerminalRule("Register", RegisterAsmType.instance(),
-            false, ruleReference("IDENTIFIER")),
-        nonTerminalRule("ImmediateOperand", null, false, ruleReference("Expression")),
-        nonTerminalRule("Identifier", StringAsmType.instance(),
-            false, ruleReference("IDENTIFIER")),
+            false, ruleReference("IDENTIFIER", StringAsmType.instance())),
+        nonTerminalRule("ImmediateOperand", OperandAsmType.instance(), false,
+            ruleReference("Expression")),
+        nonTerminalRule("Identifier", null, false, ruleReference("IDENTIFIER")),
         nonTerminalRule("Expression", ExpressionAsmType.instance(), true,
             ruleReference("Expression")),
         nonTerminalRule("Instruction", InstructionAsmType.instance(), true,
             ruleReference("Instruction")),
         integerRule(),
-        nonTerminalRule("Natural", ConstantAsmType.instance(), false, ruleReference("INTEGER")),
-        nonTerminalRule("Label", SymbolAsmType.instance(), false, ruleReference("Identifier"))
+        nonTerminalRule("Natural", ConstantAsmType.instance(), false,
+            ruleReference("INTEGER", ConstantAsmType.instance())),
+        nonTerminalRule("Label", SymbolAsmType.instance(), false,
+            ruleReference("Identifier", StringAsmType.instance()))
     ));
   }
 
@@ -190,36 +194,65 @@ public class AsmGrammarDefaultRules {
   private static AsmGrammarRuleDefinition nonTerminalRule(String name, @Nullable AsmType ruleType,
                                                           boolean isBuiltinRule,
                                                           AsmGrammarElementDefinition... elements) {
-    var rule = new AsmGrammarRuleDefinition(
-        new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION),
-        null,
-        new AsmGrammarAlternativesDefinition(
-            new ArrayList<>(List.of(List.of(elements))),
-            SourceLocation.INVALID_SOURCE_LOCATION
-        ),
+    var alternativesDefinition = new AsmGrammarAlternativesDefinition(
+        new ArrayList<>(List.of(List.of(elements))),
         SourceLocation.INVALID_SOURCE_LOCATION
     );
+    alternativesDefinition.asmType = ruleType;
 
-    // by setting the asmType we can avoid checking the default rules in the typechecker
-    rule.asmType = ruleType;
+    AsmGrammarTypeDefinition typeDef = null;
+    if (ruleType != null) {
+      typeDef = new AsmGrammarTypeDefinition(new Identifier(ruleType.name(),
+          SourceLocation.INVALID_SOURCE_LOCATION),
+          SourceLocation.INVALID_SOURCE_LOCATION);
+    }
+
+    var rule = new AsmGrammarRuleDefinition(
+        new Identifier(name, SourceLocation.INVALID_SOURCE_LOCATION), typeDef,
+        alternativesDefinition, SourceLocation.INVALID_SOURCE_LOCATION
+    );
+
     rule.isBuiltinRule = isBuiltinRule;
     return rule;
   }
 
   private static AsmGrammarRuleDefinition integerRule() {
 
+    var negCallParamLiteral = new AsmGrammarLiteralDefinition(
+        new Identifier("INTEGER", SourceLocation.INVALID_SOURCE_LOCATION), List.of(),
+        null,
+        null, SourceLocation.INVALID_SOURCE_LOCATION);
+    negCallParamLiteral.asmType = ConstantAsmType.instance();
+
+    var negLiteral = new AsmGrammarLiteralDefinition(
+        new Identifier(BUILTIN_ASM_NEG, SourceLocation.INVALID_SOURCE_LOCATION),
+        List.of(negCallParamLiteral), null, null, SourceLocation.INVALID_SOURCE_LOCATION
+    );
+    negLiteral.asmType = ConstantAsmType.instance();
+
     var negCallElement = new AsmGrammarElementDefinition(
-        null, null, false,
-        new AsmGrammarLiteralDefinition(
-            new Identifier(BUILTIN_ASM_NEG, SourceLocation.INVALID_SOURCE_LOCATION),
-            List.of(
-                new AsmGrammarLiteralDefinition(
-                    new Identifier("INTEGER", SourceLocation.INVALID_SOURCE_LOCATION), List.of(),
-                    null,
-                    null, SourceLocation.INVALID_SOURCE_LOCATION)
-            ), null, null, SourceLocation.INVALID_SOURCE_LOCATION
-        ),
+        null, new Identifier("val", SourceLocation.INVALID_SOURCE_LOCATION), false, negLiteral,
         null, null, null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
+    );
+    negCallElement.asmType = ConstantAsmType.instance();
+
+    var minusNegCallGroupElement = new AsmGrammarElementDefinition(null,
+        new Identifier("dec", SourceLocation.INVALID_SOURCE_LOCATION), false, null,
+        new AsmGrammarAlternativesDefinition(
+            List.of(List.of(ruleReference("MINUS", StringAsmType.instance()), negCallElement)),
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        null, null, null,
+        new AsmGrammarTypeDefinition(
+            new Identifier("constant", SourceLocation.INVALID_SOURCE_LOCATION),
+            SourceLocation.INVALID_SOURCE_LOCATION),
+        SourceLocation.INVALID_SOURCE_LOCATION
+    );
+
+    var integerAlternatives = new AsmGrammarAlternativesDefinition(
+        List.of(
+            List.of(ruleReference("INTEGER", ConstantAsmType.instance())),
+            List.of(minusNegCallGroupElement)
+        ), SourceLocation.INVALID_SOURCE_LOCATION
     );
 
     var rule = new AsmGrammarRuleDefinition(
@@ -228,22 +261,15 @@ public class AsmGrammarDefaultRules {
             new Identifier(ConstantAsmType.instance().name(),
                 SourceLocation.INVALID_SOURCE_LOCATION),
             SourceLocation.INVALID_SOURCE_LOCATION),
-        new AsmGrammarAlternativesDefinition(
-            List.of(
-                List.of(ruleReference("MINUS"), negCallElement),
-                List.of(ruleReference("INTEGER", ConstantAsmType.instance()))
-            ), SourceLocation.INVALID_SOURCE_LOCATION
-        ), SourceLocation.INVALID_SOURCE_LOCATION);
+        integerAlternatives, SourceLocation.INVALID_SOURCE_LOCATION);
 
-    // by setting the asmType we can avoid checking the default rules in the typechecker
-    rule.asmType = ConstantAsmType.instance();
     return rule;
   }
 
   private static AsmGrammarElementDefinition instructionRule() {
     var instructionElement = ruleReference("Instruction", InstructionAsmType.instance());
     instructionElement.attribute =
-        new Identifier("instruction", SourceLocation.INVALID_SOURCE_LOCATION);
+        new Identifier("inst", SourceLocation.INVALID_SOURCE_LOCATION);
     return instructionElement;
   }
 
@@ -253,12 +279,15 @@ public class AsmGrammarDefaultRules {
 
   private static AsmGrammarElementDefinition ruleReference(String refName,
                                                            @Nullable AsmType refRuleType) {
+
+    var literal = new AsmGrammarLiteralDefinition(
+        new Identifier(refName, SourceLocation.INVALID_SOURCE_LOCATION),
+        new ArrayList<>(), null, null, SourceLocation.INVALID_SOURCE_LOCATION
+    );
+    literal.asmType = refRuleType;
+
     var element = new AsmGrammarElementDefinition(
-        null, null, false,
-        new AsmGrammarLiteralDefinition(
-            new Identifier(refName, SourceLocation.INVALID_SOURCE_LOCATION),
-            new ArrayList<>(), null, null, SourceLocation.INVALID_SOURCE_LOCATION
-        ),
+        null, null, false, literal,
         null, null, null, null, null, SourceLocation.INVALID_SOURCE_LOCATION
     );
 
