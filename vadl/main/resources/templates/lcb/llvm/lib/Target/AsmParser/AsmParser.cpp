@@ -85,15 +85,12 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
 
     std::vector<size_t> OpIndex;
     std::vector<std::string> targets;
-    /*
+
     switch(Opcode) {
         [# th:each="instruction : ${instructions}" ]
-        case [(${namespace})]::[(${instruction.name})]: targets = {
-            // TODO llvmOperands printing here
-        }; break;
+        case [(${namespace})]::[(${instruction.name})]: targets = { [(${instruction.operands})] }; break;
         [/]
     }
-    */
 
     for( unsigned i = 0; i < targets.size(); i++ )
     {

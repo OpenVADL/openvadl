@@ -1,17 +1,20 @@
 package vadl.lcb.template.lib.Target.AsmParser;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.AssemblyDescription;
-import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 
 /**
@@ -46,14 +49,34 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  private List<Map<String, Object>> mapInstructions(Optional<InstructionSetArchitecture> isa) {
-    return isa
-        .map(InstructionSetArchitecture::ownInstructions)
-        .orElse(List.of())
-        .stream()
-        .map(i -> Map.of(
-            "name", (Object) i.simpleName()
-        )).toList();
+  private List<Map<String, String>> instructionsWithOperands(PassResults results) {
+    var output =
+        (LlvmLoweringPass.LlvmLoweringPassResult) results.lastResultOf(LlvmLoweringPass.class);
+    var result = new ArrayList<Map<String, String>>();
+
+    output.machineInstructionRecords().forEach(
+        (insn, llvmRecord) -> buildInstructionOperandMap(insn.simpleName(), llvmRecord, result)
+    );
+
+    output.pseudoInstructionRecords().forEach(
+        (pseudo, llvmRecord) -> buildInstructionOperandMap(pseudo.simpleName(), llvmRecord, result)
+    );
+
+    return result;
+  }
+
+  private void buildInstructionOperandMap(String insnName, LlvmLoweringRecord llvmRecord,
+                                          List<Map<String, String>> results) {
+    var inputs = llvmRecord.inputs().stream()
+        .map(i -> ((TableGenParameterTypeAndName) i.parameter()).name());
+    var outputs = llvmRecord.outputs().stream()
+        .map(p -> ((TableGenParameterTypeAndName) p.parameter()).name());
+
+    var operands = Stream.concat(outputs, inputs).map(op -> '"' + op + '"').toList();
+    results.add(Map.of(
+        "name", insnName,
+        "operands", String.join(", ", operands)
+    ));
   }
 
 
@@ -62,8 +85,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        CommonVarNames.INSTRUCTIONS, mapInstructions(specification.isa()),
-        CommonVarNames.ALIASES, directiveMappings(specification.assemblyDescription())
+        CommonVarNames.ALIASES, directiveMappings(specification.assemblyDescription()),
+        CommonVarNames.INSTRUCTIONS, instructionsWithOperands(passResults)
     );
   }
 
