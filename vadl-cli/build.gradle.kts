@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":vadl"))
     implementation("info.picocli:picocli:4.7.6")
     implementation("org.apache.commons:commons-compress:1.27.1")
+    implementation("org.tukaani:xz:1.10")
     annotationProcessor("info.picocli:picocli-codegen:4.7.6")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
