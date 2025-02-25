@@ -42,6 +42,7 @@ public class RegisterUtils {
           "index", index,
           "name", name,
           "alias", !aliases.isEmpty() ? aliases.get(0) : "",
+          "aliases", aliases,
           "getAsmName", getAsmName()
       );
     }
