@@ -255,6 +255,15 @@ enum UnaryOperator {
   UnaryOperator(String symbol) {
     this.symbol = symbol;
   }
+
+  public static UnaryOperator fromSymbol(String symbol) {
+    for (UnaryOperator op : UnaryOperator.values()) {
+      if (op.symbol.equals(symbol)) {
+        return op;
+      }
+    }
+    throw new IllegalArgumentException("No operator with symbol: " + symbol);
+  }
 }
 
 /**

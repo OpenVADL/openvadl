@@ -134,7 +134,8 @@ public class TypeChecker
 
     if (from instanceof ConstantType fromConstant) {
       if (to == Type.bool()) {
-        return false;
+        var value = fromConstant.getValue();
+        return value.equals(BigInteger.ZERO) || value.equals(BigInteger.ONE);
       }
 
       if (to.getClass() == SIntType.class) {
@@ -207,8 +208,17 @@ public class TypeChecker
    */
   private static Expr wrapImplicitCast(Expr inner, Type to) {
     var innerType = Objects.requireNonNull(inner.type);
-    if (innerType.equals(to) || !canImplicitCast(innerType, to)) {
+    if (innerType.equals(to)) {
       return inner;
+    }
+
+    if (!canImplicitCast(innerType, to)) {
+      if (!(innerType instanceof ConstantType innerConstTyp)) {
+        return inner;
+      }
+
+      // For constant types we cast to them anyway to the clostest type to improve the error message
+      return new CastExpr(inner, innerConstTyp.closestTo(to));
     }
 
     return new CastExpr(inner, to);
@@ -556,6 +566,7 @@ public class TypeChecker
           .locationDescription(definition.expr, "Expected `%s` but got `%s`", retType, exprType)
           .build();
     }
+
 
     var argTypes = definition.params.stream().map(p -> p.typeLiteral.type).toList();
     definition.type = Type.concreteRelation(argTypes, retType);
@@ -2119,6 +2130,26 @@ public class TypeChecker
       expr.flatArgs().forEach(this::check);
       var argTypes = Objects.requireNonNull(expr.flatArgs().stream().map(v -> v.type)).toList();
 
+      // FIXME: Find a better solution that is universal enough for binary operations and builtin
+      // functions.
+
+      // If the function is also a unary operation, we instead type check it as if it were a unary
+      // operation which has some special type rules.
+      if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 1) {
+        var operatorSymbol = Objects.requireNonNull(builtin.operator());
+        if (operatorSymbol.equals("~") && expr.flatArgs().get(0).type instanceof BoolType) {
+          operatorSymbol = "!";
+        }
+        var operator = UnaryOperator.fromSymbol(operatorSymbol);
+        var fakeUnExpr =
+            new UnaryExpr(new UnOp(operator, expr.location), expr.flatArgs().get(0));
+        check(fakeUnExpr);
+
+        // Set type and arguments since they might have been wrapped in type casts
+        expr.setFlatArgs(List.of(fakeUnExpr.operand));
+        expr.type = fakeUnExpr.type;
+      }
+
       // If the function is also a binary operation, we instead type check it as if it were a binary
       // operation which has some special type rules.
       if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
@@ -2130,7 +2161,6 @@ public class TypeChecker
         // Set type and arguments since they might have been wraped in type casts
         expr.setFlatArgs(List.of(fakeBinExpr.left, fakeBinExpr.right));
         expr.type = fakeBinExpr.type;
-        return null;
       }
 
       if (!builtin.takes(argTypes)) {
@@ -2141,7 +2171,9 @@ public class TypeChecker
 
       // Note: cannot set the computed type because builtins aren't a definition.
       expr.computedBuiltIn = builtin;
-      expr.type = builtin.returns(argTypes);
+      if (expr.type == null) {
+        expr.type = builtin.returns(argTypes);
+      }
       return null;
     }
 
