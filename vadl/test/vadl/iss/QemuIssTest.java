@@ -221,8 +221,11 @@ public abstract class QemuIssTest extends DockerExecutionTest {
               d.run("../configure --cc='" + cc + "' --target-list=" + softmmuTarget);
               // setup redis cache endpoint environment variablef
               redisCache.setupEnv(d);
-              // build qemu with all cpu cores and print if cache was used
-              d.run("make -j$(nproc) && sccache -s");
+              // build qemu with all cpu cores and print if cache was used.
+              // the sccache --start-server is required,
+              // otherwise we get a deadlock after the last make step.
+              // see https://github.com/mozilla/sccache/issues/2145
+              d.run("sccache --start-server && make -j$(nproc) && sccache -s");
               // validate existence of generated qemu iss
               d.run(qemuBin + " --version");
 
