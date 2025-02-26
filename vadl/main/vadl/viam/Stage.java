@@ -123,6 +123,6 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
     var writes = writes();
     outputs.forEach(output ->
-            ensure(writes.contains(output), "Output %s is not written to", output.simpleName()));
+        ensure(writes.contains(output), "Output %s is not written to", output.simpleName()));
   }
 }

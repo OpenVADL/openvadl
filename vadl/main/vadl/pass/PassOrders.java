@@ -77,6 +77,7 @@ import vadl.viam.passes.dummyPasses.DummyMiaPass;
 import vadl.viam.passes.dummyPasses.DummyMipPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
+import vadl.viam.passes.mia.StageOrderingPass;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
 import vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass;
@@ -464,10 +465,11 @@ public class PassOrders {
 
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));
+    order.add(new StageOrderingPass(config));
 
     addHtmlDump(order, config,
-            "mia",
-            "Added dummy MiA");
+        "mia",
+        "Added dummy MiA");
 
     return order;
   }

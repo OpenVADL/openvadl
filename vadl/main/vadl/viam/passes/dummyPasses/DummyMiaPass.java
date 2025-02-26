@@ -1,6 +1,7 @@
 package vadl.viam.passes.dummyPasses;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -66,8 +67,8 @@ public class DummyMiaPass extends Pass {
     var mia = new MicroArchitecture(
         ident,
         mip,
-        List.of(fetch, decode, execute, memory, writeBack),
-        List.of(bypass, predict)
+        new ArrayList<>(List.of(fetch, decode, execute, memory, writeBack)),
+        new ArrayList<>(List.of(bypass, predict))
     );
 
     viam.add(mia);

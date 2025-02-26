@@ -17,8 +17,8 @@ public class Signal extends Resource {
   /**
    * Constructions a new signal definition.
    *
-   * @param identifier   the unique identifier of the definition
-   * @param resultType   the type of the signal
+   * @param identifier the unique identifier of the definition
+   * @param resultType the type of the signal
    */
   public Signal(Identifier identifier, DataType resultType) {
     super(identifier);

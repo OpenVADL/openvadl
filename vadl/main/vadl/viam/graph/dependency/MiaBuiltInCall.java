@@ -19,31 +19,31 @@ import java.util.List;
  */
 public class MiaBuiltInCall extends BuiltInCall {
 
-    private final List<Resource> resources;
+  private final List<Resource> resources;
 
-    private final List<Logic> logic;
+  private final List<Logic> logic;
 
-    public MiaBuiltInCall(BuiltInTable.BuiltIn builtIn, NodeList<ExpressionNode> args, Type type) {
-        super(builtIn, args, type);
-        this.resources = new ArrayList<>();
-        this.logic = new ArrayList<>();
-        ensure(BuiltInTable.MIA_BUILTINS.contains(builtIn), "Not a micro architecture builtin");
-    }
+  public MiaBuiltInCall(BuiltInTable.BuiltIn builtIn, NodeList<ExpressionNode> args, Type type) {
+    super(builtIn, args, type);
+    this.resources = new ArrayList<>();
+    this.logic = new ArrayList<>();
+    ensure(BuiltInTable.MIA_BUILTINS.contains(builtIn), "Not a micro architecture builtin");
+  }
 
-    public List<Resource> resources() {
-        return resources;
-    }
+  public List<Resource> resources() {
+    return resources;
+  }
 
-    public void add(Resource resource) {
-        resources.add(resource);
-    }
+  public void add(Resource resource) {
+    resources.add(resource);
+  }
 
-    public List<Logic> logic() {
-        return logic;
-    }
+  public List<Logic> logic() {
+    return logic;
+  }
 
-    public void add(Logic logic) {
-        this.logic.add(logic);
-    }
+  public void add(Logic logic) {
+    this.logic.add(logic);
+  }
 
 }

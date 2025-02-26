@@ -1052,12 +1052,12 @@ public class BuiltInTable {
    * <p>{@code process fetchNext -> FetchResult}
    */
   public static final BuiltIn FETCH_NEXT =
-          proc("fetchNext", null,
-                  Type.relation(FetchResultType.class))
-                  .takesDefault()
-                  .noCompute()
-                  .returns(MicroArchitectureType.fetchResult())
-                  .build();
+      proc("fetchNext", null,
+          Type.relation(FetchResultType.class))
+          .takesDefault()
+          .noCompute()
+          .returns(MicroArchitectureType.fetchResult())
+          .build();
 
   /**
    * Decode instruction.
@@ -1065,22 +1065,22 @@ public class BuiltInTable {
    * <p>{@code process decode(fr: FetchResult) -> Instruction}
    */
   public static final BuiltIn DECODE =
-          proc("decode", null,
-                  Type.relation(List.of(FetchResultType.class), InstructionType.class))
-                  .takesDefault()
-                  .noCompute()
-                  .returns(MicroArchitectureType.instruction())
-                  .build();
+      proc("decode", null,
+          Type.relation(List.of(FetchResultType.class), InstructionType.class))
+          .takesDefault()
+          .noCompute()
+          .returns(MicroArchitectureType.instruction())
+          .build();
 
 
   // processes mapping instruction behavior: name(instr: Instruction) -> Instruction
   private static BuiltIn instr(String name) {
     return proc(name, null,
-            Type.relation(List.of(InstructionType.class), InstructionType.class))
-            .takesDefault()
-            .noCompute()
-            .returns(MicroArchitectureType.instruction())
-            .build();
+        Type.relation(List.of(InstructionType.class), InstructionType.class))
+        .takesDefault()
+        .noCompute()
+        .returns(MicroArchitectureType.instruction())
+        .build();
   }
 
   /**

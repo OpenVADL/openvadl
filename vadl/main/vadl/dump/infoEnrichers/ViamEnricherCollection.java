@@ -16,13 +16,7 @@ import vadl.dump.entities.DefinitionEntity;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
-import vadl.viam.DefProp;
-import vadl.viam.Encoding;
-import vadl.viam.Format;
-import vadl.viam.Function;
-import vadl.viam.Instruction;
-import vadl.viam.Parameter;
-import vadl.viam.ViamError;
+import vadl.viam.*;
 import vadl.viam.graph.Graph;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 
@@ -283,6 +277,27 @@ public class ViamEnricherCollection {
       });
 
   /**
+   * A {@link InfoEnricher} that adds a {@link vadl.dump.Info.Tag} containing the next/prev stage of the
+   * micro architecture.
+   * This is only done if the given entity is a {@link Stage}.
+   */
+  public static InfoEnricher STAGE_ORDER_SUPPLIER =
+      forType(DefinitionEntity.class, (definitionEntity, passResult) -> {
+        if (definitionEntity.origin() instanceof Stage stage) {
+          var prev = stage.prev();
+          if (prev != null) {
+            definitionEntity.addInfo(Info.Tag.of("Prev", prev.simpleName()));
+          }
+          var list = stage.next();
+          if (list != null) {
+            for (Stage next : list) {
+              definitionEntity.addInfo(Info.Tag.of("Next", next.simpleName()));
+            }
+          }
+        }
+      });
+
+  /**
    * A list of all info enrichers for the default VIAM specification.
    */
   public static List<InfoEnricher> all = List.of(
@@ -295,7 +310,8 @@ public class ViamEnricherCollection {
       VERIFY_SUPPLIER_EXPANDABLE,
       SOURCE_CODE_SUPPLIER_EXPANDABLE,
       RESOURCE_ACCESS_SUPPLIER_EXPANDABLE,
-      BEHAVIOR_NO_LOCATION_EXPANDABLE
+      BEHAVIOR_NO_LOCATION_EXPANDABLE,
+      STAGE_ORDER_SUPPLIER
   );
 
 }
