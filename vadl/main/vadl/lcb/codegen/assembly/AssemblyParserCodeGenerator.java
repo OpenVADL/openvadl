@@ -73,7 +73,7 @@ public class AssemblyParserCodeGenerator {
   private String parserCompareFunction = "equals_insensitive";
   private String currentRuleTypeString = "invalid";
 
-  private final Map<AsmGrammarElement, String> elementVarName = new HashMap<>();
+  private final Map<Integer, String> elementVarName = new HashMap<>();
   private final SymbolTable grammarElementSymbolTable = new SymbolTable("ELEM_");
   private final Set<String> functionDefinitions = new HashSet<>();
 
@@ -113,7 +113,7 @@ public class AssemblyParserCodeGenerator {
   }
 
   private String varName(AsmGrammarElement element) {
-    return elementVarName.computeIfAbsent(element,
+    return elementVarName.computeIfAbsent(System.identityHashCode(element),
         key -> grammarElementSymbolTable.getNextVariable());
   }
 
