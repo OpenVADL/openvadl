@@ -544,6 +544,8 @@ public class AssemblyParserCodeGenerator {
         keys.forEach(
             attribute -> {
               if (!attribute.equals("mnemonic")) {
+                ctx.ln("%s.Value.%s.Value.setTarget(\"%s\");", finalCurValueVar, attribute,
+                    attribute);
                 ctx.ln("Operands.push_back(std::make_unique<%sParsedOperand>(%s.Value.%s.Value));",
                     namespace, finalCurValueVar, attribute);
               }
