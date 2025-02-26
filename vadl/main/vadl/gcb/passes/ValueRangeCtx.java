@@ -1,6 +1,7 @@
 package vadl.gcb.passes;
 
 import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Optional;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
@@ -16,6 +17,10 @@ public class ValueRangeCtx extends DefinitionExtension<Instruction> {
 
   public ValueRangeCtx() {
     this.ranges = new IdentityHashMap<>();
+  }
+
+  public Map<Format.Field, ValueRange> ranges() {
+    return ranges;
   }
 
   /**

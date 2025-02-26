@@ -81,6 +81,12 @@ namespace llvm
 
             void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results, SelectionDAG &DAG) const override;
 
+            bool isLegalAddressingMode(const DataLayout &DL, const AddrMode &AM, Type *Ty,
+                                         unsigned AS,
+                                         Instruction *I = nullptr) const override;
+            bool isLegalICmpImmediate(int64_t Imm) const override;
+            bool isLegalAddImmediate(int64_t Imm) const override;
+
 
         private:
             const [(${namespace})]Subtarget &Subtarget;

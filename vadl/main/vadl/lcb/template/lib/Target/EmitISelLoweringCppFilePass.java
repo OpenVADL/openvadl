@@ -7,9 +7,13 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticBuilder;
+import vadl.gcb.passes.ValueRange;
+import vadl.gcb.passes.ValueRangeCtx;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
@@ -80,6 +84,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var hasCMove32 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_32);
     var hasCMove64 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_64);
     var conditionalMove = getConditionalMove(hasCMove32, hasCMove64, labelledMachineInstructions);
+    var database = new Database(passResults, specification);
+    var conditionalValueRange = getValueRangeCompareInstructions(database);
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE, lcbConfiguration().processorName().value().toLowerCase());
@@ -99,8 +105,64 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("hasCMove32", hasCMove32);
     map.put("hasCMove64", hasCMove64);
     map.put("conditionalMove", conditionalMove);
-    map.put("branchInstructions", getBranchInstructions(new Database(passResults, specification)));
+    map.put("addImmediateInstruction", getAddImmediate(database));
+    map.put("branchInstructions", getBranchInstructions(database));
+    map.put("memoryInstructions", getMemoryInstructions(database));
+    map.put("conditionalValueRangeLowest", conditionalValueRange.lowest());
+    map.put("conditionalValueRangeHighest", conditionalValueRange.highest());
     return map;
+  }
+
+  private ISelInstruction getAddImmediate(Database database) {
+    var queryResult = database.run(
+        new Query.Builder().machineInstructionLabel(MachineInstructionLabel.ADDI_64)
+            .or(new Query.Builder().machineInstructionLabel(MachineInstructionLabel.ADDI_32)
+                .build()).build());
+
+    var instruction = queryResult.firstMachineInstruction();
+    Supplier<DiagnosticBuilder> error =
+        () -> Diagnostic.error("Addition-Register-Immediate requires a value range",
+            instruction.sourceLocation());
+    var valueRangeCtx = ensureNonNull(instruction.extension(ValueRangeCtx.class), error);
+    var valueRange = ensurePresent(valueRangeCtx.getFirst(), error);
+
+    return new ISelInstruction(instruction.simpleName(), valueRange);
+  }
+
+  /**
+   * LLVM needs a method to check whether an immediate fits into a conditional instruction.
+   * However, it does not provide an instruction. Therefore, this must be the smallest/highest
+   * range across all compares.
+   */
+  private ValueRange getValueRangeCompareInstructions(Database database) {
+    var queryResult = database.run(
+        new Query.Builder().machineInstructionLabelGroup(
+            MachineInstructionLabelGroup.CONDITIONAL_INSTRUCTIONS).build());
+
+    var smallest = Integer.MAX_VALUE;
+    var highest = Integer.MIN_VALUE;
+
+    for (var instruction : queryResult.machineInstructions()) {
+      var valueRangeCtx = instruction.extension(ValueRangeCtx.class);
+
+      // The group `MachineInstructionLabelGroup.CONDITIONAL_INSTRUCTIONS` might also
+      // have instructions without immediates. Therefore, it is ok that there is no value range.
+      if (valueRangeCtx != null && !valueRangeCtx.ranges().isEmpty()) {
+        var valueRange = ensurePresent(valueRangeCtx.getFirst(),
+            () -> Diagnostic.error("Conditional instruction requires a value range",
+                instruction.sourceLocation()));
+
+        if (valueRange.lowest() < smallest) {
+          smallest = valueRange.lowest();
+        }
+
+        if (valueRange.highest() > highest) {
+          highest = valueRange.highest();
+        }
+      }
+    }
+
+    return new ValueRange(smallest, highest);
   }
 
   record BranchInstruction(String instructionName, String isdName) implements Renderable {
@@ -114,10 +176,38 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  record ISelInstruction(String instructionName, ValueRange offsetValueRange)
+      implements Renderable {
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "instructionName", instructionName,
+          "minValue", offsetValueRange.lowest(),
+          "maxValue", offsetValueRange.highest()
+      );
+    }
+  }
+
+  private List<ISelInstruction> getMemoryInstructions(Database database) {
+    var queryResult = database.run(new Query.Builder().machineInstructionLabelGroup(
+        MachineInstructionLabelGroup.MEMORY_INSTRUCTIONS).build());
+    return queryResult.machineInstructions().stream().map(instruction -> {
+      Supplier<DiagnosticBuilder> error =
+          () -> Diagnostic.error("Memory instruction requires a value range",
+              instruction.sourceLocation());
+
+      var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class), error);
+      var valueRange = ensurePresent(ctx.getFirst(), error);
+
+      return new ISelInstruction(instruction.simpleName(), valueRange);
+    }).toList();
+  }
+
   private List<BranchInstruction> getBranchInstructions(Database database) {
     var queryResult = database.run(new Query.Builder().machineInstructionLabelGroup(
         MachineInstructionLabelGroup.BRANCH_INSTRUCTIONS).build());
     var flipped = database.flipMachineInstructions();
+
 
     return queryResult.machineInstructions().stream().map(instruction -> {
       var machineInstructionLabel = ensureNonNull(flipped.get(instruction),

@@ -848,3 +848,49 @@ void [(${namespace})]TargetLowering::ReplaceNodeResults(SDNode *N,
       llvm_unreachable("Don't know how to custom type legalize this operation!");
     }
 }
+
+bool [(${namespace})]TargetLowering::isLegalICmpImmediate(int64_t Imm) const {
+  return Imm >= [(${conditionalValueRangeLowest})] && Imm <= [(${conditionalValueRangeHighest})];
+}
+
+bool [(${namespace})]TargetLowering::isLegalAddImmediate(int64_t Imm) const {
+  return Imm >= [(${addImmediateInstruction.minValue})] && Imm <= [(${addImmediateInstruction.maxValue})];
+}
+
+bool [(${namespace})]TargetLowering::isLegalAddressingMode(const DataLayout &DL,
+                                                const AddrMode &AM, Type *Ty,
+                                                unsigned AS,
+                                                Instruction *I) const {
+  // No global is ever allowed as a base.
+  if (AM.BaseGV)
+    return false;
+
+  auto withInRange = false;
+  switch(I->getOpcode()) {
+  [# th:each="mem : ${memoryInstructions}" ]
+    case [(${namespace})]::[(${mem.instructionName})]:
+      withInRange = AM.BaseOffs >= [(${mem.minValue})] && AM.BaseOffs <= [(${mem.maxValue})];
+      break;
+  [/]
+    default:
+      // because not affected
+      return true;
+  }
+
+  // Only return when false
+  if(!withInRange)
+    return false;
+
+  switch (AM.Scale) {
+  case 0: // "r+i" or just "i", depending on HasBaseReg.
+    break;
+  case 1:
+    if (!AM.HasBaseReg) // allow "r+i".
+      break;
+    return false; // disallow "r+r" or "r+r+i".
+  default:
+    return false;
+  }
+
+  return true;
+}
