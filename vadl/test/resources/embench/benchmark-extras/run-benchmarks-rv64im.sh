@@ -13,7 +13,6 @@ echo "Done."
 
 # Normalize dtc timings
 python3 data-relative.py results-rv64im-iss \
-        results/rv64im-qemu-9-2-2/rv64im-qemu-9-2-2.csv \
         results/rv64im-qemu/rv64im-qemu.csv \
         results/rv64im-open-vadl/rv64im-open-vadl.csv
 
