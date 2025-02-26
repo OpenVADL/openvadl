@@ -222,7 +222,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
               // setup redis cache endpoint environment variablef
               redisCache.setupEnv(d);
               // build qemu with all cpu cores and print if cache was used
-              d.run("make && sccache -s");
+              d.run("make -j$(nproc) && sccache -s");
               // validate existence of generated qemu iss
               d.run(qemuBin + " --version");
 
