@@ -75,6 +75,9 @@ class FormatBitsVerifier {
           .collect(Collectors.joining(", "));
     }
     if (!doubleUsedBits.isEmpty()) {
+      if (!message.isEmpty()) {
+        message += "\n";
+      }
       message += "The following bits are multiple times: "
           + doubleUsedBits.stream()
           .map(String::valueOf)

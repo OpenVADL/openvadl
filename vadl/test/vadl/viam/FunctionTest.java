@@ -3,6 +3,7 @@ package vadl.viam;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.TestUtils;
 import vadl.types.BuiltInTable;
@@ -14,13 +15,10 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 
-// FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
 public class FunctionTest extends AbstractTest {
 
-
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // @Test
-  void testValidFunctions() {
+  @Test
+  public void testValidFunctions() {
     var spec = runAndGetViamSpecification("unit/function/valid_functions.vadl");
 
     var noArg = TestUtils.findDefinitionByNameIn("FunctionTest::noArg", spec, Function.class);
@@ -30,16 +28,17 @@ public class FunctionTest extends AbstractTest {
     var callFuncOutsideISA =
         TestUtils.findDefinitionByNameIn("FunctionTest::callFuncOutsideISA", spec, Function.class);
     var outSideISA = TestUtils.findDefinitionByNameIn("outSideISA", spec, Function.class);
-    var callFuncInsideISA = TestUtils.findDefinitionByNameIn("callFuncInsideISA", spec, Function.class);
+    var callFuncInsideISA =
+        TestUtils.findDefinitionByNameIn("callFuncInsideISA", spec, Function.class);
     var useConstOfFunc =
         TestUtils.findDefinitionByNameIn("FunctionTest::useConstOfFunc", spec, Function.class);
 
     {
-      Assertions.assertEquals(4, noArg.behavior().getNodes().count());
-      // typecast before actual return
-      var typeCast = noArg.behavior().getNodes(TypeCastNode.class).findFirst().get();
-      var constant = ((ConstantNode) typeCast.value()).constant();
-      assertEquals(Constant.Value.of(20, Type.unsignedInt(30)), constant);
+      Assertions.assertEquals(3, noArg.behavior().getNodes().count());
+      // No typecast
+      Assertions.assertEquals(0, noArg.behavior().getNodes(TypeCastNode.class).count());
+      var constant = (noArg.behavior().getNodes(ConstantNode.class).findFirst().get()).constant();
+      assertEquals(Constant.Value.of(20, Type.bits(30)), constant);
     }
 
     {
@@ -58,9 +57,9 @@ public class FunctionTest extends AbstractTest {
       var builtInCall = withArgs.behavior().getNodes(BuiltInCall.class).findFirst().get();
       Assertions.assertEquals(BuiltInTable.ADD, builtInCall.builtIn());
       Assertions.assertEquals(withArgs.parameters()[0],
-          ((FuncParamNode) builtInCall.arguments().get(0).inputs().findFirst().get()).parameter());
+          ((FuncParamNode) builtInCall.arguments().get(0)).parameter());
       Assertions.assertEquals(withArgs.parameters()[1],
-          ((FuncParamNode) builtInCall.arguments().get(1).inputs().findFirst().get()).parameter());
+          ((FuncParamNode) builtInCall.arguments().get(1)).parameter());
     }
 
 
@@ -78,20 +77,20 @@ public class FunctionTest extends AbstractTest {
 
     {
       var ret = useConstOfFunc.behavior().getNodes(ReturnNode.class).findFirst().get();
-      var func = ((FuncCallNode) ret.value()).function();
-      assertEquals(noArg, func);
+      var constant = ((ConstantNode) ret.value()).constant();
+      assertEquals(Constant.Value.of(20, Type.bits(30)), constant);
     }
 
   }
 
 
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // @Test
+  @Test
   void callFunctionInInstruction() {
     var spec = runAndGetViamSpecification("unit/function/valid_functionUsage.vadl");
 
     var noArg = TestUtils.findDefinitionByNameIn("FunctionCallTest::noArg", spec, Function.class);
-    var addition = TestUtils.findDefinitionByNameIn("FunctionCallTest::addition", spec, Function.class);
+    var addition =
+        TestUtils.findDefinitionByNameIn("FunctionCallTest::addition", spec, Function.class);
     var funcCallTest =
         TestUtils.findDefinitionByNameIn("FunctionCallTest::FuncCallTest", spec, Instruction.class);
 

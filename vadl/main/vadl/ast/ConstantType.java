@@ -2,6 +2,7 @@ package vadl.ast;
 
 import java.math.BigInteger;
 import vadl.types.BitsType;
+import vadl.types.BoolType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
@@ -40,6 +41,20 @@ public class ConstantType extends Type {
   }
 
   Type closestTo(Type target) {
+    // Numbers cannot be cast to bools but the closest is a bits
+    if (target instanceof BoolType) {
+      if (value.equals(BigInteger.ZERO) || value.equals(BigInteger.ONE)) {
+        return target;
+      }
+
+      var bitsWidth = requiredBitWidth();
+      if (value.compareTo(BigInteger.ZERO) < 0) {
+        // Cannot pack into uint is negative, closest is still SInt
+        return Type.signedInt(bitsWidth);
+      }
+      return Type.bits(bitsWidth);
+    }
+
     if (target instanceof SIntType targetSInt) {
       var bitsWidth = Math.max(targetSInt.bitWidth(), requiredBitWidth());
       return Type.signedInt(bitsWidth);

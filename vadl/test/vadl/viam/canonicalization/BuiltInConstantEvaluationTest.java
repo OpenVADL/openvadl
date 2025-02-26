@@ -7,6 +7,7 @@ import static vadl.TestUtils.findDefinitionByNameIn;
 import java.io.IOException;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
 import vadl.AbstractTest;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -32,11 +33,9 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
 
   private static Specification spec;
 
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // @TestFactory
+  @TestFactory
   Stream<DynamicTest> constantEvalTest() throws IOException, DuplicatedPassKeyException {
     var config = getConfiguration(false);
-//    var config = new GeneralConfiguration("build/test-out/const-eval", true);
     var setup = setupPassManagerAndRunSpec(
         "passes/canonicalization/valid_builtin_constant_evaluation.vadl",
         PassOrders.viam(config)

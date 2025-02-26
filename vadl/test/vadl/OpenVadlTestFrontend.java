@@ -12,6 +12,7 @@ import vadl.ast.Ungrouper;
 import vadl.ast.VadlParser;
 import vadl.ast.ViamLowering;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticPrinter;
 import vadl.viam.Specification;
 
 class OpenVadlTestFrontend implements TestFrontend {
@@ -36,6 +37,8 @@ class OpenVadlTestFrontend implements TestFrontend {
     } catch (Diagnostic e) {
       // FIXME: Proper print to string
       var stringWriter = new StringWriter();
+      stringWriter.append(new DiagnosticPrinter(false).toString(e));
+      stringWriter.append("\n");
       e.printStackTrace(new PrintWriter(stringWriter));
       logs = e.getMessage() + "\n" + stringWriter;
       return false;

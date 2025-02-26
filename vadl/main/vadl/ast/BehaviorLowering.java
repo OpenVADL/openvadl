@@ -1,6 +1,7 @@
 package vadl.ast;
 
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -22,6 +23,7 @@ import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
+import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Relocation;
 import vadl.viam.graph.Graph;
@@ -59,6 +61,12 @@ import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
+/**
+ * Lowers statements and expressions into viam behaivor graph.
+ *
+ * <p>Because the caches this class holds are delicate, create a new instance for every graph you
+ * generate.
+ */
 class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
   private final ViamLowering viamLowering;
   private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
@@ -66,7 +74,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   private final IdentityHashMap<Expr, ExpressionNode> expressionCache = new IdentityHashMap<>();
   //private IdentityHashMap<Statement, SubgraphContext> statementCache = new IdentityHashMap<>();
 
-  @Nullable
+  @LazyInit
   private Graph currentGraph;
 
   BehaviorLowering(ViamLowering generator) {
@@ -183,12 +191,29 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return result;
   }
 
-  @Override
-  public ExpressionNode visit(Identifier expr) {
 
-    var computedTarget = Objects.requireNonNull(expr.symbolTable).resolveNode(expr.name);
+  /**
+   * Identifier and IdentifierPath are quite similar in what they do, so let's resolve both here.
+   */
+  private ExpressionNode visitIdentifyable(Expr expr) {
 
-    // Constant
+    Node computedTarget;
+    String innerName;
+    String fullName;
+
+    if (expr instanceof Identifier identifier) {
+      computedTarget = Objects.requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
+      innerName = identifier.name;
+      fullName = identifier.name;
+    } else if (expr instanceof IdentifierPath path) {
+      computedTarget = Objects.requireNonNull(expr.symbolTable).findAs(path, Node.class);
+      var segments = path.pathToSegments();
+      innerName = segments.get(segments.size() - 1);
+      fullName = path.pathToString();
+    } else {
+      throw new IllegalStateException();
+    }    // Constant
+
     if (computedTarget instanceof ConstantDefinition constant) {
       var value = constantEvaluator.eval(constant.value).toViamConstant();
       return new ConstantNode(value);
@@ -211,7 +236,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           (DataType) Objects.requireNonNull(expr.type));
     }
 
-    // Registers and counters
+    // Register
+    if (computedTarget instanceof RegisterDefinition registerDefinition) {
+      var register = (Register) viamLowering.fetch(registerDefinition).orElseThrow();
+      return new ReadRegNode(
+          register,
+          (DataType) Objects.requireNonNull(expr.type),
+          null);
+    }
+
+    // Counters
     if (computedTarget instanceof CounterDefinition counterDefinition) {
       if (counterDefinition.kind == CounterDefinition.CounterKind.PROGRAM) {
         var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
@@ -224,11 +258,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // Let statement and expression
     if (computedTarget instanceof LetStatement letStatement) {
-      return new LetNode(new LetNode.Name(expr.name, letStatement.sourceLocation()),
+      return new LetNode(new LetNode.Name(innerName, letStatement.sourceLocation()),
           fetch(letStatement.valueExpr));
     }
     if (computedTarget instanceof LetExpr letExpr) {
-      return new LetNode(new LetNode.Name(expr.name, letExpr.sourceLocation()),
+      return new LetNode(new LetNode.Name(innerName, letExpr.sourceLocation()),
           fetch(letExpr.valueExpr));
     }
 
@@ -247,7 +281,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Builtin Call
     var matchingBuiltins = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().isEmpty())
-        .filter(b -> b.name().toLowerCase().equals(expr.name))
+        .filter(b -> b.name().toLowerCase().equals(innerName))
         .toList();
 
     if (matchingBuiltins.size() == 1) {
@@ -258,8 +292,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     throw new RuntimeException(
         "The behavior generator cannot resolve yet identifier '%s' which points to %s".formatted(
-            expr.name,
+            fullName,
             computedTarget == null ? "null" : computedTarget.getClass().getSimpleName()));
+  }
+
+  @Override
+  public ExpressionNode visit(Identifier expr) {
+    return visitIdentifyable(expr);
   }
 
   @Override
@@ -345,8 +384,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(IdentifierPath expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    return visitIdentifyable(expr);
   }
 
   @Override
@@ -585,7 +623,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var value = fetch(statement.valueExpression);
 
     if (statement.target instanceof CallExpr callTarget) {
-      // Register Write
+      // Register File Write
       if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
         var regFile = viamLowering.fetch(regFileTarget).orElseThrow();
         var address = callTarget.flatArgs().get(0).accept(this);
@@ -616,16 +654,25 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       throw new IllegalStateException(
           "Call target not yet implemented " + callTarget.computedTarget);
     } else if (statement.target instanceof Identifier identifierExpr) {
-      var computedTarget = Objects.requireNonNull(identifierExpr.symbolTable)
-          .requireAs(identifierExpr, vadl.ast.Node.class);
+      var computedTarget = Objects.requireNonNull(Objects.requireNonNull(identifierExpr.symbolTable)
+          .requireAs(identifierExpr, vadl.ast.Node.class));
 
+      // Register Write
+      if (computedTarget instanceof RegisterDefinition registerDefinition) {
+        var register = (Register) viamLowering.fetch(registerDefinition).orElseThrow();
+        var write = new WriteRegNode(register, value, null);
+        return SubgraphContext.of(statement, write);
+      }
+
+      // Counter (also register) Write
       if (computedTarget instanceof CounterDefinition counterDefinition) {
         var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
         var write = new WriteRegNode(counter.registerRef(), value, null);
         return SubgraphContext.of(statement, write);
       }
 
-      throw new IllegalStateException("Identifier target not yet implemented" + statement.target);
+      throw new IllegalStateException("Identifier targeting %s not yet implemented".formatted(
+          computedTarget.getClass().getSimpleName()));
     }
 
     throw new IllegalStateException("unknown target expression: " + statement.target);

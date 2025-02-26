@@ -204,6 +204,35 @@ class Operator {
   public static final Operator ElementOf = new Operator("∈", precIn);
   public static final Operator NotElementOf = new Operator("∉", precIn);
 
+  public static final List<Operator> allOperators = List.of(
+      LogicalOr,
+      LogicalAnd,
+      Or,
+      Xor,
+      And,
+      Equal,
+      NotEqual,
+      GreaterEqual,
+      Greater,
+      LessEqual,
+      Less,
+      RotateRight,
+      RotateLeft,
+      ShiftRight,
+      ShiftLeft,
+      Add,
+      Subtract,
+      SaturatedAdd,
+      SaturatedSubtract,
+      Multiply,
+      Divide,
+      Modulo,
+      LongMultiply,
+      In,
+      NotIn,
+      ElementOf,
+      NotElementOf
+  );
   public static final List<Operator> logicalComparisions = List.of(LogicalOr, LogicalAnd);
   public static final List<Operator> arithmeticOperators =
       List.of(Or, Xor, And, RotateRight, RotateLeft, ShiftLeft, ShiftRight, Add, Subtract, Multiply,
@@ -211,6 +240,11 @@ class Operator {
   public static final List<Operator> artihmeticComparisons =
       List.of(Equal, NotEqual, GreaterEqual, Greater, LessEqual, Less
       );
+
+  @Nullable
+  public static Operator fromString(String operator) {
+    return allOperators.stream().filter(op -> op.symbol.equals(operator)).findFirst().orElse(null);
+  }
 }
 
 enum UnaryOperator {
@@ -220,6 +254,15 @@ enum UnaryOperator {
 
   UnaryOperator(String symbol) {
     this.symbol = symbol;
+  }
+
+  public static UnaryOperator fromSymbol(String symbol) {
+    for (UnaryOperator op : UnaryOperator.values()) {
+      if (op.symbol.equals(symbol)) {
+        return op;
+      }
+    }
+    throw new IllegalArgumentException("No operator with symbol: " + symbol);
   }
 }
 
@@ -1305,6 +1348,12 @@ final class IdentifierPath extends Expr implements IsId {
     return sb.toString();
   }
 
+  //  @Override
+  public List<String> pathToSegments() {
+    // FIXME: There must be a better solution
+    return List.of(pathToString().split("::"));
+  }
+
   @Override
   public void prettyPrint(int indent, StringBuilder builder) {
     var isFirst = true;
@@ -1470,6 +1519,25 @@ final class CallExpr extends Expr implements IsCallExpr {
 
   List<Expr> flatArgs() {
     return argsIndices.stream().flatMap(List::stream).toList();
+  }
+
+  /**
+   * This replaces all arguments in the same order, so that pretty printing is unaffected.
+   *
+   * @param args new arguments to replace.
+   */
+  void setFlatArgs(List<Expr> args) {
+    if (args.size() != flatArgs().size()) {
+      throw new IllegalArgumentException();
+    }
+
+    int index = 0;
+    for (var inner : argsIndices) {
+      for (var i = 0; i < inner.size(); i++) {
+        inner.set(i, args.get(index));
+        index++;
+      }
+    }
   }
 
   @Override

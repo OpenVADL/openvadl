@@ -7,6 +7,7 @@ import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
@@ -24,10 +25,8 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * We need this tests as there is no occurrence of the tested problems in the RISC-V specification.
  */
 public class IssTcgSchedulingPassTest extends AbstractTest {
-  
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // FIXME: @ffreitag requires format field lowering fix in frontend.
-  // @Test
+
+  @Test
   public void test_schedule_in_both_branches() throws IOException, DuplicatedPassKeyException {
     var config =
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), false));

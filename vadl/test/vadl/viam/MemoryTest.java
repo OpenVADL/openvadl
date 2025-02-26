@@ -1,6 +1,7 @@
 package vadl.viam;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.TestUtils;
 import vadl.types.DataType;
@@ -10,8 +11,7 @@ import vadl.viam.graph.dependency.WriteMemNode;
 
 public class MemoryTest extends AbstractTest {
 
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  //  @Test
+  @Test
   void testMemory() {
     var spec = runAndGetViamSpecification("unit/memory/valid_memory.vadl");
 

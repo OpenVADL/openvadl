@@ -121,8 +121,56 @@ class SymbolTable {
   }
 
   @Nullable
+  Symbol resolveBuiltinSymbol(String name) {
+    var root = this;
+    while (root.parent != null) {
+      root = root.parent;
+    }
+
+    // FIXME: I don't think the namespace prefix should be in here
+    var symbol = root.resolveSymbol(name);
+    if (symbol == null) {
+      symbol = root.resolveSymbol("VADL::" + name);
+    }
+
+    if (symbol instanceof BuiltInSymbol) {
+      return symbol;
+    }
+    return null;
+  }
+
+  @Nullable
+  Symbol resolveSymbolPath(List<String> path) {
+    // The vadl namespace is a pseudo namespace and points to the root and its buitlin functions
+    if (path.size() == 2 && path.get(0).equalsIgnoreCase("vadl")) {
+      return resolveBuiltinSymbol(path.get(1));
+    }
+
+    if (path.size() == 1) {
+      return symbols.get(path.get(0));
+    }
+
+    var namespace = (AstSymbol) resolveSymbol(path.get(0));
+    if (namespace == null) {
+      return null;
+    }
+
+    return namespace.origin.symbolTable().resolveSymbolPath(path.subList(1, path.size()));
+  }
+
+  @Nullable
   Node resolveNode(String name) {
     var symbol = resolveSymbol(name);
+    if (!(symbol instanceof AstSymbol astSymbol)) {
+      return null;
+    }
+
+    return astSymbol.origin;
+  }
+
+  @Nullable
+  Node resolveNodePath(List<String> path) {
+    var symbol = resolveSymbolPath(path);
     if (!(symbol instanceof AstSymbol astSymbol)) {
       return null;
     }
@@ -151,6 +199,14 @@ class SymbolTable {
       return ((ModelDefinition) origin).toMacro();
     }
 
+    return null;
+  }
+
+  <T extends Node> @Nullable T findAs(IdentifierPath usage, Class<T> type) {
+    var origin = resolveNodePath(usage.pathToSegments());
+    if (type.isInstance(origin)) {
+      return type.cast(origin);
+    }
     return null;
   }
 
@@ -349,7 +405,7 @@ class SymbolTable {
       } else if (definition instanceof FormatDefinition format) {
         format.symbolTable = symbols.createChild();
         symbols.defineSymbol(format);
-        collectSymbols(symbols, format.type);
+        collectSymbols(symbols, format.typeLiteral);
         for (FormatDefinition.FormatField field : format.fields) {
           format.symbolTable().defineSymbol(field.identifier().name, (Node) field);
 
@@ -1156,6 +1212,12 @@ class SymbolTable {
       } else if (expr instanceof SymbolExpr sym) {
         resolveSymbols((Expr) sym.path());
         resolveSymbols(sym.size);
+      } else if (expr instanceof IdentifierPath path) {
+        var symbol = expr.symbolTable().resolveSymbolPath(path.pathToSegments());
+        if (symbol == null) {
+          expr.symbolTable()
+              .reportError("Symbol not found: " + path.pathToString(), path.location());
+        }
       } else if (expr instanceof IsId id) {
         var symbol = expr.symbolTable().resolveSymbol(id.pathToString());
         if (symbol == null) {

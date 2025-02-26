@@ -8,6 +8,7 @@ import static org.junit.jupiter.params.provider.Arguments.of;
 
 import java.io.IOException;
 import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.AbstractTest;
@@ -43,8 +44,7 @@ public class DuplicateWriteDetectionPassTest extends AbstractTest {
     return tests.stream().map(Arguments::of);
   }
 
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // @ParameterizedTest
+  @ParameterizedTest
   @MethodSource("invalidTestArgs")
   void testInvalid(String name, int numErrs, String errmsg)
       throws IOException, DuplicatedPassKeyException {
@@ -62,8 +62,7 @@ public class DuplicateWriteDetectionPassTest extends AbstractTest {
   }
 
 
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // @ParameterizedTest
+  @ParameterizedTest
   @MethodSource("validTestArgs")
   void validTest(String test) throws IOException, DuplicatedPassKeyException {
     setupPassManagerAndRunSpec(

@@ -426,7 +426,8 @@ class MacroExpander
       return new FormatDefinition.AuxiliaryField(auxField.kind(), entries);
     });
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    return new FormatDefinition(id, definition.type, fields, auxFields, copyLoc(definition.loc))
+    return new FormatDefinition(id, definition.typeLiteral, fields, auxFields,
+        copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
 
