@@ -22,6 +22,9 @@ public abstract class DataType extends Type {
    */
   @Override
   public final boolean isTrivialCastTo(Type other) {
+    if (this == other) {
+      return true;
+    }
     if (other instanceof DataType otherDataType) {
       var sameLength = otherDataType.bitWidth() == bitWidth();
       return sameLength && (other instanceof BitsType || other instanceof BoolType);

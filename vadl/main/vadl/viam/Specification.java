@@ -74,6 +74,16 @@ public class Specification extends Definition {
   }
 
   /**
+   * Returns the micro architecture of the specification.
+   */
+  public Optional<MicroArchitecture> mia() {
+    return definitions()
+            .filter(MicroArchitecture.class::isInstance)
+            .map(MicroArchitecture.class::cast)
+            .findFirst();
+  }
+
+  /**
    * Returns all global format definitions as stream.
    */
   public Stream<Format> formats() {

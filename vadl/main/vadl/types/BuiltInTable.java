@@ -1043,6 +1043,96 @@ public class BuiltInTable {
           .returns(Type.bool())
           .build();
 
+
+  ///// MICRO ARCHITECTURE //////
+
+  /**
+   * Fetch the next instruction.
+   *
+   * <p>{@code process fetchNext -> FetchResult}
+   */
+  public static final BuiltIn FETCH_NEXT =
+          proc("fetchNext", null,
+                  Type.relation(FetchResultType.class))
+                  .takesDefault()
+                  .noCompute()
+                  .returns(MicroArchitectureType.fetchResult())
+                  .build();
+
+  /**
+   * Decode instruction.
+   *
+   * <p>{@code process decode(fr: FetchResult) -> Instruction}
+   */
+  public static final BuiltIn DECODE =
+          proc("decode", null,
+                  Type.relation(List.of(FetchResultType.class), InstructionType.class))
+                  .takesDefault()
+                  .noCompute()
+                  .returns(MicroArchitectureType.instruction())
+                  .build();
+
+
+  // processes mapping instruction behavior: name(instr: Instruction) -> Instruction
+  private static BuiltIn instr(String name) {
+    return proc(name, null,
+            Type.relation(List.of(InstructionType.class), InstructionType.class))
+            .takesDefault()
+            .noCompute()
+            .returns(MicroArchitectureType.instruction())
+            .build();
+  }
+
+  /**
+   * Execute instruction reads.
+   *
+   * <p>{@code process read(instr: Instruction) -> Instruction}
+   */
+  public static final BuiltIn INSTRUCTION_READ = instr("read");
+
+  /**
+   * Execute instruction reads.
+   *
+   * <p>{@code process readOrForward(instr: Instruction) -> Instruction}
+   */
+  public static final BuiltIn INSTRUCTION_READ_OR_FORWARD = instr("readOrForward");
+
+  /**
+   * Execute instruction writes.
+   *
+   * <p>{@code process write(instr: Instruction) -> Instruction}
+   */
+  public static final BuiltIn INSTRUCTION_WRITE = instr("write");
+
+  /**
+   * Execute instruction computations.
+   *
+   * <p>{@code process compute(instr: Instruction) -> Instruction}
+   */
+  public static final BuiltIn INSTRUCTION_COMPUTE = instr("compute");
+
+  /**
+   * Execute instruction address calculations.
+   *
+   * <p>{@code process address(instr: Instruction) -> Instruction}
+   */
+  public static final BuiltIn INSTRUCTION_ADDRESS = instr("address");
+
+  /**
+   * Execute instruction results calculations.
+   *
+   * <p>{@code process results(instr: Instruction) -> Instruction}
+   */
+  public static final BuiltIn INSTRUCTION_RESULTS = instr("results");
+
+  /**
+   * Instruction verify branching decision.
+   *
+   * <p>{@code process verify(instr: Instruction) -> Instruction}
+   */
+  public static final BuiltIn INSTRUCTION_VERIFY = instr("verify");
+
+
   /// // FIELDS /////
 
   public static final List<BuiltIn> BUILT_INS = List.of(
@@ -1160,7 +1250,14 @@ public class BuiltInTable {
       // ASM PARSER FUNCTIONS
 
       LA_ID_IN,
-      LA_ID_EQ
+      LA_ID_EQ,
+
+      // MICRO ARCHITECTURE
+      FETCH_NEXT,
+      DECODE,
+      INSTRUCTION_READ,
+      INSTRUCTION_WRITE,
+      INSTRUCTION_COMPUTE
   );
 
   public static final HashSet<BuiltIn> commutative = new HashSet<>(List.of(
@@ -1195,11 +1292,26 @@ public class BuiltInTable {
   ));
 
   public static Set<BuiltIn> ASM_PARSER_BUILT_INS =
-      Collections.newSetFromMap(new IdentityHashMap<>());
+          Collections.newSetFromMap(new IdentityHashMap<>());
 
   static {
     ASM_PARSER_BUILT_INS.add(LA_ID_EQ);
     ASM_PARSER_BUILT_INS.add(LA_ID_IN);
+  }
+
+  public static Set<BuiltIn> MIA_BUILTINS =
+          Collections.newSetFromMap(new IdentityHashMap<>());
+
+  static {
+    MIA_BUILTINS.add(FETCH_NEXT);
+    MIA_BUILTINS.add(DECODE);
+    MIA_BUILTINS.add(INSTRUCTION_READ);
+    MIA_BUILTINS.add(INSTRUCTION_WRITE);
+    MIA_BUILTINS.add(INSTRUCTION_COMPUTE);
+    MIA_BUILTINS.add(INSTRUCTION_ADDRESS);
+    MIA_BUILTINS.add(INSTRUCTION_RESULTS);
+    MIA_BUILTINS.add(INSTRUCTION_READ_OR_FORWARD);
+    MIA_BUILTINS.add(INSTRUCTION_VERIFY);
   }
 
   public static Stream<BuiltIn> builtIns() {
@@ -1364,6 +1476,11 @@ public class BuiltInTable {
 
   private static BuiltInBuilder func(String name, RelationType signature) {
     return func(name, (String) null, signature);
+  }
+
+  private static BuiltInBuilder proc(String name, @Nullable String operator,
+                                     RelationType signature) {
+    return new BuiltInBuilder(name, operator, signature, BuiltIn.Kind.PROCESS);
   }
 
   private static class BuiltInBuilder {
