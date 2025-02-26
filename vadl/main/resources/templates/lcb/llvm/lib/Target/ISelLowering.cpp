@@ -872,6 +872,9 @@ bool [(${namespace})]TargetLowering::isLegalAddressingMode(const DataLayout &DL,
       withInRange = AM.BaseOffs >= [(${mem.minValue})] && AM.BaseOffs <= [(${mem.maxValue})];
       break;
   [/]
+    default:
+      // because not affected
+      return true;
   }
 
   // Only return when false
