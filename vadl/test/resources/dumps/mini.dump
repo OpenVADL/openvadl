@@ -1,131 +1,131 @@
 InstructionSetDefinition
-. Identifier name: "RV3264I", type: null
+. Identifier name: "RV3264I"
 . ConstantDefinition
-. : Identifier name: "Arch32", type: null
+. : Identifier name: "Arch32"
 . : IntegerLiteral literal: 32 (32), type: null
 . ConstantDefinition
-. : Identifier name: "MLen", type: null
-. : Identifier name: "Arch32", type: null
+. : Identifier name: "MLen"
+. : Identifier name: "Arch32"
 . UsingDefinition
-. : Identifier name: "Inst", type: null
+. : Identifier name: "Inst"
 . : TypeLiteral type: null
-. : ' Identifier name: "Bits", type: null
+. : ' Identifier name: "Bits"
 . : ' Sizes
 . : ' | IntegerLiteral literal: 32 (32), type: null
 . UsingDefinition
-. : Identifier name: "Regs", type: null
+. : Identifier name: "Regs"
 . : TypeLiteral type: null
-. : ' Identifier name: "Bits", type: null
+. : ' Identifier name: "Bits"
 . : ' Sizes
-. : ' | Identifier name: "MLen", type: null
+. : ' | Identifier name: "MLen"
 . UsingDefinition
-. : Identifier name: "Bits3", type: null
+. : Identifier name: "Bits3"
 . : TypeLiteral type: null
-. : ' Identifier name: "Bits", type: null
+. : ' Identifier name: "Bits"
 . : ' Sizes
 . : ' | IntegerLiteral literal: 3 (3), type: null
 . UsingDefinition
-. : Identifier name: "Bits7", type: null
+. : Identifier name: "Bits7"
 . : TypeLiteral type: null
-. : ' Identifier name: "Bits", type: null
+. : ' Identifier name: "Bits"
 . : ' Sizes
 . : ' | IntegerLiteral literal: 7 (7), type: null
 . UsingDefinition
-. : Identifier name: "Index", type: null
+. : Identifier name: "Index"
 . : TypeLiteral type: null
-. : ' Identifier name: "Bits", type: null
+. : ' Identifier name: "Bits"
 . : ' Sizes
 . : ' | IntegerLiteral literal: 5 (5), type: null
 . RegisterFileDefinition
-. : Identifier name: "X", type: null
+. : Identifier name: "X"
 . : TypeLiteral type: null
-. : ' Identifier name: "Index", type: null
+. : ' Identifier name: "Index"
 . : TypeLiteral type: null
-. : ' Identifier name: "Regs", type: null
+. : ' Identifier name: "Regs"
 . FormatDefinition
-. : Identifier name: "Rtype", type: null
+. : Identifier name: "Rtype"
 . : TypeLiteral type: null
-. : ' Identifier name: "Inst", type: null
+. : ' Identifier name: "Inst"
 . : TypedFormatField
-. : ' Identifier name: "funct7", type: null
+. : ' Identifier name: "funct7"
 . : ' TypeLiteral type: null
-. : ' | Identifier name: "Bits7", type: null
+. : ' | Identifier name: "Bits7"
 . : TypedFormatField
-. : ' Identifier name: "rs2", type: null
+. : ' Identifier name: "rs2"
 . : ' TypeLiteral type: null
-. : ' | Identifier name: "Index", type: null
+. : ' | Identifier name: "Index"
 . : TypedFormatField
-. : ' Identifier name: "rs1", type: null
+. : ' Identifier name: "rs1"
 . : ' TypeLiteral type: null
-. : ' | Identifier name: "Index", type: null
+. : ' | Identifier name: "Index"
 . : TypedFormatField
-. : ' Identifier name: "funct3", type: null
+. : ' Identifier name: "funct3"
 . : ' TypeLiteral type: null
-. : ' | Identifier name: "Bits3", type: null
+. : ' | Identifier name: "Bits3"
 . : TypedFormatField
-. : ' Identifier name: "rd", type: null
+. : ' Identifier name: "rd"
 . : ' TypeLiteral type: null
-. : ' | Identifier name: "Index", type: null
+. : ' | Identifier name: "Index"
 . : TypedFormatField
-. : ' Identifier name: "opcode", type: null
+. : ' Identifier name: "opcode"
 . : ' TypeLiteral type: null
-. : ' | Identifier name: "Bits7", type: null
+. : ' | Identifier name: "Bits7"
 . : DerivedFormatField
-. : ' Identifier name: "shamt", type: null
+. : ' Identifier name: "shamt"
 . : ' CastExpr type: null
-. : ' | Identifier name: "rs2", type: null
+. : ' | Identifier name: "rs2"
 . : ' | TypeLiteral type: null
-. : ' | . Identifier name: "UInt", type: null
+. : ' | . Identifier name: "UInt"
 . InstructionDefinition
-. : Identifier name: "ADD", type: null
-. : Identifier name: "Rtype", type: null
+. : Identifier name: "ADD"
+. : Identifier name: "Rtype"
 . : AssignmentStatement
 . : ' CallExpr type: null
-. : ' | Identifier name: "X", type: null
+. : ' | Identifier name: "X"
 . : ' | ArgsIndices
-. : ' | . Identifier name: "rd", type: null
+. : ' | . Identifier name: "rd"
 . : ' CastExpr type: null
 . : ' | BinaryExpr operator: +, type: null
 . : ' | . CastExpr type: null
 . : ' | . : CallExpr type: null
-. : ' | . : ' Identifier name: "X", type: null
+. : ' | . : ' Identifier name: "X"
 . : ' | . : ' ArgsIndices
-. : ' | . : ' | Identifier name: "rs1", type: null
+. : ' | . : ' | Identifier name: "rs1"
 . : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits", type: null
+. : ' | . : ' Identifier name: "Bits"
 . : ' | . CastExpr type: null
 . : ' | . : CallExpr type: null
-. : ' | . : ' Identifier name: "X", type: null
+. : ' | . : ' Identifier name: "X"
 . : ' | . : ' ArgsIndices
-. : ' | . : ' | Identifier name: "rs2", type: null
+. : ' | . : ' | Identifier name: "rs2"
 . : ' | . : TypeLiteral type: null
-. : ' | . : ' Identifier name: "Bits", type: null
+. : ' | . : ' Identifier name: "Bits"
 . : ' | TypeLiteral type: null
-. : ' | . Identifier name: "Regs", type: null
+. : ' | . Identifier name: "Regs"
 . InstructionDefinition
-. : Identifier name: "ADD2", type: null
-. : Identifier name: "Rtype", type: null
+. : Identifier name: "ADD2"
+. : Identifier name: "Rtype"
 . : BlockStatement
 . : ' AssignmentStatement
 . : ' | CallExpr type: null
-. : ' | . Identifier name: "X", type: null
+. : ' | . Identifier name: "X"
 . : ' | . ArgsIndices
-. : ' | . : Identifier name: "rd", type: null
+. : ' | . : Identifier name: "rd"
 . : ' | CastExpr type: null
 . : ' | . BinaryExpr operator: +, type: null
 . : ' | . : CastExpr type: null
 . : ' | . : ' CallExpr type: null
-. : ' | . : ' | Identifier name: "X", type: null
+. : ' | . : ' | Identifier name: "X"
 . : ' | . : ' | ArgsIndices
-. : ' | . : ' | . Identifier name: "rs1", type: null
+. : ' | . : ' | . Identifier name: "rs1"
 . : ' | . : ' TypeLiteral type: null
-. : ' | . : ' | Identifier name: "Bits", type: null
+. : ' | . : ' | Identifier name: "Bits"
 . : ' | . : CastExpr type: null
 . : ' | . : ' CallExpr type: null
-. : ' | . : ' | Identifier name: "X", type: null
+. : ' | . : ' | Identifier name: "X"
 . : ' | . : ' | ArgsIndices
-. : ' | . : ' | . Identifier name: "rs2", type: null
+. : ' | . : ' | . Identifier name: "rs2"
 . : ' | . : ' TypeLiteral type: null
-. : ' | . : ' | Identifier name: "Bits", type: null
+. : ' | . : ' | Identifier name: "Bits"
 . : ' | . TypeLiteral type: null
-. : ' | . : Identifier name: "Regs", type: null
+. : ' | . : Identifier name: "Regs"

@@ -110,6 +110,9 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
 
   @Override
   public String toString() {
+    if (type == null) {
+      return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
+    }
     return "%s name: \"%s\", type: %s".formatted(this.getClass().getSimpleName(), this.name,
         this.type);
   }
