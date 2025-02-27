@@ -5,7 +5,7 @@ import javax.annotation.Nullable;
 /**
  * Types necessary for the Micro Architecture description.
  */
-public abstract class MicroArchitectureType extends DataType {
+public abstract class MicroArchitectureType extends Type {
 
   private static @Nullable FetchResultType fetchResult;
 
@@ -33,15 +33,5 @@ public abstract class MicroArchitectureType extends DataType {
       instruction = new InstructionType();
     }
     return instruction;
-  }
-
-  @Override
-  public int bitWidth() {
-    return 0;
-  }
-
-  @Override
-  public @Nullable DataType fittingCppType() {
-    return null;
   }
 }

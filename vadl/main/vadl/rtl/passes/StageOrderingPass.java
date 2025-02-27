@@ -1,4 +1,4 @@
-package vadl.viam.passes.mia;
+package vadl.rtl.passes;
 
 import java.io.IOException;
 import java.util.ArrayList;
