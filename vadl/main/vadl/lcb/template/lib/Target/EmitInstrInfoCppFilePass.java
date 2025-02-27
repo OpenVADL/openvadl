@@ -256,9 +256,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
                                 int regOperand,
                                 int immOperand,
                                 String zeroRegister,
-      /* when there is no zeroRegister then some
-       * instructions are never as cheap as move.
-       */
+                                // when there is no zeroRegister then some
+                                // instructions are never as cheap as move.
                                 boolean isCheckable) implements Renderable {
 
     @Override
