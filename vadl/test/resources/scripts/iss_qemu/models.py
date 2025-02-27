@@ -8,6 +8,7 @@ class TestSpec:
     id: str
     asm_core: str
     reg_tests: Dict[str, str] = field(default_factory=dict)
+    qemu_args: str = field(default="")
     reference_exec: str = field(default="")
     reference_regs: list[str] = field(default_factory=list)
 

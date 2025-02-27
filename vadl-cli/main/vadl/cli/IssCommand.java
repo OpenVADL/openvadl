@@ -2,23 +2,14 @@ package vadl.cli;
 
 import static org.apache.commons.io.file.PathUtils.isEmptyDirectory;
 
-import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Comparator;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.io.file.PathUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -47,12 +38,12 @@ public class IssCommand extends BaseCommand {
       description = "Download and prepare QEMU before generating ISS.")
   private boolean init;
 
-  private static String QEMU_VERSION = "9.0.3";
-  private static String QEMU_DOWNLOAD_URL =
+  private static final String QEMU_VERSION = "9.2.2";
+  private static final String QEMU_DOWNLOAD_URL =
       "https://github.com/qemu/qemu/archive/refs/tags/v" + QEMU_VERSION + ".tar.gz";
-  private static String QEMU_SHA256_CHECKSUM = "e9G8+p+nv31UJz4HvCWCHVC89AT3bMcxRC6GSW9oykc=";
+  private static final String QEMU_SHA256_CHECKSUM = "E6zBznDb31pHb/Zt7nV9GSKrlFVPSWzvYgEZWQ9/cQI=";
   // used to show progress bar when downloading
-  private static int QEMU_TAR_BYTE_SIZE = 38119749;
+  private static final int QEMU_TAR_BYTE_SIZE = 39_845_342;
 
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
@@ -211,45 +202,7 @@ public class IssCommand extends BaseCommand {
   }
 
   private void extractTarXz(Path archive, Path outputDir) throws IOException {
-    try (var fileInputStream = Files.newInputStream(archive);
-         var bufferedInputStream = new BufferedInputStream(fileInputStream);
-         var xzInputStream = new GzipCompressorInputStream(bufferedInputStream);
-         var tarInputStream = new TarArchiveInputStream(xzInputStream)) {
-
-      TarArchiveEntry entry;
-      String topLevelDir = null;
-
-      while ((entry = tarInputStream.getNextEntry()) != null) {
-        String entryName = entry.getName();
-
-        // Detect top-level directory
-        if (topLevelDir == null) {
-          int firstSlash = entryName.indexOf('/');
-          if (firstSlash != -1) {
-            topLevelDir = entryName.substring(0, firstSlash + 1); // "qemu-9.0.3/"
-          }
-        }
-
-        // Remove top-level directory
-        if (topLevelDir != null && entryName.startsWith(topLevelDir)) {
-          entryName = entryName.substring(topLevelDir.length());
-        }
-
-        if (entryName.isEmpty()) {
-          continue; // Skip empty root directory entry
-        }
-
-        Path outputPath = outputDir.resolve(entryName);
-        if (entry.isDirectory()) {
-          Files.createDirectories(outputPath);
-        } else {
-          Files.createDirectories(outputPath.getParent());
-          try (var outputStream = Files.newOutputStream(outputPath)) {
-            tarInputStream.transferTo(outputStream);
-          }
-        }
-      }
-    }
+    TarGzExtractor.extractTarGz(archive, outputDir, 1);
   }
 
 }

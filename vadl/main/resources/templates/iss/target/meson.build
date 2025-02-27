@@ -1,7 +1,6 @@
 subdir('alpha')
 subdir('arm')
 subdir('avr')
-subdir('cris')
 subdir('hexagon')
 subdir('hppa')
 subdir('i386')
@@ -20,5 +19,3 @@ subdir('tricore')
 subdir('xtensa')
 # VADL generated line
 subdir('[(${gen_arch})]')
-
-specific_ss.add(files('target-common.c'))

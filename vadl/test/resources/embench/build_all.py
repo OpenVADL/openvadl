@@ -121,6 +121,11 @@ def build_parser():
         default=5,
         help='Timeout used for the compiler and linker invocations'
     )
+    parser.add_argument(
+        '--exclude',
+        type=str,
+        help='Comma separated list of benchmarks to exclude'
+    )
 
     return parser
 
@@ -195,6 +200,10 @@ def validate_args(args):
         for envarg in envlist:
             var, val = envarg.split('=', 1)
             gp['env'][var] = val
+
+    gp['exclude'] = []
+    if args.exclude:
+        gp['exclude'] = args.exclude.split(',')
 
     # Other args validated later.
 
@@ -695,6 +704,9 @@ def link_benchmark(bench):
 
     return succeeded
 
+def exclude_benchmarks(benchmarks):
+    """Exclude benchmarks that are in the exclude list"""
+    return [bench for bench in benchmarks if bench not in gp['exclude']]
 
 def main():
     """Main program to drive building of benchmarks."""
@@ -719,6 +731,7 @@ def main():
 
     # Find the benchmarks
     benchmarks = find_benchmarks()
+    benchmarks = exclude_benchmarks(benchmarks)
     log_benchmarks(benchmarks)
 
     # Establish other global parameters

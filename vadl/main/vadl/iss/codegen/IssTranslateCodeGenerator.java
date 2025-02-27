@@ -119,7 +119,7 @@ public class IssTranslateCodeGenerator implements CDefaultMixins.All,
 
   @Handler
   void impl(CGenContext<Node> ctx, IssStaticPcRegNode node) {
-    ctx.wr("(ctx->base.pc_next)");
+    ctx.wr("(ctx->pc_curr)");
   }
 
   @Handler

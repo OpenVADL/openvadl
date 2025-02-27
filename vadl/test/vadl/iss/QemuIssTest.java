@@ -35,7 +35,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
   // config of qemu test image
   private static final String QEMU_TEST_IMAGE =
-      "jozott/qemu@sha256:9fa0d230b540829f25d8b7fcbe494a078bbee4785578372afaa64e7fabda03e0";
+      "jozott/qemu@sha256:15bbbb8d4372abfa637f2758d38c237704a1de1d621dfe18d3f073eba515b977";
 
   // specification to image cache
   // we must separate CAS and ISS, otherwise the CAS test would use the ISS image
@@ -216,14 +216,16 @@ public abstract class QemuIssTest extends DockerExecutionTest {
               // use redis cache for building (sccache allows remote caching)
               var cc = "sccache gcc";
 
-              // TODO: update target name
               d.workDir("/qemu/build");
               // configure qemu with the new target from the specification
               d.run("../configure --cc='" + cc + "' --target-list=" + softmmuTarget);
               // setup redis cache endpoint environment variablef
               redisCache.setupEnv(d);
-              // build qemu with all cpu cores and print if cache was used
-              d.run("make -j$(nproc) && sccache -s");
+              // build qemu with all cpu cores and print if cache was used.
+              // the sccache --start-server is required,
+              // otherwise we get a deadlock after the last make step.
+              // see https://github.com/mozilla/sccache/issues/2145
+              d.run("sccache --start-server && make -j$(nproc) && sccache -s");
               // validate existence of generated qemu iss
               d.run(qemuBin + " --version");
 

@@ -11,7 +11,7 @@ from utils import get_unique_sock_addr
 
 class QEMUExecuter:
 
-    def __init__(self, name: str, qemu_exec: str):
+    def __init__(self, name: str, qemu_exec: str, args: str):
         self.qemu_exec = qemu_exec
         self.qmp = QMPClient(name)
         self.listener = EventListener()
@@ -19,6 +19,7 @@ class QEMUExecuter:
         self.event_handle_task = asyncio.Task(self._event_handler())
         self.logs = []
         self.sock_addr = get_unique_sock_addr()
+        self.args = args
 
     def __del__(self):
         try:
@@ -47,6 +48,9 @@ class QEMUExecuter:
     async def _start_qemu(self, test_elf: str):
         qmp_addr = f"unix:{self.sock_addr}"
         qmp_conn = f"{qmp_addr},server=on,wait=off"
+
+        qemu_args = self.args.split(" ")
+
         self.process = await asyncio.create_subprocess_exec(
             self.qemu_exec,
             "-nographic",
@@ -54,6 +58,7 @@ class QEMUExecuter:
             "-qmp", qmp_conn,
             "-machine", "virt",
             "-bios", test_elf,
+            *qemu_args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
