@@ -48,7 +48,7 @@ public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationT
     // Copy embench
     {
       var input = new File(
-          "test/main/resources/embench");
+          "test/resources/embench");
       var output = new File(configuration.outputPath() + "/lcb/embench");
       FileUtils.copyDirectory(input, output);
     }

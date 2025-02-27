@@ -20,9 +20,11 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.ValueRange;
 import vadl.gcb.passes.ValueRangeCtx;
+import vadl.lcb.passes.TableGenInstructionCtx;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
@@ -245,6 +247,32 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  /**
+   * There are several instructions which are marked as `isAsCheapMoveAggregate`. However, it
+   * sometimes depends. Particularly, {@code ADDI} etc. must have as a register argument the
+   * zero register or an immediate which is zero.
+   */
+  record IsAsCheapMoveAggregate(String instructionName,
+                                int regOperand,
+                                int immOperand,
+                                String zeroRegister,
+      /* when there is no zeroRegister then some
+       * instructions are never as cheap as move.
+       */
+                                boolean isCheckable) implements Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "instructionName", instructionName,
+          "regOperand", regOperand,
+          "immOperand", immOperand,
+          "zeroRegister", zeroRegister,
+          "isCheckable", isCheckable
+      );
+    }
+  }
+
   private RegisterFile getRegisterClassFromInstruction(Instruction instruction) {
     return
         ensurePresent(
@@ -315,6 +343,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put("bgeu",
         getBranchInstruction(specification, passResults,
             MachineInstructionLabel.BUGEQ).simpleName());
+    map.put("isAsCheapAsMove",
+        areAsCheapAsMove(fieldUsages, new Database(passResults, specification)));
 
     return map;
   }
@@ -430,5 +460,63 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         "destRegisterFile", obj.destRegisterFile.simpleName(),
         "instruction", obj.instruction.simpleName()
     );
+  }
+
+  private List<IsAsCheapMoveAggregate> areAsCheapAsMove(
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+      Database database) {
+    var aggregates = new ArrayList<IsAsCheapMoveAggregate>();
+    var instructions = database.run(new Query.Builder().machineInstructionLabelGroup(
+            MachineInstructionLabelGroup.AS_CHEAP_AS_MOVE_CANDIDATES).build())
+        .machineInstructions().stream().toList();
+
+    for (var instruction : instructions) {
+      var reg =
+          ensurePresent(
+              fieldUsages.fieldsByRegisterUsage(instruction,
+                      IdentifyFieldUsagePass.RegisterUsage.SOURCE)
+                  .stream().findFirst(),
+              () -> Diagnostic.error("Cannot find a register operand.",
+                  instruction.sourceLocation()));
+
+      var immediate =
+          ensurePresent(fieldUsages.getImmediates(instruction.format()).stream().findFirst(),
+              () -> Diagnostic.error("Cannot find an immediate operand.",
+                  instruction.sourceLocation()));
+
+      var ctx = instruction.extension(TableGenInstructionCtx.class);
+      var loweringRecord =
+          ensureNonNull(ctx,
+              () -> Diagnostic.error("Cannot find a TableGen record for this instruction.",
+                  instruction.sourceLocation())).record();
+
+      // MCInst have the output at the beginning.
+      // Therefore, we need to offset the inputs.
+      var regIndex =
+          loweringRecord.outputs().size() + loweringRecord.findInputIndex(reg.left());
+      var immIndex = loweringRecord.outputs().size() + loweringRecord.findInputIndex(immediate);
+
+      var isCheckable = false;
+      var zeroRegister = "";
+
+      // Is it a register file?
+      if (reg.right().isRight()) {
+        var registerFile = reg.right().right();
+        var zeroRegisterAddr = registerFile.zeroRegister();
+        if (zeroRegisterAddr.isPresent()) {
+          zeroRegister = registerFile.generateName(zeroRegisterAddr.get());
+          isCheckable = true;
+        }
+      }
+
+      aggregates.add(new IsAsCheapMoveAggregate(
+          instruction.simpleName(),
+          regIndex,
+          immIndex,
+          zeroRegister,
+          isCheckable));
+    }
+
+    return aggregates;
   }
 }

@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.TableGenInstructionCtx;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
@@ -27,6 +28,7 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweri
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryLoadStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryStoreStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringUnconditionalJumpsStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringXoriAndOriStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrategyImpl;
@@ -55,9 +57,9 @@ public class LlvmLoweringPass extends Pass {
    */
   public record Flags(boolean isTerminator, boolean isBranch, boolean isCall, boolean isReturn,
                       boolean isPseudo, boolean isCodeGenOnly, boolean mayLoad, boolean mayStore,
-                      boolean isBarrier) {
+                      boolean isBarrier, boolean isRematerialisable, boolean isAsCheapAsAMove) {
     public static Flags empty() {
-      return new Flags(false, false, false, false, false, false, false, false, false);
+      return new Flags(false, false, false, false, false, false, false, false, false, false, false);
     }
 
     /**
@@ -65,7 +67,8 @@ public class LlvmLoweringPass extends Pass {
      */
     public static Flags withTerminator(Flags flags) {
       return new Flags(true, flags.isBranch, flags.isCall, flags.isReturn, flags.isPseudo,
-          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier);
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
+          flags.isRematerialisable, flags.isAsCheapAsAMove);
     }
 
     /**
@@ -73,7 +76,8 @@ public class LlvmLoweringPass extends Pass {
      */
     public static Flags withNoTerminator(Flags flags) {
       return new Flags(false, flags.isBranch, flags.isCall, flags.isReturn, flags.isPseudo,
-          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier);
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
+          flags.isRematerialisable, flags.isAsCheapAsAMove);
     }
 
     /**
@@ -81,7 +85,9 @@ public class LlvmLoweringPass extends Pass {
      */
     public static Flags withBranch(Flags flags) {
       return new Flags(flags.isTerminator(), true, flags.isCall, flags.isReturn, flags.isPseudo,
-          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier);
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
+          flags.isRematerialisable,
+          flags.isAsCheapAsAMove);
     }
 
     /**
@@ -90,7 +96,8 @@ public class LlvmLoweringPass extends Pass {
     public static Flags withBarrier(Flags flags) {
       return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
           flags.isPseudo,
-          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), true);
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), true, flags.isRematerialisable,
+          flags.isAsCheapAsAMove);
     }
 
     /**
@@ -98,7 +105,29 @@ public class LlvmLoweringPass extends Pass {
      */
     public static Flags withNoBranch(Flags flags) {
       return new Flags(flags.isTerminator(), false, flags.isCall, flags.isReturn, flags.isPseudo,
-          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier);
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
+          flags.isRematerialisable, flags.isAsCheapAsAMove);
+    }
+
+    /**
+     * Given {@link Flags} overwrite the {@code isRematerialisable} and return it.
+     */
+    public static Flags withIsRematerialisable(Flags flags) {
+      return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
+          flags.isPseudo,
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
+          true, flags.isAsCheapAsAMove);
+    }
+
+
+    /**
+     * Given {@link Flags} overwrite the {@code isAsCheapAsMove} and return it.
+     */
+    public static Flags withIsAsCheapAsMove(Flags flags) {
+      return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
+          flags.isPseudo,
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
+          flags.isRematerialisable, true);
     }
   }
 
@@ -145,6 +174,7 @@ public class LlvmLoweringPass extends Pass {
             new LlvmInstructionLoweringIndirectJumpStrategyImpl(architectureType),
             new LlvmInstructionLoweringMemoryStoreStrategyImpl(architectureType),
             new LlvmInstructionLoweringMemoryLoadStrategyImpl(architectureType),
+            new LlvmInstructionLoweringXoriAndOriStrategyImpl(architectureType),
             new LlvmInstructionLoweringDefaultStrategyImpl(architectureType));
     var pseudoStrategies =
         List.of(new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies),
@@ -180,8 +210,14 @@ public class LlvmLoweringPass extends Pass {
                     abi);
 
             // Okay, we have to save record.
-            record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(instruction,
-                llvmLoweringIntermediateResult));
+            record.ifPresent(llvmLoweringIntermediateResult -> {
+              tableGenRecords.put(instruction,
+                  llvmLoweringIntermediateResult);
+
+              // Also attach it as extension to the instruction.
+              instruction.attachExtension(
+                  new TableGenInstructionCtx(llvmLoweringIntermediateResult));
+            });
 
             // Allow only one strategy to apply.
             // Otherwise, the results from a previous strategy are overwritten.

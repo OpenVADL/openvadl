@@ -440,3 +440,24 @@ unsigned [(${namespace})]InstrInfo::removeBranch(MachineBasicBlock &MBB,
   I->eraseFromParent();
   return 2;
 }
+
+
+bool [(${namespace})]InstrInfo::isAsCheapAsAMove(const MachineInstr &MI) const {
+  const unsigned Opcode = MI.getOpcode();
+  switch (Opcode) {
+  default:
+    break;
+  [# th:each="aggr : ${isAsCheapAsMove}" ]
+  case [(${namespace})]::[(${aggr.instructionName})]:
+    [#th:block th:if="${!aggr.isCheckable}"]
+      return false;
+    [/th:block]
+    [#th:block th:if="${aggr.isCheckable}"]
+    return (MI.getOperand([(${aggr.regOperand})]).isReg() &&
+            MI.getOperand([(${aggr.regOperand})]).getReg() == [(${namespace})]::[(${aggr.zeroRegister})]) ||
+           (MI.getOperand([(${aggr.immOperand})]).isImm() && MI.getOperand([(${aggr.immOperand})]).getImm() == 0);
+    [/th:block]
+  [/]
+  }
+  return MI.isAsCheapAsAMove();
+}

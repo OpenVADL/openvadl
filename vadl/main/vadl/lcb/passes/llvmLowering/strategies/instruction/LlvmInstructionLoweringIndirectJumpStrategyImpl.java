@@ -64,6 +64,14 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   @Override
+  protected LlvmLoweringPass.Flags getFlags(Graph graph) {
+    var flags = super.getFlags(graph);
+
+    return LlvmLoweringPass.Flags.withIsRematerialisable(
+        LlvmLoweringPass.Flags.withIsAsCheapAsMove(flags));
+  }
+
+  @Override
   protected Optional<LlvmLoweringRecord> lowerInstruction(
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,

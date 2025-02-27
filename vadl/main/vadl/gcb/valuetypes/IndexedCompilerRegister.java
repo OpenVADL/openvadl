@@ -29,17 +29,9 @@ public class IndexedCompilerRegister extends CompilerRegister {
                                  String asmName,
                                  List<String> altNames,
                                  int dwarfNumber) {
-    super(generateName(registerFile, index), asmName, altNames, dwarfNumber, index);
+    super(registerFile.generateName(index), asmName, altNames, dwarfNumber, index);
     this.index = index;
   }
-
-  /**
-   * Generate the internal compiler name from a {@link RegisterFile} and {@code index}.
-   */
-  public static String generateName(RegisterFile registerFile, int index) {
-    return registerFile.identifier.simpleName() + index;
-  }
-
 
   /**
    * Generate {@link CompilerRegister} from {@link RegisterFile}.
@@ -68,7 +60,7 @@ public class IndexedCompilerRegister extends CompilerRegister {
               .stream().findFirst(),
           () -> Diagnostic.error(
               String.format("The aliases for a register file's register '%s' are not defined",
-                  generateName(registerFile, addr)),
+                  registerFile.generateName(addr)),
               registerFile.sourceLocation().join(abi.sourceLocation())));
 
       int dwarfNumber = dwarfNumberOffset + addr;

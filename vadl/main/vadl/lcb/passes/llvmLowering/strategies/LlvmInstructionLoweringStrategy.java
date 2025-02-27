@@ -216,7 +216,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    *
    * @return the flags of an {@link Graph}.
    */
-  public static LlvmLoweringPass.Flags getFlags(Graph graph) {
+  protected LlvmLoweringPass.Flags getFlags(Graph graph) {
     var isTerminator = graph.getNodes(WriteRegNode.class)
         .anyMatch(node -> node.staticCounterAccess() != null);
 
@@ -234,6 +234,8 @@ public abstract class LlvmInstructionLoweringStrategy {
         graph.getNodes(Set.of(WriteMemNode.class, LlvmMayStoreMemory.class)).findFirst()
             .isPresent();
     var isBarrier = false;
+    var isRemat = false;
+    var isAsCheapAsMove = false;
 
     return new LlvmLoweringPass.Flags(
         isTerminator,
@@ -244,7 +246,9 @@ public abstract class LlvmInstructionLoweringStrategy {
         isCodeGenOnly,
         mayLoad,
         mayStore,
-        isBarrier
+        isBarrier,
+        isRemat,
+        isAsCheapAsMove
     );
   }
 

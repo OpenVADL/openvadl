@@ -57,15 +57,17 @@ public final class TableGenInstructionRenderer {
                         
             %s
                         
-            let isTerminator  = %d;
-            let isBranch      = %d;
-            let isCall        = %d;
-            let isReturn      = %d;
-            let isPseudo      = %d;
-            let isCodeGenOnly = %d;
-            let mayLoad       = %d;
-            let mayStore      = %d;
-            let isBarrier     = %d;
+            let isTerminator       = %d;
+            let isBranch           = %d;
+            let isCall             = %d;
+            let isReturn           = %d;
+            let isPseudo           = %d;
+            let isCodeGenOnly      = %d;
+            let mayLoad            = %d;
+            let mayStore           = %d;
+            let isBarrier          = %d;
+            let isReMaterializable = %d;
+            let isAsCheapAsAMove   = %d;
                         
             let Constraints = "";
             let AddedComplexity = 0;
@@ -99,6 +101,8 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().mayLoad()),
         toInt(instruction.getFlags().mayStore()),
         toInt(instruction.getFlags().isBarrier()),
+        toInt(instruction.getFlags().isRematerialisable()),
+        toInt(instruction.getFlags().isAsCheapAsAMove()),
         instruction.getAnonymousPatterns()
             .stream()
             .filter(x -> x instanceof TableGenSelectionPattern)

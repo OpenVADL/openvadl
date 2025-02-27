@@ -9,6 +9,7 @@ import java.util.Set;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
@@ -42,6 +43,14 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
   @Override
   protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
     return replacementHooksWithDefaultFieldAccessReplacement();
+  }
+
+  @Override
+  protected LlvmLoweringPass.Flags getFlags(Graph graph) {
+    var flags = super.getFlags(graph);
+
+    return LlvmLoweringPass.Flags.withIsRematerialisable(
+        LlvmLoweringPass.Flags.withIsAsCheapAsMove(flags));
   }
 
   @Override
