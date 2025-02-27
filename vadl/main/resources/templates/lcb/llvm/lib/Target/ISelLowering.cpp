@@ -861,6 +861,10 @@ bool [(${namespace})]TargetLowering::isLegalAddressingMode(const DataLayout &DL,
                                                 const AddrMode &AM, Type *Ty,
                                                 unsigned AS,
                                                 Instruction *I) const {
+  if(I == nullptr) {
+    return true;
+  }
+
   // No global is ever allowed as a base.
   if (AM.BaseGV)
     return false;

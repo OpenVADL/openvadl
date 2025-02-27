@@ -100,11 +100,11 @@ public class RegisterFile extends Resource {
 
     for (Constraint constraint : constraints) {
       ensure(constraint.value.type().isTrivialCastTo(resultType),
-          "Type missmatch: Can't cast value type %s to register file result type %s.",
+          "Type mismatch: Can't cast value type %s to register file result type %s.",
           constraint.value.type(), this.resultType);
 
       ensure(constraint.address.type().isTrivialCastTo(addressType),
-          "Type missmatch: Can't cast address type %s to register file address type %s.",
+          "Type mismatch: Can't cast address type %s to register file address type %s.",
           constraint.address.type(), this.resultType);
     }
   }
