@@ -48,6 +48,8 @@ class TableGenInstructionRendererTest extends AbstractTest {
         false,
         false,
         false,
+        false,
+        false,
         false
     );
     var instruction =
@@ -90,15 +92,17 @@ class TableGenInstructionRendererTest extends AbstractTest {
         let Inst{19-10} = register{9-0};
         let Inst{9-0} = opCode{9-0};
                 
-        let isTerminator  = 0;
-        let isBranch      = 0;
-        let isCall        = 0;
-        let isReturn      = 0;
-        let isPseudo      = 0;
-        let isCodeGenOnly = 0;
-        let mayLoad       = 0;
-        let mayStore      = 0;
-        let isBarrier     = 0;
+        let isTerminator       = 0;
+        let isBranch           = 0;
+        let isCall             = 0;
+        let isReturn           = 0;
+        let isPseudo           = 0;
+        let isCodeGenOnly      = 0;
+        let mayLoad            = 0;
+        let mayStore           = 0;
+        let isBarrier          = 0;
+        let isReMaterializable = 0;
+        let isAsCheapAsAMove   = 0;
                 
         let Constraints = "";
         let AddedComplexity = 0;

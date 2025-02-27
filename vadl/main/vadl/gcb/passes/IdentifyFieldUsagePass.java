@@ -6,6 +6,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
@@ -13,9 +14,13 @@ import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.Either;
+import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Format.Field;
 import vadl.viam.Instruction;
+import vadl.viam.Register;
+import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
@@ -23,7 +28,8 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegNode;
 
 /**
  * This pass goes over all instructions and determines
@@ -42,6 +48,15 @@ public class IdentifyFieldUsagePass extends Pass {
   }
 
   /**
+   * Wrapper around {@link RegisterUsage} to also store the {@link RegisterFile} or
+   * {@link Register}.
+   */
+  public record RegisterUsageAggregate(RegisterUsage registerUsage,
+                                       Either<Register, RegisterFile> ref) {
+
+  }
+
+  /**
    * Helper class for the result of this pass.
    */
   public static class ImmediateDetectionContainer {
@@ -54,7 +69,7 @@ public class IdentifyFieldUsagePass extends Pass {
      * Tracks how a register is used in an {@link Instruction}. This is not true for all
      * {@link Format}. That's why the key is {@link Instruction}.
      */
-    private final IdentityHashMap<Instruction, IdentityHashMap<Field, RegisterUsage>>
+    private final IdentityHashMap<Instruction, IdentityHashMap<Field, RegisterUsageAggregate>>
         registerUsage;
 
     /**
@@ -87,7 +102,7 @@ public class IdentifyFieldUsagePass extends Pass {
     /**
      * Adding a {@link FieldUsage} to the result.
      */
-    public void addField(Format format, Field field, FieldUsage kind) {
+    public void addFieldUsage(Format format, Field field, FieldUsage kind) {
       var f = fieldUsage.get(format);
       if (f == null) {
         throw new ViamError("Format must not be null");
@@ -100,7 +115,10 @@ public class IdentifyFieldUsagePass extends Pass {
      * If a {@link Field} is already stored then {@code kind} is ignored and
      * {@link RegisterUsage#BOTH} is added.
      */
-    public void addField(Instruction instruction, Field field, RegisterUsage kind) {
+    public void addRegisterUsage(Instruction instruction,
+                                 Field field,
+                                 RegisterUsage kind,
+                                 RegisterFile registerFile) {
       var f = registerUsage.get(instruction);
       if (f == null) {
         throw new ViamError("Format must not be null");
@@ -108,9 +126,33 @@ public class IdentifyFieldUsagePass extends Pass {
 
       if (f.containsKey(field)) {
         // It already exists therefore, we add `BOTH`.
-        f.put(field, RegisterUsage.BOTH);
+        f.put(field,
+            new RegisterUsageAggregate(RegisterUsage.BOTH, new Either<>(null, registerFile)));
       } else {
-        f.put(field, kind);
+        f.put(field, new RegisterUsageAggregate(kind, new Either<>(null, registerFile)));
+      }
+    }
+
+    /**
+     * Adding a {@link RegisterUsage} to the result.
+     * If a {@link Field} is already stored then {@code kind} is ignored and
+     * {@link RegisterUsage#BOTH} is added.
+     */
+    public void addRegisterUsage(Instruction instruction,
+                                 Field field,
+                                 RegisterUsage kind,
+                                 Register register) {
+      var f = registerUsage.get(instruction);
+      if (f == null) {
+        throw new ViamError("Format must not be null");
+      }
+
+      if (f.containsKey(field)) {
+        // It already exists therefore, we add `BOTH`.
+        f.put(field,
+            new RegisterUsageAggregate(RegisterUsage.BOTH, new Either<>(register, null)));
+      } else {
+        f.put(field, new RegisterUsageAggregate(kind, new Either<>(register, null)));
       }
     }
 
@@ -143,12 +185,32 @@ public class IdentifyFieldUsagePass extends Pass {
     /**
      * Get the usages of registers by instruction.
      */
-    public Map<Field, RegisterUsage> getRegisterUsages(Instruction instruction) {
+    public Map<Field, RegisterUsageAggregate> getRegisterUsages(Instruction instruction) {
       var obj = registerUsage.get(instruction);
       if (obj == null) {
         throw new ViamError("Hashmap must not be null");
       }
       return obj;
+
+    }
+
+    /**
+     * Get the fields by instruction and usage. Note that if the {@link RegisterUsage#BOTH} is set
+     * then it also returned.
+     *
+     * @return a list of pairs. The left indicates the field and the right whether it is
+     *         referencing {@link Register} or {@link RegisterFile}.
+     */
+    public List<Pair<Field, Either<Register, RegisterFile>>> fieldsByRegisterUsage(
+        Instruction instruction,
+        RegisterUsage usage) {
+      var obj = registerUsage.getOrDefault(instruction, new IdentityHashMap<>());
+
+      return obj.entrySet()
+          .stream().filter(x -> x.getValue().registerUsage() == usage
+              || x.getValue().registerUsage() == RegisterUsage.BOTH)
+          .map(x -> Pair.of(x.getKey(), x.getValue().ref))
+          .collect(Collectors.toList());
     }
 
     /**
@@ -187,22 +249,31 @@ public class IdentifyFieldUsagePass extends Pass {
         .forEach(fieldAccessRefNode -> {
           var fieldRef = fieldAccessRefNode.fieldAccess().fieldRef();
           container.addFormat(fieldRef.format());
-          container.addField(fieldRef.format(), fieldRef,
+          container.addFieldUsage(fieldRef.format(), fieldRef,
               FieldUsage.IMMEDIATE);
         });
   }
 
-  private static void handleFields(Instruction instruction, ImmediateDetectionContainer container) {
+  private static void handleFields(Instruction instruction,
+                                   ImmediateDetectionContainer container) {
     instruction.behavior().getNodes(FieldRefNode.class)
         .forEach(fieldRefNode -> {
           var fieldRef = fieldRefNode.formatField();
-          var isRegisterRead = fieldRefNode.usages()
-              .anyMatch(
-                  usage -> usage instanceof ReadRegNode || usage instanceof ReadRegFileNode);
-          var isRegisterWrite = fieldRefNode.usages()
-              .filter(usage -> usage instanceof WriteResourceNode)
-              .anyMatch(usage -> {
-                var cast = (WriteResourceNode) usage;
+          var registerRead = fieldRefNode.usages()
+              .filter(
+                  usage -> usage instanceof ReadRegNode)
+              .map(usage -> ((ReadRegNode) usage).register())
+              .findFirst();
+          var registerFileRead = fieldRefNode.usages()
+              .filter(
+                  usage -> usage instanceof ReadRegFileNode)
+              .map(usage -> ((ReadRegFileNode) usage).registerFile())
+              .findFirst();
+
+          var registerWrite = fieldRefNode.usages()
+              .filter(usage -> usage instanceof WriteRegNode)
+              .filter(usage -> {
+                var cast = (WriteRegNode) usage;
                 var nodes = new ArrayList<Node>();
                 // The field should be marked as REGISTER when the field is used as a register
                 // index. Therefore, we need to check whether the node is in the address tree.
@@ -211,23 +282,50 @@ public class IdentifyFieldUsagePass extends Pass {
                 Objects.requireNonNull(cast.address()).collectInputsWithChildren(nodes);
                 return cast.hasAddress()
                     && (cast.address() == fieldRefNode || nodes.contains(fieldRefNode));
-              });
+              })
+              .map(usage -> ((WriteRegNode) usage).register())
+              .findFirst();
+
+          var registerFileWrite = fieldRefNode.usages()
+              .filter(usage -> usage instanceof WriteRegFileNode)
+              .filter(usage -> {
+                var cast = (WriteRegFileNode) usage;
+                var nodes = new ArrayList<Node>();
+                // The field should be marked as REGISTER when the field is used as a register
+                // index. Therefore, we need to check whether the node is in the address tree.
+                // We avoid a direct check because it is theoretically possible to do
+                // arithmetic with the register file's index. However, this is very unlikely.
+                Objects.requireNonNull(cast.address()).collectInputsWithChildren(nodes);
+                return cast.hasAddress()
+                    && (cast.address() == fieldRefNode || nodes.contains(fieldRefNode));
+              })
+              .map(usage -> ((WriteRegFileNode) usage).registerFile())
+              .findFirst();
 
           container.addFormat(fieldRef.format());
-
-          if (isRegisterRead || isRegisterWrite) {
-            container.addField(fieldRef.format(), fieldRef,
+          if (registerRead.isPresent()
+              || registerFileRead.isPresent()
+              || registerWrite.isPresent()
+              || registerFileWrite.isPresent()) {
+            container.addFieldUsage(fieldRef.format(), fieldRef,
                 FieldUsage.REGISTER);
-            if (isRegisterRead) {
-              container.addField(instruction, fieldRef,
-                  RegisterUsage.SOURCE);
-            } else {
-              container.addField(instruction, fieldRef,
-                  RegisterUsage.DESTINATION);
-            }
           } else {
             throw Diagnostic.error("Register index is not used as write or read.",
                 fieldRefNode.sourceLocation()).build();
+          }
+
+          if (registerRead.isPresent()) {
+            container.addRegisterUsage(instruction, fieldRef,
+                RegisterUsage.SOURCE, registerRead.get());
+          } else if (registerFileRead.isPresent()) {
+            container.addRegisterUsage(instruction, fieldRef,
+                RegisterUsage.SOURCE, registerFileRead.get());
+          } else if (registerWrite.isPresent()) {
+            container.addRegisterUsage(instruction, fieldRef,
+                RegisterUsage.DESTINATION, registerWrite.get());
+          } else {
+            container.addRegisterUsage(instruction, fieldRef,
+                RegisterUsage.DESTINATION, registerFileWrite.get());
           }
         });
   }

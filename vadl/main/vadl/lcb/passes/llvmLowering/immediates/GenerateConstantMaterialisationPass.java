@@ -140,14 +140,14 @@ public class GenerateConstantMaterialisationPass extends Pass {
                 new Parameter(fieldRefNode.formatField().identifier, fieldRefNode.type())));
       } else {
         var registerUsages = fieldUsages.getRegisterUsages(addi);
-        var registerUsage = registerUsages.get(fieldRefNode.formatField());
-        ensureNonNull(registerUsage,
+        var aggregate = registerUsages.get(fieldRefNode.formatField());
+        ensureNonNull(aggregate,
             () -> Diagnostic.error("Could not detect how the register field is used.",
                     fieldRefNode.sourceLocation())
                 .note("A register field can be used as source, destination or both.")
         );
 
-        switch (Objects.requireNonNull(registerUsage)) {
+        switch (Objects.requireNonNull(aggregate).registerUsage()) {
           case BOTH ->
               throw Diagnostic.error("Register field cannot be used as source and destination.",
                   fieldRefNode.sourceLocation()).build();

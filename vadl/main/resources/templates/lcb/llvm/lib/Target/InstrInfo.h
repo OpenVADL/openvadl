@@ -93,6 +93,8 @@ namespace llvm
 
             const MCInstrDesc &getBrCond([(${namespace})]CC::CondCode CC) const;
 
+            bool isAsCheapAsAMove(const MachineInstr &MI) const override;
+
         private:
             const [(${namespace})]Subtarget &STI;
     };

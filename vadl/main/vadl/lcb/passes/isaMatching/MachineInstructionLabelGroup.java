@@ -11,7 +11,9 @@ import vadl.viam.ViamError;
 public enum MachineInstructionLabelGroup {
   BRANCH_INSTRUCTIONS,
   MEMORY_INSTRUCTIONS,
-  CONDITIONAL_INSTRUCTIONS;
+  CONDITIONAL_INSTRUCTIONS,
+  /* but only those which need to be checked in InstrInfo.cpp */
+  AS_CHEAP_AS_MOVE_CANDIDATES;
 
   public static final Set<MachineInstructionLabel> branchMachineInstructions = Set.of(
       MachineInstructionLabel.BEQ,
@@ -40,6 +42,13 @@ public enum MachineInstructionLabelGroup {
       MachineInstructionLabel.STORE_MEM
   );
 
+  public static final Set<MachineInstructionLabel> asCheapAsMoveCandidates = Set.of(
+      MachineInstructionLabel.XORI,
+      MachineInstructionLabel.ADDI_32,
+      MachineInstructionLabel.ADDI_64,
+      MachineInstructionLabel.ORI
+  );
+
   /**
    * Return the set of instructions based on the value in the enum.
    */
@@ -50,6 +59,8 @@ public enum MachineInstructionLabelGroup {
       return memoryMachineInstructions;
     } else if (this == CONDITIONAL_INSTRUCTIONS) {
       return conditionalInstructions;
+    } else if (this == AS_CHEAP_AS_MOVE_CANDIDATES) {
+      return asCheapAsMoveCandidates;
     }
 
     throw new ViamError("not supported");

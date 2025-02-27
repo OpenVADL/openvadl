@@ -1,9 +1,13 @@
 package vadl.viam;
 
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.utils.Pair;
 
 /**
  * The register file is related to the {@link Register} but takes an address/index when accessing
@@ -55,6 +59,39 @@ public class RegisterFile extends Resource {
 
   public Constraint[] constraints() {
     return constraints;
+  }
+
+  /**
+   * Get a stream over all the constant registers which are defined in {@link #constraints}.
+   */
+  public Stream<Pair<Constant.Value, Constant.Value>> constantRegisters() {
+    return Arrays.stream(constraints)
+        .map(constraint -> Pair.of(constraint.address, constraint.value));
+  }
+
+  /**
+   * Return the address of a zero register if it exists.
+   */
+  public Optional<Constant.Value> zeroRegister() {
+    return constantRegisters()
+        .filter(constantRegister -> constantRegister.right().intValue() == 0)
+        .map(Pair::left)
+        .findFirst();
+  }
+
+  /**
+   * Generate the name from this register file with an {@code index}.
+   */
+  public String generateName(int index) {
+    return identifier.simpleName() + index;
+  }
+
+
+  /**
+   * Generate the name from this register file with an {@code index}.
+   */
+  public String generateName(Constant.Value index) {
+    return identifier.simpleName() + index.intValue();
   }
 
   @Override

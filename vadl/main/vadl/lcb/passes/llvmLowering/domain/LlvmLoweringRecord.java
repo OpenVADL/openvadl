@@ -2,9 +2,12 @@ package vadl.lcb.passes.llvmLowering.domain;
 
 
 import java.util.List;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.viam.Format;
 import vadl.viam.graph.Graph;
 
 /**
@@ -61,5 +64,18 @@ public class LlvmLoweringRecord {
 
   public List<RegisterRef> defs() {
     return def;
+  }
+
+  /**
+   * Find the index in the {@link #inputs} by the given field.
+   */
+  public int findInputIndex(Format.Field field) {
+    for (int i = 0; i < inputs.size(); i++) {
+      if (inputs.get(i) instanceof ReferencesFormatField x && x.formatField().equals(field)) {
+        return i;
+      }
+    }
+
+    throw Diagnostic.error("Cannot find field in inputs.", field.sourceLocation()).build();
   }
 }
