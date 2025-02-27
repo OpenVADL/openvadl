@@ -1,5 +1,6 @@
 package vadl.viam.graph.dependency;
 
+import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Logic;
@@ -19,8 +20,10 @@ import java.util.List;
  */
 public class MiaBuiltInCall extends BuiltInCall {
 
+  @DataValue
   private final List<Resource> resources;
 
+  @DataValue
   private final List<Logic> logic;
 
   public MiaBuiltInCall(BuiltInTable.BuiltIn builtIn, NodeList<ExpressionNode> args, Type type) {
@@ -28,6 +31,13 @@ public class MiaBuiltInCall extends BuiltInCall {
     this.resources = new ArrayList<>();
     this.logic = new ArrayList<>();
     ensure(BuiltInTable.MIA_BUILTINS.contains(builtIn), "Not a micro architecture builtin");
+  }
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(resources);
+    collection.add(logic);
   }
 
   public List<Resource> resources() {
