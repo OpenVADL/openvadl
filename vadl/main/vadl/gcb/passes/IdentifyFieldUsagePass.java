@@ -199,7 +199,7 @@ public class IdentifyFieldUsagePass extends Pass {
      * then it also returned.
      *
      * @return a list of pairs. The left indicates the field and the right whether it is
-     * referencing {@link Register} or {@link RegisterFile}.
+     *         referencing {@link Register} or {@link RegisterFile}.
      */
     public List<Pair<Field, Either<Register, RegisterFile>>> fieldsByRegisterUsage(
         Instruction instruction,
