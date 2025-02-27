@@ -77,6 +77,8 @@ public class AssemblyParserCodeGenerator {
   private final SymbolTable grammarElementSymbolTable = new SymbolTable("ELEM_");
   private final Set<String> functionDefinitions = new HashSet<>();
 
+  private boolean attributesValueNeeded = true;
+  private String assignToCurValueVar = "";
 
   /**
    * Constructor.
@@ -223,14 +225,20 @@ public class AssemblyParserCodeGenerator {
     var elementCount =
         element.elements().stream().filter(e -> !(e instanceof AsmLocalVarDefinition)).count();
 
+    var oldAttributesValueNeeded = attributesValueNeeded;
+
     if (elementCount > 1 && element.asmType() instanceof GroupAsmType groupAsmType) {
+      attributesValueNeeded = true;
       groupAsmType.getSubtypeMap().forEach(
           (attribute, type) ->
               ctx.ln("std::optional<ParsedValue<%s>> %s;", type.toCppTypeString(namespace),
                   attribute));
+    } else {
+      attributesValueNeeded = false;
     }
 
     element.elements().forEach(ctx::gen);
+    attributesValueNeeded = oldAttributesValueNeeded;
 
     if (elementCount == 1) {
       // if the alternative contains only one element
@@ -280,8 +288,8 @@ public class AssemblyParserCodeGenerator {
     ctx.spacedIn();
     ctx.ln("return RuleParsingResult<%s>(Lexer.getTok().getLoc(), \"%s\");",
         currentRuleTypeString, alternativesErrorMessage(element));
-    ctx.ln("}");
     ctx.spaceOut();
+    ctx.ln("}");
 
     ctx.ln("ParsedValue<%s> %s = %s.value();",
         type, varName(element), alternativesResultVar);
@@ -289,12 +297,18 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmAssignToAttribute element) {
-    // Handled in writeAssignToIfNotNull
+    if (attributesValueNeeded) {
+      if (element.getIsWithinRepetition()) {
+        ctx.ln("%s.Value.push_back(%s.Value);", element.getAssignToName(), assignToCurValueVar);
+      } else {
+        ctx.ln("%s = %s;", element.getAssignToName(), assignToCurValueVar);
+      }
+    }
   }
 
   @Handler
   void handle(CAsmContext ctx, AsmAssignToLocalVar element) {
-    // Handled in writeAssignToIfNotNull
+    ctx.ln("%s = %s;", element.getAssignToName(), assignToCurValueVar);
   }
 
   @Handler
@@ -469,11 +483,8 @@ public class AssemblyParserCodeGenerator {
   private void writeAssignToIfNotNull(CAsmContext ctx, @Nullable AsmAssignTo assignTo,
                                       String tempVar) {
     if (assignTo != null) {
-      if (assignTo.isPlusEqualsAssignment()) {
-        ctx.ln("%s.Value.push_back(%s.Value);", assignTo.getAssignToName(), tempVar);
-      } else {
-        ctx.ln("%s = %s;", assignTo.getAssignToName(), tempVar);
-      }
+      assignToCurValueVar = tempVar;
+      ctx.gen(assignTo);
     }
   }
 
@@ -704,6 +715,14 @@ public class AssemblyParserCodeGenerator {
         ctx.ln("ParsedValue<std::vector<%sParsedOperand>> %s"
                 + "(std::vector<%sParsedOperand>{ %s.Value });",
             namespace, tempVar, namespace, curValueVar);
+        return tempVar;
+      }
+
+      // to @instruction
+      if (to == InstructionAsmType.instance()) {
+        ctx.ln("Operands.push_back(std::make_unique<%sParsedOperand>(%s.Value));",
+            namespace, curValueVar);
+        ctx.ln("%s = ParsedValue<NoData>(NoData());", destination);
         return tempVar;
       }
     }
