@@ -319,7 +319,7 @@ public class AssemblyParserCodeGenerator {
 
     var resultVar =
         writeCastIfNecessary(ctx, functionReturnType, element.asmType(), tempVar, false);
-    writeAssignToIfNotNull(ctx, element.assignToElement(), tempVar);
+    writeAssignToIfNotNull(ctx, element.assignToElement(), resultVar);
     writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
   }
 
