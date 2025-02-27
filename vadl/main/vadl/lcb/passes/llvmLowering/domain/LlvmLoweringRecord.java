@@ -71,7 +71,7 @@ public class LlvmLoweringRecord {
    */
   public int findInputIndex(Format.Field field) {
     for (int i = 0; i < inputs.size(); i++) {
-      if (inputs.get(i) instanceof ReferencesFormatField x && x.formatField() == field) {
+      if (inputs.get(i) instanceof ReferencesFormatField x && x.formatField().equals(field)) {
         return i;
       }
     }
