@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
+import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -32,7 +33,7 @@ import vadl.viam.graph.dependency.SliceNode;
     include = {"vadl.viam", "vadl.cppCodeGen.model.nodes"}
 )
 public class RelocationCodeGenerator
-    implements CDefaultMixins.AllExpressions, CDefaultMixins.Utils {
+    implements CDefaultMixins.AllExpressions, CDefaultMixins.Utils, CInvalidMixins.ReadStageOutput {
   protected final Function function;
   protected final CNodeContext context;
   protected final StringBuilder builder;

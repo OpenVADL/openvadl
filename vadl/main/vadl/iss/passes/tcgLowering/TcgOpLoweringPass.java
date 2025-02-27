@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssExtractNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
@@ -67,6 +68,7 @@ import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -76,6 +78,7 @@ import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteStageOutputNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
@@ -715,6 +718,17 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   void handle(AsmBuiltInCall toHandle) {
     throw failShouldNotHappen(toHandle);
   }
+
+  @Handler
+  void handle(ReadStageOutputNode toHandle) {
+    throw new UnsupportedOperationException("Type ReadStageOutputNode not yet implemented");
+  }
+
+  @Handler
+  void handle(WriteStageOutputNode toHandle) {
+    throw new UnsupportedOperationException("Type WriteStageOutputNode not yet implemented");
+  }
+
 
   /**
    * Throws a {@link ViamGraphError} indicating that the node should not be handled.

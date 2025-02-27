@@ -126,6 +126,7 @@ class SideEffectScheduler {
 
     var pcReg = pc != null ? pc.registerRef() : null;
     var partitionedEffects = endNode.sideEffects().stream()
+        .map(WriteResourceNode.class::cast)
         .collect(Collectors.partitioningBy(
             s -> s.resourceDefinition().equals(pcReg)
         ));

@@ -1,5 +1,12 @@
 package vadl.viam.passes.mia;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
 import vadl.pass.Pass;
@@ -11,16 +18,8 @@ import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.ViamError;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 /**
- * Sets the next and prev pointers of all stages.
+ * Sets the next and prev pointers of all stages. Examines stage input and output relations.
  *
  * <p>Currently only supports linear pipelines.
  */
@@ -46,13 +45,13 @@ public class StageOrderingPass extends Pass {
     return order;
   }
 
-  public static List<Stage> order(MicroArchitecture mia) {
+  private static List<Stage> order(MicroArchitecture mia) {
 
     var dep = new HashSet<Pair<Stage, Stage>>(); // stage read from -> stage reading
     for (Stage inputStage : mia.stages()) {
-      var reads = inputStage.reads();
+      var inputs = inputStage.inputs();
       mia.stages().stream()
-          .filter(outputStage -> reads.stream().anyMatch(outputStage.outputs()::contains))
+          .filter(outputStage -> inputs.stream().anyMatch(outputStage.outputs()::contains))
           .forEach(outputStage -> dep.add(Pair.of(outputStage, inputStage)));
     }
 

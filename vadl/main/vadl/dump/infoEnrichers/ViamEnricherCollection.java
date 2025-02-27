@@ -16,7 +16,14 @@ import vadl.dump.entities.DefinitionEntity;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
-import vadl.viam.*;
+import vadl.viam.DefProp;
+import vadl.viam.Encoding;
+import vadl.viam.Format;
+import vadl.viam.Function;
+import vadl.viam.Instruction;
+import vadl.viam.Parameter;
+import vadl.viam.Stage;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 
@@ -277,8 +284,8 @@ public class ViamEnricherCollection {
       });
 
   /**
-   * A {@link InfoEnricher} that adds a {@link vadl.dump.Info.Tag} containing the next/prev stage of the
-   * micro architecture.
+   * A {@link InfoEnricher} that adds a {@link vadl.dump.Info.Tag} containing the next/prev stage
+   * of the micro architecture.
    * This is only done if the given entity is a {@link Stage}.
    */
   public static InfoEnricher STAGE_ORDER_SUPPLIER =

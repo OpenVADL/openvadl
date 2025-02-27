@@ -1,14 +1,13 @@
 package vadl.viam.graph.dependency;
 
+import java.util.ArrayList;
+import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Logic;
 import vadl.viam.Resource;
 import vadl.viam.graph.NodeList;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Represents a VADL micro architecture built-in process.
@@ -26,6 +25,13 @@ public class MiaBuiltInCall extends BuiltInCall {
   @DataValue
   private final List<Logic> logic;
 
+  /**
+   * Create MiA builtin call.
+   *
+   * @param builtIn builtin type, must be in {@link BuiltInTable#MIA_BUILTINS}
+   * @param args arguments
+   * @param type result type
+   */
   public MiaBuiltInCall(BuiltInTable.BuiltIn builtIn, NodeList<ExpressionNode> args, Type type) {
     super(builtIn, args, type);
     this.resources = new ArrayList<>();
@@ -44,12 +50,12 @@ public class MiaBuiltInCall extends BuiltInCall {
     return resources;
   }
 
-  public void add(Resource resource) {
-    resources.add(resource);
-  }
-
   public List<Logic> logic() {
     return logic;
+  }
+
+  public void add(Resource resource) {
+    resources.add(resource);
   }
 
   public void add(Logic logic) {

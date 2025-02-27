@@ -3,15 +3,18 @@ package vadl.viam;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
  * Stage definition in MiA description.
  *
- * <p>A stage has a behavior and outputs (assignments to the outputs are write resource nodes).
+ * <p>A stage has a behavior and outputs.
  */
 public class Stage extends Definition implements DefProp.WithBehavior {
 
@@ -21,19 +24,22 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   private Graph behavior;
 
-  private final List<Resource> inputs;
-
-  private final List<Resource> outputs;
+  private final List<StageOutput> outputs;
 
   private @Nullable Stage prev;
 
   private @Nullable List<Stage> next;
 
-  public Stage(Identifier identifier, Graph behavior, List<Resource> inputs,
-               List<Resource> outputs) {
+  /**
+   * Instantiate a new stage definition.
+   *
+   * @param identifier stage identifier
+   * @param behavior behavior graph
+   * @param outputs list of stage outputs
+   */
+  public Stage(Identifier identifier, Graph behavior, List<StageOutput> outputs) {
     super(identifier);
     this.behavior = behavior;
-    this.inputs = new ArrayList<>(inputs);
     this.outputs = new ArrayList<>(outputs);
 
     this.behavior.setParentDefinition(this);
@@ -51,36 +57,49 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     this.behavior = behavior;
   }
 
-  public List<Resource> inputs() {
-    return inputs;
-  }
-
-  public void addInput(Resource resource) {
-    inputs.add(resource);
-  }
-
-  public List<Resource> reads() {
+  /**
+   * Get all resources read by this stage.
+   *
+   * @return list of resources
+   */
+  public List<Resource> resourceReads() {
     return behavior.getNodes(ReadResourceNode.class)
         .map(ReadResourceNode::resourceDefinition)
         .toList();
   }
 
-  public List<Resource> writes() {
+  /**
+   * Get all resources writte by this stage.
+   *
+   * @return list of resources
+   */
+  public List<Resource> resourceWrites() {
     return behavior.getNodes(WriteResourceNode.class)
         .map(WriteResourceNode::resourceDefinition)
         .toList();
   }
 
-  public List<Resource> outputs() {
+  /**
+   * Get all stage output definitions used by this stage as inputs.
+   *
+   * @return list of stage outputs
+   */
+  public List<StageOutput> inputs() {
+    return behavior.getNodes(ReadStageOutputNode.class)
+        .map(ReadStageOutputNode::stageOutput)
+        .toList();
+  }
+
+  public List<StageOutput> outputs() {
     return outputs;
   }
 
-  public void addOutput(Resource resource) {
-    outputs.add(resource);
+  public void addOutput(StageOutput output) {
+    outputs.add(output);
   }
 
-  public void removeOutput(Resource resource) {
-    outputs.remove(resource);
+  public void removeOutput(StageOutput output) {
+    outputs.remove(output);
   }
 
   @Override
@@ -121,8 +140,9 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     super.verify();
     behavior.verify();
 
-    var writes = writes();
-    outputs.forEach(output ->
-        ensure(writes.contains(output), "Output %s is not written to", output.simpleName()));
+    var writes = behavior.getNodes(WriteStageOutputNode.class)
+        .map(WriteStageOutputNode::stageOutput).collect(Collectors.toSet());
+    outputs.forEach(output -> ensure(writes.contains(output),
+        "Output %s is not written to", output.simpleName()));
   }
 }

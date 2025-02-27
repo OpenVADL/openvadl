@@ -58,6 +58,8 @@ public interface DefinitionVisitor {
 
   void visit(Stage stage);
 
+  void visit(StageOutput stageOutput);
+
   void visit(AssemblyDescription assemblyDescription);
 
   void visit(AsmDirectiveMapping directive);
@@ -304,7 +306,14 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Stage stage) {
       beforeTraversal(stage);
+      stage.outputs().forEach(output -> output.accept(this));
       afterTraversal(stage);
+    }
+
+    @Override
+    public void visit(StageOutput stageOutput) {
+      beforeTraversal(stageOutput);
+      afterTraversal(stageOutput);
     }
 
     @Override
@@ -478,6 +487,11 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Stage stage) {
+
+    }
+
+    @Override
+    public void visit(StageOutput stageOutput) {
 
     }
 

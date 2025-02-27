@@ -26,6 +26,9 @@ public abstract class Logic extends Definition {
     visitor.visit(this);
   }
 
+  /**
+   * Logic definition for a forwarding unit.
+   */
   public static class Forwarding extends Logic {
 
     public Forwarding(Identifier identifier) {
@@ -34,6 +37,9 @@ public abstract class Logic extends Definition {
 
   }
 
+  /**
+   * Logic definition for a branch predictor.
+   */
   public static class BranchPrediction extends Logic {
 
     public BranchPrediction(Identifier identifier) {

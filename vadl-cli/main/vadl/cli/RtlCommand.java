@@ -1,14 +1,13 @@
 package vadl.cli;
 
+import static picocli.CommandLine.ScopeType.INHERIT;
+
+import java.io.IOException;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
-
-import java.io.IOException;
-
-import static picocli.CommandLine.ScopeType.INHERIT;
 
 /**
  * The Command does provide the rtl subcommand.
