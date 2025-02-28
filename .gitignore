@@ -10,11 +10,12 @@ build/
 .idea/compiler.xml
 .idea/libraries/
 .idea/*
-.idea/codeStyles/*
 !.idea/checkstyle-idea.xml
 !.idea/codeStyles
 !.idea/codeStyles/Project.xml
 !.idea/misc.xml
+!.idea/scopes
+!.idea/copyright
 *.iws
 *.iml
 *.ipr

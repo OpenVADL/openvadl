@@ -1,0 +1,11 @@
+<component name="CopyrightManager">
+  <settings default="OpenVADL Source Code">
+    <module2copyright>
+      <element module="All" copyright="OpenVADL Source Code" />
+    </module2copyright>
+    <LanguageOptions name="JAVA">
+      <option name="fileTypeOverride" value="3" />
+      <option name="block" value="false" />
+    </LanguageOptions>
+  </settings>
+</component>
