@@ -267,6 +267,12 @@ static void [(${gen_arch_lower})]_cpu_class_init(ObjectClass *oc, void *data)
     cc->sysemu_ops = &[(${gen_arch_lower})]_sysemu_ops;
     cc->disas_set_info = [(${gen_arch_lower})]_cpu_disas_set_info;
     cc->tcg_ops = &[(${gen_arch_lower})]_tcg_ops;
+
+    // GDB settings
+    cc->gdb_read_register = [(${gen_arch_lower})]_cpu_gdb_read_register;
+    cc->gdb_write_register = [(${gen_arch_lower})]_cpu_gdb_write_register;
+    cc->gdb_core_xml_file = "[(${gen_arch_lower})]-cpu.xml";
+    cc->gdb_stop_before_watchpoint = true;
 }
 
 

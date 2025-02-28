@@ -42,6 +42,7 @@ import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
+import vadl.iss.passes.IssGdbInfoExtractionPass;
 import vadl.iss.passes.IssHardcodedTcgAddOnPass;
 import vadl.iss.passes.IssNormalizationPass;
 import vadl.iss.passes.IssPcAccessConversionPass;
@@ -53,12 +54,14 @@ import vadl.iss.passes.safeResourceRead.IssSafeResourceReadPass;
 import vadl.iss.passes.tcgLowering.IssTcgContextPass;
 import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
+import vadl.iss.template.gdb_xml.EmitIssGdbXmlPass;
 import vadl.iss.template.hw.EmitIssVirtCPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
 import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssDecodeTreePass;
+import vadl.iss.template.target.EmitIssGdbStubPass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
 import vadl.lcb.passes.DummyAnnotationPass;
@@ -391,6 +394,9 @@ public class PassOrders {
         .add(new TcgOpLoweringPass(config))
         .add(new IssHardcodedTcgAddOnPass(config))
         .add(new IssTcgVAllocationPass(config))
+
+        // Common passes
+        .add(new IssGdbInfoExtractionPass(config))
     ;
 
     addDecodePasses(order, config);
@@ -423,6 +429,12 @@ public class PassOrders {
         // arch init rendering
         .add(issDefault("/include/disas/dis-asm.h", config))
         .add(issDefault("/include/sysemu/arch_init.h", config))
+
+        // gdb rendering
+        // gdb-xml/gen-arch-cpu.xml
+        .add(new EmitIssGdbXmlPass(config))
+        // target/gen-arch/gdbsub.c
+        .add(new EmitIssGdbStubPass(config))
 
         // hardware rendering
         .add(issDefault("/hw/Kconfig", config))

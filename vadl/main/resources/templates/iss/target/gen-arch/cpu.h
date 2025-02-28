@@ -86,6 +86,10 @@ static inline void cpu_get_tb_cpu_state(CPU[(${gen_arch_upper})]State *env, vadd
 
 void [(${gen_arch_lower})]_tcg_init(void);
 
+int [(${gen_arch_lower})]_cpu_gdb_read_register(CPUState *cpu, GByteArray *buf, int reg);
+int [(${gen_arch_lower})]_cpu_gdb_write_register(CPUState *cpu, uint8_t *buf, int reg);
+
+
 #include "exec/cpu-all.h"
 
 #endif
