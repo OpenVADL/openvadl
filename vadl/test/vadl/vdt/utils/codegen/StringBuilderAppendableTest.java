@@ -18,6 +18,7 @@ package vadl.vdt.utils.codegen;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.utils.codegen.StringBuilderAppendable;
 
 public class StringBuilderAppendableTest {
 

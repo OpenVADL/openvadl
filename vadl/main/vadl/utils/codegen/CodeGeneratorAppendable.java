@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.utils.codegen;
+package vadl.utils.codegen;
 
 /**
  * An interface for appending code to a buffer, handling indentation and new lines gracefully.
