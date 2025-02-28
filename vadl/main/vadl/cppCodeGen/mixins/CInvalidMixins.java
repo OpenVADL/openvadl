@@ -9,9 +9,11 @@ import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
  * A collection of mixins for nodes that should not be used for
@@ -22,7 +24,7 @@ import vadl.viam.graph.dependency.WriteRegNode;
 public interface CInvalidMixins {
 
   @SuppressWarnings("MissingJavadocType")
-  interface SideEffect extends WriteReg, WriteRegFile, WriteMem {
+  interface SideEffect extends WriteReg, WriteRegFile, WriteMem, WriteStageOutput {
 
   }
 
@@ -84,6 +86,22 @@ public interface CInvalidMixins {
     @Handler
     default void impl(CGenContext<Node> ctx, InstrCallNode node) {
       throwNotAllowed(node, "Instruction calls");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface WriteStageOutput {
+    @Handler
+    default void impl(CGenContext<Node> ctx, WriteStageOutputNode node) {
+      throwNotAllowed(node, "Write stage output");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface ReadStageOutput {
+    @Handler
+    default void impl(CGenContext<Node> ctx, ReadStageOutputNode node) {
+      throwNotAllowed(node, "Read stage output");
     }
   }
 

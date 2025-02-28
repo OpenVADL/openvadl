@@ -50,6 +50,16 @@ public interface DefinitionVisitor {
 
   void visit(MicroProcessor microProcessor);
 
+  void visit(MicroArchitecture microArchitecture);
+
+  void visit(Logic logic);
+
+  void visit(Signal signal);
+
+  void visit(Stage stage);
+
+  void visit(StageOutput stageOutput);
+
   void visit(AssemblyDescription assemblyDescription);
 
   void visit(AsmDirectiveMapping directive);
@@ -269,6 +279,44 @@ public interface DefinitionVisitor {
     }
 
     @Override
+    public void visit(MicroArchitecture microArchitecture) {
+      beforeTraversal(microArchitecture);
+      microArchitecture.stages().forEach(stage -> stage.accept(this));
+      microArchitecture.logic().forEach(logic -> logic.accept(this));
+      microArchitecture.signals().forEach(signal -> signal.accept(this));
+      microArchitecture.ownRegisters().forEach(register -> register.accept(this));
+      microArchitecture.ownRegisterFiles().forEach(registerFile -> registerFile.accept(this));
+      microArchitecture.ownMemories().forEach(memory -> memory.accept(this));
+      microArchitecture.ownFunctions().forEach(function -> function.accept(this));
+      afterTraversal(microArchitecture);
+    }
+
+    @Override
+    public void visit(Logic logic) {
+      beforeTraversal(logic);
+      afterTraversal(logic);
+    }
+
+    @Override
+    public void visit(Signal signal) {
+      beforeTraversal(signal);
+      afterTraversal(signal);
+    }
+
+    @Override
+    public void visit(Stage stage) {
+      beforeTraversal(stage);
+      stage.outputs().forEach(output -> output.accept(this));
+      afterTraversal(stage);
+    }
+
+    @Override
+    public void visit(StageOutput stageOutput) {
+      beforeTraversal(stageOutput);
+      afterTraversal(stageOutput);
+    }
+
+    @Override
     public void visit(AssemblyDescription assemblyDescription) {
       beforeTraversal(assemblyDescription);
       for (var directive : assemblyDescription.directives()) {
@@ -419,6 +467,31 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(MicroProcessor microProcessor) {
+
+    }
+
+    @Override
+    public void visit(MicroArchitecture microArchitecture) {
+
+    }
+
+    @Override
+    public void visit(Logic logic) {
+
+    }
+
+    @Override
+    public void visit(Signal signal) {
+
+    }
+
+    @Override
+    public void visit(Stage stage) {
+
+    }
+
+    @Override
+    public void visit(StageOutput stageOutput) {
 
     }
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.DispatchFor;
@@ -27,6 +28,7 @@ import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
  * The TCG context is associated with an instruction.
@@ -158,6 +160,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
           return List.of(createConstExprVar(expr));
         }
       });
+    }
+
+    @Handler
+    List<TcgVRefNode> handle(WriteStageOutputNode toHandle) {
+      throw new UnsupportedOperationException("Type WriteStageOutputNode not yet implemented");
     }
 
     private TcgVRefNode toNode(TcgV tcgV) {

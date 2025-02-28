@@ -64,6 +64,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
+import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.viam.Specification;
@@ -73,6 +74,7 @@ import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyPasses.DummyAbiPass;
+import vadl.viam.passes.dummyPasses.DummyMiaPass;
 import vadl.viam.passes.dummyPasses.DummyMipPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
@@ -453,6 +455,23 @@ public class PassOrders {
 
     // VDT Decode Passes
     order.add(new VdtLoweringPass(config));
+  }
+
+  /**
+   * Constructs the pass order used to generate the RTL (Chisel) from a VADL specification.
+   */
+  public static PassOrder rtl(GeneralConfiguration config) throws IOException {
+    var order = viam(config);
+
+    // TODO: Remove once frontend creates it
+    order.add(new DummyMiaPass(config));
+    order.add(new StageOrderingPass(config));
+
+    addHtmlDump(order, config,
+        "mia",
+        "Added dummy MiA");
+
+    return order;
   }
 
   /**

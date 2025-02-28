@@ -22,11 +22,13 @@ public class ArchitectureTest {
         .layer("Gcb").definedBy("..gcb..")
         .layer("Lcb").definedBy("..lcb..")
         .layer("CppGen").definedBy("..cppCodeGen..")
+        .layer("Rtl").definedBy("..rtl..")
         .whereLayer("Ast").mayOnlyAccessLayers("Viam")
         .whereLayer("Viam").mayOnlyAccessLayers("Ast", "CppGen")
         .whereLayer("Gcb").mayOnlyAccessLayers("Viam", "CppGen")
         .whereLayer("CppGen").mayOnlyAccessLayers("Viam")
-        .whereLayer("Lcb").mayOnlyAccessLayers("Gcb", "Viam", "CppGen");
+        .whereLayer("Lcb").mayOnlyAccessLayers("Gcb", "Viam", "CppGen")
+        .whereLayer("Rtl").mayOnlyAccessLayers("Viam");
 
     layeredArchitecture.check(jc);
   }

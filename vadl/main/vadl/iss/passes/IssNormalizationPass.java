@@ -8,6 +8,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
+import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.nodes.IssExtractNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
@@ -39,6 +40,7 @@ import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -565,6 +567,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   @Handler
   void handle(AsmBuiltInCall toHandle) {
     throw graphError(toHandle, "Node should not occur here");
+  }
+
+  @Handler
+  void handle(ReadStageOutputNode toHandle) {
+    throw new UnsupportedOperationException("Type ReadStageOutputNode not yet implemented");
   }
 
   @FormatMethod

@@ -36,7 +36,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
 )
 public class IssTranslateCodeGenerator implements CDefaultMixins.All,
     CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads, CInvalidMixins.InstrCall,
-    IssCMixins.Default, IssCMixins.Invalid {
+    CInvalidMixins.ReadStageOutput, IssCMixins.Default, IssCMixins.Invalid {
 
   private Instruction insn;
   private boolean generateInsnCount;

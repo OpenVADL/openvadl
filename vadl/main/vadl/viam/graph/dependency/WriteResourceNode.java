@@ -5,6 +5,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
+import vadl.viam.Resource;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 
@@ -105,5 +106,10 @@ public abstract class WriteResourceNode extends SideEffectNode {
     address = visitor.applyNullable(this, address, ExpressionNode.class);
     value = visitor.apply(this, value, ExpressionNode.class);
   }
+
+  /**
+   * Returns the resource affected by this write node.
+   */
+  public abstract Resource resourceDefinition();
 
 }
