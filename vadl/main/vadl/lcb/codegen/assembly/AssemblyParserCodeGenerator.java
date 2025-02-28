@@ -570,11 +570,11 @@ public class AssemblyParserCodeGenerator {
       if (to == OperandAsmType.instance() && subTypeMap.size() == 2
           && subTypes.get(0) == ModifierAsmType.instance()
           && subTypes.get(1) == ExpressionAsmType.instance()) {
-        var modifier = curValueVar + ".Value." + keys.get(0) + ".Value";
-        var expr = curValueVar + ".Value." + keys.get(1) + ".Value";
+        var modifier = curValueVar + ".Value." + keys.get(0);
+        var expr = curValueVar + ".Value." + keys.get(1);
         var modifiedExpr = symbolTable.getNextVariable();
         ctx.ln(
-            "const MCExpr* %s = %sMCExpr::create(%s, %s, Parser.getContext());",
+            "const MCExpr* %s = %sMCExpr::create(%s.Value, %s.Value, Parser.getContext());",
             modifiedExpr, namespace, expr, modifier);
         ctx.ln(
             "SMLoc S = %s.S.getPointer() < %s.S.getPointer() ? %s.S : %s.S;",
@@ -582,7 +582,7 @@ public class AssemblyParserCodeGenerator {
         ctx.ln(
             "SMLoc E = %s.E.getPointer() < %s.E.getPointer() ? %s.E : %s.E;",
             modifier, expr, modifier, expr);
-        ctx.ln("%s(%sParsedOperand::CreateImm(%s, S, E))", destination, namespace, modifiedExpr);
+        ctx.ln("%s(%sParsedOperand::CreateImm(%s, S, E));", destination, namespace, modifiedExpr);
         return tempVar;
       }
 
