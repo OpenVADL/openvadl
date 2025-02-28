@@ -13,34 +13,24 @@ import vadl.viam.Relocation;
  * user generated like {@code %lo} or {@code %hi} in risc-v.
  */
 public class UserSpecifiedRelocation extends CompilerRelocation {
-  private final Identifier identifier;
   private final VariantKind variantKind;
 
   /**
    * Constructor.
    */
   public UserSpecifiedRelocation(
-      Relocation originalRelocation,
       Format format,
       Format.Field field,
-      VariantKind variantKindRef) {
-    super(format, field, originalRelocation, variantKindRef);
-    this.identifier = generateName(format, field, kind);
+      Relocation originalRelocation) {
+    super(generateName(format,
+            field,
+            originalRelocation.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE),
+        format, field, originalRelocation);
     this.variantKind = new VariantKind(originalRelocation);
   }
 
-  private Identifier generateName(Format format, Format.Field imm, Kind kind) {
+  private static Identifier generateName(Format format, Format.Field imm, Kind kind) {
     return format.identifier.append(kind.name(), imm.identifier.simpleName());
-  }
-
-  public Identifier identifier() {
-    return identifier;
-  }
-
-
-  @Override
-  public VariantKind variantKind() {
-    return variantKind;
   }
 
   @Override

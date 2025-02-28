@@ -5,6 +5,7 @@ import java.util.Map;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.template.Renderable;
 import vadl.viam.Format;
+import vadl.viam.Identifier;
 import vadl.viam.Relocation;
 
 /**
@@ -12,11 +13,11 @@ import vadl.viam.Relocation;
  * both {@link UserSpecifiedRelocation} and {@link AutomaticallyGeneratedRelocation}.
  */
 public abstract class CompilerRelocation implements Renderable {
+  protected final Identifier identifier;
   protected final CompilerRelocation.Kind kind;
   protected final Format format;
   protected final Format.Field immediate;
   protected final Relocation relocationRef;
-  protected final VariantKind variantKindRef;
 
   /**
    * Determines what kind of relocation this is.
@@ -47,32 +48,33 @@ public abstract class CompilerRelocation implements Renderable {
   /**
    * Constructor.
    */
-  public CompilerRelocation(Format format,
-                            Format.Field immediate,
-                            Relocation relocationRef,
-                            VariantKind variantKindRef
+  public CompilerRelocation(
+      Identifier identifier,
+      Format format,
+      Format.Field immediate,
+      Relocation relocationRef
   ) {
-    this(relocationRef.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE,
+    this(identifier,
+        relocationRef.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE,
         format,
         immediate,
-        relocationRef,
-        variantKindRef);
+        relocationRef);
   }
 
   /**
    * Constructor.
    */
   public CompilerRelocation(
+      Identifier identifier,
       Kind kind,
       Format format,
       Format.Field immediate,
-      Relocation relocationRef,
-      VariantKind variantKindRef
+      Relocation relocationRef
   ) {
+    this.identifier = identifier;
     this.kind = kind;
     this.format = format;
     this.relocationRef = relocationRef;
-    this.variantKindRef = variantKindRef;
     this.immediate = immediate;
   }
 
@@ -92,16 +94,16 @@ public abstract class CompilerRelocation implements Renderable {
     return immediate;
   }
 
+  public Identifier identifier() {
+    return identifier;
+  }
+
   /**
    * Get the ELF name.
    */
   public ElfRelocationName elfRelocationName() {
     return new ElfRelocationName(
         "R_" + relocation().identifier.lower());
-  }
-
-  public VariantKind variantKind() {
-    return variantKindRef;
   }
 
   @Override

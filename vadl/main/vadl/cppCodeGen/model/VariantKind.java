@@ -1,19 +1,17 @@
 package vadl.cppCodeGen.model;
 
 import java.util.Map;
-import vadl.gcb.passes.relocation.model.LogicalRelocation;
+import vadl.gcb.passes.relocation.model.CompilerRelocation;
+import vadl.gcb.passes.relocation.model.UserSpecifiedRelocation;
 import vadl.template.Renderable;
 import vadl.viam.Format;
 import vadl.viam.Relocation;
 
 /**
- * Kind for {@link LogicalRelocation} and immediates.
+ * A {@link VariantKind} specifies how a symbol get referenced. It can be over a
+ * {@link UserSpecifiedRelocation} or GOT or more.
  */
 public record VariantKind(String value, String human, boolean isImmediate) implements Renderable {
-  public VariantKind(Format.Field field) {
-    this("VK_" + field.identifier.lower(), field.identifier.lower(), true);
-  }
-
   public VariantKind(Relocation relocation) {
     this("VK_" + relocation.identifier.lower(), relocation.identifier.simpleName(), false);
   }
@@ -26,14 +24,30 @@ public record VariantKind(String value, String human, boolean isImmediate) imple
     return new VariantKind("VK_Invalid", "Invalid", false);
   }
 
+
+  public static VariantKind absolute(Relocation relocation) {
+    return new VariantKind("VK_ABS_" + relocation.identifier.lower(),
+        "ABS_" + relocation.identifier.lower(), false);
+  }
+
+  public static VariantKind relative(Relocation relocation) {
+    return new VariantKind("VK_PCREL_" + relocation.identifier.lower(),
+        "PCREL_" + relocation.identifier.lower(), false);
+  }
+
+  /*
+  Variant kinds of fields are a bit messy but still required because we could encode a symbol
+  directly into an immediate without any modifier.
+   */
+
   public static VariantKind absolute(Format.Field field) {
     return new VariantKind("VK_SYMB_ABS_" + field.identifier.lower(),
-        "SYMB_ABS_" + field.identifier.lower(), false);
+        "SYMB_ABS_" + field.identifier.lower(), true);
   }
 
   public static VariantKind relative(Format.Field field) {
     return new VariantKind("VK_SYMB_PCREL_" + field.identifier.lower(),
-        "SYMB_PCREL_" + field.identifier.lower(), false);
+        "SYMB_PCREL_" + field.identifier.lower(), true);
   }
 
   @Override

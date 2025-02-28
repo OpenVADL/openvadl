@@ -2,7 +2,6 @@ package vadl.lcb.passes.relocation;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,10 +12,10 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.BitMaskFunctionGenerator;
+import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
-import vadl.gcb.passes.relocation.model.ConcreteLogicalRelocation;
 import vadl.gcb.passes.relocation.model.Fixup;
-import vadl.gcb.passes.relocation.model.GeneratedRelocation;
+import vadl.gcb.passes.relocation.model.ImplementedUserSpecifiedRelocation;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
@@ -29,6 +28,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
+import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldRefNode;
 
@@ -51,11 +51,7 @@ public class GenerateLinkerComponentsPass extends Pass {
   public record Output(
       List<VariantKind> variantKinds,
       List<Fixup> fixups,
-      List<CompilerRelocation> elfRelocations,
-      Map<Format.Field, List<VariantKind>> variantKindMap,
-      Map<CompilerRelocation, List<Instruction>> instructionsPerCompilerRelocation,
-      Map<VariantKind, List<Instruction>> instructionPerImmediateVariant,
-      Map<Format.Field, List<Fixup>> fixupsByField
+      List<CompilerRelocation> elfRelocations
   ) {
 
   }
@@ -64,109 +60,104 @@ public class GenerateLinkerComponentsPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     // The hierarchy is variant kind > fixup > relocation.
-    var immediates =
+    var fieldUsages =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);
 
-    var variantKindMap = new IdentityHashMap<Format.Field, List<VariantKind>>();
     var variantKinds = new ArrayList<VariantKind>();
+
     var compilerRelocations = new ArrayList<CompilerRelocation>();
     var fixups = new ArrayList<Fixup>();
-    var relocationPerFormat = new IdentityHashMap<Format, List<CompilerRelocation>>();
-    var instructionsPerCompilerRelocation =
-        new IdentityHashMap<CompilerRelocation, List<Instruction>>();
-    final var fixupsByField =
-        new IdentityHashMap<Format.Field, List<Fixup>>();
 
     variantKinds.add(VariantKind.none());
     variantKinds.add(VariantKind.invalid());
 
-    // User defined relocations
-    viam.isa().map(isa -> isa.ownRelocations().stream()).orElseGet(Stream::empty)
-        .forEach(relocation -> {
-          var variantKind = new VariantKind(relocation);
-          var alreadySeen = new HashSet<Format.Field>();
-
-          // Create a concrete relocations for each user defined + immediate field combination.
-          // The reason is that it might exist a pseudo instruction which sets a relocation.
-          viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
-              .forEach(instruction -> {
-                var imms = immediates.getImmediates(instruction.format());
-
-                for (var field : imms) {
-                  var format = instruction.format();
-                  var updateFieldFunction =
-                      BitMaskFunctionGenerator.generateUpdateFunction(format, field);
-                  var cppConformRelocation =
-                      CppTypeNormalizationPass.createGcbRelocationCppFunction(relocation);
-
-                  if (!alreadySeen.contains(field)) {
-                    var concrete =
-                        new ConcreteLogicalRelocation(relocation, cppConformRelocation,
-                            format,
-                            field,
-                            updateFieldFunction,
-                            variantKind);
-                    var fixup = new Fixup(concrete);
-                    compilerRelocations.add(concrete);
-                    fixups.add(fixup);
-                    extend(relocationPerFormat, format, concrete);
-                    extend(variantKindMap, field, variantKind);
-                    extend(instructionsPerCompilerRelocation, concrete, instruction);
-                    alreadySeen.add(field);
-                  }
-                }
-              });
-
-          // Bookkeeping
-          variantKinds.add(variantKind);
-        });
+    var relocations =
+        viam.isa().map(isa -> isa.ownRelocations().stream()).orElseGet(Stream::empty).toList();
 
 
-    viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
-        .forEach(format -> {
-          var imms = immediates.getImmediates(format);
-          for (var imm : imms) {
-            var absoluteVariantKind = VariantKind.absolute(imm);
-            variantKinds.add(absoluteVariantKind);
-            var updateFieldFunction =
-                BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
-            var generated = GeneratedRelocation.create(CompilerRelocation.Kind.ABSOLUTE,
-                format,
-                imm,
-                updateFieldFunction,
-                absoluteVariantKind
-            );
-            var fixup = new Fixup(generated);
-            compilerRelocations.add(generated);
-            extend(variantKindMap, imm, absoluteVariantKind);
-            extend(fixupsByField, imm, fixup);
-            fixups.add(fixup);
-          }
-        });
+    // Variant Kinds
+    for (var relocation : relocations) {
+      var abs = VariantKind.absolute(relocation);
+      var rel = VariantKind.relative(relocation);
 
-    viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty)
-        .forEach(format -> {
-          var imms = immediates.getImmediates(format);
-          for (var imm : imms) {
-            var relativeRelocation = VariantKind.relative(imm);
-            variantKinds.add(relativeRelocation);
-            var updateFieldFunction =
-                BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
-            var generated = GeneratedRelocation.create(CompilerRelocation.Kind.RELATIVE,
-                format,
-                imm,
-                updateFieldFunction,
-                relativeRelocation
-            );
-            var fixup = new Fixup(generated);
-            compilerRelocations.add(generated);
-            extend(variantKindMap, imm, relativeRelocation);
-            extend(fixupsByField, imm, fixup);
-            fixups.add(fixup);
-          }
-        });
+      variantKinds.add(abs);
+      variantKinds.add(rel);
+    }
 
+    var formats =
+        viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(Stream::empty).toList();
+    // Fixups and relocations for user defined relocations
+    for (var relocation : relocations) {
+      for (var format : formats) {
+        // We cannot use all the fields of a format because not all are immediates.
+        // That's why need the `fieldUsages`.
+        var immediateFields = fieldUsages.getImmediates(format);
+
+        // Generate a relocation for every immediate in the format.
+        // However, usually, it should be just one.
+        for (var field : immediateFields) {
+          // The `updateFieldFunction` is the cpp function which tells the compiler how
+          // to update the field when a relocation has to be done.
+          var updateFieldFunction =
+              BitMaskFunctionGenerator.generateUpdateFunction(format, field);
+          var gcbRelocationFunction =
+              CppTypeNormalizationPass.createGcbRelocationCppFunction(relocation);
+
+          var liftedRelocation = new ImplementedUserSpecifiedRelocation(
+              relocation,
+              gcbRelocationFunction,
+              format,
+              field,
+              updateFieldFunction
+          );
+
+          fixups.add(new Fixup(liftedRelocation));
+          compilerRelocations.add(liftedRelocation);
+        }
+      }
+    }
+
+    // Next, we need to generate relocations for every immediate in an instruction.
+    for (var format : formats) {
+      // We cannot use all the fields of a format because not all are immediates.
+      // That's why need the `fieldUsages`.
+      var immediateFields = fieldUsages.getImmediates(format);
+      // Generate a relocation for every immediate in the format.
+      // However, usually, it should be just one.
+
+      // Absolute
+      for (var imm : immediateFields) {
+        var absoluteVariantKind = VariantKind.absolute(imm);
+        variantKinds.add(absoluteVariantKind);
+        var updateFieldFunction =
+            BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
+        var generated = AutomaticallyGeneratedRelocation.create(CompilerRelocation.Kind.ABSOLUTE,
+            format,
+            imm,
+            updateFieldFunction);
+
+        fixups.add(new Fixup(generated));
+        compilerRelocations.add(generated);
+      }
+
+      // Relative
+      for (var imm : immediateFields) {
+        var relativeVariantKind = VariantKind.relative(imm);
+        variantKinds.add(relativeVariantKind);
+        var updateFieldFunction =
+            BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
+        var generated = AutomaticallyGeneratedRelocation.create(CompilerRelocation.Kind.RELATIVE,
+            format,
+            imm,
+            updateFieldFunction);
+
+        fixups.add(new Fixup(generated));
+        compilerRelocations.add(generated);
+      }
+    }
+
+    /*
     // Immediates have variant kind as well because we emit them in the Pseudo Expansion
     var tableGenImmediateRecords = (List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class);
@@ -186,15 +177,12 @@ public class GenerateLinkerComponentsPass extends Pass {
         }
       }
     }
+     */
 
     return new Output(
         variantKinds,
         fixups,
-        compilerRelocations,
-        variantKindMap,
-        instructionsPerCompilerRelocation,
-        instructionsPerImmediateVariant,
-        fixupsByField
+        compilerRelocations
     );
   }
 

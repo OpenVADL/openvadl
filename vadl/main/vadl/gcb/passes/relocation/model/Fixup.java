@@ -1,8 +1,5 @@
 package vadl.gcb.passes.relocation.model;
 
-import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
-import vadl.cppCodeGen.model.VariantKind;
-
 /**
  * Every {@link Fixup} is like a {@link CompilerRelocation}. But not every
  * {@link CompilerRelocation} is a {@link Fixup}. The compiler can resolve symbols in the same
@@ -11,29 +8,23 @@ import vadl.cppCodeGen.model.VariantKind;
  * address is only known at compile-time.
  */
 public class Fixup {
-  private final RelocationLowerable lowerable;
+  private final CompilerRelocation.Kind kind;
+  private final HasRelocationComputationAndUpdate implementedRelocation;
 
   /**
-   * Constructor.
+   * Create a fixup for relocations which have been generated for an immediate.
    */
-  public Fixup(RelocationLowerable lowerable) {
-    this.lowerable = lowerable;
+  public Fixup(AutomaticallyGeneratedRelocation automaticallyGeneratedRelocation) {
+    this.kind = automaticallyGeneratedRelocation.kind;
+    this.implementedRelocation = automaticallyGeneratedRelocation;
   }
 
-  public CompilerRelocation.Kind kind() {
-    return lowerable.kind();
-  }
-
-  public VariantKind variantKind() {
-    return lowerable.variantKind();
-  }
-
-  public RelocationLowerable relocationLowerable() {
-    return lowerable;
-  }
-
-  public GcbImmediateExtractionCppFunction valueRelocation() {
-    return lowerable.valueRelocation();
+  /**
+   * Create a fixup for relocations which have been specified from a user.
+   */
+  public Fixup(ImplementedUserSpecifiedRelocation implementedUserSpecifiedRelocation) {
+    this.kind = implementedUserSpecifiedRelocation.kind;
+    this.implementedRelocation = implementedUserSpecifiedRelocation;
   }
 
   /**
@@ -41,7 +32,8 @@ public class Fixup {
    */
   public FixupName name() {
     return new FixupName(
-        "fixup_" + lowerable.valueRelocation().functionName().identifier().simpleName() + "_"
-            + lowerable.identifier().lower());
+        "fixup_" +
+            implementedRelocation.valueRelocation().functionName().identifier().simpleName() + "_"
+            + implementedRelocation.identifier().lower());
   }
 }
