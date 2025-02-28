@@ -1,4 +1,3 @@
-# VADL generated file
 
 gen_arch_ss = ss.source_set()
 gen_arch_system_ss = ss.source_set()

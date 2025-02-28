@@ -1,4 +1,3 @@
-// VADL generated file
 #ifndef QEMU_[(${gen_arch_upper})]_CPU_H
 #define QEMU_[(${gen_arch_upper})]_CPU_H
 

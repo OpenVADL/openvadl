@@ -1,4 +1,3 @@
-// VADL generated file
 #ifndef [(${gen_arch_upper})]_CPU_QOM_H
 #define [(${gen_arch_upper})]_CPU_QOM_H
 

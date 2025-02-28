@@ -1,4 +1,3 @@
-// [(${gen_arch_upper})] generated file
 #include "qemu/osdep.h"
 #include "tcg/tcg.h"
 #include "exec/exec-all.h"

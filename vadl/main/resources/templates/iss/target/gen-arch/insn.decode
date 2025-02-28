@@ -1,4 +1,3 @@
-# [(${gen_arch_upper})] generated file
 
 # Fields:
 [# th:if="${decode_fields != null}"] [# th:each="field, iterState : ${decode_fields}"]
