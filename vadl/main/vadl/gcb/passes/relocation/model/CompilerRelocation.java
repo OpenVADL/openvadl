@@ -9,7 +9,7 @@ import vadl.viam.Relocation;
 
 /**
  * {@link CompilerRelocation} is a super class to hold
- * both {@link LogicalRelocation} and {@link GeneratedRelocation}.
+ * both {@link UserSpecifiedRelocation} and {@link AutomaticallyGeneratedRelocation}.
  */
 public abstract class CompilerRelocation implements Renderable {
   protected final CompilerRelocation.Kind kind;

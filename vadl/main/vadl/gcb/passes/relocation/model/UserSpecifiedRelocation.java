@@ -9,17 +9,17 @@ import vadl.viam.Relocation;
 
 /**
  * A logical relocation is helper construct for the {@link vadl.viam.Relocation}.
- * In contrast to {@link GeneratedRelocation} are {@link LogicalRelocation} always
+ * In contrast to {@link AutomaticallyGeneratedRelocation} are {@link UserSpecifiedRelocation} always
  * user generated like {@code %lo} or {@code %hi} in risc-v.
  */
-public class LogicalRelocation extends CompilerRelocation {
+public class UserSpecifiedRelocation extends CompilerRelocation {
   private final Identifier identifier;
   private final VariantKind variantKind;
 
   /**
    * Constructor.
    */
-  public LogicalRelocation(
+  public UserSpecifiedRelocation(
       Relocation originalRelocation,
       Format format,
       Format.Field field,
@@ -51,7 +51,7 @@ public class LogicalRelocation extends CompilerRelocation {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    LogicalRelocation that = (LogicalRelocation) o;
+    UserSpecifiedRelocation that = (UserSpecifiedRelocation) o;
     return kind == that.kind && Objects.equals(format, that.format);
   }
 

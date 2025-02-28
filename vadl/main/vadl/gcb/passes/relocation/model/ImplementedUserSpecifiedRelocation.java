@@ -10,7 +10,7 @@ import vadl.viam.Relocation;
  * A concrete logical relocation is like a logical relocation (lo, hi) but it already
  * has the cpp functions for the compiler backend.
  */
-public class ConcreteLogicalRelocation extends LogicalRelocation implements RelocationLowerable {
+public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation implements RelocationLowerable {
   // This is the function which computes the value for the
   // relocation.
   protected final GcbImmediateExtractionCppFunction valueRelocation;
@@ -20,12 +20,12 @@ public class ConcreteLogicalRelocation extends LogicalRelocation implements Relo
   /**
    * Constructor.
    */
-  public ConcreteLogicalRelocation(Relocation originalRelocation,
-                                   GcbImmediateExtractionCppFunction valueRelocation,
-                                   Format format,
-                                   Format.Field field,
-                                   GcbUpdateFieldRelocationCppFunction fieldUpdateFunction,
-                                   VariantKind variantKindRef) {
+  public ImplementedUserSpecifiedRelocation(Relocation originalRelocation,
+                                            GcbImmediateExtractionCppFunction valueRelocation,
+                                            Format format,
+                                            Format.Field field,
+                                            GcbUpdateFieldRelocationCppFunction fieldUpdateFunction,
+                                            VariantKind variantKindRef) {
     super(originalRelocation, format, field, variantKindRef);
     this.valueRelocation = valueRelocation;
     this.fieldUpdateFunction = fieldUpdateFunction;
