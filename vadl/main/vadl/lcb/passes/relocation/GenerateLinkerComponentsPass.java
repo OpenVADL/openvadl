@@ -1,8 +1,9 @@
 package vadl.lcb.passes.relocation;
 
+import static vadl.viam.ViamError.ensureNonNull;
+
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -10,25 +11,23 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.BitMaskFunctionGenerator;
 import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
 import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.gcb.passes.relocation.model.Fixup;
 import vadl.gcb.passes.relocation.model.ImplementedUserSpecifiedRelocation;
-import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.gcb.passes.relocation.model.Modifier;
+import vadl.gcb.passes.relocation.model.ModifierCtx;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.Pair;
 import vadl.viam.Format;
-import vadl.viam.Instruction;
-import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldRefNode;
 
@@ -46,12 +45,13 @@ public class GenerateLinkerComponentsPass extends Pass {
   }
 
   /**
-   * Output for this pass32.
+   * Output for this pass.
    */
   public record Output(
       List<VariantKind> variantKinds,
       List<Fixup> fixups,
-      List<CompilerRelocation> elfRelocations
+      List<CompilerRelocation> elfRelocations,
+      List<Pair<Modifier, VariantKind>> linkModifierToVariantKind
   ) {
 
   }
@@ -65,7 +65,7 @@ public class GenerateLinkerComponentsPass extends Pass {
             IdentifyFieldUsagePass.class);
 
     var variantKinds = new ArrayList<VariantKind>();
-
+    var linkModifierToVariantKind = new ArrayList<Pair<Modifier, VariantKind>>();
     var compilerRelocations = new ArrayList<CompilerRelocation>();
     var fixups = new ArrayList<Fixup>();
 
@@ -75,11 +75,22 @@ public class GenerateLinkerComponentsPass extends Pass {
     var relocations =
         viam.isa().map(isa -> isa.ownRelocations().stream()).orElseGet(Stream::empty).toList();
 
-
     // Variant Kinds
     for (var relocation : relocations) {
       var abs = VariantKind.absolute(relocation);
       var rel = VariantKind.relative(relocation);
+
+      var ctx = ensureNonNull(relocation.extension(ModifierCtx.class),
+          () -> Diagnostic.error(
+              "Relocation has no generated modifier. It should have been automatically generated.",
+              relocation.sourceLocation()));
+
+      var absModifier = ctx.absoluteModifier();
+      var relModifier = ctx.relativeModifier();
+
+      // We need to store a link to map from a modifier to variant kind.
+      linkModifierToVariantKind.add(Pair.of(absModifier, abs));
+      linkModifierToVariantKind.add(Pair.of(relModifier, rel));
 
       variantKinds.add(abs);
       variantKinds.add(rel);
@@ -91,7 +102,7 @@ public class GenerateLinkerComponentsPass extends Pass {
     for (var relocation : relocations) {
       for (var format : formats) {
         // We cannot use all the fields of a format because not all are immediates.
-        // That's why need the `fieldUsages`.
+        // That's why we need the `fieldUsages`.
         var immediateFields = fieldUsages.getImmediates(format);
 
         // Generate a relocation for every immediate in the format.
@@ -121,7 +132,7 @@ public class GenerateLinkerComponentsPass extends Pass {
     // Next, we need to generate relocations for every immediate in an instruction.
     for (var format : formats) {
       // We cannot use all the fields of a format because not all are immediates.
-      // That's why need the `fieldUsages`.
+      // That's why we need the `fieldUsages`.
       var immediateFields = fieldUsages.getImmediates(format);
       // Generate a relocation for every immediate in the format.
       // However, usually, it should be just one.
@@ -182,7 +193,8 @@ public class GenerateLinkerComponentsPass extends Pass {
     return new Output(
         variantKinds,
         fixups,
-        compilerRelocations
+        compilerRelocations,
+        linkModifierToVariantKind
     );
   }
 

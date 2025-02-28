@@ -82,11 +82,11 @@ MCOperand [(${namespace})]MCInstLower::LowerSymbolOperand(const MachineOperand &
     case [(${namespace})]BaseInfo::MO_None:
         Kind = [(${namespace})]MCExpr::VariantKind::VK_None;
         break;
-        /*
-    «FOR relocation : relocations» case [(${namespace})]BaseInfo::«relocation.moAnnotationIdentifier»:
-        Kind = [(${namespace})]MCExpr::VariantKind::«relocation.variantKindIdentifier»;
-        break;
-        «ENDFOR» */
+    [# th:each="link : ${linkModifiersToVariantKinds}" ]
+    case [(${namespace})]BaseInfo::[(${link.modifier})]:
+      Kind = [(${namespace})]MCExpr::VariantKind::[(${link.variantKind})];
+      break;
+    [/]
     default : llvm_unreachable("<unsupported target flag on operand>");
     }
 
