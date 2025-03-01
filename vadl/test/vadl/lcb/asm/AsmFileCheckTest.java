@@ -68,7 +68,7 @@ public abstract class AsmFileCheckTest extends AbstractLcbTest {
               List.of(
                   Pair.of(
                       Path.of(
-                          "test/resources/asm/" + target),
+                          "test/resources/llvm/riscv/asm/" + target),
                       "/src/inputs")
               ),
               Map.of("INPUT", name),
@@ -77,10 +77,10 @@ public abstract class AsmFileCheckTest extends AbstractLcbTest {
         })).toList();
   }
 
-  private static Stream<String> inputFilesFromFile(String path) {
+  private static Stream<String> inputFilesFromFile(String target) {
     return Arrays.stream(
             Objects.requireNonNull(
-                new File("test/resources/asm/" + path)
+                new File("test/resources/llvm/riscv/asm/" + target)
                     .listFiles()))
         .filter(File::isFile)
         .map(File::getName);
