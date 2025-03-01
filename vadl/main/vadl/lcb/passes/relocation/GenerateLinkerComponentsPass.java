@@ -111,7 +111,7 @@ public class GenerateLinkerComponentsPass extends Pass {
       return this.automaticallyGenerated.absolute
           .entrySet()
           .stream()
-          .filter(x -> x.getKey().right() == field)
+          .filter(x -> x.getKey().right().equals(field))
           .map(Map.Entry::getValue)
           .toList();
     }

@@ -148,7 +148,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
 
     var modifiers = output.modifiers().stream()
         .filter(x -> x.kind().isAbsolute())
-        .filter(x -> x.field() == immediate)
+        .filter(x -> x.field().equals(immediate))
         .filter(x -> x.relocationFunctionLabel().isPresent()
             && x.relocationFunctionLabel().get() == relocationFunctionLabel)
         .toList();
