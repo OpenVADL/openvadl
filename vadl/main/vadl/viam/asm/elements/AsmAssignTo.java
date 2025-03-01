@@ -19,6 +19,4 @@ public abstract class AsmAssignTo implements AsmGrammarElement {
   public boolean getIsWithinRepetition() {
     return isWithinRepetition;
   }
-
-  public abstract boolean isPlusEqualsAssignment();
 }

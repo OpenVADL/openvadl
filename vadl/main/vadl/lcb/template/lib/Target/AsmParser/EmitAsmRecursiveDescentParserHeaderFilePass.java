@@ -83,7 +83,8 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
     return specification.assemblyDescription().map(
         asmDesc -> asmDesc.rules().stream().map(
             rule -> new ParsingResultRecord(
-                rule.getAsmType().toCppTypeString(specification.simpleName()),
+                rule.getAsmType()
+                    .toCppTypeString(lcbConfiguration().processorName().value().toLowerCase()),
                 rule.simpleName().trim(), rule.simpleName()
             )
         )
@@ -93,7 +94,8 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
   private List<ParsedValueStruct> parsedValueStructs(
       Specification specification) {
     return specification.assemblyDescription().map(
-        asmDesc -> new StructGenerator().getAllStructs(specification.simpleName(), asmDesc.rules())
+        asmDesc -> new StructGenerator().getAllStructs(
+            lcbConfiguration().processorName().value().toLowerCase(), asmDesc.rules())
     ).orElse(Stream.empty()).toList();
   }
 }

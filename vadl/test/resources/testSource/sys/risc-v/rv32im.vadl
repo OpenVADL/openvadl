@@ -9,6 +9,122 @@ instruction set architecture RV32IM extending RV3264IM = {}
 
 application binary interface ABI for RV32IM = {}
 
+[commentString = "#"]
+assembly description ASM for ABI = {
+
+  modifiers = {
+    "hi" -> RV32IM::hi,
+    "lo" -> RV32IM::lo
+  }
+
+  grammar = {
+    // TODO: UType, BType, branch- and JAL pseudo-instructions
+
+    ImmediateOperand :
+      Expression @operand
+      | op = (
+          "%" mod = ("hi" | "lo") @modifier
+          "(" val = Expression ")"
+        ) @operand
+    ;
+
+
+    RRIds : "ADD" | "SUB" | "AND" | "OR" | "XOR" | "SLT" | "SLTU" | "SLL" | "SRL" | "SRA"
+            | "MUL" | "MULH" | "MULHSU" | "MULHU" | "DIV" | "DIVU" | "REM" | "REMU"
+    ;
+
+    RRInstruction @instruction:
+      mnemonic = RRIds @operand
+      rd = Register@operand ","
+      rs1 = Register@operand ","
+      rs2 = Register@operand
+    ;
+
+
+    ITypeIds : "ADDI" | "ANDI" | "ORI" | "XORI" | "SLTI" | "SLTIU" | "JALR" ;
+
+    ITypeInstruction @instruction:
+      mnemonic = ITypeIds @operand
+      rd = Register@operand ","
+      rs1 = Register@operand ","
+      imm = ImmediateOperand
+    ;
+
+
+    LTypeIds : "LB" | "LBU" | "LH" | "LHU" | "LW" ;
+
+    LTypeInstruction @instruction:
+      mnemonic = LTypeIds @operand
+      rd = Register @operand ","
+      imm = ImmediateOperand
+      "(" rs1 = Register @operand ")"
+    ;
+
+
+    STypeIds : "SB" | "SH" | "SW" ;
+
+    STypeInstruction @instruction:
+      mnemonic = STypeIds @operand
+      rs2 = Register @operand ","
+      imm = ImmediateOperand
+      "(" rs1 = Register @operand ")"
+    ;
+
+
+    IShftTypeIds : "SLLI" | "SRLI" | "SRAI" ;
+
+    IShftTypeInstruction @instruction:
+      mnemonic = IShftTypeIds @operand
+      rd = Register@operand ","
+      rs1 = Register@operand ","
+      sft = ImmediateOperand
+    ;
+
+
+    NoOperandIds : "RET" | "NOP" | "ECALL" | "EBREAK" ;
+
+    NoOperandPseudoInstruction @instruction :
+      mnemonic = NoOperandIds @operand
+    ;
+
+
+    SymbolPseudoIds : "CALL" | "TAIL" ;
+
+    SymbolPseudoInstruction @instruction :
+      mnemonic = SymbolPseudoIds @operand
+      symbol = (Identifier @symbol) @operand
+    ;
+
+
+    JPseudoInstruction @instruction :
+      mnemonic = "J" @operand
+      imm = ImmediateOperand
+    ;
+
+
+    RRPseudoIds : "MOV" | "NOT" | "NEG" | "SNEZ" | "SLTZ" | "SGTZ" ;
+
+    RRPseudoInstruction @instruction :
+      mnemonic = RRPseudoIds @operand
+      rd = Register @operand ","
+      rs1 = Register @operand
+    ;
+
+
+    LLAPseudoInstruction @instruction:
+      mnemonic = "LLA" @operand
+      rd = Register @operand ","
+      symbol = (Identifier @symbol) @operand
+    ;
+
+    LIPseudoInstruction @instruction:
+      mnemonic = "LI" @operand
+      rd = Register @operand ","
+      symbol = (Identifier @symbol) @operand
+    ;
+  }
+}
+
 micro processor CPU implements RV32IM with ABI = {
   start = 0x80000000
 }

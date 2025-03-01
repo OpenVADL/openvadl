@@ -8,9 +8,4 @@ public class AsmAssignToAttribute extends AsmAssignTo {
   public AsmAssignToAttribute(String assignToName, boolean isWithinRepetition) {
     super(assignToName, isWithinRepetition);
   }
-
-  @Override
-  public boolean isPlusEqualsAssignment() {
-    return getIsWithinRepetition();
-  }
 }

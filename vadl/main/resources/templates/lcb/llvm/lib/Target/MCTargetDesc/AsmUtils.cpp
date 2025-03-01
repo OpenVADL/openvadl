@@ -246,16 +246,41 @@ std::string AsmUtils::getRegisterName( unsigned RegNo )
 
 bool AsmUtils::MatchRegNo(StringRef Reg, unsigned &RegNo)
 {
+    [# th:each="rg : ${registers}" ]
+    if(Reg.[(${asmCompareFunction})]("[(${rg.name})]")) {
+        RegNo = [(${namespace})]::[(${rg.name})];
+        return true;
+    }
+    [# th:each="alias : ${rg.aliases}" ]
+    if(Reg.[(${asmCompareFunction})]("[(${alias})]")) {
+        RegNo = [(${namespace})]::[(${rg.name})];
+        return true;
+    }
+    [/]
+    [/]
     return false;
 }
 
 bool AsmUtils::MatchOpcode(StringRef Mnemonic, unsigned &Opcode)
 {
+    [# th:each="instName : ${instructionNames}" ]
+    if(Mnemonic.[(${asmCompareFunction})]("[(${instName})]")) {
+        Opcode = [(${namespace})]::[(${instName})];
+        return true;
+    }
+    [/]
     return false;
 }
 
 bool AsmUtils::MatchCustomModifier(StringRef String, [(${namespace})]MCExpr::VariantKind &VariantKind)
 {
+    [# th:each="mapping : ${modifierMappings}" ]
+    if(String.[(${asmCompareFunction})]("[(${mapping.modifier})]"))
+    {
+        VariantKind = [(${namespace})]MCExpr::VariantKind::VK_[(${mapping.relocation})];
+        return true;
+    }
+    [/]
     return false;
 }
 
