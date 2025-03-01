@@ -62,8 +62,9 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
         .map(asmDesc -> asmDesc.rules().stream())
         .orElse(Stream.empty());
 
-    var codeGenerator = new AssemblyParserCodeGenerator(specification.simpleName(),
-        parserCaseSensitive, rules);
+    var codeGenerator = new AssemblyParserCodeGenerator(
+        lcbConfiguration().processorName().value().toLowerCase(), parserCaseSensitive, rules
+    );
 
     return codeGenerator.generateRules();
   }

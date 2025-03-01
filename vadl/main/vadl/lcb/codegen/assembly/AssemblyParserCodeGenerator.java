@@ -73,10 +73,12 @@ public class AssemblyParserCodeGenerator {
   private String parserCompareFunction = "equals_insensitive";
   private String currentRuleTypeString = "invalid";
 
-  private final Map<AsmGrammarElement, String> elementVarName = new HashMap<>();
+  private final Map<Integer, String> elementVarName = new HashMap<>();
   private final SymbolTable grammarElementSymbolTable = new SymbolTable("ELEM_");
   private final Set<String> functionDefinitions = new HashSet<>();
 
+  private boolean attributesValueNeeded = true;
+  private String assignToCurValueVar = "";
 
   /**
    * Constructor.
@@ -113,7 +115,7 @@ public class AssemblyParserCodeGenerator {
   }
 
   private String varName(AsmGrammarElement element) {
-    return elementVarName.computeIfAbsent(element,
+    return elementVarName.computeIfAbsent(System.identityHashCode(element),
         key -> grammarElementSymbolTable.getNextVariable());
   }
 
@@ -223,14 +225,20 @@ public class AssemblyParserCodeGenerator {
     var elementCount =
         element.elements().stream().filter(e -> !(e instanceof AsmLocalVarDefinition)).count();
 
+    var oldAttributesValueNeeded = attributesValueNeeded;
+
     if (elementCount > 1 && element.asmType() instanceof GroupAsmType groupAsmType) {
+      attributesValueNeeded = true;
       groupAsmType.getSubtypeMap().forEach(
           (attribute, type) ->
               ctx.ln("std::optional<ParsedValue<%s>> %s;", type.toCppTypeString(namespace),
                   attribute));
+    } else {
+      attributesValueNeeded = false;
     }
 
     element.elements().forEach(ctx::gen);
+    attributesValueNeeded = oldAttributesValueNeeded;
 
     if (elementCount == 1) {
       // if the alternative contains only one element
@@ -280,8 +288,8 @@ public class AssemblyParserCodeGenerator {
     ctx.spacedIn();
     ctx.ln("return RuleParsingResult<%s>(Lexer.getTok().getLoc(), \"%s\");",
         currentRuleTypeString, alternativesErrorMessage(element));
-    ctx.ln("}");
     ctx.spaceOut();
+    ctx.ln("}");
 
     ctx.ln("ParsedValue<%s> %s = %s.value();",
         type, varName(element), alternativesResultVar);
@@ -289,12 +297,18 @@ public class AssemblyParserCodeGenerator {
 
   @Handler
   void handle(CAsmContext ctx, AsmAssignToAttribute element) {
-    // Handled in writeAssignToIfNotNull
+    if (attributesValueNeeded) {
+      if (element.getIsWithinRepetition()) {
+        ctx.ln("%s.Value.push_back(%s.Value);", element.getAssignToName(), assignToCurValueVar);
+      } else {
+        ctx.ln("%s = %s;", element.getAssignToName(), assignToCurValueVar);
+      }
+    }
   }
 
   @Handler
   void handle(CAsmContext ctx, AsmAssignToLocalVar element) {
-    // Handled in writeAssignToIfNotNull
+    ctx.ln("%s = %s;", element.getAssignToName(), assignToCurValueVar);
   }
 
   @Handler
@@ -319,7 +333,7 @@ public class AssemblyParserCodeGenerator {
 
     var resultVar =
         writeCastIfNecessary(ctx, functionReturnType, element.asmType(), tempVar, false);
-    writeAssignToIfNotNull(ctx, element.assignToElement(), tempVar);
+    writeAssignToIfNotNull(ctx, element.assignToElement(), resultVar);
     writeToElementVar(ctx, element.asmType(), varName(element), resultVar);
   }
 
@@ -469,11 +483,8 @@ public class AssemblyParserCodeGenerator {
   private void writeAssignToIfNotNull(CAsmContext ctx, @Nullable AsmAssignTo assignTo,
                                       String tempVar) {
     if (assignTo != null) {
-      if (assignTo.isPlusEqualsAssignment()) {
-        ctx.ln("%s.Value.push_back(%s.Value);", assignTo.getAssignToName(), tempVar);
-      } else {
-        ctx.ln("%s = %s;", assignTo.getAssignToName(), tempVar);
-      }
+      assignToCurValueVar = tempVar;
+      ctx.gen(assignTo);
     }
   }
 
@@ -544,6 +555,8 @@ public class AssemblyParserCodeGenerator {
         keys.forEach(
             attribute -> {
               if (!attribute.equals("mnemonic")) {
+                ctx.ln("%s.Value.%s.Value.setTarget(\"%s\");", finalCurValueVar, attribute,
+                    attribute);
                 ctx.ln("Operands.push_back(std::make_unique<%sParsedOperand>(%s.Value.%s.Value));",
                     namespace, finalCurValueVar, attribute);
               }
@@ -557,11 +570,11 @@ public class AssemblyParserCodeGenerator {
       if (to == OperandAsmType.instance() && subTypeMap.size() == 2
           && subTypes.get(0) == ModifierAsmType.instance()
           && subTypes.get(1) == ExpressionAsmType.instance()) {
-        var modifier = curValueVar + ".Value." + keys.get(0) + ".Value";
-        var expr = curValueVar + ".Value." + keys.get(1) + ".Value";
+        var modifier = curValueVar + ".Value." + keys.get(0);
+        var expr = curValueVar + ".Value." + keys.get(1);
         var modifiedExpr = symbolTable.getNextVariable();
         ctx.ln(
-            "const MCExpr* %s = %sMCExpr::create(%s, %s, Parser.getContext());",
+            "const MCExpr* %s = %sMCExpr::create(%s.Value, %s.Value, Parser.getContext());",
             modifiedExpr, namespace, expr, modifier);
         ctx.ln(
             "SMLoc S = %s.S.getPointer() < %s.S.getPointer() ? %s.S : %s.S;",
@@ -569,7 +582,7 @@ public class AssemblyParserCodeGenerator {
         ctx.ln(
             "SMLoc E = %s.E.getPointer() < %s.E.getPointer() ? %s.E : %s.E;",
             modifier, expr, modifier, expr);
-        ctx.ln("%s(%sParsedOperand::CreateImm(%s, S, E))", destination, namespace, modifiedExpr);
+        ctx.ln("%s(%sParsedOperand::CreateImm(%s, S, E));", destination, namespace, modifiedExpr);
         return tempVar;
       }
 
@@ -702,6 +715,14 @@ public class AssemblyParserCodeGenerator {
         ctx.ln("ParsedValue<std::vector<%sParsedOperand>> %s"
                 + "(std::vector<%sParsedOperand>{ %s.Value });",
             namespace, tempVar, namespace, curValueVar);
+        return tempVar;
+      }
+
+      // to @instruction
+      if (to == InstructionAsmType.instance()) {
+        ctx.ln("Operands.push_back(std::make_unique<%sParsedOperand>(%s.Value));",
+            namespace, curValueVar);
+        ctx.ln("%s = ParsedValue<NoData>(NoData());", destination);
         return tempVar;
       }
     }
