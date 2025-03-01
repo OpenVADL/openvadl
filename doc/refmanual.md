@@ -18,40 +18,53 @@ The length \f$N\f$ includes both the sign-bit and data bits.
 For all bit-vector based types `Bits`, `SInt`, and `UInt` -- \ac{VADL} will try to infer the bit size of the surrounding usage.
 But for definitions, a concrete bit size has to be specified in order to determine the actual size of, e.g., a register.
 In contrast to Chisel the size of the resulting bit vector of an operation is identical to the size of the source operands.
-An exception is the multiplication where two versions are available, one with a result with the same size and one with a double sized result.
+An exception is multiplication where two versions are available, one with a result with the same size and one with a double sized result.
 
 An additional `String` type is available which is used in the assembly specification and the macro system.
 
 The operator `as` does explicit type casting between different types.
 There is no change in the bit vector representation, if the size of source and result vector are equal.
 The vector is truncated if the result type is smaller than the source type.
+Boolean truncation is a comparison to zero:
+
+`Bits<`\f$N\f$`> as Bool`, \f$N\f$`> 1` \f$\Rightarrow\f$ `Bits<`\f$N\f$`> != 0` \n 
+`SInt<`\f$N\f$`> as Bool`, \f$N\f$`> 1` \f$\Rightarrow\f$ `SInt<`\f$N\f$`> != 0` \n 
+`UInt<`\f$N\f$`> as Bool`, \f$N\f$`> 1` \f$\Rightarrow\f$ `UInt<`\f$N\f$`> != 0` \n 
+
 The vector is sign or zero extended if the result type is larger than the source type.
 
 Zero or sign extension is defined by the following explicit type casting rules:
 
-\listing{type_extension_rules, VADL Type Extension Rules}
-~~~{.vadl}
-Bits<M> as Bits<N>, N > M => zero extension
-Bits<M> as UInt<N>, N > M => zero extension
-Bits<M> as SInt<N>, N > M => sign extension
+`Bits<`\f$N\f$`> as Bits<`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ zero extension \n 
+`Bits<`\f$N\f$`> as UInt<`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ zero extension \n 
+`Bits<`\f$N\f$`> as SInt<`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ sign extension
 
-UInt<M> as Bits<N>, N > M => zero extension
-UInt<M> as UInt<N>, N > M => zero extension
-UInt<M> as SInt<N>, N > M => zero extension
 
-SInt<M> as Bits<N>, N > M => sign extension
-SInt<M> as UInt<N>, N > M => sign extension
-SInt<M> as SInt<N>, N > M => sign extension
-~~~
-\endlisting
+`UInt<`\f$N\f$`> as Bits`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ zero extension \n 
+`UInt<`\f$N\f$`> as UInt`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ zero extension \n 
+`UInt<`\f$N\f$`> as SInt`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ zero extension
 
-\ac{VADL} supports the following implicit type casting rules:
+`SInt<`\f$N\f$`> as Bits`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ sign extension \n 
+`SInt<`\f$N\f$`> as UInt`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ sign extension \n 
+`SInt<`\f$N\f$`> as SInt`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ sign extension
 
-* `Bits<1>` \f$\Longleftrightarrow\f$ `Bool`
-* `Bits<`\f$N\f$`>` \f$\Longrightarrow\f$ `SInt<`\f$M\f$`>` \f$| ~ N = M\f$
-* `Bits<`\f$N\f$`>` \f$\Longrightarrow\f$ `Bits<`\f$M\f$`>` \f$| ~ N \leq M\f$
-* `UInt<`\f$N\f$`>` \f$\Longrightarrow\f$ `Bits<`\f$M\f$`>` \f$| ~ N \leq M\f$
-* `SInt<`\f$N\f$`>` \f$\Longrightarrow\f$ `Bits<`\f$M\f$`>` \f$| ~ N \leq M ~ \land ~ N > 1\f$
+If a `Bool` is casted to a bit vector with a length larger than `1`, `false` is represented as `0` and `true` is represented as `1`.
+For `Bool` and bit vectors with the same length the following implicit type casting rules apply:
+
+`Bits<1>` \f$\Longleftrightarrow\f$ `Bool`
+
+`SInt<`\f$N\f$`>` \f$\Longleftrightarrow\f$ `Bits<`\f$N\f$`>` \n 
+`UInt<`\f$N\f$`>` \f$\Longleftrightarrow\f$ `Bits<`\f$N\f$`>`
+
+For arithmetic operations and bitwise operations except shift and rotate \ac{VADL} supports the following implicit type casting rules:
+
+`SInt<`\f$N\f$`> + SInt<`\f$N\f$`> -> SInt<`\f$N\f$`>` \n 
+`SInt<`\f$N\f$`> + Bits<`\f$N\f$`> -> SInt<`\f$N\f$`>` \n 
+`Bits<`\f$N\f$`> + SInt<`\f$N\f$`> -> SInt<`\f$N\f$`>`
+ 
+`UInt<`\f$N\f$`> + UInt<`\f$N\f$`> -> UInt<`\f$N\f$`>` \n 
+`UInt<`\f$N\f$`> + Bits<`\f$N\f$`> -> UInt<`\f$N\f$`>` \n 
+`Bits<`\f$N\f$`> + UInt<`\f$N\f$`> -> UInt<`\f$N\f$`>` 
 
 
 \listing{basic_math_arithmetic, VADL Arithmetic Operations}
@@ -62,8 +75,7 @@ function add ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a + b
 function adds( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )
 function addc( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status )
 
-// satadd requires SInt/UInt differentiation, 
-// as the saturation value depends on the type
+// saturated add requires SInt/UInt variants, as the saturation value depends on the type
 function ssatadd ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a +| b
 function usatadd ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a +| b
 function ssatadds( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status )
@@ -72,10 +84,10 @@ function ssataddc( a : SInt<N>, b : SInt<N>, c : Bool ) -> ( SInt<N>, Status )
 function usataddc( a : UInt<N>, b : UInt<N>, c : Bool ) -> ( UInt<N>, Status )
 
 function sub  ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a - c
-function subsc( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )
-function subsb( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )
-function subc ( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status )
-function subb ( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status )
+function subsc( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )            // carry
+function subsb( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )            // borrow
+function subc ( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status )  // carry
+function subb ( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status )  // borrow
 
 function ssatsub ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a -| b
 function usatsub ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a -| b
@@ -89,6 +101,7 @@ function usatsubb( a : UInt<N>, b : UInt<N>, c : Bool ) -> ( UInt<N>, Status )
 function mul ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a * b
 function muls( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )
 
+// multiplication with double sized result requires SInt/UInt variants
 function smull   ( a : SInt<N>, b : SInt<N> ) -> SInt<2*N> // <=> a *# b
 function umull   ( a : UInt<N>, b : UInt<N> ) -> UInt<2*N> // <=> a *# b
 function sumull  ( a : SInt<N>, b : UInt<N> ) -> SInt<2*N> // <=> a *# b
@@ -127,9 +140,7 @@ function ors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )
 ## Comparison Operation
 \listing{basic_math_comparison, VADL Arithmetic Comparison Operations}
 ~~~{.vadl}
-// TODO: does (2 as SInt<2>) = (2 as UInt<2>) hold?
 function equ ( a : Bits<N>, b : Bits<N> ) -> Bool // <=> a = b
-
 function neq ( a : Bits<N>, b : Bits<N> ) -> Bool // <=> a != b
 
 function slth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a < b
