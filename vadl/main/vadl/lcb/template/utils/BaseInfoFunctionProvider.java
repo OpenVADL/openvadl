@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.model.CppFunctionCode;
+import vadl.cppCodeGen.model.VariantKind;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassResults;
@@ -21,12 +22,14 @@ public class BaseInfoFunctionProvider {
    */
   public record BaseInfoRecord(
       String functionName,
+      VariantKind variantKind,
       CppFunctionCode relocation) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
       return Map.of(
           "functionName", functionName,
+          "variantKind", variantKind,
           "relocation", relocation
       );
     }
@@ -50,6 +53,7 @@ public class BaseInfoFunctionProvider {
           var function = new CppFunctionCode(generator.genFunctionDefinition());
           return new BaseInfoRecord(
               generator.genFunctionName(),
+              relocation.variantKind(),
               function
           );
         })

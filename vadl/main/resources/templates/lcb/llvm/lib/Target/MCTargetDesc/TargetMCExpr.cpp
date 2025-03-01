@@ -151,14 +151,12 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
 {
     int64_t resultValue = Value;
 
-    /*
-    [# th:each="bi : ${baseInfos}" ]
-      if(Kind == baseInfos' variant kind)
+    [# th:each="bi : ${mappingVariantKindsIntoBaseInfos}" ]
+      if(Kind == [(${bi.variantKind.value})])
       {
         resultValue = [(${namespace})]BaseInfo::[(${bi.functionName})](resultValue);
       }
     [/]
-    */
 
     return resultValue;
 }

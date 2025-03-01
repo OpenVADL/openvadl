@@ -1,7 +1,5 @@
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
-import static vadl.viam.ViamError.ensureNonNull;
-
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
@@ -9,6 +7,7 @@ import vadl.cppCodeGen.model.VariantKind;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.BaseInfoFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
@@ -49,10 +48,12 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
         .map(VariantKind::value)
         .toList();
 
+    var baseInfos = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         "immediates", immediates,
-        "variantKinds", variantKinds
+        "variantKinds", variantKinds,
+        "mappingVariantKindsIntoBaseInfos", baseInfos
     );
   }
 }

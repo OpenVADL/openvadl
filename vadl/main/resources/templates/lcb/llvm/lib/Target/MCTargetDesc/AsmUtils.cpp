@@ -277,7 +277,7 @@ bool AsmUtils::MatchCustomModifier(StringRef String, [(${namespace})]MCExpr::Var
     [# th:each="mapping : ${modifierMappings}" ]
     if(String.[(${asmCompareFunction})]("[(${mapping.modifier})]"))
     {
-        VariantKind = [(${namespace})]MCExpr::VariantKind::VK_[(${mapping.relocation})];
+        VariantKind = [(${namespace})]MCExpr::VariantKind::[(${mapping.variantKind})];
         return true;
     }
     [/]
