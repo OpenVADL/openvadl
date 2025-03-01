@@ -7,13 +7,13 @@
 
 \ac{VADL}'s type system is inspired by the hardware construction language Chisel.
 The main two primitive data types are `Bool` and `Bits<`\f$N\f$`>`.
-`Bool` represents a Boolean typed data (see Section \r{refman_boolean_literal}).
+`Bool` represents Boolean typed data (see Section \r{refman_boolean_literal}).
 `Bits<`\f$N\f$`>` represents an arbitrary bit vector type of length \f$N\f$.
 
 To express explicitly signed and unsigned arithmetic operations \ac{VADL} provides two sub-types of `Bits<`\f$N\f$`>` -- `SInt<`\f$N\f$`>` and `UInt<`\f$N\f$`>`.
 `SInt<`\f$N\f$`>` represents a signed two's complement integer type of length \f$N\f$. 
 The length \f$N\f$ includes both the sign-bit and data bits.
-`UInt`\f$N\f$`>` represents an unsigned integer type of length \f$N\f$.
+`UInt<`\f$N\f$`>` represents an unsigned integer type of length \f$N\f$.
 
 For all bit-vector based types `Bits`, `SInt`, and `UInt` -- \ac{VADL} will try to infer the bit size of the surrounding usage.
 But for definitions, a concrete bit size has to be specified in order to determine the actual size of, e.g., a register.
@@ -23,13 +23,13 @@ An exception is multiplication where two versions are available, one with a resu
 An additional `String` type is available which is used in the assembly specification and the macro system.
 
 The operator `as` does explicit type casting between different types.
-There is no change in the bit vector representation, if the size of source and result vector are equal.
-The vector is truncated if the result type is smaller than the source type.
-Boolean truncation is a comparison to zero:
+There is no change in the bit vector representation if the size of source and result vector are equal.
+The bit vector is truncated if the result type is smaller than the source type.
+Boolean truncation is a comparison with zero:
 
-`Bits<`\f$N\f$`> as Bool`, \f$N\f$`> 1` \f$\Rightarrow\f$ `Bits<`\f$N\f$`> != 0` \n 
-`SInt<`\f$N\f$`> as Bool`, \f$N\f$`> 1` \f$\Rightarrow\f$ `SInt<`\f$N\f$`> != 0` \n 
-`UInt<`\f$N\f$`> as Bool`, \f$N\f$`> 1` \f$\Rightarrow\f$ `UInt<`\f$N\f$`> != 0` \n 
+`Bits<`\f$N\f$`> as Bool`, \f$N\f$ ` > 1` \f$\Rightarrow\f$ `Bits<`\f$N\f$`> != 0` \n 
+`SInt<`\f$N\f$`> as Bool`, \f$N\f$ ` > 1` \f$\Rightarrow\f$ `SInt<`\f$N\f$`> != 0` \n 
+`UInt<`\f$N\f$`> as Bool`, \f$N\f$ ` > 1` \f$\Rightarrow\f$ `UInt<`\f$N\f$`> != 0` \n 
 
 The vector is sign or zero extended if the result type is larger than the source type.
 
@@ -56,16 +56,97 @@ For `Bool` and bit vectors with the same length the following implicit type cast
 `SInt<`\f$N\f$`>` \f$\Longleftrightarrow\f$ `Bits<`\f$N\f$`>` \n 
 `UInt<`\f$N\f$`>` \f$\Longleftrightarrow\f$ `Bits<`\f$N\f$`>`
 
-For arithmetic operations and bitwise operations except shift and rotate \ac{VADL} supports the following implicit type casting rules:
+For arithmetic operations and bitwise operations except shift and rotate \ac{VADL} supports the following implicit
+type casting rules from `Bits<`\f$N\f$`>`:
 
-`SInt<`\f$N\f$`> + SInt<`\f$N\f$`> -> SInt<`\f$N\f$`>` \n 
-`SInt<`\f$N\f$`> + Bits<`\f$N\f$`> -> SInt<`\f$N\f$`>` \n 
-`Bits<`\f$N\f$`> + SInt<`\f$N\f$`> -> SInt<`\f$N\f$`>`
+`SInt<`\f$N\f$`> o SInt<`\f$N\f$`> -> SInt<`\f$N\f$`>` \n 
+`SInt<`\f$N\f$`> o Bits<`\f$N\f$`> -> SInt<`\f$N\f$`>` \n 
+`Bits<`\f$N\f$`> o SInt<`\f$N\f$`> -> SInt<`\f$N\f$`>`
  
-`UInt<`\f$N\f$`> + UInt<`\f$N\f$`> -> UInt<`\f$N\f$`>` \n 
-`UInt<`\f$N\f$`> + Bits<`\f$N\f$`> -> UInt<`\f$N\f$`>` \n 
-`Bits<`\f$N\f$`> + UInt<`\f$N\f$`> -> UInt<`\f$N\f$`>` 
+`UInt<`\f$N\f$`> o UInt<`\f$N\f$`> -> UInt<`\f$N\f$`>` \n 
+`UInt<`\f$N\f$`> o Bits<`\f$N\f$`> -> UInt<`\f$N\f$`>` \n 
+`Bits<`\f$N\f$`> o UInt<`\f$N\f$`> -> UInt<`\f$N\f$`>` 
 
+## Expressions and Operator Precedence
+
+The behavior of instructions is described by expressions consisting of operations on bit vectors.
+These operations can be selected either using binary and unary operators or by calling \ac{VADL}'s builtin functions.
+To avoid excessive usage of parantheses an operator precedence inspired by `C++` has been defined as shown in the
+following table (operators with lower precedence level bind stronger):
+
+|precedence|      symbols     |       |
+|:--------:|:----------------:|:------|
+|    16    | `.`              | dot, ordered sequence in group expression
+|    15    | `,`              | comma, set union for operation, unordered sequence in group\n expression, always in `{` `}`
+|    14    | `..`             | range in bit fields, range in group expressions
+|    13    | \|\|             | logical or
+|    12    | `&&`             | logical and
+|    11    | `∈ ∉ in !in`     | set operators (if `&` is intersection, `,` is union, `>=` and `<=` are subset)
+|    10    | \|               | bitwise or, alternative in group expression or assembly grammar
+|     9    | `^`              | bitwise exclusive or
+|     8    | `&`              | bitwise and, intersection in set expression
+|     7    | `= !=`           | equality operators
+|     6    | `< <= > >=`      | relational operators
+|     5    | `<< >> <<> <>>`  | shift left, shift right, rotate left, rotate right
+|     4    | `+ - +`\| ` -`\| | addition, subtraction, with saturation
+|     3    | `* / % *#`       | multiply, divide, modulo, multiply with double wide result
+|     2    | `as`             | type cast
+|     1    | `- ~ !`          | negate, bitwise not, logical not (unary operators)
+
+In \ac{VADL} additionally to expressions on bit vectors there are expressions in the assembly grammar
+which use the `"|"` operator and regular expressions for defining groups for \ac{VLIW} architectures
+which use the `"."`, `","` and `"|"` operator.
+
+## Arithmetic Operations
+
+\ac{VADL} provides a set of pre-defined basic mathematical built-in functions.
+Many of them can be accessed by using binary or unary operators, all others have to be invoked by a function call
+in the built-in name space `VADL`.
+Listing \r{math_status_example} shows a let expression which uses binary operators (`binaryExpr`),
+an equivalent second let expression which uses function calls (`callExpr`) and a third let expression
+which calls a built-in function with a double result, the result of the operation
+and a bit field structure with the status bits for this operation (`result, status`).
+
+\listing{math_status_example, Arithmetic with Status Flags}
+~~~{.vadl}
+let binaryExpr = X(5) + X(6) * 2 in {}
+let callExpr   = VADL::add( X(5), VADL::mul(X(6), 2)) in {}
+
+let result, status = VADL::adds( X(5), X(6) ) in {
+  // 'result'          contains the addition result
+  // 'status'          contains all status flags
+  // 'status.zero'     contains the zero flag as 'Bool' type
+  // 'status.carry'    contains the carry flag as 'Bool' type
+  // 'status.overflow' contains the overflow flag as 'Bool' type
+  // 'status.negative' contains the negative flag as 'Bool' type
+}
+~~~
+\endlisting
+
+All pre-defined built-in functions define the actual semantics of the available \ac{VADL} operations.
+Each available unary or infix operator maps to the corresponding built-in function.
+
+The complete list of the supported built-in functions is given in Listings \r{basic_math_arithmetic},
+\r{basic_math_logical},  \r{basic_math_comparison}, \r{basic_math_shifting} and \r{basic_math_bit_counting}.
+
+Some built-ins have a carry (e.g. `addc`) and carry with status (e.g. `adds`) version in order to
+represent ternary operations where the carry is part of the mathematical operation.
+While the carry flag is well-defined for addition, there are two common ways to use the carry flag
+for subtraction operations.
+
+The first uses the bit as a borrow flag, setting it if `a<b` when computing `a-b`, and a borrow must be performed.
+If `a>=b`, the bit is cleared. The subtract with borrow (`subb`) built-in function will compute `a-b-C = a-(b+C)`,
+while a subtract without borrow (`subsb`) acts as if the borrow bit were clear.
+The 8080, 6800, Z80, 8051, x86 and 68k families of instruction set architectures use a borrow bit.
+
+The second uses the identity that `-x = not(x)+1` directly (i.e. without storing the carry bit inverted) and
+computes `a-b` as `a+not(b)+1`.
+The carry flag is set according to this addition, and subtract with carry (`subc`) computes `a+not(b)+C`,
+while subtract without carry  (`subsc`) acts as if the carry bit were set.
+The result is that the carry bit is set if `a>=b`, and clear if `a<b`.
+The System/360, 6502, MSP430, COP8, ARM and PowerPC instruction set architectures use this convention.
+The 6502 is a particularly well-known example because it does not have a subtract without carry operation,
+so programmers must ensure that the carry flag is set before every subtract operation where a borrow is not required.
 
 \listing{basic_math_arithmetic, VADL Arithmetic Operations}
 ~~~{.vadl}
@@ -89,6 +170,7 @@ function subsb( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )            // 
 function subc ( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status )  // carry
 function subb ( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status )  // borrow
 
+// saturated sub requires SInt/UInt variants, as the saturation value depends on the type
 function ssatsub ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a -| b
 function usatsub ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a -| b
 function ssatsubs( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status )
@@ -109,20 +191,22 @@ function smulls  ( a : SInt<N>, b : SInt<N> ) -> ( SInt<2*N>, Status )
 function umulls  ( a : UInt<N>, b : UInt<N> ) -> ( UInt<2*N>, Status )
 function sumulls ( a : SInt<N>, b : UInt<N> ) -> ( SInt<2*N>, Status )
 
-function smod ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a % b
-function umod ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a % b
-function smods( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status )
-function umods( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status )
+// division and remainder (modulo) require SInt/UInt variants
 
 function sdiv ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a / b
 function udiv ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a / b
 function sdivs( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status )
 function udivs( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status )
+
+function smod ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a % b
+function umod ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a % b
+function smods( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status )
+function umods( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status )
 ~~~
 \endlisting
 
 ## Logical Operations
-\listing{basic_math_logicl, VADL Logical Operations}
+\listing{basic_math_logical, VADL Logical Operations}
 ~~~{.vadl}
 function not ( a : Bits<N> ) ->Bits<N> // <=> ~a, !a if N == 1
 

@@ -1,4 +1,4 @@
 # VADL Tutorial {#tutorial}
 
 
-Some Text
+Every \ac{VADL} processor specification is separated into different sections.
