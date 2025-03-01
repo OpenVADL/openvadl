@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+OS=$(uname -s)
+
+if [[ "$OS" = "Darwin" ]]; then
+SED_I=(-i '')
+else
+SED_I=(-i'')
+fi
+
+DIR=$1
+
+if [ -z "$DIR" ]; then
+  echo not set
+  exit 1
+fi
+
+# Due to recent events, we check for the usual
+# name of an output directory
+EXPECTED_PART="obj/doc"
+echo "$DIR" | grep -q $EXPECTED_PART || exit 1
+
+REFMAN="$DIR"/refman.tex
+AUTHORS="$DIR"/authors.tex
+DESIGN_RATIONALE="$DIR"/design_rationale.tex
+GEN_VADL="$DIR"/namespaceat_1_1ac_1_1tuwien_1_1complang_1_1vadl_1_1_v_a_d_l.tex
+
+sed \
+  "${SED_I[@]}" \
+  -e '/8md}/ s/^%*/%/' \
+  -e '/8xtext}/ s/^%*/%/' \
+  -e '/chapter{File Documentation}/ s/^%*/%/' \
+  -e '/md__r_e_l_e_a_s_e__n_o_t_e_s}/ s/^%*/%/' \
+  -e '/chapter{VADL Release Notes}/ s/^%*/%/' \
+  -e '/{acronyms}/ s/^%*/%/' \
+  -e '/chapter{List of Acronyms}/ s/^%*/%/' \
+  -e '/{deprecated}/ s/^%*/%/' \
+  -e '/chapter{Deprecated List}/ s/^%*/%/' \
+  -e '/{langref}/ s/^%*/%/' \
+  -e '/chapter{VADL Reference Manual}/ s/^%*/%/' \
+  -e '/{authors}/ s/^%*/%/' \
+  -e '/chapter{Authors}/ s/^%*/%/' \
+  "$REFMAN"
+
+sed \
+  "${SED_I[@]}" \
+  's/\\chapter{Namespace Documentation}/\\chapter{VADL Reference Manual}\\label{langref}\\Hypertarget{langref}\\input{langref} \\clearpage/g' \
+  "$REFMAN"
+
+sed \
+  "${SED_I[@]}" \
+  's/%\\chapter{File Documentation}/\\chapter{VADL Release Notes}\\label{md__r_e_l_e_a_s_e__n_o_t_e_s}\\Hypertarget{md__r_e_l_e_a_s_e__n_o_t_e_s}\\input{md__r_e_l_e_a_s_e__n_o_t_e_s}/g' \
+  "$REFMAN"
+
+sed \
+  "${SED_I[@]}" \
+  's/%\\input{_r_e_l_e_a_s_e-_n_o_t_e_s_8md}/\\chapter{List of Acronyms}\\label{acronyms}\\Hypertarget{acronyms}\\input{acronyms}/g' \
+  "$REFMAN"
+
+sed \
+  "${SED_I[@]}" \
+  's/%\\input{_v_a_d_l_8xtext}/\\chapter{List of Deprecated}\\label{deprecated}\\Hypertarget{deprecated}\\input{deprecated}/g' \
+  "$REFMAN"
+
+sed \
+  "${SED_I[@]}" \
+  's/%\\input{_v_a_d_l_8xtext}/\\chapter{List of Deprecated}\\label{deprecated}\\Hypertarget{deprecated}\\input{deprecated}/g' \
+  "$REFMAN"
+
+sed \
+  "${SED_I[@]}" \
+  's/\\input{authors.md}/\\input{authors}/g' \
+  "$REFMAN"
+
+if [[ -f "$GEN_VADL" ]]; then
+  sed \
+  "${SED_I[@]}" \
+    's/\\doxyparagraph{Generates}/\\doxysubsubsection{Generates}/g' \
+  "$GEN_VADL"
+fi
+
+sed \
+  "${SED_I[@]}" \
+-e 's/\\hline/%\\hline/g' \
+-e 's/\\cline/%\\cline/g' \
+-e 's/\\raggedleft/\\raggedleft\\large/g' \
+-e '/\\tablehead/ s/^%*/%/' \
+-e '/\\endfirsthead/ s/^%*/%/' \
+-e '/\\endhead/ s/^%*/%/' \
+-e '/\\endfoot/ s/^%*/%/' \
+-e '/\\begin{longtabu}/ s/^%*/%/' \
+-e '/\\end{longtabu}/ s/^%*/%/' \
+-e '/\\tabulinesep/ s/^%*/%/' \
+-e '/\\label{authors/ s/^%*/%/' \
+-e '/\\Hypertarget{authors/ s/^%*/%/' \
+"$AUTHORS"
+
+if [[ -f "$DESIGN_RATIONALE" ]]; then
+  sed \
+  "${SED_I[@]}" \
+  -e 's/\\begin{longtabu}/\\clearpage\\begin{longtabu}/' \
+  "$DESIGN_RATIONALE"
+fi
+
+# This is a bit safer than using cd to move to a dir
+find "$DIR" -name "*.tex" -exec sed "${SED_I[@]}" \
+  -e '/{\\footnotesize\\ttfamily/ s/^%*/%/' {} \;
