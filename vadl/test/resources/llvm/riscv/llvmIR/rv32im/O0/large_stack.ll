@@ -30,7 +30,7 @@ define void @test() {
 ; CHECK-NEXT: ADD sp,sp,a0
   %tmp = alloca [ 305419896 x i8 ] , align 4
   ret void
-}; RUN: FileCheck %s
+}
 
 ; This test case artificially produces register pressure which should force
 ; use of the emergency spill slot.
