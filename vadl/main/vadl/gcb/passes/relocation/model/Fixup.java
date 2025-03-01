@@ -32,8 +32,8 @@ public class Fixup {
    */
   public FixupName name() {
     return new FixupName(
-        "fixup_" +
-            implementedRelocation.valueRelocation().functionName().identifier().simpleName() + "_"
+        "fixup_"
+            + implementedRelocation.valueRelocation().functionName().identifier().simpleName() + "_"
             + implementedRelocation.identifier().lower());
   }
 

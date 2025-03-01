@@ -9,8 +9,8 @@ import vadl.viam.Relocation;
 
 /**
  * A logical relocation is helper construct for the {@link vadl.viam.Relocation}.
- * In contrast to {@link AutomaticallyGeneratedRelocation} are {@link UserSpecifiedRelocation} always
- * user generated like {@code %lo} or {@code %hi} in risc-v.
+ * In contrast to {@link AutomaticallyGeneratedRelocation} are {@link UserSpecifiedRelocation}
+ * always user generated like {@code %lo} or {@code %hi} in risc-v.
  */
 public class UserSpecifiedRelocation extends CompilerRelocation {
   private final VariantKind variantKind;

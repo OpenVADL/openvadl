@@ -128,7 +128,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
 
   private Modifier findHighModifier(Instruction instruction,
                                     GenerateLinkerComponentsPass.Output output,
-                                    IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages) {
+                                    IdentifyFieldUsagePass.ImmediateDetectionContainer
+                                        fieldUsages) {
     return findModifier(instruction, output, fieldUsages, RelocationFunctionLabel.HI);
   }
 

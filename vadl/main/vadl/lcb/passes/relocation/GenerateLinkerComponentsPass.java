@@ -102,9 +102,10 @@ public class GenerateLinkerComponentsPass extends Pass {
     }
 
     /**
-     * Get the absolute variant kinds for a given {@link Format.Field} when we know that it has been automatically
-     * generated. It is expected that only one variant kind will be returned. However, it might
-     * be possible that an instruction has multiple relocations in one and that's why return a list.
+     * Get the absolute variant kinds for a given {@link Format.Field} when we know that it has
+     * been automatically generated. It is expected that only one variant kind will be returned.
+     * However, it might be possible that an instruction has multiple relocations in one and that's
+     * why return a list.
      */
     public List<VariantKind> absoluteVariantKindsByAutomaticGeneratedRelocationAndField(
         Format.Field field) {

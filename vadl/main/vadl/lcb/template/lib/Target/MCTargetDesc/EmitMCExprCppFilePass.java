@@ -49,9 +49,6 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
         .map(VariantKind::value)
         .toList();
 
-    // var immediateRecords = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
-    //    GenerateTableGenImmediateRecordPass.class));    // var decodingFunctions = ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults);
-    //var baseInfos = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         "immediates", immediates,

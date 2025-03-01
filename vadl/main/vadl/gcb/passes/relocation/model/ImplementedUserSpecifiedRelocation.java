@@ -30,7 +30,8 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
                                             GcbImmediateExtractionCppFunction valueRelocation,
                                             Format format,
                                             Format.Field field,
-                                            GcbUpdateFieldRelocationCppFunction fieldUpdateFunction) {
+                                            GcbUpdateFieldRelocationCppFunction
+                                                fieldUpdateFunction) {
     super(format, field, originalRelocation);
     this.variantKind = variantKind;
     this.modifier = modifier;

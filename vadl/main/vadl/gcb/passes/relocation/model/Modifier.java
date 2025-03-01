@@ -19,6 +19,10 @@ public record Modifier(String value,
                        Format.Field field,
                        Optional<RelocationFunctionLabel> relocationFunctionLabel)
     implements Renderable {
+
+  /**
+   * Create a modifier.
+   */
   public static Modifier from(Relocation relocation, Format.Field field) {
     var name = relocation.identifier.lower() + "_" + field.identifier.tail().lower();
     var kind = relocation.isAbsolute() ? CompilerRelocation.Kind.ABSOLUTE
@@ -31,11 +35,19 @@ public record Modifier(String value,
     return new Modifier("MO_" + name, kind, field, Optional.of(ctx.label()));
   }
 
+  /**
+   * Create an absolute modifier.
+   */
   public static Modifier absolute(Format.Field imm) {
-    return new Modifier("MO_ABS_" + imm.identifier.lower(), CompilerRelocation.Kind.ABSOLUTE, imm,
+    return new Modifier("MO_ABS_" + imm.identifier.lower(),
+        CompilerRelocation.Kind.ABSOLUTE,
+        imm,
         Optional.empty());
   }
 
+  /**
+   * Create a relative modifier.
+   */
   public static Modifier relative(Format.Field imm) {
     return new Modifier("MO_REL_" + imm.identifier.lower(), CompilerRelocation.Kind.RELATIVE, imm,
         Optional.empty());

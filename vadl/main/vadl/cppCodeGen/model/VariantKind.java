@@ -24,30 +24,37 @@ public record VariantKind(String value, String human, boolean isImmediate) imple
   }
 
 
+  /**
+   * Create an absolute variant kind.
+   */
   public static VariantKind absolute(Relocation relocation, Format.Field field) {
-    var name =  relocation.identifier.lower() + "_" + field.identifier.tail().lower();
+    var name = relocation.identifier.lower() + "_" + field.identifier.tail().lower();
 
     return new VariantKind("VK_ABS_" + name,
         "ABS_" + name, false);
   }
 
-  public static VariantKind relative(Relocation relocation, Format.Field field) {
-    var name =  relocation.identifier.lower() + "_" + field.identifier.tail().lower();
-
-    return new VariantKind("VK_PCREL_" + name,
-        "PCREL_" + name, false);
-  }
-
-  /*
-  Variant kinds of fields are a bit messy but still required because we could encode a symbol
-  directly into an immediate without any modifier.
+  /**
+   * Create an absolute variant kind.
    */
-
   public static VariantKind absolute(Format.Field field) {
     return new VariantKind("VK_SYMB_ABS_" + field.identifier.lower(),
         "SYMB_ABS_" + field.identifier.lower(), true);
   }
 
+  /**
+   * Create a relative variant kind.
+   */
+  public static VariantKind relative(Relocation relocation, Format.Field field) {
+    var name = relocation.identifier.lower() + "_" + field.identifier.tail().lower();
+
+    return new VariantKind("VK_PCREL_" + name,
+        "PCREL_" + name, false);
+  }
+
+  /**
+   * Create a relative variant kind.
+   */
   public static VariantKind relative(Format.Field field) {
     return new VariantKind("VK_SYMB_PCREL_" + field.identifier.lower(),
         "SYMB_PCREL_" + field.identifier.lower(), true);

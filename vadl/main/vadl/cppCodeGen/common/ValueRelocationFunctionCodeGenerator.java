@@ -45,7 +45,8 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractRelocationCode
       GcbImmediateExtractionCppFunction gcbValueRelocationCppFunction) {
     super(gcbValueRelocationCppFunction);
     this.functionName =
-        relocation.identifier().append(gcbValueRelocationCppFunction.identifier.tail().parts()).lower();
+        relocation.identifier().append(gcbValueRelocationCppFunction.identifier.tail().parts())
+            .lower();
     this.options = new Options(false, false);
     this.context = new CNodeContext(
         builder::append,
@@ -64,7 +65,8 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractRelocationCode
       Options options) {
     super(gcbValueRelocationCppFunction);
     this.functionName =
-        relocation.identifier().append(gcbValueRelocationCppFunction.identifier.tail().parts()).lower();
+        relocation.identifier().append(gcbValueRelocationCppFunction.identifier.tail().parts())
+            .lower();
     this.options = options;
     this.context = new CNodeContext(
         builder::append,
