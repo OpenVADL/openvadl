@@ -1,5 +1,5 @@
 <component name="CopyrightManager">
-  <settings default="OpenVADL Source Code">
+  <settings>
     <module2copyright>
       <element module="All" copyright="OpenVADL Source Code" />
     </module2copyright>
