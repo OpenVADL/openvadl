@@ -18,8 +18,8 @@ define void @callee() nounwind {
 ; CHECK-NEXT: SW s9,104(sp)                           # 4-byte Folded Spill
 ; CHECK-NEXT: SW s10,100(sp)                          # 4-byte Folded Spill
 ; CHECK-NEXT: SW s11,96(sp)                           # 4-byte Folded Spill
-; CHECK-NEXT: LUI s1,%hi(var)
-; CHECK-NEXT: ADDI s1,s1,%lo(var)
+; CHECK-NEXT: LUI a0,%hi(var)
+; CHECK-NEXT: ADDI s1,a0,%lo(var)
 ; CHECK-NEXT: LW a0,0(s1)
 ; CHECK-NEXT: SW a0,92(sp)                            # 4-byte Folded Spill
 ; CHECK-NEXT: LW a0,4(s1)
