@@ -81,6 +81,10 @@ const char *[(${namespace})]TargetLowering::getTargetNodeName(unsigned Opcode) c
         return "[(${namespace})]ISD::CALL";
     case [(${namespace})]ISD::SELECT_CC:
         return "[(${namespace})]ISD::SELECT_CC";
+    case [(${namespace})]ISD::ADD_LO:
+            return "[(${namespace})]ISD::ADD_LO";
+    case [(${namespace})]ISD::HI:
+            return "[(${namespace})]ISD::HI";
     default:
         llvm_unreachable("unknown opcode");
     }
@@ -582,8 +586,8 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
     }
     case CodeModel::Small:
     {
-        SDValue AddrHi = getTargetNode(N, DL, Ty, DAG, [(${namespace})]BaseInfo::MO_RV3264I_hi);
-        SDValue AddrLo = getTargetNode(N, DL, Ty, DAG, [(${namespace})]BaseInfo::MO_RV3264I_lo);
+        SDValue AddrHi = getTargetNode(N, DL, Ty, DAG, [(${namespace})]BaseInfo::[(${addImmediateHighModifier})]);
+        SDValue AddrLo = getTargetNode(N, DL, Ty, DAG, [(${namespace})]BaseInfo::[(${addImmediateLowModifier})]);
         SDValue MNHi = DAG.getNode([(${namespace})]ISD::HI, DL, Ty, AddrHi);
         return DAG.getNode([(${namespace})]ISD::ADD_LO, DL, Ty, MNHi, AddrLo);
     }

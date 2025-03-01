@@ -1,6 +1,6 @@
 /*
  * Node representing the frame index.
- * The method CPUDAGToDAGISel::SelectAddrFI is used to determine
+ * The method SelectAddrFI is used to determine
  * if the specific register is a frame pointer.
  */
 def AddrFI : ComplexPattern<iPTR, 1, "SelectAddrFI", [frameindex], []>;
@@ -226,6 +226,7 @@ def : Pat<([(${namespace})]_hi tglobaladdr:$in), ([(${lui})] tglobaladdr:$in)>;
 def : Pat<([(${namespace})]_hi tblockaddress:$in), ([(${lui})] tblockaddress:$in)>;
 def : Pat<([(${namespace})]_hi tjumptable:$in), ([(${lui})] tjumptable:$in)>;
 def : Pat<([(${namespace})]_hi tconstpool:$in), ([(${lui})] tconstpool:$in)>;
+def : Pat<([(${namespace})]_add_lo X:$hi, tglobaladdr:$lo), ([(${addi})] X:$hi, tglobaladdr:$lo)>;
 def : Pat<([(${namespace})]_add_lo X:$hi, tblockaddress:$lo), ([(${addi})] X:$hi, tblockaddress:$lo)>;
 def : Pat<([(${namespace})]_add_lo X:$hi, tjumptable:$lo), ([(${addi})] X:$hi, tjumptable:$lo)>;
 def : Pat<([(${namespace})]_add_lo X:$hi, tconstpool:$lo), ([(${addi})] X:$hi, tconstpool:$lo)>;

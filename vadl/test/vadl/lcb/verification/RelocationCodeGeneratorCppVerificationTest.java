@@ -161,7 +161,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
         new GcbImmediateExtractionCppFunction(immField.extractFunction());
 
     var extractionFunctionCodeGenerator =
-        new ValueRelocationFunctionCodeGenerator(normalisedImmediateExtractionFunction);
+        new ValueRelocationFunctionCodeGenerator(relocation, normalisedImmediateExtractionFunction);
     var relocationOverrideFunctionCodeGenerator =
         new UpdateFieldRelocationFunctionCodeGenerator(relocation.fieldUpdateFunction());
 

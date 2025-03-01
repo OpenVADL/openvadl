@@ -41,28 +41,18 @@ public class BaseInfoFunctionProvider {
             GenerateLinkerComponentsPass.class);
     var elfRelocations = output.elfRelocations();
     return elfRelocations.stream()
-        .filter(distinctByKey(x -> x.relocation().identifier))
-        .filter(x -> x instanceof HasRelocationComputationAndUpdate)
-        .map(x -> (HasRelocationComputationAndUpdate) x)
-        //.sorted(Comparator.comparing(o -> o.elfRelocationName().value()))
         .map(relocation -> {
-          var generator = new ValueRelocationFunctionCodeGenerator(relocation.valueRelocation(),
-              new ValueRelocationFunctionCodeGenerator.Options(
-                  false, true
-              ));
+          var generator =
+              new ValueRelocationFunctionCodeGenerator(relocation, relocation.valueRelocation(),
+                  new ValueRelocationFunctionCodeGenerator.Options(
+                      false, true
+                  ));
           var function = new CppFunctionCode(generator.genFunctionDefinition());
           return new BaseInfoRecord(
-              relocation.valueRelocation().identifier.lower(),
+              generator.genFunctionName(),
               function
           );
         })
         .toList();
-  }
-
-  private static <T> Predicate<T> distinctByKey(
-      Function<? super T, ?> keyExtractor) {
-
-    Map<Object, Boolean> seen = new ConcurrentHashMap<>();
-    return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
   }
 }

@@ -43,6 +43,13 @@ public abstract class CompilerRelocation implements Renderable {
           "isRelative", this.isRelative()
       );
     }
+
+    /**
+     * Returns {@code true} when kind is {@code ABSOLUTE}.
+     */
+    public boolean isAbsolute() {
+      return this == ABSOLUTE;
+    }
   }
 
   /**
