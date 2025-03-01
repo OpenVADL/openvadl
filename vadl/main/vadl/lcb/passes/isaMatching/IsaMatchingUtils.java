@@ -14,6 +14,7 @@ import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterFile;
+import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -60,7 +61,7 @@ public interface IsaMatchingUtils {
   default boolean findRegisterRegisterOrRegisterImmediateOrImmediateRegister(
       UninlinedGraph behavior, BuiltInTable.BuiltIn builtin) {
     return findRR(behavior, List.of(builtin))
-      || findRegisterImmediateOrImmediateRegister(behavior, List.of(builtin));
+        || findRegisterImmediateOrImmediateRegister(behavior, List.of(builtin));
   }
 
   /**
@@ -176,6 +177,21 @@ public interface IsaMatchingUtils {
         .filter(instruction -> instruction.hasExtension(PseudoInstructionCtx.class))
         .collect(Collectors.groupingBy(entry -> {
           var ext = ensureNonNull(entry.extension(PseudoInstructionCtx.class), "must not be null");
+          return ext.label();
+        }));
+  }
+
+  /**
+   * Create a map from the specification with {@link RelocationFunctionLabel}.
+   */
+  default Map<RelocationFunctionLabel, List<Relocation>> createRelocationFunctionLabelMap(
+      Specification specification) {
+    return specification.isa()
+        .map(isa -> isa.ownRelocations().stream())
+        .orElse(Stream.empty())
+        .filter(relocation -> relocation.hasExtension(RelocationCtx.class))
+        .collect(Collectors.groupingBy(entry -> {
+          var ext = ensureNonNull(entry.extension(RelocationCtx.class), "must not be null");
           return ext.label();
         }));
   }
