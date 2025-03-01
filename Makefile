@@ -260,6 +260,8 @@ OPEN_VADL_DOC_INPUT_IMPL="\
 OPEN_VADL_DOC_INPUT_REFMAN="\
 ./open-vadl/doc/introduction.md \
 ./open-vadl/doc/authors.md \
+./open-vadl/doc/tutorial.md \
+./open-vadl/doc/reference.md \
 "
 
 DOC_INPUT_IMPL="\
