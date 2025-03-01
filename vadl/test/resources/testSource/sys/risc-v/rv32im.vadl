@@ -9,7 +9,7 @@ instruction set architecture RV32IM extending RV3264IM = {}
 
 application binary interface ABI for RV32IM = {}
 
-[commentString = ";"]
+[commentString = "#"]
 assembly description ASM for ABI = {
 
   modifiers = {
