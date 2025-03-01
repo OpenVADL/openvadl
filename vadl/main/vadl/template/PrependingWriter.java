@@ -19,6 +19,13 @@ package vadl.template;
 import java.io.IOException;
 import java.io.Writer;
 
+/**
+ * A writer that wraps another writer.
+ * Before the first data is written to the wrapped writer,
+ * it will write the given prefix to it.
+ * E.g., this is used to add the copyright/generation notice to all generated files during
+ * template rendering.
+ */
 public class PrependingWriter extends Writer {
   private final Writer original;
   private final String prefix;
