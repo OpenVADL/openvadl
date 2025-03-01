@@ -582,8 +582,10 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
     }
     case CodeModel::Small:
     {
-        SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
-        return SDValue(DAG.getMachineNode([(${namespace})]::[(${addressSequence})], DL, Ty, Addr), 0);
+        SDValue AddrHi = getTargetNode(N, DL, Ty, DAG, [(${namespace})]BaseInfo::MO_RV3264I_hi);
+        SDValue AddrLo = getTargetNode(N, DL, Ty, DAG, [(${namespace})]BaseInfo::MO_RV3264I_lo);
+        SDValue MNHi = DAG.getNode([(${namespace})]ISD::HI, DL, Ty, AddrHi);
+        return DAG.getNode([(${namespace})]ISD::ADD_LO, DL, Ty, MNHi, AddrLo);
     }
     }
 }

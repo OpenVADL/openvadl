@@ -15,6 +15,9 @@ def SDT_CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, [(${stackPointerType})]>, SDTCi
 // Target-dependent type requirements
 def SDT_CPU_Call : SDTypeProfile<0, -1, [SDTCisVT<0, [(${stackPointerType})]>]>;
 
+def [(${namespace})]_add_lo : SDNode<"[(${namespace})]ISD::ADD_LO", SDTIntBinOp>;
+def [(${namespace})]_hi : SDNode<"[(${namespace})]ISD::HI", SDTIntUnaryOp>;
+
 class InstFormat<bits<5> val> {
     bits<5> Value = val;
 }
@@ -216,6 +219,16 @@ def SelectCC_[(${registerFile.name})]: Instruction {
 
 def : Pat<([(${stackPointerType})] AddrFI:$rs1),
   ([(${addi})] AddrFI:$rs1, ([(${stackPointerType})] 0))>;
+
+/// HI and ADD_LO address nodes.
+
+def : Pat<([(${namespace})]_hi tglobaladdr:$in), ([(${lui})] tglobaladdr:$in)>;
+def : Pat<([(${namespace})]_hi tblockaddress:$in), ([(${lui})] tblockaddress:$in)>;
+def : Pat<([(${namespace})]_hi tjumptable:$in), ([(${lui})] tjumptable:$in)>;
+def : Pat<([(${namespace})]_hi tconstpool:$in), ([(${lui})] tconstpool:$in)>;
+def : Pat<([(${namespace})]_add_lo X:$hi, tblockaddress:$lo), ([(${addi})] X:$hi, tblockaddress:$lo)>;
+def : Pat<([(${namespace})]_add_lo X:$hi, tjumptable:$lo), ([(${addi})] X:$hi, tjumptable:$lo)>;
+def : Pat<([(${namespace})]_add_lo X:$hi, tconstpool:$lo), ([(${addi})] X:$hi, tconstpool:$lo)>;
 
 [# th:each="pseudo : ${pseudos}" ]
 [(${pseudo})]

@@ -1,6 +1,5 @@
 package vadl.lcb.template.utils;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -8,8 +7,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.model.CppFunctionCode;
-import vadl.cppCodeGen.model.VariantKind;
-import vadl.gcb.passes.relocation.model.RelocationLowerable;
+import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
@@ -23,15 +21,13 @@ public class BaseInfoFunctionProvider {
    */
   public record BaseInfoRecord(
       String functionName,
-      CppFunctionCode relocation,
-      VariantKind variantKind) implements Renderable {
+      CppFunctionCode relocation) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
       return Map.of(
           "functionName", functionName,
-          "relocation", relocation,
-          "variantKind", variantKind
+          "relocation", relocation
       );
     }
   }
@@ -46,9 +42,9 @@ public class BaseInfoFunctionProvider {
     var elfRelocations = output.elfRelocations();
     return elfRelocations.stream()
         .filter(distinctByKey(x -> x.relocation().identifier))
-        .filter(x -> x instanceof RelocationLowerable)
-        .map(x -> (RelocationLowerable) x)
-        .sorted(Comparator.comparing(o -> o.elfRelocationName().value()))
+        .filter(x -> x instanceof HasRelocationComputationAndUpdate)
+        .map(x -> (HasRelocationComputationAndUpdate) x)
+        //.sorted(Comparator.comparing(o -> o.elfRelocationName().value()))
         .map(relocation -> {
           var generator = new ValueRelocationFunctionCodeGenerator(relocation.valueRelocation(),
               new ValueRelocationFunctionCodeGenerator.Options(
@@ -57,8 +53,7 @@ public class BaseInfoFunctionProvider {
           var function = new CppFunctionCode(generator.genFunctionDefinition());
           return new BaseInfoRecord(
               relocation.valueRelocation().identifier.lower(),
-              function,
-              relocation.variantKind()
+              function
           );
         })
         .toList();

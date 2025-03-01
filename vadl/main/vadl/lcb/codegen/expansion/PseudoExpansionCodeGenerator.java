@@ -22,8 +22,9 @@ import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
 import vadl.cppCodeGen.model.VariantKind;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
-import vadl.gcb.passes.relocation.model.CompilerRelocation;
+import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.gcb.valuetypes.ProcessorName;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Function;
@@ -60,10 +61,10 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   private final ProcessorName processorName;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, GcbFieldAccessCppFunction> immediateDecodings;
-  private final Map<Format.Field, List<VariantKind>> immVariants;
-  private final List<CompilerRelocation> relocations;
+  private final List<HasRelocationComputationAndUpdate> relocations;
   private final PseudoInstruction pseudoInstruction;
   private final SymbolTable symbolTable;
+  private final GenerateLinkerComponentsPass.VariantKindStore variantKindStore;
 
 
   /**
@@ -74,18 +75,19 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
                                           fieldUsages,
                                       Map<Format.Field, GcbFieldAccessCppFunction>
                                           immediateDecodings,
-                                      Map<Format.Field, List<VariantKind>> immVariants,
-                                      List<CompilerRelocation> relocations,
+                                      List<HasRelocationComputationAndUpdate> relocations,
+                                      GenerateLinkerComponentsPass.VariantKindStore
+                                          variantKindStore,
                                       PseudoInstruction pseudoInstruction,
                                       Function function) {
     super(function);
     this.processorName = processorName;
     this.fieldUsages = fieldUsages;
     this.immediateDecodings = immediateDecodings;
-    this.immVariants = immVariants;
     this.relocations = relocations;
     this.pseudoInstruction = pseudoInstruction;
     this.symbolTable = new SymbolTable();
+    this.variantKindStore = variantKindStore;
   }
 
   @Override
@@ -129,16 +131,9 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
             pseudoInstructionIndex);
 
         var argumentImmSymbol = symbolTable.getNextVariable();
-        var variants = immVariants.get(field);
-        ensure(variants != null, () -> Diagnostic.error(
-                String.format("Variant must exist for the field '%s' but it doesn't.",
-                    field.identifier.lower()),
-                field.sourceLocation())
-            .note(
-                "The compiler generator tries to lower an immediate in the "
-                    + "pseudo expansion. To do so it requires to generate variants for immediates. "
-                    + "It seems like that that this variants was not generated.")
-        );
+
+        var variants =
+            variantKindStore.absoluteVariantKindsByAutomaticGeneratedRelocationAndField(field);
         var variant =
             ensurePresent(
                 requireNonNull(variants).stream().filter(VariantKind::isImmediate)

@@ -22,8 +22,8 @@ import vadl.utils.Pair;
 public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationTest
     extends AbstractLcbTest {
 
-  @EnabledIfEnvironmentVariable(named = "GATE_KEEPER_EMBENCH_NUMBER_EXECUTED_INSTRUCTIONS",
-      matches = "true")
+  //@EnabledIfEnvironmentVariable(named = "GATE_KEEPER_EMBENCH_NUMBER_EXECUTED_INSTRUCTIONS",
+  //    matches = "true")
   @Test
   void testEmbench() throws IOException, DuplicatedPassKeyException {
     var target = "rv32im";

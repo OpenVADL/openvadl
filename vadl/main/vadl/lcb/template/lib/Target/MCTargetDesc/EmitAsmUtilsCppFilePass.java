@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.relocation.model.ConcreteLogicalRelocation;
-import vadl.gcb.passes.relocation.model.LogicalRelocation;
+import vadl.gcb.passes.relocation.model.ImplementedUserSpecifiedRelocation;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.templateUtils.RegisterUtils;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Definition;
@@ -39,14 +39,15 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/AsmUtils.cpp";
   }
 
-  private List<ConcreteLogicalRelocation> formatModifier(PassResults passResults) {
+  private List<ModifierAggregate> formatModifier(PassResults passResults) {
     var container = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
     return container.elfRelocations()
         .stream()
-        .filter(x -> x instanceof ConcreteLogicalRelocation)
-        .map(x -> (ConcreteLogicalRelocation) x)
-        .filter(distinctByKey(LogicalRelocation::variantKind))
+        .filter(x -> x instanceof ImplementedUserSpecifiedRelocation)
+        .map(x -> (ImplementedUserSpecifiedRelocation) x)
+        .filter(distinctByKey(ImplementedUserSpecifiedRelocation::variantKind))
+        .map(x -> new ModifierAggregate(x.variantKind().value(), x.relocation().simpleName()))
         .toList();
   }
 
@@ -80,11 +81,21 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
     ).toList();
   }
 
+  record ModifierAggregate(String variantKind, String relocationName) implements Renderable {
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of("variantKind", variantKind,
+          "relocationName", relocationName);
+    }
+  }
+
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
+    var modifiers = formatModifier(passResults);
+
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         "registers",
@@ -93,10 +104,10 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
         "registerClasses",
         specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
             .toList(),
-        "formatModifiers", formatModifier(passResults),
         "asmCompareFunction", stringCompareFunction(specification),
         "instructionNames", instructionsNames(specification),
-        "modifierMappings", modifierMappings(specification)
+        "modifierMappings", modifierMappings(specification),
+        "formatModifiers", modifiers
     );
   }
 }

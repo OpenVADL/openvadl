@@ -52,7 +52,7 @@ public class EmitAsmBackendCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(
         "name", obj.name().value(),
         "kind", obj.kind(),
-        "valueRelocationName", obj.valueRelocation().functionName().lower()
+        "valueRelocationName", obj.implementedRelocation().valueRelocation().functionName().lower()
     );
   }
 }

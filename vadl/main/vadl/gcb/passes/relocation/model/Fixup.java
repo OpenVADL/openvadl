@@ -36,4 +36,12 @@ public class Fixup {
             implementedRelocation.valueRelocation().functionName().identifier().simpleName() + "_"
             + implementedRelocation.identifier().lower());
   }
+
+  public CompilerRelocation.Kind kind() {
+    return kind;
+  }
+
+  public HasRelocationComputationAndUpdate implementedRelocation() {
+    return implementedRelocation;
+  }
 }

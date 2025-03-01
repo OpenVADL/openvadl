@@ -225,8 +225,8 @@ std::string AsmUtils::formatExpr(const MCExpr *Expr, uint8_t Radix, const MCAsmI
 std::string AsmUtils::FormatModifier(const [(${namespace})]MCExpr::VariantKind VariantKind)
 {
     [# th:each="fm : ${formatModifiers}" ]
-    if(VariantKind == [(${namespace})]MCExpr::VariantKind::[(${fm.variantKind.value})]) {
-      return "[(${fm.relocation.name})]";
+    if(VariantKind == [(${namespace})]MCExpr::VariantKind::[(${fm.variantKind})]) {
+      return "[(${fm.relocationName})]";
     }
     [/]
 

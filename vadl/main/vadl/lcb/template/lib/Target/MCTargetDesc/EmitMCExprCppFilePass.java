@@ -3,16 +3,12 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.cppCodeGen.model.VariantKind;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.utils.BaseInfoFunctionProvider;
-import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
@@ -37,46 +33,29 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
         + processorName + "MCExpr.cpp";
   }
 
-  record Wrapper(TableGenImmediateRecord record, String baseInfoName) {
-
-  }
-
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var immediateRecords = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
-        GenerateTableGenImmediateRecordPass.class));
     var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
-    var decodingFunctions = ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults);
+    var variantKinds = output.variantKinds().stream().map(x -> Map.of(
+        "human", x.human(),
+        "value", x.value()
+    )).toList();
 
-    var wrapped = immediateRecords.stream().map(x -> {
-      var function = decodingFunctions.get(x.fieldAccessRef().fieldRef());
-      ensureNonNull(function, "function must not be null");
-      return new Wrapper(x, x.rawName());
-    }).toList();
+    var immediates = output.variantKinds()
+        .stream()
+        .filter(VariantKind::isImmediate)
+        .map(VariantKind::value)
+        .toList();
 
-    var baseInfos = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
-
+    // var immediateRecords = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
+    //    GenerateTableGenImmediateRecordPass.class));    // var decodingFunctions = ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults);
+    //var baseInfos = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
-        "immediates", wrapped.stream().map(this::map).toList(),
-        "variantKinds", output.variantKinds(),
-        "baseInfos", baseInfos.stream().map(this::map).toList()
+        "immediates", immediates,
+        "variantKinds", variantKinds
     );
   }
-
-  private Map<String, Object> map(Wrapper wrapper) {
-    return Map.of(
-        "variantKind", wrapper.record.variantKind()
-    );
-  }
-
-  private Map<String, Object> map(BaseInfoFunctionProvider.BaseInfoRecord obj) {
-    return Map.of(
-        "variantKind", obj.variantKind(),
-        "functionName", obj.functionName()
-    );
-  }
-
 }

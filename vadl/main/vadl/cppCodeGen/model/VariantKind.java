@@ -1,7 +1,6 @@
 package vadl.cppCodeGen.model;
 
 import java.util.Map;
-import vadl.gcb.passes.relocation.model.CompilerRelocation;
 import vadl.gcb.passes.relocation.model.UserSpecifiedRelocation;
 import vadl.template.Renderable;
 import vadl.viam.Format;
@@ -25,14 +24,18 @@ public record VariantKind(String value, String human, boolean isImmediate) imple
   }
 
 
-  public static VariantKind absolute(Relocation relocation) {
-    return new VariantKind("VK_ABS_" + relocation.identifier.lower(),
-        "ABS_" + relocation.identifier.lower(), false);
+  public static VariantKind absolute(Relocation relocation, Format.Field field) {
+    var name =  relocation.identifier.lower() + "_" + field.identifier.tail().lower();
+
+    return new VariantKind("VK_ABS_" + name,
+        "ABS_" + name, false);
   }
 
-  public static VariantKind relative(Relocation relocation) {
-    return new VariantKind("VK_PCREL_" + relocation.identifier.lower(),
-        "PCREL_" + relocation.identifier.lower(), false);
+  public static VariantKind relative(Relocation relocation, Format.Field field) {
+    var name =  relocation.identifier.lower() + "_" + field.identifier.tail().lower();
+
+    return new VariantKind("VK_PCREL_" + name,
+        "PCREL_" + name, false);
   }
 
   /*

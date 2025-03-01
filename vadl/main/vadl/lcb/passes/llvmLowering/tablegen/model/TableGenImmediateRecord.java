@@ -24,7 +24,8 @@ public class TableGenImmediateRecord {
   private final BitsType rawType;
   private final int formatFieldBitSize;
   private final Format.FieldAccess fieldAccessRef;
-  private final VariantKind variantKind;
+  private final VariantKind absoluteVariantKind;
+  private final VariantKind relativeVariantKind;
 
   /**
    * Constructor for an immediate operand.
@@ -45,7 +46,8 @@ public class TableGenImmediateRecord {
     this.rawType = (BitsType) fieldAccessRef.type();
     this.formatFieldBitSize = fieldAccessRef.fieldRef().size();
     this.fieldAccessRef = fieldAccessRef;
-    this.variantKind = new VariantKind(fieldAccessRef.fieldRef());
+    this.absoluteVariantKind = VariantKind.absolute(fieldAccessRef.fieldRef());
+    this.relativeVariantKind = VariantKind.relative(fieldAccessRef.fieldRef());
   }
 
   /**
@@ -124,7 +126,11 @@ public class TableGenImmediateRecord {
     return fieldAccessRef;
   }
 
-  public VariantKind variantKind() {
-    return variantKind;
+  public VariantKind absoluteVariantKind() {
+    return absoluteVariantKind;
+  }
+
+  public VariantKind relativeVariantKind() {
+    return relativeVariantKind;
   }
 }

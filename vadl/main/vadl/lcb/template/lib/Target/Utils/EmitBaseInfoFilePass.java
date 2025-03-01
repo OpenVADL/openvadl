@@ -3,11 +3,9 @@ package vadl.lcb.template.lib.Target.Utils;
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.lib.Target.EmitInstrInfoCppFilePass;
 import vadl.lcb.template.utils.BaseInfoFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -40,27 +38,22 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
     var output =
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
-    var elfRelocations = output.elfRelocations();
-    var relocations = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
-
-    var mos = elfRelocations.stream()
-        .filter(x -> x instanceof RelocationLowerable)
-        .map(x -> (RelocationLowerable) x)
-        .filter(distinctByKey(x -> x.valueRelocation().functionName().lower()))
-        .map(this::map)
+    var modifiers = output.modifiers();
+    var linkModifierToRelocation = output
+        .linkModifierToRelocation()
+        .stream()
+        .filter(distinctByKey(x -> x.left().value()))
+        .map(x -> Map.of("modifier", x.left(),
+            "relocation", x.right().valueRelocation().functionName().lower()))
         .toList();
+    var relocations = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         "isBigEndian", false,
         "relocations", relocations,
-        "mos", mos
-    );
-  }
-
-  private Map<String, Object> map(RelocationLowerable obj) {
-    return Map.of(
-        "valueRelocationNameLower", obj.valueRelocation().functionName().lower()
+        "modifiers", modifiers,
+        "linkModifierToRelocation", linkModifierToRelocation
     );
   }
 }
