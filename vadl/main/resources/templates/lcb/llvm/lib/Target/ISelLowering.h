@@ -90,6 +90,7 @@ namespace llvm
                                          Instruction *I = nullptr) const override;
             bool isLegalICmpImmediate(int64_t Imm) const override;
             bool isLegalAddImmediate(int64_t Imm) const override;
+            bool preferZeroCompareBranch() const override { return true; }
 
 
         private:
