@@ -25,7 +25,7 @@ public class FormatTest extends AbstractTest {
     return AbstractTest.getTestSourceArgsForParameterizedTest("unit/format/invalid_",
         arguments("fieldAccess_encFunc", "No access function on field 'LO' found"),
         arguments("fieldAccess_encFunc2", "Field `LO` not found"),
-        arguments("overlappingField", "Field overlapping of 'HI' and 'LO' at bit 3")
+        arguments("overlappingField", "The following bits are multiple times: 3")
     );
   }
 
@@ -105,8 +105,7 @@ public class FormatTest extends AbstractTest {
 
   }
 
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // @Test
+  @Test
   public void complexFormat() {
     var spec = runAndGetViamSpecification("unit/format/valid_complexFormat.vadl");
 

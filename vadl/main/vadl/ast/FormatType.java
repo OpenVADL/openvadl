@@ -2,6 +2,7 @@ package vadl.ast;
 
 import java.util.Objects;
 import vadl.types.BitsType;
+import vadl.types.Type;
 
 /**
  * A format type is a type from a format.
@@ -17,8 +18,8 @@ class FormatType extends BitsType {
     this.format = format;
   }
 
-  BitsType concreteBitsType() {
-    return (BitsType) Objects.requireNonNull(format.typeLiteral.type);
+  Type innerType() {
+    return Objects.requireNonNull(format.typeLiteral.type);
   }
 
   @Override
