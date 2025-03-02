@@ -196,6 +196,16 @@ public class TypeChecker
       }
     }
 
+    // FormatType<"?", T1> => T2 iff T1 => T2
+    if (from.getClass() == FormatType.class) {
+      return canImplicitCast(((FormatType) from).format.typeLiteral.type(), to);
+    }
+
+    // T1 => FormatType<"?", T2> iff T1 => T2
+    if (to.getClass() == FormatType.class) {
+      return canImplicitCast(from, ((FormatType) to).format.typeLiteral.type());
+    }
+
     return false;
   }
 
@@ -313,9 +323,11 @@ public class TypeChecker
 
     for (var field : definition.fields) {
       if (field instanceof FormatDefinition.TypedFormatField typedField) {
-        check(typedField.typeLiteral);
-        if (!(typedField.typeLiteral.type instanceof BitsType fieldBitsType)) {
+        var fieldType = check(typedField.typeLiteral);
+
+        if (!(fieldType instanceof BitsType fieldBitsType)) {
           throw Diagnostic.error("Bits Type expected", typedField.typeLiteral)
+              .description("Format fields can only be assigned a bits type.")
               .build();
         }
         typedField.range = new FormatDefinition.BitRange(nextOccupiedBit,
@@ -1847,7 +1859,7 @@ public class TypeChecker
 
     if (typeTarget instanceof FormatDefinition formatDef) {
       check(formatDef);
-      return Objects.requireNonNull(formatDef.typeLiteral.type);
+      return new FormatType(formatDef);
     }
 
     throw new RuntimeException(
@@ -1915,7 +1927,7 @@ public class TypeChecker
     var identifierTarget = ((Identifier) expr.target.path());
 
     var targetType = check(identifierTarget);
-    if (!(targetType.getClass() != BitsType.class)) {
+    if (!(targetType instanceof BitsType)) {
       throw Diagnostic.error("Type Mismatch", identifierTarget)
           .description("Only bit types can be sliced but the target was a `%s`", targetType)
           .build();
@@ -1934,9 +1946,81 @@ public class TypeChecker
     }
 
     // FIXME: Verify that the range is inside the target.
-
     // That isn't quite correct, shouldn't SInt also work?
     expr.type = Type.bits(rangeSize);
+  }
+
+  /**
+   * Throws if a subcall exists.
+   *
+   * @param expr       with possibly subcalls.
+   * @param callTarget to which is called.
+   */
+  private void verifyNoSubcall(CallExpr expr, Definition callTarget) {
+    verifyNoSubcall(expr, callTarget.getClass().getSimpleName());
+  }
+
+  /**
+   * Throws if a subcall exists.
+   *
+   * @param expr       with possibly subcalls.
+   * @param targetName to which is called.
+   */
+  private void verifyNoSubcall(CallExpr expr, String targetName) {
+    if (expr.subCalls.isEmpty()) {
+      return;
+    }
+
+    throw Diagnostic.error("Invalid subcall", expr)
+        .description("Calls to %s cannot have subcalls", targetName)
+        .build();
+  }
+
+  /**
+   * At this point we already know what is called but there are still some dangling subcalls that
+   * need to be resolved and which might result in a different type.
+   *
+   * <p>Modiefies the provided expr.
+   *
+   * @param expr of the call.
+   */
+  private void visitSubCall(CallExpr expr, Type typeBeforeSubCall) {
+    if (expr.subCalls.isEmpty()) {
+      expr.type = typeBeforeSubCall;
+      return;
+    }
+
+    int from = 0;
+    int to = 0;
+
+    // Might be a format access
+    var type = typeBeforeSubCall;
+    for (var subCall : expr.subCalls) {
+      var fieldName = subCall.id().name;
+      if (!(type instanceof FormatType formatType)) {
+        // FIXME: Better error message
+        throw Diagnostic.error("Cannot resolve `%s`".formatted(fieldName), expr)
+            .description("Because the type up until it is not a format but `%s`", type)
+            .build();
+      }
+      check(formatType.format);
+
+      var fieldType = formatType.format.getFieldType(fieldName);
+      if (fieldType == null) {
+        var formatName = formatType.format.identifier().name;
+        throw Diagnostic.error("Unknown format field `%s`".formatted(fieldName), expr)
+            .description("Format `%s` doesn't have any field named `%s`", formatName, fieldName)
+            .build();
+      }
+
+      var range = Objects.requireNonNull(formatType.format.getFieldRange(subCall.id().name));
+      from = range.from() + to;
+      to = range.to() + to;
+
+      type = fieldType;
+    }
+    expr.type = type;
+    expr.computedFormatBitRange = new FormatDefinition.BitRange(from, to);
   }
 
   @Override
@@ -1951,7 +2035,7 @@ public class TypeChecker
     var callTarget = Objects.requireNonNull(expr.symbolTable)
         .findAs(expr.target.path().pathToString(), Definition.class);
 
-    // Handle register
+    // Handle register File
     if (callTarget instanceof RegisterFileDefinition registerFile) {
       if (expr.argsIndices.size() != 1 || expr.argsIndices.get(0).size() != 1) {
         throw Diagnostic.error("Invalid Register Usage", expr)
@@ -1976,8 +2060,9 @@ public class TypeChecker
             .build();
       }
 
-      expr.type = Objects.requireNonNull(registerFile.type).resultType();
+      var typeBeforeSubCalls = Objects.requireNonNull(registerFile.type).resultType();
       expr.computedTarget = registerFile;
+      visitSubCall(expr, typeBeforeSubCalls);
       return null;
     }
 
@@ -1988,6 +2073,7 @@ public class TypeChecker
             .description("Memory access must have exactly one argument.")
             .build();
       }
+      verifyNoSubcall(expr, memDef);
 
       var argList = expr.argsIndices.get(0);
       var arg = argList.get(0);
@@ -2059,6 +2145,7 @@ public class TypeChecker
     // User defined functions
     if (callTarget instanceof FunctionDefinition functionDef) {
       check(functionDef);
+      verifyNoSubcall(expr, "user defined Function");
       var funcType = Objects.requireNonNull(functionDef.type);
       var expectedArgCount = funcType.argTypes().size();
       var actualArgCount = expr.flatArgs().size();
@@ -2095,6 +2182,7 @@ public class TypeChecker
     // Relocation call (similar to function)
     if (callTarget instanceof RelocationDefinition relocationDef) {
       check(relocationDef);
+      verifyNoSubcall(expr, relocationDef);
       var relocationType = Objects.requireNonNull(relocationDef.type);
       var expectedArgCount = relocationType.argTypes().size();
       var actualArgCount = expr.flatArgs().size();
@@ -2129,6 +2217,16 @@ public class TypeChecker
       return null;
     }
 
+    // If there is are *only* subcalls, we first resolve the target as if it were a standalone
+    // identifier and later rewrite the type with the subcalls.
+    if (expr.flatArgs().isEmpty() && !expr.subCalls.isEmpty()) {
+      visit((Identifier) expr.target);
+      var typeBeforeSubcall = Objects.requireNonNull(((Identifier) expr.target).type);
+      expr.computedTarget = callTarget;
+      visitSubCall(expr, typeBeforeSubcall);
+      return null;
+    }
+
 
     // Builtin function
     expr.flatArgs().forEach(this::check);
@@ -2137,6 +2235,7 @@ public class TypeChecker
     if (builtin != null) {
       // FIXME: Find a better solution that is universal enough for binary operations and builtin
       // functions.
+      verifyNoSubcall(expr, "Builtin Function");
 
       // If the function is also a unary operation, we instead type check it as if it were a unary
       // operation which has some special type rules.

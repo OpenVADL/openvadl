@@ -151,7 +151,7 @@ interface DefinitionVisitor<R> {
  * <p>name The declared name of this parameter.
  * type The declared type of this parameter.
  */
-class Parameter extends Node implements IdentifiableNode {
+class Parameter extends Node implements IdentifiableNode, TypedNode {
   Identifier name;
   TypeLiteral typeLiteral;
 
@@ -214,9 +214,14 @@ class Parameter extends Node implements IdentifiableNode {
     result = 31 * result + typeLiteral.hashCode();
     return result;
   }
+
+  @Override
+  public Type type() {
+    return typeLiteral.type();
+  }
 }
 
-class ConstantDefinition extends Definition implements IdentifiableNode {
+class ConstantDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
 
   @Nullable
@@ -301,14 +306,24 @@ class ConstantDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + Objects.hashCode(value);
     return result;
   }
+
+  @Override
+  public Type type() {
+    return value.type();
+  }
 }
 
-class FormatDefinition extends Definition implements IdentifiableNode {
+class FormatDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
   TypeLiteral typeLiteral;
   List<FormatField> fields;
   List<AuxiliaryField> auxiliaryFields;
   SourceLocation loc;
+
+  @Override
+  public Type type() {
+    return new FormatType(this);
+  }
 
   record BitRange(int from, int to) {
   }
@@ -626,6 +641,31 @@ class FormatDefinition extends Definition implements IdentifiableNode {
     }
   }
 
+  @Nullable
+  BitRange getFieldRange(String name) {
+    var field = getField(name);
+
+    if (field instanceof TypedFormatField typedField) {
+      return typedField.range;
+    } else if (field instanceof RangeFormatField rangeField) {
+      // FIXME: propper merge them
+      if (rangeField.ranges.size() > 1) {
+        throw new IllegalStateException(
+            "Not implemented: Too many ranges: " + rangeField.ranges.size());
+      }
+      if (rangeField.computedRanges == null) {
+        return null;
+      }
+      return rangeField.computedRanges.get(0);
+    } else if (field instanceof DerivedFormatField derivedField) {
+      throw new IllegalStateException(
+          "Cannot compute range of derived field: " + field.getClass().getSimpleName());
+    } else {
+      throw new IllegalStateException("Unknown field type: " + field.getClass().getSimpleName());
+    }
+  }
+
+
   @Override
   public Identifier identifier() {
     return (Identifier) identifier;
@@ -809,11 +849,16 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
   }
 }
 
-class CounterDefinition extends Definition implements IdentifiableNode {
+class CounterDefinition extends Definition implements IdentifiableNode, TypedNode {
   CounterKind kind;
   IdentifierOrPlaceholder identifier;
   TypeLiteral typeLiteral;
   SourceLocation loc;
+
+  @Override
+  public Type type() {
+    return typeLiteral.type();
+  }
 
   enum CounterKind {
     PROGRAM,
@@ -891,7 +936,7 @@ class CounterDefinition extends Definition implements IdentifiableNode {
   }
 }
 
-class MemoryDefinition extends Definition implements IdentifiableNode {
+class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
   TypeLiteral addressTypeLiteral;
   TypeLiteral dataTypeLiteral;
@@ -970,9 +1015,14 @@ class MemoryDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + dataTypeLiteral.hashCode();
     return result;
   }
+
+  @Override
+  public Type type() {
+    return Objects.requireNonNull(type);
+  }
 }
 
-class RegisterDefinition extends Definition implements IdentifiableNode {
+class RegisterDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
   TypeLiteral typeLiteral;
   SourceLocation loc;
@@ -1044,6 +1094,11 @@ class RegisterDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + identifier.hashCode();
     result = 31 * result + typeLiteral.hashCode();
     return result;
+  }
+
+  @Override
+  public Type type() {
+    return typeLiteral.type();
   }
 }
 

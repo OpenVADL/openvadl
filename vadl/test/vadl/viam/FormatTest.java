@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.AbstractTest;
@@ -41,8 +42,7 @@ public class FormatTest extends AbstractTest {
     runAndAssumeFailure(testSource, failureMessage);
   }
 
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // @Test
+  @Test
   public void simpleFormat() {
     var spec = runAndGetViamSpecification("unit/format/valid_simpleFormat.vadl");
 
