@@ -35,6 +35,7 @@ public class TableGenImmediateRecord {
   // The `rawEncoderMethod` is the method for the raw logic.
   private final Identifier rawEncoderMethod;
   private final Identifier decoderMethod;
+  private final Identifier rawDecoderMethod;
   private final Identifier predicateMethod;
   private final ValueType llvmType;
   private final BitsType rawType;
@@ -50,6 +51,7 @@ public class TableGenImmediateRecord {
                                   Identifier encoderIdentifier,
                                   Identifier rawEncoderIdentifier,
                                   Identifier decoderIdentifier,
+                                  Identifier rawDecoderIdentifier,
                                   Identifier predicateIdentifier,
                                   ValueType llvmType,
                                   Format.FieldAccess fieldAccessRef) {
@@ -57,6 +59,7 @@ public class TableGenImmediateRecord {
     this.encoderMethod = encoderIdentifier;
     this.rawEncoderMethod = rawEncoderIdentifier;
     this.decoderMethod = decoderIdentifier;
+    this.rawDecoderMethod = rawDecoderIdentifier;
     this.predicateMethod = predicateIdentifier;
     this.llvmType = llvmType;
     this.rawType = (BitsType) fieldAccessRef.type();
@@ -76,6 +79,7 @@ public class TableGenImmediateRecord {
             EmitMCCodeEmitterCppFilePass.WRAPPER),
         Objects.requireNonNull(fieldAccess.encoding()).identifier,
         fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
+        fieldAccess.accessFunction().identifier,
         fieldAccess.predicate().identifier,
         llvmType,
         fieldAccess);
@@ -95,6 +99,10 @@ public class TableGenImmediateRecord {
 
   public String decoderMethod() {
     return decoderMethod.lower();
+  }
+
+  public String rawDecoderMethod() {
+    return rawDecoderMethod.lower();
   }
 
   public ValueType llvmType() {

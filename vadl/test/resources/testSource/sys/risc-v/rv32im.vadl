@@ -18,7 +18,7 @@ assembly description ASM for ABI = {
   }
 
   grammar = {
-    // TODO: UType, BType, branch- and JAL pseudo-instructions
+    // TODO: branch- and JAL pseudo-instructions
 
     ImmediateOperand :
       Expression @operand
@@ -51,6 +51,14 @@ assembly description ASM for ABI = {
     ;
 
 
+    UTypeIds: "LUI" | "AUIPC" ;
+
+    UTypeInstruction @instruction:
+      mnemonic = UTypeIds @operand
+      rd = Register@operand ","
+      imm = ImmediateOperand
+    ;
+
     LTypeIds : "LB" | "LBU" | "LH" | "LHU" | "LW" ;
 
     LTypeInstruction @instruction:
@@ -68,6 +76,16 @@ assembly description ASM for ABI = {
       rs2 = Register @operand ","
       imm = ImmediateOperand
       "(" rs1 = Register @operand ")"
+    ;
+
+
+    BTypeIds : "BEQ" | "BNE" |  "BGE" | "BGEU" | "BLT" | "BLTU" ;
+
+    BTypeInstruction @instruction:
+      mnemonic = BTypeIds @operand
+      rs1 = Register@operand ","
+      rs2 = Register@operand ","
+      imm = ImmediateOperand@operand
     ;
 
 

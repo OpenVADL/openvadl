@@ -16,22 +16,36 @@
 
 package vadl.lcb.template.lib.Target.AsmParser;
 
+import static vadl.viam.ViamError.ensureNonNull;
+import static vadl.viam.ViamError.ensurePresent;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
+import vadl.error.Diagnostic;
+import vadl.gcb.passes.ValueRange;
+import vadl.gcb.passes.ValueRangeCtx;
+import vadl.lcb.passes.EncodeAssemblyImmediateAnnotation;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.AssemblyDescription;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
+import vadl.viam.ViamError;
 
 /**
  * This file contains the implementation for parsing assembly files.
@@ -95,6 +109,69 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     ));
   }
 
+  private List<Map<String, Object>> immediateConversions(PassResults passResults) {
+    var output =
+        (LlvmLoweringPass.LlvmLoweringPassResult) passResults.lastResultOf(LlvmLoweringPass.class);
+    var result = new ArrayList<Map<String, Object>>();
+
+    output.machineInstructionRecords().forEach(
+        (insn, llvmRecord) -> {
+          var templateVars = new HashMap<String, Object>();
+          var immediateOperands = llvmRecord.inputs().stream()
+              .filter(i -> i instanceof TableGenInstructionImmediateOperand
+                  || i instanceof TableGenInstructionImmediateLabelOperand
+              ).toList();
+          var emitConversion = immediateOperands.size() == 1;
+
+          templateVars.put("insnName", insn.simpleName());
+          templateVars.put("emitConversion", emitConversion);
+
+          if (emitConversion) {
+            templateVars.put("needsDecode",
+                insn.assembly().hasAnnotation(EncodeAssemblyImmediateAnnotation.class));
+
+            var operand = immediateOperands.get(0);
+            var immediateOperand = immediateOperand(operand);
+
+            templateVars.put("operandName",
+                ((TableGenParameterTypeAndName) operand.parameter()).name());
+            templateVars.put("formatFieldTypeSize", immediateOperand.formatFieldBitSize());
+            templateVars.put("immediateOperandName", immediateOperand.fullname());
+
+            templateVars.put("decodeType",
+                immediateOperand.llvmType().isSigned() ? "int64_t" : "uint64_t");
+            templateVars.put("decodeMethod", immediateOperand.rawDecoderMethod());
+            templateVars.put("predicateMethod", immediateOperand.predicateMethod());
+
+
+            var valueRange = valueRange(insn);
+            templateVars.put("lowestValue", valueRange.lowest());
+            templateVars.put("highestValue", valueRange.highest());
+          }
+
+          result.add(templateVars);
+        }
+    );
+
+    return result;
+  }
+
+  private TableGenImmediateRecord immediateOperand(TableGenInstructionOperand operand) {
+    if (operand instanceof TableGenInstructionImmediateOperand imm) {
+      return imm.immediateOperand();
+    }
+    if (operand instanceof TableGenInstructionImmediateLabelOperand labelImm) {
+      return labelImm.immediateOperand();
+    }
+    throw new ViamError("Unexpected operand type: " + operand.getClass());
+  }
+
+  private ValueRange valueRange(Instruction instruction) {
+    var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class),
+        () -> Diagnostic.error("Has no extension value range", instruction.sourceLocation()));
+    return ensurePresent(ctx.getFirst(),
+        () -> Diagnostic.error("Has no value range", instruction.sourceLocation()));
+  }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
@@ -102,7 +179,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         CommonVarNames.ALIASES, directiveMappings(specification.assemblyDescription()),
-        CommonVarNames.INSTRUCTIONS, instructionsWithOperands(passResults)
+        CommonVarNames.INSTRUCTIONS, instructionsWithOperands(passResults),
+        "immediateConversions", immediateConversions(passResults)
     );
   }
 

@@ -26,7 +26,7 @@ class [(${namespace})]AsmParser : public MCTargetAsmParser {
     return static_cast<[(${namespace})]TargetStreamer &>(TS);
 }
 
-bool ModifyImmediate(unsigned OpCode, unsigned OpIndex, [(${namespace})]ParsedOperand &Op);
+bool ModifyImmediate(unsigned OpCode, StringRef OpName, [(${namespace})]ParsedOperand &Op);
 
 bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                             OperandVector &Operands, MCStreamer &Out,
@@ -104,7 +104,7 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
             auto parsedTarget = op.getTarget();
             if( parsedTarget == searchTarget )
             {
-                if(!ModifyImmediate(Opcode, j, op))
+                if(!ModifyImmediate(Opcode, parsedTarget, op))
                 {
                     return true;
                 }
@@ -191,15 +191,57 @@ void [(${namespace})]AsmParser::convertToMapAndConstraints(unsigned Kind,
                                               const OperandVector &Operands) {
 }
 
-bool [(${namespace})]AsmParser::ModifyImmediate(unsigned Opcode, unsigned OpIndex, [(${namespace})]ParsedOperand &Op)
+bool [(${namespace})]AsmParser::ModifyImmediate(unsigned Opcode, StringRef OpName, [(${namespace})]ParsedOperand &Op)
 {
     if(!Op.isImm() || Op.getImm()->getKind() != MCExpr::ExprKind::Constant)
         return true;
 
-    auto opImm64 = dyn_cast<MCConstantExpr>(Op.getImm())->getValue();
+    int64_t opImm64 = dyn_cast<MCConstantExpr>(Op.getImm())->getValue();
     switch(Opcode)
     {
+        default: return true;
+      [# th:each="conversion : ${immediateConversions}" ]
+        [# th:if="${conversion.emitConversion}" ]
+        case([(${namespace})]::[(${conversion.insnName})]):
+        {
+            if (OpName.equals_insensitive("[(${conversion.operandName})]")) {
+                [# th:if="${conversion.needsDecode}" ]
+                /*
+                if(!isInt<[(${conversion.formatFieldTypeSize})]>(opImm64) && !isUInt<[(${conversion.formatFieldTypeSize})]>(opImm64))
+                {
+                    std::string error = "Invalid immediate operand for [(${conversion.insnName})].[(${conversion.operandName})]. The operand is out of range.";
+                    Parser.Error(Op.getStartLoc(), error);
+                    return false;
+                }
+                */
+                // check if immediate is in ([(${conversion.lowestValue})],[(${conversion.highestValue})])
+                if (opImm64 < [(${conversion.lowestValue})] || opImm64 > [(${conversion.highestValue})]) {
+                    std::string error = "Invalid immediate operand for [(${conversion.insnName})].[(${conversion.operandName})]. Value "
+                     + std::to_string(opImm64) + " is out of the valid range ([(${conversion.lowestValue})],[(${conversion.highestValue})]).";
+                    Parser.Error(Op.getStartLoc(), error);
+                    return false;
+                }
 
+                //[(${conversion.decodeType})] decoded = [(${conversion.decodeMethod})](opImm64);
+                opImm64 = [(${conversion.decodeMethod})](opImm64);
+                [/]
+                // check if immediate fits the provided predicate for the instruction
+                if(![(${conversion.predicateMethod})](opImm64))
+                {
+                    std::string error = "Invalid immediate operand for [(${conversion.insnName})].[(${conversion.operandName})]. The predicate does not hold.";
+                    Parser.Error(Op.getStartLoc(), error);
+                    return false;
+                }
+                const MCExpr* constantExpr = MCConstantExpr::create(opImm64, Parser.getContext());
+
+                Op = [(${namespace})]ParsedOperand::CreateImm(constantExpr, Op.getStartLoc(), Op.getEndLoc());
+            } else {
+                const MCExpr* constantExpr = MCConstantExpr::create(opImm64, Parser.getContext());
+                Op = [(${namespace})]ParsedOperand::CreateImm(constantExpr, Op.getStartLoc(), Op.getEndLoc());
+            }
+            return true;
+            break;
+        }[/][/]
     }
     return true;
 }
