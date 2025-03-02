@@ -6,7 +6,7 @@
 define i32 @rotl_32(i32 %x, i32 %y) nounwind {
 ; CHECK-LABEL: rotl_32:
 ; CHECK: # %bb.0:
-; CHECK-NEXT: LUI a2,0x20
+; CHECK-NEXT: LUI a2,0x0
 ; CHECK-NEXT: ADDI a2,a2,32
 ; CHECK-NEXT: SUB a2,a2,a1
 ; CHECK-NEXT: SLL a1,a0,a1
@@ -25,7 +25,7 @@ define i32 @rotr_32(i32 %x, i32 %y) nounwind {
 ; CHECK: # %bb.0:
 ; CHECK-NEXT: ADDI a2,zero,32
 ; CHECK-NEXT: SUB a1,a2,a1
-; CHECK-NEXT: LUI a2,0x20
+; CHECK-NEXT: LUI a2,0x0
 ; CHECK-NEXT: ADDI a2,a2,32
 ; CHECK-NEXT: SUB a2,a2,a1
 ; CHECK-NEXT: SLL a1,a0,a1
@@ -122,7 +122,7 @@ define i64 @rotr_64(i64 %x, i64 %y) nounwind {
 define i32 @rotl_32_mask(i32 %x, i32 %y) nounwind {
 ; CHECK-LABEL: rotl_32_mask:
 ; CHECK: # %bb.0:
-; CHECK-NEXT: LUI a2,0x20
+; CHECK-NEXT: LUI a2,0x0
 ; CHECK-NEXT: ADDI a2,a2,32
 ; CHECK-NEXT: SUB a2,a2,a1
 ; CHECK-NEXT: SLL a1,a0,a1
@@ -140,7 +140,7 @@ define i32 @rotl_32_mask(i32 %x, i32 %y) nounwind {
 define i32 @rotl_32_mask_and_63_and_31(i32 %x, i32 %y) nounwind {
 ; CHECK-LABEL: rotl_32_mask_and_63_and_31:
 ; CHECK: # %bb.0:
-; CHECK-NEXT: LUI a2,0x20
+; CHECK-NEXT: LUI a2,0x0
 ; CHECK-NEXT: ADDI a2,a2,32
 ; CHECK-NEXT: SUB a2,a2,a1
 ; CHECK-NEXT: SLL a1,a0,a1
@@ -159,7 +159,7 @@ define i32 @rotl_32_mask_and_63_and_31(i32 %x, i32 %y) nounwind {
 define i32 @rotl_32_mask_or_64_or_32(i32 %x, i32 %y) nounwind {
 ; CHECK-LABEL: rotl_32_mask_or_64_or_32:
 ; CHECK: # %bb.0:
-; CHECK-NEXT: LUI a2,0x20
+; CHECK-NEXT: LUI a2,0x0
 ; CHECK-NEXT: ADDI a2,a2,32
 ; CHECK-NEXT: SUB a2,a2,a1
 ; CHECK-NEXT: SLL a1,a0,a1
@@ -179,7 +179,7 @@ define i32 @rotr_32_mask(i32 %x, i32 %y) nounwind {
 ; CHECK-LABEL: rotr_32_mask:
 ; CHECK: # %bb.0:
 ; CHECK-NEXT: SUB a1,zero,a1
-; CHECK-NEXT: LUI a2,0x20
+; CHECK-NEXT: LUI a2,0x0
 ; CHECK-NEXT: ADDI a2,a2,32
 ; CHECK-NEXT: SUB a2,a2,a1
 ; CHECK-NEXT: SLL a1,a0,a1
@@ -198,7 +198,7 @@ define i32 @rotr_32_mask_and_63_and_31(i32 %x, i32 %y) nounwind {
 ; CHECK-LABEL: rotr_32_mask_and_63_and_31:
 ; CHECK: # %bb.0:
 ; CHECK-NEXT: SUB a1,zero,a1
-; CHECK-NEXT: LUI a2,0x20
+; CHECK-NEXT: LUI a2,0x0
 ; CHECK-NEXT: ADDI a2,a2,32
 ; CHECK-NEXT: SUB a2,a2,a1
 ; CHECK-NEXT: SLL a1,a0,a1
@@ -218,7 +218,7 @@ define i32 @rotr_32_mask_or_64_or_32(i32 %x, i32 %y) nounwind {
 ; CHECK-LABEL: rotr_32_mask_or_64_or_32:
 ; CHECK: # %bb.0:
 ; CHECK-NEXT: SUB a1,zero,a1
-; CHECK-NEXT: LUI a2,0x20
+; CHECK-NEXT: LUI a2,0x0
 ; CHECK-NEXT: ADDI a2,a2,32
 ; CHECK-NEXT: SUB a2,a2,a1
 ; CHECK-NEXT: SLL a1,a0,a1
