@@ -1,5 +1,6 @@
-package vadl.lcb.passes.isaMatching;
+package vadl.gcb.valuetypes;
 
+import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
 import vadl.viam.Relocation;
 
 /**

@@ -1,4 +1,4 @@
-package vadl.lcb.passes.isaMatching;
+package vadl.gcb.valuetypes;
 
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;

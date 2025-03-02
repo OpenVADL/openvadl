@@ -20,7 +20,7 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
-import vadl.lcb.passes.isaMatching.RelocationFunctionLabel;
+import vadl.gcb.valuetypes.RelocationFunctionLabel;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
