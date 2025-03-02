@@ -2,12 +2,12 @@
 
 ## General Language Features
 
-### Type System
+## Type System
 \lbl{langref_type_system}
 
-\ac{VADL}'s type system is inspired by the hardware construction language Chisel.
+\ac{VADL}'s type system is inspired by the type system of the hardware construction language Chisel.
 The main two primitive data types are `Bool` and `Bits<`\f$N\f$`>`.
-`Bool` represents Boolean typed data (see Section \r{refman_boolean_literal}).
+`Bool` represents Boolean typed data (see Section \r{refman_literals}).
 `Bits<`\f$N\f$`>` represents an arbitrary bit vector type of length \f$N\f$.
 
 To express explicitly signed and unsigned arithmetic operations \ac{VADL} provides two sub-types of `Bits<`\f$N\f$`>` -- `SInt<`\f$N\f$`>` and `UInt<`\f$N\f$`>`.
@@ -25,7 +25,7 @@ An additional `String` type is available which is used in the assembly specifica
 The operator `as` does explicit type casting between different types.
 There is no change in the bit vector representation if the size of source and result vector are equal.
 The bit vector is truncated if the result type is smaller than the source type.
-Boolean truncation is a comparison with zero:
+A truncating cast to `Bool` is defined as a comparison with zero:
 
 `Bits<`\f$N\f$`> as Bool`, \f$N\f$ ` > 1` \f$\Rightarrow\f$ `Bits<`\f$N\f$`> != 0` \n 
 `SInt<`\f$N\f$`> as Bool`, \f$N\f$ ` > 1` \f$\Rightarrow\f$ `SInt<`\f$N\f$`> != 0` \n 
@@ -48,7 +48,7 @@ Zero or sign extension is defined by the following explicit type casting rules:
 `SInt<`\f$N\f$`> as UInt`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ sign extension \n 
 `SInt<`\f$N\f$`> as SInt`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ sign extension
 
-If a `Bool` is casted to a bit vector with a length larger than `1`, `false` is represented as `0` and `true` is represented as `1`.
+If a `Bool` is casted to a bit vector with a length larger than `1`, `false` is represented as `0` and `true` is represented as `1` which is equivalent to zero extension.
 For `Bool` and bit vectors with the same length the following implicit type casting rules apply:
 
 `Bits<1>` \f$\Longleftrightarrow\f$ `Bool`
@@ -67,7 +67,39 @@ type casting rules from `Bits<`\f$N\f$`>`:
 `UInt<`\f$N\f$`> o Bits<`\f$N\f$`> -> UInt<`\f$N\f$`>` \n 
 `Bits<`\f$N\f$`> o UInt<`\f$N\f$`> -> UInt<`\f$N\f$`>` 
 
+### Literals and Type Inference
+\lbl{refman_literals}
+
+For the type `Bool` there exist the two boolean literals `true` (value `1` as `Bits<1>`) and `false` (value `0` as `Bits<1>`).
+
+Binary and hexadecimal literals are of the type `Bits` with the number of
+digits representing the length of a bit vector. Leading zeros are counted
+to determine the size. Binary literals start with `0b` and hexadecimal literals
+start with `0x`. The apostrophe can be used to make the representation
+more comprehensible (see Listing \r{lst_literals}).
+
+\listing{lst_literals, VADL Arithmetic Operations}
+~~~{.vadl}
+constant binLit = 0b1'0011       // has the value 19 and is of type Bits<5>
+constant hexLit = 0x000f         // has the value 15 and is of type Bits<16>
+
+constant decLit = 4              // has the value  4 and is of type SInt<*>
+constant decEx  = 4 * 3 + 1      // has the value 13 and is of type SInt<*>
+
+constant bitEx  = binLit + decEx // has the value  0 and is of type Bits<5>
+~~~
+\endlisting
+
+Decimal literals represent signed integers with an arbitrary length, they can
+be viewed as `SInt<*>`. In the evaluation of constant expressions no truncation
+can happen. Type inference is used to determine the type of an expression. In
+Listing \r{lst_literals} the constant `bitEx` is of type `Bits<5>` as `binLit`
+is of type `Bits<5>` and the decimal value `13` of `decEx` then also is implicitly
+casted to `Bits<5>` and the addition of these two numbers gives `0`.
+
+
 ## Expressions and Operator Precedence
+\lbl{expr_precedence}
 
 The behavior of instructions is described by expressions consisting of operations on bit vectors.
 These operations can be selected either using binary and unary operators or by calling \ac{VADL}'s builtin functions.
@@ -102,15 +134,15 @@ which use the `"."`, `","` and `"|"` operator.
 \ac{VADL} provides a set of pre-defined basic mathematical built-in functions.
 Many of them can be accessed by using binary or unary operators, all others have to be invoked by a function call
 in the built-in name space `VADL`.
-Listing \r{math_status_example} shows a let expression which uses binary operators (`binaryExpr`),
+Listing \r{math_status_example} shows a let expression which uses binary infix operators (`infixExpr`),
 an equivalent second let expression which uses function calls (`callExpr`) and a third let expression
 which calls a built-in function with a double result, the result of the operation
 and a bit field structure with the status bits for this operation (`result, status`).
 
 \listing{math_status_example, Arithmetic with Status Flags}
 ~~~{.vadl}
-let binaryExpr = X(5) + X(6) * 2 in {}
-let callExpr   = VADL::add( X(5), VADL::mul(X(6), 2)) in {}
+let infixExpr = X(5) + X(6) * 2 in {}
+let callExpr  = VADL::add( X(5), VADL::mul(X(6), 2)) in {}
 
 let result, status = VADL::adds( X(5), X(6) ) in {
   // 'result'          contains the addition result
@@ -208,15 +240,15 @@ function umods( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status )
 ## Logical Operations
 \listing{basic_math_logical, VADL Logical Operations}
 ~~~{.vadl}
-function not ( a : Bits<N> ) ->Bits<N> // <=> ~a, !a if N == 1
+function not ( a : Bits<N> ) -> Bits<N> // <=> ~a, !a if N == 1 or Bool
 
-function and ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a & b, a && b if N == 1
+function and ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a & b, a && b if N == 1 or Bool
 function ands( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )
 
-function xor ( a : Bits<N>, b : Bits<N> ) -> [ SInt<N> | UInt<N> ] // <=> a ^ b
+function xor ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a ^ b
 function xors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )
 
-function or ( a : Bits<N>, b : Bits<N> ) -> [ SInt<N> | UInt<N> ] // <=> a | b, a || b if N ==1
+function or ( a : Bits<N>, b : Bits<N> ) -> Bits<N>  // <=> a | b, a || b if N ==1 or Bool
 function ors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )
 ~~~
 \endlisting

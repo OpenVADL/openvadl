@@ -1,0 +1,64 @@
+instruction set architecture RV32I = {
+
+  constant Size = 32                     // architecture size is 32 bits
+
+  using Byte    = Bits<  8 >             // 8 bit Byte
+  using Inst    = Bits< 32 >             // instruction word type
+  using Regs    = Bits<Size>             // register word type 
+  using Index   = Bits<  5 >             // 5 bit register index type for 32 registers
+  using Addr    = Regs                   // address type is equal to the register type
+
+  //[zero : X(0)]                        // register with index 0 always is zero
+  register file    X : Index -> Regs     // integer register file with 32 registers
+  [rvWeakMemoryOrdering]                 // RISC V weak memory ordering
+  memory         MEM : Addr  -> Byte     // byte addressed memory
+  program counter PC : Addr              // PC points to the start of an instruction
+
+  format Itype  : Inst =                 // immediate instruction format
+    { imm       : Bits<12>               // [31..20] 12 bit immediate value
+    , rs1       : Index                  // [19..15] source register index
+    , funct3    : Bits<3>                // [14..12] 3 bit function code
+    , rd        : Index                  // [11..7]  destination register index
+    , opcode    : Bits<7>                // [6..0]   7 bit operation code
+    , immS      = imm as SInt<Size>      // sign extended immediate value
+    }
+
+  format Btype : Inst =                  // branch instruction format
+    { imm    [31, 7, 30..25, 11..8]      // 12 bit immediate value
+    , rs2    [24..20]                    // 2nd source register index
+    , rs1    [19..15]                    // 1st source register index
+    , funct3 [14..12]                    // 3 bit function code
+    , opcode [6..0]                      // 7 bit operation code
+    , immS   = imm as SInt<Size> << 1    // sign extended and shifted immediate value immS
+    }
+
+  // macro for immediate instructions with name, operator, function code and type
+  model ItypeInstr (name : Id, op : BinOp, funct3 : Bin, type: Id) : IsaDefs = {
+    instruction $name : Itype =
+       X(rd) := (X(rs1) as $type $op immS as $type) as Regs
+    encoding $name = {opcode = 0b001'0011, funct3 = $funct3}
+    assembly $name = (mnemonic," ",register(rd),",",register(rs1),",",decimal(imm))
+    }
+
+  model BtypeInstr (name : Id, relOp : BinOp, funct3 : Bin, lhsTy : Id) : IsaDefs = {
+    instruction $name : Btype =          // conditional branch instructions
+      if X(rs1) as $lhsTy $relOp X(rs2) then
+        PC := PC + immS
+    encoding $name = {opcode = 0b110'0011, funct3 = $funct3}
+    assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
+    }
+
+  $ItypeInstr (ADDI ; +  ; 0b000 ; SInt) // add immediate
+  $ItypeInstr (ANDI ; &  ; 0b111 ; SInt) // and immediate
+  $ItypeInstr (ORI  ; |  ; 0b110 ; SInt) // or immediate
+  $ItypeInstr (XORI ; ^  ; 0b100 ; SInt) // exclusive or immediate
+  $ItypeInstr (SLTI ; <  ; 0b010 ; SInt) // set less than immediate
+  $ItypeInstr (SLTIU; <  ; 0b011 ; UInt) // set less than immediate unsigned
+
+  $BtypeInstr (BEQ  ; =  ; 0b000 ; Bits) // branch equal
+  $BtypeInstr (BNE  ; != ; 0b001 ; Bits) // branch not equal
+  $BtypeInstr (BGE  ; >= ; 0b101 ; SInt) // branch greater or equal
+  $BtypeInstr (BGEU ; >= ; 0b111 ; UInt) // branch greater or equal unsigned
+  $BtypeInstr (BLT  ; <  ; 0b100 ; SInt) // branch less than
+  $BtypeInstr (BLTU ; <  ; 0b110 ; UInt) // branch less than unsigned
+}
