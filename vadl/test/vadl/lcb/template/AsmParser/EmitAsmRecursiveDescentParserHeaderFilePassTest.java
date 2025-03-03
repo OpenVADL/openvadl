@@ -42,7 +42,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePassTest extends AbstractLcb
     // Then
     var resultFile = passResult.emittedFile().toFile();
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines();
+    var output = trimmed.lines().skip(4); // skip copyright notice;
 
     Assertions.assertLinesMatch("""
         #ifndef LLVM_LIB_TARGET_processornamevalue_ASMPARSER_H

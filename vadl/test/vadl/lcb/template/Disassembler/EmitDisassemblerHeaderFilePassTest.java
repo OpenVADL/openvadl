@@ -43,12 +43,12 @@ public class EmitDisassemblerHeaderFilePassTest extends AbstractLcbTest {
     // Then
     var resultFile = passResult.emittedFile().toFile();
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines();
+    var output = trimmed.lines().skip(4); // skip copyright notice;
 
     Assertions.assertLinesMatch("""
         #ifndef LLVM_LIB_TARGET_processornamevalue_DISASSEMBLER_processornamevalueDISASSEMBLER_H
         #define LLVM_LIB_TARGET_processornamevalue_DISASSEMBLER_processornamevalueDISASSEMBLER_H
-                
+        
         #include "MCTargetDesc/processornamevalueMCTargetDesc.h"
         #include "TargetInfo/processornamevalueTargetInfo.h"
         #include "Utils/processornamevalueBaseInfo.h"
@@ -61,25 +61,25 @@ public class EmitDisassemblerHeaderFilePassTest extends AbstractLcbTest {
         #include "llvm/MC/MCSubtargetInfo.h"
         #include "llvm/Support/Endian.h"
         #include "llvm/MC/TargetRegistry.h"
-                
+        
         using namespace llvm;
-                
+        
         typedef MCDisassembler::DecodeStatus DecodeStatus;
-                
+        
         namespace llvm
         {
             class processornamevalueDisassembler : public MCDisassembler
             {
             public:
                 processornamevalueDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool isBigEndian);
-                
+        
                 DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CStream) const override;
-                
+        
             protected:
                 bool IsBigEndian;
             };
         } // end llvm namespace
-                
+        
         #endif 
         """.trim().lines(), output);
   }

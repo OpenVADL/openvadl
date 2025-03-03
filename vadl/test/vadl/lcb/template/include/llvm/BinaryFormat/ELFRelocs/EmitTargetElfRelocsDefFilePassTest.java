@@ -44,17 +44,17 @@ public class EmitTargetElfRelocsDefFilePassTest extends AbstractLcbTest {
     // Then
     var resultFile = passResult.emittedFile().toFile();
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines();
+    var output = trimmed.lines().skip(4); // skip copyright notice;
 
     Assertions.assertLinesMatch("""
         #ifndef ELF_RELOC
         #error "ELF_RELOC must be defined"
         #endif
-                
+        
         ELF_RELOC(R_processornamevalue_NONE, 0)
         ELF_RELOC(R_processornamevalue_32, 1)
         ELF_RELOC(R_processornamevalue_64, 2)
-                
+        
         ELF_RELOC(R_RV3264I_hi_Itype_imm, 3)
         ELF_RELOC(R_RV3264I_hi_Utype_imm, 4)
         ELF_RELOC(R_RV3264I_hi_Stype_imm, 5)

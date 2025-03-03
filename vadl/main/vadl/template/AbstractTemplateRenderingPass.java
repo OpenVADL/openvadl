@@ -185,7 +185,10 @@ public abstract class AbstractTemplateRenderingPass extends Pass {
   /**
    * Renders the template into a {@link StringWriter}. Additionally, this will not create a
    * folder in the output path.
+   *
+   * @deprecated One test only uses this. We should remove it.
    */
+  @Deprecated
   public String renderToString(final PassResults passResults, Specification viam) {
     var stringWriter = new StringWriter();
     var ctx = new Context();
