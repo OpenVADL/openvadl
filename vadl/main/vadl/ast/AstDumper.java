@@ -334,12 +334,12 @@ public class AstDumper
       dumpChildren(definition.enumType);
     }
     for (var entry : definition.entries) {
-      dumpChildren(entry.name());
-      if (entry.value() != null) {
-        dumpChildren(entry.value());
+      dumpChildren(entry.name);
+      if (entry.value != null) {
+        dumpChildren(entry.value);
       }
-      if (entry.behavior() != null) {
-        dumpChildren(entry.behavior());
+      if (entry.behavior != null) {
+        dumpChildren(entry.behavior);
       }
     }
     return null;

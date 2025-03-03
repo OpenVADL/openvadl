@@ -480,17 +480,18 @@ class SymbolTable {
           collectSymbols(symbols, alias.targetType);
         }
       } else if (definition instanceof EnumerationDefinition enumeration) {
+        enumeration.symbolTable = symbols.createChild();
+        symbols.defineSymbol(enumeration);
         if (enumeration.enumType != null) {
           collectSymbols(symbols, enumeration.enumType);
         }
         for (EnumerationDefinition.Entry entry : enumeration.entries) {
-          String path = enumeration.identifier().name + "::" + entry.name().name;
-          symbols.defineSymbol(path, enumeration);
-          if (entry.value() != null) {
-            collectSymbols(symbols, entry.value());
+          enumeration.symbolTable().defineSymbol(entry.name.name, entry);
+          if (entry.value != null) {
+            collectSymbols(symbols, entry.value);
           }
-          if (entry.behavior() != null) {
-            collectSymbols(symbols, entry.behavior());
+          if (entry.behavior != null) {
+            collectSymbols(symbols, entry.behavior);
           }
         }
       } else if (definition instanceof ExceptionDefinition exception) {
@@ -949,11 +950,11 @@ class SymbolTable {
         resolveSymbols(alias.value);
       } else if (definition instanceof EnumerationDefinition enumeration) {
         for (EnumerationDefinition.Entry entry : enumeration.entries) {
-          if (entry.value() != null) {
-            resolveSymbols(entry.value());
+          if (entry.value != null) {
+            resolveSymbols(entry.value);
           }
-          if (entry.behavior() != null) {
-            resolveSymbols(entry.behavior());
+          if (entry.behavior != null) {
+            resolveSymbols(entry.behavior);
           }
         }
       } else if (definition instanceof ExceptionDefinition exception) {

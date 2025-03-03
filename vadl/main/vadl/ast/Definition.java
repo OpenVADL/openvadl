@@ -2105,7 +2105,48 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     return result;
   }
 
-  record Entry(Identifier name, @Nullable Expr value, @Nullable Expr behavior) {
+  static class Entry extends Node implements WithSourceLocation {
+
+    Identifier name;
+    @Nullable
+    Expr value;
+    @Nullable
+    Expr behavior;
+
+
+    public Entry(Identifier name, @Nullable Expr value, @Nullable Expr behavior) {
+      this.name = name;
+      this.value = value;
+      this.behavior = behavior;
+    }
+
+    @Override
+    SourceLocation location() {
+      var loc = name.sourceLocation();
+      if (value != null) {
+        loc = loc.join(value.sourceLocation());
+      }
+      if (behavior != null) {
+        loc = loc.join(behavior.sourceLocation());
+      }
+      return loc;
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      name.prettyPrint(indent, builder);
+      builder.append(" = ");
+      if (value != null) {
+        value.prettyPrint(indent, builder);
+      } else if (behavior != null) {
+        behavior.prettyPrint(indent, builder);
+      }
+    }
   }
 }
 
