@@ -84,6 +84,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
+import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.vdt.passes.VdtLoweringPass;
@@ -496,6 +497,8 @@ public class PassOrders {
     // TODO: Remove once frontend creates it
     order.add(new DummyMiaPass(config));
     order.add(new StageOrderingPass(config));
+
+    order.add(new InstructionProgressGraphCreationPass(config));
 
     addHtmlDump(order, config,
         "mia",

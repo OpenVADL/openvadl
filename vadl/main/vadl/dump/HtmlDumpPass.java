@@ -36,6 +36,7 @@ import vadl.dump.entitySuppliers.VdtEntitySupplier;
 import vadl.dump.entitySuppliers.ViamEntitySupplier;
 import vadl.dump.infoEnrichers.IssEnricherCollection;
 import vadl.dump.infoEnrichers.LcbEnricherCollection;
+import vadl.dump.infoEnrichers.RtlEnricherCollection;
 import vadl.dump.infoEnrichers.VdtEnricherCollection;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
 import vadl.pass.Pass;
@@ -92,6 +93,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
     enrichers.addAll(LcbEnricherCollection.all);
     enrichers.addAll(IssEnricherCollection.all);
     enrichers.addAll(VdtEnricherCollection.all);
+    enrichers.addAll(RtlEnricherCollection.all);
   };
 
 
