@@ -18,7 +18,6 @@ package vadl.lcb.template;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -47,10 +46,7 @@ public abstract class LcbTemplateRenderingPass extends AbstractTemplateRendering
   @Override
   protected String lineComment() {
     var filename = FilenameUtils.getName(getOutputPath());
-    var ending = FilenameUtils.getExtension(filename);
-    var hashEndings = Set.of("def");
-    if (hashEndings.contains(ending)
-        || filename.contains("Makefile")
+    if (filename.contains("Makefile")
         || filename.startsWith("CMake")
     ) {
       return "#";
