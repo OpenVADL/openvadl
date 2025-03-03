@@ -81,7 +81,7 @@ public class GenerateLinkerComponentsPass extends Pass {
     public void addUserDefined(ImplementedUserSpecifiedRelocation relocation,
                                Format.Field field,
                                VariantKind kind) {
-      if (relocation.relocation().isAbsolute()) {
+      if (relocation.kind() == CompilerRelocation.Kind.ABSOLUTE) {
         this.userDefined.absolute.put(Pair.of(relocation, field), kind);
       } else {
         this.userDefined.relative.put(Pair.of(relocation, field), kind);
@@ -94,7 +94,7 @@ public class GenerateLinkerComponentsPass extends Pass {
     public void addAutomaticallyGeneratedRelocation(AutomaticallyGeneratedRelocation relocation,
                                                     Format.Field field,
                                                     VariantKind kind) {
-      if (relocation.relocation().isAbsolute()) {
+      if (relocation.kind() == CompilerRelocation.Kind.ABSOLUTE) {
         this.automaticallyGenerated.absolute.put(Pair.of(relocation, field), kind);
       } else {
         this.automaticallyGenerated.relative.put(Pair.of(relocation, field), kind);

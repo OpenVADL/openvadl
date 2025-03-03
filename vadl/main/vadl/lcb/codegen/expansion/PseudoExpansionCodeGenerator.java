@@ -134,6 +134,11 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
 
         var variants =
             variantKindStore.absoluteVariantKindsByAutomaticGeneratedRelocationAndField(field);
+
+        ensure(variants.size() == 1, () -> Diagnostic.error(
+            "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
+            toHandle.sourceLocation()));
+
         var variant =
             ensurePresent(
                 requireNonNull(variants).stream().filter(VariantKind::isImmediate)
