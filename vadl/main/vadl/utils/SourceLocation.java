@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
  *
  * @param uri          uri to concrete source file
  * @param begin        the span begin with line and column
- * @param end          the span end with line and column
+ * @param end          the span end with line and column (this is inclusive)
  * @param expandedFrom pointing to the location of a macro instantiation from which the current ast
  *                     got expanded. This is useful to both print the code in the macro as well as
  *                     the invocation. Is null for location that weren't expanded.
@@ -252,6 +252,9 @@ public record SourceLocation(
 
   /**
    * Represents a position in the source file with line and column information.
+   *
+   * @param line   starting at 1, just as displayed in an IDE.
+   * @param column starting at 1, just as displayed in an IDE.
    */
   public record Position(
       int line,

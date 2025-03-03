@@ -149,6 +149,24 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return result;
   }
 
+  /**
+   * There are some types that should never leave the frontend.
+   * This function ensures they don't.
+   *
+   * @param astType original type as found in the ast.
+   * @return a type that is safe to be entered into the VIAM.
+   */
+  private Type getViamType(Type astType) {
+    if (astType instanceof ConstantType) {
+      throw new IllegalStateException("No constant type should ever leave the VIAM!");
+    }
+
+    if (astType instanceof FormatType formatType) {
+      return getViamType(formatType.innerType());
+    }
+
+    return astType;
+  }
 
   /**
    * Generate a new viam Identifier from an ast Identifier.
@@ -520,11 +538,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var identifier = generateIdentifier(definition.viamId, definition.identifier().location());
 
     // FIXME: Further research for the parameters (probably don't apply to counter)
+
+    Format format = null;
+    if (definition.type() instanceof FormatType) {
+      format = (Format) fetch(((FormatType) definition.type()).format).orElseThrow();
+    }
+
     var reg = new Register(identifier,
-        (DataType) requireNonNull(definition.typeLiteral.type),
+        (DataType) getViamType(requireNonNull(definition.typeLiteral.type)),
         Register.AccessKind.FULL,
         Register.AccessKind.FULL,
-        null,
+        format,
         new Register[] {});
 
     Map<CounterDefinition.CounterKind, Counter.Kind> kinds =
@@ -544,7 +568,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         definition,
         List.of(),
         definition.expr,
-        requireNonNull(definition.expr.type)
+        getViamType(requireNonNull(definition.expr.type))
     ));
   }
 
@@ -559,7 +583,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     for (var parameter : params) {
       var viamParameter = new vadl.viam.Parameter(
           generateIdentifier(parameter.name.name, parameter.name.location()),
-          requireNonNull(parameter.typeLiteral.type));
+          getViamType(parameter.typeLiteral.type()));
       parameterCache.put(parameter, viamParameter);
       parameters.add(viamParameter);
     }
@@ -608,7 +632,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(FormatDefinition definition) {
     var format =
         new Format(generateIdentifier(definition.viamId, definition.identifier()),
-            (BitsType) requireNonNull(definition.typeLiteral.type));
+            (BitsType) getViamType(definition.typeLiteral.type()));
 
     var fields = new ArrayList<Format.Field>();
     var fieldAccesses = new ArrayList<Format.FieldAccess>();
@@ -618,12 +642,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         var field = new Format.Field(
             generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
                 fieldDefinition.identifier()),
-            (BitsType) requireNonNull(typedField.typeLiteral.type),
+            (BitsType) getViamType(typedField.typeLiteral.type()),
             new Constant.BitSlice(new Constant.BitSlice.Part(
                 requireNonNull(typedField.range).from(),
                 requireNonNull(typedField.range).to())),
             format
         );
+        if (typedField.typeLiteral.type() instanceof FormatType formatType) {
+          field.setRefFormat((Format) fetch(formatType.format).orElseThrow());
+        }
         formatFieldCache.put(typedField, field);
         fields.add(field);
         continue;
@@ -633,7 +660,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         var field = new Format.Field(
             generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
                 fieldDefinition.identifier()),
-            (BitsType) requireNonNull(rangeField.type),
+            (BitsType) getViamType(requireNonNull(rangeField.type)),
             new Constant.BitSlice(requireNonNull(rangeField.computedRanges).stream()
                 .map(r -> new Constant.BitSlice.Part(r.from(), r.to()))
                 .toArray(Constant.BitSlice.Part[]::new)),
@@ -655,7 +682,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         var access =
             new Function(generateIdentifier(accessName, derivedField.identifier),
                 new vadl.viam.Parameter[0],
-                requireNonNull(derivedField.expr.type), accessGraph);
+                getViamType(derivedField.expr.type()), accessGraph);
 
         // FIXME: Add encoding from language
         @Nullable Function encoding = null;
@@ -671,7 +698,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         var parameter = new vadl.viam.Parameter(
             new vadl.viam.Identifier(fieldDefinition.identifier().name,
                 SourceLocation.INVALID_SOURCE_LOCATION),
-            requireNonNull(derivedField.expr.type));
+            getViamType(derivedField.expr.type()));
         var predicate = new Function(
             generateIdentifier(predicateName, derivedField.identifier),
             new vadl.viam.Parameter[] {parameter}, Type.bool(), predicateGraph
@@ -701,7 +728,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             definition,
             definition.params,
             definition.expr,
-            requireNonNull(definition.retType.type)
+            getViamType(definition.retType.type())
         )
     );
   }
@@ -864,8 +891,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(MemoryDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
     return Optional.of(new Memory(identifier,
-        (DataType) requireNonNull(definition.addressTypeLiteral.type),
-        (DataType) requireNonNull(definition.dataTypeLiteral.type)));
+        (DataType) getViamType(definition.addressTypeLiteral.type()),
+        (DataType) getViamType(definition.dataTypeLiteral.type())));
   }
 
   @Override
@@ -995,11 +1022,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(PseudoInstructionDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
     var parameters = definition.params.stream()
-        .map(p -> {
+        .map(parameter -> {
           var viamParam = new vadl.viam.Parameter(
-              generateIdentifier(p.name.name, p.name.location()),
-              requireNonNull(p.typeLiteral.type));
-          parameterCache.put(p, viamParam);
+              generateIdentifier(parameter.name.name, parameter.name.location()),
+              getViamType(parameter.typeLiteral.type()));
+          parameterCache.put(parameter, viamParam);
           return viamParam;
         })
         .toArray(vadl.viam.Parameter[]::new);
@@ -1024,12 +1051,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterDefinition definition) {
     // TODO: Support recursive sub registers
+    Format format = null;
+    if (definition.type() instanceof FormatType) {
+      format = (Format) fetch(((FormatType) definition.type()).format).orElseThrow();
+    }
+
     var reg = new Register(
         generateIdentifier(definition.viamId, definition.identifier()),
-        requireNonNull(definition.type),
+        (DataType) getViamType(definition.type()),
         Register.AccessKind.FULL,
         Register.AccessKind.FULL,
-        null,
+        format,
         new Register[] {}
     );
     return Optional.of(reg);
@@ -1037,8 +1069,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterFileDefinition definition) {
-    var addrType = (DataType) requireNonNull(definition.type).argTypes().get(0);
-    var resultType = (DataType) requireNonNull(definition.type).resultType();
+    var addrType = (DataType) getViamType(requireNonNull(definition.type).argTypes().get(0));
+    var resultType = (DataType) getViamType(requireNonNull(definition.type).resultType());
 
     // FIXME: Add proper constraints. This is currently only temporarily hardcoded to
     //    fix the riscv iss simulation.
@@ -1061,7 +1093,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .map(p -> {
           var viamParam =
               new vadl.viam.Parameter(generateIdentifier(p.name.name, p.name.location()),
-                  requireNonNull(p.typeLiteral.type));
+                  getViamType(p.typeLiteral.type()));
           parameterCache.put(p, viamParam);
           return viamParam;
         })
@@ -1073,7 +1105,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         new Relocation(
             identifier,
             parameters,
-            requireNonNull(definition.resultTypeLiteral.type),
+            getViamType(definition.resultTypeLiteral.type()),
             graph));
   }
 

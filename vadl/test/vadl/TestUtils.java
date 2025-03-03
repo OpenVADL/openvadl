@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static vadl.utils.ViamUtils.findDefinitionsByFilter;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
@@ -20,6 +21,7 @@ import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.MicroProcessor;
 import vadl.viam.Parameter;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
@@ -36,7 +38,14 @@ public class TestUtils {
    * @throws AssertionError if the number of resources found with the given name is not equal to 1
    */
   public static Resource findResourceByName(String name, Specification spec) {
-    var r = spec.definitions()
+    var definitions = new ArrayList<>(spec.definitions().toList());
+
+    // The ISA is no longer in the spec definitions but the tests expect it so let's add it here
+    spec.definitions().filter(MicroProcessor.class::isInstance)
+        .findFirst()
+        .ifPresent(mp -> definitions.add(((MicroProcessor) mp).isa()));
+
+    var r = definitions.stream()
         .filter(InstructionSetArchitecture.class::isInstance)
         .map(InstructionSetArchitecture.class::cast)
         .flatMap(i -> Stream.concat(i.ownRegisters().stream(), i.ownRegisterFiles().stream()))
@@ -178,13 +187,13 @@ public class TestUtils {
   }
 
   public static Format.Field createFieldWithParent(String name, DataType ty,
-                                                      Constant.BitSlice slice, int bitWidthFormat) {
+                                                   Constant.BitSlice slice, int bitWidthFormat) {
     var parent = new Format(createIdentifier(name + ".format"), BitsType.bits(bitWidthFormat));
     return createField(name, ty, slice, parent);
   }
 
   public static Format.Field createField(String name, DataType ty, Constant.BitSlice slice,
-                                            Format parent) {
+                                         Format parent) {
     return new Format.Field(createIdentifier(name), ty, slice, parent);
   }
 

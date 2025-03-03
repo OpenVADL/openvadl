@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
 
@@ -110,6 +111,10 @@ abstract class Node implements WithSourceLocation {
 
 interface IdentifiableNode {
   Identifier identifier();
+}
+
+interface TypedNode {
+  Type type();
 }
 
 final class BinOp extends Node implements IsBinOp {

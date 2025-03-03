@@ -16,9 +16,14 @@ import vadl.utils.SourceLocation;
 /**
  * The Expression node of the AST.
  */
-public abstract class Expr extends Node {
+public abstract class Expr extends Node implements TypedNode {
   @Nullable
   Type type = null;
+
+  @Override
+  public Type type() {
+    return Objects.requireNonNull(type);
+  }
 
   abstract <R> R accept(ExprVisitor<R> visitor);
 }
@@ -110,6 +115,9 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
 
   @Override
   public String toString() {
+    if (type == null) {
+      return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
+    }
     return "%s name: \"%s\", type: %s".formatted(this.getClass().getSimpleName(), this.name,
         this.type);
   }
@@ -1211,6 +1219,12 @@ final class TypeLiteral extends Expr {
       this.baseType = new Identifier("SInt", SourceLocation.INVALID_SOURCE_LOCATION);
       this.sizeIndices =
           List.of(List.of(new IntegerLiteral(Integer.toString(sintType.bitWidth()), loc)));
+    } else if (type.getClass() == FormatType.class) {
+      var formatType = (FormatType) type;
+      this.baseType = new Identifier(formatType.format.identifier().name,
+          SourceLocation.INVALID_SOURCE_LOCATION);
+      this.sizeIndices =
+          List.of(List.of());
     } else {
       throw new IllegalStateException("Unsupported type " + type.getClass().getSimpleName());
     }
@@ -1491,6 +1505,13 @@ final class CallExpr extends Expr implements IsCallExpr {
    */
   @Nullable
   BuiltInTable.BuiltIn computedBuiltIn;
+
+  /**
+   * If there are accesses to a format the bitrange that will be sliced into is stored here by the
+   * typechecker.
+   */
+  @Nullable
+  FormatDefinition.BitRange computedFormatBitRange;
 
   /**
    * A list of function arguments or register/memory indices.

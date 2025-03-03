@@ -67,6 +67,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * <p>Because the caches this class holds are delicate, create a new instance for every graph you
  * generate.
  */
+@SuppressWarnings("OverloadMethodsDeclarationOrder")
 class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor<ExpressionNode> {
   private final ViamLowering viamLowering;
   private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
@@ -396,6 +397,24 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         Objects.requireNonNull(expr.type));
   }
 
+  /**
+   * Subcalls for format fields introduce slicing, which is handled here.
+   *
+   * @param expr              with the potential subcalls
+   * @param exprBeforeSubcall to be sliced
+   * @return the original expr or wrapped in a slice.
+   */
+  private ExpressionNode visitSubCall(CallExpr expr, ExpressionNode exprBeforeSubcall) {
+    if (expr.subCalls.isEmpty()) {
+      return exprBeforeSubcall;
+    }
+
+
+    var bitRange = Objects.requireNonNull(expr.computedFormatBitRange);
+    var slice = new Constant.BitSlice(new Constant.BitSlice.Part(bitRange.from(), bitRange.to()));
+    return new SliceNode(exprBeforeSubcall, slice, (DataType) Objects.requireNonNull(expr.type));
+  }
+
   @Override
   public ExpressionNode visit(CallExpr expr) {
 
@@ -429,7 +448,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var args = expr.flatArgs().stream().map(this::fetch).toList();
       var regFile = (RegisterFile) viamLowering.fetch(expr.computedTarget).orElseThrow();
       var type = (DataType) Objects.requireNonNull(expr.type);
-      return new ReadRegFileNode(regFile, args.get(0), type, null);
+      return visitSubCall(expr, new ReadRegFileNode(regFile, args.get(0), type, null));
     }
 
     // Memory read
@@ -484,6 +503,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var slice = new Constant.BitSlice(new Constant.BitSlice.Part(from, to));
       return new SliceNode(value, slice, (DataType) Objects.requireNonNull(expr.type));
     }
+
+    // If there is are *only* subcalls, we first resolve the target as if it were a standalone
+    // identifier and later rewrite the type with the subcalls.
+    if (expr.flatArgs().isEmpty() && !expr.subCalls.isEmpty()) {
+      var exprBeforeSubCall = visit((Identifier) expr.target);
+      return visitSubCall(expr, exprBeforeSubCall);
+    }
+
 
     throw new IllegalStateException("Cannot handle call to %s yet".formatted(expr.computedTarget));
   }
