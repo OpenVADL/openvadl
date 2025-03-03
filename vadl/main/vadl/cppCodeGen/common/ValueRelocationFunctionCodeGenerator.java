@@ -8,6 +8,7 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CRelocationMixins;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
+import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.javaannotations.DispatchFor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
@@ -40,9 +41,12 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractRelocationCode
    * Creates a new pure function code generator for the specified function.
    */
   public ValueRelocationFunctionCodeGenerator(
+      HasRelocationComputationAndUpdate relocation,
       GcbImmediateExtractionCppFunction gcbValueRelocationCppFunction) {
     super(gcbValueRelocationCppFunction);
-    this.functionName = function.identifier.lower();
+    this.functionName =
+        relocation.identifier().append(gcbValueRelocationCppFunction.identifier.tail().parts())
+            .lower();
     this.options = new Options(false, false);
     this.context = new CNodeContext(
         builder::append,
@@ -56,10 +60,13 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractRelocationCode
    * Creates a new pure function code generator for the specified function.
    */
   public ValueRelocationFunctionCodeGenerator(
+      HasRelocationComputationAndUpdate relocation,
       GcbImmediateExtractionCppFunction gcbValueRelocationCppFunction,
       Options options) {
     super(gcbValueRelocationCppFunction);
-    this.functionName = function.identifier.lower();
+    this.functionName =
+        relocation.identifier().append(gcbValueRelocationCppFunction.identifier.tail().parts())
+            .lower();
     this.options = options;
     this.context = new CNodeContext(
         builder::append,

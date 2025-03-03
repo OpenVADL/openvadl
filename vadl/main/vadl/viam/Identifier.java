@@ -13,7 +13,7 @@ public record Identifier(
     String[] parts,
     SourceLocation sourceLocation
 ) implements WithSourceLocation {
-  
+
   /**
    * Normalize the parts of the identifier by removing leading and trailing dots.
    */
@@ -90,6 +90,14 @@ public record Identifier(
         Arrays.stream(this.parts).toArray(String[]::new),
         sourceLocation
     );
+  }
+
+  /**
+   * Returns a new identifier but without the first part.
+   */
+  public Identifier tail() {
+    return new Identifier(Arrays.stream(this.parts()).skip(1).toArray(String[]::new),
+        sourceLocation);
   }
 
   @Override

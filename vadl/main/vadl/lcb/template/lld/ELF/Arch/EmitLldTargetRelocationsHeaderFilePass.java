@@ -1,11 +1,9 @@
 package vadl.lcb.template.lld.ELF.Arch;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
-import vadl.gcb.passes.relocation.model.RelocationLowerable;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -42,12 +40,10 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().processorName().value().toLowerCase(),
         "relocations", relocations.stream()
-            .filter(x -> x instanceof RelocationLowerable)
-            .map(x -> (RelocationLowerable) x)
-            .sorted(Comparator.comparing(o -> o.elfRelocationName().value()))
             .map(relocation -> {
               var generator =
-                  new ValueRelocationFunctionCodeGenerator(relocation.valueRelocation());
+                  new ValueRelocationFunctionCodeGenerator(relocation,
+                      relocation.valueRelocation());
               return generator.genFunctionDefinition();
             }).toList());
   }

@@ -44,7 +44,7 @@ public class EmitELFObjectWriterCppFilePass extends LcbTemplateRenderingPass {
   private Map<String, Object> mapFixup(Fixup fixup) {
     return Map.of(
         "name", fixup.name().value(),
-        "elfRelocationName", fixup.relocationLowerable().elfRelocationName().value()
+        "elfRelocationName", fixup.implementedRelocation().elfRelocationName().value()
     );
   }
 }

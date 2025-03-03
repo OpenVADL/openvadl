@@ -1,6 +1,6 @@
 /*
  * Node representing the frame index.
- * The method CPUDAGToDAGISel::SelectAddrFI is used to determine
+ * The method SelectAddrFI is used to determine
  * if the specific register is a frame pointer.
  */
 def AddrFI : ComplexPattern<iPTR, 1, "SelectAddrFI", [frameindex], []>;
@@ -14,6 +14,9 @@ def SDT_CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i64>, SDTCisVT<1, i64>]>;
 
 // Target-dependent type requirements
 def SDT_CPU_Call : SDTypeProfile<0, -1, [SDTCisVT<0, i64>]>;
+
+def processornamevalue_add_lo : SDNode<"processornamevalueISD::ADD_LO", SDTIntBinOp>;
+def processornamevalue_hi : SDNode<"processornamevalueISD::HI", SDTIntUnaryOp>;
 
 class InstFormat<bits<5> val> {
     bits<5> Value = val;
@@ -1657,8 +1660,8 @@ let isCodeGenOnly      = 0;
 let mayLoad            = 0;
 let mayStore           = 0;
 let isBarrier          = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3624,6 +3627,17 @@ let Defs = [  ];
 
 def : Pat<(i64 AddrFI:$rs1),
   (ADDI AddrFI:$rs1, (i64 0))>;
+
+/// HI and ADD_LO address nodes.
+
+def : Pat<(processornamevalue_hi tglobaladdr:$in), (LUI tglobaladdr:$in)>;
+def : Pat<(processornamevalue_hi tblockaddress:$in), (LUI tblockaddress:$in)>;
+def : Pat<(processornamevalue_hi tjumptable:$in), (LUI tjumptable:$in)>;
+def : Pat<(processornamevalue_hi tconstpool:$in), (LUI tconstpool:$in)>;
+def : Pat<(processornamevalue_add_lo X:$hi, tglobaladdr:$lo), (ADDI X:$hi, tglobaladdr:$lo)>;
+def : Pat<(processornamevalue_add_lo X:$hi, tblockaddress:$lo), (ADDI X:$hi, tblockaddress:$lo)>;
+def : Pat<(processornamevalue_add_lo X:$hi, tjumptable:$lo), (ADDI X:$hi, tjumptable:$lo)>;
+def : Pat<(processornamevalue_add_lo X:$hi, tconstpool:$lo), (ADDI X:$hi, tconstpool:$lo)>;
 
 
 def BEQZ : Instruction

@@ -15,7 +15,11 @@ namespace llvm
             FIRST_NUMBER = ISD::BUILTIN_OP_END,
             CALL,
             RET_FLAG,
-            SELECT_CC
+            SELECT_CC,
+            // Add the Lo 12 bits from an address. Selected to ADDI.
+            ADD_LO,
+            // Get the Hi 20 bits from an address. Selected to LUI.
+            HI
         };
     }
 
@@ -86,6 +90,7 @@ namespace llvm
                                          Instruction *I = nullptr) const override;
             bool isLegalICmpImmediate(int64_t Imm) const override;
             bool isLegalAddImmediate(int64_t Imm) const override;
+            bool preferZeroCompareBranch() const override { return true; }
 
 
         private:

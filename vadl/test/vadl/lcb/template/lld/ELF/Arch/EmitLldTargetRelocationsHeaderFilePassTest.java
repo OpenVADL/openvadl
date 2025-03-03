@@ -31,77 +31,77 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
-        uint32_t RV3264I_Btype_ABSOLUTE_imm(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Btype_RELATIVE_imm(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Ftype_ABSOLUTE_sft(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Ftype_RELATIVE_sft(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Itype_ABSOLUTE_imm(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Itype_RELATIVE_imm(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Jtype_ABSOLUTE_imm(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Jtype_RELATIVE_imm(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Stype_ABSOLUTE_imm(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Stype_RELATIVE_imm(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Utype_ABSOLUTE_imm(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_Utype_RELATIVE_imm(uint32_t input) {
-           return input;
-        }
-        uint32_t RV3264I_hi(uint32_t symbol) {
+        uint32_t RV3264I_Itype_ABSOLUTE_imm_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        uint32_t RV3264I_hi(uint32_t symbol) {
+        uint32_t RV3264I_Utype_ABSOLUTE_imm_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        uint32_t RV3264I_hi(uint32_t symbol) {
+        uint32_t RV3264I_Stype_ABSOLUTE_imm_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        uint32_t RV3264I_hi(uint32_t symbol) {
+        uint32_t RV3264I_Btype_ABSOLUTE_imm_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        uint32_t RV3264I_hi(uint32_t symbol) {
+        uint32_t RV3264I_Jtype_ABSOLUTE_imm_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        uint32_t RV3264I_hi(uint32_t symbol) {
+        uint32_t RV3264I_Ftype_ABSOLUTE_sft_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        int16_t RV3264I_lo(uint32_t symbol) {
+        int16_t RV3264I_Itype_ABSOLUTE_imm_lo(uint32_t symbol) {
            return VADL_uextract(symbol, 12);
         }
-        int16_t RV3264I_lo(uint32_t symbol) {
+        int16_t RV3264I_Utype_ABSOLUTE_imm_lo(uint32_t symbol) {
            return VADL_uextract(symbol, 12);
         }
-        int16_t RV3264I_lo(uint32_t symbol) {
+        int16_t RV3264I_Stype_ABSOLUTE_imm_lo(uint32_t symbol) {
            return VADL_uextract(symbol, 12);
         }
-        int16_t RV3264I_lo(uint32_t symbol) {
+        int16_t RV3264I_Btype_ABSOLUTE_imm_lo(uint32_t symbol) {
            return VADL_uextract(symbol, 12);
         }
-        int16_t RV3264I_lo(uint32_t symbol) {
+        int16_t RV3264I_Jtype_ABSOLUTE_imm_lo(uint32_t symbol) {
            return VADL_uextract(symbol, 12);
         }
-        int16_t RV3264I_lo(uint32_t symbol) {
+        int16_t RV3264I_Ftype_ABSOLUTE_sft_lo(uint32_t symbol) {
            return VADL_uextract(symbol, 12);
+        }
+        uint32_t RV3264I_Itype_ABSOLUTE_imm_Itype_ABSOLUTE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Itype_RELATIVE_imm_Itype_RELATIVE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Utype_ABSOLUTE_imm_Utype_ABSOLUTE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Utype_RELATIVE_imm_Utype_RELATIVE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Stype_ABSOLUTE_imm_Stype_ABSOLUTE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Stype_RELATIVE_imm_Stype_RELATIVE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Btype_ABSOLUTE_imm_Btype_ABSOLUTE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Btype_RELATIVE_imm_Btype_RELATIVE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Jtype_ABSOLUTE_imm_Jtype_ABSOLUTE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Jtype_RELATIVE_imm_Jtype_RELATIVE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Ftype_ABSOLUTE_sft_Ftype_ABSOLUTE_sft(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Ftype_RELATIVE_sft_Ftype_RELATIVE_sft(uint32_t input) {
+           return input;
         }
         """.trim().lines(), output);
   }

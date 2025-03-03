@@ -18,7 +18,7 @@ import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
-import vadl.gcb.passes.relocation.model.RelocationLowerable;
+import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForImmediateExtractionPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
 import vadl.lcb.AbstractLcbTest;
@@ -70,11 +70,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
                                                  Path path) throws IOException {
     var output = (GenerateLinkerComponentsPass.Output) testSetup.passManager().getPassResults()
         .lastResultOf(GenerateLinkerComponentsPass.class);
-    var elfRelocations =
-        output.elfRelocations().stream()
-            .filter(x -> x instanceof RelocationLowerable)
-            .map(x -> (RelocationLowerable) x)
-            .toList();
+    var elfRelocations = output.elfRelocations();
     var immediateDetection =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) testSetup.passManager()
             .getPassResults()
@@ -148,7 +144,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
       Format.Field immField,
       long instructionWord,
       long updatedValue,
-      RelocationLowerable relocation,
+      HasRelocationComputationAndUpdate relocation,
       CppTypeNormalizationPass.NormalisedTypeResult
           cppNormalisedImmediateExtraction) {
     // How do we test the relocation?
@@ -165,7 +161,7 @@ public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest 
         new GcbImmediateExtractionCppFunction(immField.extractFunction());
 
     var extractionFunctionCodeGenerator =
-        new ValueRelocationFunctionCodeGenerator(normalisedImmediateExtractionFunction);
+        new ValueRelocationFunctionCodeGenerator(relocation, normalisedImmediateExtractionFunction);
     var relocationOverrideFunctionCodeGenerator =
         new UpdateFieldRelocationFunctionCodeGenerator(relocation.fieldUpdateFunction());
 

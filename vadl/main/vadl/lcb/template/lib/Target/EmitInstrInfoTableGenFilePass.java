@@ -3,6 +3,7 @@ package vadl.lcb.template.lib.Target;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,6 +68,11 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
     var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);
+    var luiRaw =
+        Objects.requireNonNull(labelledMachineInstructions.get(MachineInstructionLabel.LUI));
+    var lui = ensurePresent(luiRaw.stream().findFirst(),
+        () -> Diagnostic.error("There must be a load upper immediate instruction",
+            specification.sourceLocation()));
     var rawAddi = addi64 != null ? addi64 : Objects.requireNonNull(addi32);
 
     var addi = ensurePresent(rawAddi.stream().findFirst(),
@@ -113,18 +119,21 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
                 ))
             .toList();
 
-    return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
-        "returnAddress", abi.returnAddress().render(),
-        "addi", addi.simpleName(),
-        "stackPointerRegister", abi.stackPointer().render(),
-        "stackPointerType",
-        ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType(),
-        "immediates", renderedImmediates,
-        "instructions", renderedTableGenMachineRecords,
-        "pseudos", renderedTableGenPseudoRecords,
-        "patterns", renderedPatterns,
-        "registerFiles", specification.registerFiles().map(this::map).toList());
+    var map = new HashMap<String, Object>();
+    map.put(CommonVarNames.NAMESPACE,
+        lcbConfiguration().processorName().value().toLowerCase());
+    map.put("returnAddress", abi.returnAddress().render());
+    map.put("addi", addi.simpleName());
+    map.put("lui", lui.simpleName());
+    map.put("stackPointerRegister", abi.stackPointer().render());
+    map.put("stackPointerType",
+        ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
+    map.put("immediates", renderedImmediates);
+    map.put("instructions", renderedTableGenMachineRecords);
+    map.put("pseudos", renderedTableGenPseudoRecords);
+    map.put("patterns", renderedPatterns);
+    map.put("registerFiles", specification.registerFiles().map(this::map).toList());
+    return map;
   }
 
   private Map<String, Object> map(RegisterFile obj) {

@@ -14,6 +14,7 @@ import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.pass.PassResults;
+import vadl.utils.SourceLocation;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
@@ -124,14 +125,30 @@ public class Database {
   }
 
   /**
-   * The compiler generator has a pass which tries to assign {@link PseudoInstructionLabel} for
-   * an {@link PseudoInstruction}. This is useful when we want to find an {@link PseudoInstruction}
-   * with a certain property. However, in some cases, we need to do opposite. We have an
-   * {@link PseudoInstruction} and require the {@link PseudoInstructionLabel}. This method flips the
-   * matched {@link Map}.
+   * This is a short-cut method because finding an addition-immediate instruction is so common.
+   *
+   * @return a 64 bit addi instruction or a 32 bit addi instruction (when 64 does not exist).
+   * @throws Diagnostic when both do not exist.
    */
-  public IdentityHashMap<PseudoInstruction,
-      PseudoInstructionLabel> flipPseudoInstructions() {
-    return LlvmLoweringPass.flipPseudoInstructions(labelledPseudoInstructions);
+  public Instruction getAddImmediate() {
+    var query =
+        new Query.Builder().machineInstructionLabel(MachineInstructionLabel.ADDI_32).build();
+    var addi32 = run(query);
+
+    if (addi32.machineInstructions().isEmpty()) {
+      var query2 =
+          new Query.Builder().machineInstructionLabel(MachineInstructionLabel.ADDI_64).build();
+      var addi64 = run(query2);
+
+      if (!addi64.machineInstructions().isEmpty()) {
+        return addi64.firstMachineInstruction();
+      } else {
+        throw Diagnostic.error("There is no addition immediate instruction",
+            SourceLocation.INVALID_SOURCE_LOCATION).build();
+      }
+    } else {
+      return addi32.firstMachineInstruction();
+    }
+
   }
 }

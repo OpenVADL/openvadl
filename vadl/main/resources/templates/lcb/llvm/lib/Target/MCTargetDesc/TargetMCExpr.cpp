@@ -113,7 +113,7 @@ bool [(${namespace})]MCExpr::isInternalImmExpr() const
     switch(Kind)
     {
     [# th:each="imm : ${immediates}" ]
-      case [(${imm.variantKind.value})]:
+      case [(${imm})]:
         return true;
     [/]
       default:
@@ -151,7 +151,7 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
 {
     int64_t resultValue = Value;
 
-    [# th:each="bi : ${baseInfos}" ]
+    [# th:each="bi : ${mappingVariantKindsIntoBaseInfos}" ]
       if(Kind == [(${bi.variantKind.value})])
       {
         resultValue = [(${namespace})]BaseInfo::[(${bi.functionName})](resultValue);

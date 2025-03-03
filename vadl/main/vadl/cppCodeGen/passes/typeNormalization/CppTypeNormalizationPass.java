@@ -84,10 +84,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
   }
 
   /**
-   * Changes the function so that all VADL types conform to CPP types
-   * which simplifies the code generation.
-   * All the non-conforming types will be upcasted to next higher bit size. The name of the
-   * {@link GcbFieldAccessCppFunction} is taken from {@code function.identifier}.
+   * Wraps the {@code function} into a {@link GcbFieldAccessCppFunction}.
    */
   public static GcbFieldAccessCppFunction createGcbFieldAccessCppFunction(
       Function function,
@@ -100,10 +97,7 @@ public abstract class CppTypeNormalizationPass extends Pass {
   }
 
   /**
-   * Changes the function so that all VADL types conform to CPP types
-   * which simplifies the code generation.
-   * All the non-conforming types will be upcasted to next higher bit size. The name of the
-   * {@link GcbImmediateExtractionCppFunction} is taken from {@code function.identifier}.
+   * Wraps the {@code function} into a {@link GcbImmediateExtractionCppFunction}.
    */
   public static GcbImmediateExtractionCppFunction createGcbRelocationCppFunction(
       Function function) {

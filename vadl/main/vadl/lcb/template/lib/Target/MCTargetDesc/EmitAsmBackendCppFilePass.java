@@ -3,6 +3,7 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.gcb.passes.relocation.model.Fixup;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
@@ -52,7 +53,8 @@ public class EmitAsmBackendCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(
         "name", obj.name().value(),
         "kind", obj.kind(),
-        "valueRelocationName", obj.valueRelocation().functionName().lower()
+        "valueRelocationName", new ValueRelocationFunctionCodeGenerator(obj.implementedRelocation(),
+            obj.implementedRelocation().valueRelocation()).genFunctionName()
     );
   }
 }

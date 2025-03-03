@@ -26,7 +26,7 @@ public class ArchitectureTest {
         .whereLayer("Ast").mayOnlyAccessLayers("Viam")
         .whereLayer("Viam").mayOnlyAccessLayers("Ast", "CppGen")
         .whereLayer("Gcb").mayOnlyAccessLayers("Viam", "CppGen")
-        .whereLayer("CppGen").mayOnlyAccessLayers("Viam")
+        .whereLayer("CppGen").mayOnlyAccessLayers("Viam", "Gcb")
         .whereLayer("Lcb").mayOnlyAccessLayers("Gcb", "Viam", "CppGen")
         .whereLayer("Rtl").mayOnlyAccessLayers("Viam");
 

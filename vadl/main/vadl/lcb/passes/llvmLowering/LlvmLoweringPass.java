@@ -25,6 +25,7 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweri
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDivisionAndRemainderStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringIndirectJumpStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringLoadUpperImmediateStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryLoadStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringMemoryStoreStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringUnconditionalJumpsStrategyImpl;
@@ -175,6 +176,7 @@ public class LlvmLoweringPass extends Pass {
             new LlvmInstructionLoweringMemoryStoreStrategyImpl(architectureType),
             new LlvmInstructionLoweringMemoryLoadStrategyImpl(architectureType),
             new LlvmInstructionLoweringXoriAndOriStrategyImpl(architectureType),
+            new LlvmInstructionLoweringLoadUpperImmediateStrategyImpl(architectureType),
             new LlvmInstructionLoweringDefaultStrategyImpl(architectureType));
     var pseudoStrategies =
         List.of(new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies),

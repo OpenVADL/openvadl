@@ -19,7 +19,6 @@ public class GenerateRegisterClassesPassTest extends AbstractLcbTest {
     var setup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
         new PassKey(GenerateTableGenRegistersPass.class.getName()));
     var passManager = setup.passManager();
-    var spec = setup.specification();
 
     // When
     var generatedRegisterClasses =
