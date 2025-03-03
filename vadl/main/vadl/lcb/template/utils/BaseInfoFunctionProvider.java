@@ -2,13 +2,9 @@ package vadl.lcb.template.utils;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.model.CppFunctionCode;
-import vadl.cppCodeGen.model.VariantKind;
-import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
+import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;

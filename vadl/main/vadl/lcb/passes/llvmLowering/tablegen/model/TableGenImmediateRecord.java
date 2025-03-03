@@ -1,7 +1,7 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
 import java.util.Objects;
-import vadl.cppCodeGen.model.VariantKind;
+import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.lib.Target.Disassembler.EmitDisassemblerCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;

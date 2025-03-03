@@ -1,4 +1,4 @@
-package vadl.cppCodeGen.model;
+package vadl.gcb.valuetypes;
 
 import java.util.Map;
 import vadl.gcb.passes.relocation.model.UserSpecifiedRelocation;

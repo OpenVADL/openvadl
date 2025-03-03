@@ -3,25 +3,13 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generateEncodeFunctions;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import vadl.configuration.LcbConfiguration;
-import vadl.cppCodeGen.model.VariantKind;
-import vadl.error.Diagnostic;
-import vadl.gcb.passes.IdentifyFieldUsagePass;
-import vadl.gcb.passes.relocation.model.CompilerRelocation;
-import vadl.gcb.passes.relocation.model.Fixup;
-import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
-import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
-import vadl.viam.Format;
-import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
 /**

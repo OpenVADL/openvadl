@@ -2,7 +2,7 @@ package vadl.gcb.passes.relocation.model;
 
 import java.util.Map;
 import java.util.Objects;
-import vadl.cppCodeGen.model.VariantKind;
+import vadl.gcb.valuetypes.VariantKind;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Relocation;

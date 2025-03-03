@@ -2,7 +2,7 @@ package vadl.gcb.passes.relocation.model;
 
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
-import vadl.cppCodeGen.model.VariantKind;
+import vadl.gcb.valuetypes.VariantKind;
 import vadl.viam.Format;
 import vadl.viam.Relocation;
 

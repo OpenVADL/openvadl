@@ -2,7 +2,6 @@ package vadl.gcb.passes.relocation.model;
 
 import java.util.HashMap;
 import java.util.Map;
-import vadl.cppCodeGen.model.VariantKind;
 import vadl.template.Renderable;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
