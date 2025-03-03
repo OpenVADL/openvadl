@@ -1,4 +1,3 @@
-// VADL generated file
 #include "qemu/osdep.h"
 #include "cpu.h"
 #include "qemu/error-report.h"

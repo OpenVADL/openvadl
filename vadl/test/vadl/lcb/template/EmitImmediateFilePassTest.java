@@ -1,3 +1,19 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package vadl.lcb.template;
 
 import java.io.IOException;
@@ -22,6 +38,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         new EmitImmediateFilePass(getConfiguration(false));
 
     // When
+    // TODO: Turn this into a normal rendering test
     var result = template.renderToString(passManager.getPassResults(), spec);
     var trimmed = result.trim();
     var output = trimmed.lines();
@@ -29,7 +46,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
     Assertions.assertLinesMatch("""
         #ifndef LLVM_LIB_TARGET_processornamevalue_UTILS_IMMEDIATEUTILS_H
         #define LLVM_LIB_TARGET_processornamevalue_UTILS_IMMEDIATEUTILS_H
-                
+        
         #include "llvm/Support/ErrorHandling.h"
         #include "vadl-builtins.h"
         #include <cstdint>
@@ -37,27 +54,27 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         #include <vector>
         #include <stdio.h>
         #include <bitset>
-                
+        
         // "__extension__" suppresses warning
         __extension__ typedef          __int128 int128_t;
         __extension__ typedef unsigned __int128 uint128_t;
-                
+        
         template<int start, int end, std::size_t N>
         std::bitset<N> project_range(std::bitset<N> bits)
         {
             std::bitset<N> result;
             size_t result_index = 0; // Index for the new bitset
-                
+        
             // Extract bits from the range [start, end]
             for (size_t i = start; i <= end; ++i) {
               result[result_index] = bits[i];
             result_index++;
             }
-                
+        
             return result;
         }
-                
-                
+        
+        
         static int64_t RV3264I_Btype_immS_decode(uint16_t param) {
            return VADL_lsl(VADL_sextract(param, 12), 64, ((uint8_t) 0x1 ), 1);
         }
@@ -79,9 +96,9 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static uint8_t RV3264I_Rtype_shamt_decode(uint8_t param) {
            return param;
         }
-                
-                
-                
+        
+        
+        
         static uint16_t RV3264I_Btype_immS_encoding(int64_t immS) {
            return (project_range<1, 12>(std::bitset<64>(immS)) << 0).to_ulong();
         }
@@ -103,10 +120,10 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static uint8_t RV3264I_Rtype_shamt_encoding(uint8_t shamt) {
            return (project_range<0, 4>(std::bitset<5>(shamt)) << 0).to_ulong();
         }
-                
-                
-                
-                
+        
+        
+        
+        
         static bool RV3264I_Btype_immS_predicate(int64_t immS) {
            return ((bool) 0x1 );
         }
@@ -128,8 +145,8 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         static bool RV3264I_Utype_immUp_predicate(int64_t immUp) {
            return ((bool) 0x1 );
         }
-                
-                
+        
+        
         namespace
         {
             class ImmediateUtils
@@ -148,7 +165,7 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                               , IK_RV3264I_Utype_immUp_decode
                              \s
                             };
-                
+        
                 static uint64_t applyDecoding(const uint64_t value, processornamevalueImmediateKind kind)
                 {
                     switch (kind)
@@ -176,9 +193,9 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                     }
                 }
             };
-                
+        
         } // end of anonymous namespace
-                
+        
         #endif // LLVM_LIB_TARGET_processornamevalue_UTILS_IMMEDIATEUTILS_H
         """.trim().lines(), output);
   }

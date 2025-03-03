@@ -1,3 +1,19 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package vadl.lcb.template.Disassembler;
 
 import java.io.IOException;
@@ -27,23 +43,23 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
     // Then
     var resultFile = passResult.emittedFile().toFile();
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines();
+    var output = trimmed.lines().skip(4); // skip copyright notice
 
     Assertions.assertLinesMatch("""
         #include "processornamevalueDisassembler.h"
         #include <iostream>
         #include "Utils/ImmediateUtils.h"
-                
+        
         #define DEBUG_TYPE "disassembler"
-                
+        
         using namespace llvm;
-                
+        
         processornamevalueDisassembler::processornamevalueDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool isBigEndian) : MCDisassembler(STI, Ctx), IsBigEndian(isBigEndian)
         {
         }
-                
+        
         /* == Register Classes == */
-                
+        
         static const unsigned XDecoderTable[] = {
          \s
             processornamevalue::X0,
@@ -80,10 +96,10 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
             processornamevalue::X31
          \s
         };
-                
-                
+        
+        
         /* == Immediate Decoding == */
-                
+        
         DecodeStatus RV3264I_Btype_immS_decode_wrapper(MCInst &Inst, uint64_t Imm, int64_t Address, const void *Decoder)
         {
             Imm = Imm & 4095;
@@ -133,9 +149,9 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
             Inst.addOperand(MCOperand::createImm(Imm));
             return MCDisassembler::Success;
         }
-                
-                
-                
+        
+        
+        
         static DecodeStatus DecodeXRegisterClass
             ( MCInst &Inst
             , uint64_t RegNo
@@ -146,21 +162,21 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
             // check if register number is in range
             if( RegNo >= 32)
                 return MCDisassembler::Fail;
-                
+        
             // access custom generated decoder table in register info
             Register reg = XDecoderTable[RegNo];
-                
+        
             // check if decoded register is valid
             if( reg == processornamevalue::NoRegister )
                 return MCDisassembler::Fail;
-                
+        
             Inst.addOperand( MCOperand::createReg(reg) );
             return MCDisassembler::Success;
         }
-                
-                
+        
+        
         #include "processornamevalueGenDisassemblerTables.inc"
-                
+        
         DecodeStatus processornamevalueDisassembler::getInstruction(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CS) const
         {
             if (Bytes.size() < 4)
@@ -168,7 +184,7 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
                 Size = 0;
                 return MCDisassembler::Fail;
             }
-                
+        
             uint32_t Instr;
            \s
            \s
@@ -181,17 +197,17 @@ public class EmitDisassemblerCppFilePassTest extends AbstractLcbTest {
                     Instr = support::endian::read32le(Bytes.data());
                 }
            \s
-                
+        
             auto Result = decodeInstruction(DecoderTable32, MI, Instr, Address, this, STI);
             Size = 4;
             return Result;
         }
-                
+        
         static MCDisassembler *createprocessornamevalueDisassembler(const Target &T, const MCSubtargetInfo &STI, MCContext &Ctx)
         {
             return new processornamevalueDisassembler(STI, Ctx, processornamevalueBaseInfo::IsBigEndian());
         }
-                
+        
         extern "C" void LLVMInitializeprocessornamevalueDisassembler()
         {
             // Register Target Disassembler

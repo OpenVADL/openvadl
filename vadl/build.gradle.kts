@@ -1,8 +1,26 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import vadl.CocoR_gradle
+import java.util.*
+
 plugins {
+    id("vadl.CocoR")
 }
 
-group = "vadl"
-version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -55,6 +73,35 @@ tasks.withType<Checkstyle> {
     }
 }
 
+// Register the custom task with your configuration
+tasks.register<CocoR_gradle.GenerateCocoParserTask>("generateCocoParser") {
+    inputFiles.from("main/vadl/ast/vadl.ATG")
+    outputDir.set(outputDir.get().dir("vadl/ast"))
+    cocoJar.set(project.file("libs/Coco.jar"))
+}
+
+// add the generated open-vadl.properties file to the JAR package.
+tasks.processResources {
+    from(createProperties)
+}
+
+// generates an open-vadl properties file at build time.
+// this includes the version of open-vadl
+val createProperties by tasks.registering {
+    val outputDir = layout.buildDirectory.dir("generated/resources")
+    val versionFile = outputDir.map { it.file("open-vadl.properties") }
+
+    outputs.file(versionFile)
+    doLast {
+        val properties = Properties()
+        properties["version"] = project.version.toString()
+        versionFile.get().asFile.apply {
+            parentFile.mkdirs()
+            outputStream().use { properties.store(it, null) }
+        }
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
     jvmArgs("--enable-preview")
@@ -79,42 +126,4 @@ tasks.test {
         }
     }))
 
-}
-
-// Register the custom task with your configuration
-tasks.register<GenerateCocoParserTask>("generateCocoParser") {
-    inputFiles.from("main/vadl/ast/vadl.ATG")
-    outputDir.set(outputDir.get().dir("vadl/ast"))
-    cocoJar.set(project.file("libs/Coco.jar"))
-}
-
-open class GenerateCocoParserTask : DefaultTask() {
-    @InputFiles
-    val inputFiles: ConfigurableFileCollection = project.files()
-
-    @InputFile
-    val cocoJar = project.objects.fileProperty()
-
-    @OutputDirectory
-    val outputDir =
-        project.objects.directoryProperty().convention(
-            project.layout.buildDirectory.dir("generated/sources/coco/java/main"),
-        )
-
-    @TaskAction
-    fun generate() {
-        // Ensure the output directory exists
-        val outputDirFile = outputDir.get().asFile
-        if (!outputDirFile.exists()) {
-            outputDirFile.mkdirs()
-        }
-
-        inputFiles.files.forEach {
-            println("Generating from $it...")
-            project.exec {
-                commandLine("java", "-jar", cocoJar.get().asFile.absolutePath, "-o", outputDirFile.path, it)
-            }
-            println("------")
-        }
-    }
 }

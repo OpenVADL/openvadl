@@ -1,3 +1,19 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package vadl.lcb.template.include.llvm.BinaryFormat.ELFRelocs;
 
 import java.io.IOException;
@@ -28,17 +44,17 @@ public class EmitTargetElfRelocsDefFilePassTest extends AbstractLcbTest {
     // Then
     var resultFile = passResult.emittedFile().toFile();
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines();
+    var output = trimmed.lines().skip(4); // skip copyright notice;
 
     Assertions.assertLinesMatch("""
         #ifndef ELF_RELOC
         #error "ELF_RELOC must be defined"
         #endif
-                
+        
         ELF_RELOC(R_processornamevalue_NONE, 0)
         ELF_RELOC(R_processornamevalue_32, 1)
         ELF_RELOC(R_processornamevalue_64, 2)
-                
+        
         ELF_RELOC(R_RV3264I_hi_Itype_imm, 3)
         ELF_RELOC(R_RV3264I_hi_Utype_imm, 4)
         ELF_RELOC(R_RV3264I_hi_Stype_imm, 5)

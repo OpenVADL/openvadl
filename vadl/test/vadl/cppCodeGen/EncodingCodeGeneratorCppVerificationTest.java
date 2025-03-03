@@ -1,6 +1,21 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package vadl.cppCodeGen;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -143,25 +158,25 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
             #include <iostream>
             #include <bitset>
             #include <vector>
-                        
+            
             // Imported by manual copy mapping
             #include "/vadl-builtins.h"
-                        
+            
             template<int start, int end, std::size_t N>
             std::bitset<N> project_range(std::bitset<N> bits)
             {
                 std::bitset<N> result;
                 size_t result_index = 0; // Index for the new bitset
-
+            
                 // Extract bits from the range [start, end]
                 for (size_t i = start; i <= end; ++i) {
                   result[result_index] = bits[i];
                   result_index++;
                 }
-
+            
                 return result;
             }
-
+            
             template<std::size_t N, std::size_t M>
             std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
                 auto target = 0;
@@ -170,14 +185,14 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                     dest.set(j, source[i]);
                     target++;
                 }
-
+            
                 return dest;
             }
-
+            
             %s
-
+            
             %s
-
+            
             int main() {
               %s expected = %d;
               auto actual = %s(%s(expected));

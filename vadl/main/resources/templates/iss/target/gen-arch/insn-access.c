@@ -1,5 +1,3 @@
-// [(${gen_arch_upper})] generated file
-
 #include "insn-access.h"
 
 #include <stdint.h>

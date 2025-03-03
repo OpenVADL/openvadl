@@ -1,3 +1,19 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package vadl.lcb.template.Disassembler;
 
 import java.io.IOException;
@@ -27,12 +43,12 @@ public class EmitDisassemblerHeaderFilePassTest extends AbstractLcbTest {
     // Then
     var resultFile = passResult.emittedFile().toFile();
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines();
+    var output = trimmed.lines().skip(4); // skip copyright notice;
 
     Assertions.assertLinesMatch("""
         #ifndef LLVM_LIB_TARGET_processornamevalue_DISASSEMBLER_processornamevalueDISASSEMBLER_H
         #define LLVM_LIB_TARGET_processornamevalue_DISASSEMBLER_processornamevalueDISASSEMBLER_H
-                
+        
         #include "MCTargetDesc/processornamevalueMCTargetDesc.h"
         #include "TargetInfo/processornamevalueTargetInfo.h"
         #include "Utils/processornamevalueBaseInfo.h"
@@ -45,25 +61,25 @@ public class EmitDisassemblerHeaderFilePassTest extends AbstractLcbTest {
         #include "llvm/MC/MCSubtargetInfo.h"
         #include "llvm/Support/Endian.h"
         #include "llvm/MC/TargetRegistry.h"
-                
+        
         using namespace llvm;
-                
+        
         typedef MCDisassembler::DecodeStatus DecodeStatus;
-                
+        
         namespace llvm
         {
             class processornamevalueDisassembler : public MCDisassembler
             {
             public:
                 processornamevalueDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool isBigEndian);
-                
+        
                 DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address, raw_ostream &CStream) const override;
-                
+        
             protected:
                 bool IsBigEndian;
             };
         } // end llvm namespace
-                
+        
         #endif 
         """.trim().lines(), output);
   }
