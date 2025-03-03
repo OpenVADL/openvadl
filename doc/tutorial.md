@@ -123,3 +123,49 @@ The `assembly` specifies the assembly language syntax for the instruction with a
 
 By packing these three definitions into a macro, an instruction with behavior, encoding and assembly can be specified in a single line.
 This macro is invoked six times for all RISC-V instructions with immediate operands (lines 51 to 56).
+
+
+\figure{b!}
+\dot
+graph example {
+node  [shape=none];
+
+top     [ label="┳"       ];
+stats   [ label="Stats"   ];
+stat    [ label="Stat"    ];
+encs    [ label="Encs"    ];
+isadefs [ label="IsaDefs" ];
+defs    [ label="Defs"    ];
+ex      [ label="Ex"      ];
+lit     [ label="Lit"     ];
+str     [ label="Str"     ];
+val     [ label="Val"     ];
+bool    [ label="Bool"    ];
+int     [ label="Int"     ];
+bin     [ label="Bin"     ];
+callex  [ label="CallEx"  ];
+symex   [ label="SymEx"   ];
+id      [ label="Id"      ];
+binop   [ label="BinOp"   ];
+unop    [ label="UnOp"    ];
+
+top     -- stats   ;
+top     -- encs    ;
+top     -- isadefs ;
+top     -- ex      ;
+top     -- binop   ;
+top     -- unop    ;
+stats   -- stat    ;
+isadefs -- defs    ;
+ex      -- lit     ;
+lit     -- str     ;
+lit     -- val     ;
+val     -- bool    ;
+val     -- int     ;
+val     -- bin     ;
+ex      -- callex  ;
+callex  -- symex   ;
+symex   -- id      ;
+}
+\enddot
+\endfigure{type_hierarchy, Syntax Types Hierarchy in the OpenVADL macro system}
