@@ -279,6 +279,7 @@ PRODUCTIONS
   commonDefinition<out Definition def>    (. def = DUMMY_DEF; .)
   = constantDefinition<out def>
   | formatDefinition<out def>
+  | enumerationDefinition<out def>
   | usingDefinition<out def>
   | functionDefinition<out def>
   | recordDefinition<out def>
@@ -345,7 +346,6 @@ PRODUCTIONS
     registerFileDefinition<out def>
   | registerDefinition<out def>
   | aliasDefinition<out def>
-  | enumerationDefinition<out def>
   | exceptionDefinition<out def>
   | processDefinition<out def>
   | operationDefinition<out def>

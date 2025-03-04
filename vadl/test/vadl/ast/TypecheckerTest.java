@@ -650,12 +650,10 @@ public class TypecheckerTest {
   @Test
   public void enumWithTypes() {
     var prog = """
-          instruction set architecture TEST = {
-            enumeration ENUM: Bits<2> =
-            { A = 0b00 + 0b01
-            , B = 0b01
-            , C = 0b10
-            }
+          enumeration ENUM: Bits<2> =
+          { A = 0b00 + 0b01
+          , B = 0b01
+          , C = 0b10
           }
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
@@ -671,12 +669,10 @@ public class TypecheckerTest {
   @Test
   public void invalidEnumWithTypes() {
     var prog = """
-          instruction set architecture TEST = {
-            enumeration ENUM: Bits<2> =
-            { A = 0b00 + 0b01
-            , B = 0b0111111
-            , C = 0b10
-            }
+          enumeration ENUM: Bits<2> =
+          { A = 0b00 + 0b01
+          , B = 0b0111111
+          , C = 0b10
           }
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
@@ -688,12 +684,10 @@ public class TypecheckerTest {
   @Test
   public void enumWithoutTypes() {
     var prog = """
-          instruction set architecture TEST = {
-            enumeration ENUM =
-            { A = 1
-            , B = 2
-            , C = 3 + 4
-            }
+          enumeration ENUM =
+          { A = 1
+          , B = 2
+          , C = 3 + 4
           }
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
