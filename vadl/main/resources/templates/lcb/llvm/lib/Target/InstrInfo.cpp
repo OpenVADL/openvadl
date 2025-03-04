@@ -213,7 +213,7 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
     }
 
     // Quick Check to avoid a register allocation
-    if(DestReg == SrcReg && Val >= [(${additionImmLowestValue})] && Val <= [(${additionImmHighestValue})]) {
+    if(Val >= [(${additionImmLowestValue})] && Val <= [(${additionImmHighestValue})]) {
       BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImm})]))
             .addReg(DestReg, RegState::Define)
             .addReg(SrcReg)
