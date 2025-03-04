@@ -647,6 +647,64 @@ public class TypecheckerTest {
         "Program isn't typesafe");
   }
 
+  @Test
+  public void enumWithTypes() {
+    var prog = """
+          instruction set architecture TEST = {
+            enumeration ENUM: Bits<2> =
+            { A = 0b00 + 0b01
+            , B = 0b01
+            , C = 0b10
+            }
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    var enumeration = finder.findDefinition(ast, "ENUM", EnumerationDefinition.class);
+    Assertions.assertEquals(Type.bits(2), enumeration.getEntryType("A"));
+    Assertions.assertEquals(Type.bits(2), enumeration.getEntryType("B"));
+    Assertions.assertEquals(Type.bits(2), enumeration.getEntryType("C"));
+  }
+
+  @Test
+  public void invalidEnumWithTypes() {
+    var prog = """
+          instruction set architecture TEST = {
+            enumeration ENUM: Bits<2> =
+            { A = 0b00 + 0b01
+            , B = 0b0111111
+            , C = 0b10
+            }
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
+        "Program isn't typesafe");
+  }
+
+  @Test
+  public void enumWithoutTypes() {
+    var prog = """
+          instruction set architecture TEST = {
+            enumeration ENUM =
+            { A = 1
+            , B = 2
+            , C = 3 + 4
+            }
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    var enumeration = finder.findDefinition(ast, "ENUM", EnumerationDefinition.class);
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(1)), enumeration.getEntryType("A"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(2)), enumeration.getEntryType("B"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(7)), enumeration.getEntryType("C"));
+  }
 
   @Test
   public void instructionEncodingAssembly() {

@@ -2040,6 +2040,18 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     this.loc = location;
   }
 
+  Entry getEntry(String name) {
+    return entries.stream().filter(e -> e.name.name.equals(name)).findFirst().orElseThrow();
+  }
+
+  Expr getEntryValue(String name) {
+    return Objects.requireNonNull(getEntry(name).value);
+  }
+
+  Type getEntryType(String name) {
+    return Objects.requireNonNull(getEntry(name).value).type();
+  }
+
   @Override
   public Identifier identifier() {
     return (Identifier) id;
@@ -2149,6 +2161,23 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
       if (value != null) {
         value.prettyPrint(indent, builder);
       }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Entry entry = (Entry) o;
+      return name.equals(entry.name) && Objects.equals(value, entry.value);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = name.hashCode();
+      result = 31 * result + Objects.hashCode(value);
+      return result;
     }
   }
 }

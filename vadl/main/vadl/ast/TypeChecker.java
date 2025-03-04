@@ -634,26 +634,31 @@ public class TypeChecker
     }
 
 
-    ConstantValue largestValue = null;
-    ConstantValue lastVal = null;
+    int lastVal = 0;
     for (var entry : definition.entries) {
       if (entry.value != null) {
-        lastVal = constantEvaluator.eval(entry.value);
-      } else {
-        // if value is not set, we use the last value + 1.
-        // if last value is null, we default to 0.
-        // TODO: set entry value to last + 1 (instead of hardcoded zero)
-        lastVal = new ConstantValue(BigInteger.ZERO, Type.bits(2));
+        lastVal = constantEvaluator.eval(entry.value).value().intValueExact();
+        continue;
       }
 
-      if (largestValue == null ||
-          lastVal.type().asDataType().bitWidth() > largestValue.type().asDataType().bitWidth()) {
-        largestValue = lastVal;
-      }
+      // if value is not set, we use the last value + 1.
+      entry.value =
+          new IntegerLiteral(String.valueOf(lastVal), SourceLocation.INVALID_SOURCE_LOCATION);
     }
 
-    System.out.println("Largest value is " + largestValue);
-    System.out.println("Last value is " + lastVal);
+    definition.entries.forEach(e -> check(requireNonNull(e.value)));
+
+    // Insert casts when type exists
+    if (type != null) {
+      for (var entry : definition.entries) {
+        entry.value = wrapImplicitCast(requireNonNull(entry.value), type);
+        if (!entry.value.type().equals(type)) {
+          throw Diagnostic.error("Type mismatch", entry.value)
+              .description("Expected %s but got `%s`", type, entry.value.type())
+              .build();
+        }
+      }
+    }
 
     return null;
   }

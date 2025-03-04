@@ -617,14 +617,14 @@ PRODUCTIONS
     [
       SYM_EQ
       expression<out value, BIN_OPS>
-    ]
+    ]                                       (. entries.add(new EnumerationDefinition.Entry(name, value)); .)
     {
       SYM_COMMA
       identifier<out name>
       [
         SYM_EQ
         expression<out value, BIN_OPS>
-      ]
+      ]                                     (. entries.add(new EnumerationDefinition.Entry(name, value)); .)
     }
     SYM_BRACE_CLOSE                         (. def = new EnumerationDefinition(id, enumType, entries, start.join(loc())); .)
   .
