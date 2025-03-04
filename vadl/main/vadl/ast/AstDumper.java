@@ -338,9 +338,6 @@ public class AstDumper
       if (entry.value != null) {
         dumpChildren(entry.value);
       }
-      if (entry.behavior != null) {
-        dumpChildren(entry.behavior);
-      }
     }
     return null;
   }

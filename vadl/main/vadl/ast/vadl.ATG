@@ -618,10 +618,6 @@ PRODUCTIONS
       SYM_EQ
       expression<out value, BIN_OPS>
     ]
-    [
-      SYM_BIGARROW
-      callOrBinaryExpression<out behavior, false>
-    ]                                       (. entries.add(new EnumerationDefinition.Entry(name, value, behavior)); .)
     {
       SYM_COMMA
       identifier<out name>
@@ -629,10 +625,6 @@ PRODUCTIONS
         SYM_EQ
         expression<out value, BIN_OPS>
       ]
-      [
-        SYM_BIGARROW
-        callOrBinaryExpression<out behavior, false>
-      ]                                     (. entries.add(new EnumerationDefinition.Entry(name, value, behavior)); .)
     }
     SYM_BRACE_CLOSE                         (. def = new EnumerationDefinition(id, enumType, entries, start.join(loc())); .)
   .

@@ -625,29 +625,14 @@ public class TypeChecker
           .build();
     }
 
-    // check if either all or none of behavior kind
-    var result = definition.entries.stream()
-        .map(e -> e.behavior == null)
-        .distinct()
-        .count();
-    if (result == 0) {
+    // check if there are enums
+    if (definition.entries.isEmpty()) {
       throw Diagnostic.error("No enumeration entries", definition)
           .locationDescription(definition,
               "The enumeration has no entries, but at least one is required.")
           .build();
     }
-    if (result == 2) {
-      throw Diagnostic.error("Mixed enumeration entry kinds", definition)
-          .locationDescription(
-              definition,
-              "The enumeration contains entries that have a behavior and some that don't.")
-          .build();
-    }
 
-    var behaviorEnum = definition.entries.get(0).behavior != null;
-    if (behaviorEnum) {
-      throw new UnsupportedOperationException("Behaviors in enums are not yet supported.");
-    }
 
     ConstantValue largestValue = null;
     ConstantValue lastVal = null;
@@ -1732,19 +1717,19 @@ public class TypeChecker
       var target = requireNonNull(specialBinaryPattern.get(Pair.of(leftTyp, rightTyp)));
       if (!leftTyp.equals(target.left())) {
         expr.left = new CastExpr(expr.left, target.left());
-        leftTyp = requireNonNull(expr.left.type);
+        leftTyp = expr.left.type();
       } else {
         expr.right = new CastExpr(expr.right, target.right());
-        rightTyp = requireNonNull(expr.right.type);
+        rightTyp = expr.right.type();
       }
     }
 
     // Apply general implicit casting rules after specialised once.
     expr.left = wrapImplicitCast(expr.left, rightTyp);
-    leftTyp = requireNonNull(expr.left.type);
+    leftTyp = expr.left.type();
 
     expr.right = wrapImplicitCast(expr.right, leftTyp);
-    rightTyp = requireNonNull(expr.right.type);
+    rightTyp = expr.right.type();
 
     if (!leftTyp.equals(rightTyp)) {
       throw Diagnostic.error("Type Missmatch", expr)
@@ -2132,7 +2117,7 @@ public class TypeChecker
           requireNonNull(requireNonNull(registerFile.type).argTypes().get(0));
       argList.set(0, wrapImplicitCast(arg, requiredArgType));
       arg = argList.get(0);
-      var actualArgType = requireNonNull(arg.type);
+      var actualArgType = arg.type();
 
       if (!actualArgType.equals(requiredArgType)) {
         throw Diagnostic.error("Type Mismatch", arg)
@@ -2140,7 +2125,7 @@ public class TypeChecker
             .build();
       }
 
-      var typeBeforeSubCalls = requireNonNull(registerFile.type).resultType();
+      var typeBeforeSubCalls = registerFile.type().resultType();
       expr.computedTarget = registerFile;
       visitSubCall(expr, typeBeforeSubCalls);
       return null;
@@ -2165,7 +2150,7 @@ public class TypeChecker
 
       argList.set(0, wrapImplicitCast(arg, requiredArgType));
       arg = argList.get(0);
-      var actualArgType = requireNonNull(arg.type);
+      var actualArgType = arg.type();
 
       if (!actualArgType.equals(requiredArgType)) {
         throw Diagnostic.error("Type Mismatch", arg)
@@ -2173,7 +2158,7 @@ public class TypeChecker
             .build();
       }
 
-      var callType = requireNonNull(memDef.type).resultType();
+      var callType = memDef.type().resultType();
       if (expr.target instanceof SymbolExpr targetSymbol) {
         int multiplier = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
         if (!(callType instanceof BitsType callBitsType)) {
@@ -2226,7 +2211,7 @@ public class TypeChecker
     if (callTarget instanceof FunctionDefinition functionDef) {
       check(functionDef);
       verifyNoSubcall(expr, "user defined Function");
-      var funcType = requireNonNull(functionDef.type);
+      var funcType = functionDef.type();
       var expectedArgCount = funcType.argTypes().size();
       var actualArgCount = expr.flatArgs().size();
       if (expectedArgCount != actualArgCount) {
@@ -2245,7 +2230,7 @@ public class TypeChecker
           expr.argsIndices.get(i)
               .set(j, wrapImplicitCast(argNode, funcType.argTypes().get(argCount)));
           argNode = expr.argsIndices.get(i).get(j);
-          if (!requireNonNull(argNode.type).equals(funcType.argTypes().get(argCount))) {
+          if (!argNode.type().equals(funcType.argTypes().get(argCount))) {
             throw Diagnostic.error("Type Mismatch", argNode)
                 .description("Expected %s but got `%s`", funcType.argTypes(), argNode)
                 .build();
@@ -2263,7 +2248,7 @@ public class TypeChecker
     if (callTarget instanceof RelocationDefinition relocationDef) {
       check(relocationDef);
       verifyNoSubcall(expr, relocationDef);
-      var relocationType = requireNonNull(relocationDef.type);
+      var relocationType = relocationDef.type();
       var expectedArgCount = relocationType.argTypes().size();
       var actualArgCount = expr.flatArgs().size();
       if (expectedArgCount != actualArgCount) {
@@ -2282,7 +2267,7 @@ public class TypeChecker
           expr.argsIndices.get(i)
               .set(j, wrapImplicitCast(argNode, relocationType.argTypes().get(argCount)));
           argNode = expr.argsIndices.get(i).get(j);
-          if (!requireNonNull(argNode.type)
+          if (!argNode.type()
               .equals(relocationType.argTypes().get(argCount))) {
             throw Diagnostic.error("Type Mismatch", argNode)
                 .description("Expected %s but got `%s`", relocationType.argTypes(), argNode)
@@ -2301,7 +2286,7 @@ public class TypeChecker
     // identifier and later rewrite the type with the subcalls.
     if (expr.flatArgs().isEmpty() && !expr.subCalls.isEmpty()) {
       visit((Identifier) expr.target);
-      var typeBeforeSubcall = requireNonNull(((Identifier) expr.target).type);
+      var typeBeforeSubcall = ((Identifier) expr.target).type();
       expr.computedTarget = callTarget;
       visitSubCall(expr, typeBeforeSubcall);
       return null;
@@ -2376,7 +2361,7 @@ public class TypeChecker
   public Void visit(IfExpr expr) {
     check(expr.condition);
     expr.condition = wrapImplicitCast(expr.condition, Type.bool());
-    var condType = requireNonNull(expr.condition.type);
+    var condType = expr.condition.type();
     if (condType != Type.bool()) {
       throw Diagnostic.error("Type Mismatch", expr.condition)
           .description("Expected %s but got `%s`", Type.bool(), condType)
@@ -2388,9 +2373,9 @@ public class TypeChecker
 
     // Apply general implicit casting rules after specialised once.
     expr.thenExpr = wrapImplicitCast(expr.thenExpr, elseType);
-    thenType = requireNonNull(expr.thenExpr.type);
+    thenType = expr.thenExpr.type();
     expr.elseExpr = wrapImplicitCast(expr.elseExpr, thenType);
-    elseType = requireNonNull(expr.elseExpr.type);
+    elseType = expr.elseExpr.type();
 
     if (!thenType.equals(elseType)) {
       throw Diagnostic.error("Type Mismatch", expr)
@@ -2417,7 +2402,7 @@ public class TypeChecker
     var valType = check(expr.value);
 
     expr.typeLiteral.type = parseTypeLiteral(expr.typeLiteral, preferredBitWidthOf(valType));
-    var litType = requireNonNull(expr.typeLiteral.type);
+    var litType = expr.typeLiteral.type();
 
     // FIXME: For complex types add restrictions here
 
@@ -2506,7 +2491,7 @@ public class TypeChecker
   public Void visit(IfStatement statement) {
     check(statement.condition);
     statement.condition = wrapImplicitCast(statement.condition, Type.bool());
-    var condType = requireNonNull(statement.condition.type);
+    var condType = statement.condition.type();
     if (condType != Type.bool()) {
       throw Diagnostic.error("Type Mismatch", statement.condition)
           .description("Expected `%s` but got `%s`", Type.bool(), condType)
@@ -2525,8 +2510,8 @@ public class TypeChecker
     check(statement.target);
     check(statement.valueExpression);
 
-    var targetType = requireNonNull(statement.target.type);
-    var valueType = requireNonNull(statement.valueExpression.type);
+    var targetType = statement.target.type();
+    var valueType = statement.valueExpression.type();
 
     if (!targetType.equals(valueType) && canImplicitCast(valueType, targetType)) {
       statement.valueExpression =
@@ -2617,7 +2602,7 @@ public class TypeChecker
             new InstructionCallStatement.NamedArgument(arg.name(),
                 wrapImplicitCast(arg.value(), targetType)));
         arg = statement.namedArguments.get(i);
-        var actualType = requireNonNull(arg.value().type);
+        var actualType = arg.value().type();
 
         if (!targetType.equals(actualType)) {
           throw Diagnostic.error("Type Mismatch", arg.location())
@@ -2649,13 +2634,13 @@ public class TypeChecker
 
       // Implicit cast and check the arguments
       for (var i = 0; i < statement.unnamedArguments.size(); i++) {
-        var targetType = requireNonNull(pseudoDef.params.get(i).typeLiteral.type);
+        var targetType = pseudoDef.params.get(i).typeLiteral.type();
         var arg = statement.unnamedArguments.get(i);
         check(arg);
         statement.unnamedArguments.set(i,
             wrapImplicitCast(arg, targetType));
         arg = statement.unnamedArguments.get(i);
-        var actualType = requireNonNull(statement.unnamedArguments.get(i).type);
+        var actualType = statement.unnamedArguments.get(i).type();
 
         if (!targetType.equals(actualType)) {
           throw Diagnostic.error("Type Mismatch", arg.location())

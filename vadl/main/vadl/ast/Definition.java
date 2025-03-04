@@ -1033,7 +1033,7 @@ class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode
   }
 
   @Override
-  public Type type() {
+  public ConcreteRelationType type() {
     return Objects.requireNonNull(type);
   }
 }
@@ -1118,7 +1118,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 }
 
-class RegisterFileDefinition extends Definition implements IdentifiableNode {
+class RegisterFileDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
   RelationTypeLiteral typeLiteral;
   SourceLocation loc;
@@ -1199,6 +1199,11 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + identifier.hashCode();
     result = 31 * result + typeLiteral.hashCode();
     return result;
+  }
+
+  @Override
+  public ConcreteRelationType type() {
+    return Objects.requireNonNull(type);
   }
 
   record RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
@@ -1395,7 +1400,7 @@ class PseudoInstructionDefinition extends Definition implements IdentifiableNode
   }
 }
 
-class RelocationDefinition extends Definition implements IdentifiableNode {
+class RelocationDefinition extends Definition implements IdentifiableNode, TypedNode {
   Identifier identifier;
   List<Parameter> params;
   TypeLiteral resultTypeLiteral;
@@ -1484,6 +1489,11 @@ class RelocationDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + Objects.hashCode(resultTypeLiteral);
     result = 31 * result + Objects.hashCode(expr);
     return result;
+  }
+
+  @Override
+  public ConcreteRelationType type() {
+    return Objects.requireNonNull(type);
   }
 }
 
@@ -1816,7 +1826,7 @@ class UsingDefinition extends Definition implements IdentifiableNode {
   }
 }
 
-class FunctionDefinition extends Definition implements IdentifiableNode {
+class FunctionDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder name;
   List<Parameter> params;
   TypeLiteral retType;
@@ -1902,6 +1912,11 @@ class FunctionDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + Objects.hashCode(retType);
     result = 31 * result + Objects.hashCode(expr);
     return result;
+  }
+
+  @Override
+  public ConcreteRelationType type() {
+    return Objects.requireNonNull(type);
   }
 }
 
@@ -2061,10 +2076,6 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
         builder.append(" = ");
         entry.value.prettyPrint(0, builder);
       }
-      if (entry.behavior != null) {
-        builder.append(" => ");
-        entry.behavior.prettyPrint(0, builder);
-      }
       builder.append("\n");
     }
     builder.append(prettyIndentString(indent + 1)).append("}\n");
@@ -2110,14 +2121,11 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     Identifier name;
     @Nullable
     Expr value;
-    @Nullable
-    Expr behavior;
 
 
-    public Entry(Identifier name, @Nullable Expr value, @Nullable Expr behavior) {
+    public Entry(Identifier name, @Nullable Expr value) {
       this.name = name;
       this.value = value;
-      this.behavior = behavior;
     }
 
     @Override
@@ -2125,9 +2133,6 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
       var loc = name.sourceLocation();
       if (value != null) {
         loc = loc.join(value.sourceLocation());
-      }
-      if (behavior != null) {
-        loc = loc.join(behavior.sourceLocation());
       }
       return loc;
     }
@@ -2143,8 +2148,6 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
       builder.append(" = ");
       if (value != null) {
         value.prettyPrint(indent, builder);
-      } else if (behavior != null) {
-        behavior.prettyPrint(indent, builder);
       }
     }
   }

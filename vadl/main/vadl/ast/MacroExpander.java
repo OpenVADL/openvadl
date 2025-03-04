@@ -557,8 +557,7 @@ class MacroExpander
     var id = resolvePlaceholderOrIdentifier(definition.id);
     var entries = new ArrayList<>(definition.entries);
     entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name,
-        entry.value == null ? null : expandExpr(entry.value),
-        entry.behavior == null ? null : expandExpr(entry.behavior)));
+        entry.value == null ? null : expandExpr(entry.value)));
     return new EnumerationDefinition(id, definition.enumType, entries, copyLoc(definition.loc))
         .withAnnotations(definition.annotations);
   }

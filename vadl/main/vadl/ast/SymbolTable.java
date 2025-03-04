@@ -490,9 +490,6 @@ class SymbolTable {
           if (entry.value != null) {
             collectSymbols(symbols, entry.value);
           }
-          if (entry.behavior != null) {
-            collectSymbols(symbols, entry.behavior);
-          }
         }
       } else if (definition instanceof ExceptionDefinition exception) {
         symbols.defineSymbol(exception);
@@ -952,9 +949,6 @@ class SymbolTable {
         for (EnumerationDefinition.Entry entry : enumeration.entries) {
           if (entry.value != null) {
             resolveSymbols(entry.value);
-          }
-          if (entry.behavior != null) {
-            resolveSymbols(entry.behavior);
           }
         }
       } else if (definition instanceof ExceptionDefinition exception) {

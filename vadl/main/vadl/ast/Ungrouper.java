@@ -335,8 +335,7 @@ public class Ungrouper
   public Definition visit(EnumerationDefinition definition) {
     ungroupAnnotations(definition);
     definition.entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name,
-        entry.value == null ? null : entry.value.accept(this),
-        entry.behavior == null ? null : entry.behavior.accept(this)));
+        entry.value == null ? null : entry.value.accept(this)));
     return definition;
   }
 
