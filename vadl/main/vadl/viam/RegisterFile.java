@@ -68,6 +68,10 @@ public class RegisterFile extends Resource {
     return resultType;
   }
 
+  public int numberOfRegisters() {
+    return (int) Math.pow(2, addressType.bitWidth());
+  }
+
   @Override
   public ConcreteRelationType relationType() {
     return Type.concreteRelation(addressType, resultType);

@@ -7,6 +7,7 @@ gen_arch_ss.add(files(
                'translate.c',
                'cpu.c',
                'helper.c',
+               'gdbstub.c',
 #              'disas.c'
 ))
 

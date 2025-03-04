@@ -29,6 +29,8 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.AccessFunctionCodeGenerator;
 import vadl.types.BitsType;
 import vadl.types.DataType;
+import vadl.utils.codegen.CodeGeneratorAppendable;
+import vadl.utils.codegen.StringBuilderAppendable;
 import vadl.vdt.impl.theiling.InnerNodeImpl;
 import vadl.vdt.impl.theiling.LeafNodeImpl;
 import vadl.vdt.model.InnerNode;
@@ -37,8 +39,6 @@ import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
-import vadl.vdt.utils.codegen.CodeGeneratorAppendable;
-import vadl.vdt.utils.codegen.StringBuilderAppendable;
 import vadl.viam.Format;
 
 /**
