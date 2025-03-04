@@ -41,6 +41,7 @@ import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.BigIntUtils;
 import vadl.utils.StreamUtils;
+import vadl.viam.graph.dependency.ConstantNode;
 
 /**
  * The Constant class represents some kind of constant with a specific type.
@@ -69,6 +70,10 @@ public abstract class Constant {
   public Constant.Tuple asTuple() {
     ensure(this instanceof Tuple, "Constant is not a tuple");
     return (Constant.Tuple) this;
+  }
+
+  public ConstantNode toNode() {
+    return new ConstantNode(this);
   }
 
   @Override

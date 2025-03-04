@@ -133,6 +133,13 @@ public class BitsType extends DataType {
     }
   }
 
+  public static int minimalRequiredWidthFor(long value) {
+    if (value == 0) {
+      return 1;
+    }
+    return Long.SIZE - Long.numberOfLeadingZeros(value);
+  }
+
   @Override
   public int hashCode() {
     return super.hashCode();

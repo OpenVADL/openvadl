@@ -53,6 +53,13 @@ public class UIntType extends BitsType {
     return Type.unsignedInt(bitWidth);
   }
 
+  public static UIntType minimalTypeFor(long value) {
+    if (value < 0) {
+      throw new IllegalArgumentException("value must be >= 0");
+    }
+    return Type.unsignedInt(minimalRequiredWidthFor(value));
+  }
+
   @Override
   public int hashCode() {
     return super.hashCode();

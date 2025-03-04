@@ -23,6 +23,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Register;
@@ -34,6 +35,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 
@@ -255,7 +257,25 @@ public class GraphUtils {
     return new WriteRegNode(register, val, staticCounterAddress);
   }
 
-  /// / CONSTANT VALUE CONSTRUCTION ////
+  public static ExpressionNode testSignBit(ExpressionNode value) {
+    // 1001 -> msb = 3
+    var msb = value.type().asDataType().bitWidth();
+    // shift msb right
+    var shift = BuiltInCall.of(
+        BuiltInTable.LSR,
+        value,
+        Constant.Value.of(msb, UIntType.minimalTypeFor(msb))
+            .toNode()
+    );
+    return new TruncateNode(shift, Type.bool());
+  }
+
+  public static ExpressionNode castBool(ExpressionNode value) {
+    return binaryOp(BuiltInTable.EQU, Type.bool(), value,
+        Constant.Value.of(0, value.type().asDataType()).toNode());
+  }
+
+  /// CONSTANT VALUE CONSTRUCTION ///
 
   public static Constant.Value intS(long val, int width) {
     return Constant.Value.of(val, Type.signedInt(width));
