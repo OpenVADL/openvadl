@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;

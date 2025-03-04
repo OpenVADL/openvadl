@@ -26,9 +26,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
@@ -73,7 +74,7 @@ public class LlvmInstructionLoweringDivisionAndRemainderStrategyImpl
   }
 
   @Override
-  public Optional<LlvmLoweringRecord> lower(
+  public Optional<LlvmLoweringRecord> lowerInstruction(
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
@@ -85,25 +86,21 @@ public class LlvmInstructionLoweringDivisionAndRemainderStrategyImpl
       visitReplacementHooks(visitor, endNode);
     }
 
-    var outputOperands = getTableGenOutputOperands(copy);
-    var inputOperands = getInputs(outputOperands, copy);
-
-    var registerUses = getRegisterUses(copy, inputOperands, outputOperands);
-    var registerDefs = getRegisterDefs(copy, inputOperands, outputOperands);
-    var flags = getFlags(copy);
+    var info = lowerBaseInfo(copy);
+    var inputOperands = getInputs(info.outputs(), copy);
 
     copy.deinitializeNodes();
 
     var patterns = generatePatterns(instruction,
         inputOperands,
         copy.getNodes(WriteResourceNode.class).toList());
-    return Optional.of(new LlvmLoweringRecord(copy,
-        inputOperands,
-        outputOperands,
-        flags,
-        patterns,
-        registerUses,
-        registerDefs
+    return Optional.of(new LlvmLoweringRecord(
+        new LlvmLoweringPass.BaseInstructionInfo(inputOperands,
+            info.outputs(),
+            info.flags(),
+            info.uses(),
+            info.defs()),
+        patterns
     ));
   }
 

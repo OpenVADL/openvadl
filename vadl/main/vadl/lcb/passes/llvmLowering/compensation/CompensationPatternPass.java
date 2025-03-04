@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.llvmLowering.compensation.strategies.LlvmCompensationPatternStrategy;
-import vadl.lcb.passes.llvmLowering.compensation.strategies.LlvmCompensationRotateLeftPatternStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -37,7 +36,7 @@ import vadl.viam.Specification;
  */
 public class CompensationPatternPass extends Pass {
   private final List<LlvmCompensationPatternStrategy> patternStrategies =
-      List.of(new LlvmCompensationRotateLeftPatternStrategy());
+      List.of();
 
   public CompensationPatternPass(GeneralConfiguration configuration) {
     super(configuration);

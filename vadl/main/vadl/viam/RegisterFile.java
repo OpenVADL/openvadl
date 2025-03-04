@@ -111,7 +111,7 @@ public class RegisterFile extends Resource {
    * Generate the name from this register file with an {@code index}.
    */
   public String generateName(Constant.Value index) {
-    return identifier.simpleName() + index.intValue();
+    return generateName(index.intValue());
   }
 
   @Override

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.isaMatching;
+package vadl.gcb.passes;
 
 import static vadl.types.BuiltInTable.ADD;
 import static vadl.types.BuiltInTable.ADDS;
@@ -68,8 +68,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
-import vadl.configuration.LcbConfiguration;
+import vadl.configuration.GcbConfiguration;
 import vadl.error.Diagnostic;
+import vadl.lcb.passes.isaMatching.IsaMatchingUtils;
+import vadl.lcb.passes.isaMatching.MachineInstructionCtx;
+import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -119,7 +122,7 @@ import vadl.viam.passes.functionInliner.UninlinedGraph;
  * easier to search for these instructions.
  */
 public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchingUtils {
-  public IsaMachineInstructionMatchingPass(LcbConfiguration configuration) {
+  public IsaMachineInstructionMatchingPass(GcbConfiguration configuration) {
     super(configuration);
   }
 
@@ -129,7 +132,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   /**
-   * Result of the pass.
+   * Output of the pass.
    */
   public record Result(Map<MachineInstructionLabel, List<Instruction>> labels,
                        Map<Instruction, MachineInstructionLabel> reverse) {
@@ -153,7 +156,6 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       return new Result(Collections.emptyMap(), Collections.emptyMap());
     }
 
-    // TODO: @kper : Support RegisterFileCounters
     ensure(isa.pc() instanceof Counter.RegisterCounter,
         () -> Diagnostic.error("Only counter to single registers are supported.",
             Objects.requireNonNull(isa.pc()).sourceLocation()));

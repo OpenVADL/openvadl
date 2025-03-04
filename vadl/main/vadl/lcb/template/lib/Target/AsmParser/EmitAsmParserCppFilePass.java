@@ -74,18 +74,20 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
         (insn, llvmRecord) -> buildInstructionOperandMap(insn.simpleName(), llvmRecord, result)
     );
 
+    /*
     output.pseudoInstructionRecords().forEach(
         (pseudo, llvmRecord) -> buildInstructionOperandMap(pseudo.simpleName(), llvmRecord, result)
     );
+     */
 
     return result;
   }
 
   private void buildInstructionOperandMap(String insnName, LlvmLoweringRecord llvmRecord,
                                           List<Map<String, String>> results) {
-    var inputs = llvmRecord.inputs().stream()
+    var inputs = llvmRecord.info().inputs().stream()
         .map(i -> ((TableGenParameterTypeAndName) i.parameter()).name());
-    var outputs = llvmRecord.outputs().stream()
+    var outputs = llvmRecord.info().outputs().stream()
         .map(p -> ((TableGenParameterTypeAndName) p.parameter()).name());
 
     var operands = Stream.concat(outputs, inputs).map(op -> '"' + op + '"').toList();

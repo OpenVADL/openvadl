@@ -20,8 +20,6 @@ import java.io.IOException;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.gcb.passes.pseudo.AbstractPseudoInstructionArgumentReplacementPass;
-import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbConstantNodeReplacement;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -49,33 +47,18 @@ public class PseudoConstantUpliftingPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
+    /*
     var pseudoInstructions = viam.isa()
         .map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .toList();
     var appliedArguments =
-        (AbstractPseudoInstructionArgumentReplacementPass.Output) passResults.lastResultOf(
+        (PseudoInstructionArgumentReplacementPass.Output) passResults.lastResultOf(
             PseudoInstructionArgumentReplacementPass.class);
 
     for (var pseudoInstruction : pseudoInstructions) {
       var behaviorWithAppliedArguments =
           appliedArguments.appliedGraph().get(pseudoInstruction);
       if (behaviorWithAppliedArguments != null) {
-        /*
-              if (constantNode.type() instanceof BitsType bitsType) {
-                if (bitsType.bitWidth() <= 32) {
-                  var ty = bitsType.withBitWidth(32);
-                  constantNode.setType(ty);
-                  constantNode.constant().setType(ty);
-                } else if (bitsType.bitWidth() <= 64) {
-                  var ty = bitsType.withBitWidth(64);
-                  constantNode.setType(ty);
-                  constantNode.constant().setType(ty);
-                } else {
-                  throw Diagnostic.error("Not supporting constants larger than 64",
-                      constantNode.sourceLocation()).build();
-                }
-              }
-               */
         behaviorWithAppliedArguments
             .getNodes(InstrCallNode.class)
             .map(instrCallNode -> instrCallNode.target().behavior())
@@ -83,6 +66,7 @@ public class PseudoConstantUpliftingPass extends Pass {
             .forEach(LcbConstantNodeReplacement::updateConstant);
       }
     }
+     */
 
     return null;
   }

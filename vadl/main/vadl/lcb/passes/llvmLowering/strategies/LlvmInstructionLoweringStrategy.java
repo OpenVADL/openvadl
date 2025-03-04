@@ -32,12 +32,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
@@ -125,9 +123,6 @@ import vadl.viam.graph.dependency.WriteResourceNode;
  * Defines how a {@link Instruction} will be lowered to {@link TableGenInstruction}.
  */
 public abstract class LlvmInstructionLoweringStrategy {
-  private static final Logger logger = LoggerFactory.getLogger(
-      LlvmInstructionLoweringStrategy.class);
-
   protected final ValueType architectureType;
 
   public LlvmInstructionLoweringStrategy(ValueType architectureType) {
@@ -269,46 +264,28 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Generate a lowering result for the given {@link Graph} for machine instructions.
-   * If it is not lowerable then return {@link Optional#empty()}.
-   *
-   * @param labelledMachineInstructions the instructions which have known semantics.
-   * @param instruction                 is the machine instruction which should be lowered.
-   * @param unmodifiedBehavior          is the uninlined graph in the case of {@link Instruction}.
+   * Lowers basic instruction information without patterns.
    */
-  public Optional<LlvmLoweringRecord> lower(
-      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
-      Instruction instruction,
-      Graph unmodifiedBehavior,
-      Abi abi) {
-    return lowerInstruction(labelledMachineInstructions,
-        instruction,
-        unmodifiedBehavior,
-        abi);
-  }
+  public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(Graph behavior) {
+    var outputOperands = getTableGenOutputOperands(behavior);
+    var inputOperands = getTableGenInputOperands(outputOperands, behavior);
 
-  /**
-   * Lower a pseudo instruction.
-   */
-  public Optional<LlvmLoweringRecord> lower(
-      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
-      PseudoInstruction pseudoInstruction,
-      Instruction instruction,
-      Graph unmodifiedBehavior,
-      Abi abi) {
-    logger.atDebug().log("Lowering {} with {}", instruction.identifier.simpleName(),
-        pseudoInstruction.identifier.simpleName());
-    return lowerInstruction(labelledMachineInstructions,
-        instruction,
-        unmodifiedBehavior,
-        abi);
+    var registerUses = getRegisterUses(behavior, inputOperands, outputOperands);
+    var registerDefs = getRegisterDefs(behavior, inputOperands, outputOperands);
+    var flags = getFlags(behavior);
+
+    return new LlvmLoweringPass.BaseInstructionInfo(inputOperands,
+        outputOperands,
+        flags,
+        registerUses,
+        registerDefs);
   }
 
   /**
    * Generate a lowering result for the given {@link Graph} for pseudo instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
    */
-  protected Optional<LlvmLoweringRecord> lowerInstruction(
+  public Optional<LlvmLoweringRecord> lowerInstruction(
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
@@ -346,44 +323,31 @@ public abstract class LlvmInstructionLoweringStrategy {
       isLowerable = false;
     }
 
-    var outputOperands = getTableGenOutputOperands(copy);
-    var inputOperands = getTableGenInputOperands(outputOperands, copy);
-
-    var registerUses = getRegisterUses(copy, inputOperands, outputOperands);
-    var registerDefs = getRegisterDefs(copy, inputOperands, outputOperands);
-    var flags = getFlags(copy);
+    var info = lowerBaseInfo(copy);
 
     copy.deinitializeNodes();
 
     if (isLowerable) {
       var patterns = generatePatterns(instruction,
-          inputOperands,
+          info.inputs(),
           copy.getNodes(WriteResourceNode.class).toList());
       var alternativePatterns =
           generatePatternVariations(
               instruction,
               labelledMachineInstructions,
               copy,
-              inputOperands,
-              outputOperands,
+              info.inputs(),
+              info.outputs(),
               patterns,
               abi);
-      return Optional.of(new LlvmLoweringRecord(copy,
-          inputOperands,
-          outputOperands,
-          flags,
-          Stream.concat(patterns.stream(), alternativePatterns.stream()).toList(),
-          registerUses,
-          registerDefs
+      return Optional.of(new LlvmLoweringRecord(
+          info,
+          Stream.concat(patterns.stream(), alternativePatterns.stream()).toList()
       ));
     } else {
-      return Optional.of(new LlvmLoweringRecord(copy,
-          inputOperands,
-          outputOperands,
-          flags,
-          Collections.emptyList(),
-          registerUses,
-          registerDefs
+      return Optional.of(new LlvmLoweringRecord(
+          info,
+          Collections.emptyList()
       ));
     }
   }

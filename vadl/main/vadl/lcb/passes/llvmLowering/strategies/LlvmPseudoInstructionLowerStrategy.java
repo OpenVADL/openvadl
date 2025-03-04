@@ -20,7 +20,6 @@ import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -29,8 +28,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
@@ -38,6 +37,7 @@ import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
@@ -46,7 +46,6 @@ import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
@@ -65,7 +64,7 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
    * We use the strategies from {@link LlvmLoweringPass} for the individual
    * {@link Instruction} from {@link InstrCallNode} in {@link PseudoInstruction}.
    */
-  private final List<LlvmInstructionLoweringStrategy> strategies;
+  protected final List<LlvmInstructionLoweringStrategy> strategies;
 
   /**
    * Constructor.
@@ -93,8 +92,9 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
   /**
    * Lower a {@link PseudoInstruction} into a {@link LlvmLoweringPseudoRecord}.
    */
-  public Optional<LlvmLoweringPseudoRecord> lower(
+  public Optional<LlvmLoweringPseudoRecord> lowerInstruction(
       Abi abi,
+      List<TableGenInstAlias> instAliases,
       PseudoInstruction pseudo,
       IsaMachineInstructionMatchingPass.Result supportedInstructions) {
     var patterns = new ArrayList<TableGenPattern>();
@@ -117,14 +117,10 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
                   + "machine instructions",
               pseudo.sourceLocation()).build());
     }
-    // This variable keeps track of the graph which has the applied arguments.
-    // Key: Instruction
-    // Value: Graph with applied arguments
-    var appliedInstructionBehavior = new IdentityHashMap<Instruction, Graph>();
+
 
     for (var callNode : pseudo.behavior().getNodes(InstrCallNode.class).toList()) {
       var instructionBehavior = callNode.target().behavior().copy();
-      appliedInstructionBehavior.put(callNode.target(), instructionBehavior);
 
       /*
       Example:
@@ -224,32 +220,18 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
           continue;
         }
 
-        var tableGenRecord = strategy.lower(supportedInstructions,
-            pseudo,
-            callNode.target(),
-            instructionBehavior,
-            abi);
+        var baseInstructionInfo = strategy.lowerBaseInfo(instructionBehavior);
 
-        if (tableGenRecord.isPresent()) {
-          var record = tableGenRecord.get();
-
-          updatePatterns(pseudo, record);
-          final var patternVariations =
-              generatePatternVariations(pseudo, record, appliedInstructionBehavior);
-
-          var flags = record.flags();
-          isTerminator |= flags.isTerminator();
-          isReturn |= flags.isReturn();
-          mayLoad |= flags.mayLoad();
-          mayStore |= flags.mayStore();
-          isBranch |= flags.isBranch();
-          defs.addAll(record.defs());
-          uses.addAll(record.uses());
-          inputOperands.addAll(record.inputs());
-          outputOperands.addAll(record.outputs());
-          patterns.addAll(record.patterns());
-          patterns.addAll(patternVariations);
-        }
+        var flags = baseInstructionInfo.flags();
+        isTerminator |= flags.isTerminator();
+        isReturn |= flags.isReturn();
+        mayLoad |= flags.mayLoad();
+        mayStore |= flags.mayStore();
+        isBranch |= flags.isBranch();
+        defs.addAll(baseInstructionInfo.defs());
+        uses.addAll(baseInstructionInfo.uses());
+        inputOperands.addAll(baseInstructionInfo.inputs());
+        outputOperands.addAll(baseInstructionInfo.outputs());
 
         break;
       }
@@ -267,14 +249,18 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
         false,
         false);
 
-    return Optional.of(new LlvmLoweringPseudoRecord(pseudo.behavior(),
+    var info = new LlvmLoweringPass.BaseInstructionInfo(
         dedup(inputOperands),
         dedup(outputOperands),
         flags,
-        patterns,
         dedup(uses),
-        dedup(defs),
-        appliedInstructionBehavior
+        dedup(defs)
+    );
+
+    return Optional.of(new LlvmLoweringPseudoRecord(
+        info,
+        patterns,
+        instAliases
     ));
   }
 
@@ -285,8 +271,7 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
 
   protected List<TableGenPattern> generatePatternVariations(
       PseudoInstruction pseudo,
-      LlvmLoweringRecord record,
-      IdentityHashMap<Instruction, Graph> appliedInstructionBehavior) {
+      LlvmLoweringRecord record) {
     return Collections.emptyList();
   }
 

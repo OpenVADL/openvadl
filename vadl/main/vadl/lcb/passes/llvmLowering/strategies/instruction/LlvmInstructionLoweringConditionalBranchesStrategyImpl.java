@@ -35,8 +35,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
@@ -84,7 +84,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   @Override
-  public Optional<LlvmLoweringRecord> lower(
+  public Optional<LlvmLoweringRecord> lowerInstruction(
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph uninlinedBehavior,
@@ -106,19 +106,16 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       Graph visitedGraph,
       Abi abi) {
-
-    var outputOperands = getTableGenOutputOperands(visitedGraph);
-    var inputOperands = getTableGenInputOperands(outputOperands, visitedGraph);
-    var flags = getFlags(visitedGraph);
+    var info = lowerBaseInfo(visitedGraph);
 
     var writes = visitedGraph.getNodes(WriteResourceNode.class).toList();
-    var patterns = generatePatterns(instruction, inputOperands, writes);
+    var patterns = generatePatterns(instruction, info.inputs(), writes);
     var alternatives =
         generatePatternVariations(instruction,
             supportedInstructions,
             visitedGraph,
-            inputOperands,
-            outputOperands,
+            info.inputs(),
+            info.outputs(),
             patterns,
             abi);
 
@@ -126,17 +123,9 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         .map(LoweringStrategyUtils::replaceBasicBlockByLabelImmediateInMachineInstruction)
         .toList();
 
-    var uses = getRegisterUses(visitedGraph, inputOperands, outputOperands);
-    var defs = getRegisterDefs(visitedGraph, inputOperands, outputOperands);
-
     return new LlvmLoweringRecord(
-        visitedGraph,
-        inputOperands,
-        outputOperands,
-        flags,
-        allPatterns,
-        uses,
-        defs
+        info,
+        allPatterns
     );
   }
 
@@ -184,7 +173,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     var register = (ReadRegFileNode) brcc.first();
     var llvmRegisterNode =
         new LlvmReadRegFileNode(register.registerFile(),
-        register.address().copy(),
+            register.address().copy(),
             register.type(), register.staticCounterAccess());
     var registerFile = register.registerFile();
     var zeroRegister = getZeroRegister(registerFile);

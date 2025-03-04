@@ -60,6 +60,7 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
     setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
     setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+    setOperationAction({ISD::ROTL, ISD::ROTR}, MVT::[(${stackPointerType})], Expand);
 
     for (auto N : {ISD::EXTLOAD, ISD::SEXTLOAD, ISD::ZEXTLOAD}) {
         setLoadExtAction(N, MVT::[(${stackPointerType})], MVT::i1, Promote);

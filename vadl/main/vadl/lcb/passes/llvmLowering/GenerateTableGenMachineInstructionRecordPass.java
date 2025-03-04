@@ -69,11 +69,11 @@ public class GenerateTableGenMachineInstructionRecordPass extends Pass {
                   instruction.identifier.simpleName(),
                   lcbConfiguration().processorName().value(),
                   instruction,
-                  result.flags(),
-                  result.inputs(),
-                  result.outputs(),
-                  result.uses(),
-                  result.defs(),
+                  result.info().flags(),
+                  result.info().inputs(),
+                  result.info().outputs(),
+                  result.info().uses(),
+                  result.info().defs(),
                   result.patterns()
               );
             })

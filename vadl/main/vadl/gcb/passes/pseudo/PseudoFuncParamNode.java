@@ -50,7 +50,6 @@ public class PseudoFuncParamNode extends FuncParamNode {
     this.index = index;
   }
 
-
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);

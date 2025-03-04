@@ -31,12 +31,13 @@ import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDe
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
+import vadl.gcb.passes.GenerateFieldAccessFunctionsFromFieldsPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
-import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
 import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
@@ -65,7 +66,6 @@ import vadl.iss.template.target.EmitIssGdbStubPass;
 import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
 import vadl.lcb.passes.DummyAnnotationPass;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
@@ -74,7 +74,6 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
-import vadl.lcb.passes.pseudo.PseudoConstantUpliftingPass;
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
@@ -172,6 +171,8 @@ public class PassOrders {
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
+    order.add(new IsaMachineInstructionMatchingPass(gcbConfiguration));
+    order.add(new GenerateFieldAccessFunctionsFromFieldsPass(gcbConfiguration));
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
@@ -180,7 +181,6 @@ public class PassOrders {
     order.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
     order.add(new AssemblyReplacementNodePass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
-    order.add(new PseudoInstructionArgumentReplacementPass(gcbConfiguration));
 
     addHtmlDump(order, gcbConfiguration, "gcbProcessing",
         "Now the gcb produced all necessary encoding function for field accesses "
@@ -199,10 +199,9 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
     order.add(new DummyAnnotationPass(configuration));
 
-    order.add(new PseudoConstantUpliftingPass(configuration));
+    // order.add(new PseudoConstantUpliftingPass(configuration));
     order.add(new PseudoExpansionFunctionGeneratorPass(configuration));
 
-    order.add(new IsaMachineInstructionMatchingPass(configuration));
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new IsaRelocationMatchingPass(configuration));
     order.add(new GenerateTableGenRegistersPass(configuration));

@@ -16,12 +16,15 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 
@@ -46,5 +49,16 @@ public class LlvmPseudoInstructionLoweringDefaultStrategyImpl
   public boolean isApplicable(@Nullable PseudoInstructionLabel pseudoInstructionLabel) {
     // This is strategy should be always applicable.
     return true;
+  }
+
+  @Override
+  protected List<TableGenPattern> generatePatternVariations(PseudoInstruction pseudo,
+                                                            LlvmLoweringRecord record) {
+    return Collections.emptyList();
+  }
+
+  @Override
+  protected void updatePatterns(PseudoInstruction pseudo, LlvmLoweringRecord record) {
+
   }
 }

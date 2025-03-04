@@ -235,6 +235,10 @@ def : Pat<([(${namespace})]_add_lo X:$hi, tconstpool:$lo), ([(${addi})] X:$hi, t
 [(${pseudo})]
 [/]
 
+[# th:each="instAlias : ${instAliases}" ]
+[(${instAlias})]
+[/]
+
 [# th:each="pattern : ${patterns}" ]
 [(${pattern})]
 [/]

@@ -25,7 +25,7 @@ import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionCtx;
 import vadl.lcb.passes.isaMatching.PseudoInstructionCtx;
@@ -114,10 +114,10 @@ public class LcbEnricherCollection {
 
           if (result != null) {
             var renderedInputOperands =
-                result.inputs().stream().map(TableGenInstructionOperand::render).collect(
+                result.info().inputs().stream().map(TableGenInstructionOperand::render).collect(
                     Collectors.joining(", "));
             var renderedOutputOperands =
-                result.outputs().stream().map(TableGenInstructionOperand::render).collect(
+                result.info().outputs().stream().map(TableGenInstructionOperand::render).collect(
                     Collectors.joining(", "));
             definitionEntity.addInfo(InfoUtils.createCodeBlockExpandable(
                 "TableGen Input Operands",

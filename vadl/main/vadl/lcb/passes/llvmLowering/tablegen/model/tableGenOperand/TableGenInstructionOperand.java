@@ -20,6 +20,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterName;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.graph.Node;
 
@@ -41,6 +42,10 @@ public class TableGenInstructionOperand {
 
   public TableGenInstructionOperand(@Nullable Node origin, String type, String name) {
     this(origin, new TableGenParameterTypeAndName(type, name));
+  }
+
+  public TableGenInstructionOperand(@Nullable Node origin, String name) {
+    this(origin, new TableGenParameterName(name));
   }
 
   public String render() {

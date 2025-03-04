@@ -14,33 +14,40 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.domain;
+package vadl.lcb.passes.llvmLowering.tablegen.model;
 
-import java.util.List;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.viam.Assembly;
+import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
+import vadl.viam.graph.Graph;
 
 /**
- * A record for {@link PseudoInstruction}.
+ * Defines an instruction alias in LLVM. This is used for {@link PseudoInstruction} when they
+ * only have one {@link Instruction}.
  */
-public class LlvmLoweringPseudoRecord extends LlvmLoweringRecord {
-
-  private final List<TableGenInstAlias> instAliases;
+public class TableGenInstAlias {
+  private final PseudoInstruction pseudoInstruction;
+  private final Assembly assembly;
+  private final Graph output;
 
   /**
    * Constructor.
    */
-  public LlvmLoweringPseudoRecord(LlvmLoweringPass.BaseInstructionInfo info,
-                                  List<TableGenPattern> patterns,
-                                  List<TableGenInstAlias> instAliases
-  ) {
-    super(info, patterns);
-    this.instAliases = instAliases;
+  public TableGenInstAlias(PseudoInstruction pseudoInstruction, Assembly assembly, Graph output) {
+    this.pseudoInstruction = pseudoInstruction;
+    this.assembly = assembly;
+    this.output = output;
   }
 
-  public List<TableGenInstAlias> instAliases() {
-    return instAliases;
+  public Assembly assembly() {
+    return assembly;
+  }
+
+  public Graph output() {
+    return output;
+  }
+
+  public PseudoInstruction pseudoInstruction() {
+    return pseudoInstruction;
   }
 }

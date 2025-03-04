@@ -18,6 +18,7 @@ package vadl.lcb.passes.isaMatching;
 
 import java.util.HashMap;
 import javax.annotation.Nullable;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.viam.Instruction;
 

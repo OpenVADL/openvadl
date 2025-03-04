@@ -50,22 +50,18 @@ public class LcbWriteRegNodeReplacement
 
     visitApplicable(writeRegNode.value());
 
-    // this will get the nullable static counter access
-    // if the reg write node writes the pc, this will not be null
-    var pc = writeRegNode.staticCounterAccess();
-    if (pc != null) {
+    if (writeRegNode.isPcAccess()) {
       if (writeRegNode.value() instanceof BuiltInCall builtin && Set.of(
           BuiltInTable.ADD,
           BuiltInTable.ADDS,
           BuiltInTable.SUB
       ).contains(builtin.builtIn())) {
-        // We need to four parameters.
+        // We need four parameters to replace a memory write by `LlvmBrCcSD`.
         // 1. the conditional code (SETEQ, ...)
         // 2. the first operand of the comparison
         // 3. the second operand of the comparison
         // 4. the immediate offset
 
-        // idea: it would be good to have a link from the side effect to if-node.
         var conditional = (BuiltInCall) writeRegNode.condition();
         var condCond = LlvmCondCode.from(conditional.builtIn());
         if (condCond == null) {

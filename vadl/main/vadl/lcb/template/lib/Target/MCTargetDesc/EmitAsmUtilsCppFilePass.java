@@ -82,10 +82,11 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
   private List<String> instructionsNames(Specification specification) {
     var isa = specification.isa();
     if (isa.isPresent()) {
-      var insns = isa.get().ownInstructions().stream().map(Definition::simpleName);
-      var pseudoInsns = isa.get().ownPseudoInstructions().stream().map(Definition::simpleName);
+      var instructions = isa.get().ownInstructions().stream().map(Definition::simpleName);
+      var pseudoInstructions =
+          isa.get().ownPseudoInstructions().stream().map(Definition::simpleName);
 
-      return Stream.concat(insns, pseudoInsns).toList();
+      return Stream.concat(instructions, pseudoInstructions).toList();
     }
     return List.of();
   }

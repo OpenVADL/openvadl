@@ -22,12 +22,9 @@ import java.util.BitSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
@@ -42,8 +39,6 @@ import vadl.viam.PseudoInstruction;
  * Utility class for mapping into tablegen.
  */
 public final class TableGenInstructionRenderer {
-  private static final Logger logger = LoggerFactory.getLogger(
-      TableGenInstructionRenderer.class);
 
   /**
    * Transforms the given {@link Instruction} into a string which can be used by LLVM's TableGen.
@@ -161,8 +156,6 @@ public final class TableGenInstructionRenderer {
             let Constraints = "";
             let AddedComplexity = 0;
             
-            let Pattern = [%s];
-            
             let Uses = [ %s ];
             let Defs = [ %s ];
             }
@@ -184,16 +177,10 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().mayLoad()),
         toInt(instruction.getFlags().mayStore()),
         toInt(instruction.getFlags().isBarrier()),
-        instruction.getAnonymousPatterns()
-            .stream()
-            .filter(x -> x instanceof TableGenSelectionPattern)
-            .map(x -> (TableGenSelectionPattern) x)
-            .map(TableGenInstructionRenderer::lower)
-            .collect(Collectors.joining(",")),
         instruction.getUses().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         anonymousPatterns.stream()
-            .map(x -> lower(instruction, x))
+            .map(TableGenInstructionRenderer::lower)
             .collect(Collectors.joining("\n"))
     );
 
@@ -211,9 +198,7 @@ public final class TableGenInstructionRenderer {
     return "(" + visitor.getResult() + ")";
   }
 
-  private static String lower(TableGenInstruction instruction,
-                              TableGenSelectionWithOutputPattern tableGenPattern) {
-    logger.atTrace().log("Lowering pattern for " + instruction.getName());
+  private static String lower(TableGenSelectionWithOutputPattern tableGenPattern) {
     ensure(tableGenPattern.isPatternLowerable(), "TableGen pattern must be lowerable");
     var visitor = new TableGenPatternPrinterVisitor();
     var machineVisitor = new TableGenMachineInstructionPrinterVisitor();

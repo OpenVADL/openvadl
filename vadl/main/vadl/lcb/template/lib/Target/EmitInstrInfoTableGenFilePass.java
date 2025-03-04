@@ -26,14 +26,16 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenImmediateOperandRenderer;
+import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstAliasRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionPatternRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPseudoInstExpansionRenderer;
@@ -77,10 +79,13 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var tableGenMachineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class);
-    var tableGenPseudoRecords = (List<TableGenPseudoInstruction>) passResults.lastResultOf(
-        GenerateTableGenPseudoInstructionRecordPass.class);
+    var llvmLoweringPassResults =
+        (LlvmLoweringPass.LlvmLoweringPassResult) passResults.lastResultOf(
+            LlvmLoweringPass.class);
     var labelledMachineInstructions = ((IsaMachineInstructionMatchingPass.Result)
         passResults.lastResultOf(IsaMachineInstructionMatchingPass.class)).labels();
+    var tableGenPseudoRecords = (List<TableGenPseudoInstruction>) passResults.lastResultOf(
+        GenerateTableGenPseudoInstructionRecordPass.class);
 
     var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
     var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);
@@ -109,6 +114,13 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var renderedTableGenPseudoRecords = tableGenPseudoRecords
         .stream()
         .map(TableGenInstructionRenderer::lower)
+        .toList();
+
+    var renderedTableGenInstAliases = llvmLoweringPassResults
+        .pseudoInstructionRecords()
+        .values()
+        .stream()
+        .map(TableGenInstAliasRenderer::lower)
         .toList();
 
     var pseudoExpansionPatterns = tableGenMachineRecords
@@ -147,6 +159,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("immediates", renderedImmediates);
     map.put("instructions", renderedTableGenMachineRecords);
     map.put("pseudos", renderedTableGenPseudoRecords);
+    map.put("instAliases", renderedTableGenInstAliases);
     map.put("patterns", renderedPatterns);
     map.put("registerFiles", specification.registerFiles().map(this::map).toList());
     return map;

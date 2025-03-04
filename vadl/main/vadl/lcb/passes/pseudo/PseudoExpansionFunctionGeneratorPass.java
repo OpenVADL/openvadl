@@ -16,14 +16,8 @@
 
 package vadl.lcb.passes.pseudo;
 
-import static vadl.viam.ViamError.ensureNonNull;
-
-import java.util.Objects;
 import java.util.stream.Stream;
 import vadl.configuration.GeneralConfiguration;
-import vadl.error.Diagnostic;
-import vadl.gcb.passes.pseudo.AbstractPseudoInstructionArgumentReplacementPass;
-import vadl.gcb.passes.pseudo.PseudoInstructionArgumentReplacementPass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
@@ -51,26 +45,12 @@ public class PseudoExpansionFunctionGeneratorPass
       PassResults passResults,
       Specification viam) {
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var appliedArguments =
-        (AbstractPseudoInstructionArgumentReplacementPass.Output) passResults.lastResultOf(
-            PseudoInstructionArgumentReplacementPass.class);
-
     var specifiedSequences = Stream.of(abi.returnSequence(), abi.callSequence());
 
-    // We do not use the behavior of the pseudo instruction because each InstrCallNode
-    // has the instruction behavior to the original instruction.
-    // However, we did apply the arguments, and now we want to expand the pseudo instruction
-    // with those arguments. That's why we have to use the result of a previous pass.
     var pseudoInstructions = Stream.concat(viam.isa()
             .map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty),
         specifiedSequences);
     return pseudoInstructions
-        .map(pseudoInstruction -> {
-          var appliedInstructions = appliedArguments.appliedGraph().get(pseudoInstruction);
-          ensureNonNull(appliedInstructions,
-              () -> Diagnostic.error("There is no graph with the applied arguments.",
-                  pseudoInstruction.sourceLocation()));
-          return Pair.of(pseudoInstruction, Objects.requireNonNull(appliedInstructions));
-        });
+        .map(pseudoInstruction -> Pair.of(pseudoInstruction, pseudoInstruction.behavior()));
   }
 }

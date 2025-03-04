@@ -34,10 +34,10 @@ import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.ValueRange;
 import vadl.gcb.passes.ValueRangeCtx;
 import vadl.lcb.passes.TableGenInstructionCtx;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
@@ -508,8 +508,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
       // MCInst have the output at the beginning.
       // Therefore, we need to offset the inputs.
       var regIndex =
-          loweringRecord.outputs().size() + loweringRecord.findInputIndex(reg.left());
-      var immIndex = loweringRecord.outputs().size() + loweringRecord.findInputIndex(immediate);
+          loweringRecord.info().outputs().size() + loweringRecord.info().findInputIndex(reg.left());
+      var immIndex =
+          loweringRecord.info().outputs().size() + loweringRecord.info().findInputIndex(immediate);
 
       var isCheckable = false;
       var zeroRegister = "";

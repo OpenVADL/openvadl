@@ -14,34 +14,45 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.domain;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter;
 
-
-import java.util.List;
-import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import java.util.Objects;
 
 /**
- * Contains information for the lowering of instructions.
+ * Parameter with a name of a {@link TableGenParameter}.
  */
-public class LlvmLoweringRecord {
-  private final LlvmLoweringPass.BaseInstructionInfo info;
-  private final List<TableGenPattern> patterns;
+public class TableGenParameterName extends TableGenParameter {
+  private final String name;
 
-  /**
-   * Constructor.
-   */
-  public LlvmLoweringRecord(LlvmLoweringPass.BaseInstructionInfo info,
-                            List<TableGenPattern> patterns) {
-    this.info = info;
-    this.patterns = patterns;
+  public TableGenParameterName(String name) {
+    this.name = name;
   }
 
-  public List<TableGenPattern> patterns() {
-    return patterns;
+  @Override
+  public String render() {
+    return name;
   }
 
-  public LlvmLoweringPass.BaseInstructionInfo info() {
-    return info;
+  public String name() {
+    return name;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+
+    if (o instanceof TableGenParameterName casted) {
+      return name.equals(casted.name);
+    }
+
+    return false;
+  }
+
+
+  @Override
+  public int hashCode() {
+    return 31 * Objects.hashCode(name);
   }
 }

@@ -26,8 +26,8 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
@@ -88,7 +88,17 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   @Override
-  protected Optional<LlvmLoweringRecord> lowerInstruction(
+  public LlvmLoweringPass.BaseInstructionInfo lowerBaseInfo(Graph behavior) {
+    var baseInfo = super.lowerBaseInfo(behavior);
+
+    // Clear the flags
+    baseInfo = baseInfo.withFlags(LlvmLoweringPass.Flags.empty());
+
+    return baseInfo;
+  }
+
+  @Override
+  public Optional<LlvmLoweringRecord> lowerInstruction(
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
@@ -100,28 +110,22 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       visitReplacementHooks(visitor, node);
     }
 
-    var outputOperands = getTableGenOutputOperands(copy);
-    var inputOperands = getTableGenInputOperands(outputOperands, copy);
+    var info = lowerBaseInfo(copy);
 
-    var uses = getRegisterUses(copy, inputOperands, outputOperands);
-    var defs = getRegisterDefs(copy, inputOperands, outputOperands);
+    // Clear the flags for this strategy
+    info = info.withFlags(LlvmLoweringPass.Flags.empty());
 
     var patterns = generatePatternVariations(instruction,
         labelledMachineInstructions,
         copy,
-        inputOperands,
-        outputOperands,
+        info.inputs(),
+        info.outputs(),
         Collections.emptyList(),
         abi);
 
     return Optional.of(new LlvmLoweringRecord(
-        copy,
-        inputOperands,
-        outputOperands,
-        LlvmLoweringPass.Flags.empty(),
-        patterns,
-        uses,
-        defs
+        info,
+        patterns
     ));
   }
 

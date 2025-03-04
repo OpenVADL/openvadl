@@ -65,6 +65,52 @@ public class AssemblyConstant extends ConstantNode {
   }
 
   /**
+   * Get the string representation of a constant.
+   */
+  public String string() {
+    return switch (this.kind) {
+      case Space -> " ";
+      case Plus -> "+";
+      case Minus -> "-";
+      case Star -> "*";
+      case Slash -> "/";
+      case BackSlash -> "\\";
+      case Question -> "?";
+      case Exclaim -> "!";
+      case Dot -> ".";
+      case Dollar -> "$";
+      case Comma -> ",";
+      case Tilde -> "~";
+      case Colon -> ":";
+      case Caret -> "^";
+      case LParen -> "(";
+      case RParen -> ")";
+      case LBrac -> "[";
+      case RBrac -> "]";
+      case LCurly -> "{";
+      case RCurly -> "}";
+      case Equal -> "=";
+      case EqualEqual -> "==";
+      case ExclaimEqual -> "!=";
+      case Percent -> "%";
+      case Hash -> "#";
+      case Pipe -> "|";
+      case PipePipe -> "||";
+      case Amp -> "&";
+      case AmpAmp -> "&&";
+      case At -> "@";
+      case Less -> "<";
+      case LessEqual -> "<=";
+      case LessLess -> "<<";
+      case LessGreater -> "<>";
+      case Greater -> ">";
+      case GreaterEqual -> ">=";
+      case MinusGreater -> "->";
+      default -> constant.toString();
+    };
+  }
+
+  /**
    * Get {@link TokenKind} based on constant.
    */
   public static TokenKind getKind(Constant.Str constant) {

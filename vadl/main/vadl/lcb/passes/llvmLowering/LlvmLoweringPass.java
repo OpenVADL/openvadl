@@ -20,20 +20,28 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
+import vadl.gcb.passes.IdentifyFieldUsagePass;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.TableGenInstructionCtx;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
-import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
+import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
@@ -51,14 +59,29 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstruction
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
+import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
+import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
  * This is a wrapper class which contains utility functions for the lowering.
@@ -66,6 +89,33 @@ import vadl.viam.Specification;
 public class LlvmLoweringPass extends Pass {
   public LlvmLoweringPass(LcbConfiguration configuration) {
     super(configuration);
+  }
+
+  /**
+   * This record contains the basic information for lowering {@link Instruction} and
+   * {@link PseudoInstruction}.
+   */
+  public record BaseInstructionInfo(List<TableGenInstructionOperand> inputs,
+                                    List<TableGenInstructionOperand> outputs,
+                                    LlvmLoweringPass.Flags flags,
+                                    List<RegisterRef> uses,
+                                    List<RegisterRef> defs) {
+    /**
+     * Find the index in the {@link #inputs} by the given field.
+     */
+    public int findInputIndex(Format.Field field) {
+      for (int i = 0; i < inputs.size(); i++) {
+        if (inputs.get(i) instanceof ReferencesFormatField x && x.formatField().equals(field)) {
+          return i;
+        }
+      }
+
+      throw Diagnostic.error("Cannot find field in inputs.", field.sourceLocation()).build();
+    }
+
+    public BaseInstructionInfo withFlags(LlvmLoweringPass.Flags newFlags) {
+      return new BaseInstructionInfo(inputs, outputs, newFlags, uses, defs);
+    }
   }
 
   /**
@@ -102,6 +152,16 @@ public class LlvmLoweringPass extends Pass {
      */
     public static Flags withBranch(Flags flags) {
       return new Flags(flags.isTerminator(), true, flags.isCall, flags.isReturn, flags.isPseudo,
+          flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
+          flags.isRematerialisable,
+          flags.isAsCheapAsAMove);
+    }
+
+    /**
+     * Given {@link Flags} overwrite the {@code isPseudo} and return it.
+     */
+    public static Flags withPseudo(Flags flags) {
+      return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn, true,
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
           flags.isRematerialisable,
           flags.isAsCheapAsAMove);
@@ -154,7 +214,7 @@ public class LlvmLoweringPass extends Pass {
    */
   public record LlvmLoweringPassResult(
       IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords,
-      IdentityHashMap<PseudoInstruction, LlvmLoweringRecord> pseudoInstructionRecords) {
+      IdentityHashMap<PseudoInstruction, LlvmLoweringPseudoRecord> pseudoInstructionRecords) {
 
   }
 
@@ -174,6 +234,8 @@ public class LlvmLoweringPass extends Pass {
         (IsaPseudoInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
+    var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
+        IdentifyFieldUsagePass.class);
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
 
     var architectureType =
@@ -200,8 +262,8 @@ public class LlvmLoweringPass extends Pass {
 
     var machineRecords = generateRecordsForMachineInstructions(viam, abi, machineStrategies,
         labelingResult);
-    var pseudoRecords = pseudoInstructions(viam, abi, pseudoStrategies,
-        labelingResult, labelingResultPseudo);
+    var pseudoRecords = pseudoInstructions(machineRecords, viam, fieldUsages, abi,
+        pseudoStrategies, labelingResult, labelingResultPseudo);
 
     return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
   }
@@ -224,7 +286,8 @@ public class LlvmLoweringPass extends Pass {
             }
 
             var record =
-                strategy.lower(labelledMachineInstructions, instruction, instruction.behavior(),
+                strategy.lowerInstruction(labelledMachineInstructions, instruction,
+                    instruction.behavior(),
                     abi);
 
             // Okay, we have to save record.
@@ -246,13 +309,16 @@ public class LlvmLoweringPass extends Pass {
     return tableGenRecords;
   }
 
-  private IdentityHashMap<PseudoInstruction, LlvmLoweringRecord> pseudoInstructions(
+  private IdentityHashMap<PseudoInstruction, LlvmLoweringPseudoRecord> pseudoInstructions(
+      IdentityHashMap<Instruction, LlvmLoweringRecord> machineRecords,
       Specification viam,
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Abi abi,
       List<LlvmPseudoInstructionLowerStrategy> pseudoStrategies,
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
-      IsaPseudoInstructionMatchingPass.Result labelledPseudoInstructions) {
-    var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord>();
+      IsaPseudoInstructionMatchingPass.Result labelledPseudoInstructions
+  ) {
+    var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringPseudoRecord>();
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .forEach(pseudo -> {
@@ -262,7 +328,9 @@ public class LlvmLoweringPass extends Pass {
               continue;
             }
 
-            var record = strategy.lower(abi, pseudo, labelledMachineInstructions);
+            var instAliases = instAliases(machineRecords, fieldUsages, pseudo);
+            var record =
+                strategy.lowerInstruction(abi, instAliases, pseudo, labelledMachineInstructions);
 
             // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(pseudo,
@@ -275,6 +343,117 @@ public class LlvmLoweringPass extends Pass {
     return tableGenRecords;
   }
 
+  private @Nonnull List<TableGenInstAlias> instAliases(
+      IdentityHashMap<Instruction, LlvmLoweringRecord> machineRecords,
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+      PseudoInstruction pseudo) {
+    if (pseudo.behavior().getNodes(InstrCallNode.class).toList().size() != 1) {
+      return Collections.emptyList();
+    }
+
+    var instruction =
+        ensurePresent(pseudo.behavior().getNodes(InstrCallNode.class).findFirst(),
+            "must exist");
+    var machineRecord = ensureNonNull(machineRecords.get(instruction.target()), "must exist");
+    var args = getArgsForInstAlias(machineRecord, fieldUsages, instruction);
+    var graph = new Graph("output");
+    graph.addWithInputs(
+        new LcbMachineInstructionNode(new NodeList<>(args), instruction.target()));
+
+    var instAliases = List.of(
+        new TableGenInstAlias(
+            pseudo,
+            pseudo.assembly(),
+            graph
+        )
+    );
+    return instAliases;
+  }
+
+  private List<ExpressionNode> getArgsForInstAlias(
+      LlvmLoweringRecord machineRecord,
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+      InstrCallNode instruction) {
+    var args = new ArrayList<ExpressionNode>();
+
+    for (int i = 0; i < instruction.arguments().size(); i++) {
+      var field = instruction.getParamFields().get(i);
+      var argument = instruction.getArgument(field);
+      var fieldUsageMap = fieldUsages.getFieldUsages(instruction.target());
+
+      if (Optional.ofNullable(fieldUsageMap.get(field))
+          .map(x -> x == IdentifyFieldUsagePass.FieldUsage.REGISTER).orElse(false)) {
+        // There are two cases:
+        // First, the given argument is `FuncParamNode`. This means that the argument remains
+        // a register file.
+        // Second, the given argument is a `ConstantNode`. This means that the argument will be
+        // a fixed register in a register file.
+        if (argument instanceof FuncParamNode) {
+          // it is a register file
+          var registerFile =
+              ensurePresent(
+                  instruction.target().behavior().getNodes(FieldRefNode.class)
+                      .flatMap(x -> x.usages().filter(y -> y instanceof HasRegisterFile)
+                          .map(y -> ((HasRegisterFile) y).registerFile()))
+                      .findFirst(), () -> Diagnostic.error("Expected to find register file",
+                      field.sourceLocation()));
+          args.add(new LcbMachineInstructionParameterNode(
+              new TableGenInstructionOperand(null, registerFile.identifier.simpleName(),
+                  field.identifier.simpleName())));
+        } else if (argument instanceof ConstantNode constantNode) {
+          // it is indexed in a register file
+          var registerFile =
+              ensurePresent(
+                  instruction.target().behavior().getNodes(FieldRefNode.class)
+                      .flatMap(x -> x.usages().filter(y -> y instanceof HasRegisterFile)
+                          .map(y -> ((HasRegisterFile) y).registerFile()))
+                      .findFirst(), () -> Diagnostic.error("Expected to find register file",
+                      field.sourceLocation()));
+          args.add(new LcbMachineInstructionParameterNode(
+              new TableGenInstructionOperand(null,
+                  registerFile.generateName(constantNode.constant().asVal()))));
+        }
+      } else {
+        // There are two cases:
+        // First, the given argument is `FuncCallNode`. This means that the argument remains
+        // an immediate which needs to be selected during instruction selection.
+        // Second, the given argument is a `ConstantNode`. This means that the argument will be
+        // a fixed constant.
+        if (argument instanceof FuncParamNode) {
+          var fieldAccess =
+              ensurePresent(
+                  instruction.target().behavior().getNodes(FieldAccessRefNode.class)
+                      .filter(x ->
+                          x.fieldAccess().fieldRef().equals(field))
+                      .findFirst(),
+                  () -> Diagnostic.error("Cannot find field access function for field",
+                      field.sourceLocation()));
+          var operand =
+              ensurePresent(
+                  Stream.concat(machineRecord.info().inputs().stream(),
+                          machineRecord.info().outputs().stream())
+                      .filter(x -> (x instanceof TableGenInstructionImmediateOperand y
+                          &&
+                          y.immediateOperand().fieldAccessRef().equals(fieldAccess.fieldAccess()))
+                          || (x instanceof TableGenInstructionImmediateLabelOperand z
+                          &&
+                          z.immediateOperand().fieldAccessRef().equals(fieldAccess.fieldAccess()))
+                      )
+                      .findFirst(),
+                  () -> Diagnostic.error("Cannot find operand", argument.sourceLocation()));
+
+          args.add(new LcbMachineInstructionParameterNode(operand));
+        } else if (argument instanceof ConstantNode constantNode) {
+          args.add(new LcbMachineInstructionParameterNode(
+              new TableGenInstructionOperand(null, constantNode.constant().asVal().intValue() + "")
+          ));
+        }
+      }
+    }
+
+    return args;
+  }
+
   /**
    * The {@link IsaMachineInstructionMatchingPass} computes a hashmap with the instruction label
    * as a key and all the matched instructions as value.
@@ -284,26 +463,6 @@ public class LlvmLoweringPass extends Pass {
   public static IdentityHashMap<Instruction, MachineInstructionLabel> flipMachineInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatched) {
     IdentityHashMap<Instruction, MachineInstructionLabel> inverse = new IdentityHashMap<>();
-
-    for (var entry : isaMatched.entrySet()) {
-      for (var item : entry.getValue()) {
-        inverse.put(item, entry.getKey());
-      }
-    }
-
-    return inverse;
-  }
-
-  /**
-   * The {@link IsaMachineInstructionMatchingPass} computes a hashmap with the instruction label
-   * as a key and all the matched instructions as value.
-   * However, we would like to check whether {@link LlvmPseudoInstructionLowerStrategy} supports
-   * this {@link Instruction} in this pass. That's why we have the flip the hashmap.
-   */
-  public static IdentityHashMap<PseudoInstruction,
-      PseudoInstructionLabel> flipPseudoInstructions(
-      Map<PseudoInstructionLabel, List<PseudoInstruction>> isaMatched) {
-    IdentityHashMap<PseudoInstruction, PseudoInstructionLabel> inverse = new IdentityHashMap<>();
 
     for (var entry : isaMatched.entrySet()) {
       for (var item : entry.getValue()) {

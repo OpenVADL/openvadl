@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
-import vadl.lcb.passes.isaMatching.IsaMachineInstructionMatchingPass;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.ConstantMatPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
