@@ -18,16 +18,7 @@ assembly description ASM for ABI = {
   }
 
   grammar = {
-    // TODO: branch- and JAL pseudo-instructions
-
-    ImmediateOperand :
-      Expression @operand
-      | op = (
-          "%" mod = ("hi" | "lo") @modifier
-          "(" val = Expression ")"
-        ) @operand
-    ;
-
+    // TODO: branch pseudo-instructions
 
     RRIds : "ADD" | "SUB" | "AND" | "OR" | "XOR" | "SLT" | "SLTU" | "SLL" | "SRL" | "SRA"
             | "MUL" | "MULH" | "MULHSU" | "MULHU" | "DIV" | "DIVU" | "REM" | "REMU"
@@ -41,7 +32,7 @@ assembly description ASM for ABI = {
     ;
 
 
-    ITypeIds : "ADDI" | "ANDI" | "ORI" | "XORI" | "SLTI" | "SLTIU" | "JALR" ;
+    ITypeIds : "ANDI" | "ORI" | "XORI" | "SLTI" | "SLTIU" | "JALR" ;
 
     ITypeInstruction @instruction:
       mnemonic = ITypeIds @operand
@@ -50,11 +41,37 @@ assembly description ASM for ABI = {
       imm = ImmediateOperand
     ;
 
+    AddIInstruction @instruction:
+      mnemonic = "ADDI" @operand
+      rd = Register@operand ","
+      rs1 = Register@operand ","
+      imm = LoImmediateOperand
+    ;
 
-    UTypeIds: "LUI" | "AUIPC" ;
+    LoImmediateOperand :
+      ImmediateOperand
+      | op = (
+          "%" mod="lo"@modifier
+          "(" val = Expression ")"
+        ) @operand
+    ;
 
-    UTypeInstruction @instruction:
-      mnemonic = UTypeIds @operand
+    LuiInstruction @instruction:
+      mnemonic = "LUI" @operand
+      rd = Register@operand ","
+      imm = LuiImmediateOperand
+    ;
+
+    LuiImmediateOperand :
+      ImmediateOperand
+      | op = (
+          "%" mod="hi"@modifier
+          "(" val = Expression ")"
+        ) @operand
+    ;
+
+    AuipcInstruction @instruction:
+      mnemonic = "AUIPC" @operand
       rd = Register@operand ","
       imm = ImmediateOperand
     ;
@@ -64,7 +81,7 @@ assembly description ASM for ABI = {
     LTypeInstruction @instruction:
       mnemonic = LTypeIds @operand
       rd = Register @operand ","
-      imm = ImmediateOperand
+      imm = LoImmediateOperand
       "(" rs1 = Register @operand ")"
     ;
 
@@ -74,8 +91,14 @@ assembly description ASM for ABI = {
     STypeInstruction @instruction:
       mnemonic = STypeIds @operand
       rs2 = Register @operand ","
-      imm = ImmediateOperand
+      imm = LoImmediateOperand
       "(" rs1 = Register @operand ")"
+    ;
+
+    JalInstruction @instruction:
+      mnemonic = "JAL" @operand
+      rd = Register @operand ","
+      imm = ImmediateOperand
     ;
 
 

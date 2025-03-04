@@ -206,14 +206,7 @@ bool [(${namespace})]AsmParser::ModifyImmediate(unsigned Opcode, StringRef OpNam
         {
             if (OpName.equals_insensitive("[(${conversion.operandName})]")) {
                 [# th:if="${conversion.needsDecode}" ]
-                /*
-                if(!isInt<[(${conversion.formatFieldTypeSize})]>(opImm64) && !isUInt<[(${conversion.formatFieldTypeSize})]>(opImm64))
-                {
-                    std::string error = "Invalid immediate operand for [(${conversion.insnName})].[(${conversion.operandName})]. The operand is out of range.";
-                    Parser.Error(Op.getStartLoc(), error);
-                    return false;
-                }
-                */
+
                 // check if immediate is in ([(${conversion.lowestValue})],[(${conversion.highestValue})])
                 if (opImm64 < [(${conversion.lowestValue})] || opImm64 > [(${conversion.highestValue})]) {
                     std::string error = "Invalid immediate operand for [(${conversion.insnName})].[(${conversion.operandName})]. Value "
@@ -222,7 +215,6 @@ bool [(${namespace})]AsmParser::ModifyImmediate(unsigned Opcode, StringRef OpNam
                     return false;
                 }
 
-                //[(${conversion.decodeType})] decoded = [(${conversion.decodeMethod})](opImm64);
                 opImm64 = [(${conversion.decodeMethod})](opImm64);
                 [/]
                 // check if immediate fits the provided predicate for the instruction

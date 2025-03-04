@@ -45,7 +45,6 @@ import vadl.template.Renderable;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
-import vadl.viam.ViamError;
 
 /**
  * This file contains the implementation for parsing assembly files.
@@ -131,18 +130,14 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
                 insn.assembly().hasAnnotation(EncodeAssemblyImmediateAnnotation.class));
 
             var operand = immediateOperands.get(0);
-            var immediateOperand = immediateOperand(operand);
+            var immediateRecord = immediateRecord(operand);
 
             templateVars.put("operandName",
                 ((TableGenParameterTypeAndName) operand.parameter()).name());
-            templateVars.put("formatFieldTypeSize", immediateOperand.formatFieldBitSize());
-            templateVars.put("immediateOperandName", immediateOperand.fullname());
+            templateVars.put("immediateOperandName", immediateRecord.fullname());
 
-            templateVars.put("decodeType",
-                immediateOperand.llvmType().isSigned() ? "int64_t" : "uint64_t");
-            templateVars.put("decodeMethod", immediateOperand.rawDecoderMethod());
-            templateVars.put("predicateMethod", immediateOperand.predicateMethod());
-
+            templateVars.put("decodeMethod", immediateRecord.rawDecoderMethod());
+            templateVars.put("predicateMethod", immediateRecord.predicateMethod());
 
             var valueRange = valueRange(insn);
             templateVars.put("lowestValue", valueRange.lowest());
@@ -156,14 +151,14 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     return result;
   }
 
-  private TableGenImmediateRecord immediateOperand(TableGenInstructionOperand operand) {
+  private TableGenImmediateRecord immediateRecord(TableGenInstructionOperand operand) {
     if (operand instanceof TableGenInstructionImmediateOperand imm) {
       return imm.immediateOperand();
     }
     if (operand instanceof TableGenInstructionImmediateLabelOperand labelImm) {
       return labelImm.immediateOperand();
     }
-    throw new ViamError("Unexpected operand type: " + operand.getClass());
+    throw new IllegalStateException("Unreachable");
   }
 
   private ValueRange valueRange(Instruction instruction) {
