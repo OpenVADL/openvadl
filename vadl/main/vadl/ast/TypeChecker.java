@@ -1878,8 +1878,13 @@ public class TypeChecker
       return new FormatType(formatDef);
     }
 
-    throw new RuntimeException(
-        "No type with the name `%s` exists.".formatted(expr.baseType.pathToString()));
+    var sb = new StringBuilder();
+    expr.prettyPrint(0, sb);
+    var typeName = sb.toString();
+    throw Diagnostic.error("Unknown Type `%s`".formatted(typeName), expr)
+        .description("No type with that name exists.")
+        .build()
+        ;
   }
 
   @Override
