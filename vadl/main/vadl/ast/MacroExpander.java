@@ -139,8 +139,8 @@ class MacroExpander
   Annotations expandAnnotations(Annotations annotations) {
     var list = new ArrayList<>(annotations.annotations());
     list.replaceAll(annotation -> new Annotation(
-        expandExpr(annotation.expr()), annotation.type(), annotation.property() == null ? null :
-        resolvePlaceholderOrIdentifier(annotation.property())));
+        expandExpr(annotation.expr), annotation.type, annotation.property == null ? null :
+        resolvePlaceholderOrIdentifier(annotation.property)));
     return new Annotations(list);
   }
 
@@ -343,8 +343,8 @@ class MacroExpander
     var candidate = expandExpr(expr.candidate);
     var defaultResult = expandExpr(expr.defaultResult);
     var cases = new ArrayList<>(expr.cases);
-    cases.replaceAll(matchCase -> new MatchExpr.Case(expandExprs(matchCase.patterns()),
-        expandExpr(matchCase.result())));
+    cases.replaceAll(matchCase -> new MatchExpr.Case(expandExprs(matchCase.patterns),
+        expandExpr(matchCase.result)));
     return new MatchExpr(candidate, cases, defaultResult, copyLoc(expr.loc));
   }
 
@@ -438,7 +438,7 @@ class MacroExpander
     auxFields.replaceAll(auxField -> {
       var entries = new ArrayList<>(auxField.entries());
       entries.replaceAll(entry ->
-          new FormatDefinition.AuxiliaryFieldEntry(entry.id(), expandExpr(entry.expr())));
+          new FormatDefinition.AuxiliaryFieldEntry(entry.id, expandExpr(entry.expr)));
       return new FormatDefinition.AuxiliaryField(auxField.kind(), entries);
     });
     var id = resolvePlaceholderOrIdentifier(definition.identifier);
@@ -556,9 +556,8 @@ class MacroExpander
   public Definition visit(EnumerationDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.id);
     var entries = new ArrayList<>(definition.entries);
-    entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name(),
-        entry.value() == null ? null : expandExpr(entry.value()),
-        entry.behavior() == null ? null : expandExpr(entry.behavior())));
+    entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name,
+        entry.value == null ? null : expandExpr(entry.value)));
     return new EnumerationDefinition(id, definition.enumType, entries, copyLoc(definition.loc))
         .withAnnotations(definition.annotations);
   }
@@ -939,8 +938,8 @@ class MacroExpander
     var defaultResult =
         matchStatement.defaultResult == null ? null : matchStatement.defaultResult.accept(this);
     var cases = new ArrayList<>(matchStatement.cases);
-    cases.replaceAll(matchCase -> new MatchStatement.Case(expandExprs(matchCase.patterns()),
-        matchCase.result().accept(this)));
+    cases.replaceAll(matchCase -> new MatchStatement.Case(expandExprs(matchCase.patterns),
+        matchCase.result.accept(this)));
     return new MatchStatement(candidate, cases, defaultResult, copyLoc(matchStatement.loc));
   }
 
@@ -955,8 +954,8 @@ class MacroExpander
     var id = resolvePlaceholderOrIdentifier(instructionCallStatement.id);
     var namedArguments = new ArrayList<>(instructionCallStatement.namedArguments);
     namedArguments.replaceAll(namedArgument ->
-        new InstructionCallStatement.NamedArgument(namedArgument.name(),
-            expandExpr(namedArgument.value())));
+        new InstructionCallStatement.NamedArgument(namedArgument.name,
+            expandExpr(namedArgument.value)));
     var unnamedArguments = expandExprs(instructionCallStatement.unnamedArguments);
     return new InstructionCallStatement(id, namedArguments, unnamedArguments,
         copyLoc(instructionCallStatement.loc));

@@ -1,0 +1,21 @@
+
+instruction set architecture TEST = {
+
+  enumeration ENUM: Bits<2> =      // system register code
+    { A = 0b00 + 0b01
+    , B = 0b01
+    , C = 0b10
+    , D = 0b11
+    }
+
+  format FORMAT: Bits<6> =
+  { A: Bits<2>
+  , B: Bits<2>
+  , C: Bits<2>
+  }
+
+
+  function access -> Bits<2> = ENUM::A
+
+
+}

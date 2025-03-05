@@ -236,6 +236,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new ConstantNode(value);
     }
 
+    // Enum field
+    if (computedTarget instanceof EnumerationDefinition.Entry enumField) {
+      // Inline the value of the enum
+      return fetch(Objects.requireNonNull(enumField.value));
+    }
+
     // Format field
     if (computedTarget instanceof FormatDefinition.TypedFormatField typedFormatField) {
       return new FieldRefNode(
@@ -800,8 +806,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var fields = new ArrayList<Format.Field>();
 
     for (var arg : statement.namedArguments) {
-      fields.add(fieldMap.get(arg.name().name));
-      argExprs.add(fetch(arg.value()));
+      fields.add(fieldMap.get(arg.name.name));
+      argExprs.add(fetch(arg.value));
     }
     var call = new InstrCallNode(target, fields, argExprs);
     call = addToGraph(call);

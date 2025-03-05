@@ -621,7 +621,40 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     }
   }
 
-  record AuxiliaryFieldEntry(Identifier id, Expr expr) {
+  static final class AuxiliaryFieldEntry {
+    Identifier id;
+    Expr expr;
+
+    AuxiliaryFieldEntry(Identifier id, Expr expr) {
+      this.id = id;
+      this.expr = expr;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (AuxiliaryFieldEntry) obj;
+      return Objects.equals(this.id, that.id)
+          && Objects.equals(this.expr, that.expr);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id, expr);
+    }
+
+    @Override
+    public String toString() {
+      return "AuxiliaryFieldEntry["
+          + "id=" + id + ", "
+          + "expr=" + expr + ']';
+    }
+
   }
 
   enum AuxiliaryFieldKind {
@@ -1033,7 +1066,7 @@ class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode
   }
 
   @Override
-  public Type type() {
+  public ConcreteRelationType type() {
     return Objects.requireNonNull(type);
   }
 }
@@ -1118,7 +1151,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 }
 
-class RegisterFileDefinition extends Definition implements IdentifiableNode {
+class RegisterFileDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
   RelationTypeLiteral typeLiteral;
   SourceLocation loc;
@@ -1199,6 +1232,11 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + identifier.hashCode();
     result = 31 * result + typeLiteral.hashCode();
     return result;
+  }
+
+  @Override
+  public ConcreteRelationType type() {
+    return Objects.requireNonNull(type);
   }
 
   record RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
@@ -1395,7 +1433,7 @@ class PseudoInstructionDefinition extends Definition implements IdentifiableNode
   }
 }
 
-class RelocationDefinition extends Definition implements IdentifiableNode {
+class RelocationDefinition extends Definition implements IdentifiableNode, TypedNode {
   Identifier identifier;
   List<Parameter> params;
   TypeLiteral resultTypeLiteral;
@@ -1484,6 +1522,11 @@ class RelocationDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + Objects.hashCode(resultTypeLiteral);
     result = 31 * result + Objects.hashCode(expr);
     return result;
+  }
+
+  @Override
+  public ConcreteRelationType type() {
+    return Objects.requireNonNull(type);
   }
 }
 
@@ -1816,7 +1859,7 @@ class UsingDefinition extends Definition implements IdentifiableNode {
   }
 }
 
-class FunctionDefinition extends Definition implements IdentifiableNode {
+class FunctionDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder name;
   List<Parameter> params;
   TypeLiteral retType;
@@ -1902,6 +1945,11 @@ class FunctionDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + Objects.hashCode(retType);
     result = 31 * result + Objects.hashCode(expr);
     return result;
+  }
+
+  @Override
+  public ConcreteRelationType type() {
+    return Objects.requireNonNull(type);
   }
 }
 
@@ -2025,6 +2073,18 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     this.loc = location;
   }
 
+  Entry getEntry(String name) {
+    return entries.stream().filter(e -> e.name.name.equals(name)).findFirst().orElseThrow();
+  }
+
+  Expr getEntryValue(String name) {
+    return Objects.requireNonNull(getEntry(name).value);
+  }
+
+  Type getEntryType(String name) {
+    return Objects.requireNonNull(getEntry(name).value).type();
+  }
+
   @Override
   public Identifier identifier() {
     return (Identifier) id;
@@ -2060,10 +2120,6 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
       if (entry.value != null) {
         builder.append(" = ");
         entry.value.prettyPrint(0, builder);
-      }
-      if (entry.behavior != null) {
-        builder.append(" => ");
-        entry.behavior.prettyPrint(0, builder);
       }
       builder.append("\n");
     }
@@ -2105,7 +2161,57 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     return result;
   }
 
-  record Entry(Identifier name, @Nullable Expr value, @Nullable Expr behavior) {
+  static class Entry extends Node implements WithSourceLocation {
+
+    Identifier name;
+    @Nullable
+    Expr value;
+
+
+    public Entry(Identifier name, @Nullable Expr value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    @Override
+    SourceLocation location() {
+      var loc = name.sourceLocation();
+      if (value != null) {
+        loc = loc.join(value.sourceLocation());
+      }
+      return loc;
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      name.prettyPrint(indent, builder);
+      builder.append(" = ");
+      if (value != null) {
+        value.prettyPrint(indent, builder);
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Entry entry = (Entry) o;
+      return name.equals(entry.name) && Objects.equals(value, entry.value);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = name.hashCode();
+      result = 31 * result + Objects.hashCode(value);
+      return result;
+    }
   }
 }
 
@@ -2460,8 +2566,20 @@ record Annotations(List<Annotation> annotations) {
   }
 }
 
-record Annotation(Expr expr, @Nullable TypeLiteral type,
-                  @Nullable IdentifierOrPlaceholder property) {
+final class Annotation {
+  Expr expr;
+  @Nullable
+  TypeLiteral type;
+  @Nullable
+  IdentifierOrPlaceholder property;
+
+  Annotation(Expr expr, @Nullable TypeLiteral type,
+             @Nullable IdentifierOrPlaceholder property) {
+    this.expr = expr;
+    this.type = type;
+    this.property = property;
+  }
+
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(Node.prettyIndentString(indent));
     builder.append('[');
@@ -2475,6 +2593,33 @@ record Annotation(Expr expr, @Nullable TypeLiteral type,
       property.prettyPrint(indent, builder);
     }
     builder.append(" ]\n");
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj == null || obj.getClass() != this.getClass()) {
+      return false;
+    }
+    var that = (Annotation) obj;
+    return Objects.equals(this.expr, that.expr)
+        && Objects.equals(this.type, that.type)
+        && Objects.equals(this.property, that.property);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(expr, type, property);
+  }
+
+  @Override
+  public String toString() {
+    return "Annotation["
+        + "expr=" + expr + ", "
+        + "type=" + type + ", "
+        + "property=" + property + ']';
   }
 }
 

@@ -673,7 +673,40 @@ final class MatchStatement extends Statement {
     return result;
   }
 
-  record Case(List<Expr> patterns, Statement result) {
+  static final class Case {
+    List<Expr> patterns;
+    Statement result;
+
+    Case(List<Expr> patterns, Statement result) {
+      this.patterns = patterns;
+      this.result = result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (Case) obj;
+      return Objects.equals(this.patterns, that.patterns)
+          && Objects.equals(this.result, that.result);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(patterns, result);
+    }
+
+    @Override
+    public String toString() {
+      return "Case["
+          + "patterns=" + patterns + ", "
+          + "result=" + result + ']';
+    }
+
   }
 }
 
@@ -760,10 +793,44 @@ final class InstructionCallStatement extends Statement {
     return Objects.hash(id, namedArguments, unnamedArguments);
   }
 
-  record NamedArgument(Identifier name, Expr value) {
-    public SourceLocation location() {
-      return name.location().join(value().location());
+  static final class NamedArgument {
+    Identifier name;
+    Expr value;
+
+    NamedArgument(Identifier name, Expr value) {
+      this.name = name;
+      this.value = value;
     }
+
+    public SourceLocation location() {
+      return name.location().join(value.location());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (NamedArgument) obj;
+      return Objects.equals(this.name, that.name)
+          && Objects.equals(this.value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(name, value);
+    }
+
+    @Override
+    public String toString() {
+      return "NamedArgument["
+          + "name=" + name + ", "
+          + "value=" + value + ']';
+    }
+
   }
 }
 

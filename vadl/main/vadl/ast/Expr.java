@@ -1969,7 +1969,31 @@ class MatchExpr extends Expr {
     return result;
   }
 
-  record Case(List<Expr> patterns, Expr result) {
+  static class Case {
+    List<Expr> patterns;
+    Expr result;
+
+    public Case(List<Expr> patterns, Expr result) {
+      this.patterns = patterns;
+      this.result = result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Case other = (Case) o;
+      return patterns.equals(other.patterns) && result.equals(other.result);
+    }
+
+    @Override
+    public int hashCode() {
+      int result1 = patterns.hashCode();
+      result1 = 31 * result1 + result.hashCode();
+      return result1;
+    }
   }
 }
 

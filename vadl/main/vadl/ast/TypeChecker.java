@@ -16,6 +16,8 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
@@ -81,7 +82,7 @@ public class TypeChecker
       expr.accept(this);
     }
 
-    return Objects.requireNonNull(expr.type);
+    return requireNonNull(expr.type);
   }
 
   /**
@@ -233,7 +234,7 @@ public class TypeChecker
    * @return the original expression, possibly wrapped.
    */
   private static Expr wrapImplicitCast(Expr inner, Type to) {
-    var innerType = Objects.requireNonNull(inner.type);
+    var innerType = requireNonNull(inner.type);
     if (innerType.equals(to)) {
       return inner;
     }
@@ -305,7 +306,7 @@ public class TypeChecker
     } else {
       definition.typeLiteral.type =
           parseTypeLiteral(definition.typeLiteral, preferredBitWidthOf(valType));
-      Type litType = Objects.requireNonNull(definition.typeLiteral.type);
+      Type litType = requireNonNull(definition.typeLiteral.type);
 
       if (!canImplicitCast(valType, litType)) {
         throw Diagnostic.error("Type missmatch: expected %s, got %s".formatted(litType, valType),
@@ -354,7 +355,7 @@ public class TypeChecker
       } else if (field instanceof FormatDefinition.RangeFormatField rangeField) {
         if (rangeField.typeLiteral != null) {
           check(rangeField.typeLiteral);
-          rangeField.type = Objects.requireNonNull(rangeField.typeLiteral.type);
+          rangeField.type = requireNonNull(rangeField.typeLiteral.type);
         }
 
         int fieldBitWidth = 0;
@@ -413,7 +414,7 @@ public class TypeChecker
 
     if (bitsVerifier.hasViolations()) {
       throw Diagnostic.error("Invalid Format", definition)
-          .description("%s", Objects.requireNonNull(bitsVerifier.getViolationsMessage()))
+          .description("%s", requireNonNull(bitsVerifier.getViolationsMessage()))
           .build();
     }
 
@@ -445,8 +446,8 @@ public class TypeChecker
     check(definition.addressTypeLiteral);
     check(definition.dataTypeLiteral);
     definition.type = Type.concreteRelation(
-        List.of(Objects.requireNonNull(definition.addressTypeLiteral.type)),
-        Objects.requireNonNull(definition.dataTypeLiteral.type));
+        List.of(requireNonNull(definition.addressTypeLiteral.type)),
+        requireNonNull(definition.dataTypeLiteral.type));
     return null;
   }
 
@@ -470,14 +471,14 @@ public class TypeChecker
     check(definition.typeLiteral.resultType());
     definition.type = Type.concreteRelation(
         definition.typeLiteral.argTypes().stream().map(arg -> arg.type).toList(),
-        Objects.requireNonNull(definition.typeLiteral.resultType().type));
+        requireNonNull(definition.typeLiteral.resultType().type));
 
     return null;
   }
 
   @Override
   public Void visit(InstructionDefinition definition) {
-    if (Objects.requireNonNull(definition.formatNode).typeLiteral.type == null) {
+    if (requireNonNull(definition.formatNode).typeLiteral.type == null) {
       check(definition.formatNode);
     }
 
@@ -526,9 +527,9 @@ public class TypeChecker
     check(definition.expr);
 
     // Verify the types are compatible
-    var definedType = Objects.requireNonNull(definition.resultTypeLiteral.type);
+    var definedType = requireNonNull(definition.resultTypeLiteral.type);
     definition.expr = wrapImplicitCast(definition.expr, definedType);
-    var actualType = Objects.requireNonNull(definition.expr.type);
+    var actualType = requireNonNull(definition.expr.type);
     if (!definedType.equals(actualType)) {
       throw Diagnostic.error("Type Missmatch", definition.expr)
           .description("Expected %s but got %s", definedType, actualType)
@@ -549,12 +550,12 @@ public class TypeChecker
       }
 
       check(encodingField.value);
-      var fieldType = Objects.requireNonNull(
-          Objects.requireNonNull(definition.formatNode)
+      var fieldType = requireNonNull(
+          requireNonNull(definition.formatNode)
               .getFieldType(encodingField.field.name));
 
       encodingField.value = wrapImplicitCast(encodingField.value, fieldType);
-      var valueType = Objects.requireNonNull(encodingField.value.type);
+      var valueType = requireNonNull(encodingField.value.type);
 
       if (!fieldType.equals(valueType)) {
         throw Diagnostic.error("Type Mismatch", encodingField.value)
@@ -568,7 +569,7 @@ public class TypeChecker
   @Override
   public Void visit(AssemblyDefinition definition) {
     check(definition.expr);
-    var exprType = Objects.requireNonNull(definition.expr.type);
+    var exprType = requireNonNull(definition.expr.type);
 
     if (exprType.getClass() != StringType.class) {
       throw Diagnostic.error("Type Mismatch", definition.expr)
@@ -590,9 +591,9 @@ public class TypeChecker
     check(definition.retType);
     check(definition.expr);
 
-    var retType = Objects.requireNonNull(definition.retType.type);
+    var retType = requireNonNull(definition.retType.type);
     definition.expr = wrapImplicitCast(definition.expr, retType);
-    var exprType = Objects.requireNonNull(definition.expr.type);
+    var exprType = requireNonNull(definition.expr.type);
 
     if (!exprType.equals(retType)) {
       throw Diagnostic.error("Type Mismatch", definition.expr)
@@ -609,13 +610,57 @@ public class TypeChecker
 
   @Override
   public Void visit(AliasDefinition definition) {
-    throwUnimplemented(definition);
+    //throwUnimplemented(definition);
     return null;
   }
 
   @Override
   public Void visit(EnumerationDefinition definition) {
-    throwUnimplemented(definition);
+    var type = definition.enumType != null ? check(definition.enumType) : null;
+    if (type != null && !(type instanceof BitsType bitsType)) {
+      throw Diagnostic.error("Type mismatch", definition)
+          .locationDescription(requireNonNull(definition.enumType),
+              "Expected bits type length but got `%s`", type)
+          .note("In future there will be support for Strings and other types as well.")
+          .build();
+    }
+
+    // check if there are enums
+    if (definition.entries.isEmpty()) {
+      throw Diagnostic.error("No enumeration entries", definition)
+          .locationDescription(definition,
+              "The enumeration has no entries, but at least one is required.")
+          .build();
+    }
+
+
+    int nextVal = 0;
+    for (var entry : definition.entries) {
+      if (entry.value != null) {
+        nextVal = constantEvaluator.eval(entry.value).value().intValueExact() + 1;
+        continue;
+      }
+
+      // if value is not set, we use the last value + 1.
+      entry.value =
+          new IntegerLiteral(String.valueOf(nextVal), SourceLocation.INVALID_SOURCE_LOCATION);
+      nextVal++;
+    }
+
+    definition.entries.forEach(e -> check(requireNonNull(e.value)));
+
+    // Insert casts when type exists
+    if (type != null) {
+      for (var entry : definition.entries) {
+        entry.value = wrapImplicitCast(requireNonNull(entry.value), type);
+        if (!entry.value.type().equals(type)) {
+          throw Diagnostic.error("Type mismatch", entry.value)
+              .description("Expected %s but got `%s`", type, entry.value.type())
+              .build();
+        }
+      }
+    }
+
     return null;
   }
 
@@ -772,7 +817,7 @@ public class TypeChecker
   public Void visit(AsmGrammarRuleDefinition definition) {
     if (definition.isBuiltinRule) {
       definition.asmType =
-          getAsmTypeFromAsmTypeDefinition(Objects.requireNonNull(definition.asmTypeDefinition));
+          getAsmTypeFromAsmTypeDefinition(requireNonNull(definition.asmTypeDefinition));
       return null;
     }
 
@@ -1053,8 +1098,8 @@ public class TypeChecker
             "Assigning to unknown local variable %s.".formatted(definition.attribute.name));
       }
 
-      Objects.requireNonNull(definition.asmType);
-      Objects.requireNonNull(localVarDefinition.asmType);
+      requireNonNull(definition.asmType);
+      requireNonNull(localVarDefinition.asmType);
       if (localVarDefinition.asmType != definition.asmType) {
         throw Diagnostic.error("Type Mismatch", definition)
             .locationDescription(localVarDefinition, "Local variable %s is "
@@ -1207,10 +1252,10 @@ public class TypeChecker
     for (int i = 0; i < enclosingAsmLiteral.parameters.size(); i++) {
       var asmParam = enclosingAsmLiteral.parameters.get(i);
       check(asmParam);
-      Objects.requireNonNull(asmParam.asmType);
+      requireNonNull(asmParam.asmType);
 
       var argumentType = function.params.get(i).typeLiteral.type;
-      Objects.requireNonNull(argumentType);
+      requireNonNull(argumentType);
 
       if (!canImplicitCast(asmParam.asmType.toOperationalType(), argumentType)) {
         throw Diagnostic.error("Type Mismatch in function argument", enclosingAsmLiteral)
@@ -1221,7 +1266,7 @@ public class TypeChecker
       }
     }
 
-    Objects.requireNonNull(function.retType.type);
+    requireNonNull(function.retType.type);
     var returnType = AsmType.getAsmTypeFromOperationalType(function.retType.type);
     determineAsmTypeForEnclosingLiteral(enclosingAsmLiteral, returnType);
   }
@@ -1309,7 +1354,7 @@ public class TypeChecker
   public Void visit(CpuFunctionDefinition definition) {
     if (definition.kind == CpuFunctionDefinition.BehaviorKind.START) {
       check(definition.expr);
-      var exprType = Objects.requireNonNull(definition.expr.type);
+      var exprType = requireNonNull(definition.expr.type);
       // FIXME: the type must fit into the memory index (address).
       if (!(exprType instanceof DataType)) {
         throw Diagnostic.error("Type mismatch", definition.expr)
@@ -1389,11 +1434,11 @@ public class TypeChecker
     String fullName;
 
     if (expr instanceof Identifier identifier) {
-      origin = Objects.requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
+      origin = requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
       innerName = identifier.name;
       fullName = identifier.name;
     } else if (expr instanceof IdentifierPath path) {
-      origin = Objects.requireNonNull(expr.symbolTable).findAs(path, Node.class);
+      origin = requireNonNull(expr.symbolTable).findAs(path, Node.class);
       var segments = path.pathToSegments();
       innerName = segments.get(segments.size() - 1);
       fullName = path.pathToString();
@@ -1432,19 +1477,19 @@ public class TypeChecker
 
     if (origin instanceof CounterDefinition counter) {
       check(counter);
-      expr.type = Objects.requireNonNull(counter.typeLiteral.type);
+      expr.type = requireNonNull(counter.typeLiteral.type);
       return;
     }
 
     if (origin instanceof LetExpr letExpr) {
       // No need to check because this can only be the case if we are inside the let statement.
-      expr.type = Objects.requireNonNull(letExpr.valueExpr.type);
+      expr.type = requireNonNull(letExpr.valueExpr.type);
       return;
     }
 
     if (origin instanceof LetStatement letStatement) {
       // No need to check because this can only be the case if we are inside the let statement.
-      expr.type = Objects.requireNonNull(letStatement.getTypeOf(innerName));
+      expr.type = requireNonNull(letStatement.getTypeOf(innerName));
       return;
     }
 
@@ -1464,7 +1509,12 @@ public class TypeChecker
 
     if (origin instanceof RegisterDefinition registerDefinition) {
       check(registerDefinition);
-      expr.type = Objects.requireNonNull(registerDefinition.type);
+      expr.type = requireNonNull(registerDefinition.type);
+      return;
+    }
+
+    if (origin instanceof EnumerationDefinition.Entry enumEntry) {
+      expr.type = check(requireNonNull(enumEntry.value));
       return;
     }
 
@@ -1496,7 +1546,7 @@ public class TypeChecker
   }
 
   private void visitLogicalBinaryExpression(BinaryExpr expr) {
-    var leftTyp = Objects.requireNonNull(expr.left.type);
+    var leftTyp = requireNonNull(expr.left.type);
 
     // Both sides must be boolean
     if (!(leftTyp instanceof BoolType) && !canImplicitCast(leftTyp, Type.bool())) {
@@ -1508,7 +1558,7 @@ public class TypeChecker
     }
     expr.left = wrapImplicitCast(expr.left, Type.bool());
 
-    var rightTyp = Objects.requireNonNull(expr.right.type);
+    var rightTyp = requireNonNull(expr.right.type);
     if (!(rightTyp instanceof BoolType) && !canImplicitCast(rightTyp, Type.bool())) {
       throw Diagnostic.error("Type Mismatch", expr)
           .locationDescription(expr, "Expected a Boolean here but the right side was an `%s`",
@@ -1540,11 +1590,11 @@ public class TypeChecker
 
       if (leftTyp.equals(Type.bool())) {
         expr.left = wrapImplicitCast(expr.left, Type.bits(1));
-        leftTyp = Objects.requireNonNull(expr.left.type);
+        leftTyp = requireNonNull(expr.left.type);
       }
       if (rightTyp.equals(Type.bool())) {
         expr.right = wrapImplicitCast(expr.right, Type.bits(1));
-        rightTyp = Objects.requireNonNull(expr.right.type);
+        rightTyp = requireNonNull(expr.right.type);
       }
 
       if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
@@ -1587,7 +1637,7 @@ public class TypeChecker
 
       if (!(rightTyp instanceof UIntType)) {
         expr.right = new CastExpr(expr.right, closestUIntType);
-        rightTyp = Objects.requireNonNull(expr.right.type);
+        rightTyp = requireNonNull(expr.right.type);
       }
 
       // Only the left side decides the output type
@@ -1619,11 +1669,11 @@ public class TypeChecker
     // If only one type is const, cast it to it's partner (or as close as possible)
     if (leftTyp instanceof ConstantType leftConstType) {
       expr.left = new CastExpr(expr.left, leftConstType.closestTo(rightTyp));
-      leftTyp = Objects.requireNonNull(expr.left.type);
+      leftTyp = requireNonNull(expr.left.type);
     } else if (rightTyp instanceof ConstantType rightConstType) {
       expr.right =
           new CastExpr(expr.right, rightConstType.closestTo(leftTyp));
-      rightTyp = Objects.requireNonNull(expr.right.type);
+      rightTyp = requireNonNull(expr.right.type);
     }
 
     // Long Multiply has different rules than all other arithmetic operations
@@ -1670,22 +1720,22 @@ public class TypeChecker
 
     if (((BitsType) leftTyp).bitWidth() == ((BitsType) rightTyp).bitWidth()
         && specialBinaryPattern.containsKey(Pair.of(leftTyp, rightTyp))) {
-      var target = Objects.requireNonNull(specialBinaryPattern.get(Pair.of(leftTyp, rightTyp)));
+      var target = requireNonNull(specialBinaryPattern.get(Pair.of(leftTyp, rightTyp)));
       if (!leftTyp.equals(target.left())) {
         expr.left = new CastExpr(expr.left, target.left());
-        leftTyp = Objects.requireNonNull(expr.left.type);
+        leftTyp = expr.left.type();
       } else {
         expr.right = new CastExpr(expr.right, target.right());
-        rightTyp = Objects.requireNonNull(expr.right.type);
+        rightTyp = expr.right.type();
       }
     }
 
     // Apply general implicit casting rules after specialised once.
     expr.left = wrapImplicitCast(expr.left, rightTyp);
-    leftTyp = Objects.requireNonNull(expr.left.type);
+    leftTyp = expr.left.type();
 
     expr.right = wrapImplicitCast(expr.right, leftTyp);
-    rightTyp = Objects.requireNonNull(expr.right.type);
+    rightTyp = expr.right.type();
 
     if (!leftTyp.equals(rightTyp)) {
       throw Diagnostic.error("Type Missmatch", expr)
@@ -1856,7 +1906,7 @@ public class TypeChecker
               .build();
         }
       } else {
-        bitWidth = Objects.requireNonNull(preferredBitWidth);
+        bitWidth = requireNonNull(preferredBitWidth);
       }
 
       return switch (base) {
@@ -2034,7 +2084,7 @@ public class TypeChecker
             .build();
       }
 
-      var range = Objects.requireNonNull(formatType.format.getFieldRange(subCall.id().name));
+      var range = requireNonNull(formatType.format.getFieldRange(subCall.id().name));
       from = range.from() + to;
       to = range.to() + to;
 
@@ -2053,7 +2103,7 @@ public class TypeChecker
       return null;
     }
 
-    var callTarget = Objects.requireNonNull(expr.symbolTable)
+    var callTarget = requireNonNull(expr.symbolTable)
         .findAs(expr.target.path().pathToString(), Definition.class);
 
     // Handle register File
@@ -2070,10 +2120,10 @@ public class TypeChecker
 
       check(registerFile);
       var requiredArgType =
-          Objects.requireNonNull(Objects.requireNonNull(registerFile.type).argTypes().get(0));
+          requireNonNull(requireNonNull(registerFile.type).argTypes().get(0));
       argList.set(0, wrapImplicitCast(arg, requiredArgType));
       arg = argList.get(0);
-      var actualArgType = Objects.requireNonNull(arg.type);
+      var actualArgType = arg.type();
 
       if (!actualArgType.equals(requiredArgType)) {
         throw Diagnostic.error("Type Mismatch", arg)
@@ -2081,7 +2131,7 @@ public class TypeChecker
             .build();
       }
 
-      var typeBeforeSubCalls = Objects.requireNonNull(registerFile.type).resultType();
+      var typeBeforeSubCalls = registerFile.type().resultType();
       expr.computedTarget = registerFile;
       visitSubCall(expr, typeBeforeSubCalls);
       return null;
@@ -2102,11 +2152,11 @@ public class TypeChecker
 
       check(memDef);
       var requiredArgType =
-          Objects.requireNonNull(Objects.requireNonNull(memDef.type).argTypes().get(0));
+          requireNonNull(requireNonNull(memDef.type).argTypes().get(0));
 
       argList.set(0, wrapImplicitCast(arg, requiredArgType));
       arg = argList.get(0);
-      var actualArgType = Objects.requireNonNull(arg.type);
+      var actualArgType = arg.type();
 
       if (!actualArgType.equals(requiredArgType)) {
         throw Diagnostic.error("Type Mismatch", arg)
@@ -2114,7 +2164,7 @@ public class TypeChecker
             .build();
       }
 
-      var callType = Objects.requireNonNull(memDef.type).resultType();
+      var callType = memDef.type().resultType();
       if (expr.target instanceof SymbolExpr targetSymbol) {
         int multiplier = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
         if (!(callType instanceof BitsType callBitsType)) {
@@ -2167,7 +2217,7 @@ public class TypeChecker
     if (callTarget instanceof FunctionDefinition functionDef) {
       check(functionDef);
       verifyNoSubcall(expr, "user defined Function");
-      var funcType = Objects.requireNonNull(functionDef.type);
+      var funcType = functionDef.type();
       var expectedArgCount = funcType.argTypes().size();
       var actualArgCount = expr.flatArgs().size();
       if (expectedArgCount != actualArgCount) {
@@ -2186,7 +2236,7 @@ public class TypeChecker
           expr.argsIndices.get(i)
               .set(j, wrapImplicitCast(argNode, funcType.argTypes().get(argCount)));
           argNode = expr.argsIndices.get(i).get(j);
-          if (!Objects.requireNonNull(argNode.type).equals(funcType.argTypes().get(argCount))) {
+          if (!argNode.type().equals(funcType.argTypes().get(argCount))) {
             throw Diagnostic.error("Type Mismatch", argNode)
                 .description("Expected %s but got `%s`", funcType.argTypes(), argNode)
                 .build();
@@ -2204,7 +2254,7 @@ public class TypeChecker
     if (callTarget instanceof RelocationDefinition relocationDef) {
       check(relocationDef);
       verifyNoSubcall(expr, relocationDef);
-      var relocationType = Objects.requireNonNull(relocationDef.type);
+      var relocationType = relocationDef.type();
       var expectedArgCount = relocationType.argTypes().size();
       var actualArgCount = expr.flatArgs().size();
       if (expectedArgCount != actualArgCount) {
@@ -2223,7 +2273,7 @@ public class TypeChecker
           expr.argsIndices.get(i)
               .set(j, wrapImplicitCast(argNode, relocationType.argTypes().get(argCount)));
           argNode = expr.argsIndices.get(i).get(j);
-          if (!Objects.requireNonNull(argNode.type)
+          if (!argNode.type()
               .equals(relocationType.argTypes().get(argCount))) {
             throw Diagnostic.error("Type Mismatch", argNode)
                 .description("Expected %s but got `%s`", relocationType.argTypes(), argNode)
@@ -2242,7 +2292,7 @@ public class TypeChecker
     // identifier and later rewrite the type with the subcalls.
     if (expr.flatArgs().isEmpty() && !expr.subCalls.isEmpty()) {
       visit((Identifier) expr.target);
-      var typeBeforeSubcall = Objects.requireNonNull(((Identifier) expr.target).type);
+      var typeBeforeSubcall = ((Identifier) expr.target).type();
       expr.computedTarget = callTarget;
       visitSubCall(expr, typeBeforeSubcall);
       return null;
@@ -2251,7 +2301,7 @@ public class TypeChecker
 
     // Builtin function
     expr.flatArgs().forEach(this::check);
-    var argTypes = Objects.requireNonNull(expr.flatArgs().stream().map(v -> v.type)).toList();
+    var argTypes = requireNonNull(expr.flatArgs().stream().map(v -> v.type)).toList();
     var builtin = getBuiltIn(expr.target.path().pathToString(), argTypes);
     if (builtin != null) {
       // FIXME: Find a better solution that is universal enough for binary operations and builtin
@@ -2261,7 +2311,7 @@ public class TypeChecker
       // If the function is also a unary operation, we instead type check it as if it were a unary
       // operation which has some special type rules.
       if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 1) {
-        var operatorSymbol = Objects.requireNonNull(builtin.operator());
+        var operatorSymbol = requireNonNull(builtin.operator());
         if (operatorSymbol.equals("~") && expr.flatArgs().get(0).type instanceof BoolType) {
           operatorSymbol = "!";
         }
@@ -2278,7 +2328,7 @@ public class TypeChecker
       // If the function is also a binary operation, we instead type check it as if it were a binary
       // operation which has some special type rules.
       if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
-        var operator = Objects.requireNonNull(Operator.fromString(builtin.operator()));
+        var operator = requireNonNull(Operator.fromString(builtin.operator()));
         var fakeBinExpr = new BinaryExpr(expr.flatArgs().get(0), new BinOp(operator, expr.location),
             expr.flatArgs().get(1));
         check(fakeBinExpr);
@@ -2288,7 +2338,7 @@ public class TypeChecker
         expr.type = fakeBinExpr.type;
       }
 
-      argTypes = Objects.requireNonNull(expr.flatArgs().stream().map(v -> v.type)).toList();
+      argTypes = requireNonNull(expr.flatArgs().stream().map(v -> v.type)).toList();
       if (!builtin.takes(argTypes)) {
         throw Diagnostic.error("Type Mismatch", expr)
             .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
@@ -2317,7 +2367,7 @@ public class TypeChecker
   public Void visit(IfExpr expr) {
     check(expr.condition);
     expr.condition = wrapImplicitCast(expr.condition, Type.bool());
-    var condType = Objects.requireNonNull(expr.condition.type);
+    var condType = expr.condition.type();
     if (condType != Type.bool()) {
       throw Diagnostic.error("Type Mismatch", expr.condition)
           .description("Expected %s but got `%s`", Type.bool(), condType)
@@ -2329,9 +2379,9 @@ public class TypeChecker
 
     // Apply general implicit casting rules after specialised once.
     expr.thenExpr = wrapImplicitCast(expr.thenExpr, elseType);
-    thenType = Objects.requireNonNull(expr.thenExpr.type);
+    thenType = expr.thenExpr.type();
     expr.elseExpr = wrapImplicitCast(expr.elseExpr, thenType);
-    elseType = Objects.requireNonNull(expr.elseExpr.type);
+    elseType = expr.elseExpr.type();
 
     if (!thenType.equals(elseType)) {
       throw Diagnostic.error("Type Mismatch", expr)
@@ -2358,7 +2408,7 @@ public class TypeChecker
     var valType = check(expr.value);
 
     expr.typeLiteral.type = parseTypeLiteral(expr.typeLiteral, preferredBitWidthOf(valType));
-    var litType = Objects.requireNonNull(expr.typeLiteral.type);
+    var litType = expr.typeLiteral.type();
 
     // FIXME: For complex types add restrictions here
 
@@ -2447,7 +2497,7 @@ public class TypeChecker
   public Void visit(IfStatement statement) {
     check(statement.condition);
     statement.condition = wrapImplicitCast(statement.condition, Type.bool());
-    var condType = Objects.requireNonNull(statement.condition.type);
+    var condType = statement.condition.type();
     if (condType != Type.bool()) {
       throw Diagnostic.error("Type Mismatch", statement.condition)
           .description("Expected `%s` but got `%s`", Type.bool(), condType)
@@ -2466,8 +2516,8 @@ public class TypeChecker
     check(statement.target);
     check(statement.valueExpression);
 
-    var targetType = Objects.requireNonNull(statement.target.type);
-    var valueType = Objects.requireNonNull(statement.valueExpression.type);
+    var targetType = statement.target.type();
+    var valueType = statement.valueExpression.type();
 
     if (!targetType.equals(valueType) && canImplicitCast(valueType, targetType)) {
       statement.valueExpression =
@@ -2546,19 +2596,19 @@ public class TypeChecker
       // Implicit cast and check the arguments
       for (var i = 0; i < statement.namedArguments.size(); i++) {
         // TODO: Check all format fields that arne't part of the ecoding
-        var format = Objects.requireNonNull(instrDef.formatNode);
+        var format = requireNonNull(instrDef.formatNode);
 
         var arg = statement.namedArguments.get(i);
         // FIXME: better error
-        var targetType = Objects.requireNonNull(format.getFieldType(arg.name().name));
+        var targetType = requireNonNull(format.getFieldType(arg.name.name));
 
-        check(arg.value());
+        check(arg.value);
 
         statement.namedArguments.set(i,
-            new InstructionCallStatement.NamedArgument(arg.name(),
-                wrapImplicitCast(arg.value(), targetType)));
+            new InstructionCallStatement.NamedArgument(arg.name,
+                wrapImplicitCast(arg.value, targetType)));
         arg = statement.namedArguments.get(i);
-        var actualType = Objects.requireNonNull(arg.value().type);
+        var actualType = arg.value.type();
 
         if (!targetType.equals(actualType)) {
           throw Diagnostic.error("Type Mismatch", arg.location())
@@ -2590,13 +2640,13 @@ public class TypeChecker
 
       // Implicit cast and check the arguments
       for (var i = 0; i < statement.unnamedArguments.size(); i++) {
-        var targetType = Objects.requireNonNull(pseudoDef.params.get(i).typeLiteral.type);
+        var targetType = pseudoDef.params.get(i).typeLiteral.type();
         var arg = statement.unnamedArguments.get(i);
         check(arg);
         statement.unnamedArguments.set(i,
             wrapImplicitCast(arg, targetType));
         arg = statement.unnamedArguments.get(i);
-        var actualType = Objects.requireNonNull(statement.unnamedArguments.get(i).type);
+        var actualType = statement.unnamedArguments.get(i).type();
 
         if (!targetType.equals(actualType)) {
           throw Diagnostic.error("Type Mismatch", arg.location())

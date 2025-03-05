@@ -480,17 +480,15 @@ class SymbolTable {
           collectSymbols(symbols, alias.targetType);
         }
       } else if (definition instanceof EnumerationDefinition enumeration) {
+        enumeration.symbolTable = symbols.createChild();
+        symbols.defineSymbol(enumeration);
         if (enumeration.enumType != null) {
           collectSymbols(symbols, enumeration.enumType);
         }
         for (EnumerationDefinition.Entry entry : enumeration.entries) {
-          String path = enumeration.identifier().name + "::" + entry.name().name;
-          symbols.defineSymbol(path, enumeration);
-          if (entry.value() != null) {
-            collectSymbols(symbols, entry.value());
-          }
-          if (entry.behavior() != null) {
-            collectSymbols(symbols, entry.behavior());
+          enumeration.symbolTable().defineSymbol(entry.name.name, entry);
+          if (entry.value != null) {
+            collectSymbols(symbols, entry.value);
           }
         }
       } else if (definition instanceof ExceptionDefinition exception) {
@@ -710,14 +708,14 @@ class SymbolTable {
           collectSymbols(symbols, match.defaultResult);
         }
         for (MatchStatement.Case matchCase : match.cases) {
-          collectSymbols(symbols, matchCase.result());
-          for (Expr pattern : matchCase.patterns()) {
+          collectSymbols(symbols, matchCase.result);
+          for (Expr pattern : matchCase.patterns) {
             collectSymbols(symbols, pattern);
           }
         }
       } else if (stmt instanceof InstructionCallStatement instructionCall) {
         for (var namedArgument : instructionCall.namedArguments) {
-          collectSymbols(symbols, namedArgument.value());
+          collectSymbols(symbols, namedArgument.value);
         }
         for (var unnamedArgument : instructionCall.unnamedArguments) {
           collectSymbols(symbols, unnamedArgument);
@@ -785,8 +783,8 @@ class SymbolTable {
         collectSymbols(symbols, match.candidate);
         collectSymbols(symbols, match.defaultResult);
         for (MatchExpr.Case matchCase : match.cases) {
-          collectSymbols(symbols, matchCase.result());
-          for (Expr pattern : matchCase.patterns()) {
+          collectSymbols(symbols, matchCase.result);
+          for (Expr pattern : matchCase.patterns) {
             collectSymbols(symbols, pattern);
           }
         }
@@ -949,11 +947,8 @@ class SymbolTable {
         resolveSymbols(alias.value);
       } else if (definition instanceof EnumerationDefinition enumeration) {
         for (EnumerationDefinition.Entry entry : enumeration.entries) {
-          if (entry.value() != null) {
-            resolveSymbols(entry.value());
-          }
-          if (entry.behavior() != null) {
-            resolveSymbols(entry.behavior());
+          if (entry.value != null) {
+            resolveSymbols(entry.value);
           }
         }
       } else if (definition instanceof ExceptionDefinition exception) {
@@ -1123,8 +1118,8 @@ class SymbolTable {
           resolveSymbols(match.defaultResult);
         }
         for (MatchStatement.Case matchCase : match.cases) {
-          resolveSymbols(matchCase.result());
-          for (Expr pattern : matchCase.patterns()) {
+          resolveSymbols(matchCase.result);
+          for (Expr pattern : matchCase.patterns) {
             resolveSymbols(pattern);
           }
         }
@@ -1137,17 +1132,17 @@ class SymbolTable {
           for (var namedArgument : instructionCall.namedArguments) {
             FormatDefinition.FormatField foundField = null;
             for (var field : format.fields) {
-              if (field.identifier().name.equals(namedArgument.name().name)) {
+              if (field.identifier().name.equals(namedArgument.name.name)) {
                 foundField = field;
                 break;
               }
             }
             if (foundField == null) {
               instructionCall.symbolTable()
-                  .reportError("Unknown format field " + namedArgument.name().name,
-                      namedArgument.name().location());
+                  .reportError("Unknown format field " + namedArgument.name.name,
+                      namedArgument.name.location());
             }
-            resolveSymbols(namedArgument.value());
+            resolveSymbols(namedArgument.value);
           }
         } else {
           var pseudoInstr =
@@ -1158,7 +1153,7 @@ class SymbolTable {
             for (var namedArgument : instructionCall.namedArguments) {
               Parameter foundParam = null;
               for (var param : pseudoInstr.params) {
-                if (param.identifier().name.equals(namedArgument.name().name)) {
+                if (param.identifier().name.equals(namedArgument.name.name)) {
                   foundParam = param;
                   break;
                 }
@@ -1166,11 +1161,11 @@ class SymbolTable {
               if (foundParam == null) {
                 instructionCall.symbolTable()
                     .reportError(
-                        "Unknown instruction param %s (%s)".formatted(namedArgument.name().name,
+                        "Unknown instruction param %s (%s)".formatted(namedArgument.name.name,
                             pseudoInstr.identifier().name),
-                        namedArgument.name().location());
+                        namedArgument.name.location());
               }
-              resolveSymbols(namedArgument.value());
+              resolveSymbols(namedArgument.value);
             }
           } else {
             instructionCall.symbolTable()
@@ -1243,8 +1238,8 @@ class SymbolTable {
         resolveSymbols(match.candidate);
         resolveSymbols(match.defaultResult);
         for (MatchExpr.Case matchCase : match.cases) {
-          resolveSymbols(matchCase.result());
-          for (Expr pattern : matchCase.patterns()) {
+          resolveSymbols(matchCase.result);
+          for (Expr pattern : matchCase.patterns) {
             resolveSymbols(pattern);
           }
         }

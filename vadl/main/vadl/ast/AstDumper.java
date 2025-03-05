@@ -111,8 +111,8 @@ public class AstDumper
     }
     for (var auxField : definition.auxiliaryFields) {
       for (FormatDefinition.AuxiliaryFieldEntry entry : auxField.entries()) {
-        dumpChildren(entry.id());
-        dumpChildren(entry.expr());
+        dumpChildren(entry.id);
+        dumpChildren(entry.expr);
       }
     }
     this.indent--;
@@ -334,12 +334,9 @@ public class AstDumper
       dumpChildren(definition.enumType);
     }
     for (var entry : definition.entries) {
-      dumpChildren(entry.name());
-      if (entry.value() != null) {
-        dumpChildren(entry.value());
-      }
-      if (entry.behavior() != null) {
-        dumpChildren(entry.behavior());
+      dumpChildren(entry.name);
+      if (entry.value != null) {
+        dumpChildren(entry.value);
       }
     }
     return null;
@@ -787,8 +784,8 @@ public class AstDumper
     dumpNode(expr);
     dumpChildren(expr.candidate, expr.defaultResult);
     for (var matchCase : expr.cases) {
-      dumpChildren(matchCase.patterns());
-      dumpChildren(matchCase.result());
+      dumpChildren(matchCase.patterns);
+      dumpChildren(matchCase.result);
     }
     return null;
   }
@@ -934,8 +931,8 @@ public class AstDumper
       dumpChildren(matchStatement.defaultResult);
     }
     for (var matchCase : matchStatement.cases) {
-      dumpChildren(matchCase.patterns());
-      dumpChildren(matchCase.result());
+      dumpChildren(matchCase.patterns);
+      dumpChildren(matchCase.result);
     }
     return null;
   }
@@ -952,7 +949,7 @@ public class AstDumper
     dumpNode(instructionCallStatement);
     dumpChildren(instructionCallStatement.id());
     dumpChildren(instructionCallStatement.namedArguments.stream()
-        .flatMap(namedArgument -> Stream.of(namedArgument.name(), namedArgument.value())).toList());
+        .flatMap(namedArgument -> Stream.of(namedArgument.name, namedArgument.value)).toList());
     dumpChildren(instructionCallStatement.unnamedArguments);
     return null;
   }

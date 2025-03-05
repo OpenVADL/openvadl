@@ -16,19 +16,23 @@
 
 package vadl.ast;
 
-import java.util.ArrayList;
-
 /**
  * Removes all group expressions recursively.
  * Groups are needed in the AST during parsing until all binary expressions are reordered, but can
  * then be removed. This is especially useful for testing, where two AST trees are often tested
  * for semantic equality and thus ungrouped before comparison.
+ *
+ * <p>NOTE: Do not replace any AST nodes here!
+ * Because at this point in time, the symbol resolver already ran and if nodes get replaced the
+ * SymbolTable will point to nodes no longer in the AST.
+ * This will eventually fail when the typechecker assigns types to nodes in the AST but the
+ * resolved symbols from the SymbolTable won't have any types.
  */
 public class Ungrouper
-    implements ExprVisitor<Expr>, DefinitionVisitor<Definition>, StatementVisitor<Statement> {
+    implements ExprVisitor<Expr>, DefinitionVisitor<Void>, StatementVisitor<Void> {
 
   public void ungroup(Ast ast) {
-    ast.definitions.replaceAll(definition -> definition.accept(this));
+    ast.definitions.forEach(def -> def.accept(this));
   }
 
   @Override
@@ -48,9 +52,8 @@ public class Ungrouper
     if (expr.expressions.size() == 1) {
       return expr.expressions.get(0).accept(this);
     }
-    var expressions = new ArrayList<>(expr.expressions);
-    expressions.replaceAll(e -> e.accept(this));
-    return new GroupedExpr(expressions, expr.loc);
+    expr.expressions.replaceAll(e -> e.accept(this));
+    return expr;
   }
 
   @Override
@@ -109,49 +112,32 @@ public class Ungrouper
   @Override
   public Expr visit(CallExpr expr) {
     expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
-    var argsIndices = expr.argsIndices;
-    expr.argsIndices = new ArrayList<>(argsIndices.size());
-    for (var entry : argsIndices) {
-      var args = new ArrayList<Expr>(entry.size());
-      for (var arg : entry) {
-        args.add(arg.accept(this));
-      }
-      expr.argsIndices.add(args);
+    for (var entry : expr.argsIndices) {
+      entry.replaceAll(e -> e.accept(this));
     }
-    var subCalls = expr.subCalls;
-    expr.subCalls = new ArrayList<>(subCalls.size());
-    for (var subCall : subCalls) {
-      argsIndices = new ArrayList<>(subCall.argsIndices().size());
+
+    for (var subCall : expr.subCalls) {
       for (var entry : subCall.argsIndices()) {
-        var args = new ArrayList<Expr>(entry.size());
-        for (var arg : entry) {
-          args.add(arg.accept(this));
-        }
-        argsIndices.add(args);
+        entry.replaceAll(e -> e.accept(this));
       }
-      expr.subCalls.add(new CallExpr.SubCall(subCall.id(), argsIndices));
     }
+
     return expr;
   }
 
   @Override
   public Expr visit(IfExpr expr) {
-    return new IfExpr(
-        expr.condition.accept(this),
-        expr.thenExpr.accept(this),
-        expr.elseExpr.accept(this),
-        expr.location
-    );
+    expr.condition = expr.condition.accept(this);
+    expr.thenExpr = expr.thenExpr.accept(this);
+    expr.elseExpr = expr.elseExpr.accept(this);
+    return expr;
   }
 
   @Override
   public Expr visit(LetExpr expr) {
-    return new LetExpr(
-        expr.identifiers,
-        expr.valueExpr.accept(this),
-        expr.body.accept(this),
-        expr.location
-    );
+    expr.valueExpr = expr.valueExpr.accept(this);
+    expr.body = expr.body.accept(this);
+    return expr;
   }
 
   @Override
@@ -175,9 +161,9 @@ public class Ungrouper
   public Expr visit(MatchExpr expr) {
     expr.candidate = expr.candidate.accept(this);
     expr.defaultResult = expr.defaultResult.accept(this);
-    expr.cases.replaceAll(matchCase -> {
-      matchCase.patterns().replaceAll(pattern -> pattern.accept(this));
-      return new MatchExpr.Case(matchCase.patterns(), matchCase.result().accept(this));
+    expr.cases.forEach(matchCase -> {
+      matchCase.patterns.replaceAll(pattern -> pattern.accept(this));
+      matchCase.result = matchCase.result.accept(this);
     });
     return expr;
   }
@@ -209,8 +195,8 @@ public class Ungrouper
 
   @Override
   public Expr visit(ForallExpr expr) {
-    expr.indices.replaceAll(
-        index -> new ForallExpr.Index(index.identifier(), index.domain.accept(this)));
+    expr.indices.forEach(
+        index -> index.domain = index.domain.accept(this));
     expr.expr = expr.expr.accept(this);
     return expr;
   }
@@ -221,14 +207,14 @@ public class Ungrouper
   }
 
   @Override
-  public Definition visit(ConstantDefinition definition) {
+  public Void visit(ConstantDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(FormatDefinition definition) {
+  public Void visit(FormatDefinition definition) {
     ungroupAnnotations(definition);
     for (FormatDefinition.FormatField field : definition.fields) {
       if (field instanceof FormatDefinition.RangeFormatField f) {
@@ -238,434 +224,438 @@ public class Ungrouper
       }
     }
     for (FormatDefinition.AuxiliaryField auxiliaryField : definition.auxiliaryFields) {
-      auxiliaryField.entries().replaceAll(entry ->
-          new FormatDefinition.AuxiliaryFieldEntry(entry.id(), entry.expr().accept(this)));
+      auxiliaryField.entries().forEach(entry -> entry.expr = entry.expr.accept(this));
     }
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(InstructionSetDefinition definition) {
+  public Void visit(InstructionSetDefinition definition) {
     ungroupAnnotations(definition);
-    definition.definitions.replaceAll(d -> d.accept(this));
-    return definition;
+    definition.definitions.forEach(d -> d.accept(this));
+    return null;
   }
 
   @Override
-  public Definition visit(CounterDefinition definition) {
+  public Void visit(CounterDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(MemoryDefinition definition) {
+  public Void visit(MemoryDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(RegisterDefinition definition) {
+  public Void visit(RegisterDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(RegisterFileDefinition definition) {
+  public Void visit(RegisterFileDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(InstructionDefinition definition) {
+  public Void visit(InstructionDefinition definition) {
     ungroupAnnotations(definition);
-    definition.behavior = definition.behavior.accept(this);
-    return definition;
+    definition.behavior.accept(this);
+    return null;
   }
 
   @Override
-  public Definition visit(PseudoInstructionDefinition definition) {
+  public Void visit(PseudoInstructionDefinition definition) {
     ungroupAnnotations(definition);
-    definition.statements.replaceAll(this::visit);
-    return definition;
+    definition.statements.forEach(this::visit);
+    return null;
   }
 
   @Override
-  public Definition visit(RelocationDefinition definition) {
+  public Void visit(RelocationDefinition definition) {
     definition.expr = definition.expr.accept(this);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(EncodingDefinition definition) {
+  public Void visit(EncodingDefinition definition) {
     ungroupAnnotations(definition);
-    definition.encodings.items.replaceAll(encoding -> {
+    definition.encodings.items.forEach(encoding -> {
       var enc = (EncodingDefinition.EncodingField) encoding;
-      return new EncodingDefinition.EncodingField(enc.field, enc.value.accept(this));
+      enc.value = enc.value.accept(this);
     });
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(AssemblyDefinition definition) {
+  public Void visit(AssemblyDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(UsingDefinition definition) {
+  public Void visit(UsingDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(FunctionDefinition definition) {
+  public Void visit(FunctionDefinition definition) {
     ungroupAnnotations(definition);
     definition.expr = definition.expr.accept(this);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(AliasDefinition definition) {
+  public Void visit(AliasDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(EnumerationDefinition definition) {
+  public Void visit(EnumerationDefinition definition) {
     ungroupAnnotations(definition);
-    definition.entries.replaceAll(entry -> new EnumerationDefinition.Entry(entry.name(),
-        entry.value() == null ? null : entry.value().accept(this),
-        entry.behavior() == null ? null : entry.behavior().accept(this)));
-    return definition;
+    for (var entry : definition.entries) {
+      if (entry.value != null) {
+        entry.value = entry.value.accept(this);
+      }
+    }
+    return null;
   }
 
   @Override
-  public Definition visit(ExceptionDefinition definition) {
+  public Void visit(ExceptionDefinition definition) {
     ungroupAnnotations(definition);
-    definition.statement = definition.statement.accept(this);
-    return definition;
+    definition.statement.accept(this);
+    return null;
   }
 
   @Override
-  public Definition visit(PlaceholderDefinition definition) {
+  public Void visit(PlaceholderDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(MacroInstanceDefinition definition) {
+  public Void visit(MacroInstanceDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(MacroMatchDefinition definition) {
-    return definition;
+  public Void visit(MacroMatchDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(DefinitionList definition) {
+  public Void visit(DefinitionList definition) {
     for (Definition item : definition.items) {
       item.accept(this);
     }
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(ModelDefinition definition) {
-    return definition;
+  public Void visit(ModelDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(RecordTypeDefinition definition) {
-    return definition;
+  public Void visit(RecordTypeDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(ModelTypeDefinition definition) {
-    return definition;
+  public Void visit(ModelTypeDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(ImportDefinition importDefinition) {
-    return importDefinition;
+  public Void visit(ImportDefinition importDefinition) {
+    return null;
   }
 
   @Override
-  public Definition visit(ProcessDefinition processDefinition) {
+  public Void visit(ProcessDefinition processDefinition) {
     ungroupAnnotations(processDefinition);
-    processDefinition.templateParams.replaceAll(
-        templateParam -> new TemplateParam(templateParam.identifier(),
-            templateParam.type,
-            templateParam.value == null ? null : templateParam.value.accept(this)));
-    processDefinition.statement = processDefinition.statement.accept(this);
-    return processDefinition;
+    processDefinition.templateParams.forEach(
+        templateParam ->
+            templateParam.value =
+                templateParam.value == null
+                    ? null
+                    : templateParam.value.accept(this));
+    processDefinition.statement.accept(this);
+    return null;
   }
 
   @Override
-  public Definition visit(OperationDefinition operationDefinition) {
+  public Void visit(OperationDefinition operationDefinition) {
     ungroupAnnotations(operationDefinition);
-    return operationDefinition;
+    return null;
   }
 
   @Override
-  public Definition visit(GroupDefinition groupDefinition) {
+  public Void visit(GroupDefinition groupDefinition) {
     ungroupAnnotations(groupDefinition);
-    return groupDefinition;
+    return null;
   }
 
   @Override
-  public Definition visit(ApplicationBinaryInterfaceDefinition definition) {
+  public Void visit(ApplicationBinaryInterfaceDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(AbiSequenceDefinition definition) {
+  public Void visit(AbiSequenceDefinition definition) {
     ungroupAnnotations(definition);
-    definition.statements.replaceAll(stmt -> (InstructionCallStatement) stmt.accept(this));
-    return definition;
+    definition.statements.forEach(stmt -> stmt.accept(this));
+    return null;
   }
 
   @Override
-  public Definition visit(SpecialPurposeRegisterDefinition definition) {
+  public Void visit(SpecialPurposeRegisterDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(MicroProcessorDefinition definition) {
+  public Void visit(MicroProcessorDefinition definition) {
     ungroupAnnotations(definition);
-    definition.definitions.replaceAll(def -> def.accept(this));
-    return definition;
+    definition.definitions.forEach(def -> def.accept(this));
+    return null;
   }
 
   @Override
-  public Definition visit(PatchDefinition definition) {
+  public Void visit(PatchDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(SourceDefinition definition) {
+  public Void visit(SourceDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(CpuFunctionDefinition definition) {
+  public Void visit(CpuFunctionDefinition definition) {
     ungroupAnnotations(definition);
     definition.expr = definition.expr.accept(this);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(CpuProcessDefinition definition) {
+  public Void visit(CpuProcessDefinition definition) {
     ungroupAnnotations(definition);
-    definition.statement = definition.statement.accept(this);
-    return definition;
+    definition.statement.accept(this);
+    return null;
   }
 
   @Override
-  public Definition visit(MicroArchitectureDefinition definition) {
+  public Void visit(MicroArchitectureDefinition definition) {
     ungroupAnnotations(definition);
-    definition.definitions.replaceAll(def -> def.accept(this));
-    return definition;
+    definition.definitions.forEach(def -> def.accept(this));
+    return null;
   }
 
   @Override
-  public Definition visit(MacroInstructionDefinition definition) {
+  public Void visit(MacroInstructionDefinition definition) {
     ungroupAnnotations(definition);
-    definition.statement = definition.statement.accept(this);
-    return definition;
+    definition.statement.accept(this);
+    return null;
   }
 
   @Override
-  public Definition visit(PortBehaviorDefinition definition) {
+  public Void visit(PortBehaviorDefinition definition) {
     ungroupAnnotations(definition);
-    definition.statement = definition.statement.accept(this);
-    return definition;
+    definition.statement.accept(this);
+    return null;
   }
 
   @Override
-  public Definition visit(PipelineDefinition definition) {
+  public Void visit(PipelineDefinition definition) {
     ungroupAnnotations(definition);
-    definition.statement = definition.statement.accept(this);
-    return definition;
+    definition.statement.accept(this);
+    return null;
   }
 
   @Override
-  public Definition visit(StageDefinition definition) {
+  public Void visit(StageDefinition definition) {
     ungroupAnnotations(definition);
-    definition.statement = definition.statement.accept(this);
-    return definition;
+    definition.statement.accept(this);
+    return null;
   }
 
   @Override
-  public Definition visit(CacheDefinition definition) {
+  public Void visit(CacheDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(LogicDefinition definition) {
+  public Void visit(LogicDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(SignalDefinition definition) {
+  public Void visit(SignalDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(AsmDescriptionDefinition definition) {
+  public Void visit(AsmDescriptionDefinition definition) {
     ungroupAnnotations(definition);
-    return definition;
+    return null;
   }
 
   @Override
-  public Definition visit(AsmModifierDefinition definition) {
-    return definition;
+  public Void visit(AsmModifierDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(AsmDirectiveDefinition definition) {
-    return definition;
+  public Void visit(AsmDirectiveDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(AsmGrammarRuleDefinition definition) {
-    return definition;
+  public Void visit(AsmGrammarRuleDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(AsmGrammarAlternativesDefinition definition) {
-    return definition;
+  public Void visit(AsmGrammarAlternativesDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(AsmGrammarElementDefinition definition) {
-    return definition;
+  public Void visit(AsmGrammarElementDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(AsmGrammarLocalVarDefinition definition) {
-    return definition;
+  public Void visit(AsmGrammarLocalVarDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(AsmGrammarLiteralDefinition definition) {
-    return definition;
+  public Void visit(AsmGrammarLiteralDefinition definition) {
+    return null;
   }
 
   @Override
-  public Definition visit(AsmGrammarTypeDefinition definition) {
-    return definition;
+  public Void visit(AsmGrammarTypeDefinition definition) {
+    return null;
   }
 
   @Override
-  public Statement visit(BlockStatement blockStatement) {
-    blockStatement.statements.replaceAll(statement -> statement.accept(this));
-    return blockStatement;
+  public Void visit(BlockStatement blockStatement) {
+    blockStatement.statements.forEach(statement -> statement.accept(this));
+    return null;
   }
 
   @Override
-  public Statement visit(LetStatement letStatement) {
+  public Void visit(LetStatement letStatement) {
     letStatement.valueExpr = letStatement.valueExpr.accept(this);
-    letStatement.body = letStatement.body.accept(this);
-    return letStatement;
+    letStatement.body.accept(this);
+    return null;
   }
 
   @Override
-  public Statement visit(IfStatement ifStatement) {
+  public Void visit(IfStatement ifStatement) {
     ifStatement.condition = ifStatement.condition.accept(this);
-    ifStatement.thenStmt = ifStatement.thenStmt.accept(this);
-    ifStatement.elseStmt = ifStatement.elseStmt == null ? null : ifStatement.elseStmt.accept(this);
-    return ifStatement;
+    ifStatement.thenStmt.accept(this);
+    if (ifStatement.elseStmt != null) {
+      ifStatement.elseStmt.accept(this);
+    }
+    return null;
   }
 
   @Override
-  public Statement visit(AssignmentStatement assignmentStatement) {
+  public Void visit(AssignmentStatement assignmentStatement) {
     assignmentStatement.target = assignmentStatement.target.accept(this);
     assignmentStatement.valueExpression = assignmentStatement.valueExpression.accept(this);
-    return assignmentStatement;
+    return null;
   }
 
   @Override
-  public Statement visit(RaiseStatement raiseStatement) {
-    raiseStatement.statement = raiseStatement.statement.accept(this);
-    return raiseStatement;
+  public Void visit(RaiseStatement raiseStatement) {
+    raiseStatement.statement.accept(this);
+    return null;
   }
 
   @Override
-  public Statement visit(CallStatement callStatement) {
+  public Void visit(CallStatement callStatement) {
     callStatement.expr = callStatement.expr.accept(this);
-    return callStatement;
+    return null;
   }
 
   @Override
-  public Statement visit(PlaceholderStatement placeholderStatement) {
-    return placeholderStatement;
+  public Void visit(PlaceholderStatement placeholderStatement) {
+    return null;
   }
 
   @Override
-  public Statement visit(MacroInstanceStatement macroInstanceStatement) {
-    return macroInstanceStatement;
+  public Void visit(MacroInstanceStatement macroInstanceStatement) {
+    return null;
   }
 
   @Override
-  public Statement visit(MacroMatchStatement macroMatchStatement) {
-    return macroMatchStatement;
+  public Void visit(MacroMatchStatement macroMatchStatement) {
+    return null;
   }
 
   @Override
-  public Statement visit(MatchStatement matchStatement) {
+  public Void visit(MatchStatement matchStatement) {
     matchStatement.candidate = matchStatement.candidate.accept(this);
-    matchStatement.defaultResult =
-        matchStatement.defaultResult == null ? null : matchStatement.defaultResult.accept(this);
-    matchStatement.cases.replaceAll(matchCase -> {
-      matchCase.patterns().replaceAll(pattern -> pattern.accept(this));
-      return new MatchStatement.Case(matchCase.patterns(), matchCase.result().accept(this));
+    if (matchStatement.defaultResult != null) {
+      matchStatement.defaultResult.accept(this);
+    }
+    matchStatement.cases.forEach(matchCase -> {
+      matchCase.patterns.replaceAll(pattern -> pattern.accept(this));
+      matchCase.result.accept(this);
     });
-    return matchStatement;
+    return null;
   }
 
   @Override
-  public Statement visit(StatementList statementList) {
-    statementList.items.replaceAll(stmt -> stmt.accept(this));
-    return statementList;
+  public Void visit(StatementList statementList) {
+    statementList.items.forEach(stmt -> stmt.accept(this));
+    return null;
   }
 
   @Override
-  public InstructionCallStatement visit(InstructionCallStatement instructionCallStatement) {
-    instructionCallStatement.namedArguments.replaceAll(namedArgument ->
-        new InstructionCallStatement.NamedArgument(namedArgument.name(),
-            namedArgument.value().accept(this)));
+  public Void visit(InstructionCallStatement instructionCallStatement) {
+    instructionCallStatement.namedArguments.forEach(namedArgument ->
+        namedArgument.value = namedArgument.value.accept(this)
+    );
     instructionCallStatement.unnamedArguments.replaceAll(expr -> expr.accept(this));
-    return instructionCallStatement;
+    return null;
   }
 
   @Override
-  public Statement visit(LockStatement lockStatement) {
+  public Void visit(LockStatement lockStatement) {
     lockStatement.expr = lockStatement.expr.accept(this);
-    lockStatement.statement = lockStatement.statement.accept(this);
-    return lockStatement;
+    lockStatement.statement.accept(this);
+    return null;
   }
 
   @Override
-  public Statement visit(ForallStatement forallStatement) {
-    forallStatement.indices.replaceAll(
-        index -> new ForallStatement.Index(index.identifier(), index.domain.accept(this)));
-    forallStatement.statement = forallStatement.statement.accept(this);
-    return forallStatement;
+  public Void visit(ForallStatement forallStatement) {
+    forallStatement.indices.forEach(index -> index.domain = index.domain.accept(this));
+    forallStatement.statement.accept(this);
+    return null;
   }
 
   private void ungroupAnnotations(Definition definition) {
-    definition.annotations.annotations().replaceAll(
-        annotation -> new Annotation(annotation.expr().accept(this), annotation.type(),
-            annotation.property()));
+    definition.annotations.annotations().forEach(
+        annotation -> annotation.expr = annotation.expr.accept(this));
   }
 }

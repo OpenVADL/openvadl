@@ -279,6 +279,7 @@ PRODUCTIONS
   commonDefinition<out Definition def>    (. def = DUMMY_DEF; .)
   = constantDefinition<out def>
   | formatDefinition<out def>
+  | enumerationDefinition<out def>
   | usingDefinition<out def>
   | functionDefinition<out def>
   | recordDefinition<out def>
@@ -345,7 +346,6 @@ PRODUCTIONS
     registerFileDefinition<out def>
   | registerDefinition<out def>
   | aliasDefinition<out def>
-  | enumerationDefinition<out def>
   | exceptionDefinition<out def>
   | processDefinition<out def>
   | operationDefinition<out def>
@@ -612,27 +612,19 @@ PRODUCTIONS
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     [ SYM_COLON typeLiteral<out enumType> ]
     SYM_EQ                                  (. var entries = new ArrayList<EnumerationDefinition.Entry>(); .)
-    SYM_BRACE_OPEN                          (. Expr value = null; Expr behavior = null; .)
+    SYM_BRACE_OPEN                          (. Expr value = null; .)
     identifier<out Identifier name>
     [
       SYM_EQ
       expression<out value, BIN_OPS>
-    ]
-    [
-      SYM_BIGARROW
-      callOrBinaryExpression<out behavior, false>
-    ]                                       (. entries.add(new EnumerationDefinition.Entry(name, value, behavior)); .)
-    {
+    ]                                       (. entries.add(new EnumerationDefinition.Entry(name, value)); .)
+    {                                       (. value = null; .)
       SYM_COMMA
       identifier<out name>
       [
         SYM_EQ
         expression<out value, BIN_OPS>
-      ]
-      [
-        SYM_BIGARROW
-        callOrBinaryExpression<out behavior, false>
-      ]                                     (. entries.add(new EnumerationDefinition.Entry(name, value, behavior)); .)
+      ]                                     (. entries.add(new EnumerationDefinition.Entry(name, value)); .)
     }
     SYM_BRACE_CLOSE                         (. def = new EnumerationDefinition(id, enumType, entries, start.join(loc())); .)
   .
