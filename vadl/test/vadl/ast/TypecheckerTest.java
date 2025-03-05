@@ -701,6 +701,47 @@ public class TypecheckerTest {
   }
 
   @Test
+  public void enumWithOutValues() {
+    var prog = """
+          enumeration ENUM =
+          { A
+          , B
+          , C
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    var enumeration = finder.findDefinition(ast, "ENUM", EnumerationDefinition.class);
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(0)), enumeration.getEntryType("A"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(1)), enumeration.getEntryType("B"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(2)), enumeration.getEntryType("C"));
+  }
+
+  @Test
+  public void enumWithSomeValues() {
+    var prog = """
+          enumeration ENUM =
+          { A
+          , B
+          , C = 6
+          , D
+          }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    var enumeration = finder.findDefinition(ast, "ENUM", EnumerationDefinition.class);
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(0)), enumeration.getEntryType("A"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(1)), enumeration.getEntryType("B"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(6)), enumeration.getEntryType("C"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(7)), enumeration.getEntryType("D"));
+  }
+
+
+  @Test
   public void instructionEncodingAssembly() {
     var prog = """
         instruction set architecture Mini = {

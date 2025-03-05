@@ -610,7 +610,7 @@ public class TypeChecker
 
   @Override
   public Void visit(AliasDefinition definition) {
-    throwUnimplemented(definition);
+    //throwUnimplemented(definition);
     return null;
   }
 
@@ -634,16 +634,17 @@ public class TypeChecker
     }
 
 
-    int lastVal = 0;
+    int nextVal = 0;
     for (var entry : definition.entries) {
       if (entry.value != null) {
-        lastVal = constantEvaluator.eval(entry.value).value().intValueExact();
+        nextVal = constantEvaluator.eval(entry.value).value().intValueExact() + 1;
         continue;
       }
 
       // if value is not set, we use the last value + 1.
       entry.value =
-          new IntegerLiteral(String.valueOf(lastVal), SourceLocation.INVALID_SOURCE_LOCATION);
+          new IntegerLiteral(String.valueOf(nextVal), SourceLocation.INVALID_SOURCE_LOCATION);
+      nextVal++;
     }
 
     definition.entries.forEach(e -> check(requireNonNull(e.value)));
