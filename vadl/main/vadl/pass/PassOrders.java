@@ -101,6 +101,7 @@ import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
 import vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass;
+import vadl.viam.passes.statusBuiltInInlinePass.StatusBuiltInInlinePass;
 import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
@@ -372,6 +373,8 @@ public class PassOrders {
 
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
+    // add status built-in inline pass after function inline pass
+    order.addAfterFirst(FunctionInlinerPass.class, new StatusBuiltInInlinePass(config));
 
     // TODO: Remove once frontend creates it
     order.add(new DummyAbiPass(config))

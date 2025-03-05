@@ -87,13 +87,33 @@ public final class PassOrder {
     return this;
   }
 
+  public PassOrder addAfterFirst(Class<?> selector, Pass pass) {
+    int index = -1;
+    var i = 0;
+    for (PassStep step : order) {
+      if (selector.isInstance(step.pass())) {
+        index = i;
+        break;
+      }
+      i++;
+    }
+
+    if (index != -1) {
+      var step = createPassStep(null, pass);
+      passSteps().add(index + 1, step);
+    }
+
+    return this;
+  }
+
+
   /**
-   * Adds a given pass after the pass with the given {@code passName}.
+   * Adds a given pass after the selector pass.
    */
-  public PassOrder addAfterLast(Class<?> passName, Pass pass) {
+  public PassOrder addAfterLast(Class<?> selector, Pass pass) {
     int index = -1;
     for (int i = 0; i < passSteps().size(); i++) {
-      if (passName.isInstance(passSteps().get(i).pass())) {
+      if (selector.isInstance(passSteps().get(i).pass())) {
         index = i;
       }
     }

@@ -17,6 +17,7 @@
 package vadl.viam.passes.statusBuiltInInlinePass;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.utils.GraphUtils.equ;
 import static vadl.utils.GraphUtils.testSignBit;
 
 import java.math.BigInteger;
@@ -82,8 +83,7 @@ abstract class Inliner {
 
   ExpressionNode checkZero() {
     var result = getResult();
-    return BuiltInCall.of(
-        BuiltInTable.EQU,
+    return equ(
         result,
         Constant.Value.fromInteger(BigInteger.ZERO, result.type().asDataType())
             .toNode()
@@ -138,6 +138,10 @@ abstract class Inliner {
     return builtInCall.arguments().get(1);
   }
 
+  protected ExpressionNode thirdArg() {
+    return builtInCall.arguments().get(2);
+  }
+
   protected ExpressionNode binaryOf(BuiltInTable.BuiltIn builtIn) {
     return BuiltInCall.of(builtIn, firstArg(), secondArg());
   }
@@ -156,10 +160,10 @@ abstract class Inliner {
       node.usages().forEach(usage -> {
         if (usage instanceof TupleGetFieldNode getField) {
           switch (getField.index()) {
-            case 0 -> zeroUser = getField;
-            case 1 -> carryUser = getField;
-            case 2 -> overflowUser = getField;
-            case 3 -> negativeUser = getField;
+            case 0 -> negativeUser = getField;
+            case 1 -> zeroUser = getField;
+            case 2 -> carryUser = getField;
+            case 3 -> overflowUser = getField;
             default -> throw new ViamGraphError("User of status tuple accesses non existing index.")
                 .addContext(getField)
                 .addContext("status tuple", node);

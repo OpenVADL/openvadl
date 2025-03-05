@@ -41,11 +41,9 @@ public class StatusBuiltInInlinePass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    viam.isa().map(isa -> {
-      isa.ownInstructions().forEach(i ->
-          new StatusBuiltInInliner(i.behavior()).run());
-      return null;
-    });
+    var isa = viam.isa().get();
+    isa.ownInstructions().forEach(i ->
+        new StatusBuiltInInliner(i.behavior()).run());
 
     return null;
   }
@@ -54,7 +52,7 @@ public class StatusBuiltInInlinePass extends Pass {
 
 class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCall> {
 
-  private Graph graph;
+  private final Graph graph;
 
   StatusBuiltInInliner(Graph graph) {
     this.graph = graph;
@@ -74,7 +72,7 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleADDC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    new ArithmeticInliner.AddC(input).inline();
   }
 
   @Override
