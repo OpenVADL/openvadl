@@ -1984,8 +1984,8 @@ class MatchExpr extends Expr {
         return false;
       }
 
-      Case aCase = (Case) o;
-      return patterns.equals(aCase.patterns) && result.equals(aCase.result);
+      Case other = (Case) o;
+      return patterns.equals(other.patterns) && result.equals(other.result);
     }
 
     @Override

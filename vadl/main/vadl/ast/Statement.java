@@ -691,8 +691,8 @@ final class MatchStatement extends Statement {
         return false;
       }
       var that = (Case) obj;
-      return Objects.equals(this.patterns, that.patterns) &&
-          Objects.equals(this.result, that.result);
+      return Objects.equals(this.patterns, that.patterns)
+          && Objects.equals(this.result, that.result);
     }
 
     @Override
@@ -702,9 +702,9 @@ final class MatchStatement extends Statement {
 
     @Override
     public String toString() {
-      return "Case[" +
-          "patterns=" + patterns + ", " +
-          "result=" + result + ']';
+      return "Case["
+          + "patterns=" + patterns + ", "
+          + "result=" + result + ']';
     }
 
   }
@@ -815,8 +815,8 @@ final class InstructionCallStatement extends Statement {
         return false;
       }
       var that = (NamedArgument) obj;
-      return Objects.equals(this.name, that.name) &&
-          Objects.equals(this.value, that.value);
+      return Objects.equals(this.name, that.name)
+          && Objects.equals(this.value, that.value);
     }
 
     @Override
@@ -826,9 +826,9 @@ final class InstructionCallStatement extends Statement {
 
     @Override
     public String toString() {
-      return "NamedArgument[" +
-          "name=" + name + ", " +
-          "value=" + value + ']';
+      return "NamedArgument["
+          + "name=" + name + ", "
+          + "value=" + value + ']';
     }
 
   }

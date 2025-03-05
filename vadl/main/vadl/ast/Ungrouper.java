@@ -23,8 +23,8 @@ package vadl.ast;
  * for semantic equality and thus ungrouped before comparison.
  *
  * <p>NOTE: Do not replace any AST nodes here!
- * Because at this point in time, the symbol resolver already ran and if nodes get replaced the SymbolTable
- * will point to nodes no longer in the AST.
+ * Because at this point in time, the symbol resolver already ran and if nodes get replaced the
+ * SymbolTable will point to nodes no longer in the AST.
  * This will eventually fail when the typechecker assigns types to nodes in the AST but the
  * resolved symbols from the SymbolTable won't have any types.
  */

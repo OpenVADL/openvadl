@@ -236,6 +236,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return new ConstantNode(value);
     }
 
+    // Enum field
+    if (computedTarget instanceof EnumerationDefinition.Entry enumField) {
+      // Inline the value of the enum
+      return fetch(Objects.requireNonNull(enumField.value));
+    }
+
     // Format field
     if (computedTarget instanceof FormatDefinition.TypedFormatField typedFormatField) {
       return new FieldRefNode(

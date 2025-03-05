@@ -639,8 +639,8 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
         return false;
       }
       var that = (AuxiliaryFieldEntry) obj;
-      return Objects.equals(this.id, that.id) &&
-          Objects.equals(this.expr, that.expr);
+      return Objects.equals(this.id, that.id)
+          && Objects.equals(this.expr, that.expr);
     }
 
     @Override
@@ -650,9 +650,9 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 
     @Override
     public String toString() {
-      return "AuxiliaryFieldEntry[" +
-          "id=" + id + ", " +
-          "expr=" + expr + ']';
+      return "AuxiliaryFieldEntry["
+          + "id=" + id + ", "
+          + "expr=" + expr + ']';
     }
 
   }
@@ -2604,9 +2604,9 @@ final class Annotation {
       return false;
     }
     var that = (Annotation) obj;
-    return Objects.equals(this.expr, that.expr) &&
-        Objects.equals(this.type, that.type) &&
-        Objects.equals(this.property, that.property);
+    return Objects.equals(this.expr, that.expr)
+        && Objects.equals(this.type, that.type)
+        && Objects.equals(this.property, that.property);
   }
 
   @Override
@@ -2616,10 +2616,10 @@ final class Annotation {
 
   @Override
   public String toString() {
-    return "Annotation[" +
-        "expr=" + expr + ", " +
-        "type=" + type + ", " +
-        "property=" + property + ']';
+    return "Annotation["
+        + "expr=" + expr + ", "
+        + "type=" + type + ", "
+        + "property=" + property + ']';
   }
 }
 
