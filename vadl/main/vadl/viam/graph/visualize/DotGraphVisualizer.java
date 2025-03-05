@@ -17,6 +17,7 @@
 package vadl.viam.graph.visualize;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -31,6 +32,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
 
   private @Nullable Graph graph;
   private boolean withSourceLocation = false;
+  private @Nullable Predicate<Node> nodeFilter;
   private String name = "unnamed";
 
   @Override
@@ -50,6 +52,18 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
     return this;
   }
 
+  public DotGraphVisualizer withNodeFilter(Predicate<Node> nodeFilter) {
+    this.nodeFilter = nodeFilter;
+    return this;
+  }
+
+  private boolean nodeFilter(Node node) {
+    if (nodeFilter == null) {
+      return true;
+    }
+    return nodeFilter.test(node);
+  }
+
   @Override
   public String visualize() {
     Objects.requireNonNull(graph);
@@ -59,7 +73,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
     dotBuilder.append("    label=\"%s\"\n".formatted(name));
     dotBuilder.append("\n");
 
-    var nodes = graph.getNodes(Node.class);
+    var nodes = graph.getNodes(Node.class).filter(this::nodeFilter);
 
     nodes.forEach(node -> {
       dotBuilder
@@ -68,7 +82,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
           .append(" [label=\"%s\" %s]".formatted(label(node), nodeStyle(node)))
           .append(";\n");
 
-      node.inputs().forEach((input) -> {
+      node.inputs().filter(this::nodeFilter).forEach((input) -> {
         dotBuilder.append("     ")
             .append(wrapStr(input.id))
             .append(" -> ")
@@ -76,7 +90,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
             .append("[dir=back arrowtail=empty];\n");
       });
 
-      node.successors().forEach(successor -> {
+      node.successors().filter(this::nodeFilter).forEach(successor -> {
 
         dotBuilder.append("     ")
             .append(wrapStr(node.id))
@@ -96,7 +110,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
     return "\"%s\"".formatted(str);
   }
 
-  private String label(Node node) {
+  protected String label(Node node) {
     var label = new StringBuilder();
     label.append(node.toString());
     if (node instanceof ExpressionNode) {

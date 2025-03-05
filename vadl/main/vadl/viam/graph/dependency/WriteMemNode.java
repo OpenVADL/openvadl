@@ -19,6 +19,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Memory;
 import vadl.viam.Resource;
@@ -60,6 +61,24 @@ public class WriteMemNode extends WriteResourceNode {
     verifyState();
   }
 
+  /**
+   * Constructs a new WriteMemNode object.
+   *
+   * @param memory  the memory definition to write to
+   * @param words   the number of words that are written to memory
+   * @param address the expression representing the memory address
+   * @param value   the expression representing the value to write
+   */
+  public WriteMemNode(Memory memory, int words, ExpressionNode address, ExpressionNode value,
+                      @Nullable ExpressionNode condition) {
+    super(address, value);
+    this.memory = memory;
+    this.words = words;
+    this.condition = condition;
+
+    verifyState();
+  }
+
   public Memory memory() {
     return memory;
   }
@@ -95,12 +114,13 @@ public class WriteMemNode extends WriteResourceNode {
   public Node copy() {
     return new WriteMemNode(memory, words,
         (ExpressionNode) Objects.requireNonNull(address).copy(),
-        (ExpressionNode) value.copy());
+        (ExpressionNode) value.copy(),
+        (condition != null ? condition.copy() : null));
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteMemNode(memory, words, Objects.requireNonNull(address), value);
+    return new WriteMemNode(memory, words, Objects.requireNonNull(address), value, condition);
   }
 
   @Override

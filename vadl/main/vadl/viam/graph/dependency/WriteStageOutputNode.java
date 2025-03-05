@@ -17,6 +17,7 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.StageOutput;
@@ -35,9 +36,30 @@ public class WriteStageOutputNode extends SideEffectNode {
   @Input
   protected ExpressionNode value;
 
+  /**
+   * Construct a new WriteStageOutputNode.
+   *
+   * @param stageOutput stage output that is written
+   * @param value value to be written
+   */
+
   public WriteStageOutputNode(StageOutput stageOutput, ExpressionNode value) {
     this.stageOutput = stageOutput;
     this.value = value;
+  }
+
+  /**
+   * Construct a new WriteStageOutputNode.
+   *
+   * @param stageOutput stage output that is written
+   * @param value value to be written
+   * @param condition write enable condition
+   */
+  public WriteStageOutputNode(StageOutput stageOutput, ExpressionNode value,
+                              @Nullable ExpressionNode condition) {
+    this.stageOutput = stageOutput;
+    this.value = value;
+    this.condition = condition;
   }
 
   public StageOutput stageOutput() {
@@ -64,12 +86,14 @@ public class WriteStageOutputNode extends SideEffectNode {
 
   @Override
   public Node copy() {
-    return new WriteStageOutputNode(stageOutput, value);
+    return new WriteStageOutputNode(stageOutput,
+        value.copy(),
+        (condition != null ? condition.copy() : null));
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteStageOutputNode(stageOutput, value.copy());
+    return new WriteStageOutputNode(stageOutput, value, condition);
   }
 
   @Override

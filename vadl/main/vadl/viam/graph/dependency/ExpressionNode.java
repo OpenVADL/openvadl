@@ -16,6 +16,8 @@
 
 package vadl.viam.graph.dependency;
 
+import java.util.List;
+import vadl.javaannotations.viam.DataValue;
 import vadl.types.Type;
 
 /**
@@ -25,7 +27,7 @@ import vadl.types.Type;
  */
 public abstract class ExpressionNode extends DependencyNode {
 
-  //TODO: Should this be DataType in any case?
+  @DataValue
   private Type type;
 
   public ExpressionNode(Type type) {
@@ -47,6 +49,12 @@ public abstract class ExpressionNode extends DependencyNode {
   
   @Override
   public abstract ExpressionNode copy();
+
+  @Override
+  protected void collectData(List<Object> collection) {
+    super.collectData(collection);
+    collection.add(type);
+  }
 
   /**
    * Creates a pretty-printed representation of the current expression node.
