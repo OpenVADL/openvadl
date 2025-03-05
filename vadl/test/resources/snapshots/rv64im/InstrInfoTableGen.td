@@ -290,7 +290,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
+bits<7> opcode = 0b0110011;
 bits<3> funct3 = 0b000;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
@@ -343,7 +343,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100100;
+bits<7> opcode = 0b0010011;
 bits<3> funct3 = 0b000;
 bits<12> imm;
 bits<5> rs1;
@@ -394,7 +394,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101100;
+bits<7> opcode = 0b0011011;
 bits<3> funct3 = 0b000;
 bits<12> imm;
 bits<5> rs1;
@@ -445,7 +445,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101110;
+bits<7> opcode = 0b0111011;
 bits<3> funct3 = 0b000;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
@@ -498,7 +498,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
+bits<7> opcode = 0b0110011;
 bits<3> funct3 = 0b111;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
@@ -551,7 +551,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100100;
+bits<7> opcode = 0b0010011;
 bits<3> funct3 = 0b111;
 bits<12> imm;
 bits<5> rs1;
@@ -602,7 +602,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1110100;
+bits<7> opcode = 0b0010111;
 bits<20> imm;
 bits<5> rd;
 
@@ -812,7 +812,7 @@ field bits<32> Inst;
 field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100011;
-bits<3> funct3 = 0b001;
+bits<3> funct3 = 0b100;
 bits<12> imm;
 bits<5> rs2;
 bits<5> rs1;
@@ -866,7 +866,7 @@ field bits<32> Inst;
 field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100011;
-bits<3> funct3 = 0b011;
+bits<3> funct3 = 0b110;
 bits<12> imm;
 bits<5> rs2;
 bits<5> rs1;
@@ -920,7 +920,7 @@ field bits<32> Inst;
 field bits<32> SoftFail = 0;
 
 bits<7> opcode = 0b1100011;
-bits<3> funct3 = 0b100;
+bits<3> funct3 = 0b001;
 bits<12> imm;
 bits<5> rs2;
 bits<5> rs1;
@@ -973,9 +973,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
-bits<3> funct3 = 0b001;
-bits<7> funct7 = 0b1000000;
+bits<7> opcode = 0b0110011;
+bits<3> funct3 = 0b100;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -1026,9 +1026,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
+bits<7> opcode = 0b0110011;
 bits<3> funct3 = 0b101;
-bits<7> funct7 = 0b1000000;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -1079,9 +1079,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101110;
+bits<7> opcode = 0b0111011;
 bits<3> funct3 = 0b101;
-bits<7> funct7 = 0b1000000;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -1132,9 +1132,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101110;
-bits<3> funct3 = 0b001;
-bits<7> funct7 = 0b1000000;
+bits<7> opcode = 0b0111011;
+bits<3> funct3 = 0b100;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -1185,11 +1185,11 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100111;
+bits<7> opcode = 0b1110011;
 bits<3> funct3 = 0b000;
 bits<5> rd = 0b00000;
 bits<5> rs1 = 0b00000;
-bits<12> imm = 0b100000000000;
+bits<12> imm = 0b000000000001;
 
 let Inst{31-20} = imm{11-0};
 let Inst{19-15} = rs1{4-0};
@@ -1236,7 +1236,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100111;
+bits<7> opcode = 0b1110011;
 bits<3> funct3 = 0b000;
 bits<5> rd = 0b00000;
 bits<5> rs1 = 0b00000;
@@ -1287,7 +1287,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1111011;
+bits<7> opcode = 0b1101111;
 bits<20> imm;
 bits<5> rd;
 
@@ -1337,7 +1337,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1110011;
+bits<7> opcode = 0b1100111;
 bits<3> funct3 = 0b000;
 bits<12> imm;
 bits<5> rs1;
@@ -1388,7 +1388,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100000;
+bits<7> opcode = 0b0000011;
 bits<3> funct3 = 0b000;
 bits<12> imm;
 bits<5> rs1;
@@ -1439,8 +1439,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100000;
-bits<3> funct3 = 0b001;
+bits<7> opcode = 0b0000011;
+bits<3> funct3 = 0b100;
 bits<12> imm;
 bits<5> rs1;
 bits<5> rd;
@@ -1490,8 +1490,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100000;
-bits<3> funct3 = 0b110;
+bits<7> opcode = 0b0000011;
+bits<3> funct3 = 0b011;
 bits<12> imm;
 bits<5> rs1;
 bits<5> rd;
@@ -1541,8 +1541,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100000;
-bits<3> funct3 = 0b100;
+bits<7> opcode = 0b0000011;
+bits<3> funct3 = 0b001;
 bits<12> imm;
 bits<5> rs1;
 bits<5> rd;
@@ -1592,7 +1592,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100000;
+bits<7> opcode = 0b0000011;
 bits<3> funct3 = 0b101;
 bits<12> imm;
 bits<5> rs1;
@@ -1643,7 +1643,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1110110;
+bits<7> opcode = 0b0110111;
 bits<20> imm;
 bits<5> rd;
 
@@ -1690,7 +1690,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100000;
+bits<7> opcode = 0b0000011;
 bits<3> funct3 = 0b010;
 bits<12> imm;
 bits<5> rs1;
@@ -1741,8 +1741,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100000;
-bits<3> funct3 = 0b011;
+bits<7> opcode = 0b0000011;
+bits<3> funct3 = 0b110;
 bits<12> imm;
 bits<5> rs1;
 bits<5> rd;
@@ -1792,9 +1792,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
+bits<7> opcode = 0b0110011;
 bits<3> funct3 = 0b000;
-bits<7> funct7 = 0b1000000;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -1845,9 +1845,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
-bits<3> funct3 = 0b100;
-bits<7> funct7 = 0b1000000;
+bits<7> opcode = 0b0110011;
+bits<3> funct3 = 0b001;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -1898,9 +1898,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
+bits<7> opcode = 0b0110011;
 bits<3> funct3 = 0b010;
-bits<7> funct7 = 0b1000000;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -1951,9 +1951,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
-bits<3> funct3 = 0b110;
-bits<7> funct7 = 0b1000000;
+bits<7> opcode = 0b0110011;
+bits<3> funct3 = 0b011;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -2004,9 +2004,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101110;
+bits<7> opcode = 0b0111011;
 bits<3> funct3 = 0b000;
-bits<7> funct7 = 0b1000000;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -2057,8 +2057,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
-bits<3> funct3 = 0b011;
+bits<7> opcode = 0b0110011;
+bits<3> funct3 = 0b110;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
 bits<5> rs1;
@@ -2110,8 +2110,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100100;
-bits<3> funct3 = 0b011;
+bits<7> opcode = 0b0010011;
+bits<3> funct3 = 0b110;
 bits<12> imm;
 bits<5> rs1;
 bits<5> rd;
@@ -2161,9 +2161,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
-bits<3> funct3 = 0b011;
-bits<7> funct7 = 0b1000000;
+bits<7> opcode = 0b0110011;
+bits<3> funct3 = 0b110;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -2214,9 +2214,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
+bits<7> opcode = 0b0110011;
 bits<3> funct3 = 0b111;
-bits<7> funct7 = 0b1000000;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -2267,9 +2267,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101110;
+bits<7> opcode = 0b0111011;
 bits<3> funct3 = 0b111;
-bits<7> funct7 = 0b1000000;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -2320,9 +2320,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101110;
-bits<3> funct3 = 0b011;
-bits<7> funct7 = 0b1000000;
+bits<7> opcode = 0b0111011;
+bits<3> funct3 = 0b110;
+bits<7> funct7 = 0b0000001;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -2373,7 +2373,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100010;
+bits<7> opcode = 0b0100011;
 bits<3> funct3 = 0b000;
 bits<12> imm;
 bits<5> rs2;
@@ -2425,8 +2425,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100010;
-bits<3> funct3 = 0b110;
+bits<7> opcode = 0b0100011;
+bits<3> funct3 = 0b011;
 bits<12> imm;
 bits<5> rs2;
 bits<5> rs1;
@@ -2477,8 +2477,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100010;
-bits<3> funct3 = 0b100;
+bits<7> opcode = 0b0100011;
+bits<3> funct3 = 0b001;
 bits<12> imm;
 bits<5> rs2;
 bits<5> rs1;
@@ -2529,8 +2529,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
-bits<3> funct3 = 0b100;
+bits<7> opcode = 0b0110011;
+bits<3> funct3 = 0b001;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
 bits<5> rs1;
@@ -2582,9 +2582,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100100;
+bits<7> opcode = 0b0010011;
 bits<4> zero = 0b0000;
-bits<3> funct3 = 0b100;
+bits<3> funct3 = 0b001;
 bits<2> funct2 = 0b00;
 bits<6> sft;
 bits<5> rs1;
@@ -2637,8 +2637,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101100;
-bits<3> funct3 = 0b100;
+bits<7> opcode = 0b0011011;
+bits<3> funct3 = 0b001;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
 bits<5> rs1;
@@ -2690,8 +2690,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101110;
-bits<3> funct3 = 0b100;
+bits<7> opcode = 0b0111011;
+bits<3> funct3 = 0b001;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
 bits<5> rs1;
@@ -2743,7 +2743,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
+bits<7> opcode = 0b0110011;
 bits<3> funct3 = 0b010;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
@@ -2796,7 +2796,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100100;
+bits<7> opcode = 0b0010011;
 bits<3> funct3 = 0b010;
 bits<12> imm;
 bits<5> rs1;
@@ -2847,8 +2847,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100100;
-bits<3> funct3 = 0b110;
+bits<7> opcode = 0b0010011;
+bits<3> funct3 = 0b011;
 bits<12> imm;
 bits<5> rs1;
 bits<5> rd;
@@ -2898,8 +2898,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
-bits<3> funct3 = 0b110;
+bits<7> opcode = 0b0110011;
+bits<3> funct3 = 0b011;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
 bits<5> rs1;
@@ -2951,9 +2951,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
+bits<7> opcode = 0b0110011;
 bits<3> funct3 = 0b101;
-bits<7> funct7 = 0b0000010;
+bits<7> funct7 = 0b0100000;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -3004,10 +3004,10 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100100;
+bits<7> opcode = 0b0010011;
 bits<4> zero = 0b0000;
 bits<3> funct3 = 0b101;
-bits<2> funct2 = 0b10;
+bits<2> funct2 = 0b01;
 bits<6> sft;
 bits<5> rs1;
 bits<5> rd;
@@ -3059,9 +3059,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101100;
+bits<7> opcode = 0b0011011;
 bits<3> funct3 = 0b101;
-bits<7> funct7 = 0b0000010;
+bits<7> funct7 = 0b0100000;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -3112,9 +3112,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101110;
+bits<7> opcode = 0b0111011;
 bits<3> funct3 = 0b101;
-bits<7> funct7 = 0b0000010;
+bits<7> funct7 = 0b0100000;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -3165,7 +3165,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
+bits<7> opcode = 0b0110011;
 bits<3> funct3 = 0b101;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
@@ -3218,7 +3218,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100100;
+bits<7> opcode = 0b0010011;
 bits<4> zero = 0b0000;
 bits<3> funct3 = 0b101;
 bits<2> funct2 = 0b00;
@@ -3273,7 +3273,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101100;
+bits<7> opcode = 0b0011011;
 bits<3> funct3 = 0b101;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
@@ -3326,7 +3326,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101110;
+bits<7> opcode = 0b0111011;
 bits<3> funct3 = 0b101;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
@@ -3379,9 +3379,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
+bits<7> opcode = 0b0110011;
 bits<3> funct3 = 0b000;
-bits<7> funct7 = 0b0000010;
+bits<7> funct7 = 0b0100000;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -3432,9 +3432,9 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101110;
+bits<7> opcode = 0b0111011;
 bits<3> funct3 = 0b000;
-bits<7> funct7 = 0b0000010;
+bits<7> funct7 = 0b0100000;
 bits<5> rs2;
 bits<5> rs1;
 bits<5> rd;
@@ -3485,7 +3485,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100010;
+bits<7> opcode = 0b0100011;
 bits<3> funct3 = 0b010;
 bits<12> imm;
 bits<5> rs2;
@@ -3537,8 +3537,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100110;
-bits<3> funct3 = 0b001;
+bits<7> opcode = 0b0110011;
+bits<3> funct3 = 0b100;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
 bits<5> rs1;
@@ -3590,8 +3590,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1100100;
-bits<3> funct3 = 0b001;
+bits<7> opcode = 0b0010011;
+bits<3> funct3 = 0b100;
 bits<12> imm;
 bits<5> rs1;
 bits<5> rd;
