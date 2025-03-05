@@ -612,13 +612,13 @@ PRODUCTIONS
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     [ SYM_COLON typeLiteral<out enumType> ]
     SYM_EQ                                  (. var entries = new ArrayList<EnumerationDefinition.Entry>(); .)
-    SYM_BRACE_OPEN                          (. Expr value = null; Expr behavior = null; .)
+    SYM_BRACE_OPEN                          (. Expr value = null; .)
     identifier<out Identifier name>
     [
       SYM_EQ
       expression<out value, BIN_OPS>
     ]                                       (. entries.add(new EnumerationDefinition.Entry(name, value)); .)
-    {
+    {                                       (. value = null; .)
       SYM_COMMA
       identifier<out name>
       [
