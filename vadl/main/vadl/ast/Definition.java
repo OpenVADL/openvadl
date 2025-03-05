@@ -621,7 +621,40 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     }
   }
 
-  record AuxiliaryFieldEntry(Identifier id, Expr expr) {
+  static final class AuxiliaryFieldEntry {
+    Identifier id;
+    Expr expr;
+
+    AuxiliaryFieldEntry(Identifier id, Expr expr) {
+      this.id = id;
+      this.expr = expr;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (AuxiliaryFieldEntry) obj;
+      return Objects.equals(this.id, that.id) &&
+          Objects.equals(this.expr, that.expr);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id, expr);
+    }
+
+    @Override
+    public String toString() {
+      return "AuxiliaryFieldEntry[" +
+          "id=" + id + ", " +
+          "expr=" + expr + ']';
+    }
+
   }
 
   enum AuxiliaryFieldKind {
@@ -2533,8 +2566,20 @@ record Annotations(List<Annotation> annotations) {
   }
 }
 
-record Annotation(Expr expr, @Nullable TypeLiteral type,
-                  @Nullable IdentifierOrPlaceholder property) {
+final class Annotation {
+  Expr expr;
+  @Nullable
+  TypeLiteral type;
+  @Nullable
+  IdentifierOrPlaceholder property;
+
+  Annotation(Expr expr, @Nullable TypeLiteral type,
+             @Nullable IdentifierOrPlaceholder property) {
+    this.expr = expr;
+    this.type = type;
+    this.property = property;
+  }
+
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(Node.prettyIndentString(indent));
     builder.append('[');
@@ -2548,6 +2593,33 @@ record Annotation(Expr expr, @Nullable TypeLiteral type,
       property.prettyPrint(indent, builder);
     }
     builder.append(" ]\n");
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj == null || obj.getClass() != this.getClass()) {
+      return false;
+    }
+    var that = (Annotation) obj;
+    return Objects.equals(this.expr, that.expr) &&
+        Objects.equals(this.type, that.type) &&
+        Objects.equals(this.property, that.property);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(expr, type, property);
+  }
+
+  @Override
+  public String toString() {
+    return "Annotation[" +
+        "expr=" + expr + ", " +
+        "type=" + type + ", " +
+        "property=" + property + ']';
   }
 }
 

@@ -708,14 +708,14 @@ class SymbolTable {
           collectSymbols(symbols, match.defaultResult);
         }
         for (MatchStatement.Case matchCase : match.cases) {
-          collectSymbols(symbols, matchCase.result());
-          for (Expr pattern : matchCase.patterns()) {
+          collectSymbols(symbols, matchCase.result);
+          for (Expr pattern : matchCase.patterns) {
             collectSymbols(symbols, pattern);
           }
         }
       } else if (stmt instanceof InstructionCallStatement instructionCall) {
         for (var namedArgument : instructionCall.namedArguments) {
-          collectSymbols(symbols, namedArgument.value());
+          collectSymbols(symbols, namedArgument.value);
         }
         for (var unnamedArgument : instructionCall.unnamedArguments) {
           collectSymbols(symbols, unnamedArgument);
@@ -783,8 +783,8 @@ class SymbolTable {
         collectSymbols(symbols, match.candidate);
         collectSymbols(symbols, match.defaultResult);
         for (MatchExpr.Case matchCase : match.cases) {
-          collectSymbols(symbols, matchCase.result());
-          for (Expr pattern : matchCase.patterns()) {
+          collectSymbols(symbols, matchCase.result);
+          for (Expr pattern : matchCase.patterns) {
             collectSymbols(symbols, pattern);
           }
         }
@@ -1118,8 +1118,8 @@ class SymbolTable {
           resolveSymbols(match.defaultResult);
         }
         for (MatchStatement.Case matchCase : match.cases) {
-          resolveSymbols(matchCase.result());
-          for (Expr pattern : matchCase.patterns()) {
+          resolveSymbols(matchCase.result);
+          for (Expr pattern : matchCase.patterns) {
             resolveSymbols(pattern);
           }
         }
@@ -1132,17 +1132,17 @@ class SymbolTable {
           for (var namedArgument : instructionCall.namedArguments) {
             FormatDefinition.FormatField foundField = null;
             for (var field : format.fields) {
-              if (field.identifier().name.equals(namedArgument.name().name)) {
+              if (field.identifier().name.equals(namedArgument.name.name)) {
                 foundField = field;
                 break;
               }
             }
             if (foundField == null) {
               instructionCall.symbolTable()
-                  .reportError("Unknown format field " + namedArgument.name().name,
-                      namedArgument.name().location());
+                  .reportError("Unknown format field " + namedArgument.name.name,
+                      namedArgument.name.location());
             }
-            resolveSymbols(namedArgument.value());
+            resolveSymbols(namedArgument.value);
           }
         } else {
           var pseudoInstr =
@@ -1153,7 +1153,7 @@ class SymbolTable {
             for (var namedArgument : instructionCall.namedArguments) {
               Parameter foundParam = null;
               for (var param : pseudoInstr.params) {
-                if (param.identifier().name.equals(namedArgument.name().name)) {
+                if (param.identifier().name.equals(namedArgument.name.name)) {
                   foundParam = param;
                   break;
                 }
@@ -1161,11 +1161,11 @@ class SymbolTable {
               if (foundParam == null) {
                 instructionCall.symbolTable()
                     .reportError(
-                        "Unknown instruction param %s (%s)".formatted(namedArgument.name().name,
+                        "Unknown instruction param %s (%s)".formatted(namedArgument.name.name,
                             pseudoInstr.identifier().name),
-                        namedArgument.name().location());
+                        namedArgument.name.location());
               }
-              resolveSymbols(namedArgument.value());
+              resolveSymbols(namedArgument.value);
             }
           } else {
             instructionCall.symbolTable()
@@ -1238,8 +1238,8 @@ class SymbolTable {
         resolveSymbols(match.candidate);
         resolveSymbols(match.defaultResult);
         for (MatchExpr.Case matchCase : match.cases) {
-          resolveSymbols(matchCase.result());
-          for (Expr pattern : matchCase.patterns()) {
+          resolveSymbols(matchCase.result);
+          for (Expr pattern : matchCase.patterns) {
             resolveSymbols(pattern);
           }
         }

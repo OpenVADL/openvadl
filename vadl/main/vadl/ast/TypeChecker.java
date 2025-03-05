@@ -2600,15 +2600,15 @@ public class TypeChecker
 
         var arg = statement.namedArguments.get(i);
         // FIXME: better error
-        var targetType = requireNonNull(format.getFieldType(arg.name().name));
+        var targetType = requireNonNull(format.getFieldType(arg.name.name));
 
-        check(arg.value());
+        check(arg.value);
 
         statement.namedArguments.set(i,
-            new InstructionCallStatement.NamedArgument(arg.name(),
-                wrapImplicitCast(arg.value(), targetType)));
+            new InstructionCallStatement.NamedArgument(arg.name,
+                wrapImplicitCast(arg.value, targetType)));
         arg = statement.namedArguments.get(i);
-        var actualType = arg.value().type();
+        var actualType = arg.value.type();
 
         if (!targetType.equals(actualType)) {
           throw Diagnostic.error("Type Mismatch", arg.location())

@@ -255,7 +255,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     definition.annotations.annotations().forEach(
         annotation -> {
           // annotations of the form [ A = B ]
-          if (annotation.expr() instanceof BinaryExpr binaryExpr
+          if (annotation.expr instanceof BinaryExpr binaryExpr
               && binaryExpr.operator() == Operator.Equal) {
 
             if (binaryExpr.left instanceof Identifier annoId) {
@@ -634,8 +634,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(EnumerationDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    // Do nothing on purpose
+    // Enums aren't a concept in the VIAM and therefore their definition get's evicted and their
+    // usages get converted to constants.
+    return Optional.empty();
   }
 
   @Override

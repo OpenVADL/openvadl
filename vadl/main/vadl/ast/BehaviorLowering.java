@@ -800,8 +800,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var fields = new ArrayList<Format.Field>();
 
     for (var arg : statement.namedArguments) {
-      fields.add(fieldMap.get(arg.name().name));
-      argExprs.add(fetch(arg.value()));
+      fields.add(fieldMap.get(arg.name.name));
+      argExprs.add(fetch(arg.value));
     }
     var call = new InstrCallNode(target, fields, argExprs);
     call = addToGraph(call);
