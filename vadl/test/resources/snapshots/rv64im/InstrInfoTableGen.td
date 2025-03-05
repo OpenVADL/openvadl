@@ -1643,7 +1643,7 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1110110;
+bits<7> opcode = 0b0110111;
 bits<20> imm;
 bits<5> rd;
 
@@ -2637,8 +2637,8 @@ field bits<32> Inst;
 // to build the decode table.
 field bits<32> SoftFail = 0;
 
-bits<7> opcode = 0b1101100;
-bits<3> funct3 = 0b100;
+bits<7> opcode = 0b0011011;
+bits<3> funct3 = 0b001;
 bits<7> funct7 = 0b0000000;
 bits<5> rs2;
 bits<5> rs1;
