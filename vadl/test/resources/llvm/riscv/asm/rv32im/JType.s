@@ -3,4 +3,4 @@
 JAL x16, 10
 # CHECK: <MCInst #{{[0-9]+}} JAL
 # CHECK-NEXT: <MCOperand Reg:18>
-# CHECK-NEXT: <MCOperand Imm:20>
+# CHECK-NEXT: <MCOperand Imm:20>>
