@@ -16,8 +16,6 @@
 
 package vadl.viam.graph.dependency;
 
-import java.util.List;
-import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
@@ -33,7 +31,7 @@ import vadl.viam.graph.ViamGraphError;
  *
  * <p><b>NOTE: </b> Never create a type cast node during a pass. You also don't have to handle
  * type cast nodes, as they are eliminated right after frontend
- * (see {@link vadl.viam.passes.typeCastElimination.TypeCastEliminationPass}. In future we will
+ * (see {@link vadl.viam.passes.typeCastElimination.TypeCastEliminationPass}). In future we will
  * probably completely remove type cast nodes from the VIAM. </p>
  *
  * @see SignExtendNode
@@ -42,18 +40,14 @@ import vadl.viam.graph.ViamGraphError;
  */
 public class TypeCastNode extends UnaryNode implements Canonicalizable {
 
-  @DataValue
-  private final Type castType;
-
   public TypeCastNode(ExpressionNode value, Type type) {
     super(value, type);
-    this.castType = type;
   }
 
   @Override
   public void verifyState() {
     super.verifyState();
-    ensure(castType instanceof DataType, "Currently casts are only possible to DataTypes");
+    ensure(super.type() instanceof DataType, "Currently casts are only possible to DataTypes");
     ensure(value.type() instanceof DataType, "Type to cast must be DataType");
   }
 
@@ -62,7 +56,7 @@ public class TypeCastNode extends UnaryNode implements Canonicalizable {
    * Get the cast type.
    */
   public Type castType() {
-    return this.castType;
+    return this.type();
   }
 
   @Override
@@ -70,15 +64,9 @@ public class TypeCastNode extends UnaryNode implements Canonicalizable {
     if (value.isConstant()) {
       var constant = ((ConstantNode) value).constant();
       ensure(constant instanceof Constant.Value, "Only value constants may be cast");
-      return new ConstantNode(((Constant.Value) constant).castTo((DataType) castType));
+      return new ConstantNode(((Constant.Value) constant).castTo(type().asDataType()));
     }
     return this;
-  }
-
-  @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
-    collection.add(castType);
   }
 
   @Override
