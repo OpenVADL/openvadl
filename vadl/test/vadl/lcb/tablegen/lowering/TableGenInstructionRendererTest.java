@@ -87,27 +87,27 @@ class TableGenInstructionRendererTest extends AbstractTest {
         def nameValue : Instruction
         {
         let Namespace = "namespaceValue";
-                
+        
         let Size = 4;
         let CodeSize = 4;
-                
+        
         let OutOperandList = ( outs  );
         let InOperandList = ( ins  );
-                
+        
         field bits<32> Inst;
-                
+        
         // SoftFail is a field the disassembler can use to provide a way for
         // instructions to not match without killing the whole decode process. It is
         // mainly used for ARM, but Tablegen expects this field to exist or it fails
         // to build the decode table.
         field bits<32> SoftFail = 0;
-                
-        bits<10> opCode = 0b0101000000;
+        
+        bits<10> opCode = 0b0000001010;
         bits<10> register;
-                
+        
         let Inst{19-10} = register{9-0};
         let Inst{9-0} = opCode{9-0};
-                
+        
         let isTerminator       = 0;
         let isBranch           = 0;
         let isCall             = 0;
@@ -119,12 +119,12 @@ class TableGenInstructionRendererTest extends AbstractTest {
         let isBarrier          = 0;
         let isReMaterializable = 0;
         let isAsCheapAsAMove   = 0;
-                
+        
         let Constraints = "";
         let AddedComplexity = 0;
-                
+        
         let Pattern = [];
-                
+        
         let Uses = [  ];
         let Defs = [  ];
         }
