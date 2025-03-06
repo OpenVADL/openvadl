@@ -44,15 +44,8 @@ public abstract class LcbTemplateRenderingPass extends AbstractTemplateRendering
   }
 
   @Override
-  protected String lineComment() {
-    var filename = FilenameUtils.getName(getOutputPath());
-    if (filename.contains("Makefile")
-        || filename.startsWith("CMake")
-    ) {
-      return "#";
-    }
-
-    return super.lineComment();
+  protected boolean enableCopyright() {
+    return false;
   }
 
   protected static <T> Predicate<T> distinctByKey(
