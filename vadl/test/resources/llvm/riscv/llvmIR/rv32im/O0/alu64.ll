@@ -19,8 +19,9 @@ define i64 @slti(i64 %a) nounwind {
 ; CHECK-LABEL: slti: # @slti
 ; CHECK-LABEL: # %bb.0:
 ; CHECK-NEXT: ADDI sp,sp,-16
-; CHECK: SLT a2,a1,zero
+; CHECK: SLTI a2,a1,0
 ; CHECK-NEXT: SW a2,4(sp) # 4-byte Folded Spill
+; CHECK-NEXT: SLTIU a2,a0,2
   %1 = icmp slt i64 %a, 2
   %2 = zext i1 %1 to i64
   ret i64 %2

@@ -3645,10 +3645,10 @@ def BEQZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins X:$rs );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3659,8 +3659,6 @@ let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
-
-let Pattern = [];
 
 let Uses = [  ];
 let Defs = [  ];
@@ -3673,10 +3671,10 @@ def BGEZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins X:$rs );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3687,8 +3685,6 @@ let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
-
-let Pattern = [];
 
 let Uses = [  ];
 let Defs = [  ];
@@ -3701,10 +3697,10 @@ def BGTZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins X:$rs );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3715,8 +3711,6 @@ let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
-
-let Pattern = [];
 
 let Uses = [  ];
 let Defs = [  ];
@@ -3729,10 +3723,10 @@ def BLEZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins X:$rs );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3743,8 +3737,6 @@ let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
-
-let Pattern = [];
 
 let Uses = [  ];
 let Defs = [  ];
@@ -3757,10 +3749,10 @@ def BLTZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins X:$rs );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3771,8 +3763,6 @@ let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
-
-let Pattern = [];
 
 let Uses = [  ];
 let Defs = [  ];
@@ -3785,10 +3775,10 @@ def BNEZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
+let InOperandList = ( ins X:$rs );
 
-let isTerminator  = 0;
-let isBranch      = 0;
+let isTerminator  = 1;
+let isBranch      = 1;
 let isCall        = 0;
 let isReturn      = 0;
 let isPseudo      = 1;
@@ -3799,8 +3789,6 @@ let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
-
-let Pattern = [];
 
 let Uses = [  ];
 let Defs = [  ];
@@ -3828,8 +3816,6 @@ let isBarrier     = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [ X1 ];
 let Defs = [ X1 ];
 }
@@ -3856,10 +3842,8 @@ let isBarrier     = 1;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [  ];
-let Defs = [ X0 ];
+let Defs = [  ];
 }
 
 def : Pat<(br bb:$imm),
@@ -3885,8 +3869,6 @@ let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
-
-let Pattern = [];
 
 let Uses = [  ];
 let Defs = [  ];
@@ -3914,8 +3896,6 @@ let isBarrier     = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [  ];
 let Defs = [  ];
 }
@@ -3942,17 +3922,10 @@ let isBarrier     = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(add X:$rs1, (i64 0)),
-        (MOV X:$rs1)>;
-
-def : Pat<(add AddrFI:$rs1, (i64 0)),
-        (MOV AddrFI:$rs1)>;
 
 
 def NEG : Instruction
@@ -3975,14 +3948,10 @@ let isBarrier     = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(sub (i64 0), X:$rs1),
-        (NEG X:$rs1)>;
 
 
 def NOP : Instruction
@@ -4005,14 +3974,10 @@ let isBarrier     = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [ X0 ];
 let Defs = [ X0 ];
 }
 
-def : Pat<(add (i64 0), (i64 0)),
-        (NOP )>;
 
 
 def NOT : Instruction
@@ -4035,14 +4000,10 @@ let isBarrier     = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(xor X:$rs1, (i64 4095)),
-        (NOT X:$rs1)>;
 
 
 def RET : Instruction
@@ -4064,8 +4025,6 @@ let isBarrier     = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
-
-let Pattern = [];
 
 let Uses = [ X1 ];
 let Defs = [ X0 ];
@@ -4093,14 +4052,10 @@ let isBarrier     = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(setcc (i64 0), X:$rs1, SETLT),
-        (SGTZ X:$rs1)>;
 
 
 def SLTZ : Instruction
@@ -4123,14 +4078,10 @@ let isBarrier     = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(setcc X:$rs1, (i64 0), SETLT),
-        (SLTZ X:$rs1)>;
 
 
 def SNEZ : Instruction
@@ -4153,14 +4104,10 @@ let isBarrier     = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [  ];
 let Defs = [  ];
 }
 
-def : Pat<(setcc (i64 0), X:$rs1, SETULT),
-        (SNEZ X:$rs1)>;
 
 
 def TAIL : Instruction
@@ -4183,13 +4130,48 @@ let isBarrier     = 0;
 let Constraints = "";
 let AddedComplexity = 0;
 
-let Pattern = [];
-
 let Uses = [ X6 ];
 let Defs = [  ];
 }
 
 
+
+
+
+
+def : InstAlias<"NOT $rd,$rs1", (XORI X:$rd, X:$rs1, 4095)>;
+
+def : InstAlias<"NOP", (ADDI X0, X0, 0)>;
+
+def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs1, X0, RV3264I_Btype_immAsLabel:$imm)>;
+
+def : InstAlias<"BNEZ $rs,$offset", (BNE X:$rs1, X0, RV3264I_Btype_immAsLabel:$imm)>;
+
+
+
+def : InstAlias<"SLTZ $rd,$rs1", (SLT X:$rd, X:$rs1, X0)>;
+
+def : InstAlias<"SGTZ $rd,$rs1", (SLT X:$rd, X0, X:$rs2)>;
+
+def : InstAlias<"BLTZ $rs,$offset", (BLT X:$rs1, X0, RV3264I_Btype_immAsLabel:$imm)>;
+
+def : InstAlias<"RET", (JALR X1, X0, 0)>;
+
+
+
+def : InstAlias<"NEG $rd,$rs1", (SUB X:$rd, X0, X:$rs2)>;
+
+def : InstAlias<"SNEZ $rd,$rs1", (SLTU X:$rd, X0, X:$rs2)>;
+
+def : InstAlias<"BGEZ $rs,$offset", (BGE X:$rs1, X0, RV3264I_Btype_immAsLabel:$imm)>;
+
+def : InstAlias<"MOV $rd,$rs1", (ADDI X:$rd, X:$rs1, 0)>;
+
+def : InstAlias<"BGTZ $rs,$offset", (BLT X0, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+
+def : InstAlias<"BLEZ $rs,$offset", (BGE X0, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+
+def : InstAlias<"J $offset", (JAL X0, RV3264I_Jtype_immAsInt64:$imm)>;
 
 
 
@@ -4672,46 +4654,3 @@ def : Pat<(xor X:$rs1, RV3264I_Itype_immAsInt64:$imm),
 
 def : Pat<(br bb:$imm),
         (J RV3264I_Jtype_immAsLabel:$imm)>;
-
-
-
-
-
-
-def : Pat<(add X:$rs1, (i64 0)),
-        (MOV X:$rs1)>;
-
-def : Pat<(add AddrFI:$rs1, (i64 0)),
-        (MOV AddrFI:$rs1)>;
-
-
-def : Pat<(sub (i64 0), X:$rs1),
-        (NEG X:$rs1)>;
-
-
-def : Pat<(add (i64 0), (i64 0)),
-        (NOP )>;
-
-
-def : Pat<(xor X:$rs1, (i64 4095)),
-        (NOT X:$rs1)>;
-
-
-
-
-def : Pat<(setcc (i64 0), X:$rs1, SETLT),
-        (SGTZ X:$rs1)>;
-
-
-def : Pat<(setcc X:$rs1, (i64 0), SETLT),
-        (SLTZ X:$rs1)>;
-
-
-def : Pat<(setcc (i64 0), X:$rs1, SETULT),
-        (SNEZ X:$rs1)>;
-
-
-
-
-def : Pat<(rotl X:$rs1, X:$rs2),
-        (OR (SLL X:$rs1, X:$rs2), (SRL X:$rs1, (SUB (LLA (i64 64)), X:$rs2)))>;

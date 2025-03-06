@@ -209,7 +209,7 @@ define i64 @select_sge_int32min(i64 %x, i64 %y, i64 %z) {
 ; CHECK-NEXT: BNE a0,zero,.LBB2_4
 ; CHECK-NEXT: JAL zero,.LBB2_3
 ; CHECK-NEXT: .LBB2_2:
-; CHECK-NEXT: SLT a0,a0,zero
+; CHECK-NEXT: SLTI a0,a0,0
 ; CHECK-NEXT: BNE a0,zero,.LBB2_4
 ; CHECK-NEXT: .LBB2_3:
 ; CHECK-NEXT: ADDI a2,a4,0

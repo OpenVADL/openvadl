@@ -17,14 +17,14 @@ define i64 @addi(i64 %a) nounwind {
 define i64 @slti(i64 %a) nounwind {
 ; CHECK-LABEL: slti: # @slti
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a2,a1,0
-; CHECK-NEXT: ADDI a1,zero,0
-; CHECK-NEXT: BEQ a2,a1,.LBB1_2
+; CHECK-NEXT: BEQ a1,zero,.LBB1_2
 ; CHECK-LABEL: # %bb.1:
-; CHECK-NEXT: SLT a0,a2,zero
+; CHECK-NEXT: SLTI a0,a1,0
+; CHECK-NEXT: ADDI a1,zero,0
 ; CHECK-NEXT: JALR zero,0(ra)
 ; CHECK-LABEL: .LBB1_2:
 ; CHECK-NEXT: SLTIU a0,a0,2
+; CHECK-NEXT: ADDI a1,zero,0
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = icmp slt i64 %a, 2
   %2 = zext i1 %1 to i64
@@ -34,14 +34,14 @@ define i64 @slti(i64 %a) nounwind {
 define i64 @sltiu(i64 %a) nounwind {
 ; CHECK-LABEL: sltiu: # @sltiu
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI a2,a1,0
-; CHECK-NEXT: ADDI a1,zero,0
-; CHECK-NEXT: BEQ a2,a1,.LBB2_2
+; CHECK-NEXT: BEQ a1,zero,.LBB2_2
 ; CHECK-LABEL: # %bb.1:
-; CHECK-NEXT: ADDI a0,a1,0
+; CHECK-NEXT: ADDI a0,zero,0
+; CHECK-NEXT: ADDI a1,zero,0
 ; CHECK-NEXT: JALR zero,0(ra)
 ; CHECK-LABEL: .LBB2_2:
 ; CHECK-NEXT: SLTIU a0,a0,3
+; CHECK-NEXT: ADDI a1,zero,0
 ; CHECK-NEXT: JALR zero,0(ra)
   %1 = icmp ult i64 %a, 3
   %2 = zext i1 %1 to i64
