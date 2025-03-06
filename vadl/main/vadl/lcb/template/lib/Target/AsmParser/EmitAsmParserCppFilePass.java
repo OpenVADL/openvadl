@@ -74,11 +74,9 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
         (insn, llvmRecord) -> buildInstructionOperandMap(insn.simpleName(), llvmRecord, result)
     );
 
-    /*
     output.pseudoInstructionRecords().forEach(
         (pseudo, llvmRecord) -> buildInstructionOperandMap(pseudo.simpleName(), llvmRecord, result)
     );
-     */
 
     return result;
   }
