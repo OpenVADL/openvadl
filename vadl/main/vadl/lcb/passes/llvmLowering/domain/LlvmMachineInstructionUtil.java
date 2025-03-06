@@ -14,87 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.isaMatching;
+package vadl.lcb.passes.llvmLowering.domain;
 
 import java.util.HashMap;
 import javax.annotation.Nullable;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
-import vadl.viam.Instruction;
 
 /**
- * A collection of labels for a {@link Instruction}.
- * The {@link IsaMachineInstructionMatchingPass} tries to assign each {@link Instruction} a
- * {@link MachineInstructionLabel}. This label can be used to quickly search for instructions.
- * How do I read this?
- * You can say the following: An {@link Instruction} with the semantics of summing two unsigned
- * 32bit registers will get the {@link MachineInstructionLabel#ADD_32} assigned.
+ * Helper class to extend {@link MachineInstructionLabel}.
  */
-public enum MachineInstructionLabel {
-  LUI,
-  /*
-  ARITHMETIC AND LOGIC
-   */
-  ADD_32,
-  ADD_64,
-  ADDI_32,
-  ADDI_64,
-  AND,
-  OR,
-  ORI,
-  SUB,
-  MUL,
-  SUBB,
-  SUBC,
-  SDIV,
-  UDIV,
-  SMOD,
-  UMOD,
-  XOR,
-  XORI,
-  MULHU,
-  MULHS,
-  SLL,
-  SLLI,
-  SRL,
-  ROTL,
-  /*
-  COMPARISONS
-   */
-  EQ,
-  NEQ,
-  LTU,
-  LTS,
-  LTI, // less than immediate
-  LTIU, // less than immediate unsigned
-  /*
-  MEMORY
-   */
-  STORE_MEM,
-  LOAD_MEM,
-  /*
-  CONDITIONAL BRANCHES
-   */
-  BEQ,
-  BNEQ,
-  BSGEQ,
-  BSLEQ,
-  BSLTH,
-  BSGTH,
-  BUGEQ,
-  BULEQ,
-  BULTH,
-  BUGTH,
-  /*
-  UNCONDITIONAL JUMPS
-   */
-  JALR,
-  JAL,
-  /*
-  CONDITIONAL MOVE
-   */
-  CMOVE_32,
-  CMOVE_64;
+public class LlvmMachineInstructionUtil {
 
   /**
    * The names of LLVM's cond code given a machine instruction label.

@@ -28,7 +28,7 @@ import javax.annotation.Nonnull;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;

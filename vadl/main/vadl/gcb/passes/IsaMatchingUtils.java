@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.isaMatching;
+package vadl.gcb.passes;
 
 import static vadl.viam.ViamError.ensureNonNull;
 
@@ -25,9 +25,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.valuetypes.RelocationCtx;
 import vadl.gcb.valuetypes.RelocationFunctionLabel;
+import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Instruction;

@@ -14,29 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.isaMatching;
+package vadl.gcb.passes;
 
-import vadl.viam.Definition;
-import vadl.viam.DefinitionExtension;
-import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 
 /**
- * An extension for the {@link Instruction}. It will be used
- * label the instruction with a {@link MachineInstructionLabel}.
+ * A collection for labels for {@link PseudoInstruction}.
+ * It is the same as {@link MachineInstructionLabel} but only to label
+ * pseudo instruction.
  */
-public class MachineInstructionCtx extends DefinitionExtension<Instruction> {
-  private final MachineInstructionLabel label;
-
-  public MachineInstructionCtx(MachineInstructionLabel label) {
-    this.label = label;
-  }
-
-  @Override
-  public Class<? extends Definition> extendsDefClass() {
-    return Definition.class;
-  }
-
-  public MachineInstructionLabel label() {
-    return label;
-  }
+public enum PseudoInstructionLabel {
+  LI,
+  J
 }

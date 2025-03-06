@@ -26,7 +26,7 @@ import java.util.Set;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;

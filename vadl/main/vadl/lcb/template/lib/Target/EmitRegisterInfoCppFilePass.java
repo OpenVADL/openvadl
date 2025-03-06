@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;

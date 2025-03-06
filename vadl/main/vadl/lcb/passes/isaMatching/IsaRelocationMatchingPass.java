@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.IsaMatchingUtils;
 import vadl.gcb.valuetypes.RelocationCtx;
 import vadl.gcb.valuetypes.RelocationFunctionLabel;
 import vadl.pass.Pass;

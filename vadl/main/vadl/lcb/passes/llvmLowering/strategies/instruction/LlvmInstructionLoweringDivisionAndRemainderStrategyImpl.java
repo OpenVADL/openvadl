@@ -16,10 +16,10 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.SDIV;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.SMOD;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.UDIV;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.UMOD;
+import static vadl.gcb.passes.MachineInstructionLabel.SDIV;
+import static vadl.gcb.passes.MachineInstructionLabel.SMOD;
+import static vadl.gcb.passes.MachineInstructionLabel.UDIV;
+import static vadl.gcb.passes.MachineInstructionLabel.UMOD;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;

@@ -28,7 +28,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;

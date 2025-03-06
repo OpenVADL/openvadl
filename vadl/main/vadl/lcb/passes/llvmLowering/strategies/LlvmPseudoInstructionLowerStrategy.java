@@ -30,7 +30,7 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
-import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.gcb.passes.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;

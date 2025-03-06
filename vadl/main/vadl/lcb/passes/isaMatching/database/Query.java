@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
-import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabelGroup;
+import vadl.gcb.passes.PseudoInstructionLabel;
 import vadl.viam.ViamError;
 
 /**

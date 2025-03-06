@@ -36,7 +36,7 @@ import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.TableGenInstructionCtx;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;

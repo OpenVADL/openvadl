@@ -36,7 +36,7 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;

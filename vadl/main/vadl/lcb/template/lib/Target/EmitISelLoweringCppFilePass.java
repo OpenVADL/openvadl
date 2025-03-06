@@ -30,16 +30,17 @@ import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
+import vadl.gcb.passes.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabelGroup;
 import vadl.gcb.passes.ValueRange;
 import vadl.gcb.passes.ValueRangeCtx;
 import vadl.gcb.passes.relocation.model.Modifier;
 import vadl.gcb.valuetypes.RelocationFunctionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabelGroup;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
+import vadl.lcb.passes.llvmLowering.domain.LlvmMachineInstructionUtil;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
@@ -276,7 +277,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
           () -> Diagnostic.error("Cannot find a label to the instruction",
               instruction.sourceLocation()));
       var condCode =
-          ensureNonNull(MachineInstructionLabel.getLlvmCondCodeByLabel(machineInstructionLabel),
+          ensureNonNull(LlvmMachineInstructionUtil.getLlvmCondCodeByLabel(machineInstructionLabel),
               () -> Diagnostic.error("There is no cond code for the machine instruction label.",
                   instruction.sourceLocation()));
       return new BranchInstruction(instruction.simpleName(), condCode.name());

@@ -30,7 +30,7 @@ import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.assembly.AssemblyInstructionPrinterCodeGenerator;
 import vadl.lcb.passes.EncodeAssemblyImmediateAnnotation;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;

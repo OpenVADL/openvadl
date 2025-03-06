@@ -16,16 +16,16 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BEQ;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BNEQ;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSGEQ;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSGTH;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSLEQ;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BSLTH;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGEQ;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BUGTH;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULEQ;
-import static vadl.lcb.passes.isaMatching.MachineInstructionLabel.BULTH;
+import static vadl.gcb.passes.MachineInstructionLabel.BEQ;
+import static vadl.gcb.passes.MachineInstructionLabel.BNEQ;
+import static vadl.gcb.passes.MachineInstructionLabel.BSGEQ;
+import static vadl.gcb.passes.MachineInstructionLabel.BSGTH;
+import static vadl.gcb.passes.MachineInstructionLabel.BSLEQ;
+import static vadl.gcb.passes.MachineInstructionLabel.BSLTH;
+import static vadl.gcb.passes.MachineInstructionLabel.BUGEQ;
+import static vadl.gcb.passes.MachineInstructionLabel.BUGTH;
+import static vadl.gcb.passes.MachineInstructionLabel.BULEQ;
+import static vadl.gcb.passes.MachineInstructionLabel.BULTH;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.isaMatching.MachineInstructionLabel;
+import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;

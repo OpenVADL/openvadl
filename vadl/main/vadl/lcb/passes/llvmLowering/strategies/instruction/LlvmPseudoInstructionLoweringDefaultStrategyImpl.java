@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
-import vadl.lcb.passes.isaMatching.PseudoInstructionLabel;
+import vadl.gcb.passes.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrategy;
