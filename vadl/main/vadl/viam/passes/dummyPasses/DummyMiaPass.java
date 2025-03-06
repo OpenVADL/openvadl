@@ -47,6 +47,60 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
 /**
  * Adds a hardcoded {@link vadl.viam.MicroArchitecture} definition to the VIAM specification.
  * This is deleted as soon as the frontend can handle the translation.
+ *
+ * <pre>
+ * [forwarding]
+ * logic bypass
+ *
+ * [branch predictor]
+ * logic predict
+ *
+ * stage FETCH -> ( fr : FetchResult ) =
+ * {
+ *   fr := fetchNext
+ * }
+ *
+ * stage DECODE -> ( ir : Instruction ) =
+ * {
+ *   let instr = decode( FETCH.fr ) in
+ *   {
+ *     instr.address( @X )
+ *     instr.readOrForward( @X, @bypass )
+ *     ir := instr
+ *   }
+ * }
+ *
+ * stage EXECUTE -> ( ir : Instruction ) =
+ * {
+ *   let instr = DECODE.ir in
+ *   {
+ *     instr.read( @PC )
+ *     instr.compute
+ *     instr.verify
+ *     instr.write( @PC )
+ *     instr.results( @X, @bypass )
+ *     ir := instr
+ *   }
+ * }
+ *
+ * stage MEMORY -> ( ir : Instruction ) =
+ * {
+ *   let instr = EXECUTE.ir in
+ *   {
+ *     instr.write( @MEM )
+ *     instr.read( @MEM )
+ *     ir := instr
+ *   }
+ * }
+ *
+ * stage WRITE_BACK =
+ * {
+ *   let instr = MEMORY.ir in
+ *   {
+ *     instr.write( @X )
+ *   }
+ * }
+ * </pre>
  */
 public class DummyMiaPass extends Pass {
 
