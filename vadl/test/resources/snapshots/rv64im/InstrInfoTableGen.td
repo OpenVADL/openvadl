@@ -4139,39 +4139,39 @@ let Defs = [  ];
 
 
 
-def : InstAlias<"NOT $rd,$rs1", (XORI X:$rd, X:$rs1, 4095)>;
 
-def : InstAlias<"NOP", (ADDI X0, X0, 0)>;
+
+
 
 def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs1, X0, RV3264I_Btype_immAsLabel:$imm)>;
 
-def : InstAlias<"BNEZ $rs,$offset", (BNE X:$rs1, X0, RV3264I_Btype_immAsLabel:$imm)>;
-
-
-
-def : InstAlias<"SLTZ $rd,$rs1", (SLT X:$rd, X:$rs1, X0)>;
-
-def : InstAlias<"SGTZ $rd,$rs1", (SLT X:$rd, X0, X:$rs2)>;
-
-def : InstAlias<"BLTZ $rs,$offset", (BLT X:$rs1, X0, RV3264I_Btype_immAsLabel:$imm)>;
-
-def : InstAlias<"RET", (JALR X1, X0, 0)>;
-
-
-
-def : InstAlias<"NEG $rd,$rs1", (SUB X:$rd, X0, X:$rs2)>;
-
-def : InstAlias<"SNEZ $rd,$rs1", (SLTU X:$rd, X0, X:$rs2)>;
-
 def : InstAlias<"BGEZ $rs,$offset", (BGE X:$rs1, X0, RV3264I_Btype_immAsLabel:$imm)>;
-
-def : InstAlias<"MOV $rd,$rs1", (ADDI X:$rd, X:$rs1, 0)>;
 
 def : InstAlias<"BGTZ $rs,$offset", (BLT X0, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
 
 def : InstAlias<"BLEZ $rs,$offset", (BGE X0, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
 
+def : InstAlias<"BLTZ $rs,$offset", (BLT X:$rs1, X0, RV3264I_Btype_immAsLabel:$imm)>;
+
+def : InstAlias<"BNEZ $rs,$offset", (BNE X:$rs1, X0, RV3264I_Btype_immAsLabel:$imm)>;
+
 def : InstAlias<"J $offset", (JAL X0, RV3264I_Jtype_immAsInt64:$imm)>;
+
+def : InstAlias<"MOV $rd,$rs1", (ADDI X:$rd, X:$rs1, 0)>;
+
+def : InstAlias<"NEG $rd,$rs1", (SUB X:$rd, X0, X:$rs2)>;
+
+def : InstAlias<"NOP", (ADDI X0, X0, 0)>;
+
+def : InstAlias<"NOT $rd,$rs1", (XORI X:$rd, X:$rs1, 4095)>;
+
+def : InstAlias<"RET", (JALR X1, X0, 0)>;
+
+def : InstAlias<"SGTZ $rd,$rs1", (SLT X:$rd, X0, X:$rs2)>;
+
+def : InstAlias<"SLTZ $rd,$rs1", (SLT X:$rd, X:$rs1, X0)>;
+
+def : InstAlias<"SNEZ $rd,$rs1", (SLTU X:$rd, X0, X:$rs2)>;
 
 
 

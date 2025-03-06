@@ -121,6 +121,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         .values()
         .stream()
         .map(TableGenInstAliasRenderer::lower)
+        .sorted() // just that we have always the same output
         .toList();
 
     var pseudoExpansionPatterns = tableGenMachineRecords

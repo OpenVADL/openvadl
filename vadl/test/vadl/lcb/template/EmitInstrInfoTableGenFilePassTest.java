@@ -32,7 +32,7 @@ import vadl.template.AbstractTemplateRenderingPass;
 
 public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   @Test
-  void testLowering() throws IOException, DuplicatedPassKeyException, URISyntaxException {
+  void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
     var configuration = getConfiguration(false);
     var testSetup = runLcb(configuration, "sys/risc-v/rv64im.vadl",
