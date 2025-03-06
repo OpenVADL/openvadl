@@ -17,16 +17,12 @@
 package vadl.lcb.passes.pseudo;
 
 import java.io.IOException;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbConstantNodeReplacement;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
-import vadl.viam.graph.control.InstrCallNode;
-import vadl.viam.graph.dependency.ConstantNode;
 
 /**
  * LLVM only implements fixed width immediates. Therefore, we need to

@@ -17,12 +17,10 @@
 package vadl.lcb.template.lld.ELF.Arch;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.common.UpdateFieldRelocationFunctionCodeGenerator;
-import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;

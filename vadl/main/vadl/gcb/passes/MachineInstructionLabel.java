@@ -16,9 +16,6 @@
 
 package vadl.gcb.passes;
 
-import java.util.HashMap;
-import javax.annotation.Nullable;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
 import vadl.viam.Instruction;
 
 /**

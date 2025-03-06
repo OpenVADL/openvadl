@@ -26,14 +26,11 @@ import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
-import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionCtx;
-import vadl.gcb.passes.PseudoInstructionCtx;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Instruction;
-import vadl.viam.PseudoInstruction;
 
 /**
  * A static collection {@link InfoEnricher} that provides
@@ -67,32 +64,6 @@ public class LcbEnricherCollection {
         }
       });
 
-
-  /**
-   * Some instruction have a predefined behavior semantic.
-   * It was detected by VADL then emit the label.
-   */
-  public static InfoEnricher PSEUDO_ISA_MATCHING_SUPPLIER_TAG =
-      forType(DefinitionEntity.class, (definitionEntity, passResults) -> {
-        // This supplier also runs for the VIAM dump.
-        // But, the pass wasn't scheduled yet.
-        if (!passResults.hasRunPassOnce(IsaPseudoInstructionMatchingPass.class)) {
-          return;
-        }
-
-        if (definitionEntity.origin() instanceof PseudoInstruction instruction) {
-          if (instruction.hasExtension(PseudoInstructionCtx.class)) {
-            var label =
-                Optional.ofNullable(
-                        instruction.extension(
-                            PseudoInstructionCtx.class))
-                    .map(PseudoInstructionCtx::label)
-                    .map(Enum::name).orElse("No label");
-            var info = Info.Tag.of("Pseudo Instruction Label", label);
-            definitionEntity.addInfo(info);
-          }
-        }
-      });
 
   /**
    * Renders tablegen's instruction operands.

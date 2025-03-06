@@ -11,7 +11,6 @@ import vadl.rtl.ipg.InstructionProgressGraphVisualizer;
 import vadl.rtl.passes.InstructionProgressGraphExtension;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.graph.Graph;
 
 /**
  * A collection of info enrichers that provide information during the RTL generation.
