@@ -106,6 +106,10 @@ tasks.test {
     useJUnitPlatform()
     jvmArgs("--enable-preview")
 
+    reports {
+        junitXml.required.set(true)
+    }
+
     // A collection to track failed tests
     val failedTests = mutableListOf<String>()
 

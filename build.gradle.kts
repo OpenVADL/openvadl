@@ -33,6 +33,9 @@ plugins {
     id("java")
     checkstyle
     id("net.ltgt.errorprone") version "4.0.1" apply false
+    
+    // log executed tests
+    id("com.adarshr.test-logger") version "4.0.0"
 
     // custom plugins
     id("vadl.IdeConfigPlugin")
@@ -43,10 +46,12 @@ allprojects {
     version = "0.1.0-SNAPSHOT"
 }
 
+
 subprojects {
     plugins.apply("java")
     plugins.apply("net.ltgt.errorprone")
     plugins.apply("checkstyle")
+    plugins.apply("com.adarshr.test-logger")
 
     val errorProneVersion by extra("2.26.1")
 

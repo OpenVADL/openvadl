@@ -9,29 +9,39 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'    
+          distribution: 'graalvm'     
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         run: ./gradlew assemble testClasses -PFailOnWarnings
-
-  checkstyle:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
       - name: Run Checkstyle
         run: ./gradlew checkstyleAll
 
   test:
-    runs-on: ubuntu-latest
-    needs: checkstyle
+    runs-on: self-hosted
+    needs: build
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'    
+          distribution: 'graalvm'     
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'gradle'
       - name: Run tests
-        run: ./gradlew test -i
+        run: ./gradlew test
         env:
           isCI: true
+          
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: OpenVADL Tests           
+          path: "**/build/test-results/test/TEST-*.xml"    # Path to test results
+          reporter: java-junit        # Format of test results
