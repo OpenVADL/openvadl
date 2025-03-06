@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.verification;
+package vadl.lcb.riscv.riscv64.verification;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -47,7 +47,7 @@ import vadl.utils.VadlFileUtils;
 import vadl.viam.Format;
 import vadl.viam.Parameter;
 
-public class RelocationCodeGeneratorCppVerificationTest extends AbstractLcbTest {
+public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractLcbTest {
   @TestFactory
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
     var configuration = getConfiguration(false);

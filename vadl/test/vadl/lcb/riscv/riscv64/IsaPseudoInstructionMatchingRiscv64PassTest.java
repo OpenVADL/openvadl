@@ -32,7 +32,7 @@ import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Definition;
 
-public class IsaPseudoInstructionMatchingPassTest extends AbstractLcbTest {
+public class IsaPseudoInstructionMatchingRiscv64PassTest extends AbstractLcbTest {
 
   private static Stream<Arguments> getExpectedMatchings() {
     return Stream.of(

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes;
+package vadl.lcb.riscv.riscv32;
 
 import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
@@ -25,7 +25,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
-public class GenerateRegisterClassesPassTest extends AbstractLcbTest {
+public class GenerateRegisterClassesRiscv32PassTest extends AbstractLcbTest {
 
   @ParameterizedTest
   @CsvSource({"processorNameValue,X,32,i64"})
@@ -89,7 +89,7 @@ public class GenerateRegisterClassesPassTest extends AbstractLcbTest {
   void shouldHaveCorrectRegisterAssignments(String name, String reg)
       throws IOException, DuplicatedPassKeyException {
     // Given
-    var setup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
+    var setup = runLcb(getConfiguration(false), "sys/risc-v/rv32im.vadl",
         new PassKey(GenerateTableGenRegistersPass.class.getName()));
     var passManager = setup.passManager();
     var spec = setup.specification();
