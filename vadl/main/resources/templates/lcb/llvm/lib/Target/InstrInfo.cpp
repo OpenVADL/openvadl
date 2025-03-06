@@ -38,18 +38,30 @@ const MCInstrDesc &[(${namespace})]InstrInfo::getBrCond([(${namespace})]CC::Cond
   switch (CC) {
   default:
     llvm_unreachable("Unknown condition code!");
+  [#th:block th:if="${beq != null}"]
   case [(${namespace})]CC::COND_EQ:
     return get([(${namespace})]::[(${beq})]);
+  [/th:block]
+  [#th:block th:if="${bne != null}"]
   case [(${namespace})]CC::COND_NE:
     return get([(${namespace})]::[(${bne})]);
+  [/th:block]
+  [#th:block th:if="${blt != null}"]
   case [(${namespace})]CC::COND_LT:
     return get([(${namespace})]::[(${blt})]);
+  [/th:block]
+  [#th:block th:if="${bge != null}"]
   case [(${namespace})]CC::COND_GE:
     return get([(${namespace})]::[(${bge})]);
+  [/th:block]
+  [#th:block th:if="${bltu != null}"]
   case [(${namespace})]CC::COND_LTU:
     return get([(${namespace})]::[(${bltu})]);
+  [/th:block]
+  [#th:block th:if="${bgeu != null}"]
   case [(${namespace})]CC::COND_GEU:
     return get([(${namespace})]::[(${bgeu})]);
+  [/th:block]
   }
 }
 
@@ -57,18 +69,30 @@ static [(${namespace})]CC::CondCode getCondFromBranchOpc(unsigned Opc) {
   switch (Opc) {
   default:
     return [(${namespace})]CC::COND_INVALID;
+  [#th:block th:if="${beq != null}"]
   case [(${namespace})]::[(${beq})]:
     return [(${namespace})]CC::COND_EQ;
+  [/th:block]
+  [#th:block th:if="${bne != null}"]
   case [(${namespace})]::[(${bne})]:
     return [(${namespace})]CC::COND_NE;
+  [/th:block]
+  [#th:block th:if="${blt != null}"]
   case [(${namespace})]::[(${blt})]:
     return [(${namespace})]CC::COND_LT;
+  [/th:block]
+  [#th:block th:if="${bge != null}"]
   case [(${namespace})]::[(${bge})]:
     return [(${namespace})]CC::COND_GE;
+  [/th:block]
+  [#th:block th:if="${bltu != null}"]
   case [(${namespace})]::[(${bltu})]:
     return [(${namespace})]CC::COND_LTU;
+  [/th:block]
+  [#th:block th:if="${bgeu != null}"]
   case [(${namespace})]::[(${bgeu})]:
     return [(${namespace})]CC::COND_GEU;
+  [/th:block]
   }
 }
 
