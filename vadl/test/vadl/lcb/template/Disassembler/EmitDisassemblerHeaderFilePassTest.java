@@ -43,7 +43,7 @@ public class EmitDisassemblerHeaderFilePassTest extends AbstractLcbTest {
     // Then
     var resultFile = passResult.emittedFile().toFile();
     var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
-    var output = trimmed.lines().skip(4); // skip copyright notice;
+    var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
         #ifndef LLVM_LIB_TARGET_processornamevalue_DISASSEMBLER_processornamevalueDISASSEMBLER_H
