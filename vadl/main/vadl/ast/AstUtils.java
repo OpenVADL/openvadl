@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
@@ -24,9 +25,20 @@ import vadl.types.UIntType;
 
 class AstUtils {
   static BuiltInTable.BuiltIn getBinOpBuiltIn(BinaryExpr expr) {
+
+    var operator = expr.operator().symbol;
+    var operatorRewrites = Map.of(
+        "&&", "&",
+        "||", "|"
+    );
+    if (operatorRewrites.containsKey(operator)) {
+      operator = operatorRewrites.get(operator);
+    }
+
+    String finalOperator = operator;
     var builtIns = BuiltInTable.builtIns()
         .filter(b -> b.signature().argTypeClasses().size() == 2)
-        .filter(b -> Objects.equals(b.operator(), expr.operator().symbol))
+        .filter(b -> Objects.equals(b.operator(), finalOperator))
         .toList();
 
     // Sometimes there are a singed and unsigned version of builtin operation
