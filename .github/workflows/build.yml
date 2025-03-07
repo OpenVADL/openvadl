@@ -2,9 +2,6 @@
 name: OpenVADL CI
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
 
 permissions:
@@ -31,6 +28,8 @@ jobs:
     runs-on: self-hosted
     needs: build
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
       - uses: actions/checkout@v3
       - uses: graalvm/setup-graalvm@v1
         with:
