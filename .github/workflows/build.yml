@@ -1,0 +1,52 @@
+# GitHub Actions workflow for OpenVADL CI
+name: OpenVADL CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'    
+          distribution: 'graalvm'     
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        run: ./gradlew assemble testClasses -PFailOnWarnings
+      - name: Run Checkstyle
+        run: ./gradlew checkstyleAll
+
+  test:
+    runs-on: self-hosted
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'    
+          distribution: 'graalvm'     
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'gradle'
+      - name: Run tests
+        run: ./gradlew test
+        env:
+          isCI: true
+          
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: OpenVADL Tests           
+          path: "**/build/test-results/test/TEST-*.xml"    # Path to test results
+          reporter: java-junit        # Format of test results
