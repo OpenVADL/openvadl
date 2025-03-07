@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
@@ -49,6 +50,7 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Constant;
+import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -345,19 +347,19 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put("instructionSizes", instructionSizes(specification));
     map.put("jumpInstruction", jump.simpleName());
     map.put("beq",
-        getBranchInstruction(specification, passResults, MachineInstructionLabel.BEQ).simpleName());
+        getBranchInstruction(specification, passResults, MachineInstructionLabel.BEQ));
     map.put("bne", getBranchInstruction(specification, passResults,
-        MachineInstructionLabel.BNEQ).simpleName());
+        MachineInstructionLabel.BNEQ));
     map.put("blt", getBranchInstruction(specification, passResults,
-        MachineInstructionLabel.BSLTH).simpleName());
+        MachineInstructionLabel.BSLTH));
     map.put("bge", getBranchInstruction(specification, passResults,
-        MachineInstructionLabel.BSGEQ).simpleName());
+        MachineInstructionLabel.BSGEQ));
     map.put("bltu",
         getBranchInstruction(specification, passResults,
-            MachineInstructionLabel.BULTH).simpleName());
+            MachineInstructionLabel.BULTH));
     map.put("bgeu",
         getBranchInstruction(specification, passResults,
-            MachineInstructionLabel.BUGEQ).simpleName());
+            MachineInstructionLabel.BUGEQ));
     map.put("isAsCheapAsMove",
         areAsCheapAsMove(fieldUsages, new Database(passResults, specification)));
 
@@ -371,14 +373,16 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         () -> Diagnostic.error("Has no value range", instruction.sourceLocation()));
   }
 
-  private Instruction getBranchInstruction(Specification specification,
-                                           PassResults passResults,
-                                           MachineInstructionLabel machineInstructionLabel) {
+  @Nullable
+  private String getBranchInstruction(Specification specification,
+                                      PassResults passResults,
+                                      MachineInstructionLabel machineInstructionLabel) {
     var database = new Database(passResults, specification);
     var result = database.run(new Query.Builder().machineInstructionLabels(List.of(
         machineInstructionLabel
     )).build());
-    return result.firstMachineInstruction();
+    return result.machineInstructions().stream().findFirst().map(Definition::simpleName)
+        .orElse(null);
   }
 
   private List<InstructionSize> instructionSizes(Specification specification) {

@@ -1,0 +1,214 @@
+instruction set architecture RV3264IM = {
+  constant Arch32 = 32                    // 32 bit architecture
+  constant MLen   = 32                    // MLen = 32 or 64 depending on ArchSize
+  constant SftLen = (MLen / 32) + 4       // number of bits needed for shift amount (5 or 6)
+  constant WLen   = 32                    // 32 bit word length in 64 bit mode
+
+  using Byte     = Bits< 8>               // 8 bit Byte
+  using Half     = Bits<16>               // 16 bit half word type
+  using Word     = Bits<32>               // 32 bit word type
+  using Dble     = Bits<64>               // 64 bit word type
+  using Inst     = Bits<32>               // instruction word is 32 bit
+  using SIntW    = SInt<32>               // signed integer word type
+  using UIntW    = UInt<32>               // unsigned integer word type
+  using Regs     = Bits<MLen>             // untyped register word type
+  using SIntR    = SInt<MLen>             // signed integer register word type
+  using UIntR    = UInt<MLen>             // unsigned integer register word type
+  using Address  = Regs                   // address is register word type
+  using Bits3    = Bits< 3>               // 3 bit type
+  using Bits4    = Bits< 4>               // 3 bit type
+  using Bits5    = Bits< 5>               // 5 bit type
+  using Bits6    = Bits< 6>               // 6 bit type
+  using Bits7    = Bits< 7>               // 7 bit type
+  using Index    = Bits< 5>               // 5 bit register index type for 32 registers
+  using UInt5    = UInt< 5>               // 5 bit unsigned shift amount
+  using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift amount
+
+  [X(0) = 0]                              // register with index 0 always is 0
+  register file    X : Index   -> Regs    // integer register file with 32 registers of 32 bits
+  program counter PC : Address            // PC points to the start of the current instruction
+  memory         MEM : Address -> Byte    // byte addressed memory
+
+   format Rtype : Inst =                   // Rtype register 3 operand instruction format
+      { funct7 : Bits7                      // [31..25] 7 bit function code
+      , rs2    : Index                      // [24..20] 2nd source register index / shamt
+      , rs1    : Index                      // [19..15] 1st source register index
+      , funct3 : Bits3                      // [14..12] 3 bit function code
+      , rd     : Index                      // [11..7]  destination register index
+      , opcode : Bits7                      // [6..0]   7 bit operation code
+      , shamt  = rs2 as UInt                // 5 bit unsigned shift amount
+      }
+
+    format Itype : Inst =                   // Itype immediate instruction format
+      { imm    : Bits<12>                   // [31..20] 12 bit immediate value
+      , rs1    : Index                      // [19..15] source register index
+      , funct3 : Bits3                      // [14..12] 3 bit function code
+      , rd     : Index                      // [11..7]  destination register index
+      , opcode : Bits7                      // [6..0]   7 bit operation code
+      , immS   = imm as SIntR               // sign extended immediate value
+      }
+
+      format Utype : Inst =                   // Utype upper immediate instruction format
+          { imm    : Bits<20>                   // [31..12] 20 bit immediate value
+          , rd     : Index                      // [11..7]  destination register index
+          , opcode : Bits7                      // [6..0]   7 bit operation code
+          , immUp  = (imm as SIntR) << 12       // shifted signed immediate value
+          }
+
+   format Ftype : Inst =                 // Ftype shift immediate instruction format
+        { funct2 : Bits<2>                  // [31..30] 2 bit function code
+        , zero   : Bits<5>                  // [29..26/25] 4 or 5 bit zero field
+        , sft    : Bits<5>                   // [24/25..20] 5 or 6 bit shift amount
+        , rs1    : Index                    // [19..15] 1st source register index
+        , funct3 : Bits3                    // [14..12] 3 bit function code
+        , rd     : Index                    // [11..7]  destination register index
+        , opcode : Bits7                    // [6..0]   7 bit operation code
+        , shamt  = sft as UInt              // 5/6 bit unsigned shift amount
+        }
+
+   format Jtype : Inst =                   // Jtype jump and link instruction format
+       { imm    [31, 19..12, 20, 30..21]     // 20 bit immediate value
+       , rd     [11..7]                      // destination register index
+       , opcode [6..0]                       // 7 bit operation code
+       , immS   = (imm as SIntR) << 1        // sign extended and shifted immediate value immS
+       }
+
+
+  model ItypeInstr (name : Id, op : BinOp, funct3 : Bin, exTy : Id) : IsaDefs = {
+    instruction $name : Itype =                        // immediate instructions
+      X(rd) := ((X(rs1) as $exTy) $op (immS as $exTy)) as Regs
+    encoding $name = {opcode = 0b001'0011, funct3 = $funct3}
+    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+  }
+
+
+  model RtypeInstr (name : Id, op : BinOp, funct3 : Bin, funct7 : Bin, lhsTy : Id, rhsTy : Id) : IsaDefs = {
+    instruction $name : Rtype =                        // 3 register operand instructions
+      X(rd) := ((X(rs1) as $lhsTy) $op (X(rs2) as $rhsTy)) as Regs
+    encoding $name = { opcode = 0b011'0011, funct3 = $funct3, funct7 = $funct7}
+    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+    }
+
+  model UtypeInstr (name : Id, opcode : Bin, rhsEx : Ex) : IsaDefs = {
+    instruction $name : Utype =                        // upper immediate instructions
+      X(rd) := $rhsEx
+    encoding $name = {opcode = $opcode}
+    assembly $name = (mnemonic, " ", register(rd), ",", hex(imm))
+  }
+
+  model IShftInstr (name : Id, op : BinOp, funct3 : Bin, funct2 : Bin, lhsTy : Id) : IsaDefs = {
+      instruction $name : Ftype =                        // shift immediate instructions
+        X(rd) := ((X(rs1) as $lhsTy) $op shamt) as Regs
+      encoding $name = {opcode = 0b001'0011, zero = 0, funct3 = $funct3, funct2 = $funct2}
+      assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(sft))
+  }
+
+  relocation hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
+  relocation lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
+
+  $ItypeInstr (ADDI ; +  ; 0b000 ; SInt)               // add immediate
+  $RtypeInstr (ADD  ; +  ; 0b000 ; 0b000'0000 ; Bits ; Bits ) // add
+  $UtypeInstr (LUI  ; 0b011'0111 ;      immUp)         // load upper immediate
+  $RtypeInstr (MUL; * ; 0b000 ; 0b000'0001  ; Bits ; Bits )
+  $IShftInstr (SLLI ; << ; 0b001 ; 0b00       ; UInt)  // shift left  logical immediate
+
+  model JLinkInstr (name : Id, iFormat : Id, reg : Ex, opcode : Encs, asm : Ex) : IsaDefs = {
+      instruction $name : $iFormat =                     // jump and link (register)
+        let retaddr = PC.next in {
+          PC    := ($reg + immS) & (-(2 as SIntR))       // $reg could be equal to X(rd)
+          X(rd) := retaddr                               // when rs1 is equal to rd
+          }
+      encoding $name = {$opcode}
+      assembly $name = (mnemonic, " ", register(rd), ",", decimal(imm), $asm)
+      }
+
+  $JLinkInstr (JAL  ; Jtype ; PC     ; opcode = 0b110'1111 ; "") // jump and link
+  $JLinkInstr (JALR ; Itype ; X(rs1) ; opcode = 0b110'0111,      // jump and link register
+                                       funct3 = 0b000 ; ("(", register(rs1), ")"))
+
+  instruction ADDMUL : Rtype =                        // 3 register operand instructions
+      X(rd) := (((X(rs1) as Bits) + (X(rs2) as Bits)) * (X(rs2) as Bits)) as Regs
+  encoding ADDMUL = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+  assembly ADDMUL = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+
+  instruction ADDDIV1 : Rtype =                        // 3 register operand instructions
+        X(rd) :=
+          if rs2 = 0 then
+            0 as Regs
+          else
+            (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+    encoding ADDDIV1 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+    assembly ADDDIV1 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+
+  instruction ADDDIV2 : Rtype =                        // 3 register operand instructions
+        X(rd) :=
+          if rs2 != 0 then
+            (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+          else
+            0 as Regs
+    encoding ADDDIV2 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+    assembly ADDDIV2 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+
+   instruction ADDDIV3 : Rtype =                        // 3 register operand instructions
+           X(rd) :=
+             if rs1 != 0 then
+               (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+             else
+               0 as Regs
+       encoding ADDDIV3 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+       assembly ADDDIV3 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+
+   instruction ADDDIV4 : Rtype =                        // 3 register operand instructions
+              X(rd) :=
+                if rs1 != 0 & rs2 != 0 then
+                  (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+                else
+                  0 as Regs
+          encoding ADDDIV4 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+          assembly ADDDIV4 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+
+
+    instruction ADDDIV5 : Rtype =                        // 3 register operand instructions
+              X(rd) :=
+                if rs1 = 0 & rs2 != 0 then
+                  (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+                else
+                  0 as Regs
+          encoding ADDDIV5 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+          assembly ADDDIV5 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+
+pseudo instruction CALL( symbol : Bits<32> ) =
+  {
+      LUI{ rd = 1 as Bits5, imm = hi( symbol ) }
+      JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo( symbol ) }
+  }
+  assembly CALL = (mnemonic, " ", hex( symbol ))
+
+  pseudo instruction RET =
+    {
+        JALR{ rs1 = 1 as Bits5, rd = 0 as Bits5, imm = 0 as Bits<12> }
+    }
+    assembly RET = mnemonic
+
+  pseudo instruction LLA( rd: Index, symbol: Bits<32> ) =
+  {
+      LUI { rd = rd, imm = hi( symbol ) }
+      ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
+  }
+  assembly LLA = (mnemonic, " ", register(rd), hex( symbol ))
+
+  pseudo instruction J( offset : Bits<20> ) =
+  {
+        JAL{ rd = 0 as Bits5, imm = offset }
+  }
+  assembly J = (mnemonic, " ", decimal( offset ))
+
+}
+
+instruction set architecture RV32IM extending RV3264IM = {}
+
+application binary interface ABI for RV32IM = {}
+
+micro processor CPU implements RV32IM with ABI = {
+  start = 0x80000000
+}

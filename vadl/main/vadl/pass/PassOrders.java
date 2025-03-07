@@ -34,6 +34,7 @@ import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.passes.GenerateFieldAccessFunctionsFromFieldsPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
+import vadl.gcb.passes.InstructionPatternPruningPass;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
@@ -181,6 +182,7 @@ public class PassOrders {
     order.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
     order.add(new AssemblyReplacementNodePass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
+    order.add(new InstructionPatternPruningPass(gcbConfiguration));
 
     addHtmlDump(order, gcbConfiguration, "gcbProcessing",
         "Now the gcb produced all necessary encoding function for field accesses "

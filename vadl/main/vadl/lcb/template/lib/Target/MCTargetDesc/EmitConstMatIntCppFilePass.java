@@ -90,7 +90,8 @@ public class EmitConstMatIntCppFilePass extends LcbTemplateRenderingPass {
                 .getOrDefault(MachineInstructionLabel.SLLI,
                     Collections.emptyList())
                 .stream().findFirst(),
-            () -> Diagnostic.error("Expected an instruction with addition of immediate",
+            () -> Diagnostic.error(
+                "Expected an instruction with logical shift left with an immediate",
                 specification.sourceLocation()));
     var immediateDetection =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults
