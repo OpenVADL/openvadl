@@ -61,13 +61,14 @@ public class InstructionPatternPruningPass extends Pass {
                       @Nullable
                       @Override
                       public Node applyNullable(Node from, @Nullable Node to) {
-                        if (to instanceof SelectNode selectNode) { /* Here we determine the default case.
-                       Is the true case the default case
-                       or the false case?
-                       Because you can write a condition in two ways:
-                       (1) X(rs1) == X(rs2) (narrow)
-                       (2) X(rs1) != x(rs2) (wide)
-                     */
+                        if (to instanceof SelectNode selectNode) {
+                          /* Here we determine the default case.
+                             Is the true case the default case
+                             or the false case?
+                             Because you can write a condition in two ways:
+                             (1) X(rs1) == X(rs2) (narrow)
+                             (2) X(rs1) != x(rs2) (wide)
+                           */
                           var hasTrueCaseHasException = hasException(selectNode.trueCase());
                           var hasFalseCaseHasException = hasException(selectNode.falseCase());
 
@@ -120,7 +121,7 @@ public class InstructionPatternPruningPass extends Pass {
                     }));
 
             for (var item : workList) {
-              if(!item.left().isDeleted()) {
+              if (!item.left().isDeleted()) {
                 item.left().replaceAndDelete(item.right());
               }
             }
@@ -142,11 +143,38 @@ public class InstructionPatternPruningPass extends Pass {
       } else if (builtInCall.builtIn() == BuiltInTable.NEQ) {
         return Likelihood.TRUE_CASE;
       } else if (builtInCall.builtIn() == BuiltInTable.AND) {
-        return Likelihood.FALSE_CASE;
+        Likelihood result = null;
+
+        // Iterate over all the "and expressions" and see if the likelihood is the same.
+        for (var arg : builtInCall.arguments()) {
+          var subLikelihood = determineLikelihood(arg);
+
+          var combined = meet(result, subLikelihood);
+          if (combined == Likelihood.BOTH) {
+            return Likelihood.BOTH;
+          } else {
+            // They are the same so continue
+            result = combined;
+          }
+        }
+        return result == null ? Likelihood.BOTH : result;
       }
     }
 
     return Likelihood.BOTH;
+  }
+
+  private Likelihood meet(@Nullable Likelihood result, Likelihood subResult) {
+    // The result is not set because it is the first expression.
+    if (result == null) {
+      return subResult;
+    } else {
+      if (result == subResult) {
+        return result;
+      } else {
+        return Likelihood.BOTH;
+      }
+    }
   }
 
   /**

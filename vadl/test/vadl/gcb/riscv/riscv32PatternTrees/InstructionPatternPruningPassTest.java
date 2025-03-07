@@ -108,4 +108,60 @@ class InstructionPatternPruningPassTest extends AbstractGcbTest {
     Assertions.assertThat(addDiv3.get().getNodes(SelectNode.class)).isEmpty();
   }
 
+  @Test
+  void shouldPruneAddDiv4()
+      throws IOException, DuplicatedPassKeyException {
+    // Given
+    var setup = runGcbAndCppCodeGen(getConfiguration(false), "lcb/riscv32_pattern_trees.vadl");
+
+    /*
+       instruction ADDDIV4 : Rtype =                        // 3 register operand instructions
+              X(rd) :=
+                if rs1 != 0 & rs2 != 0 then
+                  (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+                else
+                  0 as Regs
+          encoding ADDDIV4 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+          assembly ADDDIV4 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+     */
+
+
+    // Then
+    var adddiv4 = setup.specification().isa().map(x -> x.ownInstructions().stream())
+        .orElse(Stream.empty())
+        .filter(instruction -> instruction.simpleName().equals("ADDDIV4"))
+        .map(Instruction::behavior).findFirst();
+
+    Assertions.assertThat(adddiv4).isPresent();
+    Assertions.assertThat(adddiv4.get().getNodes(SelectNode.class)).isEmpty();
+  }
+
+  @Test
+  void shouldNotPruneAddDiv5()
+      throws IOException, DuplicatedPassKeyException {
+    // Given
+    var setup = runGcbAndCppCodeGen(getConfiguration(false), "lcb/riscv32_pattern_trees.vadl");
+
+    /*
+       instruction ADDDIV5 : Rtype =                        // 3 register operand instructions
+              X(rd) :=
+                if rs1 = 0 & rs2 != 0 then
+                  (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+                else
+                  0 as Regs
+          encoding ADDDIV5 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+          assembly ADDDIV5 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+     */
+
+
+    // Then
+    var adddiv5 = setup.specification().isa().map(x -> x.ownInstructions().stream())
+        .orElse(Stream.empty())
+        .filter(instruction -> instruction.simpleName().equals("ADDDIV5"))
+        .map(Instruction::behavior).findFirst();
+
+    Assertions.assertThat(adddiv5).isPresent();
+    Assertions.assertThat(adddiv5.get().getNodes(SelectNode.class)).isNotEmpty();
+  }
+
 }
