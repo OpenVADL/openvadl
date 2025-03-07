@@ -69,8 +69,8 @@ public class InstructionPatternPruningPass extends Pass {
                              (1) X(rs1) == X(rs2) (narrow)
                              (2) X(rs1) != x(rs2) (wide)
                            */
-                          var hasTrueCaseHasException = hasException(selectNode.trueCase());
-                          var hasFalseCaseHasException = hasException(selectNode.falseCase());
+                          var hasTrueCaseHasException = hasException();
+                          var hasFalseCaseHasException = hasException();
 
                           if (hasTrueCaseHasException && hasFalseCaseHasException) {
                             throw Diagnostic.error(
@@ -107,7 +107,7 @@ public class InstructionPatternPruningPass extends Pass {
                               selectNode.falseCase().applyOnInputs(this);
                               return to; //selectNode.falseCase();
                             }
-                            case BOTH -> {
+                            default -> {
                               // We can't do anything.
                               return to;
                             }
@@ -180,7 +180,7 @@ public class InstructionPatternPruningPass extends Pass {
   /**
    * Returns {@code true} when an exception is raised on *ALL* execution paths.
    */
-  private boolean hasException(ExpressionNode expressionNode) {
+  private boolean hasException() {
     // TODO: VADL cannot raise exceptions at the moment.
     return false;
   }
