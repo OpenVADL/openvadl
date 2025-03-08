@@ -97,7 +97,7 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
         auto searchTarget = targets[i];
         bool targetMatched = false;
 
-        unsigned j = 1;
+        unsigned j = 1; // start at 1 because 0 is the mnemonic
         while( j < Operands.size() && targetMatched == false )
         {
             [(${namespace})]ParsedOperand& op = static_cast<[(${namespace})]ParsedOperand&>(*Operands[j]);

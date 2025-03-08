@@ -21,6 +21,7 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,6 @@ import vadl.gcb.passes.ValueRange;
 import vadl.gcb.passes.ValueRangeCtx;
 import vadl.lcb.passes.EncodeAssemblyImmediateAnnotation;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
@@ -84,28 +84,31 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     var result = new ArrayList<Map<String, String>>();
 
     output.machineInstructionRecords().forEach(
-        (insn, llvmRecord) -> buildInstructionOperandMap(insn.simpleName(), llvmRecord, result)
+        (insn, llvmRecord) -> {
+          var inputs = llvmRecord.info().inputs().stream()
+              .map(i -> ((TableGenParameterTypeAndName) i.parameter()).name());
+          var outputs = llvmRecord.info().outputs().stream()
+              .map(p -> ((TableGenParameterTypeAndName) p.parameter()).name());
+
+          var operands = Stream.concat(outputs, inputs).map(op -> '"' + op + '"').toList();
+          result.add(Map.of(
+              "name", insn.simpleName(),
+              "operands", String.join(", ", operands)
+          ));
+        }
     );
 
     output.pseudoInstructionRecords().forEach(
-        (pseudo, llvmRecord) -> buildInstructionOperandMap(pseudo.simpleName(), llvmRecord, result)
+        (pseudo, llvmRecord) -> {
+          var operands = Arrays.stream(pseudo.parameters()).map(p -> '"' + p.simpleName() + '"');
+          result.add(Map.of(
+                "name", pseudo.simpleName(),
+                "operands", String.join(", ", operands.toList()))
+          );
+        }
     );
 
     return result;
-  }
-
-  private void buildInstructionOperandMap(String insnName, LlvmLoweringRecord llvmRecord,
-                                          List<Map<String, String>> results) {
-    var inputs = llvmRecord.info().inputs().stream()
-        .map(i -> ((TableGenParameterTypeAndName) i.parameter()).name());
-    var outputs = llvmRecord.info().outputs().stream()
-        .map(p -> ((TableGenParameterTypeAndName) p.parameter()).name());
-
-    var operands = Stream.concat(outputs, inputs).map(op -> '"' + op + '"').toList();
-    results.add(Map.of(
-        "name", insnName,
-        "operands", String.join(", ", operands)
-    ));
   }
 
   private List<Map<String, Object>> immediateConversions(PassResults passResults) {
@@ -116,7 +119,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     output.machineInstructionRecords().forEach(
         (insn, llvmRecord) -> {
           var templateVars = new HashMap<String, Object>();
-          var immediateOperands = llvmRecord.inputs().stream()
+          var immediateOperands = llvmRecord.info().inputs().stream()
               .filter(i -> i instanceof TableGenInstructionImmediateOperand
                   || i instanceof TableGenInstructionImmediateLabelOperand
               ).toList();

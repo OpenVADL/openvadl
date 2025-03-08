@@ -18,8 +18,6 @@ assembly description ASM for ABI = {
   }
 
   grammar = {
-    // TODO: branch pseudo-instructions
-
     RRIds : "ADD" | "SUB" | "AND" | "OR" | "XOR" | "SLT" | "SLTU" | "SLL" | "SRL" | "SRA"
             | "MUL" | "MULH" | "MULHSU" | "MULHU" | "DIV" | "DIVU" | "REM" | "REMU"
     ;
@@ -139,7 +137,7 @@ assembly description ASM for ABI = {
 
     JPseudoInstruction @instruction :
       mnemonic = "J" @operand
-      imm = ImmediateOperand
+      offset = ImmediateOperand
     ;
 
 
@@ -149,6 +147,15 @@ assembly description ASM for ABI = {
       mnemonic = RRPseudoIds @operand
       rd = Register @operand ","
       rs1 = Register @operand
+    ;
+
+
+    BranchPseudoIds : "BEQZ" | "BNEZ" | "BLEZ" | "BGEZ" | "BLTZ" | "BGTZ" ;
+
+    BranchPseudoInstruction @instruction :
+      mnemonic = BranchPseudoIds @operand
+      rs = Register @operand ","
+      offset = ImmediateOperand @operand
     ;
 
 
