@@ -19,6 +19,7 @@ package vadl.viam;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.viam.graph.Graph;
@@ -59,6 +60,10 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     this.outputs = new ArrayList<>(outputs);
 
     this.behavior.setParentDefinition(this);
+  }
+
+  public MicroArchitecture mia() {
+    return mia;
   }
 
   public void setMia(MicroArchitecture mia) {
@@ -157,7 +162,9 @@ public class Stage extends Definition implements DefProp.WithBehavior {
     behavior.verify();
 
     var writes = behavior.getNodes(WriteStageOutputNode.class)
-        .map(WriteStageOutputNode::stageOutput).collect(Collectors.toSet());
+        .map(WriteStageOutputNode::stageOutput)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
     outputs.forEach(output -> ensure(writes.contains(output),
         "Output %s is not written to", output.simpleName()));
   }
