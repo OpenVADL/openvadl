@@ -99,7 +99,7 @@ to determine the size. Binary literals start with `0b` and hexadecimal literals
 start with `0x`. The apostrophe can be used to make the representation
 more comprehensible (see Listing \r{lst_literals}).
 
-\listing{lst_literals, VADL Binary Literals}
+\listing{lst_literals, VADL Binary and Decimal Literals}
 ~~~{.vadl}
 constant binLit = 0b1'0011       // has the value 19 and is of type Bits<5>
 constant hexLit = 0x000f         // has the value 15 and is of type Bits<16>
@@ -130,9 +130,11 @@ In \ac{VADL} tensors are specified by vectors of vectors with a bit vector for t
 When indexing tensors the index of every dimension has to be enclosed separately in parantheses.
 The outermost index is the first one, the innermost index is the last one.
 When tuples are used to initialize a tensor, the highest index comes first.
-This is uncommon to an initializer in the programming language `C++`, but fits better to the specification of bit vectors with highest bit first.
+This is different to an initializer in the programming language `C++`,
+but fits better to the specification of bit vectors with highest bit first.
+It is quite natural if every value is written in a single line.
 Listing \r{lst_tensordef} gives some examples for the definition and usage of tensors.
-OpenVADL currently supports slicing only for bit vectors.
+OpenVADL currently supports slicing only for bit vectors (the innermost dimension).
 In the future it is planned to allow slicing on the higher dimension levels.
 
 \listing{lst_tensordef, VADL Tensor Definitions and Usage}
@@ -140,23 +142,24 @@ In the future it is planned to allow slicing on the higher dimension levels.
 using Dim_1_a = Bits<16>
 using Dim_2_a = Dim_1_a<4>
 using Dim_3_a = Dim_2_a<2>
-using Dim_3_b = Bits<2><4><16>   // equivalent to Dim_3_a
+using Dim_3_b = Bits<2><4><16>         // equivalent to Dim_3_a
 
 constant d2 : Dim_2_a = (3, 2, 1, 0)   // specified with highest index first
-constant d3 : Dim_3_a = ((7, 6, 5, 4), (3, 2, 1, 0)) 
+constant d3 : Dim_3_a = ((7, 6, 5, 4), // d3(1)
+                         (3, 2, 1, 0)) // d3(0)
 
-constant a = d2(3)               // should be 3 as Dim_1_a (Bits<16>)
-constant b = d2(3)(15)           // should be 0 as Bits<1>
-constant c = d3(0)               // should be (3, 2, 1, 0) as Dim_2_a 
-constant d = d3(0)(3)            // should be 3 as Dim_1_a (Bits<16>) 
-constant e = d3(0)(3)(15)        // should be  0 as Bits<1>
-constant f = let x = d3(0) as Bits<64> in x(15..0)  // should be 0 d3(0)(0)
-constant g = let x = d3(0) as Bits<64> in x(63..48) // should be 3 d3(0)(3)
-constant h = let x = d3(1) as Bits<64> in x(63..48) // should be 7 d3(1)(3)
+constant a = d2(3)                     // is 3 as Dim_1_a (Bits<16>)
+constant b = d2(3)(15)                 // is 0 as Bits<1>
+constant c = d3(0)                     // is (3, 2, 1, 0) as Dim_2_a 
+constant d = d3(0)(3)                  // is 3 as Dim_1_a (Bits<16>) 
+constant e = d3(0)(3)(15)              // is 0 as Bits<1>
+constant f = let x = d3(0) as Bits<64> in x(15..0)  // is 0, is d3(0)(0)
+constant g = let x = d3(0) as Bits<64> in x(63..48) // is 3, is d3(0)(3)
+constant h = let x = d3(1) as Bits<64> in x(63..48) // is 7, is d3(1)(3)
 
-constant i = 0xfedc'da98'7654'3210  // Bits<64> value
-//            |63                0| // bit positions
-//            |j(3)|    |    |j(0)| // matrix elements
+constant i = 0xfedc'da98'7654'3210     // Bits<64> value
+//            |63                0|    // bit positions
+//            |j(3)|    |    |j(0)|    // tensor elements
 constant j = i as Dim_2_a
 
 instruction set architecture test = {
@@ -166,10 +169,11 @@ alias register Z : Bits<64> = X        // a single 64 bit register
 
 format F : Bits<8> = {opcode : Bits<8>}
 instruction instr1 : F =
-    X(3) := Y(3)       // are identical registers
+    X(3) := Y(3)                       // are identical registers
 instruction instr2 : F =
-    X(3) := Z(63..48)  // are the identical bits
-}~~~
+    X(3) := Z(63..48)                  // are the identical bits
+}
+~~~
 \endlisting
 
 

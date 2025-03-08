@@ -1,5 +1,7 @@
 # VADL Tutorial {#tutorial}
 
+## Getting Started
+\lbl{tut_getting_started}
 
 Every \ac{VADL} processor specification is separated into different sections.
 
@@ -124,6 +126,39 @@ The `assembly` specifies the assembly language syntax for the instruction with a
 By packing these three definitions into a macro, an instruction with behavior, encoding and assembly can be specified in a single line.
 This macro is invoked six times for all RISC-V instructions with immediate operands (lines 51 to 56).
 
+## Macro System
+\lbl{tut_macro_system}
+
+\ac{VADL} exhibits a syntactical macro system.
+The advantage of a syntactical macro system compared to a lexical macro system is the type safety.
+There exist a set of syntax types which cover syntactical elements like an expression or an identifier.
+The syntax types are designed to have a one-to-one relation to parser rules.
+This already provides a partially ordered subtype relation.
+The following table lists all core syntax types with a description and examples:
+
+|  Type   | Description                          | Examples                                |
+|:--------|:-------------------------------------|:---------------------------------------:|
+| Ex      | Generic VADL Expression              | `X(rs1) + X(rs2) * 2                  ` |
+| Lit     | Generic VADL Literal                 | `1, "ADDI"                            ` |
+| Val     | Generic VADL Value Literal           | `1, 0b001                             ` |
+| Bool    | Boolean Literal                      | `true, false                          ` |
+| Int     | Integer Literal                      | `1, 2, 3                              ` |
+| Bin     | Binary or Hexadecimal Literal        | `0b0111, 0xff                         ` |
+| Str     | String Literal                       | `"ADDI"                               ` |
+| CallEx  | Arbitrary Call Expression            | `MEM<2>(rs1)                          ` |
+| SymEx   | Symbol Call Expression               | `rs1, MEM<2>                          ` |
+| Id      | Identifier Symbol                    | `rs1, ADDI, X                         ` |
+| BinOp   | Binary Operator                      | `+, -, *                              ` |
+| UnOp    | Unary Operator                       | `-, !                                 ` |
+| Stat    | Generic VADL Statement               | `X(rd) := X(rs)                       ` |
+| Stats   | List of VADL Statements              | `X(rd) := X(rs) ...                   ` |
+| Defs    | List of common VADL Definitions      | `constant b = 8, using Byte = Bits<8> ` |
+| IsaDefs | List of VADL ISA Definition          | `instruction ORI : Itype = { ... } ...` |
+| Encs    | Element(s) of an Encoding Definition | `opcode = 0b110’0011, ...             ` |
+
+Figure \r{syntax_type_hierarchy} displays the subtype relation between the presented core types.
+The macro type system provides an implicit up-casting of the value types.
+For example, if a model expects a value of type `Val`, any subtype, i.e. `Bool`, `Int` or `Bin` will be accepted as argument.
 
 \figure{b!}
 \dot
@@ -168,4 +203,4 @@ callex  -- symex   ;
 symex   -- id      ;
 }
 \enddot
-\endfigure{type_hierarchy, Syntax Types Hierarchy in the OpenVADL macro system}
+\endfigure{syntax_type_hierarchy, Syntax Types Hierarchy in the OpenVADL macro system}
