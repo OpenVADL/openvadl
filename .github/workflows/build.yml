@@ -50,3 +50,4 @@ jobs:
           name: OpenVADL Tests           
           path: "**/build/test-results/test/TEST-*.xml"    # Path to test results
           reporter: java-junit        # Format of test results
+          list-tests: failed  # list only failed tests
