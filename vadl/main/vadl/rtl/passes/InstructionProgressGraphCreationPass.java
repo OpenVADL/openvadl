@@ -7,7 +7,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
-import vadl.rtl.ipg.InstructionWordSlice;
+import vadl.rtl.ipg.InstructionWordSliceNode;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldRefNode;
@@ -25,7 +25,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
 
   @Override
   public PassName getName() {
-    return PassName.of("InstructionProgressGraphCreation");
+    return PassName.of("Instruction Progress Graph Creation");
   }
 
   @Nullable
@@ -55,7 +55,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
     behavior.getNodes(FieldRefNode.class).toList().forEach(fieldRefNode -> {
       var field = fieldRefNode.formatField();
       var slice = behavior.addWithInputs(
-          new InstructionWordSlice(field.format().type(), field.bitSlice(), field.type()));
+          new InstructionWordSliceNode(field.format().type(), field.bitSlice(), field.type()));
       slice.addField(field);
       fieldRefNode.replaceAndDelete(slice);
     });

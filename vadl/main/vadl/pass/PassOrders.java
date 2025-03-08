@@ -96,6 +96,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
+import vadl.rtl.passes.MiaMappingCreationPass;
 import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
 import vadl.vdt.passes.VdtLoweringPass;
@@ -537,11 +538,12 @@ public class PassOrders {
     order.add(new DummyMiaPass(config));
     order.add(new StageOrderingPass(config));
 
-    order.add(new InstructionProgressGraphCreationPass(config));
+    order.add(new InstructionProgressGraphCreationPass(config))
+        .add(new MiaMappingCreationPass(config));
 
     addHtmlDump(order, config,
         "mia",
-        "Added dummy MiA");
+        "MiA after mapping and inlining instruction behavior");
 
     return order;
   }
