@@ -137,7 +137,6 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
             templateVars.put("operandName",
                 ((TableGenParameterTypeAndName) operand.parameter()).name());
-            templateVars.put("immediateOperandName", immediateRecord.fullname());
 
             templateVars.put("decodeMethod", immediateRecord.rawDecoderMethod());
             templateVars.put("predicateMethod", immediateRecord.predicateMethod());

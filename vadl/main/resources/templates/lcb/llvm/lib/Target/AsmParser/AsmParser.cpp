@@ -205,8 +205,6 @@ bool [(${namespace})]AsmParser::ModifyImmediate(unsigned Opcode, StringRef OpNam
         case([(${namespace})]::[(${conversion.insnName})]):
         {
             if (OpName.equals_insensitive("[(${conversion.operandName})]")) {
-                [# th:if="${conversion.needsDecode}" ]
-
                 // check if immediate is in ([(${conversion.lowestValue})],[(${conversion.highestValue})])
                 if (opImm64 < [(${conversion.lowestValue})] || opImm64 > [(${conversion.highestValue})]) {
                     std::string error = "Invalid immediate operand for [(${conversion.insnName})].[(${conversion.operandName})]. Value "
@@ -214,7 +212,7 @@ bool [(${namespace})]AsmParser::ModifyImmediate(unsigned Opcode, StringRef OpNam
                     Parser.Error(Op.getStartLoc(), error);
                     return false;
                 }
-
+                [# th:if="${conversion.needsDecode}" ]
                 opImm64 = [(${conversion.decodeMethod})](opImm64);
                 [/]
                 // check if immediate fits the provided predicate for the instruction
@@ -224,8 +222,8 @@ bool [(${namespace})]AsmParser::ModifyImmediate(unsigned Opcode, StringRef OpNam
                     Parser.Error(Op.getStartLoc(), error);
                     return false;
                 }
-                const MCExpr* constantExpr = MCConstantExpr::create(opImm64, Parser.getContext());
 
+                const MCExpr* constantExpr = MCConstantExpr::create(opImm64, Parser.getContext());
                 Op = [(${namespace})]ParsedOperand::CreateImm(constantExpr, Op.getStartLoc(), Op.getEndLoc());
             } else {
                 const MCExpr* constantExpr = MCConstantExpr::create(opImm64, Parser.getContext());

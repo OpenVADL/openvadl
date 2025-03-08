@@ -24,11 +24,11 @@ XORI x6, x7, 25
 # CHECK-NEXT: <MCOperand Reg:9>
 # CHECK-NEXT: <MCOperand Imm:25>>
 
-SLTI x8, x9, 0xFFF
+SLTI x8, x9, 0xFF
 # CHECK: <MCInst #{{[0-9]+}} SLTI
 # CHECK-NEXT: <MCOperand Reg:10>
 # CHECK-NEXT: <MCOperand Reg:11>
-# CHECK-NEXT: <MCOperand Imm:4095>>
+# CHECK-NEXT: <MCOperand Imm:255>>
 
 SLTIU x10, x11, 35
 # CHECK: <MCInst #{{[0-9]+}} SLTIU
