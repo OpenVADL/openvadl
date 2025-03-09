@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -42,21 +41,20 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
- * It is possible to use fields in an {@link Instruction#behavior()} and the
- * {@link PseudoInstructionArgumentReplacementPass} also replaces {@link PseudoFuncParamNode} with
- * {@link FieldRefNode}. However, they are missing encoding and predicate which makes the lowering
- * harder in the compiler backends. That's why this pass replaces {@link FieldRefNode} in the
+ * It is possible to use fields in an {@link Instruction#behavior()}.
+ * However, they are missing encoding and predicate which makes the lowering
+ * harder in the compiler backends. This pass replaces {@link FieldRefNode} in the
  * behavior by freshly created {@link FieldAccessRefNode}.
  */
-public class GenerateFieldAccessFunctionsFromFieldsPass extends Pass {
-  public GenerateFieldAccessFunctionsFromFieldsPass(
+public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
+  public NormalizeFieldsToFieldAccessFunctionsPass(
       GeneralConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return new PassName("GenerateFieldAccessFunctionsFromFieldsPass");
+    return new PassName("NormalizeFieldsToFieldAccessFunctionsPass");
   }
 
   @Nullable
@@ -65,11 +63,6 @@ public class GenerateFieldAccessFunctionsFromFieldsPass extends Pass {
     var fieldUsages =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);
-    /*
-    var pseudoArgumentReplacement =
-        (PseudoInstructionArgumentReplacementPass.Output) passResults.lastResultOf(
-            PseudoInstructionArgumentReplacementPass.class
-        );*/
 
     var machineInstructions = viam.isa()
         .map(isa -> isa.ownInstructions().stream())
@@ -79,17 +72,7 @@ public class GenerateFieldAccessFunctionsFromFieldsPass extends Pass {
         .isa()
         .map(isa -> isa.ownPseudoInstructions().stream())
         .orElse(Stream.empty())
-        .flatMap(pseudoInstruction -> {
-          /*
-          var appliedGraph =
-              ensureNonNull(pseudoArgumentReplacement.appliedGraph().get(pseudoInstruction),
-                  () -> Diagnostic.error("Cannot find a graph where the arguments were replaced",
-                      pseudoInstruction.sourceLocation())
-              );
-           */
-
-          return pseudoInstruction.behavior().getNodes(InstrCallNode.class);
-        })
+        .flatMap(pseudoInstruction -> pseudoInstruction.behavior().getNodes(InstrCallNode.class))
         .map(InstrCallNode::target);
 
     Stream.concat(machineInstructions, pseudoInstructions)

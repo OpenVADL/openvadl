@@ -38,7 +38,7 @@ public class GcbImmediateExtractionCppFunction extends Function {
   /**
    * The {@link vadl.viam.Format.Field#extractFunction()} returns a {@link Function}.
    * However, when working with relocations, we want to extract the immediate. Therefore, we need
-   * to convert {@link GcbFieldAccessCppFunction} into a {@link GcbImmediateExtractionCppFunction}.
+   * to convert {@link GcbCppFunctionForFieldAccess} into a {@link GcbImmediateExtractionCppFunction}.
    */
   public GcbImmediateExtractionCppFunction(Function extractionFunction) {
     super(extractionFunction.identifier,

@@ -18,9 +18,8 @@ package vadl.lcb.template.utils;
 
 import java.util.Map;
 import java.util.stream.Collectors;
-import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
-import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
+import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredicateFunctionPass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Format;
@@ -32,11 +31,12 @@ public class ImmediatePredicateFunctionProvider {
   /**
    * Get the predicates.
    */
-  public static Map<Format.Field, GcbFieldAccessCppFunction> generatePredicateFunctions(
+  public static Map<Format.Field, GcbCppFunctionForFieldAccess> generatePredicateFunctions(
       PassResults passResults) {
-    return ((CppTypeNormalizationPass.NormalisedTypeResult)
-        passResults.lastResultOf(CppTypeNormalizationForPredicatesPass.class))
-        .fields()
+    return ((CreateGcbFieldAccessFunctionFromPredicateFunctionPass.Output)
+        passResults.lastResultOf(CreateGcbFieldAccessFunctionFromPredicateFunctionPass.class))
+        .byField()
+        .entrySet()
         .stream()
         .map(x -> new Pair<>(x.getKey(), x.getValue()))
         .collect(Collectors.toMap(Pair::left, Pair::right));

@@ -32,11 +32,10 @@ import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.UpdateFieldRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
-import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForImmediateExtractionPass;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromExtractionFunctionPass;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredicateFunctionPass;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
@@ -53,8 +52,8 @@ public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractL
     var configuration = getConfiguration(false);
     var temporaryPasses = List.of(
         new TemporaryTestPassInjection(
-            CppTypeNormalizationForPredicatesPass.class,
-            new CppTypeNormalizationForImmediateExtractionPass(configuration)
+            CreateGcbFieldAccessFunctionFromPredicateFunctionPass.class,
+            new CreateGcbFieldAccessCppFunctionFromExtractionFunctionPass(configuration)
         )
     );
     var testSetup = runLcb(configuration,
@@ -91,9 +90,6 @@ public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractL
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) testSetup.passManager()
             .getPassResults()
             .lastResultOf(IdentifyFieldUsagePass.class);
-    var cppNormalisedImmediateExtraction = (CppTypeNormalizationPass.NormalisedTypeResult)
-        testSetup.passManager().getPassResults()
-            .lastResultOf(CppTypeNormalizationForImmediateExtractionPass.class);
 
     List<Pair<String, String>> copyMappings = new ArrayList<>();
     for (var relocation : elfRelocations) {
@@ -116,8 +112,7 @@ public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractL
             var code = render(immField,
                 instructionWordSample,
                 immediateValue,
-                relocation,
-                cppNormalisedImmediateExtraction);
+                relocation);
             copyMappings.add(Pair.of(filePath, "/inputs/" + fileName));
             try {
               var fs = new FileWriter(filePath);
@@ -160,9 +155,7 @@ public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractL
       Format.Field immField,
       long instructionWord,
       long updatedValue,
-      HasRelocationComputationAndUpdate relocation,
-      CppTypeNormalizationPass.NormalisedTypeResult
-          cppNormalisedImmediateExtraction) {
+      HasRelocationComputationAndUpdate relocation) {
     // How do we test the relocation?
     // We have an extraction function for the immediate.
     // And we have an updating function.

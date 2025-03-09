@@ -34,7 +34,7 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.context.CNodeWithBaggageContext;
-import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
+import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
@@ -76,7 +76,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
 
   private final ProcessorName processorName;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
-  private final Map<Format.Field, GcbFieldAccessCppFunction> immediateDecodings;
+  private final Map<Format.Field, GcbCppFunctionForFieldAccess> immediateDecodings;
   private final List<HasRelocationComputationAndUpdate> relocations;
   private final PseudoInstruction pseudoInstruction;
   private final SymbolTable symbolTable;
@@ -89,7 +89,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   public PseudoExpansionCodeGenerator(ProcessorName processorName,
                                       IdentifyFieldUsagePass.ImmediateDetectionContainer
                                           fieldUsages,
-                                      Map<Format.Field, GcbFieldAccessCppFunction>
+                                      Map<Format.Field, GcbCppFunctionForFieldAccess>
                                           immediateDecodings,
                                       List<HasRelocationComputationAndUpdate> relocations,
                                       GenerateLinkerComponentsPass.VariantKindStore

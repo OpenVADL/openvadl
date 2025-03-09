@@ -18,7 +18,7 @@ package vadl.cppCodeGen.common;
 
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
+import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.types.BitsType;
 import vadl.viam.Format;
@@ -35,7 +35,7 @@ public class GcbAccessOrExtractionFunctionCodeGenerator extends AccessFunctionCo
   /**
    * Constructor.
    */
-  public GcbAccessOrExtractionFunctionCodeGenerator(GcbFieldAccessCppFunction accessFunction,
+  public GcbAccessOrExtractionFunctionCodeGenerator(GcbCppFunctionForFieldAccess accessFunction,
                                                     Format.FieldAccess fieldAccess,
                                                     String functionName,
                                                     String fieldName) {

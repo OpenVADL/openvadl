@@ -93,7 +93,6 @@ public class GenerateTableGenRegistersPass extends Pass {
         var register = new TableGenRegister(
             configuration.processorName(),
             compilerRegister,
-            /*List.of(compilerRegister.asmName(), compilerRegister.name()),*/
             compilerRegisterClass.registerFile().addressType().bitWidth() - 1,
             Optional.of(compilerRegister.hwEncodingValue())
         );

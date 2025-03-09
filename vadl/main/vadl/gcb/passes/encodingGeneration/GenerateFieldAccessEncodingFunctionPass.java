@@ -29,15 +29,27 @@ import vadl.gcb.passes.encodingGeneration.strategies.impl.TrivialImmediateStrate
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.viam.Encoding;
 import vadl.viam.Format.FieldAccess;
+import vadl.viam.Function;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
-import vadl.viam.graph.Graph;
 
 /**
- * This pass generate the behavior {@link Graph} of {@link FieldAccess} when the {@link Encoding}
- * is {@code null}.
+ * This pass generates the {@link FieldAccess#encoding()} when the {@link Function} is {@code null}.
+ * <pre>{@code
+ * format Utype : Inst =
+ * {     imm    : Bits<20>
+ * , rd     : Index
+ * , opcode : Bits7
+ * , immU = imm as UInt<32>
+ * }
+ * }</pre>
+ * This class should compute the following encoding function automatically:
+ * <pre>{@code
+ * encode {
+ * imm => immU(19..0)
+ * }
+ * }</pre>
  */
 public class GenerateFieldAccessEncodingFunctionPass extends Pass {
 

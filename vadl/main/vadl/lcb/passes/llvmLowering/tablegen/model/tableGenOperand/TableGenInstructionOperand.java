@@ -27,6 +27,12 @@ import vadl.viam.graph.Node;
 /**
  * An {@link TableGenInstruction} has list of operands for inputs and outputs.
  * This class represent one element of the inputs or outputs.
+ * A {@link TableGenParameter} represents {@code X:$rs1} in
+ * <pre>
+ * {@code
+ * def : Pat<(xor X:$rs1, RV3264I_Itype_immAsInt64:$imm),
+ * (XORI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+ * }</pre>
  */
 public class TableGenInstructionOperand {
 

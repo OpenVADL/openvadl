@@ -18,9 +18,8 @@ package vadl.lcb.template.utils;
 
 import java.util.Map;
 import java.util.stream.Collectors;
-import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
-import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
+import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Format;
@@ -32,11 +31,12 @@ public class ImmediateEncodingFunctionProvider {
   /**
    * Get the encoding functions.
    */
-  public static Map<Format.Field, GcbFieldAccessCppFunction> generateEncodeFunctions(
+  public static Map<Format.Field, GcbCppFunctionForFieldAccess> generateEncodeFunctions(
       PassResults passResults) {
-    return ((CppTypeNormalizationPass.NormalisedTypeResult)
-        passResults.lastResultOf(CppTypeNormalizationForEncodingsPass.class))
-        .fields()
+    return ((CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass.Output)
+        passResults.lastResultOf(CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass.class))
+        .byField()
+        .entrySet()
         .stream()
         .map(x -> new Pair<>(x.getKey(), x.getValue()))
         .collect(Collectors.toMap(Pair::left, Pair::right));

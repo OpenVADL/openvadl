@@ -39,6 +39,8 @@ import vadl.viam.Specification;
 
 /**
  * The VIAM gives us register files, but we need separate registers.
+ * The RISC-V specification has the register file {@code X}. This pass creates
+ * the registers {@code X0} to {@code X31} from this register file.
  */
 public class GenerateCompilerRegistersPass extends Pass {
   public GenerateCompilerRegistersPass(GeneralConfiguration configuration) {

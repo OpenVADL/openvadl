@@ -33,9 +33,8 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
 import vadl.cppCodeGen.common.GcbAccessOrExtractionFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
-import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForImmediateExtractionPass;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromExtractionFunctionPass;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredicateFunctionPass;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
@@ -50,8 +49,8 @@ public class ImmediateExtractionCodeGeneratorCppVerificationRiscv64Test extends 
     var configuration = getConfiguration(false);
     var temporaryPasses = List.of(
         new TemporaryTestPassInjection(
-            CppTypeNormalizationForPredicatesPass.class,
-            new CppTypeNormalizationForImmediateExtractionPass(configuration)
+            CreateGcbFieldAccessFunctionFromPredicateFunctionPass.class,
+            new CreateGcbFieldAccessCppFunctionFromExtractionFunctionPass(configuration)
         )
     );
     var testSetup = runLcb(configuration,
@@ -83,10 +82,6 @@ public class ImmediateExtractionCodeGeneratorCppVerificationRiscv64Test extends 
   private Collection<DynamicTest> generateInputs(TestSetup setup,
                                                  ImageFromDockerfile image,
                                                  Path path) throws IOException {
-    var cppNormalisedImmediateExtraction = (CppTypeNormalizationPass.NormalisedTypeResult)
-        setup.passManager().getPassResults()
-            .lastResultOf(CppTypeNormalizationForImmediateExtractionPass.class);
-
     List<Pair<String, String>> copyMappings = new ArrayList<>();
     setup.specification()
         .isa()
@@ -112,8 +107,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationRiscv64Test extends 
                 var code = renderCode(fieldAccess,
                     pair.left(),
                     pair.right(),
-                    fieldBitSize,
-                    cppNormalisedImmediateExtraction);
+                    fieldBitSize);
 
                 copyMappings.add(Pair.of(filePath, "/inputs/" + fileName));
                 try {
@@ -138,8 +132,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationRiscv64Test extends 
       Format.FieldAccess fieldAccess,
       Long imm,
       Long instruction,
-      int fieldBitSize,
-      CppTypeNormalizationPass.NormalisedTypeResult cppNormalisedImmediateExtraction) {
+      int fieldBitSize) {
     var extractFunction =
         new GcbImmediateExtractionCppFunction(fieldAccess.fieldRef().extractFunction());
     var extractionFunctionCodeGenerator =
