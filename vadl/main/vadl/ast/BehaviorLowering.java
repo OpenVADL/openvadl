@@ -372,7 +372,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(BoolLiteral expr) {
-    return new ConstantNode(Constant.Value.of(true));
+    return new ConstantNode(Constant.Value.of(expr.value));
   }
 
   @Override
@@ -426,23 +426,60 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
    * @param exprBeforeSubcall to be sliced
    * @return the original expr or wrapped in a slice.
    */
-  private ExpressionNode visitSubCall(CallExpr expr, ExpressionNode exprBeforeSubcall) {
+  private ExpressionNode visitSubCall(CallIndexExpr expr, ExpressionNode exprBeforeSubcall) {
     if (expr.subCalls.isEmpty()) {
       return exprBeforeSubcall;
     }
 
+    var resultExpr = exprBeforeSubcall;
+    for (var subCall : expr.subCalls) {
+      var bitRange = Objects.requireNonNull(subCall.computedFormatFieldBitRange);
+      var bitSlice =
+          new Constant.BitSlice(new Constant.BitSlice.Part(bitRange.from(), bitRange.to()));
+      var slice =
+          new SliceNode(resultExpr, bitSlice,
+              (DataType) Objects.requireNonNull(subCall.formatFieldType));
+      resultExpr = visitSliceIndexCall(expr, slice, subCall.argsIndices);
+    }
 
-    var bitRange = Objects.requireNonNull(expr.computedFormatBitRange);
-    var slice = new Constant.BitSlice(new Constant.BitSlice.Part(bitRange.from(), bitRange.to()));
-    return new SliceNode(exprBeforeSubcall, slice, (DataType) Objects.requireNonNull(expr.type));
+    return resultExpr;
+  }
+
+  private ExpressionNode visitSliceIndexCall(CallIndexExpr expr, ExpressionNode exprBeforeSlice,
+                                             List<CallIndexExpr.Arguments> argumentsList) {
+    if (argumentsList.isEmpty()) {
+      return exprBeforeSlice;
+    }
+
+    var args = argumentsList.get(0);
+
+    // A range slice
+    if (!args.values.isEmpty() && args.values.get(0) instanceof RangeExpr rangeExpr) {
+      var from = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
+      var to = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+      var bitSlice = new Constant.BitSlice(new Constant.BitSlice.Part(from, to));
+      var slice =
+          new SliceNode(exprBeforeSlice, bitSlice, Type.bits(from - to + 1));
+      return visitSliceIndexCall(expr, slice, argumentsList.subList(1, argumentsList.size()));
+    }
+
+    // A index (slice)
+    var fromTo = constantEvaluator.eval(args.values.get(0)).value().intValueExact();
+    var bitSlice = new Constant.BitSlice(new Constant.BitSlice.Part(fromTo, fromTo));
+    var slice =
+        new SliceNode(exprBeforeSlice, bitSlice, (DataType) expr.type());
+    return visitSliceIndexCall(expr, slice, argumentsList.subList(1, argumentsList.size()));
   }
 
   @Override
-  public ExpressionNode visit(CallExpr expr) {
+  public ExpressionNode visit(CallIndexExpr expr) {
+
+    List<Expr> firstArgs =
+        !expr.argsIndices.isEmpty() ? expr.argsIndices.get(0).values : new ArrayList<>();
 
     // Builtin Call
     if (expr.computedBuiltIn != null) {
-      var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var args = firstArgs.stream().map(this::fetch).toList();
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
         return new AsmBuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
             Objects.requireNonNull(expr.type));
@@ -453,36 +490,50 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // Function Call
     if (expr.computedTarget instanceof FunctionDefinition functionDefinition) {
-      var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var args = firstArgs.stream().map(this::fetch).toList();
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
-      return new FuncCallNode(new NodeList<>(args), function, Objects.requireNonNull(expr.type));
+      var funcCall =
+          new FuncCallNode(new NodeList<>(args), function, Objects.requireNonNull(expr.type));
+      var slicedNode = visitSliceIndexCall(expr, funcCall,
+          expr.argsIndices.subList(1, expr.argsIndices.size()));
+      return visitSubCall(expr, slicedNode);
     }
 
     // Relocation Call (similar to function call)
     if (expr.computedTarget instanceof RelocationDefinition relocationDefinition) {
-      var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var args = firstArgs.stream().map(this::fetch).toList();
       var relocation = (Relocation) viamLowering.fetch(relocationDefinition).orElseThrow();
-      return new FuncCallNode(new NodeList<>(args), relocation, Objects.requireNonNull(expr.type));
+      var funcCall =
+          new FuncCallNode(new NodeList<>(args), relocation, Objects.requireNonNull(expr.type));
+      var slicedNode = visitSliceIndexCall(expr, funcCall,
+          expr.argsIndices.subList(1, expr.argsIndices.size()));
+      return visitSubCall(expr, slicedNode);
     }
 
     // Register file read
     if (expr.computedTarget instanceof RegisterFileDefinition) {
-      var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var args = firstArgs.stream().map(this::fetch).toList();
       var regFile = (RegisterFile) viamLowering.fetch(expr.computedTarget).orElseThrow();
       var type = (DataType) Objects.requireNonNull(expr.type);
-      return visitSubCall(expr, new ReadRegFileNode(regFile, args.get(0), type, null));
+      var readRegFile = new ReadRegFileNode(regFile, args.get(0), type, null);
+      var slicedNode = visitSliceIndexCall(expr, readRegFile,
+          expr.argsIndices.subList(1, expr.argsIndices.size()));
+      return visitSubCall(expr, slicedNode);
     }
 
     // Memory read
     if (expr.computedTarget instanceof MemoryDefinition memoryDefinition) {
-      var args = expr.flatArgs().stream().map(this::fetch).toList();
+      var args = firstArgs.stream().map(this::fetch).toList();
       var words = 1;
       if (expr.target instanceof SymbolExpr targetSymbol) {
         words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
       }
       var memory = (Memory) viamLowering.fetch(memoryDefinition).orElseThrow();
-      return new ReadMemNode(memory, words, args.get(0),
+      var readMem = new ReadMemNode(memory, words, args.get(0),
           (DataType) Objects.requireNonNull(expr.type));
+      var slicedNode = visitSliceIndexCall(expr, readMem,
+          expr.argsIndices.subList(1, expr.argsIndices.size()));
+      return visitSubCall(expr, slicedNode);
     }
 
     // Program counter read
@@ -503,9 +554,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var byteWidth = 8;
       var instrWidthInByte = instrWidth / byteWidth;
 
+      // FIXME: Handle slicing and format subcall propperly
       int offset = 0;
       for (var subcall : expr.subCalls) {
-        var subcallName = subcall.id().name;
+        var subcallName = subcall.id.name;
         if (subcallName.equals("next")) {
           offset += instrWidthInByte;
         } else {
@@ -514,27 +566,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       }
 
       var constant = new ConstantNode(Constant.Value.of(offset, counterType));
-      return new BuiltInCall(BuiltInTable.ADD, new NodeList<>(constant, regRead), counterType);
+      return
+          new BuiltInCall(BuiltInTable.ADD, new NodeList<>(constant, regRead), counterType);
     }
 
-    // Slicing
-    if (expr.flatArgs().size() == 1 && expr.flatArgs().get(0) instanceof RangeExpr rangeExpr) {
-      var value = fetch((Expr) expr.target);
-      var from = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
-      var to = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
-      var slice = new Constant.BitSlice(new Constant.BitSlice.Part(from, to));
-      return new SliceNode(value, slice, (DataType) Objects.requireNonNull(expr.type));
-    }
-
-    // If there is are *only* subcalls, we first resolve the target as if it were a standalone
-    // identifier and later rewrite the type with the subcalls.
-    if (expr.flatArgs().isEmpty() && !expr.subCalls.isEmpty()) {
-      var exprBeforeSubCall = visit((Identifier) expr.target);
-      return visitSubCall(expr, exprBeforeSubCall);
-    }
-
-
-    throw new IllegalStateException("Cannot handle call to %s yet".formatted(expr.computedTarget));
+    // If nothing else, assume slicing and subcall
+    var exprBeforeSubCall = fetch((Expr) expr.target);
+    var result = visitSubCall(expr, exprBeforeSubCall);
+    result = visitSliceIndexCall(expr, result, expr.argsIndices);
+    return result;
   }
 
   @Override
@@ -671,11 +711,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public SubgraphContext visit(AssignmentStatement statement) {
     var value = fetch(statement.valueExpression);
 
-    if (statement.target instanceof CallExpr callTarget) {
+    if (statement.target instanceof CallIndexExpr callTarget) {
       // Register File Write
       if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
         var regFile = viamLowering.fetch(regFileTarget).orElseThrow();
-        var address = callTarget.flatArgs().get(0).accept(this);
+        var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
         var write = new WriteRegFileNode(
             (RegisterFile) regFile,
             address,
@@ -694,7 +734,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         if (callTarget.target instanceof SymbolExpr targetSymbol) {
           words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
         }
-        var address = callTarget.flatArgs().get(0).accept(this);
+        var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
         var write = new WriteMemNode(memory, words, address, value);
         write = Objects.requireNonNull(currentGraph).addWithInputs(write);
         return SubgraphContext.of(statement, write);

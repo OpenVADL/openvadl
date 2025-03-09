@@ -74,6 +74,14 @@ class MacroExpander
     return result;
   }
 
+  public CallIndexExpr.Arguments expandArgs(CallIndexExpr.Arguments args) {
+    return new CallIndexExpr.Arguments(
+        args.values.stream()
+            .map(this::expandExpr)
+            .collect(ArrayList::new, ArrayList::add, ArrayList::addAll),
+        copyLoc(args.location));
+  }
+
   public List<Expr> expandExprs(List<Expr> expressions) {
     var copy = new ArrayList<>(expressions);
     copy.replaceAll(this::expandExpr);
@@ -283,17 +291,17 @@ class MacroExpander
   }
 
   @Override
-  public Expr visit(CallExpr expr) {
+  public Expr visit(CallIndexExpr expr) {
     var argsIndices = new ArrayList<>(expr.argsIndices);
-    argsIndices.replaceAll(this::expandExprs);
+    argsIndices.replaceAll(this::expandArgs);
     var subCalls = new ArrayList<>(expr.subCalls);
     subCalls.replaceAll(subCall -> {
-      var subCallArgsIndices = new ArrayList<>(subCall.argsIndices());
-      subCallArgsIndices.replaceAll(this::expandExprs);
-      return new CallExpr.SubCall(subCall.id(), subCallArgsIndices);
+      var subCallArgsIndices = new ArrayList<>(subCall.argsIndices);
+      subCallArgsIndices.replaceAll(this::expandArgs);
+      return new CallIndexExpr.SubCall(subCall.id, subCallArgsIndices);
     });
     var target = (IsSymExpr) expandExpr((Expr) expr.target);
-    return new CallExpr(target, argsIndices, subCalls, copyLoc(expr.location));
+    return new CallIndexExpr(target, argsIndices, subCalls, copyLoc(expr.location));
   }
 
   @Override

@@ -29,7 +29,6 @@ import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Constant;
 import vadl.viam.Function;
-import vadl.viam.Specification;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
@@ -47,7 +46,6 @@ import vadl.viam.passes.verification.ViamVerificationPass;
  */
 public class BuiltInConstantEvaluationTest extends AbstractTest {
 
-  private static Specification spec;
 
   @TestFactory
   Stream<DynamicTest> constantEvalTest() throws IOException, DuplicatedPassKeyException {

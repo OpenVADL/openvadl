@@ -721,20 +721,20 @@ public class AstDumper
   }
 
   @Override
-  public Void visit(CallExpr expr) {
+  public Void visit(CallIndexExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
     indent++;
-    for (List<Expr> args : expr.argsIndices) {
+    for (CallIndexExpr.Arguments args : expr.argsIndices) {
       builder.append(indentString()).append("ArgsIndices\n");
-      dumpChildren(args);
+      dumpChildren(args.values);
     }
-    for (CallExpr.SubCall subCall : expr.subCalls) {
+    for (CallIndexExpr.SubCall subCall : expr.subCalls) {
       builder.append(indentString()).append("SubCall\n");
-      dumpChildren(subCall.id());
-      for (List<Expr> args : subCall.argsIndices()) {
+      dumpChildren(subCall.id);
+      for (var args : subCall.argsIndices) {
         builder.append(indentString()).append("ArgsIndices\n");
-        dumpChildren(args);
+        dumpChildren(args.values);
       }
     }
     indent--;

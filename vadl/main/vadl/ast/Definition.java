@@ -493,9 +493,38 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     }
   }
 
+  /**
+   * A (pseudo) field derived from another. In the VIAM this is called FieldAccess.
+   *
+   * <p><pre>
+   * {@code
+   * format ABC : Bits<8> =
+   *   { A  : Bits<2>
+   *   , B  : Bits<6>
+   *   , C = A as Bits<4>    // This is a derived format field
+   *   }
+   * }
+   * </pre>
+   */
   static class DerivedFormatField extends Node implements FormatField {
     Identifier identifier;
     Expr expr;
+
+    /**
+     * Since the predicate doesn't have to follow the derived format field, the parser cannot
+     * connect link them together and instead the typechecker does this by understanding the
+     * semantic.
+     */
+    @Nullable
+    Expr predicate;
+
+    //    /**
+    //     * Since the predicate doesn't have to follow the derived format field, the parser cannot
+    //     * connect link them together and instead the typechecker does this by understanding the
+    //     * semantic.
+    //     */
+    //    @Nullable
+    //    Expr encoding;
 
     public DerivedFormatField(Identifier identifier, Expr expr) {
       this.identifier = identifier;
@@ -551,6 +580,25 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     }
   }
 
+  /**
+   * The predicate or encoding of a derived format field.
+   *
+   * <p><pre>
+   * {@code
+   * format ABC : Bits<8> =
+   *   { A  : Bits<2>
+   *   , B  : Bits<6>
+   *   , C = A as Bits<4>
+   *   : encode {               // This is an auxiliary field
+   *     HI => VAR as Bits<2>
+   *     }
+   *   : predicate {            // This is an auxiliary field
+   *     VAR => VAR = 0
+   *     }
+   *   }
+   * }
+   * </pre>
+   */
   static class AuxiliaryField extends Node {
     private final AuxiliaryFieldKind kind;
     private final List<AuxiliaryFieldEntry> entries;

@@ -110,15 +110,15 @@ public class Ungrouper
   }
 
   @Override
-  public Expr visit(CallExpr expr) {
+  public Expr visit(CallIndexExpr expr) {
     expr.target = (IsSymExpr) ((Expr) expr.target).accept(this);
     for (var entry : expr.argsIndices) {
-      entry.replaceAll(e -> e.accept(this));
+      entry.values.replaceAll(e -> e.accept(this));
     }
 
     for (var subCall : expr.subCalls) {
-      for (var entry : subCall.argsIndices()) {
-        entry.replaceAll(e -> e.accept(this));
+      for (var entry : subCall.argsIndices) {
+        entry.values.replaceAll(e -> e.accept(this));
       }
     }
 

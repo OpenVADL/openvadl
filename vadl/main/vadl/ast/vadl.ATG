@@ -1430,39 +1430,39 @@ PRODUCTIONS
   /// Use the "allowLtOp" parameter to disallow this behavior, e.g. in type literals.
   callOrBinaryExpression<out Expr expr, boolean allowLtOp> (. expr = DUMMY_EXPR; .)
   = IF (isIdentifierToken(la) || isMacroReplacementOfType(this, BasicSyntaxType.SYM_EX))
-    symbolOrBinaryExpression<out expr, allowLtOp>          (. List<List<Expr>> argsIndices = new ArrayList<>(); .)
+    symbolOrBinaryExpression<out expr, allowLtOp>          (. List<CallIndexExpr.Arguments> argsIndices = new ArrayList<>(); .)
     {
       // Check if we received a symbol expression -> collect arguments
       // Otherwise, just return the collected binary expression
       IF (la.kind == _SYM_PAREN_OPEN && expr instanceof IsSymExpr)
-      arguments<.out List<Expr> args.>                     (. argsIndices.add(args); .)
-    }                                                      (. List<CallExpr.SubCall> subCalls = new ArrayList<>(); .)
+      arguments<.out CallIndexExpr.Arguments args.>        (. argsIndices.add(args); .)
+    }                                                      (. List<CallIndexExpr.SubCall> subCalls = new ArrayList<>(); .)
     {
       IF (la.kind == _SYM_DOT && expr instanceof IsSymExpr)
-      SYM_DOT                                              (. var subCallArgsIndices = new ArrayList<List<Expr>>(); .)
+      SYM_DOT                                              (. var subCallArgsIndices = new ArrayList<CallIndexExpr.Arguments>(); .)
       identifier<out Identifier id>
       {
         IF (la.kind == _SYM_PAREN_OPEN)
-        arguments<.out List<Expr> args.>                   (. subCallArgsIndices.add(args); .)
-      }                                                    (. subCalls.add(new CallExpr.SubCall(id, subCallArgsIndices)); .)
+        arguments<.out CallIndexExpr.Arguments args.>      (. subCallArgsIndices.add(args); .)
+      }                                                    (. subCalls.add(new CallIndexExpr.SubCall(id, subCallArgsIndices)); .)
     }                                                      (. if (expr instanceof IsSymExpr symExpr && (!argsIndices.isEmpty() || !subCalls.isEmpty()))
-                                                                expr = new CallExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
+                                                                expr = new CallIndexExpr(symExpr, argsIndices, subCalls, expr.location().join(loc()));
                                                            .)
   | macroReplacement<out Node node>                        (. expr = castExpr(this, node); .)
   .
 
   /// Represents one set of invocation arguments.
   /// Multiple invocations (e.g. multi-dimensional access) will need multiple #arguments
-  arguments<.out List<Expr> args.>
-  = SYM_PAREN_OPEN                            (. args = new ArrayList<>(); .)
-    expression<out Expr arg, BIN_OPS>         (. args.add(arg); .)
+  arguments<.out CallIndexExpr.Arguments args.>    (. var start = lookaheadLoc(); .)
+  = SYM_PAREN_OPEN                            (. var values = new ArrayList<Expr>(); .)
+    expression<out Expr arg, BIN_OPS>         (. values.add(arg); .)
     ( SYM_RANGE
-      expression<out Expr rangeTo, BIN_OPS>   (. args.set(0, new RangeExpr(arg, rangeTo)); .)
+      expression<out Expr rangeTo, BIN_OPS>   (. values.set(0, new RangeExpr(arg, rangeTo)); .)
     | {
       SYM_COMMA
-      expression<out Expr nextArg, BIN_OPS>   (. args.add(nextArg); .)
+      expression<out Expr nextArg, BIN_OPS>   (. values.add(nextArg); .)
     })
-    SYM_PAREN_CLOSE
+    SYM_PAREN_CLOSE                           (. args = new CallIndexExpr.Arguments(values, start.join(loc())); .)
   .
 
   /// Symbol expressions of form "a::b<3>".

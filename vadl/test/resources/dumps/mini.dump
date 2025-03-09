@@ -80,21 +80,21 @@ InstructionSetDefinition
 . : Identifier name: "ADD"
 . : Identifier name: "Rtype"
 . : AssignmentStatement
-. : ' CallExpr type: null
+. : ' CallIndexExpr type: null
 . : ' | Identifier name: "X"
 . : ' | ArgsIndices
 . : ' | . Identifier name: "rd"
 . : ' CastExpr type: null
 . : ' | BinaryExpr operator: +, type: null
 . : ' | . CastExpr type: null
-. : ' | . : CallExpr type: null
+. : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X"
 . : ' | . : ' ArgsIndices
 . : ' | . : ' | Identifier name: "rs1"
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Bits"
 . : ' | . CastExpr type: null
-. : ' | . : CallExpr type: null
+. : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X"
 . : ' | . : ' ArgsIndices
 . : ' | . : ' | Identifier name: "rs2"
@@ -107,21 +107,21 @@ InstructionSetDefinition
 . : Identifier name: "Rtype"
 . : BlockStatement
 . : ' AssignmentStatement
-. : ' | CallExpr type: null
+. : ' | CallIndexExpr type: null
 . : ' | . Identifier name: "X"
 . : ' | . ArgsIndices
 . : ' | . : Identifier name: "rd"
 . : ' | CastExpr type: null
 . : ' | . BinaryExpr operator: +, type: null
 . : ' | . : CastExpr type: null
-. : ' | . : ' CallExpr type: null
+. : ' | . : ' CallIndexExpr type: null
 . : ' | . : ' | Identifier name: "X"
 . : ' | . : ' | ArgsIndices
 . : ' | . : ' | . Identifier name: "rs1"
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "Bits"
 . : ' | . : CastExpr type: null
-. : ' | . : ' CallExpr type: null
+. : ' | . : ' CallIndexExpr type: null
 . : ' | . : ' | Identifier name: "X"
 . : ' | . : ' | ArgsIndices
 . : ' | . : ' | . Identifier name: "rs2"

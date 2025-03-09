@@ -25,17 +25,17 @@ InstructionSetDefinition
 . EnumerationDefinition
 . : Identifier name: "Flags"
 . : Identifier name: "READ"
-. : CallExpr type: null
+. : CallIndexExpr type: null
 . : ' Identifier name: "nthBit"
 . : ' ArgsIndices
 . : ' | IntegerLiteral literal: 0 (0), type: null
 . : Identifier name: "WRITE"
-. : CallExpr type: null
+. : CallIndexExpr type: null
 . : ' Identifier name: "nthBit"
 . : ' ArgsIndices
 . : ' | IntegerLiteral literal: 1 (1), type: null
 . : Identifier name: "EXEC"
-. : CallExpr type: null
+. : CallIndexExpr type: null
 . : ' Identifier name: "nthBit"
 . : ' ArgsIndices
 . : ' | IntegerLiteral literal: 2 (2), type: null

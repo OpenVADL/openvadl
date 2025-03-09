@@ -230,7 +230,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   }
 
   @Override
-  public ConstantValue visit(CallExpr expr) {
+  public ConstantValue visit(CallIndexExpr expr) {
     throw new RuntimeException(
         "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
 

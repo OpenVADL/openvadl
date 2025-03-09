@@ -71,7 +71,7 @@ interface ExprVisitor<R> {
 
   R visit(UnaryExpr expr);
 
-  R visit(CallExpr expr);
+  R visit(CallIndexExpr expr);
 
   R visit(IfExpr expr);
 
@@ -1306,7 +1306,7 @@ final class TypeLiteral extends Expr {
   }
 }
 
-sealed interface IsCallExpr permits CallExpr, IsSymExpr {
+sealed interface IsCallExpr permits CallIndexExpr, IsSymExpr {
   IsId path();
 
   @Nullable
@@ -1499,15 +1499,34 @@ final class SymbolExpr extends Expr implements IsSymExpr {
 }
 
 /**
- * A call expression or many similar expressions.
+ * A call expression or indexing or many similar expressions.
+ *
+ * <p>The expression represents zero or one calls followed by zero or many indexing/slicing.
  *
  * <p>The following are also call expressions:
  * - Memory access: Mem<4>(addr)
  * - Slicing: target(4..8)
- * - Access of fields: PC.next
+ * - Access of fields: PC.next ... a subcall
+ *
+ * <p>One call expr can have multiple "calls":
+ * - Accessing a Register File and slicing: X(0)(3..7)
  */
-final class CallExpr extends Expr implements IsCallExpr {
+final class CallIndexExpr extends Expr implements IsCallExpr {
   IsSymExpr target;
+
+  /**
+   * A list of function arguments or register/memory indices.
+   *
+   * <p>Because, a callExpr can actually represent multiple calls this is a list of lists.
+   */
+  List<Arguments> argsIndices;
+
+  /**
+   * A list of method or sub-field access, e.g. the {@code .bar()} in {@code Namespace::Foo.bar()}.
+   * Each sub-call can itself also have single- and multidimensional arguments.
+   */
+  List<SubCall> subCalls;
+  SourceLocation location;
 
   /**
    * The resolved target definition being called.
@@ -1522,60 +1541,23 @@ final class CallExpr extends Expr implements IsCallExpr {
   @Nullable
   BuiltInTable.BuiltIn computedBuiltIn;
 
-  /**
-   * If there are accesses to a format the bitrange that will be sliced into is stored here by the
-   * typechecker.
-   */
-  @Nullable
-  FormatDefinition.BitRange computedFormatBitRange;
-
-  /**
-   * A list of function arguments or register/memory indices.
-   *
-   * <p>Calls of multiple arguments can be written as f(a)(b,c) or f(a,b,c) so for pretty printing
-   * the nested list of list must be kept but semantically the difference doesn't matter.
-   *
-   * <p>If you only care about semantics than use {@link #flatArgs()}.
-   */
-  List<List<Expr>> argsIndices;
-
-  /**
-   * A list of method or sub-field access, e.g. the {@code .bar()} in {@code Namespace::Foo.bar()}.
-   * Each sub-call can itself also have single- and multidimensional arguments.
-   */
-  List<SubCall> subCalls;
-  SourceLocation location;
-
-  public CallExpr(IsSymExpr target, List<List<Expr>> argsIndices, List<SubCall> subCalls,
-                  SourceLocation location) {
+  public CallIndexExpr(IsSymExpr target, List<Arguments> argsIndices, List<SubCall> subCalls,
+                       SourceLocation location) {
     this.target = target;
     this.argsIndices = argsIndices;
     this.subCalls = subCalls;
     this.location = location;
   }
 
-  List<Expr> flatArgs() {
-    return argsIndices.stream().flatMap(List::stream).toList();
+  void replaceArgsFor(int index, List<Expr> newArgs) {
+    var args = this.argsIndices.get(index);
+    if (args.values.size() != newArgs.size()) {
+      throw new IllegalStateException();
+    }
+    args.values.clear();
+    args.values.addAll(newArgs);
   }
 
-  /**
-   * This replaces all arguments in the same order, so that pretty printing is unaffected.
-   *
-   * @param args new arguments to replace.
-   */
-  void setFlatArgs(List<Expr> args) {
-    if (args.size() != flatArgs().size()) {
-      throw new IllegalArgumentException();
-    }
-
-    int index = 0;
-    for (var inner : argsIndices) {
-      for (var i = 0; i < inner.size(); i++) {
-        inner.set(i, args.get(index));
-        index++;
-      }
-    }
-  }
 
   @Override
   public IsId path() {
@@ -1608,11 +1590,11 @@ final class CallExpr extends Expr implements IsCallExpr {
     }
   }
 
-  private void printArgsIndices(List<List<Expr>> argsIndices, StringBuilder builder) {
+  private void printArgsIndices(List<Arguments> argsIndices, StringBuilder builder) {
     for (var args : argsIndices) {
       builder.append("(");
       boolean first = true;
-      for (var arg : args) {
+      for (var arg : args.values) {
         if (!first) {
           builder.append(", ");
         }
@@ -1642,7 +1624,7 @@ final class CallExpr extends Expr implements IsCallExpr {
       return false;
     }
 
-    CallExpr that = (CallExpr) o;
+    CallIndexExpr that = (CallIndexExpr) o;
     return target.equals(that.target)
         && argsIndices.equals(that.argsIndices)
         && subCalls.equals(that.subCalls);
@@ -1656,7 +1638,103 @@ final class CallExpr extends Expr implements IsCallExpr {
     return result;
   }
 
-  record SubCall(Identifier id, List<List<Expr>> argsIndices) {
+  static final class Arguments implements TypedNode {
+    List<Expr> values;
+    SourceLocation location;
+
+    @Nullable
+    Type type;
+
+    /**
+     * If the argument is a slice or a field access the typechecker will cache the result here.
+     */
+    @Nullable
+    FormatDefinition.BitRange computedBitRange;
+
+    Arguments(List<Expr> values, SourceLocation location) {
+      this.values = values;
+      this.location = location;
+    }
+
+    @Override
+    public Type type() {
+      return Objects.requireNonNull(type);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (Arguments) obj;
+      return Objects.equals(this.values, that.values);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(values);
+    }
+
+    @Override
+    public String toString() {
+      return "Arguments["
+          + "args=" + values + ']';
+    }
+
+
+  }
+
+  static final class SubCall {
+    Identifier id;
+    List<Arguments> argsIndices;
+
+    /**
+     * If the subcall is a format fieldaccess the type of that access is stored here.
+     * This does ignore further manipulation by the argsIndicies.
+     */
+    @Nullable
+    Type formatFieldType;
+
+    /**
+     * If the subcall is a format fieldaccess the range of that access is stored here.
+     * This does ignore further manipulation by the argsIndicies.
+     */
+    @Nullable
+    FormatDefinition.BitRange computedFormatFieldBitRange;
+
+    SubCall(Identifier id, List<Arguments> argsIndices) {
+      this.id = id;
+      this.argsIndices = argsIndices;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (SubCall) obj;
+      return Objects.equals(this.id, that.id)
+          && Objects.equals(this.argsIndices, that.argsIndices);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(id, argsIndices);
+    }
+
+    @Override
+    public String toString() {
+      return "SubCall["
+          + "id=" + id + ", "
+          + "argsIndices=" + argsIndices + ']';
+    }
+
   }
 }
 

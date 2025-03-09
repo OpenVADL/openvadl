@@ -758,16 +758,16 @@ class SymbolTable {
       } else if (expr instanceof CastExpr cast) {
         collectSymbols(symbols, cast.value);
         collectSymbols(symbols, cast.typeLiteral);
-      } else if (expr instanceof CallExpr call) {
+      } else if (expr instanceof CallIndexExpr call) {
         collectSymbols(symbols, (Expr) call.target);
-        for (List<Expr> argsIndex : call.argsIndices) {
-          for (Expr index : argsIndex) {
+        for (CallIndexExpr.Arguments argsIndex : call.argsIndices) {
+          for (Expr index : argsIndex.values) {
             collectSymbols(symbols, index);
           }
         }
-        for (CallExpr.SubCall subCall : call.subCalls) {
-          for (List<Expr> argsIndex : subCall.argsIndices()) {
-            for (Expr index : argsIndex) {
+        for (CallIndexExpr.SubCall subCall : call.subCalls) {
+          for (CallIndexExpr.Arguments argsIndex : subCall.argsIndices) {
+            for (Expr index : argsIndex.values) {
               collectSymbols(symbols, index);
             }
           }
@@ -1206,16 +1206,16 @@ class SymbolTable {
         resolveSymbols(binary.right);
       } else if (expr instanceof CastExpr cast) {
         resolveSymbols(cast.value);
-      } else if (expr instanceof CallExpr call) {
+      } else if (expr instanceof CallIndexExpr call) {
         resolveSymbols((Expr) call.target);
-        for (List<Expr> argsIndex : call.argsIndices) {
-          for (Expr index : argsIndex) {
+        for (var argsIndex : call.argsIndices) {
+          for (Expr index : argsIndex.values) {
             resolveSymbols(index);
           }
         }
-        for (CallExpr.SubCall subCall : call.subCalls) {
-          for (List<Expr> argsIndex : subCall.argsIndices()) {
-            for (Expr index : argsIndex) {
+        for (CallIndexExpr.SubCall subCall : call.subCalls) {
+          for (var argsIndex : subCall.argsIndices) {
+            for (Expr index : argsIndex.values) {
               resolveSymbols(index);
             }
           }
