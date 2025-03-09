@@ -1,0 +1,32 @@
+# Publishes the Doxygen reference manual on Github pages
+name: OpenVADL Refman
+
+on:
+  push:
+    branches:
+      - "master"
+
+permissions:
+  contents: write
+
+jobs:
+  publish-docs:
+    # We use our free gh hosted runner minutes for this
+    runs-on: ubuntu-latest
+    name: Build refman and deploy
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Doxygen
+        uses: awalsh128/cache-apt-pkgs-action@v1.4.3
+        with:
+          packages: doxygen graphviz
+          version: 1.0
+
+      - name: Build
+        run: DOXYGEN=doxygen make html
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@4.1.5
+        with:
+          branch: gh-pages
+          folder: obj/doc/open-vadl-refman/html

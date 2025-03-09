@@ -57,3 +57,4 @@ bin/
 
 ### Generated VADL Files ###
 /output/
+/obj/

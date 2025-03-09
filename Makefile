@@ -1,4 +1,4 @@
-DOXYGEN=obj/bin/doxygen
+DOXYGEN ?= obj/bin/doxygen
 
 default: docs
 
@@ -29,7 +29,7 @@ latex: open-vadl-latex
 
 open-vadl-html-impl: doxygen
 	@echo "-- Generating HTML Documentation"
-	PROJECT_NUMBER="(`(git describe --always --dirty`)" \
+	PROJECT_NUMBER="(`(git describe --always --dirty)`)" \
 	PROJECT_BRIEF="open-vadl" \
 	PROJECT_LOGO="" \
 	OUTPUT_DIRECTORY="./obj/doc/open-vadl-impl" \
