@@ -2,8 +2,6 @@
 name: OpenVADL Refman
 
 on:
-  # TODO: Remove this
-  pull_request:
   push:
     branches:
       - "master"

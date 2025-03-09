@@ -162,6 +162,11 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
   }
 
   @Override
+  protected boolean enableCopyright() {
+    return false;
+  }
+
+  @Override
   protected String getTemplatePath() {
     return "htmlDump/index.html";
   }
