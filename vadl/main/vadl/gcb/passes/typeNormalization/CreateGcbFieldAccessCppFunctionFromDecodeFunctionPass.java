@@ -52,7 +52,7 @@ public class CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass extends Pass 
    * Output of the pass.
    */
   public record Output(Map<Function, GcbCppFunctionForFieldAccess> byFunction,
-                Map<Format.Field, GcbCppFunctionForFieldAccess> byField) {
+                       Map<Format.Field, GcbCppFunctionForFieldAccess> byField) {
 
   }
 
@@ -69,7 +69,8 @@ public class CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass extends Pass 
         .map(fieldAccess -> new Pair<>(fieldAccess,
             ensureNonNull(fieldAccess.accessFunction(),
                 () -> Diagnostic.error(
-                    "Decoding function must not be null. Maybe it does not exist or was not generated?",
+                    "Decoding function must not be null. Maybe it does not exist "
+                        + "or was not generated?",
                     fieldAccess.sourceLocation())
             )))
         .forEach(pair -> {

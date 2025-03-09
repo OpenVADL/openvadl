@@ -54,7 +54,6 @@ public class PseudoExpansionFunctionGeneratorPass extends Pass {
   }
 
   private Stream<Pair<PseudoInstruction, Graph>> getApplicable(
-      PassResults passResults,
       Specification viam) {
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var specifiedSequences = Stream.of(abi.returnSequence(), abi.callSequence());
@@ -71,7 +70,7 @@ public class PseudoExpansionFunctionGeneratorPass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var result = new IdentityHashMap<PseudoInstruction, GcbExpandPseudoInstructionCppFunction>();
 
-    getApplicable(passResults, viam)
+    getApplicable(viam)
         .forEach(x -> {
           var pseudoInstruction = x.left();
           var ty = new CppType("MCInst", true, true);

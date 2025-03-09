@@ -31,11 +31,11 @@ import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDe
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
-import vadl.gcb.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.InstructionPatternPruningPass;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
+import vadl.gcb.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
