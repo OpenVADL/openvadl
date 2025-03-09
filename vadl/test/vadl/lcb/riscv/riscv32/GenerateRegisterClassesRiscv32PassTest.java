@@ -28,11 +28,11 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 public class GenerateRegisterClassesRiscv32PassTest extends AbstractLcbTest {
 
   @ParameterizedTest
-  @CsvSource({"processorNameValue,X,32,i64"})
+  @CsvSource({"processorNameValue,X,32,i32"})
   void shouldHaveMainRegisterClasses(String namespace, String name, int alignment, String type)
       throws IOException, DuplicatedPassKeyException {
     // Given
-    var setup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
+    var setup = runLcb(getConfiguration(false), "sys/risc-v/rv32im.vadl",
         new PassKey(GenerateTableGenRegistersPass.class.getName()));
     var passManager = setup.passManager();
 
