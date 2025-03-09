@@ -117,8 +117,9 @@ public class VadlParser {
     } catch (DiagnosticList e) {
       errors.addAll(e.items);
     } catch (Exception e) {
-      errors.add(Diagnostic.error("Exception caught during parsing: " + e,
-          SourceLocation.INVALID_SOURCE_LOCATION).build());
+      errors.add(Diagnostic.error("Parsing Error", SourceLocation.INVALID_SOURCE_LOCATION)
+          .description("The following exception was thrown:\n%s", e)
+          .build());
     }
 
     if (parser.errors.count > 0) {
@@ -132,12 +133,21 @@ public class VadlParser {
         // Not every error has a location specified
         var lineNum = fields.length == 3 ? Integer.parseInt(fields[0]) : -1;
         var colNum = fields.length == 3 ? Integer.parseInt(fields[1]) : -1;
-        var title = fields[fields.length - 1];
-        var error = Diagnostic.error(
-            title,
-            new SourceLocation(parser.sourceFile, new SourceLocation.Position(lineNum, colNum))
-        );
-        if (title.contains("expected")) {
+        var message = fields[fields.length - 1];
+
+        // Rewrite some of the most obscure messages
+        if (message.equals("EOF expected") || message.equals("invalid term")) {
+          message = "Unexpected character";
+        }
+
+        var location =
+            new SourceLocation(parser.sourceFile, new SourceLocation.Position(lineNum, colNum));
+        var error = Diagnostic.error("Parsing Error", location)
+            .locationDescription(location, "%s", message)
+            .description(
+                "The parser got confused at this point, probably because of a "
+                    + "syntax error in your code.");
+        if (message.matches("^expected .+")) {
           error.note(
               "Sometimes the expected is just something with what the parser could work with "
                   + " but maybe not what you intended.");
