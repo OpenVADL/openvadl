@@ -56,9 +56,7 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
         .allMatch(x -> {
           var cast = (BuiltInCall) x;
 
-          if (cast.builtIn() == BuiltInTable.LSL
-              || cast.builtIn() == BuiltInTable.LSR
-              || cast.builtIn() == BuiltInTable.ASR) {
+          if (cast.builtIn() == BuiltInTable.LSL) {
             return true;
           }
 
@@ -87,12 +85,8 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
       var upperBound = shiftValue.intValue() + fieldRef.size() - 1;
       var lowerBound = shiftValue.intValue();
       var slice = new Constant.BitSlice(
-          new Constant.BitSlice.Part[] {
-              Constant.BitSlice.Part.of(upperBound, lowerBound)});
+          Constant.BitSlice.Part.of(upperBound, lowerBound));
       invertedSliceNode = new SliceNode(new FuncParamNode(parameter), slice, fieldRef.type());
-    } else if (originalShift.builtIn() == BuiltInTable.LSR
-        || originalShift.builtIn() == BuiltInTable.ASR) {
-      throw new ViamError("Not implemented now");
     } else {
       throw new ViamError("Inverting builtin is not supported");
     }

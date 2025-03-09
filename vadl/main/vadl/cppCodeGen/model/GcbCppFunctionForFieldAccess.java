@@ -26,14 +26,14 @@ import vadl.viam.graph.Graph;
 /**
  * An extension of a {@link Function} which has more information about the generated code.
  */
-public class GcbFieldAccessCppFunction extends Function {
+public class GcbCppFunctionForFieldAccess extends Function {
   private final Format.FieldAccess fieldAccess;
 
-  public GcbFieldAccessCppFunction(Identifier identifier,
-                                   Parameter[] parameters,
-                                   Type returnType,
-                                   Graph behavior,
-                                   Format.FieldAccess fieldAccess) {
+  public GcbCppFunctionForFieldAccess(Identifier identifier,
+                                      Parameter[] parameters,
+                                      Type returnType,
+                                      Graph behavior,
+                                      Format.FieldAccess fieldAccess) {
     super(identifier, parameters, returnType, behavior);
     this.fieldAccess = fieldAccess;
   }

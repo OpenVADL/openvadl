@@ -18,10 +18,10 @@ package vadl.gcb.passes.relocation.model;
 
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
-import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.utils.SourceLocation;
 import vadl.viam.Format;
+import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
 import vadl.viam.Relocation;
@@ -55,7 +55,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
         SourceLocation.INVALID_SOURCE_LOCATION),
         format.type());
     var relocation = new Relocation(identifier, new Parameter[] {parameter}, format.type());
-    var valueRelocation = CppTypeNormalizationPass.createGcbRelocationCppFunction(relocation);
+    var valueRelocation = createGcbRelocationCppFunction(relocation);
     valueRelocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
     return new AutomaticallyGeneratedRelocation(identifier,
         kind,
@@ -65,6 +65,17 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
         relocation,
         valueRelocation,
         fieldUpdateFunction);
+  }
+
+  /**
+   * Wraps the {@code function} into a {@link GcbImmediateExtractionCppFunction}.
+   */
+  public static GcbImmediateExtractionCppFunction createGcbRelocationCppFunction(
+      Function function) {
+    return new GcbImmediateExtractionCppFunction(function.identifier,
+        function.parameters(),
+        function.returnType(),
+        function.behavior());
   }
 
   private AutomaticallyGeneratedRelocation(Identifier identifier,

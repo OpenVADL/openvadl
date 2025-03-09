@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.BitMaskFunctionGenerator;
 import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
@@ -180,7 +179,7 @@ public class GenerateLinkerComponentsPass extends Pass {
           var updateFieldFunction =
               BitMaskFunctionGenerator.generateUpdateFunction(format, field);
           var gcbRelocationFunction =
-              CppTypeNormalizationPass.createGcbRelocationCppFunction(relocation);
+              AutomaticallyGeneratedRelocation.createGcbRelocationCppFunction(relocation);
 
           var liftedRelocation = new ImplementedUserSpecifiedRelocation(
               relocation,

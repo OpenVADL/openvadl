@@ -61,8 +61,8 @@ public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
     // The field takes up a certain slice.
     // But we need to take a slice of the immediate of the same size.
     var fieldAccessBitSlice = fieldRef.bitSlice();
-    var invertedSlice = new Constant.BitSlice(new Constant.BitSlice.Part[] {
-        Constant.BitSlice.Part.of(fieldAccessBitSlice.bitSize() - 1, 0)});
+    var invertedSlice = new Constant.BitSlice(
+        Constant.BitSlice.Part.of(fieldAccessBitSlice.bitSize() - 1, 0));
     var invertedSliceNode = new SliceNode(new FuncParamNode(
         parameter),
         invertedSlice,

@@ -31,17 +31,16 @@ import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDe
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
-import vadl.gcb.passes.GenerateFieldAccessFunctionsFromFieldsPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.InstructionPatternPruningPass;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
+import vadl.gcb.passes.NormalizeFieldsToFieldAccessFunctionsPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
-import vadl.gcb.passes.assembly.AssemblyReplacementNodePass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForPredicatesPass;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredicateFunctionPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
@@ -173,14 +172,13 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new IsaMachineInstructionMatchingPass(gcbConfiguration));
-    order.add(new GenerateFieldAccessFunctionsFromFieldsPass(gcbConfiguration));
+    order.add(new NormalizeFieldsToFieldAccessFunctionsPass(gcbConfiguration));
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
-    order.add(new CppTypeNormalizationForEncodingsPass(gcbConfiguration));
-    order.add(new CppTypeNormalizationForDecodingsPass(gcbConfiguration));
-    order.add(new CppTypeNormalizationForPredicatesPass(gcbConfiguration));
-    order.add(new AssemblyReplacementNodePass(gcbConfiguration));
+    order.add(new CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass(gcbConfiguration));
+    order.add(new CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass(gcbConfiguration));
+    order.add(new CreateGcbFieldAccessFunctionFromPredicateFunctionPass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
     order.add(new InstructionPatternPruningPass(gcbConfiguration));
 
@@ -201,7 +199,6 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
     order.add(new DummyAnnotationPass(configuration));
 
-    // order.add(new PseudoConstantUpliftingPass(configuration));
     order.add(new PseudoExpansionFunctionGeneratorPass(configuration));
 
     order.add(new IsaPseudoInstructionMatchingPass(configuration));

@@ -32,10 +32,9 @@ import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.common.GcbAccessOrExtractionFunctionCodeGenerator;
-import vadl.cppCodeGen.model.GcbFieldAccessCppFunction;
-import vadl.cppCodeGen.passes.typeNormalization.CppTypeNormalizationPass;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForDecodingsPass;
-import vadl.gcb.passes.typeNormalization.CppTypeNormalizationForEncodingsPass;
+import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
+import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
 import vadl.utils.Pair;
@@ -75,20 +74,20 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
     var passManager = setup.passManager();
     var spec = setup.specification();
 
-    var normalizedDecodings =
-        (CppTypeNormalizationPass.NormalisedTypeResult) passManager.getPassResults()
-            .lastResultOf(CppTypeNormalizationForDecodingsPass.class);
-    var normalizedEncodings =
-        (CppTypeNormalizationPass.NormalisedTypeResult) passManager.getPassResults()
-            .lastResultOf(CppTypeNormalizationForEncodingsPass.class);
+    var decodings =
+        (CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass.Output) passManager.getPassResults()
+            .lastResultOf(CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass.class);
+    var encodings =
+        (CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass.Output) passManager.getPassResults()
+            .lastResultOf(CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass.class);
 
     var entries = spec.isa().map(isa -> isa.ownFormats().stream())
         .orElse(Stream.empty())
         .flatMap(format -> format.fieldAccesses().stream())
         .map(
             fieldAccess -> {
-              var accessFunction = normalizedDecodings.byFunction(fieldAccess.accessFunction());
-              var encodeFunction = normalizedEncodings.byFunction(fieldAccess.encoding());
+              var accessFunction = decodings.byFunction().get(fieldAccess.accessFunction());
+              var encodeFunction = encodings.byFunction().get(fieldAccess.encoding());
               var inputType =
                   Arrays.stream(fieldAccess.accessFunction().parameters()).findFirst().get().type();
               return new Quadruple<>(fieldAccess.identifier.lower(), (BitsType) inputType,
@@ -136,8 +135,8 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
 
   TestCase render(String testName,
                   int sample,
-                  GcbFieldAccessCppFunction accessFunction,
-                  GcbFieldAccessCppFunction encodingFunction) {
+                  GcbCppFunctionForFieldAccess accessFunction,
+                  GcbCppFunctionForFieldAccess encodingFunction) {
     var decodeFunctionGenerator =
         new GcbAccessOrExtractionFunctionCodeGenerator(accessFunction, accessFunction.fieldAccess(),
             accessFunction.identifier.lower(),
@@ -158,25 +157,25 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
             #include <iostream>
             #include <bitset>
             #include <vector>
-            
+                        
             // Imported by manual copy mapping
             #include "/vadl-builtins.h"
-            
+                        
             template<int start, int end, std::size_t N>
             std::bitset<N> project_range(std::bitset<N> bits)
             {
                 std::bitset<N> result;
                 size_t result_index = 0; // Index for the new bitset
-            
+                        
                 // Extract bits from the range [start, end]
                 for (size_t i = start; i <= end; ++i) {
                   result[result_index] = bits[i];
                   result_index++;
                 }
-            
+                        
                 return result;
             }
-            
+                        
             template<std::size_t N, std::size_t M>
             std::bitset<N> set_bits(std::bitset<N> dest, const std::bitset<M> source, std::vector<int> bits) {
                 auto target = 0;
@@ -185,14 +184,14 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                     dest.set(j, source[i]);
                     target++;
                 }
-            
+                        
                 return dest;
             }
-            
+                        
             %s
-            
+                        
             %s
-            
+                        
             int main() {
               %s expected = %d;
               auto actual = %s(%s(expected));

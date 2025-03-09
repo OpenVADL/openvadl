@@ -29,6 +29,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 /**
  * Replaces all {@link FieldRefNode} by {@link FuncParamNode} but only in the
  * {@link Format.FieldAccess#accessFunction()}.
+ * {@code int decodingFunction(int imm); }
  */
 public class FieldNodeReplacementPassForDecoding extends FieldNodeReplacementPass {
 
