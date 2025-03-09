@@ -80,7 +80,7 @@ public class IdentifyFieldUsagePass extends Pass {
      * fieldUsage tracks how a field is used. This is true for all instructions and formats.
      * Thus, can be stored based on the {@link Format}
      */
-    private final IdentityHashMap<Format, IdentityHashMap<Field, FieldUsage>> fieldUsage;
+    private final IdentityHashMap<Instruction, IdentityHashMap<Field, List<FieldUsage>>> fieldUsage;
     /**
      * Tracks how a register is used in an {@link Instruction}. This is not true for all
      * {@link Format}. That's why the key is {@link Instruction}.
@@ -97,16 +97,6 @@ public class IdentifyFieldUsagePass extends Pass {
     }
 
     /**
-     * Adding a {@link Format} to the result.
-     */
-    public void addFormat(Format format) {
-      if (!fieldUsage.containsKey(format)) {
-        fieldUsage.put(format, new IdentityHashMap<>());
-      }
-
-    }
-
-    /**
      * Adding a {@link Instruction} to the result.
      */
     public void addInstruction(Instruction instruction) {
@@ -118,12 +108,9 @@ public class IdentifyFieldUsagePass extends Pass {
     /**
      * Adding a {@link FieldUsage} to the result.
      */
-    public void addFieldUsage(Format format, Field field, FieldUsage kind) {
-      var f = fieldUsage.get(format);
-      if (f == null) {
-        throw new ViamError("Format must not be null");
-      }
-      f.put(field, kind);
+    public void addFieldUsage(Instruction instruction, Field field, FieldUsage kind) {
+      var f = fieldUsage.computeIfAbsent(instruction, k -> new IdentityHashMap<>());
+      f.computeIfAbsent(field, k -> new ArrayList<>()).add(kind);
     }
 
     /**
@@ -172,26 +159,15 @@ public class IdentifyFieldUsagePass extends Pass {
       }
     }
 
-    /**
-     * Get a result by format.
-     */
-    public Map<Field, FieldUsage> getFieldUsages(Format format) {
-      var obj = fieldUsage.get(format);
-      if (obj == null) {
-        throw new ViamError("Hashmap must not be null");
-      }
-      return obj;
-    }
-
-    public Map<Format, IdentityHashMap<Field, FieldUsage>> getFieldUsages() {
+    public Map<Instruction, IdentityHashMap<Field, List<FieldUsage>>> getFieldUsages() {
       return fieldUsage;
     }
 
     /**
      * Get the usages of fields by instruction.
      */
-    public Map<Field, FieldUsage> getFieldUsages(Instruction instruction) {
-      var obj = fieldUsage.get(instruction.format());
+    public Map<Field, List<FieldUsage>> getFieldUsages(Instruction instruction) {
+      var obj = fieldUsage.get(instruction);
       if (obj == null) {
         throw new ViamError("Hashmap must not be null");
       }
@@ -232,11 +208,11 @@ public class IdentifyFieldUsagePass extends Pass {
     /**
      * Get the immediate fields for the given format.
      */
-    public List<Field> getImmediates(Format format) {
-      return fieldUsage.getOrDefault(format, new IdentityHashMap<>())
+    public List<Field> getImmediates(Instruction instruction) {
+      return fieldUsage.getOrDefault(instruction, new IdentityHashMap<>())
           .entrySet()
           .stream()
-          .filter(x -> x.getValue() == FieldUsage.IMMEDIATE)
+          .filter(x -> x.getValue().contains(FieldUsage.IMMEDIATE))
           .map(Map.Entry::getKey)
           .toList();
     }
@@ -264,8 +240,8 @@ public class IdentifyFieldUsagePass extends Pass {
     instruction.behavior().getNodes(FieldAccessRefNode.class)
         .forEach(fieldAccessRefNode -> {
           var fieldRef = fieldAccessRefNode.fieldAccess().fieldRef();
-          container.addFormat(fieldRef.format());
-          container.addFieldUsage(fieldRef.format(), fieldRef,
+          container.addInstruction(instruction);
+          container.addFieldUsage(instruction, fieldRef,
               FieldUsage.IMMEDIATE);
         });
   }
@@ -318,12 +294,12 @@ public class IdentifyFieldUsagePass extends Pass {
               .map(usage -> ((WriteRegFileNode) usage).registerFile())
               .findFirst();
 
-          container.addFormat(fieldRef.format());
+          container.addInstruction(instruction);
           if (registerRead.isPresent()
               || registerFileRead.isPresent()
               || registerWrite.isPresent()
               || registerFileWrite.isPresent()) {
-            container.addFieldUsage(fieldRef.format(), fieldRef,
+            container.addFieldUsage(instruction, fieldRef,
                 FieldUsage.REGISTER);
           } else {
             throw Diagnostic.error("Register index is not used as write or read.",

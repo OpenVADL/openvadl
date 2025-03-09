@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
@@ -45,6 +46,7 @@ import vadl.utils.Pair;
 import vadl.utils.VadlFileUtils;
 import vadl.viam.Format;
 import vadl.viam.Parameter;
+import vadl.viam.Specification;
 
 public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractLcbTest {
   @TestFactory
@@ -77,12 +79,13 @@ public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractL
     var image = new ImageFromDockerfile()
         .withDockerfile(Paths.get(configuration.outputPath() + "/encoding/Dockerfile"));
 
-    return generateInputs(testSetup, image, configuration.outputPath());
+    return generateInputs(testSetup, image, configuration.outputPath(), testSetup.specification());
   }
 
   private Collection<DynamicTest> generateInputs(TestSetup testSetup,
                                                  ImageFromDockerfile image,
-                                                 Path path) throws IOException {
+                                                 Path path,
+                                                 Specification specification) throws IOException {
     var output = (GenerateLinkerComponentsPass.Output) testSetup.passManager().getPassResults()
         .lastResultOf(GenerateLinkerComponentsPass.class);
     var elfRelocations = output.elfRelocations();
@@ -91,39 +94,48 @@ public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractL
             .getPassResults()
             .lastResultOf(IdentifyFieldUsagePass.class);
 
+    var instructions = specification.isa().map(x -> x.ownInstructions().stream())
+        .orElse(Stream.empty()).toList();
     List<Pair<String, String>> copyMappings = new ArrayList<>();
-    for (var relocation : elfRelocations) {
-      var format = relocation.format();
-      immediateDetection.getImmediates(format).forEach(immField -> {
-        var params = relocation.fieldUpdateFunction().parameters();
-        // The first parameter is hardcoded to be the instruction word.
-        // The second parameter is the updated value.
-        var arbitraryInstructionWord =
-            getArbitrary(params[0]);
-        var arbitraryImmediateValue = getArbitrary(immField);
 
-        var limit = 3;
-        arbitraryInstructionWord.sampleStream().limit(limit).forEach(instructionWordSample -> {
-          arbitraryImmediateValue.sampleStream().limit(limit).forEach(immediateValue -> {
-            var fileName =
-                immField.identifier.lower() + "_instr_" + instructionWordSample + "_imm_"
-                    + immediateValue + ".cpp";
-            var filePath = path + "/inputs/" + fileName;
-            var code = render(immField,
-                instructionWordSample,
-                immediateValue,
-                relocation);
-            copyMappings.add(Pair.of(filePath, "/inputs/" + fileName));
-            try {
-              var fs = new FileWriter(filePath);
-              fs.write(code);
-              fs.close();
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          });
-        });
-      });
+    for (var instruction : instructions) {
+      var relocation =
+          elfRelocations.stream().filter(x -> x.format() == instruction.format()).findFirst();
+
+      relocation.ifPresent(
+          hasRelocationComputationAndUpdate -> immediateDetection.getImmediates(instruction)
+              .forEach(immField -> {
+                var params = hasRelocationComputationAndUpdate.fieldUpdateFunction().parameters();
+                // The first parameter is hardcoded to be the instruction word.
+                // The second parameter is the updated value.
+                var arbitraryInstructionWord =
+                    getArbitrary(params[0]);
+                var arbitraryImmediateValue = getArbitrary(immField);
+
+                var limit = 3;
+                arbitraryInstructionWord.sampleStream().limit(limit)
+                    .forEach(
+                        instructionWordSample -> arbitraryImmediateValue.sampleStream().limit(limit)
+                            .forEach(immediateValue -> {
+                              var fileName =
+                                  immField.identifier.lower() + "_instr_" + instructionWordSample
+                                      + "_imm_"
+                                      + immediateValue + ".cpp";
+                              var filePath = path + "/inputs/" + fileName;
+                              var code = render(immField,
+                                  instructionWordSample,
+                                  immediateValue,
+                                  hasRelocationComputationAndUpdate);
+                              copyMappings.add(Pair.of(filePath, "/inputs/" + fileName));
+                              try {
+                                var fs = new FileWriter(filePath);
+                                fs.write(code);
+                                fs.close();
+                              } catch (IOException e) {
+                                throw new RuntimeException(e);
+                              }
+                            }));
+              }));
     }
 
     // Add vadl-builtin

@@ -229,7 +229,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   private int getImmBitSize(IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
                             Instruction additionRI) {
-    var fields = fieldUsages.getImmediates(additionRI.format());
+    var fields = fieldUsages.getImmediates(additionRI);
     verifyInstructionHasOnlyOneImm(additionRI, fields);
     return ensurePresent(fields.stream().findFirst(), "already checked that it is present").size();
   }
@@ -418,7 +418,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
       for (var callNode : callNodes) {
         var machineInstruction = callNode.target();
-        var immediates = fieldUsages.getImmediates(machineInstruction.format());
+        var immediates = fieldUsages.getImmediates(machineInstruction);
         ensure(immediates.size() == 1,
             () -> Diagnostic.error("We only support branch instructions with one label.",
                 machineInstruction.sourceLocation()));
@@ -448,7 +448,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     )).build());
 
     for (var machineInstruction : result.machineInstructions()) {
-      var immediates = fieldUsages.getImmediates(machineInstruction.format());
+      var immediates = fieldUsages.getImmediates(machineInstruction);
       ensure(immediates.size() == 1,
           () -> Diagnostic.error("We only support branch instructions with one label.",
               machineInstruction.sourceLocation()));
@@ -499,7 +499,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
                   instruction.sourceLocation()));
 
       var immediate =
-          ensurePresent(fieldUsages.getImmediates(instruction.format()).stream().findFirst(),
+          ensurePresent(fieldUsages.getImmediates(instruction).stream().findFirst(),
               () -> Diagnostic.error("Cannot find an immediate operand.",
                   instruction.sourceLocation()));
 
