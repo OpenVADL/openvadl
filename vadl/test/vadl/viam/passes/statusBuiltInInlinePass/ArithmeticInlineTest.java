@@ -27,26 +27,52 @@ import vadl.viam.Constant;
 public class ArithmeticInlineTest extends StatusBuiltinInlineTest {
 
 
+  // 32-bit tests Created with: https://godbolt.org/z/E4MYY5W15
   @TestFactory
   public Stream<DynamicTest> addsTests() {
     return runTests(
-        adds(5, 0b0, 0b0, 0b0, false, true, false, false),
         adds(3, 0b111, 0b111, 0b110, true, false, true, false),
         adds(4, 0b1111, 0b0001, 0b0000, false, true, true, false),
         adds(4, 0b0100, 0b0100, 0b1000, true, false, false, true),
-        adds(4, 0b1000, 0b1000, 0b0000, false, true, true, true)
+        adds(4, 0b1000, 0b1000, 0b0000, false, true, true, true),
+        adds(32, 0x00L, 0x00L, 0x00L, false, true, false, false),
+        adds(32, 0xFFFFFFFFL, 0x01L, 0x00L, false, true, true, false),
+        adds(32, 0x01L, 0xFFFFFFFFL, 0x00L, false, true, true, false),
+        adds(32, 0x10000000L, 0x10000000L, 0x20000000L, false, false, false, false),
+        adds(32, 0x8FFFFFFFL, 0x8FFFFFFFL, 0x1FFFFFFEL, false, false, true, true),
+        adds(32, 0x7FFFFFFFL, 0x8FFFFFFFL, 0xFFFFFFEL, false, false, true, false),
+        adds(32, 0x8FFFFFFFL, 0x7FFFFFFFL, 0xFFFFFFEL, false, false, true, false),
+        adds(32, 0xFFFFFFFFL, 0x00L, 0xFFFFFFFFL, true, false, false, false),
+        adds(32, 0x00L, 0xFFFFFFFFL, 0xFFFFFFFFL, true, false, false, false),
+        adds(32, 0x7FFFFFFFL, 0x00L, 0x7FFFFFFFL, false, false, false, false),
+        adds(32, 0x00L, 0x7FFFFFFFL, 0x7FFFFFFFL, false, false, false, false)
     );
   }
 
+  // Created with: https://godbolt.org/z/6aeY8PdfW
   @TestFactory
   public Stream<DynamicTest> addcTests() {
     return runTests(
-        addc(4, 0b0000, 0b0000, false, 0b0000, false, true, false, false),
-        addc(4, 0b0000, 0b0000, true, 0b0001, false, false, false, false),
+        addc(32, 0x00L, 0x00L, false, 0x00L, false, true, false, false),
+        addc(32, 0x00L, 0x00L, true, 0x01L, false, false, false, false),
         addc(32, 0xFFFFFFFFL, 0x01L, false, 0x00L, false, true, true, false),
-        addc(32, 0xFFFFFFFEL, 0x01L, false, 0xFFFFFFFFL, true, false, false, false),
+        addc(32, 0xFFFFFFFFL, 0x01L, true, 0x01L, false, false, true, false),
+        addc(32, 0x10000000L, 0x10000000L, false, 0x20000000L, false, false, false, false),
+        addc(32, 0x10000000L, 0x10000000L, true, 0x20000001L, false, false, false, false),
+        addc(32, 0x8FFFFFFFL, 0x8FFFFFFFL, false, 0x1FFFFFFEL, false, false, true, true),
+        addc(32, 0x8FFFFFFFL, 0x8FFFFFFFL, true, 0x1FFFFFFFL, false, false, true, true),
+        addc(32, 0x7FFFFFFFL, 0x8FFFFFFFL, false, 0xFFFFFFEL, false, false, true, false),
+        addc(32, 0x7FFFFFFFL, 0x8FFFFFFFL, false, 0xFFFFFFEL, false, false, true, false),
+        addc(32, 0x8FFFFFFFL, 0x7FFFFFFFL, true, 0xFFFFFFFL, false, false, true, false),
+        addc(32, 0x8FFFFFFFL, 0x7FFFFFFFL, true, 0xFFFFFFFL, false, false, true, false),
         addc(32, 0xFFFFFFFFL, 0x00L, false, 0xFFFFFFFFL, true, false, false, false),
-        addc(32, 0xFFFFFFFFL, 0x00L, true, 0x00L, false, true, true, false)
+        addc(32, 0xFFFFFFFFL, 0x00L, true, 0x00L, false, true, true, false),
+        addc(32, 0x00L, 0xFFFFFFFFL, false, 0xFFFFFFFFL, true, false, false, false),
+        addc(32, 0x00L, 0xFFFFFFFFL, true, 0x00L, false, true, true, false),
+        addc(32, 0x7FFFFFFFL, 0x00L, false, 0x7FFFFFFFL, false, false, false, false),
+        addc(32, 0x7FFFFFFFL, 0x00L, true, 0x80000000L, true, false, false, true),
+        addc(32, 0x00L, 0x7FFFFFFFL, false, 0x7FFFFFFFL, false, false, false, false),
+        addc(32, 0x00L, 0x7FFFFFFFL, true, 0x80000000L, true, false, false, true)
     );
   }
 

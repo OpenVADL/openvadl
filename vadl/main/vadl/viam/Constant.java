@@ -208,7 +208,7 @@ public abstract class Constant {
       if (type() instanceof BoolType) {
         return this.value;
       } else {
-        return BigIntUtils.fromTwosComplement(value, (BitsType) type());
+        return BigIntUtils.fromTwosComplement(value, type().bitWidth(), type().isSigned());
       }
     }
 
@@ -565,7 +565,10 @@ public abstract class Constant {
     public Constant.Value lth(Constant.Value other, boolean singed) {
       boolean result;
       if (singed) {
-        result = integer().compareTo(other.integer()) < 0;
+        var thisBigInt = BigIntUtils.fromTwosComplement(value, type().bitWidth(), true);
+        var otherBigInt =
+            BigIntUtils.fromTwosComplement(other.value, other.type().bitWidth(), true);
+        result = thisBigInt.compareTo(otherBigInt) < 0;
       } else {
         result = value.compareTo(other.value) < 0;
       }

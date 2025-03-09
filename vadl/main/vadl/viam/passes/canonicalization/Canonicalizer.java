@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.passes.GraphProcessor;
 
 /**
@@ -68,6 +69,11 @@ public class Canonicalizer extends GraphProcessor<Node> {
       var canonicalNode = ((Canonicalizable) toProcess).canonical();
 
       if (canonicalNode != toProcess) {
+
+        if (canonicalNode instanceof ConstantNode node) {
+          log.info("{}:\t{}", toProcess.id, node.constant());
+        }
+
         // replace original one by new one
         toProcess.replaceAndDelete(canonicalNode);
       }

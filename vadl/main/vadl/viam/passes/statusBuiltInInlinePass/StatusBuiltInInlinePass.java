@@ -27,6 +27,15 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.BuiltInCall;
 
+/**
+ * This pass inlines all status built-ins,
+ * so the behaviors do not contain any status results afterward.
+ * E.g., when a graph contains a call to {@link vadl.types.BuiltInTable#ADDS}, it will
+ * be replaced by built-ins that compute the status flags returned by ADDS.
+ *
+ * <p>This pass will only create logic for status flags if they are used by the callee.
+ * E.g., if the {@code status.negative} flag is not used, no logic for this will be created.</p>
+ */
 public class StatusBuiltInInlinePass extends Pass {
 
   public StatusBuiltInInlinePass(GeneralConfiguration configuration) {
@@ -49,7 +58,10 @@ public class StatusBuiltInInlinePass extends Pass {
   }
 }
 
-
+/**
+ * Inlines all status built-ins for the given graph.
+ * There is a {@link Inliner} for each status built-in.
+ */
 class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCall> {
 
   private final Graph graph;

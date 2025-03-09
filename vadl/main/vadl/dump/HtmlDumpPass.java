@@ -177,11 +177,6 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
   }
 
   @Override
-  protected boolean enableCopyright() {
-    return false;
-  }
-
-  @Override
   public Result constructResult() {
     return new Result(getEmittedFile(), lastPass);
   }

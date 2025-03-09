@@ -33,6 +33,20 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 
+/**
+ * The inliner is responsible
+ * for replacing a specific kind of status built-in by non-status built-ins.
+ * E.g. the {@link vadl.viam.passes.statusBuiltInInlinePass.ArithmeticInliner.AddS} inliner
+ * replaces a {@link BuiltInTable#ADDS} built-in call.
+ *
+ * <p>An inliner must implement three methods: {@link #createResult()}, {@link #checkOverflow()},
+ * {@link #checkCarry()}.
+ * The {@link #checkNegative()} and {@link #checkZero()} status flags are already implemented
+ * by this super class.
+ * Those check methods return the expression tree that implements the respective check.
+ * This super class takes care of only create checks when required (i.e., the status flag is used
+ * by the callee).</p>
+ */
 abstract class Inliner {
 
   BuiltInCall builtInCall;

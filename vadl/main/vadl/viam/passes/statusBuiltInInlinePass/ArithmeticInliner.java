@@ -16,18 +16,19 @@
 
 package vadl.viam.passes.statusBuiltInInlinePass;
 
-import static vadl.utils.GraphUtils.and;
 import static vadl.utils.GraphUtils.binaryOp;
-import static vadl.utils.GraphUtils.equ;
-import static vadl.utils.GraphUtils.not;
 import static vadl.utils.GraphUtils.or;
 import static vadl.utils.GraphUtils.testSignBit;
 import static vadl.utils.GraphUtils.zeroExtend;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import vadl.types.BuiltInTable;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
+/**
+ * Contains the status built-in {@link Inliner}s for all arithmetic operations.
+ */
 class ArithmeticInliner {
 
   static class AddS extends Inliner {
@@ -46,25 +47,26 @@ class ArithmeticInliner {
       // the signed overflow (or just overflow) happens, if the sign of the result is unexpected.
       // so if we add two positive numbers and get a negative or if we add two negative numbers and
       // get a positive, an overflow occurs.
-      // we can check this by taking the condition described above.
+
+      // https://godbolt.org/z/nh5TKzGWb
+      // when using the clang built-in __builtin_add_overflow(a, b, result); which returns
+      // if there was an overflow, it compiles to
+      // add     a3, a0, a1  -- add operands
+      // slt     a0, a3, a0  -- check if result < operand1 (signed)
+      // slti    a1, a1, 0   -- check if operand2 < 0 (testSignBit)
+      // xor     a0, a0, a1  -- check if either result < operand1 or operand2 < 0
+
       var result = getResult();
       var a = firstArg();
       var b = secondArg();
 
-      // check: x < 0 && a > 0 && b > 0 || x > 0 && a < 0 && b < 0
-      return or(
-          // x < 0 && a > 0 && b > 0
-          and(
-              testSignBit(result),
-              not(testSignBit(a)),
-              not(testSignBit(b))
+      // check: result < a ^ b < 0
+      return binaryOp(BuiltInTable.XOR,
+          binaryOp(BuiltInTable.SLTH,
+              result,
+              a
           ),
-          // x > 0 && a < 0 && b < 0
-          and(
-              not(testSignBit(result)),
-              testSignBit(a),
-              testSignBit(b)
-          )
+          testSignBit(b)
       );
     }
 
@@ -74,58 +76,103 @@ class ArithmeticInliner {
       // this is because in case of a carry, the result will always be samller than the smaller
       // operand.
       // e.g.: 11 + 01 = 00 -> 00 is smaller than 01
-      return BuiltInCall.of(
-          BuiltInTable.ULTH,
+
+      // this is also how clang compiles __builtin_add_overflow to machine code:
+      // https://godbolt.org/z/Kec7xs9h5
+
+      return binaryOp(BuiltInTable.ULTH,
           getResult(),
           firstArg()
       );
     }
   }
 
-  // 10 + 11 = 01
-  // 11 + 11 = 10
-
-  // the overflow implementation stays the same for ADDC,
-  // as the carry will never cause a change of the sign bit.
-  static class AddC extends AddS {
+  static class AddC extends Inliner {
 
     AddC(BuiltInCall builtInCall) {
       super(builtInCall);
     }
+
+    @LazyInit
+    private ExpressionNode partialResult;
 
     @Override
     ExpressionNode createResult() {
       var a = firstArg();
       var b = secondArg();
       var carryIn = thirdArg();
+
+      partialResult = binaryOp(BuiltInTable.ADD, a, b);
       // a + b + carry
       return binaryOp(
           BuiltInTable.ADD,
-          binaryOp(BuiltInTable.ADD, a, b),
+          partialResult,
           zeroExtend(carryIn, a.type().asDataType())
+      );
+    }
+
+    @Override
+    ExpressionNode checkOverflow() {
+      // as for ADDS, if the operands have the same sign which differs from the
+      // result sign, a signed overflow occurs.
+
+      // the naive approach would be
+      // (a >= 0 && b >= 0 && result < 0)|| (a < 0 && b < 0 && result >= 0).
+      // however, we can simplify this to
+      // (a ^ result) & (b ^ result) < 0
+
+      var result = getResult();
+      var a = firstArg();
+      var b = secondArg();
+
+      // check: (a ^ result) & (b ^ result) < 0
+      return testSignBit(
+          binaryOp(BuiltInTable.AND,
+              binaryOp(BuiltInTable.XOR,
+                  a,
+                  result
+              ),
+              binaryOp(BuiltInTable.XOR,
+                  b,
+                  result
+              )
+          )
       );
     }
 
     @Override
     ExpressionNode checkCarry() {
       // for ADDC the carry is a bit different,
-      // because the result might "catch" the smallest operand.
-      // e.g. 11 + 01 = 00 -> carry out.
-      // however, if the carry in is 1 we get 11 + 01 + 1 = 01
+      // because the result might "catch up" with the smallest operand.
+      // e.g., 11 + 01 = 00 -> carry out.
+      // however, if the carry in is 1 we get 11 + 01 + 1 = 01,
       // so the condition of ADD doesn't hold any longer.
-      // the new condition to check the carry out is
-      // x < a || (carry && (x == a || x == b))
-      var carryIn = thirdArg();
-      return or(
-          BuiltInCall.of(BuiltInTable.ULTH, getResult(), firstArg()),
-          and(
-              carryIn,
-              or(
-                  equ(getResult(), firstArg()),
-                  equ(getResult(), firstArg())
-              )
-          )
+
+      // the new condition to check the carry-out is
+      // p = a + b
+      // result = a + b + carry_in
+      // partialCarry = (p < a)
+      // finalCarry = (result < p)
+      // carry_out = partialCarry || finalCarry
+
+      // you can see this on godbolt: https://godbolt.org/z/457KP9s3z
+
+      var a = firstArg();
+
+      var result = getResult();
+      var p = partialResult;
+
+      var partialCarry = BuiltInCall.of(
+          BuiltInTable.ULTH,
+          p,
+          a
       );
+      var finalCarry = BuiltInCall.of(
+          BuiltInTable.ULTH,
+          result,
+          p
+      );
+      return or(partialCarry, finalCarry);
     }
   }
 
