@@ -382,7 +382,8 @@ public class LlvmLoweringPass extends Pass {
       var fieldUsageMap = fieldUsages.getFieldUsages(instruction.target());
 
       if (Optional.ofNullable(fieldUsageMap.get(field))
-          .map(x -> x == IdentifyFieldUsagePass.FieldUsage.REGISTER).orElse(false)) {
+          .map(x -> x.stream().anyMatch(y -> y == IdentifyFieldUsagePass.FieldUsage.REGISTER))
+          .orElse(false)) {
         // There are two cases:
         // First, the given argument is `FuncParamNode`. This means that the argument remains
         // a register file.

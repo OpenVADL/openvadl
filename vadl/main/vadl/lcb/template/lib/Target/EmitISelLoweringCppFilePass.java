@@ -161,7 +161,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
                                 IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
                                 RelocationFunctionLabel relocationFunctionLabel) {
     var immediate =
-        ensurePresent(fieldUsages.getImmediates(instruction.format()).stream().findFirst(),
+        ensurePresent(fieldUsages.getImmediates(instruction).stream().findFirst(),
             () -> Diagnostic.error("Expected to have an immediate", instruction.sourceLocation()));
 
     var modifiers = output.modifiers().stream()

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.template.lld.ELF.Arch;
+package vadl.lcb.riscv.riscv64.template.lld.ELF.Arch;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.shaded.com.google.common.io.Files;
 import vadl.lcb.AbstractLcbTest;
+import vadl.lcb.template.lld.ELF.Arch.EmitLldTargetRelocationsHeaderFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -62,6 +63,9 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
         uint32_t RV3264I_Jtype_ABSOLUTE_imm_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
+        uint32_t RV3264I_Rtype_ABSOLUTE_rs2_hi(uint32_t symbol) {
+           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
+        }
         uint32_t RV3264I_Ftype_ABSOLUTE_sft_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
@@ -78,6 +82,9 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
            return VADL_uextract(symbol, 12);
         }
         int16_t RV3264I_Jtype_ABSOLUTE_imm_lo(uint32_t symbol) {
+           return VADL_uextract(symbol, 12);
+        }
+        int16_t RV3264I_Rtype_ABSOLUTE_rs2_lo(uint32_t symbol) {
            return VADL_uextract(symbol, 12);
         }
         int16_t RV3264I_Ftype_ABSOLUTE_sft_lo(uint32_t symbol) {
@@ -111,6 +118,12 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
            return input;
         }
         uint32_t RV3264I_Jtype_RELATIVE_imm_Jtype_RELATIVE_imm(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Rtype_ABSOLUTE_rs2_Rtype_ABSOLUTE_rs2(uint32_t input) {
+           return input;
+        }
+        uint32_t RV3264I_Rtype_RELATIVE_rs2_Rtype_RELATIVE_rs2(uint32_t input) {
            return input;
         }
         uint32_t RV3264I_Ftype_ABSOLUTE_sft_Ftype_ABSOLUTE_sft(uint32_t input) {

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.template.include.llvm.BinaryFormat.ELFRelocs;
+package vadl.lcb.riscv.riscv64.template.include.llvm.BinaryFormat.ELFRelocs;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -50,35 +50,39 @@ public class EmitTargetElfRelocsDefFilePassTest extends AbstractLcbTest {
         #ifndef ELF_RELOC
         #error "ELF_RELOC must be defined"
         #endif
-        
+                
         ELF_RELOC(R_processornamevalue_NONE, 0)
         ELF_RELOC(R_processornamevalue_32, 1)
         ELF_RELOC(R_processornamevalue_64, 2)
-        
+                
         ELF_RELOC(R_RV3264I_hi_Itype_imm, 3)
         ELF_RELOC(R_RV3264I_hi_Utype_imm, 4)
         ELF_RELOC(R_RV3264I_hi_Stype_imm, 5)
         ELF_RELOC(R_RV3264I_hi_Btype_imm, 6)
         ELF_RELOC(R_RV3264I_hi_Jtype_imm, 7)
-        ELF_RELOC(R_RV3264I_hi_Ftype_sft, 8)
-        ELF_RELOC(R_RV3264I_lo_Itype_imm, 9)
-        ELF_RELOC(R_RV3264I_lo_Utype_imm, 10)
-        ELF_RELOC(R_RV3264I_lo_Stype_imm, 11)
-        ELF_RELOC(R_RV3264I_lo_Btype_imm, 12)
-        ELF_RELOC(R_RV3264I_lo_Jtype_imm, 13)
-        ELF_RELOC(R_RV3264I_lo_Ftype_sft, 14)
-        ELF_RELOC(R_RV3264I_Itype_ABSOLUTE_imm, 15)
-        ELF_RELOC(R_RV3264I_Itype_RELATIVE_imm, 16)
-        ELF_RELOC(R_RV3264I_Utype_ABSOLUTE_imm, 17)
-        ELF_RELOC(R_RV3264I_Utype_RELATIVE_imm, 18)
-        ELF_RELOC(R_RV3264I_Stype_ABSOLUTE_imm, 19)
-        ELF_RELOC(R_RV3264I_Stype_RELATIVE_imm, 20)
-        ELF_RELOC(R_RV3264I_Btype_ABSOLUTE_imm, 21)
-        ELF_RELOC(R_RV3264I_Btype_RELATIVE_imm, 22)
-        ELF_RELOC(R_RV3264I_Jtype_ABSOLUTE_imm, 23)
-        ELF_RELOC(R_RV3264I_Jtype_RELATIVE_imm, 24)
-        ELF_RELOC(R_RV3264I_Ftype_ABSOLUTE_sft, 25)
-        ELF_RELOC(R_RV3264I_Ftype_RELATIVE_sft, 26)
+        ELF_RELOC(R_RV3264I_hi_Rtype_rs2, 8)
+        ELF_RELOC(R_RV3264I_hi_Ftype_sft, 9)
+        ELF_RELOC(R_RV3264I_lo_Itype_imm, 10)
+        ELF_RELOC(R_RV3264I_lo_Utype_imm, 11)
+        ELF_RELOC(R_RV3264I_lo_Stype_imm, 12)
+        ELF_RELOC(R_RV3264I_lo_Btype_imm, 13)
+        ELF_RELOC(R_RV3264I_lo_Jtype_imm, 14)
+        ELF_RELOC(R_RV3264I_lo_Rtype_rs2, 15)
+        ELF_RELOC(R_RV3264I_lo_Ftype_sft, 16)
+        ELF_RELOC(R_RV3264I_Itype_ABSOLUTE_imm, 17)
+        ELF_RELOC(R_RV3264I_Itype_RELATIVE_imm, 18)
+        ELF_RELOC(R_RV3264I_Utype_ABSOLUTE_imm, 19)
+        ELF_RELOC(R_RV3264I_Utype_RELATIVE_imm, 20)
+        ELF_RELOC(R_RV3264I_Stype_ABSOLUTE_imm, 21)
+        ELF_RELOC(R_RV3264I_Stype_RELATIVE_imm, 22)
+        ELF_RELOC(R_RV3264I_Btype_ABSOLUTE_imm, 23)
+        ELF_RELOC(R_RV3264I_Btype_RELATIVE_imm, 24)
+        ELF_RELOC(R_RV3264I_Jtype_ABSOLUTE_imm, 25)
+        ELF_RELOC(R_RV3264I_Jtype_RELATIVE_imm, 26)
+        ELF_RELOC(R_RV3264I_Rtype_ABSOLUTE_rs2, 27)
+        ELF_RELOC(R_RV3264I_Rtype_RELATIVE_rs2, 28)
+        ELF_RELOC(R_RV3264I_Ftype_ABSOLUTE_sft, 29)
+        ELF_RELOC(R_RV3264I_Ftype_RELATIVE_sft, 30)
         """.trim().lines(), output);
   }
 }

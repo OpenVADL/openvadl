@@ -130,15 +130,21 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   public void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
     var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
     var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
+    var instruction = ((CNodeWithBaggageContext) ctx).get(INSTRUCTION, Instruction.class);
 
     var pseudoInstructionIndex =
         getOperandIndexFromPseudoInstruction(field, toHandle,
             toHandle.parameter().identifier);
 
-    var usage = fieldUsages.getFieldUsages(field.format()).get(field);
+    var usage = fieldUsages.getFieldUsages(instruction).get(field);
     ensure(usage != null, "usage must not be null");
+    ensure(usage.size() == 1, () -> {
+      throw Diagnostic.error(
+          "Cannot expand pseudo instruction because the usage of the field is unclear",
+          field.sourceLocation()).build();
+    });
 
-    switch (usage) {
+    switch (usage.get(0)) {
       case IMMEDIATE -> {
         var argumentSymbol = symbolTable.getNextVariable();
         ctx.ln(
@@ -199,9 +205,16 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     var instruction = ((CNodeWithBaggageContext) ctx).get(INSTRUCTION, Instruction.class);
     var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
 
-    var usage = fieldUsages.getFieldUsages(field.format()).get(field);
+    var usage = fieldUsages.getFieldUsages(instruction).get(field);
     ensure(usage != null, "usage must not be null");
-    switch (usage) {
+
+    ensure(usage.size() == 1, () -> {
+      throw Diagnostic.error(
+          "Cannot expand pseudo instruction because the usage of the field is unclear",
+          field.sourceLocation()).build();
+    });
+
+    switch (usage.get(0)) {
       case IMMEDIATE -> {
         var decodingFunction = immediateDecodings.get(field);
         ensure(decodingFunction != null, "decodingFunction must not be null");
@@ -344,7 +357,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
         Streams.zip(instrCallNode.getParamFields().stream(), instrCallNode.arguments().stream(),
             Pair::of).toList();
 
-    var reorderedPairs = reorderParameters(instrCallNode.target().format(), pairs);
+    var reorderedPairs = reorderParameters(instrCallNode.target(), pairs);
 
     reorderedPairs.forEach(pair -> {
       /*
@@ -388,15 +401,15 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
    * order.
    */
   private List<Pair<Format.Field, ExpressionNode>> reorderParameters(
-      Format format,
+      Instruction instruction,
       List<Pair<Format.Field, ExpressionNode>> pairs) {
     var result = new ArrayList<Pair<Format.Field, ExpressionNode>>();
     var lookup = pairs.stream().collect(Collectors.toMap(Pair::left, Pair::right));
-    var usages = fieldUsages.getFieldUsages(format).keySet();
+    var usages = fieldUsages.getFieldUsages(instruction).keySet();
     // The `fieldsSortedByLsbDesc` returns all fields from the format.
     // However, we are only interested in the registers and immediates.
     // That's why we filter with `contains`. `fieldUsages` only stores REGISTER and IMMEDIATE.
-    var order = format.fieldsSortedByLsbDesc().filter(usages::contains).toList();
+    var order = instruction.format().fieldsSortedByLsbDesc().filter(usages::contains).toList();
 
     for (var item : order) {
       var l = ensureNonNull(lookup.get(item),

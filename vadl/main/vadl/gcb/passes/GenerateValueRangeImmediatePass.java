@@ -74,7 +74,7 @@ public class GenerateValueRangeImmediatePass extends Pass {
     viam.isa().map(x -> x.ownInstructions().stream())
         .orElse(Stream.empty())
         .forEach(instruction -> {
-          var fields = fieldResult.getImmediates(instruction.format());
+          var fields = fieldResult.getImmediates(instruction);
           var ctx = new ValueRangeCtx();
 
           fields.forEach(field -> {

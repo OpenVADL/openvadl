@@ -77,7 +77,7 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
 
     Stream.concat(machineInstructions, pseudoInstructions)
         .forEach(instruction -> {
-          var immediates = fieldUsages.getImmediates(instruction.format());
+          var immediates = fieldUsages.getImmediates(instruction);
 
           instruction.behavior().getNodes(FieldRefNode.class)
               // Only process immediates

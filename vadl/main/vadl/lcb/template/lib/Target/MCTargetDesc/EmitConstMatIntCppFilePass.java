@@ -179,7 +179,8 @@ public class EmitConstMatIntCppFilePass extends LcbTemplateRenderingPass {
     return immediateDetection.getFieldUsages(instruction)
         .entrySet()
         .stream()
-        .filter(x -> x.getValue() == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE)
+        .filter(x -> x.getValue().stream()
+            .anyMatch(y -> y == IdentifyFieldUsagePass.FieldUsage.IMMEDIATE))
         .map(Map.Entry::getKey)
         .findFirst();
   }
