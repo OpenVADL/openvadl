@@ -389,7 +389,7 @@ public class LlvmLoweringPass extends Pass {
         // a register file.
         // Second, the given argument is a `ConstantNode`. This means that the argument will be
         // a fixed register in a register file.
-        if (argument instanceof FuncParamNode) {
+        if (argument instanceof FuncParamNode funcParamNode) {
           // it is a register file
           var registerFile =
               ensurePresent(
@@ -398,9 +398,18 @@ public class LlvmLoweringPass extends Pass {
                           .map(y -> ((HasRegisterFile) y).registerFile()))
                       .findFirst(), () -> Diagnostic.error("Expected to find register file",
                       field.sourceLocation()));
+          // We use the funcParamNode's name because we need to make sure that the register
+          // renaming is handled.
+          // pseudo instruction BEQZ( rs : Index, offset : Bits<12> ) =
+          //  {
+          //      BEQ{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
+          //  }
+          // Here register `rs1` gets renamed to `rs`.
+          // So the pattern will look like:
+          // `def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs, X0, RV3264I_Btype_immAsLabel:$imm)>;`
           args.add(new LcbMachineInstructionParameterNode(
               new TableGenInstructionOperand(null, registerFile.identifier.simpleName(),
-                  field.identifier.simpleName())));
+                  funcParamNode.parameter().simpleName())));
         } else if (argument instanceof ConstantNode constantNode) {
           // it is indexed in a register file
           var registerFile =
