@@ -44,12 +44,12 @@ instruction set architecture RV32I = {
     , immS   = imm as SInt<Size> << 1    // sign extended and shifted immediate value immS
     }
 
-  // macro for immediate instructions with name, operator, function code and type
+  // macro for immediate instructions with name, operator, function code and operand type
   model ItypeInstr (name : Id, op : BinOp, funct3 : Bin, type: Id) : IsaDefs = {
     instruction $name : Itype =
        X(rd) := (X(rs1) as $type $op immS as $type) as Regs
     encoding $name = {opcode = 0b001'0011, funct3 = $funct3}
-    assembly $name = (mnemonic," ",register(rd),",",register(rs1),",",decimal(imm))
+    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
     }
 
   model BtypeInstr (name : Id, relOp : BinOp, funct3 : Bin, lhsTy : Id) : IsaDefs = {
@@ -60,7 +60,11 @@ instruction set architecture RV32I = {
     assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
     }
 
-  $ItypeInstr (ADDI ; +  ; 0b000 ; SInt) // add immediate
+  //$ItypeInstr (ADDI ; +  ; 0b000 ; SInt) // add immediate
+    instruction ADDI : Itype =
+       X(rd) := (X(rs1) as SInt + immS as SInt) as Regs
+    encoding ADDI = {opcode = 0b001'0011, funct3 = 0b000}
+    assembly ADDI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
   $ItypeInstr (ANDI ; &  ; 0b111 ; SInt) // and immediate
   $ItypeInstr (ORI  ; |  ; 0b110 ; SInt) // or immediate
   $ItypeInstr (XORI ; ^  ; 0b100 ; SInt) // exclusive or immediate
@@ -102,7 +106,7 @@ If not changed by an annotation the program counter points to the start of the d
 
 A format definition is used to specify bitfields with named and typed member fields.
 There are two different variants for format specification.
-The first one defines bitfields with a name followed by a colon `:` and a type (line 17 to 24).
+The first one defines bitfields with a name followed by a colon `":"` and a type (line 17 to 24).
 The second one defines bitfields with a name and a list of subranges in square brackets (line 26 to 33).
 It is possible to define accsess functions to format fields (line 23).
 The infix operator `as` casts the left value to the type on the right side.
@@ -115,8 +119,8 @@ There exist syntactic types like `Id` (identifier), `BinOp` (binary operator), `
 An instantiation of a macro or the substitution of a macro argument are indicated by the dollar sign.
 
 An `instruction` defines the behavior of an instruction (line 37).
-After the symbol `=` the behavior is defined by a single statement or a list of statements in parantheses.
-Assignment statements use the symbol `:=` to separate the target on the left hand side from the expression on the right hand side.
+After the equality symbol `"="` the behavior is defined by a single statement or a list of statements in parantheses.
+Assignment statements use the symbol `":="` to separate the target on the left hand side from the expression on the right hand side.
 The precedence of all operators is listed in a table in section \r{expr_precedence}.
 A conditional statement is shown in line 45.
 
@@ -129,32 +133,39 @@ This macro is invoked six times for all RISC-V instructions with immediate opera
 ## Macro System
 \lbl{tut_macro_system}
 
+### Syntax Types
+
 \ac{VADL} exhibits a syntactical macro system.
 The advantage of a syntactical macro system compared to a lexical macro system is the type safety.
-There exist a set of syntax types which cover syntactical elements like an expression or an identifier.
+There exists a set of syntax types which cover syntactical elements like an expression or an identifier.
 The syntax types are designed to have a one-to-one relation to parser rules.
 This already provides a partially ordered subtype relation.
 The following table lists all core syntax types with a description and examples:
 
-|  Type   | Description                          | Examples                                |
-|:--------|:-------------------------------------|:---------------------------------------:|
-| Ex      | Generic VADL Expression              | `X(rs1) + X(rs2) * 2                  ` |
-| Lit     | Generic VADL Literal                 | `1, "ADDI"                            ` |
-| Val     | Generic VADL Value Literal           | `1, 0b001                             ` |
-| Bool    | Boolean Literal                      | `true, false                          ` |
-| Int     | Integer Literal                      | `1, 2, 3                              ` |
-| Bin     | Binary or Hexadecimal Literal        | `0b0111, 0xff                         ` |
-| Str     | String Literal                       | `"ADDI"                               ` |
-| CallEx  | Arbitrary Call Expression            | `MEM<2>(rs1)                          ` |
-| SymEx   | Symbol Call Expression               | `rs1, MEM<2>                          ` |
-| Id      | Identifier Symbol                    | `rs1, ADDI, X                         ` |
-| BinOp   | Binary Operator                      | `+, -, *                              ` |
-| UnOp    | Unary Operator                       | `-, !                                 ` |
-| Stat    | Generic VADL Statement               | `X(rd) := X(rs)                       ` |
-| Stats   | List of VADL Statements              | `X(rd) := X(rs) ...                   ` |
-| Defs    | List of common VADL Definitions      | `constant b = 8, using Byte = Bits<8> ` |
-| IsaDefs | List of VADL ISA Definition          | `instruction ORI : Itype = { ... } ...` |
-| Encs    | Element(s) of an Encoding Definition | `opcode = 0b110’0011, ...             ` |
+|  Type   | Description                          | Examples                                  |
+|:--------|:-------------------------------------|:-----------------------------------------:|
+| Ex      | Generic VADL Expression              | `X(rs1) + X(rs2) * 2                    ` |
+| Lit     | Generic VADL Literal                 | `1, "ADDI"                              ` |
+| Val     | Generic VADL Value Literal           | `1, 0b001                               ` |
+| Bool    | Boolean Literal                      | `true, false                            ` |
+| Int     | Integer Literal                      | `1, 2, 3                                ` |
+| Bin     | Binary or Hexadecimal Literal        | `0b0111, 0xff                           ` |
+| Str     | String Literal                       | `"ADDI"                                 ` |
+| CallEx  | Arbitrary Call Expression            | `MEM<2>(rs1),PC.next,abs(X(rs1)),Z(0)(1)` |
+| SymEx   | Symbol Expression                    | `rs1, MEM<2>, VADL::add                 ` |
+| Id      | Identifier Symbol                    | `rs1, ADDI, X                           ` |
+| BinOp   | Binary Operator                      | `+, -, *                                ` |
+| UnOp    | Unary Operator                       | `-, !                                   ` |
+| Stat    | Generic VADL Statement               | `X(rd) := X(rs)                         ` |
+| Stats   | List of VADL Statements              | `X(rd) := X(rs) ...                     ` |
+| Defs    | List of common VADL Definitions      | `constant b = 8, using Byte = Bits<8>   ` |
+| IsaDefs | List of VADL ISA Definition          | `instruction ORI : Itype = { ... } ...  ` |
+| Encs    | Element(s) of an Encoding Definition | `opcode = 0b110’0011, none, ...         ` |
+
+Call expressions represent function or method calls, memory accesses or indexed registers accesses with slicing.
+The left hand side expression of an assignment also is a call expression.
+Additional examples are `X(rs1)(15..0)`, `IntQueue.consume(@BranchIntBase)`, `VADL::add(X(5), X(6) * 2)` and `a(11..8,3..0)`.
+A symbol expression consists of an identifier path optionally followed by a vector specification (`<VectorSizeExpression>`).
 
 Figure \r{syntax_type_hierarchy} displays the subtype relation between the presented core types.
 The macro type system provides an implicit up-casting of the value types.
@@ -166,11 +177,11 @@ graph example {
 node  [shape=none];
 
 top     [ label="┳"       ];
+isadefs [ label="IsaDefs" ];
+defs    [ label="Defs"    ];
 stats   [ label="Stats"   ];
 stat    [ label="Stat"    ];
 encs    [ label="Encs"    ];
-isadefs [ label="IsaDefs" ];
-defs    [ label="Defs"    ];
 ex      [ label="Ex"      ];
 lit     [ label="Lit"     ];
 str     [ label="Str"     ];
@@ -184,14 +195,14 @@ id      [ label="Id"      ];
 binop   [ label="BinOp"   ];
 unop    [ label="UnOp"    ];
 
+top     -- isadefs ;
 top     -- stats   ;
 top     -- encs    ;
-top     -- isadefs ;
 top     -- ex      ;
 top     -- binop   ;
 top     -- unop    ;
-stats   -- stat    ;
 isadefs -- defs    ;
+stats   -- stat    ;
 ex      -- lit     ;
 lit     -- str     ;
 lit     -- val     ;
@@ -204,3 +215,26 @@ symex   -- id      ;
 }
 \enddot
 \endfigure{syntax_type_hierarchy, Syntax Types Hierarchy in the OpenVADL macro system}
+
+### Macro Definition (model)
+
+A macro is defined through the keyword `model` followed by the name of the macro, a list of typed arguments in parentheses separated by the comma symbol `","`, the type of the macro after a colon symbol `":"` and after the equal symbol `"="` the body of the macro enclosed in parentheses.
+The usage of the model arguments inside the model body is indicated by the dollar symbol `"$"`.
+When a model is invoked, the model arguments in the body are substituted by the values passed in the arguments.
+Similar to arguments the invocation of a model is indicated by the dollar symbol `"$"`.
+The arguments in a model invocation are separated by the semicolon symbol `";"`.
+The result of the model invocation in line 51 of Listing \r{riscv-isa} is shown in Listing \r{macro_model_invocation}.
+
+
+\listing{macro_model_invocation, Result of Model Invocation}
+~~~{.vadl}
+    instruction ADDI : Itype =
+       X(rd) := (X(rs1) as SInt + immS as SInt) as Regs
+    encoding ADDI = {opcode = 0b001'0011, funct3 = 0b000}
+    assembly ADDI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+~~~
+\endlisting
+
+
+### Conditional Macro (match)
+

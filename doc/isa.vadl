@@ -32,12 +32,12 @@ instruction set architecture RV32I = {
     , immS   = imm as SInt<Size> << 1    // sign extended and shifted immediate value immS
     }
 
-  // macro for immediate instructions with name, operator, function code and type
+  // macro for immediate instructions with name, operator, function code and operand type
   model ItypeInstr (name : Id, op : BinOp, funct3 : Bin, type: Id) : IsaDefs = {
     instruction $name : Itype =
        X(rd) := (X(rs1) as $type $op immS as $type) as Regs
     encoding $name = {opcode = 0b001'0011, funct3 = $funct3}
-    assembly $name = (mnemonic," ",register(rd),",",register(rs1),",",decimal(imm))
+    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
     }
 
   model BtypeInstr (name : Id, relOp : BinOp, funct3 : Bin, lhsTy : Id) : IsaDefs = {
