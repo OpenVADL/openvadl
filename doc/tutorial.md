@@ -60,11 +60,7 @@ instruction set architecture RV32I = {
     assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
     }
 
-  //$ItypeInstr (ADDI ; +  ; 0b000 ; SInt) // add immediate
-    instruction ADDI : Itype =
-       X(rd) := (X(rs1) as SInt + immS as SInt) as Regs
-    encoding ADDI = {opcode = 0b001'0011, funct3 = 0b000}
-    assembly ADDI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+  $ItypeInstr (ADDI ; +  ; 0b000 ; SInt) // add immediate
   $ItypeInstr (ANDI ; &  ; 0b111 ; SInt) // and immediate
   $ItypeInstr (ORI  ; |  ; 0b110 ; SInt) // or immediate
   $ItypeInstr (XORI ; ^  ; 0b100 ; SInt) // exclusive or immediate
@@ -171,7 +167,7 @@ Figure \r{syntax_type_hierarchy} displays the subtype relation between the prese
 The macro type system provides an implicit up-casting of the value types.
 For example, if a model expects a value of type `Val`, any subtype, i.e. `Bool`, `Int` or `Bin` will be accepted as argument.
 
-\figure{b!}
+\figure{ht!}
 \dot
 graph example {
 node  [shape=none];
@@ -237,4 +233,83 @@ The result of the model invocation in line 51 of Listing \r{riscv-isa} is shown 
 
 
 ### Conditional Macro (match)
+
+### Syntax Type Composition (record)
+
+### Lexical Macro Functions 
+
+### Higher Order Macros (model-type)
+
+Higher order macros are macros which generate macros or which take macros as arguments.
+In the macro expansion system of OpenVADL, model instances are expanded immediately at the site they are declared. This allows the usage of models that produce models. 
+
+\listing{model_producing_model, A model-producing model}
+~~~{.vadl}
+model BinExFactory(binExName: Id, op: BinOp): IsaDefs = {
+  model $binExName(left: Ex, right: Ex): Ex = { 
+    $left $op $right
+  }
+}
+$BinExFactory(Addition ; +)
+instruction ADD : RType = X(rd) := $Addition(X(rs1) ; X(rs2))
+~~~
+\endlisting
+
+Listing \r{model_producing_model} shows the model `BinExFactory` which in turn produces a model. Because the `$BinExFactory` instance is evaluated immediately after it is parsed, the produced model `Addition` is known to the parser and can be used in the definition of the `ADD` instruction. 
+
+#### Type variance in model-type parameters
+
+OpenVADL allows the model parameters to be supertypes of the `model-type` parameters and the result type to be a subtype of the `model-type` result. Listing \r{model_type_parameters} shows a reference to `model Constants` being used as an `IsaDefsFactory`. The reference is of a valid type because the result type `Defs` is a subtype of `IsaDefs` and the type `Ex` of parameter `size` is a supertype of `Id` (see Figure \r{syntax_type_hierarchy}). 
+
+\listing{model_type_parameters, Valid types in model references}
+~~~{.vadl}
+instruction set architecture ISA = {
+  constant Word = 16
+
+  model-type IsaDefsFactory = (Id) -> IsaDefs
+
+  model Constants(size: Ex): Defs = {
+    constant a = $size
+    constant b = $size / 2
+  }
+
+  model BitDefs(factory: IsaDefsFactory, size: Id): IsaDefs = {
+    $factory($size)
+  }
+
+  $BitDefs(Constants ; Word)
+}
+~~~
+\endlisting
+
+\listing{higher_order_macro, Instruction Specification applying Higher Order Macros}
+~~~{.vadl}
+record Instr (id: Id, ass: Str, op: BinOp, opcode: Bin)
+record Cond  (str: Str, code: Id, ex: Ex)
+
+model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
+  instruction ExtendId ($instr.id, $cond.str) : ArLoImm = {
+    if ($cond.ex) then
+      R(rd) := R(rn) $instr.op imm12
+    }
+  encoding ExtendId ($instr.id, $cond.str) =
+    {cc = cond::$cond.code, op = $instr.opcode, flags = 0}
+  assembly ExtendId ($instr.id, $cond.str) =
+    ($instr.ass, $cond.str, ' ', register(rd), ',', register(rn), ',', decimal(imm12))
+  }
+
+model-type CondInstrModel = (Cond, Instr) -> IsaDefs
+
+model CondInstr (modelid: CondInstrModel, instr: Instr) : IsaDefs = {
+  $modelid (( "eq" ; EQ ;  APSR.Z = 0b1 ) ; $instr)
+  $modelid (( "ne" ; NE ;  APSR.Z = 0b0 ) ; $instr)
+  //...
+  }
+
+$CondInstr(ALImmCondInstr ; ( ADD ; "add" ; + ; 0b000'0100 ))
+$CondInstr(ALImmCondInstr ; ( SUB ; "sub" ; - ; 0b000'0010 ))
+$CondInstr(ALImmCondInstr ; ( AND ; "and" ; & ; 0b000'0000 ))
+$CondInstr(ALImmCondInstr ; ( ORR ; "orr" ; | ; 0b000'1100 ))
+~~~
+\endlisting
 

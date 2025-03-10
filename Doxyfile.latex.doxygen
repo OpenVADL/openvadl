@@ -245,7 +245,7 @@ TAB_SIZE               = 4
 ALIASES  = ac{1}="[\1](\ref ACRONYM_\1)"
 ALIASES += acp{1}="[\1s](\ref ACRONYM_\1)"
 ALIASES += acronym{2}="\anchor ACRONYM_\1 **\1** \2 <br>"
-ALIASES += listing{2}="\latexonly\begin{figure}[t!]\newcommand*{\DoxyCodeLabel}{\1}\newcommand*{\DoxyCodeCaption}{\2}\endlatexonly"
+ALIASES += listing{2}="\latexonly\begin{figure}[h!]\newcommand*{\DoxyCodeLabel}{\1}\newcommand*{\DoxyCodeCaption}{\2}\endlatexonly"
 ALIASES += listing="\latexonly\begin{figure}\endlatexonly"
 ALIASES += endlisting="\latexonly\end{figure}\endlatexonly"
 ALIASES += figure="\figure{h}"
