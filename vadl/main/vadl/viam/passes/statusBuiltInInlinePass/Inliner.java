@@ -89,6 +89,12 @@ abstract class Inliner {
     inline(negativeUser, this::getNegative);
   }
 
+  private void inline(@Nullable TupleGetFieldNode user, Supplier<ExpressionNode> creator) {
+    if (user != null) {
+      user.replaceAndDelete(creator.get());
+    }
+  }
+
   abstract ExpressionNode createResult();
 
   abstract ExpressionNode checkOverflow();
@@ -144,26 +150,20 @@ abstract class Inliner {
     return negativeNode;
   }
 
-  protected ExpressionNode firstArg() {
+  protected ExpressionNode arg0() {
     return builtInCall.arguments().get(0);
   }
 
-  protected ExpressionNode secondArg() {
+  protected ExpressionNode arg1() {
     return builtInCall.arguments().get(1);
   }
 
-  protected ExpressionNode thirdArg() {
+  protected ExpressionNode arg2() {
     return builtInCall.arguments().get(2);
   }
 
   protected ExpressionNode binaryOf(BuiltInTable.BuiltIn builtIn) {
-    return BuiltInCall.of(builtIn, firstArg(), secondArg());
-  }
-
-  private void inline(@Nullable TupleGetFieldNode user, Supplier<ExpressionNode> creator) {
-    if (user != null) {
-      user.replaceAndDelete(creator.get());
-    }
+    return BuiltInCall.of(builtIn, arg0(), arg1());
   }
 
   private void initUsers(BuiltInCall builtInCall) {

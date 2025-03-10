@@ -53,6 +53,9 @@ public class UIntType extends BitsType {
     return Type.unsignedInt(bitWidth);
   }
 
+  /**
+   * Returns the minimal required unsigned integer type to hold the given value.
+   */
   public static UIntType minimalTypeFor(long value) {
     if (value < 0) {
       throw new IllegalArgumentException("value must be >= 0");

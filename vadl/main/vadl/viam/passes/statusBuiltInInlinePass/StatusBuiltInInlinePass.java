@@ -19,6 +19,7 @@ package vadl.viam.passes.statusBuiltInInlinePass;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -76,6 +77,12 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
     });
   }
 
+  private void throwNotImplemented(BuiltInCall input) {
+    throw Diagnostic.error("Built-In Lowering Not Implemented", input)
+        .description("OpenVADL does not yet implement the inlining of the %s built-in.",
+            input.builtIn().name())
+        .build();
+  }
 
   @Override
   public void handleADDS(BuiltInCall input) {
@@ -89,22 +96,22 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleSSATADDS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleUSATADDS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleSSATADDC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleUSATADDC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
@@ -119,164 +126,163 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleSUBC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    new ArithmeticInliner.SubC(input).inline();
   }
 
   @Override
   public void handleSUBB(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    new ArithmeticInliner.SubB(input).inline();
   }
 
   @Override
   public void handleSSATSUBS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleUSATSUBS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleSSATSUBC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleUSATSUBC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleSSATSUBB(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleUSATSUBB(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleMULS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleSMULLS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleUMULLS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
   }
 
   @Override
   public void handleSUMULLS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleSMODS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleUMODS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleSDIVS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleUDIVS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleANDS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleXORS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleORS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleLSLS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleLSLC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleASRS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleLSRS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleASRC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleLSRC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleROLS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleROLC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleRORS(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    throwNotImplemented(input);
 
   }
 
   @Override
   public void handleRORC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
-
+    throwNotImplemented(input);
   }
 }

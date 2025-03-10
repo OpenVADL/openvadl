@@ -273,6 +273,10 @@ public class GraphUtils {
     return new WriteRegNode(register, val, staticCounterAddress);
   }
 
+  /**
+   * Creates an expression tree that results in {@code true} if the value's sign is {@code 1}
+   * (negative), and otherwise false.
+   */
   public static ExpressionNode testSignBit(ExpressionNode value) {
     // 1001 -> msb = 3
     var msb = value.type().asDataType().bitWidth() - 1;
@@ -286,6 +290,9 @@ public class GraphUtils {
     return new TruncateNode(shift, Type.bool());
   }
 
+  /**
+   * Creates a built-in call for {@link BuiltInTable#NOT}.
+   */
   public static ExpressionNode not(ExpressionNode expr) {
     return BuiltInCall.of(
         BuiltInTable.NOT,

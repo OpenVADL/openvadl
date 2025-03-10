@@ -23,6 +23,13 @@ import vadl.types.BuiltInTable;
  */
 public interface VadlBuiltInStatusOnlyDispatcher<T> {
 
+  /**
+   * Calls the correct handler for the given built-in and uses the input as argument.
+   *
+   * @param input   is passed to the handler method.
+   * @param builtIn to find the correct handler method.
+   * @return true if the handler was found and called, false otherwise.
+   */
   default boolean dispatch(T input, BuiltInTable.BuiltIn builtIn) {
     if (builtIn == BuiltInTable.ADDS) {
       handleADDS(input);

@@ -87,6 +87,13 @@ public final class PassOrder {
     return this;
   }
 
+  /**
+   * Adds the given pass after the first pass of the given selector type.
+   *
+   * @param selector Determines the pass after which the new pass is inserted.
+   * @param pass     The pass to be inserted.
+   * @return this
+   */
   public PassOrder addAfterFirst(Class<?> selector, Pass pass) {
     int index = -1;
     var i = 0;
