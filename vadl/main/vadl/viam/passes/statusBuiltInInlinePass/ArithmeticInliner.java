@@ -17,6 +17,7 @@
 package vadl.viam.passes.statusBuiltInInlinePass;
 
 import static vadl.utils.GraphUtils.binaryOp;
+import static vadl.utils.GraphUtils.bits;
 import static vadl.utils.GraphUtils.or;
 import static vadl.utils.GraphUtils.testSignBit;
 import static vadl.utils.GraphUtils.zeroExtend;
@@ -29,7 +30,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 /**
  * Contains the status built-in {@link Inliner}s for all arithmetic operations.
  */
-class ArithmeticInliner {
+abstract class ArithmeticInliner {
 
   static class AddS extends Inliner {
 
@@ -173,6 +174,132 @@ class ArithmeticInliner {
           p
       );
       return or(partialCarry, finalCarry);
+    }
+  }
+
+  /**
+   * Implements subtract with carry, using the two's complement identity:
+   * <code>-x = not(x) + 1</code>. It computes <code>a - b</code> as
+   * <code>a + not(b) + 1</code>.
+   *
+   * <p>In subtract-without-carry operations (subsc), the instruction acts as if the carry
+   * flag was set (i.e. <code>C = 1</code>).
+   *
+   * <p>This convention sets the carry flag if <code>a ≥ b</code> (indicating that no borrow occurred)
+   * and clears it if <code>a &lt; b</code>.
+   * This behavior is used in several instruction set architectures,
+   * including System/360, 6502, MSP430, COP8, ARM, and PowerPC.
+   *
+   * <p>Notably, the 6502 does not have an explicit subtract-without-carry instruction,
+   * so programmers must ensure that the carry flag is set before subtract operations where a borrow is not desired.
+   *
+   * @see <a href="https://arc.net/l/quote/fmdsnowl">Wikipedia: Carry vs. Borrow Flag</a>
+   * @see <a href="https://developer.arm.com/documentation/ddi0602/2024-12/Base-Instructions/SUBS--extended-register---Subtract-extended-and-scaled-register--setting-flags-?lang=en">
+   *     ARM64 SUBS Instruction</a>
+   */
+  static class SubSC extends Inliner {
+
+    public SubSC(BuiltInCall builtInCall) {
+      super(builtInCall);
+    }
+
+    @Override
+    ExpressionNode createResult() {
+      // for us the most optimized way is to just use SUB for the result
+      return binaryOp(BuiltInTable.SUB, firstArg(), secondArg());
+    }
+
+    /**
+     * As described in the class documentation, the nvzc flags are typically taken
+     * from the ADDC result using {@code a+(not(b)+1)}.
+     * Below the overflow check is inlined from the {@link AddS#checkOverflow()} implementation.
+     * <pre>{@code
+     * result < a ^ b > 0
+     * }
+     * </pre>
+     */
+    @Override
+    ExpressionNode checkOverflow() {
+      var result = getResult();
+      var a = firstArg();
+      var b = secondArg();
+
+      return binaryOp(BuiltInTable.XOR,
+          binaryOp(BuiltInTable.SLTH,
+              result,
+              a
+          ),
+          binaryOp(
+              BuiltInTable.SGTH,
+              b, bits(0, b.type().asDataType().bitWidth()).toNode()
+          )
+      );
+    }
+
+    /**
+     * For the subtract with carry operation, the carry flag (no borrow) is set iff
+     * {@code a >= b}, so when no underflow happens.
+     */
+    @Override
+    ExpressionNode checkCarry() {
+      return binaryOp(BuiltInTable.UGEQ, firstArg(), secondArg());
+    }
+  }
+
+  /**
+   * Implements subtract with borrow, which uses the bit as a borrow flag,
+   * setting it if {@code a < b} when computing {@code a - b}, and a
+   * borrow must be performed.
+   * The {@link BuiltInTable#SUBSB} built-in acts as if the carry flag is not set.
+   *
+   * @see <a href="https://arc.net/l/quote/fmdsnowl">Wikipedia: Carry vs. Borrow Flag</a>
+   */
+  static class SubSB extends Inliner {
+
+    public SubSB(BuiltInCall builtInCall) {
+      super(builtInCall);
+    }
+
+    @Override
+    ExpressionNode createResult() {
+      // for us the most optimized way is to just use SUB for the result
+      return binaryOp(BuiltInTable.SUB, firstArg(), secondArg());
+    }
+
+    /**
+     * As described in the class documentation, the nvzc flags are typically taken
+     * from the ADDC result using {@code a+(not(b)+1)}.
+     * Below the overflow check is inlined from the {@link AddS#checkOverflow()} implementation.
+     * <pre>{@code
+     * result < a ^ b > 0
+     * }
+     * </pre>
+     */
+    @Override
+    ExpressionNode checkOverflow() {
+      var result = getResult();
+      var a = firstArg();
+      var b = secondArg();
+
+      return binaryOp(BuiltInTable.XOR,
+          binaryOp(BuiltInTable.SLTH,
+              result,
+              a
+          ),
+          binaryOp(
+              BuiltInTable.SGTH,
+              b, bits(0, b.type().asDataType().bitWidth()).toNode()
+          )
+      );
+    }
+
+    /**
+     * For the subtract with borrow operation, the carry flag (borrow) is set iff
+     * {@code a < b}, so when an underflow happens.
+     */
+    @Override
+    ExpressionNode checkCarry() {
+      return binaryOp(BuiltInTable.ULTH, firstArg(), secondArg());
     }
   }
 

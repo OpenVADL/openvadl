@@ -109,12 +109,12 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleSUBSC(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    new ArithmeticInliner.SubSC(input).inline();
   }
 
   @Override
   public void handleSUBSB(BuiltInCall input) {
-    throw new UnsupportedOperationException("Not supported yet.");
+    new ArithmeticInliner.SubSB(input).inline();
   }
 
   @Override

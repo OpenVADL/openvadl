@@ -76,10 +76,79 @@ public class ArithmeticInlineTest extends StatusBuiltinInlineTest {
     );
   }
 
+  @TestFactory
+  public Stream<DynamicTest> subscTests() {
+    return runTests(
+        subsc(2, 0, 1, -1, true, false, false, false),
+        subsc(2, 1, -1, -2, true, false, false, true),
+        subsc(2, 0, -2, -2, true, false, false, true),
+        subsc(2, 1, -2, -1, true, false, false, true),
+        subsc(2, -2, -2, 0, false, true, true, false),
+        subsc(2, -1, -2, 1, false, false, true, false),
+        subsc(2, -2, 1, 1, false, false, true, true),
+        subsc(2, -1, -1, 0, false, true, true, false),
+        subsc(32, 0x00L, 0x00L, 0x00L, false, true, true, false),
+        subsc(32, 0xFFFFFFFFL, 0x01L, 0xFFFFFFFEL, true, false, true, false),
+        subsc(32, 0x01L, 0xFFFFFFFFL, 0x02L, false, false, false, false),
+        subsc(32, 0x10000000L, 0x10000000L, 0x00L, false, true, true, false),
+        subsc(32, 0x8FFFFFFFL, 0x8FFFFFFFL, 0x00L, false, true, true, false),
+        subsc(32, 0x7FFFFFFFL, 0x8FFFFFFFL, 0xF0000000L, true, false, false, true),
+        subsc(32, 0x8FFFFFFFL, 0x7FFFFFFFL, 0x10000000L, false, false, true, true),
+        subsc(32, 0xFFFFFFFFL, 0x00L, 0xFFFFFFFFL, true, false, true, false),
+        subsc(32, 0x00L, 0xFFFFFFFFL, 0x01L, false, false, false, false),
+        subsc(32, 0x7FFFFFFFL, 0x00L, 0x7FFFFFFFL, false, false, true, false),
+        subsc(32, 0x00L, 0x7FFFFFFFL, 0x80000001L, true, false, false, false)
+    );
+  }
+
+  @TestFactory
+  public Stream<DynamicTest> subsbTests() {
+    return runTests(
+        subsb(2, 0, 1, -1, true, false, true, false),
+        subsb(2, 1, -1, -2, true, false, true, true),
+        subsb(2, 0, -2, -2, true, false, true, true),
+        subsb(2, 1, -2, -1, true, false, true, true),
+        subsb(2, -2, -2, 0, false, true, false, false),
+        subsb(2, -1, -2, 1, false, false, false, false),
+        subsb(2, -2, 1, 1, false, false, false, true),
+        subsb(2, -1, -1, 0, false, true, false, false),
+        subsb(32, 0x8FFFFFFFL, 0x8FFFFFFFL, 0x00L, false, true, false, false),
+        subsb(32, 0x7FFFFFFFL, 0x8FFFFFFFL, 0xF0000000L, true, false, true, true),
+        subsb(32, 0x8FFFFFFFL, 0x7FFFFFFFL, 0x10000000L, false, false, false, true),
+        subsb(32, 0xFFFFFFFFL, 0x00L, 0xFFFFFFFFL, true, false, false, false),
+        subsb(32, 0x00L, 0xFFFFFFFFL, 0x01L, false, false, true, false),
+        subsb(32, 0x7FFFFFFFL, 0x00L, 0x7FFFFFFFL, false, false, false, false),
+        subsb(32, 0x00L, 0x7FFFFFFFL, 0x80000001L, true, false, true, false)
+    );
+  }
+
 
   private Stream<Test> adds(int size, long a, long b, long result, boolean negative, boolean zero,
                             boolean carry, boolean overflow) {
-    return operation(BuiltInTable.ADDS,
+    return binary(BuiltInTable.ADDS, size, a, b, result, negative, zero, carry, overflow);
+  }
+
+  private Stream<Test> addc(int size, long a, long b, boolean c, long result, boolean negative,
+                            boolean zero,
+                            boolean carry, boolean overflow) {
+    return ternary(BuiltInTable.ADDC, size, a, b, c, result, negative, zero, carry, overflow);
+  }
+
+  private Stream<Test> subsc(int size, long a, long b, long result, boolean negative, boolean zero,
+                             boolean carry, boolean overflow) {
+    return binary(BuiltInTable.SUBSC, size, a, b, result, negative, zero, carry, overflow);
+  }
+
+  private Stream<Test> subsb(int size, long a, long b, long result, boolean negative, boolean zero,
+                             boolean carry, boolean overflow) {
+    return binary(BuiltInTable.SUBSB, size, a, b, result, negative, zero, carry, overflow);
+  }
+
+
+  private Stream<Test> binary(BuiltInTable.BuiltIn op, int size, long a, long b, long result,
+                              boolean negative, boolean zero,
+                              boolean carry, boolean overflow) {
+    return operation(op,
         List.of(
             Constant.Value.of(a, Type.bits(size)),
             Constant.Value.of(b, Type.bits(size))
@@ -89,10 +158,12 @@ public class ArithmeticInlineTest extends StatusBuiltinInlineTest {
     );
   }
 
-  private Stream<Test> addc(int size, long a, long b, boolean c, long result, boolean negative,
-                            boolean zero,
-                            boolean carry, boolean overflow) {
-    return operation(BuiltInTable.ADDC,
+  private Stream<Test> ternary(BuiltInTable.BuiltIn op, int size, long a, long b, boolean c,
+                               long result,
+                               boolean negative,
+                               boolean zero,
+                               boolean carry, boolean overflow) {
+    return operation(op,
         List.of(
             Constant.Value.of(a, Type.bits(size)),
             Constant.Value.of(b, Type.bits(size)),

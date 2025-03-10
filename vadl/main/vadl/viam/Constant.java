@@ -27,6 +27,7 @@ import java.util.IntSummaryStatistics;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -563,53 +564,40 @@ public abstract class Constant {
      * Performs singed or and unsigned less comparison.
      */
     public Constant.Value lth(Constant.Value other, boolean singed) {
-      boolean result;
-      if (singed) {
-        var thisBigInt = BigIntUtils.fromTwosComplement(value, type().bitWidth(), true);
-        var otherBigInt =
-            BigIntUtils.fromTwosComplement(other.value, other.type().bitWidth(), true);
-        result = thisBigInt.compareTo(otherBigInt) < 0;
-      } else {
-        result = value.compareTo(other.value) < 0;
-      }
-      return Constant.Value.fromBoolean(result);
+      return compare(other, singed, (a, b) -> a.compareTo(b) < 0);
     }
 
     /**
      * Performs singed or and unsigned less equals comparison.
      */
     public Constant.Value leq(Constant.Value other, boolean singed) {
-      boolean result;
-      if (singed) {
-        result = integer().compareTo(other.integer()) <= 0;
-      } else {
-        result = value.compareTo(other.value) <= 0;
-      }
-      return Constant.Value.fromBoolean(result);
+      return compare(other, singed, (a, b) -> a.compareTo(b) <= 0);
     }
 
     /**
      * Performs singed or and unsigned greater comparison.
      */
     public Constant.Value gth(Constant.Value other, boolean singed) {
-      boolean result;
-      if (singed) {
-        result = integer().compareTo(other.integer()) > 0;
-      } else {
-        result = value.compareTo(other.value) > 0;
-      }
-      return Constant.Value.fromBoolean(result);
+      return compare(other, singed, (a, b) -> a.compareTo(b) > 0);
     }
 
     /**
      * Performs singed or and unsigned less equals comparison.
      */
     public Constant.Value geq(Constant.Value other, boolean singed) {
+      return compare(other, singed, (a, b) -> a.compareTo(b) >= 0);
+    }
+
+    private Constant.Value compare(Constant.Value other, boolean singed,
+                                   BiFunction<BigInteger, BigInteger, Boolean> cmp) {
       boolean result;
       if (singed) {
-        result = integer().compareTo(other.integer()) >= 0;
+        var thisBigInt = BigIntUtils.fromTwosComplement(value, type().bitWidth(), true);
+        var otherBigInt =
+            BigIntUtils.fromTwosComplement(other.value, other.type().bitWidth(), true);
+        result = cmp.apply(thisBigInt, otherBigInt);
       } else {
-        result = value.compareTo(other.value) >= 0;
+        result = cmp.apply(value, other.value);
       }
       return Constant.Value.fromBoolean(result);
     }
