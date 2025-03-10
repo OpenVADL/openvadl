@@ -89,7 +89,6 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -701,16 +700,6 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(ConstantNode toHandle) {
-    throw failShouldNotHappen(toHandle);
-  }
-
-  /**
-   * Handles the {@link TypeCastNode}. Should never happen.
-   *
-   * @throws ViamGraphError Always thrown.
-   */
-  @Handler
-  void handle(TypeCastNode toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 

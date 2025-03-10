@@ -40,7 +40,6 @@ import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.translation_validation.ExplicitBitSizesInTypingPass;
 import vadl.viam.passes.translation_validation.ExtendMultiplicationPass;
 import vadl.viam.passes.translation_validation.TranslationValidation;
-import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
 
 public class AlgebraicSimplificationTest extends DockerExecutionTest {
   private static final Logger logger = LoggerFactory.getLogger(AlgebraicSimplificationTest.class);
@@ -64,9 +63,6 @@ public class AlgebraicSimplificationTest extends DockerExecutionTest {
 
     new FunctionInlinerPass(configuration).execute(PassResults.empty(), initialSpec);
     new FunctionInlinerPass(configuration).execute(PassResults.empty(), spec);
-
-    new TypeCastEliminationPass(configuration).execute(PassResults.empty(), initialSpec);
-    new TypeCastEliminationPass(configuration).execute(PassResults.empty(), spec);
 
     new ExtendMultiplicationPass(configuration).execute(PassResults.empty(), initialSpec);
     new ExtendMultiplicationPass(configuration).execute(PassResults.empty(), spec);

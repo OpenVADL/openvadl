@@ -61,7 +61,6 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -566,11 +565,6 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(FuncCallNode toHandle) {
-    throw graphError(toHandle, "Node should not occur here");
-  }
-
-  @Handler
-  void handle(TypeCastNode toHandle) {
     throw graphError(toHandle, "Node should not occur here");
   }
 

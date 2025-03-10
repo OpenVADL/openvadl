@@ -33,7 +33,7 @@ import vadl.AbstractTest;
 import vadl.types.Type;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.TypeCastNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 public class FormatTest extends AbstractTest {
 
@@ -238,7 +238,7 @@ public class FormatTest extends AbstractTest {
       assertTrue(encoding.behavior().isPureFunction());
       assertEquals("AUXILIARY_ACCESS::HI_encode0::VAR",
           encoding.parameters()[0].identifier.name());
-      assertEquals(1, encoding.behavior().getNodes(TypeCastNode.class).count());
+      assertEquals(1, encoding.behavior().getNodes(ZeroExtendNode.class).count());
     }
   }
 }

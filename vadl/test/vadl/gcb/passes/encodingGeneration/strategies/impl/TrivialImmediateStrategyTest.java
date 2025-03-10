@@ -35,7 +35,7 @@ import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.SliceNode;
-import vadl.viam.graph.dependency.TypeCastNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 class TrivialImmediateStrategyTest extends AbstractTest {
   TrivialImmediateStrategy strategy = new TrivialImmediateStrategy();
@@ -51,7 +51,7 @@ class TrivialImmediateStrategyTest extends AbstractTest {
 
     // Setup behavior
     var returnNode =
-        new ReturnNode(new TypeCastNode(new FieldRefNode(field, DataType.bits(20)),
+        new ReturnNode(new ZeroExtendNode(new FieldRefNode(field, DataType.bits(20)),
             Type.bits(32)));
     var startNode = new StartNode(returnNode);
     accessFunction.behavior().addWithInputs(returnNode);

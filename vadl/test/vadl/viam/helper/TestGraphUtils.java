@@ -23,7 +23,6 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 
 public class TestGraphUtils {
 
@@ -48,14 +47,6 @@ public class TestGraphUtils {
         ),
         resultType
     );
-  }
-
-  public static TypeCastNode cast(ExpressionNode val, Type type) {
-    return new TypeCastNode(val, type);
-  }
-
-  public static TypeCastNode cast(Type type, ExpressionNode val) {
-    return new TypeCastNode(val, type);
   }
 
   public static ConstantNode intSNode(long val, int width) {

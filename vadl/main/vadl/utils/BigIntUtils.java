@@ -17,7 +17,6 @@
 package vadl.utils;
 
 import java.math.BigInteger;
-import vadl.types.BitsType;
 import vadl.viam.ViamError;
 
 
@@ -70,16 +69,14 @@ public class BigIntUtils {
    * Converts a BigInteger value from two's complement representation
    * to its original value, based on the provided BitsType.
    *
-   * @param value The value in two's complement representation.
-   * @param type  The BitsType specifying the bit width and sign of the value.
+   * @param value    The value in two's complement representation.
+   * @param bitWidth The bit-width of the value.
+   * @param isSigned Whether the value is interpreted signed or unsigned.
    * @return The original value represented by the two's complement.
    */
-  public static BigInteger fromTwosComplement(BigInteger value, BitsType type) {
-    var maxUnsigned = BigInteger.ZERO.setBit(type.bitWidth()).subtract(BigInteger.ONE);
-    var isSignBit = value.testBit(type.bitWidth() - 1); // check if sign bit active
-
-    // As the bits type is automatically cast to SInt, we interpret it as signed integer
-    var isSigned = type.isSigned();
+  public static BigInteger fromTwosComplement(BigInteger value, int bitWidth, boolean isSigned) {
+    var maxUnsigned = BigInteger.ZERO.setBit(bitWidth).subtract(BigInteger.ONE);
+    var isSignBit = value.testBit(bitWidth - 1); // check if sign bit active
 
     if (isSigned && isSignBit) {
       //  negate  inverse        inc

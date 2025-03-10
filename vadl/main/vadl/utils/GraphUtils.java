@@ -22,7 +22,9 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Register;
@@ -34,8 +36,10 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegNode;
-import vadl.viam.graph.dependency.TypeCastNode;
+import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
  * A collection of useful utility methods on graphs.
@@ -202,6 +206,19 @@ public class GraphUtils {
   }
 
   /**
+   * Creates a binary operation built-in call with the specified operation and constant values.
+   *
+   * @param op The built-in operation to be performed.
+   * @param a  The first constant value operand.
+   * @param b  The second constant value operand.
+   * @return A new instance of {@code BuiltInCall} representing the binary operation.
+   */
+  public static BuiltInCall binaryOp(BuiltInTable.BuiltIn op, ExpressionNode a, ExpressionNode b) {
+    return BuiltInCall.of(op, a, b);
+  }
+
+
+  /**
    * Creates a binary operation built-in call with the specified operation, operand nodes,
    * and result type.
    *
@@ -221,14 +238,6 @@ public class GraphUtils {
         ),
         resultType
     );
-  }
-
-  public static TypeCastNode cast(ExpressionNode val, Type type) {
-    return new TypeCastNode(val, type);
-  }
-
-  public static TypeCastNode cast(Type type, ExpressionNode val) {
-    return new TypeCastNode(val, type);
   }
 
   public static ConstantNode intSNode(long val, int width) {
@@ -255,7 +264,74 @@ public class GraphUtils {
     return new WriteRegNode(register, val, staticCounterAddress);
   }
 
-  /// / CONSTANT VALUE CONSTRUCTION ////
+  /**
+   * Creates an expression tree that results in {@code true} if the value's sign is {@code 1}
+   * (negative), and otherwise false.
+   */
+  public static ExpressionNode testSignBit(ExpressionNode value) {
+    // 1001 -> msb = 3
+    var msb = value.type().asDataType().bitWidth() - 1;
+    // shift msb right
+    var shift = BuiltInCall.of(
+        BuiltInTable.LSR,
+        value,
+        Constant.Value.of(msb, UIntType.minimalTypeFor(msb))
+            .toNode()
+    );
+    return new TruncateNode(shift, Type.bool());
+  }
+
+  /**
+   * Creates a built-in call for {@link BuiltInTable#NOT}.
+   */
+  public static ExpressionNode not(ExpressionNode expr) {
+    return BuiltInCall.of(
+        BuiltInTable.NOT,
+        expr
+    );
+  }
+
+  public static ExpressionNode and(ExpressionNode... exprs) {
+    return combineExpressions(BuiltInTable.AND, exprs);
+  }
+
+  public static ExpressionNode or(ExpressionNode... exprs) {
+    return combineExpressions(BuiltInTable.OR, exprs);
+  }
+
+  public static ExpressionNode equ(ExpressionNode... exprs) {
+    return combineExpressions(BuiltInTable.EQU, exprs);
+  }
+
+  private static ExpressionNode combineExpressions(BuiltInTable.BuiltIn operation,
+                                                   ExpressionNode... exprs) {
+    assert exprs.length >= 2;
+    var expr = BuiltInCall.of(operation, exprs[0], exprs[1]);
+    for (var i = 2; i < exprs.length; i++) {
+      expr = BuiltInCall.of(operation, expr, exprs[i]);
+    }
+    return expr;
+  }
+
+
+  public static ExpressionNode castBool(ExpressionNode value) {
+    return binaryOp(BuiltInTable.EQU, Type.bool(), value,
+        Constant.Value.of(0, value.type().asDataType()).toNode());
+  }
+
+  public static ExpressionNode signExtend(ExpressionNode value, DataType dataType) {
+    return new SignExtendNode(value, dataType);
+  }
+
+  public static ExpressionNode zeroExtend(ExpressionNode value, DataType dataType) {
+    return new ZeroExtendNode(value, dataType);
+  }
+
+  public static ExpressionNode truncate(ExpressionNode value, DataType dataType) {
+    return new TruncateNode(value, dataType);
+  }
+
+  /// CONSTANT VALUE CONSTRUCTION ///
 
   public static Constant.Value intS(long val, int width) {
     return Constant.Value.of(val, Type.signedInt(width));

@@ -101,7 +101,7 @@ import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
 import vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass;
-import vadl.viam.passes.typeCastElimination.TypeCastEliminationPass;
+import vadl.viam.passes.statusBuiltInInlinePass.StatusBuiltInInlinePass;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
 /**
@@ -125,7 +125,7 @@ public class PassOrders {
 
     order.add(new ViamVerificationPass(configuration));
 
-    order.add(new TypeCastEliminationPass(configuration));
+    order.add(new StatusBuiltInInlinePass(configuration));
 
     // Common optimizations
     order.add(new CanonicalizationPass(configuration));
@@ -165,6 +165,10 @@ public class PassOrders {
    */
   public static PassOrder gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) throws IOException {
     var order = viam(gcbConfiguration);
+
+    // skip status built-in inlining as lcb
+    // needs to know about those status built-in calls.
+    order.skip(StatusBuiltInInlinePass.class);
 
     order.add(new DummyAbiPass(gcbConfiguration));
     order.add(new GenerateCompilerRegistersPass(gcbConfiguration));

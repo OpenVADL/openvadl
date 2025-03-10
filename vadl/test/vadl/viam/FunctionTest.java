@@ -29,7 +29,6 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 
 public class FunctionTest extends AbstractTest {
 
@@ -51,8 +50,7 @@ public class FunctionTest extends AbstractTest {
 
     {
       Assertions.assertEquals(3, noArg.behavior().getNodes().count());
-      // No typecast
-      Assertions.assertEquals(0, noArg.behavior().getNodes(TypeCastNode.class).count());
+      
       var constant = (noArg.behavior().getNodes(ConstantNode.class).findFirst().get()).constant();
       assertEquals(Constant.Value.of(20, Type.bits(30)), constant);
     }
