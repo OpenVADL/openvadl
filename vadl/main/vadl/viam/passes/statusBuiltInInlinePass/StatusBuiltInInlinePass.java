@@ -211,19 +211,17 @@ class StatusBuiltInInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCal
 
   @Override
   public void handleANDS(BuiltInCall input) {
-    throwNotImplemented(input);
-
+    new LogicInliner.AndS(input).inline();
   }
 
   @Override
   public void handleXORS(BuiltInCall input) {
-    throwNotImplemented(input);
-
+    new LogicInliner.XorS(input).inline();
   }
 
   @Override
   public void handleORS(BuiltInCall input) {
-    throwNotImplemented(input);
+    new LogicInliner.OrS(input).inline();
 
   }
 

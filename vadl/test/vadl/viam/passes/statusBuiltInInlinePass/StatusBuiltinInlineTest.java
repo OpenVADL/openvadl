@@ -39,14 +39,15 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 
-record Test(
-    Graph exercise,
-    Constant.Value expectedValue
-) {
-
-}
 
 abstract class StatusBuiltinInlineTest {
+
+  record Test(
+      Graph exercise,
+      Constant.Value expectedValue
+  ) {
+
+  }
 
   private static final Logger log = LoggerFactory.getLogger(StatusBuiltinInlineTest.class);
 
@@ -59,9 +60,9 @@ abstract class StatusBuiltinInlineTest {
         .toList();
     var builtInCall = BuiltInCall.of(builtIn, argNodes);
 
-    var name = builtIn.name() + "_" +
-        args.stream().map(Constant.Value::hexadecimal)
-            .collect(Collectors.joining("_"));
+    var name = builtIn.name() + "_"
+        + args.stream().map(Constant.Value::hexadecimal)
+        .collect(Collectors.joining("_"));
 
     return Stream.of(
         new Test(
