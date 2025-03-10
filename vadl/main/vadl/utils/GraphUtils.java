@@ -38,7 +38,6 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
@@ -241,14 +240,6 @@ public class GraphUtils {
     );
   }
 
-  public static TypeCastNode cast(ExpressionNode val, Type type) {
-    return new TypeCastNode(val, type);
-  }
-
-  public static TypeCastNode cast(Type type, ExpressionNode val) {
-    return new TypeCastNode(val, type);
-  }
-
   public static ConstantNode intSNode(long val, int width) {
     return new ConstantNode(intS(val, width));
   }
@@ -334,6 +325,10 @@ public class GraphUtils {
 
   public static ExpressionNode zeroExtend(ExpressionNode value, DataType dataType) {
     return new ZeroExtendNode(value, dataType);
+  }
+
+  public static ExpressionNode truncate(ExpressionNode value, DataType dataType) {
+    return new TruncateNode(value, dataType);
   }
 
   /// CONSTANT VALUE CONSTRUCTION ///

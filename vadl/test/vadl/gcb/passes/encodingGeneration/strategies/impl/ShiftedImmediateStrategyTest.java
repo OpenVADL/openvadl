@@ -39,7 +39,6 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.SliceNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 
 class ShiftedImmediateStrategyTest extends AbstractTest {
   ShiftedImmediateStrategy strategy = new ShiftedImmediateStrategy();
@@ -55,11 +54,10 @@ class ShiftedImmediateStrategyTest extends AbstractTest {
 
     // Setup behavior
     var returnNode =
-        new ReturnNode(new TypeCastNode(new BuiltInCall(BuiltInTable.LSL,
+        new ReturnNode(new BuiltInCall(BuiltInTable.LSL,
             new NodeList<>(new FieldRefNode(field, DataType.bits(20)),
                 new ConstantNode(Constant.Value.of(12, DataType.unsignedInt(32)))),
-            Type.unsignedInt(32)),
-            Type.bits(32)));
+            Type.unsignedInt(32)));
     var startNode = new StartNode(returnNode);
     accessFunction.behavior().addWithInputs(returnNode);
     accessFunction.behavior().addWithInputs(startNode);

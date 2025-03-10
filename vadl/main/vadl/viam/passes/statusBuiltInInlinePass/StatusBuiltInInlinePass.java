@@ -51,11 +51,11 @@ public class StatusBuiltInInlinePass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var isa = viam.isa().get();
-    isa.ownInstructions().forEach(i ->
-        new StatusBuiltInInliner(i.behavior()).run());
-
-    return null;
+    return viam.isa().map(isa -> {
+      isa.ownInstructions().forEach(i ->
+          new StatusBuiltInInliner(i.behavior()).run());
+      return null;
+    });
   }
 }
 

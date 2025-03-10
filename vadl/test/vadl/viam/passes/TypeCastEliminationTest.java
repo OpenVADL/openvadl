@@ -44,7 +44,6 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.verification.ViamVerifier;
 
@@ -153,7 +152,6 @@ public class TypeCastEliminationTest extends AbstractTest {
     var simpleTypCast = TestUtils.findDefinitionByNameIn(testFunction, spec, Function.class);
     ViamVerifier.verifyAllIn(simpleTypCast);
     var behavior = simpleTypCast.behavior();
-    Assertions.assertEquals(0, behavior.getNodes(TypeCastNode.class).count());
     Assertions.assertEquals(1, behavior.getNodes(StartNode.class).count());
     Assertions.assertEquals(1, behavior.getNodes(ReturnNode.class).count());
     return behavior;

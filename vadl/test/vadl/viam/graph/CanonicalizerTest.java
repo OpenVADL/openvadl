@@ -17,9 +17,9 @@
 package vadl.viam.graph;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static vadl.utils.GraphUtils.truncate;
 import static vadl.viam.helper.TestGraphUtils.binaryOp;
 import static vadl.viam.helper.TestGraphUtils.bits;
-import static vadl.viam.helper.TestGraphUtils.cast;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,7 +79,7 @@ public class CanonicalizerTest {
             bits(5, 10),
             bits(-10, 10))
     );
-    testGraph.add(cast(addition, Type.unsignedInt(5)));
+    testGraph.add(truncate(addition, Type.unsignedInt(5)));
 
     testGraph.verify();
 
@@ -103,7 +103,7 @@ public class CanonicalizerTest {
             bits(5, 10),
             bits(-10, 10))
     );
-    testGraph.add(cast(addition, Type.unsignedInt(5)));
+    testGraph.add(truncate(addition, Type.unsignedInt(5)));
 
     testGraph.verify();
 

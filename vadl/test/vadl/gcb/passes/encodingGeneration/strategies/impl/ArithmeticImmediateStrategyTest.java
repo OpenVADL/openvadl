@@ -46,7 +46,6 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.ConstantValueMatcher;
@@ -127,13 +126,12 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
 
     // Setup behavior
     var returnNode =
-        new ReturnNode(new TypeCastNode(new BuiltInCall(BuiltInTable.SUB,
+        new ReturnNode(new BuiltInCall(BuiltInTable.SUB,
             new NodeList<>(
                 new ConstantNode(Constant.Value.of(
                     31, DataType.unsignedInt(32))),
                 new FieldRefNode(field, DataType.bits(20))
-            ), Type.unsignedInt(32)),
-            Type.unsignedInt(32)));
+            ), Type.unsignedInt(32)));
     var startNode = new StartNode(returnNode);
     accessFunction.behavior().addWithInputs(returnNode);
     accessFunction.behavior().addWithInputs(startNode);
@@ -174,13 +172,12 @@ class ArithmeticImmediateStrategyTest extends AbstractTest {
 
     // Setup behavior
     var returnNode =
-        new ReturnNode(new TypeCastNode(new BuiltInCall(BuiltInTable.ADD,
+        new ReturnNode(new BuiltInCall(BuiltInTable.ADD,
             new NodeList<>(
                 new ConstantNode(Constant.Value.of(
                     31, DataType.unsignedInt(32))),
                 new FieldRefNode(field, DataType.bits(20))
-            ), Type.unsignedInt(32)),
-            Type.unsignedInt(32)));
+            ), Type.unsignedInt(32)));
     var startNode = new StartNode(returnNode);
     accessFunction.behavior().addWithInputs(returnNode);
     accessFunction.behavior().addWithInputs(startNode);

@@ -31,7 +31,6 @@ import vadl.utils.Pair;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.control.BeginNode;
 import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
@@ -49,7 +48,6 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
-import vadl.viam.graph.dependency.TypeCastNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -249,12 +247,7 @@ public interface CDefaultMixins {
 
   @SuppressWarnings("MissingJavadocType")
   interface TypeCasts extends SignExtend, ZeroExtend, Truncate {
-    @Handler
-    @SuppressWarnings("MissingJavadocMethod")
-    default void handle(CNodeContext ctx, TypeCastNode toHandle) {
-      throw new ViamGraphError("Type Cast node should not exist at this stage.")
-          .addContext(toHandle);
-    }
+
   }
 
   @SuppressWarnings("MissingJavadocType")

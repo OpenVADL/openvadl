@@ -20,8 +20,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
+import static vadl.utils.GraphUtils.signExtend;
 import static vadl.viam.helper.TestGraphUtils.binaryOp;
-import static vadl.viam.helper.TestGraphUtils.cast;
 import static vadl.viam.helper.TestGraphUtils.intSNode;
 
 import java.math.BigInteger;
@@ -114,14 +114,14 @@ class CanonicalizationPassTest extends AbstractTest {
     var graph = new Graph("test graph");
 
     graph.addWithInputs(
-        cast(
-            Type.signedInt(4),
+        signExtend(
             binaryOp(
                 BuiltInTable.ADD,
                 Type.bits(4),
-                cast(intSNode(2, 4), Type.bits(4)),
-                cast(intSNode(2, 4), Type.bits(4))
-            )
+                signExtend(intSNode(2, 4), Type.bits(4)),
+                signExtend(intSNode(2, 4), Type.bits(4))
+            ),
+            Type.signedInt(4)
         )
     );
 

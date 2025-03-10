@@ -151,7 +151,7 @@ class TarGzExtractor {
          TarArchiveInputStream tarInputStream = new TarArchiveInputStream(gzipInputStream)) {
 
       TarArchiveEntry entry;
-      while ((entry = tarInputStream.getNextTarEntry()) != null) {
+      while ((entry = tarInputStream.getNextEntry()) != null) {
         String entryName = stripLeadingComponents(entry.getName(), stripComponents);
         if (entryName.isEmpty()) {
           continue; // Skip entries that are stripped to an empty name
