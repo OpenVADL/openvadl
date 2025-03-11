@@ -30,6 +30,7 @@ public class InstructionSetArchitecture extends Definition {
   private final List<Register> registers;
   private final List<RegisterFile> registerFiles;
   private final List<Memory> memories;
+  private final List<ArtificialResource> artificialResources;
 
   @Nullable
   private final Counter pc;
@@ -63,7 +64,8 @@ public class InstructionSetArchitecture extends Definition {
                                     List<Register> registers,
                                     List<RegisterFile> registerFiles,
                                     @Nullable Counter pc,
-                                    List<Memory> memories
+                                    List<Memory> memories,
+                                    List<ArtificialResource> artificialResources
   ) {
     super(identifier);
     this.specification = specification;
@@ -76,6 +78,7 @@ public class InstructionSetArchitecture extends Definition {
     this.registerFiles = registerFiles;
     this.pc = pc;
     this.memories = memories;
+    this.artificialResources = artificialResources;
 
     // set parent architecture of instructions
     for (var instr : instructions) {
@@ -151,6 +154,10 @@ public class InstructionSetArchitecture extends Definition {
    */
   public List<Memory> ownMemories() {
     return memories;
+  }
+
+  public List<ArtificialResource> ownArtificialResources() {
+    return artificialResources;
   }
 
   /**

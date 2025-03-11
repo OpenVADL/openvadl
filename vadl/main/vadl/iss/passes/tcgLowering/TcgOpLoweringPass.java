@@ -81,6 +81,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ProcCallNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -90,6 +91,7 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -498,6 +500,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     replaceCurrent();
   }
 
+  @Handler
+  void handle(ReadArtificialResNode toHandle) {
+    throw new UnsupportedOperationException("Type ReadArtificialResNode not yet implemented");
+  }
+
   /**
    * Handles the {@link ReadRegFileNode}. Currently does nothing as TCG variables
    * represent register file reads.
@@ -578,6 +585,11 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     replaceCurrent(
         new TcgStoreMemory(storeSize, mode, value, addr)
     );
+  }
+
+  @Handler
+  void handle(WriteArtificialResNode toHandle) {
+    throw new UnsupportedOperationException("Type WriteArtificialResNode not yet implemented");
   }
 
   /// / Nodes that are already considered lowered ////

@@ -41,6 +41,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -152,6 +153,11 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     List<TcgVRefNode> destOf(WriteRegFileNode toHandle) {
       return assignments.computeIfAbsent(toHandle,
           n -> createRegFileVar(toHandle.registerFile(), toHandle.address(), true));
+    }
+
+    @Handler
+    List<TcgVRefNode> destOf(WriteArtificialResNode toHandle) {
+      throw new UnsupportedOperationException("Type WriteRegFileNode not yet implemented");
     }
 
     @Handler

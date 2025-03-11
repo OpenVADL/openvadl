@@ -62,6 +62,8 @@ public interface DefinitionVisitor {
 
   void visit(Memory memory);
 
+  void visit(ArtificialResource artificialResource);
+
   void visit(Counter counter);
 
   void visit(Abi abi);
@@ -268,6 +270,14 @@ public interface DefinitionVisitor {
     }
 
     @Override
+    public void visit(ArtificialResource artificialResource) {
+      beforeTraversal(artificialResource);
+      artificialResource.readFunction().accept(this);
+      artificialResource.writeProcedure().accept(this);
+      afterTraversal(artificialResource);
+    }
+
+    @Override
     public void visit(Relocation relocation) {
       beforeTraversal(relocation);
       for (var param : relocation.parameters()) {
@@ -452,7 +462,7 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Procedure procedure) {
-      
+
     }
 
     @Override
@@ -478,6 +488,11 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Memory memory) {
 
+    }
+
+    @Override
+    public void visit(ArtificialResource artificialResource) {
+      
     }
 
     @Override

@@ -23,10 +23,12 @@ import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ProcCallNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -41,12 +43,13 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
 public interface CInvalidMixins {
 
   @SuppressWarnings("MissingJavadocType")
-  interface SideEffect extends WriteReg, WriteRegFile, WriteMem, ProcCall, WriteStageOutput {
+  interface SideEffect
+      extends WriteReg, WriteRegFile, WriteMem, WriteArtificialRes, ProcCall, WriteStageOutput {
 
   }
 
   @SuppressWarnings("MissingJavadocType")
-  interface ResourceReads extends ReadReg, ReadMem, ReadRegFile {
+  interface ResourceReads extends ReadReg, ReadMem, ReadRegFile, ReadArtificialResource {
   }
 
   @SuppressWarnings("MissingJavadocType")
@@ -74,6 +77,14 @@ public interface CInvalidMixins {
   }
 
   @SuppressWarnings("MissingJavadocType")
+  interface WriteArtificialRes {
+    @Handler
+    default void impl(CGenContext<Node> ctx, WriteArtificialResNode node) {
+      throwNotAllowed(node, "Artificial resource writes");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
   interface ProcCall {
     @Handler
     default void impl(CGenContext<Node> ctx, ProcCallNode node) {
@@ -95,6 +106,14 @@ public interface CInvalidMixins {
     @Handler
     default void impl(CGenContext<Node> ctx, ReadRegFileNode node) {
       throwNotAllowed(node, "Register reads");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface ReadArtificialResource {
+    @Handler
+    default void impl(CGenContext<Node> ctx, ReadArtificialResNode node) {
+      throwNotAllowed(node, "Artificial reads");
     }
   }
 

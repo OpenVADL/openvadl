@@ -39,6 +39,7 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
+import vadl.viam.ArtificialResource;
 import vadl.viam.Assembly;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
@@ -851,6 +852,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .map(v -> (Counter) v)
         .findFirst().orElse(null);
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
+    // TODO: @flofriday compute artifical resources
+    var artificialResources = new ArrayList<ArtificialResource>();
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
@@ -869,7 +872,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         registers,
         registerFiles,
         programCounter,
-        memories
+        memories,
+        artificialResources
     );
   }
 

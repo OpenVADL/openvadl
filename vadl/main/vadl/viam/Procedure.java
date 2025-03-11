@@ -35,6 +35,9 @@ public class Procedure extends Definition implements DefProp.WithBehavior {
   private final Parameter[] parameters;
   private final Graph behavior;
 
+  /**
+   * Constructs the procedure.
+   */
   public Procedure(Identifier identifier, Parameter[] parameters, Graph behavior) {
     super(identifier);
     this.parameters = parameters;

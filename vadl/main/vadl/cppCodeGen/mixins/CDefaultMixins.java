@@ -231,6 +231,7 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
   interface ProcEnd {
     @Handler
     default void handle(CGenContext<Node> ctx, ProcEndNode node) {
