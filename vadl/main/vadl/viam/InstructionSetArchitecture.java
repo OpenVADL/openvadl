@@ -37,6 +37,8 @@ public class InstructionSetArchitecture extends Definition {
 
   private final List<Format> formats;
   private final List<Function> functions;
+  // contains declared and anonymous exceptions
+  private final List<ExceptionDef> exceptions;
   private final List<Relocation> relocations;
 
 
@@ -58,6 +60,7 @@ public class InstructionSetArchitecture extends Definition {
                                     Specification specification,
                                     List<Format> formats,
                                     List<Function> functions,
+                                    List<ExceptionDef> exceptions,
                                     List<Relocation> relocations,
                                     List<Instruction> instructions,
                                     List<PseudoInstruction> pseudoInstructions,
@@ -71,6 +74,7 @@ public class InstructionSetArchitecture extends Definition {
     this.specification = specification;
     this.formats = formats;
     this.functions = functions;
+    this.exceptions = exceptions;
     this.relocations = relocations;
     this.registers = registers;
     this.instructions = instructions;
@@ -106,6 +110,10 @@ public class InstructionSetArchitecture extends Definition {
    */
   public List<Function> ownFunctions() {
     return functions;
+  }
+
+  public List<ExceptionDef> exceptions() {
+    return exceptions;
   }
 
   /**
@@ -156,7 +164,7 @@ public class InstructionSetArchitecture extends Definition {
     return memories;
   }
 
-  public List<ArtificialResource> ownArtificialResources() {
+  public List<ArtificialResource> artificialResources() {
     return artificialResources;
   }
 

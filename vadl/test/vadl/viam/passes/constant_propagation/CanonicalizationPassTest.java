@@ -83,6 +83,7 @@ class CanonicalizationPassTest extends AbstractTest {
         List.of(),
         List.of(),
         Collections.emptyList(),
+        Collections.emptyList(),
         List.of(new Instruction(
             Identifier.noLocation("instructionValue"),
             behavior,

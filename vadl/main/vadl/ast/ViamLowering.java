@@ -45,6 +45,7 @@ import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Encoding;
+import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
@@ -843,6 +844,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var formats = filterAndCastToInstance(allDefinitions, Format.class);
     var functions = filterAndCastToInstance(allDefinitions, Function.class);
     var relocations = filterAndCastToInstance(allDefinitions, Relocation.class);
+    // TODO: @flofriday get exceptions
+    var exceptions = new ArrayList<ExceptionDef>();
     var instructions = filterAndCastToInstance(allDefinitions, Instruction.class);
     var pseudoInstructions = filterAndCastToInstance(allDefinitions, PseudoInstruction.class);
     var registers = filterAndCastToInstance(allDefinitions, Register.class);
@@ -866,6 +869,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         currentSpecification,
         formats,
         functions,
+        exceptions,
         relocations,
         instructions,
         pseudoInstructions,
