@@ -80,6 +80,7 @@ import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ParamNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -725,12 +726,17 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(ReadStageOutputNode toHandle) {
-    throw new UnsupportedOperationException("Type ReadStageOutputNode not yet implemented");
+    throw failShouldNotHappen(toHandle);
   }
 
   @Handler
   void handle(WriteStageOutputNode toHandle) {
-    throw new UnsupportedOperationException("Type WriteStageOutputNode not yet implemented");
+    throw failShouldNotHappen(toHandle);
+  }
+
+  @Handler
+  void handle(ProcCallNode toHandle) {
+    throw failShouldNotHappen(toHandle);
   }
 
 

@@ -19,7 +19,7 @@ package vadl.viam;
 import java.util.List;
 import vadl.utils.GraphUtils;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.control.ProcedureEndNode;
+import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
@@ -60,7 +60,7 @@ public class Procedure extends Definition implements DefProp.WithBehavior {
   public void verify() {
     super.verify();
 
-    GraphUtils.getSingleNode(behavior, ProcedureEndNode.class);
+    GraphUtils.getSingleNode(behavior, ProcEndNode.class);
 
     behavior.verify();
   }

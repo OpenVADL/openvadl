@@ -22,6 +22,7 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -40,7 +41,7 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
 public interface CInvalidMixins {
 
   @SuppressWarnings("MissingJavadocType")
-  interface SideEffect extends WriteReg, WriteRegFile, WriteMem, WriteStageOutput {
+  interface SideEffect extends WriteReg, WriteRegFile, WriteMem, ProcCall, WriteStageOutput {
 
   }
 
@@ -69,6 +70,14 @@ public interface CInvalidMixins {
     @Handler
     default void impl(CGenContext<Node> ctx, WriteMemNode node) {
       throwNotAllowed(node, "Memory writes");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface ProcCall {
+    @Handler
+    default void impl(CGenContext<Node> ctx, ProcCallNode node) {
+      throwNotAllowed(node, "Procedure calls");
     }
   }
 

@@ -50,9 +50,12 @@ import vadl.viam.graph.dependency.FieldRefNode;
     context = CNodeContext.class,
     include = {"vadl.viam", "vadl.iss"}
 )
-public class IssTranslateCodeGenerator implements CDefaultMixins.All,
-    CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads, CInvalidMixins.InstrCall,
-    CInvalidMixins.ReadStageOutput, IssCMixins.Default, IssCMixins.Invalid {
+public class IssTranslateCodeGenerator implements
+    // default implementations
+    CDefaultMixins.All, IssCMixins.Default,
+    // invalid nodes
+    IssCMixins.Invalid, CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads,
+    CInvalidMixins.InstrCall, CInvalidMixins.ReadStageOutput {
 
   private Instruction insn;
   private boolean generateInsnCount;

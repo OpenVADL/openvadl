@@ -23,21 +23,21 @@ import vadl.viam.graph.dependency.SideEffectNode;
 /**
  * Indicates the end of a {@link vadl.viam.Procedure}.
  */
-public class ProcedureEndNode extends AbstractEndNode {
+public class ProcEndNode extends AbstractEndNode {
 
-  public ProcedureEndNode(
+  public ProcEndNode(
       NodeList<SideEffectNode> sideEffects) {
     super(sideEffects);
   }
 
   @Override
-  public ProcedureEndNode copy() {
-    return new ProcedureEndNode(sideEffects().copy());
+  public ProcEndNode copy() {
+    return new ProcEndNode(sideEffects().copy());
   }
 
   @Override
-  public ProcedureEndNode shallowCopy() {
-    return new ProcedureEndNode(sideEffects());
+  public ProcEndNode shallowCopy() {
+    return new ProcEndNode(sideEffects());
   }
 
   @Override

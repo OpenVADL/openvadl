@@ -38,6 +38,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.WriteMemNode;
@@ -179,8 +180,14 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
 
     @Handler
     List<TcgVRefNode> handle(WriteStageOutputNode toHandle) {
-      throw new UnsupportedOperationException("Type WriteStageOutputNode not yet implemented");
+      throw new IllegalStateException("WriteStageOutputNode should not exist here.");
     }
+
+    @Handler
+    List<TcgVRefNode> handle(ProcCallNode toHandle) {
+      throw new IllegalStateException("ProcCallNode should not exist here.");
+    }
+
 
     private TcgVRefNode toNode(TcgV tcgV) {
       return toNode(tcgV, null);
