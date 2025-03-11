@@ -149,7 +149,7 @@ The following table lists all core syntax types with a description and examples:
 | Str     | String Literal                       | `"ADDI"                                 ` |
 | CallEx  | Arbitrary Call Expression            | `MEM<2>(rs1),PC.next,abs(X(rs1)),Z(0)(1)` |
 | SymEx   | Symbol Expression                    | `rs1, MEM<2>, VADL::add                 ` |
-| Id      | Identifier Symbol                    | `rs1, ADDI, X                           ` |
+| Id      | Identifier                           | `rs1, ADDI, X                           ` |
 | BinOp   | Binary Operator                      | `+, -, *                                ` |
 | UnOp    | Unary Operator                       | `-, !                                   ` |
 | Stat    | Generic VADL Statement               | `X(rd) := X(rs)                         ` |
@@ -233,10 +233,97 @@ The result of the model invocation in line 51 of Listing \r{riscv-isa} is shown 
 
 
 ### Conditional Macro (match)
+\lbl{macro_match}
+
+To support the conditional application of macros VADL provides an explicitly typed `match`-macro.
+It will conditionally insert the match result into the syntax tree.
+It can be used inside a `model` definition as well as in any location in a specification.
+A match macro is started by the keyword `match` followed by the colon symbol `":"` and the syntax type of the macro.
+Enclosed by parentheses is a list of `match` elements separated by a semicolon `";"`.
+A `match` element contains a condition followed by the result of the macro after the double arrow symbol `"=>"`. 
+For the conditions only comparisons for equality (`"="`) or inequality (`"!="`) between two syntax elements are allowed.
+For every `match`-macro a default case has to be provided at the last position, indicated by the underline symbol `"_"`.
+When used outside of a model defintion only macro invocations can be used in the comparison.
+In the example in Listing \r{match_macro}, a user can switch between 32 and 64 Bit length by setting the appropriate `Arch` to `Arch64`.
+
+\listing{match_macro, Matching on a model}
+~~~{.vadl}
+model Arch () : Id = {Arch64}
+constant AddrWidth = match : Ex ($Arch() = Arch64 => 64; _ => 32)
+using Addr = Bits<AddrWidth>
+~~~
+\endlisting
+
+Listing \r{divide_by_null} shows a `model` that optionally wraps an operation into a zero check.
+It demonstrates the usage of multiple conditions separated by the comma symbol `","` for the same `match`-result.
+In this example multiple conditions are applied to two operators (`"/"` and `"%"`).
+The `match`-macro is used inside a model definition and uses the model parameters in the conditions.
+
+\listing{divide_by_null, Divide-by-null safeguard}
+~~~{.vadl}
+model SafeOp(left: Id, op: BinOp, right: Id): Ex = {
+  match : Ex
+  ( $op = /, $op = % 
+      => if $right = 0 then 0 else $left $op $right
+  ; _ => $left $op $right
+  )
+}
+~~~
+\endlisting
 
 ### Syntax Type Composition (record)
 
+Listing \r{record_definition} shows a `record` definition used for type composition.
+In this particular case the record definition composes an `Id` and `BinOp` type to the new type `BinInstRec`.
+The body of a record definition consists of a parameter list providing typed fields.
+Listing \r{record_application} shows how the record is initialized and the fields `name` and `op` are accessed.
+Passing a record type argument can be either done by reference or by creating a syntax tuple.
+A syntax tuple is specified the same way a model argument list is provided, i.e. syntax elements are separated by `";"` and enclosed inside parentheses.
+Accessing the passed elements is done using the record's name followed by a `"."` and the desired field.
+Accesses of sub-records can be arbitrary chained together.
+Furthermore, it is important to note that records are treated as type tuples.
+Their field names do not affect the type and are only used to access the internal elements.
+
+\listing{record_definition, Record Example}
+~~~{.vadl}
+record BinInstRec ( name: Id, op: BinOp )
+~~~
+\endlisting
+
+\listing{record_application, Record Application}
+~~~{.vadl}
+model InstModel (info: BinInstRec)
+  : IsaDefs = {
+  instruction $info.name : F = {
+    X(rd) := X(rs1) $info.op X(rs2)
+    }
+}
+
+$InstModel( ( SUB ; - ) )
+$InstModel( ( ADD ; + ) )
+~~~
+\endlisting
+
 ### Lexical Macro Functions 
+
+While most of the needs are covered by syntactical macros, string and identifier manipulation is best done using lexical macros.
+A lexical macro acts on the abstraction level of token streams in contrast to an already parsed AST.
+Two use-cases are supported using special macro functions.
+Firstly, templates generating instruction behavior and assembly often need the instruction name once in form of an identifier (`Id`) and again in form of a string (`Str`).
+This use case is covered by the `IdToStr` function.
+This function takes an `Id` typed syntax element and converts it to a `Str` typed syntax element.
+Secondly, the `ExtendId` function allows safe identifier manipulation.
+This function takes an `Id` typed identifier and an arbitrary number of `Str` typed syntax elements, concatenates them and returns a single `Id` typed syntax element.
+Listing \r{lexical_macros} shows a small example of both functions with their typed result as comment.
+It is important to note that the context of identifiers generated by lexical macros is strictly separated from the context of the syntactical macros.
+Therefore, it is not possible to define or refer to a model name or parameter using a generated identifier.
+
+\listing{lexical_macros, Lexical Macro Examples}
+~~~{.vadl}
+ExtendId( I, "Am", "An", "Identifier" ) // --> IAmAnIdentifier : Id
+IdToStr( IAmAString )                   // --> "IAmAString"    : Str
+~~~
+\endlisting
 
 ### Higher Order Macros (model-type)
 
@@ -255,22 +342,25 @@ instruction ADD : RType = X(rd) := $Addition(X(rs1) ; X(rs2))
 ~~~
 \endlisting
 
-Listing \r{model_producing_model} shows the model `BinExFactory` which in turn produces a model. Because the `$BinExFactory` instance is evaluated immediately after it is parsed, the produced model `Addition` is known to the parser and can be used in the definition of the `ADD` instruction. 
+Listing \r{model_producing_model} shows the model `BinExFactory` which in turn produces a model.
+Because the `$BinExFactory` instance is evaluated immediately after it is parsed, the produced model `Addition` is known to the parser and can be used in the definition of the `ADD` instruction. 
 
 #### Type variance in model-type parameters
 
-OpenVADL allows the model parameters to be supertypes of the `model-type` parameters and the result type to be a subtype of the `model-type` result. Listing \r{model_type_parameters} shows a reference to `model Constants` being used as an `IsaDefsFactory`. The reference is of a valid type because the result type `Defs` is a subtype of `IsaDefs` and the type `Ex` of parameter `size` is a supertype of `Id` (see Figure \r{syntax_type_hierarchy}). 
+If a macro is passed as an argument to a model and assuming that the type for this argument is declared by a `model-type`, then OpenVADL allows the model parameters of the passed macro to be supertypes of the `model-type` parameters and the result type to be a subtype of the `model-type` result.
+Listing \r{model_type_parameters} shows a reference to `model Constants` being used as an `IsaDefsFactory`.
+The reference is of a valid type because the result type `Defs` is a subtype of `IsaDefs` and the type `Ex` of parameter `size` is a supertype of `Id` (see Figure \r{syntax_type_hierarchy}). 
 
 \listing{model_type_parameters, Valid types in model references}
 ~~~{.vadl}
 instruction set architecture ISA = {
-  constant Word = 16
+  constant Word = 32
 
   model-type IsaDefsFactory = (Id) -> IsaDefs
 
   model Constants(size: Ex): Defs = {
-    constant a = $size
-    constant b = $size / 2
+    constant full = $size
+    constant half = $size / 2
   }
 
   model BitDefs(factory: IsaDefsFactory, size: Id): IsaDefs = {
