@@ -48,6 +48,8 @@ public interface DefinitionVisitor {
 
   void visit(Function function);
 
+  void visit(Procedure procedure);
+
   void visit(Relocation relocation);
 
   void visit(Parameter parameter);
@@ -218,6 +220,15 @@ public interface DefinitionVisitor {
         param.accept(this);
       }
       afterTraversal(function);
+    }
+
+    @Override
+    public void visit(Procedure procedure) {
+      beforeTraversal(procedure);
+      for (var param : procedure.parameters()) {
+        param.accept(this);
+      }
+      afterTraversal(procedure);
     }
 
     @Override
@@ -437,6 +448,11 @@ public interface DefinitionVisitor {
     @Override
     public void visit(Function function) {
 
+    }
+
+    @Override
+    public void visit(Procedure procedure) {
+      
     }
 
     @Override
