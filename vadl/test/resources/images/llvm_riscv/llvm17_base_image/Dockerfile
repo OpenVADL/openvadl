@@ -1,5 +1,5 @@
 FROM ubuntu
-
+LABEL org.opencontainers.image.source=https://github.com/OpenVADL/open-vadl
 RUN apt-get update -y
 RUN apt-get install -y make cmake ninja-build build-essential ccache git curl pkg-config libssl-dev python3 colordiff
 
