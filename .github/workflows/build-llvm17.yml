@@ -20,8 +20,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/llvm17base vadl/test/resources/images/llvm_riscv/llvm17_base_image
+          docker build -t ghcr.io/openvadl/llvm17-base vadl/test/resources/images/llvm_riscv/llvm17_base_image
 
       - name: Push Docker image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/llvm17base
+          docker push ghcr.io/openvadl/llvm17-base
