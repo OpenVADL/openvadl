@@ -32,5 +32,4 @@ format INNER : Bits<10> =
   , L  [3..0]
   }
 
-application binary interface ABI for Test = {}
-micro processor TEST implements Test with ABI = {}
+micro processor TEST implements Test = {}

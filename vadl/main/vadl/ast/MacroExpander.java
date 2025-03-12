@@ -544,6 +544,14 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(AbiPseudoInstructionDefinition definition) {
+    return new AbiPseudoInstructionDefinition(definition.kind,
+        resolvePlaceholderOrIdentifier(definition.target),
+        copyLoc(definition.loc)
+    ).withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
   public Definition visit(FunctionDefinition definition) {
     var name = resolvePlaceholderOrIdentifier(definition.name);
     var retType = (TypeLiteral) expandExpr(definition.retType);
@@ -705,7 +713,7 @@ class MacroExpander
   @Override
   public Definition visit(SpecialPurposeRegisterDefinition definition) {
     return new SpecialPurposeRegisterDefinition(
-        definition.purpose, definition.calls, copyLoc(definition.loc)
+        definition.purpose, definition.aliasName, copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 

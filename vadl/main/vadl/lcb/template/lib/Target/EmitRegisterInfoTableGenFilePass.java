@@ -34,6 +34,7 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyPasses.DummyAbiPass;
 
 /**
  * This file contains the register definitions for compiler backend.
@@ -79,7 +80,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var output = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
         GenerateTableGenRegistersPass.class));
-    var abi = (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
+    var abi = (Abi) passResults.lastResultOf(DummyAbiPass.class);
     var registerClasses = output.registerClasses();
 
     if (registerClasses.size() > 1) {

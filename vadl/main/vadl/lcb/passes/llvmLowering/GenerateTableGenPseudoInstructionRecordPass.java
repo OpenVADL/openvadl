@@ -65,6 +65,7 @@ public class GenerateTableGenPseudoInstructionRecordPass extends Pass {
               var instruction = entry.getKey();
               var result = entry.getValue();
               return new TableGenPseudoInstruction(
+                  instruction,
                   instruction.identifier.simpleName(),
                   lcbConfiguration().targetName().value(),
                   result.info().flags(),

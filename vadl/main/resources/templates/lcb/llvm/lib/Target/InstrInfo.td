@@ -93,7 +93,7 @@ def ADJCALLSTACKUP : Instruction
     let Uses = [ [(${stackPointerRegister})] ]; // stack pointer
 }
 
-def RESERVED_PSEUDO_RET : Instruction
+def [(${returnInstruction})] : Instruction
 {
     let Namespace = "[(${namespace})]";
     let InOperandList = (ins);
@@ -116,7 +116,7 @@ def RESERVED_PSEUDO_RET : Instruction
  * 'target_call', which marks a function call.
  * It will be later expanded into the defined calling sequence during code emission.
  */
-def RESERVED_PSEUDO_CALL : Instruction
+def [(${callInstruction})] : Instruction
 {
     let Namespace = "[(${namespace})]";
     let InOperandList = (ins bare_symbol:$addr);
@@ -135,8 +135,8 @@ def RESERVED_PSEUDO_CALL : Instruction
 }
 
 /* Match the call sequence for global and external symbols */
-def : Pat<(target_call tglobaladdr:$func), (RESERVED_PSEUDO_CALL tglobaladdr:$func)>;
-def : Pat<(target_call texternalsym:$func), (RESERVED_PSEUDO_CALL texternalsym:$func)>;
+def : Pat<(target_call tglobaladdr:$func), ([(${callInstruction})] tglobaladdr:$func)>;
+def : Pat<(target_call texternalsym:$func), ([(${callInstruction})] texternalsym:$func)>;
 
 def SDT_[(${namespace})]SelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                          SDTCisSameAs<0, 4>,

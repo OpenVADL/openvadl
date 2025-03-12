@@ -25,7 +25,5 @@ instruction set architecture ValidBranch = {
   }
 }
 
-application binary interface TestAbi for ValidBranch = {}
-
-micro processor Test implements ValidBranch with TestAbi = {
+micro processor Test implements ValidBranch = {
 }

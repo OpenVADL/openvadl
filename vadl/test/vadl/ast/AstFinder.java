@@ -413,4 +413,9 @@ class AstFinder implements DefinitionVisitor<Void> {
     visitDefinition(definition);
     return null;
   }
+
+  @Override
+  public Void visit(AbiPseudoInstructionDefinition abiPseudoInstructionDefinition) {
+    return null;
+  }
 }
