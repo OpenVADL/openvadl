@@ -45,6 +45,7 @@ class OpenVadlTestFrontend implements TestFrontend {
         new Ungrouper().ungroup(ast);
         new ModelRemover().removeModels(ast);
       }
+
       var typeChecker = new TypeChecker();
       typeChecker.verify(ast);
       var viamGenerator = new ViamLowering();
