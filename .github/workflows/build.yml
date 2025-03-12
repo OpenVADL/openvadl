@@ -1,19 +1,18 @@
-# GitHub Actions workflow for OpenVADL CI
-name: OpenVADL CI
+# .github/workflows/openvadl-ci.yml
+name: CI
 
 on:
   pull_request:
     paths-ignore:
       - 'doc/**'
 
-# Cancel previous runs if a new one is triggered
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
-  actions: read
+  actions: write
   checks: write
 
 jobs:
@@ -28,39 +27,25 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         run: ./gradlew assemble testClasses -PFailOnWarnings
-
       - name: Run Checkstyle
         run: ./gradlew checkstyleAll
-
       - name: Publish Checkstyle Report
         uses: lcollins/checkstyle-github-action@v3.1.0
-        if: failure()    # run this step only if previous step failed
+        if: failure()
         with:
           name: 'Checkstyle Report'
           path: '**/build/reports/checkstyle/*.xml'
 
-  
   test:
-    runs-on: self-hosted
     needs: build
-    steps:
-      - uses: actions/checkout@v3
-      - uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: '21'
-          distribution: 'graalvm'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: 'gradle'
-      - name: Run tests
-        run: ./gradlew test
-        env:
-          isCI: true
-
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: success() || failure()    # run this step even if previous step failed
-        with:
-          name: OpenVADL Tests
-          path: "**/build/test-results/test/TEST-*.xml"    # Path to test results
-          reporter: java-junit        # Format of test results
-          list-tests: failed  # list only failed tests
+    uses: ./.github/workflows/reusable-test.yml
+    strategy:
+      matrix:
+        task: [ test-lcb, test-common, test-iss ]
+        include:
+          - runner: self-hosted
+          - runner: self-hosted-x64
+            task: test-lcb
+    with:
+      test-task: ${{ matrix.task }}
+      runner: ${{ matrix.runner }}

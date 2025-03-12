@@ -133,7 +133,6 @@ tasks.register<Test>("test-others") {
         includeTestsMatching("vadl.*")
         for (gen in generators) {
             val pkg = "vadl.$gen"
-            println("Exclude $pkg")
             excludeTestsMatching("$pkg.*")
         }
     }
