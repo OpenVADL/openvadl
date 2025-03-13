@@ -3,9 +3,13 @@ name: Build LLVM17 base image
 on:
   workflow_dispatch: # Allows manual triggering
 
+permissions:
+  packages: write
+  contents: read
+
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: self-hosted-x64
 
     steps:
       - name: Checkout repository
