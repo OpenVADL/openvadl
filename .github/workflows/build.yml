@@ -3,10 +3,6 @@ name: CI
 
 on:
   pull_request:
-    paths-ignore:
-      - 'doc/**'
-      - 'docker/**'
-      - '.github/workflows/build-*.yml' # ignore image build workflow changes
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
