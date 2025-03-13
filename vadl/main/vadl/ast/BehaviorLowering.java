@@ -493,7 +493,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var args = firstArgs.stream().map(this::fetch).toList();
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
       var funcCall =
-          new FuncCallNode(new NodeList<>(args), function, Objects.requireNonNull(expr.type));
+          new FuncCallNode(function, new NodeList<>(args), Objects.requireNonNull(expr.type));
       var slicedNode = visitSliceIndexCall(expr, funcCall,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
       return visitSubCall(expr, slicedNode);
@@ -504,7 +504,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var args = firstArgs.stream().map(this::fetch).toList();
       var relocation = (Relocation) viamLowering.fetch(relocationDefinition).orElseThrow();
       var funcCall =
-          new FuncCallNode(new NodeList<>(args), relocation, Objects.requireNonNull(expr.type));
+          new FuncCallNode(relocation, new NodeList<>(args), Objects.requireNonNull(expr.type));
       var slicedNode = visitSliceIndexCall(expr, funcCall,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
       return visitSubCall(expr, slicedNode);
@@ -1035,7 +1035,7 @@ class SubgraphContext {
   }
 
   SubgraphContext ensureSideEffects() {
-    if (sideEffects == null || sideEffects.size() == 0) {
+    if (sideEffects == null || sideEffects.isEmpty()) {
       throw new IllegalStateException(
           "expected sideEffects to exist, but it was " + sideEffects + " @ "
               + root.sourceLocation());
