@@ -29,6 +29,7 @@ import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -110,6 +111,11 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
   @Override
   protected void handle(CGenContext<Node> ctx, ReadMemNode toHandle) {
     throwNotAllowed(toHandle, "Memory reads");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, ReadArtificialResNode toHandle) {
+    throwNotAllowed(toHandle, "Artificial resource reads");
   }
 
   @Override

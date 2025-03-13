@@ -39,11 +39,13 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
+import vadl.viam.ArtificialResource;
 import vadl.viam.Assembly;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Encoding;
+import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
@@ -842,6 +844,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var formats = filterAndCastToInstance(allDefinitions, Format.class);
     var functions = filterAndCastToInstance(allDefinitions, Function.class);
     var relocations = filterAndCastToInstance(allDefinitions, Relocation.class);
+    // TODO: @flofriday get exceptions
+    var exceptions = new ArrayList<ExceptionDef>();
     var instructions = filterAndCastToInstance(allDefinitions, Instruction.class);
     var pseudoInstructions = filterAndCastToInstance(allDefinitions, PseudoInstruction.class);
     var registers = filterAndCastToInstance(allDefinitions, Register.class);
@@ -851,6 +855,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .map(v -> (Counter) v)
         .findFirst().orElse(null);
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
+    // TODO: @flofriday compute artifical resources
+    var artificialResources = new ArrayList<ArtificialResource>();
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
@@ -863,13 +869,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         currentSpecification,
         formats,
         functions,
+        exceptions,
         relocations,
         instructions,
         pseudoInstructions,
         registers,
         registerFiles,
         programCounter,
-        memories
+        memories,
+        artificialResources
     );
   }
 

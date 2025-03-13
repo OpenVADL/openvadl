@@ -48,6 +48,10 @@ public interface DefinitionVisitor {
 
   void visit(Function function);
 
+  void visit(Procedure procedure);
+
+  void visit(ExceptionDef exception);
+
   void visit(Relocation relocation);
 
   void visit(Parameter parameter);
@@ -59,6 +63,8 @@ public interface DefinitionVisitor {
   void visit(RegisterFile registerFile);
 
   void visit(Memory memory);
+
+  void visit(ArtificialResource artificialResource);
 
   void visit(Counter counter);
 
@@ -112,38 +118,24 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(InstructionSetArchitecture instructionSetArchitecture) {
-      beforeTraversal(instructionSetArchitecture);
+    public void visit(InstructionSetArchitecture isa) {
+      beforeTraversal(isa);
       // do not visit PC as it is included as register in registers()
-      instructionSetArchitecture
-          .ownFormats()
-          .forEach(e -> e.accept(this));
-      instructionSetArchitecture
-          .ownFunctions()
-          .forEach(e -> e.accept(this));
-      instructionSetArchitecture
-          .ownRelocations()
-          .forEach(e -> e.accept(this));
-      instructionSetArchitecture
-          .ownRegisters()
-          .forEach(e -> e.accept(this));
-      instructionSetArchitecture
-          .ownRegisterFiles()
-          .forEach(e -> e.accept(this));
-      instructionSetArchitecture
-          .ownMemories()
-          .forEach(e -> e.accept(this));
-      instructionSetArchitecture
-          .ownInstructions()
-          .forEach(e -> e.accept(this));
-      instructionSetArchitecture
-          .ownPseudoInstructions()
-          .forEach(e -> e.accept(this));
-      var pc = instructionSetArchitecture.pc();
+      isa.ownFormats().forEach(e -> e.accept(this));
+      isa.ownFunctions().forEach(e -> e.accept(this));
+      isa.exceptions().forEach(e -> e.accept(this));
+      isa.ownRelocations().forEach(e -> e.accept(this));
+      isa.ownRegisters().forEach(e -> e.accept(this));
+      isa.ownRegisterFiles().forEach(e -> e.accept(this));
+      isa.ownMemories().forEach(e -> e.accept(this));
+      isa.artificialResources().forEach(e -> e.accept(this));
+      isa.ownInstructions().forEach(e -> e.accept(this));
+      isa.ownPseudoInstructions().forEach(e -> e.accept(this));
+      var pc = isa.pc();
       if (pc != null) {
         pc.accept(this);
       }
-      afterTraversal(instructionSetArchitecture);
+      afterTraversal(isa);
     }
 
     @Override
@@ -221,6 +213,21 @@ public interface DefinitionVisitor {
     }
 
     @Override
+    public void visit(Procedure procedure) {
+      beforeTraversal(procedure);
+      for (var param : procedure.parameters()) {
+        param.accept(this);
+      }
+      afterTraversal(procedure);
+    }
+
+    @Override
+    public void visit(ExceptionDef exception) {
+      beforeTraversal(exception);
+      afterTraversal(exception);
+    }
+
+    @Override
     public void visit(Parameter parameter) {
       beforeTraversal(parameter);
       afterTraversal(parameter);
@@ -254,6 +261,14 @@ public interface DefinitionVisitor {
     public void visit(Memory memory) {
       beforeTraversal(memory);
       afterTraversal(memory);
+    }
+
+    @Override
+    public void visit(ArtificialResource artificialResource) {
+      beforeTraversal(artificialResource);
+      artificialResource.readFunction().accept(this);
+      artificialResource.writeProcedure().accept(this);
+      afterTraversal(artificialResource);
     }
 
     @Override
@@ -440,6 +455,16 @@ public interface DefinitionVisitor {
     }
 
     @Override
+    public void visit(Procedure procedure) {
+
+    }
+
+    @Override
+    public void visit(ExceptionDef exception) {
+
+    }
+
+    @Override
     public void visit(Parameter parameter) {
 
     }
@@ -461,6 +486,11 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(Memory memory) {
+
+    }
+
+    @Override
+    public void visit(ArtificialResource artificialResource) {
 
     }
 

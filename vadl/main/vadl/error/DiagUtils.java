@@ -37,6 +37,7 @@ public class DiagUtils {
         ? node.sourceLocation()
         : node.ensureGraph().parentDefinition().sourceLocation();
     throw Diagnostic.error(what + " are not allowed here", loc)
+        .note("THIS IS AN INTERNAL ERROR")
         .build();
   }
 

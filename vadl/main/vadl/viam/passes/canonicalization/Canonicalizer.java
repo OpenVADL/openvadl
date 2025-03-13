@@ -16,12 +16,9 @@
 
 package vadl.viam.passes.canonicalization;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.passes.GraphProcessor;
 
 /**
@@ -30,8 +27,6 @@ import vadl.viam.passes.GraphProcessor;
  * and applied. Or it is applied to a subgraph (a node and all its inputs).
  */
 public class Canonicalizer extends GraphProcessor<Node> {
-
-  private static final Logger log = LoggerFactory.getLogger(Canonicalizer.class);
 
   /**
    * Applies the canonicalization on the whole graph.
@@ -69,11 +64,6 @@ public class Canonicalizer extends GraphProcessor<Node> {
       var canonicalNode = ((Canonicalizable) toProcess).canonical();
 
       if (canonicalNode != toProcess) {
-
-        if (canonicalNode instanceof ConstantNode node) {
-          log.info("{}:\t{}", toProcess.id, node.constant());
-        }
-
         // replace original one by new one
         toProcess.replaceAndDelete(canonicalNode);
       }

@@ -83,6 +83,7 @@ class CanonicalizationPassTest extends AbstractTest {
         List.of(),
         List.of(),
         Collections.emptyList(),
+        Collections.emptyList(),
         List.of(new Instruction(
             Identifier.noLocation("instructionValue"),
             behavior,
@@ -92,7 +93,9 @@ class CanonicalizationPassTest extends AbstractTest {
         Collections.emptyList(),
         Collections.emptyList(),
         null,
-        Collections.emptyList());
+        Collections.emptyList(),
+        Collections.emptyList()
+    );
 
     viam.add(isa);
 

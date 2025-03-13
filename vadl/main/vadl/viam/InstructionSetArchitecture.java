@@ -30,12 +30,15 @@ public class InstructionSetArchitecture extends Definition {
   private final List<Register> registers;
   private final List<RegisterFile> registerFiles;
   private final List<Memory> memories;
+  private final List<ArtificialResource> artificialResources;
 
   @Nullable
   private final Counter pc;
 
   private final List<Format> formats;
   private final List<Function> functions;
+  // contains declared and anonymous exceptions
+  private final List<ExceptionDef> exceptions;
   private final List<Relocation> relocations;
 
 
@@ -57,18 +60,21 @@ public class InstructionSetArchitecture extends Definition {
                                     Specification specification,
                                     List<Format> formats,
                                     List<Function> functions,
+                                    List<ExceptionDef> exceptions,
                                     List<Relocation> relocations,
                                     List<Instruction> instructions,
                                     List<PseudoInstruction> pseudoInstructions,
                                     List<Register> registers,
                                     List<RegisterFile> registerFiles,
                                     @Nullable Counter pc,
-                                    List<Memory> memories
+                                    List<Memory> memories,
+                                    List<ArtificialResource> artificialResources
   ) {
     super(identifier);
     this.specification = specification;
     this.formats = formats;
     this.functions = functions;
+    this.exceptions = exceptions;
     this.relocations = relocations;
     this.registers = registers;
     this.instructions = instructions;
@@ -76,6 +82,7 @@ public class InstructionSetArchitecture extends Definition {
     this.registerFiles = registerFiles;
     this.pc = pc;
     this.memories = memories;
+    this.artificialResources = artificialResources;
 
     // set parent architecture of instructions
     for (var instr : instructions) {
@@ -103,6 +110,10 @@ public class InstructionSetArchitecture extends Definition {
    */
   public List<Function> ownFunctions() {
     return functions;
+  }
+
+  public List<ExceptionDef> exceptions() {
+    return exceptions;
   }
 
   /**
@@ -151,6 +162,10 @@ public class InstructionSetArchitecture extends Definition {
    */
   public List<Memory> ownMemories() {
     return memories;
+  }
+
+  public List<ArtificialResource> artificialResources() {
+    return artificialResources;
   }
 
   /**

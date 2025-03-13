@@ -138,8 +138,8 @@ class DotVisitor extends DefinitionVisitor.Recursive {
   }
 
   @Override
-  public void visit(InstructionSetArchitecture instructionSetArchitecture) {
-    super.visit(instructionSetArchitecture);
+  public void visit(InstructionSetArchitecture isa) {
+    super.visit(isa);
   }
 
   @Override

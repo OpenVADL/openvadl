@@ -5,6 +5,8 @@ on:
   pull_request:
     paths-ignore:
       - 'doc/**'
+      - 'docker/**'
+      - '.github/workflows/build-*.yml' # ignore image build workflow changes
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -55,7 +57,7 @@ jobs:
   ci-status:
     runs-on: self-hosted
     needs: [ build, test ]
-    if: always()
+    if: success() || failure()
     steps:
       - name: Successful CI
         if: ${{ !(contains(needs.*.result, 'failure')) }}
