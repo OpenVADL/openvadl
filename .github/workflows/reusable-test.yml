@@ -35,7 +35,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: success() || failure()
         with:
-          name: OpenVADL Tests - ${{ inputs.test-task }}
+          name: report ${{ inputs.test-task }}
           path: '**/build/test-results/**/TEST-*.xml'
           reporter: java-junit
           list-tests: failed

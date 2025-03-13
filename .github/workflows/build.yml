@@ -55,7 +55,7 @@ jobs:
   ci-status:
     runs-on: self-hosted
     needs: [ build, test ]
-    if: always()
+    if: success() || failure()
     steps:
       - name: Successful CI
         if: ${{ !(contains(needs.*.result, 'failure')) }}
