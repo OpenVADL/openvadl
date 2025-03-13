@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 
 abstract sealed class Statement extends Node
     permits AssignmentStatement, BlockStatement, CallStatement, ForallStatement,
@@ -793,13 +794,18 @@ final class InstructionCallStatement extends Statement {
     return Objects.hash(id, namedArguments, unnamedArguments);
   }
 
-  static final class NamedArgument {
+  static final class NamedArgument implements WithSourceLocation {
     Identifier name;
     Expr value;
 
     NamedArgument(Identifier name, Expr value) {
       this.name = name;
       this.value = value;
+    }
+
+    @Override
+    public SourceLocation sourceLocation() {
+      return location();
     }
 
     public SourceLocation location() {
@@ -830,7 +836,6 @@ final class InstructionCallStatement extends Statement {
           + "name=" + name + ", "
           + "value=" + value + ']';
     }
-
   }
 }
 

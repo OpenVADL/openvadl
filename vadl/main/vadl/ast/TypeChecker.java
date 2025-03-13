@@ -82,11 +82,6 @@ public class TypeChecker
       expr.accept(this);
     }
 
-
-    if (expr.type == null) {
-      System.out.println();
-    }
-
     return requireNonNull(expr.type);
   }
 
@@ -128,6 +123,18 @@ public class TypeChecker
     throw new RuntimeException(
         "The typechecker doesn't know how to handle `%s` yet, found in %s".formatted(
             node.getClass().getSimpleName(), node.location().toIDEString()));
+  }
+
+  private Diagnostic typeMissmatchError(WithSourceLocation locatable, Type expected, Type actual) {
+    return typeMissmatchError(locatable, "`%s`".formatted(expected), actual);
+  }
+
+  private Diagnostic typeMissmatchError(WithSourceLocation locatable, String expectation,
+                                        Type actual) {
+    return Diagnostic.error("Type Mismatch", locatable)
+        .locationDescription(locatable, "Expected `%s` but got `%s`.",
+            expectation, actual)
+        .build();
   }
 
   private IllegalStateException buildIllegalStateException(Node node, String message) {
@@ -333,10 +340,7 @@ public class TypeChecker
   public Void visit(FormatDefinition definition) {
     var type = check(definition.typeLiteral);
     if (!(type instanceof BitsType bitsType)) {
-      throw Diagnostic.error("Type Mismatch", definition.typeLiteral)
-          .locationDescription(definition.typeLiteral, "Expected bits type length but got `%s`",
-              type)
-          .build();
+      throw typeMissmatchError(definition.typeLiteral, "bits type", type);
     }
 
     var bitWidth = bitsType.bitWidth();
@@ -563,9 +567,7 @@ public class TypeChecker
       var valueType = requireNonNull(encodingField.value.type);
 
       if (!fieldType.equals(valueType)) {
-        throw Diagnostic.error("Type Mismatch", encodingField.value)
-            .description("Expected %s but got `%s`", fieldType, valueType)
-            .build();
+        throw typeMissmatchError(encodingField.value, fieldType, valueType);
       }
     }
     return null;
@@ -577,9 +579,7 @@ public class TypeChecker
     var exprType = requireNonNull(definition.expr.type);
 
     if (exprType.getClass() != StringType.class) {
-      throw Diagnostic.error("Type Mismatch", definition.expr)
-          .description("Expected String but got `%s`", exprType)
-          .build();
+      throw typeMissmatchError(definition.expr, "`String`", exprType);
     }
     return null;
   }
@@ -625,7 +625,7 @@ public class TypeChecker
     if (type != null && !(type instanceof BitsType bitsType)) {
       throw Diagnostic.error("Type mismatch", definition)
           .locationDescription(requireNonNull(definition.enumType),
-              "Expected bits type length but got `%s`", type)
+              "Expected bits type but got `%s`", type)
           .note("In future there will be support for Strings and other types as well.")
           .build();
     }
@@ -659,9 +659,7 @@ public class TypeChecker
       for (var entry : definition.entries) {
         entry.value = wrapImplicitCast(requireNonNull(entry.value), type);
         if (!entry.value.type().equals(type)) {
-          throw Diagnostic.error("Type mismatch", entry.value)
-              .description("Expected %s but got `%s`", type, entry.value.type())
-              .build();
+          throw typeMissmatchError(entry.value, type, entry.value.type());
         }
       }
     }
@@ -1362,9 +1360,7 @@ public class TypeChecker
       var exprType = requireNonNull(definition.expr.type);
       // FIXME: the type must fit into the memory index (address).
       if (!(exprType instanceof DataType)) {
-        throw Diagnostic.error("Type mismatch", definition.expr)
-            .description("Expected typ of DataType but got %s", exprType)
-            .build();
+        throw typeMissmatchError(definition.expr, "DataType", exprType);
       }
     } else {
       throw new IllegalStateException("Not implemented behavior kind: " + definition.kind);
@@ -1556,7 +1552,7 @@ public class TypeChecker
     // Both sides must be boolean
     if (!(leftTyp instanceof BoolType) && !canImplicitCast(leftTyp, Type.bool())) {
       throw Diagnostic.error("Type Mismatch", expr)
-          .locationDescription(expr, "Expected a Boolean here but the left side was an `%s`",
+          .locationDescription(expr, "Expected a `Bool` here but the left side was an `%s`",
               leftTyp)
           .description("The `%s` operator only works on booleans.", expr.operator())
           .build();
@@ -1566,7 +1562,7 @@ public class TypeChecker
     var rightTyp = requireNonNull(expr.right.type);
     if (!(rightTyp instanceof BoolType) && !canImplicitCast(rightTyp, Type.bool())) {
       throw Diagnostic.error("Type Mismatch", expr)
-          .locationDescription(expr, "Expected a Boolean here but the right side was an `%s`",
+          .locationDescription(expr, "Expected a `Bool` here but the right side was an `%s`",
               rightTyp)
           .description("The `%s` operator only works on booleans.", expr.operator())
           .build();
@@ -1777,7 +1773,7 @@ public class TypeChecker
       var argType = check(argument);
       if (!argType.equals(Type.string())) {
         throw Diagnostic.error("Type Mismatch", argument.location())
-            .locationNote(argument, "Expected string but got `%s`", argType)
+            .locationNote(argument, "Expected `String` but got `%s`", argType)
             .description("The string concat operator can only concat strings.")
             .build();
       }
@@ -1829,13 +1825,13 @@ public class TypeChecker
 
     if (!(fromType instanceof BitsType) && !(fromType instanceof ConstantType)) {
       throw Diagnostic.error("Type Mismatch", expr.from)
-          .description("The from part of a range must be a number but was %s", fromType)
+          .description("The from part of a range must be a number but was `%s`", fromType)
           .build();
     }
 
     if (!(toType instanceof BitsType) && !(toType instanceof ConstantType)) {
       throw Diagnostic.error("Type Mismatch", expr.to)
-          .description("The to part of a range must be a number but was %s", fromType)
+          .description("The to part of a range must be a number but was `%s`", fromType)
           .build();
     }
 
@@ -2184,9 +2180,7 @@ public class TypeChecker
       var actualArgType = arg.type();
 
       if (!actualArgType.equals(requiredArgType)) {
-        throw Diagnostic.error("Type Mismatch", arg)
-            .description("Expected %s but got `%s`", requiredArgType, actualArgType)
-            .build();
+        throw typeMissmatchError(expr, requiredArgType, actualArgType);
       }
 
       expr.computedTarget = registerFile;
@@ -2220,9 +2214,7 @@ public class TypeChecker
       var actualArgType = arg.type();
 
       if (!actualArgType.equals(requiredArgType)) {
-        throw Diagnostic.error("Type Mismatch", arg)
-            .description("Expected %s but got `%s`", requiredArgType, actualArgType)
-            .build();
+        throw typeMissmatchError(expr, requiredArgType, actualArgType);
       }
 
       var callType = memDef.type().resultType();
@@ -2298,9 +2290,7 @@ public class TypeChecker
         args.values.set(i, wrapImplicitCast(arg, funcType.argTypes().get(i)));
         arg = args.values.get(i);
         if (!arg.type().equals(funcType.argTypes().get(i))) {
-          throw Diagnostic.error("Type Mismatch", arg)
-              .description("Expected %s but got `%s`", funcType.argTypes(), arg)
-              .build();
+          throw typeMissmatchError(expr, funcType.argTypes().get(i), arg.type());
         }
       }
 
@@ -2330,9 +2320,7 @@ public class TypeChecker
         args.values.set(i, wrapImplicitCast(arg, relocationType.argTypes().get(i)));
         arg = args.values.get(i);
         if (!arg.type().equals(relocationType.argTypes().get(i))) {
-          throw Diagnostic.error("Type Mismatch", arg)
-              .description("Expected %s but got `%s`", relocationType.argTypes(), arg)
-              .build();
+          throw typeMissmatchError(expr, relocationType.argTypes().get(i), arg.type());
         }
       }
 
@@ -2387,6 +2375,7 @@ public class TypeChecker
 
       argTypes = requireNonNull(expr.argsIndices.get(0).values.stream().map(v -> v.type)).toList();
       if (!builtin.takes(argTypes)) {
+        // FIXME: Better format that error
         throw Diagnostic.error("Type Mismatch", expr)
             .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
             .build();
@@ -2418,9 +2407,7 @@ public class TypeChecker
     expr.condition = wrapImplicitCast(expr.condition, Type.bool());
     var condType = expr.condition.type();
     if (condType != Type.bool()) {
-      throw Diagnostic.error("Type Mismatch", expr.condition)
-          .description("Expected %s but got `%s`", Type.bool(), condType)
-          .build();
+      throw typeMissmatchError(expr, Type.bool(), condType);
     }
 
     var thenType = check(expr.thenExpr);
@@ -2548,9 +2535,7 @@ public class TypeChecker
     statement.condition = wrapImplicitCast(statement.condition, Type.bool());
     var condType = statement.condition.type();
     if (condType != Type.bool()) {
-      throw Diagnostic.error("Type Mismatch", statement.condition)
-          .description("Expected `%s` but got `%s`", Type.bool(), condType)
-          .build();
+      throw typeMissmatchError(statement.condition, Type.bool(), condType);
     }
 
     check(statement.thenStmt);
@@ -2575,9 +2560,7 @@ public class TypeChecker
     }
 
     if (!targetType.equals(valueType)) {
-      throw Diagnostic.error("Type mismatch", statement.valueExpression)
-          .description("Expected %s but got `%s`", targetType, valueType)
-          .build();
+      throw typeMissmatchError(statement.valueExpression, targetType, valueType);
     }
 
     return null;
@@ -2660,9 +2643,7 @@ public class TypeChecker
         var actualType = arg.value.type();
 
         if (!targetType.equals(actualType)) {
-          throw Diagnostic.error("Type Mismatch", arg.location())
-              .description("Expected `%s` but got `%s`", targetType, actualType)
-              .build();
+          throw typeMissmatchError(arg, targetType, actualType);
         }
       }
 
@@ -2698,9 +2679,7 @@ public class TypeChecker
         var actualType = statement.unnamedArguments.get(i).type();
 
         if (!targetType.equals(actualType)) {
-          throw Diagnostic.error("Type Mismatch", arg.location())
-              .description("Expected `%s` but got `%s`", targetType, actualType)
-              .build();
+          throw typeMissmatchError(arg, targetType, actualType);
         }
       }
 
