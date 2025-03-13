@@ -49,3 +49,17 @@ jobs:
     with:
       test-task: ${{ matrix.task }}
       runner: ${{ matrix.runner }}
+
+  # Final CI job that indicates success or failure of build and test.
+  # This is used as a branch protection check condition
+  ci-status:
+    runs-on: self-hosted
+    needs: [ build, test ]
+    if: always()
+    steps:
+      - name: Successful CI
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+      - name: Failing CI
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
