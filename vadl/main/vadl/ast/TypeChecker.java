@@ -1874,6 +1874,15 @@ public class TypeChecker
       return Type.bool();
     }
 
+    if (base.equals("String")) {
+      if (!expr.sizeIndices.isEmpty()) {
+        throw Diagnostic.error("Invalid Type Notation", expr.location())
+            .description("The String type doesn't use the size notation.")
+            .build();
+      }
+      return Type.string();
+    }
+
     // The basic types SINT<n>, UINT<n> and BITS<n>
     if (Arrays.asList("SInt", "UInt", "Bits").contains(base)) {
 
@@ -2466,20 +2475,62 @@ public class TypeChecker
 
   @Override
   public Void visit(MatchExpr expr) {
-    throwUnimplemented(expr);
+    var candidateType = check(expr.candidate);
+    var firstResultType = check(expr.cases.get(0).result);
+    for (var kase : expr.cases) {
+      kase.patterns.forEach(this::check);
+      kase.patterns.replaceAll(p -> wrapImplicitCast(p, candidateType));
+      for (var pattern : kase.patterns) {
+        var patternType = pattern.type();
+        if (!candidateType.equals(patternType)) {
+          throw Diagnostic.error("Type Mismatch", pattern)
+              .locationDescription(pattern, "Expected `%s`, but got `%s`", candidateType,
+                  patternType)
+              .note("The type of the candidate and the pattern must be the same.")
+              .build();
+        }
+      }
+
+      // Check that all branches have the same type
+      check(kase.result);
+      kase.result = wrapImplicitCast(kase.result, firstResultType);
+      var resultType = check(kase.result);
+      if (!resultType.equals(firstResultType)) {
+        throw Diagnostic.error("Type Mismatch", kase.result)
+            .locationNote(kase.result, "All results before were of type `%s`, but this is `%s`",
+                firstResultType, resultType)
+            .description("All branches of a match must have the same type")
+            .build();
+      }
+    }
+
+    check(expr.defaultResult);
+    expr.defaultResult = wrapImplicitCast(expr.defaultResult, firstResultType);
+    var defaultResultType = expr.defaultResult.type();
+    if (!defaultResultType.equals(firstResultType)) {
+      throw Diagnostic.error("Type Mismatch", expr.defaultResult)
+          .locationNote(expr.defaultResult,
+              "All results before were of type `%s`, but this is `%s`",
+              firstResultType, defaultResultType)
+          .description("All branches of a match must have the same type")
+          .build();
+
+    }
+
+    expr.type = firstResultType;
     return null;
   }
 
   @Override
   public Void visit(ExtendIdExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw new IllegalStateException(
+        "No %s should ever reach the Typechecker".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
   public Void visit(IdToStrExpr expr) {
-    throwUnimplemented(expr);
-    return null;
+    throw new IllegalStateException(
+        "No %s should ever reach the Typechecker".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
