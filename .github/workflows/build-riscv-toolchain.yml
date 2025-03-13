@@ -1,4 +1,4 @@
-name: Build spike rv64im base image
+name: Build RISC-V GNU Toolchain Image
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -31,7 +31,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: vadl/test/resources/images/spike_rv64im/base_image
+          context: docker/iss/riscv-toolchain
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/openvadl/spike-rv64im-base-image:latest
+          tags: ghcr.io/openvadl/riscv-toolchain:medany-rv32i-rv32im-rv32impriv-rv64i-rv64im-rv64impriv

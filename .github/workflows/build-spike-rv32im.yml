@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: self-hosted-x64
+    runs-on: self-hosted-x86
 
     steps:
       - name: Checkout repository
