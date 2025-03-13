@@ -102,32 +102,38 @@ val createProperties by tasks.registering {
     }
 }
 
-tasks.test {
+
+tasks.withType<Test> {
     useJUnitPlatform()
     jvmArgs("--enable-preview")
-
     reports {
         junitXml.required.set(true)
     }
+}
 
-    // A collection to track failed tests
-    val failedTests = mutableListOf<String>()
+// generators to be tested separately
+val generators = listOf("iss", "lcb")
 
-    afterTest(KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
-        if (result.resultType == TestResult.ResultType.FAILURE) {
-            val failedTest = "${desc.className}::${desc.name}"
-            logger.debug("Adding $failedTest to failedTests...")
-            failedTests.add(failedTest)
+for (gen in generators) {
+    tasks.register<Test>("test-$gen") {
+        val pkg = "vadl.$gen"
+        description = "Runs tests for the $pkg package"
+        filter {
+            includeTestsMatching("$pkg.*")
         }
-    }))
+    }
+}
 
-    afterSuite(KotlinClosure2({ desc: TestDescriptor, result: TestResult ->
-        if (desc.parent == null) { // Matches the outermost suite
-            if (failedTests.isNotEmpty()) {
-                val failedList = failedTests.joinToString(separator = "\t\n") { "- $it" }
-                logger.lifecycle("Failed tests:\n\t$failedList")
-            }
+
+tasks.register<Test>("test-others") {
+    val exclPkgs = generators.joinToString(", ") { "vadl.$it" }
+    description = "Runs tests for vadl.* packages excluding $exclPkgs"
+
+    filter {
+        includeTestsMatching("vadl.*")
+        for (gen in generators) {
+            val pkg = "vadl.$gen"
+            excludeTestsMatching("$pkg.*")
         }
-    }))
-
+    }
 }

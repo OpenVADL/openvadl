@@ -127,6 +127,14 @@ subprojects {
 }
 
 /**************
+ * CI TEST TASK CONFIGS
+ *************/
+
+tasks.register<Test>("test-common") {
+    dependsOn(":vadl:test-others", ":vadl-cli:test", ":java-annotations:test")
+}
+
+/**************
  * CHECKSTYLE TASK CONFIGS
  *************/
 

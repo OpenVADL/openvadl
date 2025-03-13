@@ -1,0 +1,43 @@
+name: Reusable Test Workflow
+
+on:
+  workflow_call:
+    inputs:
+      test-task:
+        description: 'The Gradle test task to run'
+        required: true
+        type: string
+      runner:
+        description: 'Runs-on property'
+        default: 'self-hosted'
+        type: string
+        required: false
+
+jobs:
+  test:
+    name: ${{ inputs.test-task }}
+    runs-on: ${{ inputs.runner }}
+    env:
+      isCI: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'gradle'
+      - name: Run tests
+        run: ./gradlew ${{ inputs.test-task }}
+        env:
+          isCI: true
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: OpenVADL Tests - ${{ inputs.test-task }}
+          path: '**/build/test-results/**/TEST-*.xml'
+          reporter: java-junit
+          list-tests: failed
+      - if: failure()
+        uses: andymckay/cancel-action@0.5
