@@ -1768,18 +1768,27 @@ public class TypeChecker
       return null;
     }
 
-    // String concat
-    for (var argument : expr.expressions) {
-      var argType = check(argument);
-      if (!argType.equals(Type.string())) {
-        throw Diagnostic.error("Type Mismatch", argument.location())
-            .locationNote(argument, "Expected `String` but got `%s`", argType)
-            .description("The string concat operator can only concat strings.")
-            .build();
-      }
+    var types = expr.expressions.stream().map(this::check).toList();
+
+    // String concatination
+    if (types.stream().allMatch(x -> x instanceof StringType)) {
+      expr.type = Type.string();
+      return null;
     }
-    expr.type = Type.string();
-    return null;
+
+    // Bits concatination
+    if (types.stream().allMatch(x -> x instanceof BitsType)) {
+      var width = types.stream().map(t -> ((BitsType) t).bitWidth()).reduce(0, Integer::sum);
+      expr.type = Type.bits(width);
+      return null;
+    }
+
+    throw Diagnostic.error("Type Mismatch", expr)
+        .locationNote(expr, "Provided types: %s",
+            String.join(", ", types.stream().map(Type::toString).toList()))
+        .description(
+            "The concatenation operation can only be applied on a set of strings or a set of bits.")
+        .build();
   }
 
   @Override
