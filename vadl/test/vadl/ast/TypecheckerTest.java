@@ -740,6 +740,85 @@ public class TypecheckerTest {
     Assertions.assertEquals(new ConstantType(BigInteger.valueOf(7)), enumeration.getEntryType("D"));
   }
 
+  @Test
+  public void validIfExprTest() {
+    var prog = """
+          constant x = if 4 = 7 then 3 as Bits<32> else 4 as Bits<32>
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    Assertions.assertEquals(Type.bits(32), finder.getConstantType(ast, "x"));
+  }
+
+  @Test
+  public void inValidIfExprConditionNoBoolTest() {
+    var prog = """
+          constant x = if 4 then 3 as Bits<32> else 4 as Bits<32>
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  public void inValidIfExprBranchesDifferentTypesTest() {
+    var prog = """
+          constant x = if 4 = 7 then 3 as Bits<32> else 4 as Bits<16>
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  public void validMatchExprTest() {
+    var prog = """
+          constant x = match 4 as Bits<32> with 
+          { 1 => 2 as Bits<16>
+          , 2 => 4 as Bits<16>
+          , 3, 9 => 6 as Bits<16>
+          , _ => 42 as Bits<16>
+          } 
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    Assertions.assertEquals(Type.bits(16), finder.getConstantType(ast, "x"));
+  }
+
+  @Test
+  public void invalidMatchExprPatternDifferentTypeTest() {
+    var prog = """
+          constant x = match 4 as Bits<32> with 
+          { 1 => 2 as Bits<16>
+          , 2 as Bits<8> => 4 as Bits<16>
+          , 3 => 6 as Bits<16>
+          , _ => 42 as Bits<16>
+          } 
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
+  @Test
+  public void invalidMatchExprBranchesDifferentTypeTest() {
+    var prog = """
+          constant x = match 4 as Bits<32> with 
+          { 1 => 2 as Bits<16>
+          , 2 => 4 as Bits<32>
+          , 3 => 6 as Bits<16>
+          , _ => 42 as Bits<16>
+          } 
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+  }
+
 
   @Test
   public void instructionEncodingAssembly() {

@@ -660,8 +660,29 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(MatchExpr expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    ExpressionNode node = fetch(expr.defaultResult);
+    ExpressionNode candidate = fetch(expr.candidate);
+
+    // In reverse order to keep the execution order
+    for (int i = expr.cases.size() - 1; i >= 0; i--) {
+      var caseExpr = expr.cases.get(i);
+
+      // Logical or join of all patterns
+      var condition = new BuiltInCall(BuiltInTable.EQU,
+          new NodeList<>(candidate, fetch(caseExpr.patterns.get(0))), Type.bool());
+      for (int j = 1; j < caseExpr.patterns.size(); j++) {
+        var patternCond = new BuiltInCall(BuiltInTable.EQU,
+            new NodeList<>(candidate, fetch(caseExpr.patterns.get(0))), Type.bool());
+        condition =
+            new BuiltInCall(BuiltInTable.OR, new NodeList<>(condition, patternCond), Type.bool());
+      }
+
+      var consequence = fetch(caseExpr.result);
+
+      node = new SelectNode(condition, consequence, node);
+    }
+
+    return node;
   }
 
   @Override
