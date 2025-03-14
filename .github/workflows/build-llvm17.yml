@@ -9,7 +9,9 @@ permissions:
 
 jobs:
   build:
-    runs-on: self-hosted
+    # The build crashed on MacOS arm64, so we only use x64 runners to build the images.
+    # This also avoids the need of exposing the macOS user password as secret to the CI.
+    runs-on: self-hosted-x64
 
     steps:
       - name: Checkout repository
