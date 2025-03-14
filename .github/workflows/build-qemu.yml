@@ -1,4 +1,4 @@
-name: Build spike rv32im base image
+name: Build QEMU base image
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -33,7 +33,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: vadl/test/resources/images/spike_rv32im/base_image
+          context: docker/iss/qemu
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/openvadl/spike-rv32im-base-image:latest
+          tags: ghcr.io/openvadl/qemu-base:latest
