@@ -1,4 +1,4 @@
-FROM kper1337/llvm17_base:v1
+FROM ghcr.io/openvadl/llvm17-base@sha256:fdb0dd457bcaf9ca08a288cdf619042a4b0e029b6d7aaed9fa8bd01183b10c16
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
 WORKDIR /llvm/build
