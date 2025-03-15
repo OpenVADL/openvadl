@@ -339,20 +339,31 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return expr.expressions.get(0).accept(this);
     }
 
-    // String concatination
+    // String or Bits concatenation
     // This code looks so complicated because the concat function can only concat two arguments.
-    // So the first two are directly concatinaed and all others are depend on the previous concat
+    // So the first two are directly concatenated, and all others are depend on the previous concat
     // node.
-    var call = new BuiltInCall(BuiltInTable.CONCATENATE_STRINGS,
-        new NodeList<ExpressionNode>(expr.expressions.get(0).accept(this),
+
+    var concatBuiltin = expr.type().equals(Type.string()) ? BuiltInTable.CONCATENATE_STRINGS :
+        BuiltInTable.CONCATENATE_BITS;
+
+    var type = expr.type().equals(Type.string()) ? expr.type() :
+        Type.bits(expr.expressions.get(0).type().asDataType()
+            .bitWidth() + expr.expressions.get(1).type().asDataType().bitWidth());
+
+    var call = new BuiltInCall(concatBuiltin,
+        new NodeList<>(expr.expressions.get(0).accept(this),
             expr.expressions.get(1).accept(this)),
-        Type.string());
+        type);
 
     for (int i = 2; i < expr.expressions.size(); i++) {
-      call = new BuiltInCall(BuiltInTable.CONCATENATE_STRINGS,
-          new NodeList<ExpressionNode>(call,
+      type = expr.type().equals(Type.string()) ? expr.type() :
+          Type.bits(type.asDataType().bitWidth()
+              + expr.expressions.get(i).type().asDataType().bitWidth());
+      call = new BuiltInCall(concatBuiltin,
+          new NodeList<>(call,
               expr.expressions.get(i).accept(this)),
-          Type.string());
+          type);
     }
 
     return call;

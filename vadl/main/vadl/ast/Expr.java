@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
@@ -1065,7 +1066,7 @@ final class IdToStrExpr extends Expr {
  * or multiple expressions separated by a comma like {@code (a, 1 + 2, c())}.
  *
  * <p>A group expression with a single expression is just arithmetic grouping, but a group
- * expression with multiple is a string concatination.
+ * expression with multiple is a bits or string concatenation.
  */
 // FIXME: This should probably be two nodes as the semantics are so different.
 class GroupedExpr extends Expr {
