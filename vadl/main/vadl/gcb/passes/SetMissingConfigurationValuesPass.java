@@ -47,7 +47,7 @@ public class SetMissingConfigurationValuesPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var config = (LcbConfiguration) configuration();
+    var config = (GcbConfiguration) configuration();
     var targetName = viam.isa().map(x -> x.identifier).orElseThrow();
 
     if (config.isTargetNameNull()) {
