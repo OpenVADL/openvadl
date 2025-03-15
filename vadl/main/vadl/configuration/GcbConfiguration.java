@@ -16,15 +16,48 @@
 
 package vadl.configuration;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import vadl.gcb.valuetypes.TargetName;
+
 /**
  * This record defines some gcb specific LCB configuration.
  */
 public class GcbConfiguration extends GeneralConfiguration {
-  public GcbConfiguration(GeneralConfiguration generalConfiguration) {
+  @Nullable
+  private TargetName targetName;
+
+  public GcbConfiguration(GeneralConfiguration generalConfiguration,
+                          @Nullable TargetName targetName) {
     super(generalConfiguration);
+    this.targetName = targetName;
   }
 
-  public static GcbConfiguration from(GeneralConfiguration generalConfiguration) {
-    return new GcbConfiguration(generalConfiguration);
+  public static GcbConfiguration from(GeneralConfiguration generalConfiguration,
+                                      @Nullable TargetName targetName) {
+    return new GcbConfiguration(generalConfiguration, targetName);
+  }
+
+  /**
+   * Check whether the {@code targetName} is null.
+   */
+  public boolean isTargetNameNull() {
+    return targetName == null;
+  }
+
+  /**
+   * Get the target name and throw an exception when null.
+   */
+  @Nonnull
+  public TargetName targetName() {
+    if (targetName == null) {
+      throw new RuntimeException("targetName must not be null");
+    }
+
+    return targetName;
+  }
+
+  public void setTargetName(@Nullable TargetName targetName) {
+    this.targetName = targetName;
   }
 }

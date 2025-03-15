@@ -79,7 +79,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName
         + "InstrInfo.cpp";
   }
@@ -329,7 +329,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     var jump = getJump(specification, pseudoMatches);
 
     var map = new HashMap<String, Object>();
-    map.put(CommonVarNames.NAMESPACE, lcbConfiguration().processorName().value().toLowerCase());
+    map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
     map.put("copyPhysInstructions",
         getMovInstructions(isaMatches).stream().map(this::map).toList());
     map.put("storeStackSlotInstructions",

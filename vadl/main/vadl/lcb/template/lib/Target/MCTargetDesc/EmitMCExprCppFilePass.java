@@ -43,7 +43,7 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
         + processorName + "MCExpr.cpp";
   }
@@ -66,7 +66,7 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
 
     var baseInfos = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "immediates", immediates,
         "variantKinds", variantKinds,
         "mappingVariantKindsIntoBaseInfos", baseInfos

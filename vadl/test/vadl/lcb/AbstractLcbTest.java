@@ -21,6 +21,7 @@ import java.util.List;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.AbstractCppCodeGenTest;
 import vadl.gcb.valuetypes.ProcessorName;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.Pass;
 import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
@@ -32,7 +33,7 @@ public abstract class AbstractLcbTest extends AbstractCppCodeGenTest {
   @Override
   public LcbConfiguration getConfiguration(boolean doDump) {
     return new LcbConfiguration(super.getConfiguration(doDump),
-        new ProcessorName("processorNameValue"));
+        new TargetName("processorNameValue"));
   }
 
   /**

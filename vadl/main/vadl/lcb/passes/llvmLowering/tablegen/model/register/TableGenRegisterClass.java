@@ -19,6 +19,7 @@ package vadl.lcb.passes.llvmLowering.tablegen.model.register;
 import java.util.List;
 import java.util.stream.Collectors;
 import vadl.gcb.valuetypes.ProcessorName;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.viam.RegisterFile;
 
@@ -26,7 +27,7 @@ import vadl.viam.RegisterFile;
  * Represents a single register file in TableGen. This is the lowered representation of a
  * {@link RegisterFile}.
  */
-public record TableGenRegisterClass(ProcessorName namespace,
+public record TableGenRegisterClass(TargetName namespace,
                                     String name,
                                     int alignment,
                                     List<ValueType> regTypes,

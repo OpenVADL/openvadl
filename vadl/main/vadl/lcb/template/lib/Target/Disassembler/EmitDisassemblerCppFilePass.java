@@ -52,8 +52,8 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + lcbConfiguration().processorName().value() + "/Disassembler/"
-        + lcbConfiguration().processorName().value()
+    return "llvm/lib/Target/" + lcbConfiguration().targetName().value() + "/Disassembler/"
+        + lcbConfiguration().targetName().value()
         + "Disassembler.cpp";
   }
 
@@ -127,7 +127,7 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "immediates",
         extractImmediates(passResults),
         "instructionSize", getInstructionSize(specification),

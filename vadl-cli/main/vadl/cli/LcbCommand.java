@@ -20,11 +20,12 @@ import static picocli.CommandLine.ScopeType.INHERIT;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
+import javax.annotation.Nullable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.ProcessorName;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 
@@ -39,13 +40,22 @@ import vadl.pass.PassOrders;
 public class LcbCommand extends BaseCommand {
 
   @LazyInit
-  @Option(names = {"-p",
-      "--process"}, required = true, scope = INHERIT, description = "Processor Name")
-  String processorName;
+  @Option(names = {"-t",
+      "--target"}, scope = INHERIT, description = "Target Name")
+  String targetName;
 
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
-    var issConfig = new LcbConfiguration(configuration, new ProcessorName(processorName));
-    return PassOrders.lcb(issConfig);
+    var lcbConfig = new LcbConfiguration(configuration, targetName());
+    return PassOrders.lcb(lcbConfig);
+  }
+
+  @Nullable
+  private TargetName targetName() {
+    if (targetName != null) {
+      return new TargetName(targetName);
+    } else {
+      return null;
+    }
   }
 }

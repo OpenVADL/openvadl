@@ -67,7 +67,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName
         + "InstrInfo.td";
   }
@@ -150,7 +150,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     var map = new HashMap<String, Object>();
     map.put(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase());
+        lcbConfiguration().targetName().value().toLowerCase());
     map.put("returnAddress", abi.returnAddress().render());
     map.put("addi", addi.simpleName());
     map.put("lui", lui.simpleName());

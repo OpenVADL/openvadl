@@ -42,7 +42,7 @@ public class EmitELFObjectWriterCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
         + processorName + "ELFObjectWriter.cpp";
   }
@@ -53,7 +53,7 @@ public class EmitELFObjectWriterCppFilePass extends LcbTemplateRenderingPass {
     var container = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "fixups", container.fixups().stream().map(this::mapFixup).toList());
   }
 

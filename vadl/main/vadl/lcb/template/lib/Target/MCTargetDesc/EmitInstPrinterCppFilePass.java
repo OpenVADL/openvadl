@@ -61,7 +61,7 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
         + processorName + "InstPrinter.cpp";
   }
@@ -168,7 +168,7 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
         })
         .toList();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "instructions", printableInstructions,
         "instructionWithEncodedImmediate", Stream.concat(machineInstructionsWithImmediate.stream(),
             machineInstructionsWithLabel.stream()).toList());

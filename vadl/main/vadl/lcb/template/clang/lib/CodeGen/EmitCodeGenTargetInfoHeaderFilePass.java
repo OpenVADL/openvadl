@@ -47,6 +47,6 @@ public class EmitCodeGenTargetInfoHeaderFilePass extends LcbTemplateRenderingPas
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase());
+        lcbConfiguration().targetName().value().toLowerCase());
   }
 }

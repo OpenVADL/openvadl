@@ -19,6 +19,7 @@ package vadl.gcb;
 import java.io.IOException;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.AbstractCppCodeGenTest;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
@@ -28,7 +29,7 @@ public abstract class AbstractGcbTest extends AbstractCppCodeGenTest {
 
   @Override
   public GcbConfiguration getConfiguration(boolean doDump) {
-    return new GcbConfiguration(super.getConfiguration(doDump));
+    return new GcbConfiguration(super.getConfiguration(doDump), new TargetName("processorNameValue"));
   }
 
   /**

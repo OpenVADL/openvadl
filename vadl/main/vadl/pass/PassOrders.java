@@ -36,6 +36,7 @@ import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.InstructionPatternPruningPass;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.NormalizeFieldsToFieldAccessFunctionsPass;
+import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.gcb.passes.assembly.AssemblyConcatBuiltinMergingPass;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
@@ -165,6 +166,7 @@ public class PassOrders {
    */
   public static PassOrder gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) throws IOException {
     var order = viam(gcbConfiguration);
+    order.add(new SetMissingConfigurationValuesPass(gcbConfiguration));
 
     // skip status built-in inlining as lcb
     // needs to know about those status built-in calls.

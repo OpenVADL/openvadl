@@ -19,6 +19,7 @@ package vadl.cppCodeGen;
 import java.io.IOException;
 import vadl.DockerExecutionTest;
 import vadl.configuration.GcbConfiguration;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
@@ -26,7 +27,8 @@ public class AbstractCppCodeGenTest extends DockerExecutionTest {
 
   @Override
   public GcbConfiguration getConfiguration(boolean doDump) {
-    return new GcbConfiguration(super.getConfiguration(doDump));
+    return new GcbConfiguration(super.getConfiguration(doDump),
+        new TargetName("processorNameValue"));
   }
 
   public record TestCase(String testName, String code) {

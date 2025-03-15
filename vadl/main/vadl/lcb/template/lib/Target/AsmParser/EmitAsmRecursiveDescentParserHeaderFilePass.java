@@ -67,7 +67,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + lcbConfiguration().processorName().value()
+    return "llvm/lib/Target/" + lcbConfiguration().targetName().value()
         + "/AsmParser/AsmRecursiveDescentParser.h";
   }
 
@@ -90,7 +90,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
     var grammarRules = grammarRules(specification);
     var parsedValueStructs = parsedValueStructs(specification);
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "parsingResults", grammarRules,
         "parsedValueStructs", parsedValueStructs);
   }
@@ -100,7 +100,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
         asmDesc -> asmDesc.rules().stream().map(
             rule -> new ParsingResultRecord(
                 rule.getAsmType()
-                    .toCppTypeString(lcbConfiguration().processorName().value().toLowerCase()),
+                    .toCppTypeString(lcbConfiguration().targetName().value().toLowerCase()),
                 rule.simpleName().trim(), rule.simpleName()
             )
         )
@@ -111,7 +111,7 @@ public class EmitAsmRecursiveDescentParserHeaderFilePass extends LcbTemplateRend
       Specification specification) {
     return specification.assemblyDescription().map(
         asmDesc -> new StructGenerator().getAllStructs(
-            lcbConfiguration().processorName().value().toLowerCase(), asmDesc.rules())
+            lcbConfiguration().targetName().value().toLowerCase(), asmDesc.rules())
     ).orElse(Stream.empty()).toList();
   }
 }

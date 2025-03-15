@@ -53,7 +53,7 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName
         + "DAGToDAGISel.cpp";
   }
@@ -89,7 +89,7 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
     var zeroRegister = registerFile.identifier.simpleName() + zero.address().intValue();
 
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "lui", lui.identifier.simpleName(),
         "zeroRegister", zeroRegister,
         "stackPointerType",

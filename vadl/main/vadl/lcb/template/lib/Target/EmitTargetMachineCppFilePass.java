@@ -44,7 +44,7 @@ public class EmitTargetMachineCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName + "TargetMachine.cpp";
   }
 
@@ -54,7 +54,7 @@ public class EmitTargetMachineCppFilePass extends LcbTemplateRenderingPass {
     var gpr = ensurePresent(specification.registerFiles().findFirst(),
         "Specification requires at least one register file");
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "dataLayout",
         createDataLayoutString(createDataLayout(gpr)));
   }

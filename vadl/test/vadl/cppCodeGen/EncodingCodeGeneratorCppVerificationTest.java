@@ -35,6 +35,7 @@ import vadl.cppCodeGen.common.GcbAccessOrExtractionFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.types.BitsType;
 import vadl.utils.Pair;
@@ -44,7 +45,8 @@ import vadl.utils.VadlFileUtils;
 public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGenTest {
   @TestFactory
   Collection<DynamicTest> instructions() throws IOException, DuplicatedPassKeyException {
-    var configuration = new GcbConfiguration(getConfiguration(false));
+    var configuration =
+        new GcbConfiguration(getConfiguration(false), new TargetName("processorNameValue"));
     var setup = runGcbAndCppCodeGen(configuration, "sys/risc-v/rv64im.vadl");
 
     // Move files into Docker Context

@@ -59,7 +59,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
         + processorName + "MCInstExpander.cpp";
   }
@@ -111,7 +111,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var function = ensureNonNull(cppFunctions.get(pseudoInstruction),
         "cpp function must exist)");
 
-    var base = lcbConfiguration().processorName();
+    var base = lcbConfiguration().targetName();
     var codeGen =
         new PseudoExpansionCodeGenerator(base,
             fieldUsages,
@@ -123,7 +123,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
 
     var renderedFunction = codeGen.genFunctionDefinition();
     var classPrefix = new CppClassImplName(
-        lcbConfiguration().processorName().value().toLowerCase() + "MCInstExpander");
+        lcbConfiguration().targetName().value().toLowerCase() + "MCInstExpander");
     ensureNonNull(function, "a function must exist");
     return new RenderedPseudoInstruction(
         classPrefix,
@@ -175,7 +175,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             passResults, output.variantKindStore());
 
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "pseudoInstructions",
         Stream.concat(pseudoInstructions.stream(),
             compilerInstructions.stream()).toList()
