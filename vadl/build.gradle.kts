@@ -116,6 +116,8 @@ val generators = listOf("iss", "lcb")
 
 for (gen in generators) {
     tasks.register<Test>("test-$gen") {
+        // fail fast, so we don't try to rebuild all failing images over and over
+        failFast = true
         val pkg = "vadl.$gen"
         description = "Runs tests for the $pkg package"
         filter {
