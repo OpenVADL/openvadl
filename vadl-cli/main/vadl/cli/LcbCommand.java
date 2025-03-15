@@ -52,7 +52,7 @@ public class LcbCommand extends BaseCommand {
 
   @Nullable
   private TargetName targetName() {
-    if(targetName != null) {
+    if (targetName != null) {
       return new TargetName(targetName);
     } else {
       return null;

@@ -50,8 +50,8 @@ public class SetMissingConfigurationValuesPass extends Pass {
     var config = (LcbConfiguration) configuration();
     var targetName = viam.isa().map(x -> x.identifier).orElseThrow();
 
-    if(config.isTargetNameNull()) {
-      config.setTargetName(new TargetName(targetName.simpleName()));
+    if (config.isTargetNameNull()) {
+      config.setTargetName(new TargetName(targetName.simpleName().toLowerCase()));
     }
 
     return null;

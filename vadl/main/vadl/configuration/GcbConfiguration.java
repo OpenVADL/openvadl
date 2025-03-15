@@ -38,13 +38,19 @@ public class GcbConfiguration extends GeneralConfiguration {
     return new GcbConfiguration(generalConfiguration, targetName);
   }
 
+  /**
+   * Check whether the {@code targetName} is null.
+   */
   public boolean isTargetNameNull() {
     return targetName == null;
   }
 
+  /**
+   * Get the target name and throw an exception when null.
+   */
   @Nonnull
   public TargetName targetName() {
-    if(targetName == null) {
+    if (targetName == null) {
       throw new RuntimeException("targetName must not be null");
     }
 
