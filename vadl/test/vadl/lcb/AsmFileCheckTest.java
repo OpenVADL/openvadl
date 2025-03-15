@@ -31,6 +31,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.riscv.SpikeRiscvImageProvider;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
@@ -55,7 +56,7 @@ public abstract class AsmFileCheckTest extends AbstractLcbTest {
     var upstreamBuildTarget = getUpstreamBuildTarget();
     var upstreamClangTarget = getUpstreamClangTarget();
     var configuration = new LcbConfiguration(getConfiguration(false),
-        new ProcessorName(target));
+        new TargetName(target));
 
 
     runLcb(configuration, getSpecPath());

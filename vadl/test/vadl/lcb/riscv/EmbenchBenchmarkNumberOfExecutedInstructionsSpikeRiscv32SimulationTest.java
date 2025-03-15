@@ -31,6 +31,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.ProcessorName;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.AbstractLcbTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
@@ -45,7 +46,7 @@ public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationT
     var target = "rv32im";
     var upstreamBuildTarget = "RISCV";
     var configuration = new LcbConfiguration(getConfiguration(false),
-        new ProcessorName(target));
+        new TargetName(target));
 
     runLcb(configuration, "sys/risc-v/rv32im.vadl");
 

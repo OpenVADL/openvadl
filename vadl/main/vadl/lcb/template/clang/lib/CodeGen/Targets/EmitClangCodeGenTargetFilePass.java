@@ -42,13 +42,13 @@ public class EmitClangCodeGenTargetFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "clang/lib/CodeGen/Targets/" + lcbConfiguration().processorName().value() + ".cpp";
+    return "clang/lib/CodeGen/Targets/" + lcbConfiguration().targetName().value() + ".cpp";
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase());
+        lcbConfiguration().targetName().value().toLowerCase());
   }
 }

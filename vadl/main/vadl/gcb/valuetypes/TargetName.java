@@ -14,30 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.template.lib.Target.Utils;
+package vadl.gcb.valuetypes;
 
-import java.io.IOException;
-import vadl.configuration.LcbConfiguration;
-import vadl.lcb.template.superClass.AbstractEmitImmediateFilePass;
+import java.util.Map;
+import vadl.template.Renderable;
 
 /**
- * This file contains all the immediates for TableGen.
+ * Name of the processor's ISA.
  */
-public class EmitImmediateFilePass extends AbstractEmitImmediateFilePass {
-
-  public EmitImmediateFilePass(LcbConfiguration lcbConfiguration)
-      throws IOException {
-    super(lcbConfiguration);
-  }
-
+public record TargetName(String value) implements Renderable {
   @Override
-  protected String getTemplatePath() {
-    return "lcb/llvm/lib/Target/Utils/ImmediateUtils.h";
-  }
-
-  @Override
-  protected String getOutputPath() {
-    var processorName = lcbConfiguration().targetName().value();
-    return "llvm/lib/Target/" + processorName + "/Utils/ImmediateUtils.h";
+  public Map<String, Object> renderObj() {
+    return Map.of(
+        "value", value
+    );
   }
 }

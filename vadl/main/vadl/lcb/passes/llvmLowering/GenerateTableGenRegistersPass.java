@@ -79,7 +79,7 @@ public class GenerateTableGenRegistersPass extends Pass {
 
     for (var compilerRegister : output.generalRegisters()) {
       var register = new TableGenRegister(
-          configuration.processorName(),
+          configuration.targetName(),
           compilerRegister,
           compilerRegister.hwEncodingValue(),
           Optional.empty()
@@ -91,7 +91,7 @@ public class GenerateTableGenRegistersPass extends Pass {
       var classRegisters = new ArrayList<TableGenRegister>();
       for (var compilerRegister : compilerRegisterClass.registers()) {
         var register = new TableGenRegister(
-            configuration.processorName(),
+            configuration.targetName(),
             compilerRegister,
             compilerRegisterClass.registerFile().addressType().bitWidth() - 1,
             Optional.of(compilerRegister.hwEncodingValue())
@@ -103,7 +103,7 @@ public class GenerateTableGenRegistersPass extends Pass {
       var type = ValueType.from(compilerRegisterClass.registerFile().resultType()).get();
       registerClasses.add(
           new TableGenRegisterClass(
-              configuration.processorName(),
+              configuration.targetName(),
               compilerRegisterClass.name(),
               compilerRegisterClass.alignment().bitAlignment(),
               List.of(type),

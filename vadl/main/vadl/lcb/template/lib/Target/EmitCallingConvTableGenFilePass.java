@@ -46,7 +46,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName
         + "CallingConv.td";
   }
@@ -68,7 +68,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "calleeRegisters", abi.calleeSaved().stream().map(Abi.RegisterRef::render).toList(),
         "functionRegisterType", getFuncArgsAssignToReg(abi).type,
         "functionRegisters", getFuncArgsAssignToReg(abi),

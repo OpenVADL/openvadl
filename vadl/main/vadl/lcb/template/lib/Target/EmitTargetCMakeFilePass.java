@@ -41,13 +41,13 @@ public class EmitTargetCMakeFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + lcbConfiguration().processorName().value() + "/CMakeLists.txt";
+    return "llvm/lib/Target/" + lcbConfiguration().targetName().value() + "/CMakeLists.txt";
   }
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase());
+        lcbConfiguration().targetName().value().toLowerCase());
   }
 }

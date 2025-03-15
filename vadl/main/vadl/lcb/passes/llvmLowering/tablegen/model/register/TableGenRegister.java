@@ -21,12 +21,13 @@ import java.util.Map;
 import java.util.Optional;
 import vadl.gcb.valuetypes.CompilerRegister;
 import vadl.gcb.valuetypes.ProcessorName;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.template.Renderable;
 
 /**
  * Represents a single register in TableGen.
  */
-public record TableGenRegister(ProcessorName namespace,
+public record TableGenRegister(TargetName namespace,
                                CompilerRegister compilerRegister,
                                int hwEncodingMsb,
                                Optional<Integer> index) implements Renderable {

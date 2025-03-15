@@ -41,7 +41,7 @@ public class EmitRegisterInfoHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName
         + "RegisterInfo.h";
   }
@@ -50,7 +50,7 @@ public class EmitRegisterInfoHeaderFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "registerClasses", specification.registerFiles().map(Definition::simpleName).toList());
   }
 }

@@ -43,7 +43,7 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
 
   @Override
   protected String getOutputPath() {
-    return "lld/ELF/Arch/" + lcbConfiguration().processorName().value() + "ManualEncoding.cpp";
+    return "lld/ELF/Arch/" + lcbConfiguration().targetName().value() + "ManualEncoding.cpp";
   }
 
   @Override
@@ -54,7 +54,7 @@ public class EmitLldManualEncodingHeaderFilePass extends LcbTemplateRenderingPas
             GenerateLinkerComponentsPass.class);
     var elfRelocations = output.elfRelocations();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "functions", elfRelocations.stream()
             .collect(Collectors.groupingBy(x -> x.fieldUpdateFunction().functionName().lower()))
             .values()

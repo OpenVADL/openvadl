@@ -51,7 +51,7 @@ public class EmitTripleCppFilePass extends LcbTemplateRenderingPass {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "pointerBitWidth", abi.stackPointer().registerFile().addressType().bitWidth(),
         "isLittleEndian", true); // TODO kper make adjustable
   }

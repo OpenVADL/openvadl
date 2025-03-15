@@ -42,7 +42,7 @@ public class EmitFixupKindsHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
         + processorName + "FixupKinds.h";
   }
@@ -55,7 +55,7 @@ public class EmitFixupKindsHeaderFilePass extends LcbTemplateRenderingPass {
     var fixups = output.fixups();
 
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "fixups", fixups.stream().map(this::map).toList());
   }
 

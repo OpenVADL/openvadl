@@ -42,7 +42,7 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "lld/ELF/Arch/" + lcbConfiguration().processorName().value() + ".cpp";
+    return "lld/ELF/Arch/" + lcbConfiguration().targetName().value() + ".cpp";
   }
 
   record ElfInfo(boolean isBigEndian, int maxInstructionWordSize) {
@@ -62,7 +62,7 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
     var relocations = output.elfRelocations();
     var elfInfo = createElfInfo();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.MAX_INSTRUCTION_WORDSIZE, elfInfo.maxInstructionWordSize(),
         CommonVarNames.IS_BIG_ENDIAN, elfInfo.isBigEndian(),
         CommonVarNames.RELOCATIONS, relocations);

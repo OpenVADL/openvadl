@@ -44,7 +44,7 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + lcbConfiguration().processorName().value()
+    return "llvm/lib/Target/" + lcbConfiguration().targetName().value()
         + "/MCTargetDesc/AsmUtils.h";
   }
 
@@ -69,7 +69,7 @@ public class EmitAsmUtilsHeaderFilePass extends LcbTemplateRenderingPass {
             .map(x -> new RegisterClass(x.identifier.simpleName()))
             .toList();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.REGISTERS_CLASSES, registerFiles,
         "registers",
         specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))

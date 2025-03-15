@@ -90,6 +90,7 @@ import vadl.vdt.passes.VdtLoweringPass;
 import vadl.viam.Specification;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
+import vadl.gcb.passes.SetMissingConfigurationValuesPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
@@ -165,6 +166,7 @@ public class PassOrders {
    */
   public static PassOrder gcbAndCppCodeGen(GcbConfiguration gcbConfiguration) throws IOException {
     var order = viam(gcbConfiguration);
+    order.add(new SetMissingConfigurationValuesPass(gcbConfiguration));
 
     // skip status built-in inlining as lcb
     // needs to know about those status built-in calls.

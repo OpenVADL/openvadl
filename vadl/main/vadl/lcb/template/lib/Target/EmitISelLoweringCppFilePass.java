@@ -68,7 +68,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName + "ISelLowering.cpp";
   }
 
@@ -114,7 +114,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var conditionalValueRange = getValueRangeCompareInstructions(database);
 
     var map = new HashMap<String, Object>();
-    map.put(CommonVarNames.NAMESPACE, lcbConfiguration().processorName().value().toLowerCase());
+    map.put(CommonVarNames.NAMESPACE, lcbConfiguration().targetName().value().toLowerCase());
     map.put("registerFiles", registerFiles.stream().map(this::mapRegisterFile).toList());
     map.put("framePointer", framePointer);
     map.put("stackPointer", stackPointer);

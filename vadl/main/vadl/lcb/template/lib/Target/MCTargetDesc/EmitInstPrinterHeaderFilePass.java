@@ -40,7 +40,7 @@ public class EmitInstPrinterHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
         + processorName + "InstPrinter.h";
   }
@@ -56,7 +56,7 @@ public class EmitInstPrinterHeaderFilePass extends LcbTemplateRenderingPass {
         specification.registerFiles().map(x -> new RegisterClass(x.identifier.simpleName()))
             .toList();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.REGISTERS_CLASSES,
         registerFiles.stream().map(RegisterClass::simpleName).toList());
   }
