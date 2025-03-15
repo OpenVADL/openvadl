@@ -70,7 +70,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName + "RegisterInfo.cpp";
   }
 
@@ -117,7 +117,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         GenerateTableGenMachineInstructionRecordPass.class);
     var constraints = getConstraints(specification);
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "constraints", constraints,
         "framePointer", abi.framePointer().render(),
         "returnAddress", abi.returnAddress().render(),

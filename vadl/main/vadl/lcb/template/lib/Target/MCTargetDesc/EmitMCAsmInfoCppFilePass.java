@@ -44,7 +44,7 @@ public class EmitMCAsmInfoCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/"
         + processorName + "MCAsmInfo.cpp";
   }
@@ -64,7 +64,7 @@ public class EmitMCAsmInfoCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.ASSEMBLY_DESCRIPTION,
         new AssemblyDescription(asmCommentString(specification),
             asmAlignmentIsInBytes(specification))

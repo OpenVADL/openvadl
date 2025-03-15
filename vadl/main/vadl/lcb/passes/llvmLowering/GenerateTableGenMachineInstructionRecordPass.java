@@ -67,7 +67,7 @@ public class GenerateTableGenMachineInstructionRecordPass extends Pass {
               var result = entry.getValue();
               return new TableGenMachineInstruction(
                   instruction.identifier.simpleName(),
-                  lcbConfiguration().processorName().value(),
+                  lcbConfiguration().targetName().value(),
                   instruction,
                   result.info().flags(),
                   result.info().inputs(),

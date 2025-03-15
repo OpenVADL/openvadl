@@ -44,7 +44,7 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/Utils/"
         + processorName + "BaseInfo.h";
   }
@@ -67,7 +67,7 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
     var relocations = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
 
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "isBigEndian", false,
         "relocations", relocations,
         "modifiers", modifiers,

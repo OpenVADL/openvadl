@@ -40,7 +40,7 @@ public class EmitAsmParsedOperandHeaderFilePass extends LcbTemplateRenderingPass
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + lcbConfiguration().processorName().value()
+    return "llvm/lib/Target/" + lcbConfiguration().targetName().value()
         + "/AsmParser/AsmParsedOperand.h";
   }
 
@@ -48,6 +48,6 @@ public class EmitAsmParsedOperandHeaderFilePass extends LcbTemplateRenderingPass
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase());
+        lcbConfiguration().targetName().value().toLowerCase());
   }
 }

@@ -42,7 +42,7 @@ public class EmitTargetElfRelocsDefFilePass extends LcbTemplateRenderingPass {
   @Override
   protected String getOutputPath() {
     return "llvm/include/llvm/BinaryFormat/ELFRelocs/"
-        + lcbConfiguration().processorName().value() + ".def";
+        + lcbConfiguration().targetName().value() + ".def";
   }
 
   @Override
@@ -53,7 +53,7 @@ public class EmitTargetElfRelocsDefFilePass extends LcbTemplateRenderingPass {
             GenerateLinkerComponentsPass.class);
     var relocations = output.elfRelocations();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.RELOCATIONS, relocations);
   }
 }

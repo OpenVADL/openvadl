@@ -44,7 +44,7 @@ public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    return "clang/lib/Basic/Targets/" + lcbConfiguration().processorName().value() + ".h";
+    return "clang/lib/Basic/Targets/" + lcbConfiguration().targetName().value() + ".h";
   }
 
 
@@ -54,7 +54,7 @@ public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
     var gpr = ensurePresent(specification.registerFiles().findFirst(),
         "Specification requires at least one register file");
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.DATALAYOUT, createDataLayoutString(createDataLayout(gpr)));
   }
 }

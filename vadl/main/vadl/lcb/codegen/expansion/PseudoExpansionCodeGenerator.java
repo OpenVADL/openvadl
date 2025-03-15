@@ -38,7 +38,7 @@ import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
-import vadl.gcb.valuetypes.ProcessorName;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.utils.Pair;
@@ -75,7 +75,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   private static final String INSTRUCTION = "instruction";
   private static final String INSTRUCTION_SYMBOL = "instructionSymbol";
 
-  private final ProcessorName processorName;
+  private final TargetName targetName;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, GcbCppFunctionForFieldAccess> immediateDecodings;
   private final List<HasRelocationComputationAndUpdate> relocations;
@@ -87,7 +87,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   /**
    * Constructor.
    */
-  public PseudoExpansionCodeGenerator(ProcessorName processorName,
+  public PseudoExpansionCodeGenerator(TargetName targetName,
                                       IdentifyFieldUsagePass.ImmediateDetectionContainer
                                           fieldUsages,
                                       Map<Format.Field, GcbCppFunctionForFieldAccess>
@@ -98,7 +98,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
                                       PseudoInstruction pseudoInstruction,
                                       Function function) {
     super(function);
-    this.processorName = processorName;
+    this.targetName = targetName;
     this.fieldUsages = fieldUsages;
     this.immediateDecodings = immediateDecodings;
     this.relocations = relocations;
@@ -177,7 +177,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
         ctx.ln(
             "MCOperand %s = MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, "
                 + "Ctx));",
-            argumentImmSymbol, processorName.value(), argumentSymbol, processorName.value(),
+            argumentImmSymbol, targetName.value(), argumentSymbol, targetName.value(),
             requireNonNull(variant.value()));
         ctx.ln(String.format("%s.addOperand(%s);",
             instructionSymbol,
@@ -256,7 +256,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
 
         context.ln("%s.addOperand(MCOperand::createReg(%s::%s%s));",
             instructionSymbol,
-            processorName.value(),
+            targetName.value(),
             registerFile.identifier.simpleName(),
             toHandle.constant().asVal().intValue());
       }
@@ -293,7 +293,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
         .ln(
             "MCOperand %s = "
                 + "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));",
-            argumentRelocationSymbol, processorName.value(), argumentSymbol, processorName.value(),
+            argumentRelocationSymbol, targetName.value(), argumentSymbol, targetName.value(),
             variant)
         .ln(String.format("%s.addOperand(%s);",
             instructionSymbol,
@@ -343,7 +343,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     for (var node : nodes) {
       var sym = symbolTable.getNextVariable();
       context.ln("MCInst %s = MCInst();", sym)
-          .ln("%s.setOpcode(%s::%s);", sym, processorName.value(),
+          .ln("%s.setOpcode(%s::%s);", sym, targetName.value(),
               node.target().identifier.simpleName());
       writeInstructionCall(context, node, sym);
       context.ln("result.push_back(%s);", sym);
@@ -429,7 +429,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
 
   @Override
   public String genFunctionSignature() {
-    return "std::vector<MCInst> %sMCInstExpander::%s_%s".formatted(processorName.value(),
+    return "std::vector<MCInst> %sMCInstExpander::%s_%s".formatted(targetName.value(),
         pseudoInstruction.identifier.lower(), function.simpleName())
         + "(const MCInst& instruction) const";
   }

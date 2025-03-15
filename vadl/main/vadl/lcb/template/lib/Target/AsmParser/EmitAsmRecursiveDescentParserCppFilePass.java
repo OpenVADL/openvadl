@@ -44,7 +44,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
 
   @Override
   protected String getOutputPath() {
-    return "llvm/lib/Target/" + lcbConfiguration().processorName().value()
+    return "llvm/lib/Target/" + lcbConfiguration().targetName().value()
         + "/AsmParser/AsmRecursiveDescentParser.cpp";
   }
 
@@ -54,7 +54,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
     var grammarRules = grammarRules(specification);
     var compareFunction = stringCompareFunction(specification);
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "asmDescriptionExists", specification.assemblyDescription().isPresent(),
         "grammarRules", grammarRules,
         "compareFunction", compareFunction
@@ -79,7 +79,7 @@ public class EmitAsmRecursiveDescentParserCppFilePass extends LcbTemplateRenderi
         .orElse(Stream.empty());
 
     var codeGenerator = new AssemblyParserCodeGenerator(
-        lcbConfiguration().processorName().value().toLowerCase(), parserCaseSensitive, rules
+        lcbConfiguration().targetName().value().toLowerCase(), parserCaseSensitive, rules
     );
 
     return codeGenerator.generateRules();

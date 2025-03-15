@@ -51,7 +51,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName
         + "RegisterInfo.td";
   }
@@ -119,7 +119,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
                 Collectors.joining(", "));
 
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "registers", output.registers(),
         "registerFiles", List.of(
             new WrappedRegisterFile(registerClass, allocationSeq)

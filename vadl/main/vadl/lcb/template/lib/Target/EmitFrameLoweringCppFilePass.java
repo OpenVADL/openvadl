@@ -41,7 +41,7 @@ public class EmitFrameLoweringCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/" + processorName
         + "FrameLowering.cpp";
   }
@@ -58,7 +58,7 @@ public class EmitFrameLoweringCppFilePass extends LcbTemplateRenderingPass {
     var stackAlignment = abi.stackAlignment();
     var transientStackAlignment = abi.transientStackAlignment();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "hasFramePointer", abi.hasFramePointer(),
         "framePointer", framePointer,
         "stackPointer", stackPointer,

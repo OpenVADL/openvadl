@@ -28,6 +28,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.GcbConfiguration;
 import vadl.gcb.AbstractGcbTest;
 import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPass;
+import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 import vadl.utils.VadlFileUtils;
@@ -45,7 +46,8 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
 
   @TestFactory
   Collection<DynamicTest> instructions() throws DuplicatedPassKeyException, IOException {
-    var configuration = new GcbConfiguration(getConfiguration(false));
+    var configuration =
+        new GcbConfiguration(getConfiguration(false), new TargetName("processorNameValue"));
     var setup = runGcbAndCppCodeGen(configuration, "sys/risc-v/rv64im.vadl");
 
     // Move files into Docker Context

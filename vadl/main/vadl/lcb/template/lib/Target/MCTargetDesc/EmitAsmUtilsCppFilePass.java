@@ -55,7 +55,7 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/MCTargetDesc/AsmUtils.cpp";
   }
 
@@ -136,7 +136,7 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
     var modifiers = formatModifier(passResults);
 
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "registers",
         specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
             .flatMap(x -> x.registers().stream()).toList(),

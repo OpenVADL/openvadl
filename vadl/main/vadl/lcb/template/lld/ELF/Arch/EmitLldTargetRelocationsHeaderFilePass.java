@@ -43,7 +43,7 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
 
   @Override
   protected String getOutputPath() {
-    return "lld/ELF/Arch/" + lcbConfiguration().processorName().value() + "Relocations.hpp";
+    return "lld/ELF/Arch/" + lcbConfiguration().targetName().value() + "Relocations.hpp";
   }
 
   @Override
@@ -54,7 +54,7 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
             GenerateLinkerComponentsPass.class);
     var relocations = output.elfRelocations();
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "relocations", relocations.stream()
             .map(relocation -> {
               var generator =

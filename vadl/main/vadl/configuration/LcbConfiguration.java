@@ -16,25 +16,22 @@
 
 package vadl.configuration;
 
-import vadl.gcb.valuetypes.ProcessorName;
+import javax.annotation.Nullable;
+import vadl.gcb.valuetypes.TargetName;
 
 /**
  * This record defines some lcb specific LCB configuration.
  */
 public class LcbConfiguration extends GcbConfiguration {
-  private final ProcessorName processorName;
 
-  public LcbConfiguration(GeneralConfiguration gcbConfiguration, ProcessorName processorName) {
-    super(gcbConfiguration);
-    this.processorName = processorName;
+
+  public LcbConfiguration(GeneralConfiguration gcbConfiguration, @Nullable TargetName targetName) {
+    super(gcbConfiguration, targetName);
   }
 
   public static LcbConfiguration from(GcbConfiguration gcbConfiguration,
-                                      ProcessorName processorName) {
-    return new LcbConfiguration(gcbConfiguration, processorName);
+                                      TargetName targetName) {
+    return new LcbConfiguration(gcbConfiguration, targetName);
   }
 
-  public ProcessorName processorName() {
-    return processorName;
-  }
 }

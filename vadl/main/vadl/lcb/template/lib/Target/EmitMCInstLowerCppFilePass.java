@@ -42,7 +42,7 @@ public class EmitMCInstLowerCppFilePass extends LcbTemplateRenderingPass {
 
   @Override
   protected String getOutputPath() {
-    var processorName = lcbConfiguration().processorName().value();
+    var processorName = lcbConfiguration().targetName().value();
     return "llvm/lib/Target/" + processorName + "/"
         + processorName + "MCInstLower.cpp";
   }
@@ -55,7 +55,7 @@ public class EmitMCInstLowerCppFilePass extends LcbTemplateRenderingPass {
             GenerateLinkerComponentsPass.class)).linkModifierToVariantKind();
 
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().processorName().value().toLowerCase(),
+        lcbConfiguration().targetName().value().toLowerCase(),
         "linkModifiersToVariantKinds", linkModifiersToVariantKinds.stream().map(
                 pair -> Map.of("modifier", pair.left().value(),
                     "variantKind", pair.right().value()))
