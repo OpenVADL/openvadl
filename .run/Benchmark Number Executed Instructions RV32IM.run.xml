@@ -7,9 +7,9 @@
         </map>
       </option>
       <option name="executionName" />
-      <option name="externalProjectPath" value="$PROJECT_DIR$/.." />
+      <option name="externalProjectPath" value="$PROJECT_DIR$" />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="-PopenVadl.tests=EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationTest -PnoXtendCompile -i" />
+      <option name="scriptParameters" value="-i" />
       <option name="taskDescriptions">
         <list />
       </option>
@@ -17,7 +17,7 @@
         <list>
           <option value="test" />
           <option value="--tests" />
-          <option value="at.ac.tuwien.complang.vadl.tests.OpenVADLSpecificTests" />
+          <option value="vadl.lcb.riscv.EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationTest" />
         </list>
       </option>
       <option name="vmOptions" />
