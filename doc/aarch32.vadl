@@ -1,0 +1,48 @@
+instruction set architecture AArch32 = {
+
+register file R: Bits<4> -> Bits<32>
+format   Status: Bits<1> = {Z : Bits<1>}
+register   APSR: Status
+
+enumeration cond: Bits<4> =
+  { EQ  // equal                   Z == 1
+  , NE  // not equal               Z == 0
+  //...
+  , AL  // always
+  }
+
+format ArLoImm: Bits<32> = // arithmetic/logic immediate format
+  { cc    [31..28]         // condition
+  , op    [27..21]         // opcode
+  , flags [20]             // set status register
+  , rn    [19..16]         // source register
+  , rd    [15..12]         // destination register
+  , imm12 [11..0]          // 12 bit immediate
+  }
+
+record Instr (id: Id, ass: Str, op: BinOp, opcode: Bin)
+record Cond  (str: Str, code: Id, ex: Ex)
+
+model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
+  instruction ExtendId ($instr.id, $cond.str) : ArLoImm =
+    if ($cond.ex) then
+      R(rd) := R(rn) $instr.op imm12 as Bits<32>
+  encoding ExtendId ($instr.id, $cond.str) =
+    {cc = cond::$cond.code, op = $instr.opcode, flags = 0}
+  assembly ExtendId ($instr.id, $cond.str) =
+    ($instr.ass, $cond.str, ' ', register(rd), ',', register(rn), ',', decimal(imm12))
+  }
+
+model-type CondInstrModel = (Cond, Instr) -> IsaDefs
+
+model CondInstr (instrModelId: CondInstrModel, instr: Instr) : IsaDefs = {
+  $instrModelId (( "eq" ; EQ ;  APSR.Z = 0b1 ) ; $instr)
+  $instrModelId (( "ne" ; NE ;  APSR.Z = 0b0 ) ; $instr)
+  //...
+  }
+
+$CondInstr(ALImmCondInstr ; ( ADD ; "add" ; + ; 0b000'0100 ))
+$CondInstr(ALImmCondInstr ; ( SUB ; "sub" ; - ; 0b000'0010 ))
+$CondInstr(ALImmCondInstr ; ( AND ; "and" ; & ; 0b000'0000 ))
+$CondInstr(ALImmCondInstr ; ( ORR ; "orr" ; | ; 0b000'1100 ))
+}

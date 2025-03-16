@@ -25,11 +25,13 @@ The index can be any expression which can be evaluated to a constant value durin
 Multiple indices and ranges can be combined in a single slice specification by separating indices and ranges by a comma.
 The following examples show different ways for the specification of slices:
 
-`a(7..0)            // extracts the lowest 8 bit`\n
-`a(7,6,5,4,3,2,1,0) // equal to a(7..0)`\n
-`a(11..8,3..0)      // concatenates two 4 bit ranges`\n
-`a(3..0,11..8)      // reversed order to above example`\n
-`a(16-1,5+1..0)     // concatenates the highest bit with the 6 lowest bits`
+```
+a(7..0)            // extracts the lowest 8 bit
+a(7,6,5,4,3,2,1,0) // equal to a(7..0), concatenation of single bits
+a(11..8,3..0)      // concatenates two 4 bit ranges
+a(3..0,11..8)      // reversed order to above example
+a(16-1,5+1..0)     // concatenates the highest bit with the 7 lowest bits
+```
 
 To express explicitly signed and unsigned arithmetic operations \ac{VADL} provides two sub-types of `Bits<`\f$N\f$`>` -- `SInt<`\f$N\f$`>` and `UInt<`\f$N\f$`>`.
 `SInt<`\f$N\f$`>` represents a signed two's complement integer type of length \f$N\f$. 

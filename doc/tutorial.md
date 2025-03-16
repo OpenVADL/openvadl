@@ -5,10 +5,10 @@
 
 Every \ac{VADL} processor specification is separated into different sections.
 
-Listing \r{riscv-isa} shows a complete \ac{ISA} specification of all RISC-V instructions with immediate operands and branches.
+Listing \r{riscv_isa} shows a complete \ac{ISA} specification of all RISC-V instructions with immediate operands and branches.
 It is a good example to show the most important \ac{VADL} \ac{ISA} features.
 
-\listing{riscv-isa, RISC-V ISA specification for instructions with immediate operands and all branches}
+\listing{riscv_isa, RISC-V ISA specification for instructions with immediate operands and all branches}
 ~~~{.vadl}
 instruction set architecture RV32I = {
 
@@ -142,7 +142,7 @@ The following table lists all core syntax types with a description and examples:
 |:--------|:-------------------------------------|:-----------------------------------------:|
 | Ex      | Generic VADL Expression              | `X(rs1) + X(rs2) * 2                    ` |
 | Lit     | Generic VADL Literal                 | `1, "ADDI"                              ` |
-| Val     | Generic VADL Value Literal           | `1, 0b001                               ` |
+| Val     | Generic VADL Value Literal           | `true, 1, 0b001, 0x00ff                 ` |
 | Bool    | Boolean Literal                      | `true, false                            ` |
 | Int     | Integer Literal                      | `1, 2, 3                                ` |
 | Bin     | Binary or Hexadecimal Literal        | `0b0111, 0xff                           ` |
@@ -150,18 +150,19 @@ The following table lists all core syntax types with a description and examples:
 | CallEx  | Arbitrary Call Expression            | `MEM<2>(rs1),PC.next,abs(X(rs1)),Z(0)(1)` |
 | SymEx   | Symbol Expression                    | `rs1, MEM<2>, VADL::add                 ` |
 | Id      | Identifier                           | `rs1, ADDI, X                           ` |
-| BinOp   | Binary Operator                      | `+, -, *                                ` |
-| UnOp    | Unary Operator                       | `-, !                                   ` |
+| BinOp   | Binary Operator                      | `+, -, *, &&, +`\|`, <>>, !in           ` |
+| UnOp    | Unary Operator                       | `-, ~, !                                ` |
 | Stat    | Generic VADL Statement               | `X(rd) := X(rs)                         ` |
 | Stats   | List of VADL Statements              | `X(rd) := X(rs) ...                     ` |
-| Defs    | List of common VADL Definitions      | `constant b = 8, using Byte = Bits<8>   ` |
+| Defs    | List of common VADL Definitions      | `constant b = 8 * 4 ...                 ` |
 | IsaDefs | List of VADL ISA Definition          | `instruction ORI : Itype = { ... } ...  ` |
 | Encs    | Element(s) of an Encoding Definition | `opcode = 0b110’0011, none, ...         ` |
 
-Call expressions represent function or method calls, memory accesses or indexed registers accesses with slicing.
-The left hand side expression of an assignment also is a call expression.
+Call expressions represent function or method calls, memory accesses or indexed registers accesses with slicing and field accesses.
+The left hand side expression of an assignment statement also is a call expression.
 Additional examples are `X(rs1)(15..0)`, `IntQueue.consume(@BranchIntBase)`, `VADL::add(X(5), X(6) * 2)` and `a(11..8,3..0)`.
 A symbol expression consists of an identifier path optionally followed by a vector specification (`<VectorSizeExpression>`).
+`Stats`, `Defs`, `IsaDefs` and `Encs` require at least one element of the specified type.
 
 Figure \r{syntax_type_hierarchy} displays the subtype relation between the presented core types.
 The macro type system provides an implicit up-casting of the value types.
@@ -214,12 +215,25 @@ symex   -- id      ;
 
 ### Macro Definition (model)
 
-A macro is defined through the keyword `model` followed by the name of the macro, a list of typed arguments in parentheses separated by the comma symbol `","`, the type of the macro after a colon symbol `":"` and after the equal symbol `"="` the body of the macro enclosed in parentheses.
+A macro is defined through the keyword `model` followed by the name of the macro, a list of typed arguments in parentheses separated by the comma symbol `","`, the type of the macro after a colon symbol `":"` and after the equal symbol `"="` the body of the macro enclosed in braces.
 The usage of the model arguments inside the model body is indicated by the dollar symbol `"$"`.
 When a model is invoked, the model arguments in the body are substituted by the values passed in the arguments.
 Similar to arguments the invocation of a model is indicated by the dollar symbol `"$"`.
 The arguments in a model invocation are separated by the semicolon symbol `";"`.
-The result of the model invocation in line 51 of Listing \r{riscv-isa} is shown in Listing \r{macro_model_invocation}.
+The result of the model invocation in line 8 of Listing \r{macro_model_definition} is shown in Listing \r{macro_model_invocation}.
+
+\listing{macro_model_definition, Model Definition and Invocation}
+~~~{.vadl}
+  model ItypeInstr (name : Id, op : BinOp, funct3 : Bin, type: Id) : IsaDefs = {
+    instruction $name : Itype =
+       X(rd) := (X(rs1) as $type $op immS as $type) as Regs
+    encoding $name = {opcode = 0b001'0011, funct3 = $funct3}
+    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+    }
+
+  $ItypeInstr (ADDI ; +  ; 0b000 ; SInt) // add immediate
+~~~
+\endlisting
 
 
 \listing{macro_model_invocation, Result of Model Invocation}
@@ -235,7 +249,7 @@ The result of the model invocation in line 51 of Listing \r{riscv-isa} is shown 
 ### Conditional Macro (match)
 \lbl{macro_match}
 
-To support the conditional application of macros VADL provides an explicitly typed `match`-macro.
+VADL provides an explicitly typed `match`-macro to support the conditional application of macros.
 It will conditionally insert the match result into the syntax tree.
 It can be used inside a `model` definition as well as in any location in a specification.
 A match macro is started by the keyword `match` followed by the colon symbol `":"` and the syntax type of the macro.
@@ -243,13 +257,13 @@ Enclosed by parentheses is a list of `match` elements separated by a semicolon `
 A `match` element contains a condition followed by the result of the macro after the double arrow symbol `"=>"`. 
 For the conditions only comparisons for equality (`"="`) or inequality (`"!="`) between two syntax elements are allowed.
 For every `match`-macro a default case has to be provided at the last position, indicated by the underline symbol `"_"`.
-When used outside of a model defintion only macro invocations can be used in the comparison.
-In the example in Listing \r{match_macro}, a user can switch between 32 and 64 Bit length by setting the appropriate `Arch` to `Arch64`.
+When used outside of a model definition only macro invocations can be used in the comparison.
+In the example in Listing \r{match_macro}, a user can switch between a 32 and 64 bit address width by setting the appropriate model `Arch` to the identifier `Arch64`.
 
 \listing{match_macro, Matching on a model}
 ~~~{.vadl}
 model Arch () : Id = {Arch64}
-constant AddrWidth = match : Ex ($Arch() = Arch64 => 64; _ => 32)
+constant AddrWidth = match : Int ($Arch() = Arch64 => 64; _ => 32)
 using Addr = Bits<AddrWidth>
 ~~~
 \endlisting
@@ -273,6 +287,8 @@ model SafeOp(left: Id, op: BinOp, right: Id): Ex = {
 
 ### Syntax Type Composition (record)
 
+In real world processor specifications the number of model arguments can become quite large.
+Model types can be grouped together in a `record` to reduce the number of arguments.
 Listing \r{record_definition} shows a `record` definition used for type composition.
 In this particular case the record definition composes an `Id` and `BinOp` type to the new type `BinInstRec`.
 The body of a record definition consists of a parameter list providing typed fields.
@@ -292,11 +308,9 @@ record BinInstRec ( name: Id, op: BinOp )
 
 \listing{record_application, Record Application}
 ~~~{.vadl}
-model InstModel (info: BinInstRec)
-  : IsaDefs = {
-  instruction $info.name : F = {
+model InstModel (info: BinInstRec) : IsaDefs = {
+  instruction $info.name : F =
     X(rd) := X(rs1) $info.op X(rs2)
-    }
 }
 
 $InstModel( ( SUB ; - ) )
@@ -304,7 +318,7 @@ $InstModel( ( ADD ; + ) )
 ~~~
 \endlisting
 
-### Lexical Macro Functions 
+### Lexical Macro Functions (ExtendId, IdToStr)
 
 While most of the needs are covered by syntactical macros, string and identifier manipulation is best done using lexical macros.
 A lexical macro acts on the abstraction level of token streams in contrast to an already parsed AST.
@@ -345,11 +359,35 @@ instruction ADD : RType = X(rd) := $Addition(X(rs1) ; X(rs2))
 Listing \r{model_producing_model} shows the model `BinExFactory` which in turn produces a model.
 Because the `$BinExFactory` instance is evaluated immediately after it is parsed, the produced model `Addition` is known to the parser and can be used in the definition of the `ADD` instruction. 
 
+#### Macros as Macro arguments
+
+When using a macro as an argument of a macro, it is necessary to specify the signature of the passed macro in the argument type declaration (e.g. `(Ex, Ex) -> Ex` in Listing \r{higher_order_model_definition}).
+As an alternative with better readability the signature can be declared in a separate type definition with the keyword `model-type` followed by the signature after the equal symbol `=`.
+
+The model `BinExStat` takes a macro of type `BinExType` as an argument and returns a statement.
+When the model `BinExStat` is invoked with the model `AddExp` as an argument, an assignment statement with an addition on the right hand side is generated.
+
+\listing{higher_order_model_definition, Higher-Order Macro Passing a Macro as Argument}
+~~~{.vadl}
+model-type BinExType = (Ex, Ex) -> Ex
+
+model BinExStat (binEx : BinExType) : Stat = {
+    X(rd) := $binEx(X(rs1) ; X(rs2))
+  }
+
+model AddExp (rhs: Ex, lhs : Ex) : Ex = {
+  $rhs + $lhs
+  }
+
+$BinExStat(AddExp)
+~~~
+\endlisting
+
 #### Type variance in model-type parameters
 
 If a macro is passed as an argument to a model and assuming that the type for this argument is declared by a `model-type`, then OpenVADL allows the model parameters of the passed macro to be supertypes of the `model-type` parameters and the result type to be a subtype of the `model-type` result.
 Listing \r{model_type_parameters} shows a reference to `model Constants` being used as an `IsaDefsFactory`.
-The reference is of a valid type because the result type `Defs` is a subtype of `IsaDefs` and the type `Ex` of parameter `size` is a supertype of `Id` (see Figure \r{syntax_type_hierarchy}). 
+The reference is of a valid type because the result type `Defs` is a subtype of `IsaDefs` and the type `Ex` of parameter `size` is a supertype of `Id` (see Listing \r{syntax_type_hierarchy}). 
 
 \listing{model_type_parameters, Valid types in model references}
 ~~~{.vadl}
@@ -372,16 +410,45 @@ instruction set architecture ISA = {
 ~~~
 \endlisting
 
-\listing{higher_order_macro, Instruction Specification applying Higher Order Macros}
+#### Design Patterns for Using Higher-Order Macros
+
+The ARM architecture AArch32 has a register file called `R` consisting of 16 registers which are 32 bits wide (see Listing \r{higher_order_macro}).
+Conditions are specified by boolean expressions on flags of the status register `APSR`, e.g. the zero flag `Z`.
+Every instruction can be executed conditionally.
+There are 15 different conditions which are described by an enumeration in the specification and encoded by the `cc` field in an instruction word which is 32 bits wide.
+Arithmetic/logic instructions, which have an immediate value as second source operand, share a common instruction encoding specified in the `ArLoImm` instruction format.
+
+\listing{higher_order_macro, AArch32 -- Instruction Specification applying Higher Order Macros}
 ~~~{.vadl}
+instruction set architecture AArch32 = {
+
+register file R: Bits<4> -> Bits<32>
+format   Status: Bits<1> = {Z : Bits<1>}
+register   APSR: Status
+
+enumeration cond: Bits<4> =
+  { EQ  // equal                   Z == 1
+  , NE  // not equal               Z == 0
+  //...
+  , AL  // always
+  }
+
+format ArLoImm: Bits<32> = // arithmetic/logic immediate format
+  { cc    [31..28]         // condition
+  , op    [27..21]         // opcode
+  , flags [20]             // set status register
+  , rn    [19..16]         // source register
+  , rd    [15..12]         // destination register
+  , imm12 [11..0]          // 12 bit immediate
+  }
+
 record Instr (id: Id, ass: Str, op: BinOp, opcode: Bin)
 record Cond  (str: Str, code: Id, ex: Ex)
 
 model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
-  instruction ExtendId ($instr.id, $cond.str) : ArLoImm = {
+  instruction ExtendId ($instr.id, $cond.str) : ArLoImm =
     if ($cond.ex) then
-      R(rd) := R(rn) $instr.op imm12
-    }
+      R(rd) := R(rn) $instr.op imm12 as Bits<32>
   encoding ExtendId ($instr.id, $cond.str) =
     {cc = cond::$cond.code, op = $instr.opcode, flags = 0}
   assembly ExtendId ($instr.id, $cond.str) =
@@ -390,9 +457,9 @@ model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
 
 model-type CondInstrModel = (Cond, Instr) -> IsaDefs
 
-model CondInstr (modelid: CondInstrModel, instr: Instr) : IsaDefs = {
-  $modelid (( "eq" ; EQ ;  APSR.Z = 0b1 ) ; $instr)
-  $modelid (( "ne" ; NE ;  APSR.Z = 0b0 ) ; $instr)
+model CondInstr (instrModelId: CondInstrModel, instr: Instr) : IsaDefs = {
+  $instrModelId (( "eq" ; EQ ;  APSR.Z = 0b1 ) ; $instr)
+  $instrModelId (( "ne" ; NE ;  APSR.Z = 0b0 ) ; $instr)
   //...
   }
 
@@ -400,6 +467,40 @@ $CondInstr(ALImmCondInstr ; ( ADD ; "add" ; + ; 0b000'0100 ))
 $CondInstr(ALImmCondInstr ; ( SUB ; "sub" ; - ; 0b000'0010 ))
 $CondInstr(ALImmCondInstr ; ( AND ; "and" ; & ; 0b000'0000 ))
 $CondInstr(ALImmCondInstr ; ( ORR ; "orr" ; | ; 0b000'1100 ))
+}
 ~~~
 \endlisting
 
+As in the AArch32 architecture every instruction can be executed conditionally, a basic instruction exists in 15 variants for 15 different conditions.
+This problem can be solved smartly by an extension macro design pattern using higher-order macros as demonstrated in Listing \r{higher_order_macro}.
+
+To reduce the number of macro arguments record types are defined for an instruction and a condition.
+The `Inst` record type definition groups the four arguments describing an instruction together.
+The `Cond` record type definition consists of a string representing the extension of the assembly name, the identifier of the enumeration of the condition encoding and a boolean expression for condition evaluation. 
+
+Now 15 different instructions with a unique identifier have to be created.
+This can be handled with the lexical macro function `ExtendId` by appending the extension string of the condition to the identifier.
+
+The final problem is that there is a set of models which describe different kinds of conditional instructions and all these models should be called 15 times for the 15 different conditions.
+This can be solved by the higher-order model `CondInstr`, which takes an instruction model (e.g. `ALImmCondInstr`) as first argument.
+The instruction model is then called 15 times with an argument list which has been extended by the conditions.
+In the above example the 4 macro calls expand to 60 different instructions.
+The AArch32 architecture has instructions with a lot of additional variants like setting the status register, shifted operands or complex addressing modes.
+This leads to a specification with multiple higher-order macro arguments.
+
+### Macro Usage for Configuration
+
+VADL provides the possibility of passing configuration information to the macro system using the command line.
+Currently, this mechanism is kept very simple and is restricted to elements of type `Id`.
+To prepare a configurable macro variable a default model of type `Id` has to be defined.
+Listing \r{macro_configuration} shows such a variable of name `Arch`, with the default setting `Aarch32`.
+Without any passed configurations the instantiation of `Arch` results in the identifier `Aarch32`.
+If VADL receives the command line option `-m` or `--model` followed by the string `"Arch=Aarch64"`, the value of `Arch` is overridden.
+If `Arch` is instantiated given the previous command line option, it would result in `Aarch64`.
+In combination with conditional expansion, see Section \r{macro_match} and Listing \r{match_macro}, this simple mechanism already provides powerful configuration capabilities.
+
+\listing{macro_configuration, Macro Configuration Variable}
+~~~{.vadl}
+model Arch() : Id = { Aarch32 }
+~~~
+\endlisting

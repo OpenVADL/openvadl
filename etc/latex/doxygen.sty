@@ -170,12 +170,13 @@
 , numbers=left
 , numbersep=5pt
 , numberstyle=\tiny\color{gray}
-, keywordstyle=\color{blue}\bfseries
-, keywords=
+, alsoletter={-},
+, keywords=[1]
   { instruction
   , set
   , architecture
   , instance
+  , model-type
   , model
   , record
   , memory
@@ -277,13 +278,16 @@
   , pipeline
   , assert
   }
-, string=[b][\color{ForestGreen}]"
-, comment=[l][\color{red}]{//}
-, morecomment=[s][\color{red}]{/*}{*/}
-, morecomment=[l][\color{red}]{\#}
+, keywordstyle=[1]\color{blue}\bfseries
+, keywords=[2]{Ex, Lit, Val, Int, Bin, Str, CallEx, SymEx, Id, BinOp, UnOp, Stat, Stats, Defs, IsaDefs, Encs}
+, keywordstyle=[2]\color{violet}\bfseries
+, string=[b][\color{red}]"
+, comment=[l][\color{ForestGreen}]{//}
+, morecomment=[s][\color{ForestGreen}]{/*}{*/}
+, morecomment=[l][\color{ForestGreen}]{\#}
 , showspaces=false
 , showstringspaces=false
-, stringstyle=\color{ForestGreen}
+, stringstyle=\color{red}
 , tabsize=4
 }
 
