@@ -482,11 +482,11 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               std::vector< MCInst > result;
               MCInst a = MCInst();
               a.setOpcode(processorNameValue::BEQ);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
               const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
               MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_SYMB_ABS_RV3264I_Btype_imm, Ctx));
               a.addOperand(c);
-              a.addOperand(instruction.getOperand(0));
-              a.addOperand(MCOperand::createReg(processorNameValue::X0));
               result.push_back(a);
               return result;
         }
@@ -498,11 +498,11 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               std::vector< MCInst > result;
               MCInst a = MCInst();
               a.setOpcode(processorNameValue::BNE);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
               const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
               MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_SYMB_ABS_RV3264I_Btype_imm, Ctx));
               a.addOperand(c);
-              a.addOperand(instruction.getOperand(0));
-              a.addOperand(MCOperand::createReg(processorNameValue::X0));
               result.push_back(a);
               return result;
         }
@@ -514,11 +514,11 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               std::vector< MCInst > result;
               MCInst a = MCInst();
               a.setOpcode(processorNameValue::BGE);
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(instruction.getOperand(0));
               const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
               MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_SYMB_ABS_RV3264I_Btype_imm, Ctx));
               a.addOperand(c);
-              a.addOperand(MCOperand::createReg(processorNameValue::X0));
-              a.addOperand(instruction.getOperand(0));
               result.push_back(a);
               return result;
         }
@@ -530,11 +530,11 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               std::vector< MCInst > result;
               MCInst a = MCInst();
               a.setOpcode(processorNameValue::BGE);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
               const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
               MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_SYMB_ABS_RV3264I_Btype_imm, Ctx));
               a.addOperand(c);
-              a.addOperand(instruction.getOperand(0));
-              a.addOperand(MCOperand::createReg(processorNameValue::X0));
               result.push_back(a);
               return result;
         }
@@ -546,11 +546,11 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               std::vector< MCInst > result;
               MCInst a = MCInst();
               a.setOpcode(processorNameValue::BLT);
+              a.addOperand(instruction.getOperand(0));
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
               const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
               MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_SYMB_ABS_RV3264I_Btype_imm, Ctx));
               a.addOperand(c);
-              a.addOperand(instruction.getOperand(0));
-              a.addOperand(MCOperand::createReg(processorNameValue::X0));
               result.push_back(a);
               return result;
         }
@@ -562,11 +562,11 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               std::vector< MCInst > result;
               MCInst a = MCInst();
               a.setOpcode(processorNameValue::BLT);
+              a.addOperand(MCOperand::createReg(processorNameValue::X0));
+              a.addOperand(instruction.getOperand(0));
               const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(1));
               MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_SYMB_ABS_RV3264I_Btype_imm, Ctx));
               a.addOperand(c);
-              a.addOperand(MCOperand::createReg(processorNameValue::X0));
-              a.addOperand(instruction.getOperand(0));
               result.push_back(a);
               return result;
         }

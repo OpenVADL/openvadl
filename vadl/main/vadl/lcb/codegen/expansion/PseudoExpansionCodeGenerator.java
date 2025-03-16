@@ -20,15 +20,12 @@ import static java.util.Objects.requireNonNull;
 import static vadl.error.DiagUtils.throwNotAllowed;
 import static vadl.utils.GraphUtils.getNodes;
 import static vadl.viam.ViamError.ensure;
-import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.common.collect.Streams;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
@@ -363,9 +360,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
         Streams.zip(instrCallNode.getParamFields().stream(), instrCallNode.arguments().stream(),
             Pair::of).toList();
 
-    var reorderedPairs = reorderParameters(instrCallNode.target(), pairs);
-
-    reorderedPairs.forEach(pair -> {
+    pairs.forEach(pair -> {
       /*
         pseudo instruction CALL( symbol : Bits<32> ) =
          {
@@ -374,6 +369,8 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
          }
 
          E.g. rd is the field and 1 is the argument.
+         Expander relies on defined order of parameters,
+         e.g. instruction.getOperand(0) is called to retrieve parameter rd.
       */
 
       var field = pair.left();
@@ -399,32 +396,6 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
             .build();
       }
     });
-  }
-
-  /**
-   * The order of the parameters is not necessarily the order in which the expansion should happen.
-   * This function looks at the {@link Format} and reorders the list to the same
-   * order.
-   */
-  private List<Pair<Format.Field, ExpressionNode>> reorderParameters(
-      Instruction instruction,
-      List<Pair<Format.Field, ExpressionNode>> pairs) {
-    var result = new ArrayList<Pair<Format.Field, ExpressionNode>>();
-    var lookup = pairs.stream().collect(Collectors.toMap(Pair::left, Pair::right));
-    var usages = fieldUsages.getFieldUsages(instruction).keySet();
-    // The `fieldsSortedByLsbDesc` returns all fields from the format.
-    // However, we are only interested in the registers and immediates.
-    // That's why we filter with `contains`. `fieldUsages` only stores REGISTER and IMMEDIATE.
-    var order = instruction.format().fieldsSortedByLsbDesc().filter(usages::contains).toList();
-
-    for (var item : order) {
-      var l = ensureNonNull(lookup.get(item),
-          () -> Diagnostic.error("Cannot find format's field in pseudo instruction",
-              item.sourceLocation()));
-      result.add(Pair.of(item, l));
-    }
-
-    return result;
   }
 
   @Override
