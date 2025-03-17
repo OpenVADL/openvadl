@@ -99,6 +99,15 @@ public class IssExtractNode extends IssExprNode {
     return Math.min(fromWidth, toWidth);
   }
 
+  /**
+   * Removes this node from the expression tree by linking its usages to
+   * {@code this.value}.
+   */
+  public void replaceByNothingAndDelete() {
+    replaceAtAllUsages(this.value);
+    safeDelete();
+  }
+
   @Override
   public DataType type() {
     return (DataType) super.type();
