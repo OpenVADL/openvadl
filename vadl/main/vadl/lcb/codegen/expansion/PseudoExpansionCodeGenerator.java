@@ -440,8 +440,8 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     return result;
   }
 
-  private Format.Field getFormatField(TableGenInstructionOperand operand, Instruction instruction){
-    for(var field : instruction.format().fields()){
+  private Format.Field getFormatField(TableGenInstructionOperand operand, Instruction instruction) {
+    for (var field : instruction.format().fields()) {
       if (field.identifier.simpleName().equals(getParameterName(operand))) {
         return field;
       }
