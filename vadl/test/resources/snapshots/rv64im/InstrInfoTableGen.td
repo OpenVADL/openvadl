@@ -4165,7 +4165,7 @@ def : InstAlias<"NOP", (ADDI X0, X0, 0)>;
 
 def : InstAlias<"NOT $rd,$rs1", (XORI X:$rd, X:$rs1, 4095)>;
 
-def : InstAlias<"RET", (JALR X0, X1, 0)>;
+def : InstAlias<"RET", (JALR X1, X0, 0)>;
 
 def : InstAlias<"SGTZ $rd,$rs1", (SLT X:$rd, X0, X:$rs1)>;
 

@@ -20,12 +20,17 @@ import static java.util.Objects.requireNonNull;
 import static vadl.error.DiagUtils.throwNotAllowed;
 import static vadl.utils.GraphUtils.getNodes;
 import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.common.collect.Streams;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
@@ -37,6 +42,9 @@ import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.VariantKind;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.utils.Pair;
 import vadl.viam.Format;
@@ -79,6 +87,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   private final PseudoInstruction pseudoInstruction;
   private final SymbolTable symbolTable;
   private final GenerateLinkerComponentsPass.VariantKindStore variantKindStore;
+  private final IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords;
 
 
   /**
@@ -93,7 +102,9 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
                                       GenerateLinkerComponentsPass.VariantKindStore
                                           variantKindStore,
                                       PseudoInstruction pseudoInstruction,
-                                      Function function) {
+                                      Function function,
+                                      IdentityHashMap<Instruction, LlvmLoweringRecord>
+                                          machineInstructionRecords) {
     super(function);
     this.targetName = targetName;
     this.fieldUsages = fieldUsages;
@@ -102,6 +113,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     this.pseudoInstruction = pseudoInstruction;
     this.symbolTable = new SymbolTable();
     this.variantKindStore = variantKindStore;
+    this.machineInstructionRecords = machineInstructionRecords;
   }
 
   @Override
@@ -360,7 +372,9 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
         Streams.zip(instrCallNode.getParamFields().stream(), instrCallNode.arguments().stream(),
             Pair::of).toList();
 
-    pairs.forEach(pair -> {
+    var reorderedPairs = reorderParameters(instrCallNode.target(), pairs);
+
+    reorderedPairs.forEach(pair -> {
       /*
         pseudo instruction CALL( symbol : Bits<32> ) =
          {
@@ -369,8 +383,6 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
          }
 
          E.g. rd is the field and 1 is the argument.
-         Expander relies on defined order of parameters,
-         e.g. instruction.getOperand(0) is called to retrieve parameter rd.
       */
 
       var field = pair.left();
@@ -396,6 +408,50 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
             .build();
       }
     });
+  }
+
+  /**
+   * The order of the parameters is not necessarily the order in which the expansion should happen.
+   * This function looks at the {@link LlvmLoweringRecord} of the corresponding instruction
+   * and reorders the list according to the order of outputs and inputs.
+   */
+  private List<Pair<Format.Field, ExpressionNode>> reorderParameters(
+      Instruction instruction,
+      List<Pair<Format.Field, ExpressionNode>> pairs) {
+    var result = new ArrayList<Pair<Format.Field, ExpressionNode>>();
+    var lookup = pairs.stream().collect(Collectors.toMap(Pair::left, Pair::right));
+
+    var llvmRecord = ensureNonNull(machineInstructionRecords.get(instruction),
+        () -> Diagnostic.error("Cannot find llvmRecord for instruction used in pseudo instruction",
+        instruction.sourceLocation()));
+
+    var order = Stream.concat(
+        llvmRecord.info().outputs().stream().map(op -> getFormatField(op, instruction)),
+        llvmRecord.info().inputs().stream().map(op -> getFormatField(op, instruction))
+    ).toList();
+
+    for (var item : order) {
+      var l = ensureNonNull(lookup.get(item),
+          () -> Diagnostic.error("Cannot find format's field in pseudo instruction",
+              item.sourceLocation()));
+      result.add(Pair.of(item, l));
+    }
+
+    return result;
+  }
+
+  private Format.Field getFormatField(TableGenInstructionOperand operand, Instruction instruction){
+    for(var field : instruction.format().fields()){
+      if (field.identifier.simpleName().equals(getParameterName(operand))) {
+        return field;
+      }
+    }
+    throw Diagnostic.error("Cannot find format's field in pseudo instruction ",
+        instruction.sourceLocation()).build();
+  }
+
+  private String getParameterName(TableGenInstructionOperand operand) {
+    return ((TableGenParameterTypeAndName) operand.parameter()).name();
   }
 
   @Override

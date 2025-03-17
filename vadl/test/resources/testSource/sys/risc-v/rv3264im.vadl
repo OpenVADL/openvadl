@@ -304,7 +304,7 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   pseudo instruction RET =
   {
-      JALR{ rd = 0 as Bits5, rs1 = 1 as Bits5, imm = 0 as Bits<12> }
+      JALR{ rs1 = 1 as Bits5, rd = 0 as Bits5, imm = 0 as Bits<12> }
   }
   assembly RET = mnemonic
 
