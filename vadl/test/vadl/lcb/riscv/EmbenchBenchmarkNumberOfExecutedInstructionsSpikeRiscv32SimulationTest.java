@@ -23,19 +23,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.AbstractLcbTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
+@Tag("benchmarkTest")
 public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationTest
     extends AbstractLcbTest {
 
@@ -71,10 +73,12 @@ public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationT
     }
 
     var redisCache = getRunningRedisCache();
-    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_embench_spike_riscv32")
+    var image = redisCache.setupEnv(new ImageFromDockerfile("tc_embench_spike_riscv32", false)
         .withDockerfile(Paths.get(configuration.outputPath() + "/lcb/Dockerfile"))
         .withBuildArg("TARGET", target)
         .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget));
+
+    var volumeMapping = volumeMappings();
 
     runContainerAndCopyInputIntoContainer(image,
         List.of(Pair.of(Path.of("test/resources/llvm/riscv/spike"),
@@ -82,6 +86,18 @@ public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationT
         Map.of(
             "LLVM_PARALLEL_COMPILE_JOBS", "4",
             "LLVM_PARALLEL_LINK_JOBS", "2"),
+        volumeMapping,
         "sh /src/embench/benchmark-extras/get-number-executed-instructions-spike-clang-lcb.sh");
+  }
+
+  private List<Pair<String, String>> volumeMappings() {
+    var embenchHostOutput = System.getenv().get("EMBENCH_BENCHMARK_RESULT_HOST_PATH");
+    var embenchGuestInput = System.getenv().get("EMBENCH_BENCHMARK_RESULT_GUEST_PATH");
+
+    if (embenchGuestInput != null && embenchHostOutput != null) {
+      return List.of(Pair.of(embenchGuestInput, embenchHostOutput));
+    }
+
+    return Collections.emptyList();
   }
 }

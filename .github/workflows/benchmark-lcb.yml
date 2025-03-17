@@ -1,0 +1,61 @@
+name: benchmark LCB
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  actions: write
+  checks: write
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        run: ./gradlew assemble testClasses -PFailOnWarnings
+  test:
+    needs: build
+    runs-on: self-hosted-x64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'gradle'
+      - name: Run tests
+        run: |
+          ./gradlew test --tests EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationTest -DincludeTags=BenchmarkTest
+        env:
+          isCI: true
+          GATE_KEEPER_EMBENCH_NUMBER_EXECUTED_INSTRUCTIONS: true
+          EMBENCH_BENCHMARK_RESULT_HOST_PATH: ${{ github.workspace }}/riscv32.csv
+          EMBENCH_BENCHMARK_RESULT_GUEST_PATH: /src/embench/result/executed_instructions_relative.csv
+      - name: Read
+        run: cat ${{ github.workspace }}/riscv32.csv
+      - name: Update csv
+        run: awk -v hash="${{ github.sha }}" -v date="$(date --rfc-3339=date)" -F',' '{print $0 "," hash "," date}' ${{ github.workspace }}/riscv32.csv > ${{ github.workspace }}/${{ github.sha }}.csv
+      - name: Read Updated
+        run: cat ${{ github.workspace }}/${{ github.sha }}.csv
+      - name: Pushes csv
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.ACCESS_TOKEN_RESSELPARK }}
+        with:
+          source_file: ${{ github.workspace }}/${{ github.sha }}.csv
+          destination_repo: 'openVADL/resselpark'
+          destination_branch: 'master'
+          destination_folder: 'data/lcb/riscv32'
+          user_email: 'ci@openvadl.org'
+          user_name: 'ci'
+          commit_message: 'data: Pushed LCB data'
