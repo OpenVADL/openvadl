@@ -28,4 +28,5 @@ public abstract class IssExprNode extends ExpressionNode {
   public IssExprNode(Type type) {
     super(type);
   }
+
 }

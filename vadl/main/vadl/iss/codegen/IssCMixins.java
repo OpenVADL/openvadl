@@ -19,7 +19,7 @@ package vadl.iss.codegen;
 import static vadl.error.DiagUtils.throwNotAllowed;
 
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.iss.passes.nodes.IssExtractNode;
+import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
 
@@ -63,11 +63,11 @@ public interface IssCMixins {
 
 
     /**
-     * Implements the C code representation of the {@link IssExtractNode}.
+     * Implements the C code representation of the {@link IssConstExtractNode}.
      */
     @Handler
     default void impl(CGenContext<Node> ctx,
-                      IssExtractNode node) {
+                      IssConstExtractNode node) {
       var sign = node.isSigned() ? "s" : "u";
       ctx.wr("VADL_" + sign + "extract(")
           .gen(node.value())

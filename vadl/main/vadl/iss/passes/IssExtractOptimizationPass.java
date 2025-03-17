@@ -24,19 +24,18 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.iss.passes.nodes.IssExtractNode;
+import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.types.Type;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * The {@link IssNormalizationPass} added a lot of {@link IssExtractNode}s to instruction
+ * The {@link IssNormalizationPass} added a lot of {@link IssConstExtractNode}s to instruction
  * behaviors.
  * Most of them are not necessary, as chains of extracts (sign-extend, zero-extend, truncate)
  * can mostly be expressed by a single extract node.
@@ -75,7 +74,7 @@ class IssExtractOptimizer {
 
   void run() {
     behavior.getNodes(DependencyNode.class)
-        .filter(e -> !(e instanceof IssExtractNode))
+        .filter(e -> !(e instanceof IssConstExtractNode))
         .forEach(this::optimizeSubNode);
 
     // clean up not necessary zero extends
@@ -85,13 +84,13 @@ class IssExtractOptimizer {
   }
 
   private void removeUnusedZeroExtends() {
-    behavior.getNodes(IssExtractNode.class)
+    behavior.getNodes(IssConstExtractNode.class)
         // only consider real zero extends
         .filter(IssExtractOptimizer::extractIsRealZeroExtend)
         .forEach(n -> {
           for (var u : n.usages().toList()) {
             // for all non-extract users, we replace the zero extend by its value.
-            if (u instanceof IssExtractNode) {
+            if (u instanceof IssConstExtractNode) {
               continue;
             }
             u.replaceInput(n, n.value());
@@ -100,7 +99,7 @@ class IssExtractOptimizer {
   }
 
   // a extract node that does not truncate the value, but only zero extends it
-  private static boolean extractIsRealZeroExtend(IssExtractNode node) {
+  private static boolean extractIsRealZeroExtend(IssConstExtractNode node) {
     return node.extendMode() == TcgExtend.ZERO
         && node.fromWidth() <= node.toWidth()
         && node.value().type().asDataType().bitWidth() <= node.fromWidth();
@@ -108,14 +107,14 @@ class IssExtractOptimizer {
 
 
   private void optimizeSubNode(DependencyNode node) {
-    if (node instanceof IssExtractNode) {
+    if (node instanceof IssConstExtractNode) {
       // extract nodes are only implicitly optimized
       return;
     }
 
     var extractInputs = node.inputs()
-        .filter(IssExtractNode.class::isInstance)
-        .map(IssExtractNode.class::cast)
+        .filter(IssConstExtractNode.class::isInstance)
+        .map(IssConstExtractNode.class::cast)
         .distinct()
         .toList();
 
@@ -136,7 +135,7 @@ class IssExtractOptimizer {
     // if lastOpWasExtension==true, the extension mode (true for sign–extension)
     boolean extSign;
 
-    void setTo(IssExtractNode ext) {
+    void setTo(IssConstExtractNode ext) {
       preservedWidth = ext.preservedWidth();
       outWidth = ext.toWidth();
       lastOpWasExtension = !ext.isTruncate();
@@ -144,7 +143,7 @@ class IssExtractOptimizer {
     }
   }
 
-  public static ExpressionNode optimizeExtractChain(IssExtractNode ext) {
+  public static ExpressionNode optimizeExtractChain(IssConstExtractNode ext) {
     var chain = flattenChain(ext);
     if (chain.isEmpty()) {
       return ext;
@@ -152,7 +151,7 @@ class IssExtractOptimizer {
 
     var segments = new ArrayList<Segment>();
     Segment current = null;
-    for (IssExtractNode op : chain) {
+    for (IssConstExtractNode op : chain) {
       if (current == null) {
         current = newSegment(op);
         continue;
@@ -212,13 +211,14 @@ class IssExtractOptimizer {
       // For an extension segment, use its sign flag; for truncation, sign is irrelevant.
       boolean segSign = seg.lastOpWasExtension && seg.extSign;
       base =
-          new IssExtractNode(base, TcgExtend.fromBoolean(segSign), seg.preservedWidth, seg.outWidth,
-              Type.bits(seg.outWidth));
+          new IssConstExtractNode(base, TcgExtend.fromBoolean(segSign), seg.preservedWidth,
+              seg.outWidth,
+              ext.type());
     }
     return base;
   }
 
-  private static Segment newSegment(IssExtractNode op) {
+  private static Segment newSegment(IssConstExtractNode op) {
     var segment = new Segment();
     segment.setTo(op);
     return segment;
@@ -226,11 +226,11 @@ class IssExtractOptimizer {
 
   // Flatten consecutive extract nodes in the dependency graph.
   // The returned list is in order from the base upward.
-  private static List<IssExtractNode> flattenChain(IssExtractNode node) {
-    var chain = new ArrayList<IssExtractNode>();
+  private static List<IssConstExtractNode> flattenChain(IssConstExtractNode node) {
+    var chain = new ArrayList<IssConstExtractNode>();
     while (node != null) {
       chain.add(node);
-      if (node.value() instanceof IssExtractNode extractNode) {
+      if (node.value() instanceof IssConstExtractNode extractNode) {
         node = extractNode;
       } else {
         break;

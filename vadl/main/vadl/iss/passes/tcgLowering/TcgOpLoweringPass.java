@@ -18,6 +18,7 @@ package vadl.iss.passes.tcgLowering;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
+import static vadl.utils.GraphUtils.intU;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
@@ -28,8 +29,9 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.TcgPassUtils;
-import vadl.iss.passes.nodes.IssExtractNode;
+import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -401,12 +403,14 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Handles the {@link IssExtractNode} by generating a {@code (s)extract} operation.
+   * Handles the {@link IssConstExtractNode} by generating a {@code (s)extract} operation.
    */
   @Handler
-  void handle(IssExtractNode toHandle) {
+  void handle(IssConstExtractNode toHandle) {
     var dest = singleDestOf(toHandle);
     var src = singleDestOf(toHandle.value());
+    var ofs = intU(0, 32).toNode();
+    var len = intU(toHandle.fromWidth(), 32).toNode();
     // TODO: Support toWidth of other than target size.
     //    If the mode is signed, it must be sign extended until the target width, but not more than
     //    that.
@@ -415,7 +419,18 @@ class TcgOpLoweringExecutor implements CfgTraverser {
         "Signed extract to other width than targetSize is not yet supported. "
             + "Special case for signed extract.");
     replaceCurrent(
-        new TcgExtractNode(dest, src, 0, toHandle.fromWidth(), toHandle.extendMode()));
+        new TcgExtractNode(dest, src, ofs, len, toHandle.extendMode()));
+  }
+
+  /**
+   * Handles the {@link IssValExtractNode} by generating a {@code (s)extract} operation.
+   */
+  @Handler
+  void handle(IssValExtractNode toHandle) {
+    var dest = singleDestOf(toHandle);
+    var src = singleDestOf(toHandle.value());
+    replaceCurrent(
+        new TcgExtractNode(dest, src, toHandle.ofs(), toHandle.len(), toHandle.extendMode()));
   }
 
   /**
@@ -667,9 +682,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       throw new UnsupportedOperationException("Non continuous slices are not yet implemented");
     }
 
-    var pos = bitSlice.lsb();
-    var len = bitSlice.bitSize();
-    var node = new TcgExtractNode(destVar, srcVar, pos, len, TcgExtend.ZERO);
+    var pos = intU(bitSlice.lsb(), 32);
+    var len = intU(bitSlice.bitSize(), 32);
+    var node = new TcgExtractNode(destVar, srcVar, pos.toNode(), len.toNode(), TcgExtend.ZERO);
     replaceCurrent(node);
   }
 

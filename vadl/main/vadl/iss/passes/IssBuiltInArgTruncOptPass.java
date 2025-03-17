@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.iss.passes.nodes.IssExtractNode;
+import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -65,9 +65,7 @@ public class IssBuiltInArgTruncOptPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     viam.isa().get().ownInstructions()
-        .forEach(
-            i -> new IssBuiltInArgTruncOptimizer(i.behavior()).run()
-        );
+        .forEach(i -> new IssBuiltInArgTruncOptimizer(i.behavior()).run());
     return null;
   }
 }
@@ -113,9 +111,11 @@ class IssBuiltInArgTruncOptimizer {
   }
 
   private void optAllArgs(BuiltInCall call) {
+    var typeWidth = call.type().asDataType().bitWidth();
     for (var arg : call.arguments()) {
-      if (arg instanceof IssExtractNode extractNode
-          && extractNode.isTruncate()) {
+      if (arg instanceof IssConstExtractNode extractNode
+          // we cannot remove the extract operation if it manipulates the original input value
+          && extractNode.preservedWidth() >= typeWidth) {
         extractNode.replaceByNothingAndDelete();
       }
     }
@@ -123,8 +123,12 @@ class IssBuiltInArgTruncOptimizer {
 
   private void optFirstArgs(BuiltInCall call) {
     var firstArg = call.arguments().get(0);
-    if (firstArg instanceof IssExtractNode extractNode
+    if (firstArg instanceof IssConstExtractNode extractNode
         && extractNode.isTruncate()) {
+      if (extractNode.toWidth() < call.type().asDataType().bitWidth()) {
+        // if the truncate also truncates operand bits, we must keep it
+        return;
+      }
       extractNode.replaceByNothingAndDelete();
     }
   }

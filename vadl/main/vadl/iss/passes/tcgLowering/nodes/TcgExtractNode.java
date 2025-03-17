@@ -21,7 +21,10 @@ import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * Extract a bitfield from t1, placing the result in dest().
@@ -36,11 +39,11 @@ import vadl.viam.graph.Node;
  */
 public class TcgExtractNode extends TcgUnaryOpNode {
 
-  @DataValue
-  private final int offset;
+  @Input
+  private ExpressionNode offset;
 
-  @DataValue
-  private final int len;
+  @Input
+  private ExpressionNode len;
 
   @DataValue
   private final TcgExtend extendMode;
@@ -54,18 +57,19 @@ public class TcgExtractNode extends TcgUnaryOpNode {
    * @param len    of extraction (from lsb)
    */
   public TcgExtractNode(TcgVRefNode dest,
-                        TcgVRefNode t1, int offset, int len, TcgExtend extendMode) {
+                        TcgVRefNode t1, ExpressionNode offset, ExpressionNode len,
+                        TcgExtend extendMode) {
     super(dest, t1);
     this.offset = offset;
     this.len = len;
     this.extendMode = extendMode;
   }
 
-  public int pos() {
+  public ExpressionNode pos() {
     return offset;
   }
 
-  public int len() {
+  public ExpressionNode len() {
     return len;
   }
 
@@ -81,14 +85,16 @@ public class TcgExtractNode extends TcgUnaryOpNode {
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg.varName() + ", " + offset
+    return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg.varName() + ", "
+        + nodeToCCode.apply(offset)
         + ", "
-        + len + ");";
+        + nodeToCCode.apply(len) + ");";
   }
 
   @Override
   public TcgExtractNode copy() {
-    return new TcgExtractNode(firstDest().copy(), arg.copy(), offset, len, extendMode);
+    return new TcgExtractNode(firstDest().copy(), arg.copy(), offset.copy(), len.copy(),
+        extendMode);
   }
 
   @Override
@@ -99,8 +105,20 @@ public class TcgExtractNode extends TcgUnaryOpNode {
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
+    collection.add(extendMode);
+  }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
     collection.add(offset);
     collection.add(len);
-    collection.add(extendMode);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    offset = visitor.apply(this, offset, ExpressionNode.class);
+    len = visitor.apply(this, len, ExpressionNode.class);
   }
 }
