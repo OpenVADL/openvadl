@@ -30,7 +30,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
@@ -43,8 +42,6 @@ import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.utils.Pair;
 import vadl.viam.Format;
@@ -423,12 +420,9 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
 
     var llvmRecord = ensureNonNull(machineInstructionRecords.get(instruction),
         () -> Diagnostic.error("Cannot find llvmRecord for instruction used in pseudo instruction",
-        instruction.sourceLocation()));
+            instruction.sourceLocation()));
 
-    var order = Stream.concat(
-        llvmRecord.info().outputs().stream().map(op -> getFormatField(op, instruction)),
-        llvmRecord.info().inputs().stream().map(op -> getFormatField(op, instruction))
-    ).toList();
+    var order = llvmRecord.info().outputInputOperandsFormatFields();
 
     for (var item : order) {
       var l = ensureNonNull(lookup.get(item),
@@ -438,20 +432,6 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     }
 
     return result;
-  }
-
-  private Format.Field getFormatField(TableGenInstructionOperand operand, Instruction instruction) {
-    for (var field : instruction.format().fields()) {
-      if (field.identifier.simpleName().equals(getParameterName(operand))) {
-        return field;
-      }
-    }
-    throw Diagnostic.error("Cannot find format's field in pseudo instruction ",
-        instruction.sourceLocation()).build();
-  }
-
-  private String getParameterName(TableGenInstructionOperand operand) {
-    return ((TableGenParameterTypeAndName) operand.parameter()).name();
   }
 
   @Override

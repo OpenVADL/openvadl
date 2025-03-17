@@ -68,6 +68,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.SourceLocation;
 import vadl.viam.Abi;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
@@ -111,6 +112,33 @@ public class LlvmLoweringPass extends Pass {
       }
 
       throw Diagnostic.error("Cannot find field in inputs.", field.sourceLocation()).build();
+    }
+
+    /**
+     * Return the concatenation of {@link #outputs} and {@link #inputs} in that order.
+     */
+    public List<TableGenInstructionOperand> outputInputOperands() {
+      var result = new ArrayList<>(outputs);
+      result.addAll(inputs);
+      return result;
+    }
+
+    /**
+     * Return the format fields of the {@link #outputs} and {@link #inputs}.
+     *
+     * @throws Diagnostic if any operand is not a {@link ReferencesFormatField}.
+     */
+    public List<Format.Field> outputInputOperandsFormatFields() {
+      var result = new ArrayList<Format.Field>();
+      for (var operand : outputInputOperands()) {
+        if (operand instanceof ReferencesFormatField x) {
+          result.add(x.formatField());
+        } else {
+          throw Diagnostic.error("Expected to find format field on operand.",
+              SourceLocation.INVALID_SOURCE_LOCATION).build();
+        }
+      }
+      return result;
     }
 
     public BaseInstructionInfo withFlags(LlvmLoweringPass.Flags newFlags) {
