@@ -26,6 +26,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,6 +41,7 @@ import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.VariantKind;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.utils.Pair;
 import vadl.viam.Format;
@@ -82,6 +84,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   private final PseudoInstruction pseudoInstruction;
   private final SymbolTable symbolTable;
   private final GenerateLinkerComponentsPass.VariantKindStore variantKindStore;
+  private final IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords;
 
 
   /**
@@ -96,7 +99,9 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
                                       GenerateLinkerComponentsPass.VariantKindStore
                                           variantKindStore,
                                       PseudoInstruction pseudoInstruction,
-                                      Function function) {
+                                      Function function,
+                                      IdentityHashMap<Instruction, LlvmLoweringRecord>
+                                          machineInstructionRecords) {
     super(function);
     this.targetName = targetName;
     this.fieldUsages = fieldUsages;
@@ -105,6 +110,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     this.pseudoInstruction = pseudoInstruction;
     this.symbolTable = new SymbolTable();
     this.variantKindStore = variantKindStore;
+    this.machineInstructionRecords = machineInstructionRecords;
   }
 
   @Override
@@ -403,19 +409,20 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
 
   /**
    * The order of the parameters is not necessarily the order in which the expansion should happen.
-   * This function looks at the {@link Format} and reorders the list to the same
-   * order.
+   * This function looks at the {@link LlvmLoweringRecord} of the corresponding instruction
+   * and reorders the list according to the order of outputs and inputs.
    */
   private List<Pair<Format.Field, ExpressionNode>> reorderParameters(
       Instruction instruction,
       List<Pair<Format.Field, ExpressionNode>> pairs) {
     var result = new ArrayList<Pair<Format.Field, ExpressionNode>>();
     var lookup = pairs.stream().collect(Collectors.toMap(Pair::left, Pair::right));
-    var usages = fieldUsages.getFieldUsages(instruction).keySet();
-    // The `fieldsSortedByLsbDesc` returns all fields from the format.
-    // However, we are only interested in the registers and immediates.
-    // That's why we filter with `contains`. `fieldUsages` only stores REGISTER and IMMEDIATE.
-    var order = instruction.format().fieldsSortedByLsbDesc().filter(usages::contains).toList();
+
+    var llvmRecord = ensureNonNull(machineInstructionRecords.get(instruction),
+        () -> Diagnostic.error("Cannot find llvmRecord for instruction used in pseudo instruction",
+            instruction.sourceLocation()));
+
+    var order = llvmRecord.info().outputInputOperandsFormatFields();
 
     for (var item : order) {
       var l = ensureNonNull(lookup.get(item),

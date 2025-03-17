@@ -31,6 +31,8 @@ import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.lcb.codegen.expansion.PseudoExpansionCodeGenerator;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
@@ -40,6 +42,7 @@ import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
+import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
@@ -91,13 +94,15 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       List<HasRelocationComputationAndUpdate> relocations,
       PassResults passResults,
-      GenerateLinkerComponentsPass.VariantKindStore variantKindStore) {
+      GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
+      IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
         .map(pseudoInstruction -> renderPseudoInstruction(cppFunctions, fieldUsages,
             relocations,
             passResults,
             pseudoInstruction,
-            variantKindStore))
+            variantKindStore,
+            machineInstructionRecords))
         .toList();
   }
 
@@ -107,7 +112,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       List<HasRelocationComputationAndUpdate> relocations,
       PassResults passResults,
       PseudoInstruction pseudoInstruction,
-      GenerateLinkerComponentsPass.VariantKindStore variantKindStore) {
+      GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
+      IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords) {
     var function = ensureNonNull(cppFunctions.get(pseudoInstruction),
         "cpp function must exist)");
 
@@ -119,7 +125,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             relocations,
             variantKindStore,
             pseudoInstruction,
-            function);
+            function,
+            machineInstructionRecords);
 
     var renderedFunction = codeGen.genFunctionDefinition();
     var classPrefix = new CppClassImplName(
@@ -138,7 +145,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       List<HasRelocationComputationAndUpdate> relocations,
       PassResults passResults,
-      GenerateLinkerComponentsPass.VariantKindStore variantKindStore) {
+      GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
+      IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords) {
     return Stream.of(abi.returnSequence(), abi.callSequence())
         .map(pseudoInstruction -> renderPseudoInstruction(
             cppFunctions,
@@ -146,7 +154,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             relocations,
             passResults,
             pseudoInstruction,
-            variantKindStore))
+            variantKindStore,
+            machineInstructionRecords))
         .toList();
   }
 
@@ -166,13 +175,16 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
     var relocations = output.elfRelocations();
+    var llvmLoweringPassResult =
+        (LlvmLoweringPass.LlvmLoweringPassResult) passResults.lastResultOf(LlvmLoweringPass.class);
+    var machineInstructionRecords = llvmLoweringPassResult.machineInstructionRecords();
 
     var pseudoInstructions =
         pseudoInstructions(specification, cppFunctions, fieldUsages, relocations,
-            passResults, output.variantKindStore());
+            passResults, output.variantKindStore(), machineInstructionRecords);
     var compilerInstructions =
         compilerInstructions(abi, cppFunctions, fieldUsages, relocations,
-            passResults, output.variantKindStore());
+            passResults, output.variantKindStore(), machineInstructionRecords);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),

@@ -63,15 +63,6 @@ public class Format extends Definition implements DefProp.WithType {
   }
 
   /**
-   * Get the {@link Field} of this format but sorted by the least significant bit in descending
-   * order.
-   */
-  public Stream<Field> fieldsSortedByLsbDesc() {
-    return Arrays.stream(fields)
-        .sorted((o1, o2) -> Integer.compare(o1.bitSlice().lsb(), o2.bitSlice.lsb()));
-  }
-
-  /**
    * Used by VIAM builder only.
    */
   public void setFields(Field[] fields) {
