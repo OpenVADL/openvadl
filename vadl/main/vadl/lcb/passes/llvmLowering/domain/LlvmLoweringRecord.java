@@ -20,19 +20,24 @@ package vadl.lcb.passes.llvmLowering.domain;
 import java.util.List;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.viam.Instruction;
 
 /**
  * Contains information for the lowering of instructions.
  */
 public class LlvmLoweringRecord {
+  private final Instruction instructionRef;
   private final LlvmLoweringPass.BaseInstructionInfo info;
   private final List<TableGenPattern> patterns;
 
   /**
    * Constructor.
    */
-  public LlvmLoweringRecord(LlvmLoweringPass.BaseInstructionInfo info,
-                            List<TableGenPattern> patterns) {
+  public LlvmLoweringRecord(
+      Instruction instructionRef,
+      LlvmLoweringPass.BaseInstructionInfo info,
+      List<TableGenPattern> patterns) {
+    this.instructionRef = instructionRef;
     this.info = info;
     this.patterns = patterns;
   }
@@ -43,5 +48,9 @@ public class LlvmLoweringRecord {
 
   public LlvmLoweringPass.BaseInstructionInfo info() {
     return info;
+  }
+
+  public Instruction instruction() {
+    return instructionRef;
   }
 }

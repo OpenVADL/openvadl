@@ -124,6 +124,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         abi);
 
     return Optional.of(new LlvmLoweringRecord(
+        instruction,
         info,
         patterns
     ));

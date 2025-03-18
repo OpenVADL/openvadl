@@ -341,11 +341,13 @@ public abstract class LlvmInstructionLoweringStrategy {
               patterns,
               abi);
       return Optional.of(new LlvmLoweringRecord(
+          instruction,
           info,
           Stream.concat(patterns.stream(), alternativePatterns.stream()).toList()
       ));
     } else {
       return Optional.of(new LlvmLoweringRecord(
+          instruction,
           info,
           Collections.emptyList()
       ));

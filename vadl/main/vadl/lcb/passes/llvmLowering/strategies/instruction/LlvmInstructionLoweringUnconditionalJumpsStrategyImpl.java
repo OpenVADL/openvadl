@@ -97,6 +97,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
     var patterns = generatePatterns(instruction, uninlinedGraph, info.inputs(), writes);
 
     return new LlvmLoweringRecord(
+        instruction,
         info.withFlags(flags),
         patterns
     );

@@ -95,6 +95,7 @@ public class LlvmInstructionLoweringDivisionAndRemainderStrategyImpl
         inputOperands,
         copy.getNodes(WriteResourceNode.class).toList());
     return Optional.of(new LlvmLoweringRecord(
+        instruction,
         new LlvmLoweringPass.BaseInstructionInfo(inputOperands,
             info.outputs(),
             info.flags(),

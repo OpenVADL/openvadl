@@ -124,6 +124,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         .toList();
 
     return new LlvmLoweringRecord(
+        instruction,
         info,
         allPatterns
     );
