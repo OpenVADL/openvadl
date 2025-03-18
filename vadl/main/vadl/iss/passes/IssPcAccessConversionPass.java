@@ -18,9 +18,8 @@ package vadl.iss.passes;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.GraphUtils;
@@ -41,9 +40,9 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * <p>Additionally, the pass converts all PC reads into {@link IssStaticPcRegNode}s, so
  * they are not scheduled in the succeeding {@link IssTcgSchedulingPass}.</p>
  */
-public class IssPcAccessConversionPass extends Pass {
+public class IssPcAccessConversionPass extends AbstractIssPass {
 
-  public IssPcAccessConversionPass(GeneralConfiguration configuration) {
+  public IssPcAccessConversionPass(IssConfiguration configuration) {
     super(configuration);
   }
 

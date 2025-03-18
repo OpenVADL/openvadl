@@ -20,6 +20,7 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,6 +44,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -497,20 +499,11 @@ public class HandlerProcessor extends AbstractProcessor {
               + " handler, " + contextParams + baseTypeName
               + " obj) {\n");
 
-      // Sort handler methods by specificity
+      // Sort handler methods by subtypes (more specific types at start)
       List<HandlerMethod> sortedHandlerMethods = new ArrayList<>(handlerMethods.values());
-      sortedHandlerMethods.sort((hm1, hm2) -> {
-        TypeMirror type1 = hm1.handleType;
-        TypeMirror type2 = hm2.handleType;
-
-        if (typeUtils.isSubtype(type1, type2) && !typeUtils.isSameType(type1, type2)) {
-          return -1; // type1 is more specific
-        } else if (typeUtils.isSubtype(type2, type1) && !typeUtils.isSameType(type1, type2)) {
-          return 1; // type2 is more specific
-        } else {
-          return 0; // Unrelated types
-        }
-      });
+      sortedHandlerMethods.sort(Comparator.comparingInt(
+          hm -> -getInheritanceDepth(hm.handleType)) // negative inheritance
+      );
 
       var contextParamNames =
           contextTypes.stream().map(p -> typeMirrorSimpleName(p).toLowerCase() + ", ")
@@ -563,6 +556,15 @@ public class HandlerProcessor extends AbstractProcessor {
 
       writer.write("}\n");
     }
+  }
+
+  private int getInheritanceDepth(TypeMirror type) {
+    int depth = 0;
+    while (type != null && !type.toString().equals(Object.class.getName())) {
+      depth++;
+      type = ((TypeElement) ((DeclaredType) type).asElement()).getSuperclass();
+    }
+    return depth;
   }
 
   private String typeMirrorSimpleName(TypeMirror typeMirror) {

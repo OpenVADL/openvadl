@@ -34,8 +34,10 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -104,6 +106,20 @@ public class GraphUtils {
     }
     return inputs.stream()
         .flatMap(GraphUtils::getLeafNodes);
+  }
+
+  /**
+   * Recursively finds all input nodes that by a given filter.
+   */
+  public static Stream<Node> getInputNodes(Node node,
+                                           Function<DependencyNode, Boolean> filter) {
+    return node.inputs()
+        .flatMap(i -> {
+          if (filter.apply((DependencyNode) i)) {
+            return Stream.concat(Stream.of(i), getInputNodes(i, filter));
+          }
+          return getInputNodes(i, filter);
+        });
   }
 
   /**
@@ -301,6 +317,19 @@ public class GraphUtils {
 
   public static ExpressionNode equ(ExpressionNode... exprs) {
     return combineExpressions(BuiltInTable.EQU, exprs);
+  }
+
+  public static ExpressionNode sub(ExpressionNode... exprs) {
+    return combineExpressions(BuiltInTable.SUB, exprs);
+  }
+
+  public static ExpressionNode add(ExpressionNode... exprs) {
+    return combineExpressions(BuiltInTable.ADD, exprs);
+  }
+
+  public static SelectNode select(ExpressionNode cond, ExpressionNode trueCase,
+                                  ExpressionNode falseCase) {
+    return new SelectNode(cond, trueCase, falseCase);
   }
 
   private static ExpressionNode combineExpressions(BuiltInTable.BuiltIn operation,

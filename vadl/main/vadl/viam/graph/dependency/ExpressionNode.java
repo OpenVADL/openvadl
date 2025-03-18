@@ -46,7 +46,14 @@ public abstract class ExpressionNode extends DependencyNode {
   public boolean isConstant() {
     return this instanceof ConstantNode;
   }
-  
+
+  /**
+   * Overrides the type of the node.
+   */
+  public void overrideType(Type type) {
+    this.type = type;
+  }
+
   @Override
   public abstract ExpressionNode copy();
 

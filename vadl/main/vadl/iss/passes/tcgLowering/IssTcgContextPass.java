@@ -19,7 +19,7 @@ package vadl.iss.passes.tcgLowering;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.pass.Pass;
+import vadl.iss.passes.AbstractIssPass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -28,7 +28,7 @@ import vadl.viam.Specification;
  * This pass only attaches a new {@link TcgCtx} to each instruction as an extension.
  * The TCG context is information per instruction that is used by several passes.
  */
-public class IssTcgContextPass extends Pass {
+public class IssTcgContextPass extends AbstractIssPass {
 
   public IssTcgContextPass(IssConfiguration configuration) {
     super(configuration);

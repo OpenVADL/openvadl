@@ -34,7 +34,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * It is used by the ISS to lift/normalize the types to 32 or 64 bit, which is necessary
  * to ensure correct functionality in QEMU.
  */
-public class IssExtractNode extends IssExprNode {
+public class IssConstExtractNode extends IssExprNode {
 
   @Input
   private ExpressionNode value;
@@ -57,9 +57,9 @@ public class IssExtractNode extends IssExprNode {
    *                   This is not the target-size even if the
    *                   toWidth parameter was set higher than this type.
    */
-  public IssExtractNode(ExpressionNode value, TcgExtend extendMode, int fromWidth,
-                        int toWidth,
-                        DataType type) {
+  public IssConstExtractNode(ExpressionNode value, TcgExtend extendMode, int fromWidth,
+                             int toWidth,
+                             DataType type) {
     super(type);
     this.value = value;
     this.extendMode = extendMode;
@@ -99,19 +99,28 @@ public class IssExtractNode extends IssExprNode {
     return Math.min(fromWidth, toWidth);
   }
 
+  /**
+   * Removes this node from the expression tree by linking its usages to
+   * {@code this.value}.
+   */
+  public void replaceByNothingAndDelete() {
+    replaceAtAllUsages(this.value);
+    safeDelete();
+  }
+
   @Override
   public DataType type() {
     return (DataType) super.type();
   }
 
   @Override
-  public IssExtractNode copy() {
-    return new IssExtractNode(value.copy(), extendMode, fromWidth, toWidth, type());
+  public IssConstExtractNode copy() {
+    return new IssConstExtractNode(value.copy(), extendMode, fromWidth, toWidth, type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new IssExtractNode(value, extendMode, fromWidth, toWidth, type());
+    return new IssConstExtractNode(value, extendMode, fromWidth, toWidth, type());
   }
 
   @Override

@@ -18,6 +18,7 @@ package vadl.iss.passes.tcgLowering;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.getSingleNode;
+import static vadl.utils.GraphUtils.intU;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
@@ -27,9 +28,11 @@ import java.util.Map;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.TcgPassUtils;
-import vadl.iss.passes.nodes.IssExtractNode;
+import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -59,7 +62,6 @@ import vadl.iss.passes.tcgLowering.nodes.TcgSubNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgXorNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
@@ -112,7 +114,7 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * Once lowering is complete, all dependency nodes are removed from the graph.
  * The resulting structure is a CFG consisting of TCG op nodes in SSA form.</p>
  */
-public class TcgOpLoweringPass extends Pass {
+public class TcgOpLoweringPass extends AbstractIssPass {
 
   /**
    * Constructs a new {@code TcgOpLoweringPass} with the specified configuration.
@@ -133,11 +135,6 @@ public class TcgOpLoweringPass extends Pass {
     return PassName.of("TCG Operation Lowering");
   }
 
-  @Override
-  public IssConfiguration configuration() {
-    return (IssConfiguration) super.configuration();
-  }
-
   /**
    * Executes the TCG operation lowering pass on the given specification.
    * It processes instructions and lowers them to TCG operations.
@@ -151,11 +148,14 @@ public class TcgOpLoweringPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
+    // only if we skip the jmp slot optimization, we set it to false
+    var optJmpSlot = !configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_JMP_SLOTS);
+
     viam.isa().get().ownInstructions()
         .forEach(i ->
             new TcgOpLoweringExecutor(i.expectExtension(TcgCtx.class).assignment(),
                 configuration().targetSize())
-                .runOn(i.behavior()));
+                .runOn(i.behavior(), optJmpSlot));
 
     return null;
   }
@@ -184,6 +184,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   // indicates whether jump slot 1 is already
   // used by some branch (instr exit)
   boolean isJumpSlotTaken = false;
+  // indicates if we want to optimize jumps with jump slots.
+  // only false if `--skip opt-jmp-slots` was passed.
+  boolean optJumpSlot = true;
 
   /**
    * Constructs a new {@code TcgOpLoweringExecutor} with the given variable assignments.
@@ -201,7 +204,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    *
    * @param graph The graph to process.
    */
-  void runOn(Graph graph) {
+  void runOn(Graph graph, boolean optJumpSlot) {
+    this.optJumpSlot = optJumpSlot;
     this.graph = graph;
     // first set jump, as later the info isn't available anymore
     setJmp(graph);
@@ -368,7 +372,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       var pcWrite = node.pcWrite();
 
       var jmpSlot = TcgGottoTb.JmpSlot.LOOK_UP;
-      if (!this.isJumpSlotTaken) {
+      if (!this.isJumpSlotTaken && optJumpSlot) {
         // if the jumpslot (1) is not yet taken, we take it.
         // TODO: We could use heuristic to find the best slot assignment.
         //  (other than just the first one)
@@ -401,12 +405,14 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Handles the {@link IssExtractNode} by generating a {@code (s)extract} operation.
+   * Handles the {@link IssConstExtractNode} by generating a {@code (s)extract} operation.
    */
   @Handler
-  void handle(IssExtractNode toHandle) {
+  void handle(IssConstExtractNode toHandle) {
     var dest = singleDestOf(toHandle);
     var src = singleDestOf(toHandle.value());
+    var ofs = intU(0, 32).toNode();
+    var len = intU(toHandle.fromWidth(), 32).toNode();
     // TODO: Support toWidth of other than target size.
     //    If the mode is signed, it must be sign extended until the target width, but not more than
     //    that.
@@ -415,7 +421,18 @@ class TcgOpLoweringExecutor implements CfgTraverser {
         "Signed extract to other width than targetSize is not yet supported. "
             + "Special case for signed extract.");
     replaceCurrent(
-        new TcgExtractNode(dest, src, 0, toHandle.fromWidth(), toHandle.extendMode()));
+        new TcgExtractNode(dest, src, ofs, len, toHandle.extendMode()));
+  }
+
+  /**
+   * Handles the {@link IssValExtractNode} by generating a {@code (s)extract} operation.
+   */
+  @Handler
+  void handle(IssValExtractNode toHandle) {
+    var dest = singleDestOf(toHandle);
+    var src = singleDestOf(toHandle.value());
+    replaceCurrent(
+        new TcgExtractNode(dest, src, toHandle.ofs(), toHandle.len(), toHandle.extendMode()));
   }
 
   /**
@@ -667,9 +684,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       throw new UnsupportedOperationException("Non continuous slices are not yet implemented");
     }
 
-    var pos = bitSlice.lsb();
-    var len = bitSlice.bitSize();
-    var node = new TcgExtractNode(destVar, srcVar, pos, len, TcgExtend.ZERO);
+    var pos = intU(bitSlice.lsb(), 32);
+    var len = intU(bitSlice.bitSize(), 32);
+    var node = new TcgExtractNode(destVar, srcVar, pos.toNode(), len.toNode(), TcgExtend.ZERO);
     replaceCurrent(node);
   }
 

@@ -1,3 +1,19 @@
+<!-- SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- -->
+<!-- This program is free software: you can redistribute it and/or modify -->
+<!-- it under the terms of the GNU General Public License as published by -->
+<!-- the Free Software Foundation, either version 3 of the License, or -->
+<!-- (at your option) any later version. -->
+<!-- -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program.  If not, see <https://www.gnu.org/licenses/>. -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,6 +31,9 @@
             margin-right: 0.5rem;
             padding: 0.125rem 0.625rem;
             border-radius: 0.25rem;
+        }
+        .badge-orange {
+            background-color: rgb(255 207 181);
         }
         .graph-container > svg {
             height: 100%;
@@ -87,6 +106,7 @@
                 <span class="badge text-blue-800 text-sm">[[${singlePass.pass.className}]]</span>
             </div>
         </div>
+        <span th:if="${singlePass.skipped}" class="badge badge-orange text-sm text-orange-800 ml-auto mr-5">Skipped</span>
         <i th:if="${hasLink}" class="fa-solid fa-book-open ml-auto mr-5"></i>
     </div>
 

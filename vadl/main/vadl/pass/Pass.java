@@ -64,4 +64,14 @@ public abstract class Pass {
   public GeneralConfiguration configuration() {
     return configuration;
   }
+
+
+  /**
+   * Checks if this pass should be skipped by the pass manager.
+   * It can be used to dynamically turn on/off passes given certain conditions.
+   */
+  public boolean skip() {
+    return false;
+  }
+
 }

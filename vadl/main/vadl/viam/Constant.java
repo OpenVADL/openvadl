@@ -153,7 +153,7 @@ public abstract class Constant {
           // integer value boundaries
           if (integer.bitLength() > bitsType.bitWidth()) {
             throw new ViamError("Value %s does not fit in type %s".formatted(integer.toString(16),
-                bitsType.getClass()));
+                bitsType));
           }
         } else if (minValueOf(bitsType).integer().compareTo(integer) > 0
             || maxValueOf(bitsType).integer().compareTo(integer) < 0) {

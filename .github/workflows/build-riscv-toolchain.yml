@@ -31,3 +31,6 @@ jobs:
     uses: ./.github/workflows/reusable-image-merge.yml
     with:
       image: ghcr.io/openvadl/riscv-toolchain
+      tags: |
+        latest
+        medany-rv32i-rv32im-rv32impriv-rv64i-rv64im-rv64impriv

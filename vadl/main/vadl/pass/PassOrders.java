@@ -42,6 +42,8 @@ import vadl.gcb.passes.encodingGeneration.GenerateFieldAccessEncodingFunctionPas
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass;
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredicateFunctionPass;
+import vadl.iss.passes.IssBuiltInArgTruncOptPass;
+import vadl.iss.passes.IssBuiltInSimplificationPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
@@ -390,6 +392,8 @@ public class PassOrders {
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))
+        .add(new IssBuiltInSimplificationPass(config))
+        .add(new IssBuiltInArgTruncOptPass(config))
         .add(new SideEffectSchedulingPass(config))
         .add(new IssSafeResourceReadPass(config))
         .add(new IssPcAccessConversionPass(config))
@@ -410,8 +414,6 @@ public class PassOrders {
         "This dump is executed after the iss transformation passes were executed.",
         IssVerificationPass.class,
         IssConfiguration.class);
-
-    order.add(new ViamVerificationPass(config));
 
     if (!config.isDryRun()) {
       // add iss template emitting passes to order

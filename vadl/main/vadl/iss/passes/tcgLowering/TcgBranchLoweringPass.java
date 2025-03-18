@@ -21,14 +21,14 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgBr;
 import vadl.iss.passes.tcgLowering.nodes.TcgBrCond;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.Type;
@@ -62,14 +62,14 @@ import vadl.viam.passes.CfgTraverser;
  * These control flow structures are then transformed into a linear sequence of TCG operations
  * using labels and conditional branching.</p>
  */
-public class TcgBranchLoweringPass extends Pass {
+public class TcgBranchLoweringPass extends AbstractIssPass {
 
   /**
    * Constructs a new {@code TcgBranchLoweringPass} with the specified configuration.
    *
    * @param configuration the general configuration settings for the pass
    */
-  public TcgBranchLoweringPass(GeneralConfiguration configuration) {
+  public TcgBranchLoweringPass(IssConfiguration configuration) {
     super(configuration);
   }
 
@@ -81,13 +81,15 @@ public class TcgBranchLoweringPass extends Pass {
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
+    
+    var optimizeCtrlFlow = !configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_CTRL_FLOW);
 
     viam.isa().ifPresent(isa -> isa.ownInstructions()
         .forEach(instr ->
             new TcgBranchLoweringExecutor(
                 instr.behavior(),
                 instr.expectExtension(TcgCtx.class).assignment()
-            ).run()
+            ).run(optimizeCtrlFlow)
         ));
 
     return null;
@@ -106,6 +108,9 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
   StartNode startNode;
 
   Graph graph;
+  // only false if `--skip opt-ctrl-flow` set via cli.
+  // if true, empty else branches are optimized
+  boolean optimizeCtrlFlow = true;
 
   TcgBranchLoweringExecutor(Graph graph, TcgCtx.Assignment assignments) {
     this.graph = graph;
@@ -115,7 +120,8 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
   /**
    * Initiates traversal of the CFG starting from the graph's start node.
    */
-  public void run() {
+  public void run(boolean optimizeCtrlFlow) {
+    this.optimizeCtrlFlow = optimizeCtrlFlow;
     startNode = getSingleNode(graph, StartNode.class);
     traverseBranch(startNode);
   }
@@ -144,7 +150,7 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    */
   private ControlNode buildControlSequence(IfNode ifNode) {
     // if the else branch does not include any source code, we can skip it
-    var skipElse = isEmptyBranch(ifNode.falseBranch());
+    var skipElse = optimizeCtrlFlow && isEmptyBranch(ifNode.falseBranch());
 
     var elseLabel = genLabelObj("else");
     var endLabel = genLabelObj("end");

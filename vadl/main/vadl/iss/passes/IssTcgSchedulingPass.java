@@ -27,7 +27,6 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Counter;
@@ -71,7 +70,7 @@ import vadl.viam.passes.GraphProcessor;
  * After this pass, all dependency nodes corresponding to TCG operations are correctly scheduled.
  * </p>
  */
-public class IssTcgSchedulingPass extends Pass {
+public class IssTcgSchedulingPass extends AbstractIssPass {
 
   /**
    * Constructs a new ISS TCG Scheduling Pass with the given configuration.

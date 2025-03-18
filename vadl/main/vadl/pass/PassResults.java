@@ -122,11 +122,26 @@ public final class PassResults {
    * @return the result of the found pass
    */
   public <T extends Pass> @Nullable Object lastNullableResultOf(Class<T> passClass) {
-    return lastExecutionOf(passClass).result();
+    var stepResult = lastExecutionOf(passClass);
+    if (stepResult.skipped()) {
+      throw new PassError("Pass %s was skipped, and thus has no result.", passClass);
+    }
+    return stepResult.result();
   }
 
+  /**
+   * Retrieves all results of a given pass class and casts them to the given result type.
+   *
+   * <p>It will not include results of skipped passes.</p>
+   *
+   * @param passClass type of pass
+   * @param type      type of pass result
+   * @return stream of pass results
+   */
   public <T extends Pass, R> Stream<R> allResultsOf(Class<T> passClass, Class<R> type) {
-    return allExecutionsOf(passClass).map(SingleResult::result).map(type::cast);
+    return allExecutionsOf(passClass)
+        .filter(e -> !e.skipped)
+        .map(SingleResult::result).map(type::cast);
   }
 
   public <T extends Pass> Stream<SingleResult> allExecutionsOf(Class<T> passClass) {
@@ -161,7 +176,11 @@ public final class PassResults {
           "Tried to store result of executed pass %s, but result for this key already exist",
           key);
     }
-    store.put(key, new SingleResult(key, pass, durationMs, result));
+    store.put(key, new SingleResult(key, pass, durationMs, result, false));
+  }
+
+  void addSkipped(PassKey key, Pass pass) {
+    store.put(key, new SingleResult(key, pass, 0, null, true));
   }
 
 
@@ -177,7 +196,8 @@ public final class PassResults {
       PassKey passKey,
       Pass pass,
       long durationMs,
-      @Nullable Object result
+      @Nullable Object result,
+      boolean skipped
   ) {
   }
 

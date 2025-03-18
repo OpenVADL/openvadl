@@ -26,6 +26,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
+import java.util.EnumSet;
 import org.apache.commons.io.file.PathUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -54,6 +55,14 @@ public class IssCommand extends BaseCommand {
       description = "Download and prepare QEMU before generating ISS.")
   private boolean init;
 
+  @CommandLine.Option(names = "--skip",
+      description = "Optimizations to be skipped. Valid values: ${COMPLETION-CANDIDATES}",
+      split = ",",
+      converter = IssOptsConverter.class, completionCandidates = IssOptsConverter.class
+  )
+  private EnumSet<IssConfiguration.IssOptsToSkip> skipOpts = EnumSet.noneOf(
+      IssConfiguration.IssOptsToSkip.class);
+
   private static final String QEMU_VERSION = "9.2.2";
   private static final String QEMU_DOWNLOAD_URL =
       "https://github.com/qemu/qemu/archive/refs/tags/v" + QEMU_VERSION + ".tar.gz";
@@ -65,11 +74,14 @@ public class IssCommand extends BaseCommand {
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
     var issConfig = new IssConfiguration(configuration);
     issConfig.setDryRun(dryRun);
+    issConfig.setOptsToSkip(skipOpts);
     return PassOrders.iss(issConfig);
   }
 
   @Override
   public Integer call() {
+    // the ISS may perform a QEMU setup if --init is set.
+    // this must be done before anything else.
     if (!setup()) {
       // if setup failed, return exit code 1
       return 1;

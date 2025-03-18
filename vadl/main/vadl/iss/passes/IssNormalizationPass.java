@@ -22,10 +22,10 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.nodes.IssExtractNode;
+import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulKind;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -33,7 +33,6 @@ import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
@@ -74,16 +73,16 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * Therefore, operations (mostly arithmetic ones) like ADD must possibly truncate
  * their results or sign extend their arguments.
  *
- * <p>This pass inserts {@link IssExtractNode}s where required and replaces all
+ * <p>This pass inserts {@link IssConstExtractNode}s where required and replaces all
  * zero/sign extends and truncates by such node.
  * A follow-up pass merges the extract nodes.
  *
- * @see IssExtractNode
+ * @see IssConstExtractNode
  * @see IssExtractOptimizationPass
  */
-public class IssNormalizationPass extends Pass {
+public class IssNormalizationPass extends AbstractIssPass {
 
-  public IssNormalizationPass(GeneralConfiguration configuration) {
+  public IssNormalizationPass(IssConfiguration configuration) {
     super(configuration);
   }
 
@@ -133,7 +132,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
     if (handledCache.contains(node)) {
       return;
     }
-    if (node instanceof IssExtractNode) {
+    if (node instanceof IssConstExtractNode) {
       return;
     }
     normalizeInputs(node);
@@ -145,27 +144,29 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
     node.inputs().forEach(e -> normalize((ExpressionNode) e));
   }
 
-  private IssExtractNode extract(ExpressionNode node, int fromWidth, int toWidth, boolean signed) {
+  private IssConstExtractNode extract(ExpressionNode node, int fromWidth, int toWidth,
+                                      boolean signed) {
     var nodeSize = node.type().asDataType().bitWidth();
     return extract(node, fromWidth, toWidth, signed, BitsType.bits(nodeSize));
   }
 
-  private IssExtractNode extract(ExpressionNode node, int fromWidth, int toWidth, boolean signed,
-                                 BitsType originalType) {
+  private IssConstExtractNode extract(ExpressionNode node, int fromWidth, int toWidth,
+                                      boolean signed,
+                                      BitsType originalType) {
     var tcgExtend = signed ? TcgExtend.SIGN : TcgExtend.ZERO;
     return behavior.add(
-        new IssExtractNode(node, tcgExtend, fromWidth, toWidth, originalType));
+        new IssConstExtractNode(node, tcgExtend, fromWidth, toWidth, originalType));
   }
 
-  private IssExtractNode truncate(ExpressionNode node, int toWidth) {
+  private IssConstExtractNode truncate(ExpressionNode node, int toWidth) {
     return extract(node, toWidth, targetSize, false);
   }
 
-  private IssExtractNode signExtend(ExpressionNode node) {
+  private IssConstExtractNode signExtend(ExpressionNode node) {
     return signExtend(node, sizeOf(node));
   }
 
-  private IssExtractNode signExtend(ExpressionNode node, int fromWith) {
+  private IssConstExtractNode signExtend(ExpressionNode node, int fromWith) {
     return extract(node, fromWith, targetSize, true);
   }
 
@@ -565,7 +566,12 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   /* Nodes that should not exist at this point */
 
   @Handler
-  void handle(IssExtractNode toHandle) {
+  void handle(IssConstExtractNode toHandle) {
+    throw graphError(toHandle, "Node should not occur here");
+  }
+
+  @Handler
+  void handle(IssValExtractNode toHandle) {
     throw graphError(toHandle, "Node should not occur here");
   }
 
