@@ -27,11 +27,11 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.error.Diagnostic;
+import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulKind;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.Type;
@@ -68,7 +68,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * logically equivalent operations that only accept and return values with a maximum
  * size of 64 bits.</p>
  */
-public class IssOpDecompositionPass extends Pass {
+public class IssOpDecompositionPass extends AbstractIssPass {
   public IssOpDecompositionPass(IssConfiguration configuration) {
     super(configuration);
   }
@@ -76,11 +76,6 @@ public class IssOpDecompositionPass extends Pass {
   @Override
   public PassName getName() {
     return PassName.of("ISS Op Decomposition Pass");
-  }
-
-  @Override
-  public IssConfiguration configuration() {
-    return (IssConfiguration) super.configuration();
   }
 
   @Nullable

@@ -23,10 +23,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
@@ -42,9 +41,9 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * This pass takes care of removing unnecessary extract nodes to minimize the overhead of
  * QEMU normalization.
  */
-public class IssExtractOptimizationPass extends Pass {
+public class IssExtractOptimizationPass extends AbstractIssPass {
 
-  public IssExtractOptimizationPass(GeneralConfiguration configuration) {
+  public IssExtractOptimizationPass(IssConfiguration configuration) {
     super(configuration);
   }
 

@@ -21,14 +21,14 @@ import static vadl.utils.GraphUtils.getSingleNode;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgBr;
 import vadl.iss.passes.tcgLowering.nodes.TcgBrCond;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenLabel;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetLabel;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.Type;
@@ -62,14 +62,14 @@ import vadl.viam.passes.CfgTraverser;
  * These control flow structures are then transformed into a linear sequence of TCG operations
  * using labels and conditional branching.</p>
  */
-public class TcgBranchLoweringPass extends Pass {
+public class TcgBranchLoweringPass extends AbstractIssPass {
 
   /**
    * Constructs a new {@code TcgBranchLoweringPass} with the specified configuration.
    *
    * @param configuration the general configuration settings for the pass
    */
-  public TcgBranchLoweringPass(GeneralConfiguration configuration) {
+  public TcgBranchLoweringPass(IssConfiguration configuration) {
     super(configuration);
   }
 

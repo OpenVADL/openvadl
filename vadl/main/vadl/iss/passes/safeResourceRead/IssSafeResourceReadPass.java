@@ -29,9 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
@@ -65,7 +65,7 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * all reads to these resources must be conservatively treated as potential conflicts
  * with all writes to the same resource.</p>
  */
-public class IssSafeResourceReadPass extends Pass {
+public class IssSafeResourceReadPass extends AbstractIssPass {
 
   /**
    * Result of the IssSafeResourceReadPass execution.
@@ -83,7 +83,7 @@ public class IssSafeResourceReadPass extends Pass {
    *
    * @param configuration The general configuration for the pass.
    */
-  public IssSafeResourceReadPass(GeneralConfiguration configuration) {
+  public IssSafeResourceReadPass(IssConfiguration configuration) {
     super(configuration);
   }
 

@@ -28,14 +28,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
 import vadl.iss.DataFlowAnalysis;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgCtx;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.RegisterFile;
@@ -69,9 +68,9 @@ import vadl.viam.graph.control.StartNode;
  * The primary goal is to maximize the reuse of written registers,
  * reducing unnecessary temporary allocations.</p>
  */
-public class IssTcgVAllocationPass extends Pass {
+public class IssTcgVAllocationPass extends AbstractIssPass {
 
-  public IssTcgVAllocationPass(GeneralConfiguration configuration) {
+  public IssTcgVAllocationPass(IssConfiguration configuration) {
     super(configuration);
   }
 

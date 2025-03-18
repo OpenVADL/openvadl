@@ -19,9 +19,8 @@ package vadl.iss.passes;
 import java.io.IOException;
 import java.util.Set;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssConstExtractNode;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
@@ -50,9 +49,9 @@ import vadl.viam.graph.dependency.BuiltInCall;
  * While required for type checking, this truncation is unnecessary for arithmetic correctness.
  * </p>
  */
-public class IssBuiltInArgTruncOptPass extends Pass {
+public class IssBuiltInArgTruncOptPass extends AbstractIssPass {
 
-  public IssBuiltInArgTruncOptPass(GeneralConfiguration configuration) {
+  public IssBuiltInArgTruncOptPass(IssConfiguration configuration) {
     super(configuration);
   }
 

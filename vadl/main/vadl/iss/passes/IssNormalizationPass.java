@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
@@ -34,7 +33,6 @@ import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
@@ -82,9 +80,9 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * @see IssConstExtractNode
  * @see IssExtractOptimizationPass
  */
-public class IssNormalizationPass extends Pass {
+public class IssNormalizationPass extends AbstractIssPass {
 
-  public IssNormalizationPass(GeneralConfiguration configuration) {
+  public IssNormalizationPass(IssConfiguration configuration) {
     super(configuration);
   }
 

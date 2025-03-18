@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
@@ -61,7 +62,6 @@ import vadl.iss.passes.tcgLowering.nodes.TcgSubNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgXorNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
@@ -114,7 +114,7 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * Once lowering is complete, all dependency nodes are removed from the graph.
  * The resulting structure is a CFG consisting of TCG op nodes in SSA form.</p>
  */
-public class TcgOpLoweringPass extends Pass {
+public class TcgOpLoweringPass extends AbstractIssPass {
 
   /**
    * Constructs a new {@code TcgOpLoweringPass} with the specified configuration.
@@ -133,11 +133,6 @@ public class TcgOpLoweringPass extends Pass {
   @Override
   public PassName getName() {
     return PassName.of("TCG Operation Lowering");
-  }
-
-  @Override
-  public IssConfiguration configuration() {
-    return (IssConfiguration) super.configuration();
   }
 
   /**

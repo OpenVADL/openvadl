@@ -22,12 +22,10 @@ import static vadl.utils.GraphUtils.sub;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
@@ -42,9 +40,9 @@ import vadl.viam.graph.dependency.ReadResourceNode;
  * This pass does built-in simplifications after normalization.
  * E.g., it replaces some right shift operations with extract operations.
  */
-public class IssBuiltInSimplificationPass extends Pass {
+public class IssBuiltInSimplificationPass extends AbstractIssPass {
 
-  public IssBuiltInSimplificationPass(GeneralConfiguration configuration) {
+  public IssBuiltInSimplificationPass(IssConfiguration configuration) {
     super(configuration);
   }
 

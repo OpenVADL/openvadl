@@ -22,9 +22,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import vadl.configuration.GeneralConfiguration;
+import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenException;
-import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Instruction;
@@ -36,9 +35,9 @@ import vadl.viam.graph.control.InstrEndNode;
  * E.g. it adds an exception generation to {@code ECALL} instruction because
  * this is not yet supported in the VADL specification.
  */
-public class IssHardcodedTcgAddOnPass extends Pass {
+public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
 
-  public IssHardcodedTcgAddOnPass(GeneralConfiguration configuration) {
+  public IssHardcodedTcgAddOnPass(IssConfiguration configuration) {
     super(configuration);
   }
 
@@ -76,5 +75,5 @@ public class IssHardcodedTcgAddOnPass extends Pass {
     var instrEnd = getSingleNode(instr.behavior(), InstrEndNode.class);
     instrEnd.addBefore(new TcgGenException(0xb));
   }
-  
+
 }
