@@ -42,8 +42,6 @@ jobs:
         task: [ test-lcb, test-common, test-iss ]
         include:
           - runner: self-hosted
-          - runner: self-hosted-x64
-            task: test-lcb
     with:
       test-task: ${{ matrix.task }}
       runner: ${{ matrix.runner }}

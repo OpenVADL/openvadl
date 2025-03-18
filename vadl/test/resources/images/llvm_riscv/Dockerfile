@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/llvm17-base@sha256:fdb0dd457bcaf9ca08a288cdf619042a4b0e029b6d7aaed9fa8bd01183b10c16
+FROM ghcr.io/openvadl/llvm17-base@sha256:26659363db3bd278f54fb6d81581038d270aaaee859d839188063545d50d81ae
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
 WORKDIR /llvm/build

@@ -26,7 +26,6 @@ jobs:
           java-version: '21'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: 'gradle'
       - name: Run tests
         run: ./gradlew ${{ inputs.test-task }}
         env:
