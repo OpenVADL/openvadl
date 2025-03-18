@@ -539,8 +539,6 @@ class SymbolTable {
           collectSymbols(mip.symbolTable, def);
         }
       } else if (definition instanceof SpecialPurposeRegisterDefinition specialPurposeRegister) {
-        // Why is this not working?
-        // symbols.defineSymbol(specialPurposeRegister.aliasName);
         specialPurposeRegister.symbolTable = symbols.createChild();
       } else if (definition instanceof AbiPseudoInstructionDefinition
           abiPseudoInstructionDefinition) {
