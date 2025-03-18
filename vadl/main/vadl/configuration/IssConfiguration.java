@@ -26,6 +26,9 @@ import vadl.iss.passes.tcgLowering.Tcg_32_64;
  */
 public class IssConfiguration extends GeneralConfiguration {
 
+  /**
+   * ISS optimization that can be skipped using the CLI.
+   */
   public enum IssOptsToSkip {
     OPT_BUILT_INS("QEMU specific optimizations of VADL built-in calls."),
     OPT_ARGS("Argument preparation optimization for VADL built-in calls. \n"
@@ -62,6 +65,9 @@ public class IssConfiguration extends GeneralConfiguration {
     return new IssConfiguration(generalConfig);
   }
 
+  /**
+   * Construct the configuration from a general configuration.
+   */
   public static IssConfiguration from(GeneralConfiguration generalConfig, boolean insnCounting) {
     var config = new IssConfiguration(generalConfig);
     config.insnCount = insnCounting;

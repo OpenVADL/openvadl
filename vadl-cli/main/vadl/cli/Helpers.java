@@ -17,6 +17,7 @@
 package vadl.cli;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -28,11 +29,32 @@ class Helpers {
 }
 
 
-class IssOptsConverter implements CommandLine.ITypeConverter<IssConfiguration.IssOptsToSkip>
-    , Iterable<String> {
+class IssOptsConverter implements CommandLine.ITypeConverter<IssConfiguration.IssOptsToSkip>,
+    Iterable<String> {
 
   @Override
   public IssConfiguration.IssOptsToSkip convert(String value) {
+    if (value.equals("help")) {
+      // Calculate the maximum width of option names
+      int maxOptionLength = Arrays.stream(IssConfiguration.IssOptsToSkip.values())
+          .map(opt -> toCliName(opt).length())
+          .max(Integer::compare)
+          .orElse(0);
+
+      // Define the indentation for descriptions
+      int descriptionIndent = 6 + maxOptionLength; // 6 accounts for "    - " and two spaces
+
+      // Print help message for available options
+      System.out.println("Available optimizations to skip:");
+      Arrays.stream(IssConfiguration.IssOptsToSkip.values())
+          .sorted(Comparator.comparing(v -> v.name()))
+          .forEach(opt ->
+              printFormattedOption(toCliName(opt), opt.desc, maxOptionLength,
+                  descriptionIndent));
+
+      System.exit(0);
+    }
+
     try {
       return IssConfiguration.IssOptsToSkip.valueOf(value.toUpperCase().replace('-', '_'));
     } catch (IllegalArgumentException e) {
@@ -48,8 +70,27 @@ class IssOptsConverter implements CommandLine.ITypeConverter<IssConfiguration.Is
   @Override
   public Iterator<String> iterator() {
     return Arrays.stream(IssConfiguration.IssOptsToSkip.values())
-        .map(v -> v.name().toLowerCase().replace('_', '-'))
+        .map(this::toCliName)
         .sorted()
         .iterator();
+  }
+
+  private String toCliName(IssConfiguration.IssOptsToSkip value) {
+    return value.name().toLowerCase().replace('_', '-');
+  }
+
+  private static void printFormattedOption(String optionName, String description, int nameWidth,
+                                           int descriptionIndent) {
+    // Split the description into lines
+    String[] lines = description.split("\n", -1);
+
+    // Print the first line with the option name
+    System.out.printf("    - %-" + nameWidth + "s  %s%n", optionName, lines[0]);
+
+    // Print subsequent lines with indentation
+    String format = "%" + (descriptionIndent + 2) + "s%s%n";
+    for (int i = 1; i < lines.length; i++) {
+      System.out.printf(format, "", lines[i]);
+    }
   }
 }

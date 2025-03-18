@@ -96,7 +96,6 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     // the tcgV cache stores assignments not necessarily specifc to nodes
     // but to register/reigsterFile+index, ...
     private final HashMap<Object, List<TcgVRefNode>> tcgVCache;
-    ;
 
     private Assignment() {
       this.assignments = new HashMap<>();
