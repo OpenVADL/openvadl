@@ -23,7 +23,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
@@ -31,7 +30,6 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
-import vadl.viam.Abi;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
@@ -76,20 +74,6 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
         )).toList();
   }
 
-  private List<RenderedPseudoInstruction> compilerInstructions(
-      Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
-      Specification specification) {
-    var abi =
-        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-
-    return Stream.of(abi.returnSequence(), abi.callSequence())
-        .map(x -> new RenderedPseudoInstruction(
-            ensureNonNull(cppFunctions.get(x), "cppFunction must exist").identifier.lower(),
-            x
-        ))
-        .toList();
-  }
-
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
@@ -101,11 +85,10 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     var pseudoInstructions =
         pseudoInstructions(specification, passResults, cppFunctions);
-    var compilerInstructions = compilerInstructions(cppFunctions, specification);
     return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().targetName().value().toLowerCase(), "pseudoInstructionsHeaders",
-        Stream.concat(pseudoInstructions.stream(),
-            compilerInstructions.stream()).map(e -> e.header).toList()
+        lcbConfiguration().targetName().value().toLowerCase(),
+        "pseudoInstructionsHeaders",
+        pseudoInstructions.stream().map(e -> e.header).toList()
     );
   }
 }

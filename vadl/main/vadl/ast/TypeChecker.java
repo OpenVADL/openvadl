@@ -591,6 +591,12 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(AbiPseudoInstructionDefinition abiPseudoInstructionDefinition) {
+    // Isn't type checked on purpose because there is nothing to type check.
+    return null;
+  }
+
+  @Override
   public Void visit(FunctionDefinition definition) {
     definition.params.forEach(param -> check(param.typeLiteral));
     check(definition.retType);
@@ -615,7 +621,7 @@ public class TypeChecker
 
   @Override
   public Void visit(AliasDefinition definition) {
-    //throwUnimplemented(definition);
+    // Isn't type checked on purpose because there is nothing to type check.
     return null;
   }
 
@@ -743,6 +749,51 @@ public class TypeChecker
   @Override
   public Void visit(ApplicationBinaryInterfaceDefinition definition) {
     definition.definitions.forEach(this::check);
+
+    // Check whether there exists just one special purpose register.
+    for (var purpose : Set.of(SpecialPurposeRegisterDefinition.Purpose.STACK_POINTER,
+        SpecialPurposeRegisterDefinition.Purpose.RETURN_ADDRESS,
+        SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER,
+        SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER,
+        SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER)) {
+      var registers = definition.definitions.stream().filter(
+              x -> x instanceof SpecialPurposeRegisterDefinition specialPurposeRegisterDefinition
+                  && specialPurposeRegisterDefinition.purpose == purpose)
+          .toList();
+
+      if (registers.size() > 1) {
+        throw Diagnostic.error(
+            "Multiple " + purpose.name() + " registers were declared but only was expected",
+            SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
+      }
+
+      if (registers.isEmpty()) {
+        throw Diagnostic.error(
+            "No register purpose was defined for " + purpose.name(), definition.loc).build();
+      }
+    }
+
+    // Check whether there exists just one pseudo instruction.
+    for (var kind : AbiPseudoInstructionDefinition.Kind.values()) {
+      var pseudoInstructions = definition.definitions
+          .stream()
+          .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
+          .toList();
+
+      if (pseudoInstructions.size() > 1) {
+        throw Diagnostic.error(
+                "Multiple " + kind.name()
+                    + " pseudo instructions were declared but only was expected",
+                SourceLocation.join(pseudoInstructions.stream().map(Node::sourceLocation).toList()))
+            .build();
+      }
+
+      if (pseudoInstructions.isEmpty()) {
+        throw Diagnostic.error(
+            "No register purpose was defined for " + kind.name(), definition.loc).build();
+      }
+    }
+
     return null;
   }
 
@@ -1325,13 +1376,13 @@ public class TypeChecker
 
   @Override
   public Void visit(AbiSequenceDefinition definition) {
-    throwUnimplemented(definition);
+    // Isn't type checked on purpose because there is nothing to type check.
     return null;
   }
 
   @Override
   public Void visit(SpecialPurposeRegisterDefinition definition) {
-    throwUnimplemented(definition);
+    // Isn't type checked on purpose because there is nothing to type check.
     return null;
   }
 

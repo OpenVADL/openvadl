@@ -18,5 +18,4 @@ instruction set architecture PcTest = {
   }
 }
 
-application binary interface ABI for PcTest = {}
-micro processor TEST implements PcTest with ABI = {}
+micro processor TEST implements PcTest = {}

@@ -302,6 +302,12 @@ public class AstDumper
   }
 
   @Override
+  public Void visit(AbiPseudoInstructionDefinition definition) {
+    dumpNode(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(FunctionDefinition definition) {
     dumpNode(definition);
     dumpChildren(definition.identifier());
@@ -486,7 +492,6 @@ public class AstDumper
   @Override
   public Void visit(SpecialPurposeRegisterDefinition definition) {
     dumpNode(definition);
-    dumpChildren(definition.calls);
     return null;
   }
 
@@ -495,7 +500,9 @@ public class AstDumper
     dumpNode(definition);
     dumpChildren(definition.id);
     dumpChildren(definition.implementedIsas.stream().map(Node.class::cast).toList());
-    dumpChildren((Node) definition.abi);
+    if (definition.abi != null) {
+      dumpChildren((Node) definition.abi);
+    }
     dumpChildren(definition.definitions);
     return null;
   }

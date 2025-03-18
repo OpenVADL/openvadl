@@ -539,9 +539,10 @@ class SymbolTable {
           collectSymbols(mip.symbolTable, def);
         }
       } else if (definition instanceof SpecialPurposeRegisterDefinition specialPurposeRegister) {
-        for (SequenceCallExpr call : specialPurposeRegister.calls) {
-          collectSymbols(symbols, call);
-        }
+        specialPurposeRegister.symbolTable = symbols.createChild();
+      } else if (definition instanceof AbiPseudoInstructionDefinition
+          abiPseudoInstructionDefinition) {
+        abiPseudoInstructionDefinition.symbolTable = symbols.createChild();
       } else if (definition instanceof CpuFunctionDefinition cpuFunction) {
         collectSymbols(symbols, cpuFunction.expr);
       } else if (definition instanceof CpuProcessDefinition cpuProcess) {
@@ -977,18 +978,16 @@ class SymbolTable {
             mip.implementedIsaNodes.add(isa);
           }
         }
-        var abi = mip.symbolTable()
-            .requireAs((Identifier) mip.abi, ApplicationBinaryInterfaceDefinition.class);
-        if (abi != null) {
-          mip.abiNode = abi;
-          mip.symbolTable().extendBy(abi.symbolTable());
-          for (Definition def : mip.definitions) {
-            resolveSymbols(def);
+        if (mip.abi != null) {
+          var abi = mip.symbolTable()
+              .requireAs((Identifier) mip.abi, ApplicationBinaryInterfaceDefinition.class);
+          if (abi != null) {
+            mip.abiNode = abi;
+            mip.symbolTable().extendBy(abi.symbolTable());
+            for (Definition def : mip.definitions) {
+              resolveSymbols(def);
+            }
           }
-        }
-      } else if (definition instanceof SpecialPurposeRegisterDefinition specialPurposeRegister) {
-        for (SequenceCallExpr call : specialPurposeRegister.calls) {
-          resolveSymbols(call);
         }
       } else if (definition instanceof CpuFunctionDefinition cpuFunction) {
         resolveSymbols(cpuFunction.expr);

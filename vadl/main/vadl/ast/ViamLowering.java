@@ -18,6 +18,9 @@ package vadl.ast;
 
 
 import static java.util.Objects.requireNonNull;
+import static vadl.viam.ViamError.ensure;
+import static vadl.viam.ViamError.ensureNonNull;
+import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
@@ -37,8 +40,10 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
+import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
+import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Assembly;
 import vadl.viam.AssemblyDescription;
@@ -222,8 +227,83 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(ApplicationBinaryInterfaceDefinition definition) {
-    // FIXME: Generate ABI
-    return Optional.empty();
+
+    var id = generateIdentifier(definition.viamId, definition.identifier());
+    var aliasLookup = aliasLookupTable(definition.definitions);
+
+    var stackPointerDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.STACK_POINTER);
+    var returnAddressDef =
+        getSpecialPurposeRegisterDefinition(definition.definitions,
+            SpecialPurposeRegisterDefinition.Purpose.RETURN_ADDRESS);
+    var globalPtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER);
+    var framePtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER);
+    var threadPtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER);
+
+    var stackPointer = mapToRegisterRef(aliasLookup, stackPointerDef);
+    var returnAddress = mapToRegisterRef(aliasLookup, returnAddressDef);
+    var globalPtr = mapToRegisterRef(aliasLookup, globalPtrDef);
+    var framePtr = mapToRegisterRef(aliasLookup, framePtrDef);
+    var threadPtr = mapToRegisterRef(aliasLookup, threadPtrDef);
+
+    var pseudoRetInstrDef = getAbiPseudoInstruction(definition.definitions,
+        AbiPseudoInstructionDefinition.Kind.RETURN);
+    var pseudoCallInstrDef = getAbiPseudoInstruction(definition.definitions,
+        AbiPseudoInstructionDefinition.Kind.CALL);
+    var pseudoLocalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
+        AbiPseudoInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD);
+
+    var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow();
+    var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow();
+    var pseudoLocalAddressLoad = (PseudoInstruction) fetch(pseudoLocalAddressLoadDef).orElseThrow();
+
+    Map<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>> aliases =
+        aliasLookup.entrySet()
+            .stream()
+            .collect(
+                Collectors.toMap(
+                    entry -> getRegisterFile(entry.getValue()),
+                    entry -> {
+                      var list = new ArrayList<Abi.RegisterAlias>();
+                      list.add(new Abi.RegisterAlias(entry.getKey().name));
+                      return list;
+                    },
+                    (existing, newValue) -> {
+                      existing.addAll(newValue);
+                      return existing;
+                    }));
+
+    Map<RegisterFile, Abi.Alignment> registerFileAlignment =
+        definitionCache.keySet()
+            .stream().filter(x -> x instanceof RegisterFileDefinition)
+            .map(x -> (RegisterFileDefinition) x)
+            .map(x -> (RegisterFile) fetch(x).orElseThrow())
+            .collect(Collectors.toMap(
+                x -> x,
+                x -> Abi.Alignment.HALF_WORD
+            ));
+
+    return Optional.of(new Abi(id,
+        returnAddress,
+        stackPointer,
+        framePtr,
+        globalPtr,
+        threadPtr,
+        aliases,
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        pseudoRet,
+        pseudoCall,
+        pseudoLocalAddressLoad,
+        Abi.Alignment.DOUBLE_WORD,
+        Abi.Alignment.DOUBLE_WORD,
+        registerFileAlignment
+    ));
   }
 
   @Override
@@ -930,7 +1010,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(MicroProcessorDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
-    // create emtpy list of ast definitions
+    // create empty list of ast definitions
     // for each isa in mip add definitions to definition list
     // create new isa ast node with list of definitions
     // visitIsa on created isa ast node
@@ -944,7 +1024,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           .orElseThrow();
     }
 
-    var mip = new MicroProcessor(identifier, isa, null, start, null, null);
+    var abi = definition.abiNode != null ? (Abi) fetch(definition.abiNode).orElse(null) : null;
+    var mip = new MicroProcessor(identifier, isa, abi, start, null, null);
 
     // FIXME: Remove this, once annotation framework is supported
     mip.addAnnotation(new EnableHtifAnno());
@@ -1164,5 +1245,100 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // Do nothing on purpose.
     // The typechecker already resolved all types they are no longer needed.
     return Optional.empty();
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(
+      AbiPseudoInstructionDefinition definition) {
+    var pseudoInstructionDefinition =
+        definition.symbolTable().requireAs((Identifier) definition.target,
+            PseudoInstructionDefinition.class);
+
+    return Optional.ofNullable(pseudoInstructionDefinition).flatMap(this::fetch);
+  }
+
+  /**
+   * Maps the aliases {@code alias register zero = X(0)} to {@link Abi.RegisterRef} to be
+   * used in {@link Abi}.
+   */
+  private Abi.RegisterRef mapToRegisterRef(
+      Map<Identifier, Expr> aliasLookup,
+      SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
+    var expr = ensureNonNull(aliasLookup.get(specialPurposeRegisterDef.aliasName),
+        () -> Diagnostic.error("Cannot alias for register definition",
+            specialPurposeRegisterDef.aliasName.sourceLocation()));
+    var pair = getRegisterFile(expr);
+    var registerFile = pair.left();
+    var index = pair.right();
+
+    return new Abi.RegisterRef(registerFile, index, Abi.Alignment.NO_ALIGNMENT);
+  }
+
+  /**
+   * An expression {@code X(0)} should be returned as a pair.
+   */
+  private Pair<RegisterFile, Integer> getRegisterFile(Expr expr) {
+    if (expr instanceof CallIndexExpr callExpr
+        && callExpr.symbolTable != null
+        && callExpr.target instanceof Identifier identifier) {
+      var registerFile =
+          ensurePresent(
+              Optional.ofNullable(
+                      callExpr.symbolTable.requireAs(identifier, RegisterFileDefinition.class))
+                  .flatMap(this::fetch)
+                  .map(x -> (RegisterFile) x),
+              () -> Diagnostic.error("Cannot find register file with the name "
+                      + identifier.name,
+                  callExpr.location));
+
+      ensure(callExpr.argsIndices.size() == 1 && callExpr.argsIndices.get(0).values.size() == 1,
+          () -> Diagnostic.error("Expected an index for the register file", callExpr.location));
+
+      var index = (IntegerLiteral) callExpr.argsIndices.get(0).values.get(0);
+      return Pair.of(registerFile, index.number.intValue());
+    } else {
+      throw Diagnostic.error("This expression is not register file", expr.sourceLocation())
+          .build();
+    }
+  }
+
+  /**
+   * Builds a lookup table for {@link AliasDefinition}.
+   */
+  private Map<Identifier, Expr> aliasLookupTable(List<Definition> definitions) {
+    return definitions
+        .stream()
+        .filter(x -> x instanceof AliasDefinition)
+        .map(x -> (AliasDefinition) x)
+        .collect(Collectors.toMap(AliasDefinition::identifier, x -> x.value));
+  }
+
+  /**
+   * Extracts a {@link SpecialPurposeRegisterDefinition} with the given {@code purpose}.
+   * It will throw an error if none or multiple exist.
+   */
+  private SpecialPurposeRegisterDefinition getSpecialPurposeRegisterDefinition(
+      List<Definition> definitions, SpecialPurposeRegisterDefinition.Purpose purpose) {
+    var registers = definitions
+        .stream()
+        .filter(x -> x instanceof SpecialPurposeRegisterDefinition y && y.purpose == purpose)
+        .toList();
+
+    return (SpecialPurposeRegisterDefinition) registers.stream().findFirst().get();
+  }
+
+
+  /**
+   * Extracts {@link AbiPseudoInstructionDefinition} from an
+   * {@link ApplicationBinaryInterfaceDefinition}.
+   */
+  private AbiPseudoInstructionDefinition getAbiPseudoInstruction(
+      List<Definition> definitions, AbiPseudoInstructionDefinition.Kind kind) {
+    var pseudoInstructions = definitions
+        .stream()
+        .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
+        .toList();
+
+    return (AbiPseudoInstructionDefinition) pseudoInstructions.stream().findFirst().orElseThrow();
   }
 }
