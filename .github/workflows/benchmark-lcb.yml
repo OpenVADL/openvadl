@@ -44,15 +44,15 @@ jobs:
       - name: Read
         run: cat ${{ github.workspace }}/riscv32.csv
       - name: Update csv
-        run: awk -v hash="${{ github.sha }}" -v date="$(date --iso-8601=seconds)" -F',' '{print $0 "," hash "," date}' ${{ github.workspace }}/riscv32.csv > ${{ github.workspace }}/$(date --iso-8601=seconds)-${{ github.sha }}.csv
+        run: awk -v hash="${{ github.sha }}" -v date="${{ github.event.repository.updated_at}}" -F',' '{print $0 "," hash "," date}' ${{ github.workspace }}/riscv32.csv > ${{ github.workspace }}/${{ github.event.repository.updated_at}}-${{ github.sha }}.csv
       - name: Read updated
-        run: cat ${{ github.workspace }}/$(date --iso-8601=seconds)-${{ github.sha }}.csv
+        run: cat ${{ github.workspace }}/${{ github.event.repository.updated_at }}-${{ github.sha }}.csv
       - name: Pushes csv
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.ACCESS_TOKEN_RESSELPARK }}
         with:
-          source_file: ${{ github.workspace }}/$(date --iso-8601=seconds)-${{ github.sha }}.csv
+          source_file: ${{ github.workspace }}/${{ github.event.repository.updated_at }}-${{ github.sha }}.csv
           destination_repo: 'openVADL/resselpark'
           destination_branch: 'master'
           destination_folder: 'data/lcb/riscv32'
