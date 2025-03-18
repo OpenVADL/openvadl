@@ -141,6 +141,13 @@ public class PassManager {
       // Wrapping the passResults into an unmodifiable map so a pass cannot modify
       // the results.
       var pass = step.pass();
+
+      if (pass.skip()) {
+        logger.debug("Skipping pass with key: {}", step.key());
+        passResults.addSkipped(step.key(), pass);
+        continue;
+      }
+
       var passResult = execPass(pass, viam);
       pass.verification(viam, passResult);
 
