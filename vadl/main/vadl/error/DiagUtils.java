@@ -16,6 +16,7 @@
 
 package vadl.error;
 
+import java.util.Objects;
 import vadl.utils.SourceLocation;
 import vadl.viam.graph.Node;
 
@@ -36,7 +37,8 @@ public class DiagUtils {
     SourceLocation loc = !node.sourceLocation().equals(SourceLocation.INVALID_SOURCE_LOCATION)
         ? node.sourceLocation()
         : node.ensureGraph().parentDefinition().sourceLocation();
-    throw Diagnostic.error(what + " are not allowed here", loc)
+    throw Diagnostic.error(
+            what + " are not allowed in " + Objects.requireNonNull(node.graph()).name, loc)
         .note("THIS IS AN INTERNAL ERROR")
         .build();
   }

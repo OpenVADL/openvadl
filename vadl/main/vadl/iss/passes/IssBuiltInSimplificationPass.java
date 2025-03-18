@@ -47,13 +47,13 @@ public class IssBuiltInSimplificationPass extends AbstractIssPass {
   }
 
   @Override
-  public IssConfiguration configuration() {
-    return (IssConfiguration) super.configuration();
+  public PassName getName() {
+    return PassName.of("ISS Built-In Simplification");
   }
 
   @Override
-  public PassName getName() {
-    return PassName.of("ISS Built-In Simplification");
+  public boolean skip() {
+    return configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_BUILT_INS);
   }
 
   @Nullable

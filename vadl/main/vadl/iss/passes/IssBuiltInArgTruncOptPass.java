@@ -60,6 +60,11 @@ public class IssBuiltInArgTruncOptPass extends AbstractIssPass {
     return PassName.of("ISS BuiltIn Arg Truncate Optimization");
   }
 
+  @Override
+  public boolean skip() {
+    return configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_ARGS);
+  }
+
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {

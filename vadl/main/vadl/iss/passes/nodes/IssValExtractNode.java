@@ -73,6 +73,10 @@ public class IssValExtractNode extends IssExprNode {
     return len;
   }
 
+  public boolean isSigned() {
+    return extendMode == TcgExtend.SIGN;
+  }
+
   public TcgExtend extendMode() {
     return extendMode;
   }

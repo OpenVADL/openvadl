@@ -16,6 +16,7 @@
 
 package vadl.configuration;
 
+import java.util.EnumSet;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 
 /**
@@ -25,10 +26,26 @@ import vadl.iss.passes.tcgLowering.Tcg_32_64;
  */
 public class IssConfiguration extends GeneralConfiguration {
 
+  public enum IssOptsToSkip {
+    OPT_BUILT_INS("QEMU specific optimizations of VADL built-in calls."),
+    OPT_ARGS("Argument preparation optimization for VADL built-in calls. \n"
+        + "E.g., removes truncation of VADL::add arguments."),
+    OPT_VAR_ALLOC("Reduces required number of temporary TCG variables to a minimum."),
+    OPT_JMP_SLOTS("Uses QEMU jump slot optimization to chain jumps between TBs."),
+    OPT_CTRL_FLOW("Optimizes control flow within an instruction.");
+
+    public final String desc;
+
+    IssOptsToSkip(String desc) {
+      this.desc = desc;
+    }
+  }
+
   // is set by the IssConfigurationPass
   private String targetName;
   private boolean insnCount;
   private Tcg_32_64 targetSize;
+  private EnumSet<IssOptsToSkip> optsToSkip;
 
   /**
    * Constructs a {@link IssConfiguration}.
@@ -38,20 +55,7 @@ public class IssConfiguration extends GeneralConfiguration {
     targetName = "unknown";
     insnCount = false;
     targetSize = Tcg_32_64.i64;
-  }
-
-  /**
-   * Constructs IssConfiguration.
-   *
-   * @param insnCount used to determine if the iss generates add instruction for special
-   *                  cpu register (QEMU)
-   */
-  public IssConfiguration(GeneralConfiguration generalConfig, boolean insnCount) {
-    super(generalConfig);
-    this.targetName = "unknown";
-    this.insnCount = insnCount;
-    targetSize = Tcg_32_64.i64;
-
+    optsToSkip = EnumSet.noneOf(IssOptsToSkip.class);
   }
 
   public static IssConfiguration from(GeneralConfiguration generalConfig) {
@@ -59,7 +63,9 @@ public class IssConfiguration extends GeneralConfiguration {
   }
 
   public static IssConfiguration from(GeneralConfiguration generalConfig, boolean insnCounting) {
-    return new IssConfiguration(generalConfig, insnCounting);
+    var config = new IssConfiguration(generalConfig);
+    config.insnCount = insnCounting;
+    return config;
   }
 
   public String targetName() {
@@ -84,5 +90,14 @@ public class IssConfiguration extends GeneralConfiguration {
 
   public void setTargetSize(Tcg_32_64 targetSize) {
     this.targetSize = targetSize;
+  }
+
+  public boolean isSkip(IssOptsToSkip optsToSkip) {
+    return this.optsToSkip.contains(optsToSkip);
+  }
+
+  public void setOptsToSkip(
+      EnumSet<IssOptsToSkip> optsToSkip) {
+    this.optsToSkip = optsToSkip;
   }
 }

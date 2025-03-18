@@ -148,11 +148,14 @@ public class TcgOpLoweringPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
+    // only if we skip the jmp slot optimization, we set it to false
+    var optJmpSlot = !configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_JMP_SLOTS);
+
     viam.isa().get().ownInstructions()
         .forEach(i ->
             new TcgOpLoweringExecutor(i.expectExtension(TcgCtx.class).assignment(),
                 configuration().targetSize())
-                .runOn(i.behavior()));
+                .runOn(i.behavior(), optJmpSlot));
 
     return null;
   }
@@ -181,6 +184,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   // indicates whether jump slot 1 is already
   // used by some branch (instr exit)
   boolean isJumpSlotTaken = false;
+  // indicates if we want to optimize jumps with jump slots.
+  // only false if `--skip opt-jmp-slots` was passed.
+  boolean optJumpSlot = true;
 
   /**
    * Constructs a new {@code TcgOpLoweringExecutor} with the given variable assignments.
@@ -198,7 +204,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    *
    * @param graph The graph to process.
    */
-  void runOn(Graph graph) {
+  void runOn(Graph graph, boolean optJumpSlot) {
+    this.optJumpSlot = optJumpSlot;
     this.graph = graph;
     // first set jump, as later the info isn't available anymore
     setJmp(graph);
@@ -365,7 +372,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       var pcWrite = node.pcWrite();
 
       var jmpSlot = TcgGottoTb.JmpSlot.LOOK_UP;
-      if (!this.isJumpSlotTaken) {
+      if (!this.isJumpSlotTaken && optJumpSlot) {
         // if the jumpslot (1) is not yet taken, we take it.
         // TODO: We could use heuristic to find the best slot assignment.
         //  (other than just the first one)

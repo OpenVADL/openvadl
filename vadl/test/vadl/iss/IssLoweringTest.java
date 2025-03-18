@@ -18,6 +18,7 @@ package vadl.iss;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,14 @@ public class IssLoweringTest extends AbstractTest {
   void issLoweringTest() throws IOException, DuplicatedPassKeyException {
     var config =
         new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), true));
+    // skip allocation
+    config.setOptsToSkip(EnumSet.of(
+//        IssConfiguration.IssOptsToSkip.OPT_JMP_SLOTS,
+//        IssConfiguration.IssOptsToSkip.OPT_CTRL_FLOW,
+//        IssConfiguration.IssOptsToSkip.OPT_VAR_ALLOC,
+        IssConfiguration.IssOptsToSkip.OPT_ARGS
+//        IssConfiguration.IssOptsToSkip.OPT_BUILT_INS
+    ));
 
     setupPassManagerAndRunSpec("sys/risc-v/rv64im.vadl",
         PassOrders.iss(config)

@@ -83,13 +83,16 @@ public class IssTcgVAllocationPass extends AbstractIssPass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
+    var skipOptimization = configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_VAR_ALLOC);
+
     // Process each instruction in the ISA
     viam.isa().ifPresent(isa -> isa.ownInstructions()
         .forEach(instr ->
             // Allocate variables for the instruction's behavior
             new IssVariableAllocator(instr.behavior(),
-                instr.expectExtension(TcgCtx.class).assignment())
-                .assignFinalVariables()
+                instr.expectExtension(TcgCtx.class).assignment()
+            )
+                .assignFinalVariables(!skipOptimization)
         ));
     return null;
   }
@@ -114,7 +117,6 @@ class IssVariableAllocator {
   private final StartNode startNode;
   // the integer just represents some non-specific TCGv
   private final Map<TcgVRefNode, Integer> allocationMap;
-  private final TcgCtx.Assignment initialAssignment;
   private final LivenessAnalysis livenessAnalysis;
 
   /**
@@ -127,7 +129,6 @@ class IssVariableAllocator {
     this.graph = graph;
     this.startNode = getSingleNode(graph, StartNode.class);
     this.livenessAnalysis = new LivenessAnalysis(ssaAssignments);
-    this.initialAssignment = ssaAssignments;
     this.allocationMap = new HashMap<>();
   }
 
@@ -142,11 +143,17 @@ class IssVariableAllocator {
    *   <li>Updating the TCGv assignments on TcgNodes based on the allocation.
    * </ul>
    */
-  void assignFinalVariables() {
+  void assignFinalVariables(boolean optimizeAllocation) {
+
+    if (!optimizeAllocation) {
+      // if we don't optimize allocation, we just init all variables
+      initializeFixedVariables(true);
+      return;
+    }
 
     // this schedules non temporary variables, e.i.:
     // reg, regfile, const
-    initializeFixedVariables();
+    initializeFixedVariables(false);
 
     // perform liveness analysis
     livenessAnalysis.analyze(graph);
@@ -160,10 +167,12 @@ class IssVariableAllocator {
   /**
    * Initializes all variable at start of instruction.
    * This is required to build a valid inference graph.
+   *
+   * @param initTmps indicates if temporary variables should be initialized.
    */
-  private void initializeFixedVariables() {
-    initialAssignment.tcgVariables()
-        .filter(v -> v.var().kind() != TcgV.Kind.TMP)
+  private void initializeFixedVariables(boolean initTmps) {
+    graph.getNodes(TcgVRefNode.class)
+        .filter(v -> initTmps || v.var().kind() != TcgV.Kind.TMP)
         .sorted(Comparator.comparing(v -> v.var().kind()))
         .forEach(v -> startNode.addAfter(TcgGetVar.from(v)));
   }
@@ -281,6 +290,7 @@ class IssVariableAllocator {
  * It helps in building the interference graph by identifying variables
  * that are live simultaneously.
  */
+// TODO: Check if the tempassignmets is enough here (look at IssMulhNode)
 class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
 
   private final TcgCtx.Assignment tempAssignments;
