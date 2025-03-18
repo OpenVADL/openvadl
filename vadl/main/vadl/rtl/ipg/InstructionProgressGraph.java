@@ -1,13 +1,20 @@
 package vadl.rtl.ipg;
 
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.Streams;
+import java.util.ArrayDeque;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The instruction progress graph is used to combine the behavior of all instructions into
@@ -44,6 +51,12 @@ public class InstructionProgressGraph extends Graph {
   public <T extends Node> T add(T node) {
     contexts.put(node, new NodeContext(node));
     return super.add(node);
+  }
+
+  @Override
+  protected void remove(Node node) {
+    super.remove(node);
+    contexts.remove(node);
   }
 
   /**
@@ -83,6 +96,116 @@ public class InstructionProgressGraph extends Graph {
   public void markNodeWithInputs(Node node, Instruction instruction) {
     markNode(node, instruction);
     node.inputs().forEach(input -> markNodeWithInputs(input, instruction));
+  }
+
+  /**
+   * Merge nodes of a type if the instructions they belong to do not overlap. The inputs of the
+   * merged nodes are modified by adding select-by-instruction nodes.
+   *
+   * @param nodes set of nodes to consider
+   * @param removed handles removed nodes
+   * @param added handles added nodes
+   * @param <T> type of nodes to merge
+   */
+  public <T extends Node> void merge(Set<T> nodes, @Nullable Consumer<T> removed,
+                                     @Nullable Consumer<Node> added) {
+    Multimaps.index(nodes, Node::dataList).asMap().values()
+        .forEach(candidates -> {
+          // try to merge collection of candidate nodes that share the same data list
+          // queue them based on the number of instructions they belong to (fewer first)
+          var q = new ArrayDeque<T>();
+          candidates.stream()
+              .sorted(Comparator.comparing(
+                  n -> getContext(n).instructions().size(), Comparator.reverseOrder()))
+              .forEach(q::addLast);
+          while (!q.isEmpty()) {
+            var n1 = q.removeFirst();
+            if (n1.isDeleted()) {
+              continue;
+            }
+            // pick node to merge based on most equal inputs
+            var n2opt = q.stream()
+                .filter(n2 -> !n1.equals(n2) && !n2.isDeleted() && canMerge(n1, n2))
+                .min(prioritizeEqualInputsComparator(n1));
+            if (n2opt.isPresent()) {
+              var n2 = n2opt.get();
+              Streams.forEachPair(n1.inputs(), n2.inputs(), (i1, i2) -> {
+                if (!i1.equals(i2)) {
+                  ensure(i1 instanceof ExpressionNode && i2 instanceof ExpressionNode,
+                      "Inputs must be an expression node");
+                  var e1 = (ExpressionNode) i1;
+                  var e2 = (ExpressionNode) i2;
+                  // insert select-by-instruction nodes if necessary at inputs of n1
+                  if (i1 instanceof SelectByInstructionNode sel1
+                      && i2 instanceof SelectByInstructionNode sel2) {
+                    sel1.merge(sel2);
+                    getContext(sel1).instructions().addAll(getContext(sel2).instructions());
+                  } else if (i1 instanceof SelectByInstructionNode sel1) {
+                    for (Instruction instruction : getContext(n2).instructions()) {
+                      sel1.add(instruction, e2);
+                      getContext(sel1).instructions().add(instruction);
+                    }
+                  } else if (i2 instanceof SelectByInstructionNode sel2) {
+                    for (Instruction instruction : getContext(n1).instructions()) {
+                      sel2.add(instruction, e1);
+                      getContext(sel2).instructions().add(instruction);
+                    }
+                    n1.replaceInput(i1, sel2);
+                  } else {
+                    var sel = add(new SelectByInstructionNode(e2.type()));
+                    n1.replaceInput(i1, sel);
+                    for (Instruction instruction : getContext(n1).instructions()) {
+                      sel.add(instruction, e1);
+                      getContext(sel).instructions().add(instruction);
+                    }
+                    for (Instruction instruction : getContext(n2).instructions()) {
+                      sel.add(instruction, e2);
+                      getContext(sel).instructions().add(instruction);
+                    }
+                    if (added != null) {
+                      added.accept(sel);
+                    }
+                  }
+                }
+              });
+              // update instruction sets in context for n1 and remove n2
+              for (Instruction instruction : getContext(n2).instructions()) {
+                getContext(n1).instructions().add(instruction);
+              }
+              n2.replaceAtAllUsages(n1);
+              n2.safeDelete();
+              if (removed != null) {
+                removed.accept(n2);
+              }
+              q.addLast(n1);
+            }
+          }
+        });
+  }
+
+  private boolean canMerge(Node n1, Node n2) {
+    var s1 = getContext(n1).instructions();
+    var s2 = getContext(n2).instructions();
+    return s1.stream().noneMatch(s2::contains) && n1.inputs().count() == n2.inputs().count();
+  }
+
+  private int countEqualInputs(Node n1, Node n2) {
+    var i1 = n1.inputs().toList();
+    var i2 = n2.inputs().toList();
+    if (i1.size() != i2.size()) {
+      return 0;
+    }
+    var count = 0;
+    for (int i = 0; i < i1.size(); i++) {
+      if (i1.get(i) == i2.get(i)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private Comparator<Node> prioritizeEqualInputsComparator(Node ref) {
+    return Comparator.comparing(n -> countEqualInputs(ref, n), Comparator.reverseOrder());
   }
 
   /**
