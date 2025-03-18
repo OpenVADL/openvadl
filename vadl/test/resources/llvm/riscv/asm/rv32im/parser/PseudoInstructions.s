@@ -26,8 +26,8 @@ J 100
 # CHECK: <MCInst #{{[0-9]+}} J
 # CHECK-NEXT: <MCOperand Imm:100>>
 
-MOV x0, x1
-# CHECK: <MCInst #{{[0-9]+}} MOV
+MV x0, x1
+# CHECK: <MCInst #{{[0-9]+}} MV
 # CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Reg:3>>
 
