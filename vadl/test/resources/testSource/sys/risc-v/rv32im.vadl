@@ -231,7 +231,7 @@ assembly description ASM for ABI = {
     ;
 
 
-    RRPseudoIds : "MOV" | "NOT" | "NEG" | "SNEZ" | "SLTZ" | "SGTZ" ;
+    RRPseudoIds : "MV" | "NOT" | "NEG" | "SNEZ" | "SLTZ" | "SGTZ" ;
 
     RRPseudoInstruction @instruction :
       mnemonic = RRPseudoIds @operand

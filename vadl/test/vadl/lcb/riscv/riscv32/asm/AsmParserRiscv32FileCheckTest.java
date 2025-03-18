@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.riscv.riscv32.parser;
+package vadl.lcb.riscv.riscv32.asm;
 
 import vadl.lcb.AsmFileCheckTest;
 
@@ -42,5 +42,10 @@ public class AsmParserRiscv32FileCheckTest extends AsmFileCheckTest {
   @Override
   protected String getSpikeTarget() {
     return "rv32im";
+  }
+
+  @Override
+  protected String getComponent() {
+    return "parser";
   }
 }

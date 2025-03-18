@@ -297,7 +297,7 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   pseudo instruction CALL( symbol : Bits<32> ) =
   {
-      LUI{ rd = 1 as Bits5, imm = hi( symbol ) }
+      AUIPC{ rd = 1 as Bits5, imm = hi( symbol ) }
       JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo( symbol ) }
   }
   assembly CALL = (mnemonic, " ", hex( symbol ))
@@ -327,11 +327,11 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   }
   assembly NOP = mnemonic
 
-  pseudo instruction MOV( rd : Index, rs1 : Index ) =
+  pseudo instruction MV( rd : Index, rs1 : Index ) =
   {
       ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits<12> }
   }
-  assembly MOV = (mnemonic, " ", register( rd ), ",", register( rs1 ))
+  assembly MV = (mnemonic, " ", register( rd ), ",", register( rs1 ))
 
   pseudo instruction NOT( rd : Index, rs1 : Index ) =
   {
