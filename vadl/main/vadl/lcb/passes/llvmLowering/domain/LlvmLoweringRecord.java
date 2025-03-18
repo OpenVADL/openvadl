@@ -57,9 +57,6 @@ public abstract class LlvmLoweringRecord {
 
     /**
      * Constructor.
-     *
-     * @param info
-     * @param patterns
      */
     public Machine(Instruction instructionRef, LlvmLoweringPass.BaseInstructionInfo info,
                    List<TableGenPattern> patterns) {

@@ -74,12 +74,9 @@ import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.HasRegisterFile;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
-import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -266,7 +263,7 @@ public class LlvmLoweringPass extends Pass {
         () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
-    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
+    var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().orElseThrow();
 
     var architectureType =
         ensurePresent(ValueType.from(abi.stackPointer().registerFile().resultType()),
@@ -290,7 +287,7 @@ public class LlvmLoweringPass extends Pass {
         List.of(new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies),
             new LlvmPseudoInstructionLoweringDefaultStrategyImpl(machineStrategies));
 
-    var machineRecords = generateRecordsForMachineInstructions(viam, abi, machineStrategies,
+    var machineRecords = machineInstructions(viam, abi, machineStrategies,
         labelingResult);
     var pseudoRecords = pseudoInstructions(machineRecords, viam, fieldUsages, abi,
         pseudoStrategies, labelingResult, labelingResultPseudo);
@@ -299,8 +296,7 @@ public class LlvmLoweringPass extends Pass {
   }
 
 
-  private IdentityHashMap<Instruction, LlvmLoweringRecord.Machine>
-  generateRecordsForMachineInstructions(
+  private IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructions(
       Specification viam, Abi abi,
       List<LlvmInstructionLoweringStrategy> strategies,
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions) {
@@ -406,9 +402,8 @@ public class LlvmLoweringPass extends Pass {
       InstrCallNode instruction) {
     var args = new ArrayList<ExpressionNode>();
 
-    var orderedFormatFields = orderedFormatFields(instruction);
-    for (int i = 0; i < orderedFormatFields.size(); i++) {
-      var field = orderedFormatFields.get(i);
+    for (int i = 0; i < machineRecord.info().outputInputOperandsFormatFields().size(); i++) {
+      var field = machineRecord.info().outputInputOperandsFormatFields().get(i);
       var argument = instruction.getArgument(field);
       var fieldUsageMap = fieldUsages.getFieldUsages(instruction.target());
 
@@ -493,36 +488,6 @@ public class LlvmLoweringPass extends Pass {
     }
 
     return args;
-  }
-
-  /**
-   * Since the {@link InstrCallNode#arguments()} can be written in any order, we
-   * have to make sure that the {@link TableGenInstAlias} has the correct order.
-   * Where do we get the correct order?
-   * We look that the {@link Instruction#assembly()} to get an ordered list.
-   */
-  private static List<Format.Field> orderedFormatFields(InstrCallNode instruction) {
-    var returnNode =
-        instruction.target().assembly().function().behavior().getNodes(ReturnNode.class).findFirst()
-            .orElseThrow();
-    var assemblyNodes = new ArrayList<Format.Field>();
-    returnNode.applyOnInputs(new GraphVisitor.Applier<>() {
-      @Nullable
-      @Override
-      public Node applyNullable(Node from, @Nullable Node to) {
-        if (to != null) {
-          if (to instanceof FieldRefNode fieldRefNode) {
-            assemblyNodes.add(fieldRefNode.formatField());
-          } else {
-            to.applyOnInputs(this);
-          }
-        }
-
-        return to;
-      }
-    });
-
-    return assemblyNodes;
   }
 
   /**
