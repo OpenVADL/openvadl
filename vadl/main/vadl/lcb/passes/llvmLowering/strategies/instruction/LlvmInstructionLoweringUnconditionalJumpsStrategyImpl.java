@@ -53,7 +53,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
   }
 
   @Override
-  public Optional<LlvmLoweringRecord> lowerInstruction(
+  public Optional<LlvmLoweringRecord.Machine> lowerInstruction(
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph uninlinedBehavior,
@@ -84,7 +84,7 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
         LlvmLoweringPass.Flags.withIsAsCheapAsMove(flags));
   }
 
-  private LlvmLoweringRecord createIntermediateResult(
+  private LlvmLoweringRecord.Machine createIntermediateResult(
       Instruction instruction,
       Graph uninlinedGraph) {
 
@@ -93,12 +93,10 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
     var flags = LlvmLoweringPass.Flags.withNoTerminator(
         LlvmLoweringPass.Flags.withNoBranch(unchangedFlags));
 
-    var writes = uninlinedGraph.getNodes(WriteResourceNode.class).toList();
-    var patterns = generatePatterns(instruction, uninlinedGraph, info.inputs(), writes);
-
-    return new LlvmLoweringRecord(
+    return new LlvmLoweringRecord.Machine(
+        instruction,
         info.withFlags(flags),
-        patterns
+        Collections.emptyList()
     );
   }
 
@@ -108,13 +106,6 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
                                                    List<TableGenInstructionOperand> inputOperands,
                                                    List<WriteResourceNode> sideEffectNodes) {
     throw new RuntimeException("Must not be called. Use the other method");
-  }
-
-  protected List<TableGenPattern> generatePatterns(Instruction instruction,
-                                                   Graph uninlinedGraph,
-                                                   List<TableGenInstructionOperand> inputOperands,
-                                                   List<WriteResourceNode> sideEffectNodes) {
-    return Collections.emptyList();
   }
 
   @Override

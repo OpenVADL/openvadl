@@ -84,7 +84,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   private final PseudoInstruction pseudoInstruction;
   private final SymbolTable symbolTable;
   private final GenerateLinkerComponentsPass.VariantKindStore variantKindStore;
-  private final IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords;
+  private final IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords;
 
 
   /**
@@ -100,7 +100,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
                                           variantKindStore,
                                       PseudoInstruction pseudoInstruction,
                                       Function function,
-                                      IdentityHashMap<Instruction, LlvmLoweringRecord>
+                                      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine>
                                           machineInstructionRecords) {
     super(function);
     this.targetName = targetName;

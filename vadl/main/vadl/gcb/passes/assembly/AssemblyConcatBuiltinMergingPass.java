@@ -26,6 +26,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.viam.Specification;
+import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -56,7 +57,14 @@ public class AssemblyConcatBuiltinMergingPass extends Pass {
         .map(isa -> isa.ownInstructions().stream())
         .orElseGet(Stream::empty)
         .flatMap(
-            instruction -> instruction.assembly().function().behavior().getNodes(BuiltInCall.class))
+            instruction -> {
+              var nodes = new ArrayList<BuiltInCall>();
+              var returnNode =
+                  instruction.assembly().function().behavior().getNodes(ReturnNode.class)
+                      .findFirst().orElseThrow();
+              returnNode.collectInputsWithChildren(nodes, BuiltInCall.class);
+              return nodes.stream();
+            })
         .filter(builtin -> builtin.builtIn() == BuiltInTable.CONCATENATE_STRINGS)
         // only find concat strings that are not used by other concat strings.
         // we will recursively resolve them, so we want only the root objects.

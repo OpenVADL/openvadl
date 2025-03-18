@@ -32,7 +32,6 @@ import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.PseudoInstructionLabel;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
@@ -90,9 +89,9 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
   }
 
   /**
-   * Lower a {@link PseudoInstruction} into a {@link LlvmLoweringPseudoRecord}.
+   * Lower a {@link PseudoInstruction} into a {@link LlvmLoweringRecord.Pseudo}.
    */
-  public Optional<LlvmLoweringPseudoRecord> lowerInstruction(
+  public Optional<LlvmLoweringRecord.Pseudo> lowerInstruction(
       Abi abi,
       List<TableGenInstAlias> instAliases,
       PseudoInstruction pseudo,
@@ -257,7 +256,7 @@ public abstract class LlvmPseudoInstructionLowerStrategy {
         dedup(defs)
     );
 
-    return Optional.of(new LlvmLoweringPseudoRecord(
+    return Optional.of(new LlvmLoweringRecord.Pseudo(
         info,
         patterns,
         instAliases

@@ -285,7 +285,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Generate a lowering result for the given {@link Graph} for pseudo instructions.
    * If it is not lowerable then return {@link Optional#empty()}.
    */
-  public Optional<LlvmLoweringRecord> lowerInstruction(
+  public Optional<LlvmLoweringRecord.Machine> lowerInstruction(
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
@@ -340,12 +340,14 @@ public abstract class LlvmInstructionLoweringStrategy {
               info.outputs(),
               patterns,
               abi);
-      return Optional.of(new LlvmLoweringRecord(
+      return Optional.of(new LlvmLoweringRecord.Machine(
+          instruction,
           info,
           Stream.concat(patterns.stream(), alternativePatterns.stream()).toList()
       ));
     } else {
-      return Optional.of(new LlvmLoweringRecord(
+      return Optional.of(new LlvmLoweringRecord.Machine(
+          instruction,
           info,
           Collections.emptyList()
       ));

@@ -155,6 +155,26 @@ public abstract class Node implements WithSourceLocation {
     sublist.forEach(input -> input.collectInputsWithChildren(collection));
   }
 
+  /**
+   * Collects all successors in the provided list and it's children's successors.
+   * It will only add it to the result when it is an instance of the given {@code clazz}.
+   *
+   * @param collection to add the successors to.
+   * @param clazz      checks whether it is can instance of this class.
+   */
+  public final <T> void collectInputsWithChildren(List<T> collection, Class<T> clazz) {
+    var sublist = new ArrayList<Node>();
+    this.collectInputs(sublist);
+    collection.addAll(
+        sublist.stream()
+            .filter(clazz::isInstance)
+            .map(clazz::cast)
+            .toList());
+
+    // Only iterate over the newly visited inputs and ignore the rest.
+    sublist.forEach(input -> input.collectInputsWithChildren(collection, clazz));
+  }
+
   protected final List<Node> inputList() {
     var collection = new ArrayList<Node>();
     collectInputs(collection);

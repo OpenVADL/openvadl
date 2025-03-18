@@ -74,7 +74,7 @@ public class LlvmInstructionLoweringDivisionAndRemainderStrategyImpl
   }
 
   @Override
-  public Optional<LlvmLoweringRecord> lowerInstruction(
+  public Optional<LlvmLoweringRecord.Machine> lowerInstruction(
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
@@ -94,7 +94,8 @@ public class LlvmInstructionLoweringDivisionAndRemainderStrategyImpl
     var patterns = generatePatterns(instruction,
         inputOperands,
         copy.getNodes(WriteResourceNode.class).toList());
-    return Optional.of(new LlvmLoweringRecord(
+    return Optional.of(new LlvmLoweringRecord.Machine(
+        instruction,
         new LlvmLoweringPass.BaseInstructionInfo(inputOperands,
             info.outputs(),
             info.flags(),
