@@ -19,14 +19,15 @@ package vadl.lcb.passes.llvmLowering.domain;
 
 import java.util.List;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 
 /**
  * Contains information for the lowering of instructions.
  */
-public class LlvmLoweringRecord {
-  private final Instruction instructionRef;
+public abstract class LlvmLoweringRecord {
   private final LlvmLoweringPass.BaseInstructionInfo info;
   private final List<TableGenPattern> patterns;
 
@@ -34,10 +35,8 @@ public class LlvmLoweringRecord {
    * Constructor.
    */
   public LlvmLoweringRecord(
-      Instruction instructionRef,
       LlvmLoweringPass.BaseInstructionInfo info,
       List<TableGenPattern> patterns) {
-    this.instructionRef = instructionRef;
     this.info = info;
     this.patterns = patterns;
   }
@@ -50,7 +49,50 @@ public class LlvmLoweringRecord {
     return info;
   }
 
-  public Instruction instruction() {
-    return instructionRef;
+  /**
+   * Represents a {@link LlvmLoweringRecord} for {@link Instruction}.
+   */
+  public static class Machine extends LlvmLoweringRecord {
+    private final Instruction instructionRef;
+
+    /**
+     * Constructor.
+     *
+     * @param info
+     * @param patterns
+     */
+    public Machine(Instruction instructionRef, LlvmLoweringPass.BaseInstructionInfo info,
+                   List<TableGenPattern> patterns) {
+      super(info, patterns);
+      this.instructionRef = instructionRef;
+    }
+
+
+    public Instruction instruction() {
+      return instructionRef;
+    }
+  }
+
+  /**
+   * Represents a {@link LlvmLoweringRecord} for {@link PseudoInstruction}.
+   */
+  public static class Pseudo extends LlvmLoweringRecord {
+    private final List<TableGenInstAlias> instAliases;
+
+    /**
+     * Constructor.
+     */
+    public Pseudo(LlvmLoweringPass.BaseInstructionInfo info,
+                  List<TableGenPattern> patterns,
+                  List<TableGenInstAlias> instAliases
+    ) {
+      super(info, patterns);
+      this.instAliases = instAliases;
+    }
+
+    public List<TableGenInstAlias> instAliases() {
+      return instAliases;
+    }
+
   }
 }

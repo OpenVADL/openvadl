@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.gcb.passes.assembly.AssemblyRegisterNode;
-import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.types.BuiltInTable;
 import vadl.viam.Assembly;
@@ -45,7 +45,7 @@ public class TableGenInstAliasRenderer {
   /**
    * Lowers a pseudo record.
    */
-  public static String lower(LlvmLoweringPseudoRecord pseudoRecord) {
+  public static String lower(LlvmLoweringRecord.Pseudo pseudoRecord) {
     return pseudoRecord.instAliases().stream().map(TableGenInstAliasRenderer::lower)
         .collect(Collectors.joining("\n"));
   }

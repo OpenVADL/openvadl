@@ -98,7 +98,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   @Override
-  public Optional<LlvmLoweringRecord> lowerInstruction(
+  public Optional<LlvmLoweringRecord.Machine> lowerInstruction(
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph unmodifiedBehavior,
@@ -123,7 +123,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         Collections.emptyList(),
         abi);
 
-    return Optional.of(new LlvmLoweringRecord(
+    return Optional.of(new LlvmLoweringRecord.Machine(
         instruction,
         info,
         patterns
@@ -306,7 +306,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
 
     var machine = new Graph("machine");
     machine.addWithInputs(new LcbMachineInstructionNode(
-        new NodeList<>((LlvmReadRegFileNode) llvmRegister.copy(),
+        new NodeList<>(llvmRegister.copy(),
             new ConstantNode(constant)),
         new OutputInstructionName("PseudoBRIND")));
 

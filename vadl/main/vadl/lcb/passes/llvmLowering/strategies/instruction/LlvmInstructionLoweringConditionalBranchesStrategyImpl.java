@@ -84,7 +84,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   @Override
-  public Optional<LlvmLoweringRecord> lowerInstruction(
+  public Optional<LlvmLoweringRecord.Machine> lowerInstruction(
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       Instruction instruction,
       Graph uninlinedBehavior,
@@ -101,7 +101,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         createIntermediateResult(labelledMachineInstructions, instruction, copy, abi));
   }
 
-  private LlvmLoweringRecord createIntermediateResult(
+  private LlvmLoweringRecord.Machine createIntermediateResult(
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       Instruction instruction,
       Graph visitedGraph,
@@ -123,7 +123,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         .map(LoweringStrategyUtils::replaceBasicBlockByLabelImmediateInMachineInstruction)
         .toList();
 
-    return new LlvmLoweringRecord(
+    return new LlvmLoweringRecord.Machine(
         instruction,
         info,
         allPatterns

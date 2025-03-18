@@ -37,7 +37,6 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.TableGenInstructionCtx;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
-import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
@@ -75,9 +74,12 @@ import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -241,8 +243,8 @@ public class LlvmLoweringPass extends Pass {
    * tablegen records for machine instructions and pseudo instructions.
    */
   public record LlvmLoweringPassResult(
-      IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords,
-      IdentityHashMap<PseudoInstruction, LlvmLoweringPseudoRecord> pseudoInstructionRecords) {
+      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords,
+      IdentityHashMap<PseudoInstruction, LlvmLoweringRecord.Pseudo> pseudoInstructionRecords) {
 
   }
 
@@ -297,11 +299,12 @@ public class LlvmLoweringPass extends Pass {
   }
 
 
-  private IdentityHashMap<Instruction, LlvmLoweringRecord> generateRecordsForMachineInstructions(
+  private IdentityHashMap<Instruction, LlvmLoweringRecord.Machine>
+  generateRecordsForMachineInstructions(
       Specification viam, Abi abi,
       List<LlvmInstructionLoweringStrategy> strategies,
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions) {
-    var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord>();
+    var tableGenRecords = new IdentityHashMap<Instruction, LlvmLoweringRecord.Machine>();
 
     viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty)
         .forEach(instruction -> {
@@ -337,8 +340,8 @@ public class LlvmLoweringPass extends Pass {
     return tableGenRecords;
   }
 
-  private IdentityHashMap<PseudoInstruction, LlvmLoweringPseudoRecord> pseudoInstructions(
-      IdentityHashMap<Instruction, LlvmLoweringRecord> machineRecords,
+  private IdentityHashMap<PseudoInstruction, LlvmLoweringRecord.Pseudo> pseudoInstructions(
+      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineRecords,
       Specification viam,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       Abi abi,
@@ -346,7 +349,7 @@ public class LlvmLoweringPass extends Pass {
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions,
       IsaPseudoInstructionMatchingPass.Result labelledPseudoInstructions
   ) {
-    var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringPseudoRecord>();
+    var tableGenRecords = new IdentityHashMap<PseudoInstruction, LlvmLoweringRecord.Pseudo>();
 
     viam.isa().map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty)
         .forEach(pseudo -> {
@@ -372,7 +375,7 @@ public class LlvmLoweringPass extends Pass {
   }
 
   private @Nonnull List<TableGenInstAlias> instAliases(
-      IdentityHashMap<Instruction, LlvmLoweringRecord> machineRecords,
+      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineRecords,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
       PseudoInstruction pseudo) {
     if (pseudo.behavior().getNodes(InstrCallNode.class).toList().size() != 1) {
@@ -388,14 +391,13 @@ public class LlvmLoweringPass extends Pass {
     graph.addWithInputs(
         new LcbMachineInstructionNode(new NodeList<>(args), instruction.target()));
 
-    var instAliases = List.of(
+    return List.of(
         new TableGenInstAlias(
             pseudo,
             pseudo.assembly(),
             graph
         )
     );
-    return instAliases;
   }
 
   private List<ExpressionNode> getArgsForInstAlias(
@@ -404,8 +406,9 @@ public class LlvmLoweringPass extends Pass {
       InstrCallNode instruction) {
     var args = new ArrayList<ExpressionNode>();
 
-    for (int i = 0; i < instruction.arguments().size(); i++) {
-      var field = instruction.getParamFields().get(i);
+    var orderedFormatFields = orderedFormatFields(instruction);
+    for (int i = 0; i < orderedFormatFields.size(); i++) {
+      var field = orderedFormatFields.get(i);
       var argument = instruction.getArgument(field);
       var fieldUsageMap = fieldUsages.getFieldUsages(instruction.target());
 
@@ -490,6 +493,36 @@ public class LlvmLoweringPass extends Pass {
     }
 
     return args;
+  }
+
+  /**
+   * Since the {@link InstrCallNode#arguments()} can be written in any order, we
+   * have to make sure that the {@link TableGenInstAlias} has the correct order.
+   * Where do we get the correct order?
+   * We look that the {@link Instruction#assembly()} to get an ordered list.
+   */
+  private static List<Format.Field> orderedFormatFields(InstrCallNode instruction) {
+    var returnNode =
+        instruction.target().assembly().function().behavior().getNodes(ReturnNode.class).findFirst()
+            .orElseThrow();
+    var assemblyNodes = new ArrayList<Format.Field>();
+    returnNode.applyOnInputs(new GraphVisitor.Applier<>() {
+      @Nullable
+      @Override
+      public Node applyNullable(Node from, @Nullable Node to) {
+        if (to != null) {
+          if (to instanceof FieldRefNode fieldRefNode) {
+            assemblyNodes.add(fieldRefNode.formatField());
+          } else {
+            to.applyOnInputs(this);
+          }
+        }
+
+        return to;
+      }
+    });
+
+    return assemblyNodes;
   }
 
   /**

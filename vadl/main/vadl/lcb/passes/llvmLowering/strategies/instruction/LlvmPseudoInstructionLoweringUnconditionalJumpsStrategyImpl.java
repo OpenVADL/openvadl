@@ -30,7 +30,6 @@ import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.PseudoInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringPseudoRecord;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
@@ -69,7 +68,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
   }
 
   @Override
-  public Optional<LlvmLoweringPseudoRecord> lowerInstruction(
+  public Optional<LlvmLoweringRecord.Pseudo> lowerInstruction(
       Abi abi,
       List<TableGenInstAlias> instAliases,
       PseudoInstruction pseudo,
@@ -134,7 +133,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
               tableGenRecord.get().info().uses(),
               tableGenRecord.get().info().defs());
           return Optional.of(
-              new LlvmLoweringPseudoRecord(newInfo,
+              new LlvmLoweringRecord.Pseudo(newInfo,
                   generatePatternVariations(pseudo, record),
                   instAliases));
         } else {

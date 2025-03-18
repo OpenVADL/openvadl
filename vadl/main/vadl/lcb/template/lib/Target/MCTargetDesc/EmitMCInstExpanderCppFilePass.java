@@ -95,7 +95,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       List<HasRelocationComputationAndUpdate> relocations,
       PassResults passResults,
       GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
-      IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords) {
+      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
         .map(pseudoInstruction -> renderPseudoInstruction(cppFunctions, fieldUsages,
             relocations,
@@ -113,7 +113,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       PassResults passResults,
       PseudoInstruction pseudoInstruction,
       GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
-      IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords) {
+      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords) {
     var function = ensureNonNull(cppFunctions.get(pseudoInstruction),
         "cpp function must exist)");
 
@@ -146,7 +146,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       List<HasRelocationComputationAndUpdate> relocations,
       PassResults passResults,
       GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
-      IdentityHashMap<Instruction, LlvmLoweringRecord> machineInstructionRecords) {
+      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords) {
     return Stream.of(abi.returnSequence(), abi.callSequence())
         .map(pseudoInstruction -> renderPseudoInstruction(
             cppFunctions,
