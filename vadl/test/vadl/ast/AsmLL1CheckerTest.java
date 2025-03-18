@@ -21,19 +21,62 @@ import org.junit.jupiter.api.Test;
 import vadl.error.Diagnostic;
 
 public class AsmLL1CheckerTest {
+  private final String base = """
+       instruction set architecture ISA = {
+        register file X : Bits<5> -> Bits<32>
+        
+        format Rtype : Bits<1> =
+        { funct7 : Bits<1> }
+        
+        instruction DO : Rtype =
+        {
+           X(0) := 1
+        }
+        encoding DO = { funct7 = 0b0 }
+        assembly DO = (mnemonic)
+        
+        pseudo instruction NOP( symbol: Bits<5>) = {
+        }
+        assembly NOP = (mnemonic)
+      }
+      application binary interface ABI for ISA = {
+        pseudo return instruction = NOP
+        pseudo call instruction = NOP
+        pseudo local address load instruction = NOP
+        alias register zero = X(0)
+        stack pointer = zero
+        return address = zero
+        global pointer = zero
+        frame pointer = zer
+        thread pointer = zero
+      }
+      """;
+
   private String inputWrappedByValidAsmDescription(String input) {
     return """
-          instruction set architecture ISA = {}
-          application binary interface ABI for ISA = {}
-        
+          %s
+                
           assembly description AD for ABI = {
             %s
           }
-        """.formatted(input);
+        """.formatted(base, input);
+  }
+
+  /**
+   * A lot of tests in this file are negative tests. Therefore, we check that an
+   * {@link Diagnostic} is thrown. However, the tests are worthless when the input file
+   * is broken. Therefore, we have to check that they worked before and only the added
+   * changes lead to an exception. That's why we test the {@code BASE} version first.
+   */
+  void hasToWork() {
+    var ast = Assertions.assertDoesNotThrow((() -> VadlParser.parse(base)));
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast));
   }
 
   @Test
   void stringIsStartOfMultipleAlternatives() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : "B" | "B" ;
@@ -47,6 +90,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void ruleIsStartOfMultipleAlternatives() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : Integer | Integer ;
@@ -60,6 +104,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void ruleIsStartOfMultipleNestedAlternatives() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : (Integer | Integer) Expression;
@@ -73,6 +118,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void optionWithDeletableContent() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : [[Integer]];
@@ -86,6 +132,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void startAndSuccessorOfOption() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : [Integer] Integer;
@@ -99,6 +146,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void startAndSuccessorOfRepetition() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : {Integer} Integer;
@@ -112,13 +160,14 @@ public class AsmLL1CheckerTest {
 
   @Test
   void firstParsableElementInParamsConflict() {
+    hasToWork();
     var prog = """
           instruction set architecture ISA = {}
           application binary interface ABI for ISA = {}
-        
+                
           assembly description AD for ABI = {
             function minusOne (x : SInt<64>) -> SInt<64> = x - 1
-        
+                
             grammar = {
               RuleA :
                 attr = minusOne<Integer>
@@ -135,14 +184,15 @@ public class AsmLL1CheckerTest {
 
   @Test
   void firstParsableElementInLastElementOfGroup() {
+    hasToWork();
     var prog = """
           instruction set architecture ISA = {}
           application binary interface ABI for ISA = {}
-        
+                
           assembly description AD for ABI = {
             function one -> SInt<64> = 1
             function add (a: SInt<64>, b: SInt<64>) -> SInt<64> = a + b
-        
+                
             grammar = {
               RuleA :
                 (
@@ -162,6 +212,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void equalStartOfTerminalAndNonTerminal() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : Integer@void | MINUS@void;
@@ -175,20 +226,23 @@ public class AsmLL1CheckerTest {
 
   @Test
   void ambiguousStringAndTerminal() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : IDENTIFIER@void | Token;
             Token : "some"@void;
           }
         """;
+    var x = inputWrappedByValidAsmDescription(prog);
     var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
+        () -> VadlParser.parse(x), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
 
   @Test
   void validStringAlternatives() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : "A" | "B";
@@ -202,6 +256,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void semanticPredicateToSolveAlternativeConflict() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" | "A";
@@ -215,6 +270,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void semanticPredicateToSolveOptionConflict() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : [?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A"] "A";
@@ -228,6 +284,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void semanticPredicateToSolveRepetitionConflict() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : {?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A"} "A";
@@ -241,6 +298,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void semanticPredicateFollowedByAlternatives() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : [ ?(VADL::equ(1 as Bits<2>,2 as Bits<2>))
@@ -257,6 +315,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void missingSemanticPredicateFollowedByAlternatives() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : [ ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" | "A"] "A";
@@ -270,6 +329,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void unnecessarySemanticPredicateInAlternatives() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" | "B";
@@ -283,6 +343,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void semanticPredicateShouldBeInPreviousAlternatives() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : "B" | ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "B";
@@ -296,6 +357,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void unnecessarySemanticPredicateInOption() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : [ ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" ] "B";
@@ -309,6 +371,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void unnecessarySemanticPredicateInRepetition() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : { ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" } "B";
@@ -322,6 +385,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void misplacedSemanticPredicateInGroup() {
+    hasToWork();
     var prog = """
           grammar = {
             RuleA : ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) "A" ?(VADL::equ(1 as Bits<2>,2 as Bits<2>)) | "A";
@@ -335,6 +399,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void conflictInOptionCausedByFollowSet() {
+    hasToWork();
     var prog = """
           grammar = {
             A : B;            // Identifier in follow(A), therefore in follow(B)
@@ -350,6 +415,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void conflictByChainedFollowSet() {
+    hasToWork();
     var prog = """
           grammar = {
             A : D;
@@ -367,6 +433,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void conflictWithTerminal() {
+    hasToWork();
     var prog = """
           grammar = {
             A : "+" | PLUS;
@@ -394,6 +461,7 @@ public class AsmLL1CheckerTest {
 
   @Test
   void conflictInExpandedInstructionRule() {
+    hasToWork();
     var prog = """
           grammar = {
             A : inst = (Register @operand) @instruction;
@@ -415,7 +483,7 @@ public class AsmLL1CheckerTest {
               ?(laideq(0,"r1")) A
               | B
             ) @instruction ;
-        
+                
             A : Register @operand ;
             B : Register @operand ;
           }

@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.error.Diagnostic;
@@ -228,6 +229,7 @@ public class ViamError extends RuntimeException {
    */
   @Contract("null, _  -> fail")
   @FormatMethod
+  @Nonnull
   public static <T> T ensureNonNull(@Nullable T obj, String msg) {
     ensure(obj != null, msg);
     return obj;

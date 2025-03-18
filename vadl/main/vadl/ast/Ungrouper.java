@@ -303,6 +303,12 @@ public class Ungrouper
   }
 
   @Override
+  public Void visit(AbiPseudoInstructionDefinition abiPseudoInstructionDefinition) {
+    ungroupAnnotations(abiPseudoInstructionDefinition);
+    return null;
+  }
+
+  @Override
   public Void visit(FunctionDefinition definition) {
     ungroupAnnotations(definition);
     definition.expr = definition.expr.accept(this);

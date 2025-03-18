@@ -23,7 +23,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppClassImplName;
@@ -41,7 +40,6 @@ import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
-import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
@@ -139,31 +137,9 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         pseudoInstruction);
   }
 
-  private List<RenderedPseudoInstruction> compilerInstructions(
-      Abi abi,
-      Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
-      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      List<HasRelocationComputationAndUpdate> relocations,
-      PassResults passResults,
-      GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
-      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords) {
-    return Stream.of(abi.returnSequence(), abi.callSequence())
-        .map(pseudoInstruction -> renderPseudoInstruction(
-            cppFunctions,
-            fieldUsages,
-            relocations,
-            passResults,
-            pseudoInstruction,
-            variantKindStore,
-            machineInstructionRecords))
-        .toList();
-  }
-
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var abi =
-        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     var cppFunctionsForPseudoInstructions =
         (IdentityHashMap<PseudoInstruction, GcbExpandPseudoInstructionCppFunction>)
             passResults.lastResultOf(
@@ -182,15 +158,10 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     var pseudoInstructions =
         pseudoInstructions(specification, cppFunctions, fieldUsages, relocations,
             passResults, output.variantKindStore(), machineInstructionRecords);
-    var compilerInstructions =
-        compilerInstructions(abi, cppFunctions, fieldUsages, relocations,
-            passResults, output.variantKindStore(), machineInstructionRecords);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "pseudoInstructions",
-        Stream.concat(pseudoInstructions.stream(),
-            compilerInstructions.stream()).toList()
+        "pseudoInstructions", pseudoInstructions
     );
   }
 }

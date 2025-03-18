@@ -21,6 +21,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -72,6 +73,26 @@ public record SourceLocation(
 
   public SourceLocation orDefault(SourceLocation defaultLocation) {
     return isValid() ? this : defaultLocation;
+  }
+
+  /**
+   * Joins multiple source location together.
+   *
+   * @return The joined source location or the invalid one, if an original one is invalid
+   * @throws IllegalArgumentException if they point to different files.
+   */
+  public static SourceLocation join(List<SourceLocation> others) {
+    if (others.isEmpty()) {
+      return SourceLocation.INVALID_SOURCE_LOCATION;
+    }
+
+    var joined = others.get(0);
+    for (int i = 1; i < others.size(); i++) {
+      var item = others.get(i);
+      joined = joined.join(item);
+    }
+
+    return joined;
   }
 
 

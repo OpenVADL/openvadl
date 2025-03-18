@@ -93,7 +93,7 @@ def ADJCALLSTACKUP : Instruction
     let Uses = [ X2 ]; // stack pointer
 }
 
-def RESERVED_PSEUDO_RET : Instruction
+def RET : Instruction
 {
     let Namespace = "processornamevalue";
     let InOperandList = (ins);
@@ -116,7 +116,7 @@ def RESERVED_PSEUDO_RET : Instruction
  * 'target_call', which marks a function call.
  * It will be later expanded into the defined calling sequence during code emission.
  */
-def RESERVED_PSEUDO_CALL : Instruction
+def CALL : Instruction
 {
     let Namespace = "processornamevalue";
     let InOperandList = (ins bare_symbol:$addr);
@@ -135,8 +135,8 @@ def RESERVED_PSEUDO_CALL : Instruction
 }
 
 /* Match the call sequence for global and external symbols */
-def : Pat<(target_call tglobaladdr:$func), (RESERVED_PSEUDO_CALL tglobaladdr:$func)>;
-def : Pat<(target_call texternalsym:$func), (RESERVED_PSEUDO_CALL texternalsym:$func)>;
+def : Pat<(target_call tglobaladdr:$func), (CALL tglobaladdr:$func)>;
+def : Pat<(target_call texternalsym:$func), (CALL texternalsym:$func)>;
 
 def SDT_processornamevalueSelectCC     : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                          SDTCisSameAs<0, 4>,
@@ -3796,32 +3796,6 @@ let Defs = [  ];
 
 
 
-def CALL : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs  );
-let InOperandList = ( ins bare_symbol:$symbol );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 0;
-let mayLoad       = 0;
-let mayStore      = 0;
-let isBarrier     = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Uses = [ X1 ];
-let Defs = [ X1 ];
-}
-
-
-
 def J : Instruction
 {
 let Namespace = "processorNameValue";
@@ -4002,32 +3976,6 @@ let AddedComplexity = 0;
 
 let Uses = [  ];
 let Defs = [  ];
-}
-
-
-
-def RET : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs  );
-let InOperandList = ( ins  );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 0;
-let mayLoad       = 0;
-let mayStore      = 0;
-let isBarrier     = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Uses = [ X1 ];
-let Defs = [ X0 ];
 }
 
 

@@ -30,6 +30,7 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Specification;
+import vadl.viam.passes.dummyPasses.DummyAbiPass;
 
 /**
  * This file contains the calling conventions for the defined backend.
@@ -65,8 +66,7 @@ public class EmitCallingConvTableGenFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var abi =
-        (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
+    var abi = (Abi) passResults.lastResultOf(DummyAbiPass.class);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "calleeRegisters", abi.calleeSaved().stream().map(Abi.RegisterRef::render).toList(),

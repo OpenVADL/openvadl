@@ -39,5 +39,4 @@ instruction set architecture ValidRegFileWrites = {
   }
 }
 
-application binary interface ABI for ValidRegFileWrites = {}
-micro processor TEST implements ValidRegFileWrites with ABI = {}
+micro processor TEST implements ValidRegFileWrites = {}

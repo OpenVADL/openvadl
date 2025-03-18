@@ -32,6 +32,7 @@ import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.asm.AsmToken;
 
 /**
@@ -159,6 +160,8 @@ interface DefinitionVisitor<R> {
   R visit(StageDefinition definition);
 
   R visit(UsingDefinition definition);
+
+  R visit(AbiPseudoInstructionDefinition abiPseudoInstructionDefinition);
 }
 
 /**
@@ -3325,6 +3328,77 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
   }
 }
 
+/**
+ * The compiler generator requires a few {@link PseudoInstruction}. Those need to be defined
+ * in the ABI. They are distinguised with the {@link AbiPseudoInstructionDefinition#kind}
+ * property.
+ */
+class AbiPseudoInstructionDefinition extends Definition {
+
+  Kind kind;
+  IdentifierOrPlaceholder target;
+  SourceLocation loc;
+
+  AbiPseudoInstructionDefinition(Kind kind, IdentifierOrPlaceholder target, SourceLocation loc) {
+    this.kind = kind;
+    this.target = target;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    annotations.prettyPrint(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append(kind.keyword);
+    builder.append(" = ");
+    builder.append(target).append("}\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AbiPseudoInstructionDefinition that = (AbiPseudoInstructionDefinition) o;
+    return kind == that.kind && target.equals(that.target);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(kind, target);
+  }
+
+  enum Kind {
+    RETURN("return"),
+    CALL("call"),
+    LOCAL_ADDRESS_LOAD("local address load");
+
+    private final String keyword;
+
+    Kind(String keyword) {
+      this.keyword = keyword;
+    }
+  }
+}
+
 class AbiSequenceDefinition extends Definition {
 
   SeqKind kind;
@@ -3401,13 +3475,14 @@ class AbiSequenceDefinition extends Definition {
 class SpecialPurposeRegisterDefinition extends Definition {
 
   Purpose purpose;
-  List<SequenceCallExpr> calls;
+  Identifier aliasName;
   SourceLocation loc;
 
-  SpecialPurposeRegisterDefinition(Purpose purpose, List<SequenceCallExpr> calls,
+  SpecialPurposeRegisterDefinition(Purpose purpose,
+                                   Identifier aliasName,
                                    SourceLocation loc) {
     this.purpose = purpose;
-    this.calls = calls;
+    this.aliasName = aliasName;
     this.loc = loc;
   }
 
@@ -3432,20 +3507,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append(purpose.keywords);
     builder.append(" = ");
-    if (calls.size() == 1) {
-      calls.get(0).prettyPrint(0, builder);
-    } else {
-      builder.append("[");
-      var isFirst = true;
-      for (SequenceCallExpr call : calls) {
-        if (!isFirst) {
-          builder.append(", ");
-        }
-        isFirst = false;
-        call.prettyPrint(0, builder);
-      }
-      builder.append("]");
-    }
+    builder.append(aliasName);
   }
 
   @Override
@@ -3457,12 +3519,12 @@ class SpecialPurposeRegisterDefinition extends Definition {
       return false;
     }
     SpecialPurposeRegisterDefinition that = (SpecialPurposeRegisterDefinition) o;
-    return purpose == that.purpose && Objects.equals(calls, that.calls);
+    return purpose == that.purpose && aliasName.equals(that.aliasName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(purpose, calls);
+    return Objects.hash(purpose, aliasName);
   }
 
   enum Purpose {
@@ -3471,6 +3533,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
     STACK_POINTER("stack pointer"),
     GLOBAL_POINTER("global pointer"),
     FRAME_POINTER("frame pointer"),
+    THREAD_POINTER("thread pointer"),
     FUNCTION_ARGUMENT("function argument"),
     CALLER_SAVED("caller saved"),
     CALLEE_SAVED("callee saved");
@@ -3486,6 +3549,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
 class MicroProcessorDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   List<IsId> implementedIsas;
+  @Nullable
   IsId abi;
   List<Definition> definitions;
   SourceLocation loc;
@@ -3494,7 +3558,7 @@ class MicroProcessorDefinition extends Definition implements IdentifiableNode {
   @Nullable
   ApplicationBinaryInterfaceDefinition abiNode;
 
-  MicroProcessorDefinition(Identifier id, List<IsId> implementedIsas, IsId abi,
+  MicroProcessorDefinition(Identifier id, List<IsId> implementedIsas, @Nullable IsId abi,
                            List<Definition> definitions, SourceLocation loc) {
     this.id = id;
     this.implementedIsas = implementedIsas;
@@ -3538,7 +3602,9 @@ class MicroProcessorDefinition extends Definition implements IdentifiableNode {
       implementedIsa.prettyPrint(0, builder);
     }
     builder.append(" with ");
-    abi.prettyPrint(0, builder);
+    if (abi != null) {
+      abi.prettyPrint(0, builder);
+    }
     builder.append(" = {\n");
     for (Definition definition : definitions) {
       definition.prettyPrint(indent + 1, builder);

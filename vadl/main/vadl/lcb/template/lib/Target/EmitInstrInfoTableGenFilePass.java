@@ -113,6 +113,10 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     var renderedTableGenPseudoRecords = tableGenPseudoRecords
         .stream()
+        // Return and Call have special entries in the tableGen file
+        // that's why we skip it.
+        .filter(record -> !(abi.returnSequence() == record.pseudoInstruction()
+            || abi.callSequence() == record.pseudoInstruction()))
         .map(TableGenInstructionRenderer::lower)
         .toList();
 
@@ -163,6 +167,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("instAliases", renderedTableGenInstAliases);
     map.put("patterns", renderedPatterns);
     map.put("registerFiles", specification.registerFiles().map(this::map).toList());
+    map.put("returnInstruction", abi.returnSequence().identifier.simpleName());
+    map.put("callInstruction", abi.callSequence().identifier.simpleName());
     return map;
   }
 

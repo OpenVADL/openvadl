@@ -31,15 +31,45 @@ import vadl.types.asmTypes.VoidAsmType;
 
 public class TypecheckerAsmTest {
 
+  private final String base = """
+       instruction set architecture ISA = {
+        register file X : Bits<5> -> Bits<32>
+       
+        format Rtype : Bits<1> =
+        { funct7 : Bits<1> }
+       
+        instruction DO : Rtype =
+        {
+           X(0) := 1
+        }
+        encoding DO = { funct7 = 0b0 }
+        assembly DO = (mnemonic)
+       
+        pseudo instruction NOP( symbol: Bits<5>) = {
+        }
+        assembly NOP = (mnemonic)
+      }
+      application binary interface ABI for ISA = {
+        pseudo return instruction = NOP
+        pseudo call instruction = NOP
+        pseudo local address load instruction = NOP
+        alias register zero = X(0)
+        stack pointer = zero
+        return address = zero
+        global pointer = zero
+        frame pointer = zer
+        thread pointer = zero
+      }
+      """;
+
   private String inputWrappedByValidAsmDescription(String input) {
     return """
-          instruction set architecture ISA = {}
-          application binary interface ABI for ISA = {}
-        
+          %s
+                
           assembly description AD for ABI = {
             %s
           }
-        """.formatted(input);
+        """.formatted(base, input);
   }
 
   @Test
@@ -443,17 +473,13 @@ public class TypecheckerAsmTest {
   @Test
   void validTypesFunctionInvocation() {
     var prog = """
-          instruction set architecture ISA = {}
-          application binary interface ABI for ISA = {}
-        
-          assembly description AD for ABI = {
-            function minusOne(x: SInt<64>) -> SInt<64> = x - 1
-            grammar = {
-              A : attr = minusOne<Integer>;
-            }
+          function minusOne(x: SInt<64>) -> SInt<64> = x - 1
+          grammar = {
+            A : attr = minusOne<Integer>;
           }
         """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
@@ -463,17 +489,13 @@ public class TypecheckerAsmTest {
   @Test
   void invalidArgumentTypeFunctionInvocation() {
     var prog = """
-          instruction set architecture ISA = {}
-          application binary interface ABI for ISA = {}
-        
-          assembly description AD for ABI = {
             function minusOne(x: SInt<64>) -> SInt<64> = x - 1
             grammar = {
               A : attr = minusOne<Identifier>;
             }
-          }
         """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
@@ -481,17 +503,13 @@ public class TypecheckerAsmTest {
   @Test
   void tooManyArgumentsFunctionInvocation() {
     var prog = """
-          instruction set architecture ISA = {}
-          application binary interface ABI for ISA = {}
-        
-          assembly description AD for ABI = {
             function minusOne(x: SInt<64>) -> SInt<64> = x - 1
             grammar = {
               A : attr = minusOne<Integer,Integer>;
             }
-          }
         """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
@@ -499,18 +517,14 @@ public class TypecheckerAsmTest {
   @Test
   void functionInvocationInParameters() {
     var prog = """
-          instruction set architecture ISA = {}
-          application binary interface ABI for ISA = {}
-        
-          assembly description AD for ABI = {
             function one -> SInt<64> = 1
             function minusOne(x: SInt<64>) -> SInt<64> = x - 1
             grammar = {
               A : minusOne<one>;
             }
-          }
         """;
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var ast = Assertions.assertDoesNotThrow(
+        () -> VadlParser.parse(inputWrappedByValidAsmDescription(prog)), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
     var typeFinder = new AstFinder();
