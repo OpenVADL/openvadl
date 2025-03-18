@@ -24,7 +24,7 @@ jobs:
         run: ./gradlew assemble testClasses -PFailOnWarnings
   benchmark:
     needs: build
-    runs-on: self-hosted
+    runs-on: self-hosted-x86 # The git push plugin requires linux
     steps:
       - uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
