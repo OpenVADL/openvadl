@@ -127,6 +127,10 @@ public class Diagnostic extends RuntimeException {
     return level + " " + reason + " " + multiLocation;
   }
 
+  public String getReason() {
+    return reason;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
