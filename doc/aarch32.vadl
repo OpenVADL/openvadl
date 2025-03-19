@@ -1,23 +1,25 @@
 instruction set architecture AArch32 = {
 
-register file R: Bits<4> -> Bits<32>
+using Word = Bits<32>
+
+register file R: Bits<4> -> Word
 format   Status: Bits<1> = {Z : Bits<1>}
 register   APSR: Status
 
 enumeration cond: Bits<4> =
-  { EQ  // equal                   Z == 1
-  , NE  // not equal               Z == 0
+  { EQ  // equal           Z == 1
+  , NE  // not equal       Z == 0
   //...
   , AL  // always
   }
 
-format ArLoImm: Bits<32> = // arithmetic/logic immediate format
-  { cc    [31..28]         // condition
-  , op    [27..21]         // opcode
-  , flags [20]             // set status register
-  , rn    [19..16]         // source register
-  , rd    [15..12]         // destination register
-  , imm12 [11..0]          // 12 bit immediate
+format ArLoImm: Word =  // arithmetic/logic immediate format
+  { cc    [31..28]      // condition
+  , op    [27..21]      // opcode
+  , flags [20]          // set status register
+  , rn    [19..16]      // source register
+  , rd    [15..12]      // destination register
+  , imm12 [11..0]       // 12 bit immediate
   }
 
 record Instr (id: Id, ass: Str, op: BinOp, opcode: Bin)
@@ -26,7 +28,7 @@ record Cond  (str: Str, code: Id, ex: Ex)
 model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
   instruction ExtendId ($instr.id, $cond.str) : ArLoImm =
     if ($cond.ex) then
-      R(rd) := R(rn) $instr.op imm12 as Bits<32>
+      R(rd) := R(rn) $instr.op imm12 as Word
   encoding ExtendId ($instr.id, $cond.str) =
     {cc = cond::$cond.code, op = $instr.opcode, flags = 0}
   assembly ExtendId ($instr.id, $cond.str) =
