@@ -67,6 +67,8 @@ application binary interface ABI for RV32IM = {
    pseudo call instruction = CALL
    pseudo local address load instruction = LLA
 
+   return value = a{0..1}
+
   /*
   constant sequence( rd : Bits<5>, val : SInt<32> ) =
   {

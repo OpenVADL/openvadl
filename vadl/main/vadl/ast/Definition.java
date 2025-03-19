@@ -3475,14 +3475,14 @@ class AbiSequenceDefinition extends Definition {
 class SpecialPurposeRegisterDefinition extends Definition {
 
   Purpose purpose;
-  Identifier aliasName;
+  List<SequenceCallExpr> exprs;
   SourceLocation loc;
 
   SpecialPurposeRegisterDefinition(Purpose purpose,
-                                   Identifier aliasName,
+                                   List<SequenceCallExpr> sequence,
                                    SourceLocation loc) {
     this.purpose = purpose;
-    this.aliasName = aliasName;
+    this.exprs = sequence;
     this.loc = loc;
   }
 
@@ -3507,7 +3507,9 @@ class SpecialPurposeRegisterDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append(purpose.keywords);
     builder.append(" = ");
-    builder.append(aliasName);
+    for (var i : exprs) {
+      i.prettyPrint(indent + 1, builder);
+    }
   }
 
   @Override
@@ -3519,12 +3521,12 @@ class SpecialPurposeRegisterDefinition extends Definition {
       return false;
     }
     SpecialPurposeRegisterDefinition that = (SpecialPurposeRegisterDefinition) o;
-    return purpose == that.purpose && aliasName.equals(that.aliasName);
+    return purpose == that.purpose && Objects.equals(exprs, that.exprs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(purpose, aliasName);
+    return Objects.hash(purpose, exprs);
   }
 
   enum Purpose {

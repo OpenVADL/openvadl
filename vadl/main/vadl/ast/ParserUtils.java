@@ -685,9 +685,9 @@ class ParserUtils {
         } else {
           reportError(parser, "Unknown index type " + callExpr.range, callExpr.range.location());
         }
-        for (; !start.equals(end); start = start.add(BigInteger.valueOf(end.compareTo(start)))) {
+        for (BigInteger i = start; i.compareTo(end) <= 0; i = i.add(BigInteger.ONE)) {
           expandedCalls.add(
-              new SequenceCallExpr(new Identifier(callExpr.target.name + start, callExpr.loc), null,
+              new SequenceCallExpr(new Identifier(callExpr.target.name + i, callExpr.loc), null,
                   callExpr.loc));
         }
       }
