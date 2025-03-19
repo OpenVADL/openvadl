@@ -72,7 +72,7 @@ application binary interface ABI for RV64I = {
 
    // ra is callee saved because it is used as normal register and has to be restored.
    caller saved = [ a{0..7}, t{0..6} ]
-   callee saved = [ sp, fp, s{0..11}, ra ]
+   callee saved = [ ra, gp, tp, fp, s{0..11} ]
 
   /*
   constant sequence( rd : Bits<5>, val : SInt<32> ) =
