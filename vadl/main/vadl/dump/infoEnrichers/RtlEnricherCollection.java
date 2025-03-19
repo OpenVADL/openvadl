@@ -18,17 +18,28 @@ package vadl.dump.infoEnrichers;
 
 import static vadl.dump.InfoEnricher.forType;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.InstructionProgressGraphVisualizer;
 import vadl.rtl.map.MiaMapping;
+import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.InstructionProgressGraphExtension;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Stage;
+import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 
 /**
  * A collection of info enrichers that provide information during the RTL generation.
@@ -73,6 +84,47 @@ public class RtlEnricherCollection {
         }
       });
 
+  private static <T extends Node> Stream<T> stageNodes(Class<T> type, MiaMapping mapping,
+                                                       Stage stage) {
+    return mapping.stageContexts(stage)
+        .map(MiaMapping.NodeContext::ipgNodes).flatMap(Collection::stream)
+        .filter(type::isInstance).map(type::cast);
+  }
+
+  public static InfoEnricher RESOURCE_ACCESS_STAGE =
+      forType(DefinitionEntity.class, (defEntity, passResult) -> {
+        if (defEntity.origin() instanceof Stage stage) {
+          var mapping = stage.mia().extension(MiaMapping.class);
+          if (mapping != null) {
+            var reads = stageNodes(ReadResourceNode.class, mapping, stage)
+                .map(ReadResourceNode::resourceDefinition)
+                .collect(Collectors.groupingBy(r -> r, Collectors.counting()))
+                .entrySet().stream()
+                .map(e -> e.getKey().simpleName() + " (" + e.getValue() + ")")
+                .collect(Collectors.toCollection(ArrayList::new));
+            var writes = stageNodes(WriteResourceNode.class, mapping, stage)
+                .map(WriteResourceNode::resourceDefinition)
+                .collect(Collectors.groupingBy(r -> r, Collectors.counting()))
+                .entrySet().stream()
+                .map(e -> e.getKey().simpleName() + " (" + e.getValue() + ")")
+                .collect(Collectors.toCollection(ArrayList::new));
+
+            if (reads.isEmpty() && writes.isEmpty()) {
+              return;
+            }
+
+            reads.add(0, "Read");
+            writes.add(0, "Written");
+
+            var info = InfoUtils.createTableExpandable(
+                "Accessed Resources",
+                List.of(reads, writes)
+            );
+            defEntity.addInfo(info);
+          }
+        }
+      });
+
   private static String viz(InstructionProgressGraph ipg) {
     return new InstructionProgressGraphVisualizer()
         .load(ipg)
@@ -99,7 +151,8 @@ public class RtlEnricherCollection {
   public static List<InfoEnricher> all = List.of(
       ENRICH_ISA_WITH_IPG,
       ENRICH_INSTRUCTION_WITH_IPG,
-      ENRICH_STAGE_WITH_IPG
+      ENRICH_STAGE_WITH_IPG,
+      RESOURCE_ACCESS_STAGE
   );
 
 }
