@@ -3553,16 +3553,16 @@ class SpecialPurposeRegisterDefinition extends Definition {
     }
 
     /**
-     * How many arguments are allowed?
+     * Determines how many arguments are allowed.
      * function value = a{0..1} -> ok
      * stack pointer = a{0..1} -> not ok
      */
-    public final static Map<Purpose, Occurrence> numberOfExpectedArguments;
+    public static final Map<Purpose, Occurrence> numberOfExpectedArguments;
 
     /**
-     * How often is a definition in the ABI allowed?
+     * Determines how often a definition is allowed in the ABI.
      */
-    public final static Map<Purpose, Occurrence> numberOfOccurrencesAbi;
+    public static final Map<Purpose, Occurrence> numberOfOccurrencesAbi;
 
     static {
       numberOfExpectedArguments = Map.of(Purpose.STACK_POINTER, Occurrence.ONE,
@@ -3584,7 +3584,8 @@ class SpecialPurposeRegisterDefinition extends Definition {
           Purpose.RETURN_VALUE, Occurrence.ONE,
           Purpose.CALLER_SAVED, Occurrence.ONE,
           Purpose.CALLEE_SAVED, Occurrence.ONE,
-          Purpose.FUNCTION_ARGUMENT, Occurrence.ONE);    }
+          Purpose.FUNCTION_ARGUMENT, Occurrence.ONE);
+    }
   }
 }
 
