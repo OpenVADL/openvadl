@@ -3529,6 +3529,12 @@ class SpecialPurposeRegisterDefinition extends Definition {
     return Objects.hash(purpose, exprs);
   }
 
+  enum Occurrence {
+    OPTIONAL,
+    ONE,
+    AT_LEAST_ONE
+  }
+
   enum Purpose {
     RETURN_ADDRESS("return address"),
     RETURN_VALUE("return value"),
@@ -3545,6 +3551,40 @@ class SpecialPurposeRegisterDefinition extends Definition {
     Purpose(String keywords) {
       this.keywords = keywords;
     }
+
+    /**
+     * How many arguments are allowed?
+     * function value = a{0..1} -> ok
+     * stack pointer = a{0..1} -> not ok
+     */
+    public final static Map<Purpose, Occurrence> numberOfExpectedArguments;
+
+    /**
+     * How often is a definition in the ABI allowed?
+     */
+    public final static Map<Purpose, Occurrence> numberOfOccurrencesAbi;
+
+    static {
+      numberOfExpectedArguments = Map.of(Purpose.STACK_POINTER, Occurrence.ONE,
+          Purpose.RETURN_ADDRESS, Occurrence.ONE,
+          Purpose.GLOBAL_POINTER, Occurrence.ONE,
+          Purpose.FRAME_POINTER, Occurrence.ONE,
+          Purpose.THREAD_POINTER, Occurrence.ONE,
+          Purpose.RETURN_VALUE, Occurrence.AT_LEAST_ONE,
+          Purpose.CALLER_SAVED, Occurrence.AT_LEAST_ONE,
+          Purpose.CALLEE_SAVED, Occurrence.AT_LEAST_ONE,
+          Purpose.FUNCTION_ARGUMENT, Occurrence.AT_LEAST_ONE);
+
+
+      numberOfOccurrencesAbi = Map.of(Purpose.STACK_POINTER, Occurrence.ONE,
+          Purpose.RETURN_ADDRESS, Occurrence.ONE,
+          Purpose.GLOBAL_POINTER, Occurrence.ONE,
+          Purpose.FRAME_POINTER, Occurrence.OPTIONAL,
+          Purpose.THREAD_POINTER, Occurrence.OPTIONAL,
+          Purpose.RETURN_VALUE, Occurrence.ONE,
+          Purpose.CALLER_SAVED, Occurrence.ONE,
+          Purpose.CALLEE_SAVED, Occurrence.ONE,
+          Purpose.FUNCTION_ARGUMENT, Occurrence.ONE);    }
   }
 }
 
