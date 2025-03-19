@@ -122,7 +122,7 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No register purpose was defined for RETURN", throwable.getReason());
+    Assertions.assertEquals("No register purpose was defined for RETURN", throwable.reason);
   }
 
   @Test
@@ -147,7 +147,7 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No register purpose was defined for CALL", throwable.getReason());
+    Assertions.assertEquals("No register purpose was defined for CALL", throwable.reason);
   }
 
   @Test
@@ -173,7 +173,7 @@ public class TypecheckerAbiTest {
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
     Assertions.assertEquals("No register purpose was defined for LOCAL_ADDRESS_LOAD",
-        throwable.getReason());
+        throwable.reason);
   }
 
   @Test
@@ -198,8 +198,8 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No STACK_POINTER registers were declared but only one was expected",
-        throwable.getReason());
+    Assertions.assertEquals("No STACK_POINTER registers were declared but one was expected",
+        throwable.reason);
   }
 
   @Test
@@ -225,7 +225,7 @@ public class TypecheckerAbiTest {
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
     Assertions.assertEquals("Number of registers is incorrect. This definition expects only one",
-        throwable.getReason());
+        throwable.reason);
   }
 
   @Test
@@ -251,7 +251,7 @@ public class TypecheckerAbiTest {
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
     Assertions.assertEquals("Number of registers is incorrect. This definition expects only one",
-        throwable.getReason());
+        throwable.reason);
   }
 
   @Test
@@ -277,7 +277,7 @@ public class TypecheckerAbiTest {
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
     Assertions.assertEquals("Number of registers is incorrect. This definition expects only one",
-        throwable.getReason());
+        throwable.reason);
   }
 
   @Test
@@ -303,7 +303,7 @@ public class TypecheckerAbiTest {
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
     Assertions.assertEquals("Number of registers is incorrect. This definition expects only one",
-        throwable.getReason());
+        throwable.reason);
   }
 
   @Test
@@ -329,7 +329,7 @@ public class TypecheckerAbiTest {
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
     Assertions.assertEquals("Number of registers is incorrect. This definition expects only one",
-        throwable.getReason());
+        throwable.reason);
   }
 
   @Test
@@ -354,8 +354,8 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No FRAME_POINTER registers were declared but only one was expected",
-        throwable.getReason());
+    Assertions.assertEquals("No FRAME_POINTER registers were declared but one was expected",
+        throwable.reason);
   }
 
   @Test
@@ -380,8 +380,8 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No GLOBAL_POINTER registers were declared but only one was expected",
-        throwable.getReason());
+    Assertions.assertEquals("No GLOBAL_POINTER registers were declared but one was expected",
+        throwable.reason);
   }
 
   @Test
@@ -406,8 +406,8 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No RETURN_VALUE registers were declared but only one was expected",
-        throwable.getReason());
+    Assertions.assertEquals("No RETURN_VALUE registers were declared but one was expected",
+        throwable.reason);
   }
 
   @Test
@@ -432,8 +432,8 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No FUNCTION_ARGUMENT registers were declared but only one was expected",
-        throwable.getReason());
+    Assertions.assertEquals("No FUNCTION_ARGUMENT registers were declared but one was expected",
+        throwable.reason);
   }
 
   @Test
@@ -458,8 +458,8 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No CALLER_SAVED registers were declared but only one was expected",
-        throwable.getReason());
+    Assertions.assertEquals("No CALLER_SAVED registers were declared but one was expected",
+        throwable.reason);
   }
 
   @Test
@@ -484,8 +484,8 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No CALLEE_SAVED registers were declared but only one was expected",
-        throwable.getReason());
+    Assertions.assertEquals("No CALLEE_SAVED registers were declared but one was expected",
+        throwable.reason);
   }
 
   @Test
@@ -513,7 +513,7 @@ public class TypecheckerAbiTest {
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
     Assertions.assertEquals(
         "Multiple FRAME_POINTER registers were declared but only one was expected",
-        throwable.getReason());
+        throwable.reason);
   }
 
   @Test
@@ -540,8 +540,8 @@ public class TypecheckerAbiTest {
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
     Assertions.assertEquals(
-        "Multiple LOCAL_ADDRESS_LOAD pseudo instructions were declared but only was expected",
-        throwable.getReason());
+        "Multiple LOCAL_ADDRESS_LOAD pseudo instructions were declared but only one was expected",
+        throwable.reason);
   }
 
 }

@@ -3507,9 +3507,9 @@ class SpecialPurposeRegisterDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append(purpose.keywords);
     builder.append(" = ");
-    for (var i : exprs) {
-      i.prettyPrint(indent + 1, builder);
-    }
+    exprs.forEach(e -> {
+      e.prettyPrint(indent + 1, builder);
+    });
   }
 
   @Override

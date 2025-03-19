@@ -762,8 +762,8 @@ public class TypeChecker
         case ONE -> {
           if (registers.isEmpty()) {
             throw Diagnostic.error(
-                "No " + purpose.name() + " registers were declared but only one was expected",
-                SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
+                "No " + purpose.name() + " registers were declared but one was expected",
+                definition.sourceLocation()).build();
           } else if (registers.size() != 1) {
             throw Diagnostic.error(
                 "Multiple " + purpose.name() + " registers were declared but only one was expected",
@@ -774,7 +774,7 @@ public class TypeChecker
           if (!(registers.isEmpty() || registers.size() == 1)) {
             throw Diagnostic.error(
                 "Multiple " + purpose.name()
-                    + " registers were declared but only zero or one was expected",
+                    + " registers were declared but zero or one was expected",
                 SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
           }
         }
@@ -799,7 +799,7 @@ public class TypeChecker
       if (pseudoInstructions.size() > 1) {
         throw Diagnostic.error(
                 "Multiple " + kind.name()
-                    + " pseudo instructions were declared but only was expected",
+                    + " pseudo instructions were declared but only one was expected",
                 SourceLocation.join(pseudoInstructions.stream().map(Node::sourceLocation).toList()))
             .build();
       }
