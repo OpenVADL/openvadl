@@ -392,7 +392,7 @@ The reference is of a valid type because the result type `Defs` is a subtype of 
 \listing{model_type_parameters, Valid types in model references}
 ~~~{.vadl}
 instruction set architecture ISA = {
-  constant Word = 32
+  constant wordSize = 32
 
   model-type IsaDefsFactory = (Id) -> IsaDefs
 
@@ -405,7 +405,7 @@ instruction set architecture ISA = {
     $factory($size)
   }
 
-  $BitDefs(Constants ; Word)
+  $BitDefs(Constants ; wordSize)
 }
 ~~~
 \endlisting
@@ -422,24 +422,26 @@ Arithmetic/logic instructions, which have an immediate value as second source op
 ~~~{.vadl}
 instruction set architecture AArch32 = {
 
-register file R: Bits<4> -> Bits<32>
+using Word = Bits<32>
+
+register file R: Bits<4> -> Word
 format   Status: Bits<1> = {Z : Bits<1>}
 register   APSR: Status
 
 enumeration cond: Bits<4> =
-  { EQ  // equal                   Z == 1
-  , NE  // not equal               Z == 0
+  { EQ  // equal           Z == 1
+  , NE  // not equal       Z == 0
   //...
   , AL  // always
   }
 
-format ArLoImm: Bits<32> = // arithmetic/logic immediate format
-  { cc    [31..28]         // condition
-  , op    [27..21]         // opcode
-  , flags [20]             // set status register
-  , rn    [19..16]         // source register
-  , rd    [15..12]         // destination register
-  , imm12 [11..0]          // 12 bit immediate
+format ArLoImm: Word =  // arithmetic/logic immediate format
+  { cc    [31..28]      // condition
+  , op    [27..21]      // opcode
+  , flags [20]          // set status register
+  , rn    [19..16]      // source register
+  , rd    [15..12]      // destination register
+  , imm12 [11..0]       // 12 bit immediate
   }
 
 record Instr (id: Id, ass: Str, op: BinOp, opcode: Bin)
@@ -448,7 +450,7 @@ record Cond  (str: Str, code: Id, ex: Ex)
 model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
   instruction ExtendId ($instr.id, $cond.str) : ArLoImm =
     if ($cond.ex) then
-      R(rd) := R(rn) $instr.op imm12 as Bits<32>
+      R(rd) := R(rn) $instr.op imm12 as Word
   encoding ExtendId ($instr.id, $cond.str) =
     {cc = cond::$cond.code, op = $instr.opcode, flags = 0}
   assembly ExtendId ($instr.id, $cond.str) =
@@ -493,14 +495,22 @@ This leads to a specification with multiple higher-order macro arguments.
 VADL provides the possibility of passing configuration information to the macro system using the command line.
 Currently, this mechanism is kept very simple and is restricted to elements of type `Id`.
 To prepare a configurable macro variable a default model of type `Id` has to be defined.
-Listing \r{macro_configuration} shows such a variable of name `Arch`, with the default setting `Aarch32`.
-Without any passed configurations the instantiation of `Arch` results in the identifier `Aarch32`.
-If VADL receives the command line option `-m` or `--model` followed by the string `"Arch=Aarch64"`, the value of `Arch` is overridden.
-If `Arch` is instantiated given the previous command line option, it would result in `Aarch64`.
+Listing \r{macro_configuration} shows such a variable of name `Size`, with the default setting `Arch32`.
+Without any passed configurations the instantiation of `Size` results in the identifier `Arch32`.
+If VADL receives the command line option `-m` or `--model` followed by the string `"Size=Arch64"`, the value of `Arch` is overridden.
+If `Arch` is instantiated given the previous command line option, it would result in `Arch64`.
 In combination with conditional expansion, see Section \r{macro_match} and Listing \r{match_macro}, this simple mechanism already provides powerful configuration capabilities.
 
 \listing{macro_configuration, Macro Configuration Variable}
 ~~~{.vadl}
-model Arch() : Id = { Aarch32 }
+model Size() : Id = { Arch32 }
+~~~
+\endlisting
+
+Similarly to model passing in the command line it is possible to pass models as an argument to import declarations as demonstrated in Listing \r{macro_import}.
+
+\listing{macro_import, Import with Macro Argument}
+~~~{.vadl}
+import rv3264im::RV3264I with ("Size=Arch64")
 ~~~
 \endlisting

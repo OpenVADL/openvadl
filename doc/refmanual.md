@@ -355,7 +355,22 @@ function ugeq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a >= b
 ~~~
 \endlisting
 
-## Shifting Operations
+## Shift and Rotate Operations
+
+Listing \r{basic_math_shifting} lists the primitives for shift and rotate operations.
+Shift and rotate operations move the bits of operand `a` left or right by the number of bits specified by operand `b % N` of type `UInt<M>`.
+Shift operations to the left fill the low bit positions with zeros and operand `a` and the result are of type `Bits<N>`.
+Shift operations to the right fill the high bit positions with the sign bit for arithmetic shifts (`SInt`) and with zeros for logical shifts (`UInt`).
+`M` has to be smaller or equal to `N`.
+
+For instructions which set the status register (`*s`, `*c`, `rrx`) the carry flag is set to the last bit shifted out.
+The carry flag is unchanged if the shift/rotate amount is `0`.
+
+Rotate left (right) provides the operand `a` rotated by a variable number of bits.
+The bits that are rotated off the left (right) end are inserted into the vacated bit positions on the right (left). 
+Rotate right with extend ( `rrx`) moves the bits of a register to the right by one bit.
+It copies the carry flag into the highest bit position of the result and sets the carry flag to lowest bit position of operand `a`.
+
 \listing{basic_math_shifting, VADL Shifting Operations}
 ~~~{.vadl}
 M <= N
@@ -377,7 +392,7 @@ function rolc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status )
 function ror ( a : Bits<N>, b : UInt<M> ) -> Bits<N> // <=> a <>> b
 function rors( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status )
 function rorc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status )
-function rrx ( a : Bits<N>, b : UInt<M>, c : Bool ) -> Bits<N>
+function rrx ( a : Bits<N>, c : Bool ) -> Bits<N>
 ~~~
 \endlisting
 
