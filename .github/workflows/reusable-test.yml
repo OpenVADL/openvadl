@@ -38,5 +38,12 @@ jobs:
           path: '**/build/test-results/**/TEST-*.xml'
           reporter: java-junit
           list-tests: failed
+      - name: Upload Raw Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-test-report-xml
+          path: '**/build/test-results/**/TEST-*.xml'
+          retention-days: 3
       - if: failure()
         uses: andymckay/cancel-action@0.5
