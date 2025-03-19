@@ -243,11 +243,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var threadPtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER);
 
-    var stackPointer = mapToRegisterRef(aliasLookup, stackPointerDef);
-    var returnAddress = mapToRegisterRef(aliasLookup, returnAddressDef);
-    var globalPtr = mapToRegisterRef(aliasLookup, globalPtrDef);
-    var framePtr = mapToRegisterRef(aliasLookup, framePtrDef);
-    var threadPtr = mapToRegisterRef(aliasLookup, threadPtrDef);
+    var stackPointer = mapSingleSpecialPurposeRegisterDef(aliasLookup, stackPointerDef);
+    var returnAddress = mapSingleSpecialPurposeRegisterDef(aliasLookup, returnAddressDef);
+    var globalPtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, globalPtrDef);
+    var framePtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, framePtrDef);
+    var threadPtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, threadPtrDef);
 
     var pseudoRetInstrDef = getAbiPseudoInstruction(definition.definitions,
         AbiPseudoInstructionDefinition.Kind.RETURN);
@@ -1258,15 +1258,27 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   /**
+   * Maps a {@link SpecialPurposeRegisterDefinition} to a {@link Abi.RegisterRef}.
+   * It expects only one register in the {@link SpecialPurposeRegisterDefinition}. Otherwise,
+   * it will throw an error.
+   */
+  private Abi.RegisterRef mapSingleSpecialPurposeRegisterDef(
+      Map<Identifier, Expr> aliasLookup,
+      SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
+    var identifier = specialPurposeRegisterDef.exprs.stream().findFirst().orElseThrow().target;
+    return mapToRegisterRef(aliasLookup, identifier);
+  }
+
+  /**
    * Maps the aliases {@code alias register zero = X(0)} to {@link Abi.RegisterRef} to be
    * used in {@link Abi}.
    */
   private Abi.RegisterRef mapToRegisterRef(
       Map<Identifier, Expr> aliasLookup,
-      SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
-    var expr = ensureNonNull(aliasLookup.get(specialPurposeRegisterDef.aliasName),
+      Identifier identifier) {
+    var expr = ensureNonNull(aliasLookup.get(identifier),
         () -> Diagnostic.error("Cannot alias for register definition",
-            specialPurposeRegisterDef.aliasName.sourceLocation()));
+            identifier.sourceLocation()));
     var pair = getRegisterFile(expr);
     var registerFile = pair.left();
     var index = pair.right();

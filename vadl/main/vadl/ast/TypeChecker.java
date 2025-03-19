@@ -773,6 +773,7 @@ public class TypeChecker
       }
     }
 
+
     // Check whether there exists just one pseudo instruction.
     for (var kind : AbiPseudoInstructionDefinition.Kind.values()) {
       var pseudoInstructions = definition.definitions
@@ -1382,7 +1383,36 @@ public class TypeChecker
 
   @Override
   public Void visit(SpecialPurposeRegisterDefinition definition) {
-    // Isn't type checked on purpose because there is nothing to type check.
+    // Check whether the number of registers is correct.
+    // There can be only one stack pointer. However, there might be multiple argument registers.
+    enum NumberOfRegisters {
+      ONE,
+      MANY
+    }
+
+    Map<SpecialPurposeRegisterDefinition.Purpose, NumberOfRegisters> expectedNumberOfRegisters =
+        Map.of(SpecialPurposeRegisterDefinition.Purpose.STACK_POINTER, NumberOfRegisters.ONE,
+            SpecialPurposeRegisterDefinition.Purpose.RETURN_ADDRESS, NumberOfRegisters.ONE,
+            SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER, NumberOfRegisters.ONE,
+            SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER, NumberOfRegisters.ONE,
+            SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER, NumberOfRegisters.ONE,
+            SpecialPurposeRegisterDefinition.Purpose.RETURN_VALUE, NumberOfRegisters.MANY);
+
+    if (expectedNumberOfRegisters.get(definition.purpose) == NumberOfRegisters.ONE) {
+      if (definition.exprs.size() != 1) {
+        throw Diagnostic.error("Number of registers is incorrect. This definition expects only one",
+            definition.sourceLocation()).build();
+      }
+    }
+
+    if (expectedNumberOfRegisters.get(definition.purpose) == NumberOfRegisters.MANY) {
+      if (definition.exprs.isEmpty()) {
+        throw Diagnostic.error(
+            "Number of registers is incorrect. This definition expects at least one.",
+            definition.sourceLocation()).build();
+      }
+    }
+
     return null;
   }
 
