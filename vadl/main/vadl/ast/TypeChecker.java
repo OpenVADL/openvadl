@@ -760,7 +760,11 @@ public class TypeChecker
 
       switch (entry.getValue()) {
         case ONE -> {
-          if (registers.size() != 1) {
+          if (registers.isEmpty()) {
+            throw Diagnostic.error(
+                "No " + purpose.name() + " registers were declared but only one was expected",
+                SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
+          } else if (registers.size() != 1) {
             throw Diagnostic.error(
                 "Multiple " + purpose.name() + " registers were declared but only one was expected",
                 SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
