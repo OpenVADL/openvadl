@@ -96,7 +96,6 @@ import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
-import vadl.viam.passes.dummyPasses.DummyAbiPass;
 import vadl.viam.passes.dummyPasses.DummyMiaPass;
 import vadl.viam.passes.dummyPasses.DummyMipPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
@@ -174,7 +173,6 @@ public class PassOrders {
     // needs to know about those status built-in calls.
     order.skip(StatusBuiltInInlinePass.class);
 
-    order.add(new DummyAbiPass(gcbConfiguration));
     order.add(new GenerateCompilerRegistersPass(gcbConfiguration));
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
@@ -382,8 +380,7 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
 
     // TODO: Remove once frontend creates it
-    order.add(new DummyAbiPass(config))
-        .add(new DummyMipPass(config));
+    order.add(new DummyMipPass(config));
 
     // iss function passes
     order

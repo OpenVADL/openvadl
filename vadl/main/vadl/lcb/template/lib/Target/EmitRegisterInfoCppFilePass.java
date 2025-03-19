@@ -51,7 +51,6 @@ import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.passes.dummyPasses.DummyAbiPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.functionInliner.UninlinedGraph;
 
@@ -106,7 +105,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var abi = (Abi) passResults.lastResultOf(DummyAbiPass.class);
+    var abi = specification.abi().orElseThrow();
     var instructionLabels =
         ((IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class)).labels();
