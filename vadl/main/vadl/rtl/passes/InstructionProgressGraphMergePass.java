@@ -29,6 +29,8 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
+import vadl.rtl.ipg.nodes.RtlReadMemNode;
+import vadl.rtl.ipg.nodes.RtlWriteMemNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
@@ -88,9 +90,11 @@ public class InstructionProgressGraphMergePass extends Pass {
             merge(ipg, mapping, ReadRegNode.class, ipgNodes, deleted);
             merge(ipg, mapping, ReadRegFileNode.class, ipgNodes, deleted);
             merge(ipg, mapping, ReadMemNode.class, ipgNodes, deleted);
+            merge(ipg, mapping, RtlReadMemNode.class, ipgNodes, deleted);
             merge(ipg, mapping, WriteRegNode.class, ipgNodes, deleted);
             merge(ipg, mapping, WriteRegFileNode.class, ipgNodes, deleted);
             merge(ipg, mapping, WriteMemNode.class, ipgNodes, deleted);
+            merge(ipg, mapping, RtlWriteMemNode.class, ipgNodes, deleted);
           });
     }
 

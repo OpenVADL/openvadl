@@ -3,6 +3,8 @@ package vadl.rtl.ipg;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
 import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -10,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import vadl.rtl.ipg.nodes.SelectByInstructionNode;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Graph;
@@ -47,10 +50,89 @@ public class InstructionProgressGraph extends Graph {
     return instructions;
   }
 
+  private Collection<Instruction> addWithInstructions = Collections.emptyList();
+
+  /**
+   * Adds the given node with all its inputs to the graph.
+   * If this or any input is a unique node, it will be only
+   * added if there is no duplicate. Mark all added nodes
+   * and its inputs with the given instructions.
+   *
+   * @param <T> node type
+   * @param node node to add with its inputs
+   * @param instructions instructions to mark nodes with
+   * @return the node added to the graph or its duplicate
+   */
+  public <T extends Node> T addWithInputs(T node, Collection<Instruction> instructions) {
+    addWithInstructions = instructions;
+    var result = addWithInputs(node);
+    addWithInstructions = Collections.emptyList();
+    return result;
+  }
+
+  @Override
+  public <T extends Node> T addWithInputs(T node) {
+    var result = super.addWithInputs(node);
+    if (result != node) {
+      markNodeWithInputs(result, addWithInstructions);
+    }
+    return result;
+  }
+
+  /**
+   * Adds the node to the graph (without its inputs).
+   * If the node is a unique node, it will check for duplication int the graph.
+   * Mark the node with the given instructions.
+   *
+   * @param <T> node type
+   * @param node to be added
+   * @param instructions instructions to mark node with
+   * @return the node added to the graph or its duplicate
+   */
+  public <T extends Node> T add(T node, Collection<Instruction> instructions) {
+    var result = add(node);
+    markNode(node, instructions);
+    return result;
+  }
+
   @Override
   public <T extends Node> T add(T node) {
-    contexts.put(node, new NodeContext(node));
-    return super.add(node);
+    contexts.computeIfAbsent(node, NodeContext::new);
+    var result = super.add(node);
+    if (!addWithInstructions.isEmpty()) {
+      markNode(result, addWithInstructions);
+    }
+    return result;
+  }
+
+  /**
+   * Replace node with replacements while merging marked instructions on the replacement node.
+   *
+   * @param <T> node type
+   * @param node node to be replaced
+   * @param replacement the node to replace node with
+   * @return the replacement node
+   */
+  public <T extends Node> T replace(T node, T replacement) {
+    var instructions = getContext(node).instructions();
+    replacement = node.replace(replacement);
+    markNodeWithInputs(replacement, instructions);
+    return replacement;
+  }
+
+  /**
+   * Replaces this node by the given node while merging marked instructions on the replacement node.
+   * After node is replaced, it is removed from the graph.
+   *
+   * @param node node to be replaced
+   * @param replacement node that replaces node
+   * @return the replacement node
+   */
+  public <T extends Node> T replaceAndDelete(T node, T replacement) {
+    var instructions = getContext(node).instructions();
+    replacement = node.replaceAndDelete(replacement);
+    markNodeWithInputs(replacement, instructions);
+    return replacement;
   }
 
   @Override
@@ -75,27 +157,30 @@ public class InstructionProgressGraph extends Graph {
   }
 
   /**
-   * Add an instruction to the set in a node's context.
+   * Add instructions to the set in a node's context.
    * Used by {@link InstructionProgressGraph#markNodeWithInputs}.
    *
    * @param node node to add the instruction to
-   * @param instruction instruction
+   * @param instructions instructions
    */
-  public void markNode(Node node, Instruction instruction) {
-    getContext(node).instructions().add(instruction);
-    instructions.add(instruction);
+  public void markNode(Node node, Collection<Instruction> instructions) {
+    getContext(node).instructions().addAll(instructions);
+    this.instructions.addAll(instructions);
   }
 
   /**
-   * Add an instruction to the set in a node's context and the contexts of all its inputs
+   * Add instructions to the set in a node's context and the contexts of all its inputs
    * recursively. This is used during creation of the instruction progress graph.
    *
    * @param node node to add the instruction to
-   * @param instruction instruction
+   * @param instructions instructions
    */
-  public void markNodeWithInputs(Node node, Instruction instruction) {
-    markNode(node, instruction);
-    node.inputs().forEach(input -> markNodeWithInputs(input, instruction));
+  public void markNodeWithInputs(Node node, Collection<Instruction> instructions) {
+    if (instructions.isEmpty()) {
+      return;
+    }
+    markNode(node, instructions);
+    node.inputs().forEach(input -> markNodeWithInputs(input, instructions));
   }
 
   /**

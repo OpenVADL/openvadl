@@ -303,6 +303,10 @@ public class GraphUtils {
     return combineExpressions(BuiltInTable.EQU, exprs);
   }
 
+  public static ExpressionNode neq(ExpressionNode... exprs) {
+    return combineExpressions(BuiltInTable.NEQ, exprs);
+  }
+
   public static ExpressionNode sub(ExpressionNode... exprs) {
     return combineExpressions(BuiltInTable.SUB, exprs);
   }

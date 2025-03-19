@@ -64,8 +64,10 @@ public class AlgebraicSimplifier {
           var oldNode = pair.left();
           var newNode = pair.right();
 
-          oldNode.replaceAndDelete(newNode);
-          hasChanged = true;
+          if (newNode.isActive()) { // in case a previous replacement already deleted newNode
+            oldNode.replaceAndDelete(newNode);
+            hasChanged = true;
+          }
         }
       } while (hasChanged);
     });

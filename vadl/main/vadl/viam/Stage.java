@@ -90,7 +90,7 @@ public class Stage extends Definition implements DefProp.WithBehavior {
   }
 
   /**
-   * Get all resources writte by this stage.
+   * Get all resources written by this stage.
    *
    * @return list of resources
    */
