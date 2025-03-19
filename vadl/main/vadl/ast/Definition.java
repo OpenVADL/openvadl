@@ -3579,7 +3579,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
       numberOfOccurrencesAbi = Map.of(Purpose.STACK_POINTER, Occurrence.ONE,
           Purpose.RETURN_ADDRESS, Occurrence.ONE,
           Purpose.GLOBAL_POINTER, Occurrence.ONE,
-          Purpose.FRAME_POINTER, Occurrence.OPTIONAL,
+          Purpose.FRAME_POINTER, Occurrence.ONE,
           Purpose.THREAD_POINTER, Occurrence.OPTIONAL,
           Purpose.RETURN_VALUE, Occurrence.ONE,
           Purpose.CALLER_SAVED, Occurrence.ONE,

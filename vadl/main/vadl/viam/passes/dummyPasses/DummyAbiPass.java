@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -76,7 +77,7 @@ public class DummyAbiPass extends Pass {
         new Abi.RegisterRef(registerFile, 2, Abi.Alignment.HALF_WORD),
         new Abi.RegisterRef(registerFile, 8, Abi.Alignment.WORD),
         new Abi.RegisterRef(registerFile, 3, Abi.Alignment.WORD),
-        new Abi.RegisterRef(registerFile, 4, Abi.Alignment.WORD),
+        Optional.of(new Abi.RegisterRef(registerFile, 4, Abi.Alignment.WORD)),
         aliases,
         callerSaved,
         calleeSaved,
