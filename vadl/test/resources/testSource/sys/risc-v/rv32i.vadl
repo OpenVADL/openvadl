@@ -68,9 +68,11 @@ application binary interface ABI for RV32I = {
    pseudo local address load instruction = LLA
 
    return value = a{0..1}
-   function value = a{0..1}
-   caller saved = [ ra, a{0..7}, t{0..6} ]
-   callee saved = [ sp, fp, s{0..11} ]
+   function argument = a{0..1}
+
+   // ra is callee saved because it is used as normal register and has to be restored.
+   caller saved = [ a{0..7}, t{0..6} ]
+   callee saved = [ sp, fp, s{0..11}, ra ]
 
   /*
   constant sequence( rd : Bits<5>, val : SInt<32> ) =
