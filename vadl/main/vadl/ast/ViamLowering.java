@@ -231,6 +231,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var id = generateIdentifier(definition.viamId, definition.identifier());
     var aliasLookup = aliasLookupTable(definition.definitions);
 
+    // Special Registers
+
     var stackPointerDef = getSpecialPurposeRegisterDefinition(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.STACK_POINTER);
     var returnAddressDef =
@@ -249,6 +251,23 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var globalPtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, globalPtrDef);
     var framePtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, framePtrDef);
 
+    // Calling Convention
+    var returnValueDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.RETURN_VALUE);
+    var functionArgumentDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT);
+    var callerSavedDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.CALLER_SAVED);
+    var calleeSavedDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.CALLEE_SAVED);
+
+    var returnValues = mapSpecialPurposeRegistersDef(aliasLookup, returnValueDef);
+    var functionArguments = mapSpecialPurposeRegistersDef(aliasLookup, functionArgumentDef);
+    var callerSaved = mapSpecialPurposeRegistersDef(aliasLookup, callerSavedDef);
+    var calleeSaved = mapSpecialPurposeRegistersDef(aliasLookup, calleeSavedDef);
+
+    // Pseudo Instructions
+
     var pseudoRetInstrDef = getAbiPseudoInstruction(definition.definitions,
         AbiPseudoInstructionDefinition.Kind.RETURN);
     var pseudoCallInstrDef = getAbiPseudoInstruction(definition.definitions,
@@ -259,6 +278,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow();
     var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow();
     var pseudoLocalAddressLoad = (PseudoInstruction) fetch(pseudoLocalAddressLoadDef).orElseThrow();
+
+    // Aliases
 
     Map<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>> aliases =
         aliasLookup.entrySet()
@@ -293,10 +314,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         globalPtr,
         threadPtr,
         aliases,
-        Collections.emptyList(),
-        Collections.emptyList(),
-        Collections.emptyList(),
-        Collections.emptyList(),
+        callerSaved,
+        calleeSaved,
+        functionArguments,
+        returnValues,
         pseudoRet,
         pseudoCall,
         pseudoLocalAddressLoad,
@@ -1267,6 +1288,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
     var identifier = specialPurposeRegisterDef.exprs.stream().findFirst().orElseThrow().target;
     return mapToRegisterRef(aliasLookup, identifier);
+  }
+
+  /**
+   * Maps a {@link SpecialPurposeRegisterDefinition} to a list of {@link Abi.RegisterRef}.
+   */
+  private List<Abi.RegisterRef> mapSpecialPurposeRegistersDef(
+      Map<Identifier, Expr> aliasLookup,
+      SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
+    return specialPurposeRegisterDef.exprs.stream()
+        .map(x -> mapToRegisterRef(aliasLookup, x.target))
+        .toList();
   }
 
   /**
