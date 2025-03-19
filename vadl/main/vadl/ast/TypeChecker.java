@@ -755,7 +755,11 @@ public class TypeChecker
         SpecialPurposeRegisterDefinition.Purpose.RETURN_ADDRESS,
         SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER,
         SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER,
-        SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER)) {
+        SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER,
+        SpecialPurposeRegisterDefinition.Purpose.CALLER_SAVED,
+        SpecialPurposeRegisterDefinition.Purpose.CALLEE_SAVED,
+        SpecialPurposeRegisterDefinition.Purpose.RETURN_VALUE,
+        SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT)) {
       var registers = definition.definitions.stream().filter(
               x -> x instanceof SpecialPurposeRegisterDefinition specialPurposeRegisterDefinition
                   && specialPurposeRegisterDefinition.purpose == purpose)
@@ -1396,16 +1400,26 @@ public class TypeChecker
             SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER, NumberOfRegisters.ONE,
             SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER, NumberOfRegisters.ONE,
             SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER, NumberOfRegisters.ONE,
-            SpecialPurposeRegisterDefinition.Purpose.RETURN_VALUE, NumberOfRegisters.MANY);
+            SpecialPurposeRegisterDefinition.Purpose.RETURN_VALUE, NumberOfRegisters.MANY,
+            SpecialPurposeRegisterDefinition.Purpose.CALLER_SAVED, NumberOfRegisters.MANY,
+            SpecialPurposeRegisterDefinition.Purpose.CALLEE_SAVED, NumberOfRegisters.MANY,
+            SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT, NumberOfRegisters.MANY);
 
-    if (expectedNumberOfRegisters.get(definition.purpose) == NumberOfRegisters.ONE) {
+    var actual = expectedNumberOfRegisters.get(definition.purpose);
+
+    if (actual == null) {
+      throw Diagnostic.error("Cannot determine number of expected registers",
+          definition.sourceLocation()).build();
+    }
+
+    if (actual == NumberOfRegisters.ONE) {
       if (definition.exprs.size() != 1) {
         throw Diagnostic.error("Number of registers is incorrect. This definition expects only one",
             definition.sourceLocation()).build();
       }
     }
 
-    if (expectedNumberOfRegisters.get(definition.purpose) == NumberOfRegisters.MANY) {
+    if (actual == NumberOfRegisters.MANY) {
       if (definition.exprs.isEmpty()) {
         throw Diagnostic.error(
             "Number of registers is incorrect. This definition expects at least one.",

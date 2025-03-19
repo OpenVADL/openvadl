@@ -68,6 +68,8 @@ application binary interface ABI for RV64IM = {
    pseudo local address load instruction = LLA
    
    function value = a{0..1}
+   caller saved = [ ra, a{0..7}, t{0..6} ]
+   callee saved = [ sp, fp, s{0..11} ]
 
   /*
   constant sequence( rd : Bits<5>, val : SInt<32> ) =
