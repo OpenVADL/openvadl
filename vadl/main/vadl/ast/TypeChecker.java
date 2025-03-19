@@ -773,8 +773,8 @@ public class TypeChecker
         case OPTIONAL -> {
           if (!(registers.isEmpty() || registers.size() == 1)) {
             throw Diagnostic.error(
-                "Multiple " + purpose.name() +
-                    " registers were declared but only zero or one was expected",
+                "Multiple " + purpose.name()
+                    + " registers were declared but only zero or one was expected",
                 SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
           }
         }
@@ -785,6 +785,7 @@ public class TypeChecker
                 definition.sourceLocation()).build();
           }
         }
+        default -> throw new RuntimeException("enum variant not handled");
       }
     }
 
