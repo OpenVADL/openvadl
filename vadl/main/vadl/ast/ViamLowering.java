@@ -240,14 +240,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER);
     var framePtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER);
-    var threadPtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
-        SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER);
+    var threadPtr = getOptionalSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER)
+        .map(def -> mapSingleSpecialPurposeRegisterDef(aliasLookup, def));
 
     var stackPointer = mapSingleSpecialPurposeRegisterDef(aliasLookup, stackPointerDef);
     var returnAddress = mapSingleSpecialPurposeRegisterDef(aliasLookup, returnAddressDef);
     var globalPtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, globalPtrDef);
     var framePtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, framePtrDef);
-    var threadPtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, threadPtrDef);
 
     var pseudoRetInstrDef = getAbiPseudoInstruction(definition.definitions,
         AbiPseudoInstructionDefinition.Kind.RETURN);
@@ -1331,12 +1331,21 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    */
   private SpecialPurposeRegisterDefinition getSpecialPurposeRegisterDefinition(
       List<Definition> definitions, SpecialPurposeRegisterDefinition.Purpose purpose) {
+    return getOptionalSpecialPurposeRegisterDefinition(definitions, purpose).get();
+  }
+
+  /**
+   * Extracts a {@link SpecialPurposeRegisterDefinition} with the given {@code purpose}.
+   * It is ok to find no definition.
+   */
+  private Optional<SpecialPurposeRegisterDefinition> getOptionalSpecialPurposeRegisterDefinition(
+      List<Definition> definitions, SpecialPurposeRegisterDefinition.Purpose purpose) {
     var registers = definitions
         .stream()
         .filter(x -> x instanceof SpecialPurposeRegisterDefinition y && y.purpose == purpose)
         .toList();
 
-    return (SpecialPurposeRegisterDefinition) registers.stream().findFirst().get();
+    return registers.stream().findFirst().map(x -> (SpecialPurposeRegisterDefinition) x);
   }
 
 
