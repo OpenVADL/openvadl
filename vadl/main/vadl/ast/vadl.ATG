@@ -831,7 +831,8 @@ PRODUCTIONS
     ( specialPurposeRegisterSingleDef<out def>
     | aliasDefinition<out def>
     | abiPseudoInstructionDefinition<out def>
-    )                                        (. def.withAnnotations(annotations); .)
+    | abiSequenceDef<out def>
+  )                                        (. def.withAnnotations(annotations); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
     macroReplacement<out Node n>             (. def = castCommonDef(this, n);
                                                 if (def instanceof DefinitionList list) {
@@ -872,20 +873,15 @@ PRODUCTIONS
 
   abiSequenceDef<out Definition def>                         (. var start = lookaheadLoc(); .)
   =                                                          (. AbiSequenceDefinition.SeqKind kind = null; .)
-  ( ADDRESS                                                  (. kind = AbiSequenceDefinition.SeqKind.ADDRESS; .)
-  | CALL                                                     (. kind = AbiSequenceDefinition.SeqKind.CALL; .)
-  | CONSTANT                                                 (. kind = AbiSequenceDefinition.SeqKind.CONSTANT; .)
-  | NOP                                                      (. kind = AbiSequenceDefinition.SeqKind.NOP; .)
-  | RETURN                                                   (. kind = AbiSequenceDefinition.SeqKind.RETURN; .)
-  )
-    SEQUENCE                                                 (. List<Parameter> params = new ArrayList<>(); .)
-    [ parameters<.out params.> ]
-    SYM_EQ
-    SYM_BRACE_OPEN                                           (. var stmts = new ArrayList<InstructionCallStatement>(); .)
-    {
-      instructionCallStmt<out InstructionCallStatement stmt> (. stmts.add(stmt); .)
-    }
-    SYM_BRACE_CLOSE                                          (. def = new AbiSequenceDefinition(kind, params, stmts, start.join(loc())); .)
+  CONSTANT                                                   (. kind = AbiSequenceDefinition.SeqKind.CONSTANT; .)
+  SEQUENCE                                                   (. List<Parameter> params = new ArrayList<>(); .)
+  [ parameters<.out params.> ]
+  SYM_EQ
+  SYM_BRACE_OPEN                                             (. var stmts = new ArrayList<InstructionCallStatement>(); .)
+  {
+    instructionCallStmt<out InstructionCallStatement stmt>   (. stmts.add(stmt); .)
+  }
+  SYM_BRACE_CLOSE                                            (. def = new AbiSequenceDefinition(kind, params, stmts, start.join(loc())); .)
   .
 
 
