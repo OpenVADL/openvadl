@@ -3462,7 +3462,7 @@ class AbiSequenceDefinition extends Definition {
   }
 
   enum SeqKind {
-    ADDRESS("address"), CALL("call"), CONSTANT("constant"), NOP("nop"), RETURN("return");
+    CONSTANT("constant");
 
     private final String keyword;
 
