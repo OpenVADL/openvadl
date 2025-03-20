@@ -3475,14 +3475,14 @@ class AbiSequenceDefinition extends Definition {
 class SpecialPurposeRegisterDefinition extends Definition {
 
   Purpose purpose;
-  Identifier aliasName;
+  List<SequenceCallExpr> exprs;
   SourceLocation loc;
 
   SpecialPurposeRegisterDefinition(Purpose purpose,
-                                   Identifier aliasName,
+                                   List<SequenceCallExpr> sequence,
                                    SourceLocation loc) {
     this.purpose = purpose;
-    this.aliasName = aliasName;
+    this.exprs = sequence;
     this.loc = loc;
   }
 
@@ -3507,7 +3507,9 @@ class SpecialPurposeRegisterDefinition extends Definition {
     builder.append(prettyIndentString(indent));
     builder.append(purpose.keywords);
     builder.append(" = ");
-    builder.append(aliasName);
+    exprs.forEach(e -> {
+      e.prettyPrint(indent + 1, builder);
+    });
   }
 
   @Override
@@ -3519,12 +3521,18 @@ class SpecialPurposeRegisterDefinition extends Definition {
       return false;
     }
     SpecialPurposeRegisterDefinition that = (SpecialPurposeRegisterDefinition) o;
-    return purpose == that.purpose && aliasName.equals(that.aliasName);
+    return purpose == that.purpose && Objects.equals(exprs, that.exprs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(purpose, aliasName);
+    return Objects.hash(purpose, exprs);
+  }
+
+  enum Occurrence {
+    OPTIONAL,
+    ONE,
+    AT_LEAST_ONE
   }
 
   enum Purpose {
@@ -3542,6 +3550,41 @@ class SpecialPurposeRegisterDefinition extends Definition {
 
     Purpose(String keywords) {
       this.keywords = keywords;
+    }
+
+    /**
+     * Determines how many arguments are allowed.
+     * function value = a{0..1} -> ok
+     * stack pointer = a{0..1} -> not ok
+     */
+    public static final Map<Purpose, Occurrence> numberOfExpectedArguments;
+
+    /**
+     * Determines how often a definition is allowed in the ABI.
+     */
+    public static final Map<Purpose, Occurrence> numberOfOccurrencesAbi;
+
+    static {
+      numberOfExpectedArguments = Map.of(Purpose.STACK_POINTER, Occurrence.ONE,
+          Purpose.RETURN_ADDRESS, Occurrence.ONE,
+          Purpose.GLOBAL_POINTER, Occurrence.ONE,
+          Purpose.FRAME_POINTER, Occurrence.ONE,
+          Purpose.THREAD_POINTER, Occurrence.ONE,
+          Purpose.RETURN_VALUE, Occurrence.AT_LEAST_ONE,
+          Purpose.CALLER_SAVED, Occurrence.AT_LEAST_ONE,
+          Purpose.CALLEE_SAVED, Occurrence.AT_LEAST_ONE,
+          Purpose.FUNCTION_ARGUMENT, Occurrence.AT_LEAST_ONE);
+
+
+      numberOfOccurrencesAbi = Map.of(Purpose.STACK_POINTER, Occurrence.ONE,
+          Purpose.RETURN_ADDRESS, Occurrence.ONE,
+          Purpose.GLOBAL_POINTER, Occurrence.ONE,
+          Purpose.FRAME_POINTER, Occurrence.ONE,
+          Purpose.THREAD_POINTER, Occurrence.OPTIONAL,
+          Purpose.RETURN_VALUE, Occurrence.ONE,
+          Purpose.CALLER_SAVED, Occurrence.ONE,
+          Purpose.CALLEE_SAVED, Occurrence.ONE,
+          Purpose.FUNCTION_ARGUMENT, Occurrence.ONE);
     }
   }
 }

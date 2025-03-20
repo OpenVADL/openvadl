@@ -828,14 +828,9 @@ PRODUCTIONS
 
   abiElementDefinition<out Definition def>   (. def = DUMMY_DEF; .)
   = annotations<out Annotations annotations> (. var peek = scanner.Peek(); .)
-    ( IF (peek.kind == _SEQUENCE) // RETURN can be followed by both SEQUENCE and VALUE / ADDRESS
-      abiSequenceDef<out def>
-    // | IF (la.kind == _FUNCTION && peek.kind == _ARGUMENT)
-    //  functionArgumentRegisterDef<out def>
-    | specialPurposeRegisterDef<out def>
+    ( specialPurposeRegisterSingleDef<out def>
     | aliasDefinition<out def>
     | abiPseudoInstructionDefinition<out def>
-    | commonDefinition<out def>
     )                                        (. def.withAnnotations(annotations); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
     macroReplacement<out Node n>             (. def = castCommonDef(this, n);
@@ -844,28 +839,24 @@ PRODUCTIONS
                                                 } .)
   .
 
-  specialPurposeRegisterDef<out Definition def>              (. var start = lookaheadLoc(); .)
+  specialPurposeRegisterSingleDef<out Definition def>        (. var start = lookaheadLoc(); .)
   =                                                          (. SpecialPurposeRegisterDefinition.Purpose purpose = null; .)
-  ( RETURN
-    ( ADDRESS                                                (. purpose = SpecialPurposeRegisterDefinition.Purpose.RETURN_ADDRESS; .)
+  (
+  RETURN (
+    ADDRESS                                                  (. purpose = SpecialPurposeRegisterDefinition.Purpose.RETURN_ADDRESS; .)
     | VALUE                                                  (. purpose = SpecialPurposeRegisterDefinition.Purpose.RETURN_VALUE; .)
-  )
+    )
   | STACK POINTER                                            (. purpose = SpecialPurposeRegisterDefinition.Purpose.STACK_POINTER; .)
   | GLOBAL POINTER                                           (. purpose = SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER; .)
   | FRAME POINTER                                            (. purpose = SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER; .)
   | THREAD POINTER                                           (. purpose = SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER; .)
-  // | CALLER SAVED                                             (. purpose = SpecialPurposeRegisterDefinition.Purpose.CALLER_SAVED; .)
-  // | CALLEE SAVED                                             (. purpose = SpecialPurposeRegisterDefinition.Purpose.CALLEE_SAVED; .)
+  | CALLER SAVED                                             (. purpose = SpecialPurposeRegisterDefinition.Purpose.CALLER_SAVED; .)
+  | CALLEE SAVED                                             (. purpose = SpecialPurposeRegisterDefinition.Purpose.CALLEE_SAVED; .)
+  | FUNCTION ARGUMENT                                        (. purpose = SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT; .)
   )
   SYM_EQ
-  identifier<out Identifier id>  (. def = new SpecialPurposeRegisterDefinition(purpose, id, start.join(loc())); .)
+  sequenceCallExprList<.out List<SequenceCallExpr> calls.> (. def = new SpecialPurposeRegisterDefinition(purpose, calls, start.join(loc())); .)
   .
-
-  // Only necessary to resolve LL(1) conflict between function in commonDef and this factored specialPurposeRegisterDef
-  // functionArgumentRegisterDef<out Definition def>            (. var start = lookaheadLoc(); .)
-  // = FUNCTION ARGUMENT SYM_EQ
-  //  sequenceCallExprList<.out List<SequenceCallExpr> calls.> (. def = new SpecialPurposeRegisterDefinition(SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT, calls, start.join(loc())); .)
-  // .
 
   abiPseudoInstructionDefinition<out Definition def>         (. var start = lookaheadLoc(); .)
   =                                                          (. AbiPseudoInstructionDefinition.Kind kind = null; .)

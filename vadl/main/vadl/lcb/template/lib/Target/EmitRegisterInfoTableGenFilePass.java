@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
@@ -34,7 +35,6 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Specification;
-import vadl.viam.passes.dummyPasses.DummyAbiPass;
 
 /**
  * This file contains the register definitions for compiler backend.
@@ -80,7 +80,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var output = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
         GenerateTableGenRegistersPass.class));
-    var abi = (Abi) passResults.lastResultOf(DummyAbiPass.class);
+    var abi = specification.abi().orElseThrow();
     var registerClasses = output.registerClasses();
 
     if (registerClasses.size() > 1) {
@@ -96,13 +96,14 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var callerSaved = abi.callerSaved().stream().map(Abi.RegisterRef::render).toList();
 
     // Remove marked regs from callee to mark sure that they are allocated last.
-    var exceptions = new HashSet<>(List.of(
-        abi.returnAddress().render(),
-        abi.stackPointer().render(),
-        abi.globalPointer().render(),
-        abi.framePointer().render(),
-        abi.threadPointer().render()
-    ));
+    var exceptions = new HashSet<>(Stream.of(
+        Optional.of(abi.returnAddress().render()),
+        Optional.of(abi.stackPointer().render()),
+        Optional.of(abi.globalPointer().render()),
+        Optional.of(abi.framePointer().render()),
+        abi.threadPointer().map(Abi.RegisterRef::render)
+    ).filter(Optional::isPresent).map(Optional::get).toList());
+
     var calleeSaved = abi.calleeSaved().stream()
         .map(Abi.RegisterRef::render)
         .filter(render -> !exceptions.contains(render)).toList();

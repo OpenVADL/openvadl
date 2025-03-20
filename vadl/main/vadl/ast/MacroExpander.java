@@ -713,7 +713,7 @@ class MacroExpander
   @Override
   public Definition visit(SpecialPurposeRegisterDefinition definition) {
     return new SpecialPurposeRegisterDefinition(
-        definition.purpose, definition.aliasName, copyLoc(definition.loc)
+        definition.purpose, definition.exprs, copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }
 

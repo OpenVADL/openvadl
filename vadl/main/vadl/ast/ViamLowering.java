@@ -231,6 +231,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var id = generateIdentifier(definition.viamId, definition.identifier());
     var aliasLookup = aliasLookupTable(definition.definitions);
 
+    // Special Registers
+
     var stackPointerDef = getSpecialPurposeRegisterDefinition(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.STACK_POINTER);
     var returnAddressDef =
@@ -240,14 +242,31 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER);
     var framePtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER);
-    var threadPtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
-        SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER);
+    var threadPtr = getOptionalSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER)
+        .map(def -> mapSingleSpecialPurposeRegisterDef(aliasLookup, def));
 
-    var stackPointer = mapToRegisterRef(aliasLookup, stackPointerDef);
-    var returnAddress = mapToRegisterRef(aliasLookup, returnAddressDef);
-    var globalPtr = mapToRegisterRef(aliasLookup, globalPtrDef);
-    var framePtr = mapToRegisterRef(aliasLookup, framePtrDef);
-    var threadPtr = mapToRegisterRef(aliasLookup, threadPtrDef);
+    var stackPointer = mapSingleSpecialPurposeRegisterDef(aliasLookup, stackPointerDef);
+    var returnAddress = mapSingleSpecialPurposeRegisterDef(aliasLookup, returnAddressDef);
+    var globalPtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, globalPtrDef);
+    var framePtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, framePtrDef);
+
+    // Calling Convention
+    var returnValueDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.RETURN_VALUE);
+    var functionArgumentDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT);
+    var callerSavedDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.CALLER_SAVED);
+    var calleeSavedDef = getSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.CALLEE_SAVED);
+
+    var returnValues = mapSpecialPurposeRegistersDef(aliasLookup, returnValueDef);
+    var functionArguments = mapSpecialPurposeRegistersDef(aliasLookup, functionArgumentDef);
+    var callerSaved = mapSpecialPurposeRegistersDef(aliasLookup, callerSavedDef);
+    var calleeSaved = mapSpecialPurposeRegistersDef(aliasLookup, calleeSavedDef);
+
+    // Pseudo Instructions
 
     var pseudoRetInstrDef = getAbiPseudoInstruction(definition.definitions,
         AbiPseudoInstructionDefinition.Kind.RETURN);
@@ -259,6 +278,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow();
     var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow();
     var pseudoLocalAddressLoad = (PseudoInstruction) fetch(pseudoLocalAddressLoadDef).orElseThrow();
+
+    // Aliases
 
     Map<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>> aliases =
         aliasLookup.entrySet()
@@ -293,10 +314,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         globalPtr,
         threadPtr,
         aliases,
-        Collections.emptyList(),
-        Collections.emptyList(),
-        Collections.emptyList(),
-        Collections.emptyList(),
+        callerSaved,
+        calleeSaved,
+        functionArguments,
+        returnValues,
         pseudoRet,
         pseudoCall,
         pseudoLocalAddressLoad,
@@ -1258,15 +1279,38 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   /**
+   * Maps a {@link SpecialPurposeRegisterDefinition} to a {@link Abi.RegisterRef}.
+   * It expects only one register in the {@link SpecialPurposeRegisterDefinition}. Otherwise,
+   * it will throw an error.
+   */
+  private Abi.RegisterRef mapSingleSpecialPurposeRegisterDef(
+      Map<Identifier, Expr> aliasLookup,
+      SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
+    var identifier = specialPurposeRegisterDef.exprs.stream().findFirst().orElseThrow().target;
+    return mapToRegisterRef(aliasLookup, identifier);
+  }
+
+  /**
+   * Maps a {@link SpecialPurposeRegisterDefinition} to a list of {@link Abi.RegisterRef}.
+   */
+  private List<Abi.RegisterRef> mapSpecialPurposeRegistersDef(
+      Map<Identifier, Expr> aliasLookup,
+      SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
+    return specialPurposeRegisterDef.exprs.stream()
+        .map(x -> mapToRegisterRef(aliasLookup, x.target))
+        .toList();
+  }
+
+  /**
    * Maps the aliases {@code alias register zero = X(0)} to {@link Abi.RegisterRef} to be
    * used in {@link Abi}.
    */
   private Abi.RegisterRef mapToRegisterRef(
       Map<Identifier, Expr> aliasLookup,
-      SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
-    var expr = ensureNonNull(aliasLookup.get(specialPurposeRegisterDef.aliasName),
+      Identifier identifier) {
+    var expr = ensureNonNull(aliasLookup.get(identifier),
         () -> Diagnostic.error("Cannot alias for register definition",
-            specialPurposeRegisterDef.aliasName.sourceLocation()));
+            identifier.sourceLocation()));
     var pair = getRegisterFile(expr);
     var registerFile = pair.left();
     var index = pair.right();
@@ -1319,12 +1363,21 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    */
   private SpecialPurposeRegisterDefinition getSpecialPurposeRegisterDefinition(
       List<Definition> definitions, SpecialPurposeRegisterDefinition.Purpose purpose) {
+    return getOptionalSpecialPurposeRegisterDefinition(definitions, purpose).get();
+  }
+
+  /**
+   * Extracts a {@link SpecialPurposeRegisterDefinition} with the given {@code purpose}.
+   * It is ok to find no definition.
+   */
+  private Optional<SpecialPurposeRegisterDefinition> getOptionalSpecialPurposeRegisterDefinition(
+      List<Definition> definitions, SpecialPurposeRegisterDefinition.Purpose purpose) {
     var registers = definitions
         .stream()
         .filter(x -> x instanceof SpecialPurposeRegisterDefinition y && y.purpose == purpose)
         .toList();
 
-    return (SpecialPurposeRegisterDefinition) registers.stream().findFirst().get();
+    return registers.stream().findFirst().map(x -> (SpecialPurposeRegisterDefinition) x);
   }
 
 

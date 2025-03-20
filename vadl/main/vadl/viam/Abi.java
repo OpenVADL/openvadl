@@ -18,6 +18,7 @@ package vadl.viam;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import vadl.utils.Pair;
 
 /**
@@ -80,7 +81,7 @@ public class Abi extends Definition {
   private final RegisterRef stackPointer;
   private final RegisterRef globalPointer;
   private final RegisterRef framePointer;
-  private final RegisterRef threadPointer;
+  private final Optional<RegisterRef> threadPointer;
 
 
   private final Map<Pair<RegisterFile, Integer>, List<RegisterAlias>> aliases;
@@ -111,7 +112,7 @@ public class Abi extends Definition {
              RegisterRef stackPointer,
              RegisterRef framePointer,
              RegisterRef globalPointer,
-             RegisterRef threadPointer,
+             Optional<RegisterRef> threadPointer,
              Map<Pair<RegisterFile, Integer>, List<RegisterAlias>> aliases,
              List<RegisterRef> callerSaved,
              List<RegisterRef> calleeSaved,
@@ -165,7 +166,7 @@ public class Abi extends Definition {
     return globalPointer;
   }
 
-  public RegisterRef threadPointer() {
+  public Optional<RegisterRef> threadPointer() {
     return threadPointer;
   }
 

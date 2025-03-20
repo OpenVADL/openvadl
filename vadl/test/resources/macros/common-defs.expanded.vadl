@@ -5,5 +5,4 @@ instruction set architecture ISA = {
   function add1632(left : SInt16, right : SInt16) -> SInt32 = VADL::adds(left, right) as SInt32
 }
 application binary interface ABI for ISA = {
-  function mul3264(left : SInt32, right : SInt32) -> SInt64 = VADL::muls(left, right) as SInt64
 }

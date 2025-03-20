@@ -57,8 +57,14 @@ public class TypecheckerAsmTest {
         stack pointer = zero
         return address = zero
         global pointer = zero
-        frame pointer = zer
+        frame pointer = zero
         thread pointer = zero
+        
+        
+        return value = zero
+        function argument = zero
+        caller saved = zero
+        callee saved = zero
       }
       """;
 

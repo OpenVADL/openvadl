@@ -750,26 +750,42 @@ public class TypeChecker
   public Void visit(ApplicationBinaryInterfaceDefinition definition) {
     definition.definitions.forEach(this::check);
 
-    // Check whether there exists just one special purpose register.
-    for (var purpose : Set.of(SpecialPurposeRegisterDefinition.Purpose.STACK_POINTER,
-        SpecialPurposeRegisterDefinition.Purpose.RETURN_ADDRESS,
-        SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER,
-        SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER,
-        SpecialPurposeRegisterDefinition.Purpose.THREAD_POINTER)) {
+    // Check the number of occurrences in the ABI.
+    for (var entry : SpecialPurposeRegisterDefinition.Purpose.numberOfOccurrencesAbi.entrySet()) {
+      var purpose = entry.getKey();
       var registers = definition.definitions.stream().filter(
               x -> x instanceof SpecialPurposeRegisterDefinition specialPurposeRegisterDefinition
                   && specialPurposeRegisterDefinition.purpose == purpose)
           .toList();
 
-      if (registers.size() > 1) {
-        throw Diagnostic.error(
-            "Multiple " + purpose.name() + " registers were declared but only was expected",
-            SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
-      }
-
-      if (registers.isEmpty()) {
-        throw Diagnostic.error(
-            "No register purpose was defined for " + purpose.name(), definition.loc).build();
+      switch (entry.getValue()) {
+        case ONE -> {
+          if (registers.isEmpty()) {
+            throw Diagnostic.error(
+                "No " + purpose.name() + " registers were declared but one was expected",
+                definition.sourceLocation()).build();
+          } else if (registers.size() != 1) {
+            throw Diagnostic.error(
+                "Multiple " + purpose.name() + " registers were declared but only one was expected",
+                SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
+          }
+        }
+        case OPTIONAL -> {
+          if (!(registers.isEmpty() || registers.size() == 1)) {
+            throw Diagnostic.error(
+                "Multiple " + purpose.name()
+                    + " registers were declared but zero or one was expected",
+                SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
+          }
+        }
+        case AT_LEAST_ONE -> {
+          if (registers.isEmpty()) {
+            throw Diagnostic.error(
+                "Zero " + purpose.name() + " registers were declared but at least one was expected",
+                definition.sourceLocation()).build();
+          }
+        }
+        default -> throw new RuntimeException("enum variant not handled");
       }
     }
 
@@ -783,7 +799,7 @@ public class TypeChecker
       if (pseudoInstructions.size() > 1) {
         throw Diagnostic.error(
                 "Multiple " + kind.name()
-                    + " pseudo instructions were declared but only was expected",
+                    + " pseudo instructions were declared but only one was expected",
                 SourceLocation.join(pseudoInstructions.stream().map(Node::sourceLocation).toList()))
             .build();
       }
@@ -1382,7 +1398,31 @@ public class TypeChecker
 
   @Override
   public Void visit(SpecialPurposeRegisterDefinition definition) {
-    // Isn't type checked on purpose because there is nothing to type check.
+    // Check whether the number of registers is correct.
+    // There can be only one stack pointer. However, there might be multiple argument registers.
+    var actual =
+        SpecialPurposeRegisterDefinition.Purpose.numberOfExpectedArguments.get(definition.purpose);
+
+    if (actual == null) {
+      throw Diagnostic.error("Cannot determine number of expected registers",
+          definition.sourceLocation()).build();
+    }
+
+    if (actual == SpecialPurposeRegisterDefinition.Occurrence.ONE) {
+      if (definition.exprs.size() != 1) {
+        throw Diagnostic.error("Number of registers is incorrect. This definition expects only one",
+            definition.sourceLocation()).build();
+      }
+    }
+
+    if (actual == SpecialPurposeRegisterDefinition.Occurrence.ONE) {
+      if (definition.exprs.isEmpty()) {
+        throw Diagnostic.error(
+            "Number of registers is incorrect. This definition expects at least one.",
+            definition.sourceLocation()).build();
+      }
+    }
+
     return null;
   }
 

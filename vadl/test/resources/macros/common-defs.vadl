@@ -12,5 +12,4 @@ instruction set architecture ISA = {
 }
 
 application binary interface ABI for ISA = {
-  $CastedOp(mul3264 ; muls ; SInt32 ; SInt64)
 }
