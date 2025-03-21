@@ -16,6 +16,8 @@
 
 package vadl.utils;
 
+import static vadl.utils.EditorUtils.isIntelliJIDE;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -173,8 +175,7 @@ public record SourceLocation(
 
     String printablePath;
 
-    if (Objects.requireNonNullElse(System.getenv("TERMINAL_EMULATOR"), "")
-        .equals("JetBrains-JediTerm") || this.uri.getScheme().equals("memory")) {
+    if (isIntelliJIDE() || this.uri.getScheme().equals("memory")) {
       // IntelliJ integrated terminal needs special treatment
       printablePath = this.uri.toString();
     } else {
