@@ -49,6 +49,7 @@ import vadl.error.DiagnosticPrinter;
 import vadl.pass.PassManager;
 import vadl.pass.PassOrder;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.utils.EditorUtils;
 import vadl.utils.SourceLocation;
 import vadl.viam.Specification;
 
@@ -211,6 +212,37 @@ public abstract class BaseCommand implements Callable<Integer> {
     return spec;
   }
 
+  protected void printDumps(String message) {
+    if (ArtifactTracker.getDumpPaths().isEmpty()) {
+      return;
+    }
+
+    System.out.println(message);
+    for (var path : ArtifactTracker.getDumpPaths()) {
+      if (EditorUtils.isIntelliJIDE()) {
+        var uri = path.toAbsolutePath().toUri();
+        System.out.printf("\t- %s\n", uri);
+      } else {
+        System.out.printf("\t- %s\n", path);
+      }
+    }
+  }
+
+  protected void printArtifacts(String message) {
+    if (ArtifactTracker.getArtifactPathsPaths().isEmpty()) {
+      return;
+    }
+    System.out.println(message);
+    for (var path : ArtifactTracker.getArtifactPathsPaths()) {
+      if (EditorUtils.isIntelliJIDE()) {
+        var uri = path.toAbsolutePath().toUri();
+        System.out.printf("\t- %s\n", uri);
+      } else {
+        System.out.printf("\t- %s\n", path);
+      }
+    }
+  }
+
   // lazy evaluated config, do NOT use this directly.
   // use getConfig() instead.
   @Nullable
@@ -266,14 +298,7 @@ public abstract class BaseCommand implements Callable<Integer> {
           https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/new
           """);
 
-      if (!ArtifactTracker.getDumpPaths().isEmpty()) {
-        var dumpMessage = "\nBefore the crash, the following dumps were generated:";
-        System.out.println(dumpMessage);
-        for (var path : ArtifactTracker.getDumpPaths()) {
-          System.out.printf("\t- %s\n", path);
-        }
-        System.out.println("");
-      }
+      printDumps("\nBefore the crash, the following dumps were generated:");
 
       // Dirty hack to avoid stdout and stderr getting mixed in IntelliJ (flushing wasn't enough).
       try {
@@ -296,25 +321,13 @@ public abstract class BaseCommand implements Callable<Integer> {
       }
     }
 
-    if (!ArtifactTracker.getArtifactPathsPaths().isEmpty()) {
-      var artifactMessage = returnVal == 0
-          ? "\nThe following artifacts were generated:"
-          : "\nEven though some errors occurred, the following artifacts were generated:";
-      System.out.println(artifactMessage);
-      for (var path : ArtifactTracker.getArtifactPathsPaths()) {
-        System.out.printf("\t- %s\n", path);
-      }
-    }
+    printArtifacts(returnVal == 0
+        ? "\nThe following artifacts were generated:"
+        : "\nEven though some errors occurred, the following artifacts were generated:");
 
-    if (!ArtifactTracker.getDumpPaths().isEmpty()) {
-      var dumpMessage = returnVal == 0
-          ? "\nThe following dumps were generated:"
-          : "\nEven though some errors occurred, the following dumps were generated:";
-      System.out.println(dumpMessage);
-      for (var path : ArtifactTracker.getDumpPaths()) {
-        System.out.printf("\t- %s\n", path);
-      }
-    }
+    printDumps(returnVal == 0
+        ? "\nThe following dumps were generated:"
+        : "\nEven though some errors occurred, the following dumps were generated:");
 
     return returnVal;
   }
