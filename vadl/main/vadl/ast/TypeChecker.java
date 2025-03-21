@@ -30,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
@@ -58,9 +59,24 @@ import vadl.utils.WithSourceLocation;
 public class TypeChecker
     implements DefinitionVisitor<Void>, StatementVisitor<Void>, ExprVisitor<Void> {
 
+  private BranchStrategy branchStrategy = BranchStrategy.ALL;
+
+  /**
+   * Describes whether all branches are checked and the result of all branches must be equal, or
+   * if we must evaluate the condition and propergate the type from the chosen branch.
+   */
+  enum BranchStrategy {
+    ALL,
+    ONE,
+  }
+
   //private final List<Diagnostic> errors = new ArrayList<>();
   private final ConstantEvaluator constantEvaluator;
 
+  /**
+   * There is no point in checking a statement or definition twice, so these sets record which
+   * nodes we already visited. For expressions, we can simply check if the type is set.
+   */
   private final Set<Statement> checkedStatements =
       Collections.newSetFromMap(new IdentityHashMap<>());
   private final Set<Definition> checkedDefinitions =
@@ -147,6 +163,23 @@ public class TypeChecker
     throw Diagnostic.error("Type Mismatch", location)
         .description("Invalid cast from `%s` to `%s`.", from, to)
         .build();
+  }
+
+  /**
+   * Execute the operation with the specified strategy set, and reset it afterwards again.
+   *
+   * @param strategy  to be active during the execution of the operation
+   * @param operation to be executed
+   * @return the result of the operation
+   */
+  private <T> T withBranchingStrategy(BranchStrategy strategy, Supplier<T> operation) {
+    var oldStrategy = branchStrategy;
+    try {
+      branchStrategy = strategy;
+      return operation.get();
+    } finally {
+      branchStrategy = oldStrategy;
+    }
   }
 
   /**
@@ -252,7 +285,7 @@ public class TypeChecker
     }
 
     if (!canImplicitCast(innerType, to)) {
-      if (!(innerType instanceof ConstantType innerConstTyp)) {
+      if (!(innerType instanceof ConstantType innerConstTyp) || to instanceof ConstantType) {
         return inner;
       }
 
@@ -311,7 +344,7 @@ public class TypeChecker
 
   @Override
   public Void visit(ConstantDefinition definition) {
-    Type valType = check(definition.value);
+    Type valType = withBranchingStrategy(BranchStrategy.ONE, () -> check(definition.value));
 
     if (definition.typeLiteral == null) {
       // Do nothing on purpose
@@ -2526,6 +2559,25 @@ public class TypeChecker
     var thenType = check(expr.thenExpr);
     var elseType = check(expr.elseExpr);
 
+    // If only one branch should be checked, directly propergate the type, and don't check whether
+    // the branches are compatible.
+    // This is intended: https://github.com/OpenVADL/open-vadl/issues/47#issuecomment-2725475475
+    if (branchStrategy.equals(BranchStrategy.ONE)) {
+      var condVal = constantEvaluator.eval(expr.condition).value().intValueExact();
+      expr.type = condVal == 1 ? thenType : elseType;
+      return null;
+    }
+
+    // FIXME: Fix this with bidirectional checking in the future
+    if (thenType instanceof ConstantType && elseType instanceof ConstantType
+        && !thenType.equals(elseType)) {
+      throw Diagnostic.error("Type Mismatch", expr)
+          .description("Both branches return different constant types.")
+          .help("Add an explicit cast on one of the branches.")
+          .note("In the future this will work without a cast.")
+          .build();
+    }
+
     // Apply general implicit casting rules after specialised once.
     expr.thenExpr = wrapImplicitCast(expr.thenExpr, elseType);
     thenType = expr.thenExpr.type();
@@ -2579,8 +2631,9 @@ public class TypeChecker
 
   @Override
   public Void visit(MatchExpr expr) {
+
+    // Check all entities
     var candidateType = check(expr.candidate);
-    var firstResultType = check(expr.cases.get(0).result);
     for (var kase : expr.cases) {
       kase.patterns.forEach(this::check);
       kase.patterns.replaceAll(p -> wrapImplicitCast(p, candidateType));
@@ -2593,28 +2646,49 @@ public class TypeChecker
               .note("The type of the candidate and the pattern must be the same.")
               .build();
         }
+        check(kase.result);
+      }
+    }
+    check(expr.defaultResult);
+
+    // If only one branch should be checked, directly propergate the type, and don't check whether
+    // the branches are compatible.
+    // This is intended: https://github.com/OpenVADL/open-vadl/issues/47#issuecomment-2725475475
+    if (branchStrategy.equals(BranchStrategy.ONE)) {
+      var candidateConstant = constantEvaluator.eval(expr.candidate);
+      for (var kase : expr.cases) {
+        if (kase.patterns.stream()
+            .map(constantEvaluator::eval)
+            .allMatch(candidateConstant::equals)) {
+          expr.type = kase.result.type();
+          return null;
+        }
       }
 
-      // Check that all branches have the same type
-      check(kase.result);
+      expr.type = expr.defaultResult.type();
+      return null;
+    }
+
+    // Check that all branches have the same type
+    var firstResultType = check(expr.cases.get(0).result);
+    for (var kase : expr.cases) {
       kase.result = wrapImplicitCast(kase.result, firstResultType);
-      var resultType = check(kase.result);
+      var resultType = kase.result.type();
       if (!resultType.equals(firstResultType)) {
         throw Diagnostic.error("Type Mismatch", kase.result)
-            .locationNote(kase.result, "All results before were of type `%s`, but this is `%s`",
+            .locationNote(kase.result, "All previous branches were of type `%s`, but this is `%s`",
                 firstResultType, resultType)
             .description("All branches of a match must have the same type")
             .build();
       }
     }
 
-    check(expr.defaultResult);
     expr.defaultResult = wrapImplicitCast(expr.defaultResult, firstResultType);
     var defaultResultType = expr.defaultResult.type();
     if (!defaultResultType.equals(firstResultType)) {
       throw Diagnostic.error("Type Mismatch", expr.defaultResult)
           .locationNote(expr.defaultResult,
-              "All results before were of type `%s`, but this is `%s`",
+              "All previous branches were of type `%s`, but this is `%s`",
               firstResultType, defaultResultType)
           .description("All branches of a match must have the same type")
           .build();
