@@ -90,5 +90,11 @@ public abstract class TableGenInstruction {
     return name;
   }
 
-
+  /**
+   * Get the operand index in {@link #inOperands}. It is offset by the number of operands
+   * in {@link #outOperands}.
+   */
+  public int indexInOperands(TableGenInstructionOperand operand) {
+    return outOperands.size() + inOperands.indexOf(operand);
+  }
 }

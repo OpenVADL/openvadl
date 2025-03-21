@@ -21,7 +21,6 @@ import java.util.List;
 import vadl.types.Type;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
-import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 
@@ -62,43 +61,9 @@ public class Assembly extends Definition {
     visitor.visit(this);
   }
 
-  /**
-   * Some instructions require that the outputted immediate is encoded. VADL allows
-   * to write the field access function in the assembly to indicate this. This class
-   * is wrapper structure to return these cases with the operand index, since it is
-   * possible to have multiple immediates in an assembly definition and not all have
-   * to be encoded.
-   * Here {@code immS} has to be encoded when {@code immS} is a field access function.
-   * <pre>
-   * assembly $name = (mnemonic, " ", register(rd), ",", decimal(immS), $asm)
-   * </pre>
-   * When {@code immS} is a field in the format, it does not need to be encoded.
-   */
-  public record FieldAccessFunctionPosition(FieldAccessRefNode fieldAccessRefNode,
-      /* Operand in Assembly */ int opIndex) {
-
-  }
-
-  /**
-   * Return the {@link FieldAccessFunctionPosition} which are referenced in {@link #function()}.
-   */
-  public List<FieldAccessFunctionPosition> fieldAccessPositions() {
-    var returnNode = function.behavior().getNodes(ReturnNode.class)
-        .findFirst()
-        .orElseThrow();
-
-    var nodes = new ArrayList<Node>();
-    returnNode.collectInputsWithChildren(nodes);
-
-    var operands = nodes
-        .stream()
-        .filter(x -> x instanceof FieldRefNode
-            || x instanceof FieldAccessRefNode)
-        .toList();
-
+  public List<Format.FieldAccess> fieldAccesses() {
     return function.behavior().getNodes(FieldAccessRefNode.class)
-        .map(fieldAccessRefNode -> new FieldAccessFunctionPosition(fieldAccessRefNode,
-            operands.indexOf(fieldAccessRefNode)))
+        .map(FieldAccessRefNode::fieldAccess)
         .toList();
   }
 }
