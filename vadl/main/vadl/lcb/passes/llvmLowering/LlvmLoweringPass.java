@@ -59,6 +59,7 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInst
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
@@ -100,6 +101,16 @@ public class LlvmLoweringPass extends Pass {
                                     LlvmLoweringPass.Flags flags,
                                     List<RegisterRef> uses,
                                     List<RegisterRef> defs) {
+    /**
+     * Get the input operands which are immediates.
+     */
+    public List<ReferencesImmediateOperand> inputImmediates() {
+      return inputs.stream()
+          .filter(x -> x instanceof ReferencesImmediateOperand)
+          .map(x -> (ReferencesImmediateOperand) x)
+          .toList();
+    }
+
     /**
      * Find the index in the {@link #inputs} by the given field.
      */

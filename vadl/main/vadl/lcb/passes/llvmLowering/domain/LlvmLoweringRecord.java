@@ -58,7 +58,8 @@ public abstract class LlvmLoweringRecord {
     /**
      * Constructor.
      */
-    public Machine(Instruction instructionRef, LlvmLoweringPass.BaseInstructionInfo info,
+    public Machine(Instruction instructionRef,
+                   LlvmLoweringPass.BaseInstructionInfo info,
                    List<TableGenPattern> patterns) {
       super(info, patterns);
       this.instructionRef = instructionRef;

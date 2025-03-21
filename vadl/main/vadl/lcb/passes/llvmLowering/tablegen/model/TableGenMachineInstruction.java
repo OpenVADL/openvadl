@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Instruction;
@@ -38,14 +39,16 @@ public class TableGenMachineInstruction extends TableGenInstruction {
   private final List<BitBlock> bitBlocks;
   private final List<FieldEncoding> fieldEncodings;
   private final Instruction instruction;
+  private final LlvmLoweringRecord.Machine llvmLoweringRecord;
 
 
   /**
-   * Constructor for an instruction in TableGen.
+   * Constructor for an instruction in TableGen. It wraps the {@link LlvmLoweringRecord}.
    */
   public TableGenMachineInstruction(String name,
                                     String namespace,
                                     Instruction instruction,
+                                    LlvmLoweringRecord.Machine llvmLoweringRecord,
                                     LlvmLoweringPass.Flags flags,
                                     List<TableGenInstructionOperand> inOperands,
                                     List<TableGenInstructionOperand> outOperands,
@@ -59,6 +62,7 @@ public class TableGenMachineInstruction extends TableGenInstruction {
     this.bitBlocks = BitBlock.from(instruction.encoding());
     this.fieldEncodings = FieldEncoding.from(instruction.encoding());
     this.instruction = instruction;
+    this.llvmLoweringRecord = llvmLoweringRecord;
   }
 
 
@@ -84,6 +88,10 @@ public class TableGenMachineInstruction extends TableGenInstruction {
 
   public Instruction instruction() {
     return instruction;
+  }
+
+  public LlvmLoweringRecord.Machine llvmLoweringRecord() {
+    return llvmLoweringRecord;
   }
 
   /**
