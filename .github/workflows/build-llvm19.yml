@@ -1,0 +1,30 @@
+name: Build LLVM19 base image
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-image-build.yml
+    strategy:
+      matrix:
+        target:
+          - platform: linux/arm64
+            runner: self-hosted-arm64
+          - platform: linux/amd64
+            runner: self-hosted-x64
+    with:
+      image: ghcr.io/openvadl/llvm19-base
+      context: vadl/test/resources/images/llvm_riscv/llvm19_base_image
+      platform: ${{ matrix.target.platform }}
+      runner: ${{ matrix.target.runner }}
+
+  merge:
+    needs: build
+    uses: ./.github/workflows/reusable-image-merge.yml
+    with:
+      image: ghcr.io/openvadl/llvm19-base
