@@ -104,7 +104,7 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
             auto parsedTarget = op.getTarget();
             if( parsedTarget == searchTarget )
             {
-                if(!ModifyImmediate(j, Opcode, parsedTarget, op))
+                if(!ModifyImmediate(i, Opcode, parsedTarget, op))
                 {
                     return true;
                 }
