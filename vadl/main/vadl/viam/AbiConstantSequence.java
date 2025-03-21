@@ -27,6 +27,9 @@ public class AbiConstantSequence extends Definition implements DefProp.WithBehav
   private final Parameter[] parameters;
   private final Graph behavior;
 
+  /**
+   * Constructor.
+   */
   public AbiConstantSequence(Identifier identifier,
                              Parameter[] parameters,
                              Graph behavior) {

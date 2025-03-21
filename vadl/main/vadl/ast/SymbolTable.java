@@ -881,7 +881,8 @@ class SymbolTable {
           instr.formatNode = format;
         }
         resolveSymbols(instr.behavior);
-      } else if (definition instanceof InstructionSequenceDefinition instructionSequenceDefinition) {
+      } else if (definition instanceof InstructionSequenceDefinition
+          instructionSequenceDefinition) {
         for (InstructionCallStatement statement : instructionSequenceDefinition.statements) {
           resolveSymbols(statement);
         }
