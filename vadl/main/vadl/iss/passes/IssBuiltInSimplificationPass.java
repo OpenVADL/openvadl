@@ -129,6 +129,21 @@ class IssBuiltInSimplifier implements VadlBuiltInEmptyNoStatusDispatcher<BuiltIn
     var offset = safeShift;
     var length = sub(valueLength, safeShift);
 
+    if (call.usageCount() == 1) {
+      var user = call.usages().findFirst().get();
+      if (user instanceof IssConstExtractNode extNode
+          && extNode.preservedWidth() >= valueWidth) {
+        // if the only user is an extract node that has the same
+        // preserve with as the extracted value, we can just
+        // use its sign extend mode and delete it
+        if (extNode.preservedWidth() > valueWidth
+            || extNode.isSigned() == (extend == TcgExtend.SIGN)
+        ) {
+          extNode.replaceByNothingAndDelete();
+        }
+      }
+    }
+
     // Create the extraction node and replace the original call.
     var extract = new IssValExtractNode(extend, valueArg, offset, length, call.type());
     call.replaceAndDelete(extract);
@@ -138,14 +153,5 @@ class IssBuiltInSimplifier implements VadlBuiltInEmptyNoStatusDispatcher<BuiltIn
         && constExtract.preservedWidth() >= valueWidth) {
       constExtract.replaceByNothingAndDelete();
     }
-    extract.usages().filter(IssConstExtractNode.class::isInstance)
-        .map(IssConstExtractNode.class::cast)
-        .toList() // prevent concurrent modification
-        .forEach(user -> {
-          if (user.isSigned() && user.preservedWidth() >= valueWidth
-              && user.toWidth() == targetSize) {
-            user.replaceByNothingAndDelete();
-          }
-        });
   }
 }
