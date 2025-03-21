@@ -295,7 +295,7 @@ public abstract class BaseCommand implements Callable<Integer> {
                                    🔥 The vadl compiler crashed 🔥  \s
           
           This shouldn't have happened, please open an issue with the stacktrace below at:
-          https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/new
+          https://github.com/OpenVADL/open-vadl/issues/new
           """);
 
       printDumps("\nBefore the crash, the following dumps were generated:");
