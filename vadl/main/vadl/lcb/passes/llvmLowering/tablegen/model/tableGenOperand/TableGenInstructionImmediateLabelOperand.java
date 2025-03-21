@@ -23,6 +23,7 @@ import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
@@ -31,7 +32,7 @@ import vadl.viam.Format;
  * Indicates that the operand is an immediate but as a label.
  */
 public class TableGenInstructionImmediateLabelOperand extends TableGenInstructionOperand
-    implements ReferencesFormatField {
+    implements ReferencesFormatField, ReferencesImmediateOperand {
   private final TableGenImmediateRecord immediateOperand;
 
   /**
@@ -56,6 +57,7 @@ public class TableGenInstructionImmediateLabelOperand extends TableGenInstructio
     this.immediateOperand = node.immediateOperand();
   }
 
+  @Override
   public TableGenImmediateRecord immediateOperand() {
     return immediateOperand;
   }
