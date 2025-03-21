@@ -16,6 +16,8 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model;
 
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
+
 /**
  * Indicator interface which indicates that the operand is referencing
  * a {@link TableGenImmediateRecord}.
@@ -25,4 +27,9 @@ public interface ReferencesImmediateOperand {
    * Get the field from the operand.
    */
   TableGenImmediateRecord immediateOperand();
+
+  /**
+   * Get the TableGen parameter.
+   */
+  TableGenParameter parameter();
 }

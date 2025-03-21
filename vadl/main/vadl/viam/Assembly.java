@@ -16,13 +16,9 @@
 
 package vadl.viam;
 
-import java.util.ArrayList;
 import java.util.List;
 import vadl.types.Type;
-import vadl.viam.graph.Node;
-import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
  * The Assembly definition of an instruction in a VADL specification.
@@ -61,6 +57,9 @@ public class Assembly extends Definition {
     visitor.visit(this);
   }
 
+  /**
+   * Return the {@link vadl.viam.Format.FieldAccess} in the {@link #function}.
+   */
   public List<Format.FieldAccess> fieldAccesses() {
     return function.behavior().getNodes(FieldAccessRefNode.class)
         .map(FieldAccessRefNode::fieldAccess)
