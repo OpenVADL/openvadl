@@ -166,7 +166,7 @@
     instruction $name : Utype =                        // upper immediate instructions
       X(rd) := $rhsEx
     encoding $name = {opcode = $opcode}
-    assembly $name = (mnemonic, " ", register(rd), ",", hex(imm))
+    assembly $name = (mnemonic, " ", register(rd), ",", hex(immUp))
     }
 
   model LtypeInstr (name : Id, funct3 : Bin, memEx : CallEx, exTy: Id) : IsaDefs = {
@@ -190,7 +190,7 @@
       if (X(rs1) as $lhsTy) $relOp X(rs2) then
         PC := PC + immS
     encoding $name = {opcode = 0b110'0011, funct3 = $funct3}
-    assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
+    assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(immS))
     }
 
   model JLinkInstr (name : Id, iFormat : Id, reg : Ex, opcode : Encs, asm : Ex) : IsaDefs = {
@@ -200,7 +200,7 @@
         X(rd) := retaddr                               // when rs1 is equal to rd
         }
     encoding $name = {$opcode}
-    assembly $name = (mnemonic, " ", register(rd), ",", decimal(imm), $asm)
+    assembly $name = (mnemonic, " ", register(rd), ",", decimal(immS), $asm)
     }
 
   model ECallInstr (name : Id, imm : Lit) : IsaDefs = {
