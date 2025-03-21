@@ -56,8 +56,10 @@ MCOperand [(${namespace})]InstPrinter::adjustImmediateOp
           [# th:each="instruction : ${instructionWithEncodedImmediate}" ]
           case [(${namespace})]::[(${instruction.identifier})]:
           {
-            auto newOp = [(${instruction.rawEncoderMethod})](value);
-            return MCOperand::createImm(newOp);
+            if(OpIndex == [(${instruction.opIndex})]) {
+              auto newOp = [(${instruction.rawEncoderMethod})](value);
+              return MCOperand::createImm(newOp);
+            }
           }
           [/]
         }
