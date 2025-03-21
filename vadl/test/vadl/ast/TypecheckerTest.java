@@ -763,14 +763,29 @@ public class TypecheckerTest {
   }
 
   @Test
-  public void inValidIfExprBranchesDifferentTypesTest() {
+  public void ifExprBranchesDifferentTypesInConstantTest() {
     var prog = """
+          // In the "context" of an constant the branches can have different types.
           constant x = if 4 = 7 then 3 as Bits<32> else 4 as Bits<16>
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    Assertions.assertEquals(Type.bits(16), finder.getConstantType(ast, "x"));
+  }
+
+  @Test
+  public void invalidIfExprBranchesDifferentTypesInFunctionTest() {
+    // FIXME: In the future bidirectional typechecking should fix that.
+    var prog = """
+          function abc(n: SInt<8>) -> SInt<8> = if n = 7 then 3 else 4
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();
     Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
   }
+
 
   @Test
   public void validMatchExprTest() {
@@ -805,14 +820,32 @@ public class TypecheckerTest {
   }
 
   @Test
-  public void invalidMatchExprBranchesDifferentTypeTest() {
+  public void matchExprBranchesDifferentTypeInConstantTest() {
     var prog = """
+          // In the "context" of an constant the branches can have different types.
           constant x = match 4 as Bits<32> with 
           { 1 => 2 as Bits<16>
           , 2 => 4 as Bits<32>
-          , 3 => 6 as Bits<16>
-          , _ => 42 as Bits<16>
+          , 3 => 6 as Bits<8>
+          , _ => 42 as Bits<64>
           } 
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    Assertions.assertEquals(Type.bits(64), finder.getConstantType(ast, "x"));
+  }
+
+  @Test
+  public void invalidMatchExprBranchesDifferentTypeInFunctionTest() {
+    var prog = """
+          function x(n: SInt<8>) -> Bits<64> = (match n with 
+          { 1 => 2 as Bits<16>
+          , 2 => 4 as Bits<32>
+          , 3 => 6 as Bits<8>
+          , _ => 42 as Bits<64>
+          } ) as Bits<64>
         """;
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     var typechecker = new TypeChecker();

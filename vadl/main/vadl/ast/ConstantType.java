@@ -35,6 +35,10 @@ public class ConstantType extends Type {
     this.value = value;
   }
 
+  public ConstantType(long value) {
+    this.value = BigInteger.valueOf(value);
+  }
+
   BigInteger getValue() {
     return value;
   }
