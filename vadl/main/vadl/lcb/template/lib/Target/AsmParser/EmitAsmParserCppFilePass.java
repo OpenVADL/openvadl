@@ -166,7 +166,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
                     instruction.simpleName(),
                     fieldAccessFunctionsWhichRequireEncoding.contains(fieldAccess),
                     ((TableGenParameterTypeAndName) tableGenOperand.parameter()).name(),
-                    immediateOperand.decoderMethod(),
+                    immediateOperand.rawDecoderMethod(),
                     immediateOperand.predicateMethod(),
                     valueRange.lowest(),
                     valueRange.highest(),

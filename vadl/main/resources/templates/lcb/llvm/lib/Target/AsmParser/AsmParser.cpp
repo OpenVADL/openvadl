@@ -199,7 +199,7 @@ bool [(${namespace})]AsmParser::ModifyImmediate(unsigned OpIndex, unsigned Opcod
     int64_t opImm64 = dyn_cast<MCConstantExpr>(Op.getImm())->getValue();
 
     [# th:each="conversion : ${immediateConversions}" ]
-    if(OpCode == [(${namespace})]::[(${conversion.insnName})] && OpIndex == [(${conversion.opIndex})])
+    if(Opcode == [(${namespace})]::[(${conversion.insnName})] && OpIndex == [(${conversion.opIndex})])
     {
         if (OpName.equals_insensitive("[(${conversion.operandName})]")) {
             // check if immediate is in ([(${conversion.lowestValue})],[(${conversion.highestValue})])
