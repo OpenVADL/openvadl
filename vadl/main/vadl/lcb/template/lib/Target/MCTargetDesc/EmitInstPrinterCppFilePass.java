@@ -32,13 +32,12 @@ import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
-import vadl.viam.Assembly;
+import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
@@ -133,28 +132,34 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
         .filter(
             // To indicate that an instruction's immediate needs an encoding,
             // it needs to reference a field access function.
-            x -> !x.instruction().assembly().fieldAccessPositions().isEmpty())
+            x -> !x.instruction().assembly().fieldAccesses().isEmpty())
         .flatMap(x -> {
-          var fieldAccessPositions = x.instruction().assembly().fieldAccessPositions();
-          Map<Format.FieldAccess, String> encoderMethods = x.getInOperands().stream()
+          var fieldAccesses = x.instruction().assembly().fieldAccesses();
+          // `operandMappings` is a map from field access to (encoderMethod and OpIndex)
+          Map<Format.FieldAccess, Pair<String, Integer>>
+              operandMappings = x.getInOperands().stream()
               .filter(y -> y instanceof ReferencesImmediateOperand)
-              .map(y -> ((ReferencesImmediateOperand) y).immediateOperand())
-              .collect(Collectors.toMap(TableGenImmediateRecord::fieldAccessRef,
-                  TableGenImmediateRecord::rawEncoderMethod));
-          Map<Format.FieldAccess, Integer> operandIndex = fieldAccessPositions
-              .stream()
-              .collect(
-                  Collectors.toMap(y -> y.fieldAccessRefNode().fieldAccess(),
-                      Assembly.FieldAccessFunctionPosition::opIndex));
-
-          return fieldAccessPositions.stream()
-              .map(fieldAccessPosition -> fieldAccessPosition.fieldAccessRefNode().fieldAccess())
-              .map(fieldAccess -> new InstructionWithImmediate(
-                  x.instruction().identifier,
-                  ensureNonNull(encoderMethods.get(fieldAccess), "must not be null"),
-                  fieldAccess,
-                  ensureNonNull(operandIndex.get(fieldAccess), "must not be null")
+              .collect(Collectors.toMap(
+                  y -> ((ReferencesImmediateOperand) y).immediateOperand().fieldAccessRef(),
+                  y -> Pair.of(
+                      ((ReferencesImmediateOperand) y).immediateOperand().rawEncoderMethod(),
+                      x.indexInOperands(y))
               ));
+
+          return fieldAccesses.stream()
+              .map(fieldAccess -> {
+                var pair = ensureNonNull(operandMappings.get(fieldAccess), "must not be null");
+                var encoderMethod = pair.left();
+                // Index in the instruction of the immediate which should be encoded
+                var opIndex = pair.right();
+
+                return new InstructionWithImmediate(
+                    x.instruction().identifier,
+                    encoderMethod,
+                    fieldAccess,
+                    opIndex
+                );
+              });
         })
         .toList();
 
