@@ -442,15 +442,18 @@ class SymbolTable {
         symbols.defineSymbol(instr);
         instr.symbolTable = symbols.createChild();
         collectSymbols(instr.symbolTable, instr.behavior);
-      } else if (definition instanceof PseudoInstructionDefinition pseudo) {
-        symbols.defineSymbol(pseudo);
-        pseudo.symbolTable = symbols.createChild();
-        for (var param : pseudo.params) {
-          pseudo.symbolTable.defineSymbol(param);
+      } else if (definition instanceof InstructionSequenceDefinition
+          instructionSequenceDefinition) {
+        if (instructionSequenceDefinition instanceof PseudoInstructionDefinition pseudo) {
+          symbols.defineSymbol(pseudo);
+        }
+        instructionSequenceDefinition.symbolTable = symbols.createChild();
+        for (var param : instructionSequenceDefinition.params) {
+          instructionSequenceDefinition.symbolTable.defineSymbol(param);
           collectSymbols(symbols, param.typeLiteral);
         }
-        for (InstructionCallStatement statement : pseudo.statements) {
-          collectSymbols(pseudo.symbolTable, statement);
+        for (InstructionCallStatement statement : instructionSequenceDefinition.statements) {
+          collectSymbols(instructionSequenceDefinition.symbolTable, statement);
         }
       } else if (definition instanceof RelocationDefinition relocation) {
         symbols.defineSymbol(relocation);
@@ -878,8 +881,8 @@ class SymbolTable {
           instr.formatNode = format;
         }
         resolveSymbols(instr.behavior);
-      } else if (definition instanceof PseudoInstructionDefinition pseudo) {
-        for (InstructionCallStatement statement : pseudo.statements) {
+      } else if (definition instanceof InstructionSequenceDefinition instructionSequenceDefinition) {
+        for (InstructionCallStatement statement : instructionSequenceDefinition.statements) {
           resolveSymbols(statement);
         }
       } else if (definition instanceof RelocationDefinition relocation) {
@@ -965,10 +968,6 @@ class SymbolTable {
           for (Definition def : abi.definitions) {
             resolveSymbols(def);
           }
-        }
-      } else if (definition instanceof AbiSequenceDefinition abiSequence) {
-        for (InstructionCallStatement statement : abiSequence.statements) {
-          resolveSymbols(statement);
         }
       } else if (definition instanceof MicroProcessorDefinition mip) {
         for (IsId implementedIsa : mip.implementedIsas) {
