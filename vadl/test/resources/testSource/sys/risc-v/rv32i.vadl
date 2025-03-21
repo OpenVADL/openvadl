@@ -74,24 +74,22 @@ application binary interface ABI for RV32I = {
    caller saved = [ a{0..7}, t{0..6} ]
    callee saved = [ ra, gp, tp, fp, s{0..11} ]
 
-  /*
   constant sequence( rd : Bits<5>, val : SInt<32> ) =
   {
-        LUI ( rd, hi( val )     )
-        ADDI( rd, rd, lo( val ) )
+     LUI { rd = rd, imm = hi( val ) }
+     ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
   }
 
   constant sequence( rd : Bits<5>, val : UInt<32> ) =
   {
-        LUI ( rd, hi( val )     )
-        ADDI( rd, rd, lo( val ) )
+        LUI { rd = rd, imm = hi( val ) }
+        ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
   }
 
   constant sequence( rd : Bits<5>, imm : SInt<12> ) =
   {
      ADDI{ rd = rd, rs1 = 0, imm = imm }
   }
-  */
 }
 
 micro processor CPU implements RV32I with ABI = {
