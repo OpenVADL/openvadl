@@ -1392,7 +1392,11 @@ public class TypeChecker
 
   @Override
   public Void visit(AbiSequenceDefinition definition) {
-    // Isn't type checked on purpose because there is nothing to type check.
+    definition.params.forEach(param -> check(param.typeLiteral));
+
+    // Check the statements
+    definition.statements.forEach(this::check);
+
     return null;
   }
 

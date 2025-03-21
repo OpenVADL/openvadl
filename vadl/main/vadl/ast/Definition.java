@@ -1385,12 +1385,32 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
   }
 }
 
-class PseudoInstructionDefinition extends Definition implements IdentifiableNode {
-  IdentifierOrPlaceholder identifier;
-  PseudoInstrKind kind;
+/**
+ * Class which is parent for {@link PseudoInstructionDefinition} and {@link AbiSequenceDefinition}.
+ */
+abstract class InstructionSequenceDefinition extends Definition {
   List<Parameter> params;
   List<InstructionCallStatement> statements;
   SourceLocation loc;
+
+  public InstructionSequenceDefinition(List<Parameter> params,
+                                       List<InstructionCallStatement> statements,
+                                       SourceLocation loc) {
+    this.params = params;
+    this.statements = statements;
+    this.loc = loc;
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+}
+
+class PseudoInstructionDefinition extends InstructionSequenceDefinition
+    implements IdentifiableNode {
+  IdentifierOrPlaceholder identifier;
+  PseudoInstrKind kind;
 
   /**
    * The matching assembly definition.
@@ -1402,11 +1422,9 @@ class PseudoInstructionDefinition extends Definition implements IdentifiableNode
   PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
                               List<Parameter> params, List<InstructionCallStatement> statements,
                               SourceLocation loc) {
+    super(params, statements, loc);
     this.identifier = identifier;
     this.kind = kind;
-    this.params = params;
-    this.statements = statements;
-    this.loc = loc;
   }
 
   @Override
@@ -1414,10 +1432,6 @@ class PseudoInstructionDefinition extends Definition implements IdentifiableNode
     return (Identifier) identifier;
   }
 
-  @Override
-  SourceLocation location() {
-    return loc;
-  }
 
   @Override
   SyntaxType syntaxType() {
@@ -3399,19 +3413,15 @@ class AbiPseudoInstructionDefinition extends Definition {
   }
 }
 
-class AbiSequenceDefinition extends Definition {
-
+class AbiSequenceDefinition extends InstructionSequenceDefinition {
   SeqKind kind;
-  List<Parameter> params;
-  List<InstructionCallStatement> statements;
-  SourceLocation loc;
 
-  AbiSequenceDefinition(SeqKind kind, List<Parameter> params,
-                        List<InstructionCallStatement> statements, SourceLocation loc) {
+  AbiSequenceDefinition(SeqKind kind,
+                        List<Parameter> params,
+                        List<InstructionCallStatement> statements,
+                        SourceLocation loc) {
+    super(params, statements, loc);
     this.kind = kind;
-    this.params = params;
-    this.statements = statements;
-    this.loc = loc;
   }
 
   @Override

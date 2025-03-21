@@ -44,6 +44,7 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
 import vadl.viam.Abi;
+import vadl.viam.AbiConstantSequence;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Assembly;
 import vadl.viam.AssemblyDescription;
@@ -87,6 +88,7 @@ import vadl.viam.asm.rules.AsmGrammarRule;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
 import vadl.viam.asm.rules.AsmTerminalRule;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The lowering that converts the AST to the VIAM.
@@ -102,7 +104,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       formatFieldCache = new IdentityHashMap<>();
   private final IdentityHashMap<Parameter, vadl.viam.Parameter>
       parameterCache = new IdentityHashMap<>();
-
 
   @LazyInit
   private vadl.viam.Specification currentSpecification;
@@ -215,8 +216,30 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(AbiSequenceDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    if (definition.kind == AbiSequenceDefinition.SeqKind.CONSTANT) {
+      var parameters = definition.params.stream()
+          .map(parameter -> {
+            var viamParam = new vadl.viam.Parameter(
+                generateIdentifier(parameter.name.name, parameter.name.location()),
+                getViamType(parameter.typeLiteral.type()));
+            parameterCache.put(parameter, viamParam);
+            return viamParam;
+          })
+          .toArray(vadl.viam.Parameter[]::new);
+
+      var graph = new BehaviorLowering(this).getInstructionSequenceGraph(
+          new Identifier(definition.viamId, definition.loc), definition);
+
+      return Optional.of(
+          new AbiConstantSequence(
+              new vadl.viam.Identifier(definition.viamId, definition.loc),
+              parameters,
+              graph
+              ));
+    }
+
+    throw new RuntimeException("The ViamGenerator does not support the kind `%s` yet".formatted(
+        definition.kind));
   }
 
   @Override
@@ -227,7 +250,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(ApplicationBinaryInterfaceDefinition definition) {
-
     var id = generateIdentifier(definition.viamId, definition.identifier());
     var aliasLookup = aliasLookupTable(definition.definitions);
 
@@ -280,7 +302,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var pseudoLocalAddressLoad = (PseudoInstruction) fetch(pseudoLocalAddressLoadDef).orElseThrow();
 
     // Aliases
-
     Map<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>> aliases =
         aliasLookup.entrySet()
             .stream()
@@ -307,6 +328,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
                 x -> Abi.Alignment.HALF_WORD
             ));
 
+    var constantSequences = definition.definitions
+        .stream().filter(x -> x instanceof AbiSequenceDefinition)
+        .map(x -> (AbiConstantSequence) fetch(x).orElseThrow())
+        .toList();
+
     return Optional.of(new Abi(id,
         returnAddress,
         stackPointer,
@@ -323,7 +349,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         pseudoLocalAddressLoad,
         Abi.Alignment.DOUBLE_WORD,
         Abi.Alignment.DOUBLE_WORD,
-        registerFileAlignment
+        registerFileAlignment,
+        constantSequences
     ));
   }
 
@@ -1159,7 +1186,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         })
         .toArray(vadl.viam.Parameter[]::new);
 
-    var graph = new BehaviorLowering(this).getInstructionPseudoGraph(definition);
+    var graph =
+        new BehaviorLowering(this).getInstructionSequenceGraph(definition.identifier(), definition);
     var assembly = visitAssembly(requireNonNull(definition.assemblyDefinition), definition);
 
     return Optional.of(new PseudoInstruction(
