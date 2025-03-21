@@ -132,8 +132,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return graph;
   }
 
-  Graph getInstructionPseudoGraph(PseudoInstructionDefinition definition) {
-    var graph = new Graph("%s Behavior".formatted(definition.identifier().name));
+  Graph getInstructionSequenceGraph(Identifier identifier,
+                                    InstructionSequenceDefinition definition) {
+    var graph = new Graph("%s Behavior".formatted(identifier.name));
     currentGraph = graph;
 
     var end = graph.addWithInputs(new InstrEndNode(new NodeList<>()));
