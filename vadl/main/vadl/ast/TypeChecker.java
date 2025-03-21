@@ -677,10 +677,10 @@ public class TypeChecker
           .build();
     }
 
-
     int nextVal = 0;
     for (var entry : definition.entries) {
       if (entry.value != null) {
+        check(entry.value);
         nextVal = constantEvaluator.eval(entry.value).value().intValueExact() + 1;
         continue;
       }
