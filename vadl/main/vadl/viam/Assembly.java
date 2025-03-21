@@ -92,8 +92,7 @@ public class Assembly extends Definition {
 
     var operands = nodes
         .stream()
-        .filter(x -> x instanceof BuiltInCall
-            || x instanceof FieldRefNode
+        .filter(x -> x instanceof FieldRefNode
             || x instanceof FieldAccessRefNode)
         .toList();
 
