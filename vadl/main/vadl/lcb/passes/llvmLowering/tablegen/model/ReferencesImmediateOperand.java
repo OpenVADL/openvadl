@@ -14,18 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes;
+package vadl.lcb.passes.llvmLowering.tablegen.model;
 
-import vadl.viam.Annotation;
-import vadl.viam.Assembly;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
 
 /**
-* Annotation to indicate that the immediate in the {@link Assembly} needs to be emitted
-* before printing.
-*/
-public class EncodeAssemblyImmediateAnnotation extends Annotation<Assembly> {
-  @Override
-  public Class<Assembly> parentDefinitionClass() {
-    return Assembly.class;
-  }
+ * Indicator interface which indicates that the operand is referencing
+ * a {@link TableGenImmediateRecord}.
+ */
+public interface ReferencesImmediateOperand {
+  /**
+   * Get the field from the operand.
+   */
+  TableGenImmediateRecord immediateOperand();
+
+  /**
+   * Get the TableGen parameter.
+   */
+  TableGenParameter parameter();
 }

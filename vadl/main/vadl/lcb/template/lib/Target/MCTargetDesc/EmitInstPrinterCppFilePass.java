@@ -16,7 +16,6 @@
 
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
-import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
@@ -27,20 +26,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunctionCode;
-import vadl.error.Diagnostic;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.assembly.AssemblyInstructionPrinterCodeGenerator;
-import vadl.lcb.passes.EncodeAssemblyImmediateAnnotation;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.utils.Pair;
+import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Specification;
 
@@ -78,13 +76,16 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
   }
 
   record InstructionWithImmediate(Identifier identifier,
-                                  String rawEncoderMethod) implements Renderable {
+                                  String rawEncoderMethod,
+                                  Format.FieldAccess fieldAccess,
+                                  int opIndex) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
       return Map.of(
           "identifier", identifier.simpleName(),
-          "rawEncoderMethod", rawEncoderMethod
+          "rawEncoderMethod", rawEncoderMethod,
+          "opIndex", opIndex
       );
     }
   }
@@ -121,56 +122,50 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
 
     var machineInstructionsWithImmediate = machineRecords
         .stream()
-        .filter(
-            x -> x.instruction().assembly().hasAnnotation(EncodeAssemblyImmediateAnnotation.class))
         .filter(x -> x.getInOperands().stream()
-            .anyMatch(y -> y instanceof TableGenInstructionImmediateOperand))
+            .anyMatch(y -> y instanceof ReferencesImmediateOperand))
         /*
         We skip the adjustment of the immediate for LUIs because they are already adjusted in
         constant materialisation. By doing it twice, the value would be wrong.
          */
         .filter(x -> !loadUpperImmediates.contains(x.instruction()))
-        .map(x -> {
-          var immOperand = x.getInOperands().stream()
-              .filter(y -> y instanceof TableGenInstructionImmediateOperand)
-              .map(y -> (TableGenInstructionImmediateOperand) y)
-              .toList();
-
-          ensure(immOperand.size() == 1, () -> Diagnostic.error(
-              "Currently only machine instructions with one immediate are supported",
-              x.instruction()
-                  .sourceLocation()));
-
-          return new InstructionWithImmediate(x.instruction().identifier,
-              immOperand.get(0).immediateOperand().rawEncoderMethod());
-        })
-        .toList();
-
-    var machineInstructionsWithLabel = machineRecords
-        .stream()
-        .filter(x -> x.getInOperands().stream()
-            .anyMatch(y -> y instanceof TableGenInstructionImmediateLabelOperand))
         .filter(
-            x -> x.instruction().assembly().hasAnnotation(EncodeAssemblyImmediateAnnotation.class))
-        .map(x -> {
-          var immOperand = x.getInOperands().stream()
-              .filter(y -> y instanceof TableGenInstructionImmediateLabelOperand)
-              .map(y -> (TableGenInstructionImmediateLabelOperand) y)
-              .toList();
+            // To indicate that an instruction's immediate needs an encoding,
+            // it needs to reference a field access function.
+            x -> !x.instruction().assembly().fieldAccesses().isEmpty())
+        .flatMap(x -> {
+          var fieldAccesses = x.instruction().assembly().fieldAccesses();
+          // `operandMappings` is a map from field access to (encoderMethod and OpIndex)
+          Map<Format.FieldAccess, Pair<String, Integer>>
+              operandMappings = x.getInOperands().stream()
+              .filter(y -> y instanceof ReferencesImmediateOperand)
+              .collect(Collectors.toMap(
+                  y -> ((ReferencesImmediateOperand) y).immediateOperand().fieldAccessRef(),
+                  y -> Pair.of(
+                      ((ReferencesImmediateOperand) y).immediateOperand().rawEncoderMethod(),
+                      x.indexInOperands(y))
+              ));
 
-          ensure(immOperand.size() == 1, () -> Diagnostic.error(
-              "Currently only machine instructions with one immediate are supported",
-              x.instruction()
-                  .sourceLocation()));
+          return fieldAccesses.stream()
+              .map(fieldAccess -> {
+                var pair = ensureNonNull(operandMappings.get(fieldAccess), "must not be null");
+                var encoderMethod = pair.left();
+                // Index in the instruction of the immediate which should be encoded
+                var opIndex = pair.right();
 
-          return new InstructionWithImmediate(x.instruction().identifier,
-              immOperand.get(0).immediateOperand().rawEncoderMethod());
+                return new InstructionWithImmediate(
+                    x.instruction().identifier,
+                    encoderMethod,
+                    fieldAccess,
+                    opIndex
+                );
+              });
         })
         .toList();
+
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "instructions", printableInstructions,
-        "instructionWithEncodedImmediate", Stream.concat(machineInstructionsWithImmediate.stream(),
-            machineInstructionsWithLabel.stream()).toList());
+        "instructionWithEncodedImmediate", machineInstructionsWithImmediate);
   }
 }

@@ -34,7 +34,6 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
-import vadl.lcb.passes.EncodeAssemblyImmediateAnnotation;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
@@ -106,14 +105,6 @@ public class EmitConstMatIntCppFilePass extends LcbTemplateRenderingPass {
                 .stream().findFirst(),
             () -> Diagnostic.error("Expected an instruction of load upper immediate",
                 specification.sourceLocation()));
-    ensure(lui.assembly().hasAnnotation(EncodeAssemblyImmediateAnnotation.class),
-        () -> Diagnostic.error(
-                "Load upper immediate machine instruction has no encoding immediate function.",
-                lui.sourceLocation())
-            .note(
-                "The compiler expects that the load upper immediate has an annotation for "
-                    + "formatting the immediate. This is important for the "
-                    + "constant materialisation."));
     final var luiImmediate = immediate(immediateDetection, lui).get();
     final var immediateLuiSize = immediateSize(immediateDetection, lui);
     final var largestPossibleValueLui = (long) (Math.pow(2, immediateLuiSize) - 1);

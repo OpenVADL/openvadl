@@ -22,7 +22,7 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,12 +31,10 @@ import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.ValueRange;
 import vadl.gcb.passes.ValueRangeCtx;
-import vadl.lcb.passes.EncodeAssemblyImmediateAnnotation;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -102,8 +100,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
         (pseudo, llvmRecord) -> {
           var operands = Arrays.stream(pseudo.parameters()).map(p -> '"' + p.simpleName() + '"');
           result.add(Map.of(
-                "name", pseudo.simpleName(),
-                "operands", String.join(", ", operands.toList()))
+              "name", pseudo.simpleName(),
+              "operands", String.join(", ", operands.toList()))
           );
         }
     );
@@ -111,56 +109,71 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     return result;
   }
 
-  private List<Map<String, Object>> immediateConversions(PassResults passResults) {
-    var output =
-        (LlvmLoweringPass.LlvmLoweringPassResult) passResults.lastResultOf(LlvmLoweringPass.class);
-    var result = new ArrayList<Map<String, Object>>();
+  record ImmediateConversion(
+      String instructionName,
+      boolean needsDecode,
+      String operandName,
+      String decodeMethod,
+      String predicateMethod,
+      int lowestValue,
+      int highestValue,
+      int opIndex
+  ) implements Renderable {
 
-    output.machineInstructionRecords().forEach(
-        (insn, llvmRecord) -> {
-          var templateVars = new HashMap<String, Object>();
-          var immediateOperands = llvmRecord.info().inputs().stream()
-              .filter(i -> i instanceof TableGenInstructionImmediateOperand
-                  || i instanceof TableGenInstructionImmediateLabelOperand
-              ).toList();
-          var emitConversion = immediateOperands.size() == 1;
-
-          templateVars.put("insnName", insn.simpleName());
-          templateVars.put("emitConversion", emitConversion);
-
-          if (emitConversion) {
-            templateVars.put("needsDecode",
-                insn.assembly().hasAnnotation(EncodeAssemblyImmediateAnnotation.class));
-
-            var operand = immediateOperands.get(0);
-            var immediateRecord = immediateRecord(operand);
-
-            templateVars.put("operandName",
-                ((TableGenParameterTypeAndName) operand.parameter()).name());
-
-            templateVars.put("decodeMethod", immediateRecord.rawDecoderMethod());
-            templateVars.put("predicateMethod", immediateRecord.predicateMethod());
-
-            var valueRange = valueRange(insn);
-            templateVars.put("lowestValue", valueRange.lowest());
-            templateVars.put("highestValue", valueRange.highest());
-          }
-
-          result.add(templateVars);
-        }
-    );
-
-    return result;
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "insnName", instructionName,
+          "needsDecode", needsDecode,
+          "operandName", operandName,
+          "decodeMethod", decodeMethod,
+          "predicateMethod", predicateMethod,
+          "lowestValue", lowestValue,
+          "highestValue", highestValue,
+          "opIndex", opIndex
+      );
+    }
   }
 
-  private TableGenImmediateRecord immediateRecord(TableGenInstructionOperand operand) {
-    if (operand instanceof TableGenInstructionImmediateOperand imm) {
-      return imm.immediateOperand();
-    }
-    if (operand instanceof TableGenInstructionImmediateLabelOperand labelImm) {
-      return labelImm.immediateOperand();
-    }
-    throw new IllegalStateException("Unreachable");
+  private List<ImmediateConversion> immediateConversions(PassResults passResults) {
+    var tableGenMachineInstructions =
+        (List<TableGenMachineInstruction>) passResults.lastResultOf(
+            GenerateTableGenMachineInstructionRecordPass.class);
+    return tableGenMachineInstructions
+        .stream()
+        .filter(tableGenMachineInstruction -> {
+          // We only convert immediates. Therefore, we have to check whether the
+          // instruction actually has at least one immediate.
+          return !tableGenMachineInstruction.llvmLoweringRecord().info().inputImmediates()
+              .isEmpty();
+        })
+        .flatMap(tableGenMachineInstruction -> {
+          var instruction = tableGenMachineInstruction.instruction();
+          var valueRange = valueRange(instruction);
+
+          var fieldAccessFunctionsWhichRequireEncoding =
+              new HashSet<>(instruction.assembly().fieldAccesses());
+
+          return tableGenMachineInstruction.llvmLoweringRecord().info().inputs().stream()
+              .filter(i -> i instanceof ReferencesImmediateOperand)
+              .map(tableGenOperand -> {
+                var immediateOperand =
+                    ((ReferencesImmediateOperand) tableGenOperand).immediateOperand();
+                var fieldAccess = immediateOperand.fieldAccessRef();
+                var opIndex = tableGenMachineInstruction.indexInOperands(tableGenOperand);
+
+                return new ImmediateConversion(
+                    instruction.simpleName(),
+                    fieldAccessFunctionsWhichRequireEncoding.contains(fieldAccess),
+                    ((TableGenParameterTypeAndName) tableGenOperand.parameter()).name(),
+                    immediateOperand.rawDecoderMethod(),
+                    immediateOperand.predicateMethod(),
+                    valueRange.lowest(),
+                    valueRange.highest(),
+                    opIndex
+                );
+              });
+        }).toList();
   }
 
   private ValueRange valueRange(Instruction instruction) {
