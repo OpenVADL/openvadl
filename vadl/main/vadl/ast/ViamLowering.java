@@ -62,6 +62,7 @@ import vadl.viam.PseudoInstruction;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Relocation;
+import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
@@ -200,7 +201,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @param locatable the location of the identifier in the ast.
    * @return the new identifier.
    */
-  private vadl.viam.Identifier generateIdentifier(String viamId, WithSourceLocation locatable) {
+  vadl.viam.Identifier generateIdentifier(String viamId, WithSourceLocation locatable) {
     var parts = viamId.split("::");
     return new vadl.viam.Identifier(parts, locatable.sourceLocation());
   }
@@ -247,6 +248,21 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(AliasDefinition definition) {
+
+    if (definition.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE)) {
+      var identifier = generateIdentifier(definition.viamId, definition.loc);
+      var innerResource =
+          (Resource) fetch(Objects.requireNonNull(definition.computedTarget)).orElseThrow();
+
+      return Optional.of(new ArtificialResource(
+          identifier,
+          ArtificialResource.Kind.REG_FILE_ALIAS,
+          innerResource,
+          new BehaviorLowering(this).getRegisterFileAliasReadFunc(definition),
+          new BehaviorLowering(this).getRegisterFileAliasWriteProc(definition)
+      ));
+    }
+
     throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
         definition.getClass().getSimpleName()));
   }
