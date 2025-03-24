@@ -171,15 +171,25 @@ On line 17 a \ac{MiA} named `FiveStage` is defined for the \ac{ISA} `RV64IM` (se
 ## Common Definitions
 \lbl{common_definitions}
 
-### Constants
+### Constants and Literals
+
+\listing{constants_literals, Constants and Literals}
+~~~{.vadl}
+constant size    = 32
+constant double  = size * 2
+constant sizebin = 0b1'0000
+constant bigone  = 0xffff'ffff'ffff'ffff as SInt
+constant bigtwo  : SInt<64> = -1
+~~~
+\endlisting
+
+### Enumerations
 
 ### Typ Definitions (using)
 
-### Formats
-
 ### Functions
 
-### Enumerations
+### Formats
 
 
 ## Macro System
