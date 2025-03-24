@@ -27,6 +27,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -212,30 +213,15 @@ public abstract class BaseCommand implements Callable<Integer> {
     return spec;
   }
 
-  protected void printDumps(String message) {
-    if (ArtifactTracker.getDumpPaths().isEmpty()) {
+  protected void printPaths(String message, List<Path> pathList) {
+    if (pathList.isEmpty()) {
       return;
     }
 
     System.out.println(message);
-    for (var path : ArtifactTracker.getDumpPaths()) {
+    for (var path : pathList) {
       if (EditorUtils.isIntelliJIDE()) {
-        var uri = path.toAbsolutePath().toUri();
-        System.out.printf("\t- %s\n", uri);
-      } else {
-        System.out.printf("\t- %s\n", path);
-      }
-    }
-  }
-
-  protected void printArtifacts(String message) {
-    if (ArtifactTracker.getArtifactPathsPaths().isEmpty()) {
-      return;
-    }
-    System.out.println(message);
-    for (var path : ArtifactTracker.getArtifactPathsPaths()) {
-      if (EditorUtils.isIntelliJIDE()) {
-        var uri = path.toAbsolutePath().toUri();
+        var uri = path.toUri();
         System.out.printf("\t- %s\n", uri);
       } else {
         System.out.printf("\t- %s\n", path);
@@ -287,18 +273,20 @@ public abstract class BaseCommand implements Callable<Integer> {
       returnVal = 1;
     } catch (RuntimeException | IOException | DuplicatedPassKeyException e) {
       System.out.println("""
-                                       ___ ___    _   ___ _  _      \s
-                                      / __| _ \\  /_\\ / __| || |   \s
-                                     | (__|   / / _ \\\\__ \\ __ |  \s  
-                                      \\___|_|_\\/_/ \\_\\___/_||_| \s
-                                                                    \s
-                                   🔥 The vadl compiler crashed 🔥  \s
+                                       ___ ___    _   ___ _  _      
+                                      / __| _ \\  /_\\ / __| || |   
+                                     | (__|   / / _ \\\\__ \\ __ |    
+                                      \\___|_|_\\/_/ \\_\\___/_||_| 
+          
+                                   🔥 The vadl compiler crashed 🔥  
           
           This shouldn't have happened, please open an issue with the stacktrace below at:
           https://github.com/OpenVADL/open-vadl/issues/new
           """);
 
-      printDumps("\nBefore the crash, the following dumps were generated:");
+      printPaths("\nBefore the crash, the following dumps were generated:",
+          ArtifactTracker.getDumpPaths());
+      System.out.println();
 
       // Dirty hack to avoid stdout and stderr getting mixed in IntelliJ (flushing wasn't enough).
       try {
@@ -321,13 +309,16 @@ public abstract class BaseCommand implements Callable<Integer> {
       }
     }
 
-    printArtifacts(returnVal == 0
-        ? "\nThe following artifacts were generated:"
-        : "\nEven though some errors occurred, the following artifacts were generated:");
+    printPaths(returnVal == 0
+            ? "\nThe following artifacts were generated:"
+            : "\nEven though some errors occurred, the following artifacts were generated:",
+        ArtifactTracker.getArtifactPathsPaths());
 
-    printDumps(returnVal == 0
-        ? "\nThe following dumps were generated:"
-        : "\nEven though some errors occurred, the following dumps were generated:");
+    printPaths(returnVal == 0
+            ? "\nThe following dumps were generated:"
+            : "\nEven though some errors occurred, the following dumps were generated:",
+        ArtifactTracker.getDumpPaths()
+    );
 
     return returnVal;
   }
