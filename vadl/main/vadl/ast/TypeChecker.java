@@ -36,6 +36,7 @@ import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
+import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.StringType;
@@ -654,8 +655,59 @@ public class TypeChecker
 
   @Override
   public Void visit(AliasDefinition definition) {
-    // Isn't type checked on purpose because there is nothing to type check.
-    return null;
+    if (definition.kind == AliasDefinition.AliasKind.REGISTER_FILE) {
+      if (!(definition.value instanceof Identifier valIdent)) {
+        throw Diagnostic.error("Invalid alias", definition.value)
+            .locationDescription(definition.value, "The target must be an identifier but was `%s`",
+                definition.value.getClass().getSimpleName())
+            .build();
+      }
+
+      var regFile =
+          requireNonNull(definition.symbolTable).findAs(valIdent, RegisterFileDefinition.class);
+
+      if (regFile == null) {
+        throw Diagnostic.error("Invalid alias", valIdent)
+            .locationDescription(valIdent, "Doesn't point to a register file.")
+            .build();
+      }
+
+      check(regFile);
+      definition.computedTarget = regFile;
+
+
+      if (definition.aliasType == null && definition.targetType == null) {
+        definition.type = regFile.type();
+        return null;
+      } else if (definition.aliasType != null && definition.targetType != null) {
+        definition.type =
+            Type.concreteRelation(check(definition.aliasType), check(definition.targetType));
+        return null;
+      }
+
+      // FIXME: Either make this illegal in the grammar or implement the correct semantic once
+      // that is clarified: https://github.com/OpenVADL/open-vadl/issues/80#issue-2940372881
+      throw new IllegalStateException();
+    }
+
+    if (definition.kind == AliasDefinition.AliasKind.REGISTER) {
+      if (definition.targetType != null) {
+        throw Diagnostic.error("Invalid Register Alias", definition.targetType)
+            .build();
+      }
+      var valType = check(definition.value);
+      if (definition.aliasType == null) {
+        definition.type = valType;
+      } else {
+        definition.type = check(definition.aliasType);
+      }
+      return null;
+    }
+
+    throw new IllegalStateException(
+        "Kind %s not yet implemented, found at: %s".formatted(definition.kind.toString(),
+            definition.loc.toIDEString()));
+
   }
 
   @Override
@@ -708,7 +760,7 @@ public class TypeChecker
 
   @Override
   public Void visit(ExceptionDefinition definition) {
-    throwUnimplemented(definition);
+    check(definition.statement);
     return null;
   }
 
@@ -1636,9 +1688,12 @@ public class TypeChecker
       return;
     }
 
-    if (origin instanceof RegisterDefinition registerDefinition) {
-      check(registerDefinition);
-      expr.type = requireNonNull(registerDefinition.type);
+    if (origin instanceof RegisterDefinition
+        || (origin instanceof AliasDefinition aliasDef && aliasDef.kind.equals(
+        AliasDefinition.AliasKind.REGISTER))) {
+      var originDef = (Definition) origin;
+      check(originDef);
+      expr.type = ((TypedNode) originDef).type();
       return;
     }
 
@@ -1649,7 +1704,11 @@ public class TypeChecker
 
     if (origin != null) {
       // It's not a builtin but we don't handle it yet.
-      throw new RuntimeException("Don't handle class " + origin.getClass().getName());
+      // We might be here from a call expr and it might be necessary to handle the call for another
+      // definition.
+      throw new RuntimeException(
+          "Don't handle class %s found in %s".formatted(origin.getClass().getName(),
+              expr.location().toIDEString()));
     }
 
     // It's also possible to call functions without parenthesis if the function doesn't take any
@@ -2307,7 +2366,9 @@ public class TypeChecker
         .findAs(expr.target.path().pathToString(), Definition.class);
 
     // Handle register File
-    if (callTarget instanceof RegisterFileDefinition registerFile) {
+    if (callTarget instanceof RegisterFileDefinition
+        || (callTarget instanceof AliasDefinition aliasDef
+        && aliasDef.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE))) {
       if (expr.argsIndices.isEmpty() || expr.argsIndices.get(0).values.size() != 1) {
         throw Diagnostic.error("Invalid Register Usage", expr)
             .description("A register call must have exactly one argument.")
@@ -2318,9 +2379,10 @@ public class TypeChecker
       var arg = argList.values.get(0);
       check(arg);
 
-      check(registerFile);
+      check(callTarget);
+      var callTargetType = (ConcreteRelationType) ((TypedNode) callTarget).type();
       var requiredArgType =
-          requireNonNull(requireNonNull(registerFile.type).argTypes().get(0));
+          requireNonNull(requireNonNull(callTargetType).argTypes().get(0));
       argList.values.set(0, wrapImplicitCast(arg, requiredArgType));
       arg = argList.values.get(0);
       var actualArgType = arg.type();
@@ -2329,8 +2391,8 @@ public class TypeChecker
         throw typeMissmatchError(expr, requiredArgType, actualArgType);
       }
 
-      expr.computedTarget = registerFile;
-      var typeBeforeIndex = registerFile.type().resultType();
+      expr.computedTarget = callTarget;
+      var typeBeforeIndex = callTargetType.resultType();
       argList.type = typeBeforeIndex;
       visitSliceIndexCall(expr, typeBeforeIndex,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -2755,7 +2817,8 @@ public class TypeChecker
       return null;
     }
 
-    throw new RuntimeException("Cannot handle tuple unpacking yet");
+    throw new RuntimeException("Cannot handle tuple unpacking yet, found in %s".formatted(
+        statement.location.toIDEString()));
   }
 
   @Override

@@ -556,7 +556,8 @@ PRODUCTIONS
   = ALIAS
     (
       REGISTER                                        (. kind = AliasDefinition.AliasKind.REGISTER; .)
-      [ FILE                                          (. kind = AliasDefinition.AliasKind.REGISTER_FILE; .) ]
+      [ FILE                                          (. kind = AliasDefinition.AliasKind.REGISTER_FILE; .)
+      ]
       identifierOrPlaceholder<out id>
       [
         SYM_COLON

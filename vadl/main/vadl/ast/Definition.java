@@ -2018,7 +2018,7 @@ class FunctionDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 }
 
-class AliasDefinition extends Definition implements IdentifiableNode {
+class AliasDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder id;
   AliasKind kind;
   @Nullable
@@ -2027,6 +2027,16 @@ class AliasDefinition extends Definition implements IdentifiableNode {
   TypeLiteral targetType;
   Expr value;
   SourceLocation loc;
+
+  @Nullable
+  Type type;
+
+
+  /**
+   * Set by the typechecker, the register file or register the alias points to.
+   */
+  @Nullable
+  Definition computedTarget;
 
   AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind,
                   @Nullable TypeLiteral aliasType, @Nullable TypeLiteral targetType, Expr value,
@@ -2043,6 +2053,12 @@ class AliasDefinition extends Definition implements IdentifiableNode {
   public Identifier identifier() {
     return (Identifier) id;
   }
+
+  @Override
+  public Type type() {
+    return Objects.requireNonNull(type);
+  }
+
 
   @Override
   SourceLocation location() {
