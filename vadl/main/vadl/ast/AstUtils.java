@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
+import vadl.types.Type;
 import vadl.types.UIntType;
 
 class AstUtils {
@@ -33,6 +34,11 @@ class AstUtils {
     );
     if (operatorRewrites.containsKey(operator)) {
       operator = operatorRewrites.get(operator);
+    }
+
+    if (expr.operator().equals(Operator.Add) && expr.left.type().equals(Type.string()) &&
+        expr.right.type().equals(Type.string())) {
+      return BuiltInTable.CONCATENATE_STRINGS;
     }
 
     String finalOperator = operator;

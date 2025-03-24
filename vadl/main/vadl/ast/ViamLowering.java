@@ -1385,8 +1385,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       ensure(callExpr.argsIndices.size() == 1 && callExpr.argsIndices.get(0).values.size() == 1,
           () -> Diagnostic.error("Expected an index for the register file", callExpr.location));
 
-      var index = (IntegerLiteral) callExpr.argsIndices.get(0).values.get(0);
-      return Pair.of(registerFile, index.number.intValue());
+      var index = constantEvaluator.eval(callExpr.argsIndices.get(0).values.get(0));
+      return Pair.of(registerFile, index.value().intValueExact());
     } else {
       throw Diagnostic.error("This expression is not register file", expr.sourceLocation())
           .build();

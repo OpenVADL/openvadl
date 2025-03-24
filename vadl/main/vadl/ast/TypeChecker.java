@@ -1785,18 +1785,27 @@ public class TypeChecker
         rightTyp = requireNonNull(expr.right.type);
       }
 
+      // Special concat on strings
+      if (expr.operator().equals(Operator.Add) && leftTyp.equals(Type.string()) &&
+          rightTyp.equals(Type.string())) {
+        expr.type = Type.string();
+        return null;
+      }
+
       if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
         throw Diagnostic.error("Type Missmatch", expr)
             .locationDescription(expr, "Expected a number here but the left side was an `%s`",
                 leftTyp)
-            .description("The `%s` operator only works on numbers.", expr.operator())
+            .description("The `%s` operator only works on pairs of numbers or strings.",
+                expr.operator())
             .build();
       }
       if (!(rightTyp instanceof BitsType) && !(rightTyp instanceof ConstantType)) {
         throw Diagnostic.error("Type Missmatch", expr)
             .locationDescription(expr, "Expected a number here but the right side was an `%s`",
                 rightTyp)
-            .description("The `%s` operator only works on numbers.", expr.operator())
+            .description("The `%s` operator only works on pairs of numbers or string.s",
+                expr.operator())
             .build();
       }
     } else {
