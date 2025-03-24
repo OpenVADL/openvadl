@@ -1,0 +1,5 @@
+constant size    = 32
+constant double  = size * 2
+constant sizebin = 0b1'0000
+constant bigone  = 0xffff'ffff'ffff'ffff as SInt
+constant bigtwo  : SInt<64> = -1
