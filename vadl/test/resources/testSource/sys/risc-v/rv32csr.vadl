@@ -9,7 +9,7 @@ instruction set architecture RV32IM extending RV3264IM = {}
 
 instruction set architecture RV32Zicsr extending RV32IM = {
 
-  enumeration CsrDef : Bits<12> = 
+  enumeration CsrDef : Bits<12> = // defined control and status register indices
     { ustatus  =   0 // 0x000  User mode restricted view of mstatus
     , uie      =   4 // 0x004  User mode Interrupt Enable
     , utvec    =   5 // 0x005  User mode Trap VECtor base address
@@ -30,7 +30,7 @@ instruction set architecture RV32Zicsr extending RV32IM = {
     , mip      = 836 // 0x344  Machine Interrupt Pending
     }
 
-  enumeration CsrImpl : Bits<12> = 
+  enumeration CsrImpl : Bits<12> =  // implemented control and status register indices
     { ustatus        // 0x000  User mode restricted view of mstatus
     , uie            // 0x004  User mode Interrupt Enable
     , utvec          // 0x005  User mode Trap VECtor base address
@@ -52,7 +52,7 @@ instruction set architecture RV32Zicsr extending RV32IM = {
     , ImplLength     // count of implemented registers
     }
 
-  function CsrDefToImpl (csr : Bits<12>) -> Bits<12> = 
+  function CsrDefToImpl (csr : Bits<12>) -> Bits<12> = // map defined to index to implemented index
     match csr with
       { CsrDef::ustatus  => CsrImpl::ustatus        // 0x000  User mode restricted view of mstatus
       , CsrDef::uie      => CsrImpl::uie            // 0x004  User mode Interrupt Enable
@@ -102,8 +102,7 @@ instruction set architecture RV32Zicsr extending RV32IM = {
 
   exception IllegalInstruction = {}
 
-  instruction CSRRW : Itype =
-    // add lock
+  instruction CSRRW : Itype =            // atomic CSR Read / Write
     let csridx = CsrDefToImpl(imm) in
       if csridx = -1 as Bits<12> then
         raise IllegalInstruction
@@ -116,8 +115,7 @@ instruction set architecture RV32Zicsr extending RV32IM = {
   encoding CSRRW = { opcode = 0b111'0011, funct3 = 0b001 }
   assembly CSRRW = (mnemonic, ' ', register(rd), ',', CsrString(imm), ',', register(rs1))
 
-  instruction CSRRS : Itype =
-    // add lock
+  instruction CSRRS : Itype =           // atomic CSR Read and Set bits
     let csridx = CsrDefToImpl(imm) in
       if csridx = -1 as Bits<12> then
         raise IllegalInstruction
