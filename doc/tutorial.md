@@ -171,17 +171,38 @@ On line 17 a \ac{MiA} named `FiveStage` is defined for the \ac{ISA} `RV64IM` (se
 ## Common Definitions
 \lbl{common_definitions}
 
-### Constants and Literals
+### Constants, Literals and Expressions
 
 \listing{constants_literals, Constants and Literals}
 ~~~{.vadl}
-constant size    = 32
-constant double  = size * 2
-constant sizebin = 0b1'0000
-constant bigone  = 0xffff'ffff'ffff'ffff as SInt
-constant bigtwo  : SInt<64> = -1
+constant size    = 32                                 // 32
+constant twice   = size * 2                           // 64
+constant binsize = 0b10'0000                          // 32
+constant min1one = 0xffff'ffff'ffff'ffff as SInt<64>  // -1 as SInt<64>
+constant min1two : SInt<64> = -1                      // -1 as SInt<64>
 ~~~
 \endlisting
+
+Constant definitions start with the keyword `constant` followed by the name of the constant, an optional type after the colon symbol `":"`, the equal symbol `"="` and an expression which has to be evaluated at parse time (see Listing \r{constants_literals}).
+The evaluation of the expression is done with a signed integer type with unlimited size (internaly the parser uses a Java `BigInteger` type for the evaluation).
+Therefore, the constant `twice` as expected has the value `64`.
+
+Literals can also be specified as binary or hexadecimal numbers.
+A single quote symbol can be inserted into numbers to make them more readable.
+The constant `binsize` represents the same value `32` as the constant `size`.
+Equally to the constant `min1two` the constant `min1one` has the value minus one (`-1`) as the very large hexadecimal constant with a positive integer value is casted to a signed integer of the same size resulting in the negative value.
+
+\listing{constants_expressions, Constant Expressions}
+~~~{.vadl}
+constant val32   = 32                                 // 32
+constant addEx1  = val32 + 32                         // 64
+constant addEx2  = VADL::add(val32, 32)               // 64
+constant letEx   = let val32 = 32 in val32 + 32       // 64
+constant ifEx    = if val32 = 32 then 5 else 6        // 5
+constant matchEx = match val32 with {32 => 5, _ => 6} // 5
+~~~
+\endlisting
+
 
 ### Enumerations
 
@@ -222,7 +243,7 @@ The following table lists all core syntax types with a description and examples:
 | Stats   | List of VADL Statements              | `X(rd) := X(rs) ...                     ` |
 | Defs    | List of common VADL Definitions      | `constant b = 8 * 4 ...                 ` |
 | IsaDefs | List of VADL ISA Definition          | `instruction ORI : Itype = { ... } ...  ` |
-| Encs    | Element(s) of an Encoding Definition | `opcode = 0b110’0011, none, ...         ` |
+| Encs    | Element(s) of an Encoding Definition | `opcode = 0b110'0011, none, ...         ` |
 
 Call expressions represent function or method calls, memory accesses or indexed registers accesses with slicing and field accesses.
 The left hand side expression of an assignment statement also is a call expression.

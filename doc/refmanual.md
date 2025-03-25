@@ -137,7 +137,7 @@ but fits better to the specification of bit vectors with highest bit first.
 It is quite natural if every value is written in a single line.
 Listing \r{lst_tensordef} gives some examples for the definition and usage of tensors.
 OpenVADL currently supports slicing only for bit vectors (the innermost dimension).
-In the future it is planned to allow slicing on the higher dimension levels.
+In the future it is planned to allow slicing on the higher dimension levels too.
 
 \listing{lst_tensordef, VADL Tensor Definitions and Usage}
 ~~~{.vadl}
