@@ -1,5 +1,12 @@
-constant size    = 32
-constant double  = size * 2
-constant sizebin = 0b1'0000
-constant bigone  = 0xffff'ffff'ffff'ffff as SInt
-constant bigtwo  : SInt<64> = -1
+constant size    = 32                                 // 32
+constant twice   = size * 2                           // 64
+constant binsize = 0b10'0000                          // 32
+constant min1one = 0xffff'ffff'ffff'ffff as SInt<64>  // -1 as SInt<64>
+constant min1two : SInt<64> = -1                      // -1 as SInt<64>
+
+constant val32   = 32                                 // 32
+constant addEx1  = val32 + 32                         // 64
+//constant addEx2  = VADL::add(val32, 32)             // 64
+constant letEx   = let val32 = 32 in val32 + 32       // 64
+constant ifEx    = if val32 = 32 then 5 else 6        // 5
+constant matchEx = match val32 with {32 => 5, _ => 6} // 5
