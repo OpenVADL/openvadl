@@ -1048,8 +1048,8 @@ instruction set architecture QDSP6 =
     assembly $name = (AsmR(x5), " = ", IdToStr($op), "(#", decimal(immU), IdToStr($shiftop), "(", AsmR(x5), "#", decimal(shiftU), "))")
   }
 
-  $ALUImmShifted ( AddImmAsl ; majop=0b010 ; add ; asl )
-  $ALUImmShifted ( SubImmAsl ; majop=0b011 ; sub ; asl )
+  $ALUImmShifted ( AddImmAsl ; majop=0b010 ; add ; lsl )
+  $ALUImmShifted ( SubImmAsl ; majop=0b011 ; sub ; lsl )
   $ALUImmShifted ( AddImmLsr ; majop=0b110 ; add ; lsr )
   $ALUImmShifted ( SubImmLsr ; majop=0b111 ; sub ; lsr )
 

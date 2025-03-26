@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
@@ -310,38 +311,6 @@ public class TypeChecker
     return null;
   }
 
-  @Nullable
-  private static BuiltInTable.BuiltIn getBuiltIn(String name, List<Type> argTypes) {
-    // FIXME: Namespace should be propper resolved and not that hacky
-    if (name.startsWith("VADL::")) {
-      name = name.substring("VADL::".length());
-    }
-
-    // FIXME: We decided that in the future this behaivor will be removed and only the
-    //  signed/unsigned versions are available.
-    // Discussion: https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/287#issuecomment-23771
-
-    // There are some pseudo functions that will get resolved to either the signed or unsinged one.
-    var pseudoRewrites = Map.of("div", List.of("sdiv", "udiv"), "mod", List.of("smod", "umod"));
-    if (pseudoRewrites.containsKey(name)) {
-      var singed = argTypes.stream().anyMatch(t -> t instanceof SIntType);
-      name = pseudoRewrites.get(name).get(singed ? 0 : 1);
-    }
-
-    String finalBuiltinName = name;
-    var matchingBuiltin = BuiltInTable.builtIns()
-        .filter(b -> b.name().toLowerCase().equals(finalBuiltinName)).toList();
-
-    if (matchingBuiltin.size() > 1) {
-      throw new IllegalStateException("Multiple builtin match '$s': " + finalBuiltinName);
-    }
-
-    if (matchingBuiltin.isEmpty()) {
-      return null;
-    }
-
-    return matchingBuiltin.get(0);
-  }
 
   @Override
   public Void visit(ConstantDefinition definition) {
@@ -365,6 +334,16 @@ public class TypeChecker
         definition.value = new CastExpr(definition.value, definition.typeLiteral);
         check(definition.value);
       }
+    }
+
+    // Evaluate the constant (like all constants must be able to be evaluated)
+    try {
+      constantEvaluator.eval(definition.value);
+    } catch (EvaluationError e) {
+      throw Diagnostic.error("Invalid constant value", definition.value)
+          .locationDescription(e.location, "%s", Objects.requireNonNull(e.getMessage()))
+          .description("All constants must be able to be evaluated")
+          .build();
     }
 
     return null;
@@ -1786,8 +1765,8 @@ public class TypeChecker
       }
 
       // Special concat on strings
-      if (expr.operator().equals(Operator.Add) && leftTyp.equals(Type.string()) &&
-          rightTyp.equals(Type.string())) {
+      if (expr.operator().equals(Operator.Add) && leftTyp.equals(Type.string())
+          && rightTyp.equals(Type.string())) {
         expr.type = Type.string();
         return null;
       }
@@ -2553,7 +2532,7 @@ public class TypeChecker
     List<Expr> args =
         !expr.argsIndices.isEmpty() ? expr.argsIndices.get(0).values : new ArrayList<>();
     var argTypes = args.stream().map(this::check).toList();
-    var builtin = getBuiltIn(expr.target.path().pathToString(), argTypes);
+    var builtin = AstUtils.getBuiltIn(expr.target.path().pathToString(), argTypes);
     if (builtin != null) {
       // FIXME: Find a better solution that is universal enough for binary operations and builtin
       // functions.
@@ -2561,13 +2540,8 @@ public class TypeChecker
       // If the function is also a unary operation, we instead type check it as if it were a unary
       // operation which has some special type rules.
       if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 1) {
-        var operatorSymbol = requireNonNull(builtin.operator());
-        if (operatorSymbol.equals("~") && args.get(0).type instanceof BoolType) {
-          operatorSymbol = "!";
-        }
-        var operator = UnaryOperator.fromSymbol(operatorSymbol);
-        var fakeUnExpr =
-            new UnaryExpr(new UnOp(operator, expr.location), args.get(0));
+
+        var fakeUnExpr = AstUtils.getBuiltinUnOp(expr, builtin);
         check(fakeUnExpr);
 
         // Set type and arguments since they might have been wrapped in type casts
@@ -2578,11 +2552,7 @@ public class TypeChecker
       // If the function is also a binary operation, we instead type check it as if it were a binary
       // operation which has some special type rules.
       if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
-        var operator = requireNonNull(Operator.fromString(builtin.operator()));
-        var fakeBinExpr =
-            new BinaryExpr(expr.argsIndices.get(0).values.get(0),
-                new BinOp(operator, expr.location),
-                expr.argsIndices.get(0).values.get(1));
+        var fakeBinExpr = AstUtils.getBuiltinBinOp(expr, builtin);
         check(fakeBinExpr);
 
         // Set type and arguments since they might have been wraped in type casts
@@ -2590,8 +2560,10 @@ public class TypeChecker
         expr.type = fakeBinExpr.type;
       }
 
+      // FIXME: Better casting for const types.
+      // Should we also constanteval here if all arguments are constant?
       argTypes = requireNonNull(expr.argsIndices.get(0).values.stream().map(v -> v.type)).toList();
-      if (!builtin.takes(argTypes)) {
+      if (expr.type == null && !builtin.takes(argTypes)) {
         // FIXME: Better format that error
         throw Diagnostic.error("Type Mismatch", expr)
             .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
@@ -2610,7 +2582,13 @@ public class TypeChecker
 
 
     // If nothing else, assume slicing and subcall
-    expr.type = check((Identifier) expr.target);
+    if (expr.target instanceof Identifier targetIdentifier) {
+      expr.type = check(targetIdentifier);
+    } else if (expr.target instanceof IdentifierPath targetIdentifierPath) {
+      expr.type = check(targetIdentifierPath);
+    } else {
+      throw new IllegalStateException();
+    }
     expr.computedTarget = callTarget;
     visitSliceIndexCall(expr, expr.type(), expr.argsIndices);
     visitSubCall(expr, expr.type());

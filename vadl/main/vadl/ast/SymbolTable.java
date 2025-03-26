@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
+import vadl.types.BuiltInTable;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
 
@@ -51,9 +52,17 @@ class SymbolTable {
    * passes (the type-checker) needs to know on it's own how to deal with them.
    */
   void loadBuiltins() {
-    for (String builtinFunction : Builtins.BUILTIN_FUNCTIONS) {
-      symbols.put(builtinFunction, new BuiltInSymbol());
-    }
+    // Load all "real" buildins
+    BuiltInTable.builtIns().map(BuiltInTable.BuiltIn::name)
+        .forEach(name -> symbols.put(name, new BuiltInSymbol()));
+
+    // Add pseudo buildins
+    symbols.put("VADL::mod", new BuiltInSymbol());
+    symbols.put("VADL::div", new BuiltInSymbol());
+    symbols.put("start", new BuiltInSymbol());
+    symbols.put("executable", new BuiltInSymbol());
+    symbols.put("halt", new BuiltInSymbol());
+    symbols.put("firmware", new BuiltInSymbol());
   }
 
   /**
