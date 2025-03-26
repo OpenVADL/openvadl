@@ -44,10 +44,10 @@ import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
 import vadl.viam.Abi;
-import vadl.viam.AbiConstantSequence;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Assembly;
 import vadl.viam.AssemblyDescription;
+import vadl.viam.CompilerInstruction;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Encoding;
@@ -88,7 +88,6 @@ import vadl.viam.asm.rules.AsmGrammarRule;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
 import vadl.viam.asm.rules.AsmTerminalRule;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The lowering that converts the AST to the VIAM.
@@ -231,11 +230,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           new Identifier(definition.viamId, definition.loc), definition);
 
       return Optional.of(
-          new AbiConstantSequence(
+          new CompilerInstruction(
               new vadl.viam.Identifier(definition.viamId, definition.loc),
               parameters,
               graph
-              ));
+          ));
     }
 
     throw new RuntimeException("The ViamGenerator does not support the kind `%s` yet".formatted(
@@ -330,7 +329,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     var constantSequences = definition.definitions
         .stream().filter(x -> x instanceof AbiSequenceDefinition)
-        .map(x -> (AbiConstantSequence) fetch(x).orElseThrow())
+        .map(x -> (CompilerInstruction) fetch(x).orElseThrow())
         .toList();
 
     return Optional.of(new Abi(id,
