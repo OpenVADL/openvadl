@@ -35,9 +35,7 @@ import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
 /**
- * This pass extracts the immediates from the TableGen records. This makes it easier for the
- * {@link GenerateConstantMaterialisationPass} to generate the {@link PseudoInstruction} to
- * load immediates into registers.
+ * This pass extracts the immediates from the TableGen records.
  */
 public class GenerateTableGenImmediateRecordPass extends Pass {
 

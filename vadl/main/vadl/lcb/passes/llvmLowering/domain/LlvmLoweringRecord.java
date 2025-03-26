@@ -17,10 +17,12 @@
 package vadl.lcb.passes.llvmLowering.domain;
 
 
+import java.util.Collections;
 import java.util.List;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.viam.CompilerInstruction;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 
@@ -92,5 +94,18 @@ public abstract class LlvmLoweringRecord {
       return instAliases;
     }
 
+  }
+
+  /**
+   * Represents a {@link LlvmLoweringRecord} for {@link CompilerInstruction}.
+   */
+  public static class Compiler extends LlvmLoweringRecord {
+
+    /**
+     * Constructor.
+     */
+    public Compiler(LlvmLoweringPass.BaseInstructionInfo info) {
+      super(info, Collections.emptyList());
+    }
   }
 }

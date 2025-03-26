@@ -94,7 +94,7 @@ public interface DefinitionVisitor {
 
   void visit(AsmNonTerminalRule nonTerminalRule);
 
-  void visit(AbiConstantSequence abiConstantSequence);
+  void visit(CompilerInstruction compilerInstruction);
 
   /**
    * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor
@@ -398,9 +398,9 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(AbiConstantSequence abiConstantSequence) {
-      beforeTraversal(abiConstantSequence);
-      afterTraversal(abiConstantSequence);
+    public void visit(CompilerInstruction compilerInstruction) {
+      beforeTraversal(compilerInstruction);
+      afterTraversal(compilerInstruction);
     }
   }
 
@@ -580,7 +580,7 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(AbiConstantSequence abiConstantSequence) {
+    public void visit(CompilerInstruction compilerInstruction) {
 
     }
   }

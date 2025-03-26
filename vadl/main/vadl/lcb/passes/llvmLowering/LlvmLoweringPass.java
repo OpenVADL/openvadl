@@ -43,6 +43,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParameterNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrategy;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmCompilerInstructionLoweringDefaultStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringAddImmediateStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringConditionalBranchesStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringDefaultStrategyImpl;
@@ -70,6 +71,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.SourceLocation;
 import vadl.viam.Abi;
+import vadl.viam.CompilerInstruction;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -244,15 +246,27 @@ public class LlvmLoweringPass extends Pass {
           flags.isCodeGenOnly, flags.mayLoad, flags.mayStore(), flags.isBarrier,
           flags.isRematerialisable, true);
     }
+
+    /**
+     * Given {@link Flags} overwrite the {@code isCodeGenOnly} to false.
+     */
+    public static Flags withNoCodeGenOnly(Flags flags) {
+      return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
+          flags.isPseudo,
+          false, flags.mayLoad, flags.mayStore(), flags.isBarrier,
+          flags.isRematerialisable, flags.isAsCheapAsAMove);
+    }
   }
 
   /**
    * This is the result of the {@link LlvmLoweringPass}. It contains the
-   * tablegen records for machine instructions and pseudo instructions.
+   * tablegen records for machine instructions, pseudo instructions and compiler instructions.
    */
   public record LlvmLoweringPassResult(
       IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords,
-      IdentityHashMap<PseudoInstruction, LlvmLoweringRecord.Pseudo> pseudoInstructionRecords) {
+      IdentityHashMap<PseudoInstruction, LlvmLoweringRecord.Pseudo> pseudoInstructionRecords,
+      IdentityHashMap<CompilerInstruction, LlvmLoweringRecord.Compiler>
+          compilerInstructionRecords) {
 
   }
 
@@ -297,13 +311,17 @@ public class LlvmLoweringPass extends Pass {
     var pseudoStrategies =
         List.of(new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies),
             new LlvmPseudoInstructionLoweringDefaultStrategyImpl(machineStrategies));
+    var compilerStrategies =
+        List.of(new LlvmCompilerInstructionLoweringDefaultStrategyImpl(machineStrategies));
 
     var machineRecords = machineInstructions(viam, abi, machineStrategies,
         labelingResult);
     var pseudoRecords = pseudoInstructions(machineRecords, viam, fieldUsages, abi,
         pseudoStrategies, labelingResult, labelingResultPseudo);
+    var compilerInstructions =
+        compilerInstructions(abi, compilerStrategies, labelingResult);
 
-    return new LlvmLoweringPassResult(machineRecords, pseudoRecords);
+    return new LlvmLoweringPassResult(machineRecords, pseudoRecords, compilerInstructions);
   }
 
 
@@ -370,13 +388,32 @@ public class LlvmLoweringPass extends Pass {
             var record =
                 strategy.lowerInstruction(abi, instAliases, pseudo, labelledMachineInstructions);
 
-            // Okay, we have to save record.
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(pseudo,
                 llvmLoweringIntermediateResult));
 
             break;
           }
         });
+
+    return tableGenRecords;
+  }
+
+  private IdentityHashMap<CompilerInstruction, LlvmLoweringRecord.Compiler> compilerInstructions(
+      Abi abi,
+      List<LlvmCompilerInstructionLoweringDefaultStrategyImpl> compilerStrategies,
+      IsaMachineInstructionMatchingPass.Result labelledMachineInstructions) {
+    var tableGenRecords = new IdentityHashMap<CompilerInstruction, LlvmLoweringRecord.Compiler>();
+
+    abi.constantSequences().forEach(compilerInstruction -> {
+      for (var strategy : compilerStrategies) {
+        var record = strategy.lowerInstruction(compilerInstruction, labelledMachineInstructions);
+
+        record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(compilerInstruction,
+            llvmLoweringIntermediateResult));
+
+        break;
+      }
+    });
 
     return tableGenRecords;
   }
