@@ -79,7 +79,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
           "header", header,
           "code", code,
           "classImpl", classImpl,
-          "pseudoInstruction", Map.of(
+          "compilerInstruction", Map.of(
               "name", identifier.simpleName()
           )
       );

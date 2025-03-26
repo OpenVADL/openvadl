@@ -103,6 +103,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       formatFieldCache = new IdentityHashMap<>();
   private final IdentityHashMap<Parameter, vadl.viam.Parameter>
       parameterCache = new IdentityHashMap<>();
+  private int constantMatSequence = 0;
 
   @LazyInit
   private vadl.viam.Specification currentSpecification;
@@ -226,12 +227,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
           })
           .toArray(vadl.viam.Parameter[]::new);
 
+      var astIdentifier = new Identifier("constMat" + constantMatSequence, definition.loc);
+      var viamIdentifier = generateIdentifier("constMat" + constantMatSequence, definition.loc);
+      constantMatSequence++;
       var graph = new BehaviorLowering(this).getInstructionSequenceGraph(
-          new Identifier(definition.viamId, definition.loc), definition);
+          astIdentifier, definition);
 
       return Optional.of(
           new CompilerInstruction(
-              new vadl.viam.Identifier(definition.viamId, definition.loc),
+              viamIdentifier,
               parameters,
               graph
           ));

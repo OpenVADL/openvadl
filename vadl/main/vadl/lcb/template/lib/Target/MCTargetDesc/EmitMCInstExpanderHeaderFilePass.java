@@ -111,7 +111,7 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
         Stream.concat(
             pseudoInstructions.stream().map(e -> e.header).toList().stream(),
             constantSequences.stream().map(e -> e.header).toList().stream()
-        )
+        ).toList()
     );
   }
 }
