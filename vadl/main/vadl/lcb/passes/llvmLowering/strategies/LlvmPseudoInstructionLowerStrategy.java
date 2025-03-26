@@ -29,9 +29,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.Abi;
-import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * Defines a {@link PseudoInstruction} will be lowered to {@link TableGenInstruction}.
@@ -39,17 +37,10 @@ import vadl.viam.graph.control.InstrCallNode;
 public abstract class LlvmPseudoInstructionLowerStrategy
     extends LlvmCompilerInstructionLowerStrategy {
   /**
-   * We use the strategies from {@link LlvmLoweringPass} for the individual
-   * {@link Instruction} from {@link InstrCallNode} in {@link PseudoInstruction}.
-   */
-  protected final List<LlvmInstructionLoweringStrategy> strategies;
-
-  /**
    * Constructor.
    */
   protected LlvmPseudoInstructionLowerStrategy(List<LlvmInstructionLoweringStrategy> strategies) {
     super(strategies);
-    this.strategies = strategies;
   }
 
   /**

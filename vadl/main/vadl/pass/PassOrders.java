@@ -206,7 +206,8 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
 
     order.add(new PseudoExpansionFunctionGeneratorPass(configuration));
-    order.add(new AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass(configuration));
+    order.add(new AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass(
+        configuration));
 
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new IsaRelocationMatchingPass(configuration));

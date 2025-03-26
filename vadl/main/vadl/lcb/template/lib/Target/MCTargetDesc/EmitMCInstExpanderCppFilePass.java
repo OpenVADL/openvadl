@@ -158,7 +158,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    Map<CompilerInstruction, GcbExpandPseudoInstructionCppFunction>
+    IdentityHashMap<CompilerInstruction, GcbExpandPseudoInstructionCppFunction>
         cppFunctionsForPseudoInstructions =
         (IdentityHashMap<CompilerInstruction, GcbExpandPseudoInstructionCppFunction>)
             passResults.lastResultOf(

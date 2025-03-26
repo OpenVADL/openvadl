@@ -4087,6 +4087,87 @@ let Defs = [  ];
 
 
 
+def constMat0 : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 1;
+let mayLoad       = 0;
+let mayStore      = 0;
+let isBarrier     = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
+def constMat1 : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 1;
+let mayLoad       = 0;
+let mayStore      = 0;
+let isBarrier     = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
+def constMat2 : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins  );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 1;
+let mayLoad       = 0;
+let mayStore      = 0;
+let isBarrier     = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
+
+
+
 
 
 
