@@ -23,12 +23,16 @@ import java.util.Comparator;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
+import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenCompilerInstruction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Generate {@link TableGenCompilerInstruction} from {@link LlvmLoweringRecord.Compiler}.
+ */
 public class GenerateTableGenConstantMatInstructionRecordPass extends Pass {
   public GenerateTableGenConstantMatInstructionRecordPass(GeneralConfiguration configuration) {
     super(configuration);

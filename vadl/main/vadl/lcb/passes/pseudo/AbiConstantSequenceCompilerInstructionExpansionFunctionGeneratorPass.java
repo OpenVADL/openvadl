@@ -31,6 +31,9 @@ import vadl.viam.CompilerInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 
+/**
+ * Pass to create {@link GcbExpandPseudoInstructionCppFunction}.
+ */
 public class AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass extends Pass {
 
   public AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass(

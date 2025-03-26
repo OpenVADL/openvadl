@@ -30,10 +30,8 @@ import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.utils.Pair;
-import vadl.viam.Abi;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterFile;
@@ -46,6 +44,9 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
+/**
+ * Abstract class to lower {@link CompilerInstruction} to {@link LlvmLoweringRecord.Compiler}.
+ */
 public abstract class LlvmCompilerInstructionLowerStrategy {
   protected final List<LlvmInstructionLoweringStrategy> strategies;
 
@@ -54,6 +55,9 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
     this.strategies = strategies;
   }
 
+  /**
+   * Lower an instruction.
+   */
   public Optional<LlvmLoweringRecord.Compiler> lowerInstruction(
       CompilerInstruction compilerInstruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions
@@ -81,14 +85,7 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
     for (var callNode : compilerInstruction.behavior().getNodes(InstrCallNode.class).toList()) {
       var instructionBehavior = callNode.target().behavior().copy();
 
-      /*
-      Example:
-      pseudo instruction RET =
-      {
-          JALR{ rs1 = 1 as Bits5, rd = 0 as Bits5, imm = 0 as Bits12 }
-      }
-      */
-      replaceNodesInBehavior(compilerInstruction, instructionBehavior, callNode);
+      replaceNodesInBehavior(instructionBehavior, callNode);
 
       var label = supportedInstructions.reverse().get(callNode.target());
 
@@ -169,8 +166,10 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
     return argument;
   }
 
-  public void replaceNodesInBehavior(CompilerInstruction compilerInstruction,
-                                     Graph copiedInstructionBehavior,
+  /**
+   * Replace the arguments in the behavior of {@code copiedInstructionBehavior}.
+   */
+  public void replaceNodesInBehavior(Graph copiedInstructionBehavior,
                                      InstrCallNode callNode) {
     Streams.zip(callNode.getParamFields().stream(), callNode.arguments().stream(),
             Pair::new)
@@ -178,12 +177,6 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
           var formatField = app.left();
           var argument = indexArgument(callNode.arguments(), app.right());
 
-            /*
-              pseudo instruction MOV( rd : Index, rs1 : Index ) =
-              {
-                  ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits12 }
-              }
-             */
           Stream.concat(
                   copiedInstructionBehavior.getNodes(FieldRefNode.class),
                   copiedInstructionBehavior.getNodes(FieldAccessRefNode.class)
