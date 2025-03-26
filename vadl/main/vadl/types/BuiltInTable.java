@@ -54,7 +54,7 @@ public class BuiltInTable {
    * {@code function neg( a : Bits<N> ) -> Bits<N> // <=> -a }
    */
   public static final BuiltIn NEG =
-      func("NEG", "-", Type.relation(BitsType.class, BitsType.class))
+      func("VADL::neg", "-", Type.relation(BitsType.class, BitsType.class))
           .computeUnary(Constant.Value::negate)
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
@@ -65,7 +65,7 @@ public class BuiltInTable {
    * {@code function add ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a + b }
    */
   public static final BuiltIn ADD =
-      func("ADD", "+", Type.relation(BitsType.class, BitsType.class, BitsType.class))
+      func("VADL::add", "+", Type.relation(BitsType.class, BitsType.class, BitsType.class))
           .compute(
               (Constant.Value a, Constant.Value b) -> a.add(b, false).get(0, Constant.Value.class))
           .takesAllWithSameBitWidths()
@@ -77,7 +77,7 @@ public class BuiltInTable {
    * {@code function adds( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ADDS =
-      func("ADDS", null, Type.relation(BitsType.class, BitsType.class, TupleType.class))
+      func("VADL::adds", null, Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .compute((Constant.Value a, Constant.Value b) -> a.add(b, false))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(BitsType.class)
@@ -88,7 +88,7 @@ public class BuiltInTable {
    * {@code function addc( a : Bits<N>, b : Bits<N>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ADDC =
-      func("ADDC",
+      func("VADL::addc",
           Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class))
           .compute(
               (Constant.Value a, Constant.Value b, Constant.Value carry) -> a.add(b, carry.bool()))
@@ -101,7 +101,7 @@ public class BuiltInTable {
    * {@code function ssatadd ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a +| b }
    */
   public static final BuiltIn SSATADD =
-      func("SSATADD", "+|", Type.relation(SIntType.class, SIntType.class, SIntType.class))
+      func("VADL::ssatadd", "+|", Type.relation(SIntType.class, SIntType.class, SIntType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(SIntType.class)
           .build();
@@ -111,7 +111,7 @@ public class BuiltInTable {
    * {@code function usatadd ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a +| b }
    */
   public static final BuiltIn USATADD =
-      func("USATADD", "+|", Type.relation(UIntType.class, UIntType.class, UIntType.class))
+      func("VADL::usatadd", "+|", Type.relation(UIntType.class, UIntType.class, UIntType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(UIntType.class)
           .build();
@@ -121,7 +121,7 @@ public class BuiltInTable {
    * {@code function ssatadds( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SSATADDS =
-      func("SSATADDS", Type.relation(SIntType.class, SIntType.class, TupleType.class))
+      func("VADL::ssatadds", Type.relation(SIntType.class, SIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
@@ -131,7 +131,7 @@ public class BuiltInTable {
    * {@code function usatadds( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn USATADDS =
-      func("USATADDS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
+      func("VADL::usatadds", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
@@ -141,7 +141,7 @@ public class BuiltInTable {
    * {@code function ssataddc( a : SInt<N>, b : SInt<N>, c : Bool ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SSATADDC =
-      func("SSATADDC",
+      func("VADL::ssataddc",
           Type.relation(List.of(SIntType.class, SIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
@@ -153,7 +153,7 @@ public class BuiltInTable {
    * {@code function usataddc( a : UInt<N>, b : UInt<N>, c : Bool ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn USATADDC =
-      func("USATADDC",
+      func("VADL::usataddc",
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
@@ -167,7 +167,7 @@ public class BuiltInTable {
    * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUB =
-      func("SUB", "-", Type.relation(BitsType.class, BitsType.class, BitsType.class))
+      func("VADL::sub", "-", Type.relation(BitsType.class, BitsType.class, BitsType.class))
           .compute(
               (Constant.Value a, Constant.Value b) -> a.subtract(b, Constant.Value.SubMode.X86_LIKE,
                   false).firstValue())
@@ -184,7 +184,7 @@ public class BuiltInTable {
    * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUBSC =
-      func("SUBSC", null, Type.relation(BitsType.class, BitsType.class, TupleType.class))
+      func("VADL::subsc", null, Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .compute((Constant.Value a, Constant.Value b) -> a.subtract(b,
               Constant.Value.SubMode.ARM_LIKE, true))
           .takesAllWithSameBitWidths()
@@ -200,7 +200,7 @@ public class BuiltInTable {
    * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUBSB =
-      func("SUBSB", null, Type.relation(BitsType.class, BitsType.class, TupleType.class))
+      func("VADL::subsb", null, Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .compute(
               (Constant.Value a, Constant.Value b) -> a.subtract(b, Constant.Value.SubMode.X86_LIKE,
                   false))
@@ -215,7 +215,7 @@ public class BuiltInTable {
    * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUBC =
-      func("SUBC",
+      func("VADL::subc",
           Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class))
           .compute((Constant.Value a, Constant.Value b, Constant.Value carry) ->
               a.subtract(b, Constant.Value.SubMode.ARM_LIKE, carry.bool())
@@ -231,7 +231,7 @@ public class BuiltInTable {
    * @see Constant.Value#subtract(Constant.Value, Constant.Value.SubMode, boolean)
    */
   public static final BuiltIn SUBB =
-      func("SUBB",
+      func("VADL::subb",
           Type.relation(List.of(BitsType.class, BitsType.class, BoolType.class), TupleType.class))
           .compute((Constant.Value a, Constant.Value b, Constant.Value carry) ->
               a.subtract(b, Constant.Value.SubMode.X86_LIKE, carry.bool())
@@ -245,7 +245,7 @@ public class BuiltInTable {
    * {@code function ssatsub ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a -| b }
    */
   public static final BuiltIn SSATSUB =
-      func("SSATSUB", "-|", Type.relation(SIntType.class, SIntType.class, SIntType.class))
+      func("VADL::ssatsub", "-|", Type.relation(SIntType.class, SIntType.class, SIntType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(SIntType.class)
           .build();
@@ -255,7 +255,7 @@ public class BuiltInTable {
    * {@code function usatsub ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a -| b }
    */
   public static final BuiltIn USATSUB =
-      func("USATSUB", "-|", Type.relation(UIntType.class, UIntType.class, UIntType.class))
+      func("VADL::usatsub", "-|", Type.relation(UIntType.class, UIntType.class, UIntType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(UIntType.class)
           .build();
@@ -265,7 +265,7 @@ public class BuiltInTable {
    * {@code function ssatsubs( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SSATSUBS =
-      func("SSATSUBS", Type.relation(SIntType.class, SIntType.class, TupleType.class))
+      func("VADL::ssatsubs", Type.relation(SIntType.class, SIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
@@ -275,7 +275,7 @@ public class BuiltInTable {
    * {@code function usatsubs( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn USATSUBS =
-      func("USATSUBS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
+      func("VADL::usatsubs", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
@@ -285,7 +285,7 @@ public class BuiltInTable {
    * {@code function ssatsubc( a : SInt<N>, b : SInt<N>, c : Bool ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SSATSUBC =
-      func("SSATSUBC",
+      func("VADL::ssatsubc",
           Type.relation(List.of(SIntType.class, SIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
@@ -297,7 +297,7 @@ public class BuiltInTable {
    * {@code function usatsubc( a : UInt<N>, b : UInt<N>, c : Bool ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn USATSUBC =
-      func("USATSUBC",
+      func("VADL::usatsubc",
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
@@ -309,7 +309,7 @@ public class BuiltInTable {
    * {@code function ssatsubb( a : SInt<N>, b : SInt<N>, c : Bool ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SSATSUBB =
-      func("SSATSUBB",
+      func("VADL::ssatsubb",
           Type.relation(List.of(SIntType.class, SIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
@@ -321,7 +321,7 @@ public class BuiltInTable {
    * {@code function usatsubb( a : UInt<N>, b : UInt<N>, c : Bool ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn USATSUBB =
-      func("USATSUBB",
+      func("VADL::usatsubb",
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesFirstTwoWithSameBitWidths()
@@ -333,7 +333,7 @@ public class BuiltInTable {
    * {@code function mul ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a * b }
    */
   public static final BuiltIn MUL =
-      func("MUL", "*", Type.relation(BitsType.class, BitsType.class, BitsType.class))
+      func("VADL::mul", "*", Type.relation(BitsType.class, BitsType.class, BitsType.class))
           .compute((Constant.Value a, Constant.Value b) -> a.multiply(b, false, false))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(BitsType.class)
@@ -344,7 +344,7 @@ public class BuiltInTable {
    * {@code function muls( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn MULS =
-      func("MULS", null, Type.relation(BitsType.class, BitsType.class, TupleType.class))
+      func("VADL::muls", null, Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
@@ -354,7 +354,8 @@ public class BuiltInTable {
    * {@code function smull   ( a : SInt<N>, b : SInt<N> ) -> SInt<2*N> // <=> a *# b }
    */
   public static final BuiltIn SMULL =
-      func("SMULL", "*#", Type.relation(SIntType.class, SIntType.class, SIntType.class)).compute(
+      func("VADL::smull", "*#",
+          Type.relation(SIntType.class, SIntType.class, SIntType.class)).compute(
               (Constant.Value a, Constant.Value b) -> a.multiply(b, true, true))
           .takesAllWithSameBitWidths()
           .returnsFromFirstAsDataType((a) -> Type.signedInt(2 * a.bitWidth()))
@@ -365,7 +366,8 @@ public class BuiltInTable {
    * {@code function umull   ( a : UInt<N>, b : UInt<N> ) -> UInt<2*N> // <=> a *# b }
    */
   public static final BuiltIn UMULL =
-      func("UMULL", "*#", Type.relation(UIntType.class, UIntType.class, UIntType.class)).compute(
+      func("VADL::umull", "*#",
+          Type.relation(UIntType.class, UIntType.class, UIntType.class)).compute(
               (Constant.Value a, Constant.Value b) -> a.multiply(b, true, false))
           .takesAllWithSameBitWidths()
           .returnsFromFirstAsDataType((a) -> Type.unsignedInt(2 * a.bitWidth()))
@@ -376,7 +378,7 @@ public class BuiltInTable {
    * {@code function sumull  ( a : SInt<N>, b : UInt<N> ) -> SInt<2*N> // <=> a *# b }
    */
   public static final BuiltIn SUMULL =
-      func("SUMULL", "*#", Type.relation(SIntType.class, UIntType.class, SIntType.class))
+      func("VADL::sumull", "*#", Type.relation(SIntType.class, UIntType.class, SIntType.class))
           .takesAllWithSameBitWidths()
           .returnsFromFirstAsDataType((a) -> Type.signedInt(2 * a.bitWidth()))
           .build();
@@ -386,7 +388,7 @@ public class BuiltInTable {
    * {@code function smulls  ( a : SInt<N>, b : SInt<N> ) -> ( SInt<2*N>, Status ) }
    */
   public static final BuiltIn SMULLS =
-      func("SMULLS", Type.relation(SIntType.class, SIntType.class, TupleType.class))
+      func("VADL::smulls", Type.relation(SIntType.class, SIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFromFirstAsDataType((a) -> Type.tuple(
               Type.signedInt(2 * a.bitWidth()),
@@ -399,7 +401,7 @@ public class BuiltInTable {
    * {@code function umulls  ( a : UInt<N>, b : UInt<N> ) -> ( UInt<2*N>, Status ) }
    */
   public static final BuiltIn UMULLS =
-      func("UMULLS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
+      func("VADL::umulls", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFromFirstAsDataType((a) -> Type.tuple(
               Type.unsignedInt(2 * a.bitWidth()),
@@ -412,7 +414,7 @@ public class BuiltInTable {
    * {@code function sumulls ( a : SInt<N>, b : UInt<N> ) -> ( SInt<2*N>, Status ) }
    */
   public static final BuiltIn SUMULLS =
-      func("SUMULLS", Type.relation(SIntType.class, UIntType.class, TupleType.class))
+      func("VADL::sumulls", Type.relation(SIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFromFirstAsDataType((a) -> Type.tuple(
               Type.signedInt(2 * a.bitWidth()),
@@ -425,7 +427,7 @@ public class BuiltInTable {
    * {@code function smod ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a % b }
    */
   public static final BuiltIn SMOD =
-      func("SMOD", "%", Type.relation(SIntType.class, SIntType.class, SIntType.class))
+      func("VADL::smod", "%", Type.relation(SIntType.class, SIntType.class, SIntType.class))
           .takesAllWithSameBitWidths()
           .compute((Constant.Value a, Constant.Value b) -> a.modulo(b, true))
           .returnsFirstBitWidth(SIntType.class)
@@ -436,7 +438,7 @@ public class BuiltInTable {
    * {@code function umod ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a % b }
    */
   public static final BuiltIn UMOD =
-      func("UMOD", "%", Type.relation(UIntType.class, UIntType.class, UIntType.class))
+      func("VADL::umod", "%", Type.relation(UIntType.class, UIntType.class, UIntType.class))
           .takesAllWithSameBitWidths()
           .compute((Constant.Value a, Constant.Value b) -> a.modulo(b, false))
           .returnsFirstBitWidth(UIntType.class)
@@ -447,7 +449,7 @@ public class BuiltInTable {
    * {@code function smods( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SMODS =
-      func("SMODS", Type.relation(SIntType.class, SIntType.class, TupleType.class))
+      func("VADL::smods", Type.relation(SIntType.class, SIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(SIntType.class)
           .build();
@@ -457,7 +459,7 @@ public class BuiltInTable {
    * {@code function umods( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn UMODS =
-      func("UMODS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
+      func("VADL::umods", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
@@ -467,7 +469,7 @@ public class BuiltInTable {
    * {@code function sdiv ( a : SInt<N>, b : SInt<N> ) -> SInt<N> // <=> a / b }
    */
   public static final BuiltIn SDIV =
-      func("SDIV", "/", Type.relation(SIntType.class, SIntType.class, SIntType.class))
+      func("VADL::sdiv", "/", Type.relation(SIntType.class, SIntType.class, SIntType.class))
           .compute((Constant.Value a, Constant.Value b) -> a.divide(b, true))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(SIntType.class)
@@ -478,7 +480,7 @@ public class BuiltInTable {
    * {@code function udiv ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a / b }
    */
   public static final BuiltIn UDIV =
-      func("UDIV", "/", Type.relation(UIntType.class, UIntType.class, UIntType.class))
+      func("VADL::udiv", "/", Type.relation(UIntType.class, UIntType.class, UIntType.class))
           .compute((Constant.Value a, Constant.Value b) -> a.divide(b, false))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(UIntType.class)
@@ -489,7 +491,7 @@ public class BuiltInTable {
    * {@code function sdivs( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn SDIVS =
-      func("SDIVS", Type.relation(SIntType.class, SIntType.class, TupleType.class))
+      func("VADL::sdivs", Type.relation(SIntType.class, SIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
@@ -499,7 +501,7 @@ public class BuiltInTable {
    * {@code function udivs( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn UDIVS =
-      func("UDIVS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
+      func("VADL::udivs", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
@@ -511,7 +513,7 @@ public class BuiltInTable {
    * {@code function not ( a : Bits<N> ) -> Bits<N> // <=> ~a }
    */
   public static final BuiltIn NOT =
-      func("NOT", "~", Type.relation(BitsType.class, BitsType.class))
+      func("VADL::not", "~", Type.relation(BitsType.class, BitsType.class))
           .compute((List<Constant.Value> args) -> args.get(0).not())
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
@@ -522,7 +524,7 @@ public class BuiltInTable {
    * {@code function and ( a : Bits<N>, b : Bits<N> ) -> Bits<N> // <=> a & b }
    */
   public static final BuiltIn AND =
-      func("AND", "&", Type.relation(BitsType.class, BitsType.class, BitsType.class))
+      func("VADL::and", "&", Type.relation(BitsType.class, BitsType.class, BitsType.class))
           .compute(Constant.Value::and)
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidth(BitsType.class)
@@ -533,7 +535,7 @@ public class BuiltInTable {
    * {@code function ands( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ANDS =
-      func("ANDS", Type.relation(BitsType.class, BitsType.class, TupleType.class))
+      func("VADL::ands", Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
@@ -543,7 +545,7 @@ public class BuiltInTable {
    * {@code function xor ( a : Bits<N>, b : Bits<N> ) -> [ SInt<N> | UInt<N> ] // <=> a ^ b }
    */
   public static final BuiltIn XOR =
-      func("XOR", "^", Type.relation(BitsType.class, BitsType.class, SIntType.class))
+      func("VADL::xor", "^", Type.relation(BitsType.class, BitsType.class, SIntType.class))
           .takesAllWithSameBitWidths()
           .compute(Constant.Value::xor)
           // as it is not known but effectively irrelevant, we use bits
@@ -555,7 +557,7 @@ public class BuiltInTable {
    * {@code function xors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn XORS =
-      func("XORS", Type.relation(BitsType.class, BitsType.class, TupleType.class))
+      func("VADL::xors", Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
@@ -565,7 +567,7 @@ public class BuiltInTable {
    * {@code function or ( a : Bits<N>, b : Bits<N> ) -> [ SInt<N> | UInt<N> ] // <=> a | b }
    */
   public static final BuiltIn OR =
-      func("OR", "|", Type.relation(BitsType.class, BitsType.class, SIntType.class))
+      func("VADL::or", "|", Type.relation(BitsType.class, BitsType.class, SIntType.class))
           .takesAllWithSameBitWidths()
           .compute(Constant.Value::or)
           // as it is not known and effectively relevant, we return bits
@@ -577,7 +579,7 @@ public class BuiltInTable {
    * {@code function ors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ORS =
-      func("ORS", Type.relation(BitsType.class, BitsType.class, TupleType.class))
+      func("VADL::ors", Type.relation(BitsType.class, BitsType.class, TupleType.class))
           .takesAllWithSameBitWidths()
           .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
@@ -589,7 +591,7 @@ public class BuiltInTable {
    * {@code function equ ( a : Bits<N>, b : Bits<N> ) -> Bool // <=> a = b }
    */
   public static final BuiltIn EQU =
-      func("EQU", "=", Type.relation(BitsType.class, BitsType.class, BoolType.class))
+      func("VADL::equ", "=", Type.relation(BitsType.class, BitsType.class, BoolType.class))
           .takesAllWithSameBitWidths()
           .compute((a, b) -> Constant.Value.fromBoolean(a.equals(b)))
           .returns(Type.bool())
@@ -600,7 +602,7 @@ public class BuiltInTable {
    * {@code function neq ( a : Bits<N>, b : Bits<N> ) -> Bool // <=> a != b }
    */
   public static final BuiltIn NEQ =
-      func("NEQ", "!=", Type.relation(BitsType.class, BitsType.class, BoolType.class))
+      func("VADL::neq", "!=", Type.relation(BitsType.class, BitsType.class, BoolType.class))
           .takesAllWithSameBitWidths()
           .compute((a, b) -> Constant.Value.fromBoolean(!a.equals(b)))
           .returns(Type.bool())
@@ -611,7 +613,7 @@ public class BuiltInTable {
    * {@code function slth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a < b }
    */
   public static final BuiltIn SLTH =
-      func("SLTH", "<", Type.relation(SIntType.class, SIntType.class, BoolType.class))
+      func("VADL::slth", "<", Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
           .compute((Constant.Value a, Constant.Value b) -> a.lth(b, true))
           .returns(Type.bool())
@@ -622,7 +624,7 @@ public class BuiltInTable {
    * {@code function ulth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a < b }
    */
   public static final BuiltIn ULTH =
-      func("ULTH", "<", Type.relation(UIntType.class, UIntType.class, BoolType.class))
+      func("VADL::ulth", "<", Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
           .compute((Constant.Value a, Constant.Value b) -> a.lth(b, false))
           .returns(Type.bool())
@@ -633,7 +635,7 @@ public class BuiltInTable {
    * {@code function sleq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a <= b }
    */
   public static final BuiltIn SLEQ =
-      func("SLEQ", "<=",
+      func("VADL::sleq", "<=",
           Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
           .compute((Constant.Value a, Constant.Value b) -> a.leq(b, true))
@@ -645,7 +647,7 @@ public class BuiltInTable {
    * {@code function uleq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a <= b }
    */
   public static final BuiltIn ULEQ =
-      func("ULEQ", "<=",
+      func("VADL::uleq", "<=",
           Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
           .compute((Constant.Value a, Constant.Value b) -> a.leq(b, false))
@@ -657,7 +659,7 @@ public class BuiltInTable {
    * {@code function sgth ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a > b }
    */
   public static final BuiltIn SGTH =
-      func("SGTH", ">",
+      func("VADL::sgth", ">",
           Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
           .compute((Constant.Value a, Constant.Value b) -> a.gth(b, true))
@@ -669,7 +671,7 @@ public class BuiltInTable {
    * {@code function ugth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a > b }
    */
   public static final BuiltIn UGTH =
-      func("UGTH", ">",
+      func("VADL::ugth", ">",
           Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
           .compute((Constant.Value a, Constant.Value b) -> a.gth(b, false))
@@ -681,7 +683,7 @@ public class BuiltInTable {
    * {@code function sgeq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a >= b }
    */
   public static final BuiltIn SGEQ =
-      func("SGEQ", ">=",
+      func("VADL::sgeq", ">=",
           Type.relation(SIntType.class, SIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
           .compute((Constant.Value a, Constant.Value b) -> a.geq(b, true))
@@ -693,7 +695,7 @@ public class BuiltInTable {
    * {@code function ugeq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a >= b }
    */
   public static final BuiltIn UGEQ =
-      func("UGEQ", ">=",
+      func("VADL::ugeq", ">=",
           Type.relation(UIntType.class, UIntType.class, BoolType.class))
           .takesAllWithSameBitWidths()
           .compute((Constant.Value a, Constant.Value b) -> a.geq(b, false))
@@ -708,7 +710,7 @@ public class BuiltInTable {
    * {@code function lsl ( a : Bits<N>, b : UInt<M> ) -> Bits<N> // <=> a << b }
    */
   public static final BuiltIn LSL =
-      func("LSL", "<<", Type.relation(BitsType.class, UIntType.class, BitsType.class))
+      func("VADL::lsl", "<<", Type.relation(BitsType.class, UIntType.class, BitsType.class))
           .compute(Constant.Value::lsl)
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
@@ -719,7 +721,7 @@ public class BuiltInTable {
    * {@code function lsls( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn LSLS =
-      func("LSLS", Type.relation(BitsType.class, UIntType.class, TupleType.class))
+      func("VADL::lsls", Type.relation(BitsType.class, UIntType.class, TupleType.class))
           .takesDefault()
           .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
@@ -729,7 +731,7 @@ public class BuiltInTable {
    * {@code function lslc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn LSLC =
-      func("LSLC",
+      func("VADL::lslc",
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesDefault()
@@ -741,7 +743,7 @@ public class BuiltInTable {
    * {@code function asr ( a : SInt<N>, b : UInt<M> ) -> SInt<N> // <=> a >> b }
    */
   public static final BuiltIn ASR =
-      func("ASR", ">>", Type.relation(SIntType.class, UIntType.class, SIntType.class))
+      func("VADL::asr", ">>", Type.relation(SIntType.class, UIntType.class, SIntType.class))
           .takesDefault()
           .returnsFirstBitWidth(SIntType.class)
           .build();
@@ -751,7 +753,7 @@ public class BuiltInTable {
    * {@code function lsr ( a : UInt<N>, b : UInt<M> ) -> UInt<N> // <=> a >> b }
    */
   public static final BuiltIn LSR =
-      func("LSR", ">>", Type.relation(UIntType.class, UIntType.class, UIntType.class))
+      func("VADL::lsr", ">>", Type.relation(UIntType.class, UIntType.class, UIntType.class))
           .takesDefault()
           .compute(Constant.Value::lsr)
           .returnsFirstBitWidth(UIntType.class)
@@ -762,7 +764,7 @@ public class BuiltInTable {
    * {@code function asrs( a : SInt<N>, b : UInt<M> ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn ASRS =
-      func("ASRS", Type.relation(SIntType.class, UIntType.class, TupleType.class))
+      func("VADL::asrs", Type.relation(SIntType.class, UIntType.class, TupleType.class))
           .takesDefault()
           .returnsFirstBitWidthAndStatus(SIntType.class)
           .build();
@@ -772,7 +774,7 @@ public class BuiltInTable {
    * {@code function lsrs( a : UInt<N>, b : UInt<M> ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn LSRS =
-      func("LSRS", Type.relation(UIntType.class, UIntType.class, TupleType.class))
+      func("VADL::lsrs", Type.relation(UIntType.class, UIntType.class, TupleType.class))
           .takesDefault()
           .returnsFirstBitWidthAndStatus(UIntType.class)
           .build();
@@ -782,7 +784,7 @@ public class BuiltInTable {
    * {@code function asrc( a : SInt<N>, b : UInt<M>, c : Bool ) -> ( SInt<N>, Status ) }
    */
   public static final BuiltIn ASRC =
-      func("ASRC",
+      func("VADL::asrc",
           Type.relation(List.of(SIntType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesDefault()
@@ -794,7 +796,7 @@ public class BuiltInTable {
    * {@code function lsrc( a : UInt<N>, b : UInt<M>, c : Bool ) -> ( UInt<N>, Status ) }
    */
   public static final BuiltIn LSRC =
-      func("LSRC",
+      func("VADL::lsrc",
           Type.relation(List.of(UIntType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesDefault()
@@ -806,7 +808,7 @@ public class BuiltInTable {
    * {@code function rol ( a : Bits<N>, b : UInt<M> ) ->Bits<N> }
    */
   public static final BuiltIn ROL =
-      func("ROL", Type.relation(BitsType.class, UIntType.class, BitsType.class))
+      func("VADL::rol", Type.relation(BitsType.class, UIntType.class, BitsType.class))
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
           .build();
@@ -816,7 +818,7 @@ public class BuiltInTable {
    * {@code function rols( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ROLS =
-      func("ROLS", Type.relation(BitsType.class, UIntType.class, TupleType.class))
+      func("VADL::rols", Type.relation(BitsType.class, UIntType.class, TupleType.class))
           .takesDefault()
           .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
@@ -826,7 +828,7 @@ public class BuiltInTable {
    * {@code function rolc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn ROLC =
-      func("ROLC",
+      func("VADL::rolc",
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesDefault()
@@ -838,7 +840,7 @@ public class BuiltInTable {
    * {@code function ror ( a : Bits<N>, b : UInt<M> ) -> Bits<N> }
    */
   public static final BuiltIn ROR =
-      func("ROR", Type.relation(BitsType.class, UIntType.class, BitsType.class))
+      func("VADL::ror", Type.relation(BitsType.class, UIntType.class, BitsType.class))
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
           .build();
@@ -848,7 +850,7 @@ public class BuiltInTable {
    * {@code function rors( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn RORS =
-      func("RORS", Type.relation(BitsType.class, UIntType.class, TupleType.class))
+      func("VADL::rors", Type.relation(BitsType.class, UIntType.class, TupleType.class))
           .takesDefault()
           .returnsFirstBitWidthAndStatus(BitsType.class)
           .build();
@@ -858,7 +860,7 @@ public class BuiltInTable {
    * {@code function rorc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status ) }
    */
   public static final BuiltIn RORC =
-      func("RORC",
+      func("VADL::rorc",
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class),
               TupleType.class))
           .takesDefault()
@@ -870,7 +872,7 @@ public class BuiltInTable {
    * {@code function rrx ( a : Bits<N>, b : UInt<M>, c : Bool ) -> Bits<N> }
    */
   public static final BuiltIn RRX =
-      func("RRX",
+      func("VADL::rrx",
           Type.relation(List.of(BitsType.class, UIntType.class, BoolType.class),
               BitsType.class))
           .takesDefault()
@@ -887,7 +889,7 @@ public class BuiltInTable {
    * <p>{@code function cob( a : Bits<N> ) -> UInt<N> }
    */
   public static final BuiltIn COB =
-      func("COB", Type.relation(BitsType.class, UIntType.class))
+      func("VADL::cob", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
           .returnsFirstBitWidth(UIntType.class)
           .build();
@@ -897,7 +899,7 @@ public class BuiltInTable {
    * {@code function czb( a : Bits<N> ) -> UInt<N> // counting zero bits }
    */
   public static final BuiltIn CZB =
-      func("CZB", Type.relation(BitsType.class, UIntType.class))
+      func("VADL::czb", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
           .returnsFirstBitWidth(UIntType.class)
           .build();
@@ -909,7 +911,7 @@ public class BuiltInTable {
    * <p>{@code function clz( a : Bits<N> ) -> UInt<N>  }
    */
   public static final BuiltIn CLZ =
-      func("CLZ", Type.relation(BitsType.class, UIntType.class))
+      func("VADL::clz", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
           .returnsFirstBitWidth(UIntType.class)
           .build();
@@ -921,7 +923,7 @@ public class BuiltInTable {
    * <p>{@code function clo( a : Bits<N> ) -> UInt<N> }
    */
   public static final BuiltIn CLO =
-      func("CLO", Type.relation(BitsType.class, UIntType.class))
+      func("VADL::clo", Type.relation(BitsType.class, UIntType.class))
           .takesDefault()
           .returnsFirstBitWidth(UIntType.class)
           .build();
@@ -933,7 +935,7 @@ public class BuiltInTable {
    * <p>{@code function cls( a : Bits<N> ) -> UInt<N>}
    */
   public static final BuiltIn CLS =
-      func("CLS", Type.relation(BitsType.class, TupleType.class))
+      func("VADL::cls", Type.relation(BitsType.class, TupleType.class))
           .takesDefault()
           .returnsFirstBitWidth(UIntType.class)
           .build();
@@ -947,7 +949,7 @@ public class BuiltInTable {
    * <p>{@code function mnemonic() -> String<N>}
    */
   public static final BuiltIn MNEMONIC =
-      func("MNEMONIC", Type.relation(StringType.class))
+      func("mnemonic", Type.relation(StringType.class))
           .takesDefault()
           .returns(Type.string())
           .noCompute()
@@ -959,7 +961,7 @@ public class BuiltInTable {
    * <p>{@code function concatenate(String<N>, String<M>) -> String<X>}
    */
   public static final BuiltIn CONCATENATE_STRINGS =
-      func("CONCATENATE",
+      func("VADL::concatenate",
           Type.relation(StringType.class, StringType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
@@ -971,7 +973,7 @@ public class BuiltInTable {
    * <p>{@code function concatenate(Bits<N>, Bits<M>) -> Bits<N + M>}
    */
   public static final BuiltIn CONCATENATE_BITS =
-      func("CONCATENATE",
+      func("VADL::concatenate",
           Type.relation(BitsType.class, BitsType.class, BitsType.class))
           .takesDefault()
           .returnsFromDataTypes(args -> Type.bits(args.stream().mapToInt(DataType::bitWidth).sum()))
@@ -982,7 +984,7 @@ public class BuiltInTable {
    * <p>{@code function register(Bits<N>) -> String<M>}
    */
   public static final BuiltIn REGISTER =
-      func("REGISTER",
+      func("register",
           Type.relation(BitsType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
@@ -994,7 +996,7 @@ public class BuiltInTable {
    * <p>{@code function binary(Bits<N>) -> String<M>}
    */
   public static final BuiltIn BINARY =
-      func("BINARY", Type.relation(BitsType.class, StringType.class))
+      func("binary", Type.relation(BitsType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
           .build();
@@ -1005,7 +1007,7 @@ public class BuiltInTable {
    * <p>{@code function decimal(Bits<N>) -> String<M>}
    */
   public static final BuiltIn DECIMAL =
-      func("DECIMAL",
+      func("decimal",
           Type.relation(BitsType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
@@ -1017,7 +1019,7 @@ public class BuiltInTable {
    * <p>{@code function hex(Bits<N>) -> String<M>}
    */
   public static final BuiltIn HEX =
-      func("HEX", Type.relation(BitsType.class, StringType.class))
+      func("hex", Type.relation(BitsType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
           .build();
@@ -1036,10 +1038,10 @@ public class BuiltInTable {
   /**
    * Checks if the token at lookahead {@code n} in the AsmParser is equal to a string {@code s}.
    *
-   * <p>{@code function LaIdEq(n: UInt<N>,s: String) -> Bool}
+   * <p>{@code function laideq(n: UInt<N>,s: String) -> Bool}
    */
   public static final BuiltIn LA_ID_EQ =
-      func("LaIdEq", null, Type.relation(UIntType.class, StringType.class, BoolType.class))
+      func("laideq", null, Type.relation(UIntType.class, StringType.class, BoolType.class))
           .takesDefault()
           .noCompute()
           .returns(Type.bool())
@@ -1048,10 +1050,10 @@ public class BuiltInTable {
   /**
    * Checks if the token at lookahead {@code n} in the AsmParser is any of the strings in {@code s}.
    *
-   * <p>{@code function LaIdEq(n: UInt<N>,s: String...) -> Bool}
+   * <p>{@code function laidin(n: UInt<N>,s: String...) -> Bool}
    */
   public static final BuiltIn LA_ID_IN =
-      func("LaIdIn", null,
+      func("laidin", null,
           Type.relation(List.of(UIntType.class, StringType.class), true, BoolType.class))
           .takesDefault()
           .noCompute()

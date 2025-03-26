@@ -63,6 +63,7 @@ abstract class StatusBuiltinInlineTest {
     var name = builtIn.name() + "_"
         + args.stream().map(Constant.Value::hexadecimal)
         .collect(Collectors.joining("_"));
+    name = name.replaceFirst("VADL::", "");
 
     return Stream.of(
         new Test(

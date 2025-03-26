@@ -386,7 +386,7 @@ public interface CDefaultMixins {
       // use the built-in VADL library functions.
       // generators must include the vadl-builtins.h header file.
 
-      var name = "VADL_" + op.builtIn().name().toLowerCase();
+      var name = op.builtIn().name().replace("::", "_");
       ctx.wr(name)
           .wr("(");
 

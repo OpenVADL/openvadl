@@ -1356,6 +1356,7 @@ public class BuiltinCTest extends DockerExecutionTest {
     expected = norm(expected, size);
     var builtIn = BuiltInTable.RRX;
     var name = builtIn.name().toLowerCase() + "_" + counter++;
+    name = name.replaceFirst("vadl::", "");
     return genericFunc(name, binaryOp(BuiltInTable.EQU,
         Type.bool(),
         new BuiltInCall(builtIn,
@@ -1589,6 +1590,7 @@ public class BuiltinCTest extends DockerExecutionTest {
     val = norm(val, size);
     expected = norm(expected, size);
     var name = builtIn.name() + "_" + counter++;
+    name = name.replaceFirst("VADL::", "");
     return genericFunc(name, binaryOp(BuiltInTable.EQU,
         Type.bool(),
         unaryOp(builtIn, GraphUtils.bits(val, size)),
@@ -1606,6 +1608,7 @@ public class BuiltinCTest extends DockerExecutionTest {
     b = norm(b, size);
     expected = norm(expected, outSize);
     var name = builtIn.name().toLowerCase() + "_" + counter++;
+    name = name.replaceFirst("vadl::", "");
     return genericFunc(name, binaryOp(BuiltInTable.EQU,
         Type.bool(),
         binaryOp(builtIn,

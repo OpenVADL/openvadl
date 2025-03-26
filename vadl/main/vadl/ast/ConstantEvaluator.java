@@ -17,7 +17,9 @@
 package vadl.ast;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,6 +28,8 @@ import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.utils.SourceLocation;
+import vadl.utils.WithSourceLocation;
 import vadl.viam.Constant;
 
 
@@ -37,17 +41,21 @@ import vadl.viam.Constant;
  */
 class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
+  private final IdentityHashMap<Expr, ConstantValue> cache = new IdentityHashMap<>();
 
-  // FIXME: There should be a cache here to avoid needlessly re-evaluating expressions
-  // With that also verify that there is only one instance to keep the cache between typechecking
-  // and lowering etc.
   public ConstantValue eval(Expr expr) {
     // A simple optimization that avoids unneeded traversing the tree.
     if (expr.type instanceof ConstantType) {
       return new ConstantValue(((ConstantType) expr.type).getValue(), expr.type);
     }
 
-    return expr.accept(this);
+    if (cache.containsKey(expr)) {
+      return (ConstantValue) cache.get(expr);
+    }
+
+    var result = expr.accept(this);
+    cache.put(expr, result);
+    return result;
   }
 
   @Override
@@ -63,9 +71,9 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       return eval(functionDefinition.expr);
     }
 
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate identifier with origin of %s yet.".formatted(
-            origin.getClass().getSimpleName()));
+    throw new EvaluationError(
+        "Cannot evaluate identifier with origin of %s yet.".formatted(
+            origin.getClass().getSimpleName()), expr);
   }
 
   private static final Map<Operator, BinaryOperator<BigInteger>> BinOpFuncs = new HashMap<>();
@@ -179,15 +187,14 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(PlaceholderExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new IllegalStateException(
+        "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
   public ConstantValue visit(MacroInstanceExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
+    throw new IllegalStateException(
+        "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
@@ -198,8 +205,8 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(TypeLiteral expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new EvaluationError("Cannot evaluate %s.".formatted(expr.getClass().getSimpleName()),
+        expr);
   }
 
   @Override
@@ -231,16 +238,49 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(CallIndexExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
 
+    List<Expr> args =
+        !expr.argsIndices.isEmpty() ? expr.argsIndices.get(0).values : new ArrayList<>();
+    var argTypes = args.stream().map(Expr::type).toList();
+    var builtin = AstUtils.getBuiltIn(expr.target.path().pathToString(), argTypes);
+    if (builtin != null) {
+      // FIXME: verify no subcalls or slicing here
+      if (expr.argsIndices.size() != 1 || !expr.subCalls.isEmpty()) {
+        throw new EvaluationError(
+            "The constant evaluator cannot handle subcalls or indexing/slicing", expr);
+      }
+
+      if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 1) {
+
+        var fakeUnExpr = AstUtils.getBuiltinUnOp(expr, builtin);
+        return eval(fakeUnExpr);
+      }
+
+      // If the function is also a binary operation, we instead type check it as if it were a binary
+      // operation which has some special type rules.
+      if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
+        var fakeBinExpr = AstUtils.getBuiltinBinOp(expr, builtin);
+        return eval(fakeBinExpr);
+      }
+
+      throw new RuntimeException(
+          "At the moment the constant evaluator can only evaluate builtins that are also binary or"
+              + " unary operators.");
+    }
+
+
+    throw new RuntimeException(
+        "The constant evaluator cannot handle such calls");
   }
 
   @Override
   public ConstantValue visit(IfExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
-
+    var valCondition = eval(expr.condition);
+    if (!valCondition.value().equals(BigInteger.ZERO)) {
+      return eval(expr.thenExpr);
+    } else {
+      return eval(expr.elseExpr);
+    }
   }
 
   @Override
@@ -269,26 +309,36 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(MacroMatchExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new IllegalStateException(
+        "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
   public ConstantValue visit(MatchExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    var candidateVal = eval(expr.candidate);
+
+    for (var kase : expr.cases) {
+      for (var pattern : kase.patterns) {
+        var pattenrVal = eval(pattern);
+        if (candidateVal.equals(pattenrVal)) {
+          return eval(kase.result);
+        }
+      }
+    }
+
+    return eval(expr.defaultResult);
   }
 
   @Override
   public ConstantValue visit(ExtendIdExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new IllegalStateException(
+        "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
   public ConstantValue visit(IdToStrExpr expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    throw new IllegalStateException(
+        "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
@@ -357,10 +407,15 @@ record ConstantValue(BigInteger value, Type type) {
 
   public Constant.Value toViamConstant() {
     if (this.type instanceof ConstantType) {
-      var isNegative = value.compareTo(BigInteger.ZERO) >= 0;
-      var bitWidth = value.bitLength() + (isNegative ? 1 : 0);
-      var closestType = isNegative ? Type.unsignedInt(bitWidth) : Type.signedInt(bitWidth);
-      return Constant.Value.fromInteger(value, closestType);
+      var isNegative = value.compareTo(BigInteger.ZERO) < 0;
+      var bitWidth = Math.max(value.bitLength(), 1) + (isNegative ? 1 : 0);
+      var closestType = isNegative ? Type.signedInt(bitWidth) : Type.unsignedInt(bitWidth);
+      try {
+        return Constant.Value.fromInteger(value, closestType);
+      } catch (Exception e) {
+        System.out.println();
+        throw e;
+      }
     }
 
     if (this.type instanceof DataType dataType) {
@@ -369,5 +424,15 @@ record ConstantValue(BigInteger value, Type type) {
 
     throw new IllegalStateException(
         "Constant evaluator cannot convert type %s yet.".formatted(this.type));
+  }
+}
+
+class EvaluationError extends RuntimeException {
+
+  SourceLocation location;
+
+  public EvaluationError(String message, WithSourceLocation location) {
+    super(message);
+    this.location = location.sourceLocation();
   }
 }
