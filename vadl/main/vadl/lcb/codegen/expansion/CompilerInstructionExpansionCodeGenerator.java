@@ -275,12 +275,9 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
     var relocation = (Relocation) toHandle.function();
 
-    var relocationArgument =
-        ensurePresent(Arrays.stream(toHandle.function().parameters()).findFirst(),
-            () -> Diagnostic.error("Function does not have a parameter in pseudo instruction",
-                toHandle.sourceLocation()));
+    var parameterName = ((FuncParamNode) toHandle.arguments().get(0)).parameter().identifier;
     var pseudoInstructionIndex =
-        getOperandIndexFromCompilerInstruction(field, toHandle, relocationArgument.identifier);
+        getOperandIndexFromCompilerInstruction(field, toHandle, parameterName);
 
     var argumentSymbol = symbolTable.getNextVariable();
     var argumentRelocationSymbol = symbolTable.getNextVariable();

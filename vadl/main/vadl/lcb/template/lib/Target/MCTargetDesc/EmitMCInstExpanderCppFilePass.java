@@ -190,7 +190,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "compilerInstructions", Stream.concat(pseudoInstructions.stream(),
-            constantSequences.stream())
+            constantSequences.stream()).toList()
     );
   }
 }
