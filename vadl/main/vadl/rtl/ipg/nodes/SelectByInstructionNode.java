@@ -96,7 +96,9 @@ public class SelectByInstructionNode extends ExpressionNode {
     set.add(instruction);
     instructions.add(set);
     values.add(value);
-    updateUsageOf(null, value);
+    if (isActive()) {
+      updateUsageOf(null, value);
+    }
   }
 
   /**
