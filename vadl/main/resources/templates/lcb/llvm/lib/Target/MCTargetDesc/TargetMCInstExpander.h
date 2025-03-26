@@ -29,7 +29,7 @@ namespace llvm
         // instruction expansion method
         //
 
-        [# th:each="instructionHeaders : ${pseudoInstructionsHeaders}" ]
+        [# th:each="instructionHeaders : ${compilerInstructionHeaders}" ]
         std::vector<MCInst> [(${instructionHeaders})]( const MCInst& instruction ) const;
         [/]
     };

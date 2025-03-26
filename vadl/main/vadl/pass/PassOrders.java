@@ -70,12 +70,14 @@ import vadl.iss.template.target.EmitIssMachinePass;
 import vadl.iss.template.target.EmitIssTranslatePass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenConstantMatInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
+import vadl.lcb.passes.pseudo.AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
@@ -204,6 +206,8 @@ public class PassOrders {
     order.skip(FieldAccessInlinerPass.class);
 
     order.add(new PseudoExpansionFunctionGeneratorPass(configuration));
+    order.add(new AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass(
+        configuration));
 
     order.add(new IsaPseudoInstructionMatchingPass(configuration));
     order.add(new IsaRelocationMatchingPass(configuration));
@@ -211,6 +215,7 @@ public class PassOrders {
     order.add(new LlvmLoweringPass(configuration));
     order.add(new GenerateTableGenMachineInstructionRecordPass(configuration));
     order.add(new GenerateTableGenPseudoInstructionRecordPass(configuration));
+    order.add(new GenerateTableGenConstantMatInstructionRecordPass(configuration));
     order.add(new GenerateTableGenImmediateRecordPass(configuration));
     order.add(new CompensationPatternPass(configuration));
     order.add(new GenerateLinkerComponentsPass(configuration));

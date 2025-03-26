@@ -21,55 +21,43 @@ import java.util.IdentityHashMap;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
-import vadl.cppCodeGen.model.CppGenericType;
-import vadl.cppCodeGen.model.CppParameter;
-import vadl.cppCodeGen.model.CppType;
 import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
-import vadl.utils.SourceLocation;
 import vadl.viam.Abi;
 import vadl.viam.CompilerInstruction;
-import vadl.viam.Identifier;
-import vadl.viam.Parameter;
-import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 
 /**
- * The {@code PseudoExpansionCodeGenerator} requires a function to generate the expansion.
- * However, we only have a {@link Graph} as behavior. This pass wraps the graph to a
- * {@link GcbExpandPseudoInstructionCppFunction}.
+ * Pass to create {@link GcbExpandPseudoInstructionCppFunction}.
  */
-public class PseudoExpansionFunctionGeneratorPass extends Pass {
-  public PseudoExpansionFunctionGeneratorPass(
+public class AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass extends Pass {
+
+  public AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass(
       GeneralConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return new PassName("PseudoExpansionFunctionGeneratorPass");
+    return new PassName("CompilerExpansionFunctionGeneratorPass");
   }
 
-  protected Stream<Pair<PseudoInstruction, Graph>> getApplicable(
+  protected Stream<Pair<CompilerInstruction, Graph>> getApplicable(
       Specification viam) {
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var specifiedSequences = Stream.of(abi.returnSequence(), abi.callSequence());
 
-    var pseudoInstructions = Stream.concat(viam.isa()
-            .map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty),
-        specifiedSequences);
-    return pseudoInstructions
+    return abi.constantSequences().stream()
         .map(pseudoInstruction -> Pair.of(pseudoInstruction, pseudoInstruction.behavior()));
   }
 
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var result = new IdentityHashMap<PseudoInstruction, GcbExpandPseudoInstructionCppFunction>();
+    var result = new IdentityHashMap<CompilerInstruction, GcbExpandPseudoInstructionCppFunction>();
 
     getApplicable(viam)
         .forEach(x -> {
@@ -78,20 +66,5 @@ public class PseudoExpansionFunctionGeneratorPass extends Pass {
         });
 
     return result;
-  }
-}
-
-class Utils {
-  public static GcbExpandPseudoInstructionCppFunction create(Identifier identifier,
-                                                             Graph behavior) {
-    var ty = new CppType("MCInst", true, true);
-    var param = new CppParameter(new Identifier("instruction",
-        SourceLocation.INVALID_SOURCE_LOCATION),
-        ty);
-    return new GcbExpandPseudoInstructionCppFunction(
-        identifier.append("expand"),
-        new Parameter[] {param},
-        new CppGenericType("std::vector", new CppType("MCInst", false, false)),
-        behavior);
   }
 }

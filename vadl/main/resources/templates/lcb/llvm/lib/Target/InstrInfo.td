@@ -235,6 +235,10 @@ def : Pat<([(${namespace})]_add_lo X:$hi, tconstpool:$lo), ([(${addi})] X:$hi, t
 [(${pseudo})]
 [/]
 
+[# th:each="comp : ${compiler}" ]
+[(${comp})]
+[/]
+
 [# th:each="instAlias : ${instAliases}" ]
 [(${instAlias})]
 [/]

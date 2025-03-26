@@ -22,14 +22,17 @@ import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
+import vadl.lcb.passes.pseudo.AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ConstantSequencesProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
+import vadl.viam.CompilerInstruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
@@ -54,20 +57,32 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
         + "MCInstExpander.h";
   }
 
-  record RenderedPseudoInstruction(String header, PseudoInstruction pseudoInstruction) {
+  record RenderedCompilerInstruction(String header, CompilerInstruction compilerInstruction) {
 
   }
 
   /**
    * Get the simple names of the pseudo instructions.
    */
-  private List<RenderedPseudoInstruction> pseudoInstructions(
+  private List<RenderedCompilerInstruction> pseudoInstructions(
       Specification specification,
       PassResults passResults,
       Map<PseudoInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions
   ) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
-        .map(x -> new RenderedPseudoInstruction(
+        .map(x -> new RenderedCompilerInstruction(
+            ensureNonNull(cppFunctions.get(x), "cppFunction must exist")
+                .functionName().lower(),
+            x
+        )).toList();
+  }
+
+  private List<RenderedCompilerInstruction> constantSequences(
+      Specification specification,
+      Map<CompilerInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions
+  ) {
+    return ConstantSequencesProvider.getSupportedCompilerInstructions(specification)
+        .map(x -> new RenderedCompilerInstruction(
             ensureNonNull(cppFunctions.get(x), "cppFunction must exist")
                 .functionName().lower(),
             x
@@ -81,14 +96,22 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
         (IdentityHashMap<PseudoInstruction, GcbExpandPseudoInstructionCppFunction>)
             passResults.lastResultOf(
                 PseudoExpansionFunctionGeneratorPass.class);
-    var cppFunctions = cppFunctionsForPseudoInstructions.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    var cppFunctionsForAbiConstantSequenceCompilerInstructions =
+        (IdentityHashMap<CompilerInstruction, GcbExpandPseudoInstructionCppFunction>)
+            passResults.lastResultOf(
+                AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass.class);
+
     var pseudoInstructions =
-        pseudoInstructions(specification, passResults, cppFunctions);
+        pseudoInstructions(specification, passResults, cppFunctionsForPseudoInstructions);
+    var constantSequences =
+        constantSequences(specification, cppFunctionsForAbiConstantSequenceCompilerInstructions);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "pseudoInstructionsHeaders",
-        pseudoInstructions.stream().map(e -> e.header).toList()
+        "compilerInstructionHeaders",
+        Stream.concat(
+            pseudoInstructions.stream().map(e -> e.header).toList().stream(),
+            constantSequences.stream().map(e -> e.header).toList().stream()
+        ).toList()
     );
   }
 }

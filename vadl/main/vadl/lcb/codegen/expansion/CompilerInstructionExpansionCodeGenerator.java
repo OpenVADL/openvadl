@@ -44,6 +44,7 @@ import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.utils.Pair;
+import vadl.viam.CompilerInstruction;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
@@ -72,7 +73,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  * A {@link PseudoInstruction} contains one or multiple {@link Instruction}. This generator
  * creates the CPP code which creates the code to expand the pseudo instruction.
  */
-public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
+public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGenerator {
   private static final String FIELD = "field";
   private static final String INSTRUCTION = "instruction";
   private static final String INSTRUCTION_SYMBOL = "instructionSymbol";
@@ -81,7 +82,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
   private final Map<Format.Field, GcbCppFunctionForFieldAccess> immediateDecodings;
   private final List<HasRelocationComputationAndUpdate> relocations;
-  private final PseudoInstruction pseudoInstruction;
+  private final CompilerInstruction compilerInstruction;
   private final SymbolTable symbolTable;
   private final GenerateLinkerComponentsPass.VariantKindStore variantKindStore;
   private final IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords;
@@ -90,24 +91,21 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   /**
    * Constructor.
    */
-  public PseudoExpansionCodeGenerator(TargetName targetName,
-                                      IdentifyFieldUsagePass.ImmediateDetectionContainer
-                                          fieldUsages,
-                                      Map<Format.Field, GcbCppFunctionForFieldAccess>
-                                          immediateDecodings,
-                                      List<HasRelocationComputationAndUpdate> relocations,
-                                      GenerateLinkerComponentsPass.VariantKindStore
-                                          variantKindStore,
-                                      PseudoInstruction pseudoInstruction,
-                                      Function function,
-                                      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine>
-                                          machineInstructionRecords) {
+  public CompilerInstructionExpansionCodeGenerator(
+      TargetName targetName,
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+      Map<Format.Field, GcbCppFunctionForFieldAccess> immediateDecodings,
+      List<HasRelocationComputationAndUpdate> relocations,
+      GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
+      CompilerInstruction compilerInstruction,
+      Function function,
+      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords) {
     super(function);
     this.targetName = targetName;
     this.fieldUsages = fieldUsages;
     this.immediateDecodings = immediateDecodings;
     this.relocations = relocations;
-    this.pseudoInstruction = pseudoInstruction;
+    this.compilerInstruction = compilerInstruction;
     this.symbolTable = new SymbolTable();
     this.variantKindStore = variantKindStore;
     this.machineInstructionRecords = machineInstructionRecords;
@@ -145,7 +143,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     var instruction = ((CNodeWithBaggageContext) ctx).get(INSTRUCTION, Instruction.class);
 
     var pseudoInstructionIndex =
-        getOperandIndexFromPseudoInstruction(field, toHandle,
+        getOperandIndexFromCompilerInstruction(field, toHandle,
             toHandle.parameter().identifier);
 
     var usage = fieldUsages.getFieldUsages(instruction).get(field);
@@ -277,12 +275,9 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
     var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
     var relocation = (Relocation) toHandle.function();
 
-    var relocationArgument =
-        ensurePresent(Arrays.stream(toHandle.function().parameters()).findFirst(),
-            () -> Diagnostic.error("Function does not have a parameter in pseudo instruction",
-                toHandle.sourceLocation()));
+    var parameterName = ((FuncParamNode) toHandle.arguments().get(0)).parameter().identifier;
     var pseudoInstructionIndex =
-        getOperandIndexFromPseudoInstruction(field, toHandle, relocationArgument.identifier);
+        getOperandIndexFromCompilerInstruction(field, toHandle, parameterName);
 
     var argumentSymbol = symbolTable.getNextVariable();
     var argumentRelocationSymbol = symbolTable.getNextVariable();
@@ -314,12 +309,12 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
    * have to know that {@code arg2} has index {@code 1} to correctly map it to a machine
    * instruction later.
    */
-  private int getOperandIndexFromPseudoInstruction(Format.Field field,
-                                                   ExpressionNode argument,
-                                                   Identifier parameter) {
-    for (int i = 0; i < pseudoInstruction.parameters().length; i++) {
+  private int getOperandIndexFromCompilerInstruction(Format.Field field,
+                                                     ExpressionNode argument,
+                                                     Identifier parameter) {
+    for (int i = 0; i < compilerInstruction.parameters().length; i++) {
       if (parameter.simpleName()
-          .equals(pseudoInstruction.parameters()[i].identifier.simpleName())) {
+          .equals(compilerInstruction.parameters()[i].identifier.simpleName())) {
         return i;
       }
     }
@@ -330,7 +325,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
             parameter.sourceLocation())
         .locationDescription(argument.sourceLocation(), "Trying to match this argument.")
         .locationDescription(field.sourceLocation(), "Trying to assign this field.")
-        .locationDescription(pseudoInstruction.sourceLocation(),
+        .locationDescription(compilerInstruction.sourceLocation(),
             "This pseudo instruction is affected.")
         .help("The parameter '%s' must match any pseudo instruction's parameter names",
             parameter.simpleName())
@@ -437,7 +432,7 @@ public class PseudoExpansionCodeGenerator extends FunctionCodeGenerator {
   @Override
   public String genFunctionSignature() {
     return "std::vector<MCInst> %sMCInstExpander::%s_%s".formatted(targetName.value(),
-        pseudoInstruction.identifier.lower(), function.simpleName())
+        compilerInstruction.identifier.lower(), function.simpleName())
         + "(const MCInst& instruction) const";
   }
 }

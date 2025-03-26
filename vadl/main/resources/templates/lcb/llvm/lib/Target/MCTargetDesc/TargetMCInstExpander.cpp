@@ -21,8 +21,8 @@ bool [(${namespace})]MCInstExpander::needsExpansion(const MCInst &MCI) const
     switch (opcode)
     {
     // instructions
-    [# th:each="instruction : ${pseudoInstructions}" ]
-    case [(${namespace})]::[(${instruction.pseudoInstruction.name})]:
+    [# th:each="instruction : ${compilerInstructions}" ]
+    case [(${namespace})]::[(${instruction.compilerInstruction.name})]:
     [/]
     {
         return true;
@@ -41,8 +41,8 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
     switch (opcode)
     {
     // instructions
-    [# th:each="instruction : ${pseudoInstructions}" ]
-        case [(${namespace})]::[(${instruction.pseudoInstruction.name})]:
+    [# th:each="instruction : ${compilerInstructions}" ]
+        case [(${namespace})]::[(${instruction.compilerInstruction.name})]:
     [/]
     {
         return true;
@@ -64,8 +64,8 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCIns
         // instructions
         //
 
-    [# th:each="instruction : ${pseudoInstructions}" ]
-      case [(${namespace})]::[(${instruction.pseudoInstruction.name})]:
+    [# th:each="instruction : ${compilerInstructions}" ]
+      case [(${namespace})]::[(${instruction.compilerInstruction.name})]:
       {
         MCIExpansion = [(${instruction.header})](MCI);
         return true;
@@ -114,7 +114,7 @@ const int64_t [(${namespace})]MCInstExpander::MCOperandToInt64(const MCOperand &
     llvm_unreachable("<unsupported operand type or value>");
 }
 
-[# th:each="instruction : ${pseudoInstructions}" ]
+[# th:each="instruction : ${compilerInstructions}" ]
 
 [(${instruction.code})]
 
