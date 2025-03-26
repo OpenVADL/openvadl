@@ -1,4 +1,4 @@
-# Licence information
+# License information
 
 The OpenVADL distribution includes both the OpenVADL frontend with its
 different generators and various processor specifications. These are
@@ -34,10 +34,10 @@ copyright and license identifier to clarify the terms of every file.
 OpenVADL includes some third party libraries. The following table lists
 the libraries with their licence information:
 
-|      licence       | package name and description                   |
-|:------------------:|:-----------------------------------------------|
-| Apache License 2.0 | picocli - a mighty tiny command line interface |
-
+|      licence       | package name and description                             |
+|:------------------:|:---------------------------------------------------------|
+| Apache License 2.0 | picocli - a mighty tiny command line interface           |
+| BSD 2-Clause       | svg-pan-zoom - simple pan/zoom solution for SVGs in HTML |
 
 Andreas Krall and the OpenVADL team
 
