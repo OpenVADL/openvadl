@@ -25,12 +25,14 @@ import javax.annotation.Nullable;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionNode;
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbPseudoInstructionNode;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenCompilerInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.viam.CompilerInstruction;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
@@ -125,11 +127,74 @@ public final class TableGenInstructionRenderer {
     );
   }
 
+
   /**
    * Transforms the given {@link PseudoInstruction} into a string which can be used by LLVM's
    * TableGen.
    */
   public static String lower(TableGenPseudoInstruction instruction) {
+    var anonymousPatterns = instruction.getAnonymousPatterns().stream()
+        .filter(TableGenPattern::isPatternLowerable)
+        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
+        .map(x -> (TableGenSelectionWithOutputPattern) x)
+        .toList();
+    var y = String.format("""
+            def %s : Instruction
+            {
+            let Namespace = "%s";
+            
+            let OutOperandList = ( outs %s );
+            let InOperandList = ( ins %s );
+            
+            let isTerminator  = %d;
+            let isBranch      = %d;
+            let isCall        = %d;
+            let isReturn      = %d;
+            let isPseudo      = %d;
+            let isCodeGenOnly = %d;
+            let mayLoad       = %d;
+            let mayStore      = %d;
+            let isBarrier     = %d;
+            
+            let Constraints = "";
+            let AddedComplexity = 0;
+            
+            let Uses = [ %s ];
+            let Defs = [ %s ];
+            }
+            
+            %s
+            """,
+        instruction.getName(),
+        instruction.getNamespace(),
+        instruction.getOutOperands().stream().map(TableGenInstructionRenderer::lower).collect(
+            Collectors.joining(", ")),
+        instruction.getInOperands().stream().map(TableGenInstructionRenderer::lower).collect(
+            Collectors.joining(", ")),
+        toInt(instruction.getFlags().isTerminator()),
+        toInt(instruction.getFlags().isBranch()),
+        toInt(instruction.getFlags().isCall()),
+        toInt(instruction.getFlags().isReturn()),
+        toInt(instruction.getFlags().isPseudo()),
+        toInt(instruction.getFlags().isCodeGenOnly()),
+        toInt(instruction.getFlags().mayLoad()),
+        toInt(instruction.getFlags().mayStore()),
+        toInt(instruction.getFlags().isBarrier()),
+        instruction.getUses().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
+        instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
+        anonymousPatterns.stream()
+            .map(TableGenInstructionRenderer::lower)
+            .collect(Collectors.joining("\n"))
+    );
+
+    return y;
+  }
+
+  /**
+   * Transforms the given {@link CompilerInstruction} into a string which can be used by LLVM's
+   * TableGen.
+   */
+  public static String lower(TableGenCompilerInstruction instruction) {
     var anonymousPatterns = instruction.getAnonymousPatterns().stream()
         .filter(TableGenPattern::isPatternLowerable)
         .filter(x -> x instanceof TableGenSelectionWithOutputPattern)

@@ -29,6 +29,7 @@ import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenConstantMatInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -39,6 +40,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstAliasRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionPatternRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenInstructionRenderer;
 import vadl.lcb.passes.llvmLowering.tablegen.lowering.TableGenPseudoInstExpansionRenderer;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenCompilerInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstExpansionPattern;
@@ -48,6 +50,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
+import vadl.viam.CompilerInstruction;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 
@@ -86,6 +89,8 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         passResults.lastResultOf(IsaMachineInstructionMatchingPass.class)).labels();
     var tableGenPseudoRecords = (List<TableGenPseudoInstruction>) passResults.lastResultOf(
         GenerateTableGenPseudoInstructionRecordPass.class);
+    var tableGenConstMatRecords = (List<TableGenCompilerInstruction>) passResults.lastResultOf(
+        GenerateTableGenConstantMatInstructionRecordPass.class);
 
     var addi32 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_32);
     var addi64 = labelledMachineInstructions.get(MachineInstructionLabel.ADDI_64);
@@ -117,6 +122,11 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         // that's why we skip it.
         .filter(record -> !(abi.returnSequence() == record.pseudoInstruction()
             || abi.callSequence() == record.pseudoInstruction()))
+        .map(TableGenInstructionRenderer::lower)
+        .toList();
+
+    var renderedTableGenCompilerInstructionsRecords = tableGenConstMatRecords
+        .stream()
         .map(TableGenInstructionRenderer::lower)
         .toList();
 
@@ -164,6 +174,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("immediates", renderedImmediates);
     map.put("instructions", renderedTableGenMachineRecords);
     map.put("pseudos", renderedTableGenPseudoRecords);
+    map.put("compiler", renderedTableGenCompilerInstructionsRecords);
     map.put("instAliases", renderedTableGenInstAliases);
     map.put("patterns", renderedPatterns);
     map.put("registerFiles", specification.registerFiles().map(this::map).toList());
