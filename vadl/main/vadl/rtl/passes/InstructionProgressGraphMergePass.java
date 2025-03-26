@@ -107,7 +107,7 @@ public class InstructionProgressGraphMergePass extends Pass {
         .map(nodeClass::cast).collect(Collectors.toSet()),
         removed -> {
           removeNodeFromContexts(mapping, removed);
-          removeNodeFromSet(ipgNodes, removed);
+          ipgNodes.remove(removed);
           deleted.add(removed);
         },
         added -> {
@@ -123,7 +123,4 @@ public class InstructionProgressGraphMergePass extends Pass {
     });
   }
 
-  private void removeNodeFromSet(Set<Node> nodes, Node node) {
-    nodes.remove(node);
-  }
 }

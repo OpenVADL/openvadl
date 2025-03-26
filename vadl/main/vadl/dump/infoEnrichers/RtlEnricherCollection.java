@@ -18,11 +18,10 @@ package vadl.dump.infoEnrichers;
 
 import static vadl.dump.InfoEnricher.forType;
 
+import com.google.common.html.HtmlEscapers;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import vadl.dump.InfoEnricher;
@@ -31,7 +30,6 @@ import vadl.dump.entities.DefinitionEntity;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.InstructionProgressGraphVisualizer;
 import vadl.rtl.map.MiaMapping;
-import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.InstructionProgressGraphExtension;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -39,7 +37,6 @@ import vadl.viam.Stage;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 
 /**
  * A collection of info enrichers that provide information during the RTL generation.
@@ -125,6 +122,38 @@ public class RtlEnricherCollection {
         }
       });
 
+  public static InfoEnricher INSTRUCTION_INPUT_OUTPUT_STAGE =
+      forType(DefinitionEntity.class, (defEntity, passResult) -> {
+        if (defEntity.origin() instanceof Stage stage) {
+          var mapping = stage.mia().extension(MiaMapping.class);
+          if (mapping != null) {
+            var inputs = stageNodes(Node.class, mapping, stage)
+                .flatMap(n -> n.inputs().filter(i -> !mapping.containsInStage(stage, i)))
+                .map(Node::toString)
+                .map(HtmlEscapers.htmlEscaper()::escape)
+                .collect(Collectors.toCollection(ArrayList::new));
+            var outputs = stageNodes(Node.class, mapping, stage)
+                .filter(n -> n.usages().anyMatch(u -> !mapping.containsInStage(stage, u)))
+                .map(Node::toString)
+                .map(HtmlEscapers.htmlEscaper()::escape)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+            if (inputs.isEmpty() && outputs.isEmpty()) {
+              return;
+            }
+
+            inputs.add(0, "Inputs");
+            outputs.add(0, "Outputs");
+
+            var info = InfoUtils.createTableExpandable(
+                "Instruction Inputs/Outputs",
+                List.of(inputs, outputs)
+            );
+            defEntity.addInfo(info);
+          }
+        }
+      });
+
   private static String viz(InstructionProgressGraph ipg) {
     return new InstructionProgressGraphVisualizer()
         .load(ipg)
@@ -152,7 +181,8 @@ public class RtlEnricherCollection {
       ENRICH_ISA_WITH_IPG,
       ENRICH_INSTRUCTION_WITH_IPG,
       ENRICH_STAGE_WITH_IPG,
-      RESOURCE_ACCESS_STAGE
+      RESOURCE_ACCESS_STAGE,
+      INSTRUCTION_INPUT_OUTPUT_STAGE
   );
 
 }
