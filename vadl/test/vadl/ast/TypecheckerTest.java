@@ -515,6 +515,75 @@ public class TypecheckerTest {
   }
 
   @Test
+  public void builtinOnConstantTypes() {
+    var prog = """
+        constant a = 51                 // 0b110011
+        constant b = 42                 // 0b101010
+        
+        //constant c = VADL::and(true, true)  // true
+        //constant d = true || false          // true
+        constant e = VADL::or(a,  b)          // 0b111011 = 59
+        constant f = VADL::and(a, b)          // 0b100010 = 34
+        constant g = VADL::xor(a, b)          // 0b011001 = 25
+        constant h = VADL::equ(a, b)          // false
+        constant i = VADL::neq(a, b)          // true
+        constant j = VADL::sgeq(a, b)         // true
+        constant k = VADL::sgth(a, b)         // true
+        constant l = VADL::slth(a, b)         // false
+        constant m = VADL::sleq(a, b)         // false
+        constant n = VADL::lsl(b, 2)          // 0b10101000 = 168
+        constant o = VADL::lsr(b, 2)          // 0b1010 = 10
+        constant p = VADL::add(a, b)          // 93
+        constant q = VADL::sub(a, b)          // 9
+        constant r = VADL::mul(a, b)          // 2142
+        constant s = VADL::div(a, 5)          // 5
+        constant t = VADL::mod(b, 20)         // 2
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+
+    var finder = new AstFinder();
+//    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "c"));
+//    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "c").value());
+//    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "d"));
+//    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "d").value());
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(59)),
+        finder.getConstantType(ast, "e"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(34)),
+        finder.getConstantType(ast, "f"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(25)),
+        finder.getConstantType(ast, "g"));
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "h"));
+    Assertions.assertEquals(BigInteger.ZERO, finder.getConstantValue(ast, "h").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "i"));
+    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "i").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "j"));
+    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "j").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "k"));
+    Assertions.assertEquals(BigInteger.ONE, finder.getConstantValue(ast, "k").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "l"));
+    Assertions.assertEquals(BigInteger.ZERO, finder.getConstantValue(ast, "l").value());
+    Assertions.assertEquals(Type.bool(), finder.getConstantType(ast, "m"));
+    Assertions.assertEquals(BigInteger.ZERO, finder.getConstantValue(ast, "m").value());
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(168)),
+        finder.getConstantType(ast, "n"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(10)),
+        finder.getConstantType(ast, "o"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(93)),
+        finder.getConstantType(ast, "p"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(9)),
+        finder.getConstantType(ast, "q"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(2142)),
+        finder.getConstantType(ast, "r"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(10)),
+        finder.getConstantType(ast, "s"));
+    Assertions.assertEquals(new ConstantType(BigInteger.valueOf(2)),
+        finder.getConstantType(ast, "t"));
+  }
+
+
+  @Test
   public void functionDefinition() {
     var prog = """
         function addOne(n: SInt<8>) -> SInt<8> = n + 1 
@@ -873,6 +942,68 @@ public class TypecheckerTest {
             }
         
           instruction ADD : Rtype = X(rd) := (X(rs1) + X(rs2)) as Regs
+          encoding ADD = {opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0000}
+          assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+  }
+
+  @Test
+  public void tupleUnpackingLetExprTest() {
+    var prog = """
+            instruction set architecture Mini = {
+        
+              using Inst     = Bits<32>               // instruction word is 32 bit
+              using Regs     = Bits<32>               // untyped register word type
+        
+              register file    X : Bits<5>   -> Regs  // integer register file with 32 registers of 32 bits
+        
+              format Rtype : Inst =                   // Rtype register 3 operand instruction format
+                { funct7 : Bits<7>                    // [31..25] 7 bit function code
+                , rs2    : Bits<5>                    // [24..20] 2nd source register index / shamt
+                , rs1    : Bits<5>                    // [19..15] 1st source register index
+                , funct3 : Bits<3>                    // [14..12] 3 bit function code
+                , rd     : Bits<5>                    // [11..7]  destination register index
+                , opcode : Bits<7>                    // [6..0]   7 bit operation code
+                }
+        
+              instruction ADD : Rtype = X(rd) :=
+                let res, s = VADL::adds(X(rs1), X(rs2)) in
+                  res as Regs
+              encoding ADD = {opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0000}
+              assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+            }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+  }
+
+  @Test
+  public void tupleUnpackingLetStmtTest() {
+    var prog = """
+        instruction set architecture Mini = {
+        
+          using Inst     = Bits<32>               // instruction word is 32 bit
+          using Regs     = Bits<32>               // untyped register word type
+        
+          register file    X : Bits<5>   -> Regs  // integer register file with 32 registers of 32 bits
+        
+          format Rtype : Inst =                   // Rtype register 3 operand instruction format
+            { funct7 : Bits<7>                    // [31..25] 7 bit function code
+            , rs2    : Bits<5>                    // [24..20] 2nd source register index / shamt
+            , rs1    : Bits<5>                    // [19..15] 1st source register index
+            , funct3 : Bits<3>                    // [14..12] 3 bit function code
+            , rd     : Bits<5>                    // [11..7]  destination register index
+            , opcode : Bits<7>                    // [6..0]   7 bit operation code
+            }
+        
+          instruction ADD : Rtype =
+            let res, s = VADL::adds(X(rs1), X(rs2)) in
+              X(rd) := res as Regs
           encoding ADD = {opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0000}
           assembly ADD = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
         }

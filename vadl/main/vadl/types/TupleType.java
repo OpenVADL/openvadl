@@ -56,7 +56,7 @@ public class TupleType extends Type {
 
   @Override
   public String name() {
-    return "(%s)".formatted(types.stream()
+    return "Tuple<%s>".formatted(types.stream()
         .map(Type::name)
         .collect(Collectors.joining(", ")));
   }

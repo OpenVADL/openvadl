@@ -62,6 +62,7 @@ import vadl.viam.PseudoInstruction;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Relocation;
+import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
@@ -200,7 +201,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @param locatable the location of the identifier in the ast.
    * @return the new identifier.
    */
-  private vadl.viam.Identifier generateIdentifier(String viamId, WithSourceLocation locatable) {
+  vadl.viam.Identifier generateIdentifier(String viamId, WithSourceLocation locatable) {
     var parts = viamId.split("::");
     return new vadl.viam.Identifier(parts, locatable.sourceLocation());
   }
@@ -247,6 +248,21 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(AliasDefinition definition) {
+
+    if (definition.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE)) {
+      var identifier = generateIdentifier(definition.viamId, definition.loc);
+      var innerResource =
+          (Resource) fetch(Objects.requireNonNull(definition.computedTarget)).orElseThrow();
+
+      return Optional.of(new ArtificialResource(
+          identifier,
+          ArtificialResource.Kind.REG_FILE_ALIAS,
+          innerResource,
+          new BehaviorLowering(this).getRegisterFileAliasReadFunc(definition),
+          new BehaviorLowering(this).getRegisterFileAliasWriteProc(definition)
+      ));
+    }
+
     throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
         definition.getClass().getSimpleName()));
   }
@@ -1369,8 +1385,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       ensure(callExpr.argsIndices.size() == 1 && callExpr.argsIndices.get(0).values.size() == 1,
           () -> Diagnostic.error("Expected an index for the register file", callExpr.location));
 
-      var index = (IntegerLiteral) callExpr.argsIndices.get(0).values.get(0);
-      return Pair.of(registerFile, index.number.intValue());
+      var index = constantEvaluator.eval(callExpr.argsIndices.get(0).values.get(0));
+      return Pair.of(registerFile, index.value().intValueExact());
     } else {
       throw Diagnostic.error("This expression is not register file", expr.sourceLocation())
           .build();

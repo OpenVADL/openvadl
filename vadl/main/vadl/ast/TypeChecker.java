@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
@@ -36,9 +37,11 @@ import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
+import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.StringType;
+import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.types.asmTypes.AsmType;
@@ -183,6 +186,34 @@ public class TypeChecker
   }
 
   /**
+   * Tests whether a type can explicit be cast to another.
+   *
+   * @param from is the source type.
+   * @param to   is the target type.
+   * @return true if the cast can happen explicitly, false otherwise.
+   */
+  private static boolean canExplicitCast(Type from, Type to) {
+    if (from.equals(to)) {
+      return true;
+    }
+
+    var castTable = Map.of(
+        ConstantType.class, List.of(BitsType.class, BoolType.class),
+        BitsType.class, List.of(BitsType.class, BoolType.class),
+        BoolType.class, List.of(BoolType.class, BitsType.class),
+        StringType.class, List.of(StringType.class)
+    );
+
+    var key =
+        castTable.keySet().stream().filter(k -> k.isInstance(from)).findFirst().orElse(null);
+    if (key == null) {
+      return false;
+    }
+    var allowedTargets = requireNonNull(castTable.get(key));
+    return allowedTargets.stream().anyMatch(t -> t.isInstance(to));
+  }
+
+  /**
    * Tests whether a type can implicitly be cast to another.
    *
    * @param from is the source type.
@@ -309,38 +340,6 @@ public class TypeChecker
     return null;
   }
 
-  @Nullable
-  private static BuiltInTable.BuiltIn getBuiltIn(String name, List<Type> argTypes) {
-    // FIXME: Namespace should be propper resolved and not that hacky
-    if (name.startsWith("VADL::")) {
-      name = name.substring("VADL::".length());
-    }
-
-    // FIXME: We decided that in the future this behaivor will be removed and only the
-    //  signed/unsigned versions are available.
-    // Discussion: https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/287#issuecomment-23771
-
-    // There are some pseudo functions that will get resolved to either the signed or unsinged one.
-    var pseudoRewrites = Map.of("div", List.of("sdiv", "udiv"), "mod", List.of("smod", "umod"));
-    if (pseudoRewrites.containsKey(name)) {
-      var singed = argTypes.stream().anyMatch(t -> t instanceof SIntType);
-      name = pseudoRewrites.get(name).get(singed ? 0 : 1);
-    }
-
-    String finalBuiltinName = name;
-    var matchingBuiltin = BuiltInTable.builtIns()
-        .filter(b -> b.name().toLowerCase().equals(finalBuiltinName)).toList();
-
-    if (matchingBuiltin.size() > 1) {
-      throw new IllegalStateException("Multiple builtin match '$s': " + finalBuiltinName);
-    }
-
-    if (matchingBuiltin.isEmpty()) {
-      return null;
-    }
-
-    return matchingBuiltin.get(0);
-  }
 
   @Override
   public Void visit(ConstantDefinition definition) {
@@ -364,6 +363,16 @@ public class TypeChecker
         definition.value = new CastExpr(definition.value, definition.typeLiteral);
         check(definition.value);
       }
+    }
+
+    // Evaluate the constant (like all constants must be able to be evaluated)
+    try {
+      constantEvaluator.eval(definition.value);
+    } catch (EvaluationError e) {
+      throw Diagnostic.error("Invalid constant value", definition.value)
+          .locationDescription(e.location, "%s", Objects.requireNonNull(e.getMessage()))
+          .description("All constants must be able to be evaluated")
+          .build();
     }
 
     return null;
@@ -654,8 +663,59 @@ public class TypeChecker
 
   @Override
   public Void visit(AliasDefinition definition) {
-    // Isn't type checked on purpose because there is nothing to type check.
-    return null;
+    if (definition.kind == AliasDefinition.AliasKind.REGISTER_FILE) {
+      if (!(definition.value instanceof Identifier valIdent)) {
+        throw Diagnostic.error("Invalid alias", definition.value)
+            .locationDescription(definition.value, "The target must be an identifier but was `%s`",
+                definition.value.getClass().getSimpleName())
+            .build();
+      }
+
+      var regFile =
+          requireNonNull(definition.symbolTable).findAs(valIdent, RegisterFileDefinition.class);
+
+      if (regFile == null) {
+        throw Diagnostic.error("Invalid alias", valIdent)
+            .locationDescription(valIdent, "Doesn't point to a register file.")
+            .build();
+      }
+
+      check(regFile);
+      definition.computedTarget = regFile;
+
+
+      if (definition.aliasType == null && definition.targetType == null) {
+        definition.type = regFile.type();
+        return null;
+      } else if (definition.aliasType != null && definition.targetType != null) {
+        definition.type =
+            Type.concreteRelation(check(definition.aliasType), check(definition.targetType));
+        return null;
+      }
+
+      // FIXME: Either make this illegal in the grammar or implement the correct semantic once
+      // that is clarified: https://github.com/OpenVADL/open-vadl/issues/80#issue-2940372881
+      throw new IllegalStateException();
+    }
+
+    if (definition.kind == AliasDefinition.AliasKind.REGISTER) {
+      if (definition.targetType != null) {
+        throw Diagnostic.error("Invalid Register Alias", definition.targetType)
+            .build();
+      }
+      var valType = check(definition.value);
+      if (definition.aliasType == null) {
+        definition.type = valType;
+      } else {
+        definition.type = check(definition.aliasType);
+      }
+      return null;
+    }
+
+    throw new IllegalStateException(
+        "Kind %s not yet implemented, found at: %s".formatted(definition.kind.toString(),
+            definition.loc.toIDEString()));
+
   }
 
   @Override
@@ -708,7 +768,7 @@ public class TypeChecker
 
   @Override
   public Void visit(ExceptionDefinition definition) {
-    throwUnimplemented(definition);
+    check(definition.statement);
     return null;
   }
 
@@ -1612,7 +1672,7 @@ public class TypeChecker
 
     if (origin instanceof LetExpr letExpr) {
       // No need to check because this can only be the case if we are inside the let statement.
-      expr.type = requireNonNull(letExpr.valueExpr.type);
+      expr.type = requireNonNull(letExpr.getTypeOf(innerName));
       return;
     }
 
@@ -1636,9 +1696,12 @@ public class TypeChecker
       return;
     }
 
-    if (origin instanceof RegisterDefinition registerDefinition) {
-      check(registerDefinition);
-      expr.type = requireNonNull(registerDefinition.type);
+    if (origin instanceof RegisterDefinition
+        || (origin instanceof AliasDefinition aliasDef && aliasDef.kind.equals(
+        AliasDefinition.AliasKind.REGISTER))) {
+      var originDef = (Definition) origin;
+      check(originDef);
+      expr.type = ((TypedNode) originDef).type();
       return;
     }
 
@@ -1649,7 +1712,11 @@ public class TypeChecker
 
     if (origin != null) {
       // It's not a builtin but we don't handle it yet.
-      throw new RuntimeException("Don't handle class " + origin.getClass().getName());
+      // We might be here from a call expr and it might be necessary to handle the call for another
+      // definition.
+      throw new RuntimeException(
+          "Don't handle class %s found in %s".formatted(origin.getClass().getName(),
+              expr.location().toIDEString()));
     }
 
     // It's also possible to call functions without parenthesis if the function doesn't take any
@@ -1726,18 +1793,27 @@ public class TypeChecker
         rightTyp = requireNonNull(expr.right.type);
       }
 
+      // Special concat on strings
+      if (expr.operator().equals(Operator.Add) && leftTyp.equals(Type.string())
+          && rightTyp.equals(Type.string())) {
+        expr.type = Type.string();
+        return null;
+      }
+
       if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
         throw Diagnostic.error("Type Missmatch", expr)
             .locationDescription(expr, "Expected a number here but the left side was an `%s`",
                 leftTyp)
-            .description("The `%s` operator only works on numbers.", expr.operator())
+            .description("The `%s` operator only works on pairs of numbers or strings.",
+                expr.operator())
             .build();
       }
       if (!(rightTyp instanceof BitsType) && !(rightTyp instanceof ConstantType)) {
         throw Diagnostic.error("Type Missmatch", expr)
             .locationDescription(expr, "Expected a number here but the right side was an `%s`",
                 rightTyp)
-            .description("The `%s` operator only works on numbers.", expr.operator())
+            .description("The `%s` operator only works on pairs of numbers or string.s",
+                expr.operator())
             .build();
       }
     } else {
@@ -2307,7 +2383,9 @@ public class TypeChecker
         .findAs(expr.target.path().pathToString(), Definition.class);
 
     // Handle register File
-    if (callTarget instanceof RegisterFileDefinition registerFile) {
+    if (callTarget instanceof RegisterFileDefinition
+        || (callTarget instanceof AliasDefinition aliasDef
+        && aliasDef.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE))) {
       if (expr.argsIndices.isEmpty() || expr.argsIndices.get(0).values.size() != 1) {
         throw Diagnostic.error("Invalid Register Usage", expr)
             .description("A register call must have exactly one argument.")
@@ -2318,9 +2396,10 @@ public class TypeChecker
       var arg = argList.values.get(0);
       check(arg);
 
-      check(registerFile);
+      check(callTarget);
+      var callTargetType = (ConcreteRelationType) ((TypedNode) callTarget).type();
       var requiredArgType =
-          requireNonNull(requireNonNull(registerFile.type).argTypes().get(0));
+          requireNonNull(requireNonNull(callTargetType).argTypes().get(0));
       argList.values.set(0, wrapImplicitCast(arg, requiredArgType));
       arg = argList.values.get(0);
       var actualArgType = arg.type();
@@ -2329,8 +2408,8 @@ public class TypeChecker
         throw typeMissmatchError(expr, requiredArgType, actualArgType);
       }
 
-      expr.computedTarget = registerFile;
-      var typeBeforeIndex = registerFile.type().resultType();
+      expr.computedTarget = callTarget;
+      var typeBeforeIndex = callTargetType.resultType();
       argList.type = typeBeforeIndex;
       visitSliceIndexCall(expr, typeBeforeIndex,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -2482,7 +2561,7 @@ public class TypeChecker
     List<Expr> args =
         !expr.argsIndices.isEmpty() ? expr.argsIndices.get(0).values : new ArrayList<>();
     var argTypes = args.stream().map(this::check).toList();
-    var builtin = getBuiltIn(expr.target.path().pathToString(), argTypes);
+    var builtin = AstUtils.getBuiltIn(expr.target.path().pathToString(), argTypes);
     if (builtin != null) {
       // FIXME: Find a better solution that is universal enough for binary operations and builtin
       // functions.
@@ -2490,13 +2569,8 @@ public class TypeChecker
       // If the function is also a unary operation, we instead type check it as if it were a unary
       // operation which has some special type rules.
       if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 1) {
-        var operatorSymbol = requireNonNull(builtin.operator());
-        if (operatorSymbol.equals("~") && args.get(0).type instanceof BoolType) {
-          operatorSymbol = "!";
-        }
-        var operator = UnaryOperator.fromSymbol(operatorSymbol);
-        var fakeUnExpr =
-            new UnaryExpr(new UnOp(operator, expr.location), args.get(0));
+
+        var fakeUnExpr = AstUtils.getBuiltinUnOp(expr, builtin);
         check(fakeUnExpr);
 
         // Set type and arguments since they might have been wrapped in type casts
@@ -2507,11 +2581,7 @@ public class TypeChecker
       // If the function is also a binary operation, we instead type check it as if it were a binary
       // operation which has some special type rules.
       if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
-        var operator = requireNonNull(Operator.fromString(builtin.operator()));
-        var fakeBinExpr =
-            new BinaryExpr(expr.argsIndices.get(0).values.get(0),
-                new BinOp(operator, expr.location),
-                expr.argsIndices.get(0).values.get(1));
+        var fakeBinExpr = AstUtils.getBuiltinBinOp(expr, builtin);
         check(fakeBinExpr);
 
         // Set type and arguments since they might have been wraped in type casts
@@ -2519,8 +2589,10 @@ public class TypeChecker
         expr.type = fakeBinExpr.type;
       }
 
+      // FIXME: Better casting for const types.
+      // Should we also constanteval here if all arguments are constant?
       argTypes = requireNonNull(expr.argsIndices.get(0).values.stream().map(v -> v.type)).toList();
-      if (!builtin.takes(argTypes)) {
+      if (expr.type == null && !builtin.takes(argTypes)) {
         // FIXME: Better format that error
         throw Diagnostic.error("Type Mismatch", expr)
             .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
@@ -2539,7 +2611,13 @@ public class TypeChecker
 
 
     // If nothing else, assume slicing and subcall
-    expr.type = check((Identifier) expr.target);
+    if (expr.target instanceof Identifier targetIdentifier) {
+      expr.type = check(targetIdentifier);
+    } else if (expr.target instanceof IdentifierPath targetIdentifierPath) {
+      expr.type = check(targetIdentifierPath);
+    } else {
+      throw new IllegalStateException();
+    }
     expr.computedTarget = callTarget;
     visitSliceIndexCall(expr, expr.type(), expr.argsIndices);
     visitSubCall(expr, expr.type());
@@ -2599,7 +2677,25 @@ public class TypeChecker
 
   @Override
   public Void visit(LetExpr expr) {
-    check(expr.valueExpr);
+    var valType = check(expr.valueExpr);
+
+    if (expr.identifiers.size() > 1) {
+      if (!(valType instanceof TupleType valTupleType)) {
+        var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
+        throw Diagnostic.error("Type Mismatch", loc)
+            .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
+            .build();
+      }
+
+      if (expr.identifiers.size() != valTupleType.size()) {
+        var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
+        throw Diagnostic.error("Invalid Tuple Unpacking", loc)
+            .description("Cannot unpack %d values form a `%s`.", expr.identifiers.size(),
+                valType)
+            .build();
+      }
+    }
+
     expr.type = check(expr.body);
     return null;
   }
@@ -2611,7 +2707,11 @@ public class TypeChecker
     expr.typeLiteral.type = parseTypeLiteral(expr.typeLiteral, preferredBitWidthOf(valType));
     var litType = expr.typeLiteral.type();
 
-    // FIXME: For complex types add restrictions here
+    if (!canExplicitCast(valType, litType)) {
+      throw Diagnostic.error("Invalid cast", expr)
+          .locationDescription(expr, "Cannot cast `%s` to `%s`.", valType, litType)
+          .build();
+    }
 
     expr.type = litType;
     return null;
@@ -2749,13 +2849,27 @@ public class TypeChecker
 
   @Override
   public Void visit(LetStatement statement) {
-    if (statement.identifiers.size() == 1) {
-      check(statement.valueExpr);
-      check(statement.body);
-      return null;
+    var valType = check(statement.valueExpr);
+
+    if (statement.identifiers.size() > 1) {
+      if (!(valType instanceof TupleType valTupleType)) {
+        var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
+        throw Diagnostic.error("Type Mismatch", loc)
+            .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
+            .build();
+      }
+
+      if (statement.identifiers.size() != valTupleType.size()) {
+        var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
+        throw Diagnostic.error("Invalid Tuple Unpacking", loc)
+            .description("Cannot unpack %d values form a `%s`.", statement.identifiers.size(),
+                valType)
+            .build();
+      }
     }
 
-    throw new RuntimeException("Cannot handle tuple unpacking yet");
+    check(statement.body);
+    return null;
   }
 
   @Override

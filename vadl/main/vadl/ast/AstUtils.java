@@ -16,14 +16,50 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
+import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
+import vadl.types.Type;
 import vadl.types.UIntType;
 
 class AstUtils {
+  @Nullable
+  static BuiltInTable.BuiltIn getBuiltIn(String name, List<Type> argTypes) {
+
+    // FIXME: We decided that in the future this behaivor will be removed and only the
+    //  signed/unsigned versions are available.
+    // Discussion: https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/287#issuecomment-23771
+
+    // There are some pseudo functions that will get resolved to either the signed or unsinged one.
+    var pseudoRewrites = Map.of("VADL::div", List.of("VADL::sdiv", "VADL::udiv"), "VADL::mod",
+        List.of("VADL::smod", "VADL::umod"));
+    if (pseudoRewrites.containsKey(name)) {
+      var singed = argTypes.stream().anyMatch(t -> t instanceof SIntType);
+      name = pseudoRewrites.get(name).get(singed ? 0 : 1);
+    }
+
+    String finalBuiltinName = name;
+    var matchingBuiltin = BuiltInTable.builtIns()
+        .filter(b -> b.name().equals(finalBuiltinName)).toList();
+
+    if (matchingBuiltin.size() > 1) {
+      throw new IllegalStateException("Multiple builtin match '$s': " + finalBuiltinName);
+    }
+
+    if (matchingBuiltin.isEmpty()) {
+      return null;
+    }
+
+    return matchingBuiltin.get(0);
+  }
+
   static BuiltInTable.BuiltIn getBinOpBuiltIn(BinaryExpr expr) {
 
     var operator = expr.operator().symbol;
@@ -33,6 +69,11 @@ class AstUtils {
     );
     if (operatorRewrites.containsKey(operator)) {
       operator = operatorRewrites.get(operator);
+    }
+
+    if (expr.operator().equals(Operator.Add) && expr.left.type().equals(Type.string())
+        && expr.right.type().equals(Type.string())) {
+      return BuiltInTable.CONCATENATE_STRINGS;
     }
 
     String finalOperator = operator;
@@ -82,5 +123,28 @@ class AstUtils {
               expr.operator,
               builtIns));
     };
+  }
+
+
+  // FIXME: This is a temporary workaround, a more robust solution should be found in the future
+  static UnaryExpr getBuiltinUnOp(CallIndexExpr expr, BuiltInTable.BuiltIn builtin) {
+    List<Expr> args =
+        !expr.argsIndices.isEmpty() ? expr.argsIndices.get(0).values : new ArrayList<>();
+    var operatorSymbol = requireNonNull(builtin.operator());
+    if (operatorSymbol.equals("~") && args.get(0).type instanceof BoolType) {
+      operatorSymbol = "!";
+    }
+    var operator = UnaryOperator.fromSymbol(operatorSymbol);
+    return
+        new UnaryExpr(new UnOp(operator, expr.location), args.get(0));
+  }
+
+  // FIXME: This is a temporary workaround, a more robust solution should be found in the future
+  static BinaryExpr getBuiltinBinOp(CallIndexExpr expr, BuiltInTable.BuiltIn builtin) {
+    var operator = requireNonNull(Operator.fromString(requireNonNull(builtin.operator())));
+    return
+        new BinaryExpr(expr.argsIndices.get(0).values.get(0),
+            new BinOp(operator, expr.location),
+            expr.argsIndices.get(0).values.get(1));
   }
 }

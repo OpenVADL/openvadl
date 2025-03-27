@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
+import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
@@ -39,6 +40,7 @@ import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
+import vadl.viam.Procedure;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Relocation;
@@ -52,6 +54,7 @@ import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
+import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
@@ -71,6 +74,7 @@ import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -156,6 +160,89 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     graph.addWithInputs(start);
 
     return graph;
+  }
+
+  Function getRegisterFileAliasReadFunc(AliasDefinition definition) {
+    var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
+    currentGraph = graph;
+
+    var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
+    var type = (ConcreteRelationType) definition.type();
+    var regFileDef = (RegisterFileDefinition) Objects.requireNonNull(definition.computedTarget);
+
+
+    var param = new vadl.viam.Parameter(
+        viamLowering.generateIdentifier(
+            identifier.name() + "::readFunc::index",
+            identifier.sourceLocation()),
+        type.argTypes().get(0));
+
+    // FIXME: Wrap input and output in casts
+    // FIXME: Add conditions based on annotations
+    var regFile = (RegisterFile) viamLowering.fetch(regFileDef).orElseThrow();
+    var regfileRead = new ReadRegFileNode(
+        regFile,
+        new FuncParamNode(param),
+        (DataType) ((ConcreteRelationType) regFileDef.type()).resultType(),
+        null
+    );
+
+    var returnNode = graph.addWithInputs(new ReturnNode(regfileRead));
+    graph.addWithInputs(new StartNode(returnNode));
+
+    // FIXME: Modify based on annotations
+    return new Function(
+        viamLowering.generateIdentifier(identifier.name() + "::readFunc",
+            identifier.sourceLocation()),
+        new vadl.viam.Parameter[] {param},
+        type.resultType(),
+        graph
+    );
+  }
+
+  Procedure getRegisterFileAliasWriteProc(AliasDefinition definition) {
+    var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
+    currentGraph = graph;
+
+    var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
+    var type = (ConcreteRelationType) definition.type();
+    var regFileDef = (RegisterFileDefinition) Objects.requireNonNull(definition.computedTarget);
+
+
+    var indexParam = new vadl.viam.Parameter(
+        viamLowering.generateIdentifier(
+            identifier.name() + "::writeProc::index",
+            identifier.sourceLocation()),
+        type.argTypes().get(0));
+
+    var valueParam = new vadl.viam.Parameter(
+        viamLowering.generateIdentifier(
+            identifier.name() + "::writeProc::value",
+            identifier.sourceLocation()),
+        type.resultType());
+
+
+    // FIXME: Wrap input and output in casts
+    // FIXME: Add conditions based on annotations
+    var regFile = (RegisterFile) viamLowering.fetch(regFileDef).orElseThrow();
+    var regfileRead = new WriteRegFileNode(
+        regFile,
+        new FuncParamNode(indexParam),
+        new FuncParamNode(valueParam),
+        null,
+        null
+    );
+
+    var end = graph.addWithInputs(new ProcEndNode(new NodeList<>(regfileRead)));
+    graph.addWithInputs(new StartNode(end));
+
+    // FIXME: Modify based on annotations
+    return new Procedure(
+        viamLowering.generateIdentifier(identifier.name() + "::readFunc",
+            identifier.sourceLocation()),
+        new vadl.viam.Parameter[] {indexParam, valueParam},
+        graph
+    );
   }
 
 
@@ -282,12 +369,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // Let statement and expression
     if (computedTarget instanceof LetStatement letStatement) {
-      return new LetNode(new LetNode.Name(innerName, letStatement.sourceLocation()),
-          fetch(letStatement.valueExpr));
+      var expression = fetch(letStatement.valueExpr);
+      var index = letStatement.getIndexOf(innerName);
+      if (letStatement.identifiers.size() > 1) {
+        expression = new TupleGetFieldNode(index, expression, letStatement.getTypeOf(innerName));
+      }
+      return new LetNode(new LetNode.Name(innerName, letStatement.sourceLocation()), expression);
     }
     if (computedTarget instanceof LetExpr letExpr) {
-      return new LetNode(new LetNode.Name(innerName, letExpr.sourceLocation()),
-          fetch(letExpr.valueExpr));
+      var expression = fetch(letExpr.valueExpr);
+      var index = letExpr.getIndexOf(innerName);
+      if (letExpr.identifiers.size() > 1) {
+        expression = new TupleGetFieldNode(index, expression, letExpr.getTypeOf(innerName));
+      }
+      return new LetNode(new LetNode.Name(innerName, letExpr.sourceLocation()), expression);
     }
 
     // Parameter of a function

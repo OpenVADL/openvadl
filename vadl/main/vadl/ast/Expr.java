@@ -21,11 +21,11 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
-import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
+import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.SourceLocation;
@@ -1824,6 +1824,33 @@ class LetExpr extends Expr {
     this.valueExpr = valueExpr;
     this.body = body;
     this.location = location;
+  }
+
+  /**
+   * Returns the index of one of the variables the statement defines.
+   *
+   * @return the type of the name provided.
+   */
+  int getIndexOf(String name) {
+    return identifiers.stream().map(i -> i.name).toList().indexOf(name);
+  }
+
+  /**
+   * Returns the type of one of the variables the statement defines.
+   *
+   * @return the type of the name provided.
+   */
+  Type getTypeOf(String name) {
+    var valType = valueExpr.type;
+    if (identifiers.size() == 1) {
+      return Objects.requireNonNull(valType);
+    }
+
+    if (!(valType instanceof TupleType valTuple)) {
+      throw new IllegalStateException("Expected TupleType but got " + valType);
+    }
+
+    return Objects.requireNonNull(valTuple.get(getIndexOf(name)));
   }
 
   @Override

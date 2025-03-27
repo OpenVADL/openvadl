@@ -4409,7 +4409,7 @@ match reg with
 
   [operation XTYPE ]
   instruction AddImmAsl : AddImmShiftedFormat =   {
-    R(x5) := VADL::add(immU, VADL::asl(R(x5), shiftU) as UInt)
+    R(x5) := VADL::add(immU, VADL::lsl(R(x5), shiftU) as UInt)
   }
 
 
@@ -4419,11 +4419,11 @@ match reg with
   , majop = 0b010
   }
 
-  assembly AddImmAsl = (AsmR(x5), " = ", "add", "(#", decimal(immU), "asl", "(", AsmR(x5), "#", decimal(shiftU), "))")
+  assembly AddImmAsl = (AsmR(x5), " = ", "add", "(#", decimal(immU), "lsl", "(", AsmR(x5), "#", decimal(shiftU), "))")
 
   [operation XTYPE ]
   instruction SubImmAsl : AddImmShiftedFormat =   {
-    R(x5) := VADL::sub(immU, VADL::asl(R(x5), shiftU) as UInt)
+    R(x5) := VADL::sub(immU, VADL::lsl(R(x5), shiftU) as UInt)
   }
 
 
@@ -4433,7 +4433,7 @@ match reg with
   , majop = 0b011
   }
 
-  assembly SubImmAsl = (AsmR(x5), " = ", "sub", "(#", decimal(immU), "asl", "(", AsmR(x5), "#", decimal(shiftU), "))")
+  assembly SubImmAsl = (AsmR(x5), " = ", "sub", "(#", decimal(immU), "lsl", "(", AsmR(x5), "#", decimal(shiftU), "))")
 
   [operation XTYPE ]
   instruction AddImmLsr : AddImmShiftedFormat =   {
