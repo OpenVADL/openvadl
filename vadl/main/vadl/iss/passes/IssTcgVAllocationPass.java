@@ -507,18 +507,22 @@ class GraphColoring {
   /**
    * Selects the next variable to color.
    *
-   * <p>This implementation selects an arbitrary variable.
-   * It can be improved by using heuristics like choosing the variable with the highest degree.
+   * <p>Priorities non-temporary variables, so that they are colored first.
    *
    * @param uncoloredVariables The set of uncolored variables.
    * @return The selected variable.
    */
   private TcgVRefNode selectVariable(Set<TcgVRefNode> uncoloredVariables) {
-    return uncoloredVariables.iterator().next();
+    return uncoloredVariables.stream()
+        .min(Comparator.comparing(e -> e.var().kind() == TcgV.Kind.TMP))
+        .get();
   }
 
   /**
    * Assigns a color (register number) to the given variable.
+   * We prefer to reuse colors that are shared with non-temporary variables.
+   * This optimizes cases where two temporary variables share the same color
+   * causing an unnecessary move to the destination register.
    *
    * @param variable The variable to color.
    */
@@ -533,11 +537,26 @@ class GraphColoring {
       }
     }
 
-    // Find the smallest color not used by neighbors
-    int color = 0;
-    while (usedColors.contains(color)) {
-      color++;
-    }
+    // list of colors and filter non used colors (sorted by non-temporary).
+    // if no non-used color was found, take max color + 1
+    var color = variableColors.entrySet().stream()
+        // filter all variables that use the same color as some neighboring variables
+        .filter(e -> !usedColors.contains(e.getValue()))
+        // sort results, such that non-temporary variables come first
+        .sorted(Comparator.comparing(e -> e.getKey().var().kind() == TcgV.Kind.TMP))
+        // find the variable assignment with the smallest color
+        .min(Comparator.comparingInt(Map.Entry::getValue))
+        // get only the color
+        .map(Map.Entry::getValue)
+        // if there was no variable that can share the color, we fallback to the smallest
+        // free color
+        .orElseGet(() -> {
+          int nextColor = 0;
+          while (usedColors.contains(nextColor)) {
+            nextColor++;
+          }
+          return nextColor;
+        });
 
     variableColors.put(variable, color);
 

@@ -57,8 +57,6 @@ public class WriteMemNode extends WriteResourceNode {
     super(address, value);
     this.memory = memory;
     this.words = words;
-
-    verifyState();
   }
 
   /**
@@ -75,8 +73,6 @@ public class WriteMemNode extends WriteResourceNode {
     this.memory = memory;
     this.words = words;
     this.condition = condition;
-
-    verifyState();
   }
 
   public Memory memory() {

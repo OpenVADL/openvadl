@@ -21,8 +21,7 @@ RUN apt update &&  \
     python3  \
     python3-venv  \
     python3-pip \
-    netcat \
-    qemu-system
+    netcat
 
 RUN pip install pyyaml qemu.qmp tomli
 
