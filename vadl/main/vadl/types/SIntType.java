@@ -26,6 +26,11 @@ public class SIntType extends BitsType {
   }
 
   @Override
+  public int useableBitWidth() {
+    return bitWidth() - 1;
+  }
+
+  @Override
   public String name() {
     return "SInt<%s>".formatted(bitWidth);
   }

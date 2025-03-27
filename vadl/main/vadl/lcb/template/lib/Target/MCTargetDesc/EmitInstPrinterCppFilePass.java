@@ -112,23 +112,11 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
           return new PrintableInstruction(instruction.identifier.simpleName(), result);
         })
         .toList();
-    var database = new Database(passResults, specification);
-    var loadUpperImmediates =
-        new HashSet<>(
-            database.run(
-                    new Query.Builder().machineInstructionLabel(MachineInstructionLabel.LUI)
-                        .build())
-                .machineInstructions());
 
     var machineInstructionsWithImmediate = machineRecords
         .stream()
         .filter(x -> x.getInOperands().stream()
             .anyMatch(y -> y instanceof ReferencesImmediateOperand))
-        /*
-        We skip the adjustment of the immediate for LUIs because they are already adjusted in
-        constant materialisation. By doing it twice, the value would be wrong.
-         */
-        .filter(x -> !loadUpperImmediates.contains(x.instruction()))
         .filter(
             // To indicate that an instruction's immediate needs an encoding,
             // it needs to reference a field access function.

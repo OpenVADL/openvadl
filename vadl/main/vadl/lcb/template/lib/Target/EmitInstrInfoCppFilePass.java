@@ -17,6 +17,7 @@
 package vadl.lcb.template.lib.Target;
 
 import static vadl.error.Diagnostic.error;
+import static vadl.lcb.template.utils.ConstantSequencesUtil.createConstantSequences;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
@@ -24,7 +25,6 @@ import static vadl.viam.ViamError.unwrap;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -39,8 +39,6 @@ import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.MachineInstructionLabelGroup;
 import vadl.gcb.passes.PseudoInstructionLabel;
-import vadl.gcb.passes.ValueRange;
-import vadl.gcb.passes.ValueRangeCtx;
 import vadl.lcb.passes.TableGenInstructionCtx;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.database.Database;
@@ -49,7 +47,6 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
-import vadl.viam.Constant;
 import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
@@ -131,7 +128,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         (List<Instruction>) isaMatching.getOrDefault(MachineInstructionLabel.STORE_MEM,
             Collections.emptyList());
 
-    var mapped = instructions.stream()
+    return instructions.stream()
         .map(i -> {
           var destRegisterFile =
               ensurePresent(i.behavior().getNodes(ReadRegFileNode.class).findFirst(),
@@ -144,8 +141,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         // Sort by largest word size descending
         .sorted((storeRegSlot, t1) -> Integer.compare(t1.words, storeRegSlot.words))
         .toList();
-
-    return mapped;
   }
 
   private List<LoadRegSlot> getLoadMemoryInstructions(
@@ -227,13 +222,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         ));
   }
 
-  private int getImmBitSize(IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-                            Instruction additionRI) {
-    var fields = fieldUsages.getImmediates(additionRI);
-    verifyInstructionHasOnlyOneImm(additionRI, fields);
-    return ensurePresent(fields.stream().findFirst(), "already checked that it is present").size();
-  }
-
   private void verifyInstructionHasOnlyOneImm(Instruction addition, List<Format.Field> fields) {
     ensure(fields.size() == 1, () -> error(
         "The compiler requires an addition with immediate with only one immediate. "
@@ -313,19 +301,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);
     var additionRI = getAdditionRI(isaMatches);
-    var additionRIValueRange = valueRange(additionRI);
     var additionRR = getAdditionRR(isaMatches);
     var additionRegisterFile = getRegisterClassFromInstruction(additionRR);
     // Integer of the index of the zero register in the register file.
-    var zeroRegisterIndex =
-        ensurePresent(
-            Arrays.stream(additionRegisterFile.constraints()).filter(x -> x.value().intValue() == 0)
-                .map(
-                    RegisterFile.Constraint::address)
-                .map(Constant.Value::intValue)
-                .findFirst(),
-            () -> Diagnostic.error("Cannot find a zero register for the register file",
-                additionRegisterFile.sourceLocation()));
     var jump = getJump(specification, pseudoMatches);
 
     var map = new HashMap<String, Object>();
@@ -337,12 +315,8 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put("loadStackSlotInstructions",
         getLoadMemoryInstructions(isaMatches).stream().map(this::map).toList());
     map.put("additionImm", additionRI.simpleName());
-    map.put("additionImmHighestValue", additionRIValueRange.highest());
-    map.put("additionImmLowestValue", additionRIValueRange.lowest());
     map.put("addition", additionRR.simpleName());
     map.put("additionRegisterFile", additionRegisterFile.simpleName());
-    map.put("additionImmSize", getImmBitSize(fieldUsages, additionRI));
-    map.put("zeroRegisterIndex", zeroRegisterIndex);
     map.put("branchInstructions", getBranchInstructions(specification, passResults, fieldUsages));
     map.put("instructionSizes", instructionSizes(specification));
     map.put("jumpInstruction", jump.simpleName());
@@ -362,15 +336,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
             MachineInstructionLabel.BUGEQ));
     map.put("isAsCheapAsMove",
         areAsCheapAsMove(fieldUsages, new Database(passResults, specification)));
+    map.put("constantSequences", createConstantSequences(specification));
 
     return map;
-  }
-
-  private ValueRange valueRange(Instruction instruction) {
-    var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class),
-        () -> Diagnostic.error("Has no extension value range", instruction.sourceLocation()));
-    return ensurePresent(ctx.getFirst(),
-        () -> Diagnostic.error("Has no value range", instruction.sourceLocation()));
   }
 
   @Nullable

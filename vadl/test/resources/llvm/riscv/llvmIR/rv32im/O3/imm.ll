@@ -40,6 +40,7 @@ define signext i32 @neg_i32() nounwind {
 define signext i32 @pos_i32_hi20_only() nounwind {
   ; CHECK-LABEL: pos_i32_hi20_only: # @pos_i32_hi20_only
   ; CHECK: LUI a0,0x10
+  ; CHECK-NEXT: ADDI a0,a0,0
   ; CHECK-NEXT: JALR zero,0(ra)
   ret i32 65536 ; 0x10000
 }
@@ -47,6 +48,7 @@ define signext i32 @pos_i32_hi20_only() nounwind {
 define signext i32 @neg_i32_hi20_only() nounwind {
   ; CHECK-LABEL: neg_i32_hi20_only: # @neg_i32_hi20_only
   ; CHECK: LUI a0,0xffff0
+  ; CHECK-NEXT: ADDI a0,a0,0
   ; CHECK-NEXT: JALR zero,0(ra)
   ret i32 -65536 ; -0x10000
 }
@@ -56,6 +58,7 @@ define i64 @imm_end_xori_1() nounwind {
   ; CHECK: LUI a0,0x2000
   ; CHECK-NEXT: ADDI a0,a0,-1
   ; CHECK-NEXT: LUI a1,0xe0000
+  ; CHECK-NEXT: ADDI a1,a1,0
   ; CHECK-NEXT: JALR zero,0(ra)
   ret i64 -2305843009180139521 ; 0xE000_0000_01FF_FFFF
 }

@@ -36,6 +36,7 @@ import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
+import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
@@ -706,7 +707,15 @@ public abstract class LlvmInstructionLoweringStrategy {
     // Then, the rest
     var z = graph.getNodes(FuncCallNode.class).flatMap(
         funcCallNode -> funcCallNode.function().behavior().getNodes(FuncParamNode.class));
-    return Stream.concat(Stream.concat(x, y), z)
+
+    // We need this edge case for compiler and pseudo instructions.
+    // However, we need to filter for `WriteResourceNode` and `ReadResourceNode`, so
+    // the operand is not added twice.
+    var u = graph.getNodes(PseudoFuncParamNode.class)
+        .filter(k -> k.usages()
+            .noneMatch(v -> v instanceof WriteResourceNode || v instanceof ReadResourceNode));
+
+    return Stream.concat(Stream.concat(Stream.concat(x, y), z), u)
         .map(k -> (Node) k).toList();
   }
 

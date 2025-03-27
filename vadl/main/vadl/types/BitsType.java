@@ -36,6 +36,11 @@ public class BitsType extends DataType {
   }
 
   @Override
+  public int useableBitWidth() {
+    return bitWidth;
+  }
+
+  @Override
   public String name() {
     return "Bits<%d>".formatted(bitWidth);
   }

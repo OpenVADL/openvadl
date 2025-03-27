@@ -47,9 +47,9 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * Get the lowest possible value that the immediate with the given {@code formatBitSize} can
    * have.
    */
-  public static int lowestPossibleValue(int formatBitSize, BitsType rawType) {
+  public static long lowestPossibleValue(int formatBitSize, BitsType rawType) {
     return rawType.isSigned()
-        ? (int) (-1 * Math.pow(2, (double) formatBitSize - 1))
+        ? (long) (-1 * Math.pow(2, (double) formatBitSize - 1))
         : 0;
   }
 
@@ -57,9 +57,9 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * Get the highest possible value that the immediate with the given {@code formatBitSize} can
    * have.
    */
-  public static int highestPossibleValue(int formatBitSize, BitsType rawType) {
+  public static long highestPossibleValue(int formatBitSize, BitsType rawType) {
     return
-        (int) (rawType.isSigned()
+        (long) (rawType.isSigned()
             ? Math.pow(2, (double) formatBitSize - 1)
             : Math.pow(2, formatBitSize)) - 1;
   }

@@ -16,12 +16,9 @@
 
 package vadl.gcb.passes.relocation;
 
-import java.math.BigInteger;
-import java.util.List;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
 import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
 import vadl.utils.SourceLocation;
-import vadl.viam.Constant;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
@@ -81,27 +78,5 @@ public class BitMaskFunctionGenerator {
     graph.addWithInputs(node);
 
     return graph;
-  }
-
-  // TODO: @kper remove this?
-  @SuppressWarnings("unused")
-  private static BigInteger generateBitMaskForInstrWord(List<Constant.BitSlice> slices) {
-    var x = BigInteger.ZERO;
-
-    for (var slice : slices) {
-      for (var part : slice.parts().toList()) {
-        for (var i = part.lsb(); i <= part.msb(); i++) {
-          x = x.setBit(1);
-        }
-      }
-    }
-
-    return x;
-  }
-
-  // TODO: @kper remove this?
-  @SuppressWarnings("unused")
-  private static long generateBitMask(int size) {
-    return (1L << size) - 1;
   }
 }
