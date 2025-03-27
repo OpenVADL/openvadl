@@ -31,6 +31,8 @@ public class IssRiscvVariantsEmbenchTest extends QemuIssTest {
 
   private static final Logger log = LoggerFactory.getLogger(IssRiscvEmbenchTest.class);
 
+  // TODO These tests can be made faster by including the pythong packages into the docker image.
+  //      Also the run-benchmarks-rv64im.sh runs the upstream version every time.
   @Test
   void rv64imVariantsEmbenchTest() throws IOException {
     String vadlPath = "sys/risc-v/rv64im.vadl";
@@ -44,7 +46,6 @@ public class IssRiscvVariantsEmbenchTest extends QemuIssTest {
       throws IOException {
 
     var config = IssConfiguration.from(getConfiguration(false));
-
     config.setOptsToSkip(optsToSkip);
 
     ConcurrentHashMap<String, ImageFromDockerfile> emptyCache = new ConcurrentHashMap<>();
