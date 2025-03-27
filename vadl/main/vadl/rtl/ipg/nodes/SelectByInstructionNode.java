@@ -18,6 +18,7 @@ package vadl.rtl.ipg.nodes;
 
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -72,6 +73,24 @@ public class SelectByInstructionNode extends ExpressionNode {
   }
 
   /**
+   * Get the list of sets of instructions by which this node selects its value inputs by.
+   *
+   * @return sets of instruction
+   */
+  public List<Set<Instruction>> instructions() {
+    return instructions;
+  }
+
+  /**
+   * Get the list of value inputs this node selects its output from.
+   *
+   * @return list of expression nodes
+   */
+  public NodeList<ExpressionNode> values() {
+    return values;
+  }
+
+  /**
    * Add a pair of an instruction and a value to this select node. The output of this node will be
    * the given value, if the instruction matches.
    *
@@ -102,6 +121,24 @@ public class SelectByInstructionNode extends ExpressionNode {
   }
 
   /**
+   * Remove value input from this select node.
+   *
+   * @param value expression node
+   */
+  public void remove(ExpressionNode value) {
+    for (int i = 0; i < values.size(); i++) {
+      if (values.get(i).equals(value)) {
+        values.remove(i);
+        instructions.remove(i);
+        if (isActive()) {
+          updateUsageOf(value, null);
+        }
+        break;
+      }
+    }
+  }
+
+  /**
    * Add instructions and values of another select node to this node.
    *
    * @param other the other select node
@@ -115,6 +152,38 @@ public class SelectByInstructionNode extends ExpressionNode {
             add(instruction, value);
           }
         });
+  }
+
+  /**
+   * Split this node by removing the given inputs and adding them to a newly created select node
+   * each with the same instructions associated. Then add the new node as a new value input to this
+   * node to have a resulting graph with the same behavior.
+   *
+   * @param splitValues input values to split away to new select node
+   * @return new node inserted as input to this select node
+   */
+  public SelectByInstructionNode split(Set<ExpressionNode> splitValues) {
+    ensure(isActive(), "SelectByInstruction node must be active to be split");
+    var newSel = new SelectByInstructionNode(type());
+    var newIns = new HashSet<Instruction>();
+    for (int i = 0; i < values.size(); i++) {
+      var val = values.get(i);
+      var ins = instructions.get(i);
+      if (splitValues.contains(val)) {
+        // move value to new node
+        newSel.values.add(val);
+        newSel.instructions.add(ins);
+        newIns.addAll(ins);
+      }
+    }
+    splitValues.forEach(this::remove);
+
+    // add new select node to graph and as value input to this node
+    newSel = ensureGraph().add(newSel);
+    for (Instruction newIn : newIns) {
+      add(newIn, newSel);
+    }
+    return newSel;
   }
 
   @Override
