@@ -67,5 +67,11 @@ public enum Tcg_8_16_32_64 {
     }
   }
 
+  /**
+   * Checks if a given value can be converted to this TCG type set.
+   */
+  public static boolean available(int width) {
+    return width == 8 || width == 16 || width == 32 || width == 64;
+  }
 
 }
