@@ -174,24 +174,30 @@ final class LetStatement extends Statement {
   }
 
   /**
+   * Returns the index of one of the variables the statement defines.
+   *
+   * @return the type of the name provided.
+   */
+  int getIndexOf(String name) {
+    return identifiers.stream().map(i -> i.name).toList().indexOf(name);
+  }
+
+  /**
    * Returns the type of one of the variables the statement defines.
    *
    * @return the type of the name provided.
    */
-  @Nullable
   Type getTypeOf(String name) {
     var valType = valueExpr.type;
     if (identifiers.size() == 1) {
-      return valType;
+      return Objects.requireNonNull(valType);
     }
 
     if (!(valType instanceof TupleType valTuple)) {
       throw new IllegalStateException("Expected TupleType but got " + valType);
     }
 
-    return valTuple.get(
-        identifiers.stream().map(i -> i.name).toList().indexOf(name)
-    );
+    return Objects.requireNonNull(valTuple.get(getIndexOf(name)));
   }
 
   @Override
