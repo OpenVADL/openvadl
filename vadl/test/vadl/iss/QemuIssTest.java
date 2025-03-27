@@ -99,7 +99,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * This will generate the simulator image if it is not already contained in the provided
    * cache.
    */
-  private ImageFromDockerfile generateSimulator(Map<String, ImageFromDockerfile> cache,
+  protected ImageFromDockerfile generateSimulator(Map<String, ImageFromDockerfile> cache,
                                                 String specPath,
                                                 IssConfiguration configuration) {
     return cache.computeIfAbsent(specPath, (path) -> {
@@ -234,7 +234,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
               d.workDir("/qemu/build");
               // configure qemu with the new target from the specification
-              d.run("../configure --cc='" + cc + "' --target-list=" + softmmuTarget);
+              d.run("../configure --cc='" + cc + "' --target-list=riscv64-softmmu," + softmmuTarget);
               // setup redis cache endpoint environment variablef
               redisCache.setupEnv(d);
               // build qemu with all cpu cores and print if cache was used.
