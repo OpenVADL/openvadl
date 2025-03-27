@@ -117,7 +117,7 @@ class MemoryTransformer {
         && extract.isTruncate()
     ) {
       // if the value is a const extract node that truncates the original value
-      // to the same or greater with as the storeSize, we can directly use the original value
+      // to the same or greater width as the storeSize, we can directly use the original value
       write.replaceInput(extract, extract.value());
     }
 
