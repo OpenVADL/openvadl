@@ -16,6 +16,10 @@
 
 package vadl.lcb.template.lib.Target;
 
+<<<<<<< HEAD
+=======
+import static vadl.error.Diagnostic.error;
+>>>>>>> b47b0f64 (lcb: Implemented constant sequences)
 import static vadl.lcb.template.utils.ConstantSequencesUtil.createConstantSequences;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;

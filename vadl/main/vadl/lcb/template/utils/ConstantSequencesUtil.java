@@ -35,9 +35,9 @@ public class ConstantSequencesUtil {
    * Helper record to construct constant sequences.
    */
   public record ConstantSequence(CompilerInstruction instruction,
-                          boolean isSigned,
-                          long highestValue,
-                          long lowestValue) implements Renderable {
+                                 boolean isSigned,
+                                 long highestValue,
+                                 long lowestValue) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
