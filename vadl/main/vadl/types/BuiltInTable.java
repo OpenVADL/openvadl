@@ -1139,7 +1139,7 @@ public class BuiltInTable {
   public static final BuiltIn INSTRUCTION_ADDRESS = instr("address");
 
   /**
-   * Execute instruction results calculations.
+   * Provide already computed instruction results to forwarding logic.
    *
    * <p>{@code process results(instr: Instruction) -> Instruction}
    */

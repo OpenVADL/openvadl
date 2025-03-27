@@ -28,6 +28,7 @@ import vadl.viam.DefinitionExtension;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
@@ -84,6 +85,11 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
   public Optional<NodeContext> findContext(Node ipgNode) {
     return contexts.values().stream().filter(context -> context.ipgNodes.contains(ipgNode))
         .findFirst();
+  }
+
+  public NodeContext ensureContext(Node ipgNode) {
+    return findContext(ipgNode).orElseThrow(() ->
+        new ViamGraphError("IPG node has no context in MiA mapping").addContext(ipgNode));
   }
 
   /**

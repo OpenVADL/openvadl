@@ -24,8 +24,12 @@ import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.UnaryNode;
+import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -36,31 +40,26 @@ import vadl.viam.graph.dependency.WriteResourceNode;
 public class MiaBuiltInCallMatcher {
 
   interface Matcher {
-    boolean match(Node matchNode, MiaBuiltInCall mapNode);
+    boolean match(Node matchNode, MiaBuiltInCall mapNode, Set<Node> doneNodes);
   }
 
   private static final IdentityHashMap<BuiltInTable.BuiltIn, Matcher> MATCHERS =
       new IdentityHashMap<>();
 
   static {
-    MATCHERS.put(BuiltInTable.INSTRUCTION_READ, (matchNode, mapNode) -> {
+    MATCHERS.put(BuiltInTable.INSTRUCTION_READ, (matchNode, mapNode, doneNodes) -> {
       return matchNode instanceof ReadResourceNode n
           && mapNode.matchResource(n.resourceDefinition());
     });
-    MATCHERS.put(BuiltInTable.INSTRUCTION_WRITE, (matchNode, mapNode) -> {
+    MATCHERS.put(BuiltInTable.INSTRUCTION_WRITE, (matchNode, mapNode, doneNodes) -> {
       return matchNode instanceof WriteResourceNode n
           && mapNode.matchResource(n.resourceDefinition());
     });
-    MATCHERS.put(BuiltInTable.INSTRUCTION_COMPUTE, (matchNode, mapNode) -> {
-      if (matchNode instanceof BuiltInCall n) {
-        // TODO fix meaning of compute
-        return n.arguments().stream()
-            .anyMatch(i -> (i.type() instanceof DataType dt && dt.bitWidth() > 1));
-      }
-      return false;
+    MATCHERS.put(BuiltInTable.INSTRUCTION_COMPUTE, (matchNode, mapNode, doneNodes) -> {
+      return resolveCompute(matchNode, doneNodes);
 
     });
-    MATCHERS.put(BuiltInTable.INSTRUCTION_ADDRESS, (matchNode, mapNode) -> {
+    MATCHERS.put(BuiltInTable.INSTRUCTION_ADDRESS, (matchNode, mapNode, doneNodes) -> {
       return matchNode.usages().anyMatch(use -> {
         if (use instanceof ReadResourceNode n && mapNode.matchResource(n.resourceDefinition())) {
           return (n.hasAddress() && n.address() == matchNode);
@@ -71,21 +70,69 @@ public class MiaBuiltInCallMatcher {
         return false;
       });
     });
-    MATCHERS.put(BuiltInTable.INSTRUCTION_RESULTS, (matchNode, mapNode) -> {
+    MATCHERS.put(BuiltInTable.INSTRUCTION_RESULTS, (matchNode, mapNode, doneNodes) -> {
       return matchNode.usages().anyMatch(use -> {
         if (use instanceof WriteResourceNode n && mapNode.matchResource(n.resourceDefinition())) {
-          return (n.hasAddress() && n.value() == matchNode);
+          return (n.hasAddress() && n.value() == matchNode
+              && resolveDoneThroughUnaryNodes(matchNode, doneNodes));
         }
         return false;
       });
     });
-    MATCHERS.put(BuiltInTable.INSTRUCTION_READ_OR_FORWARD, (matchNode, mapNode) -> {
+    MATCHERS.put(BuiltInTable.INSTRUCTION_READ_OR_FORWARD, (matchNode, mapNode, doneNodes) -> {
       return matchNode instanceof ReadResourceNode n
           && mapNode.matchResource(n.resourceDefinition());
     });
-    MATCHERS.put(BuiltInTable.INSTRUCTION_VERIFY, (matchNode, mapNode) -> {
-      return false; // TODO
+    MATCHERS.put(BuiltInTable.INSTRUCTION_VERIFY, (matchNode, mapNode, doneNodes) -> {
+      return matchNode.usages().anyMatch(use ->
+          (use instanceof WriteRegNode writeRegNode && writeRegNode.isPcAccess()));
     });
+  }
+
+  /**
+   * Resolve if a done node is reachable through a chain of unary nodes. The unary nodes we have
+   * don't include calculation, just truncate and sign/zero-extend nodes. Used for determine if
+   * a result can be mapped for {@link BuiltInTable#INSTRUCTION_RESULTS} nodes.
+   *
+   * @param node node to resolve chain of unary nodes for
+   * @param doneNodes set of already mapped nodes
+   * @return true, if done node is reachable through chain of unary nodes
+   */
+  private static boolean resolveDoneThroughUnaryNodes(Node node, Set<Node> doneNodes) {
+    if (doneNodes.contains(node)) {
+      return true;
+    }
+    if (node instanceof UnaryNode unaryNode) {
+      return resolveDoneThroughUnaryNodes(unaryNode.value(), doneNodes);
+    }
+    return false;
+  }
+
+  /**
+   * Resolve if the given node should be mapped as part of the compute built-in.
+   *
+   * @param matchNode node to be mapped
+   * @param doneNodes set of already mapped nodes
+   * @return true, if node is part of compute
+   */
+  private static boolean resolveCompute(Node matchNode, Set<Node> doneNodes) {
+    if (matchNode instanceof BuiltInCall n) {
+      // TODO fix meaning of compute
+      if (n.arguments().stream()
+          .anyMatch(i -> (i.type() instanceof DataType dt && dt.bitWidth() > 1))) {
+        return true;
+      }
+      return matchNode.inputs()
+          .allMatch(input -> doneNodes.contains(input) || resolveCompute(input, doneNodes));
+    }
+    if (matchNode instanceof ConstantNode) {
+      return true;
+    }
+    if (matchNode instanceof SelectNode || matchNode instanceof UnaryNode) {
+      return matchNode.inputs()
+          .allMatch(input -> doneNodes.contains(input) || resolveCompute(input, doneNodes));
+    }
+    return false;
   }
 
   /**
@@ -96,13 +143,13 @@ public class MiaBuiltInCallMatcher {
    * @param nodes set of nodes to filter
    * @return filtered set of nodes
    */
-  public Set<Node> match(MiaBuiltInCall mapNode, Set<Node> nodes) {
+  public Set<Node> match(MiaBuiltInCall mapNode, Set<Node> nodes, Set<Node> doneNodes) {
     var matcher = MATCHERS.get(mapNode.builtIn());
     if (matcher == null) {
       return Collections.emptySet();
     }
     return nodes.stream()
-        .filter(matchNode -> matcher.match(matchNode, mapNode))
+        .filter(matchNode -> matcher.match(matchNode, mapNode, doneNodes))
         .collect(Collectors.toSet());
   }
 

@@ -143,7 +143,7 @@ public class MiaMappingCreationPass extends Pass {
         Set<Node> matched = Collections.emptySet();
         if (mapNode instanceof MiaBuiltInCall miaCall) {
           // use matcher
-          matched = matcher.match(miaCall, ipgNodes);
+          matched = matcher.match(miaCall, ipgNodes, inputDone);
         } else {
           throw new PassError("Could not map node handling instructions %s in stage %s",
               mapNode, stage);
