@@ -31,7 +31,9 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssConstExtractNode;
+import vadl.iss.passes.nodes.IssLoadNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
+import vadl.iss.passes.nodes.IssStoreNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
@@ -535,23 +537,19 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Handles the {@link ReadMemNode} by generating a TCG load memory operation.
-   *
-   * @param toHandle The node to handle.
+   * Handles the {@link IssLoadNode}, which was created from a {@link ReadMemNode}
+   * in the {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
    */
   @Handler
-  void handle(ReadMemNode toHandle) {
+  void handle(IssLoadNode toHandle) {
     var dest = singleDestOf(toHandle);
     var src = singleDestOf(toHandle.address());
-    var loadSize = Tcg_8_16_32_64.fromWidth(toHandle.type().bitWidth());
-
-    // TODO: Don't hardcode this
-    var mode = TcgExtend.ZERO;
 
     replaceCurrent(
-        new TcgLoadMemory(loadSize, mode, dest, src)
+        new TcgLoadMemory(toHandle.loadSize(), toHandle.tcgExtend(), dest, src)
     );
   }
+
 
   /**
    * Handles the {@link WriteRegFileNode} by generating a TCG move operation if necessary.
@@ -586,17 +584,16 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Handles the {@link WriteMemNode} by generating a TCG store memory operation.
-   *
-   * @param toHandle The node to handle.
+   * Handles the {@link IssStoreNode}, which was created from a {@link WriteMemNode}
+   * in the {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
    */
   @Handler
-  void handle(WriteMemNode toHandle) {
+  void handle(IssStoreNode toHandle) {
     var addr = singleDestOf(toHandle.address());
     var value = singleDestOf(toHandle.value());
 
-    var storeSize = Tcg_8_16_32_64.from(toHandle.value());
-    // TODO: Don't hardcode this
+    var storeSize = toHandle.storeSize();
+    // doesn't matter (hopefully)
     var mode = TcgExtend.SIGN;
 
     replaceCurrent(
@@ -730,6 +727,24 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(ConstantNode toHandle) {
+    throw failShouldNotHappen(toHandle);
+  }
+
+  /**
+   * Handles the {@link ReadMemNode}. Should be replaced by a {@link IssLoadNode} in the
+   * {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
+   */
+  @Handler
+  void handle(ReadMemNode toHandle) {
+    throw failShouldNotHappen(toHandle);
+  }
+
+  /**
+   * Handles the {@link WriteMemNode}. Should be replaced by a {@link IssStoreNode} in the
+   * {@link vadl.iss.passes.IssMemoryAccessTransformationPass}.
+   */
+  @Handler
+  void handle(WriteMemNode toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 
