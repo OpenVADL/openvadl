@@ -2,6 +2,8 @@
 import os
 import sys
 import pandas as pd
+import numpy as np
+from scipy.stats import gmean
 
 
 def handle_speed_benchmark():
@@ -22,11 +24,16 @@ def handle_speed_benchmark():
         data = pd.concat([detailed, data], axis=1)
         input.append(data)
 
-    data = pd.concat(input).mean().rename()
+    data = pd.concat(input)
     # Remove mean
-    data = data.drop(["speed geometric standard deviation"]).rename(index={"speed geometric mean": "mean"})
+    data = data.drop(["speed geometric standard deviation"], axis=1)
+    data = data.drop(["speed geometric mean"], axis=1)
+    data = pd.DataFrame({"mean": data.mean(), "min": data.min().astype(float)})
+    geo_means = gmean(data, axis=0)
+    data.loc['geomean'] = geo_means
+    data = data.round(2)
 
-    result = data.to_csv(header=["time"], index_label="benchmark")
+    result = data.to_csv(header=["time_mean", "time_min"], index_label="benchmark")
     with open(output_name, "w") as outfile:
         outfile.write(result)
 

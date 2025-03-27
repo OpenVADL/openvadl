@@ -16,11 +16,13 @@ baseline_data = pd.read_csv(baseline)
 
 with open(output_dir + "/" + os.path.basename(baseline), "w") as outfile:
     baseline0 = baseline_data.copy()
-    baseline0.time = 1
+    baseline0.time_mean = 1
+    # baseline0.time_min = 1
     outfile.write(baseline0.to_csv(index=False))
 
 for f in sys.argv[2:]:
     data = pd.read_csv(f)
-    data.time = data.time / baseline_data.time
+    data.time_mean = data.time_mean / baseline_data.time_mean
+    data.time_min = data.time_min / baseline_data.time_min
     with open(output_dir + "/" + os.path.basename(f), "w") as outfile:
         outfile.write(data.to_csv(index=False))

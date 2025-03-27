@@ -18,7 +18,7 @@ mkdir -p "results/$name"
 
 cd ..
 
-for i in $(seq 1 2); do
+for i in $(seq 1 10); do
     $runner "$@" > "benchmark-extras/results/$name/$i.json"
 done
 
