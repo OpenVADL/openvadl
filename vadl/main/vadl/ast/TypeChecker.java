@@ -41,6 +41,7 @@ import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.StringType;
+import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.types.asmTypes.AsmType;
@@ -182,6 +183,34 @@ public class TypeChecker
     } finally {
       branchStrategy = oldStrategy;
     }
+  }
+
+  /**
+   * Tests whether a type can explicit be cast to another.
+   *
+   * @param from is the source type.
+   * @param to   is the target type.
+   * @return true if the cast can happen explicitly, false otherwise.
+   */
+  private static boolean canExplicitCast(Type from, Type to) {
+    if (from.equals(to)) {
+      return true;
+    }
+
+    var castTable = Map.of(
+        ConstantType.class, List.of(BitsType.class, BoolType.class),
+        BitsType.class, List.of(BitsType.class, BoolType.class),
+        BoolType.class, List.of(BoolType.class, BitsType.class),
+        StringType.class, List.of(StringType.class)
+    );
+
+    var key =
+        castTable.keySet().stream().filter(k -> k.isInstance(from)).findFirst().orElse(null);
+    if (key == null) {
+      return false;
+    }
+    var allowedTargets = requireNonNull(castTable.get(key));
+    return allowedTargets.stream().anyMatch(t -> t.isInstance(to));
   }
 
   /**
@@ -1643,7 +1672,7 @@ public class TypeChecker
 
     if (origin instanceof LetExpr letExpr) {
       // No need to check because this can only be the case if we are inside the let statement.
-      expr.type = requireNonNull(letExpr.valueExpr.type);
+      expr.type = requireNonNull(letExpr.getTypeOf(innerName));
       return;
     }
 
@@ -2648,7 +2677,25 @@ public class TypeChecker
 
   @Override
   public Void visit(LetExpr expr) {
-    check(expr.valueExpr);
+    var valType = check(expr.valueExpr);
+
+    if (expr.identifiers.size() > 1) {
+      if (!(valType instanceof TupleType valTupleType)) {
+        var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
+        throw Diagnostic.error("Type Mismatch", loc)
+            .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
+            .build();
+      }
+
+      if (expr.identifiers.size() != valTupleType.size()) {
+        var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
+        throw Diagnostic.error("Invalid Tuple Unpacking", loc)
+            .description("Cannot unpack %d values form a `%s`.", expr.identifiers.size(),
+                valType)
+            .build();
+      }
+    }
+
     expr.type = check(expr.body);
     return null;
   }
@@ -2660,7 +2707,11 @@ public class TypeChecker
     expr.typeLiteral.type = parseTypeLiteral(expr.typeLiteral, preferredBitWidthOf(valType));
     var litType = expr.typeLiteral.type();
 
-    // FIXME: For complex types add restrictions here
+    if (!canExplicitCast(valType, litType)) {
+      throw Diagnostic.error("Invalid cast", expr)
+          .locationDescription(expr, "Cannot cast `%s` to `%s`.", valType, litType)
+          .build();
+    }
 
     expr.type = litType;
     return null;
@@ -2798,14 +2849,27 @@ public class TypeChecker
 
   @Override
   public Void visit(LetStatement statement) {
-    if (statement.identifiers.size() == 1) {
-      check(statement.valueExpr);
-      check(statement.body);
-      return null;
+    var valType = check(statement.valueExpr);
+
+    if (statement.identifiers.size() > 1) {
+      if (!(valType instanceof TupleType valTupleType)) {
+        var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
+        throw Diagnostic.error("Type Mismatch", loc)
+            .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
+            .build();
+      }
+
+      if (statement.identifiers.size() != valTupleType.size()) {
+        var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
+        throw Diagnostic.error("Invalid Tuple Unpacking", loc)
+            .description("Cannot unpack %d values form a `%s`.", statement.identifiers.size(),
+                valType)
+            .build();
+      }
     }
 
-    throw new RuntimeException("Cannot handle tuple unpacking yet, found in %s".formatted(
-        statement.location.toIDEString()));
+    check(statement.body);
+    return null;
   }
 
   @Override

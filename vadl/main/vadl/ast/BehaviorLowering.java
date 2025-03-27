@@ -74,6 +74,7 @@ import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -368,12 +369,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // Let statement and expression
     if (computedTarget instanceof LetStatement letStatement) {
-      return new LetNode(new LetNode.Name(innerName, letStatement.sourceLocation()),
-          fetch(letStatement.valueExpr));
+      var expression = fetch(letStatement.valueExpr);
+      var index = letStatement.getIndexOf(innerName);
+      if (letStatement.identifiers.size() > 1) {
+        expression = new TupleGetFieldNode(index, expression, letStatement.getTypeOf(innerName));
+      }
+      return new LetNode(new LetNode.Name(innerName, letStatement.sourceLocation()), expression);
     }
     if (computedTarget instanceof LetExpr letExpr) {
-      return new LetNode(new LetNode.Name(innerName, letExpr.sourceLocation()),
-          fetch(letExpr.valueExpr));
+      var expression = fetch(letExpr.valueExpr);
+      var index = letExpr.getIndexOf(innerName);
+      if (letExpr.identifiers.size() > 1) {
+        expression = new TupleGetFieldNode(index, expression, letExpr.getTypeOf(innerName));
+      }
+      return new LetNode(new LetNode.Name(innerName, letExpr.sourceLocation()), expression);
     }
 
     // Parameter of a function
