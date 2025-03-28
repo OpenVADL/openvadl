@@ -540,13 +540,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var resultExpr = exprBeforeSubcall;
     for (var subCall : expr.subCalls) {
-      var bitRange = Objects.requireNonNull(subCall.computedFormatFieldBitRange);
-      var bitSlice =
-          new Constant.BitSlice(new Constant.BitSlice.Part(bitRange.from(), bitRange.to()));
-      var slice =
-          new SliceNode(resultExpr, bitSlice,
-              (DataType) Objects.requireNonNull(subCall.formatFieldType));
-      resultExpr = visitSliceIndexCall(expr, slice, subCall.argsIndices);
+      if (subCall.computedFormatFieldBitRange != null) {
+        var bitRange = Objects.requireNonNull(subCall.computedFormatFieldBitRange);
+        var bitSlice =
+            new Constant.BitSlice(new Constant.BitSlice.Part(bitRange.from(), bitRange.to()));
+        var slice =
+            new SliceNode(resultExpr, bitSlice,
+                (DataType) Objects.requireNonNull(subCall.formatFieldType));
+        resultExpr = visitSliceIndexCall(expr, slice, subCall.argsIndices);
+      } else if (subCall.computedStatusIndex != null) {
+        var indexing = new TupleGetFieldNode(subCall.computedStatusIndex, resultExpr, Type.bool());
+        resultExpr = visitSliceIndexCall(expr, indexing, subCall.argsIndices);
+      } else {
+        throw new IllegalStateException();
+      }
     }
 
     return resultExpr;
