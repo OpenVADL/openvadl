@@ -152,7 +152,7 @@ public class TypeChecker
   private Diagnostic typeMissmatchError(WithSourceLocation locatable, String expectation,
                                         Type actual) {
     return Diagnostic.error("Type Mismatch", locatable)
-        .locationDescription(locatable, "Expected `%s` but got `%s`.",
+        .locationDescription(locatable, "Expected %s but got `%s`.",
             expectation, actual)
         .build();
   }
@@ -354,9 +354,7 @@ public class TypeChecker
       Type litType = requireNonNull(definition.typeLiteral.type);
 
       if (!canImplicitCast(valType, litType)) {
-        throw Diagnostic.error("Type missmatch: expected %s, got %s".formatted(litType, valType),
-            definition.value.location()
-        ).build();
+        throw typeMissmatchError(definition.value, litType, valType);
       }
 
       // Insert a cast if needed
@@ -1983,8 +1981,8 @@ public class TypeChecker
     }
 
     // Bits concatination
-    if (types.stream().allMatch(x -> x instanceof BitsType)) {
-      var width = types.stream().map(t -> ((BitsType) t).bitWidth()).reduce(0, Integer::sum);
+    if (types.stream().allMatch(x -> x instanceof DataType)) {
+      var width = types.stream().map(t -> ((DataType) t).bitWidth()).reduce(0, Integer::sum);
       expr.type = Type.bits(width);
       return null;
     }

@@ -652,6 +652,22 @@ public abstract class Constant {
     }
 
     /**
+     * Concatenates the bits of two constants.
+     *
+     * @param other constant to be appended
+     * @return a new concatenated constant.
+     */
+    public Constant.Value concat(Constant.Value other) {
+      var type = Type.bits(this.type().bitWidth() + other.type().bitWidth());
+      var result = Constant.Value.fromInteger(this.integer(), type);
+      result =
+          result.lsl(Constant.Value.fromInteger(BigInteger.valueOf(other.type().bitWidth()), type));
+      result = result.or(Constant.Value.fromInteger(other.integer(), type));
+      return result;
+    }
+
+
+    /**
      * Zero extends the value to the given type.
      */
     public Constant.Value zeroExtend(DataType newType) {
