@@ -54,6 +54,7 @@ public abstract class AbstractRelocationCodeGenerator extends AbstractFunctionCo
         "Truncation to boolean is not allowed");
     var bitWidth = node.type().bitWidth();
 
+<<<<<<< HEAD
     if (node.type().isSigned()) {
       ctx.wr("VADL_sextract(")
           .gen(node.value())
@@ -63,6 +64,11 @@ public abstract class AbstractRelocationCodeGenerator extends AbstractFunctionCo
           .gen(node.value())
           .wr(", %s)", bitWidth);
     }
+=======
+    ctx.wr("VADL_uextract(")
+        .gen(node.value())
+        .wr(", %s)", bitWidth);
+>>>>>>> efc37826 (lcb: Sign extend function)
   }
 
   /**
