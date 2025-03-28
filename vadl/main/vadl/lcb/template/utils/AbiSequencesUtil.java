@@ -17,8 +17,10 @@
 package vadl.lcb.template.utils;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.template.Renderable;
 import vadl.types.BitsType;
@@ -28,16 +30,15 @@ import vadl.viam.Specification;
 /**
  * Utility class.
  */
-public class ConstantSequencesUtil {
-
+public class AbiSequencesUtil {
 
   /**
    * Helper record to construct constant sequences.
    */
   public record ConstantSequence(CompilerInstruction instruction,
-                          boolean isSigned,
-                          long highestValue,
-                          long lowestValue) implements Renderable {
+                                 boolean isSigned,
+                                 long highestValue,
+                                 long lowestValue) implements Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
@@ -56,25 +57,45 @@ public class ConstantSequencesUtil {
   public static List<ConstantSequence> createConstantSequences(Specification specification) {
     var abi = specification.abi().orElseThrow();
     return abi.constantSequences()
-        .stream().map(x -> {
-          var param = x.getLargestParameter();
-          var ty = (BitsType) param.type().asDataType();
-
-          var highest = GenerateValueRangeImmediatePass.highestPossibleValue(ty.bitWidth(), ty);
-          var lowest = GenerateValueRangeImmediatePass.lowestPossibleValue(ty.bitWidth(), ty);
-
-          return new ConstantSequence(x,
-              Arrays.stream(x.parameters()).anyMatch(y -> y.type().asDataType().isSigned()),
-              highest,
-              lowest
-          );
-        })
-        .sorted((o1, o2) -> {
-          var b1 = o1.instruction.getLargestParameter().type().asDataType().useableBitWidth();
-          var b2 = o2.instruction.getLargestParameter().type().asDataType().useableBitWidth();
-
-          return b1 - b2;
-        })
+        .stream().map(AbiSequencesUtil::constantSequence)
+        .sorted(sortingFunction())
         .toList();
+  }
+
+  /**
+   * Create register adjustment sequences from abi.
+   */
+  public static List<ConstantSequence> createRegisterAdjustment(Specification specification) {
+    var abi = specification.abi().orElseThrow();
+    return abi.registerAdjustmentSequences()
+        .stream().map(AbiSequencesUtil::constantSequence)
+        .sorted(sortingFunction())
+        .toList();
+  }
+
+  /**
+   * Sorts the sequences by smallest type first.
+   */
+  private static @Nonnull Comparator<ConstantSequence> sortingFunction() {
+    return (o1, o2) -> {
+      var b1 = o1.instruction.getLargestParameter().type().asDataType().useableBitWidth();
+      var b2 = o2.instruction.getLargestParameter().type().asDataType().useableBitWidth();
+
+      return b1 - b2;
+    };
+  }
+
+  private static ConstantSequence constantSequence(CompilerInstruction x) {
+    var param = x.getLargestParameter();
+    var ty = (BitsType) param.type().asDataType();
+
+    var highest = GenerateValueRangeImmediatePass.highestPossibleValue(ty.bitWidth(), ty);
+    var lowest = GenerateValueRangeImmediatePass.lowestPossibleValue(ty.bitWidth(), ty);
+
+    return new ConstantSequence(x,
+        Arrays.stream(x.parameters()).anyMatch(y -> y.type().asDataType().isSigned()),
+        highest,
+        lowest
+    );
   }
 }

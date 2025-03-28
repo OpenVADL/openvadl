@@ -4165,6 +4165,32 @@ let Defs = [  ];
 
 
 
+def registerAdjustment0 : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins X:$rs1, bare_symbol:$imm );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 1;
+let mayLoad       = 0;
+let mayStore      = 0;
+let isBarrier     = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
 
 
 

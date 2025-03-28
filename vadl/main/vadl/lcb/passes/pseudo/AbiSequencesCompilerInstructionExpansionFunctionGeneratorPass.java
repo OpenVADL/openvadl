@@ -34,9 +34,9 @@ import vadl.viam.graph.Graph;
 /**
  * Pass to create {@link GcbExpandPseudoInstructionCppFunction}.
  */
-public class AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass extends Pass {
+public class AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass extends Pass {
 
-  public AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass(
+  public AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass(
       GeneralConfiguration configuration) {
     super(configuration);
   }
@@ -50,8 +50,9 @@ public class AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPas
       Specification viam) {
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
 
-    return abi.constantSequences().stream()
-        .map(pseudoInstruction -> Pair.of(pseudoInstruction, pseudoInstruction.behavior()));
+    return Stream.concat(abi.constantSequences().stream(),
+            abi.registerAdjustmentSequences().stream())
+        .map(compilerInstruction -> Pair.of(compilerInstruction, compilerInstruction.behavior()));
   }
 
   @Nullable

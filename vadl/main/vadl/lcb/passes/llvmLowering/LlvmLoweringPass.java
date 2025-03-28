@@ -407,18 +407,20 @@ public class LlvmLoweringPass extends Pass {
       IsaMachineInstructionMatchingPass.Result labelledMachineInstructions) {
     var tableGenRecords = new IdentityHashMap<CompilerInstruction, LlvmLoweringRecord.Compiler>();
 
-    abi.constantSequences().forEach(compilerInstruction -> {
-      for (var strategy : compilerStrategies) {
-        var record =
-            strategy.lowerInstruction(compilerInstruction,
-                labelledMachineInstructions);
+    Stream.concat(abi.constantSequences().stream(), abi.registerAdjustmentSequences().stream())
+        .forEach(compilerInstruction -> {
+          for (var strategy : compilerStrategies) {
+            var record =
+                strategy.lowerInstruction(compilerInstruction,
+                    labelledMachineInstructions);
 
-        record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(compilerInstruction,
-            llvmLoweringIntermediateResult));
+            record.ifPresent(
+                llvmLoweringIntermediateResult -> tableGenRecords.put(compilerInstruction,
+                    llvmLoweringIntermediateResult));
 
-        break;
-      }
-    });
+            break;
+          }
+        });
 
     return tableGenRecords;
   }

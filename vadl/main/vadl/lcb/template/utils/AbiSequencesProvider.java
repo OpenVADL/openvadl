@@ -23,14 +23,23 @@ import vadl.viam.CompilerInstruction;
 import vadl.viam.Specification;
 
 /**
- * Utility class for getting the constant sequences.
+ * Utility class for getting the abi sequences.
  */
-public class ConstantSequencesProvider {
+public class AbiSequencesProvider {
   /**
    * Get the constant sequences.
    */
-  public static Stream<CompilerInstruction> getSupportedCompilerInstructions(
+  public static Stream<CompilerInstruction> constantSequences(
       Specification specification) {
     return specification.abi().map(Abi::constantSequences).orElse(Collections.emptyList()).stream();
+  }
+
+  /**
+   * Get the register adjustment sequences.
+   */
+  public static Stream<CompilerInstruction> registerAdjustmentSequences(
+      Specification specification) {
+    return specification.abi().map(Abi::registerAdjustmentSequences).orElse(Collections.emptyList())
+        .stream();
   }
 }

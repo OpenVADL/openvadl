@@ -3488,7 +3488,8 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
   }
 
   enum SeqKind {
-    CONSTANT("constant");
+    CONSTANT("constant"),
+    REGISTER("register");
 
     private final String keyword;
 
