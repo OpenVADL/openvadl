@@ -86,4 +86,22 @@ public class CompilerInstruction extends Definition implements DefProp.WithBehav
   public List<Graph> behaviors() {
     return List.of(behavior);
   }
+
+  /**
+   * Get the largest parameter in {@link #parameters}. Signed 32 is smaller than unsigned 32 bit.
+   * When two parameters have the same bitwidth then the returned parameter is undefined.
+   */
+  public Parameter getLargestParameter() {
+    return Arrays.stream(parameters).sorted((o1, o2) -> {
+      var ty1 = o1.type().asDataType().isSigned() ? o1.type().asDataType().bitWidth() - 1 :
+          o1.type().asDataType().bitWidth();
+      var ty2 = o2.type().asDataType().isSigned() ? o2.type().asDataType().bitWidth() - 1 :
+          o2.type().asDataType().bitWidth();
+      if (ty1 < ty2) {
+        return 1;
+      } else {
+        return -1;
+      }
+    }).findFirst().orElseThrow();
+  }
 }

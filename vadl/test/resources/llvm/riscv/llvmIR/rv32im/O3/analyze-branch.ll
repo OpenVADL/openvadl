@@ -10,7 +10,8 @@ declare void @test_false()
 define void @test_bcc_fallthrough_taken(i32 %in) nounwind {
 ; CHECK-LABEL: test_bcc_fallthrough_taken: # @test_bcc_fallthrough_taken
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI sp,sp,-16
+; CHECK-NEXT: ADDI a1,zero,-16
+; CHECK-NEXT: ADD sp,sp,a1
 ; CHECK-NEXT: SW ra,12(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: ADDI a1,zero,42
 ; CHECK-NEXT: BNE a0,a1,.LBB0_2
@@ -18,14 +19,10 @@ define void @test_bcc_fallthrough_taken(i32 %in) nounwind {
 ; CHECK-NEXT: LUI ra,%hi(test_true)
 ; CHECK-NEXT: JALR ra,%lo(test_true)(ra)
 ; CHECK-NEXT: LW ra,12(sp) # 4-byte Folded Reload
-; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
 ; CHECK-LABEL: LBB0_2:
 ; CHECK-NEXT: LUI ra,%hi(test_false)
 ; CHECK-NEXT: JALR ra,%lo(test_false)(ra)
 ; CHECK-NEXT: LW ra,12(sp) # 4-byte Folded Reload
-; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
   %tst = icmp eq i32 %in, 42
   br i1 %tst, label %true, label %false, !prof !0
 
@@ -45,7 +42,8 @@ false:
 define void @test_bcc_fallthrough_nottaken(i32 %in) nounwind {
 ; CHECK-LABEL: test_bcc_fallthrough_nottaken: # @test_bcc_fallthrough_nottaken
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI sp,sp,-16
+; CHECK-NEXT: ADDI a1,zero,-16
+; CHECK-NEXT: ADD sp,sp,a1
 ; CHECK-NEXT: SW ra,12(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: ADDI a1,zero,42
 ; CHECK-NEXT: BNE a0,a1,.LBB1_1
@@ -54,13 +52,12 @@ define void @test_bcc_fallthrough_nottaken(i32 %in) nounwind {
 ; CHECK-NEXT: LUI ra,%hi(test_false)
 ; CHECK-NEXT: JALR ra,%lo(test_false)(ra)
 ; CHECK-NEXT: LW ra,12(sp) # 4-byte Folded Reload
-; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
 ; CHECK-LABEL: .LBB1_2: # %true
 ; CHECK-NEXT: LUI ra,%hi(test_true)
 ; CHECK-NEXT: JALR ra,%lo(test_true)(ra)
 ; CHECK-NEXT: LW ra,12(sp) # 4-byte Folded Reload
-; CHECK-NEXT: ADDI sp,sp,16
+; CHECK-NEXT: ADDI a0,zero,16
+; CHECK-NEXT: ADD sp,sp,a0
 ; CHECK-NEXT: JALR zero,0(ra)
 
   %tst = icmp eq i32 %in, 42

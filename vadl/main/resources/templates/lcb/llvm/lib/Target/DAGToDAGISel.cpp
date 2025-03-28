@@ -72,16 +72,9 @@ static SDNode *selectImm(SelectionDAG *CurDAG, const SDLoc &DL, int64_t Imm,
   auto Seq = [(${namespace})]MatInt::generateInstSeq(Imm);
 
   SDNode *Result;
-  SDValue SrcReg = CurDAG->getRegister([(${namespace})]::X0, XLenVT);
   for ([(${namespace})]MatInt::Inst &Inst : Seq) {
     SDValue SDImm = CurDAG->getTargetConstant(Inst.getImm(), DL, XLenVT);
-    if (Inst.getOpcode() == [(${namespace})]::[(${lui})])
-      Result = CurDAG->getMachineNode([(${namespace})]::[(${lui})], DL, XLenVT, SDImm);
-    else
-      Result = CurDAG->getMachineNode(Inst.getOpcode(), DL, XLenVT, SrcReg, SDImm);
-
-    // Only the first instruction has X0 as its source.
-    SrcReg = SDValue(Result, 0);
+    Result = CurDAG->getMachineNode(Inst.getOpcode(), DL, XLenVT, SDImm);
   }
 
   return Result;

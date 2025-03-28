@@ -166,7 +166,7 @@
     instruction $name : Utype =                        // upper immediate instructions
       X(rd) := $rhsEx
     encoding $name = {opcode = $opcode}
-    assembly $name = (mnemonic, " ", register(rd), ",", hex(immUp))
+    assembly $name = (mnemonic, " ", register(rd), ",", hex(imm))
     }
 
   model LtypeInstr (name : Id, funct3 : Bin, memEx : CallEx, exTy: Id) : IsaDefs = {

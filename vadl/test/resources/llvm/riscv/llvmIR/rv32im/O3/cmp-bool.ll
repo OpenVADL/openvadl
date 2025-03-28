@@ -2,7 +2,8 @@
 
 define void @bool_eq(i1 zeroext %a, i1 zeroext %b, ptr nocapture %c) nounwind {
 ; CHECK-LABEL: bool_eq:
-; CHECK: ADDI sp,sp,-16
+; CHECK: ADDI a3,zero,-16
+; CHECK-NEXT: ADD sp,sp,a3
 ; CHECK: BNE a0,a1,.LBB0_2
 ; CHECK-NEXT: # %bb.1: # %if.then
 ; CHECK-NEXT: JALR ra,0(a2)

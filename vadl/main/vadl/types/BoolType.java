@@ -35,6 +35,11 @@ public class BoolType extends DataType {
   }
 
   @Override
+  public int useableBitWidth() {
+    return bitWidth();
+  }
+
+  @Override
   public DataType fittingCppType() {
     return this;
   }

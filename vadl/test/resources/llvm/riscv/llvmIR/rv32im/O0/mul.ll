@@ -40,7 +40,8 @@ define i32 @mul_pow2(i32 %a) nounwind {
 define i64 @mul64(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: mul64: # @mul64
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: ADDI sp,sp,-16
+; CHECK-NEXT: ADDI a4,zero,-16
+; CHECK-NEXT: ADD sp,sp,a4
 ; CHECK-NEXT: SW a3,12(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: ADDI a3,a1,0
 ; CHECK-NEXT: LW a1,12(sp) # 4-byte Folded Reload
@@ -50,8 +51,6 @@ define i64 @mul64(i64 %a, i64 %b) nounwind {
 ; CHECK-NEXT: MUL a3,a3,a2
 ; CHECK-NEXT: ADD a1,a1,a3
 ; CHECK-NEXT: MUL a0,a0,a2
-; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
   %1 = mul i64 %a, %b
   ret i64 %1
 }

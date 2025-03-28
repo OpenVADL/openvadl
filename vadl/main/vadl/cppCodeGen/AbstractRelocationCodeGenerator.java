@@ -16,25 +16,81 @@
 
 package vadl.cppCodeGen;
 
+import java.util.stream.Collectors;
 import vadl.cppCodeGen.common.UpdateFieldRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
-import vadl.cppCodeGen.mixins.CRelocationMixins;
+import vadl.cppCodeGen.model.nodes.CppUpdateBitRangeNode;
+import vadl.javaannotations.DispatchFor;
+import vadl.javaannotations.Handler;
 import vadl.types.BitsType;
+import vadl.types.DataType;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.TruncateNode;
 
 /**
  * This class overrides the default implementation of {@link CDefaultMixins} for
  * generating code for {@link ValueRelocationFunctionCodeGenerator} and
- * {@link UpdateFieldRelocationFunctionCodeGenerator}. This class overrides only existing
- * implementations, while {@link CRelocationMixins} contains the code for custom CPP nodes.
+ * {@link UpdateFieldRelocationFunctionCodeGenerator}.
  */
+@DispatchFor(
+    value = ExpressionNode.class,
+    context = CNodeContext.class,
+    include = "vadl.cppCodeGen.model.nodes"
+)
 public abstract class AbstractRelocationCodeGenerator extends AbstractFunctionCodeGenerator {
   public AbstractRelocationCodeGenerator(Function function) {
     super(function);
+  }
+
+  @Override
+  public void handle(CGenContext<Node> ctx, TruncateNode node) {
+    node.ensure(node.type() != DataType.bool(),
+        "Truncation to boolean is not allowed");
+    var bitWidth = node.type().bitWidth();
+
+    if (node.type().isSigned()) {
+      ctx.wr("VADL_sextract(")
+          .gen(node.value())
+          .wr(", %s)", bitWidth);
+    } else {
+      ctx.wr("VADL_uextract(")
+          .gen(node.value())
+          .wr(", %s)", bitWidth);
+    }
+  }
+
+  /**
+   * Generate code for {@link CppUpdateBitRangeNode}.
+   */
+  @Handler
+  public void handle(CGenContext<Node> ctx, CppUpdateBitRangeNode toHandle) {
+    var bitWidth = ((BitsType) toHandle.type()).bitWidth();
+    ctx.wr("set_bits(");
+
+    // Inst
+    ctx.wr(String.format("std::bitset<%d>(", bitWidth));
+    ctx.gen(toHandle.value);
+    ctx.wr("), ");
+
+    // New value
+    ctx.wr(String.format("std::bitset<%d>(", bitWidth));
+    ctx.gen(toHandle.patch);
+    ctx.wr(")");
+
+    // Parts
+    ctx.wr(", std::vector<int> { ");
+    ctx.wr(toHandle.field.bitSlice()
+        .stream()
+        .mapToObj(String::valueOf)
+        .collect(Collectors.joining(", ")));
+    ctx.wr(" } ");
+    ctx.wr(").to_ulong()");
   }
 
   @Override

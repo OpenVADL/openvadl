@@ -2,8 +2,10 @@
 
 define void @smalltest() {
 ; CHECK-LABEL: smalltest: # @smalltest
-; CHECK: ADDI sp,sp,-1024
-; CHECK-NEXT: ADDI sp,sp,1024
+; CHECK: ADDI a0,zero,-1024
+; CHECK-NEXT: ADD sp,sp,a0
+; CHECK-NEXT: ADDI a0,zero,1024
+; CHECK-NEXT: ADD sp,sp,a0
   %tmp = alloca [ 1024 x i8 ] , align 4
   ret void
 }
@@ -41,8 +43,8 @@ define void @test_emergency_spill_slot(i32 %a) {
 ; CHECK-NEXT: ADDI a1,a1,1408
 ; CHECK-NEXT: ADD sp,sp,a1
 ; CHECK-NEXT: ADDI a1,a0,0
-; CHECK-NEXT: LUI a0,0x4e
-; CHECK-NEXT: ADDI a2,a0,512
+; CHECK-NEXT: LUI a2,0x4e
+; CHECK-NEXT: ADDI a2,a2,512
 ; CHECK-NEXT: ADDI a0,sp,0
 ; CHECK-NEXT: ADD a0,a0,a2
 ; CHECK-NEXT: SW a1,0(a0)

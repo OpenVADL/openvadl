@@ -20,7 +20,6 @@ import vadl.cppCodeGen.AbstractRelocationCodeGenerator;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
-import vadl.cppCodeGen.mixins.CRelocationMixins;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
 import vadl.javaannotations.DispatchFor;
 import vadl.viam.graph.Node;
@@ -35,8 +34,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
     context = CNodeContext.class,
     include = "vadl.cppCodeGen.model.nodes"
 )
-public class UpdateFieldRelocationFunctionCodeGenerator extends AbstractRelocationCodeGenerator
-    implements CRelocationMixins {
+public class UpdateFieldRelocationFunctionCodeGenerator extends AbstractRelocationCodeGenerator {
   protected final String functionName;
   protected final CNodeContext context;
 

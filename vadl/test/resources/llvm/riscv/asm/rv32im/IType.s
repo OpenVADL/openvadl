@@ -4,7 +4,7 @@ ADDI x0, x1, %lo(0xFFFF)
 # CHECK: <MCInst #{{[0-9]+}} ADDI
 # CHECK-NEXT: <MCOperand Reg:2>
 # CHECK-NEXT: <MCOperand Reg:3>
-# CHECK-NEXT: <MCOperand Expr:(4095)>>
+# CHECK-NEXT: <MCOperand Expr:(-1)>>
 
 ANDI x2, x3, 0xFF
 # CHECK: <MCInst #{{[0-9]+}} ANDI

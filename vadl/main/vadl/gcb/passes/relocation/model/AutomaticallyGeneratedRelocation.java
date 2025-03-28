@@ -19,6 +19,7 @@ package vadl.gcb.passes.relocation.model;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
 import vadl.gcb.valuetypes.VariantKind;
+import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.viam.Format;
 import vadl.viam.Function;
@@ -53,7 +54,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
     var identifier = generateName(format, field, kind);
     var parameter = new Parameter(new Identifier("input",
         SourceLocation.INVALID_SOURCE_LOCATION),
-        format.type());
+        Type.signedInt(64)); // default in LLVM, otherwise we might get truncation
     var relocation = new Relocation(identifier, new Parameter[] {parameter}, format.type());
     var valueRelocation = createGcbRelocationCppFunction(relocation);
     valueRelocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
@@ -74,7 +75,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
       Function function) {
     return new GcbImmediateExtractionCppFunction(function.identifier,
         function.parameters(),
-        function.returnType(),
+        Type.signedInt(64), // default in LLVM, otherwise we might get truncation
         function.behavior());
   }
 

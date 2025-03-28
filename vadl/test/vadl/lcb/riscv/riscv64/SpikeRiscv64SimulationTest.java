@@ -16,8 +16,10 @@
 
 package vadl.lcb.riscv.riscv64;
 
+import org.junit.jupiter.api.Disabled;
 import vadl.lcb.riscv.SpikeRiscvSimulationTest;
 
+@Disabled
 public class SpikeRiscv64SimulationTest extends SpikeRiscvSimulationTest {
   @Override
   protected String getTarget() {

@@ -14,7 +14,8 @@ define fastcc i32 @callee(<16 x i32> %A) nounwind {
 define i32 @caller(<16 x i32> %A) nounwind {
 ; CHECK-LABEL: caller:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT: ADDI sp,sp,-48
+; CHECK-NEXT: ADDI t0,zero,-48
+; CHECK-NEXT: ADD sp,sp,t0
 ; CHECK-NEXT: SW ra,44(sp)                            # 4-byte Folded Spill
 ; CHECK-NEXT: LW t0,76(sp)
 ; CHECK-NEXT: SW t0,28(sp)
@@ -35,8 +36,6 @@ define i32 @caller(<16 x i32> %A) nounwind {
 ; CHECK-NEXT: LUI ra,%hi(callee)
 ; CHECK-NEXT: JALR ra,%lo(callee)(ra)
 ; CHECK-NEXT: LW ra,44(sp)                            # 4-byte Folded Reload
-; CHECK-NEXT: ADDI sp,sp,48
-; CHECK-NEXT: JALR zero,0(ra)
 	%C = call fastcc i32 @callee(<16 x i32> %A)
 	ret i32 %C
 }

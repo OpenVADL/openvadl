@@ -30,9 +30,9 @@ public final class TableGenImmediateOperandRenderer {
    */
   public static String lower(TableGenImmediateRecord operand) {
     var rawType = operand.rawType();
-    int highestPossibleValue =
+    var highestPossibleValue =
         GenerateValueRangeImmediatePass.highestPossibleValue(operand.formatFieldBitSize(), rawType);
-    int lowestPossibleValue =
+    var lowestPossibleValue =
         GenerateValueRangeImmediatePass.lowestPossibleValue(operand.formatFieldBitSize(), rawType);
     return String.format("""
             class %s<ValueType ty> : Operand<ty>
