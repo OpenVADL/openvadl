@@ -94,6 +94,7 @@ public class Abi extends Definition {
   private final PseudoInstruction addressSequence;
   private final Alignment stackAlignment;
   private final List<CompilerInstruction> constantSequences;
+  private final List<CompilerInstruction> registerAdjustmentSequences;
 
   /**
    * This property is stricter than `stackAlignment` because it
@@ -124,7 +125,8 @@ public class Abi extends Definition {
              Alignment stackAlignment,
              Alignment transientStackAlignment,
              Map<RegisterFile, Abi.Alignment> registerFileAlignment,
-             List<CompilerInstruction> constantSequences
+             List<CompilerInstruction> constantSequences,
+             List<CompilerInstruction> registerAdjustmentSequences
   ) {
     super(identifier);
     this.returnAddress = returnAddress;
@@ -144,6 +146,7 @@ public class Abi extends Definition {
     this.transientStackAlignment = transientStackAlignment;
     this.registerFileAlignment = registerFileAlignment;
     this.constantSequences = constantSequences;
+    this.registerAdjustmentSequences = registerAdjustmentSequences;
   }
 
   @Override
@@ -221,6 +224,10 @@ public class Abi extends Definition {
   }
 
   public List<CompilerInstruction> constantSequences() {
+    return constantSequences;
+  }
+
+  public List<CompilerInstruction> registerAdjustmentSequences() {
     return constantSequences;
   }
 }

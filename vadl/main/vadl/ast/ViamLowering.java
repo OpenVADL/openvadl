@@ -348,7 +348,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             ));
 
     var constantSequences = definition.definitions
-        .stream().filter(x -> x instanceof AbiSequenceDefinition)
+        .stream().filter(x -> x instanceof AbiSequenceDefinition abiSequenceDefinition
+          && abiSequenceDefinition.kind == AbiSequenceDefinition.SeqKind.CONSTANT)
+        .map(x -> (CompilerInstruction) fetch(x).orElseThrow())
+        .toList();
+
+    var registerAdjustmentSequences = definition.definitions
+        .stream().filter(x -> x instanceof AbiSequenceDefinition abiSequenceDefinition
+            && abiSequenceDefinition.kind == AbiSequenceDefinition.SeqKind.REGISTER)
         .map(x -> (CompilerInstruction) fetch(x).orElseThrow())
         .toList();
 
@@ -369,7 +376,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         Abi.Alignment.DOUBLE_WORD,
         Abi.Alignment.DOUBLE_WORD,
         registerFileAlignment,
-        constantSequences
+        constantSequences,
+        registerAdjustmentSequences
     ));
   }
 

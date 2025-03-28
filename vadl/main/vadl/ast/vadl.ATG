@@ -90,6 +90,7 @@ TOKENS
   T_VAL         = "Val".
 
   ADDRESS      = "address".
+  ADJUSTMENT   = "adjustment".
   ALIAS        = "alias".
   APPEND       = "append".
   APPLICATION  = "application".
@@ -874,7 +875,10 @@ PRODUCTIONS
 
   abiSequenceDef<out Definition def>                         (. var start = lookaheadLoc(); .)
   =                                                          (. AbiSequenceDefinition.SeqKind kind = null; .)
-  CONSTANT                                                   (. kind = AbiSequenceDefinition.SeqKind.CONSTANT; .)
+  (
+    CONSTANT                                                 (. kind = AbiSequenceDefinition.SeqKind.CONSTANT; .)
+    | REGISTER ADJUSTMENT                                    (. kind = AbiSequenceDefinition.SeqKind.REGISTER; .)
+  )
   SEQUENCE                                                   (. List<Parameter> params = new ArrayList<>(); .)
   [ parameters<.out params.> ]
   SYM_EQ
