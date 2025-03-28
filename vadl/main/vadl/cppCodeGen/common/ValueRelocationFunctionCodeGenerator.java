@@ -111,6 +111,17 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractRelocationCode
   }
 
   @Override
+  public String genFunctionDefinition() {
+    var returnNode = getSingleNode(function().behavior(), ReturnNode.class);
+    context().wr(genFunctionSignature())
+        .wr(" {\n")
+        .wr("   return VADL_sextract(")
+        .gen(returnNode.value())
+        .wr(", %d);\n}", function.returnType().asDataType().bitWidth());
+    return builder().toString();
+  }
+
+  @Override
   public CNodeContext context() {
     return context;
   }
