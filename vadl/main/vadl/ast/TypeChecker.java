@@ -1833,8 +1833,8 @@ public class TypeChecker
         throw new IllegalStateException("Don't handle operator " + expr.operator());
       }
 
-      if (!(rightTyp instanceof UIntType || rightTyp instanceof BitsType) &&
-          !canImplicitCast(rightTyp, closestUIntType)) {
+      if (!(rightTyp instanceof UIntType || rightTyp instanceof BitsType)
+          && !canImplicitCast(rightTyp, closestUIntType)) {
         throw Diagnostic.error("Type Missmatch", expr)
             .locationNote(expr, "The right type must be unsigned but is %s", rightTyp)
             .build();
@@ -2923,7 +2923,7 @@ public class TypeChecker
 
   @Override
   public Void visit(RaiseStatement statement) {
-    throwUnimplemented(statement);
+    check(statement.statement);
     return null;
   }
 
@@ -2953,7 +2953,25 @@ public class TypeChecker
 
   @Override
   public Void visit(MatchStatement statement) {
-    throwUnimplemented(statement);
+    var candidateType = check(statement.candidate);
+    for (var kase : statement.cases) {
+      kase.patterns.forEach(this::check);
+      kase.patterns.replaceAll(p -> wrapImplicitCast(p, candidateType));
+      for (var pattern : kase.patterns) {
+        var patternType = pattern.type();
+        if (!candidateType.equals(patternType)) {
+          throw Diagnostic.error("Type Mismatch", pattern)
+              .locationDescription(pattern, "Expected `%s`, but got `%s`", candidateType,
+                  patternType)
+              .note("The type of the candidate and the pattern must be the same.")
+              .build();
+        }
+        check(kase.result);
+      }
+    }
+    if (statement.defaultResult != null) {
+      check(statement.defaultResult);
+    }
     return null;
   }
 
