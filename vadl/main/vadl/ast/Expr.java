@@ -1707,7 +1707,8 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     FormatDefinition.BitRange computedFormatFieldBitRange;
 
     /**
-     * If the subcall is status access, this field tells which index in the status type the field is.
+     * If the subcall is status access, this field tells which index in the status type the
+     * field is.
      */
     @Nullable
     public Integer computedStatusIndex;
