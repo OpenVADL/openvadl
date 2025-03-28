@@ -25,11 +25,11 @@ import java.util.Map;
 import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.GcbExpandPseudoInstructionCppFunction;
-import vadl.lcb.passes.pseudo.AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass;
+import vadl.lcb.passes.pseudo.AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.utils.ConstantSequencesProvider;
+import vadl.lcb.template.utils.AbiSequencesProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
 import vadl.viam.CompilerInstruction;
@@ -81,7 +81,20 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
       Specification specification,
       Map<CompilerInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions
   ) {
-    return ConstantSequencesProvider.getSupportedCompilerInstructions(specification)
+    return AbiSequencesProvider.constantSequences(specification)
+        .map(x -> new RenderedCompilerInstruction(
+            ensureNonNull(cppFunctions.get(x), "cppFunction must exist")
+                .functionName().lower(),
+            x
+        )).toList();
+  }
+
+
+  private List<RenderedCompilerInstruction> registerAdjustmentSequences(
+      Specification specification,
+      Map<CompilerInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions
+  ) {
+    return AbiSequencesProvider.registerAdjustmentSequences(specification)
         .map(x -> new RenderedCompilerInstruction(
             ensureNonNull(cppFunctions.get(x), "cppFunction must exist")
                 .functionName().lower(),
@@ -99,19 +112,24 @@ public class EmitMCInstExpanderHeaderFilePass extends LcbTemplateRenderingPass {
     var cppFunctionsForAbiConstantSequenceCompilerInstructions =
         (IdentityHashMap<CompilerInstruction, GcbExpandPseudoInstructionCppFunction>)
             passResults.lastResultOf(
-                AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass.class);
+                AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass.class);
 
     var pseudoInstructions =
         pseudoInstructions(specification, passResults, cppFunctionsForPseudoInstructions);
     var constantSequences =
         constantSequences(specification, cppFunctionsForAbiConstantSequenceCompilerInstructions);
+    var registerAdjustmentSequences =
+        registerAdjustmentSequences(specification,
+            cppFunctionsForAbiConstantSequenceCompilerInstructions);
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "compilerInstructionHeaders",
         Stream.concat(
             pseudoInstructions.stream().map(e -> e.header).toList().stream(),
-            constantSequences.stream().map(e -> e.header).toList().stream()
-        ).toList()
+            Stream.concat(
+                constantSequences.stream().map(e -> e.header).toList().stream(),
+                registerAdjustmentSequences.stream().map(e -> e.header).toList().stream()
+            )).toList()
     );
   }
 }

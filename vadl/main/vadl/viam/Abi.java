@@ -228,6 +228,6 @@ public class Abi extends Definition {
   }
 
   public List<CompilerInstruction> registerAdjustmentSequences() {
-    return constantSequences;
+    return registerAdjustmentSequences;
   }
 }

@@ -33,8 +33,8 @@ import vadl.viam.Specification;
 /**
  * Generate {@link TableGenCompilerInstruction} from {@link LlvmLoweringRecord.Compiler}.
  */
-public class GenerateTableGenConstantMatInstructionRecordPass extends Pass {
-  public GenerateTableGenConstantMatInstructionRecordPass(GeneralConfiguration configuration) {
+public class GenerateTableGenAbiSequenceInstructionRecordPass extends Pass {
+  public GenerateTableGenAbiSequenceInstructionRecordPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 

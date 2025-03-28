@@ -105,6 +105,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private final IdentityHashMap<Parameter, vadl.viam.Parameter>
       parameterCache = new IdentityHashMap<>();
   private int constantMatSequence = 0;
+  private int registerAdjustmentSequence = 0;
 
   @LazyInit
   private vadl.viam.Specification currentSpecification;
@@ -217,20 +218,35 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(AbiSequenceDefinition definition) {
-    if (definition.kind == AbiSequenceDefinition.SeqKind.CONSTANT) {
-      var parameters = definition.params.stream()
-          .map(parameter -> {
-            var viamParam = new vadl.viam.Parameter(
-                generateIdentifier(parameter.name.name, parameter.name.location()),
-                getViamType(parameter.typeLiteral.type()));
-            parameterCache.put(parameter, viamParam);
-            return viamParam;
-          })
-          .toArray(vadl.viam.Parameter[]::new);
+    var parameters = definition.params.stream()
+        .map(parameter -> {
+          var viamParam = new vadl.viam.Parameter(
+              generateIdentifier(parameter.name.name, parameter.name.location()),
+              getViamType(parameter.typeLiteral.type()));
+          parameterCache.put(parameter, viamParam);
+          return viamParam;
+        })
+        .toArray(vadl.viam.Parameter[]::new);
 
+    if (definition.kind == AbiSequenceDefinition.SeqKind.CONSTANT) {
       var astIdentifier = new Identifier("constMat" + constantMatSequence, definition.loc);
       var viamIdentifier = generateIdentifier("constMat" + constantMatSequence, definition.loc);
       constantMatSequence++;
+      var graph = new BehaviorLowering(this).getInstructionSequenceGraph(
+          astIdentifier, definition);
+
+      return Optional.of(
+          new CompilerInstruction(
+              viamIdentifier,
+              parameters,
+              graph
+          ));
+    } else if (definition.kind == AbiSequenceDefinition.SeqKind.REGISTER) {
+      var astIdentifier =
+          new Identifier("registerAdjustment" + registerAdjustmentSequence, definition.loc);
+      var viamIdentifier =
+          generateIdentifier("registerAdjustment" + registerAdjustmentSequence, definition.loc);
+      registerAdjustmentSequence++;
       var graph = new BehaviorLowering(this).getInstructionSequenceGraph(
           astIdentifier, definition);
 
@@ -349,7 +365,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     var constantSequences = definition.definitions
         .stream().filter(x -> x instanceof AbiSequenceDefinition abiSequenceDefinition
-          && abiSequenceDefinition.kind == AbiSequenceDefinition.SeqKind.CONSTANT)
+            && abiSequenceDefinition.kind == AbiSequenceDefinition.SeqKind.CONSTANT)
         .map(x -> (CompilerInstruction) fetch(x).orElseThrow())
         .toList();
 

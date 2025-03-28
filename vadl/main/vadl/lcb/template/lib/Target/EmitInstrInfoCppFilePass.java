@@ -16,7 +16,8 @@
 
 package vadl.lcb.template.lib.Target;
 
-import static vadl.lcb.template.utils.ConstantSequencesUtil.createConstantSequences;
+import static vadl.lcb.template.utils.AbiSequencesUtil.createConstantSequences;
+import static vadl.lcb.template.utils.AbiSequencesUtil.createRegisterAdjustment;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
@@ -327,6 +328,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     map.put("isAsCheapAsMove",
         areAsCheapAsMove(fieldUsages, new Database(passResults, specification)));
     map.put("constantSequences", createConstantSequences(specification));
+    map.put("registerAdjustmentSequences", createRegisterAdjustment(specification));
 
     return map;
   }

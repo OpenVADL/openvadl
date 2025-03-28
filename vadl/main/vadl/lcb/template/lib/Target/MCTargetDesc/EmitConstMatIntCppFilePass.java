@@ -16,22 +16,15 @@
 
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
-import static vadl.lcb.template.utils.ConstantSequencesUtil.createConstantSequences;
+import static vadl.lcb.template.utils.AbiSequencesUtil.createConstantSequences;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.template.Renderable;
-import vadl.types.BitsType;
-import vadl.viam.CompilerInstruction;
 import vadl.viam.Specification;
 
 /**

@@ -32,12 +32,12 @@ import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.lcb.codegen.expansion.CompilerInstructionExpansionCodeGenerator;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
-import vadl.lcb.passes.pseudo.AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass;
+import vadl.lcb.passes.pseudo.AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.utils.ConstantSequencesProvider;
+import vadl.lcb.template.utils.AbiSequencesProvider;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.lcb.template.utils.PseudoInstructionProvider;
 import vadl.pass.PassResults;
@@ -112,7 +112,26 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       PassResults passResults,
       GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
       IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords) {
-    return ConstantSequencesProvider.getSupportedCompilerInstructions(specification)
+    return AbiSequencesProvider.constantSequences(specification)
+        .map(pseudoInstruction -> renderPseudoInstruction(cppFunctions, fieldUsages,
+            relocations,
+            passResults,
+            pseudoInstruction,
+            variantKindStore,
+            machineInstructionRecords))
+        .toList();
+  }
+
+
+  private List<RenderedInstruction> registerAdjustmentSequences(
+      Specification specification,
+      Map<CompilerInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
+      IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
+      List<HasRelocationComputationAndUpdate> relocations,
+      PassResults passResults,
+      GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
+      IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords) {
+    return AbiSequencesProvider.registerAdjustmentSequences(specification)
         .map(pseudoInstruction -> renderPseudoInstruction(cppFunctions, fieldUsages,
             relocations,
             passResults,
@@ -163,10 +182,10 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         (IdentityHashMap<CompilerInstruction, GcbExpandPseudoInstructionCppFunction>)
             passResults.lastResultOf(
                 PseudoExpansionFunctionGeneratorPass.class);
-    var cppFunctionsForAbiConstantSequenceCompilerInstructions =
+    var cppFunctionsForAbiSequences =
         (IdentityHashMap<CompilerInstruction, GcbExpandPseudoInstructionCppFunction>)
             passResults.lastResultOf(
-                AbiConstantSequenceCompilerInstructionExpansionFunctionGeneratorPass.class);
+                AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass.class);
 
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
@@ -183,14 +202,20 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             passResults, output.variantKindStore(), machineInstructionRecords);
 
     var constantSequences =
-        constantSequences(specification, cppFunctionsForAbiConstantSequenceCompilerInstructions,
+        constantSequences(specification, cppFunctionsForAbiSequences,
+            fieldUsages, relocations, passResults,
+            output.variantKindStore(), machineInstructionRecords);
+
+    var registerAdjustmentSequences =
+        registerAdjustmentSequences(specification, cppFunctionsForAbiSequences,
             fieldUsages, relocations, passResults,
             output.variantKindStore(), machineInstructionRecords);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "compilerInstructions", Stream.concat(pseudoInstructions.stream(),
-            constantSequences.stream()).toList()
+                Stream.concat(constantSequences.stream(), registerAdjustmentSequences.stream()))
+            .toList()
     );
   }
 }

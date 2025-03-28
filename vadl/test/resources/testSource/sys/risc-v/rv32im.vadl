@@ -91,7 +91,7 @@ application binary interface ABI for RV32IM = {
      ADDI{ rd = rd, rs1 = 0, imm = imm }
   }
 
-  register adjustment sequence( rd : Bits<5>, rs1: Bits<5> imm : SInt<12> ) =
+  register adjustment sequence( rd : Bits<5>, rs1: Bits<5>, imm : SInt<12> ) =
   {
      ADDI{ rd = rd, rs1 = rs1, imm = imm }
   }
