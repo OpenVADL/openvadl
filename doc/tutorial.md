@@ -175,17 +175,19 @@ On line 17 a \ac{MiA} named `FiveStage` is defined for the \ac{ISA} `RV64IM` (se
 
 \listing{constants_literals, Constants and Literals}
 ~~~{.vadl}
-constant size    = 32                                 // 32
-constant twice   = size * 2                           // 64
-constant binsize = 0b10'0000                          // 32
-constant min1one = 0xffff'ffff'ffff'ffff as SInt<64>  // -1 as SInt<64>
-constant min1two : SInt<64> = -1                      // -1 as SInt<64>
+constant size    = 32                                 // value: 32
+constant twice   = size * 2                           // value: 64
+constant binsize = 0b10'0000                          // value: 32
+constant min1one = 0xffff'ffff'ffff'ffff as SInt<64>  // value: -1 as SInt<64>
+constant min1two : SInt<64> = -1                      // value: -1 as SInt<64>
 ~~~
 \endlisting
 
 Constant definitions start with the keyword `constant` followed by the name of the constant, an optional type after the colon symbol `":"`, the equal symbol `"="` and an expression which has to be evaluated at parse time (see Listing \r{constants_literals}).
-The evaluation of the expression is done with a signed integer type with unlimited size (internaly the parser uses a Java `BigInteger` type for the evaluation).
+The evaluation of the expression is done with a signed integer type with unlimited size (internally the parser uses a Java `BigInteger` type for the evaluation).
 Therefore, the constant `twice` as expected has the value `64`.
+The constants `min1one` and `min1two` are of the fixed size type `SInt<64>`.
+They cannot be used in expressions with unlimited size any more, the expression evaluaton is done on type `SInt<64>` and the operands must have the type `SInt<64>`.
 
 Literals can also be specified as binary or hexadecimal numbers.
 A single quote symbol can be inserted into numbers to make them more readable.
@@ -194,14 +196,35 @@ Equally to the constant `min1two` the constant `min1one` has the value minus one
 
 \listing{constants_expressions, Constant Expressions}
 ~~~{.vadl}
-constant val32   = 32                                 // 32
-constant addEx1  = val32 + 32                         // 64
-constant addEx2  = VADL::add(val32, 32)               // 64
-constant letEx   = let val32 = 32 in val32 + 32       // 64
-constant ifEx    = if val32 = 32 then 5 else 6        // 5
-constant matchEx = match val32 with {32 => 5, _ => 6} // 5
+constant size    = 32                                 // value: 32
+constant addEx1  = size + 32                          // value: 64
+constant addEx2  = VADL::add(size, 32)                // value: 64
+constant letEx   = let size = 16 in size + 16         // value: 32
+constant ifEx    = if letEx = 32 then 5 else 6        // value: 5
+constant matchEx = match letEx with {32 => 5, _ => 6} // value: 5
+constant width   = match true with                    // value: 5
+                     { size = 32 => 5
+                     , size > 32 => 6,
+                     _           => 4}
 ~~~
 \endlisting
+
+Constant expressions can be quite complex, they can contain function calls, `let`, `if` and `match` expressions.
+The definition of `addEx2` in Listing \r{constants_expressions} shows the call of the function `add` from the `VADL` builtin namespace.
+This is equivalent to the usage of the `"+"` operator in the definition of `addEx1`.
+A `let` expression defines the binding of an expression to a name.
+The name then can be used in the expression after the keyword `in`.
+In the constant definition of `letEx` the value `16` is bound to the name `size` which is used in the addition `size + 16` after `in`.
+VADL has nested scoping of name spaces.
+A `let` expression starts a new scope.
+Therefore, the definition of `size` in the `let` expression hides the definition of the constant `size` in line 1 of Listing \r{constants_expressions}.
+An `if` expression can be used in a constant definition if the condition can be evaluated at parse time.
+An `if` expression always needs an `else` part.
+As `letEx` has the value `32` the value of `ifEx` is `5`.
+A `match` expression can be used to specify a multi way selection.
+The expression after the keyword `match` is checked for equality with a list of expressions after the keyword `with` included in braces and separated by a comma symbol `","`.
+The expression which matches first is selected and the result of the evaluated expression after the arrow symbol `"=>"` is the result of the whole `match` expression.
+A `match` expression must contain a catch all expression (denoted by the underscore symbol `"_"`) as last entry.
 
 
 ### Enumerations
