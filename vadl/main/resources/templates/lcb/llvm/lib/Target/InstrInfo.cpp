@@ -210,23 +210,6 @@ void [(${namespace})]InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, Mac
     llvm_unreachable("Can't load this register from stack slot");
 }
 
-std::vector<int> splitNumber(int number)
-{
-    std::vector<int> parts;
-    auto max = pow(2, [(${additionImmSize})] - 1) - 1;
-
-    number = abs(number);
-    while (number >= max)
-    {
-        parts.push_back(max);
-        number -= max;
-    }
-
-    parts.push_back(number);
-
-    return parts;
-}
-
 bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, const DebugLoc &DL, Register DestReg, Register SrcReg, int64_t Val, MachineInstr::MIFlag Flag) const
 {
     MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
@@ -236,14 +219,26 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
         return false; // success
     }
 
+    [# th:each="cons,iterStat : ${registerAdjustmentSequences}" ]
+    [#th:block th:if="${!iterStat.first}"]else[/th:block] if(Val >= [(${cons.lowestValue})] && Val <= [(${cons.highestValue})]) {
+      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${cons.instruction})]))
+          .addReg(DestReg, RegState::Define)
+          .addReg(SrcReg)
+          .addImm(Val)
+          .setMIFlag(Flag);
+
+      return false;
+    }
+    [/]
+
     Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::[(${additionRegisterFile})]RegClass);
 
     [# th:each="cons,iterStat : ${constantSequences}" ]
     [#th:block th:if="${!iterStat.first}"]else[/th:block] if(Val >= [(${cons.lowestValue})] && Val <= [(${cons.highestValue})]) {
      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${cons.instruction})]))
-                .addReg(ScratchReg, RegState::Define)
-                .addImm(Val)
-                .setMIFlag(Flag);
+          .addReg(ScratchReg, RegState::Define)
+          .addImm(Val)
+          .setMIFlag(Flag);
     }
     [/]
 
