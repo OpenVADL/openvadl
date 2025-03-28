@@ -25,10 +25,16 @@ import vadl.types.BitsType;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Specification;
 
+/**
+ * Utility class.
+ */
 public class ConstantSequencesUtil {
 
 
-  record ConstantSequence(CompilerInstruction instruction,
+  /**
+   * Helper record to construct constant sequences.
+   */
+  public record ConstantSequence(CompilerInstruction instruction,
                           boolean isSigned,
                           long highestValue,
                           long lowestValue) implements Renderable {
@@ -44,9 +50,12 @@ public class ConstantSequencesUtil {
     }
   }
 
+  /**
+   * Create constant sequences from abi.
+   */
   public static List<ConstantSequence> createConstantSequences(Specification specification) {
     var abi = specification.abi().orElseThrow();
-    var constantSequences = abi.constantSequences()
+    return abi.constantSequences()
         .stream().map(x -> {
           var param = x.getLargestParameter();
           var ty = (BitsType) param.type().asDataType();
@@ -67,6 +76,5 @@ public class ConstantSequencesUtil {
           return b1 - b2;
         })
         .toList();
-    return constantSequences;
   }
 }
