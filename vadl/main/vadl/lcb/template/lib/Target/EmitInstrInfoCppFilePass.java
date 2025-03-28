@@ -16,7 +16,6 @@
 
 package vadl.lcb.template.lib.Target;
 
-import static vadl.error.Diagnostic.error;
 import static vadl.lcb.template.utils.ConstantSequencesUtil.createConstantSequences;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
@@ -48,7 +47,6 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Definition;
-import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterFile;
@@ -220,14 +218,6 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
             "Compiler generator requires a pseudo instruction for an unconditional jump",
             specification.sourceLocation()
         ));
-  }
-
-  private void verifyInstructionHasOnlyOneImm(Instruction addition, List<Format.Field> fields) {
-    ensure(fields.size() == 1, () -> error(
-        "The compiler requires an addition with immediate with only one immediate. "
-            + "The detected instruction has zero or more than one.",
-        addition.sourceLocation())
-    );
   }
 
   record BranchInstruction(String name, /* size of the immediate */ int bitWidth) implements
