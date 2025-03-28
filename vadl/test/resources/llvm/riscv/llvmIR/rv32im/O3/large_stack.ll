@@ -2,8 +2,10 @@
 
 define void @smalltest() {
 ; CHECK-LABEL: smalltest: # @smalltest
-; CHECK: ADDI sp,sp,-1024
-; CHECK-NEXT: ADDI sp,sp,1024
+; CHECK: ADDI a0,zero,-1024
+; CHECK-NEXT: ADD sp,sp,a0
+; CHECK-NEXT: ADDI a0,zero,1024
+; CHECK-NEXT: ADD sp,sp,a0
   %tmp = alloca [ 1024 x i8 ] , align 4
   ret void
 }

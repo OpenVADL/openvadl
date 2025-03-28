@@ -115,8 +115,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
       String operandName,
       String decodeMethod,
       String predicateMethod,
-      int lowestValue,
-      int highestValue,
+      long lowestValue,
+      long highestValue,
       int opIndex
   ) implements Renderable {
 

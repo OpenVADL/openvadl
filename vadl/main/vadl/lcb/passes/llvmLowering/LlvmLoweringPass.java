@@ -386,7 +386,10 @@ public class LlvmLoweringPass extends Pass {
 
             var instAliases = instAliases(machineRecords, fieldUsages, pseudo);
             var record =
-                strategy.lowerInstruction(abi, instAliases, pseudo, labelledMachineInstructions);
+                strategy.lowerInstruction(abi,
+                    instAliases,
+                    pseudo,
+                    labelledMachineInstructions);
 
             record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(pseudo,
                 llvmLoweringIntermediateResult));
@@ -406,7 +409,9 @@ public class LlvmLoweringPass extends Pass {
 
     abi.constantSequences().forEach(compilerInstruction -> {
       for (var strategy : compilerStrategies) {
-        var record = strategy.lowerInstruction(compilerInstruction, labelledMachineInstructions);
+        var record =
+            strategy.lowerInstruction(compilerInstruction,
+                labelledMachineInstructions);
 
         record.ifPresent(llvmLoweringIntermediateResult -> tableGenRecords.put(compilerInstruction,
             llvmLoweringIntermediateResult));

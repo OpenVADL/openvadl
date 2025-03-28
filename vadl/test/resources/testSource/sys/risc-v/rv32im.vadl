@@ -82,8 +82,8 @@ application binary interface ABI for RV32IM = {
 
   constant sequence( rd : Bits<5>, val : UInt<32> ) =
   {
-        LUI { rd = rd, imm = hi( val ) }
-        ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
+     LUI { rd = rd, imm = hi( val ) }
+     ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
   }
 
   constant sequence( rd : Bits<5>, imm : SInt<12> ) =

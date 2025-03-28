@@ -30,6 +30,11 @@ public abstract class DataType extends Type {
   public abstract int bitWidth();
 
   /**
+   * Bitwidth but without sign bit.
+   */
+  public abstract int useableBitWidth();
+
+  /**
    * Checks if this type can be trivially cast to another type,
    * such that the bit representation must not be changed in any way.
    *

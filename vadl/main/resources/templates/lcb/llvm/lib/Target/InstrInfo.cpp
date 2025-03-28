@@ -236,56 +236,23 @@ bool [(${namespace})]InstrInfo::adjustReg(MachineBasicBlock &MBB, MachineBasicBl
         return false; // success
     }
 
-    // Quick Check to avoid a register allocation
-    if(Val >= [(${additionImmLowestValue})] && Val <= [(${additionImmHighestValue})]) {
-      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImm})]))
-            .addReg(DestReg, RegState::Define)
-            .addReg(SrcReg)
-            .addImm(Val)
-            .setMIFlag(Flag);
-        return false; // success
-    }
-
-    auto Seq = [(${namespace})]MatInt::generateInstSeq(Val);
     Register ScratchReg = MRI.createVirtualRegister(&[(${namespace})]::[(${additionRegisterFile})]RegClass);
 
-    if(Seq.size() == 1) {
-      // If the sequence contains only instruction then it is ADDI.
-      // In that case, we need to reset the scratch register.
-      BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${additionImm})]))
-        .addReg(ScratchReg, RegState::Define)
-        .addReg([(${namespace})]::[(${additionRegisterFile})][(${zeroRegisterIndex})])
-        .addImm(0)
-        .setMIFlag(Flag);
+    [# th:each="cons,iterStat : ${constantSequences}" ]
+    [#th:block th:if="${!iterStat.first}"]else[/th:block] if(Val >= [(${cons.lowestValue})] && Val <= [(${cons.highestValue})]) {
+     BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${cons.instruction})]))
+                .addReg(ScratchReg, RegState::Define)
+                .addImm(Val)
+                .setMIFlag(Flag);
     }
+    [/]
 
-    for ([(${namespace})]MatInt::Inst &Inst : Seq) {
-      auto desc = get(Inst.getOpcode());
-
-      if(desc.getNumOperands() == 2) {
-        // LUI
-        // Then we need to set ScratchRegister as RegState::Define
-        BuildMI(MBB, MBBI, DL, get(Inst.getOpcode()))
-          .addReg(ScratchReg, RegState::Define)
-          .addImm(Inst.getImm())
-          .setMIFlag(Flag);
-      }
-      else if(desc.getNumOperands() == 3) {
-        // ADDI or SLLI do not redefine the value in the ScratchRegister.
-        BuildMI(MBB, MBBI, DL, get(Inst.getOpcode()), ScratchReg)
-          .addReg(ScratchReg)
-          .addImm(Inst.getImm())
-          .setMIFlag(Flag);
-      }
-    }
-
-    // Finally, add ScratchRegister to DestReg.
     BuildMI(MBB, MBBI, DL, get([(${namespace})]::[(${addition})]), DestReg)
       .addReg(SrcReg, RegState::Kill)
       .addReg(ScratchReg, RegState::Kill)
       .setMIFlag(Flag);
 
-    return false; // success
+    return false;
 }
 
 MachineBasicBlock *[(${namespace})]InstrInfo::getBranchDestBlock(const MachineInstr &MI) const {

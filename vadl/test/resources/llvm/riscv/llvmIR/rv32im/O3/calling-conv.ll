@@ -5,7 +5,8 @@
 define void @callee() nounwind {
 ; CHECK-LABEL: callee:
 ; CHECK: # %bb.0:
-; CHECK-NEXT: ADDI sp,sp,-144
+; CHECK-NEXT: ADDI a0,zero,-144
+; CHECK-NEXT: ADD sp,sp,a0
 ; CHECK-NEXT: SW ra,140(sp)                           # 4-byte Folded Spill
 ; CHECK-NEXT: SW s1,136(sp)                           # 4-byte Folded Spill
 ; CHECK-NEXT: SW s2,132(sp)                           # 4-byte Folded Spill
@@ -142,7 +143,8 @@ define void @callee() nounwind {
 ; CHECK-NEXT: LW s2,132(sp)                           # 4-byte Folded Reload
 ; CHECK-NEXT: LW s1,136(sp)                           # 4-byte Folded Reload
 ; CHECK-NEXT: LW ra,140(sp)                           # 4-byte Folded Reload
-; CHECK-NEXT: ADDI sp,sp,144
+; CHECK-NEXT: ADDI a0,zero,144
+; CHECK-NEXT: ADD sp,sp,a0
 ; CHECK-NEXT: JALR zero,0(ra)
   %val = load [32 x i32], ptr @var
   call void @callee()

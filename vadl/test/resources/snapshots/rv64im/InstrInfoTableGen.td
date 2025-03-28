@@ -3645,7 +3645,7 @@ def BEQZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs );
+let InOperandList = ( ins X:$rs, bare_symbol:$offset );
 
 let isTerminator  = 1;
 let isBranch      = 1;
@@ -3671,7 +3671,7 @@ def BGEZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs );
+let InOperandList = ( ins X:$rs, bare_symbol:$offset );
 
 let isTerminator  = 1;
 let isBranch      = 1;
@@ -3697,7 +3697,7 @@ def BGTZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs );
+let InOperandList = ( ins X:$rs, bare_symbol:$offset );
 
 let isTerminator  = 1;
 let isBranch      = 1;
@@ -3723,7 +3723,7 @@ def BLEZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs );
+let InOperandList = ( ins X:$rs, bare_symbol:$offset );
 
 let isTerminator  = 1;
 let isBranch      = 1;
@@ -3749,7 +3749,7 @@ def BLTZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs );
+let InOperandList = ( ins X:$rs, bare_symbol:$offset );
 
 let isTerminator  = 1;
 let isBranch      = 1;
@@ -3775,7 +3775,7 @@ def BNEZ : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs );
+let InOperandList = ( ins X:$rs, bare_symbol:$offset );
 
 let isTerminator  = 1;
 let isBranch      = 1;
@@ -4144,7 +4144,7 @@ def constMat2 : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins  );
+let InOperandList = ( ins bare_symbol:$imm );
 
 let isTerminator  = 0;
 let isBranch      = 0;

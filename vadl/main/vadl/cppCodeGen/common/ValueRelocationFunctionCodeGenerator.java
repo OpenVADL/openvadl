@@ -22,7 +22,6 @@ import vadl.cppCodeGen.AbstractRelocationCodeGenerator;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
-import vadl.cppCodeGen.mixins.CRelocationMixins;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.javaannotations.DispatchFor;
@@ -39,8 +38,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
     context = CNodeContext.class,
     include = "vadl.cppCodeGen.model.nodes"
 )
-public class ValueRelocationFunctionCodeGenerator extends AbstractRelocationCodeGenerator
-    implements CRelocationMixins {
+public class ValueRelocationFunctionCodeGenerator extends AbstractRelocationCodeGenerator {
   protected final String functionName;
   protected final Options options;
   protected final CNodeContext context;
@@ -110,11 +108,6 @@ public class ValueRelocationFunctionCodeGenerator extends AbstractRelocationCode
     return (isStatic ? "static " : "") + CppTypeMap.getCppTypeNameByVadlType(returnType)
         + " %s(%s)".formatted(functionName, genFunctionParameters(function.parameters()))
         + (isConst ? " const" : "");
-  }
-
-  public String genReturnExpression() {
-    var returnNode = getSingleNode(function.behavior(), ReturnNode.class);
-    return context.genToString(returnNode.value());
   }
 
   @Override

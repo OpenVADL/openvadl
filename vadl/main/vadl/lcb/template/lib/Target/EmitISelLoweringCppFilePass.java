@@ -202,8 +202,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         new Query.Builder().machineInstructionLabelGroup(
             MachineInstructionLabelGroup.CONDITIONAL_INSTRUCTIONS).build());
 
-    var smallest = Integer.MAX_VALUE;
-    var highest = Integer.MIN_VALUE;
+    var smallest = Long.MAX_VALUE;
+    var highest = Long.MIN_VALUE;
 
     for (var instruction : queryResult.machineInstructions()) {
       var valueRangeCtx = instruction.extension(ValueRangeCtx.class);
