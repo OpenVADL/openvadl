@@ -38,8 +38,7 @@ define i32 @rotr_32(i32 %x, i32 %y) nounwind {
 define i64 @rotl_64(i64 %x, i64 %y) nounwind {
 ; CHECK-LABEL: rotl_64:
 ; CHECK: # %bb.0:
-; CHECK-NEXT: ADDI a3,zero,-32
-; CHECK-NEXT: ADD sp,sp,a3
+; CHECK-NEXT: ADDI sp,sp,-32
 ; CHECK-NEXT: SW ra,28(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: SW s1,24(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: SW s2,20(sp) # 4-byte Folded Spill
@@ -67,6 +66,8 @@ define i64 @rotl_64(i64 %x, i64 %y) nounwind {
 ; CHECK-NEXT: LW s2,20(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: LW s1,24(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: LW ra,28(sp) # 4-byte Folded Reload
+; CHECK-NEXT: ADDI sp,sp,32
+; CHECK-NEXT: JALR zero,0(ra)
   %z = sub i64 64, %y
   %b = shl i64 %x, %y
   %c = lshr i64 %x, %z
@@ -77,8 +78,7 @@ define i64 @rotl_64(i64 %x, i64 %y) nounwind {
 define i64 @rotr_64(i64 %x, i64 %y) nounwind {
 ; CHECK-LABEL: rotr_64:
 ; CHECK: # %bb.0:
-; CHECK-NEXT: ADDI a3,zero,-32
-; CHECK-NEXT: ADD sp,sp,a3
+; CHECK-NEXT: ADDI sp,sp,-32
 ; CHECK-NEXT: SW ra,28(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: SW s1,24(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: SW s2,20(sp) # 4-byte Folded Spill
@@ -106,6 +106,8 @@ define i64 @rotr_64(i64 %x, i64 %y) nounwind {
 ; CHECK-NEXT: LW s2,20(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: LW s1,24(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: LW ra,28(sp) # 4-byte Folded Reload
+; CHECK-NEXT: ADDI sp,sp,32
+; CHECK-NEXT: JALR zero,0(ra)
   %z = sub i64 64, %y
   %b = lshr i64 %x, %y
   %c = shl i64 %x, %z
@@ -216,8 +218,7 @@ define i32 @rotr_32_mask_or_64_or_32(i32 %x, i32 %y) nounwind {
 define i64 @rotl_64_mask(i64 %x, i64 %y) nounwind {
 ; CHECK-LABEL: rotl_64_mask:
 ; CHECK: # %bb.0:
-; CHECK-NEXT: ADDI a3,zero,-32
-; CHECK-NEXT: ADD sp,sp,a3
+; CHECK-NEXT: ADDI sp,sp,-32
 ; CHECK-NEXT: SW ra,28(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: SW s1,24(sp) # 4-byte Folded Spill
 ; CHECK-NEXT: SW s2,20(sp) # 4-byte Folded Spill
@@ -245,6 +246,8 @@ define i64 @rotl_64_mask(i64 %x, i64 %y) nounwind {
 ; CHECK-NEXT: LW s2,20(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: LW s1,24(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: LW ra,28(sp) # 4-byte Folded Reload
+; CHECK-NEXT: ADDI sp,sp,32
+; CHECK-NEXT: JALR zero,0(ra)
   %z = sub i64 0, %y
   %and = and i64 %z, 63
   %b = shl i64 %x, %y
