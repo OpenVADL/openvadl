@@ -29,8 +29,6 @@ import vadl.viam.Specification;
  * Utility class.
  */
 public class ConstantSequencesUtil {
-
-
   /**
    * Helper record to construct constant sequences.
    */
