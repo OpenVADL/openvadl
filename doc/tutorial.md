@@ -223,13 +223,55 @@ An `if` expression always needs an `else` part.
 As `letEx` has the value `32` the value of `ifEx` is `5`.
 A `match` expression can be used to specify a multi way selection.
 The expression after the keyword `match` is checked for equality with a list of expressions after the keyword `with` included in braces and separated by a comma symbol `","`.
-The expression which matches first is selected and the result of the evaluated expression after the arrow symbol `"=>"` is the result of the whole `match` expression.
+The expressions in the list are evaluated sequentially, the expression which matches first is selected and the result of the evaluated expression after the arrow symbol `"=>"` gives the result of the whole `match` expression.
 A `match` expression must contain a catch all expression (denoted by the underscore symbol `"_"`) as last entry.
+In `if` and `match` expressions the types of the different alternatives must be identical.
 
 
 ### Enumerations
 
-### Typ Definitions (using)
+\listing{enumerations, Enumerations (RISC-V control and status register indices)}
+~~~{.vadl}
+enumeration CsrDef : Bits<12> =   // defined control and status register indices
+  { ustatus                       //  0 0x000  User mode restricted view of mstatus
+  , uie      =   4                //  4 0x004  User mode Interrupt Enable
+  , utvec                         //  5 0x005  User mode Trap VECtor base address
+  , uscratch =  64                // 64 0x040  User mode SCRATCH
+  , uepc                          // 65 0x041  User mode Exception Program Counter
+  , ucause   =  CsrDef::uepc + 1  // 66 0x042  User mode exception CAUSE
+  , utval                         // 67 0x043  User mode Trap VALue
+  }
+~~~
+\endlisting
+
+Enumerations are used to assign names to expressions in an own name space.
+An enumeration is defined by the keyword `enumeration` followed by the name of the enumeration, an optional type after the colon symbol `":"` and an equality symbol `"="`.
+Then follows a list of names enclosed in braces and separated by a comma symbol `","`.
+The first name has the value `0`, every further name has the value of its predecessor incremented by one.
+Optionally a constant expression can be assigned to the name after the equality symbol `"="`.
+Line 7 of Listing \r{enumerations} shows the use of an enumeration element with the added name space in front separated by `"::"` to the name.
+
+
+### Type Definitions (using)
+
+\listing{using, Type Definitions (using)}
+~~~{.vadl}
+using Bits32    = Bits<32>       // a 32 bit vector
+using Vector4   = Bits32<4>      // a 4 element vector of bit vectors 32 bit wide
+using Matrix2   = Vector4<2>     // a 2 element times 4 element matrix of bit vectors 32 bit wide
+using Matrix2_4 = Bits<2><4><16> // the same as above
+using SInt32    = SInt<32>       // a 32 bit two's complement signed integer
+using UInt32    = UInt<32>       // a 32 bit unsigned integer
+~~~
+\endlisting
+
+The type system is explained in detail in the reference manual (see Section \r{langref_type_system}).
+In VADL it is possible to define bit vectors of arbitrary length.
+The basic types are Bits, SInt and UInt which can be used to form vectors.
+Types are defined by the keyword `using` followed by the name of the type, the equality symbol `"="` and the type literal.
+The type literal is comprised of a name optionally followed by a number of vector sizes in angle brackets.
+Listing \r{using} shows some type definitions and their meaning in the comments.
+
 
 ### Functions
 
