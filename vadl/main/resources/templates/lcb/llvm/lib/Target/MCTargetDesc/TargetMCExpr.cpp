@@ -158,5 +158,12 @@ int64_t [(${namespace})]MCExpr::evaluateAsInt64(int64_t Value) const
       }
     [/]
 
+    [# th:each="decodeMapping : ${decodeMappings}" ]
+      if(Kind == [(${decodeMapping.variantKind})])
+      {
+        resultValue = [(${decodeMapping.decodeFunction})](resultValue);
+      }
+    [/]
+
     return resultValue;
 }

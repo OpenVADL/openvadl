@@ -17,11 +17,9 @@
 package vadl.lcb.template.utils;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
 import vadl.pass.PassResults;
-import vadl.utils.Pair;
 import vadl.viam.Format;
 
 /**
@@ -35,10 +33,6 @@ public class ImmediateDecodingFunctionProvider {
       PassResults passResults) {
     return ((CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass.Output)
         passResults.lastResultOf(CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass.class))
-        .byField()
-        .entrySet()
-        .stream()
-        .map(x -> new Pair<>(x.getKey(), x.getValue()))
-        .collect(Collectors.toMap(Pair::left, Pair::right));
+        .byField();
   }
 }

@@ -25,7 +25,6 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -165,7 +164,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         var argumentImmSymbol = symbolTable.getNextVariable();
 
         var variants =
-            variantKindStore.absoluteVariantKindsByAutomaticGeneratedRelocationAndField(field);
+            variantKindStore.decodeVariantKindsByField(field);
 
         ensure(variants.size() == 1, () -> Diagnostic.error(
             "There are unexpectedly multiple variant kinds for the pseudo expansion available.",

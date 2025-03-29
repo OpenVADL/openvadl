@@ -76,6 +76,16 @@ public record VariantKind(String value, String human, boolean isImmediate) imple
         "SYMB_PCREL_" + field.identifier.lower(), true);
   }
 
+
+  /**
+   * Create a variant kind for a field access to be used as mapping for the decoding function.
+   */
+  public static VariantKind decode(Format.FieldAccess fieldAccess) {
+    return new VariantKind(
+        "VK_DECODE_" + fieldAccess.identifier.lower(),
+        "DECODE_" + fieldAccess.identifier.lower(), true);
+  }
+
   @Override
   public Map<String, Object> renderObj() {
     return Map.of(
