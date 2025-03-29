@@ -437,7 +437,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleNOT(BuiltInCall input) {
-    // do nothing
+    truncateResult(input);
   }
 
   @Override
