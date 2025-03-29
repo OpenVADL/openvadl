@@ -47,12 +47,38 @@ OpenVADL includes some third party libraries. Some packages are linked with
 the generated artifacts. The following table lists the libraries and packages
 with their licence information:
 
-|      license               | package name and description                             |
-|:--------------------------:|:---------------------------------------------------------|
-| GNU version 2, BSD, MIT    | QEMU - quick emulator                                    |
-| Apache 2.0 with exceptions | LLVM - compiler infra structure                          |
-| Apache License 2.0         | picocli - a mighty tiny command line interface           |
-| BSD 2-Clause               | svg-pan-zoom - simple pan/zoom solution for SVGs in HTML |
+|          license           | package name and description                             | repository                                             |
+|:--------------------------:|:---------------------------------------------------------|:-------------------------------------------------------|
+|  GNU version 2, BSD, MIT   | QEMU - quick emulator                                    | https://gitlab.com/qemu-project/qemu                   |
+| Apache 2.0 with exceptions | LLVM - compiler infra structure                          | https://github.com/llvm/llvm-project                   |
+| GNU General Public License | CocoR - a parser generator                               | https://www.ssw.uni-linz.ac.at/Research/Projects/Coco/ |
+|     Apache License 2.0     | picocli - a mighty tiny command line interface           | https://github.com/remkop/picocli                      |
+|     Apache License 2.0     | Thymeleaf - template rendering engine                    | https://github.com/thymeleaf/thymeleaf                 |
+|     Apache License 2.0     | Guava - Google Core Library for Java                     | https://github.com/google/guava                        |
+|     Apache License 2.0     | Apache Commons Compress - (de)compression library        | https://github.com/apache/commons-compress             |
+|     Apache License 2.0     | Apache Commons Lang - Java utility classes               | https://github.com/apache/commons-lang                 |
+|     Apache License 2.0     | Apache Commons IO - io utility library                   | https://github.com/apache/commons-io                   |
+|          LGPL 2.1          | Logback - logging library for Java                       | https://github.com/qos-ch/logback                      |
+|        ISC License         | d3 - free, open-source javascript visualization library  | https://github.com/d3/d3                               |
+|        BSD 3-Clause        | d3-graphviz - render DOT graphs with d3 using graphviz   | https://github.com/magjac/d3-graphviz                  |
+|        BSD 2-Clause        | svg-pan-zoom - simple pan/zoom solution for SVGs in HTML | https://github.com/bumbu/svg-pan-zoom                  |
+|        MIT License         | tailwindcss - a css class library                        | https://github.com/tailwindlabs/tailwindcss/tree/main  |
+|        MIT License         | flowbite - tailwind component library                    | https://github.com/themesberg/flowbite                 |
+|     Apache License 2.0     | Error Prone - compile time analysis tool                 | https://github.com/google/error-prone                  |
+|        MIT License         | NullAway - static null checking for java                 | https://github.com/uber/NullAway                       |
+
+### Test Libraries
+
+|      license       | package name and description                        | repository                                            |
+|:------------------:|:----------------------------------------------------|:------------------------------------------------------|
+|      EPL 2.0       | JUnit 5 - Java testing framework                    | https://github.com/junit-team/junit5                  |
+| Apache License 2.0 | AssertJ - assertion collection                      | https://github.com/assertj/assertj                    |
+| Apache License 2.0 | ArchUnit - project architecture testing             | https://github.com/TNG/ArchUnit                       |
+| Apache License 2.0 | Availability - Java DSL for testing async processes | https://github.com/awaitility/awaitility              |
+|    MIT License     | Testcontainers - containerized testing library      | https://github.com/testcontainers/testcontainers-java |
+|      EPL 2.0       | JQWIK - property based testing                      | https://github.com/jqwik-team/jqwik                   |
+| Apache License 2.0 | Apache Velocity - macro processing engine           | https://github.com/apache/velocity-engine             |
+| Apache License 2.0 | Snakeyaml - yaml processor                          | https://bitbucket.org/snakeyaml/snakeyaml             |
 
 Andreas Krall and the OpenVADL team
 
