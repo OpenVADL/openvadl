@@ -40,6 +40,7 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
+import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmMachineInstructionUtil;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
@@ -106,6 +107,9 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         () -> Diagnostic.error("Cannot find semantics of the instructions",
             specification.sourceLocation()))
         .labels();
+    var coverageSummary =
+        (ISelLoweringOperationActionPass.CoverageSummary) passResults.lastResultOf(
+            ISelLoweringOperationActionPass.class);
     var hasCMove32 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_32);
     var hasCMove64 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_64);
     var conditionalMove = getConditionalMove(hasCMove32, hasCMove64, labelledMachineInstructions);
@@ -140,6 +144,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         findHighModifier(addi, linkerInformation, fieldUsages).value());
     map.put("addImmediateLowModifier",
         findLowModifier(addi, linkerInformation, fieldUsages).value());
+    map.put("expandableDagNodes", coverageSummary.notCoveredSelectionDagNodes());
     return map;
   }
 

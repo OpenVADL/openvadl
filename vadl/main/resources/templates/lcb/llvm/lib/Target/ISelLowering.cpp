@@ -52,15 +52,13 @@ void [(${namespace})]TargetLowering::anchor() {}
         setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
     }
     setOperationAction(ISD::BR_JT, MVT::Other, Expand);
-    setOperationAction(ISD::ROTR, MVT::i32, Expand);
-    setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
-    setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
-    setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
-    setOperationAction(ISD::BSWAP, MVT::i32, Expand);
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
     setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
     setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
-    setOperationAction({ISD::ROTL, ISD::ROTR}, MVT::[(${stackPointerType})], Expand);
+
+    [# th:each="x : ${expandableDagNodes}" ]
+    setOperationAction(ISD::[(${x.isdName})], MVT::[(${x.mvt.value})], Expand);
+    [/]
 
     for (auto N : {ISD::EXTLOAD, ISD::SEXTLOAD, ISD::ZEXTLOAD}) {
         setLoadExtAction(N, MVT::[(${stackPointerType})], MVT::i1, Promote);
