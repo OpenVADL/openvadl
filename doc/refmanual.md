@@ -3,13 +3,14 @@
 ## General Language Features
 
 ## Type System
+
 \lbl{langref_type_system}
 
 \ac{VADL}'s type system is inspired by the type system of the hardware construction language Chisel.
-The main two primitive data types are `Bool` and `Bits<`\f$N\f$`>`.
+The main two primitive data types are `Bool` and `Bits<N>`.
 `Bool` represents Boolean typed data (see Section \r{refman_literals}).
 A vector is defined by appending the length of the vector in angle brackets to a type.
-`Bits<`\f$N\f$`>` represents an arbitrary bit vector type of length \f$N\f$.
+`Bits<N>` represents an arbitrary bit vector type of length \f$N\f$.
 
 Indexing is used to acces an element of a vector.
 The index is enclosed in parantheses.
@@ -20,7 +21,8 @@ The lowest index is zero, the highest index is the length minus one.
 
 Multiple elements of a bit vector can be extracted by slicing.
 In \ac{VADL} the most significant bit -- the bit with the highest index -- comes first.
-With slicing a range of indices is specified by the higher index connected to the lower index by the range symbol `..` surrounded by parantheses.
+With slicing a range of indices is specified by the higher index connected to the lower index by the range symbol `..`
+surrounded by parentheses.
 The index can be any expression which can be evaluated to a constant value during parsing of a \ac{VADL} specification.
 Multiple indices and ranges can be combined in a single slice specification by separating indices and ranges by a comma.
 The following examples show different ways for the specification of slices:
@@ -33,15 +35,19 @@ a(3..0,11..8)      // reversed order to above example
 a(16-1,5+1..0)     // concatenates the highest bit with the 7 lowest bits
 ```
 
-To express explicitly signed and unsigned arithmetic operations \ac{VADL} provides two sub-types of `Bits<`\f$N\f$`>` -- `SInt<`\f$N\f$`>` and `UInt<`\f$N\f$`>`.
-`SInt<`\f$N\f$`>` represents a signed two's complement integer type of length \f$N\f$. 
+To express explicitly signed and unsigned arithmetic operations \ac{VADL} provides two sub-types of `Bits<N>` --
+`SInt<N>` and `UInt<N>`.
+`SInt<N>` represents a signed two's complement integer type of length \f$N\f$.
 The length \f$N\f$ includes both the sign-bit and data bits.
-`UInt<`\f$N\f$`>` represents an unsigned integer type of length \f$N\f$.
+`UInt<N>` represents an unsigned integer type of length \f$N\f$.
 
-For all bit-vector based types `Bits`, `SInt` and `UInt` \ac{VADL} will try to infer the bit size from the surrounding usage.
+For all bit-vector based types `Bits`, `SInt` and `UInt` \ac{VADL} will try to infer the bit size from the surrounding
+usage.
 But for definitions, a concrete bit size has to be specified in order to determine the actual size of, e.g., a register.
-In contrast to Chisel the size of the resulting bit vector of an operation is identical to the size of the source operands.
-An exception is multiplication where two versions are available, one with a result with the same size and one with a double sized result.
+In contrast to Chisel the size of the resulting bit vector of an operation is identical to the size of the source
+operands.
+An exception is multiplication where two versions are available, one with a result with the same size and one with a
+double sized result.
 
 An additional `String` type is available which only can be used in an assembly specification and the macro system.
 
@@ -50,50 +56,52 @@ There is no change in the bit vector representation if the size of source and re
 The bit vector is truncated if the result type is smaller than the source type.
 A truncating cast to `Bool` is defined as a comparison with zero:
 
-`Bits<`\f$N\f$`> as Bool`, \f$N\f$ ` > 1` \f$\Rightarrow\f$ `Bits<`\f$N\f$`> != 0` \n 
-`SInt<`\f$N\f$`> as Bool`, \f$N\f$ ` > 1` \f$\Rightarrow\f$ `SInt<`\f$N\f$`> != 0` \n 
-`UInt<`\f$N\f$`> as Bool`, \f$N\f$ ` > 1` \f$\Rightarrow\f$ `UInt<`\f$N\f$`> != 0` 
+`Bits<N> as Bool, N > 1 => Bits<N> != 0` \n
+`SInt<N> as Bool, N > 1 => SInt<N> != 0` \n
+`UInt<N> as Bool, N > 1 => UInt<N> != 0`
 
 The vector is sign or zero extended if the result type is larger than the source type.
 
 Zero or sign extension is defined by the following explicit type casting rules:
 
-`Bits<`\f$N\f$`> as Bits<`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ zero extension \n 
-`Bits<`\f$N\f$`> as UInt<`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ zero extension \n 
-`Bits<`\f$N\f$`> as SInt<`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ sign extension
+`Bits<N> as Bits<M>, M > N => zero extension` \n
+`Bits<N> as UInt<M>, M > N => zero extension` \n
+`Bits<N> as SInt<M>, M > N => sign extension`
 
+`UInt<N> as Bits<M>, M > N => zero extension` \n
+`UInt<N> as UInt<M>, M > N => zero extension` \n
+`UInt<N> as SInt<M>, M > N => zero extension`
 
-`UInt<`\f$N\f$`> as Bits`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ zero extension \n 
-`UInt<`\f$N\f$`> as UInt`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ zero extension \n 
-`UInt<`\f$N\f$`> as SInt`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ zero extension
+`SInt<N> as Bits<M> , M > N => sign extension` \n
+`SInt<N> as UInt<M> , M > N => sign extension` \n
+`SInt<N> as SInt<M> , M > N => sign extension`
 
-`SInt<`\f$N\f$`> as Bits`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ sign extension \n 
-`SInt<`\f$N\f$`> as UInt`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ sign extension \n 
-`SInt<`\f$N\f$`> as SInt`\f$M\f$`>`, \f$M\f$`>`\f$N\Rightarrow\f$ sign extension
-
-If a `Bool` is casted to a bit vector with a length larger than `1`, `false` is represented as `0` and `true` is represented as `1` which is equivalent to zero extension.
+If a `Bool` is casted to a bit vector with a length larger than `1`, `false` is represented as `0` and `true` is
+represented as `1` which is equivalent to zero extension.
 For `Bool` and bit vectors with the same length the following implicit type casting rules apply:
 
-`Bits<1>` \f$\Longleftrightarrow\f$ `Bool`
+`Bits<1> <=> Bool`
 
-`SInt<`\f$N\f$`>` \f$\Longleftrightarrow\f$ `Bits<`\f$N\f$`>` \n 
-`UInt<`\f$N\f$`>` \f$\Longleftrightarrow\f$ `Bits<`\f$N\f$`>`
+`SInt<N> <=> Bits<N>` \n
+`UInt<N> <=> Bits<N>`
 
 For arithmetic operations and bitwise operations except shift and rotate \ac{VADL} supports the following implicit
-type casting rules from `Bits<`\f$N\f$`>`:
+type casting rules from `Bits<N>`:
 
-`SInt<`\f$N\f$`> o SInt<`\f$N\f$`> -> SInt<`\f$N\f$`>` \n 
-`SInt<`\f$N\f$`> o Bits<`\f$N\f$`> -> SInt<`\f$N\f$`>` \n 
-`Bits<`\f$N\f$`> o SInt<`\f$N\f$`> -> SInt<`\f$N\f$`>`
- 
-`UInt<`\f$N\f$`> o UInt<`\f$N\f$`> -> UInt<`\f$N\f$`>` \n 
-`UInt<`\f$N\f$`> o Bits<`\f$N\f$`> -> UInt<`\f$N\f$`>` \n 
-`Bits<`\f$N\f$`> o UInt<`\f$N\f$`> -> UInt<`\f$N\f$`>` 
+`SInt<N> o SInt<N> -> SInt<N>` \n
+`SInt<N> o Bits<N> -> SInt<N>` \n
+`Bits<N> o SInt<N> -> SInt<N>`
+
+`UInt<N> o UInt<N> -> UInt<N>` \n
+`UInt<N> o Bits<N> -> UInt<N>` \n
+`Bits<N> o UInt<N> -> UInt<N>`
 
 ### Literals and Type Inference
+
 \lbl{refman_literals}
 
-For the type `Bool` there exist the two boolean literals `true` (value `1` as `Bits<1>`) and `false` (value `0` as `Bits<1>`).
+For the type `Bool` there exist the two boolean literals `true` (value `1` as `Bits<1>`) and `false` (value `0` as
+`Bits<1>`).
 
 Binary and hexadecimal literals are of the type `Bits` with the number of
 digits representing the length of a bit vector. Leading zeros are counted
@@ -102,6 +110,7 @@ start with `0x`. The apostrophe can be used to make the representation
 more comprehensible (see Listing \r{lst_literals}).
 
 \listing{lst_literals, VADL Binary and Decimal Literals}
+
 ~~~{.vadl}
 constant binLit = 0b1'0011       // has the value 19 and is of type Bits<5>
 constant hexLit = 0x000f         // has the value 15 and is of type Bits<16>
@@ -111,6 +120,7 @@ constant decEx  = 4 * 3 + 1      // has the value 13 and is of type SInt<*>
 
 constant bitEx  = binLit + decEx // has the value  0 and is of type Bits<5>
 ~~~
+
 \endlisting
 
 Decimal literals represent signed integers with an arbitrary length, they can
@@ -120,8 +130,8 @@ Listing \r{lst_literals} the constant `bitEx` is of type `Bits<5>` as `binLit`
 is of type `Bits<5>` and the decimal value `13` of `decEx` then also is implicitly
 casted to `Bits<5>` and the addition of these two numbers gives `0`.
 
-
 ### Tensors
+
 \lbl{refman_tensors}
 
 Tensors are multi-dimensional arrays with a uniform type.
@@ -140,6 +150,7 @@ OpenVADL currently supports slicing only for bit vectors (the innermost dimensio
 In the future it is planned to allow slicing on the higher dimension levels too.
 
 \listing{lst_tensordef, VADL Tensor Definitions and Usage}
+
 ~~~{.vadl}
 using Dim_1_a = Bits<16>
 using Dim_2_a = Dim_1_a<4>
@@ -176,10 +187,11 @@ instruction instr2 : F =
     X(3) := Z(63..48)                  // are the identical bits
 }
 ~~~
+
 \endlisting
 
-
 ## Expressions and Operator Precedence
+
 \lbl{expr_precedence}
 
 The behavior of instructions is described by expressions consisting of operations on bit vectors.
@@ -187,24 +199,24 @@ These operations can be selected either using binary and unary operators or by c
 To avoid excessive usage of parantheses an operator precedence inspired by `C++` has been defined as shown in the
 following table (operators with lower precedence level bind stronger):
 
-|precedence|      symbols     |       |
-|:--------:|:----------------:|:------|
-|    16    | `.`              | dot, ordered sequence in group expression
-|    15    | `,`              | comma, set union for operation, unordered sequence in group\n expression, always in `{` `}`
-|    14    | `..`             | range in bit fields, range in group expressions
-|    13    | \|\|             | logical or
-|    12    | `&&`             | logical and
-|    11    | `∈ ∉ in !in`     | set operators (if `&` is intersection, `,` is union, `>=` and `<=` are subset)
-|    10    | \|               | bitwise or, alternative in group expression or assembly grammar
-|     9    | `^`              | bitwise exclusive or
-|     8    | `&`              | bitwise and, intersection in set expression
-|     7    | `= !=`           | equality operators
-|     6    | `< <= > >=`      | relational operators
-|     5    | `<< >> <<> <>>`  | shift left, shift right, rotate left, rotate right
-|     4    | `+ - +`\| ` -`\| | addition, subtraction, with saturation
-|     3    | `* / % *#`       | multiply, divide, modulo, multiply with double wide result
-|     2    | `as`             | type cast
-|     1    | `- ~ !`          | negate, bitwise not, logical not (unary operators)
+| precedence |     symbols      |                                                                                             |
+|:----------:|:----------------:|:--------------------------------------------------------------------------------------------|
+|     16     |       `.`        | dot, ordered sequence in group expression                                                   |
+|     15     |       `,`        | comma, set union for operation, unordered sequence in group\n expression, always in `{` `}` |
+|     14     |       `..`       | range in bit fields, range in group expressions                                             |
+|     13     |       \|\|       | logical or                                                                                  |
+|     12     |       `&&`       | logical and                                                                                 |
+|     11     |   `∈ ∉ in !in`   | set operators (if `&` is intersection, `,` is union, `>=` and `<=` are subset)              |
+|     10     |        \|        | bitwise or, alternative in group expression or assembly grammar                             |
+|     9      |       `^`        | bitwise exclusive or                                                                        |
+|     8      |       `&`        | bitwise and, intersection in set expression                                                 |
+|     7      |      `= !=`      | equality operators                                                                          |
+|     6      |   `< <= > >=`    | relational operators                                                                        |
+|     5      | `<< >> <<> <>>`  | shift left, shift right, rotate left, rotate right                                          |
+|     4      | `+ - +`\| ` -`\| | addition, subtraction, with saturation                                                      |
+|     3      |    `* / % *#`    | multiply, divide, modulo, multiply with double wide result                                  |
+|     2      |       `as`       | type cast                                                                                   |
+|     1      |     `- ~ !`      | negate, bitwise not, logical not (unary operators)                                          |
 
 In \ac{VADL} additionally to expressions on bit vectors there are expressions in the assembly grammar
 which use the `"|"` operator and regular expressions for defining groups for \ac{VLIW} architectures
@@ -217,10 +229,11 @@ Many of them can be accessed by using binary or unary operators, all others have
 in the built-in name space `VADL`.
 Listing \r{math_status_example} shows a let expression which uses binary infix operators (`infixExpr`),
 an equivalent second let expression which uses function calls (`callExpr`) and a third let expression
-which calls a built-in function with a double result, the result of the operation
+which calls a built-in function with a double result, the result of the operation,
 and a bit field structure with the status bits for this operation (`result, status`).
 
 \listing{math_status_example, Arithmetic with Status Flags}
+
 ~~~{.vadl}
 let infixExpr = X(5) + X(6) * 2 in {}
 let callExpr  = VADL::add( X(5), VADL::mul(X(6), 2)) in {}
@@ -234,15 +247,16 @@ let result, status = VADL::adds( X(5), X(6) ) in {
   // 'status.negative' contains the negative flag as 'Bool' type
 }
 ~~~
+
 \endlisting
 
 All pre-defined built-in functions define the actual semantics of the available \ac{VADL} operations.
 Each available unary or infix operator maps to the corresponding built-in function.
 
 The complete list of the supported built-in functions is given in Listings \r{basic_math_arithmetic},
-\r{basic_math_logical},  \r{basic_math_comparison}, \r{basic_math_shifting} and \r{basic_math_bit_counting}.
+\r{basic_math_logical}, \r{basic_math_comparison}, \r{basic_math_shifting} and \r{basic_math_bit_counting}.
 
-Some built-ins have a carry (e.g. `addc`) and carry with status (e.g. `adds`) version in order to
+Some built-ins have a carry (e.g. `addc`) and carry with status (e.g. `adds`) version to
 represent ternary operations where the carry is part of the mathematical operation.
 While the carry flag is well-defined for addition, there are two common ways to use the carry flag
 for subtraction operations.
@@ -262,6 +276,7 @@ The 6502 is a particularly well-known example because it does not have a subtrac
 so programmers must ensure that the carry flag is set before every subtract operation where a borrow is not required.
 
 \listing{basic_math_arithmetic, VADL Arithmetic Operations}
+
 ~~~{.vadl}
 function neg ( a : Bits<N> ) -> Bits<N> // <=> -a
 
@@ -316,10 +331,13 @@ function umod ( a : UInt<N>, b : UInt<N> ) -> UInt<N> // <=> a % b
 function smods( a : SInt<N>, b : SInt<N> ) -> ( SInt<N>, Status )
 function umods( a : UInt<N>, b : UInt<N> ) -> ( UInt<N>, Status )
 ~~~
+
 \endlisting
 
 ## Logical Operations
+
 \listing{basic_math_logical, VADL Logical Operations}
+
 ~~~{.vadl}
 function not ( a : Bits<N> ) -> Bits<N> // <=> ~a, !a if N == 1 or Bool
 
@@ -332,10 +350,13 @@ function xors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )
 function or ( a : Bits<N>, b : Bits<N> ) -> Bits<N>  // <=> a | b, a || b if N ==1 or Bool
 function ors( a : Bits<N>, b : Bits<N> ) -> ( Bits<N>, Status )
 ~~~
+
 \endlisting
 
 ## Comparison Operation
+
 \listing{basic_math_comparison, VADL Arithmetic Comparison Operations}
+
 ~~~{.vadl}
 function equ ( a : Bits<N>, b : Bits<N> ) -> Bool // <=> a = b
 function neq ( a : Bits<N>, b : Bits<N> ) -> Bool // <=> a != b
@@ -353,25 +374,30 @@ function ugth ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a > b
 function sgeq ( a : SInt<N>, b : SInt<N> ) -> Bool // <=> a >= b 
 function ugeq ( a : UInt<N>, b : UInt<N> ) -> Bool // <=> a >= b  
 ~~~
+
 \endlisting
 
 ## Shift and Rotate Operations
 
 Listing \r{basic_math_shifting} lists the primitives for shift and rotate operations.
-Shift and rotate operations move the bits of operand `a` left or right by the number of bits specified by operand `b % N` of type `UInt<M>`.
+Shift and rotate operations move the bits of operand `a` left or right by the number of bits specified by operand
+`b % N` of type `UInt<M>`.
 Shift operations to the left fill the low bit positions with zeros and operand `a` and the result are of type `Bits<N>`.
-Shift operations to the right fill the high bit positions with the sign bit for arithmetic shifts (`SInt`) and with zeros for logical shifts (`UInt`).
+Shift operations to the right fill the high bit positions with the sign bit for arithmetic shifts (`SInt`) and with
+zeros for logical shifts (`UInt`).
 `M` has to be smaller or equal to `N`.
 
 For instructions which set the status register (`*s`, `*c`, `rrx`) the carry flag is set to the last bit shifted out.
 The carry flag is unchanged if the shift/rotate amount is `0`.
 
 Rotate left (right) provides the operand `a` rotated by a variable number of bits.
-The bits that are rotated off the left (right) end are inserted into the vacated bit positions on the right (left). 
+The bits that are rotated off the left (right) end are inserted into the vacated bit positions on the right (left).
 Rotate right with extend ( `rrx`) moves the bits of a register to the right by one bit.
-It copies the carry flag into the highest bit position of the result and sets the carry flag to lowest bit position of operand `a`.
+It copies the carry flag into the highest bit position of the result and sets the carry flag to lowest bit position of
+operand `a`.
 
 \listing{basic_math_shifting, VADL Shifting Operations}
+
 ~~~{.vadl}
 M <= N
 function lsl ( a : Bits<N>, b : UInt<M> ) -> Bits<N> // <=> a << b
@@ -394,11 +420,13 @@ function rors( a : Bits<N>, b : UInt<M> ) -> ( Bits<N>, Status )
 function rorc( a : Bits<N>, b : UInt<M>, c : Bool ) -> ( Bits<N>, Status )
 function rrx ( a : Bits<N>, c : Bool ) -> Bits<N>
 ~~~
+
 \endlisting
 
-
 ## Bit Counting Operations
+
 \listing{basic_math_bit_counting, VADL Bit Counting Operations}
+
 ~~~{.vadl}
 function cob( a : Bits<N> ) -> UInt<N> // counting one bits
 function czb( a : Bits<N> ) -> UInt<N> // counting zero bits
@@ -406,4 +434,5 @@ function clz( a : Bits<N> ) -> UInt<N> // counting leading zeros
 function clo( a : Bits<N> ) -> UInt<N> // counting leading ones
 function cls( a : Bits<N> ) -> UInt<N> // counting leading sign bits (without sign bit)
 ~~~
+
 \endlisting
