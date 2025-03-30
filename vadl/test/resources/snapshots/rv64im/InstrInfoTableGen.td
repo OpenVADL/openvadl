@@ -3656,6 +3656,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3682,6 +3684,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3708,6 +3712,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3734,6 +3740,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3760,6 +3768,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3786,6 +3796,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3812,6 +3824,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 1;
+let isReMaterializable = 1;
+let isAsCheapAsAMove   = 1;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3840,6 +3854,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3866,6 +3882,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3892,6 +3910,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3918,6 +3938,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3944,6 +3966,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3970,6 +3994,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -3996,6 +4022,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -4022,6 +4050,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -4048,6 +4078,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -4074,6 +4106,8 @@ let isCodeGenOnly = 0;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -4103,6 +4137,8 @@ let isCodeGenOnly = 1;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -4129,6 +4165,8 @@ let isCodeGenOnly = 1;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -4155,6 +4193,8 @@ let isCodeGenOnly = 1;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
@@ -4181,6 +4221,8 @@ let isCodeGenOnly = 1;
 let mayLoad       = 0;
 let mayStore      = 0;
 let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
 
 let Constraints = "";
 let AddedComplexity = 0;
