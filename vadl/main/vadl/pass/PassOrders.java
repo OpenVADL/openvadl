@@ -75,6 +75,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenAbiSequenceInstructionRecord
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
+import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.compensation.CompensationPatternPass;
 import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPass;
@@ -219,6 +220,7 @@ public class PassOrders {
     order.add(new GenerateTableGenAbiSequenceInstructionRecordPass(configuration));
     order.add(new GenerateTableGenImmediateRecordPass(configuration));
     order.add(new CompensationPatternPass(configuration));
+    order.add(new ISelLoweringOperationActionPass(configuration));
     order.add(new GenerateLinkerComponentsPass(configuration));
 
     addHtmlDump(order, configuration,
