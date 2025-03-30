@@ -427,6 +427,24 @@ public class ConstantTests {
   }
 
   @ParameterizedTest
+  @MethodSource("concatTestSource")
+  void constantConcatenate_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
+                                                   Constant.Value expected) {
+    var actual = a.concat(b);
+    assertEquals(expected, actual);
+  }
+
+  static Stream<Arguments> concatTestSource() {
+    return Stream.of(
+        Arguments.of(bits(0b0, 1), bits(0b0, 1), bits(0b00, 2)),
+        Arguments.of(bits(0b1, 1), bits(0b1, 1), bits(0b11, 2)),
+        Arguments.of(bits(0b111, 3), bits(0b000, 3), bits(0b111000, 6)),
+        Arguments.of(bits(0b000, 3), bits(0b111, 3), bits(0b000111, 6)),
+        Arguments.of(bits(0b111, 3), bits(0b0, 1), bits(0b1110, 4))
+    );
+  }
+
+  @ParameterizedTest
   @MethodSource("lslTestSource")
   void constantLsl_shouldYieldCorrectValue(Constant.Value a, Constant.Value b,
                                            Constant.Value expected) {

@@ -26,7 +26,9 @@ import java.util.Objects;
 import java.util.function.BinaryOperator;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
+import vadl.types.BuiltInTable;
 import vadl.types.DataType;
+import vadl.types.StringType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithSourceLocation;
@@ -157,11 +159,25 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(GroupedExpr expr) {
-    if (expr.expressions.size() != 1) {
-      // FIXME: What does a `(1, 2, 3) even mean, is'nt that a tuple?
-      throw new RuntimeException("Research what to do in that case");
+    if (expr.expressions.size() == 1) {
+      return eval(expr.expressions.get(0));
     }
-    return eval(expr.expressions.get(0));
+
+    if (expr.expressions.stream().anyMatch(e -> e.type() instanceof StringType)) {
+      throw new EvaluationError("Cannot evaluate strings.", expr);
+    }
+
+    List<Constant> args = expr.expressions.stream()
+        .map(this::eval)
+        .map(ConstantValue::toViamConstant)
+        .map(c -> (Constant) c)
+        .toList();
+    var res = args.stream()
+        .reduce((a, b) -> BuiltInTable.CONCATENATE_BITS.compute(List.of(a, b)).orElseThrow())
+        .orElseThrow();
+    return ConstantValue.fromViam((Constant.Value) res);
+
+    //throw new RuntimeException("Research what to do in that case");
   }
 
   @Override

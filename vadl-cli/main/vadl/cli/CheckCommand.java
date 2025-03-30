@@ -22,6 +22,7 @@ import picocli.CommandLine.Command;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
+import vadl.viam.passes.verification.ViamVerificationPass;
 
 /**
  * The Command does provide the check subcommand.
@@ -35,6 +36,6 @@ public class CheckCommand extends BaseCommand implements Callable<Integer> {
 
   @Override
   PassOrder passOrder(GeneralConfiguration configuration) throws IOException {
-    return PassOrders.viam(configuration);
+    return PassOrders.viam(configuration).untilFirst(ViamVerificationPass.class);
   }
 }

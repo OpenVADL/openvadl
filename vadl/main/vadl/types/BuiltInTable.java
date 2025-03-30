@@ -977,7 +977,9 @@ public class BuiltInTable {
           Type.relation(BitsType.class, BitsType.class, BitsType.class))
           .takesDefault()
           .returnsFromDataTypes(args -> Type.bits(args.stream().mapToInt(DataType::bitWidth).sum()))
+          .compute(Constant.Value::concat)
           .build();
+
   /**
    * Formats the register file index.
    *

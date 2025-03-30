@@ -40,6 +40,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
+import vadl.types.StatusType;
 import vadl.types.StringType;
 import vadl.types.TupleType;
 import vadl.types.Type;
@@ -151,7 +152,7 @@ public class TypeChecker
   private Diagnostic typeMissmatchError(WithSourceLocation locatable, String expectation,
                                         Type actual) {
     return Diagnostic.error("Type Mismatch", locatable)
-        .locationDescription(locatable, "Expected `%s` but got `%s`.",
+        .locationDescription(locatable, "Expected %s but got `%s`.",
             expectation, actual)
         .build();
   }
@@ -353,9 +354,7 @@ public class TypeChecker
       Type litType = requireNonNull(definition.typeLiteral.type);
 
       if (!canImplicitCast(valType, litType)) {
-        throw Diagnostic.error("Type missmatch: expected %s, got %s".formatted(litType, valType),
-            definition.value.location()
-        ).build();
+        throw typeMissmatchError(definition.value, litType, valType);
       }
 
       // Insert a cast if needed
@@ -1834,7 +1833,8 @@ public class TypeChecker
         throw new IllegalStateException("Don't handle operator " + expr.operator());
       }
 
-      if (!(rightTyp instanceof UIntType) && !canImplicitCast(rightTyp, closestUIntType)) {
+      if (!(rightTyp instanceof UIntType || rightTyp instanceof BitsType)
+          && !canImplicitCast(rightTyp, closestUIntType)) {
         throw Diagnostic.error("Type Missmatch", expr)
             .locationNote(expr, "The right type must be unsigned but is %s", rightTyp)
             .build();
@@ -1981,8 +1981,8 @@ public class TypeChecker
     }
 
     // Bits concatination
-    if (types.stream().allMatch(x -> x instanceof BitsType)) {
-      var width = types.stream().map(t -> ((BitsType) t).bitWidth()).reduce(0, Integer::sum);
+    if (types.stream().allMatch(x -> x instanceof DataType)) {
+      var width = types.stream().map(t -> ((DataType) t).bitWidth()).reduce(0, Integer::sum);
       expr.type = Type.bits(width);
       return null;
     }
@@ -2343,31 +2343,43 @@ public class TypeChecker
       return;
     }
 
-    // Might be a format access
+
+    // Might be a format or status access
     Type type = typeBeforeSubCall;
     for (var subCall : expr.subCalls) {
       var fieldName = subCall.id.name;
-      if (!(type instanceof FormatType formatType)) {
-        // FIXME: Better error message
+      if (type instanceof FormatType formatType) {
+        check(formatType.format);
+
+        var fieldType = formatType.format.getFieldType(fieldName);
+        if (fieldType == null) {
+          var formatName = formatType.format.identifier().name;
+          throw Diagnostic.error("Unknown format field `%s`".formatted(fieldName), expr)
+              .description("Format `%s` doesn't have any field named `%s`", formatName, fieldName)
+              .build();
+        }
+
+        subCall.computedFormatFieldBitRange = formatType.format.getFieldRange(fieldName);
+        subCall.formatFieldType = fieldType;
+        visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
+        type = expr.type;
+      } else if (type instanceof StatusType) {
+        var allowedStatusfields = List.of("negative", "zero", "carry", "overflow");
+        if (!allowedStatusfields.contains(fieldName)) {
+          throw Diagnostic.error("Unknown status field `%s`".formatted(fieldName), expr)
+              .note("Allowed fields are: %s", String.join(", ", allowedStatusfields))
+              .build();
+        }
+        var fieldType = Type.bool();
+        subCall.computedStatusIndex = allowedStatusfields.indexOf(fieldName);
+        visitSliceIndexCall(expr, fieldType, subCall.argsIndices);
+        type = expr.type;
+      } else {
         throw Diagnostic.error("Cannot resolve `%s`".formatted(fieldName), expr)
             .description("Because the type up until it is not a format but `%s`",
                 requireNonNull(type))
             .build();
       }
-      check(formatType.format);
-
-      var fieldType = formatType.format.getFieldType(fieldName);
-      if (fieldType == null) {
-        var formatName = formatType.format.identifier().name;
-        throw Diagnostic.error("Unknown format field `%s`".formatted(fieldName), expr)
-            .description("Format `%s` doesn't have any field named `%s`", formatName, fieldName)
-            .build();
-      }
-
-      subCall.computedFormatFieldBitRange = formatType.format.getFieldRange(fieldName);
-      subCall.formatFieldType = fieldType;
-      visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
-      type = expr.type;
     }
   }
 
@@ -2911,7 +2923,7 @@ public class TypeChecker
 
   @Override
   public Void visit(RaiseStatement statement) {
-    throwUnimplemented(statement);
+    check(statement.statement);
     return null;
   }
 
@@ -2941,7 +2953,25 @@ public class TypeChecker
 
   @Override
   public Void visit(MatchStatement statement) {
-    throwUnimplemented(statement);
+    var candidateType = check(statement.candidate);
+    for (var kase : statement.cases) {
+      kase.patterns.forEach(this::check);
+      kase.patterns.replaceAll(p -> wrapImplicitCast(p, candidateType));
+      for (var pattern : kase.patterns) {
+        var patternType = pattern.type();
+        if (!candidateType.equals(patternType)) {
+          throw Diagnostic.error("Type Mismatch", pattern)
+              .locationDescription(pattern, "Expected `%s`, but got `%s`", candidateType,
+                  patternType)
+              .note("The type of the candidate and the pattern must be the same.")
+              .build();
+        }
+        check(kase.result);
+      }
+    }
+    if (statement.defaultResult != null) {
+      check(statement.defaultResult);
+    }
     return null;
   }
 
