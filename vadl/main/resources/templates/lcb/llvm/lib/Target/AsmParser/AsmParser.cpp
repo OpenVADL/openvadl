@@ -26,12 +26,14 @@ class [(${namespace})]AsmParser : public MCTargetAsmParser {
     return static_cast<[(${namespace})]TargetStreamer &>(TS);
 }
 
-bool ModifyImmediate(unsigned OpIndex, unsigned OpCode, StringRef OpName, [(${namespace})]ParsedOperand &Op);
+bool ModifyImmediate(unsigned OpIndex, unsigned OpCode, StringRef OpName, StringRef GrammarAttribute, [(${namespace})]ParsedOperand &Op);
 
 bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                             OperandVector &Operands, MCStreamer &Out,
                             uint64_t &ErrorInfo,
                             bool MatchingInlineAsm) override;
+
+StringRef mapGrammarAttributeToTarget(unsigned Opcode, const StringRef grammarAttribute);
 
 bool parseRegister(MCRegister &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
@@ -101,10 +103,13 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
         while( j < Operands.size() && targetMatched == false )
         {
             [(${namespace})]ParsedOperand& op = static_cast<[(${namespace})]ParsedOperand&>(*Operands[j]);
-            auto parsedTarget = op.getTarget();
+
+            StringRef parsedAttribute = op.getTarget();
+            StringRef parsedTarget = mapGrammarAttributeToTarget(Opcode, parsedAttribute);
+
             if( parsedTarget == searchTarget )
             {
-                if(!ModifyImmediate(i, Opcode, parsedTarget, op))
+                if(!ModifyImmediate(i, Opcode, parsedTarget, parsedAttribute, op))
                 {
                     return true;
                 }
@@ -125,6 +130,22 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
     Out.emitInstruction(Inst, getSTI());
 
     return false;
+}
+
+StringRef [(${namespace})]AsmParser::mapGrammarAttributeToTarget(unsigned Opcode, const StringRef grammarAttribute) {
+  switch(Opcode) {
+      [# th:each="instruction : ${instructions}" ]
+      case [(${namespace})]::[(${instruction.name})]:
+        [# th:each="fieldAccess : ${instruction.fieldAccesses}" ]
+        if (grammarAttribute.equals_insensitive("[(${fieldAccess.getKey()})]")) {
+          return "[(${fieldAccess.getValue()})]";
+        }
+        [/]
+        break;
+      [/]
+  }
+
+  return grammarAttribute;
 }
 
 bool [(${namespace})]AsmParser::parseRegister(MCRegister &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) {
@@ -191,7 +212,7 @@ void [(${namespace})]AsmParser::convertToMapAndConstraints(unsigned Kind,
                                               const OperandVector &Operands) {
 }
 
-bool [(${namespace})]AsmParser::ModifyImmediate(unsigned OpIndex, unsigned Opcode, StringRef OpName, [(${namespace})]ParsedOperand &Op)
+bool [(${namespace})]AsmParser::ModifyImmediate(unsigned OpIndex, unsigned Opcode, StringRef OpName, StringRef GrammarAttribute, [(${namespace})]ParsedOperand &Op)
 {
     if(!Op.isImm() || Op.getImm()->getKind() != MCExpr::ExprKind::Constant)
         return true;
@@ -209,8 +230,10 @@ bool [(${namespace})]AsmParser::ModifyImmediate(unsigned OpIndex, unsigned Opcod
                 Parser.Error(Op.getStartLoc(), error);
                 return false;
             }
-            [# th:if="${conversion.needsDecode}" ]
-            opImm64 = [(${conversion.decodeMethod})](opImm64);
+            [# th:if="${!#strings.isEmpty(conversion.fieldAccessName)}" ]
+            if (GrammarAttribute.equals_insensitive("[(${conversion.fieldAccessName})]")) {
+              opImm64 = [(${conversion.decodeMethod})](opImm64);
+            }
             [/]
             // check if immediate fits the provided predicate for the instruction
             if(![(${conversion.predicateMethod})](opImm64))

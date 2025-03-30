@@ -752,9 +752,9 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               result.push_back(a);
               return result;
         }
-                
-                
-                
+        
+        
+        
         std::vector<MCInst> processorNameValueMCInstExpander::registerAdjustment0_expand(const MCInst& instruction) const
         {
               std::vector< MCInst > result;
@@ -763,7 +763,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               a.addOperand(instruction.getOperand(0));
               a.addOperand(instruction.getOperand(1));
               const MCExpr* b = MCOperandToMCExpr(instruction.getOperand(2));
-              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_SYMB_ABS_RV3264I_Itype_imm, Ctx));
+              MCOperand c = MCOperand::createExpr(processorNameValueMCExpr::create(b, processorNameValueMCExpr::VariantKind::VK_DECODE_RV3264I_Itype_immS, Ctx));
               a.addOperand(c);
               result.push_back(a);
               return result;
