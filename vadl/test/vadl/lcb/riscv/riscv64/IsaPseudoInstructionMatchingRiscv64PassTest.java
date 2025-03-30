@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes;
+package vadl.lcb.riscv.riscv64;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

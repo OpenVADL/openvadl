@@ -66,7 +66,9 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.error.Diagnostic;
@@ -75,6 +77,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Counter;
 import vadl.viam.Instruction;
@@ -84,6 +87,7 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -164,119 +168,163 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
           () -> Diagnostic.error("Cannot find the uninlined graph of this instruction",
               instruction.sourceLocation()));
 
+      var ty = getType(behavior);
+
       // Some are typed and some aren't.
       // The reason is that most of the time we do not care because
       // the instruction selection will figure out the types anyway.
       // The raw cases where we need the type are typed like addition.
       if (findLui(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LUI));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LUI, ty));
       } else if (findAdd32Bit(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADD_32));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADD_32, ty));
       } else if (findAdd64Bit(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADD_64));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADD_64, ty));
       } else if (findAddWithImmediate32Bit(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_32));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_32, ty));
       } else if (findAddWithImmediate64Bit(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_64));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ADDI_64, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(SDIV, SDIVS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SDIV));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SDIV, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(UDIV, UDIVS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UDIV));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UDIV, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(SMOD, SMODS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SMOD));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SMOD, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(UMOD, UMODS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UMOD));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.UMOD, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior, SUB)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUB));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUB, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(SUBB, SUBSB))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUBB));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUBB, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(SUBC, SUBSC))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUBC));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SUBC, ty));
       } else if (findRegisterRegisterOrRegisterImmediateOrImmediateRegister(behavior,
           List.of(AND, ANDS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.AND));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.AND, ty));
       } else if (findRR(behavior, List.of(OR, ORS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.OR));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.OR, ty));
       } else if (findRR_MultiplicationHigh(behavior, Set.of(SMULL, SMULLS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MULHS));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MULHS, ty));
       } else if (findRR_MultiplicationHigh(behavior, Set.of(UMULL, UMULLS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MULHU));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MULHU, ty));
       } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(OR, ORS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ORI));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.ORI, ty));
       } else if (findRR(behavior, List.of(XOR, XORS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.XOR));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.XOR, ty));
       } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(XOR, XORS))) {
         // Here is an exception:
         // Usually, it is good enough to group RR and RI together.
         // However, when generating alternative patterns for conditionals,
         // then we need the XORI instruction. Therefore, we put it extra.
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.XORI));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.XORI, ty));
       } else if (findRR_Mul(behavior, List.of(MUL, MULS, SMULL, SMULLS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MUL));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.MUL, ty));
       } else if (findRR(behavior, List.of(LSL, LSLS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLL));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLL, ty));
       } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(LSL, LSLS))
           /* the `hasNot` constraints are to differentiate between `SLLI` and `SLLIW` */
           && hasNot(behavior, TruncateNode.class)
           && hasNot(behavior, SignExtendNode.class)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLLI));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SLLI, ty));
       } else if (findRR(behavior, List.of(LSR, LSRS))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SRL));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.SRL, ty));
       } else if (pc != null && findBranchWithConditional(behavior, EQU)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BEQ));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BEQ, Optional.empty()));
       } else if (pc != null && findBranchWithConditional(behavior, NEQ)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BNEQ));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BNEQ, Optional.empty()));
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(SGEQ))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BSGEQ));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BSGEQ, Optional.empty()));
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(UGEQ))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BUGEQ));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BUGEQ, Optional.empty()));
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(SLEQ))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BSLEQ));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BSLEQ, Optional.empty()));
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(ULEQ))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BULEQ));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BULEQ, Optional.empty()));
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(SLTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BSLTH));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BSLTH, Optional.empty()));
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(ULTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BULTH));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BULTH, Optional.empty()));
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(SGTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BSGTH));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BSGTH, Optional.empty()));
       } else if (pc != null
           && findBranchWithConditional(behavior, Set.of(UGTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.BUGTH));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.BUGTH, Optional.empty()));
       } else if (findRR(behavior, List.of(SLTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTS));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTS, ty));
       } else if (findRR(behavior, List.of(ULTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTU));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTU, ty));
       } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(SLTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTI));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTI, ty));
       } else if (findRegisterImmediateOrImmediateRegister(behavior, List.of(ULTH))) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTIU));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LTIU, ty));
       } else if (findWriteMem(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.STORE_MEM));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.STORE_MEM, ty));
       } else if (findLoadMem(behavior)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.LOAD_MEM));
+        instruction.attachExtension(
+            new MachineInstructionCtx(MachineInstructionLabel.LOAD_MEM, ty));
       } else if (pc != null && findJalr(behavior, pc)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JALR));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JALR, ty));
       } else if (pc != null && findJal(behavior, pc)) {
-        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JAL));
+        instruction.attachExtension(new MachineInstructionCtx(MachineInstructionLabel.JAL, ty));
       }
     });
 
     var labels = createLabelMap(viam);
     return new Result(labels, flipIsaMatching(labels));
+  }
+
+  private Optional<BitsType> getType(UninlinedGraph behavior) {
+    var candidates =
+        Stream.concat(
+                behavior.getNodes(WriteRegFileNode.class).map(x -> (DataType) x.value().type()),
+                Stream.concat(
+                    behavior.getNodes(WriteRegNode.class).map(x -> (DataType) x.value().type()),
+                    Stream.concat(
+                        behavior.getNodes(ReadRegNode.class).map(x -> x.register().resultType()),
+                        behavior.getNodes(ReadRegFileNode.class)
+                            .map(x -> x.registerFile().resultType())
+                    )
+                )
+            )
+            .map(x -> BitsType.bits(x.bitWidth())) // LLVM only accepts signed integers anyway
+            .toList();
+
+    if (candidates.isEmpty()) {
+      return Optional.empty();
+    }
+
+    var allSame = candidates.stream()
+        .allMatch(element -> Objects.equals(candidates.get(0), element));
+
+    if (allSame) {
+      return candidates.stream().findFirst();
+    } else {
+      return Optional.empty();
+    }
   }
 
   /**

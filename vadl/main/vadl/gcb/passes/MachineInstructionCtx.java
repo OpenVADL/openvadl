@@ -16,19 +16,27 @@
 
 package vadl.gcb.passes;
 
+import java.util.Optional;
+import vadl.types.BitsType;
+import vadl.types.DataType;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.Instruction;
 
 /**
  * An extension for the {@link Instruction}. It will be used
- * label the instruction with a {@link MachineInstructionLabel}.
+ * label the instruction with a {@link MachineInstructionLabel}. The {@code type} indicates on
+ * what type the instruction operates. It can be {@link Optional#empty()} when they are
+ * multiple writes or reads with different sizes.
  */
 public class MachineInstructionCtx extends DefinitionExtension<Instruction> {
   private final MachineInstructionLabel label;
+  private final Optional<BitsType> type;
 
-  public MachineInstructionCtx(MachineInstructionLabel label) {
+  public MachineInstructionCtx(MachineInstructionLabel label,
+                               Optional<BitsType> type) {
     this.label = label;
+    this.type = type;
   }
 
   @Override
@@ -38,5 +46,9 @@ public class MachineInstructionCtx extends DefinitionExtension<Instruction> {
 
   public MachineInstructionLabel label() {
     return label;
+  }
+
+  public Optional<BitsType> type() {
+    return type;
   }
 }
