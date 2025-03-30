@@ -712,48 +712,53 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.value.type instanceof ConstantType constType) {
       return new ConstantNode(
           Constant.Value.of(constType.getValue().longValueExact(),
-              (DataType) Objects.requireNonNull(expr.type)));
+                  (DataType) constType.closestTo(expr.type()))
+              .castTo((DataType) expr.type()));
     }
 
     // check the different rules and apply them accordingly
     var source = fetch(expr.value);
-    var sourceType = (DataType) Objects.requireNonNull(expr.value.type);
-    var targetType = (DataType) Objects.requireNonNull(expr.type);
+    var sourceType = Objects.requireNonNull(expr.value.type);
+    var targetType = Objects.requireNonNull(expr.type);
     if (sourceType.isTrivialCastTo(targetType)) {
       // match 1. rule: same bit representation
       // -> no casting needs to be applied
       return source;
     }
+
+    var sourceDataType = (DataType) sourceType;
+    var targetDataType = (DataType) targetType;
+
     if (targetType.getClass() == vadl.types.BoolType.class) {
       // match 2. rule: target type is bool
       // -> produce != 0 call
       //return new BuiltInCall
       return produceNeqToZero(source);
     }
-    if (targetType.bitWidth() < sourceType.bitWidth()) {
+    if (targetDataType.bitWidth() < sourceDataType.bitWidth()) {
       // match 3. rule: cast type bit-width is smaller than source type
       // -> create TruncateNode
-      return new TruncateNode(source, targetType);
+      return new TruncateNode(source, targetDataType);
     }
     if (sourceType.getClass() == SIntType.class) {
       // match 4.
       // rule: source type is a signed integer
       // -> create sign extend node
-      return new SignExtendNode(source, targetType);
+      return new SignExtendNode(source, targetDataType);
     }
     if (sourceType.getClass() == BitsType.class
         && targetType.getClass() == SIntType.class) {
       // match 5.
       // rule: source type is a bits type and target type is SInt
       // -> create sign extend node
-      return new SignExtendNode(source, targetType);
+      return new SignExtendNode(source, targetDataType);
     }
     if (targetType.getClass() == UIntType.class
         || targetType.getClass() == BitsType.class
         || targetType.getClass() == SIntType.class
     ) {
       // match 5. rule: cast type is one of sint, uint, or bits
-      return new ZeroExtendNode(source, targetType);
+      return new ZeroExtendNode(source, targetDataType);
     }
 
     throw new IllegalArgumentException(
