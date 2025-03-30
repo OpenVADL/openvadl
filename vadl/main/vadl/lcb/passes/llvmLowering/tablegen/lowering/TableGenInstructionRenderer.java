@@ -155,6 +155,8 @@ public final class TableGenInstructionRenderer {
             let mayLoad       = %d;
             let mayStore      = %d;
             let isBarrier     = %d;
+            let isReMaterializable = %d;
+            let isAsCheapAsAMove   = %d;
             
             let Constraints = "";
             let AddedComplexity = 0;
@@ -180,6 +182,8 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().mayLoad()),
         toInt(instruction.getFlags().mayStore()),
         toInt(instruction.getFlags().isBarrier()),
+        toInt(instruction.getFlags().isRematerialisable()),
+        toInt(instruction.getFlags().isAsCheapAsAMove()),
         instruction.getUses().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         anonymousPatterns.stream()
@@ -217,6 +221,8 @@ public final class TableGenInstructionRenderer {
             let mayLoad       = %d;
             let mayStore      = %d;
             let isBarrier     = %d;
+            let isReMaterializable = %d;
+            let isAsCheapAsAMove   = %d;
             
             let Constraints = "";
             let AddedComplexity = 0;
@@ -242,6 +248,8 @@ public final class TableGenInstructionRenderer {
         toInt(instruction.getFlags().mayLoad()),
         toInt(instruction.getFlags().mayStore()),
         toInt(instruction.getFlags().isBarrier()),
+        toInt(instruction.getFlags().isRematerialisable()),
+        toInt(instruction.getFlags().isAsCheapAsAMove()),
         instruction.getUses().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         instruction.getDefs().stream().map(RegisterRef::lowerName).collect(Collectors.joining(",")),
         anonymousPatterns.stream()
