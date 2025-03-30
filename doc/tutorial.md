@@ -275,6 +275,36 @@ Listing \r{using} shows some type definitions and their meaning in the comments.
 
 ### Functions
 
+\listing{functions, Functions (RISC-V control and status register indices)}
+~~~{.vadl}
+function size -> SInt<32> = 32
+
+enumeration CsrDef  : Bits<12> = // defined control and status register indices
+  { ustatus  =   0               // 0x000  User mode restricted view of mstatus
+  , uie      =   4               // 0x004  User mode Interrupt Enable
+  // ...              
+  , uip      =  68               // 0x044  User mode Interrupt Pending
+  }
+
+enumeration CsrImpl : Bits<12> = // implemented control and status register indices
+  { ustatus                      // 0x000  User mode restricted view of mstatus
+  , uie                          // 0x004  User mode Interrupt Enable
+  // ...              
+  , uip                          // 0x044  User mode Interrupt Pending
+  }
+
+function CsrDefToImpl (csr : Bits<12>) -> Bits<12> = // map defined index to implemented index
+  match csr with
+    { CsrDef::ustatus  => CsrImpl::ustatus        // 0x000  User mode restricted view of mstatus
+    , CsrDef::uie      => CsrImpl::uie            // 0x004  User mode Interrupt Enable
+    // ...
+    , _                => CsrImpl::uip            // 0x044  User mode Interrupt Pending
+    }
+~~~
+\endlisting
+
+
+
 ### Formats
 
 
