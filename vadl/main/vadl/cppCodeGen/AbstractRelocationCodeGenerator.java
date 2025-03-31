@@ -48,17 +48,6 @@ public abstract class AbstractRelocationCodeGenerator extends AbstractFunctionCo
     super(function);
   }
 
-  @Override
-  public void handle(CGenContext<Node> ctx, TruncateNode node) {
-    node.ensure(node.type() != DataType.bool(),
-        "Truncation to boolean is not allowed");
-    var bitWidth = node.type().bitWidth();
-
-    ctx.wr("VADL_uextract(")
-        .gen(node.value())
-        .wr(", %s)", bitWidth);
-  }
-
   /**
    * Generate code for {@link CppUpdateBitRangeNode}.
    */
