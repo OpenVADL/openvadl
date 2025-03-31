@@ -856,10 +856,12 @@ class SymbolTable {
    */
   static class ResolutionPass {
     static List<Diagnostic> resolveSymbols(Ast ast) {
+      var resolveStartTime = System.nanoTime();
       for (Definition definition : ast.definitions) {
         resolveSymbols(definition);
       }
-      ast.passTimings.add(new VadlParser.PassTimings(System.nanoTime(), "Symbol resolution"));
+      ast.passTimings.add(new Ast.PassTimings("Symbol resolution",
+          (System.nanoTime() - resolveStartTime) / 1000_000));
       return Objects.requireNonNull(ast.rootSymbolTable).errors;
     }
 
