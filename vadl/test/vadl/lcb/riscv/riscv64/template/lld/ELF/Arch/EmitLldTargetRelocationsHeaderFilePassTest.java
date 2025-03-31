@@ -70,25 +70,25 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
         int64_t RV3264I_Itype_ABSOLUTE_imm_lo(uint32_t symbol) {
-           return VADL_sextract(symbol, 12);
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
         int64_t RV3264I_Utype_ABSOLUTE_imm_lo(uint32_t symbol) {
-           return VADL_sextract(symbol, 12);
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
         int64_t RV3264I_Stype_ABSOLUTE_imm_lo(uint32_t symbol) {
-           return VADL_sextract(symbol, 12);
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
         int64_t RV3264I_Btype_ABSOLUTE_imm_lo(uint32_t symbol) {
-           return VADL_sextract(symbol, 12);
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
         int64_t RV3264I_Jtype_ABSOLUTE_imm_lo(uint32_t symbol) {
-           return VADL_sextract(symbol, 12);
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
         int64_t RV3264I_Rtype_ABSOLUTE_rs2_lo(uint32_t symbol) {
-           return VADL_sextract(symbol, 12);
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
         int64_t RV3264I_Ftype_ABSOLUTE_sft_lo(uint32_t symbol) {
-           return VADL_sextract(symbol, 12);
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
         int64_t RV3264I_Itype_ABSOLUTE_imm_Itype_ABSOLUTE_imm(int64_t input) {
            return input;
