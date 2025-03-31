@@ -16,6 +16,8 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,10 +62,23 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     return result;
   }
 
-  @Override
-  public ConstantValue visit(Identifier expr) {
-    var origin =
-        Objects.requireNonNull(Objects.requireNonNull(expr.symbolTable).resolveNode(expr.name));
+  private ConstantValue visitIdentifiable(Expr expr) {
+    Node origin;
+    String innerName;
+    String fullName;
+
+    if (expr instanceof Identifier identifier) {
+      origin = requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
+      innerName = identifier.name;
+      fullName = identifier.name;
+    } else if (expr instanceof IdentifierPath path) {
+      origin = requireNonNull(expr.symbolTable).findAs(path, Node.class);
+      var segments = path.pathToSegments();
+      innerName = segments.get(segments.size() - 1);
+      fullName = path.pathToString();
+    } else {
+      throw new IllegalStateException();
+    }
 
     if (origin instanceof ConstantDefinition constantDefinition) {
       return eval(constantDefinition.value);
@@ -73,9 +88,19 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
       return eval(functionDefinition.expr);
     }
 
+    if (origin instanceof EnumerationDefinition.Entry entry) {
+      return eval(Objects.requireNonNull(entry.value));
+    }
+
     throw new EvaluationError(
-        "Cannot evaluate identifier with origin of %s yet.".formatted(
-            origin.getClass().getSimpleName()), expr);
+        "Cannot evaluate identifier with origin of %s yet, found in: %s.".formatted(
+            Objects.requireNonNull(origin).getClass().getName(),
+            expr.location().toIDEString()), expr);
+  }
+
+  @Override
+  public ConstantValue visit(Identifier expr) {
+    return visitIdentifiable(expr);
   }
 
   private static final Map<Operator, BinaryOperator<BigInteger>> BinOpFuncs = new HashMap<>();
@@ -227,8 +252,7 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   @Override
   public ConstantValue visit(IdentifierPath expr) {
-    throw new RuntimeException(
-        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+    return visitIdentifiable(expr);
   }
 
   @Override

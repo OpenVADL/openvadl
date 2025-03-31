@@ -33,9 +33,11 @@ import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.Pair;
+import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Definition;
+import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
@@ -66,6 +68,8 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ProcCallNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -75,6 +79,7 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -110,6 +115,27 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     endNode.setSourceLocation(expr.sourceLocation());
     ControlNode startNode = graph.add(new StartNode(endNode));
     startNode.setSourceLocation(expr.sourceLocation());
+    return graph;
+  }
+
+  Graph getProcedureGraph(Statement stmt, String name) {
+    var graph = new Graph(name);
+    var stmtCtx = stmt.accept(this);
+    var sideEffects = stmtCtx.sideEffectsOrEmptyList();
+
+    var end = graph.addWithInputs(new ProcEndNode(sideEffects));
+    end.setSourceLocation(stmt.sourceLocation());
+
+    ControlNode startSuccessor = end;
+    if (stmtCtx.hasControlBlock()) {
+      var controlBlock = Objects.requireNonNull(stmtCtx.controlBlock());
+      controlBlock.lastNode().setNext(end);
+      startSuccessor = controlBlock.firstNode();
+    }
+    var start = new StartNode(startSuccessor);
+    start.setSourceLocation(stmt.sourceLocation());
+    graph.addWithInputs(start);
+
     return graph;
   }
 
@@ -635,6 +661,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return visitSubCall(expr, slicedNode);
     }
 
+    // Alias to registerfile read
+    if (expr.computedTarget instanceof AliasDefinition aliasDefinition
+        && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE)) {
+
+      var artificialResource =
+          (ArtificialResource) viamLowering.fetch(expr.computedTarget).orElseThrow();
+      var address = firstArgs.stream().map(this::fetch).findFirst().orElseThrow();
+      var type = (DataType) expr.type();
+      var read = new ReadArtificialResNode(artificialResource, address, type);
+      var slicedNode = visitSliceIndexCall(expr, read,
+          expr.argsIndices.subList(1, expr.argsIndices.size()));
+      return visitSubCall(expr, slicedNode);
+    }
+
     // Memory read
     if (expr.computedTarget instanceof MemoryDefinition memoryDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
@@ -867,6 +907,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         return SubgraphContext.of(statement, write);
       }
 
+      // Alias Register File Write
+      if (callTarget.computedTarget instanceof AliasDefinition aliasDefinition
+          && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE)) {
+        var resource = (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
+        var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
+        var write = new WriteArtificialResNode(resource, address, value);
+        return SubgraphContext.of(statement, write);
+      }
+
+
       // Memory Write
       if (callTarget.computedTarget instanceof MemoryDefinition memoryTarget) {
         var memory = (Memory) viamLowering.fetch(memoryTarget).orElseThrow();
@@ -881,7 +931,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       }
 
       throw new IllegalStateException(
-          "Call target not yet implemented " + callTarget.computedTarget);
+          "Call target \"%s\" not yet implemented, found in: %s".formatted(
+              callTarget.computedTarget,
+              callTarget.location.toIDEString()));
     } else if (statement.target instanceof Identifier identifierExpr) {
       var computedTarget = Objects.requireNonNull(Objects.requireNonNull(identifierExpr.symbolTable)
           .requireAs(identifierExpr, vadl.ast.Node.class));
@@ -891,6 +943,31 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var register = (Register) viamLowering.fetch(registerDefinition).orElseThrow();
         var write = new WriteRegNode(register, value, null);
         return SubgraphContext.of(statement, write);
+      }
+
+      // Alias Register Write
+      if (computedTarget instanceof AliasDefinition aliasDefinition
+          && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
+        // FIXME: Register aliases cannot be artificial resources so we cannot create a
+        // write to an artificial resource here and just directly resolve it.
+        // https://github.com/OpenVADL/open-vadl/issues/104
+
+        // To make them work for now, they are at the moment always register file accesses so only
+        // implement them.
+
+        if (aliasDefinition.computedTarget instanceof RegisterDefinition) {
+          var register =
+              (Register) viamLowering.fetch(Objects.requireNonNull(aliasDefinition.computedTarget))
+                  .orElseThrow();
+          var write = new WriteRegNode(register, value, null);
+          return SubgraphContext.of(statement, write);
+        }
+
+        // Here is the big hack where we create a pseudo AST node that just inlines the alias
+        // and generate the instance for that.
+        var fakeAssignment =
+            new AssignmentStatement(aliasDefinition.value, statement.valueExpression);
+        return visit(fakeAssignment);
       }
 
       // Counter (also register) Write
@@ -1033,8 +1110,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(RaiseStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var exceptionDef = new ExceptionDef(
+        viamLowering.generateIdentifier("annonymousException", statement.statement),
+        getProcedureGraph(statement.statement, "annonymousException"),
+        ExceptionDef.Kind.ANONYMOUS
+    );
+    // FIXME: Add to a global store so that ISA can get a list of all exceptions
+    var raise = new ProcCallNode(exceptionDef, new NodeList<>());
+    return SubgraphContext.of(statement, raise);
   }
 
   @Override

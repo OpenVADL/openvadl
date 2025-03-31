@@ -39,7 +39,7 @@ public class ProcCallNode extends SideEffectNode {
   @Input
   NodeList<ExpressionNode> arguments;
 
-  ProcCallNode(Procedure procedure, NodeList<ExpressionNode> arguments) {
+  public ProcCallNode(Procedure procedure, NodeList<ExpressionNode> arguments) {
     this.procedure = procedure;
     this.arguments = arguments;
   }
