@@ -186,7 +186,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @param astType original type as found in the ast.
    * @return a type that is safe to be entered into the VIAM.
    */
-  private Type getViamType(Type astType) {
+  public static Type getViamType(Type astType) {
     if (astType instanceof ConstantType) {
       throw new IllegalStateException("No constant type should ever leave the VIAM!");
     }

@@ -296,13 +296,14 @@ public class Format extends Definition implements DefProp.WithType {
                        Function predicate) {
       super(identifier);
 
+      this.accessFunction = accessFunction;
+
       var decodeFormatRefs = accessFunction.behavior().getNodes(FieldRefNode.class).toList();
-      ensure(decodeFormatRefs.size() == 1,
-          "Immediate decode function must reference exactly one format field. Got: %s",
+      ensure(!decodeFormatRefs.isEmpty(),
+          "Immediate decode function must reference at least one format field. Got: %s",
           decodeFormatRefs);
 
       this.fieldRef = decodeFormatRefs.get(0).formatField();
-      this.accessFunction = accessFunction;
       this.encoding = encoding;
       this.predicate = predicate;
     }
