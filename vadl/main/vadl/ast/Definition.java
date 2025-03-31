@@ -3416,15 +3416,36 @@ class AbiPseudoInstructionDefinition extends Definition {
     return Objects.hash(kind, target);
   }
 
+  enum Occurrence {
+    OPTIONAL,
+    ONE,
+    AT_LEAST_ONE
+  }
+
   enum Kind {
     RETURN("return"),
     CALL("call"),
-    LOCAL_ADDRESS_LOAD("local address load");
+    LOCAL_ADDRESS_LOAD("local address load"),
+    PIC_ADDRESS_LOAD("pic address load"),
+    NON_PIC_ADDRESS_LOAD("non pic address load");
 
     private final String keyword;
 
     Kind(String keyword) {
       this.keyword = keyword;
+    }
+
+    /**
+     * Determines how often a definition is allowed in the ABI.
+     */
+    public static final Map<Kind, Occurrence> numberOfOccurrencesAbi;
+
+    static {
+      numberOfOccurrencesAbi = Map.of(Kind.RETURN, Occurrence.ONE,
+          Kind.CALL, Occurrence.ONE,
+          Kind.NON_PIC_ADDRESS_LOAD, Occurrence.ONE,
+          Kind.LOCAL_ADDRESS_LOAD, Occurrence.OPTIONAL,
+          Kind.PIC_ADDRESS_LOAD, Occurrence.OPTIONAL);
     }
   }
 }
@@ -3532,7 +3553,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append(purpose.keywords);
+    builder.append(purpose.keyword);
     builder.append(" = ");
     exprs.forEach(e -> {
       e.prettyPrint(indent + 1, builder);
@@ -3573,10 +3594,10 @@ class SpecialPurposeRegisterDefinition extends Definition {
     CALLER_SAVED("caller saved"),
     CALLEE_SAVED("callee saved");
 
-    private final String keywords;
+    private final String keyword;
 
-    Purpose(String keywords) {
-      this.keywords = keywords;
+    Purpose(String keyword) {
+      this.keyword = keyword;
     }
 
     /**

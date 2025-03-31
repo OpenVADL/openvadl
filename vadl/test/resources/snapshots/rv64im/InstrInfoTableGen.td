@@ -15,9 +15,6 @@ def SDT_CallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i64>, SDTCisVT<1, i64>]>;
 // Target-dependent type requirements
 def SDT_CPU_Call : SDTypeProfile<0, -1, [SDTCisVT<0, i64>]>;
 
-def processornamevalue_add_lo : SDNode<"processornamevalueISD::ADD_LO", SDTIntBinOp>;
-def processornamevalue_hi : SDNode<"processornamevalueISD::HI", SDTIntUnaryOp>;
-
 class InstFormat<bits<5> val> {
     bits<5> Value = val;
 }
@@ -3628,17 +3625,6 @@ let Defs = [  ];
 def : Pat<(i64 AddrFI:$rs1),
   (ADDI AddrFI:$rs1, (i64 0))>;
 
-/// HI and ADD_LO address nodes.
-
-def : Pat<(processornamevalue_hi tglobaladdr:$in), (LUI tglobaladdr:$in)>;
-def : Pat<(processornamevalue_hi tblockaddress:$in), (LUI tblockaddress:$in)>;
-def : Pat<(processornamevalue_hi tjumptable:$in), (LUI tjumptable:$in)>;
-def : Pat<(processornamevalue_hi tconstpool:$in), (LUI tconstpool:$in)>;
-def : Pat<(processornamevalue_add_lo X:$hi, tglobaladdr:$lo), (ADDI X:$hi, tglobaladdr:$lo)>;
-def : Pat<(processornamevalue_add_lo X:$hi, tblockaddress:$lo), (ADDI X:$hi, tblockaddress:$lo)>;
-def : Pat<(processornamevalue_add_lo X:$hi, tjumptable:$lo), (ADDI X:$hi, tjumptable:$lo)>;
-def : Pat<(processornamevalue_add_lo X:$hi, tconstpool:$lo), (ADDI X:$hi, tconstpool:$lo)>;
-
 
 def BEQZ : Instruction
 {
@@ -4118,6 +4104,62 @@ let Defs = [  ];
 
 
 
+def nonPicLA : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 0;
+let mayStore      = 0;
+let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
+def picLA : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 0;
+let mayStore      = 0;
+let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
 
 
 
@@ -4230,6 +4272,8 @@ let AddedComplexity = 0;
 let Uses = [  ];
 let Defs = [  ];
 }
+
+
 
 
 

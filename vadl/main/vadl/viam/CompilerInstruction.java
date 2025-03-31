@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 
@@ -103,5 +105,15 @@ public class CompilerInstruction extends Definition implements DefProp.WithBehav
         return -1;
       }
     }).findFirst().orElseThrow();
+  }
+
+  /**
+   * Returns {@code true} when all instructions only have absolute relocations.
+   */
+  public boolean referencesOnlyAbsoluteRelocations() {
+    return behavior.getNodes(InstrCallNode.class)
+        .flatMap(x -> x.arguments().stream())
+        .allMatch(x -> x instanceof FuncCallNode funcCallNode &&
+            funcCallNode.function() instanceof Relocation relocation && relocation.isAbsolute());
   }
 }

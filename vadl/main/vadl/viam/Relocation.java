@@ -19,7 +19,6 @@ package vadl.viam;
 import vadl.error.Diagnostic;
 import vadl.types.Type;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.dependency.ReadRegNode;
 
 /**
  * Represents a relocation definition in a VIAM specification.
@@ -32,13 +31,26 @@ import vadl.viam.graph.dependency.ReadRegNode;
  * </p>
  */
 public class Relocation extends Function {
-  public Relocation(Identifier identifier, Parameter[] parameters, Type returnType) {
-    super(identifier, parameters, returnType);
+  /**
+   * A {@link Relocation} has a certain kind. It tells the linker how to update the field.
+   */
+  public enum Kind {
+    ABSOLUTE,
+    RELATIVE,
+    GLOBAL_OFFSET_TABLE
   }
 
-  public Relocation(Identifier identifier, Parameter[] parameters, Type returnType,
+  private final Kind kind;
+
+  public Relocation(Identifier identifier, Kind kind, Parameter[] parameters, Type returnType) {
+    super(identifier, parameters, returnType);
+    this.kind = kind;
+  }
+
+  public Relocation(Identifier identifier, Kind kind, Parameter[] parameters, Type returnType,
                     Graph behavior) {
     super(identifier, parameters, returnType, behavior);
+    this.kind = kind;
   }
 
   @Override
@@ -56,20 +68,23 @@ public class Relocation extends Function {
   }
 
   /**
-   * A {@link Relocation} is relative when it references the {@link Counter} which is
-   * declared in {@link InstructionSetArchitecture#pc()}.
+   * Returns {@code true} when the relocation is relative.
    */
   public boolean isRelative() {
-    return this.behavior().getNodes(ReadRegNode.class)
-        .anyMatch(x -> x.staticCounterAccess() != null);
+    return kind == Kind.RELATIVE;
   }
 
   /**
-   * A {@link Relocation} is absolute when it does not reference the {@link Counter} which
-   * is declared in {@link InstructionSetArchitecture#pc()}.
+   * Returns {@code true} when the relocation is absolute.
    */
   public boolean isAbsolute() {
-    return this.behavior().getNodes(ReadRegNode.class)
-        .noneMatch(x -> x.staticCounterAccess() != null);
+    return kind == Kind.ABSOLUTE;
+  }
+
+  /**
+   * Returns {@code true} when the relocation references the global offset table.
+   */
+  public boolean isGlobalOffsetTable() {
+    return kind == Kind.GLOBAL_OFFSET_TABLE;
   }
 }

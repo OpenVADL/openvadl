@@ -60,6 +60,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -83,6 +84,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -106,6 +108,7 @@ public class TypecheckerAbiTest {
           // pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -122,7 +125,7 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No register purpose was defined for RETURN", throwable.reason);
+    Assertions.assertEquals("No RETURN was declared but one was expected", throwable.reason);
   }
 
   @Test
@@ -131,6 +134,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           // pseudo call instruction = NOP
           pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -147,15 +151,16 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No register purpose was defined for CALL", throwable.reason);
+    Assertions.assertEquals("No CALL was declared but one was expected", throwable.reason);
   }
 
   @Test
-  void shouldThrow_whenPseudoLocalAddressLoadInstructionMissing() {
+  void shouldThrow_whenPseudoNonPicAddressLoadInstructionMissing() {
     var prog = """
           pseudo return instruction = NOP
           pseudo call instruction = NOP
-          // pseudo local address load instruction = NOP
+          pseudo local address load instruction = NOP
+          // pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -172,7 +177,7 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No register purpose was defined for LOCAL_ADDRESS_LOAD",
+    Assertions.assertEquals("No NON_PIC_ADDRESS_LOAD was declared but one was expected",
         throwable.reason);
   }
 
@@ -182,6 +187,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           // stack pointer = zero
           return address = zero
@@ -207,7 +213,8 @@ public class TypecheckerAbiTest {
     var prog = """
           pseudo return instruction = NOP
           pseudo call instruction = NOP
-           pseudo local address load instruction = NOP
+          pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = [ zero, zero]
           return address = zero
@@ -233,7 +240,8 @@ public class TypecheckerAbiTest {
     var prog = """
           pseudo return instruction = NOP
           pseudo call instruction = NOP
-           pseudo local address load instruction = NOP
+          pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = [ zero, zero]
@@ -259,7 +267,8 @@ public class TypecheckerAbiTest {
     var prog = """
           pseudo return instruction = NOP
           pseudo call instruction = NOP
-           pseudo local address load instruction = NOP
+          pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -286,6 +295,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -312,6 +322,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -338,6 +349,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -363,7 +375,8 @@ public class TypecheckerAbiTest {
     var prog = """
           pseudo return instruction = NOP
           pseudo call instruction = NOP
-          // pseudo local address load instruction = NOP
+          pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -389,7 +402,8 @@ public class TypecheckerAbiTest {
     var prog = """
           pseudo return instruction = NOP
           pseudo call instruction = NOP
-          // pseudo local address load instruction = NOP
+          pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -415,7 +429,8 @@ public class TypecheckerAbiTest {
     var prog = """
           pseudo return instruction = NOP
           pseudo call instruction = NOP
-          // pseudo local address load instruction = NOP
+          pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -441,7 +456,8 @@ public class TypecheckerAbiTest {
     var prog = """
           pseudo return instruction = NOP
           pseudo call instruction = NOP
-          // pseudo local address load instruction = NOP
+          pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -467,7 +483,8 @@ public class TypecheckerAbiTest {
     var prog = """
           pseudo return instruction = NOP
           pseudo call instruction = NOP
-          // pseudo local address load instruction = NOP
+          pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -493,7 +510,8 @@ public class TypecheckerAbiTest {
     var prog = """
           pseudo return instruction = NOP
           pseudo call instruction = NOP
-          // pseudo local address load instruction = NOP
+          pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -523,6 +541,7 @@ public class TypecheckerAbiTest {
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
           pseudo local address load instruction = NOP
+          pseudo non pic address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -540,7 +559,7 @@ public class TypecheckerAbiTest {
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
     Assertions.assertEquals(
-        "Multiple LOCAL_ADDRESS_LOAD pseudo instructions were declared but only one was expected",
+        "Multiple LOCAL_ADDRESS_LOAD were declared but one was expected",
         throwable.reason);
   }
 

@@ -932,23 +932,38 @@ public class TypeChecker
     }
 
     // Check whether there exists just one pseudo instruction.
-    for (var kind : AbiPseudoInstructionDefinition.Kind.values()) {
+    for (var entry : AbiPseudoInstructionDefinition.Kind.numberOfOccurrencesAbi.entrySet()) {
+      var kind = entry.getKey();
       var pseudoInstructions = definition.definitions
           .stream()
           .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
           .toList();
 
-      if (pseudoInstructions.size() > 1) {
-        throw Diagnostic.error(
-                "Multiple " + kind.name()
-                    + " pseudo instructions were declared but only one was expected",
-                SourceLocation.join(pseudoInstructions.stream().map(Node::sourceLocation).toList()))
-            .build();
-      }
+      var noValues = Diagnostic.error(
+          "No " + kind.name() + " was declared but one was expected",
+          definition.sourceLocation()).build();
+      var multipleValues = Diagnostic.error(
+          "Multiple " + kind.name() + " were declared but one was expected",
+          definition.sourceLocation()).build();
 
-      if (pseudoInstructions.isEmpty()) {
-        throw Diagnostic.error(
-            "No register purpose was defined for " + kind.name(), definition.loc).build();
+      switch (entry.getValue()) {
+        case ONE -> {
+          if (pseudoInstructions.isEmpty()) {
+            throw noValues;
+          } else if (pseudoInstructions.size() > 1) {
+            throw multipleValues;
+          }
+        }
+        case OPTIONAL -> {
+          if (pseudoInstructions.size() > 1) {
+            throw multipleValues;
+          }
+        }
+        case AT_LEAST_ONE -> {
+          if (pseudoInstructions.isEmpty()) {
+            throw noValues;
+          }
+        }
       }
     }
 
