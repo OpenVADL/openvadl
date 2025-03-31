@@ -42,7 +42,7 @@ public enum AsmDirective {
   FLOAT,
   DOUBLE,
   ALIGN_POW2("align"),
-  ALIGN_BYTE("algin"),
+  ALIGN_BYTE("align"),
   ALIGN32_POW2("align32"),
   ALIGN32_BYTE("align32"),
   BALIGN,
