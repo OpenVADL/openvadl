@@ -340,9 +340,64 @@ function CsrDefToImpl (csr : Bits<12>) -> Bits<12> = // map defined index to imp
 ~~~
 \endlisting
 
+Functions in VADL are pure if they do not read registers or memory.
+Functions cannot write registers or memory.
+As long as functions do not read registers which have an effect when read, they do not have side effects.
+As VADL specifications have to be translated to specifications in a hardware description language or to patterns for the instruction selector of a compiler neither recursive calls nor higher order functions are allowed.
+A function is defined by the keyword `function` followed by the function's name, optionally a parameter list in parentheses, the arrow symbol `"->"`, the return type of the function, the equality symbol `"="` and an expression.
 
+In line 1 of Listing \r{functions} shows the definition of the parameter less function `size` which always will return the value `32`.
+In line 17 a function with one argument of type `Bits<12>` is defined which maps two different enumerations to each other.
 
 ### Formats
+
+\listing{formats, Formats (RISC-V I-Type and B-Type)}
+~~~{.vadl}
+using Index = UInt<5>
+using Inst  = Bits<32>
+
+format Itype  : Inst =                 // immediate instruction format
+  { imm       : Bits<12>               // [31..20] 12 bit immediate value
+  , rs1       : Index                  // [19..15] source register index
+  , funct3    : Bits<3>                // [14..12] 3 bit function code
+  , rd        : Index                  // [11..7]  destination register index
+  , opcode    : Bits<7>                // [6..0]   7 bit operation code
+  , immS      = imm as SInt<32>        // sign extended immediate value
+  }
+
+format Btype : Inst =                  // branch instruction format
+  { imm    [31, 7, 30..25, 11..8]      // 12 bit immediate value
+  , rs2    [24..20] : Index            // 2nd source register index
+  , rs1    [19..15] : Index            // 1st source register index
+  , funct3 [14..12]                    // 3 bit function code
+  , opcode [6..0]                      // 7 bit operation code
+  , immS   = imm as SInt<32> << 1      // sign extended and shifted immediate value immS
+  }
+~~~
+\endlisting
+
+A `format` definition defines a bit field type which is used to describe instruction formats or system registers.
+It starts with the keyword `format` followed by the name of the format, the colon symbol `":"`, a type literal, the equal symbol `"="` and a list of format fields enclosed in braces and separated by the comma symbol `","`.
+There exist two variants to define a bit field.
+
+The first one, demonstrated with the definition of the format `Itype` in Listing \r{formats}, defines a bit field with its name followed by the colon symbol `":"` and a type literal.
+Examples are the fields `rs1` and `funct3` of `Itype`.
+Format definitions start with the most significant bits.
+Therefore, the field `imm` occupies the bits from position `31` to `20`.
+
+The second one uses a bit slice notation (see the format `Btype` in Listing \r{formats}).
+A slice is defined as a concatenation of single bits and bit ranges in any order.
+A bit range starts with index of the highest bit of the range, then follows the range symbol `".."` and it ends with the index of the lowest bit of the range.
+Additionally it is possible to add a type literal to a slice separated by the colon symbol `":"`.
+
+Bit fields are not allowed to overlap.
+Every bit inside a format has to be covered by a field definition.
+
+It is possible to define access functions to bit fields.
+They are defined by the name of the access function followed by the equality symbol `"="` and an expression which can use any field name within the format definition.
+Every format has its own name space.
+
+
 
 ## Macro System
 
