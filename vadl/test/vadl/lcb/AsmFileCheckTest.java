@@ -77,7 +77,7 @@ public abstract class AsmFileCheckTest extends AbstractLcbTest {
         SpikeRiscvImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
             target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), false);
 
-    return inputFilesFromFile(target).map(
+    return inputFilesFromFile(target, getComponent()).map(
         input -> DynamicTest.dynamicTest(input, () -> {
           var name = Paths.get(input).getFileName().toString();
 
@@ -94,10 +94,10 @@ public abstract class AsmFileCheckTest extends AbstractLcbTest {
         })).toList();
   }
 
-  private static Stream<String> inputFilesFromFile(String target) {
+  private static Stream<String> inputFilesFromFile(String target, String component) {
     return Arrays.stream(
             Objects.requireNonNull(
-                new File("test/resources/llvm/riscv/asm/" + target)
+                new File("test/resources/llvm/riscv/asm/" + target + "/" + component)
                     .listFiles()))
         .filter(File::isFile)
         .map(File::getName);

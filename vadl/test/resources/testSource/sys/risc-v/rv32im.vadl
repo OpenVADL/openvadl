@@ -161,7 +161,7 @@ assembly description ASM for ABI = {
     AuipcInstruction @instruction:
       mnemonic = "AUIPC" @operand
       rd = Register@operand ","
-      imm = ImmediateOperand
+      immUp = ImmediateOperand
     ;
 
     LTypeIds : "LB" | "LBU" | "LH" | "LHU" | "LW" ;
