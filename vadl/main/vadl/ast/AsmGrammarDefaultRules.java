@@ -116,7 +116,7 @@ public class AsmGrammarDefaultRules {
         terminalRuleTypeString("GREATERGREATER", ">>", false),
         terminalRuleTypeString("AT", "@", false),
         terminalRuleTypeString("MINUSGREATER", "->", false),
-        terminalRule("EOL", "[\\r(\\r\\n)]", true, VoidAsmType.instance()),
+        terminalRule("EOL", "\\r\\n|\\r|\\n", true, VoidAsmType.instance()),
         nonTerminalRule("Statement", InstructionAsmType.instance(), false, instructionRule(),
             ruleReference("EOL", VoidAsmType.instance())),
         nonTerminalRule("Register", RegisterAsmType.instance(),
