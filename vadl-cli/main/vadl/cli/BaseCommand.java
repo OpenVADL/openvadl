@@ -27,6 +27,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -76,13 +77,22 @@ public abstract class BaseCommand implements Callable<Integer> {
       description = "Generate all dumps of intermediate representations.")
   boolean dump;
 
-  // @Option(names = "--timings", scope = INHERIT, description = "Write a AST dumps to disc.")
-  // boolean printTimings;
+  @Option(names = "--timings", scope = INHERIT,
+      description = "Print timings of the phases of the compiler")
+  boolean showTimings;
 
   @Option(names = "--expand-macros",
       scope = INHERIT,
       description = "Expand all macros and write them to disk.")
   boolean expandMacros;
+
+  /**
+   * A list of timings. Will only be filled when the timings should be recorded.
+   */
+  private final List<Timing> timings = new ArrayList<>();
+
+  private record Timing(String name, long durationMs) {
+  }
 
   /**
    * Dumps should contain their date this method returns the date in a uniform string.
@@ -210,6 +220,9 @@ public abstract class BaseCommand implements Callable<Integer> {
     dumpTyped(ast);
     var viamGenerator = new ViamLowering();
     var spec = viamGenerator.generate(ast);
+
+    ast.passTimings.forEach(t -> timings.add(new Timing(t.description(), t.durationMS())));
+
     return spec;
   }
 
@@ -227,6 +240,17 @@ public abstract class BaseCommand implements Callable<Integer> {
         System.out.printf("\t- %s\n", path);
       }
     }
+  }
+
+  protected void printTimings() {
+    if (!showTimings) {
+      return;
+    }
+
+    System.out.println("\nTimings:");
+    timings.forEach(t -> {
+      System.out.printf("\t- %-40s %5dms\n", t.name + ":", t.durationMs);
+    });
   }
 
   // lazy evaluated config, do NOT use this directly.
@@ -259,11 +283,17 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     int returnVal = 0;
     try {
+      final var totalStartTime = System.nanoTime();
       var viam = parseToVIAM();
       var passOrder = passOrder(getConfig());
       var passManager = new PassManager();
       passManager.add(passOrder);
       passManager.run(viam);
+      var result = passManager.getPassResults();
+      result.executedPasses()
+          .forEach(p -> timings.add(new Timing(p.pass().getName().value(), p.durationMs())));
+      timings.add(new Timing("Total", (System.nanoTime() - totalStartTime) / 1_000_000));
+
 
     } catch (Diagnostic d) {
       System.out.println(new DiagnosticPrinter().toString(d));
@@ -319,6 +349,8 @@ public abstract class BaseCommand implements Callable<Integer> {
             : "\nEven though some errors occurred, the following dumps were generated:",
         ArtifactTracker.getDumpPaths()
     );
+
+    printTimings();
 
     return returnVal;
   }

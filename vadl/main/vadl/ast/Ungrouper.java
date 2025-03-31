@@ -31,8 +31,16 @@ package vadl.ast;
 public class Ungrouper
     implements ExprVisitor<Expr>, DefinitionVisitor<Void>, StatementVisitor<Void> {
 
+  /**
+   * Remove all unneeded group expressions in the AST.
+   *
+   * @param ast to be modified.
+   */
   public void ungroup(Ast ast) {
+    var startTime = System.nanoTime();
     ast.definitions.forEach(def -> def.accept(this));
+    ast.passTimings.add(
+        new Ast.PassTimings("Ungrouping", (System.nanoTime() - startTime) / 1_000_000));
   }
 
   @Override

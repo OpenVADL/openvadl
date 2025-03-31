@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -41,10 +42,7 @@ public class VadlParser {
    * Parses the VADL source program at the specified path into an AST.
    */
   public static Ast parse(Path path) throws IOException {
-    var scanner = new Scanner(Files.newInputStream(path));
-    var parser = new Parser(scanner);
-    parser.sourceFile = path.toUri();
-    return parse(parser);
+    return parse(path, Collections.emptyMap());
   }
 
   /**
@@ -53,6 +51,7 @@ public class VadlParser {
    * except errors will have the proper file locations set.
    */
   public static Ast parse(Path path, Map<String, String> macroOverrides) throws IOException {
+    final var startTime = System.nanoTime();
     var scanner = new Scanner(Files.newInputStream(path));
     var parser = new Parser(scanner);
     parser.sourceFile = path.toUri();
@@ -60,6 +59,9 @@ public class VadlParser {
         new Identifier(value, SourceLocation.INVALID_SOURCE_LOCATION)));
     var ast = parse(parser);
     ast.fileUri = path.toUri();
+    ast.passTimings.add(
+        new Ast.PassTimings("Parsing", (System.nanoTime() - startTime) / 1_000_000));
+
 
     return ast;
   }
@@ -98,7 +100,6 @@ public class VadlParser {
   }
 
   private static Ast parse(Parser parser) {
-    parser.ast.passTimings.add(new PassTimings(System.nanoTime(), "Start parsing"));
     // Setting up the Error printing, so we can parse it again.
     // This is mainly because coco/r doesn't give us access to the errors internally but always
     // want's to print them.
@@ -108,10 +109,8 @@ public class VadlParser {
 
     List<Diagnostic> errors = new ArrayList<>();
 
-
     try {
       parser.Parse();
-      parser.ast.passTimings.add(new PassTimings(System.nanoTime(), "Syntax parsing"));
     } catch (Diagnostic e) {
       errors.add(e);
     } catch (DiagnosticList e) {
@@ -171,23 +170,4 @@ public class VadlParser {
     return ast;
   }
 
-  /**
-   * Reads the pass timings persisted in the AST and prints them to stdout
-   * in a human-readable way.
-   *
-   * @param ast The AST whose pass timings should be printed
-   */
-  public static void printPassTimings(Ast ast) {
-    PassTimings prev = null;
-    for (var timing : ast.passTimings) {
-      if (prev != null) {
-        double deltaMillis = (timing.timestamp - prev.timestamp) / 1000_000.0;
-        System.out.printf("%s - %.3f ms\n", timing.description, deltaMillis);
-      }
-      prev = timing;
-    }
-  }
-
-  record PassTimings(long timestamp, String description) {
-  }
 }

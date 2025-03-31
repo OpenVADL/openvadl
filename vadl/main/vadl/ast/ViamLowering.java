@@ -120,6 +120,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @throws Diagnostic if something goes wrong.
    */
   public vadl.viam.Specification generate(Ast ast) {
+    var startTime = System.nanoTime();
     var spec = new Specification(
         new vadl.viam.Identifier(ParserUtils.baseName(ast.fileUri),
             SourceLocation.INVALID_SOURCE_LOCATION));
@@ -129,6 +130,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .map(this::fetch)
         .flatMap(Optional::stream)
         .collect(Collectors.toList()));
+
+    ast.passTimings.add(
+        new Ast.PassTimings("Lowering to VIAM", (System.nanoTime() - startTime) / 1_000_000));
     return spec;
   }
 

@@ -136,7 +136,10 @@ public class TypeChecker
    * @throws Diagnostic if the program isn't well typed
    */
   public void verify(Ast ast) {
+    var startTime = System.nanoTime();
     ast.definitions.forEach(this::check);
+    ast.passTimings.add(
+        new Ast.PassTimings("Type Checking", (System.nanoTime() - startTime) / 1_000_000));
   }
 
   private void throwUnimplemented(Node node) {
