@@ -36,7 +36,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = "OpenVADL"
+PROJECT_NAME           = $(PROJECT_NAME)
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -715,7 +715,7 @@ LAYOUT_FILE            =
 # LATEX_BIB_STYLE. To use this feature you need bibtex and perl available in the
 # search path. See also \cite for info how to create references.
 
-CITE_BIB_FILES         = doc/library.bib
+CITE_BIB_FILES         = library.bib
 
 #---------------------------------------------------------------------------
 # Configuration options related to warning and progress messages
@@ -1129,7 +1129,7 @@ HTML_FILE_EXTENSION    = .html
 # of the possible markers and block names see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_HEADER            = doc/custom/header.html
+HTML_HEADER            = custom/header.html
 
 # The HTML_FOOTER tag can be used to specify a user-defined HTML footer for each
 # generated HTML page. If the tag is left blank doxygen will generate a standard
@@ -1164,10 +1164,10 @@ HTML_STYLESHEET        = etc/html/stylesheet.css
 # list). For an example see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  = doc/custom/doxygen-awesome-css/doxygen-awesome.css \
-                         doc/custom/doxygen-awesome-css/doxygen-awesome-sidebar-only.css \
-                         doc/custom/doxygen-awesome-css/doxygen-awesome-sidebar-only-darkmode-toggle.css \
-                         doc/custom/custom.css
+HTML_EXTRA_STYLESHEET  = custom/doxygen-awesome-css/doxygen-awesome.css \
+                         custom/doxygen-awesome-css/doxygen-awesome-sidebar-only.css \
+                         custom/doxygen-awesome-css/doxygen-awesome-sidebar-only-darkmode-toggle.css \
+                         custom/custom.css
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
@@ -1177,11 +1177,11 @@ HTML_EXTRA_STYLESHEET  = doc/custom/doxygen-awesome-css/doxygen-awesome.css \
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       = doc/custom/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js \
-                         doc/custom/doxygen-awesome-css/doxygen-awesome-paragraph-link.js \
-                         doc/custom/doxygen-awesome-css/doxygen-awesome-interactive-toc.js \
-                         doc/custom/doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js \
-                         doc/custom/interactive-nav.js
+HTML_EXTRA_FILES       = custom/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js \
+                         custom/doxygen-awesome-css/doxygen-awesome-paragraph-link.js \
+                         custom/doxygen-awesome-css/doxygen-awesome-interactive-toc.js \
+                         custom/doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js \
+                         custom/interactive-nav.js
 
 HTML_COPY_CLIPBOARD = NO
 
@@ -1367,7 +1367,7 @@ QCH_FILE               =
 
 # The QHP_NAMESPACE tag specifies the namespace to use when generating Qt Help
 # Project output. For more information please see Qt Help Project / Namespace
-# (see: http://qt-project.org/doc/qt-4.8/qthelpproject.html#namespace).
+# (see: http://qt-project.org/qt-4.8/qthelpproject.html#namespace).
 # The default value is: org.doxygen.Project.
 # This tag requires that the tag GENERATE_QHP is set to YES.
 
@@ -1375,7 +1375,7 @@ QHP_NAMESPACE          = org.doxygen.Project
 
 # The QHP_VIRTUAL_FOLDER tag specifies the namespace to use when generating Qt
 # Help Project output. For more information please see Qt Help Project / Virtual
-# Folders (see: http://qt-project.org/doc/qt-4.8/qthelpproject.html#virtual-
+# Folders (see: http://qt-project.org/qt-4.8/qthelpproject.html#virtual-
 # folders).
 # The default value is: doc.
 # This tag requires that the tag GENERATE_QHP is set to YES.
@@ -1384,7 +1384,7 @@ QHP_VIRTUAL_FOLDER     = doc
 
 # If the QHP_CUST_FILTER_NAME tag is set, it specifies the name of a custom
 # filter to add. For more information please see Qt Help Project / Custom
-# Filters (see: http://qt-project.org/doc/qt-4.8/qthelpproject.html#custom-
+# Filters (see: http://qt-project.org/qt-4.8/qthelpproject.html#custom-
 # filters).
 # This tag requires that the tag GENERATE_QHP is set to YES.
 
@@ -1392,7 +1392,7 @@ QHP_CUST_FILTER_NAME   =
 
 # The QHP_CUST_FILTER_ATTRS tag specifies the list of the attributes of the
 # custom filter to add. For more information please see Qt Help Project / Custom
-# Filters (see: http://qt-project.org/doc/qt-4.8/qthelpproject.html#custom-
+# Filters (see: http://qt-project.org/qt-4.8/qthelpproject.html#custom-
 # filters).
 # This tag requires that the tag GENERATE_QHP is set to YES.
 
@@ -1400,7 +1400,7 @@ QHP_CUST_FILTER_ATTRS  =
 
 # The QHP_SECT_FILTER_ATTRS tag specifies the list of the attributes this
 # project's filter section matches. Qt Help Project / Filter Attributes (see:
-# http://qt-project.org/doc/qt-4.8/qthelpproject.html#filter-attributes).
+# http://qt-project.org/qt-4.8/qthelpproject.html#filter-attributes).
 # This tag requires that the tag GENERATE_QHP is set to YES.
 
 QHP_SECT_FILTER_ATTRS  =
