@@ -1,4 +1,4 @@
-DOXYGEN ?= obj/bin/doxygen
+DOXYGEN ?= ./doxygen
 
 default: docs
 
