@@ -31,10 +31,20 @@ import vadl.utils.WithSourceLocation;
 public class Ast {
   List<Definition> definitions = new ArrayList<>();
   URI fileUri = SourceLocation.INVALID_SOURCE_LOCATION.uri();
-  List<VadlParser.PassTimings> passTimings = new ArrayList<>();
+  public List<PassTimings> passTimings = new ArrayList<>();
+
 
   @Nullable
   SymbolTable rootSymbolTable;
+
+  /**
+   * A simple record to hold the timings of passes in the frontend.
+   *
+   * @param description of the pass.
+   * @param durationMS  of the pass.
+   */
+  public record PassTimings(String description, long durationMS) {
+  }
 
   SymbolTable rootSymbolTable() {
     return Objects.requireNonNull(rootSymbolTable, "Symbol collector has not been applied");
