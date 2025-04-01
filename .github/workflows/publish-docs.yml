@@ -19,7 +19,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: self-hosted
+    runs-on: self-hosted-x64
     container:
       image: ghcr.io/openvadl/doxygen:1.13.2
     name: Build refman and deploy
