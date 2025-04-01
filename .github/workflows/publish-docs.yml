@@ -6,29 +6,36 @@ on:
     branches:
       - "master"
     paths:
-      - 'doc/**'
+      - 'docs/**'
+
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   publish-docs:
-    # We use our free gh hosted runner minutes for this
-    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: self-hosted
+    container:
+      image: ghcr.io/openvadl/doxygen:1.13.2
     name: Build refman and deploy
     steps:
+      - name: Install Git and Tar
+        run: apk add --no-cache git tar
       - uses: actions/checkout@v4
-      - name: Install Doxygen
-        uses: awalsh128/cache-apt-pkgs-action@v1.4.3
         with:
-          packages: doxygen graphviz
-          version: 1.0
-
+          submodules: true
       - name: Build
-        run: DOXYGEN=doxygen make html
-
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@4.1.5
+        run: cd docs && DOXYGEN=doxygen make open-vadl-html-refman
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          branch: gh-pages
-          folder: obj/doc/open-vadl-refman/html
+          path: docs/obj/doc/open-vadl-refman/html/
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
