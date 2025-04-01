@@ -3,6 +3,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !vadl/src/main/**/build/
 !vadl/src/test/**/build/
+docs/obj
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
