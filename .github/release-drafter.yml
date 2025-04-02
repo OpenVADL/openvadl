@@ -1,0 +1,41 @@
+template: |
+  $CHANGES
+
+exclude-labels:
+  - 'skip-changelog'
+
+categories:
+  - title: 'Features'
+    label: 'enhancements'
+  - title: 'Bug Fixes'
+    labels:
+      - 'bug'
+  - title: 'Documentation'
+    labels:
+      - 'docs'
+
+# We currently strictly increase the minor version.
+# This is going to change once we reach a stable state.
+version-resolver:
+  major:
+    labels: [ ]
+  minor:
+    labels: [ ]
+  patch:
+    labels: [ ]
+  default: minor
+
+autolabeler:
+  - label: 'enhancement'
+    branch:
+      - '/feature\/.+/'
+      - '/feat\/.+/'
+  - label: 'bug'
+    branch:
+      - '/fix\/.+/'
+      - '/bugfix\/.+/'
+  - label: 'docs'
+    files:
+      - 'docs/**.md'
+    branch:
+      - '/docs{0,1}\/.+/'
