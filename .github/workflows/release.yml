@@ -1,15 +1,83 @@
-name: Release new OpenVADL version
+name: Publish Draft Release
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Release tag'
-        required: true
+
+permissions:
+  contents: write
+
 
 jobs:
-  build-and-release:
+  update-draft-release:
+    permissions:
+      pull-requests: read
     runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.release-drafter.outputs.tag_name }}
+      upload_url: ${{ steps.release-drafter.outputs.upload_url }}
+      version: ${{ steps.extract-version.outputs.version }}
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v3
+
+      - name: Update Draft Release
+        id: release-drafter
+        uses: release-drafter/release-drafter@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Version from Tag
+        id: extract-version
+        run: |
+          VERSION=${{ steps.release-drafter.outputs.tag_name }}
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  build-and-upload:
+    needs: update-draft-release
+    strategy:
+      matrix:
+        include:
+          - architecture: arm64
+            platform: macOS
+            runner: self-hosted-arm64
+          - architecture: x64
+            platform: linux
+            runner: self-hosted-x64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Build Environment
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Native Executable
+        run: |
+          VERSIONING_GIT_TAG=${{ needs.update-draft-release.outputs.version }} ./gradlew nativeCompile
+          APPNAME=openvadl-${{ matrix.platform }}-${{ matrix.architecture }}
+          mv vadl-cli/build/native/nativeCompile/openvadl $APPNAME
+          echo "APPNAME=$APPNAME" >> $GITHUB_ENV
+
+      - name: Upload Executable to Draft Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: ${{ env.APPNAME }}
+          tag_name: ${{ needs.update-draft-release.outputs.tag_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+#  publish-release:
+#    needs: [ update-draft-release, build-and-upload ]
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Publish Draft Release
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          gh release edit ${{ needs.update-draft-release.outputs.tag_name }} --draft=false
