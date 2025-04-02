@@ -23,11 +23,19 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.stream.Streams;
 import picocli.CommandLine;
+import vadl.OpenVadlProperties;
 import vadl.configuration.IssConfiguration;
 
 class Helpers {
 }
 
+class VersionProvider implements CommandLine.IVersionProvider {
+
+  @Override
+  public String[] getVersion() {
+    return new String[] {OpenVadlProperties.getVersion()};
+  }
+}
 
 class IssOptsConverter implements CommandLine.ITypeConverter<IssConfiguration.IssOptsToSkip>,
     Iterable<String> {

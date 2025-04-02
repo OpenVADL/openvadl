@@ -31,6 +31,8 @@ plugins {
     id("java")
     checkstyle
     id("net.ltgt.errorprone") version "4.0.1" apply false
+    id("me.qoomon.git-versioning") version "6.4.4"
+
 
     // log executed tests
     id("com.adarshr.test-logger") version "4.0.0"
@@ -39,9 +41,22 @@ plugins {
     id("vadl.IdeConfigPlugin")
 }
 
-allprojects {
-    group = "vadl"
-    version = "0.1.0-SNAPSHOT"
+
+group = "openvadl"
+version = "0.0.0-SNAPSHOT"
+gitVersioning.apply {
+    refs {
+        branch(".+") {
+            version = "\${ref}-SNAPSHOT"
+        }
+        tag("v(?<version>.*)") {
+            version = "\${ref.version}"
+        }
+    }
+
+    rev {
+        version = "\${commit}"
+    }
 }
 
 
