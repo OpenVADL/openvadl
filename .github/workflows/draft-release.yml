@@ -32,7 +32,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: |
-          echo "Version: ${{ release-drafter.outputs.resolved_version }}"
+          echo "Version: ${{ steps.release-drafter.outputs.resolved_version }}"
 
   build-and-upload-native:
     needs: update_release_draft
