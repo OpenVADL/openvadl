@@ -21,6 +21,7 @@ import static vadl.dump.InfoEnricher.forType;
 import com.google.common.html.HtmlEscapers;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,6 +36,7 @@ import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
@@ -129,12 +131,15 @@ public class RtlEnricherCollection {
           if (mapping != null) {
             var inputs = stageNodes(Node.class, mapping, stage)
                 .flatMap(n -> n.inputs().filter(i -> !mapping.containsInStage(stage, i)))
-                .map(Node::toString)
+                .distinct()
+                .map(RtlEnricherCollection::stageIOName)
                 .map(HtmlEscapers.htmlEscaper()::escape)
                 .collect(Collectors.toCollection(ArrayList::new));
             var outputs = stageNodes(Node.class, mapping, stage)
                 .filter(n -> n.usages().anyMatch(u -> !mapping.containsInStage(stage, u)))
-                .map(Node::toString)
+                .filter(n -> !(n instanceof ConstantNode))
+                .distinct()
+                .map(RtlEnricherCollection::stageIOName)
                 .map(HtmlEscapers.htmlEscaper()::escape)
                 .collect(Collectors.toCollection(ArrayList::new));
 
@@ -172,6 +177,16 @@ public class RtlEnricherCollection {
         .withNodeFilter(node -> mapping.containsInStage(stage, node))
         .load(mapping.ipg())
         .visualize();
+  }
+
+  private static String stageIOName(Node node) {
+    if (node.ensureGraph() instanceof InstructionProgressGraph ipg) {
+      return ipg.getContext(node).nameHints().stream()
+          .min(Comparator.comparing(String::length))
+          .map(name -> name + ": " + node)
+          .orElseGet(node::toString);
+    }
+    return node.toString();
   }
 
   /**

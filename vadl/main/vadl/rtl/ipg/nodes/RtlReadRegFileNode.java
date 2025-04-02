@@ -26,6 +26,7 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 
 /**
  * Represents a read from a register file on RTL. Compared to
@@ -94,7 +95,7 @@ public class RtlReadRegFileNode extends ReadRegFileNode implements RtlConditiona
   }
 
   @Override
-  public Node asNode() {
-    return super.asNode();
+  public ReadResourceNode asReadNode() {
+    return this;
   }
 }

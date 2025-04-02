@@ -58,6 +58,31 @@ public class InstructionWordSliceNode extends ExpressionNode {
   }
 
   /**
+   * Create a new instruction word slice node.
+   *
+   * @param formatType format type (type of the instruction word)
+   * @param slice bit slice
+   * @param fields set of format fields
+   * @param type data type of the slice result
+   */
+  public InstructionWordSliceNode(BitsType formatType, Constant.BitSlice slice,
+                                  Set<Format.Field> fields, DataType type) {
+    super(type);
+    this.formatType = formatType;
+    this.slice = slice;
+    this.fields = fields;
+  }
+
+  /**
+   * Get the instruction format type.
+   *
+   * @return format type
+   */
+  public BitsType formatType() {
+    return formatType;
+  }
+
+  /**
    * Get bit slice.
    *
    * @return bit slice
@@ -98,7 +123,7 @@ public class InstructionWordSliceNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new InstructionWordSliceNode(formatType, slice, type().asDataType());
+    return new InstructionWordSliceNode(formatType, slice, fields, type().asDataType());
   }
 
   @Override

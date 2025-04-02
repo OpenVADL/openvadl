@@ -135,7 +135,7 @@ public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalRe
   }
 
   @Override
-  public Node asNode() {
-    return super.asNode();
+  public ReadResourceNode asReadNode() {
+    return this;
   }
 }
