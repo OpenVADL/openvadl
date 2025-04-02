@@ -33,6 +33,7 @@
 <!-- N -->
 <!-- O -->
 <!-- P -->
+\acronym{PC,   Program counter}
 \acronym{PDL,  Processor Description Language}
 <!-- Q -->
 <!-- R -->
@@ -46,6 +47,7 @@
 \acronym{VADL, Vienna Architecture Description Language}
 \acronym{VDL,  Vienna Definition Language}
 \acronym{VIAM, \ac{VADL} Intermediate Architecture Model}
+\acronym{VLIW, Very Long Instruction Word}
 <!-- W -->
 <!-- X -->
 \acronym{XML,  Extensible Markup Language}
