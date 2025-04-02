@@ -1,0 +1,24 @@
+# Adds a draft release to the Github releases by collecting merged PRs
+# using the release-drafter action.
+name: Draft Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - chore/draft-release-ci
+
+permissions:
+  contents: read
+
+jobs:
+  update_release_draft:
+    permissions:
+      contents: write
+      pull-requests: read
+    runs-on: self-hosted
+    steps:
+      - uses: release-drafter/release-drafter@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

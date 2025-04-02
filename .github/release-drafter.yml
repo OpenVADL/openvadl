@@ -1,0 +1,16 @@
+template: |
+  $CHANGES
+
+exclude-labels:
+  - 'skip-changelog'
+
+# We currently strictly increase the minor version.
+# This is going to change once we reach a stable state.
+version-resolver:
+  major:
+    labels: [ ]
+  minor:
+    labels: [ ]
+  patch:
+    labels: [ ]
+  default: minor
