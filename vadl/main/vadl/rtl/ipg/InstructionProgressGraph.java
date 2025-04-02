@@ -101,9 +101,9 @@ public class InstructionProgressGraph extends Graph {
    * @return the node added to the graph or its duplicate
    */
   public <T extends Node> T add(T node, Collection<Instruction> instructions) {
-    var result = add(node);
+    node = add(node);
     markNode(node, instructions);
-    return result;
+    return node;
   }
 
   @Override
@@ -234,6 +234,8 @@ public class InstructionProgressGraph extends Graph {
 
     private final Set<Instruction> instructions;
 
+    private final Set<String> nameHints;
+
     /**
      * Construct a node context for a node in the instruction progress graph.
      * Used in {@link InstructionProgressGraph#add}.
@@ -243,6 +245,7 @@ public class InstructionProgressGraph extends Graph {
     NodeContext(Node node) {
       this.node = node;
       this.instructions = new HashSet<>();
+      this.nameHints = new HashSet<>();
     }
 
     /**
@@ -262,6 +265,16 @@ public class InstructionProgressGraph extends Graph {
     public Set<Instruction> instructions() {
       return instructions;
     }
+
+    /**
+     * Get name hints for generating variable names.
+     *
+     * @return set of name hints
+     */
+    public Set<String> nameHints() {
+      return nameHints;
+    }
+
   }
 
 }

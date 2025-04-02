@@ -38,6 +38,7 @@ import vadl.rtl.ipg.nodes.RtlReadRegFileNode;
 import vadl.rtl.ipg.nodes.RtlReadRegNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
 import vadl.rtl.utils.GraphMergeUtils;
+import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.GraphUtils;
@@ -66,7 +67,6 @@ import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
-import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplifier;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 
@@ -114,7 +114,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
     // optimize because some of the previous steps introduce
     // potentially unnecessary constant nodes
     Canonicalizer.canonicalize(ipg);
-    new AlgebraicSimplifier(AlgebraicSimplificationPass.rules).run(ipg);
+    new AlgebraicSimplifier(RtlSimplificationRules.rules).run(ipg);
 
     // Attach IPG to ISA
     var ipgExt = new InstructionProgressGraphExtension(ipg);
@@ -280,10 +280,10 @@ public class InstructionProgressGraphCreationPass extends Pass {
       collectSideEffects(sideEffect, sideEffect, map);
     });
     map.forEach((read, sideEffects) -> {
-      var instructions = ipg.getContext(read.asNode()).instructions();
+      var instructions = ipg.getContext(read.asReadNode()).instructions();
       sideEffects.stream()
           .reduce(GraphUtils::or).ifPresent(cond -> {
-            if (hasCycle(read.asNode(), cond)) {
+            if (hasCycle(read.asReadNode(), cond)) {
               // over-approximate with true
               read.setCondition(
                   ipg.addWithInputs(GraphUtils.bool(true).toNode(), instructions));

@@ -111,7 +111,7 @@ public class InstructionProgressGraphMergePass extends Pass {
           deleted.add(removed);
         },
         added -> {
-          var usage = mapping.findContext(added.usages().findFirst().orElseThrow()).orElseThrow();
+          var usage = mapping.ensureContext(added.usages().findFirst().orElseThrow());
           usage.ipgNodes().add(added);
         });
   }

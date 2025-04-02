@@ -34,6 +34,7 @@ import vadl.pass.PassResults;
 import vadl.pass.exception.PassError;
 import vadl.rtl.map.MiaBuiltInCallMatcher;
 import vadl.rtl.map.MiaMapping;
+import vadl.types.BuiltInTable;
 import vadl.types.MicroArchitectureType;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -124,7 +125,11 @@ public class MiaMappingCreationPass extends Pass {
       var matcher = new MiaBuiltInCallMatcher();
       var q = new ArrayDeque<Node>();
       sources.forEach(source -> {
-        source.usages().filter(maps::contains).forEach(q::addLast);
+        if (maps.contains(source)) {
+          q.add(source);
+        } else {
+          source.usages().filter(maps::contains).forEach(q::addLast);
+        }
       });
       while (!q.isEmpty()) {
         var mapNode = q.removeFirst();
@@ -225,6 +230,9 @@ public class MiaMappingCreationPass extends Pass {
 
   // expression node with instruction output _and_ instruction inputs
   private boolean isMap(Node node) {
+    if (node instanceof MiaBuiltInCall miaCall && miaCall.builtIn() == BuiltInTable.DECODE) {
+      return true;
+    }
     if (node instanceof ExpressionNode expr) {
       return (expr.inputs().anyMatch(this::instructionNode) && instructionNode(expr));
     }

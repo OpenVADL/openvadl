@@ -18,14 +18,15 @@ package vadl.rtl.ipg.nodes;
 
 import com.google.common.collect.Streams;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.viam.Instruction;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
@@ -40,6 +41,10 @@ public class SelectByInstructionNode extends ExpressionNode {
 
   @DataValue
   List<Set<Instruction>> instructions;
+
+  @Input
+  @Nullable
+  protected ExpressionNode selection;
 
   @Input
   NodeList<ExpressionNode> values;
@@ -70,6 +75,31 @@ public class SelectByInstructionNode extends ExpressionNode {
         "List of instruction sets must have same size as value inputs");
     this.instructions = instructions;
     this.values = values;
+  }
+
+  /**
+   * Input that selects from the values by an integer. Null initially, is set during MiA synthesis.
+   *
+   * @return expression node supplying the selection
+   */
+  @Nullable
+  public ExpressionNode selection() {
+    return selection;
+  }
+
+  /**
+   * Set selection input. Must be of an integer type large enough to address all possible values.
+   *
+   * @param selection expression node input
+   */
+  public void setSelection(@Nullable ExpressionNode selection) {
+    if (selection != null) {
+      ensure(selection.type() instanceof UIntType t && (1 << t.bitWidth()) >= values().size(),
+          "Selection input must be a UInt large enough to address %d inputs",
+          values().size());
+    }
+    updateUsageOf(this.selection, selection);
+    this.selection = selection;
   }
 
   /**
@@ -195,12 +225,16 @@ public class SelectByInstructionNode extends ExpressionNode {
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
+    if (this.selection != null) {
+      collection.add(selection);
+    }
     collection.addAll(values);
   }
 
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
+    selection = visitor.applyNullable(this, selection, ExpressionNode.class);
     values = values.stream()
         .map((e) -> visitor.apply(this, e, ExpressionNode.class))
         .collect(Collectors.toCollection(NodeList::new));

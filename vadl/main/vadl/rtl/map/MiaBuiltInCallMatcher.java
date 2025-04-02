@@ -47,6 +47,12 @@ public class MiaBuiltInCallMatcher {
       new IdentityHashMap<>();
 
   static {
+    MATCHERS.put(BuiltInTable.DECODE, (matchNode, mapNode, doneNodes) -> {
+      if (matchNode instanceof ConstantNode) {
+        return false;
+      }
+      return resolveDecode(matchNode);
+    });
     MATCHERS.put(BuiltInTable.INSTRUCTION_READ, (matchNode, mapNode, doneNodes) -> {
       return matchNode instanceof ReadResourceNode n
           && mapNode.matchResource(n.resourceDefinition());
@@ -56,8 +62,10 @@ public class MiaBuiltInCallMatcher {
           && mapNode.matchResource(n.resourceDefinition());
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_COMPUTE, (matchNode, mapNode, doneNodes) -> {
+      if (matchNode instanceof ConstantNode) {
+        return false;
+      }
       return resolveCompute(matchNode, doneNodes);
-
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_ADDRESS, (matchNode, mapNode, doneNodes) -> {
       return matchNode.usages().anyMatch(use -> {
@@ -90,6 +98,20 @@ public class MiaBuiltInCallMatcher {
   }
 
   /**
+   * Resolve if a node's value can be determined in the decode mapping. This is, if none of its
+   * inputs are based on a read node, and it is not a write node.
+   *
+   * @param node node to check
+   * @return true, if part of decode mapping
+   */
+  private static boolean resolveDecode(Node node) {
+    if (node instanceof ReadResourceNode || node instanceof WriteResourceNode) {
+      return false;
+    }
+    return node.inputs().allMatch(MiaBuiltInCallMatcher::resolveDecode);
+  }
+
+  /**
    * Resolve if a done node is reachable through a chain of unary nodes. The unary nodes we have
    * don't include calculation, just truncate and sign/zero-extend nodes. Used for determine if
    * a result can be mapped for {@link BuiltInTable#INSTRUCTION_RESULTS} nodes.
@@ -108,6 +130,15 @@ public class MiaBuiltInCallMatcher {
     return false;
   }
 
+  private static boolean isCompute(Node matchNode) {
+    if (matchNode instanceof BuiltInCall n) {
+      // TODO fix meaning of compute
+      return n.arguments().stream()
+          .anyMatch(i -> (i.type() instanceof DataType dt && dt.bitWidth() > 1));
+    }
+    return false;
+  }
+
   /**
    * Resolve if the given node should be mapped as part of the compute built-in.
    *
@@ -117,9 +148,7 @@ public class MiaBuiltInCallMatcher {
    */
   private static boolean resolveCompute(Node matchNode, Set<Node> doneNodes) {
     if (matchNode instanceof BuiltInCall n) {
-      // TODO fix meaning of compute
-      if (n.arguments().stream()
-          .anyMatch(i -> (i.type() instanceof DataType dt && dt.bitWidth() > 1))) {
+      if (isCompute(matchNode)) {
         return true;
       }
       return matchNode.inputs()

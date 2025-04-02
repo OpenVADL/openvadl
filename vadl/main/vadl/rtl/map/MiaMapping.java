@@ -23,12 +23,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import vadl.rtl.ipg.InstructionProgressGraph;
+import vadl.types.BuiltInTable;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.MicroArchitecture;
 import vadl.viam.Stage;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
@@ -90,6 +93,15 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
   public NodeContext ensureContext(Node ipgNode) {
     return findContext(ipgNode).orElseThrow(() ->
         new ViamGraphError("IPG node has no context in MiA mapping").addContext(ipgNode));
+  }
+
+  public Optional<NodeContext> decode() {
+    return contexts.values().stream().filter(NodeContext::isDecode).findFirst();
+  }
+
+  public NodeContext ensureDecode() {
+    return decode().orElseThrow(
+        () -> new ViamError("Missing decode builtin call in micro architecture"));
   }
 
   /**
@@ -196,6 +208,10 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
      */
     public Set<Node> ipgNodes() {
       return ipgNodes;
+    }
+
+    public boolean isDecode() {
+      return (node instanceof MiaBuiltInCall b && b.builtIn() == BuiltInTable.DECODE);
     }
   }
 
