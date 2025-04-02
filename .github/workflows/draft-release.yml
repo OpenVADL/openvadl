@@ -25,20 +25,14 @@ jobs:
       pull-requests: write
     runs-on: self-hosted
     outputs:
-      tag_name: ${{ steps.release-drafter.outputs.tag_name }}
-      version: ${{ steps.extract-version.outputs.version }}
+      version: ${{ steps.release-drafter.outputs.resolved_version }}
     steps:
       - uses: release-drafter/release-drafter@v6
         id: release-drafter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract Version from Tag
-        id: extract-version
-        run: |
-          VERSION=${{ steps.release-drafter.outputs.tag_name }}
-          VERSION=${VERSION#v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - run: |
+          echo "Version: ${{ release-drafter.outputs.resolved_version }}"
 
   build-and-upload-native:
     needs: update_release_draft
@@ -65,7 +59,7 @@ jobs:
 
       - name: Build Native Executable
         run: |
-          VERSIONING_GIT_TAG=${{ needs.update-draft-release.outputs.tag_name }} ./gradlew nativeCompile
+          VERSIONING_GIT_TAG=v${{ needs.update-draft-release.outputs.version }} ./gradlew nativeCompile
           APPNAME=openvadl-${{ needs.update-draft-release.outputs.version }}-${{ matrix.platform }}-${{ matrix.architecture }}
           mv vadl-cli/build/native/nativeCompile/openvadl $APPNAME
           tar -czvf ${APPNAME}.tar.gz $APPNAME
@@ -76,7 +70,7 @@ jobs:
         with:
           draft: true
           files: ${{ env.COMPRESSED_APP }}
-          tag_name: ${{ needs.update-draft-release.outputs.tag_name }}
+          tag_name: v${{ needs.update-draft-release.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -96,7 +90,7 @@ jobs:
 
       - name: Build Application
         run: |
-          ${{ needs.update-draft-release.outputs.tag_name }} ./gradlew distTar
+          VERSIONING_GIT_TAG=v${{ needs.update-draft-release.outputs.version }} ./gradlew distTar
           JAVA_TAR=openvadl-${{ needs.update-draft-release.outputs.version }}.tar
           JAVA_JAR=openvadl-${{ needs.update-draft-release.outputs.version }}.jar
           mv vadl-cli/build/distributions/openvadl.tar $JAVA_TAR
@@ -111,6 +105,6 @@ jobs:
           files: |
             ${{ env.JAVA_TAR }}
             ${{ env.JAVA_JAR }}
-          tag_name: ${{ needs.update-draft-release.outputs.tag_name }}
+          tag_name: v${{ needs.update-draft-release.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
