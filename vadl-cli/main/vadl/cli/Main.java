@@ -26,6 +26,7 @@ import picocli.CommandLine.Command;
 @Command(mixinStandardHelpOptions = true,
     name = "OpenVADL",
     description = "The OpenVadl CLI tool.",
+    versionProvider = VersionProvider.class,
     subcommands = {CheckCommand.class, IssCommand.class, LcbCommand.class, RtlCommand.class})
 public class Main implements Runnable {
   @Override

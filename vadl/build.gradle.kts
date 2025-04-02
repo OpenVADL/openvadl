@@ -92,7 +92,7 @@ val createProperties by tasks.registering {
     outputs.file(versionFile)
     doLast {
         val properties = Properties()
-        properties["version"] = project.version.toString()
+        properties["version"] = rootProject.version.toString()
         versionFile.get().asFile.apply {
             parentFile.mkdirs()
             outputStream().use { properties.store(it, null) }
