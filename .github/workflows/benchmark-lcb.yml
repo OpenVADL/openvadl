@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - master
+    paths:
+      - vadl/main/vadl/gcb
+      - vadl/main/vadl/lcb
+      - vadl/main/resources/lcb
 
 permissions:
   contents: read
