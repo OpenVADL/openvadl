@@ -1,12 +1,21 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
 template: |
   $CHANGES
+  
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
 
 exclude-labels:
   - 'skip-changelog'
 
+include-labels:
+  - 'enhancements'
+  - 'bug'
+  - 'docs'
+
 categories:
-  - title: 'Features'
-    label: 'enhancements'
+  - title: 'New'
+    label: 'enhancement'
   - title: 'Bug Fixes'
     labels:
       - 'bug'
