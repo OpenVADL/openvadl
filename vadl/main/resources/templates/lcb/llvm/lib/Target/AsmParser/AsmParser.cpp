@@ -71,16 +71,6 @@ bool [(${namespace})]AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &O
         return true;
     }
 
-    // std::string msg = "Matching Instruction (" + std::to_string(Opcode) + "):\n";
-    // for(auto it = Operands.begin(); it != Operands.end(); ++it)
-    // {
-    //     std::string s = "";
-    //     raw_string_ostream O(s);
-    //     it->get()->print(O);
-    //     msg += O.str();
-    // }
-    // Note(IDLoc, msg);
-
     MCInst Inst;
     Inst.setOpcode(Opcode);
     Inst.setLoc(IDLoc);
@@ -230,11 +220,17 @@ bool [(${namespace})]AsmParser::ModifyImmediate(unsigned OpIndex, unsigned Opcod
                 Parser.Error(Op.getStartLoc(), error);
                 return false;
             }
+
+            // normalize if access function used in grammar
             [# th:if="${!#strings.isEmpty(conversion.fieldAccessName)}" ]
             if (GrammarAttribute.equals_insensitive("[(${conversion.fieldAccessName})]")) {
-              opImm64 = [(${conversion.decodeMethod})](opImm64);
+              opImm64 = [(${conversion.encodeMethod})](opImm64);
             }
             [/]
+
+            // decode normalized value to fit MCInst expectation
+            opImm64 = [(${conversion.decodeMethod})](opImm64);
+
             // check if immediate fits the provided predicate for the instruction
             if(![(${conversion.predicateMethod})](opImm64))
             {

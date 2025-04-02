@@ -1,6 +1,6 @@
 # RUN: /src/llvm-final/build/bin/llvm-mc -arch=rv32im -show-encoding < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
-# TODO: call, branch and load pseudo instructions
+# TODO: call, branch, j and load pseudo instructions
 
 RET
 # CHECK: # encoding: [0x67,0x80,0x00,0x00]
@@ -14,14 +14,8 @@ ECALL
 EBREAK
 # CHECK: # encoding: [0x73,0x00,0x10,0x00]
 
-# CALL my_function
-# CHECK-DISABLED: # encoding: [0x97,0x00,0x00,0x00,0xe7,0x80,0x00,0x00]
-
 TAIL my_function
 # CHECK: # encoding: [0x17,0x03,0x00,0x00,0x67,0x00,0x03,0x00]
-
-J 100
-# CHECK: # encoding: [0x6f,0x00,0x40,0x06]
 
 MV x0, x1
 # CHECK:[0x13,0x80,0x00,0x00]

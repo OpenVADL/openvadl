@@ -37,7 +37,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
-import vadl.lcb.template.lld.ELF.Arch.EmitImmediateUtilsHeaderFilePass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.AssemblyDescription;
@@ -120,6 +119,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
       String instructionName,
       String fieldAccessName,
       String operandName,
+      String encodeMethod,
       String decodeMethod,
       String predicateMethod,
       long lowestValue,
@@ -133,6 +133,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
           "insnName", instructionName,
           "fieldAccessName", fieldAccessName,
           "operandName", operandName,
+          "encodeMethod", encodeMethod,
           "decodeMethod", decodeMethod,
           "predicateMethod", predicateMethod,
           "lowestValue", lowestValue,
@@ -144,13 +145,13 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
   /**
    * Immediate conversions are used to generate the {@code ModifyImmediate} method in the parser.
-   * {@code ModifyImmediate} fulfills 3 tasks:
+   * {@code ModifyImmediate} fulfills 4 tasks:
    * <ul>
-   *   <li>Checks if a parsed immediate is in the valid value range</li>
-   *   <li>Applies {@code decode} ({@link EmitImmediateUtilsHeaderFilePass}),
-   *   if an access function was referenced in the grammar</li>
-   *   <li>Checks if the {@code predicate} ({@link EmitImmediateUtilsHeaderFilePass})
-   *   holds for the immediate value</li>
+   *   <li>Applies {@code encode} to the parsed immediate if an
+   *   access function was referenced in the grammar</li>
+   *   <li>Checks if a normalized immediate is in the valid value range</li>
+   *   <li>Applies {@code decode} to fit the expectation of {@code MCInst}</li>
+   *   <li>Checks if the {@code predicate} holds for the immediate value</li>
    * </ul>
    */
   private List<ImmediateConversion> immediateConversions(PassResults passResults) {
@@ -181,6 +182,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
                     instruction.simpleName(),
                     fieldAccess != null ? fieldAccess.simpleName() : "",
                     ((TableGenParameterTypeAndName) tableGenOperand.parameter()).name(),
+                    immediateOperand.rawEncoderMethod(),
                     immediateOperand.rawDecoderMethod(),
                     immediateOperand.predicateMethod(),
                     valueRange.lowest(),

@@ -147,7 +147,7 @@ assembly description ASM for ABI = {
     LuiInstruction @instruction:
       mnemonic = "LUI" @operand
       rd = Register@operand ","
-      immUp = LuiImmediateOperand
+      imm = LuiImmediateOperand
     ;
 
     LuiImmediateOperand :
@@ -161,7 +161,7 @@ assembly description ASM for ABI = {
     AuipcInstruction @instruction:
       mnemonic = "AUIPC" @operand
       rd = Register@operand ","
-      immUp = ImmediateOperand
+      imm = ImmediateOperand
     ;
 
     LTypeIds : "LB" | "LBU" | "LH" | "LHU" | "LW" ;
@@ -186,7 +186,7 @@ assembly description ASM for ABI = {
     JalInstruction @instruction:
       mnemonic = "JAL" @operand
       rd = Register @operand ","
-      imm = ImmediateOperand
+      immS = ImmediateOperand
     ;
 
 
@@ -196,7 +196,7 @@ assembly description ASM for ABI = {
       mnemonic = BTypeIds @operand
       rs1 = Register@operand ","
       rs2 = Register@operand ","
-      imm = ImmediateOperand@operand
+      immS = ImmediateOperand@operand
     ;
 
 

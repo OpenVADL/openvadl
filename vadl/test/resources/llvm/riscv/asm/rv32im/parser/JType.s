@@ -16,10 +16,10 @@ JAL x16, 10
 # CHECK-NEXT: <MCOperand Imm:10>>
 
 # maximum valid immediate value
-JAL x16, 524287
+JAL x16, 524286
 # CHECK: <MCInst #{{[0-9]+}} JAL
 # CHECK-NEXT: <MCOperand Reg:18>
-# CHECK-NEXT: <MCOperand Imm:524287>>
+# CHECK-NEXT: <MCOperand Imm:524286>>
 
 # minimum valid immediate value
 JAL x16, -524288
