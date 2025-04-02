@@ -11,15 +11,12 @@ jobs:
   update-draft-release:
     permissions:
       pull-requests: read
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       tag_name: ${{ steps.release-drafter.outputs.tag_name }}
       upload_url: ${{ steps.release-drafter.outputs.upload_url }}
       version: ${{ steps.extract-version.outputs.version }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
       - name: Update Draft Release
         id: release-drafter
         uses: release-drafter/release-drafter@v5
