@@ -100,7 +100,7 @@ jobs:
           JAVA_TAR=openvadl-${{ needs.update-draft-release.outputs.version }}.tar
           JAVA_JAR=openvadl-${{ needs.update-draft-release.outputs.version }}.jar
           mv vadl-cli/build/distributions/openvadl.tar $JAVA_TAR
-          mv vadl-cli/build/libs/openvadl.jar $JAVA_JAR
+          mv vadl-cli/build/libs/vadl-cli.jar $JAVA_JAR
           echo "JAVA_TAR=${JAVA_TAR}" >> $GITHUB_ENV
           echo "JAVA_JAR=${JAVA_JAR}" >> $GITHUB_ENV
 
