@@ -24,12 +24,23 @@ jobs:
       contents: write
       pull-requests: write
     runs-on: self-hosted
+    outputs:
+      tag_name: ${{ steps.release-drafter.outputs.tag_name }}
+      version: ${{ steps.extract-version.outputs.version }}
     steps:
       - uses: release-drafter/release-drafter@v6
+        id: release-drafter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build-and-upload:
+      - name: Extract Version from Tag
+        id: extract-version
+        run: |
+          VERSION=${{ steps.release-drafter.outputs.tag_name }}
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  build-and-upload-native:
     needs: update_release_draft
     strategy:
       matrix:
@@ -54,16 +65,52 @@ jobs:
 
       - name: Build Native Executable
         run: |
-          VERSIONING_GIT_TAG=v0.1.0 ./gradlew nativeCompile
-          APPNAME=openvadl-${{ matrix.platform }}-${{ matrix.architecture }}
+          VERSIONING_GIT_TAG=${{ needs.update-draft-release.outputs.tag_name }} ./gradlew nativeCompile
+          APPNAME=openvadl-${{ needs.update-draft-release.outputs.version }}-${{ matrix.platform }}-${{ matrix.architecture }}
           mv vadl-cli/build/native/nativeCompile/openvadl $APPNAME
-          echo "APPNAME=$APPNAME" >> $GITHUB_ENV
+          tar -czvf ${APPNAME}.tar.gz $APPNAME
+          echo "COMPRESSED_APP=${APPNAME}.tar.gz" >> $GITHUB_ENV
 
       - name: Upload Executable to Draft Release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          files: ${{ env.APPNAME }}
-          tag_name: v0.1.0
+          files: ${{ env.COMPRESSED_APP }}
+          tag_name: ${{ needs.update-draft-release.outputs.tag_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-and-upload-jar:
+    needs: update_release_draft
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Build Environment
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Application
+        run: |
+          ./gradlew distTar
+          JAVA_TAR=openvadl-${{ needs.update-draft-release.outputs.version }}.tar
+          JAVA_JAR=openvadl-${{ needs.update-draft-release.outputs.version }}.jar
+          mv vadl-cli/build/distributions/openvadl.tar $JAVA_TAR
+          mv vadl-cli/build/libs/openvadl.jar $JAVA_JAR
+          echo "JAVA_TAR=${JAVA_TAR}" >> $GITHUB_ENV
+          echo "JAVA_JAR=${JAVA_JAR}" >> $GITHUB_ENV
+
+      - name: Upload Executable to Draft Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            ${{ env.JAVA_TAR }}
+            ${{ env.JAVA_JAR }}
+          tag_name: ${{ needs.update-draft-release.outputs.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
