@@ -96,7 +96,7 @@ jobs:
 
       - name: Build Application
         run: |
-          ./gradlew distTar
+          ${{ needs.update-draft-release.outputs.tag_name }} ./gradlew distTar
           JAVA_TAR=openvadl-${{ needs.update-draft-release.outputs.version }}.tar
           JAVA_JAR=openvadl-${{ needs.update-draft-release.outputs.version }}.jar
           mv vadl-cli/build/distributions/openvadl.tar $JAVA_TAR
