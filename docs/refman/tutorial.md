@@ -24,7 +24,7 @@ instruction set architecture RV32I = {
   using Addr    = Regs                   // address type is equal to the register type
 
   [zero : X(0)]                          // register with index 0 always is zero
-  register file    X : Index -> Regs     // integer register file with 32 registers
+  register         X : Index -> Regs     // integer register file with 32 registers
   [rvWeakMemoryOrdering]                 // RISC V weak memory ordering
   memory         MEM : Addr  -> Byte     // byte addressed memory
   program counter PC : Addr              // PC points to the start of an instruction
@@ -617,12 +617,12 @@ $InstModel( ( ADD ; + ) )
 While most of the needs are covered by syntactical macros, string and identifier manipulation is best done using lexical
 macros.
 A lexical macro acts on the abstraction level of token streams in contrast to an already parsed AST.
-Two use-cases are supported using special macro functions.
+Two use-cases are supported using special syntax type converting functions.
 Firstly, templates generating instruction behavior and assembly often need the instruction name once in form of an
 identifier (`Id`) and again in form of a string (`Str`).
-This use case is covered by the `IdToStr` function.
+This use case is covered by the `IdToStr` function (will be renamed to `AsStr`).
 This function takes an `Id` typed syntax element and converts it to a `Str` typed syntax element.
-Secondly, the `ExtendId` function allows safe identifier manipulation.
+Secondly, the `ExtendId` function allows safe identifier manipulation (will be renamed to `AsId`).
 This function takes an arbitrary number of `Id` or `Str` typed syntax elements, converts `Id` typed elements to `Str`,
 concatenates them and returns a single `Id` typed syntax element.
 Listing \r{lexical_macros} shows a small example of both functions with their typed result as comment.
@@ -846,7 +846,7 @@ import rv3264im::RV3264I with ("Size=Arch64")
 
 \lbl{tut_isa_definition}
 
-\listing{lst_isa_definition, Instruction Set Architecture Definition with common Definitions}
+\listing{lst_isa_definition, Instruction Set Architecture Definition with some common Definitions}
 ~~~{.vadl}
 instruction set architecture RV32base = {}
 
@@ -883,6 +883,35 @@ These are followed by the definition of \ac{ISA} elements like registers or inst
 
 ### Program Counter Definition
 
+Declaring a program counter (\ac{PC}) is mandatory (see a definition in line 7 of Listing \r{lst_program_counter}).
+
+\listing{lst_program_counter, Program Counter Definition and Use}
+~~~{.vadl}
+instruction set architecture RV32I = {
+
+  using Addr = Bits<32>      // 32 bit address space
+
+  [next next]                // PC points to the end of the following instruction
+  [next]                     // PC points to the end of the current instruction
+  program counter PC : Addr  // PC points to the start of the current instruction (default)
+
+  instruction Branch : BType = {
+    let returnaddress = PC.next in
+      PC := PC.current + offset
+  }
+}
+~~~
+\endlisting
+
+In most architectures, the \ac{PC} points to the start of the current instruction when read inside an instruction specification.
+This is the default behavior when no annotation is added.
+This behavior can be changed by adding the annotation `[next]`, which lets the \ac{PC} point to the end of the current instruction.
+The ARM AArch32 architecture has the peculiar behavior that the \ac{PC} points to the end of the following instruction, which can be specified by the annotation `[next next]`.
+It is required that the following instruction has the same size as the current instruction.
+If an instruction does not explicitly modify the \ac{PC}, it is implicitly incremented by the instruction size in each execution cycle.
+
+The read value of the \ac{PC} as defined by the annotation can be overruled by using one of the builtin methods for the program counter: `current`, `next`, and `nextnext` (see lines 10 and 11 of Listing \r{lst_program_counter}).
+Independent of any \ac{PC} annotation the method `current` always delivers the start of the current instruction, the method `next` always delivers the end of the current instruction, and the method `nextnext` the end of the following instruction.
 
 ### Register Definition
 
@@ -893,16 +922,28 @@ These are followed by the definition of \ac{ISA} elements like registers or inst
 ### Instruction Definition
 
 
+#### Block Statement
+
+
 #### Assignment Statement
 
 
 #### Let Statement
 
 
-#### If Statment
+#### If Statement
 
 
 #### Match Statement
+
+
+#### Forall Statement and Expression
+
+
+#### Raise Statement and Exeption Definition
+
+
+#### Lock Statement
 
 
 ### Encoding Definition
@@ -913,6 +954,14 @@ These are followed by the definition of \ac{ISA} elements like registers or inst
 
 ### Pseudo Instructions
 
+
+### Operation Definition
+
+
+### Group Definition
+
+
+### Process Definition
 
 
 ## Application Binary Interface Definition
