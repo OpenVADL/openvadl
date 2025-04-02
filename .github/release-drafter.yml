@@ -13,6 +13,9 @@ include-labels:
   - 'bug'
   - 'docs'
 
+sort-by: title
+sort-direction: ascending
+
 categories:
   - title: 'New'
     label: 'enhancement'
