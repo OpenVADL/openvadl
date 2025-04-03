@@ -112,6 +112,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var exprNode = fetch(expr);
 
     var graph = new Graph(name);
+    graph.setSourceLocation(expr.location());
     currentGraph = graph;
 
     ControlNode endNode = graph.addWithInputs(new ReturnNode(exprNode));
@@ -147,6 +148,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   Graph getInstructionGraph(InstructionDefinition definition) {
     var graph = new Graph("%s Behavior".formatted(definition.identifier().name));
+    graph.setSourceLocation(definition.sourceLocation());
     currentGraph = graph;
 
     var stmtCtx = definition.behavior.accept(this);
@@ -171,6 +173,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   Graph getInstructionSequenceGraph(Identifier identifier,
                                     InstructionSequenceDefinition definition) {
     var graph = new Graph("%s Behavior".formatted(identifier.name));
+    graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
     var end = graph.addWithInputs(new InstrEndNode(new NodeList<>()));
@@ -196,6 +199,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   Function getRegisterFileAliasReadFunc(AliasDefinition definition) {
     var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
+    graph.setSourceLocation(definition.sourceLocation());
     currentGraph = graph;
 
     var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
@@ -234,6 +238,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   Procedure getRegisterFileAliasWriteProc(AliasDefinition definition) {
     var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
+    graph.setSourceLocation(definition.sourceLocation());
     currentGraph = graph;
 
     var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
@@ -629,6 +634,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var bitSlice = new Constant.BitSlice(new Constant.BitSlice.Part(from, to));
       var slice =
           new SliceNode(exprBeforeSlice, bitSlice, Type.bits(from - to + 1));
+      slice.setSourceLocation(args.location);
       return visitSliceIndexCall(expr, slice, argumentsList.subList(1, argumentsList.size()));
     }
 
@@ -637,6 +643,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var bitSlice = new Constant.BitSlice(new Constant.BitSlice.Part(fromTo, fromTo));
     var slice =
         new SliceNode(exprBeforeSlice, bitSlice, (DataType) expr.type());
+    slice.setSourceLocation(args.location);
     return visitSliceIndexCall(expr, slice, argumentsList.subList(1, argumentsList.size()));
   }
 
@@ -661,8 +668,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedTarget instanceof FunctionDefinition functionDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
+      var type = expr.argsIndices.get(0).type();
       var funcCall =
-          new FuncCallNode(function, new NodeList<>(args), Objects.requireNonNull(expr.type));
+          new FuncCallNode(function, new NodeList<>(args), type);
       var slicedNode = visitSliceIndexCall(expr, funcCall,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
       return visitSubCall(expr, slicedNode);
@@ -672,8 +680,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedTarget instanceof RelocationDefinition relocationDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var relocation = (Relocation) viamLowering.fetch(relocationDefinition).orElseThrow();
+      var type = expr.argsIndices.get(0).type();
       var funcCall =
-          new FuncCallNode(relocation, new NodeList<>(args), Objects.requireNonNull(expr.type));
+          new FuncCallNode(relocation, new NodeList<>(args), type);
       var slicedNode = visitSliceIndexCall(expr, funcCall,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
       return visitSubCall(expr, slicedNode);
@@ -683,7 +692,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedTarget instanceof RegisterFileDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var regFile = (RegisterFile) viamLowering.fetch(expr.computedTarget).orElseThrow();
-      var type = (DataType) Objects.requireNonNull(expr.type);
+      var type = (DataType) expr.argsIndices.get(0).type();
       var readRegFile = new ReadRegFileNode(regFile, args.get(0), type, null);
       var slicedNode = visitSliceIndexCall(expr, readRegFile,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -697,7 +706,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var artificialResource =
           (ArtificialResource) viamLowering.fetch(expr.computedTarget).orElseThrow();
       var address = firstArgs.stream().map(this::fetch).findFirst().orElseThrow();
-      var type = (DataType) expr.type();
+      var type = (DataType) expr.argsIndices.get(0).type();
       var read = new ReadArtificialResNode(artificialResource, address, type);
       var slicedNode = visitSliceIndexCall(expr, read,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -712,8 +721,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
       }
       var memory = (Memory) viamLowering.fetch(memoryDefinition).orElseThrow();
-      var readMem = new ReadMemNode(memory, words, args.get(0),
-          (DataType) Objects.requireNonNull(expr.type));
+      var type = (DataType) expr.argsIndices.get(0).type();
+      var readMem = new ReadMemNode(memory, words, args.get(0), type);
       var slicedNode = visitSliceIndexCall(expr, readMem,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
       return visitSubCall(expr, slicedNode);
@@ -954,20 +963,17 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         return SubgraphContext.of(statement, write);
       }
 
-
       // Memory Write
-      {
-        if (callTarget.computedTarget instanceof MemoryDefinition memoryTarget) {
-          var memory = (Memory) viamLowering.fetch(memoryTarget).orElseThrow();
-          var words = 1;
-          if (callTarget.target instanceof SymbolExpr targetSymbol) {
-            words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
-          }
-          var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
-          var write = new WriteMemNode(memory, words, address, value);
-          write = Objects.requireNonNull(currentGraph).addWithInputs(write);
-          return SubgraphContext.of(statement, write);
+      if (callTarget.computedTarget instanceof MemoryDefinition memoryTarget) {
+        var memory = (Memory) viamLowering.fetch(memoryTarget).orElseThrow();
+        var words = 1;
+        if (callTarget.target instanceof SymbolExpr targetSymbol) {
+          words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
         }
+        var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
+        var write = new WriteMemNode(memory, words, address, value);
+        write = Objects.requireNonNull(currentGraph).addWithInputs(write);
+        return SubgraphContext.of(statement, write);
       }
 
       throw new IllegalStateException(
@@ -1144,8 +1150,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     MergeNode end = null;
     var candidate = fetch(statement.candidate);
 
-    var endNodes = new ArrayList<BranchEndNode>();
-    endNodes.add(defaultPair.right());
 
     // In reverse order to keep the execution order
     for (int i = statement.cases.size() - 1; i >= 0; i--) {
@@ -1162,7 +1166,6 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       }
 
       var consequencePair = buildBranch(kase.result);
-      endNodes.add(consequencePair.right());
 
       Pair<BeginNode, BranchEndNode> contradictionPair;
       if (start == null) {

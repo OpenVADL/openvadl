@@ -2253,6 +2253,7 @@ public class TypeChecker
       int from = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
       int to = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
 
+
       // NOTE: From is always larger than to
       var rangeSize = (from - to) + 1;
       if (rangeSize < 1) {
@@ -2468,6 +2469,7 @@ public class TypeChecker
       }
 
       expr.computedTarget = memDef;
+      argList.type = callType;
       expr.type = callType;
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
       visitSubCall(expr, expr.type());
@@ -2536,6 +2538,7 @@ public class TypeChecker
 
       expr.computedTarget = functionDef;
       expr.type = funcType.resultType();
+      expr.argsIndices.get(0).type = funcType.resultType();
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
       visitSubCall(expr, expr.type());
       return null;
@@ -2566,6 +2569,7 @@ public class TypeChecker
 
       expr.computedTarget = relocationDef;
       expr.type = relocationType.resultType();
+      expr.argsIndices.get(0).type = relocationType.resultType();
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
       visitSubCall(expr, expr.type());
       return null;
@@ -2591,6 +2595,7 @@ public class TypeChecker
         // Set type and arguments since they might have been wrapped in type casts
         expr.argsIndices.get(0).values.set(0, fakeUnExpr.operand);
         expr.type = fakeUnExpr.type;
+        expr.argsIndices.get(0).type = fakeUnExpr.type;
       }
 
       // If the function is also a binary operation, we instead type check it as if it were a binary
@@ -2602,6 +2607,7 @@ public class TypeChecker
         // Set type and arguments since they might have been wraped in type casts
         expr.replaceArgsFor(0, List.of(fakeBinExpr.left, fakeBinExpr.right));
         expr.type = fakeBinExpr.type;
+        expr.argsIndices.get(0).type = fakeBinExpr.type;
       }
 
       // FIXME: Better casting for const types.
@@ -2618,6 +2624,7 @@ public class TypeChecker
       expr.computedBuiltIn = builtin;
       if (expr.type == null) {
         expr.type = builtin.returns(argTypes);
+        expr.argsIndices.get(0).type = builtin.returns(argTypes);
       }
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
       visitSubCall(expr, expr.type());
