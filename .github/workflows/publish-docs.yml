@@ -22,6 +22,7 @@ jobs:
     runs-on: self-hosted-x64
     container:
       image: ghcr.io/openvadl/doxygen:1.13.2
+      options: --user 998 # run as a github-runner user, otherwise it will create things as root
     name: Build refman and deploy
     steps:
       - name: Install Git and Tar
@@ -39,3 +40,6 @@ jobs:
           path: docs/obj/doc/open-vadl-docs/html/
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+
+      - name: Clear repository
+        run: cd ../ && rm -rf open-vadl
