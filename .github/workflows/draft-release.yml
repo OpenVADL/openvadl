@@ -18,7 +18,7 @@ permissions:
   contents: write
 
 jobs:
-  update-release-draft:
+  update-draft-release:
     name: Update Release Draft
     permissions:
       contents: write
@@ -35,7 +35,7 @@ jobs:
           echo "Version: ${{ steps.release-drafter.outputs.resolved_version }}"
 
   build-and-upload-native:
-    needs: update-release-draft
+    needs: update-draft-release
     strategy:
       matrix:
         include:
@@ -75,7 +75,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-and-upload-jar:
-    needs: update-release-draft
+    needs: update-draft-release
     runs-on: self-hosted
     steps:
       - name: Checkout Repository
