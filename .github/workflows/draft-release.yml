@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-drafter
+  cancel-in-progress: true
+
 jobs:
   update-draft-release:
     name: Update Release Draft
