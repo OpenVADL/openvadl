@@ -94,9 +94,7 @@ jobs:
           JAVA_TAR=openvadl-${{ needs.update-draft-release.outputs.version }}.tar
           JAVA_JAR=openvadl-${{ needs.update-draft-release.outputs.version }}.jar
           mv vadl-cli/build/distributions/openvadl.tar $JAVA_TAR
-          mv vadl-cli/build/libs/vadl-cli.jar $JAVA_JAR
           echo "JAVA_TAR=${JAVA_TAR}" >> $GITHUB_ENV
-          echo "JAVA_JAR=${JAVA_JAR}" >> $GITHUB_ENV
 
       - name: Upload Executable to Draft Release
         uses: softprops/action-gh-release@v1
@@ -104,7 +102,6 @@ jobs:
           draft: true
           files: |
             ${{ env.JAVA_TAR }}
-            ${{ env.JAVA_JAR }}
           tag_name: v${{ needs.update-draft-release.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
