@@ -712,6 +712,7 @@ class SymbolTable {
         collectSymbols(symbols, assignment.target);
         collectSymbols(symbols, assignment.valueExpression);
       } else if (stmt instanceof RaiseStatement raise) {
+        raise.viamId = String.join("::", viamPath);
         collectSymbols(symbols, raise.statement);
       } else if (stmt instanceof CallStatement call) {
         collectSymbols(symbols, call.expr);

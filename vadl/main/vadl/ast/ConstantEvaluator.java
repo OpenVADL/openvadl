@@ -64,18 +64,11 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
 
   private ConstantValue visitIdentifiable(Expr expr) {
     Node origin;
-    String innerName;
-    String fullName;
 
     if (expr instanceof Identifier identifier) {
       origin = requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
-      innerName = identifier.name;
-      fullName = identifier.name;
     } else if (expr instanceof IdentifierPath path) {
       origin = requireNonNull(expr.symbolTable).findAs(path, Node.class);
-      var segments = path.pathToSegments();
-      innerName = segments.get(segments.size() - 1);
-      fullName = path.pathToString();
     } else {
       throw new IllegalStateException();
     }

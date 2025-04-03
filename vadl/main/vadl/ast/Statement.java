@@ -16,6 +16,7 @@
 
 package vadl.ast;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -391,6 +392,9 @@ final class RaiseStatement extends Statement {
   Statement statement;
   SourceLocation location;
 
+  @LazyInit
+  String viamId;
+
   RaiseStatement(Statement statement, SourceLocation location) {
     this.statement = statement;
     this.location = location;
@@ -680,7 +684,7 @@ final class MatchStatement extends Statement {
     return result;
   }
 
-  static final class Case {
+  static final class Case implements WithSourceLocation {
     List<Expr> patterns;
     Statement result;
 
@@ -714,6 +718,10 @@ final class MatchStatement extends Statement {
           + "result=" + result + ']';
     }
 
+    @Override
+    public SourceLocation sourceLocation() {
+      return patterns.get(0).location().join(result.location());
+    }
   }
 }
 
