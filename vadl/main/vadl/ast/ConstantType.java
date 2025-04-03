@@ -76,7 +76,10 @@ public class ConstantType extends Type {
     }
 
     if (target instanceof SIntType targetSInt) {
-      var bitsWidth = Math.max(targetSInt.bitWidth(), requiredBitWidth());
+      // If the number is positiver than required bit width doesn't include the sign bit and we need
+      // to manually add it here.
+      var bitsWidth = Math.max(targetSInt.bitWidth(),
+          requiredBitWidth() + (value.compareTo(BigInteger.ZERO) < 0 ? 0 : 1));
       return Type.signedInt(bitsWidth);
     }
 

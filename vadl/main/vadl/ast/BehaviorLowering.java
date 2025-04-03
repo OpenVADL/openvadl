@@ -33,9 +33,12 @@ import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.Pair;
+import vadl.utils.WithSourceLocation;
+import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
 import vadl.viam.Definition;
+import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Instruction;
@@ -66,6 +69,8 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
+import vadl.viam.graph.dependency.ProcCallNode;
+import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
@@ -75,6 +80,7 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -106,6 +112,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var exprNode = fetch(expr);
 
     var graph = new Graph(name);
+    graph.setSourceLocation(expr.location());
+    currentGraph = graph;
+
     ControlNode endNode = graph.addWithInputs(new ReturnNode(exprNode));
     endNode.setSourceLocation(expr.sourceLocation());
     ControlNode startNode = graph.add(new StartNode(endNode));
@@ -113,8 +122,33 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return graph;
   }
 
+  Graph getProcedureGraph(Statement stmt, String name) {
+    var graph = new Graph(name);
+    graph.setSourceLocation(stmt.location());
+    currentGraph = graph;
+
+    var stmtCtx = stmt.accept(this);
+    var sideEffects = stmtCtx.sideEffectsOrEmptyList();
+
+    var end = graph.addWithInputs(new ProcEndNode(sideEffects));
+    end.setSourceLocation(stmt.sourceLocation());
+
+    ControlNode startSuccessor = end;
+    if (stmtCtx.hasControlBlock()) {
+      var controlBlock = Objects.requireNonNull(stmtCtx.controlBlock());
+      controlBlock.lastNode().setNext(end);
+      startSuccessor = controlBlock.firstNode();
+    }
+    var start = new StartNode(startSuccessor);
+    start.setSourceLocation(stmt.sourceLocation());
+    graph.addWithInputs(start);
+
+    return graph;
+  }
+
   Graph getInstructionGraph(InstructionDefinition definition) {
     var graph = new Graph("%s Behavior".formatted(definition.identifier().name));
+    graph.setSourceLocation(definition.sourceLocation());
     currentGraph = graph;
 
     var stmtCtx = definition.behavior.accept(this);
@@ -139,6 +173,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   Graph getInstructionSequenceGraph(Identifier identifier,
                                     InstructionSequenceDefinition definition) {
     var graph = new Graph("%s Behavior".formatted(identifier.name));
+    graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
     var end = graph.addWithInputs(new InstrEndNode(new NodeList<>()));
@@ -164,6 +199,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   Function getRegisterFileAliasReadFunc(AliasDefinition definition) {
     var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
+    graph.setSourceLocation(definition.sourceLocation());
     currentGraph = graph;
 
     var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
@@ -202,6 +238,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   Procedure getRegisterFileAliasWriteProc(AliasDefinition definition) {
     var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
+    graph.setSourceLocation(definition.sourceLocation());
     currentGraph = graph;
 
     var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
@@ -253,15 +290,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return node;
   }
 
-  private Pair<BeginNode, BranchEndNode> buildBranch(@Nullable Statement stmt) {
-    if (stmt == null) {
-      var endNode = addToGraph(new BranchEndNode(new NodeList<>()));
-      var beginNode = addToGraph(new BeginNode(endNode));
-      return new Pair<>(beginNode, endNode);
-    }
 
-    var branchCtx = stmt.accept(this);
-
+  private Pair<BeginNode, BranchEndNode> buildBranch(SubgraphContext branchCtx,
+                                                     WithSourceLocation locatable) {
     var endNode = addToGraph(new BranchEndNode(branchCtx.sideEffectsOrEmptyList()));
 
     BeginNode beginNode;
@@ -273,9 +304,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
     beginNode = addToGraph(beginNode);
 
-    endNode.setSourceLocation(stmt.sourceLocation());
-    beginNode.setSourceLocation(stmt.sourceLocation());
+    endNode.setSourceLocation(locatable.sourceLocation());
+    beginNode.setSourceLocation(locatable.sourceLocation());
     return new Pair<>(beginNode, endNode);
+  }
+
+  private Pair<BeginNode, BranchEndNode> buildBranch(@Nullable Statement stmt) {
+    if (stmt == null) {
+      var endNode = addToGraph(new BranchEndNode(new NodeList<>()));
+      var beginNode = addToGraph(new BeginNode(endNode));
+      return new Pair<>(beginNode, endNode);
+    }
+
+    var branchCtx = stmt.accept(this);
+    return buildBranch(branchCtx, stmt);
   }
 
   private static BuiltInCall produceNeqToZero(ExpressionNode node) {
@@ -354,6 +396,24 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           register,
           (DataType) Objects.requireNonNull(expr.type),
           null);
+    }
+
+    // Register Alias
+    if (computedTarget instanceof AliasDefinition aliasDefinition
+        && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
+      // FIXME: Currently there are no artificial ressources for registers so just inline it here
+      // but once there are uncomment the code below.
+      // https://github.com/OpenVADL/open-vadl/issues/104
+
+      // var alias = (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
+      // return new ReadArtificialResNode(alias, null, (DataType) expr.type());
+
+      // Don't call fetch on purpose cause the graph is the wrong one:
+      var x = fetch(aliasDefinition.value);
+      if (x.graph() != null && x.graph() != currentGraph) {
+        System.out.println();
+      }
+      return fetch(aliasDefinition.value);
     }
 
     // Counters
@@ -574,6 +634,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var bitSlice = new Constant.BitSlice(new Constant.BitSlice.Part(from, to));
       var slice =
           new SliceNode(exprBeforeSlice, bitSlice, Type.bits(from - to + 1));
+      slice.setSourceLocation(args.location);
       return visitSliceIndexCall(expr, slice, argumentsList.subList(1, argumentsList.size()));
     }
 
@@ -582,6 +643,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var bitSlice = new Constant.BitSlice(new Constant.BitSlice.Part(fromTo, fromTo));
     var slice =
         new SliceNode(exprBeforeSlice, bitSlice, (DataType) expr.type());
+    slice.setSourceLocation(args.location);
     return visitSliceIndexCall(expr, slice, argumentsList.subList(1, argumentsList.size()));
   }
 
@@ -606,8 +668,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedTarget instanceof FunctionDefinition functionDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
+      var type = expr.argsIndices.get(0).type();
       var funcCall =
-          new FuncCallNode(function, new NodeList<>(args), Objects.requireNonNull(expr.type));
+          new FuncCallNode(function, new NodeList<>(args), type);
       var slicedNode = visitSliceIndexCall(expr, funcCall,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
       return visitSubCall(expr, slicedNode);
@@ -617,8 +680,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedTarget instanceof RelocationDefinition relocationDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var relocation = (Relocation) viamLowering.fetch(relocationDefinition).orElseThrow();
+      var type = expr.argsIndices.get(0).type();
       var funcCall =
-          new FuncCallNode(relocation, new NodeList<>(args), Objects.requireNonNull(expr.type));
+          new FuncCallNode(relocation, new NodeList<>(args), type);
       var slicedNode = visitSliceIndexCall(expr, funcCall,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
       return visitSubCall(expr, slicedNode);
@@ -628,9 +692,23 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedTarget instanceof RegisterFileDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var regFile = (RegisterFile) viamLowering.fetch(expr.computedTarget).orElseThrow();
-      var type = (DataType) Objects.requireNonNull(expr.type);
+      var type = (DataType) expr.argsIndices.get(0).type();
       var readRegFile = new ReadRegFileNode(regFile, args.get(0), type, null);
       var slicedNode = visitSliceIndexCall(expr, readRegFile,
+          expr.argsIndices.subList(1, expr.argsIndices.size()));
+      return visitSubCall(expr, slicedNode);
+    }
+
+    // Alias to registerfile read
+    if (expr.computedTarget instanceof AliasDefinition aliasDefinition
+        && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE)) {
+
+      var artificialResource =
+          (ArtificialResource) viamLowering.fetch(expr.computedTarget).orElseThrow();
+      var address = firstArgs.stream().map(this::fetch).findFirst().orElseThrow();
+      var type = (DataType) expr.argsIndices.get(0).type();
+      var read = new ReadArtificialResNode(artificialResource, address, type);
+      var slicedNode = visitSliceIndexCall(expr, read,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
       return visitSubCall(expr, slicedNode);
     }
@@ -643,8 +721,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
       }
       var memory = (Memory) viamLowering.fetch(memoryDefinition).orElseThrow();
-      var readMem = new ReadMemNode(memory, words, args.get(0),
-          (DataType) Objects.requireNonNull(expr.type));
+      var type = (DataType) expr.argsIndices.get(0).type();
+      var readMem = new ReadMemNode(memory, words, args.get(0), type);
       var slicedNode = visitSliceIndexCall(expr, readMem,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
       return visitSubCall(expr, slicedNode);
@@ -712,48 +790,53 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.value.type instanceof ConstantType constType) {
       return new ConstantNode(
           Constant.Value.of(constType.getValue().longValueExact(),
-              (DataType) Objects.requireNonNull(expr.type)));
+                  (DataType) constType.closestTo(expr.type()))
+              .castTo((DataType) expr.type()));
     }
 
     // check the different rules and apply them accordingly
     var source = fetch(expr.value);
-    var sourceType = (DataType) Objects.requireNonNull(expr.value.type);
-    var targetType = (DataType) Objects.requireNonNull(expr.type);
+    var sourceType = Objects.requireNonNull(expr.value.type);
+    var targetType = Objects.requireNonNull(expr.type);
     if (sourceType.isTrivialCastTo(targetType)) {
       // match 1. rule: same bit representation
       // -> no casting needs to be applied
       return source;
     }
+
+    var sourceDataType = (DataType) sourceType;
+    var targetDataType = (DataType) targetType;
+
     if (targetType.getClass() == vadl.types.BoolType.class) {
       // match 2. rule: target type is bool
       // -> produce != 0 call
       //return new BuiltInCall
       return produceNeqToZero(source);
     }
-    if (targetType.bitWidth() < sourceType.bitWidth()) {
+    if (targetDataType.bitWidth() < sourceDataType.bitWidth()) {
       // match 3. rule: cast type bit-width is smaller than source type
       // -> create TruncateNode
-      return new TruncateNode(source, targetType);
+      return new TruncateNode(source, targetDataType);
     }
     if (sourceType.getClass() == SIntType.class) {
       // match 4.
       // rule: source type is a signed integer
       // -> create sign extend node
-      return new SignExtendNode(source, targetType);
+      return new SignExtendNode(source, targetDataType);
     }
     if (sourceType.getClass() == BitsType.class
         && targetType.getClass() == SIntType.class) {
       // match 5.
       // rule: source type is a bits type and target type is SInt
       // -> create sign extend node
-      return new SignExtendNode(source, targetType);
+      return new SignExtendNode(source, targetDataType);
     }
     if (targetType.getClass() == UIntType.class
         || targetType.getClass() == BitsType.class
         || targetType.getClass() == SIntType.class
     ) {
       // match 5. rule: cast type is one of sint, uint, or bits
-      return new ZeroExtendNode(source, targetType);
+      return new ZeroExtendNode(source, targetDataType);
     }
 
     throw new IllegalArgumentException(
@@ -847,6 +930,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var value = fetch(statement.valueExpression);
 
     if (statement.target instanceof CallIndexExpr callTarget) {
+      // FIXME: Ensure that no slicing is happending and handle format field masking access
+
       // Register File Write
       if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
         var regFile = viamLowering.fetch(regFileTarget).orElseThrow();
@@ -859,6 +944,22 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             null);
         write.setSourceLocation(statement.sourceLocation());
         write = Objects.requireNonNull(currentGraph).addWithInputs(write);
+        return SubgraphContext.of(statement, write);
+      }
+
+      // Alias Register File Write
+      if (callTarget.computedTarget instanceof AliasDefinition aliasDefinition
+          && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE)) {
+        var resource = (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
+        var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
+        var write = new WriteArtificialResNode(resource, address, value);
+        return SubgraphContext.of(statement, write);
+      }
+
+      // Register Write
+      if (callTarget.computedTarget instanceof RegisterDefinition registerDefinition) {
+        var reg = (Register) viamLowering.fetch(registerDefinition).orElseThrow();
+        var write = new WriteRegNode(reg, value, null);
         return SubgraphContext.of(statement, write);
       }
 
@@ -876,7 +977,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       }
 
       throw new IllegalStateException(
-          "Call target not yet implemented " + callTarget.computedTarget);
+          "Call target \"%s\" not yet implemented, found in: %s".formatted(
+              callTarget.computedTarget,
+              callTarget.location.toIDEString()));
     } else if (statement.target instanceof Identifier identifierExpr) {
       var computedTarget = Objects.requireNonNull(Objects.requireNonNull(identifierExpr.symbolTable)
           .requireAs(identifierExpr, vadl.ast.Node.class));
@@ -886,6 +989,31 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var register = (Register) viamLowering.fetch(registerDefinition).orElseThrow();
         var write = new WriteRegNode(register, value, null);
         return SubgraphContext.of(statement, write);
+      }
+
+      // Alias Register Write
+      if (computedTarget instanceof AliasDefinition aliasDefinition
+          && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
+        // FIXME: Register aliases cannot be artificial resources so we cannot create a
+        // write to an artificial resource here and just directly resolve it.
+        // https://github.com/OpenVADL/open-vadl/issues/104
+
+        // To make them work for now, they are at the moment always register file accesses so only
+        // implement them.
+
+        if (aliasDefinition.computedTarget instanceof RegisterDefinition) {
+          var register =
+              (Register) viamLowering.fetch(Objects.requireNonNull(aliasDefinition.computedTarget))
+                  .orElseThrow();
+          var write = new WriteRegNode(register, value, null);
+          return SubgraphContext.of(statement, write);
+        }
+
+        // Here is the big hack where we create a pseudo AST node that just inlines the alias
+        // and generate the instance for that.
+        var fakeAssignment =
+            new AssignmentStatement(aliasDefinition.value, statement.valueExpression);
+        return visit(fakeAssignment);
       }
 
       // Counter (also register) Write
@@ -1016,8 +1144,45 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(MatchStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var defaultPair = buildBranch(statement.defaultResult);
+    //BeginNode beginnNode = defaultPair.left();
+    IfNode start = null;
+    MergeNode end = null;
+    var candidate = fetch(statement.candidate);
+
+
+    // In reverse order to keep the execution order
+    for (int i = statement.cases.size() - 1; i >= 0; i--) {
+      var kase = statement.cases.get(i);
+
+      // Logical or join of all patterns
+      var condition = new BuiltInCall(BuiltInTable.EQU,
+          new NodeList<>(candidate, fetch(kase.patterns.get(0))), Type.bool());
+      for (int j = 1; j < kase.patterns.size(); j++) {
+        var patternCond = new BuiltInCall(BuiltInTable.EQU,
+            new NodeList<>(candidate, fetch(kase.patterns.get(0))), Type.bool());
+        condition =
+            new BuiltInCall(BuiltInTable.OR, new NodeList<>(condition, patternCond), Type.bool());
+      }
+
+      var consequencePair = buildBranch(kase.result);
+
+      Pair<BeginNode, BranchEndNode> contradictionPair;
+      if (start == null) {
+        contradictionPair = defaultPair;
+      } else {
+        contradictionPair =
+            buildBranch(SubgraphContext.of(statement, start, Objects.requireNonNull(end)), kase);
+      }
+
+      end = addToGraph(
+          new MergeNode(new NodeList<>(consequencePair.right(), contradictionPair.right())));
+      start = addToGraph(new IfNode(condition, consequencePair.left(), contradictionPair.left()));
+    }
+
+
+    return SubgraphContext.of(statement, Objects.requireNonNull(start),
+        Objects.requireNonNull(end));
   }
 
   @Override
@@ -1028,8 +1193,16 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(RaiseStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var name = statement.viamId + "::annonymousException";
+    var exceptionDef = new ExceptionDef(
+        viamLowering.generateIdentifier(name,
+            statement.statement),
+        new BehaviorLowering(this.viamLowering).getProcedureGraph(statement.statement, name),
+        ExceptionDef.Kind.ANONYMOUS
+    );
+    // FIXME: Add to a global store so that ISA can get a list of all exceptions
+    var raise = new ProcCallNode(exceptionDef, new NodeList<>());
+    return SubgraphContext.of(statement, raise);
   }
 
   @Override

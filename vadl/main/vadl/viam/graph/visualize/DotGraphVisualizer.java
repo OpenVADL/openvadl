@@ -70,7 +70,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
 
     StringBuilder dotBuilder = new StringBuilder();
     dotBuilder.append("digraph G {\n");
-    dotBuilder.append("    label=\"%s\"\n".formatted(name));
+    dotBuilder.append("    label=%s\n".formatted(wrapStr(name)));
     dotBuilder.append("\n");
 
     var nodes = graph.getNodes(Node.class).filter(this::nodeFilter);
@@ -79,7 +79,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
       dotBuilder
           .append("     ")
           .append(wrapStr(node.id()))
-          .append(" [label=\"%s\" %s]".formatted(label(node), nodeStyle(node)))
+          .append(" [label=%s %s]".formatted(wrapStr(label(node)), nodeStyle(node)))
           .append(";\n");
 
       node.inputs().filter(this::nodeFilter).forEach((input) -> {
@@ -107,7 +107,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
   }
 
   private static String wrapStr(Object str) {
-    return "\"%s\"".formatted(str);
+    return "\"%s\"".formatted(str.toString().replace("\"", "\\\""));
   }
 
   protected String label(Node node) {
