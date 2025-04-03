@@ -36,18 +36,3 @@ version-resolver:
   patch:
     labels: [ ]
   default: minor
-
-autolabeler:
-  - label: 'enhancement'
-    branch:
-      - '/feature\/.+/'
-      - '/feat\/.+/'
-  - label: 'bug'
-    branch:
-      - '/fix\/.+/'
-      - '/bugfix\/.+/'
-  - label: 'docs'
-    files:
-      - 'docs/**.md'
-    branch:
-      - '/docs{0,1}\/.+/'

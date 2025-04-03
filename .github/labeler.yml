@@ -1,0 +1,30 @@
+enhancement:
+  - head-branch: [ '^feat' ]
+
+bug:
+  - head-branch: [ '^bug', '^fix' ]
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file: docs/**
+  - head-branch: [ '^doc' ]
+
+iss:
+  - changed-files:
+      - any-glob-to-any-file: vadl/main/vadl/iss/**
+
+lcb:
+  - changed-files:
+      - any-glob-to-any-file:
+          - vadl/main/vadl/lcb/**
+          - vadl/main/vadl/gcb/**
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - vadl/main/vadl/ast/**
+
+rtl:
+  - changed-files:
+      - any-glob-to-any-file:
+          - vadl/main/vadl/rtl/**
