@@ -33,6 +33,7 @@ import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.Pair;
+import vadl.utils.WithSourceLocation;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
@@ -111,6 +112,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var exprNode = fetch(expr);
 
     var graph = new Graph(name);
+    currentGraph = graph;
+
     ControlNode endNode = graph.addWithInputs(new ReturnNode(exprNode));
     endNode.setSourceLocation(expr.sourceLocation());
     ControlNode startNode = graph.add(new StartNode(endNode));
@@ -120,6 +123,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   Graph getProcedureGraph(Statement stmt, String name) {
     var graph = new Graph(name);
+    graph.setSourceLocation(stmt.location());
+    currentGraph = graph;
+
     var stmtCtx = stmt.accept(this);
     var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
@@ -279,15 +285,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return node;
   }
 
-  private Pair<BeginNode, BranchEndNode> buildBranch(@Nullable Statement stmt) {
-    if (stmt == null) {
-      var endNode = addToGraph(new BranchEndNode(new NodeList<>()));
-      var beginNode = addToGraph(new BeginNode(endNode));
-      return new Pair<>(beginNode, endNode);
-    }
 
-    var branchCtx = stmt.accept(this);
-
+  private Pair<BeginNode, BranchEndNode> buildBranch(SubgraphContext branchCtx,
+                                                     WithSourceLocation locatable) {
     var endNode = addToGraph(new BranchEndNode(branchCtx.sideEffectsOrEmptyList()));
 
     BeginNode beginNode;
@@ -299,9 +299,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
     beginNode = addToGraph(beginNode);
 
-    endNode.setSourceLocation(stmt.sourceLocation());
-    beginNode.setSourceLocation(stmt.sourceLocation());
+    endNode.setSourceLocation(locatable.sourceLocation());
+    beginNode.setSourceLocation(locatable.sourceLocation());
     return new Pair<>(beginNode, endNode);
+  }
+
+  private Pair<BeginNode, BranchEndNode> buildBranch(@Nullable Statement stmt) {
+    if (stmt == null) {
+      var endNode = addToGraph(new BranchEndNode(new NodeList<>()));
+      var beginNode = addToGraph(new BeginNode(endNode));
+      return new Pair<>(beginNode, endNode);
+    }
+
+    var branchCtx = stmt.accept(this);
+    return buildBranch(branchCtx, stmt);
   }
 
   private static BuiltInCall produceNeqToZero(ExpressionNode node) {
@@ -380,6 +391,24 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           register,
           (DataType) Objects.requireNonNull(expr.type),
           null);
+    }
+
+    // Register Alias
+    if (computedTarget instanceof AliasDefinition aliasDefinition
+        && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
+      // FIXME: Currently there are no artificial ressources for registers so just inline it here
+      // but once there are uncomment the code below.
+      // https://github.com/OpenVADL/open-vadl/issues/104
+
+      // var alias = (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
+      // return new ReadArtificialResNode(alias, null, (DataType) expr.type());
+
+      // Don't call fetch on purpose cause the graph is the wrong one:
+      var x = fetch(aliasDefinition.value);
+      if (x.graph() != null && x.graph() != currentGraph) {
+        System.out.println();
+      }
+      return fetch(aliasDefinition.value);
     }
 
     // Counters
@@ -892,6 +921,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var value = fetch(statement.valueExpression);
 
     if (statement.target instanceof CallIndexExpr callTarget) {
+      // FIXME: Ensure that no slicing is happending and handle format field masking access
+
       // Register File Write
       if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
         var regFile = viamLowering.fetch(regFileTarget).orElseThrow();
@@ -916,18 +947,27 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         return SubgraphContext.of(statement, write);
       }
 
+      // Register Write
+      if (callTarget.computedTarget instanceof RegisterDefinition registerDefinition) {
+        var reg = (Register) viamLowering.fetch(registerDefinition).orElseThrow();
+        var write = new WriteRegNode(reg, value, null);
+        return SubgraphContext.of(statement, write);
+      }
+
 
       // Memory Write
-      if (callTarget.computedTarget instanceof MemoryDefinition memoryTarget) {
-        var memory = (Memory) viamLowering.fetch(memoryTarget).orElseThrow();
-        var words = 1;
-        if (callTarget.target instanceof SymbolExpr targetSymbol) {
-          words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
+      {
+        if (callTarget.computedTarget instanceof MemoryDefinition memoryTarget) {
+          var memory = (Memory) viamLowering.fetch(memoryTarget).orElseThrow();
+          var words = 1;
+          if (callTarget.target instanceof SymbolExpr targetSymbol) {
+            words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
+          }
+          var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
+          var write = new WriteMemNode(memory, words, address, value);
+          write = Objects.requireNonNull(currentGraph).addWithInputs(write);
+          return SubgraphContext.of(statement, write);
         }
-        var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
-        var write = new WriteMemNode(memory, words, address, value);
-        write = Objects.requireNonNull(currentGraph).addWithInputs(write);
-        return SubgraphContext.of(statement, write);
       }
 
       throw new IllegalStateException(
@@ -1098,8 +1138,48 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(MatchStatement statement) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + statement.getClass().getSimpleName());
+    var defaultPair = buildBranch(statement.defaultResult);
+    //BeginNode beginnNode = defaultPair.left();
+    IfNode start = null;
+    MergeNode end = null;
+    var candidate = fetch(statement.candidate);
+
+    var endNodes = new ArrayList<BranchEndNode>();
+    endNodes.add(defaultPair.right());
+
+    // In reverse order to keep the execution order
+    for (int i = statement.cases.size() - 1; i >= 0; i--) {
+      var kase = statement.cases.get(i);
+
+      // Logical or join of all patterns
+      var condition = new BuiltInCall(BuiltInTable.EQU,
+          new NodeList<>(candidate, fetch(kase.patterns.get(0))), Type.bool());
+      for (int j = 1; j < kase.patterns.size(); j++) {
+        var patternCond = new BuiltInCall(BuiltInTable.EQU,
+            new NodeList<>(candidate, fetch(kase.patterns.get(0))), Type.bool());
+        condition =
+            new BuiltInCall(BuiltInTable.OR, new NodeList<>(condition, patternCond), Type.bool());
+      }
+
+      var consequencePair = buildBranch(kase.result);
+      endNodes.add(consequencePair.right());
+
+      Pair<BeginNode, BranchEndNode> contradictionPair;
+      if (start == null) {
+        contradictionPair = defaultPair;
+      } else {
+        contradictionPair =
+            buildBranch(SubgraphContext.of(statement, start, Objects.requireNonNull(end)), kase);
+      }
+
+      end = addToGraph(
+          new MergeNode(new NodeList<>(consequencePair.right(), contradictionPair.right())));
+      start = addToGraph(new IfNode(condition, consequencePair.left(), contradictionPair.left()));
+    }
+
+
+    return SubgraphContext.of(statement, Objects.requireNonNull(start),
+        Objects.requireNonNull(end));
   }
 
   @Override
@@ -1110,9 +1190,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(RaiseStatement statement) {
+    var name = statement.viamId + "::annonymousException";
     var exceptionDef = new ExceptionDef(
-        viamLowering.generateIdentifier("annonymousException", statement.statement),
-        getProcedureGraph(statement.statement, "annonymousException"),
+        viamLowering.generateIdentifier(name,
+            statement.statement),
+        new BehaviorLowering(this.viamLowering).getProcedureGraph(statement.statement, name),
         ExceptionDef.Kind.ANONYMOUS
     );
     // FIXME: Add to a global store so that ISA can get a list of all exceptions
