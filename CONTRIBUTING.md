@@ -1,10 +1,12 @@
+# Contribution Guidelines
+
 With the beginning of the public implementation of **VADL**, it is important to define and follow consistent coding
 guidelines, including static analysis practices. This ensures a uniform codebase, reduces formatting issues, and helps
 prevent common runtime errors, such as `NullPointerException`.
 
 We also define contribution guidelines, including Git conventions and workflows, to streamline development.
 
-## [Code style and formatting](#codestyle)
+## Code style and formatting
 
 Instead of defining our own Java coding style, we adopt the
 well-established [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html), one of the two most
@@ -31,7 +33,7 @@ patterns through static analysis.
 
 ## Documentation
 
-The documentation in JavaDocs format and also enforced by [Checkstyle](#codestyle), which guarantees that all public
+The documentation in JavaDocs format and also enforced by Checkstyle, which guarantees that all public
 methods and classes are documented in the source code.
 Documentation should focus on what a class or method _means_ in the context of the project—its purpose and role—not how
 it works. Avoid repeating what the code already states unless the logic is complex and needs clarification.
