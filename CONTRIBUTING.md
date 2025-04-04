@@ -65,6 +65,9 @@ The optional body text can contain more detailed information. If the commit belo
 referenced in the body with `#<issue-id>`. The optional `scope` provides additional orientation by indicating to which
 _subproject_ the commit belongs. Examples for the scope are `frontend, viam, iss, gcb, ...`.
 
+> [!IMPORTANT]
+> Avoid commits that only fixes formatting and checkstyle issues. Just amend the checkstyle fixes to your previous commit. Avoid repeating commit messages like abc: Fix xyz when retrying a bug fix after a failed CI run. Ammend new changes to the previous commit, or rewrite commit history, by squashing such commits before requesting a review.
+
 ### Branch Naming
 
 Branches should represent the work performed on the branch. It must therefore have the form
