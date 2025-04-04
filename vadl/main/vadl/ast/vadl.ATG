@@ -248,8 +248,22 @@ IGNORE '\t' + '\r' + '\n'
 PRODUCTIONS
   vadl =
   {
-    topLevelDefinitions<out Definition def> (. addDef(ast.definitions, def); new SymbolTable.SymbolCollector(ParserUtils.baseName(sourceFile)).collectSymbols(ast.rootSymbolTable(), def); .)
-    | macroDef<out ModelDefinition def>     (. addDef(ast.definitions, def); new SymbolTable.SymbolCollector(ParserUtils.baseName(sourceFile)).collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def); .)
+    topLevelDefinitions<out Definition def> (.
+                                                addDef(ast.definitions, def);
+                                                // Only call the symbol resolver if there were no errors, because other
+                                                // wise the AST might be invalid, causing a crash.
+                                                if (errors.count == 0) {
+                                                  new SymbolTable.SymbolCollector(ParserUtils.baseName(sourceFile)).collectSymbols(ast.rootSymbolTable(), def);
+                                                }
+                                            .)
+    | macroDef<out ModelDefinition def>     (.
+                                                addDef(ast.definitions, def);
+                                                // Only call the symbol resolver if there were no errors, because other
+                                                // wise the AST might be invalid, causing a crash.
+                                                if (errors.count == 0) {
+                                                new SymbolTable.SymbolCollector(ParserUtils.baseName(sourceFile)).collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def);
+                                                }
+                                            .)
   }.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
@@ -380,10 +394,10 @@ PRODUCTIONS
   .
 
   formatField<out FormatDefinition.FormatField field> (. field = null; .)
-  = identifier<out Identifier id>
-    ( formatFieldRange<out field, id>
-    | formatFieldType<out field, id>
-    | formatFieldDerived<out field, id>
+  = identifier<out Identifier id>       (. System.out.println("start field"); .)
+    ( formatFieldRange<out field, id>   (. System.out.println("range"); .)
+    | formatFieldType<out field, id>    (. System.out.println("type"); .)
+    | formatFieldDerived<out field, id> (. System.out.println("derived"); .)
     )
   .
 
