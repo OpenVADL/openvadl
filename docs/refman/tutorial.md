@@ -11,7 +11,6 @@ branches.
 It is a good example to show the most important \ac{VADL} \ac{ISA} features.
 
 \listing{riscv_isa, RISC-V ISA specification for instructions with immediate operands and all branches}
-
 ~~~{.vadl}
 instruction set architecture RV32I = {
 
@@ -78,7 +77,6 @@ instruction set architecture RV32I = {
   $BtypeInstr (BLTU ; <  ; 0b110 ; UInt) // branch less than unsigned
 }
 ~~~
-
 \endlisting
 
 Line 1 defines an `instruction set architecture` with the name `RV32I`.
@@ -141,7 +139,6 @@ This macro is invoked six times for all RISC-V instructions with immediate opera
 ## Structure of a VADL Processor Specification
 
 \listing{pdl_overview, Structure of a VADL Processor Specification}
-
 ~~~{.vadl}
 constant MLen = 64
 
@@ -163,7 +160,6 @@ micro architecture FiveStage for RV64IM = {}
 
 processor CPU implements RV64IM with FiveStage for ABI = {}
 ~~~
-
 \endlisting
 
 Listing \r{pdl_overview} shows the main elements of a \ac{VADL} processor specification.
@@ -193,7 +189,6 @@ On line 17 a \ac{MiA} named `FiveStage` is defined for the \ac{ISA} `RV64IM` (se
 ### Constants, Literals and Expressions
 
 \listing{constants_literals, Constants and Literals}
-
 ~~~{.vadl}
 constant size    = 32                                 // value: 32
 constant twice   = size * 2                           // value: 64
@@ -201,7 +196,6 @@ constant binsize = 0b10'0000                          // value: 32
 constant min1one = 0xffff'ffff'ffff'ffff as SInt<64>  // value: -1 as SInt<64>
 constant min1two : SInt<64> = -1                      // value: -1 as SInt<64>
 ~~~
-
 \endlisting
 
 Constant definitions start with the keyword `constant` followed by the name of the constant, an optional type after the
@@ -221,7 +215,6 @@ Equally to the constant `min1two` the constant `min1one` has the value minus one
 constant with a positive integer value is casted to a signed integer of the same size resulting in the negative value.
 
 \listing{constants_expressions, Constant Expressions}
-
 ~~~{.vadl}
 constant size    = 32                                 // value: 32
 constant addEx1  = size + 32                          // value: 64
@@ -234,7 +227,6 @@ constant width   = match true with                    // value: 5
                      , size > 32 => 6,
                      _           => 4}
 ~~~
-
 \endlisting
 
 Constant expressions can be quite complex, they can contain function calls, `let`, `if` and `match` expressions.
@@ -263,7 +255,6 @@ In `if` and `match` expressions the types of the different alternatives must be 
 ### Enumerations
 
 \listing{enumerations, Enumerations (RISC-V control and status register indices)}
-
 ~~~{.vadl}
 enumeration CsrDef : Bits<12> =   // defined control and status register indices
   { ustatus                       //  0 0x000  User mode restricted view of mstatus
@@ -275,7 +266,6 @@ enumeration CsrDef : Bits<12> =   // defined control and status register indices
   , utval                         // 67 0x043  User mode Trap VALue
   }
 ~~~
-
 \endlisting
 
 Enumerations are used to assign names to expressions in an own name space.
@@ -287,28 +277,26 @@ Optionally a constant expression can be assigned to the name after the equality 
 Line 7 of Listing \r{enumerations} shows the use of an enumeration element with the added name space in front separated
 by `"::"` to the name.
 
-### Type Definitions (using)
+### Type Declarations (using)
 
-\listing{using, Type Definitions (using)}
-
+\listing{using, Type Declarations (using)}
 ~~~{.vadl}
-using Bits32    = Bits<32>       // a 32 bit vector
+using Bits32    = Bits<32>       // a bit vector 32 bit wide
 using Vector4   = Bits32<4>      // a 4 element vector of bit vectors 32 bit wide
 using Matrix2   = Vector4<2>     // a 2 element times 4 element matrix of bit vectors 32 bit wide
-using Matrix2_4 = Bits<2><4><16> // the same as above
+using Matrix2_4 = Bits<2><4><32> // a type equivalent to Matrix2
 using SInt32    = SInt<32>       // a 32 bit two's complement signed integer
 using UInt32    = UInt<32>       // a 32 bit unsigned integer
 ~~~
-
 \endlisting
 
 The type system is explained in detail in the reference manual (see Section \r{langref_type_system}).
-In VADL it is possible to define bit vectors of arbitrary length.
+In VADL it is possible to declare bit vectors of arbitrary length.
 The basic types are Bits, SInt and UInt which can be used to form vectors.
-Types are defined by the keyword `using` followed by the name of the type, the equality symbol `"="` and the type
+Types are declared by the keyword `using` followed by the name of the type, the equality symbol `"="` and the type
 literal.
-The type literal is comprised of a name optionally followed by a number of vector sizes in angle brackets.
-Listing \r{using} shows some type definitions and their meaning in the comments.
+The type literal is comprised of the name of another type or format optionally followed by a number of vector sizes in angle brackets.
+Listing \r{using} shows some type declarations and their meaning in the comments.
 
 ### Functions
 
@@ -504,7 +492,6 @@ The result of the model invocation in line 8 of Listing \r{macro_model_definitio
 \r{macro_model_invocation}.
 
 \listing{macro_model_definition, Model Definition and Invocation}
-
 ~~~{.vadl}
   model ItypeInstr (name : Id, op : BinOp, funct3 : Bin, type: Id) : IsaDefs = {
     instruction $name : Itype =
@@ -515,18 +502,15 @@ The result of the model invocation in line 8 of Listing \r{macro_model_definitio
 
   $ItypeInstr (ADDI ; +  ; 0b000 ; SInt) // add immediate
 ~~~
-
 \endlisting
 
 \listing{macro_model_invocation, Result of Model Invocation}
-
 ~~~{.vadl}
     instruction ADDI : Itype =
        X(rd) := (X(rs1) as SInt + immS as SInt) as Regs
     encoding ADDI = {opcode = 0b001'0011, funct3 = 0b000}
     assembly ADDI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
 ~~~
-
 \endlisting
 
 ### Conditional Macro (match)
@@ -546,13 +530,11 @@ In the example in Listing \r{match_macro}, a user can switch between a 32 and 64
 appropriate model `Arch` to the identifier `Arch64`.
 
 \listing{match_macro, Matching on a model}
-
 ~~~{.vadl}
 model Arch () : Id = {Arch64}
 constant AddrWidth = match : Int ($Arch() = Arch64 => 64; _ => 32)
 using Addr = Bits<AddrWidth>
 ~~~
-
 \endlisting
 
 Listing \r{divide_by_null} shows a `model` that optionally wraps an operation into a zero check.
@@ -561,7 +543,6 @@ In this example multiple conditions are applied to two operators (`"/"` and `"%"
 The `match`-macro is used inside a model definition and uses the model parameters in the conditions.
 
 \listing{divide_by_null, Divide-by-null safeguard}
-
 ~~~{.vadl}
 model SafeOp(left: Id, op: BinOp, right: Id): Ex = {
   match : Ex
@@ -571,7 +552,6 @@ model SafeOp(left: Id, op: BinOp, right: Id): Ex = {
   )
 }
 ~~~
-
 \endlisting
 
 ### Syntax Type Composition (record)
@@ -591,15 +571,12 @@ Furthermore, it is important to note that records are treated as type tuples.
 Their field names do not affect the type and are only used to access the internal elements.
 
 \listing{record_definition, Record Example}
-
 ~~~{.vadl}
 record BinInstRec ( name: Id, op: BinOp )
 ~~~
-
 \endlisting
 
 \listing{record_application, Record Application}
-
 ~~~{.vadl}
 model InstModel (info: BinInstRec) : IsaDefs = {
   instruction $info.name : F =
@@ -609,7 +586,6 @@ model InstModel (info: BinInstRec) : IsaDefs = {
 $InstModel( ( SUB ; - ) )
 $InstModel( ( ADD ; + ) )
 ~~~
-
 \endlisting
 
 ### Lexical Macro Functions (ExtendId, IdToStr)
@@ -631,12 +607,10 @@ context of the syntactical macros.
 Therefore, it is not possible to define or refer to a model name or parameter using a generated identifier.
 
 \listing{lexical_macros, Lexical Macro Examples}
-
 ~~~{.vadl}
 ExtendId( "", I, "Am", An, "Identifier" ) // --> IAmAnIdentifier : Id
 IdToStr( IAmAString )                     // --> "IAmAString"    : Str
 ~~~
-
 \endlisting
 
 ### Higher Order Macros (model-type)
@@ -646,7 +620,6 @@ In the macro expansion system of OpenVADL, model instances are expanded immediat
 allows the usage of models that produce models.
 
 \listing{model_producing_model, A model-producing model}
-
 ~~~{.vadl}
 model BinExFactory(binExName: Id, op: BinOp): IsaDefs = {
   model $binExName(left: Ex, right: Ex): Ex = { 
@@ -656,7 +629,6 @@ model BinExFactory(binExName: Id, op: BinOp): IsaDefs = {
 $BinExFactory(Addition ; +)
 instruction ADD : RType = X(rd) := $Addition(X(rs1) ; X(rs2))
 ~~~
-
 \endlisting
 
 Listing \r{model_producing_model} shows the model `BinExFactory` which in turn produces a model.
@@ -675,7 +647,6 @@ When the model `BinExStat` is invoked with the model `AddExp` as an argument, an
 on the right hand side is generated.
 
 \listing{higher_order_model_definition, Higher-Order Macro Passing a Macro as Argument}
-
 ~~~{.vadl}
 model-type BinExType = (Ex, Ex) -> Ex
 
@@ -689,7 +660,6 @@ model AddExp (rhs: Ex, lhs : Ex) : Ex = {
 
 $BinExStat(AddExp)
 ~~~
-
 \endlisting
 
 #### Type variance in model-type parameters
@@ -702,7 +672,6 @@ The reference is of a valid type because the result type `Defs` is a subtype of 
 `size` is a supertype of `Id` (see Listing \r{syntax_type_hierarchy}).
 
 \listing{model_type_parameters, Valid types in model references}
-
 ~~~{.vadl}
 instruction set architecture ISA = {
   constant wordSize = 32
@@ -721,7 +690,6 @@ instruction set architecture ISA = {
   $BitDefs(Constants ; wordSize)
 }
 ~~~
-
 \endlisting
 
 #### Design Patterns for Using Higher-Order Macros
@@ -881,9 +849,10 @@ At the beginning of an \ac{ISA} section usually there is a set of common definit
 These are followed by the definition of \ac{ISA} elements like registers or instructions, which are usually generated by macros.
 
 
-### Program Counter Definition
+### Program Counter Declaration
 
-Declaring a program counter (\ac{PC}) is mandatory (see a definition in line 7 of Listing \r{lst_program_counter}).
+Declaring a program counter (\ac{PC}) is required to define branch instructions or relative addressing (see a declaration in line 7 of Listing \r{lst_program_counter}).
+If an instruction does not explicitly modify the \ac{PC}, it is implicitly incremented by the instruction size in each execution cycle.
 
 \listing{lst_program_counter, Program Counter Definition and Use}
 ~~~{.vadl}
@@ -895,28 +864,103 @@ instruction set architecture RV32I = {
   [next]                     // PC points to the end of the current instruction
   program counter PC : Addr  // PC points to the start of the current instruction (default)
 
-  instruction Branch : BType = {
-    let returnaddress = PC.next in
-      PC := PC.current + offset
+  instruction BranchAndLink : BType = {
+    let retaddr = PC.next in
+      PC    := PC.current + offset
+      X(rd) := retaddr
   }
 }
 ~~~
 \endlisting
 
-In most architectures, the \ac{PC} points to the start of the current instruction when read inside an instruction specification.
-This is the default behavior when no annotation is added.
-This behavior can be changed by adding the annotation `[next]`, which lets the \ac{PC} point to the end of the current instruction.
-The ARM AArch32 architecture has the peculiar behavior that the \ac{PC} points to the end of the following instruction, which can be specified by the annotation `[next next]`.
+In most architectures, the \ac{PC} points to the start of the current instruction when used to compute a relative branch address.
+Therefore, this also is the default behavior in a VADL processor specification when no annotation is added to the \ac{PC} definition.
+This behavior can be changed by adding the annotation `[next]`, which lets the \ac{PC} point to the end of the current instruction when the \ac{PC} is read.
+When the \ac{PC} is written, it always points to the begin of an instruction.
+The ARM AArch32 architecture has the peculiar behavior that the \ac{PC} points to the end of the following instruction when used to compute the branch target address.
+This behavior can be specified by the annotation `[next next]`.
 It is required that the following instruction has the same size as the current instruction.
+
 If an instruction does not explicitly modify the \ac{PC}, it is implicitly incremented by the instruction size in each execution cycle.
 
-The read value of the \ac{PC} as defined by the annotation can be overruled by using one of the builtin methods for the program counter: `current`, `next`, and `nextnext` (see lines 10 and 11 of Listing \r{lst_program_counter}).
-Independent of any \ac{PC} annotation the method `current` always delivers the start of the current instruction, the method `next` always delivers the end of the current instruction, and the method `nextnext` the end of the following instruction.
+The read value of the \ac{PC} as defined by the annotation can be overruled by using one of the builtin member methods for the program counter: `current`, `next`, and `nextnext` (see lines 10 and 11 of Listing \r{lst_program_counter}).
+Independent of any \ac{PC} annotation the method `current` always returns the start of the current instruction, the method `next` always returns the end of the current instruction, and the method `nextnext` the end of the following instruction.
 
-### Register Definition
+### Register Declaration
+
+Listing \r{register_declaration} demonstrates two ways to declare a register file or a multidimensional register.
+In line 6 a register file named `S` is declared by a relation which maps a five bit sized `Index` to a bit vector of type `Word` using the relation symbol `"->"`.
+In line 13 the register `Y` with the same layout as `S` is declared as a 32 element vector of type `Word`.
+The first way of declaration allows only register files where the number of registers is a power of two, the second way allows an arbitrary number of registers.
+Both ways allow the declaration of multidimensional registers. 
+
+\listing{register_declaration, Register Declaration and Register Alias}
+~~~{.vadl}
+instruction set architecture ISA = {
+  using Index       = Bits<5>             // register file index for 32 registers
+  using Word        = Bits<64>            // word size
+  using Addr        = Word                // address is word size
+
+  register        S : Index -> Word       // general purpose register file, S31 SP
+  [const : X(31) = 0]                     // X31 is zero register ZR
+  [zero  : X(31)]                         // X31 is zero register ZR
+  alias register  X = S                   // general purpose register file, X31 ZR
+  alias register SP : Addr = S(31)        // stack pointer
+  alias register LR : Addr = S(30)        // link register contains return address
+  alias register ZR : Word = X(31)        // zero register
+  register        Y : Word<32>            // alternative specification instead of arrow syntax
+  alias register  Z : Bits<32><2><16> = Y // Y is interpreted as 32 registers with two 16 bit parts
+}
+~~~
+\endlisting
+
+In \ac{RISC} architectures it is common to use a certain register as a zero register, a register that ignores values assigned to it and when read, always returns zero.
+In \ac{VADL} such registers are described by an annotation enclosed in square brackets.
+The more generic version in line 7 allows to bind any constant with a certain register using a `const` annotation and specifying the constant after the equality symbol `"="`.
+The specific version in line 8 only allows the constant `0` with the `zero` annotation.
+
+It is possible to declare an alias of a register.
+The alias name follows the two keywords `alias` and `register` followed by an optional type literal after the colon symbol `":"` and the register which is aliased after the equality symbol `"="`.
+The alias can be to single register, a certain register of a register file or a complete register file.
+The only requirement is that both registers have the same number of bits.
+It is allowed that the alias register has other annotations than the aliased register as demonstrated with the registers `X` and `S`.
+The alias register inherits all attributes from the aliased register.
+It is possible to make the \ac{PC} an alias of a register using the keywords `alias program counter`.
+
+Listing \r{partial_register_access} shows the declaration of a status register with some bit fields.
+It is possible that these bit fields can be accessed directly (partial read and write) or the register can be accessed only as a whole (full read and write).
+Partial read and write is the default behavior.
+Then the fields can be directly accessed, e.g. `flags.N`.
+When the register can only be accessed as a whole, then indexing or slicing is necessary to extract fields and concatenation is necessary to write the register.
+The behavior of the register is controlled by annotations.
+Additionally, it can be specified, that a register read or write has a side effect.
+
+\listing{partial_register_access, Partial Register Access}
+~~~{.vadl}
+instruction set architecture ISA = {
+
+  format StatusFlags: Bits<32> = // flag register format
+    { N   : Bits< 1>             // negative
+    , Z   : Bits< 1>             // zero
+    , C   : Bits< 1>             // carry
+    , V   : Bits< 1>             // overflow
+    , Res : Bits<28>             // reserved
+    }
+
+  [full write]
+  [full read]
+  [partial write]                // default behavior
+  [partial read]                 // default behavior
+  [side effect write]
+  [side effect read]
+  [side effect]
+  register flags : StatusFlags   // status register
+}
+~~~
+\endlisting
 
 
-### Memory Definition
+### Memory Declaration
 
 
 ### Instruction Definition
