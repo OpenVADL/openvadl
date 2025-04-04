@@ -19,9 +19,11 @@ package vadl.ast;
 import static java.util.Objects.requireNonNull;
 
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -78,6 +80,13 @@ public class TypeChecker
   private final ConstantEvaluator constantEvaluator;
 
   /**
+   * We are keeping a list of all the nodes (well, the identities of them) we are currently
+   * visiting. This helps us detect cycles, which aren't allowed and so we can abort early with an
+   * error instead of causing a crash due to a stack overflow.
+   */
+  private final Deque<Integer> currentlyVisiting = new ArrayDeque<Integer>();
+
+  /**
    * There is no point in checking a statement or definition twice, so these sets record which
    * nodes we already visited. For expressions, we can simply check if the type is set.
    */
@@ -98,10 +107,20 @@ public class TypeChecker
    */
   private Type check(Expr expr) {
     // Expressions store their type so we can look at them to see if they were already evaluated.
-    if (expr.type == null) {
-      expr.accept(this);
+    if (expr.type != null) {
+      return requireNonNull(expr.type);
     }
 
+    var nodeId = System.identityHashCode(expr);
+    if (currentlyVisiting.contains(nodeId)) {
+      throw Diagnostic.error("Infinite Recursion", expr)
+          .description("The node is defined by itself.")
+          .build();
+    }
+
+    currentlyVisiting.add(nodeId);
+    expr.accept(this);
+    currentlyVisiting.pop();
     return requireNonNull(expr.type);
   }
 
@@ -111,10 +130,21 @@ public class TypeChecker
    * @param stmt to check.
    */
   private void check(Statement stmt) {
-    if (!checkedStatements.contains(stmt)) {
-      stmt.accept(this);
-      checkedStatements.add(stmt);
+    if (checkedStatements.contains(stmt)) {
+      return;
     }
+
+    var nodeId = System.identityHashCode(stmt);
+    if (currentlyVisiting.contains(nodeId)) {
+      throw Diagnostic.error("Infinite Recursion", stmt)
+          .description("The node is defined by itself.")
+          .build();
+    }
+
+    currentlyVisiting.add(nodeId);
+    stmt.accept(this);
+    currentlyVisiting.pop();
+    checkedStatements.add(stmt);
   }
 
   /**
@@ -123,10 +153,27 @@ public class TypeChecker
    * @param def to check.
    */
   private void check(Definition def) {
-    if (!checkedDefinitions.contains(def)) {
-      def.accept(this);
-      checkedDefinitions.add(def);
+    if (checkedDefinitions.contains(def)) {
+      return;
     }
+
+    var nodeId = System.identityHashCode(def);
+    if (currentlyVisiting.contains(nodeId)) {
+      String message = "The node is defined by itself.";
+      if (def instanceof IdentifiableNode identifiableNode) {
+        message =
+            "Definition `%s` is defined by itself.".formatted(identifiableNode.identifier().name);
+      }
+
+      throw Diagnostic.error("Infinite Recursion", def)
+          .description("%s", message)
+          .build();
+    }
+
+    currentlyVisiting.add(nodeId);
+    def.accept(this);
+    currentlyVisiting.pop();
+    checkedDefinitions.add(def);
   }
 
   /**
