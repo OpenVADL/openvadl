@@ -2,8 +2,8 @@
   <p align="center">
   <a href="https://openvadl.org" target="_blank">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/imgs/logo_dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="assets/imgs/logo_light.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="assets/imgs/logo_light.svg">
+      <source media="(prefers-color-scheme: light)" srcset="assets/imgs/logo_dark.svg">
       <img alt="OpenVADL" src="assets/imgs/logo_dark.svg" width="320">
     </picture>
   </a>
