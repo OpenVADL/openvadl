@@ -1569,14 +1569,14 @@ public class TypeChecker
           definition.sourceLocation()).build();
     }
 
-    if (actual == SpecialPurposeRegisterDefinition.Occurrence.ONE) {
+    if (actual == Occurrence.ONE) {
       if (definition.exprs.size() != 1) {
         throw Diagnostic.error("Number of registers is incorrect. This definition expects only one",
             definition.sourceLocation()).build();
       }
     }
 
-    if (actual == SpecialPurposeRegisterDefinition.Occurrence.ONE) {
+    if (actual == Occurrence.ONE) {
       if (definition.exprs.isEmpty()) {
         throw Diagnostic.error(
             "Number of registers is incorrect. This definition expects at least one.",

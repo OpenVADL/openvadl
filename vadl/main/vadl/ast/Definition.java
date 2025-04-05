@@ -3416,12 +3416,6 @@ class AbiPseudoInstructionDefinition extends Definition {
     return Objects.hash(kind, target);
   }
 
-  enum Occurrence {
-    OPTIONAL,
-    ONE,
-    AT_LEAST_ONE
-  }
-
   enum Kind {
     RETURN("return"),
     CALL("call"),
@@ -3575,12 +3569,6 @@ class SpecialPurposeRegisterDefinition extends Definition {
   @Override
   public int hashCode() {
     return Objects.hash(purpose, exprs);
-  }
-
-  enum Occurrence {
-    OPTIONAL,
-    ONE,
-    AT_LEAST_ONE
   }
 
   enum Purpose {
