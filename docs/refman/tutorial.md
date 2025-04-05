@@ -4,13 +4,10 @@
 
 \lbl{tut_getting_started}
 
-Every \ac{VADL} processor specification is separated into different sections.
-
-Listing \r{riscv_isa} shows a complete \ac{ISA} specification of all RISC-V instructions with immediate operands and
-branches.
+Listing \r{riscv_isa} shows a complete \ac{ISA} specification of all RISC-V instructions with immediate operands and all branch instructions.
 It is a good example to show the most important \ac{VADL} \ac{ISA} features.
 
-\listing{riscv_isa, RISC-V ISA specification for instructions with immediate operands and all branches}
+\listing{riscv_isa, RISC-V ISA specification for instructions with immediate operands and all branch instructions}
 ~~~{.vadl}
 instruction set architecture RV32I = {
 
@@ -277,9 +274,9 @@ Optionally a constant expression can be assigned to the name after the equality 
 Line 7 of Listing \r{enumerations} shows the use of an enumeration element with the added name space in front separated
 by `"::"` to the name.
 
-### Type Declarations (using)
+### Type Alias Definitions (using)
 
-\listing{using, Type Declarations (using)}
+\listing{using, Type Alias Definitions (using)}
 ~~~{.vadl}
 using Bits32    = Bits<32>       // a bit vector 32 bit wide
 using Vector4   = Bits32<4>      // a 4 element vector of bit vectors 32 bit wide
@@ -293,9 +290,8 @@ using UInt32    = UInt<32>       // a 32 bit unsigned integer
 The type system is explained in detail in the reference manual (see Section \r{langref_type_system}).
 In VADL it is possible to declare bit vectors of arbitrary length.
 The basic types are Bits, SInt and UInt which can be used to form vectors.
-Types are declared by the keyword `using` followed by the name of the type, the equality symbol `"="` and the type
-literal.
-The type literal is comprised of the name of another type or format optionally followed by a number of vector sizes in angle brackets.
+Type aliases are defined by the keyword `using` followed by the alias name of the type, the equality symbol `"="` and the type literal.
+The type literal is comprised of the name of a basic type, a type alias or a format optionally followed by a number of vector sizes in angle brackets.
 Listing \r{using} shows some type declarations and their meaning in the comments.
 
 ### Functions
@@ -364,7 +360,7 @@ format Btype : Inst =                  // branch instruction format
 ~~~
 \endlisting
 
-A `format` definition defines a bit field type which is used to describe instruction formats or system registers.
+A `format` definition names bit fields of a bit vector and is used to describe instruction formats or system registers.
 It starts with the keyword `format` followed by the name of the format, the colon symbol `":"`, a type literal, the equal symbol `"="` and a list of format fields enclosed in braces and separated by the comma symbol `","`.
 There exist two variants to define a bit field.
 
@@ -380,11 +376,11 @@ Additionally it is possible to add a type literal to a slice separated by the co
 
 Bit fields are not allowed to overlap.
 Every bit inside a format has to be covered by a field definition.
+It is possible to use nested format definitions.
 
 It is possible to define access functions to bit fields.
 They are defined by the name of the access function followed by the equality symbol `"="` and an expression which can use any field name within the format definition.
 Every format has its own name space.
-
 
 
 ## Macro System
@@ -963,7 +959,7 @@ instruction set architecture ISA = {
 ### Memory Declaration
 
 The characteristics of different memories are declared with the keyword `memory` followed by the name of the memory, the colon symbol `":"`, and a relation from the address type to the memory cell type.
-The memory relation is specified by the type literal for the addressing space followed by the relation operator `"->"` and the type literal for a memory cell (see the declaration of a memory named `Mem` in Listing \r{memory_declaration}).
+The memory relation is specified by the type literal for the address space followed by the relation operator `"->"` and the type literal for a memory cell (see the declaration of a memory named `Mem` in Listing \r{memory_declaration}).
 The memory declaration only describes the mapping of an address space to a memory cell, it does not specify the pyhiscal memory available in a processor.
 
 \listing{memory_declaration, Memory Declaration}
@@ -982,7 +978,8 @@ instruction set architecture ISA = {
   [littleEndian : Condition]         // if Condition met little endian else big endian access
   [instruction]                      // instruction memory only
   [data]                             // data memory only 
-  memory Mem : Addr -> Byte          // byte addressed memory with 64 bit addressing space
+  memory Mem : Addr -> Byte          // byte addressed memory with 64 bit address space
+}
 ~~~
 \endlisting
 
@@ -1002,14 +999,69 @@ There exist different memory consistency models which are specified with the `or
 
 ### Instruction Definition
 
+Listing \r{instruction_definition} presents an instruction definition in line 11.
+An instruction definition starts with the keyword `instruction` followed by the unique name of the instruction, a type literal (usually the name of a format specification) after the colon symbol `":"` and a statement after the equality symbol `"="` that defines the behavior of the instruction.
+All field and access function names of the instruction's format are visible inside the instruction and inside encoding and assembly definitions.
+Every instruction definition needs a corresponding encoding and assembly definition.
 
-#### Block Statement
+\listing{instruction_definition, Instruction Definition with Let\, Block and Assignment Statement}
+~~~{.vadl}
+instruction set architecture ISA = {
+  using Index = Bits<5>          // 5 bit register index
+  using BWord = Bits<64>         // 64 bit word
+  using SWord = SInt<64>         // 64 bit signed integer word
 
+  register X  : Index -> BWord   // 32 registers which are 64 bit wide
+  memory MEM  : BWord -> Bits<8> // byte addressed memory in a 64 bit address space
 
-#### Assignment Statement
+  format MemT : Bits<32> =       // signed offset load / store format
+    { opc     : Bits<10>         // opcode
+    , off12   : SInt<12>         // signed offset
+    , rn      : Index            // base register
+    , rt      : Index            // source/target register
+    , off     = off12 as SWord   // sign extended 64 bit offset
+    }
+
+  [require : rn != rt]           // base and target register must be different
+  instruction LDUP : MemT =      // 64 bit load instruction with base register update
+    let addr = X(rn) + off in {  // access address is base register plus offset
+      X(rt) := MEM<8>(addr)      // load 8 bytes from address addr
+      X(rn) := addr              // write back of the updated base register
+    }
+}
+~~~
+\endlisting
+
+There are restrictions on the execution order of the statements.
+The statements have a sequential semantics, but the OpenVADL compiler must be able to reorder the operations to comply with the restrictions.
+All register and memory reads are done in parallel at the beginning of the instruction's execution cycle.
+All register and memory writes are done in parallel after all reads at the end of the execution cycle.
+It is forbidden that a certain register or memory cell is written twice.
+There is no order on the execution of writes and the result would be undefined if the same register is written twice.
+
+Therefore, there exist annotations which specify restrictions on used resources.
+With the `require` annotation it is possible to specify constraints which will be checked by OpenVADL's generators and the decoder.
+In the example in Listing \r{instruction_definition} a constraint is specified which requires that the indices of the base and the target register are different.
+This constraint is additionally checked by the decoder, after the decoding necessary to determine the correct instruction is completed.
+There are no restrictions on the used relational operators for the `require` annotation.
 
 
 #### Let Statement
+
+A `let` statement is used to define the instruction `LDUP` in Listing \r{instruction_definition}.
+An identifier follows the keyword `let` at the start of the statement. 
+The `let` statement binds the expression after the equality symbol `"="` with the identifier which enables the use of the result of the expression in the statement after the keyword `in`.
+This identifier is only visible in the scope defined by the statement after `in`.
+It is common that the statement after `in` is a block statement which is also the case in the current example.
+
+
+#### Block Statement
+
+A block statement groups multiple statements together by enclosing them in braces giving a single statement.
+An empty block statement is a valid statement.
+
+
+#### Assignment Statement
 
 
 #### If Statement
