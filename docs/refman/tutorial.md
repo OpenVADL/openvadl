@@ -962,6 +962,43 @@ instruction set architecture ISA = {
 
 ### Memory Declaration
 
+The characteristics of different memories are declared with the keyword `memory` followed by the name of the memory, the colon symbol `":"`, and a relation from the address type to the memory cell type.
+The memory relation is specified by the type literal for the addressing space followed by the relation operator `"->"` and the type literal for a memory cell (see the declaration of a memory named `Mem` in Listing \r{memory_declaration}).
+The memory declaration only describes the mapping of an address space to a memory cell, it does not specify the pyhiscal memory available in a processor.
+
+\listing{memory_declaration, Memory Declaration}
+~~~{.vadl}
+instruction set architecture ISA = {
+
+  using Byte = Bits<8>
+  using Addr = Bits<64>
+
+  [ordering : sequentialConsistency] // memory consistency model is sequential consistency
+  [ordering : totalStoreOrder]       // memory consistency model is total store order
+  [ordering : rvWeakMemoryOrdering]  // memory consistency model is RISC-V weak memory ordering
+  [translate VMEM]                   // address translation with the process called VMEM
+  [raise ExceptionName : Condition]  // when Condition is met then raise exception ExceptionName
+  [bigEndian]                        // big endian memory access
+  [littleEndian : Condition]         // if Condition met little endian else big endian access
+  [instruction]                      // instruction memory only
+  [data]                             // data memory only 
+  memory Mem : Addr -> Byte          // byte addressed memory with 64 bit addressing space
+~~~
+\endlisting
+
+The memory characteristics can be detailed with different annotations.
+If no annotation is defined, the memory serves both as data and instruction memory, the memory access is carried out in little endian mode, there is no address translation and the memory consistency model is sequential consistency.
+With the annotation `[data]` a memory is only used for data.
+With the annotation `[instruction]` a memory is only used for instructions.
+With the annotation `[bigEndian]` a memory is only accessed in big endian mode.
+If a processor supports bi-endianess, the endianess is selected by the condition evaluated to true, e.g. dependent on a system register.
+If the condition is evaluated to false, the opposite endianess is selected.
+Exceptions like alignment errors could be specified in every memory accessing instruction directly.
+But this violates the principle of separation of concerns.
+With the `raise` annotation the throwing of an exception is declared together with the memory.
+The `translate` annotation connects the specified address translation process with a memory.
+There exist different memory consistency models which are specified with the `ordering` annotation. 
+
 
 ### Instruction Definition
 
