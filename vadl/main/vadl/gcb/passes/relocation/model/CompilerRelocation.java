@@ -42,13 +42,14 @@ public abstract class CompilerRelocation implements Renderable {
    */
   public enum Kind implements Renderable {
     RELATIVE,
-    ABSOLUTE;
+    ABSOLUTE,
+    GLOBAL_OFFSET_TABLE;
 
     /**
-     * Returns {@code true} when kind is {@code RELATIVE}.
+     * Returns {@code true} when kind is {@code RELATIVE} or {@code GLOBAL_OFFSET_TABLE}.
      */
     public boolean isRelative() {
-      return this == RELATIVE;
+      return this == RELATIVE || this == GLOBAL_OFFSET_TABLE;
     }
 
     @Override
@@ -64,6 +65,17 @@ public abstract class CompilerRelocation implements Renderable {
      */
     public boolean isAbsolute() {
       return this == ABSOLUTE;
+    }
+
+    /**
+     * Maps a {@link CompilerRelocation.Kind} to a {@link Relocation.Kind}.
+     */
+    public Relocation.Kind map() {
+      return switch (this) {
+        case ABSOLUTE -> Relocation.Kind.ABSOLUTE;
+        case RELATIVE -> Relocation.Kind.RELATIVE;
+        case GLOBAL_OFFSET_TABLE -> Relocation.Kind.GLOBAL_OFFSET_TABLE;
+      };
     }
   }
 

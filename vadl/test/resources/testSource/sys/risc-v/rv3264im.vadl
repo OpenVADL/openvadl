@@ -287,6 +287,13 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   relocation hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
   relocation lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
+  [relative]
+  relocation pcrel_hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
+  [relative]
+  relocation pcrel_lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
+
+  [globalOffset]
+  relocation got_hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
 
   pseudo instruction CALL( symbol : Bits<32> ) =
   {
@@ -403,10 +410,24 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   assembly BGTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
-  pseudo instruction LLA( rd: Index, symbol: Bits<32> ) =
+  pseudo instruction nonPicLA( rd: Index, symbol: Bits<32> ) =
   {
       LUI { rd = rd, imm = hi( symbol ) }
       ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
+  }
+  assembly nonPicLA = (mnemonic, " ", register(rd), hex( symbol ))
+
+  pseudo instruction picLA( rd: Index, symbol: Bits<32> ) =
+  {
+      LUI { rd = rd, imm = got_hi( symbol ) }
+      ADDI { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
+  }
+  assembly picLA = (mnemonic, " ", register(rd), hex( symbol ))
+
+  pseudo instruction LLA( rd: Index, symbol: Bits<32> ) =
+  {
+      LUI { rd = rd, imm = pcrel_hi( symbol ) }
+      ADDI { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
   }
   assembly LLA = (mnemonic, " ", register(rd), hex( symbol ))
 

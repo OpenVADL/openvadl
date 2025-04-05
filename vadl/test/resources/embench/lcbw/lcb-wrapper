@@ -3,8 +3,8 @@
 set -e
 set -x
 
-CLANG_CFLAGS="--target=riscv32 -march=rv32im -mabi=ilp32"
-LCB_CFLAGS="--target=rv32im -D__SIZEOF_POINTER__=4 -D__riscv_xlen=32"
+CLANG_CFLAGS="--target=riscv32 -mno-relax -march=rv32im -mabi=ilp32"
+LCB_CFLAGS="--target=rv32im  -D__SIZEOF_POINTER__=4 -D__riscv_xlen=32"
 CLANG=/src/llvm-final/build/bin/clang
 
 last="${@:(-1):1}"

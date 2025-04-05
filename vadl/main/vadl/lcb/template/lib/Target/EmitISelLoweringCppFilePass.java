@@ -100,7 +100,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         GenerateTableGenRegistersPass.class)).registerClasses();
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
-    var addressSequence = abi.addressSequence();
+    var addressSequence = abi.nonPicAddressLoad();
     var labelledMachineInstructions = ensureNonNull(
         (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
@@ -131,7 +131,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("stackPointerBitWidth", abi.stackPointer().registerFile().resultType().bitWidth());
     map.put("stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
-    map.put("addressSequence", addressSequence.simpleName());
+    map.put("nonPicLA", addressSequence.simpleName());
     map.put("hasCMove32", hasCMove32);
     map.put("hasCMove64", hasCMove64);
     map.put("conditionalMove", conditionalMove);
