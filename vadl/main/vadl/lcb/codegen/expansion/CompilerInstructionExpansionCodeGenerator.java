@@ -221,6 +221,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
     var instruction = ((CNodeWithBaggageContext) ctx).get(INSTRUCTION, Instruction.class);
     var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
+    var instructionCallNode =
+        ((CNodeWithBaggageContext) ctx).get(INSTRUCTION_CALL_NODE, InstrCallNode.class);
 
     var usage = fieldUsages.getFieldUsages(instruction).get(field);
     ensure(usage != null, "usage must not be null");
@@ -233,13 +235,19 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
     switch (usage.get(0)) {
       case IMMEDIATE -> {
-        var decodingFunction = immediateDecodings.get(field);
-        ensure(decodingFunction != null, "decodingFunction must not be null");
-        var decodingFunctionName = decodingFunction.functionName().lower();
-        context.ln("%s.addOperand(MCOperand::createImm(%s(%s)));",
+
+        var immediateValueString = String.valueOf(toHandle.constant().asVal().intValue());
+
+        if (!instructionCallNode.isParameterFieldAccess(field)) {
+          var decodingFunction = immediateDecodings.get(field);
+          ensure(decodingFunction != null, "decodingFunction must not be null");
+          var decodingFunctionName = decodingFunction.functionName().lower();
+          immediateValueString = decodingFunctionName + "(" + immediateValueString + ")";
+        }
+
+        context.ln("%s.addOperand(MCOperand::createImm(%s));",
             instructionSymbol,
-            decodingFunctionName,
-            toHandle.constant().asVal().intValue());
+            immediateValueString);
       }
       case REGISTER -> {
         // We know that `field` is used as a register index.
