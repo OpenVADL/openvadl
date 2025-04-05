@@ -106,14 +106,4 @@ public class CompilerInstruction extends Definition implements DefProp.WithBehav
       }
     }).findFirst().orElseThrow();
   }
-
-  /**
-   * Returns {@code true} when all instructions only have absolute relocations.
-   */
-  public boolean referencesOnlyAbsoluteRelocations() {
-    return behavior.getNodes(InstrCallNode.class)
-        .flatMap(x -> x.arguments().stream())
-        .allMatch(x -> x instanceof FuncCallNode funcCallNode &&
-            funcCallNode.function() instanceof Relocation relocation && relocation.isAbsolute());
-  }
 }
