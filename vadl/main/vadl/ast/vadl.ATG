@@ -396,10 +396,10 @@ PRODUCTIONS
   .
 
   formatField<out FormatDefinition.FormatField field> (. field = null; .)
-  = identifier<out Identifier id>       (. System.out.println("start field"); .)
-    ( formatFieldRange<out field, id>   (. System.out.println("range"); .)
-    | formatFieldType<out field, id>    (. System.out.println("type"); .)
-    | formatFieldDerived<out field, id> (. System.out.println("derived"); .)
+  = identifier<out Identifier id>
+    ( formatFieldRange<out field, id>
+    | formatFieldType<out field, id>
+    | formatFieldDerived<out field, id>
     )
   .
 
