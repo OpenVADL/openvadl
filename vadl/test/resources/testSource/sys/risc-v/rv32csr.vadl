@@ -98,14 +98,14 @@ instruction set architecture RV32Zicsr extending RV32IM = {
       , _                => hex( index )   
       }
 
-  register CSR : Bits<CsrImpl::ImplLength><MLen>
+  register CSR : Regs<CsrImpl::ImplLength>
 
   exception IllegalInstruction = {}
 
   instruction CSRRW : Itype =            // atomic CSR Read / Write
     let csridx = CsrDefToImpl(imm) in
       if csridx = -1 as Bits<12> then
-        raise IllegalInstruction
+        raise {}  // IllegalInstruction
       else
         let xrs1 = X(rs1) in {
           if rd != 0 then
@@ -118,7 +118,7 @@ instruction set architecture RV32Zicsr extending RV32IM = {
   instruction CSRRS : Itype =           // atomic CSR Read and Set bits
     let csridx = CsrDefToImpl(imm) in
       if csridx = -1 as Bits<12> then
-        raise IllegalInstruction
+        raise {}  // IllegalInstruction
       else
         let csr_csridx = CSR(csridx) in {
           if rs1 != 0 then
