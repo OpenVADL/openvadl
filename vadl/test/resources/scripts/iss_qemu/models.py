@@ -1,25 +1,50 @@
 from dataclasses import dataclass, field
-from typing import Dict, Literal
+from pathlib import Path
+from typing import Dict, Literal, Optional, List
 
 
 @dataclass
-class TestSpec:
-    """Specifies a test case"""
+class Test:
     id: str
     asm_core: str
-    reg_tests: Dict[str, str] = field(default_factory=dict)
-    qemu_args: str = field(default="")
-    reference_exec: str = field(default="")
-    reference_regs: list[str] = field(default_factory=list)
+    regs: Optional[List[str]] = None
+
+@dataclass
+class Tool:
+    path: Path
+    args: str
+
+    def __init__(self, map: dict[str, any]):
+        self.path = Path(map["path"])
+        self.args = map["args"]
+
+        if not self.path.is_file():
+            raise ValueError(f"Tool path '{self.path}' is not a valid file.")
 
 
-RegResultType = Dict[str, Dict[Literal['expected', 'actual'], str]]
+@dataclass
+class Config:
+    sim: Tool
+    ref: Tool
+    compiler: Tool
+    tests: List[Test]
+    gdbregmap: Dict[str, str]
+    stateplugin: Path
+
+    def __post_init__(self):
+        self.stateplugin = Path(self.stateplugin)
+        if not self.stateplugin.is_file():
+            raise ValueError(f"stateplugin path '{self.stateplugin}' is not a valid file.")
+
+
+
+RegResultType = Dict[str, Dict[Literal['exp', 'act'], str]]
 
 
 @dataclass
 class TestResult:
     status: Literal['PASS', 'FAIL']
-    completed_stages: [Literal['COMPILE', 'LINK', 'RUN']]
+    completed_stages: [Literal['COMPILE', 'RUN_GEN', 'RUN_REF', 'COMPARE']]
     reg_tests: RegResultType
     errors: [str]
     duration: str

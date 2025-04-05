@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import os
+import shutil
 import time
 import traceback
 import yaml
@@ -9,28 +10,26 @@ import subprocess
 from dataclasses import dataclass
 from typing import List
 
-from test_case_executer_v1 import QMPTestCaseExecutor, TestSpec
+from config_loader import load_config
+from test_case_plugin_executor import TestCasePluginExecutor
 
-
-@dataclass
-class TestSuiteConfig:
-    tests: List[TestSpec]
 
 def reset_terminal():
-    """Resets terminal state using stty."""
-    try:
-        subprocess.run(["stty", "sane"], check=True)
-    except Exception as e:
-        print(f"Warning: Failed to reset terminal state: {e}", file=sys.stderr)
+    """Resets terminal state using stty if available."""
+    if shutil.which("stty") is not None:
+        try:
+            subprocess.run(["stty", "sane"], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Warning: Failed to reset terminal state: {e}", file=sys.stderr)
 
-async def main(qemu_exec: str):
-    print(f"Starting runner with qemu executable: {qemu_exec}")
+async def main(testsuite_path: argparse.FileType):
+    test_config = load_config(testsuite_path)
 
-    test_config = load_test_config("test-suite.yaml")
 
     # produces testcases
     # test_cases = [TestCaseExecutor2(spec) for (i, spec) in enumerate(test_config.tests)]
-    test_cases = [QMPTestCaseExecutor(qemu_exec, spec) for (spec) in test_config.tests]
+    # test_cases = [QMPTestCaseExecutor(qemu_exec, spec) for spec in test_config.tests]
+    test_cases = [TestCasePluginExecutor(test, test_config) for test in test_config.tests]
 
     start_time = time.time()
 
@@ -39,7 +38,6 @@ async def main(qemu_exec: str):
     # Create a semaphore to limit concurrent test cases
     semaphore = asyncio.Semaphore(num_cores)
 
-    test_results = []
 
     # define how tests should be executed
     async def run_test(test_case):
@@ -57,10 +55,8 @@ async def main(qemu_exec: str):
                 test_end_time = time.time()
                 test_case.test_result.duration = f"{(test_end_time - test_start_time) * 1000:.2f}ms"
                 status = test_case.test_result.status == 'PASS' and "✅ PASS" or "❌ FAIL"
-                print(f"[{status}] Finish test case {test_case.spec.id} in {test_case.test_result.duration}")
-                # await test_case.emit_result(dir="results", prefix="result-")
-                result = test_case.get_test_result_map()
-                test_results.append(result)
+                print(f"[{status}] Finish test case {test_case.test.id} in {test_case.test_result.duration}")
+                await test_case.emit_result(dir="results", prefix="result-")
 
     # Create tasks with semaphore-controlled concurrency
     tasks = [asyncio.create_task(run_test(test_case)) for test_case in test_cases]
@@ -68,23 +64,13 @@ async def main(qemu_exec: str):
     # Wait for all tasks to complete
     await asyncio.gather(*tasks)
 
-    result_file = f"results.yaml"
-    with open(result_file, 'w') as f:
-        yaml.dump(test_results, f)
-
     end_time = time.time()
     print(f"Total time: {end_time - start_time:.3f}s")
 
 
-def load_test_config(filename: str) -> TestSuiteConfig:
-    with open(filename, 'r') as file:
-        data = yaml.safe_load(file)  # Load the YAML file
-        tests = [TestSpec(**test) for test in data['tests']]  # Create TestSpec instances
-        return TestSuiteConfig(tests=tests)  # Create TestSuiteConfig instance
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('simexec', type=str, help='Path to the qemu executable', default="qemu/build/qemu-system-vadl")
+    parser.add_argument("config", type=str)
     args = parser.parse_args()
-    asyncio.run(main(args.simexec))
+    asyncio.run(main(args.config))
