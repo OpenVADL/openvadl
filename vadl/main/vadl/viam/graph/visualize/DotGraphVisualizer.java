@@ -69,7 +69,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
     Objects.requireNonNull(graph);
 
     StringBuilder dotBuilder = new StringBuilder();
-    dotBuilder.append("digraph G {\n");
+    dotBuilder.append("digraph {\n");
     dotBuilder.append("    label=%s\n".formatted(wrapStr(name)));
     dotBuilder.append("\n");
 
