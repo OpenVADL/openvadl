@@ -256,4 +256,15 @@ public class NameResolutionTest {
     Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
         "Should reject typos");
   }
+
+  @Test
+  void invalidTypeNameInUsing() {
+    var prog = """
+        instruction set architecture ISA = {
+          using Word        = SInt<XSize>
+        }
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),
+        "Should reject typos");
+  }
 }

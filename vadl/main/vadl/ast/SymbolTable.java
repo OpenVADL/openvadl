@@ -884,8 +884,37 @@ class SymbolTable {
           resolveSymbols(constant.typeLiteral);
         }
         resolveSymbols(constant.value);
+      } else if (definition instanceof CounterDefinition counterDefinition) {
+        resolveSymbols(counterDefinition.typeLiteral);
+      } else if (definition instanceof RegisterDefinition registerDefinition) {
+        resolveSymbols(registerDefinition.typeLiteral);
+      } else if (definition instanceof RegisterFileDefinition registerFile) {
+        for (var argType : registerFile.typeLiteral.argTypes()) {
+          resolveSymbols(argType);
+        }
+        resolveSymbols(registerFile.typeLiteral.resultType());
+      } else if (definition instanceof MemoryDefinition memory) {
+        resolveSymbols(memory.addressTypeLiteral);
+        resolveSymbols(memory.dataTypeLiteral);
+      } else if (definition instanceof UsingDefinition using) {
+        resolveSymbols(using.typeLiteral);
       } else if (definition instanceof FunctionDefinition function) {
         resolveSymbols(function.expr);
+      } else if (definition instanceof FormatDefinition format) {
+        resolveSymbols(format.typeLiteral);
+        for (FormatDefinition.FormatField field : format.fields) {
+          if (field instanceof FormatDefinition.RangeFormatField rangeField) {
+            if (rangeField.typeLiteral != null) {
+              resolveSymbols(rangeField.typeLiteral);
+            }
+          } else if (field instanceof FormatDefinition.TypedFormatField typedField) {
+            resolveSymbols(typedField.typeLiteral);
+          } else if (field instanceof FormatDefinition.DerivedFormatField dfField) {
+            resolveSymbols(dfField.expr);
+          } else {
+            throw new RuntimeException("Unknown class");
+          }
+        }
       } else if (definition instanceof InstructionDefinition instr) {
         var format = instr.symbolTable().requireAs(instr.typeIdentifier(), FormatDefinition.class);
         if (format != null) {
