@@ -96,6 +96,8 @@ import vadl.viam.graph.Graph;
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
 public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Definition>> {
 
+  private static final String RELATIVE = "relative";
+  private static final String GLOBAL_OFFSET_TABLE = "globalOffset";
   private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
 
   private final IdentityHashMap<Definition, Optional<vadl.viam.Definition>> definitionCache =
@@ -151,6 +153,21 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     result.ifPresent(value -> value.setSourceLocationIfNotSet(definition.sourceLocation()));
     definitionCache.put(definition, result);
     return result;
+  }
+
+  /**
+   * Fetch from the cache the viam node or evaluate it. If the parameter is {@link Optional#empty()}
+   * then return {@link Optional#empty()}.
+   *
+   * @param definition for which we want to find the corresponding viam node.
+   * @return the viam node.
+   */
+  Optional<vadl.viam.Definition> fetch(Optional<? extends Definition> definition) {
+    if (definition.isPresent()) {
+      return fetch(definition.get());
+    }
+
+    return Optional.empty();
   }
 
   /**
@@ -340,10 +357,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         AbiPseudoInstructionDefinition.Kind.CALL);
     var pseudoLocalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
         AbiPseudoInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD);
+    var pseudoNonPicAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
+        AbiPseudoInstructionDefinition.Kind.NON_PIC_ADDRESS_LOAD);
+    var pseudoPicAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
+        AbiPseudoInstructionDefinition.Kind.PIC_ADDRESS_LOAD);
 
     var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow();
     var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow();
-    var pseudoLocalAddressLoad = (PseudoInstruction) fetch(pseudoLocalAddressLoadDef).orElseThrow();
+    var pseudoLocalAddressLoad = fetch(pseudoLocalAddressLoadDef).map(x -> (PseudoInstruction) x);
+    var pseudoPicAddressLoad = fetch(pseudoPicAddressLoadDef).map(x -> (PseudoInstruction) x);
+    var pseudoNonPicAddressLoad =
+        (PseudoInstruction) fetch(pseudoNonPicAddressLoadDef).orElseThrow();
 
     // Aliases
     Map<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>> aliases =
@@ -398,6 +422,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         pseudoRet,
         pseudoCall,
         pseudoLocalAddressLoad,
+        pseudoNonPicAddressLoad,
+        pseudoPicAddressLoad,
         Abi.Alignment.DOUBLE_WORD,
         Abi.Alignment.DOUBLE_WORD,
         registerFileAlignment,
@@ -1309,9 +1335,24 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var graph =
         new BehaviorLowering(this).getGraph(definition.expr, identifier.name() + "::behavior");
 
+    var isRelative = definition.annotations.annotations().stream()
+        .anyMatch(x -> x.expr instanceof vadl.ast.Identifier id && id.name.equals(RELATIVE));
+    var isGlobalOffsetTable = definition.annotations.annotations().stream()
+        .anyMatch(
+            x -> x.expr instanceof vadl.ast.Identifier id && id.name.equals(GLOBAL_OFFSET_TABLE));
+
+    Relocation.Kind kind = Relocation.Kind.ABSOLUTE;
+
+    if (isRelative) {
+      kind = Relocation.Kind.RELATIVE;
+    } else if (isGlobalOffsetTable) {
+      kind = Relocation.Kind.GLOBAL_OFFSET_TABLE;
+    }
+
     return Optional.of(
         new Relocation(
             identifier,
+            kind,
             parameters,
             getViamType(definition.resultTypeLiteral.type()),
             graph));
@@ -1465,13 +1506,13 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * Extracts {@link AbiPseudoInstructionDefinition} from an
    * {@link ApplicationBinaryInterfaceDefinition}.
    */
-  private AbiPseudoInstructionDefinition getAbiPseudoInstruction(
+  private Optional<AbiPseudoInstructionDefinition> getAbiPseudoInstruction(
       List<Definition> definitions, AbiPseudoInstructionDefinition.Kind kind) {
     var pseudoInstructions = definitions
         .stream()
         .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
         .toList();
 
-    return (AbiPseudoInstructionDefinition) pseudoInstructions.stream().findFirst().orElseThrow();
+    return pseudoInstructions.stream().findFirst().map(x -> (AbiPseudoInstructionDefinition) x);
   }
 }

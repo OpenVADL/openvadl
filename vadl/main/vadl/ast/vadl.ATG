@@ -149,10 +149,12 @@ TOKENS
   MODEL        = "model".
   MODEL_TYPE   = "model-type".
   MODIFIERS    = "modifiers".
+  NON          = "non".
   NONE         = "none".
   NOP          = "nop".
   OPERATION    = "operation".
   PATCH        = "patch".
+  PIC          = "pic".
   PIPELINE     = "pipeline".
   POINTER      = "pointer".
   PREDICATE    = "predicate".
@@ -882,6 +884,8 @@ PRODUCTIONS
     RETURN INSTRUCTION                                       (. kind = AbiPseudoInstructionDefinition.Kind.RETURN; .)
     | CALL INSTRUCTION                                       (. kind = AbiPseudoInstructionDefinition.Kind.CALL; .)
     | LOCAL ADDRESS LOAD INSTRUCTION                         (. kind = AbiPseudoInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD; .)
+    | PIC ADDRESS LOAD INSTRUCTION                           (. kind = AbiPseudoInstructionDefinition.Kind.PIC_ADDRESS_LOAD; .)
+    | NON PIC ADDRESS LOAD INSTRUCTION                       (. kind = AbiPseudoInstructionDefinition.Kind.NON_PIC_ADDRESS_LOAD; .)
   )
   SYM_EQ
   identifier<out Identifier id>  (. def = new AbiPseudoInstructionDefinition(kind, id, start.join(loc())); .)

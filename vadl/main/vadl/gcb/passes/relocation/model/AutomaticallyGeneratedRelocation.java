@@ -55,7 +55,8 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
     var parameter = new Parameter(new Identifier("input",
         SourceLocation.INVALID_SOURCE_LOCATION),
         Type.signedInt(64)); // default in LLVM, otherwise we might get truncation
-    var relocation = new Relocation(identifier, new Parameter[] {parameter}, format.type());
+    var relocation =
+        new Relocation(identifier, kind.map(), new Parameter[] {parameter}, format.type());
     var valueRelocation = createGcbRelocationCppFunction(relocation);
     valueRelocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
     return new AutomaticallyGeneratedRelocation(identifier,
