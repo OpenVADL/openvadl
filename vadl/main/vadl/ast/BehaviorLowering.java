@@ -1112,7 +1112,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     for (var arg : statement.namedArguments) {
       var field = fieldMap.get(arg.name.name);
       var fieldAccess = target.encoding().format().fieldAccesses().stream()
-          .filter(fA -> fA.simpleName().equals(arg.name.name))
+          .filter(access -> access.simpleName().equals(arg.name.name))
           .findFirst().orElse(null);
 
       fieldsOrAccesses.add(new Either<>(field, fieldAccess));

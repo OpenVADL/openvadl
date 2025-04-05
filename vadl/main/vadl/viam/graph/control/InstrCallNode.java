@@ -86,6 +86,13 @@ public class InstrCallNode extends DirectionalNode {
     this.target = instruction;
   }
 
+  /**
+   * Returns the list of {@link Format.Field}s that are required to be set for the target
+   * {@link Instruction}. If a parameter is a {@link Format.FieldAccess},
+   * its referenced {@link Format.Field} is returned.
+   *
+   * @return the list of {@link Format.Field}s
+   */
   public List<Format.Field> getParamFields() {
     return paramFieldsOrAccesses.stream().map(
         paramField -> paramField.isLeft() ? paramField.left() : paramField.right().fieldRef()
@@ -105,6 +112,12 @@ public class InstrCallNode extends DirectionalNode {
     return arguments.get(index);
   }
 
+  /**
+   * Check if the parameter corresponding to a given field is a {@link Format.FieldAccess}.
+   *
+   * @param field the given field
+   * @return true if the parameter is a {@link Format.FieldAccess}, false otherwise
+   */
   public boolean isParameterFieldAccess(Format.Field field) {
     return paramFieldsOrAccesses.stream().anyMatch(
         paramField -> paramField.isRight() && paramField.right().fieldRef().equals(field));
