@@ -156,6 +156,21 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   /**
+   * Fetch from the cache the viam node or evaluate it. If the parameter is {@link Optional#empty()}
+   * then return {@link Optional#empty()}.
+   *
+   * @param definition for which we want to find the corresponding viam node.
+   * @return the viam node.
+   */
+  Optional<vadl.viam.Definition> fetch(Optional<? extends Definition> definition) {
+    if (definition.isPresent()) {
+      return fetch(definition.get());
+    }
+
+    return Optional.empty();
+  }
+
+  /**
    * Fetch from the cache the format field node or evaluate it.
    *
    * @param field for which we want to find the corresponding viam node.
@@ -1491,13 +1506,13 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * Extracts {@link AbiPseudoInstructionDefinition} from an
    * {@link ApplicationBinaryInterfaceDefinition}.
    */
-  private AbiPseudoInstructionDefinition getAbiPseudoInstruction(
+  private Optional<AbiPseudoInstructionDefinition> getAbiPseudoInstruction(
       List<Definition> definitions, AbiPseudoInstructionDefinition.Kind kind) {
     var pseudoInstructions = definitions
         .stream()
         .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
         .toList();
 
-    return (AbiPseudoInstructionDefinition) pseudoInstructions.stream().findFirst().orElseThrow();
+    return pseudoInstructions.stream().findFirst().map(x -> (AbiPseudoInstructionDefinition) x);
   }
 }
