@@ -32,6 +32,7 @@ import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
+import vadl.utils.Either;
 import vadl.utils.Pair;
 import vadl.utils.WithSourceLocation;
 import vadl.viam.ArtificialResource;
@@ -1106,13 +1107,18 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         .collect(Collectors.toMap(Definition::simpleName, f -> f));
 
     var argExprs = new NodeList<ExpressionNode>();
-    var fields = new ArrayList<Format.Field>();
+    var fieldsOrAccesses = new ArrayList<Either<Format.Field, Format.FieldAccess>>();
 
     for (var arg : statement.namedArguments) {
-      fields.add(fieldMap.get(arg.name.name));
+      var field = fieldMap.get(arg.name.name);
+      var fieldAccess = target.encoding().format().fieldAccesses().stream()
+          .filter(access -> access.simpleName().equals(arg.name.name))
+          .findFirst().orElse(null);
+
+      fieldsOrAccesses.add(new Either<>(field, fieldAccess));
       argExprs.add(fetch(arg.value));
     }
-    var call = new InstrCallNode(target, fields, argExprs);
+    var call = new InstrCallNode(target, fieldsOrAccesses, argExprs);
     call = addToGraph(call);
     return SubgraphContext.of(statement, call);
   }

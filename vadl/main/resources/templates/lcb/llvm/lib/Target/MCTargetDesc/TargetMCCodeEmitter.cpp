@@ -40,7 +40,6 @@ using namespace llvm;
 [# th:each="imm : ${immediates}" ]
 unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {
-    /*
     const MCOperand &MO = MI.getOperand(OpNo);
 
     if (MO.isImm())
@@ -50,6 +49,7 @@ unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &M
     if (AsmUtils::evaluateConstantImm(&MO, imm))
         return [(${imm.encode})](imm);
 
+    /*
     assert(MO.isExpr() && "[(${imm.encodeWrapper})] expects only expressions or immediates");
 
     emitFixups(MI, OpNo, MO.getExpr(), Fixups);

@@ -85,10 +85,12 @@ public class GenerateLinkerComponentsPass extends Pass {
    */
   public record VariantKindStore(
       RelocationStore<ImplementedUserSpecifiedRelocation> userDefined,
-      RelocationStore<AutomaticallyGeneratedRelocation> automaticallyGenerated
+      RelocationStore<AutomaticallyGeneratedRelocation> automaticallyGenerated,
+      Map<Format.FieldAccess, VariantKind> decodeVariantKinds
   ) {
     public static VariantKindStore empty() {
-      return new VariantKindStore(RelocationStore.empty(), RelocationStore.empty());
+      return new VariantKindStore(RelocationStore.empty(), RelocationStore.empty(),
+          new IdentityHashMap<>());
     }
 
     /**
@@ -129,6 +131,19 @@ public class GenerateLinkerComponentsPass extends Pass {
           .entrySet()
           .stream()
           .filter(x -> x.getKey().right().equals(field))
+          .map(Map.Entry::getValue)
+          .toList();
+    }
+
+    /**
+     * Get the decode variant kinds for a given {@link Format.Field}. There is a distinct
+     * {@link VariantKind} for every {@link Format.FieldAccess} of a field.
+     */
+    public List<VariantKind> decodeVariantKindsByField(Format.Field field) {
+      return this.decodeVariantKinds
+          .entrySet()
+          .stream()
+          .filter(x -> x.getKey().fieldRef().equals(field))
           .map(Map.Entry::getValue)
           .toList();
     }
@@ -234,6 +249,18 @@ public class GenerateLinkerComponentsPass extends Pass {
           linkModifierToRelocation);
     }
 
+
+    // Finally, we need to generate variant kinds
+    // to apply the correct decode function after pseudo expansion.
+    var fieldAccesses = viam.isa().map(isa -> isa.ownFormats().stream()).orElseGet(
+        Stream::empty).flatMap(formats -> formats.fieldAccesses().stream()).toList();
+
+    for (var fieldAccess : fieldAccesses) {
+      var variantKind = VariantKind.decode(fieldAccess);
+      variantKinds.add(variantKind);
+      variantStore.decodeVariantKinds.put(fieldAccess, variantKind);
+    }
+
     return new Output(
         modifiers,
         variantKinds,
@@ -279,7 +306,7 @@ public class GenerateLinkerComponentsPass extends Pass {
                              List<HasRelocationComputationAndUpdate> compilerRelocations,
                              VariantKindStore variantStore,
                              List<Pair<Modifier, HasRelocationComputationAndUpdate>>
-                             linkModifierToRelocation) {
+                                 linkModifierToRelocation) {
     var absoluteVariantKind = VariantKind.absolute(imm);
     var modifier = Modifier.absolute(imm);
     modifiers.add(modifier);

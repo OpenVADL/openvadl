@@ -22,11 +22,10 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.ValueRange;
@@ -76,22 +75,29 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  private List<Map<String, String>> instructionsWithOperands(PassResults results) {
+  private List<Map<String, Object>> instructionsWithOperands(PassResults results) {
     var output =
         (LlvmLoweringPass.LlvmLoweringPassResult) results.lastResultOf(LlvmLoweringPass.class);
-    var result = new ArrayList<Map<String, String>>();
+    var result = new ArrayList<Map<String, Object>>();
 
     output.machineInstructionRecords().forEach(
         (insn, llvmRecord) -> {
-          var inputs = llvmRecord.info().inputs().stream()
-              .map(i -> ((TableGenParameterTypeAndName) i.parameter()).name());
-          var outputs = llvmRecord.info().outputs().stream()
-              .map(p -> ((TableGenParameterTypeAndName) p.parameter()).name());
 
-          var operands = Stream.concat(outputs, inputs).map(op -> '"' + op + '"').toList();
+          var operands = llvmRecord.info().outputInputOperands().stream()
+              .map(o -> '"' + ((TableGenParameterTypeAndName) o.parameter()).name() + '"')
+              .toList();
+
+          var fieldAccesses = new HashMap<String, String>();
+          insn.format().fieldAccesses().forEach(
+              fieldAccess -> {
+                fieldAccesses.put(fieldAccess.simpleName(), fieldAccess.fieldRef().simpleName());
+              }
+          );
+
           result.add(Map.of(
               "name", insn.simpleName(),
-              "operands", String.join(", ", operands)
+              "operands", String.join(", ", operands),
+              "fieldAccesses", fieldAccesses
           ));
         }
     );
@@ -101,8 +107,8 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
           var operands = Arrays.stream(pseudo.parameters()).map(p -> '"' + p.simpleName() + '"');
           result.add(Map.of(
               "name", pseudo.simpleName(),
-              "operands", String.join(", ", operands.toList()))
-          );
+              "operands", String.join(", ", operands.toList())
+          ));
         }
     );
 
@@ -111,8 +117,9 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
   record ImmediateConversion(
       String instructionName,
-      boolean needsDecode,
+      String fieldAccessName,
       String operandName,
+      String encodeMethod,
       String decodeMethod,
       String predicateMethod,
       long lowestValue,
@@ -124,8 +131,9 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     public Map<String, Object> renderObj() {
       return Map.of(
           "insnName", instructionName,
-          "needsDecode", needsDecode,
+          "fieldAccessName", fieldAccessName,
           "operandName", operandName,
+          "encodeMethod", encodeMethod,
           "decodeMethod", decodeMethod,
           "predicateMethod", predicateMethod,
           "lowestValue", lowestValue,
@@ -135,6 +143,17 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  /**
+   * Immediate conversions are used to generate the {@code ModifyImmediate} method in the parser.
+   * {@code ModifyImmediate} fulfills 4 tasks:
+   * <ul>
+   *   <li>Applies {@code encode} to the parsed immediate if an
+   *   access function was referenced in the grammar</li>
+   *   <li>Checks if a normalized immediate is in the valid value range</li>
+   *   <li>Applies {@code decode} to fit the expectation of {@code MCInst}</li>
+   *   <li>Checks if the {@code predicate} holds for the immediate value</li>
+   * </ul>
+   */
   private List<ImmediateConversion> immediateConversions(PassResults passResults) {
     var tableGenMachineInstructions =
         (List<TableGenMachineInstruction>) passResults.lastResultOf(
@@ -151,9 +170,6 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
           var instruction = tableGenMachineInstruction.instruction();
           var valueRange = valueRange(instruction);
 
-          var fieldAccessFunctionsWhichRequireEncoding =
-              new HashSet<>(instruction.assembly().fieldAccesses());
-
           return tableGenMachineInstruction.llvmLoweringRecord().info().inputs().stream()
               .filter(i -> i instanceof ReferencesImmediateOperand)
               .map(tableGenOperand -> {
@@ -164,8 +180,9 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
                 return new ImmediateConversion(
                     instruction.simpleName(),
-                    fieldAccessFunctionsWhichRequireEncoding.contains(fieldAccess),
+                    fieldAccess != null ? fieldAccess.simpleName() : "",
                     ((TableGenParameterTypeAndName) tableGenOperand.parameter()).name(),
+                    immediateOperand.rawEncoderMethod(),
                     immediateOperand.rawDecoderMethod(),
                     immediateOperand.predicateMethod(),
                     valueRange.lowest(),

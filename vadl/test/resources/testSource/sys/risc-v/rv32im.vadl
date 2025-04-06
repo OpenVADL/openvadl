@@ -186,7 +186,7 @@ assembly description ASM for ABI = {
     JalInstruction @instruction:
       mnemonic = "JAL" @operand
       rd = Register @operand ","
-      imm = ImmediateOperand
+      immS = ImmediateOperand
     ;
 
 
@@ -196,7 +196,7 @@ assembly description ASM for ABI = {
       mnemonic = BTypeIds @operand
       rs1 = Register@operand ","
       rs2 = Register@operand ","
-      imm = ImmediateOperand@operand
+      immS = ImmediateOperand@operand
     ;
 
 
@@ -231,7 +231,7 @@ assembly description ASM for ABI = {
     ;
 
 
-    RRPseudoIds : "MOV" | "NOT" | "NEG" | "SNEZ" | "SLTZ" | "SGTZ" ;
+    RRPseudoIds : "MV" | "NOT" | "NEG" | "SNEZ" | "SLTZ" | "SGTZ" ;
 
     RRPseudoInstruction @instruction :
       mnemonic = RRPseudoIds @operand
