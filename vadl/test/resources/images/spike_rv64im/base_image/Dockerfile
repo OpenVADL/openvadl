@@ -46,3 +46,4 @@ COPY helper /helper
 COPY lcb_wrapper.sh .
 COPY llvm.sh .
 COPY spike.sh .
+COPY filecheck.sh .
