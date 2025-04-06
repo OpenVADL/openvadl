@@ -1,0 +1,106 @@
+# RUN: /src/llvm-final/build/bin/llvm-mc -arch=rv32im -show-encoding < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
+
+# Test cases for ADD
+ADD x0, x1, x2
+# CHECK: # encoding: [0x33,0x80,0x20,0x00]
+
+ADD zero, ra, sp
+# CHECK: # encoding: [0x33,0x80,0x20,0x00]
+
+# Test cases for SUB
+SUB x3, x4, x5
+# CHECK: # encoding: [0xb3,0x01,0x52,0x40]
+
+SUB gp, tp, t0
+# CHECK: # encoding: [0xb3,0x01,0x52,0x40]
+
+# Test cases for AND
+AND x6, x7, x8
+# CHECK: # encoding: [0x33,0xf3,0x83,0x00]
+
+AND t1, t2, fp
+# CHECK: # encoding: [0x33,0xf3,0x83,0x00]
+
+# Test cases for OR
+OR x9, x10, x11
+# CHECK: # encoding: [0xb3,0x64,0xb5,0x00]
+
+OR s1, a0, a1
+# CHECK: # encoding: [0xb3,0x64,0xb5,0x00]
+
+# Test cases for XOR
+XOR x12, x13, x14
+# CHECK: # encoding: [0x33,0xc6,0xe6,0x00]
+
+XOR a2, a3, a4
+# CHECK: # encoding: [0x33,0xc6,0xe6,0x00]
+
+# Test cases for SLT
+SLT x15, x16, x17
+# CHECK: # encoding: [0xb3,0x27,0x18,0x01]
+
+SLT a5, a6, a7
+# CHECK: # encoding: [0xb3,0x27,0x18,0x01]
+
+# Test cases for SLTU
+SLTU x18, x19, x20
+# CHECK: # encoding: [0x33,0xb9,0x49,0x01]
+
+SLTU s2, s3, s4
+# CHECK: # encoding: [0x33,0xb9,0x49,0x01]
+
+# Test cases for SLL
+SLL x21, x22, x23
+# CHECK: # encoding: [0xb3,0x1a,0x7b,0x01]
+
+SLL s5, s6, s7
+# CHECK: # encoding: [0xb3,0x1a,0x7b,0x01]
+
+# Test cases for SRL
+SRL x24, x25, x26
+# CHECK: # encoding: [0x33,0xdc,0xac,0x01]
+
+SRL s8, s9, s10
+# CHECK: # encoding: [0x33,0xdc,0xac,0x01]
+
+# Test cases for SRA
+SRA x27, x28, x29
+# CHECK: # encoding: [0xb3,0x5d,0xde,0x41]
+
+SRA s11, t3, t4
+# CHECK: # encoding: [0xb3,0x5d,0xde,0x41]
+
+# Test cases for MUL
+MUL x30, x31, x8
+# CHECK: # encoding: [0x33,0x8f,0x8f,0x02]
+
+MUL t5, t6, s0
+# CHECK: # encoding: [0x33,0x8f,0x8f,0x02]
+
+# Test cases for MULH
+MULH x4, x5, x6
+# CHECK: # encoding: [0x33,0x92,0x62,0x02]
+
+# Test cases for MULHSU
+MULHSU x7, x8, x9
+# CHECK: # encoding: [0xb3,0x23,0x94,0x02]
+
+# Test cases for MULHU
+MULHU x10, x11, x12
+# CHECK: # encoding: [0x33,0xb5,0xc5,0x02]
+
+# Test cases for DIV
+DIV x13, x14, x15
+# CHECK: # encoding: [0xb3,0x46,0xf7,0x02]
+
+# Test cases for DIVU
+DIVU x16, x17, x18
+# CHECK: # encoding: [0x33,0xd8,0x28,0x03]
+
+# Test cases for REM
+REM x19, x20, x21
+# CHECK: # encoding: [0xb3,0x69,0x5a,0x03]
+
+# Test cases for REMU
+REMU x22, x23, x24
+# CHECK: # encoding: [0x33,0xfb,0x8b,0x03]

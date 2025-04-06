@@ -25,9 +25,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.lcb.AbstractLcbTest;
-import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.pass.PassKey;
@@ -65,7 +63,7 @@ public class CheckPseudoInstructionTableGenOperandsRiscv64PassTest extends Abstr
     inputOperands.add(new Entry("J", List.of("RV3264I_Jtype_immAsLabel:$imm")));
     inputOperands.add(new Entry("LI", List.of("bare_symbol:$symbol")));
     inputOperands.add(new Entry("LLA", List.of("bare_symbol:$symbol")));
-    inputOperands.add(new Entry("MOV", List.of("X:$rs1")));
+    inputOperands.add(new Entry("MV", List.of("X:$rs1")));
     inputOperands.add(new Entry("NEG", List.of("X:$rs1")));
     inputOperands.add(new Entry("NOP", List.of()));
     inputOperands.add(new Entry("NOT", List.of("X:$rs1")));
@@ -85,7 +83,7 @@ public class CheckPseudoInstructionTableGenOperandsRiscv64PassTest extends Abstr
     outputOperands.add(new Entry("J", List.of()));
     outputOperands.add(new Entry("LI", List.of("X:$rd")));
     outputOperands.add(new Entry("LLA", List.of("X:$rd")));
-    outputOperands.add(new Entry("MOV", List.of("X:$rd")));
+    outputOperands.add(new Entry("MV", List.of("X:$rd")));
     outputOperands.add(new Entry("NEG", List.of("X:$rd")));
     outputOperands.add(new Entry("NOP", List.of()));
     outputOperands.add(new Entry("NOT", List.of("X:$rd")));

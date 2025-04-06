@@ -3880,7 +3880,7 @@ let Defs = [  ];
 
 
 
-def MOV : Instruction
+def MV : Instruction
 {
 let Namespace = "processorNameValue";
 
@@ -4298,7 +4298,7 @@ def : InstAlias<"BNEZ $rs,$offset", (BNE X:$rs, X0, RV3264I_Btype_immAsLabel:$im
 
 def : InstAlias<"J $offset", (JAL X0, RV3264I_Jtype_immAsInt64:$imm)>;
 
-def : InstAlias<"MOV $rd,$rs1", (ADDI X:$rd, X:$rs1, 0)>;
+def : InstAlias<"MV $rd,$rs1", (ADDI X:$rd, X:$rs1, 0)>;
 
 def : InstAlias<"NEG $rd,$rs1", (SUB X:$rd, X0, X:$rs1)>;
 

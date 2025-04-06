@@ -22,6 +22,7 @@ import java.util.stream.IntStream;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
+import vadl.utils.Either;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -36,9 +37,10 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * As the order of such instruction calls is well-defined, this node is a {@link ControlNode}
  * with exactly one successor node.
  *
- * <p>The {@code paramFields} are a list of {@link Format.Field}s that are required to be set
- * for the {@code target} {@link Instruction}. The {@code arguments} is a list of expression
- * nodes that are associated to the {@code paramFields}, such as the types must match.</p>
+ * <p>The {@code paramFieldsOrAccesses} are a list of either {@link Format.Field}s or
+ * {@link Format.FieldAccess}es that are required to be set for the {@code target}
+ * {@link Instruction}. The {@code arguments} is a list of expression nodes that are associated
+ * to the {@code paramFields}, such as the types must match.</p>
  *
  * <p>A VADL might look like this
  * <pre>
@@ -53,7 +55,7 @@ public class InstrCallNode extends DirectionalNode {
   @DataValue
   protected Instruction target;
   @DataValue
-  protected List<Format.Field> paramFields;
+  protected List<Either<Format.Field, Format.FieldAccess>> paramFieldsOrAccesses;
 
   @Input
   protected NodeList<ExpressionNode> arguments;
@@ -62,15 +64,17 @@ public class InstrCallNode extends DirectionalNode {
   /**
    * Constructs an InstrCallNode object with the given paramFields and arguments.
    *
-   * @param target      the instruction that is getting called
-   * @param paramFields the list of Format.Field objects that are required to be set for the
-   *                    target Instruction
-   * @param arguments   the list of ExpressionNode objects that are associated to the paramFields
+   * @param target                the instruction that is getting called
+   * @param paramFieldsOrAccesses the list of Format.Field or Format.FieldAccess objects that are
+   *                              required to be set for the target Instruction
+   * @param arguments             the list of ExpressionNode objects that are associated
+   *                              to the paramFields
    */
-  public InstrCallNode(Instruction target, List<Format.Field> paramFields,
+  public InstrCallNode(Instruction target,
+                       List<Either<Format.Field, Format.FieldAccess>> paramFieldsOrAccesses,
                        NodeList<ExpressionNode> arguments) {
     this.target = target;
-    this.paramFields = paramFields;
+    this.paramFieldsOrAccesses = paramFieldsOrAccesses;
     this.arguments = arguments;
   }
 
@@ -82,8 +86,21 @@ public class InstrCallNode extends DirectionalNode {
     this.target = instruction;
   }
 
+  /**
+   * Returns the list of {@link Format.Field}s that are required to be set for the target
+   * {@link Instruction}. If a parameter is a {@link Format.FieldAccess},
+   * its referenced {@link Format.Field} is returned.
+   *
+   * @return the list of {@link Format.Field}s
+   */
   public List<Format.Field> getParamFields() {
-    return paramFields;
+    return paramFieldsOrAccesses.stream().map(
+        paramField -> paramField.isLeft() ? paramField.left() : paramField.right().fieldRef()
+    ).toList();
+  }
+
+  public List<Either<Format.Field, Format.FieldAccess>> getParamFieldsOrAccesses() {
+    return paramFieldsOrAccesses;
   }
 
   public NodeList<ExpressionNode> arguments() {
@@ -91,23 +108,34 @@ public class InstrCallNode extends DirectionalNode {
   }
 
   public ExpressionNode getArgument(Format.Field field) {
-    var index = paramFields.indexOf(field);
+    var index = getParamFields().indexOf(field);
     return arguments.get(index);
+  }
+
+  /**
+   * Check if the parameter corresponding to a given field is a {@link Format.FieldAccess}.
+   *
+   * @param field the given field
+   * @return true if the parameter is a {@link Format.FieldAccess}, false otherwise
+   */
+  public boolean isParameterFieldAccess(Format.Field field) {
+    return paramFieldsOrAccesses.stream().anyMatch(
+        paramField -> paramField.isRight() && paramField.right().fieldRef().equals(field));
   }
 
   @Override
   public void verifyState() {
-    ensure(paramFields.size() == arguments.size(),
+    ensure(paramFieldsOrAccesses.size() == arguments.size(),
         "Parameter fields and arguments do not match");
     for (var arg : arguments) {
       arg.ensure(arg.type() instanceof DataType,
           "Instruction Call arguments must have a DataType type, but got %s", arg.type());
     }
     ensure(
-        IntStream.range(0, paramFields.size() - 1)
+        IntStream.range(0, paramFieldsOrAccesses.size() - 1)
             .allMatch(
                 i -> ((DataType) arguments.get(i).type()).isTrivialCastTo(
-                    paramFields.get(i).type())),
+                    getParamFields().get(i).type())),
         "Parameter fields do not match concrete argument fields"
     );
   }
@@ -121,7 +149,7 @@ public class InstrCallNode extends DirectionalNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(target);
-    collection.add(paramFields);
+    collection.add(paramFieldsOrAccesses);
   }
 
   @Override
@@ -140,12 +168,12 @@ public class InstrCallNode extends DirectionalNode {
 
   @Override
   public Node copy() {
-    return new InstrCallNode(target, paramFields,
+    return new InstrCallNode(target, paramFieldsOrAccesses,
         new NodeList<>(this.arguments().stream().map(x -> (ExpressionNode) x.copy()).toList()));
   }
 
   @Override
   public Node shallowCopy() {
-    return new InstrCallNode(target, paramFields, arguments);
+    return new InstrCallNode(target, paramFieldsOrAccesses, arguments);
   }
 }

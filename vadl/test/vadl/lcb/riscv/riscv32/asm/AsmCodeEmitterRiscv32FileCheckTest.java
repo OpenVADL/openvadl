@@ -14,25 +14,38 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.template.utils;
+package vadl.lcb.riscv.riscv32.asm;
 
-import java.util.Map;
-import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
-import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
-import vadl.pass.PassResults;
-import vadl.viam.Format;
+import vadl.lcb.AsmFileCheckTest;
 
-/**
- * Utility class for decodings.
- */
-public class ImmediateDecodingFunctionProvider {
-  /**
-   * Get the decoding functions.
-   */
-  public static Map<Format.Field, GcbCppFunctionForFieldAccess> generateDecodeFunctions(
-      PassResults passResults) {
-    return ((CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass.Output)
-        passResults.lastResultOf(CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass.class))
-        .byField();
+public class AsmCodeEmitterRiscv32FileCheckTest extends AsmFileCheckTest {
+  @Override
+  protected String getTarget() {
+    return "rv32im";
+  }
+
+  @Override
+  protected String getSpecPath() {
+    return "sys/risc-v/rv32im.vadl";
+  }
+
+  @Override
+  protected String getUpstreamBuildTarget() {
+    return "RISCV";
+  }
+
+  @Override
+  protected String getUpstreamClangTarget() {
+    return "riscv32";
+  }
+
+  @Override
+  protected String getSpikeTarget() {
+    return "rv32im";
+  }
+
+  @Override
+  protected String getComponent() {
+    return "codeemitter";
   }
 }
