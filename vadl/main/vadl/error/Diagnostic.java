@@ -124,7 +124,26 @@ public class Diagnostic extends RuntimeException {
 
   @Override
   public String getMessage() {
-    return level + " " + reason + " " + multiLocation;
+    var sb = new StringBuilder();
+    sb.append("[").append(level).append("]")
+        .append(" ").append(reason).append("\n");
+    messages.forEach(
+        m -> sb.append("\t- ").append("[").append(m.type).append("]").append(" ").append(m.content)
+            .append("\n"));
+    sb.append("\t- [PRIMARY] ").append(multiLocation.primaryLocation.location.toConciseString())
+        .append("\n");
+    multiLocation.primaryLocation.labels.forEach(m -> {
+      sb.append("\t\t- ").append("[").append(m.type).append("]").append(" ").append(m.content)
+          .append("\n");
+    });
+    multiLocation.secondaryLocations.forEach(ll -> {
+      sb.append("\t- [SECONDARY] ").append(ll.location.toConciseString()).append("\n");
+      ll.labels.forEach(m -> {
+        sb.append("\t\t- ").append("[").append(m.type).append("]").append(" ").append(m.content)
+            .append("\n");
+      });
+    });
+    return sb.toString();
   }
 
   @Override
@@ -152,7 +171,7 @@ public class Diagnostic extends RuntimeException {
 
   @Override
   public String toString() {
-    return reason;
+    return getMessage();
   }
 
   /**
