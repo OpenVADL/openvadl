@@ -31,7 +31,6 @@ import javax.annotation.Nonnull;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.AbstractLcbTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
