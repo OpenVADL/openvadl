@@ -287,6 +287,12 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   relocation hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
   relocation lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
+  relocation to32AndHi( symbol : Bits<64> ) -> UInt<20> = ( ( symbol >> 32) >> 12) as UInt<20>
+  relocation to32AndLo( symbol : Bits<64> ) -> SInt<12> = ( symbol >> 32) as SInt<12>
+
+  relocation lowerHalfHi( symbol : Bits<64> ) -> SInt<12> = ( symbol >> 52) as SInt<12>
+  relocation lowerHalfLo( symbol : Bits<64> ) -> SInt<12> = symbol as SInt<12>
+
   [relative]
   relocation pcrel_hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
   [relative]
@@ -315,9 +321,9 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   }
   assembly RET = mnemonic
 
-  pseudo instruction J( offset : SIntR ) =
+  pseudo instruction J( offset : Bits<20> ) =
   {
-      JAL{ rd = 0 as Bits5, immS = offset }
+      JAL{ rd = 0 as Bits5, imm = offset }
   }
   assembly J = (mnemonic, " ", decimal( offset ))
 
@@ -327,11 +333,11 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   }
   assembly NOP = mnemonic
 
-  pseudo instruction MV( rd : Index, rs1 : Index ) =
+  pseudo instruction MOV( rd : Index, rs1 : Index ) =
   {
       ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits<12> }
   }
-  assembly MV = (mnemonic, " ", register( rd ), ",", register( rs1 ))
+  assembly MOV = (mnemonic, " ", register( rd ), ",", register( rs1 ))
 
   pseudo instruction NOT( rd : Index, rs1 : Index ) =
   {
@@ -368,44 +374,44 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   assembly SGTZ = (mnemonic, " ", register( rd ), ",", register( rs1 ))
 
-  pseudo instruction BEQZ( rs : Index, offset : SIntR ) =
+  pseudo instruction BEQZ( rs : Index, offset : Bits<12> ) =
   {
-      BEQ{ rs1 = rs, rs2 = 0 as Bits5, immS = offset }
+      BEQ{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
   }
 
   assembly BEQZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
-  pseudo instruction BNEZ( rs : Index, offset : SIntR ) =
+  pseudo instruction BNEZ( rs : Index, offset : Bits<12> ) =
   {
-      BNE{ rs1 = rs, rs2 = 0 as Bits5, immS = offset }
+      BNE{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
   }
 
   assembly BNEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
-  pseudo instruction BLEZ( rs : Index, offset : SIntR ) =
+  pseudo instruction BLEZ( rs : Index, offset : Bits<12> ) =
   {
-      BGE{ rs1 = 0 as Bits5, rs2 = rs, immS = offset }
+      BGE{ rs1 = 0 as Bits5, rs2 = rs, imm = offset }
   }
 
   assembly BLEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
-  pseudo instruction BGEZ( rs : Index, offset : SIntR ) =
+  pseudo instruction BGEZ( rs : Index, offset : Bits<12> ) =
   {
-      BGE{ rs1 = rs, rs2 = 0 as Bits5, immS = offset }
+      BGE{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
   }
 
   assembly BGEZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
-  pseudo instruction BLTZ( rs : Index, offset : SIntR ) =
+  pseudo instruction BLTZ( rs : Index, offset : Bits<12> ) =
   {
-      BLT{ rs1 = rs, rs2 = 0 as Bits5, immS = offset }
+      BLT{ rs1 = rs, rs2 = 0 as Bits5, imm = offset }
   }
 
   assembly BLTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
-  pseudo instruction BGTZ( rs : Index, offset : SIntR ) =
+  pseudo instruction BGTZ( rs : Index, offset : Bits<12> ) =
   {
-      BLT{ rs1 = 0 as Bits5, rs2 = rs, immS = offset }
+      BLT{ rs1 = 0 as Bits5, rs2 = rs, imm = offset }
   }
 
   assembly BGTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
