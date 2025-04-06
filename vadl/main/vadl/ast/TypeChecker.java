@@ -1597,6 +1597,9 @@ public class TypeChecker
   public Void visit(MicroProcessorDefinition definition) {
     definition.definitions.forEach(this::check);
 
+    // FIXME: Do we need to limit certain operations here?
+    //  (like Resource access -- except memory write of course)
+
     BiConsumer<Definition, String> addConflictDiag =
         (def, name) -> errors.add(
             Diagnostic.error("Conflicting definitions.", definition.identifier())
