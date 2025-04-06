@@ -21,7 +21,7 @@ class APInt;
 namespace [(${namespace})]MatInt {
   class Inst {
     unsigned Opc;
-    int32_t Imm; // The largest value we need to store is 20 bits.
+    int64_t Imm; // The largest value we need to store is 20 bits.
 
   public:
     Inst(unsigned Opc, int64_t I) : Opc(Opc), Imm(I) {

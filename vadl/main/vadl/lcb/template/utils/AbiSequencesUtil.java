@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.template.Renderable;
@@ -52,14 +53,25 @@ public class AbiSequencesUtil {
   }
 
   /**
-   * Create constant sequences from abi.
+   * Create constant sequences from abi. The order of constant sequences is that it first returns
+   * the constant sequences where its largest parameter type is signed. Afterward, it returns the
+   * constant sequences where its largest parameter type is unsigned. Both groups, namely
+   * signed and unsigned, are sorted ascending by "usable" bit width (bits without sign bit).
    */
   public static List<ConstantSequence> createConstantSequences(Specification specification) {
     var abi = specification.abi().orElseThrow();
-    return abi.constantSequences()
-        .stream().map(AbiSequencesUtil::constantSequence)
-        .sorted(sortingFunction())
-        .toList();
+    var signed = abi.constantSequences()
+        .stream()
+        .filter(x -> x.getLargestParameter().type().asDataType().isSigned())
+        .map(AbiSequencesUtil::constantSequence)
+        .sorted(sortingFunction());
+    var unsigned = abi.constantSequences()
+        .stream()
+        .filter(x -> !x.getLargestParameter().type().asDataType().isSigned())
+        .map(AbiSequencesUtil::constantSequence)
+        .sorted(sortingFunction());
+
+    return Stream.concat(signed, unsigned).toList();
   }
 
   /**
