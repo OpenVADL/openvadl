@@ -58,6 +58,7 @@ import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Memory;
 import vadl.viam.MicroProcessor;
+import vadl.viam.Procedure;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
@@ -586,7 +587,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     if (semanticPredicateAppliesToAlternatives && semPredExpr != null) {
       var semanticPredicateGraph = new BehaviorLowering(this)
-          .getGraph(semPredExpr, "semanticPredicate");
+          .getFunctionGraph(semPredExpr, "semanticPredicate");
       semPredFunction =
           new Function(generateIdentifier("semanticPredicate", semPredExpr.sourceLocation()),
               new vadl.viam.Parameter[0], Type.bool(), semanticPredicateGraph);
@@ -673,7 +674,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var semPredExpr = definition.alternatives.get(0).get(0).semanticPredicate;
 
     if (definition.alternatives.size() == 1 && semPredExpr != null) {
-      semanticPredicate = new BehaviorLowering(this).getGraph(semPredExpr, "semanticPredicate");
+      semanticPredicate =
+          new BehaviorLowering(this).getFunctionGraph(semPredExpr, "semanticPredicate");
     }
     return semanticPredicate;
   }
@@ -811,7 +813,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       parameterCache.put(parameter, viamParameter);
       parameters.add(viamParameter);
     }
-    var behaivor = new BehaviorLowering(this).getGraph(expr, "behaviour");
+    var behaivor = new BehaviorLowering(this).getFunctionGraph(expr, "behaviour");
 
     return new Function(identifier,
         parameters.toArray(new vadl.viam.Parameter[0]),
@@ -821,8 +823,25 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(CpuProcessDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    switch (definition.kind) {
+      case FIRMWARE -> { /* supported */ }
+      case STARTUP -> throw new RuntimeException(
+          "The ViamGenerator does not support STARTUP in `%s` yet".formatted(
+              definition.getClass().getSimpleName()));
+    }
+
+    var behavior =
+        new BehaviorLowering(this).getProcedureGraph(definition.statement, definition.kind.keyword);
+
+    // FIXME: @flofriday, when remove this, it would end with `::unknown`
+    var viamId = definition.viamId.replace("::unknown", "::" + definition.kind.keyword);
+
+    var procedure = new Procedure(
+        generateIdentifier(viamId, definition),
+        new vadl.viam.Parameter[] {},
+        behavior
+    );
+    return Optional.of(procedure);
   }
 
   @Override
@@ -904,7 +923,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
         var accessName = identifier.name() + "::decode";
         var accessGraph =
-            new BehaviorLowering(this).getGraph(derivedField.expr, accessName);
+            new BehaviorLowering(this).getFunctionGraph(derivedField.expr, accessName);
         var access =
             new Function(generateIdentifier(accessName, derivedField.identifier),
                 new vadl.viam.Parameter[0],
@@ -917,7 +936,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         // FIXME: Add real predicates
         var predicateName = identifier.name() + "::predicate";
         var predicateGraph =
-            new BehaviorLowering(this).getGraph(
+            new BehaviorLowering(this).getFunctionGraph(
                 new BoolLiteral(true, SourceLocation.INVALID_SOURCE_LOCATION),
                 predicateName);
 
@@ -984,7 +1003,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var funcIdentifier =
         new vadl.viam.Identifier(identifierName + "::func", identifierLoc);
 
-    var behavior = new BehaviorLowering(this).getGraph(definition.expr, funcIdentifier.name());
+    var behavior =
+        new BehaviorLowering(this).getFunctionGraph(definition.expr, funcIdentifier.name());
 
     // FIXME: Add to cache? But how, because one assemby ast node might be used for multiple
     // assembly in the VIAM.
@@ -1141,17 +1161,18 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // create new isa ast node with list of definitions
     // visitIsa on created isa ast node
     var isa = visitIsa(mergeIsa(definition.implementedIsaNodes));
-    var startDef = definition.definitions.stream()
-        .filter(d -> (d instanceof CpuFunctionDefinition funcDef) && funcDef.kind
-            == CpuFunctionDefinition.BehaviorKind.START).findFirst().orElse(null);
-    Function start = null;
-    if (startDef != null) {
-      start = (Function) fetch(startDef)
-          .orElseThrow();
-    }
+
+    // existence already checked in type checker
+    var start = (Function) definition.findCpuFuncDef(CpuFunctionDefinition.BehaviorKind.START)
+        .findFirst()
+        .flatMap(this::fetch).orElseThrow();
+
+    var firmware = (Procedure) definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.FIRMWARE)
+        .findFirst()
+        .flatMap(this::fetch).orElseThrow();
 
     var abi = definition.abiNode != null ? (Abi) fetch(definition.abiNode).orElse(null) : null;
-    var mip = new MicroProcessor(identifier, isa, abi, start, null, null);
+    var mip = new MicroProcessor(identifier, isa, abi, start, null, firmware, null);
 
     // FIXME: Remove this, once annotation framework is supported
     mip.addAnnotation(new EnableHtifAnno());
@@ -1333,7 +1354,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         })
         .toArray(vadl.viam.Parameter[]::new);
     var graph =
-        new BehaviorLowering(this).getGraph(definition.expr, identifier.name() + "::behavior");
+        new BehaviorLowering(this).getFunctionGraph(definition.expr,
+            identifier.name() + "::behavior");
 
     var isRelative = definition.annotations.annotations().stream()
         .anyMatch(x -> x.expr instanceof vadl.ast.Identifier id && id.name.equals(RELATIVE));

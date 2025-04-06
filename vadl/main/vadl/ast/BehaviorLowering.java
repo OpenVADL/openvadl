@@ -109,7 +109,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     this.viamLowering = generator;
   }
 
-  Graph getGraph(Expr expr, String name) {
+  Graph getFunctionGraph(Expr expr, String name) {
     var exprNode = fetch(expr);
 
     var graph = new Graph(name);

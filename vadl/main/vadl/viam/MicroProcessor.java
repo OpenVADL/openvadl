@@ -40,23 +40,28 @@ public class MicroProcessor extends Definition {
   @Nullable
   private final Function stop;
 
+  @Nullable
+  private final Procedure firmware;
+
   /**
    * Constructs the microprocessor.
    */
   public MicroProcessor(Identifier identifier, InstructionSetArchitecture isa, @Nullable Abi abi,
                         @Nullable Function start, @Nullable Function stop,
-                        @Nullable String targetName) {
+                        @Nullable Procedure firmware, @Nullable String targetName) {
     super(identifier);
     this.isa = isa;
     this.abi = abi;
     this.start = start;
     this.stop = stop;
+    this.firmware = firmware;
     if (targetName != null) {
       this.targetName = targetName;
     } else {
       this.targetName = isa.simpleName();
     }
   }
+
 
   /**
    * Returns the abi and throws if the abi isn't set.
@@ -92,6 +97,11 @@ public class MicroProcessor extends Definition {
 
   public @Nullable Function startNullable() {
     return start;
+  }
+
+  @Nullable
+  public Procedure firmware() {
+    return firmware;
   }
 
   @Nullable

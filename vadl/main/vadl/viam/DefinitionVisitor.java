@@ -307,6 +307,10 @@ public interface DefinitionVisitor {
       if (stop != null) {
         stop.accept(this);
       }
+      var firmware = microProcessor.firmware();
+      if (firmware != null) {
+        firmware.accept(this);
+      }
       microProcessor.isa().accept(this);
       afterTraversal(microProcessor);
     }
