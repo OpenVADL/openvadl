@@ -26,7 +26,8 @@ namespace llvm::[(${namespace})]MatInt {
       Res.emplace_back([(${namespace})]::[(${cons.instruction})], Val);
       return Res;
     }
-    [/]    [/]
+    [/]
+    [/]
 
     llvm_unreachable("not supported immediate");
   }
