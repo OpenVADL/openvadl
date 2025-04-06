@@ -287,6 +287,12 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   relocation hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
   relocation lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
+  relocation to32AndHi( symbol : Bits<64> ) -> UInt<20> = ( ( symbol >> 32) >> 12) as UInt<20>
+  relocation to32AndLo( symbol : Bits<64> ) -> SInt<12> = ( symbol >> 32) as SInt<12>
+
+  relocation lowerHalfHi( symbol : Bits<64> ) -> SInt<12> = ( symbol >> 52) as SInt<12>
+  relocation lowerHalfLo( symbol : Bits<64> ) -> SInt<12> = symbol as SInt<12>
+
   [relative]
   relocation pcrel_hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
   [relative]

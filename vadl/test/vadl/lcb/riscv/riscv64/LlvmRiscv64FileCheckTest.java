@@ -16,9 +16,9 @@
 
 package vadl.lcb.riscv.riscv64;
 
-import vadl.lcb.riscv.SpikeRiscvSimulationTest;
+import vadl.lcb.riscv.LlvmRiscvFileCheckTest;
 
-public class SpikeRiscv64SimulationTest extends SpikeRiscvSimulationTest {
+public class LlvmRiscv64FileCheckTest extends LlvmRiscvFileCheckTest {
   @Override
   protected String getTarget() {
     return "rv64im";
@@ -30,11 +30,6 @@ public class SpikeRiscv64SimulationTest extends SpikeRiscvSimulationTest {
   }
 
   @Override
-  protected String getSpikeTarget() {
-    return "rv64gc";
-  }
-
-  @Override
   protected String getUpstreamBuildTarget() {
     return "RISCV";
   }
@@ -42,5 +37,10 @@ public class SpikeRiscv64SimulationTest extends SpikeRiscvSimulationTest {
   @Override
   protected String getUpstreamClangTarget() {
     return "riscv64";
+  }
+
+  @Override
+  protected String getSpikeTarget() {
+    return "rv64gc";
   }
 }

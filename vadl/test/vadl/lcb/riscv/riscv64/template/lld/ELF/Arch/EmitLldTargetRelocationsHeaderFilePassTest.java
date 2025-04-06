@@ -90,6 +90,90 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
         int64_t RV3264I_Ftype_ABSOLUTE_sft_lo(uint32_t symbol) {
            return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
+        int64_t RV3264I_Itype_ABSOLUTE_imm_to32AndHi(uint64_t symbol) {
+           return VADL_uextract(VADL_lsr(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 64, ((uint8_t) 0xc ), 4), 20);
+        }
+        int64_t RV3264I_Utype_ABSOLUTE_imm_to32AndHi(uint64_t symbol) {
+           return VADL_uextract(VADL_lsr(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 64, ((uint8_t) 0xc ), 4), 20);
+        }
+        int64_t RV3264I_Stype_ABSOLUTE_imm_to32AndHi(uint64_t symbol) {
+           return VADL_uextract(VADL_lsr(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 64, ((uint8_t) 0xc ), 4), 20);
+        }
+        int64_t RV3264I_Btype_ABSOLUTE_imm_to32AndHi(uint64_t symbol) {
+           return VADL_uextract(VADL_lsr(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 64, ((uint8_t) 0xc ), 4), 20);
+        }
+        int64_t RV3264I_Jtype_ABSOLUTE_imm_to32AndHi(uint64_t symbol) {
+           return VADL_uextract(VADL_lsr(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 64, ((uint8_t) 0xc ), 4), 20);
+        }
+        int64_t RV3264I_Rtype_ABSOLUTE_rs2_to32AndHi(uint64_t symbol) {
+           return VADL_uextract(VADL_lsr(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 64, ((uint8_t) 0xc ), 4), 20);
+        }
+        int64_t RV3264I_Ftype_ABSOLUTE_sft_to32AndHi(uint64_t symbol) {
+           return VADL_uextract(VADL_lsr(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 64, ((uint8_t) 0xc ), 4), 20);
+        }
+        int64_t RV3264I_Itype_ABSOLUTE_imm_to32AndLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Utype_ABSOLUTE_imm_to32AndLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Stype_ABSOLUTE_imm_to32AndLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Btype_ABSOLUTE_imm_to32AndLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Jtype_ABSOLUTE_imm_to32AndLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Rtype_ABSOLUTE_rs2_to32AndLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Ftype_ABSOLUTE_sft_to32AndLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x20 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Itype_ABSOLUTE_imm_lowerHalfHi(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x34 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Utype_ABSOLUTE_imm_lowerHalfHi(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x34 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Stype_ABSOLUTE_imm_lowerHalfHi(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x34 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Btype_ABSOLUTE_imm_lowerHalfHi(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x34 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Jtype_ABSOLUTE_imm_lowerHalfHi(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x34 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Rtype_ABSOLUTE_rs2_lowerHalfHi(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x34 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Ftype_ABSOLUTE_sft_lowerHalfHi(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(VADL_lsr(symbol, 64, ((uint8_t) 0x34 ), 6), 12), 12);
+        }
+        int64_t RV3264I_Itype_ABSOLUTE_imm_lowerHalfLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
+        }
+        int64_t RV3264I_Utype_ABSOLUTE_imm_lowerHalfLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
+        }
+        int64_t RV3264I_Stype_ABSOLUTE_imm_lowerHalfLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
+        }
+        int64_t RV3264I_Btype_ABSOLUTE_imm_lowerHalfLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
+        }
+        int64_t RV3264I_Jtype_ABSOLUTE_imm_lowerHalfLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
+        }
+        int64_t RV3264I_Rtype_ABSOLUTE_rs2_lowerHalfLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
+        }
+        int64_t RV3264I_Ftype_ABSOLUTE_sft_lowerHalfLo(uint64_t symbol) {
+           return  VADL_sextract(VADL_uextract(symbol, 12), 12);
+        }
         int64_t RV3264I_Itype_RELATIVE_imm_pcrel_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
