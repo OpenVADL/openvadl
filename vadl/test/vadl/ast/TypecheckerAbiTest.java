@@ -26,28 +26,28 @@ public class TypecheckerAbiTest {
   private final String base = """
        instruction set architecture ISA = {
         register file X : Bits<5> -> Bits<32>
-       
+      
         format Rtype : Bits<1> =
         { funct7 : Bits<1> }
-       
+      
         instruction DO : Rtype =
         {
            X(0) := 1
         }
         encoding DO = { funct7 = 0b0 }
         assembly DO = (mnemonic)
-       
+      
         pseudo instruction NOP( symbol: Bits<5>) = {
         }
         assembly NOP = (mnemonic)
       }
-            
+      
       """;
 
   private String inputWrappedByValidAbi(String input) {
     return """
           %s
-                
+        
           application binary interface ABI for ISA = {
             %s
           }

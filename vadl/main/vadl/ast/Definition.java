@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
@@ -3666,6 +3667,30 @@ class MicroProcessorDefinition extends Definition implements IdentifiableNode {
     return BasicSyntaxType.INVALID;
   }
 
+  /**
+   * A helper function to find all cpu procedures of some given kind.
+   *
+   * @return A stream of definitions.
+   *     After the typechecker, this is known to consist of 0..1 elements.
+   */
+  Stream<CpuProcessDefinition> findCpuProcDef(CpuProcessDefinition.ProcessKind kind) {
+    return definitions.stream()
+        .filter(e -> e instanceof CpuProcessDefinition proc && proc.kind == kind)
+        .map(e -> (CpuProcessDefinition) e);
+  }
+
+  /**
+   * A helper function to find all cpu functions of some given kind.
+   *
+   * @return A stream of definitions.
+   *     After the typechecker, this is known to consist of 0..1 elements.
+   */
+  Stream<CpuFunctionDefinition> findCpuFuncDef(CpuFunctionDefinition.BehaviorKind kind) {
+    return definitions.stream()
+        .filter(e -> e instanceof CpuFunctionDefinition func && func.kind == kind)
+        .map(e -> (CpuFunctionDefinition) e);
+  }
+
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     annotations.prettyPrint(indent, builder);
@@ -3926,7 +3951,7 @@ class CpuFunctionDefinition extends Definition implements IdentifiableNode {
   enum BehaviorKind {
     START("start"), STOP("stop");
 
-    private final String keyword;
+    final String keyword;
 
     BehaviorKind(String keyword) {
       this.keyword = keyword;
@@ -3997,7 +4022,7 @@ class CpuProcessDefinition extends Definition {
   enum ProcessKind {
     FIRMWARE("firmware"), STARTUP("startup");
 
-    private final String keyword;
+    final String keyword;
 
     ProcessKind(String keyword) {
       this.keyword = keyword;
