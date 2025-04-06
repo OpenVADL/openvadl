@@ -125,17 +125,27 @@ public class Diagnostic extends RuntimeException {
   @Override
   public String getMessage() {
     var sb = new StringBuilder();
+    // [<LEVEL>] <reason>:
     sb.append("[").append(level).append("]")
         .append(" ").append(reason).append("\n");
+    //   - [<TYPE>] <message-1>
+    //   - ...
     messages.forEach(
         m -> sb.append("\t- ").append("[").append(m.type).append("]").append(" ").append(m.content)
             .append("\n"));
+    //   - [PRIMARY] <primary-location>
+    //      - <primary-message-1>
+    //      - <primary-message-n>
     sb.append("\t- [PRIMARY] ").append(multiLocation.primaryLocation.location.toConciseString())
         .append("\n");
     multiLocation.primaryLocation.labels.forEach(m -> {
       sb.append("\t\t- ").append("[").append(m.type).append("]").append(" ").append(m.content)
           .append("\n");
     });
+    //   - [SECONDARY] <secondary-1-location>
+    //      - <secondary-1-message-1>
+    //      - <secondary-2-message-n>
+    //   - ...
     multiLocation.secondaryLocations.forEach(ll -> {
       sb.append("\t- [SECONDARY] ").append(ll.location.toConciseString()).append("\n");
       ll.labels.forEach(m -> {

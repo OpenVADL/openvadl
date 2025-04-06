@@ -16,15 +16,21 @@
 
 package vadl;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static vadl.utils.ViamUtils.findDefinitionsByFilter;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.arbitraries.BigIntegerArbitrary;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.utils.SourceLocation;
@@ -44,6 +50,48 @@ import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 
 public class TestUtils {
+
+  /**
+   * Asserts that each expected error message is a substring of exactly
+   * one unique actual error message in the provided {@code DiagnosticList},
+   * and that each actual error message corresponds to exactly one expected error message.
+   *
+   * @param diagnosticList        the {@code DiagnosticList} containing the actual error messages;
+   * @param expectedErrorMessages the expected error messages to verify as substrings
+   * @throws AssertionError if the number of actual and expected messages differ, or if any expected
+   *                        error message does not have a unique corresponding actual error message,
+   *                        or if any actual error message is matched more than once
+   */
+  public static void assertErrors(DiagnosticList diagnosticList, String... expectedErrorMessages) {
+    List<String> actualMessages = diagnosticList.items.stream()
+        .map(Diagnostic::getMessage)
+        .collect(Collectors.toList());
+
+    // Check if the sizes match
+    assertThat(actualMessages)
+        .as("Mismatch in number of actual and expected error messages")
+        .hasSameSizeAs(expectedErrorMessages);
+
+    List<String> unmatchedActualMessages = new ArrayList<>(actualMessages);
+
+    for (String expectedMessage : expectedErrorMessages) {
+      Iterator<String> iterator = unmatchedActualMessages.iterator();
+      boolean matchFound = false;
+
+      while (iterator.hasNext()) {
+        String actualMessage = iterator.next();
+        if (actualMessage.contains(expectedMessage)) {
+          matchFound = true;
+          iterator.remove(); // Remove to prevent duplicate matching
+          break;
+        }
+      }
+
+      assertThat(matchFound)
+          .as("Expected error message not found: %s", expectedMessage)
+          .isTrue();
+    }
+  }
 
   /**
    * Finds a {@link Resource} with the given name in the specified {@link Specification}.

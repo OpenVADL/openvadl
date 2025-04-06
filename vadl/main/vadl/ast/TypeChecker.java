@@ -33,9 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
@@ -76,7 +78,7 @@ public class TypeChecker
     ONE,
   }
 
-  //private final List<Diagnostic> errors = new ArrayList<>();
+  private final List<Diagnostic> errors = new ArrayList<>();
   private final ConstantEvaluator constantEvaluator;
 
   /**
@@ -187,6 +189,10 @@ public class TypeChecker
     ast.definitions.forEach(this::check);
     ast.passTimings.add(
         new Ast.PassTimings("Type Checking", (System.nanoTime() - startTime) / 1_000_000));
+
+    if (!errors.isEmpty()) {
+      throw new DiagnosticList(errors);
+    }
   }
 
   private void throwUnimplemented(Node node) {
@@ -1590,6 +1596,39 @@ public class TypeChecker
   @Override
   public Void visit(MicroProcessorDefinition definition) {
     definition.definitions.forEach(this::check);
+
+    BiConsumer<Definition, String> addConflictDiag =
+        (def, name) -> errors.add(
+            Diagnostic.error("Conflicting definitions.", definition.identifier())
+                .locationDescription(definition.identifier(), "Contains multiple `%s` definitions.",
+                    name)
+                .note("Only one `%s` definition is allowed.", name)
+                .build());
+
+    // check for multiple process definitions
+    for (var type : CpuProcessDefinition.ProcessKind.values()) {
+      var procCount = definition.findCpuProcDef(type).count();
+      if (procCount > 1) {
+        addConflictDiag.accept(definition, type.keyword);
+      }
+    }
+
+    // check for multiple function definitions
+    for (var type : CpuFunctionDefinition.BehaviorKind.values()) {
+      var procCount = definition.findCpuFuncDef(type).count();
+      if (procCount > 1) {
+        addConflictDiag.accept(definition, type.keyword);
+      }
+    }
+
+    var start = definition.findCpuFuncDef(CpuFunctionDefinition.BehaviorKind.START)
+        .findFirst().orElse(null);
+    if (start == null) {
+      errors.add(
+          Diagnostic.error("Missing `start` address function.", definition.identifier()).build()
+      );
+    }
+
     return null;
   }
 
@@ -1623,7 +1662,11 @@ public class TypeChecker
 
   @Override
   public Void visit(CpuProcessDefinition definition) {
-    throwUnimplemented(definition);
+    if (definition.kind == CpuProcessDefinition.ProcessKind.FIRMWARE) {
+      check(definition.statement);
+    } else {
+      throwUnimplemented(definition);
+    }
     return null;
   }
 
