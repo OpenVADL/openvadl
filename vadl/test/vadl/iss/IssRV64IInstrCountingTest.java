@@ -52,7 +52,7 @@ public class IssRV64IInstrCountingTest extends QemuIssTest {
       var bImm = arbitrarySignedInt(12).sample();
       var regDest = b.anyTempReg().sample();
       b.add("addi %s, %s, %s", regDest, regSrc, bImm);
-      return b.toTestSpecWithSpecialRegs(Map.of("insn_count", "0000000003"), regSrc, regDest);
+      return b.toTestSpecWithSpecialRegs(Map.of("insn_count", "0000000009"), regSrc, regDest);
     });
   }
 
@@ -67,7 +67,7 @@ public class IssRV64IInstrCountingTest extends QemuIssTest {
       var bImm = arbitrarySignedInt(12).sample();
       var regDest = b.anyTempReg().sample();
       b.add("addiw %s, %s, %s", regDest, regSrc, bImm);
-      return b.toTestSpecWithSpecialRegs(Map.of("insn_count", "0000000003"), regSrc, regDest);
+      return b.toTestSpecWithSpecialRegs(Map.of("insn_count", "0000000009"), regSrc, regDest);
     });
   }
 
@@ -78,7 +78,7 @@ public class IssRV64IInstrCountingTest extends QemuIssTest {
       var destReg = b.anyTempReg().sample();
       var value = arbitraryUnsignedInt(20).sample();
       b.add("lui %s, %s", destReg, value);
-      return b.toTestSpecWithSpecialRegs(Map.of("insn_count", "0000000002"), destReg);
+      return b.toTestSpecWithSpecialRegs(Map.of("insn_count", "0000000008"), destReg);
     });
   }
 
