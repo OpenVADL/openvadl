@@ -245,20 +245,20 @@ assembly description ASM for ABI = {
     BranchPseudoInstruction @instruction :
       mnemonic = BranchPseudoIds @operand
       rs = Register @operand ","
-      offset = ImmediateOperand @operand
+      offset = ImmediateOperand
     ;
 
 
     LLAPseudoInstruction @instruction:
       mnemonic = "LLA" @operand
       rd = Register @operand ","
-      symbol = (Identifier @symbol) @operand
+      symbol = ImmediateOperand
     ;
 
     LIPseudoInstruction @instruction:
       mnemonic = "LI" @operand
       rd = Register @operand ","
-      symbol = (Identifier @symbol) @operand
+      symbol = ImmediateOperand
     ;
   }
 }

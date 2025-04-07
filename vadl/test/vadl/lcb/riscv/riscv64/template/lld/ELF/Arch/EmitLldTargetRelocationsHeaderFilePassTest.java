@@ -216,25 +216,25 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
         int64_t RV3264I_Ftype_RELATIVE_sft_pcrel_lo(uint32_t symbol) {
            return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
-        int64_t RV3264I_Itype_RELATIVE_imm_got_hi(uint32_t symbol) {
+        int64_t RV3264I_Itype_GLOBAL_OFFSET_TABLE_imm_got_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        int64_t RV3264I_Utype_RELATIVE_imm_got_hi(uint32_t symbol) {
+        int64_t RV3264I_Utype_GLOBAL_OFFSET_TABLE_imm_got_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        int64_t RV3264I_Stype_RELATIVE_imm_got_hi(uint32_t symbol) {
+        int64_t RV3264I_Stype_GLOBAL_OFFSET_TABLE_imm_got_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        int64_t RV3264I_Btype_RELATIVE_imm_got_hi(uint32_t symbol) {
+        int64_t RV3264I_Btype_GLOBAL_OFFSET_TABLE_imm_got_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        int64_t RV3264I_Jtype_RELATIVE_imm_got_hi(uint32_t symbol) {
+        int64_t RV3264I_Jtype_GLOBAL_OFFSET_TABLE_imm_got_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        int64_t RV3264I_Rtype_RELATIVE_rs2_got_hi(uint32_t symbol) {
+        int64_t RV3264I_Rtype_GLOBAL_OFFSET_TABLE_rs2_got_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
-        int64_t RV3264I_Ftype_RELATIVE_sft_got_hi(uint32_t symbol) {
+        int64_t RV3264I_Ftype_GLOBAL_OFFSET_TABLE_sft_got_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
         int64_t RV3264I_Itype_ABSOLUTE_imm_Itype_ABSOLUTE_imm(int64_t input) {

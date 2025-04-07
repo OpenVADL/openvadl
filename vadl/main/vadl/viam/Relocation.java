@@ -37,7 +37,7 @@ public class Relocation extends Function {
   public enum Kind {
     ABSOLUTE,
     RELATIVE,
-    GLOBAL_OFFSET_TABLE
+    GLOBAL_OFFSET_TABLE;
   }
 
   private final Kind kind;
@@ -65,6 +65,13 @@ public class Relocation extends Function {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  /**
+   * Returns the {@link Relocation.Kind} of this relocation.
+   */
+  public Kind kind() {
+    return kind;
   }
 
   /**

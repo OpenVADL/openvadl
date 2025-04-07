@@ -77,6 +77,28 @@ public abstract class CompilerRelocation implements Renderable {
         case GLOBAL_OFFSET_TABLE -> Relocation.Kind.GLOBAL_OFFSET_TABLE;
       };
     }
+
+    /**
+     * Get the {@link CompilerRelocation.Kind} from a {@link Relocation.Kind}.
+     */
+    public static Kind fromRelocationKind(Relocation.Kind kind) {
+      return switch (kind) {
+        case ABSOLUTE -> ABSOLUTE;
+        case RELATIVE -> RELATIVE;
+        case GLOBAL_OFFSET_TABLE -> GLOBAL_OFFSET_TABLE;
+      };
+    }
+
+    /**
+     * Maps a {@link CompilerRelocation.Kind} to a LLVM relocation kind.
+     */
+    public String llvmKind() {
+      return switch (this) {
+        case RELATIVE -> "R_PC";
+        case ABSOLUTE -> "R_ABS";
+        case GLOBAL_OFFSET_TABLE -> "R_GOT_PC";
+      };
+    }
   }
 
   /**
@@ -89,7 +111,7 @@ public abstract class CompilerRelocation implements Renderable {
       Relocation relocationRef
   ) {
     this(identifier,
-        relocationRef.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE,
+        Kind.fromRelocationKind(relocationRef.kind()),
         format,
         immediate,
         relocationRef);
@@ -143,7 +165,7 @@ public abstract class CompilerRelocation implements Renderable {
   @Override
   public Map<String, Object> renderObj() {
     var obj = new HashMap<String, Object>();
-    obj.put("kind", kind().name());
+    obj.put("llvmKind", kind.llvmKind());
     obj.put("elfRelocationName", elfRelocationName());
     obj.put("relocation", Map.of(
         "name", relocation().simpleName()
