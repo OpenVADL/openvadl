@@ -18,4 +18,4 @@ instruction set architecture RegSingleBranch = {
   }
 }
 
-micro processor TEST implements RegSingleBranch = {}
+micro processor TEST implements RegSingleBranch =  { start = 0x1000 }

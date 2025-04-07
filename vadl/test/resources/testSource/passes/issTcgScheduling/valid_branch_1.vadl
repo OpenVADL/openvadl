@@ -26,4 +26,5 @@ instruction set architecture ValidBranch = {
 }
 
 micro processor Test implements ValidBranch = {
+  start = 0x1000
 }
