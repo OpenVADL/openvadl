@@ -40,7 +40,7 @@ public class UserSpecifiedRelocation extends CompilerRelocation {
       Relocation originalRelocation) {
     super(generateName(format,
             field,
-            originalRelocation.isAbsolute() ? Kind.ABSOLUTE : Kind.RELATIVE),
+            CompilerRelocation.Kind.fromRelocationKind(originalRelocation.kind())),
         format, field, originalRelocation);
     this.variantKind = new VariantKind(originalRelocation);
   }
