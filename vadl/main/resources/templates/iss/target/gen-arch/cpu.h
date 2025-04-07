@@ -34,6 +34,9 @@ typedef struct CPUArchState {
   uint64_t insn_count;
   [/]
 
+  // pc reset vector
+  uint64_t reset_vec;
+
   // hardcoded CSR and Privilege registers
   target_ulong priv;
 

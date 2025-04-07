@@ -49,6 +49,10 @@ public class Procedure extends Definition implements DefProp.WithBehavior {
     return parameters;
   }
 
+  public Graph behavior() {
+    return behavior;
+  }
+
   public List<Resource> writtenResources() {
     return behavior.getNodes(WriteResourceNode.class).map(WriteResourceNode::resourceDefinition)
         .toList();

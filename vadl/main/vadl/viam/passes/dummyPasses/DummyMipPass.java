@@ -74,6 +74,7 @@ public class DummyMipPass extends Pass {
         abi,
         startFunc(ident),
         null,
+        null,
         null
     );
     // enabled HTIF

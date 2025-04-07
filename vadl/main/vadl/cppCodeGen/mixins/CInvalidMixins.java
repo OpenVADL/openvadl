@@ -22,6 +22,7 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
@@ -46,6 +47,10 @@ public interface CInvalidMixins {
   interface SideEffect
       extends WriteReg, WriteRegFile, WriteMem, WriteArtificialRes, ProcCall, WriteStageOutput {
 
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface HardwareRelated extends ReadStageOutput, WriteStageOutput {
   }
 
   @SuppressWarnings("MissingJavadocType")
@@ -132,6 +137,15 @@ public interface CInvalidMixins {
       throwNotAllowed(node, "Instruction calls");
     }
   }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface AsmBuiltInC {
+    @Handler
+    default void impl(CGenContext<Node> ctx, AsmBuiltInCall node) {
+      throwNotAllowed(node, "Assembler built-in calls");
+    }
+  }
+
 
   @SuppressWarnings("MissingJavadocType")
   interface WriteStageOutput {

@@ -7,6 +7,7 @@
 #include "disas/dis-asm.h"
 #include "trace.h"
 #include "tcg/debug-assert.h"
+#include "hw/qdev-properties.h"
 
 static [(${gen_arch_upper})]CPU* cpu_self;
 
@@ -66,9 +67,9 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
     }
     [/]
 
-    // Start address of the execution. Notice, that this is the start of the flash memory address
-    // from the virt board implementation.
-    env->[(${gen_arch_upper})]_PC = 0x80000000;
+    // Start address of the execution.
+    // Comes from firmware or start address definition in processor definition.
+    env->[(${gen_arch_upper})]_PC = env->reset_vec;
     [# th:if="${insn_count}"]
     env->insn_count = 0;
     [/]
@@ -247,6 +248,14 @@ static const struct TCGCPUOps [(${gen_arch_lower})]_tcg_ops = {
     .restore_state_to_opc = [(${gen_arch_lower})]_cpu_restore_state_to_opc,
 };
 
+static Property [(${gen_arch_lower})]_cpu_properties[] = {
+#ifndef CONFIG_USER_ONLY
+    // Default comes from firmware or start address definition in processor definition.
+    DEFINE_PROP_UINT64("reset_vec", [(${gen_arch_upper})]CPU, env.reset_vec, [(${mem_info.pc_reset_addr})]),
+#endif
+    DEFINE_PROP_END_OF_LIST(),
+};
+
 static void [(${gen_arch_lower})]_cpu_class_init(ObjectClass *oc, void *data)
 {
     [(${gen_arch_upper})]CPUClass *vcc = [(${gen_arch_upper})]_CPU_CLASS(oc);
@@ -273,6 +282,9 @@ static void [(${gen_arch_lower})]_cpu_class_init(ObjectClass *oc, void *data)
     cc->gdb_write_register = [(${gen_arch_lower})]_cpu_gdb_write_register;
     cc->gdb_core_xml_file = "[(${gen_arch_lower})]-cpu.xml";
     cc->gdb_stop_before_watchpoint = true;
+
+    // CPU Properties
+    device_class_set_props(dc, [(${gen_arch_lower})]_cpu_properties);
 }
 
 

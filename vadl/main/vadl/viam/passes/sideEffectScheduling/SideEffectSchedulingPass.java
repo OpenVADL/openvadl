@@ -18,6 +18,7 @@ package vadl.viam.passes.sideEffectScheduling;
 
 import static vadl.utils.GraphUtils.getSingleNode;
 
+import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,9 +27,13 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.ViamUtils;
 import vadl.viam.Counter;
+import vadl.viam.DefProp;
 import vadl.viam.Instruction;
+import vadl.viam.Procedure;
 import vadl.viam.Specification;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
@@ -45,6 +50,8 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * It separates side effects that modify the program counter (PC) from other side effects.
  * Non-PC side effects are scheduled at the beginning of branches, while PC updates are scheduled
  * immediately before the branch ends.
+ *
+ * <p>This pass also handles scheduling of {@link Procedure}s.</p>
  *
  * <p>From paper: The VIAM behavior graph represents expressions and side effects using a
  * dependency graph.
@@ -91,14 +98,19 @@ public class SideEffectSchedulingPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    viam.isa().ifPresent(isa -> {
-      var pc = isa.pc();
-      isa.ensure(pc == null || pc instanceof Counter.RegisterCounter,
-          "Only RegisterCounters are currently supported for this pass. Got: %s", pc);
+    var defs = ViamUtils.findDefinitionsByFilter(viam, def ->
+        def instanceof Instruction || def instanceof Procedure);
 
-      isa.ownInstructions().forEach(
-          instruction -> SideEffectScheduler.run(instruction, (Counter.RegisterCounter) pc));
-    });
+    var isa = viam.isa().get();
+    var pc = isa.pc();
+    isa.ensure(pc == null || pc instanceof Counter.RegisterCounter,
+        "Only RegisterCounters are currently supported for this pass. Got: %s", pc);
+
+    for (var def : defs) {
+      ((DefProp.WithBehavior) def).behaviors().forEach(behavior -> {
+        SideEffectScheduler.run(behavior, (Counter.RegisterCounter) pc);
+      });
+    }
     return null;
   }
 }
@@ -118,11 +130,11 @@ class SideEffectScheduler {
   /**
    * Runs the side effect scheduling on the given instruction.
    *
-   * @param instr The instruction to process.
-   * @param pc    The program counter register counter, or {@code null} if not available.
+   * @param behavior The behavior to process.
+   * @param pc       The program counter register counter, or {@code null} if not available.
    */
-  public static void run(Instruction instr, @Nullable Counter.RegisterCounter pc) {
-    var startNode = getSingleNode(instr.behavior(), StartNode.class);
+  public static void run(Graph behavior, @Nullable Counter.RegisterCounter pc) {
+    var startNode = getSingleNode(behavior, StartNode.class);
     var scheduler = new SideEffectScheduler();
     scheduler.pc = pc;
     scheduler.processBranch(startNode);
@@ -152,7 +164,7 @@ class SideEffectScheduler {
         .stream().findFirst();
 
     // All non-PC updates should be inserted directly at the beginning of the branch
-    for (var effect : nonPcUpdateEffects) {
+    for (var effect : Lists.reverse(nonPcUpdateEffects)) {
       beginNode.addAfter(new ScheduledNode(effect));
     }
 
