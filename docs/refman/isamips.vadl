@@ -1,0 +1,36 @@
+instruction set architecture MIPSIV = {
+
+  using IWord        = Bits<32>           // 32 bit instruction word
+  using RWord        = Bits<64>           // 64 bit register word
+  using Address      = RWord              // 64 bit register word
+  using Index        = Bits<5>            // register index for 32 registers
+
+  [next]                                  // PC points to the next following instruction
+  program counter PC : Address            // program pointer
+  register       EPC : Address            // saved exception program counter
+
+  [zero : GPR(0)]                         // zero register
+  register       GPR : Index -> RWord     // general purpose registers
+
+  format R_Type : IWord =                 // register 3 operand instruction word
+    { opcode [31..26]                     // operation code
+    , rs     [25..21]                     // 1st source register
+    , rt     [20..16]                     // 2nd source register
+    , rd     [15..11]                     // destination register
+    , shamt  [10.. 6]                     // unsigned shift amount
+    , funct  [ 5.. 0]                     // function code
+    }
+
+  exception Overflow = {                  // overflow exception
+    EPC := PC - 4                         // save exception raising PC
+    PC  := 0xFFFF'FFFF'8000'0180          // set PC to the exception handler address
+    }
+
+  instruction add : R_Type = {            // add with overflow
+    let result, status = VADL::adds(GPR(rs), GPR(rt)) in {
+      if status.overflow then
+        raise Overflow                    // raise exits the instruction
+      GPR(rd) := result
+      }
+    }
+  }

@@ -1099,6 +1099,62 @@ On the left hand side the register or memory is always written, on the right han
 
 #### Raise Statement and Exception Definition
 
+\ac{VADL} has special notations to mark exceptional behavior.
+Technically, these notations are not necessary, as every exceptional behavior can be described with the base \ac{ISA} language constructs.
+However, neither a human reader nor the compiler generator can distinguish normal behavior from exceptional behavior.
+Therefore, it is required that exceptional behavior is marked by the keyword `raise` as shown in Listing \r{raise_exception} at line 32.
+The code after the keyword `raise` can be any (block) statement or the call of an exception defined elsewhere.
+After the execution of the exception code the whole instruction is exited, no other statements are executed anymore.
+
+\listing{raise_exception, Exception Handling (simplified MIPS)}
+~~~{.vadl}
+instruction set architecture MIPSIV = {
+
+  using IWord        = Bits<32>        // 32 bit instruction word
+  using RWord        = Bits<64>        // 64 bit register word
+  using Address      = RWord           // 64 bit register word
+  using Index        = Bits<5>         // register index for 32 registers
+
+  [next]                               // PC points to the next following instruction
+  program counter PC : Address         // program pointer
+  register       EPC : Address         // saved exception program counter
+
+  [zero : GPR(0)]                      // zero register
+  register       GPR : Index -> RWord  // general purpose registers
+
+  format R_Type      : IWord =         // register 3 operand instruction word
+    { opcode : Bits<6>                 // operation code
+    , rs     : Index                   // 1st source register
+    , rt     : Index                   // 2nd source register
+    , rd     : Index                   // destination register
+    , shamt  : Bits<5>                 // unsigned shift amount
+    , funct  : Bits<6>                 // function code
+    }
+
+  exception Overflow = {               // overflow exception
+    EPC := PC - 4                      // save exception raising PC
+    PC  := 0xFFFF'FFFF'8000'0180       // set PC to the exception handler address
+    }
+
+  instruction add : R_Type = {         // add with overflow
+    let result, status = VADL::adds(GPR(rs), GPR(rt)) in {
+      if status.overflow then
+        raise Overflow                 // raise exits the instruction after Overflow is executed
+      GPR(rd) := result
+      }
+    }
+  }
+~~~
+\endlisting
+
+Exception raising code is often quite similar.
+Exceptions can be specified similarly to functions to enable code reuse.
+In contrast to functions, exceptions do not return an expression but have side effects caused by assignment statements (see lines 24 to 27).
+Nevertheless, it must be guaranteed that reads to a register or memory location precede all writes.
+
+To specify exceptional behavior like overflow, the basic \ac{VADL} built-in functions exist in a version which returns a status like the occurence of an overflow during the computation.
+These built-in functions are used to specify instructions that handle operations with overflow as demonstrated in the example in Listing \r{raise_exception}.
+
 
 #### Lock Statement
 
