@@ -55,7 +55,7 @@ public class IssTranslateCodeGenerator implements
     CDefaultMixins.All, IssCMixins.Default,
     // invalid nodes
     IssCMixins.Invalid, CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads,
-    CInvalidMixins.InstrCall, CInvalidMixins.ReadStageOutput {
+    CInvalidMixins.InstrCall, CInvalidMixins.HardwareRelated {
 
   private Instruction insn;
   private boolean generateInsnCount;

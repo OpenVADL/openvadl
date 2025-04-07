@@ -27,6 +27,7 @@ import org.apache.commons.io.FilenameUtils;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.formatting.CodeFormatter;
 import vadl.iss.codegen.QemuClangFormatter;
+import vadl.iss.passes.extensions.MemoryInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -118,6 +119,11 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("registers", mapRegs(specification));
     vars.put("insn_count", configuration().isInsnCounting());
     vars.put("target_size", configuration().targetSize().width);
+    vars.put("mem_info", getMemoryInfo(specification));
     return vars;
+  }
+
+  private MemoryInfo getMemoryInfo(Specification viam) {
+    return viam.mip().get().expectExtension(MemoryInfo.class);
   }
 }

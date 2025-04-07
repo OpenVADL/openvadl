@@ -95,7 +95,7 @@ public class WriteMemNode extends WriteResourceNode {
   }
 
   @Override
-  protected int writeBitWidth() {
+  public int writeBitWidth() {
     return memory.wordSize() * words;
   }
 

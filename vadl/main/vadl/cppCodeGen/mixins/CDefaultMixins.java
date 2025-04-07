@@ -44,6 +44,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -242,9 +243,15 @@ public interface CDefaultMixins {
   ///  DEPENDENCY HANDLERS ///
 
   @SuppressWarnings("MissingJavadocType")
-  interface AllDependencies extends AllExpressions {
+  interface AllDependencies extends AllExpressions, AllSideEffects {
   }
 
+  ///  SIDE EFFECT HANDLERS ///
+
+  @SuppressWarnings("MissingJavadocType")
+  interface AllSideEffects extends ProcCall {
+
+  }
 
   ///  EXPRESSION HANDLERS ///
 
@@ -357,6 +364,24 @@ public interface CDefaultMixins {
     @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
       ctx.wr(toHandle.function().simpleName())
+          .wr("(");
+      var first = true;
+      for (var arg : toHandle.arguments()) {
+        if (!first) {
+          ctx.wr(", ");
+        }
+        ctx.gen(arg);
+      }
+      ctx.wr(")");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface ProcCall {
+    @Handler
+    @SuppressWarnings("MissingJavadocMethod")
+    default void handle(CGenContext<Node> ctx, ProcCallNode toHandle) {
+      ctx.wr(toHandle.procedure().simpleName())
           .wr("(");
       var first = true;
       for (var arg : toHandle.arguments()) {

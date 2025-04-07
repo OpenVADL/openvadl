@@ -19,8 +19,11 @@ package vadl.iss.template.hw;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
+import vadl.iss.codegen.IssFirmwareCodeGenerator;
+import vadl.iss.passes.extensions.MemoryInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.Procedure;
 import vadl.viam.Specification;
 import vadl.viam.annotations.EnableHtifAnno;
 
@@ -28,6 +31,9 @@ import vadl.viam.annotations.EnableHtifAnno;
  * Emits the {@code hw/gen-arch/virt.c} which is the core implementation for the
  * virtual hardware board.
  * It defines things like memory, start address, HTIF, firmware loading, etc...
+ *
+ * @see IssFirmwareCodeGenerator
+ * @see MemoryInfo
  */
 public class EmitIssVirtCPass extends IssTemplateRenderingPass {
 
@@ -47,6 +53,15 @@ public class EmitIssVirtCPass extends IssTemplateRenderingPass {
     vars.put("dram_base", getDramBaseExpr());
     vars.put("start_addr", getStartAddrExpr(specification));
     vars.put("htif_enabled", htifEnabled(specification));
+
+    // firmware
+    var processor = specification.mip().get();
+    var firmware = processor.firmware();
+    if (firmware != null) {
+      vars.put("setup_rom_reset_vec",
+          firmwareWriteFunction(firmware, processor.expectExtension(MemoryInfo.class)));
+      System.out.println(vars.get("firmware"));
+    }
     return vars;
   }
 
@@ -67,4 +82,10 @@ public class EmitIssVirtCPass extends IssTemplateRenderingPass {
     specification.ensure(mip != null, "No MicroProcessor definition found");
     return mip.hasAnnotation(EnableHtifAnno.class);
   }
+
+  private String firmwareWriteFunction(Procedure firmware, MemoryInfo memoryInfo) {
+    return new IssFirmwareCodeGenerator(firmware, memoryInfo)
+        .fetch();
+  }
+
 }

@@ -1169,7 +1169,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     var firmware = (Procedure) definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.FIRMWARE)
         .findFirst()
-        .flatMap(this::fetch).orElseThrow();
+        .flatMap(this::fetch).orElse(null);
 
     var abi = definition.abiNode != null ? (Abi) fetch(definition.abiNode).orElse(null) : null;
     var mip = new MicroProcessor(identifier, isa, abi, start, null, firmware, null);

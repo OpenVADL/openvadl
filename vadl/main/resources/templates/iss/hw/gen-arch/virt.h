@@ -27,6 +27,7 @@ struct [(${gen_arch_upper})]VirtMachineState {
 };
 
 enum {
+  [# th:if="${mem_info.rom_size} != 0"]VIRT_MROM,[/]
   // location where bios is load to
   VIRT_DRAM
 };

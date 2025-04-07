@@ -196,6 +196,13 @@ public abstract class Constant {
       return fromInteger(new BigInteger(value), type);
     }
 
+    /**
+     * Returns the unsigned big integer representation of this value, regardless of the value's
+     * type.
+     */
+    public BigInteger unsignedInteger() {
+      return value;
+    }
 
     /**
      * Returns the integer value represented by this value object.
@@ -232,14 +239,18 @@ public abstract class Constant {
     }
 
     /**
+     * Keeps the same value as is, but sets the type to {@code Bits},
+     * with the same size as the current type.
+     */
+    public Value toBits() {
+      return fromTwosComplement(value, Type.bits(type().bitWidth()));
+    }
+
+    /**
      * Casts the constant value to the specified data type.
-     *
-     * <p>For the concrete casting rules take a look at
-     * {@link vadl.viam.passes.typeCastElimination.TypeCastEliminator}</p>
      *
      * @param targetType the data type to cast the value to
      * @return a new Constant.Value object representing the cast value
-     * @see vadl.viam.passes.typeCastElimination.TypeCastEliminator
      */
     public Constant.Value castTo(DataType targetType) {
       var sourceType = type();

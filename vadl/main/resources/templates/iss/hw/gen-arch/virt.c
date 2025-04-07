@@ -10,6 +10,9 @@
 #include <stdlib.h>
 
 static const MemMapEntry virt_memmap[] = {
+  [# th:if="${mem_info.rom_size} != 0"]
+  [VIRT_MROM] = {[(${mem_info.rom_start})], [(${mem_info.rom_size})]},
+  [/]
   [VIRT_DRAM] = {[(${dram_base})], 0x0},
 };
 
@@ -29,6 +32,10 @@ static void virt_sym_cb(const char *st_name, int st_info, uint64_t st_value,
     htif_symbol_callback(st_name, st_info, st_value, st_size);
     [/]
 }
+
+[# th:if="${mem_info.rom_size} != 0"]
+[(${setup_rom_reset_vec})]
+[/]
 
 static void virt_machine_ready(Notifier *notifier, void *data)
 {
@@ -55,6 +62,10 @@ static void virt_machine_ready(Notifier *notifier, void *data)
         exit(1);
     }
 
+    [# th:if="${mem_info.rom_size} != 0"]
+    setup_rom_reset_vec();
+    [/]
+
     [# th:if="${htif_enabled}"]
     if (tofromhost_defined) {
       // now we can init the htif, as it requires the firmware callbacks to be loaded
@@ -76,6 +87,14 @@ static void virt_machine_init(MachineState *machine)
 
     // add the ram region
     memory_region_add_subregion(system_memory, memmap[VIRT_DRAM].base, machine->ram);
+
+    [# th:if="${mem_info.rom_size} != 0"]
+    MemoryRegion *mask_rom = g_new(MemoryRegion, 1);
+    memory_region_init_rom(mask_rom, NULL, "[(${gen_arch_lower})].virt.mrom",
+                           memmap[VIRT_MROM].size, &error_fatal);
+    memory_region_add_subregion(system_memory, memmap[VIRT_MROM].base,
+                                mask_rom);
+    [/]
 
     s->machine_ready.notify = virt_machine_ready;
     qemu_add_machine_init_done_notifier(&s->machine_ready);
