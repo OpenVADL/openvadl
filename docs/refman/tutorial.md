@@ -327,7 +327,7 @@ function CsrDefToImpl (csr : Bits<12>) -> Bits<12> = // map defined index to imp
 Functions in VADL are pure if they do not read registers or memory.
 Functions cannot write registers or memory.
 As long as functions do not read registers which have an effect when read, they do not have side effects.
-As VADL specifications have to be translated to specifications in a hardware description language or to patterns for the instruction selector of a compiler neither recursive calls nor higher order functions are allowed.
+As VADL specifications have to be translated to specifications in a hardware description language or to patterns for the instruction selector of a compiler, neither recursive calls nor higher order functions are allowed.
 A function is defined by the keyword `function` followed by the function's name, optionally a parameter list in parentheses, the arrow symbol `"->"`, the return type of the function, the equality symbol `"="` and an expression.
 
 In line 1 of Listing \r{functions} shows the definition of the parameter less function `size` which always will return the value `32`.
@@ -1001,8 +1001,8 @@ There exist different memory consistency models which are specified with the `or
 
 Listing \r{instruction_definition} presents an instruction definition in line 11.
 An instruction definition starts with the keyword `instruction` followed by the unique name of the instruction, a type literal (usually the name of a format specification) after the colon symbol `":"` and a statement after the equality symbol `"="` that defines the behavior of the instruction.
-All field and access function names of the instruction's format are visible inside the instruction and inside encoding and assembly definitions.
 Every instruction definition needs a corresponding encoding and assembly definition.
+All field and access function names of the instruction's format are visible inside the instruction and inside encoding and assembly definitions.
 
 \listing{instruction_definition, Instruction Definition with Let\, Block and Assignment Statement}
 ~~~{.vadl}
@@ -1011,6 +1011,7 @@ instruction set architecture ISA = {
   using BWord = Bits<64>         // 64 bit word
   using SWord = SInt<64>         // 64 bit signed integer word
 
+  register status : Bits<4>      // 4 bit status register: negative, zero, carry, overflow
   register X  : Index -> BWord   // 32 registers which are 64 bit wide
   memory MEM  : BWord -> Bits<8> // byte addressed memory in a 64 bit address space
 
@@ -1022,11 +1023,19 @@ instruction set architecture ISA = {
     , off     = off12 as SWord   // sign extended 64 bit offset
     }
 
+  [operation : memop]            // belongs to operation set memop
   [require : rn != rt]           // base and target register must be different
   instruction LDUP : MemT =      // 64 bit load instruction with base register update
     let addr = X(rn) + off in {  // access address is base register plus offset
-      X(rt) := MEM<8>(addr)      // load 8 bytes from address addr
+      X(rt) := MEM<8>(addr)      // load 8 byte sized vector from address addr
       X(rn) := addr              // write back of the updated base register
+    }
+
+  [operation : aluop, addop]     // belongs to the two operation sets aluop and addop
+  instruction ADDIS : MemT =     // 64 bit add immediate instruction setting status register
+    let res, fl = VADL::adds(X(rn), off) in {
+      X(rt) := res
+      status := (fl.negative,fl.zero,fl.carry,fl.overflow)
     }
 }
 ~~~
@@ -1045,14 +1054,23 @@ In the example in Listing \r{instruction_definition} a constraint is specified w
 This constraint is additionally checked by the decoder, after the decoding necessary to determine the correct instruction is completed.
 There are no restrictions on the used relational operators for the `require` annotation.
 
+Instructions can be grouped into multiple sets used for specifying characteristics of `VLIW` instructions or \ac{MiA} elements.
+A set of instructions is named `operation` and can be defined by an annotation as shown in Listing \r{instruction_definition} or in an `operation` definition (see Section \r{tut_operation_definition})
 
-#### Let Statement
+#### Let Statement and Status Flags
 
 A `let` statement is used to define the instruction `LDUP` in Listing \r{instruction_definition}.
 An identifier follows the keyword `let` at the start of the statement. 
 The `let` statement binds the expression after the equality symbol `"="` with the identifier which enables the use of the result of the expression in the statement after the keyword `in`.
 This identifier is only visible in the scope defined by the statement after `in`.
 It is common that the statement after `in` is a block statement which is also the case in the current example.
+
+Some \ac{VADL} builtin functions return both the result of the computation and a status of the computation.
+The status consists of the four subfields `.negative`, `.zero`, `.carry` and `.overflow`.
+Such functions only can be called with a special `let` statement which allows two names separated by the comma symbol `","` as demonstrated in the definition of the instruction `ADDIS` in Listing \r{instruction_definition}.
+The \ac{VADL} builtin functions have a separated name space which is designated with the path specifyer `VADL::`.
+The first name in the special let denotes the result of the computation, the second name denotes the status of the computation.
+In the `ADDIS` instruction the status elements are selected by their subfield names, concatenated to a bit string of the type `Bits<4>` and assigned to the register named `status` which also is of type `Bits<4>`.
 
 
 #### Block Statement
@@ -1062,6 +1080,12 @@ An empty block statement is a valid statement.
 
 
 #### Assignment Statement
+
+The instruction definitions `LDUP` and `ADDIS` in Listing \r{instruction_definition} show some assignment statements which allow the assignment of a value to a register or to memory.
+On the left hand side of the assignment operator `":="` a call expression restricted to a register or memory access is expected, on the right hand side any expression is allowed.
+A register file access usually is indexed.
+A memory access is always indexed and sometimes is a vector access denoted by the vector size in angle brackets.
+On the left hand side the register or memory is always written, on the right hand side it is always read.
 
 
 #### If Statement
@@ -1073,7 +1097,7 @@ An empty block statement is a valid statement.
 #### Forall Statement and Expression
 
 
-#### Raise Statement and Exeption Definition
+#### Raise Statement and Exception Definition
 
 
 #### Lock Statement
@@ -1089,6 +1113,8 @@ An empty block statement is a valid statement.
 
 
 ### Operation Definition
+
+\lbl{tut_operation_definition}
 
 
 ### Group Definition

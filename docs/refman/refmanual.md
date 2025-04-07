@@ -27,7 +27,7 @@ The index can be any expression which can be evaluated to a constant value durin
 Multiple indices and ranges can be combined in a single slice specification by separating indices and ranges by a comma.
 The following examples show different ways for the specification of slices:
 
-```
+```{.vadl}
 a(7..0)            // extracts the lowest 8 bit
 a(7,6,5,4,3,2,1,0) // equal to a(7..0), concatenation of single bits
 a(11..8,3..0)      // concatenates two 4 bit ranges
