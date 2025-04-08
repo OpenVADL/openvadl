@@ -21,7 +21,13 @@ import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generate
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
+import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -72,10 +78,14 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var immediates = generateImmediates(passResults);
+    var symbolRefFixups = generateInstructionsForSymbolRefFixups(passResults);
+
+    var x = generateTargetFixups(passResults);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "immediates", immediates);
+        "immediates", immediates,
+        "symbolRefFixups", symbolRefFixups);
   }
 
 
@@ -85,5 +95,79 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
         .stream()
         .map(f -> new Aggregate(f.identifier.append(WRAPPER).lower(), f.identifier.lower()))
         .toList();
+  }
+
+  @Nullable
+  private List<Map<String, String>> generateTargetFixups(PassResults passResults) {
+    var linkerComponents = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
+        GenerateLinkerComponentsPass.class);
+
+    return linkerComponents.variantKindStore().userDefinedRelocation().entrySet().stream().map(
+        entry -> {
+          var relocation = entry.getKey();
+          var variantKind = entry.getValue();
+
+          var elfRelocations = linkerComponents.elfRelocations().stream().filter(
+              elfRelocation -> elfRelocation.relocation() == relocation
+          );
+
+          // TODO: get instruction name and OpIndex from elfRelocation
+
+          return Map.of(
+              "variantKind", variantKind.value(),
+              "instructionOperands", ""
+          );
+        }
+    ).toList();
+  }
+
+  private List<Map<String, Object>> generateInstructionsForSymbolRefFixups(
+      PassResults passResults) {
+    var tableGenMachineInstructions =
+        (List<TableGenMachineInstruction>) passResults.lastResultOf(
+            GenerateTableGenMachineInstructionRecordPass.class);
+
+    var linkerComponents = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
+        GenerateLinkerComponentsPass.class);
+
+    return tableGenMachineInstructions.stream()
+        .filter(tableGenMachineInstruction -> {
+          return !tableGenMachineInstruction.llvmLoweringRecord().info().inputImmediates()
+              .isEmpty();
+        })
+        .map(tableGenMachineInstruction -> {
+          var instruction = tableGenMachineInstruction.instruction();
+
+          var immediateOperands =
+              tableGenMachineInstruction.llvmLoweringRecord().info().inputs().stream()
+                  .filter(i -> i instanceof ReferencesImmediateOperand)
+                  .map(tableGenOperand -> {
+                    var immediateOperand =
+                        ((ReferencesImmediateOperand) tableGenOperand).immediateOperand();
+                    var opIndex = tableGenMachineInstruction.indexInOperands(tableGenOperand);
+
+                    // FIXME: find the correct fixup
+                    //        currently always the ABS one is found for the field
+                    var operanderFixup = linkerComponents.fixups().stream()
+                        .filter(fixup ->
+                            fixup.implementedRelocation()
+                                instanceof AutomaticallyGeneratedRelocation relocation
+                                && relocation.immediate()
+                                .equals(immediateOperand.fieldAccessRef().fieldRef())
+                        ).findFirst().get();
+
+                    // TODO: error if none found
+
+                    return Map.of(
+                        "opIndex", opIndex,
+                        "fixup", operanderFixup.name().value()
+                    );
+                  }).toList();
+
+          return Map.of(
+              "instruction", instruction.simpleName(),
+              "immediateOperands", immediateOperands
+          );
+        }).toList();
   }
 }

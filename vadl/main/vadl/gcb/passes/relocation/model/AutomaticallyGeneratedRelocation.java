@@ -35,7 +35,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
  */
 public class AutomaticallyGeneratedRelocation extends CompilerRelocation
     implements HasRelocationComputationAndUpdate {
-  protected final VariantKind variantKind;
+  //  protected final VariantKind variantKind;
   // This is the function which computes the value for the
   // relocation.
   protected final GcbImmediateExtractionCppFunction valueRelocation;
@@ -46,7 +46,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
    * Constructor.
    */
   public static AutomaticallyGeneratedRelocation create(Kind kind,
-                                                        VariantKind variantKind,
+//                                                        VariantKind variantKind,
                                                         Format format,
                                                         Format.Field field,
                                                         GcbUpdateFieldRelocationCppFunction
@@ -61,7 +61,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
     valueRelocation.behavior().addWithInputs(new ReturnNode(new FuncParamNode(parameter)));
     return new AutomaticallyGeneratedRelocation(identifier,
         kind,
-        variantKind,
+//        variantKind,
         format,
         field,
         relocation,
@@ -82,7 +82,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
 
   private AutomaticallyGeneratedRelocation(Identifier identifier,
                                            Kind kind,
-                                           VariantKind variantKind,
+//                                           VariantKind variantKind,
                                            Format format,
                                            Format.Field field,
                                            Relocation relocationRef,
@@ -90,7 +90,7 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
                                            GcbUpdateFieldRelocationCppFunction fieldUpdateFunction
   ) {
     super(identifier, kind, format, field, relocationRef);
-    this.variantKind = variantKind;
+//    this.variantKind = variantKind;
     this.valueRelocation = valueRelocation;
     this.fieldUpdateFunction = fieldUpdateFunction;
   }
@@ -116,6 +116,6 @@ public class AutomaticallyGeneratedRelocation extends CompilerRelocation
 
   @Override
   public VariantKind variantKind() {
-    return variantKind;
+    return VariantKind.none();
   }
 }

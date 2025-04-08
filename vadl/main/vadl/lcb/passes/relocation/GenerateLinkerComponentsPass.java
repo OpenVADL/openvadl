@@ -16,6 +16,8 @@
 
 package vadl.lcb.passes.relocation;
 
+import static vadl.viam.ViamError.ensure;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -70,69 +72,22 @@ public class GenerateLinkerComponentsPass extends Pass {
   }
 
   /**
-   * Data structure to find {@link VariantKind} by relocation and {@link Format.Field}.
-   */
-  public record RelocationStore<T>(
-      IdentityHashMap<Pair<T, Format.Field>, VariantKind> absolute,
-      IdentityHashMap<Pair<T, Format.Field>, VariantKind> relative) {
-    public static <X> RelocationStore<X> empty() {
-      return new RelocationStore<>(new IdentityHashMap<>(), new IdentityHashMap<>());
-    }
-  }
-
-  /**
    * This data structure keeps track of the variant kind for relocations and immediates.
    */
   public record VariantKindStore(
-      RelocationStore<ImplementedUserSpecifiedRelocation> userDefined,
-      RelocationStore<AutomaticallyGeneratedRelocation> automaticallyGenerated,
+      Map<Relocation, VariantKind> userDefinedRelocation,
       Map<Format.FieldAccess, VariantKind> decodeVariantKinds
   ) {
     public static VariantKindStore empty() {
-      return new VariantKindStore(RelocationStore.empty(), RelocationStore.empty(),
-          new IdentityHashMap<>());
+      return new VariantKindStore(new IdentityHashMap<>(), new IdentityHashMap<>());
     }
 
     /**
      * Store the variant {@link VariantKind} of an {@link ImplementedUserSpecifiedRelocation}.
      */
-    public void addUserDefined(ImplementedUserSpecifiedRelocation relocation,
-                               Format.Field field,
+    public void addUserDefined(Relocation relocation,
                                VariantKind kind) {
-      if (relocation.kind() == CompilerRelocation.Kind.ABSOLUTE) {
-        this.userDefined.absolute.put(Pair.of(relocation, field), kind);
-      } else {
-        this.userDefined.relative.put(Pair.of(relocation, field), kind);
-      }
-    }
-
-    /**
-     * Store the {@link VariantKind} of an {@link AutomaticallyGeneratedRelocation}.
-     */
-    public void addAutomaticallyGeneratedRelocation(AutomaticallyGeneratedRelocation relocation,
-                                                    Format.Field field,
-                                                    VariantKind kind) {
-      if (relocation.kind() == CompilerRelocation.Kind.ABSOLUTE) {
-        this.automaticallyGenerated.absolute.put(Pair.of(relocation, field), kind);
-      } else {
-        this.automaticallyGenerated.relative.put(Pair.of(relocation, field), kind);
-      }
-    }
-
-    /**
-     * Get the absolute variant kinds for a given {@link Format.Field} when we know that it has
-     * been automatically generated. It is expected that only one variant kind will be returned.
-     * However, it might be possible that an instruction has multiple relocations in one and that's
-     * why return a list.
-     */
-    public List<VariantKind> absoluteVariantKindsByAutomaticGeneratedRelocationAndField(
-        Format.Field field) {
-      return this.automaticallyGenerated.absolute
-          .entrySet()
-          .stream()
-          .filter(x -> x.getKey().right().equals(field))
-          .map(Map.Entry::getValue)
-          .toList();
+      userDefinedRelocation.put(relocation, kind);
     }
 
     /**
@@ -178,6 +133,12 @@ public class GenerateLinkerComponentsPass extends Pass {
     // Fixups and relocations for user defined relocations
     var candidates = new ArrayList<Pair<Relocation, Format.Field>>();
     for (var relocation : relocations) {
+
+      // Create one variant per user defined relocation
+      var variantKind = VariantKind.forUserDefinedRelocation(relocation);
+      variantKinds.add(variantKind);
+      variantStore.addUserDefined(relocation, variantKind);
+
       for (var instruction : instructions) {
         // We cannot use all the fields of a format because not all are immediates.
         // That's why we need the `fieldUsages`.
@@ -193,11 +154,11 @@ public class GenerateLinkerComponentsPass extends Pass {
       var field = candidate.right();
       var format = field.format();
 
-      // Create a variant kind for every format immediate field.
-      var variantKind = relocation.isAbsolute() ? VariantKind.absolute(relocation, field)
-          : VariantKind.relative(relocation, field);
+      // Get the VariantKind from the user defined relocation
+      var variantKind = variantStore.userDefinedRelocation().get(relocation);
+      ensure(variantKind != null,
+          "Variant kind for relocation %s not found", relocation);
       var modifier = Modifier.from(relocation, field);
-      variantKinds.add(variantKind);
 
       // The `updateFieldFunction` is the cpp function which tells the compiler how
       // to update the field when a relocation has to be done.
@@ -205,6 +166,8 @@ public class GenerateLinkerComponentsPass extends Pass {
           BitMaskFunctionGenerator.generateUpdateFunction(format, field);
       var gcbRelocationFunction =
           AutomaticallyGeneratedRelocation.createGcbRelocationCppFunction(relocation);
+
+      // TODO: save Instruction and Operand index on the ImplementedUserSpecifiedRelocation
 
       var liftedRelocation = new ImplementedUserSpecifiedRelocation(
           relocation,
@@ -221,7 +184,6 @@ public class GenerateLinkerComponentsPass extends Pass {
       fixups.add(new Fixup(liftedRelocation));
       compilerRelocations.add(liftedRelocation);
       linkModifierToRelocation.add(Pair.of(modifier, liftedRelocation));
-      variantStore.addUserDefined(liftedRelocation, field, variantKind);
       linkModifierToVariantKind.add(Pair.of(modifier, variantKind));
     }
 
@@ -241,12 +203,10 @@ public class GenerateLinkerComponentsPass extends Pass {
       var imm = candidate.right();
 
       // Absolute
-      genAbs(imm, modifiers, variantKinds, format, fixups, compilerRelocations, variantStore,
-          linkModifierToRelocation);
+      genAbs(imm, modifiers, format, fixups, compilerRelocations, linkModifierToRelocation);
 
       // Relative
-      genRelative(imm, variantKinds, modifiers, format, fixups, compilerRelocations, variantStore,
-          linkModifierToRelocation);
+      genRelative(imm, modifiers, format, fixups, compilerRelocations, linkModifierToRelocation);
     }
 
 
@@ -272,23 +232,20 @@ public class GenerateLinkerComponentsPass extends Pass {
     );
   }
 
-  private static void genRelative(Format.Field imm, List<VariantKind> variantKinds,
-                                  List<Modifier> modifiers, Format format,
+  private static void genRelative(Format.Field imm,
+                                  List<Modifier> modifiers,
+                                  Format format,
                                   List<Fixup> fixups,
                                   List<HasRelocationComputationAndUpdate> compilerRelocations,
-                                  VariantKindStore variantStore,
                                   List<Pair<Modifier, HasRelocationComputationAndUpdate>>
                                       linkModifierToRelocation) {
-    var relativeVariantKind = VariantKind.relative(imm);
     var modifier = Modifier.relative(imm);
 
-    variantKinds.add(relativeVariantKind);
     modifiers.add(modifier);
 
     var updateFieldFunction =
         BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
     var generated = AutomaticallyGeneratedRelocation.create(CompilerRelocation.Kind.RELATIVE,
-        relativeVariantKind,
         format,
         imm,
         updateFieldFunction);
@@ -296,26 +253,21 @@ public class GenerateLinkerComponentsPass extends Pass {
 
     fixups.add(new Fixup(generated));
     compilerRelocations.add(generated);
-    variantStore.addAutomaticallyGeneratedRelocation(generated, imm, relativeVariantKind);
     linkModifierToRelocation.add(Pair.of(modifier, generated));
   }
 
   private static void genAbs(Format.Field imm, List<Modifier> modifiers,
-                             List<VariantKind> variantKinds, Format format,
+                             Format format,
                              List<Fixup> fixups,
                              List<HasRelocationComputationAndUpdate> compilerRelocations,
-                             VariantKindStore variantStore,
                              List<Pair<Modifier, HasRelocationComputationAndUpdate>>
                                  linkModifierToRelocation) {
-    var absoluteVariantKind = VariantKind.absolute(imm);
     var modifier = Modifier.absolute(imm);
     modifiers.add(modifier);
 
-    variantKinds.add(absoluteVariantKind);
     var updateFieldFunction =
         BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
     var generated = AutomaticallyGeneratedRelocation.create(CompilerRelocation.Kind.ABSOLUTE,
-        absoluteVariantKind,
         format,
         imm,
         updateFieldFunction);
@@ -323,7 +275,6 @@ public class GenerateLinkerComponentsPass extends Pass {
 
     fixups.add(new Fixup(generated));
     compilerRelocations.add(generated);
-    variantStore.addAutomaticallyGeneratedRelocation(generated, imm, absoluteVariantKind);
     linkModifierToRelocation.add(Pair.of(modifier, generated));
   }
 }

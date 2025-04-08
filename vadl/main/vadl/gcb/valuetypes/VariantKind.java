@@ -39,6 +39,14 @@ public record VariantKind(String value, String human, boolean isImmediate) imple
     return new VariantKind("VK_Invalid", "Invalid", false);
   }
 
+  /**
+   * Create a variant kind from a user defined relocation.
+   * Gets its kind from the relocation kind.
+   */
+  public static VariantKind forUserDefinedRelocation(Relocation relocation) {
+    return new VariantKind("VK_" + relocation.kind().toString() + "_"
+        + relocation.identifier.lower(), relocation.identifier.simpleName(), false);
+  }
 
   /**
    * Create an absolute variant kind.
