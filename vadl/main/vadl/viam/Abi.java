@@ -92,8 +92,8 @@ public class Abi extends Definition {
   private final PseudoInstruction returnSequence;
   private final PseudoInstruction callSequence;
   private final Optional<PseudoInstruction> localAddressLoad;
-  private final PseudoInstruction nonPicAddressLoad;
-  private final Optional<PseudoInstruction> picAddressLoad;
+  private final PseudoInstruction absoluteAddressLoad;
+  private final Optional<PseudoInstruction> globalAddressLoad;
   private final Alignment stackAlignment;
   private final List<CompilerInstruction> constantSequences;
   private final List<CompilerInstruction> registerAdjustmentSequences;
@@ -124,8 +124,8 @@ public class Abi extends Definition {
              PseudoInstruction returnSequence,
              PseudoInstruction callSequence,
              Optional<PseudoInstruction> localAddressLoad,
-             PseudoInstruction nonPicAddressLoad,
-             Optional<PseudoInstruction> picAddressLoad,
+             PseudoInstruction absoluteAddressLoad,
+             Optional<PseudoInstruction> globalAddressLoad,
              Alignment stackAlignment,
              Alignment transientStackAlignment,
              Map<RegisterFile, Abi.Alignment> registerFileAlignment,
@@ -146,8 +146,8 @@ public class Abi extends Definition {
     this.returnSequence = returnSequence;
     this.callSequence = callSequence;
     this.localAddressLoad = localAddressLoad;
-    this.nonPicAddressLoad = nonPicAddressLoad;
-    this.picAddressLoad = picAddressLoad;
+    this.absoluteAddressLoad = absoluteAddressLoad;
+    this.globalAddressLoad = globalAddressLoad;
     this.stackAlignment = stackAlignment;
     this.transientStackAlignment = transientStackAlignment;
     this.registerFileAlignment = registerFileAlignment;
@@ -217,12 +217,12 @@ public class Abi extends Definition {
     return localAddressLoad;
   }
 
-  public PseudoInstruction nonPicAddressLoad() {
-    return nonPicAddressLoad;
+  public PseudoInstruction absoluteAddressLoad() {
+    return absoluteAddressLoad;
   }
 
-  public Optional<PseudoInstruction> picAddressLoad() {
-    return picAddressLoad;
+  public Optional<PseudoInstruction> globalAddressLoad() {
+    return globalAddressLoad;
   }
 
   public Alignment stackAlignment() {

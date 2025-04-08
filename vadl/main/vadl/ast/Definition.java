@@ -3421,8 +3421,8 @@ class AbiPseudoInstructionDefinition extends Definition {
     RETURN("return"),
     CALL("call"),
     LOCAL_ADDRESS_LOAD("local address load"),
-    PIC_ADDRESS_LOAD("pic address load"),
-    NON_PIC_ADDRESS_LOAD("non pic address load");
+    GLOBAL_ADDRESS_LOAD("global address load"),
+    ABSOLUTE_ADDRESS_LOAD("absolute address load");
 
     private final String keyword;
 
@@ -3438,9 +3438,9 @@ class AbiPseudoInstructionDefinition extends Definition {
     static {
       numberOfOccurrencesAbi = Map.of(Kind.RETURN, Occurrence.ONE,
           Kind.CALL, Occurrence.ONE,
-          Kind.NON_PIC_ADDRESS_LOAD, Occurrence.ONE,
+          Kind.ABSOLUTE_ADDRESS_LOAD, Occurrence.ONE,
           Kind.LOCAL_ADDRESS_LOAD, Occurrence.OPTIONAL,
-          Kind.PIC_ADDRESS_LOAD, Occurrence.OPTIONAL);
+          Kind.GLOBAL_ADDRESS_LOAD, Occurrence.OPTIONAL);
     }
   }
 }

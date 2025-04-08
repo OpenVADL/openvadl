@@ -358,17 +358,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         AbiPseudoInstructionDefinition.Kind.CALL);
     var pseudoLocalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
         AbiPseudoInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD);
-    var pseudoNonPicAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.NON_PIC_ADDRESS_LOAD);
-    var pseudoPicAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.PIC_ADDRESS_LOAD);
+    var pseudoAbsoluteAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
+        AbiPseudoInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD);
+    var pseudoGlobalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
+        AbiPseudoInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD);
 
     var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow();
     var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow();
     var pseudoLocalAddressLoad = fetch(pseudoLocalAddressLoadDef).map(x -> (PseudoInstruction) x);
-    var pseudoPicAddressLoad = fetch(pseudoPicAddressLoadDef).map(x -> (PseudoInstruction) x);
-    var pseudoNonPicAddressLoad =
-        (PseudoInstruction) fetch(pseudoNonPicAddressLoadDef).orElseThrow();
+    var pseudoGlobalAddressLoad = fetch(pseudoGlobalAddressLoadDef).map(x -> (PseudoInstruction) x);
+    var pseudoAbsoluteAddressLoad =
+        (PseudoInstruction) fetch(pseudoAbsoluteAddressLoadDef).orElseThrow();
 
     // Aliases
     Map<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>> aliases =
@@ -423,8 +423,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         pseudoRet,
         pseudoCall,
         pseudoLocalAddressLoad,
-        pseudoNonPicAddressLoad,
-        pseudoPicAddressLoad,
+        pseudoAbsoluteAddressLoad,
+        pseudoGlobalAddressLoad,
         Abi.Alignment.DOUBLE_WORD,
         Abi.Alignment.DOUBLE_WORD,
         registerFileAlignment,
