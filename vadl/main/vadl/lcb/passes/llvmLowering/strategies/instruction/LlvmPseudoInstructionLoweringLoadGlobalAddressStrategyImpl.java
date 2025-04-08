@@ -59,14 +59,16 @@ public class LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl
   @Override
   public boolean isApplicable(@Nullable PseudoInstructionLabel pseudoInstructionLabel,
                               PseudoInstruction pseudoInstruction) {
-    return abi.globalAddressLoad().isPresent() && abi.globalAddressLoad().get() == pseudoInstruction;
+    return abi.globalAddressLoad().isPresent()
+        && abi.globalAddressLoad().get() == pseudoInstruction;
   }
 
   @Override
-  public Optional<LlvmLoweringRecord.Pseudo> lowerInstruction(Abi abi,
-                                                              List<TableGenInstAlias> instAliases,
-                                                              PseudoInstruction pseudo,
-                                                              IsaMachineInstructionMatchingPass.Result supportedInstructions) {
+  public Optional<LlvmLoweringRecord.Pseudo> lowerInstruction(
+      Abi abi,
+      List<TableGenInstAlias> instAliases,
+      PseudoInstruction pseudo,
+      IsaMachineInstructionMatchingPass.Result supportedInstructions) {
     var record = super.lowerInstruction(abi, instAliases, pseudo, supportedInstructions);
 
     if (record.isPresent()) {
