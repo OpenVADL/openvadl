@@ -32,4 +32,4 @@ format INNER : Bits<10> =
   , L  [3..0]
   }
 
-micro processor TEST implements Test = {}
+micro processor TEST implements Test = { start = 0x1000}

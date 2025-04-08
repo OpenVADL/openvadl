@@ -97,6 +97,19 @@ public class InstructionSetArchitecture extends Definition {
   }
 
   /**
+   * Returns the memory definition that holds executable code.
+   * If a specification only contains a single memory definition, it is returned.
+   * Otherwise, one of the memory definitions must be marked with an annotation.
+   * This is already checked by the typechecker.
+   */
+  public Memory codeMemory() {
+    // TODO: when we have a code memory annotation we can use it to determine the code memory,
+    //   if there are more than one memory definitions.
+    ensure(memories.size() == 1, "Currently ISA requires exactly one code memory");
+    return memories.get(0);
+  }
+
+  /**
    * Returns the {@link Instruction}s <b>owned</b> by this ISA.
    * So it might not include definitions accessible through the super ISA.
    */

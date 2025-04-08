@@ -33,6 +33,7 @@ import vadl.types.Type;
 public abstract class CGenContext<T> {
 
   protected String prefix = "";
+  private boolean newLine = true;
   protected final Consumer<String> writer;
 
   public CGenContext(
@@ -79,7 +80,9 @@ public abstract class CGenContext<T> {
    * Write C code to generation context.
    */
   public CGenContext<T> wr(String str) {
-    writer.accept(prefix + str);
+    var wrPrefix = newLine ? prefix : "";
+    writer.accept(wrPrefix + str);
+    newLine = str.endsWith("\n");
     return this;
   }
 
@@ -91,7 +94,7 @@ public abstract class CGenContext<T> {
    */
   @FormatMethod
   public CGenContext<T> wr(String fmt, Object... args) {
-    wr(String.format(prefix + fmt, args));
+    wr(String.format(fmt, args));
     return this;
   }
 
@@ -103,7 +106,7 @@ public abstract class CGenContext<T> {
    */
   @FormatMethod
   public CGenContext<T> ln(String fmt, Object... args) {
-    wr(String.format(prefix + fmt + '\n', args));
+    wr(String.format(fmt + '\n', args));
     return this;
   }
 
@@ -111,7 +114,7 @@ public abstract class CGenContext<T> {
    * Write C code to generation context and end with a new line.
    */
   public CGenContext<T> ln(String str) {
-    wr(prefix + str + "\n");
+    wr(str + "\n");
     return this;
   }
 
@@ -119,7 +122,7 @@ public abstract class CGenContext<T> {
    * Write a new line to the generation context.
    */
   public CGenContext<T> ln() {
-    wr(prefix + "\n");
+    wr("\n");
     return this;
   }
 
