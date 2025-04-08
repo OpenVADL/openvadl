@@ -124,7 +124,7 @@ public class Abi extends Definition {
              PseudoInstruction returnSequence,
              PseudoInstruction callSequence,
              Optional<PseudoInstruction> localAddressLoad,
-             PseudoInstruction absolutePicAddressLoad,
+             PseudoInstruction absoluteAddressLoad,
              Optional<PseudoInstruction> globalAddressLoad,
              Alignment stackAlignment,
              Alignment transientStackAlignment,
@@ -146,7 +146,7 @@ public class Abi extends Definition {
     this.returnSequence = returnSequence;
     this.callSequence = callSequence;
     this.localAddressLoad = localAddressLoad;
-    this.absoluteAddressLoad = absolutePicAddressLoad;
+    this.absoluteAddressLoad = absoluteAddressLoad;
     this.globalAddressLoad = globalAddressLoad;
     this.stackAlignment = stackAlignment;
     this.transientStackAlignment = transientStackAlignment;

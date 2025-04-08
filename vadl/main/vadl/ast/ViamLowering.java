@@ -367,7 +367,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow();
     var pseudoLocalAddressLoad = fetch(pseudoLocalAddressLoadDef).map(x -> (PseudoInstruction) x);
     var pseudoGlobalAddressLoad = fetch(pseudoGlobalAddressLoadDef).map(x -> (PseudoInstruction) x);
-    var pseudoAbsolutePicAddressLoad =
+    var pseudoAbsoluteAddressLoad =
         (PseudoInstruction) fetch(pseudoAbsoluteAddressLoadDef).orElseThrow();
 
     // Aliases
@@ -423,7 +423,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         pseudoRet,
         pseudoCall,
         pseudoLocalAddressLoad,
-        pseudoAbsolutePicAddressLoad,
+        pseudoAbsoluteAddressLoad,
         pseudoGlobalAddressLoad,
         Abi.Alignment.DOUBLE_WORD,
         Abi.Alignment.DOUBLE_WORD,
