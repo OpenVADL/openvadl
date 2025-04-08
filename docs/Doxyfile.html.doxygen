@@ -1181,6 +1181,7 @@ HTML_EXTRA_FILES       = custom/doxygen-awesome-css/doxygen-awesome-darkmode-tog
                          custom/doxygen-awesome-css/doxygen-awesome-paragraph-link.js \
                          custom/doxygen-awesome-css/doxygen-awesome-interactive-toc.js \
                          custom/doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js \
+                         custom/doxygen-awesome-css/doxygen-awesome-tabs.js \
                          custom/interactive-nav.js
 
 HTML_COPY_CLIPBOARD = NO

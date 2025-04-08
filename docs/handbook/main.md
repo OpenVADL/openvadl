@@ -7,3 +7,11 @@ This is the main page.
 ```bash
 ./gradlew installDist
 ```
+
+<div class="section_buttons">
+
+|                   |                      Next |
+|:------------------|--------------------------:|
+|                   | [Tutorial](tutorial.html) |
+
+</div>
