@@ -33,13 +33,13 @@ public class IssTestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(IssTestUtils.class);
 
-  protected record TestCase(
+  public record TestCase(
       String id,
       String asmCore
   ) {
   }
 
-  protected record TestConfig(
+  public record TestConfig(
       // { path: <str>, args: <str> }
       Map<String, String> sim,
       // { path: <str>, args: <str> }
@@ -52,7 +52,7 @@ public class IssTestUtils {
   ) {
   }
 
-  protected record TestResult(
+  public record TestResult(
       String id,
       TestResult.Status status,
       List<TestResult.Stage> completedStages,
@@ -63,12 +63,12 @@ public class IssTestUtils {
       String duration
   ) {
 
-    protected enum Status {
+    public enum Status {
       PASS,
       FAIL
     }
 
-    protected enum Stage {
+    public enum Stage {
       COMPILE,
       LINK,
       RUN,
@@ -76,7 +76,7 @@ public class IssTestUtils {
       COMPARE
     }
 
-    protected record RegTestResult(
+    public record RegTestResult(
         String reg,
         String expected,
         String actual
@@ -87,8 +87,8 @@ public class IssTestUtils {
   /**
    * Writes the test suite configuration YAML file.
    */
-  protected static void writeTestSuiteConfigYaml(TestConfig config,
-                                                 File dest)
+  public static void writeTestSuiteConfigYaml(TestConfig config,
+                                              File dest)
       throws IOException {
 
     var testsYaml = config.tests.stream().map(spec -> {
@@ -119,7 +119,7 @@ public class IssTestUtils {
    * @return The converted TestResult object.
    * @throws IOException if an I/O error occurs.
    */
-  protected static TestResult yamlToTestResult(File yamlFile) {
+  public static TestResult yamlToTestResult(File yamlFile) {
     try (var reader = new FileInputStream(yamlFile)) {
       Yaml yaml = new Yaml();
 

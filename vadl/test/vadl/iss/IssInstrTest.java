@@ -47,19 +47,19 @@ public abstract class IssInstrTest extends QemuIssTest {
     }
   }
 
-  abstract int getTestPerInstruction();
+  public abstract int getTestPerInstruction();
 
-  abstract String getVadlSpec();
+  public abstract String getVadlSpec();
 
-  abstract AsmTestBuilder getBuilder(String testNamePrefix, int id);
+  public abstract AsmTestBuilder getBuilder(String testNamePrefix, int id);
 
-  abstract Map<String, String> gdbRegMap();
+  public abstract Map<String, String> gdbRegMap();
 
-  abstract Tool simulator();
+  public abstract Tool simulator();
 
-  abstract Tool reference();
+  public abstract Tool reference();
 
-  abstract Tool compiler();
+  public abstract Tool compiler();
 
   @SafeVarargs
   protected final Stream<DynamicTest> runTestsWith(

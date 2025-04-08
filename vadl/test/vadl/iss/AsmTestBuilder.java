@@ -33,18 +33,18 @@ public abstract class AsmTestBuilder {
     this.testId = testId;
   }
 
-  abstract Arbitrary<String> anyTempReg();
+  public abstract Arbitrary<String> anyTempReg();
 
-  abstract Arbitrary<String> anyReg();
+  public abstract Arbitrary<String> anyReg();
 
-  abstract BigInteger fillReg(String reg, BigInteger value);
+  public abstract BigInteger fillReg(String reg, BigInteger value);
 
-  BigInteger fillReg(String reg, BigInteger min, BigInteger max) {
+  public BigInteger fillReg(String reg, BigInteger min, BigInteger max) {
     var val = arbitraryBetween(min, max).sample();
     return fillReg(reg, val);
   }
 
-  BigInteger fillReg(String reg, int size) {
+  public BigInteger fillReg(String reg, int size) {
     return fillReg(reg,
         BigInteger.valueOf(-2).pow(size - 1),
         BigInteger.valueOf(2)
@@ -53,12 +53,12 @@ public abstract class AsmTestBuilder {
     );
   }
 
-  void addLabel(String label) {
+  public void addLabel(String label) {
     add("%s:", label);
   }
 
   @FormatMethod
-  AsmTestBuilder add(String instr, Object... args) {
+  public AsmTestBuilder add(String instr, Object... args) {
     instructions.add(String.format(instr, args));
     return this;
   }
@@ -67,7 +67,7 @@ public abstract class AsmTestBuilder {
     return String.join("\n", instructions);
   }
 
-  IssTestUtils.TestCase toTestCase(
+  public IssTestUtils.TestCase toTestCase(
       String... regsOfInterest
   ) {
     return new IssTestUtils.TestCase(

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.iss;
+package vadl.iss.riscv;
 
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.utility.MountableFile;
+import vadl.iss.QemuIssTest;
 
 public class IssCustomTests extends QemuIssTest {
 

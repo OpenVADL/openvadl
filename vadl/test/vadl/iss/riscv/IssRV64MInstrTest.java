@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.iss;
+package vadl.iss.riscv;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.iss.AsmTestBuilder;
+import vadl.iss.IssTestUtils;
 
 /**
  * Tests the RV64I instructions set.
@@ -29,17 +31,17 @@ public class IssRV64MInstrTest extends AbstractIssRiscv64InstrTest {
 
 
   @Override
-  int getTestPerInstruction() {
+  public int getTestPerInstruction() {
     return 50;
   }
 
   @Override
-  String getVadlSpec() {
+  public String getVadlSpec() {
     return "sys/risc-v/rv64im.vadl";
   }
 
-  AsmTestBuilder getBuilder(String testNamePrefix, int id) {
-    return new RV64ITestBuilder(testNamePrefix + "_" + id);
+  public AsmTestBuilder getBuilder(String testNamePrefix, int id) {
+    return new RV64IMTestBuilder(testNamePrefix + "_" + id);
   }
 
   @TestFactory

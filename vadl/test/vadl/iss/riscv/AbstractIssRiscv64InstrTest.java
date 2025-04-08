@@ -14,33 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.iss;
+package vadl.iss.riscv;
 
 import java.util.HashMap;
 import java.util.Map;
+import vadl.iss.IssInstrTest;
 
-abstract public class AbstractIssRiscv64InstrTest extends IssInstrTest {
+public abstract class AbstractIssRiscv64InstrTest extends IssInstrTest {
 
   // set at the bottom of this file
   static final Map<String, String> GDB_REF_MAP = new HashMap<>();
 
   @Override
-  Map<String, String> gdbRegMap() {
+  public Map<String, String> gdbRegMap() {
     return GDB_REF_MAP;
   }
 
   @Override
-  Tool simulator() {
+  public Tool simulator() {
     return new Tool("/qemu/build/qemu-system-rv64im", "-M virt -bios");
   }
 
   @Override
-  Tool reference() {
+  public Tool reference() {
     return new Tool("/qemu/build/qemu-system-riscv64", "-M spike -bios");
   }
 
   @Override
-  Tool compiler() {
+  public Tool compiler() {
     return new Tool("/scripts/compilers/riscv_compiler.py", "-march=rv64im -mabi=lp64");
   }
 

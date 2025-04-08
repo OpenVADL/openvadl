@@ -14,32 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.iss;
+package vadl.iss.riscv;
 
 import java.math.BigInteger;
 import java.util.stream.IntStream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
+import vadl.iss.AsmTestBuilder;
 
-public class RV64ITestBuilder extends AsmTestBuilder {
+public class RV64IMTestBuilder extends AsmTestBuilder {
 
-  public RV64ITestBuilder(String testId) {
+  public RV64IMTestBuilder(String testId) {
     super(testId);
   }
 
   @Override
-  BigInteger fillReg(String reg, BigInteger value) {
+  public BigInteger fillReg(String reg, BigInteger value) {
     add("li %s, %s", reg, value);
     return value;
   }
 
   @Override
-  Arbitrary<String> anyTempReg() {
+  public Arbitrary<String> anyTempReg() {
     return Arbitraries.of("x5", "x7", "x28", "x29", "x30", "x31");
   }
 
   @Override
-  Arbitrary<String> anyReg() {
+  public Arbitrary<String> anyReg() {
     return Arbitraries.of(IntStream.range(0, 32).mapToObj(i -> "x" + i).toList());
   }
 
