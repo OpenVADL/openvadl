@@ -80,10 +80,8 @@ const char *[(${namespace})]TargetLowering::getTargetNodeName(unsigned Opcode) c
         return "[(${namespace})]ISD::CALL";
     case [(${namespace})]ISD::SELECT_CC:
         return "[(${namespace})]ISD::SELECT_CC";
-    case [(${namespace})]ISD::ADD_LO:
-            return "[(${namespace})]ISD::ADD_LO";
-    case [(${namespace})]ISD::HI:
-            return "[(${namespace})]ISD::HI";
+    case [(${namespace})]ISD::LGA:
+            return "[(${namespace})]ISD::LGA";
     default:
         llvm_unreachable("unknown opcode");
     }
@@ -570,10 +568,28 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
         SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
         if (IsLocal)
         {
-            report_fatal_error("Unsupported position independent local address loading");
+          [# th:if="${hasLocalAddressLoad == false}" ]
+          report_fatal_error("Unsupported position independent local address loading");
+          [/]
+          [# th:if="${hasLocalAddressLoad == true}" ]
+          return SDValue(DAG.getMachineNode([(${namespace})]::[(${localAddressLoadInstruction})], DL, Ty, Addr), 0);
+          [/]
         }
-        // GOT access
-        report_fatal_error("Unsupported position independent local address loading");
+
+        [# th:if="${hasGlobalAddressLoad == true}" ]
+        MachineFunction &MF = DAG.getMachineFunction();
+        MachineMemOperand *MemOp = MF.getMachineMemOperand(
+            MachinePointerInfo::getGOT(MF),
+            MachineMemOperand::MOLoad | MachineMemOperand::MODereferenceable |
+                MachineMemOperand::MOInvariant,
+            LLT(Ty.getSimpleVT()), Align(Ty.getFixedSizeInBits() / 8));
+
+        return DAG.getMemIntrinsicNode([(${namespace})]ISD::LGA, DL, DAG.getVTList(Ty, MVT::Other),
+            {DAG.getEntryNode(), Addr}, Ty, MemOp);
+        [/]
+        [# th:if="${hasGlobalAddressLoad == false}" ]
+        report_fatal_error("Relative address addressing is not supported");
+        [/]
     }
 
     // address does not rely on PC
@@ -585,14 +601,8 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
     }
     case CodeModel::Small:
     {
-        /*
-        SDValue AddrHi = getTargetNode(N, DL, Ty, DAG, [(${namespace})]BaseInfo::[(${addImmediateHighModifier})]);
-        SDValue AddrLo = getTargetNode(N, DL, Ty, DAG, [(${namespace})]BaseInfo::[(${addImmediateLowModifier})]);
-        SDValue MNHi = DAG.getNode([(${namespace})]ISD::HI, DL, Ty, AddrHi);
-        return DAG.getNode([(${namespace})]ISD::ADD_LO, DL, Ty, MNHi, AddrLo);
-        */
         SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
-        return SDValue(DAG.getMachineNode([(${namespace})]::[(${nonPicLA})], DL, Ty, Addr), 0);
+        return SDValue(DAG.getMachineNode([(${namespace})]::[(${absoluteAddressLoadInstruction})], DL, Ty, Addr), 0);
     }
     }
 }

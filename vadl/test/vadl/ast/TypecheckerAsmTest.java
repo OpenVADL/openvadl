@@ -53,7 +53,7 @@ public class TypecheckerAsmTest {
         pseudo return instruction = NOP
         pseudo call instruction = NOP
         pseudo local address load instruction = NOP
-        pseudo non pic address load instruction = NOP
+        pseudo absolute address load instruction = NOP
         alias register zero = X(0)
         stack pointer = zero
         return address = zero

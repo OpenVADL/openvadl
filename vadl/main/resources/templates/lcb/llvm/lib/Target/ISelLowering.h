@@ -16,10 +16,7 @@ namespace llvm
             CALL,
             RET_FLAG,
             SELECT_CC,
-            // Add the Lo 12 bits from an address. Selected to ADDI.
-            ADD_LO,
-            // Get the Hi 20 bits from an address. Selected to LUI.
-            HI
+            LGA = ISD::FIRST_TARGET_MEMORY_OPCODE
         };
     }
 

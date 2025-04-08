@@ -277,6 +277,13 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   $WtypeInstr (SRLW ; >> ; 0b101 ; 0b000'0000 ; UIntW; UInt5) // shift right logical word
   $WtypeInstr (SRAW ; >> ; 0b101 ; 0b010'0000 ; SIntW; UInt5) // shift right arithmetic word
 
+  pseudo instruction LGA_64( rd: Index, symbol: Bits<32> ) =
+  {
+      AUIPC { rd = rd, imm = got_hi( symbol ) }
+      LD { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
+  }
+  assembly LGA_64 = ("LGA", " ", register(rd), hex( symbol ))
+
 )           // ))))))))))))))))))))))))))))))))))))))))
 
   $IShftInstr (SLLI ; << ; 0b001 ; 0b00       ; UInt)  // shift left  logical immediate
@@ -416,23 +423,23 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   assembly BGTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
-  pseudo instruction nonPicLA( rd: Index, symbol: Bits<32> ) =
+  pseudo instruction LA( rd: Index, symbol: Bits<32> ) =
   {
       LUI { rd = rd, imm = hi( symbol ) }
       ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
   }
-  assembly nonPicLA = (mnemonic, " ", register(rd), hex( symbol ))
+  assembly LA = (mnemonic, " ", register(rd), hex( symbol ))
 
-  pseudo instruction picLA( rd: Index, symbol: Bits<32> ) =
+  pseudo instruction LGA_32( rd: Index, symbol: Bits<32> ) =
   {
-      LUI { rd = rd, imm = got_hi( symbol ) }
-      ADDI { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
+      AUIPC { rd = rd, imm = got_hi( symbol ) }
+      LW { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
   }
-  assembly picLA = (mnemonic, " ", register(rd), hex( symbol ))
+  assembly LGA_32 = ("LGA", " ", register(rd), hex( symbol ))
 
   pseudo instruction LLA( rd: Index, symbol: Bits<32> ) =
   {
-      LUI { rd = rd, imm = pcrel_hi( symbol ) }
+      AUIPC { rd = rd, imm = pcrel_hi( symbol ) }
       ADDI { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
   }
   assembly LLA = (mnemonic, " ", register(rd), hex( symbol ))

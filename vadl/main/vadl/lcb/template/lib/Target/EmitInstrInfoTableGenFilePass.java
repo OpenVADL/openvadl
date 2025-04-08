@@ -179,6 +179,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("registerFiles", specification.registerFiles().map(this::map).toList());
     map.put("returnInstruction", abi.returnSequence().identifier.simpleName());
     map.put("callInstruction", abi.callSequence().identifier.simpleName());
+    map.put("lga", abi.globalAddressLoad().map(x -> x.identifier.simpleName()).orElse(""));
     return map;
   }
 

@@ -55,6 +55,7 @@ import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweri
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringUnconditionalJumpsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmInstructionLoweringXoriAndOriStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringDefaultStrategyImpl;
+import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrategyImpl;
 import vadl.lcb.passes.llvmLowering.strategies.instruction.conditionals.LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl;
@@ -256,6 +257,16 @@ public class LlvmLoweringPass extends Pass {
           false, flags.mayLoad, flags.mayStore(), flags.isBarrier,
           flags.isRematerialisable, flags.isAsCheapAsAMove);
     }
+
+
+    /**
+     * Given {@link Flags} overwrite the {@code mayLoad} to true.
+     */
+    public static Flags withMayLoad(Flags flags) {
+      return new Flags(flags.isTerminator(), flags.isBranch, flags.isCall, flags.isReturn,
+          flags.isPseudo, flags.isCodeGenOnly, true, flags.mayStore(), flags.isBarrier,
+          flags.isRematerialisable, flags.isAsCheapAsAMove);
+    }
   }
 
   /**
@@ -310,6 +321,8 @@ public class LlvmLoweringPass extends Pass {
             new LlvmInstructionLoweringDefaultStrategyImpl(architectureType));
     var pseudoStrategies =
         List.of(new LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl(machineStrategies),
+            new LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl(machineStrategies,
+                viam.abi().orElseThrow()),
             new LlvmPseudoInstructionLoweringDefaultStrategyImpl(machineStrategies));
     var compilerStrategies =
         List.of(new LlvmCompilerInstructionLoweringDefaultStrategyImpl(machineStrategies));
@@ -380,7 +393,7 @@ public class LlvmLoweringPass extends Pass {
         .forEach(pseudo -> {
           for (var strategy : pseudoStrategies) {
             var label = labelledPseudoInstructions.reverse().get(pseudo);
-            if (!strategy.isApplicable(label)) {
+            if (!strategy.isApplicable(label, pseudo)) {
               continue;
             }
 

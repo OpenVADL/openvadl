@@ -52,6 +52,12 @@ public abstract class LlvmLoweringRecord {
   }
 
   /**
+   * Apply the {@link #info} with the given parameter and return a new instance.
+   */
+  public abstract LlvmLoweringRecord withInfo(
+      LlvmLoweringPass.BaseInstructionInfo baseInstructionInfo);
+
+  /**
    * Represents a {@link LlvmLoweringRecord} for {@link Instruction}.
    */
   public static class Machine extends LlvmLoweringRecord {
@@ -70,6 +76,11 @@ public abstract class LlvmLoweringRecord {
 
     public Instruction instruction() {
       return instructionRef;
+    }
+
+    @Override
+    public LlvmLoweringRecord withInfo(LlvmLoweringPass.BaseInstructionInfo baseInstructionInfo) {
+      return new Machine(instructionRef, baseInstructionInfo, patterns());
     }
   }
 
@@ -94,6 +105,10 @@ public abstract class LlvmLoweringRecord {
       return instAliases;
     }
 
+    @Override
+    public LlvmLoweringRecord withInfo(LlvmLoweringPass.BaseInstructionInfo baseInstructionInfo) {
+      return new Pseudo(baseInstructionInfo, patterns(), instAliases);
+    }
   }
 
   /**
@@ -106,6 +121,11 @@ public abstract class LlvmLoweringRecord {
      */
     public Compiler(LlvmLoweringPass.BaseInstructionInfo info) {
       super(info, Collections.emptyList());
+    }
+
+    @Override
+    public LlvmLoweringRecord withInfo(LlvmLoweringPass.BaseInstructionInfo baseInstructionInfo) {
+      return new Compiler(baseInstructionInfo);
     }
   }
 }

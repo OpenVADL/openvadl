@@ -60,7 +60,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -84,7 +84,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -108,7 +108,7 @@ public class TypecheckerAbiTest {
           // pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -134,7 +134,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           // pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -160,7 +160,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          // pseudo non pic address load instruction = NOP
+          // pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -177,7 +177,7 @@ public class TypecheckerAbiTest {
     var typechecker = new TypeChecker();
     var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No NON_PIC_ADDRESS_LOAD was declared but one was expected",
+    Assertions.assertEquals("No ABSOLUTE_ADDRESS_LOAD was declared but one was expected",
         throwable.reason);
   }
 
@@ -187,7 +187,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           // stack pointer = zero
           return address = zero
@@ -214,7 +214,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = [ zero, zero]
           return address = zero
@@ -241,7 +241,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = [ zero, zero]
@@ -268,7 +268,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -295,7 +295,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -322,7 +322,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -349,7 +349,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -376,7 +376,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -403,7 +403,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -430,7 +430,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -457,7 +457,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -484,7 +484,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -511,7 +511,7 @@ public class TypecheckerAbiTest {
           pseudo return instruction = NOP
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -541,7 +541,7 @@ public class TypecheckerAbiTest {
           pseudo call instruction = NOP
           pseudo local address load instruction = NOP
           pseudo local address load instruction = NOP
-          pseudo non pic address load instruction = NOP
+          pseudo absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero

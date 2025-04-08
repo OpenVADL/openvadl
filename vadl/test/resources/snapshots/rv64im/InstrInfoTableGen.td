@@ -151,6 +151,8 @@ def vadl_imm64 : ImmLeaf<i64, [{ return true; }]>, Operand<i64>
 
 }
 
+def vadl_lga : SDNode<"processornamevalueISD::LGA", SDTLoad, [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+
 
 
 
@@ -3824,6 +3826,90 @@ def : Pat<(br bb:$imm),
         (J RV3264I_Jtype_immAsLabel:$imm)>;
 
 
+def LA : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 0;
+let mayStore      = 0;
+let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
+def LGA_32 : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 0;
+let mayStore      = 0;
+let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
+def LGA_64 : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs X:$rd );
+let InOperandList = ( ins bare_symbol:$symbol );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 1;
+let mayStore      = 0;
+let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
 def LI : Instruction
 {
 let Namespace = "processorNameValue";
@@ -4104,62 +4190,6 @@ let Defs = [  ];
 
 
 
-def nonPicLA : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins bare_symbol:$symbol );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 0;
-let mayLoad       = 0;
-let mayStore      = 0;
-let isBarrier     = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
-
-
-def picLA : Instruction
-{
-let Namespace = "processorNameValue";
-
-let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins bare_symbol:$symbol );
-
-let isTerminator  = 0;
-let isBranch      = 0;
-let isCall        = 0;
-let isReturn      = 0;
-let isPseudo      = 1;
-let isCodeGenOnly = 0;
-let mayLoad       = 0;
-let mayStore      = 0;
-let isBarrier     = 0;
-let isReMaterializable = 0;
-let isAsCheapAsAMove   = 0;
-
-let Constraints = "";
-let AddedComplexity = 0;
-
-let Uses = [  ];
-let Defs = [  ];
-}
-
-
-
 
 
 
@@ -4328,6 +4358,7 @@ let AddedComplexity = 0;
 let Uses = [  ];
 let Defs = [  ];
 }
+
 
 
 
@@ -4851,3 +4882,37 @@ def : Pat<(xor X:$rs1, RV3264I_Itype_immAsInt64:$imm),
 
 def : Pat<(br bb:$imm),
         (J RV3264I_Jtype_immAsLabel:$imm)>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def : Pat<(iPTR (vadl_lga tglobaladdr:$in)), (LGA_64 tglobaladdr:$in)>;

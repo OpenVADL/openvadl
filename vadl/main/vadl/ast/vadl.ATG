@@ -89,6 +89,7 @@ TOKENS
   T_UN_OP       = "UnOp".
   T_VAL         = "Val".
 
+  ABSOLUTE     = "absolute".
   ADDRESS      = "address".
   ADJUSTMENT   = "adjustment".
   ALIAS        = "alias".
@@ -884,8 +885,8 @@ PRODUCTIONS
     RETURN INSTRUCTION                                       (. kind = AbiPseudoInstructionDefinition.Kind.RETURN; .)
     | CALL INSTRUCTION                                       (. kind = AbiPseudoInstructionDefinition.Kind.CALL; .)
     | LOCAL ADDRESS LOAD INSTRUCTION                         (. kind = AbiPseudoInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD; .)
-    | PIC ADDRESS LOAD INSTRUCTION                           (. kind = AbiPseudoInstructionDefinition.Kind.PIC_ADDRESS_LOAD; .)
-    | NON PIC ADDRESS LOAD INSTRUCTION                       (. kind = AbiPseudoInstructionDefinition.Kind.NON_PIC_ADDRESS_LOAD; .)
+    | GLOBAL ADDRESS LOAD INSTRUCTION                        (. kind = AbiPseudoInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD; .)
+    | ABSOLUTE ADDRESS LOAD INSTRUCTION                      (. kind = AbiPseudoInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD; .)
   )
   SYM_EQ
   identifier<out Identifier id>  (. def = new AbiPseudoInstructionDefinition(kind, id, start.join(loc())); .)

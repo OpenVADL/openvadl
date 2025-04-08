@@ -66,8 +66,8 @@ application binary interface ABI for RV64IM = {
    pseudo return instruction = RET
    pseudo call instruction = CALL
    pseudo local address load instruction = LLA
-   pseudo pic address load instruction = picLA
-   pseudo non pic address load instruction = nonPicLA
+   pseudo global address load instruction = LGA_64
+   pseudo absolute address load instruction = LA
 
    return value = a{0..1}
    function argument = a{0..1}

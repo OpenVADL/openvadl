@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
-import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.PseudoInstructionLabel;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
@@ -52,7 +51,8 @@ public abstract class LlvmPseudoInstructionLowerStrategy
   /**
    * Checks whether the given {@link PseudoInstruction} is lowerable with this strategy.
    */
-  public boolean isApplicable(@Nullable PseudoInstructionLabel pseudoInstructionLabel) {
+  public boolean isApplicable(@Nullable PseudoInstructionLabel pseudoInstructionLabel,
+                              PseudoInstruction pseudoInstruction) {
     if (pseudoInstructionLabel == null) {
       return false;
     }
