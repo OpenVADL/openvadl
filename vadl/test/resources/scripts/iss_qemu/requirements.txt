@@ -1,0 +1,3 @@
+pyyaml
+qemu.qmp
+tomli

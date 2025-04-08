@@ -16,24 +16,14 @@
 
 package vadl.iss;
 
-import static vadl.iss.IssTestUtils.writeTestSuiteConfigYaml;
-import static vadl.iss.IssTestUtils.yamlToTestResults;
-
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.DynamicTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.shaded.com.google.common.collect.Streams;
-import org.testcontainers.utility.MountableFile;
+import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 import vadl.DockerExecutionTest;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrders;
@@ -82,20 +72,6 @@ public abstract class QemuIssTest extends DockerExecutionTest {
   }
 
   /**
-   * This will run the given specification and produces a working docker image that contains
-   * a compiled QEMU CAS from the specification.
-   *
-   * <p>If the CAS specification was already build by some other test, the image is reused.</p>
-   *
-   * @param specPath path to VADL specification in testSource
-   * @return the image containing the generated QEMU ISS
-   */
-  protected ImageFromDockerfile generateCasSimulator(String specPath) {
-    var config = IssConfiguration.from(getConfiguration(false), true);
-    return generateSimulator(casImageCache, specPath, config);
-  }
-
-  /**
    * This will generate the simulator image if it is not already contained in the provided
    * cache.
    */
@@ -114,95 +90,11 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         }
 
         // generate iss image from the output path
-        return getIssImage(issOutputPath, configuration);
+        return getIssImage(issOutputPath, configuration, "riscv64-softmmu");
       } catch (IOException | DuplicatedPassKeyException e) {
         throw new RuntimeException(e);
       }
     });
-  }
-
-  /**
-   * Runs a QEMU instr test on the given image with the given test cases.
-   *
-   * @param image     the QEMU image to run the tests on
-   * @param testCases the test cases passed to the container which runs the tests
-   * @return the test result as DynamicTests as integration with JUnit
-   */
-  protected Stream<DynamicTest> runQemuInstrTests(ImageFromDockerfile image,
-                                                  Collection<IssTestUtils.TestSpec> testCases)
-      throws IOException {
-    // resolve file that contains all test specifications.
-    // it is a yaml file that gets mapped to `/work/test-suite.yaml` of the container.
-    var testSuiteYaml = getTestDirectory().resolve("test-suite.yaml").toFile();
-    var resultsYamlPath = getTestDirectory().resolve("results.yaml").toAbsolutePath();
-    // write the test cases to this yaml file
-    writeTestSuiteConfigYaml(testCases, testSuiteYaml);
-    // run the container and copy the test cases into the container
-    // and after execution, copy the results from the container
-    runContainer(image, container -> container
-            .withCopyToContainer(MountableFile.forHostPath(testSuiteYaml.getPath()),
-                "/work/test-suite.yaml"),
-        container -> container
-            .copyFileFromContainer("/work/results.yaml", resultsYamlPath.toString())
-    );
-
-
-    List<IssTestUtils.TestResult> testResults = List.of();
-
-    try {
-      // parse the results yaml file into a list of TestResults
-      testResults = yamlToTestResults(resultsYamlPath.toFile());
-    } catch (Exception e) {
-      Assertions.fail("Failed to load test results.", e);
-    }
-
-    // just for fast access later
-    var specIds = testResults.stream()
-        .map(IssTestUtils.TestResult::id)
-        .collect(Collectors.toSet());
-    var testCaseMap = testCases.stream()
-        .collect(Collectors.toMap(IssTestUtils.TestSpec::id, s -> s));
-
-    // produce DynamicTests for all parsed test results.
-    // these will be listed in the JUnit test report
-    var normalTestResultDynamicTests = testResults.stream()
-        .map(e -> DynamicTest.dynamicTest(e.id(),
-            () -> {
-              var testSpec = testCaseMap.get(e.id());
-              var success = IssTestUtils.TestResult.Status.PASS == e.status();
-              System.out.println("----------------");
-              System.out.println("Test " + e.id());
-              System.out.println("ASM: \n" + testSpec.asmCore());
-              System.out.println("\nRan stages: " + e.completedStages());
-              System.out.println("Register tests: \n" + e.regTests());
-              System.out.println("Duration: " + e.duration());
-
-              if (!success) {
-                for (var log : e.logs().entrySet()) {
-                  System.out.println("Logs of " + log.getKey() + ": ");
-                  log.getValue().stream().map((l) -> "- " + l)
-                      .forEach(System.out::println);
-                }
-              }
-              System.out.println("----------------");
-
-              Assertions.assertEquals(IssTestUtils.TestResult.Status.PASS, e.status(),
-                  String.join(",\n\t", e.errors()));
-            }
-        ));
-
-    // produces dynamic tests for all cases where no result was found
-    var notFoundResultDynamicTests = testCases.stream()
-        .filter(c -> !specIds.contains(c.id()))
-        .map(c -> DynamicTest.dynamicTest("Find result of " + c.id(),
-            () -> Assertions.fail("No result found for test " + c.id())
-        ));
-
-    // return stream of all dynamic test cases
-    return Streams.concat(
-        normalTestResultDynamicTests,
-        notFoundResultDynamicTests
-    );
   }
 
 
@@ -210,10 +102,13 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * This will produce a new image for the given generated iss sources.
    *
    * @param generatedIssSources the path to the generated ISS/QEMU sources.
+   * @param referenceTarget     The reference target that should also be compiled
+   *                            (e.g. riscv64-softmmu)
    * @return a new image that builds the ISS at build time.
    */
   private ImageFromDockerfile getIssImage(Path generatedIssSources,
-                                          IssConfiguration configuration
+                                          IssConfiguration configuration,
+                                          @Nullable String referenceTarget
   ) {
 
     // get redis cache for faster compilation using sccache
@@ -222,6 +117,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     var targetName = configuration.targetName().toLowerCase();
     var softmmuTarget = targetName + "-softmmu";
     var qemuBin = "qemu-system-" + targetName;
+    var refTarget = referenceTarget == null ? "" : "," + referenceTarget;
 
     var dockerImage = new ImageFromDockerfile()
         .withDockerfileFromBuilder(d -> {
@@ -234,7 +130,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
               d.workDir("/qemu/build");
               // configure qemu with the new target from the specification
-              d.run("../configure --cc='" + cc + "' --target-list=" + softmmuTarget);
+              d.run("../configure --cc='" + cc + "' --target-list=" + softmmuTarget + refTarget);
               // setup redis cache endpoint environment variablef
               redisCache.setupEnv(d);
               // build qemu with all cpu cores and print if cache was used.
@@ -249,7 +145,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
               d.copy("/scripts", "/scripts");
               d.run("ls /scripts");
-              d.cmd("python3 /scripts/bare_metal_runner.py /qemu/build/" + qemuBin);
+              d.cmd("python3 /scripts/main.py test-suite.yaml");
 
               d.build();
             }

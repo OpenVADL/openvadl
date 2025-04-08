@@ -25,7 +25,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -34,38 +33,50 @@ public class IssTestUtils {
 
   private static final Logger log = LoggerFactory.getLogger(IssTestUtils.class);
 
-  protected record TestSpec(
+  public record TestCase(
       String id,
-      Map<String, String> regTests,
-      String asmCore,
-      @Nullable String referenceExec,
-      @Nullable List<String> referenceRegs
+      String asmCore
   ) {
   }
 
-  protected record TestResult(
+  public record TestConfig(
+      // { path: <str>, args: <str> }
+      Map<String, String> sim,
+      // { path: <str>, args: <str> }
+      Map<String, String> ref,
+      // { path: <str>, args: <str> }
+      Map<String, String> compiler,
+      String statePlugin,
+      Collection<TestCase> tests,
+      Map<String, String> gdbRegMap
+  ) {
+  }
+
+  public record TestResult(
       String id,
       TestResult.Status status,
       List<TestResult.Stage> completedStages,
       List<TestResult.RegTestResult> regTests,
-      Map<String, List<String>> logs,
+      Map<String, List<String>> simLogs,
+      Map<String, List<String>> refLogs,
       List<String> errors,
       String duration
   ) {
 
-    protected enum Status {
+    public enum Status {
       PASS,
       FAIL
     }
 
-    protected enum Stage {
+    public enum Stage {
       COMPILE,
       LINK,
       RUN,
-      RUN_REF
+      RUN_REF,
+      COMPARE
     }
 
-    protected record RegTestResult(
+    public record RegTestResult(
         String reg,
         String expected,
         String actual
@@ -75,33 +86,29 @@ public class IssTestUtils {
 
   /**
    * Writes the test suite configuration YAML file.
-   *
-   * @param specs The collection of test specifications.
-   * @param dest  The destination file to write the YAML configuration.
-   * @throws IOException if an I/O error occurs.
    */
-  protected static void writeTestSuiteConfigYaml(Collection<TestSpec> specs,
-                                                 File dest)
+  public static void writeTestSuiteConfigYaml(TestConfig config,
+                                              File dest)
       throws IOException {
-    var specsYaml = specs.stream().map(spec -> {
+
+    var testsYaml = config.tests.stream().map(spec -> {
       var specYaml = new LinkedHashMap<String, Object>();
       specYaml.put("id", spec.id);
-      specYaml.put("reg_tests", spec.regTests);
       specYaml.put("asm_core", spec.asmCore);
-      if (spec.referenceExec != null) {
-        specYaml.put("reference_exec", spec.referenceExec);
-      }
-      if (spec.referenceRegs != null) {
-        specYaml.put("reference_regs", spec.referenceRegs);
-      }
       return specYaml;
     }).toList();
 
-    var yamlSuite = new LinkedHashMap<>();
-    yamlSuite.put("tests", specsYaml);
+    var conigYaml = new LinkedHashMap<String, Object>();
+    conigYaml.put("sim", config.sim);
+    conigYaml.put("ref", config.ref);
+    conigYaml.put("compiler", config.compiler);
+    conigYaml.put("stateplugin", config.statePlugin);
+    conigYaml.put("tests", testsYaml);
+    conigYaml.put("gdbregmap", config.gdbRegMap());
+
     Yaml yaml = new Yaml();
     try (var writer = new FileWriter(dest)) {
-      yaml.dump(yamlSuite, writer);
+      yaml.dump(conigYaml, writer);
     }
   }
 
@@ -112,48 +119,45 @@ public class IssTestUtils {
    * @return The converted TestResult object.
    * @throws IOException if an I/O error occurs.
    */
-  protected static List<TestResult> yamlToTestResults(File yamlFile)
-      throws IOException {
+  public static TestResult yamlToTestResult(File yamlFile) {
     try (var reader = new FileInputStream(yamlFile)) {
       Yaml yaml = new Yaml();
+
       // load all results
-      List<Object> results = yaml.load(reader);
+      Map<String, Object> result = yaml.load(reader);
 
       try {
-        return results.stream()
-            // map yaml to test result
-            .map(r -> {
-              Map<String, Object> data = (Map<String, Object>) r;
-              Map<String, Object> result = (Map<String, Object>) data.get("result");
+        String id = result.get("id").toString();
+        // Assuming the YAML structure matches the fields in TestResult
+        TestResult.Status status =
+            TestResult.Status.valueOf((String) result.get("status"));
+        List<TestResult.Stage> completedStages =
+            ((List<String>) result.get("completedStages")).stream()
+                .map(e -> TestResult.Stage.valueOf(e))
+                .toList();
+        List<String> errors = (List<String>) result.get("errors");
+        String duration = (String) result.get("duration");
+        List<TestResult.RegTestResult> regTests =
+            ((Map<String, Object>) result.get("regTests")).entrySet()
+                .stream().map(e -> {
+                  var val = (Map<String, String>) e.getValue();
+                  return new TestResult.RegTestResult(e.getKey(),
+                      Objects.toString(val.get("exp")),
+                      Objects.toString(val.get("act")));
+                }).toList();
 
-              String id = data.get("id").toString();
-              // Assuming the YAML structure matches the fields in TestResult
-              TestResult.Status status =
-                  TestResult.Status.valueOf((String) result.get("status"));
-              List<TestResult.Stage> completedStages =
-                  ((List<String>) result.get("completedStages")).stream()
-                      .map(e -> TestResult.Stage.valueOf(e))
-                      .toList();
-              List<String> errors = (List<String>) result.get("errors");
-              Map<String, List<String>> logs = (Map<String, List<String>>) result.get("qemuLog");
-              String duration = (String) result.get("duration");
-              List<TestResult.RegTestResult> regTests =
-                  ((Map<String, Object>) result.get("regTests")).entrySet()
-                      .stream().map(e -> {
-                        var val = (Map<String, String>) e.getValue();
-                        return new TestResult.RegTestResult(e.getKey(),
-                            Objects.toString(val.get("expected")),
-                            Objects.toString(val.get("actual")));
-                      }).toList();
+        Map<String, List<String>> simLogs = (Map<String, List<String>>) result.get("simLogs");
+        Map<String, List<String>> refLogs = (Map<String, List<String>>) result.get("refLogs");
 
-              return new TestResult(id, status, completedStages, regTests, logs, errors,
-                  duration);
-            })
-            .toList();
+        return new TestResult(id, status, completedStages, regTests, simLogs, refLogs, errors,
+            duration);
+
       } catch (Exception e) {
-        log.error("Failed to parse file, result was\n {}", results);
-        throw e;
+        log.error("Failed to parse file, result was\n {}", result);
+        throw new RuntimeException(e);
       }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 

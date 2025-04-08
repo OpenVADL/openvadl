@@ -136,8 +136,9 @@ micro processor CPU implements RV64IM with ABI = {
     // store start_addr in memory (0x80000000)
     MEM<4>(0x1018 as Bits<64>) := 0x80000000  // lo32(start_addr)
     MEM<4>(0x101c as Bits<64>) := 0x00000000  // hi32(start_addr)
-    // we do not yet support a fdt
-    MEM<4>(0x1020 as Bits<64>) := 0x00000000  // lo32(fdt_addr)
+    // we do not yet support a fdt, but we set the address,
+    // to keep the registers consistent with upstream
+    MEM<4>(0x1020 as Bits<64>) := 0x87e00000  // lo32(fdt_addr)
     MEM<4>(0x1024 as Bits<64>) := 0x00000000  // hi32(fdt_addr)
   }
 

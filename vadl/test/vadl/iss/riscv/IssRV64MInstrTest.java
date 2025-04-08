@@ -14,32 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.iss;
+package vadl.iss.riscv;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.iss.AsmTestBuilder;
+import vadl.iss.IssTestUtils;
 
 /**
  * Tests the RV64I instructions set.
  */
-public class IssRV64MInstrTest extends IssInstrTest {
+public class IssRV64MInstrTest extends AbstractIssRiscv64InstrTest {
 
 
   @Override
-  int getTestPerInstruction() {
+  public int getTestPerInstruction() {
     return 50;
   }
 
   @Override
-  String getVadlSpec() {
+  public String getVadlSpec() {
     return "sys/risc-v/rv64im.vadl";
   }
 
-  AsmTestBuilder getBuilder(String testNamePrefix, int id) {
-    return new RV64ITestBuilder(testNamePrefix + "_" + id);
+  public AsmTestBuilder getBuilder(String testNamePrefix, int id) {
+    return new RV64IMTestBuilder(testNamePrefix + "_" + id);
   }
 
   @TestFactory
@@ -158,11 +160,11 @@ public class IssRV64MInstrTest extends IssInstrTest {
       b.fillReg(regSrc2, 64);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
-      return b.toTestSpec(regSrc1, regSrc2, regDest);
+      return b.toTestCase(regSrc1, regSrc2, regDest);
     });
   }
 
-  private IssTestUtils.TestSpec customBinaryRegRegInstr(String instr, BigInteger lhs,
+  private IssTestUtils.TestCase customBinaryRegRegInstr(String instr, BigInteger lhs,
                                                         BigInteger rhs,
                                                         AsmTestBuilder b) {
     var regSrc1 = b.anyTempReg().sample();
@@ -171,7 +173,7 @@ public class IssRV64MInstrTest extends IssInstrTest {
     b.fillReg(regSrc2, rhs);
     var regDest = b.anyTempReg().sample();
     b.add("%s %s, %s, %s", instr, regDest, regSrc1, regSrc2);
-    return b.toTestSpec(regSrc1, regSrc2, regDest);
+    return b.toTestCase(regSrc1, regSrc2, regDest);
   }
 
   private Stream<DynamicTest> testDivRemByCustom(int runs, String instr, BigInteger divisor,
@@ -185,7 +187,7 @@ public class IssRV64MInstrTest extends IssInstrTest {
       b.fillReg(regSrc2, divisor);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instr, regDest, regSrc1, regSrc2);
-      return b.toTestSpec(regSrc1, regSrc2, regDest);
+      return b.toTestCase(regSrc1, regSrc2, regDest);
     });
   }
 
@@ -202,7 +204,7 @@ public class IssRV64MInstrTest extends IssInstrTest {
       b.fillReg(regSrc2, 32);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
-      return b.toTestSpec(regSrc1, regSrc2, regDest);
+      return b.toTestCase(regSrc1, regSrc2, regDest);
     });
   }
 
