@@ -7,6 +7,7 @@ on:
       - "master"
     paths:
       - 'docs/**'
+      - '.github/workflows/publish-docs.yml'
 
 
 permissions:
@@ -25,8 +26,6 @@ jobs:
       options: --user 998 # run as a github-runner user, otherwise it will create things as root
     name: Build refman and deploy
     steps:
-      - name: Install Git and Tar
-        run: apk add --no-cache git tar
       - uses: actions/checkout@v4
         with:
           submodules: true
