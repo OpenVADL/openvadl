@@ -449,6 +449,10 @@ public class PassOrders {
         // target/gen-arch/gdbsub.c
         .add(new EmitIssGdbStubPass(config))
 
+        // plugin rendering
+        .add(issDefault("/tests/tcg/plugins/endstate.c", config))
+        .add(issDefault("/tests/tcg/plugins/meson.build", config))
+
         // hardware rendering
         .add(issDefault("/hw/Kconfig", config))
         .add(issDefault("/hw/meson.build", config))
