@@ -572,7 +572,7 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
           report_fatal_error("Unsupported position independent local address loading");
           [/]
           [# th:if="${hasLocalAddressLoad == true}" ]
-          return DAG.getNode([(${namespace})]::[(${localAddressLoadInstruction})], DL, Ty, Addr);
+          return SDValue(DAG.getMachineNode([(${namespace})]::[(${localAddressLoadInstruction})], DL, Ty, Addr), 0);
           [/]
         }
 
