@@ -151,6 +151,8 @@ def vadl_imm64 : ImmLeaf<i64, [{ return true; }]>, Operand<i64>
 
 }
 
+def vadl_lga : SDNode<"[(${namespace})]ISD::LGA", SDTLoad, [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+
 [#th:block th:each="registerFile : ${registerFiles}" ]
 [#th:block th:if="${registerFile.resultWidth == 32}"]
 def SelectCC_[(${registerFile.name})]: Instruction {
@@ -231,4 +233,8 @@ def : Pat<([(${stackPointerType})] AddrFI:$rs1),
 
 [# th:each="pattern : ${patterns}" ]
 [(${pattern})]
+[/]
+
+[# th:if="${lga != ''}" ]
+def : Pat<(iPTR (vadl_lga tglobaladdr:$in)), ([(${lga})] tglobaladdr:$in)>;
 [/]
