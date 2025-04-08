@@ -568,14 +568,15 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
         SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
         if (IsLocal)
         {
-          [# th:if="${hasPicLA == false}" ]
+          [# th:if="${hasLocalAddressLoad == false}" ]
           report_fatal_error("Unsupported position independent local address loading");
           [/]
-          [# th:if="${hasPicLA == true}" ]
-          return DAG.getNode([(${namespace})]::[(${picLA})], DL, Ty, Addr);
+          [# th:if="${hasLocalAddressLoad == true}" ]
+          return DAG.getNode([(${namespace})]::[(${localAddressLoadInstruction})], DL, Ty, Addr);
           [/]
         }
 
+        [# th:if="${hasGlobalAddressLoad == true}" ]
         MachineFunction &MF = DAG.getMachineFunction();
         MachineMemOperand *MemOp = MF.getMachineMemOperand(
             MachinePointerInfo::getGOT(MF),
@@ -585,6 +586,10 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
 
         return DAG.getMemIntrinsicNode([(${namespace})]ISD::LGA, DL, DAG.getVTList(Ty, MVT::Other),
             {DAG.getEntryNode(), Addr}, Ty, MemOp);
+        [/]
+        [# th:if="${hasGlobalAddressLoad == false}" ]
+        report_fatal_error("Relative address addressing is not supported");
+        [/]
     }
 
     // address does not rely on PC
@@ -597,7 +602,7 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
     case CodeModel::Small:
     {
         SDValue Addr = getTargetNode(N, DL, Ty, DAG, 0);
-        return SDValue(DAG.getMachineNode([(${namespace})]::[(${nonPicLA})], DL, Ty, Addr), 0);
+        return SDValue(DAG.getMachineNode([(${namespace})]::[(${absoluteAddressLoadInstruction})], DL, Ty, Addr), 0);
     }
     }
 }

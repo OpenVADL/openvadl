@@ -416,19 +416,19 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
   assembly BGTZ = (mnemonic, " ", register( rs ), ",", decimal( offset ))
 
-  pseudo instruction nonPicLA( rd: Index, symbol: Bits<32> ) =
+  pseudo instruction LA( rd: Index, symbol: Bits<32> ) =
   {
       LUI { rd = rd, imm = hi( symbol ) }
       ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
   }
-  assembly nonPicLA = (mnemonic, " ", register(rd), hex( symbol ))
+  assembly LA = (mnemonic, " ", register(rd), hex( symbol ))
 
-  pseudo instruction picLA( rd: Index, symbol: Bits<32> ) =
+  pseudo instruction LGA( rd: Index, symbol: Bits<32> ) =
   {
       LUI { rd = rd, imm = got_hi( symbol ) }
       ADDI { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
   }
-  assembly picLA = (mnemonic, " ", register(rd), hex( symbol ))
+  assembly LGA = (mnemonic, " ", register(rd), hex( symbol ))
 
   pseudo instruction LLA( rd: Index, symbol: Bits<32> ) =
   {

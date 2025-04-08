@@ -101,7 +101,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         GenerateTableGenRegistersPass.class)).registerClasses();
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
     var stackPointer = renderRegister(abi.stackPointer().registerFile(), abi.stackPointer().addr());
-    var nonPicLA = abi.nonPicAddressLoad();
+    var absoluteAddressLoadInstruction = abi.absoluteAddressLoad();
     var labelledMachineInstructions = ensureNonNull(
         (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
@@ -132,9 +132,11 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("stackPointerBitWidth", abi.stackPointer().registerFile().resultType().bitWidth());
     map.put("stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
-    map.put("nonPicLA", nonPicLA.simpleName());
-    map.put("hasPicLA", abi.picAddressLoad().isPresent());
-    map.put("picLA", abi.picAddressLoad().map(Definition::simpleName).orElse(""));
+    map.put("absoluteAddressLoadInstruction", absoluteAddressLoadInstruction.simpleName());
+    map.put("hasLocalAddressLoad", abi.localAddressLoad().isPresent());
+    map.put("hasGlobalAddressLoad", abi.globalAddressLoad().isPresent());
+    map.put("localAddressLoadInstruction",
+        abi.localAddressLoad().map(Definition::simpleName).orElse(""));
     map.put("hasCMove32", hasCMove32);
     map.put("hasCMove64", hasCMove64);
     map.put("conditionalMove", conditionalMove);

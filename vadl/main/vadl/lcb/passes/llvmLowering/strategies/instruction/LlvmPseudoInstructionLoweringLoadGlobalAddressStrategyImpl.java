@@ -59,7 +59,7 @@ public class LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl
   @Override
   public boolean isApplicable(@Nullable PseudoInstructionLabel pseudoInstructionLabel,
                               PseudoInstruction pseudoInstruction) {
-    return abi.picAddressLoad().isPresent() && abi.picAddressLoad().get() == pseudoInstruction;
+    return abi.globalAddressLoad().isPresent() && abi.globalAddressLoad().get() == pseudoInstruction;
   }
 
   @Override
