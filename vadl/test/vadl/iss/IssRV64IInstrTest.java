@@ -25,17 +25,14 @@ import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Tests the RV64I instructions set.
  */
-public class IssRV64IInstrTest extends IssInstrTest {
+public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
 
   private static final String VADL_SPEC = "sys/risc-v/rv64im.vadl";
   private static final int TESTS_PER_INSTRUCTION = 50;
-  private static final Logger log = LoggerFactory.getLogger(IssRV64MInstrTest.class);
 
   @Override
   int getTestPerInstruction() {
@@ -62,7 +59,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       b.fillReg(regSrc2, 64);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
-      return b.toTestSpec(regSrc1, regSrc2, regDest);
+      return b.toTestCase(regSrc1, regSrc2, regDest);
     });
   }
 
@@ -75,7 +72,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       var imm = arbitrarySignedInt(12).sample();
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc, imm);
-      return b.toTestSpec(regSrc, regDest);
+      return b.toTestCase(regSrc, regDest);
     });
   }
 
@@ -88,7 +85,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       var shamt = arbitraryUnsignedInt(6).sample();
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc, shamt);
-      return b.toTestSpec(regSrc, regDest);
+      return b.toTestCase(regSrc, regDest);
     });
   }
 
@@ -100,11 +97,11 @@ public class IssRV64IInstrTest extends IssInstrTest {
       var storeReg = b.anyTempReg().sample();
       b.fillReg(storeReg, dataSize);
       var addrReg = b.anyTempReg().sample();
-      b.fillReg(addrReg, BigInteger.valueOf(0x80000000L), BigInteger.valueOf(0x800F0000L));
+      b.fillReg(addrReg, BigInteger.valueOf(0x80000100L), BigInteger.valueOf(0x800F0000L));
       b.add("%s %s, 0(%s)", storeInstruction, storeReg, addrReg);
       var loadReg = b.anyTempReg().sample();
       b.add("%s %s, 0(%s)", instruction, loadReg, addrReg);
-      return b.toTestSpec(storeReg, loadReg, addrReg);
+      return b.toTestCase(storeReg, loadReg, addrReg);
     });
   }
 
@@ -116,12 +113,12 @@ public class IssRV64IInstrTest extends IssInstrTest {
       var storeReg = b.anyTempReg().sample();
       b.fillReg(storeReg, dataSize);
       var addrReg = b.anyTempReg().sample();
-      b.fillReg(addrReg, BigInteger.valueOf(0x80000000L), BigInteger.valueOf(0x800F0000L));
+      b.fillReg(addrReg, BigInteger.valueOf(0x80000100L), BigInteger.valueOf(0x800F0000L));
       b.add("%s %s, 0(%s)", instruction, storeReg, addrReg);
       var loadReg = b.anyTempReg()
           .filter(reg -> !reg.equals(storeReg)).sample();
       b.add("%s %s, 0(%s)", loadInstruction, loadReg, addrReg);
-      return b.toTestSpec(storeReg, loadReg, addrReg);
+      return b.toTestCase(storeReg, loadReg, addrReg);
     });
   }
 
@@ -150,7 +147,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       b.addLabel(branchLabel);
       b.add("addi %s, x0, 2", destReg);
       b.addLabel(endLabel);
-      return b.toTestSpec(rs1, rs2, destReg);
+      return b.toTestCase(rs1, rs2, destReg);
     });
   }
 
@@ -238,7 +235,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       b.addLabel(branchLabel);
       b.add("addi %s, x0, 2", destReg);
       b.addLabel(endLabel);
-      return b.toTestSpec(rs1, rs2, destReg);
+      return b.toTestCase(rs1, rs2, destReg);
     });
   }
 
@@ -434,7 +431,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       b.fillReg(regSrc2, arbitraryUnsignedInt(5).sample()); // 5 bits for 32-bit shift
       var regDest = b.anyTempReg().sample();
       b.add("sllw %s, %s, %s", regDest, regSrc1, regSrc2);
-      return b.toTestSpec(regSrc1, regSrc2, regDest);
+      return b.toTestCase(regSrc1, regSrc2, regDest);
     });
   }
 
@@ -448,7 +445,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       b.fillReg(regSrc2, arbitraryUnsignedInt(5).sample());
       var regDest = b.anyTempReg().sample();
       b.add("srlw %s, %s, %s", regDest, regSrc1, regSrc2);
-      return b.toTestSpec(regSrc1, regSrc2, regDest);
+      return b.toTestCase(regSrc1, regSrc2, regDest);
     });
   }
 
@@ -462,7 +459,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       b.fillReg(regSrc2, arbitraryUnsignedInt(5).sample());
       var regDest = b.anyTempReg().sample();
       b.add("sraw %s, %s, %s", regDest, regSrc1, regSrc2);
-      return b.toTestSpec(regSrc1, regSrc2, regDest);
+      return b.toTestCase(regSrc1, regSrc2, regDest);
     });
   }
 
@@ -475,7 +472,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       var shamt = arbitraryUnsignedInt(5).sample();
       var regDest = b.anyTempReg().sample();
       b.add("slliw %s, %s, %s", regDest, regSrc, shamt);
-      return b.toTestSpec(regSrc, regDest);
+      return b.toTestCase(regSrc, regDest);
     });
   }
 
@@ -488,7 +485,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       var shamt = arbitraryUnsignedInt(5).sample();
       var regDest = b.anyTempReg().sample();
       b.add("srliw %s, %s, %s", regDest, regSrc, shamt);
-      return b.toTestSpec(regSrc, regDest);
+      return b.toTestCase(regSrc, regDest);
     });
   }
 
@@ -501,7 +498,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       var shamt = arbitraryUnsignedInt(5).sample();
       var regDest = b.anyTempReg().sample();
       b.add("sraiw %s, %s, %s", regDest, regSrc, shamt);
-      return b.toTestSpec(regSrc, regDest);
+      return b.toTestCase(regSrc, regDest);
     });
   }
 
@@ -515,7 +512,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       var destReg = b.anyTempReg().sample();
       var value = arbitraryUnsignedInt(20).sample();
       b.add("lui %s, %s", destReg, value);
-      return b.toTestSpec(destReg);
+      return b.toTestCase(destReg);
     });
   }
 
@@ -526,7 +523,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       var rd = b.anyTempReg().sample();
       var imm = arbitraryUnsignedInt(20).sample();
       b.add("auipc %s, %s", rd, imm);
-      return b.toTestSpec(rd);
+      return b.toTestCase(rd);
     });
   }
 
@@ -543,7 +540,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       b.addLabel(targetLabel);
       b.add("addi %s, x0, 1", rd);
       b.addLabel(endLabel);
-      return b.toTestSpec(rd);
+      return b.toTestCase(rd);
     });
   }
 
@@ -563,7 +560,7 @@ public class IssRV64IInstrTest extends IssInstrTest {
       b.addLabel(targetLabel);
       b.add("addi %s, x0, 1", rd);
       b.addLabel(endLabel);
-      return b.toTestSpec(rd, rs1);
+      return b.toTestCase(rd, rs1);
     });
   }
 

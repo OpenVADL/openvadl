@@ -48,5 +48,7 @@ class TestResult:
     reg_tests: RegResultType
     errors: [str]
     duration: str
-    qemu_log: dict[str, list[str]] = field(default_factory=dict)
+    # { sim|ref: stderr|stdout: list[lines] }
+    sim_logs: dict[str, dict[str, list[str]]] = field(default_factory=dict)
+    ref_logs: dict[str, dict[str, list[str]]] = field(default_factory=dict)
     full_asm: str = "not set"

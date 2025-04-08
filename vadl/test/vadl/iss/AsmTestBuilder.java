@@ -22,7 +22,6 @@ import com.google.errorprone.annotations.FormatMethod;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import net.jqwik.api.Arbitrary;
 
 public abstract class AsmTestBuilder {
@@ -33,7 +32,6 @@ public abstract class AsmTestBuilder {
   public AsmTestBuilder(String testId) {
     this.testId = testId;
   }
-
 
   abstract Arbitrary<String> anyTempReg();
 
@@ -65,45 +63,17 @@ public abstract class AsmTestBuilder {
     return this;
   }
 
-  protected abstract String referenceQemuExec();
-
   public String toAsmString() {
     return String.join("\n", instructions);
   }
 
-  IssTestUtils.TestSpec toTestSpecWithSpecialRegs(Map<String, String> map, String... regsOfInterest) {
-    return new IssTestUtils.TestSpec(
-        testId,
-        map,
-        toAsmString(),
-        referenceQemuExec(),
-        List.of(regsOfInterest)
-    );
-  }
-
-  IssTestUtils.TestSpec toTestSpec(
+  IssTestUtils.TestCase toTestCase(
       String... regsOfInterest
   ) {
-    return new IssTestUtils.TestSpec(
+    return new IssTestUtils.TestCase(
         testId,
-        Map.of(),
-        toAsmString(),
-        referenceQemuExec(),
-        List.of(regsOfInterest)
+        toAsmString()
     );
   }
-
-  IssTestUtils.TestSpec toTestSpec(
-      List<String> regsOfInterest
-  ) {
-    return new IssTestUtils.TestSpec(
-        testId,
-        Map.of(),
-        toAsmString(),
-        referenceQemuExec(),
-        regsOfInterest
-    );
-  }
-
 
 }

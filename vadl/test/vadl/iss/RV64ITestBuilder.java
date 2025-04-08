@@ -27,16 +27,10 @@ public class RV64ITestBuilder extends AsmTestBuilder {
     super(testId);
   }
 
-
   @Override
   BigInteger fillReg(String reg, BigInteger value) {
     add("li %s, %s", reg, value);
     return value;
-  }
-
-  @Override
-  protected String referenceQemuExec() {
-    return "qemu-system-riscv64";
   }
 
   @Override
@@ -48,4 +42,5 @@ public class RV64ITestBuilder extends AsmTestBuilder {
   Arbitrary<String> anyReg() {
     return Arbitraries.of(IntStream.range(0, 32).mapToObj(i -> "x" + i).toList());
   }
+
 }

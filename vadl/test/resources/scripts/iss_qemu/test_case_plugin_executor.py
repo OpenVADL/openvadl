@@ -26,14 +26,18 @@ class TestCasePluginExecutor:
     # run gen
     gen = QEMUExecuter(self.config, self.compinfo, ref=False)
     success = await gen.execute()
+    self.test_result.sim_logs['stdout'] = gen.stdout
+    self.test_result.sim_logs['stderr'] = gen.stderr
     if not success:
-      raise Exception("Generated QEMU execution failed")
+      raise Exception(f"Generated QEMU execution failed with: {gen.process.returncode}")
     self.test_result.completed_stages.append("RUN")
 
     ref = QEMUExecuter(self.config, self.compinfo, ref=True)
     ref_succ = await ref.execute()
+    self.test_result.ref_logs['stdout'] = ref.stdout
+    self.test_result.ref_logs['stderr'] = ref.stderr
     if not ref_succ:
-      raise Exception("Reference QEMU execution failed")
+      raise Exception(f"Reference QEMU execution failed with: {ref.process.returncode}")
     self.test_result.completed_stages.append("RUN_REF")
 
     self.compare(await gen.extract_regs(), await ref.extract_regs())
@@ -80,13 +84,13 @@ class TestCasePluginExecutor:
     # Prepare the data to be written
     data = {
         'id': self.test.id,
-        'result': {
-            'status': self.test_result.status,
-            'duration': self.test_result.duration,
-            'completedStages': self.test_result.completed_stages,
-            'errors': self.test_result.errors,
-            'regTests': self.test_result.reg_tests,
-        }
+        'status': self.test_result.status,
+        'duration': self.test_result.duration,
+        'completedStages': self.test_result.completed_stages,
+        'errors': self.test_result.errors,
+        'regTests': self.test_result.reg_tests,
+        'simLogs': self.test_result.sim_logs,
+        'refLogs': self.test_result.ref_logs,
     }
 
     # Write data to the YAML file asynchronously

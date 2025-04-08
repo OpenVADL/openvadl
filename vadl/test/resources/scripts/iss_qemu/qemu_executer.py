@@ -1,6 +1,7 @@
 import asyncio
 import os
 import signal
+from asyncio.subprocess import Process
 from pathlib import Path
 
 from compiler import CompInfo
@@ -16,7 +17,7 @@ class QEMUExecuter:
     timeout: float
 
     def __init__(self, config: Config, compinfo: CompInfo, ref: bool, timeout: float = 1):
-        self.process = None
+        self.process: Process = None
         self.config = config
         self.compinfo = compinfo
         self.ref = ref
