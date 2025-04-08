@@ -18,26 +18,37 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.PseudoInstructionLabel;
+import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmPseudoInstructionLowerStrategy;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
+import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 
 /**
  * Whereas {@link LlvmInstructionLoweringStrategy} defines multiple to lower {@link Instruction}
- * a.k.a Machine Instructions, this class lowers {@link PseudoInstruction}. But only as a fallback
- * strategy when no other strategy is applicable.
+ * a.k.a Machine Instructions, this class lowers {@link PseudoInstruction} when the instruction
+ * is loading a global address. The reason is that this pseudo instruction requires the
+ * {@code mayLoad} flag.
  */
-public class LlvmPseudoInstructionLoweringDefaultStrategyImpl
+public class LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl
     extends LlvmPseudoInstructionLowerStrategy {
-  public LlvmPseudoInstructionLoweringDefaultStrategyImpl(
-      List<LlvmInstructionLoweringStrategy> strategies) {
+
+  private final Abi abi;
+
+  public LlvmPseudoInstructionLoweringLoadGlobalAddressStrategyImpl(
+      List<LlvmInstructionLoweringStrategy> strategies,
+      Abi abi) {
     super(strategies);
+    this.abi = abi;
   }
 
   @Override
@@ -48,8 +59,25 @@ public class LlvmPseudoInstructionLoweringDefaultStrategyImpl
   @Override
   public boolean isApplicable(@Nullable PseudoInstructionLabel pseudoInstructionLabel,
                               PseudoInstruction pseudoInstruction) {
-    // This is strategy should be always applicable.
-    return true;
+    return abi.picAddressLoad().isPresent() && abi.picAddressLoad().get() == pseudoInstruction;
+  }
+
+  @Override
+  public Optional<LlvmLoweringRecord.Pseudo> lowerInstruction(Abi abi,
+                                                              List<TableGenInstAlias> instAliases,
+                                                              PseudoInstruction pseudo,
+                                                              IsaMachineInstructionMatchingPass.Result supportedInstructions) {
+    var record = super.lowerInstruction(abi, instAliases, pseudo, supportedInstructions);
+
+    if (record.isPresent()) {
+      // The pseudo instruction which loads the global address needs to have the
+      // `mayLoad` flag.
+      var result = record.get().info()
+          .withFlags(LlvmLoweringPass.Flags.withMayLoad(record.get().info().flags()));
+      return Optional.of((LlvmLoweringRecord.Pseudo) record.get().withInfo(result));
+    }
+
+    return record;
   }
 
   @Override

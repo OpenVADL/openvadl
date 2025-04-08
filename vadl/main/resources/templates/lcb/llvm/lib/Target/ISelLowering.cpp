@@ -80,7 +80,7 @@ const char *[(${namespace})]TargetLowering::getTargetNodeName(unsigned Opcode) c
         return "[(${namespace})]ISD::CALL";
     case [(${namespace})]ISD::SELECT_CC:
         return "[(${namespace})]ISD::SELECT_CC";
-    case [(${namespace})]ISD::HI:
+    case [(${namespace})]ISD::LGA:
             return "[(${namespace})]ISD::LGA";
     default:
         llvm_unreachable("unknown opcode");
@@ -582,13 +582,6 @@ SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bo
             MachineMemOperand::MOLoad | MachineMemOperand::MODereferenceable |
                 MachineMemOperand::MOInvariant,
             LLT(Ty.getSimpleVT()), Align(Ty.getFixedSizeInBits() / 8));
-
-        MachineFunction &MF = DAG.getMachineFunction();
-              MachineMemOperand *MemOp = MF.getMachineMemOperand(
-                  MachinePointerInfo::getGOT(MF),
-                  MachineMemOperand::MOLoad | MachineMemOperand::MODereferenceable |
-                      MachineMemOperand::MOInvariant,
-                  LLT(Ty.getSimpleVT()), Align(Ty.getFixedSizeInBits() / 8));
 
         return DAG.getMemIntrinsicNode([(${namespace})]ISD::LGA, DL, DAG.getVTList(Ty, MVT::Other),
             {DAG.getEntryNode(), Addr}, Ty, MemOp);
