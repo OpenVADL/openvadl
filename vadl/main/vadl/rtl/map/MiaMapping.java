@@ -31,6 +31,7 @@ import vadl.viam.Stage;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.SideEffectNode;
 
@@ -85,20 +86,96 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
     return stageContexts(stage).anyMatch(context -> context.ipgNodes.contains(ipgNode));
   }
 
+  /**
+   * Get stage inputs.
+   *
+   * @param stage stage to filter for
+   * @return stream of expression nodes that are inputs to the stage
+   */
+  public Stream<ExpressionNode> stageInputs(Stage stage) {
+    return stageContexts(stage).flatMap(context -> context.ipgNodes.stream())
+        .flatMap(Node::inputs)
+        .filter(ExpressionNode.class::isInstance).map(ExpressionNode.class::cast)
+        .filter(node -> !containsInStage(stage, node))
+        .distinct();
+  }
+
+  /**
+   * Get stage outputs.
+   *
+   * @param stage stage to filter for
+   * @return stream of expression nodes that are outputs from the stage
+   */
+  public Stream<ExpressionNode> stageOutputs(Stage stage) {
+    return stageContexts(stage).flatMap(context -> context.ipgNodes.stream())
+        .filter(ExpressionNode.class::isInstance).map(ExpressionNode.class::cast)
+        .filter(node -> node.usages().anyMatch(u -> !containsInStage(stage, u)));
+  }
+
+  /**
+   * Find any node context for a given IPG node.
+   *
+   * @param ipgNode IPG node
+   * @return node context, if any
+   */
   public Optional<NodeContext> findContext(Node ipgNode) {
     return contexts.values().stream().filter(context -> context.ipgNodes.contains(ipgNode))
         .findFirst();
   }
 
+  /**
+   * Find a unique context for a given IPG node.
+   *
+   * @param ipgNode IPG node
+   * @return unique context, or {@link Optional#empty()} if none or not unique
+   */
+  public Optional<Stage> findStageUnique(Node ipgNode) {
+    var list = contexts.values().stream()
+        .filter(context -> context.ipgNodes.contains(ipgNode))
+        .map(NodeContext::stage).distinct().toList();
+    if (list.size() == 1) {
+      return Optional.of(list.get(0));
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Find any node context for a given IPG node, fail if not present.
+   *
+   * @param ipgNode IPG node
+   * @return node context
+   */
   public NodeContext ensureContext(Node ipgNode) {
     return findContext(ipgNode).orElseThrow(() ->
         new ViamGraphError("IPG node has no context in MiA mapping").addContext(ipgNode));
   }
 
+  /**
+   * Remove an IPG node from all node contexts.
+   *
+   * @param ipgNode IPG node to remove
+   */
+  public void removeNode(Node ipgNode) {
+    contexts().forEach((miaNode, context) -> {
+      context.fixedIpgNodes().remove(ipgNode);
+      context.ipgNodes().remove(ipgNode);
+    });
+  }
+
+  /**
+   * Get node context belonging to the decode mapping.
+   *
+   * @return context of decode mapping, if any
+   */
   public Optional<NodeContext> decode() {
     return contexts.values().stream().filter(NodeContext::isDecode).findFirst();
   }
 
+  /**
+   * Get node context belonging to the decode mapping. Fail if not present.
+   *
+   * @return context of decode mapping
+   */
   public NodeContext ensureDecode() {
     return decode().orElseThrow(
         () -> new ViamError("Missing decode builtin call in micro architecture"));
@@ -210,6 +287,11 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
       return ipgNodes;
     }
 
+    /**
+     * Check if this node context belongs to a MiA builtin call to {@link BuiltInTable#DECODE}.
+     *
+     * @return true if decode context
+     */
     public boolean isDecode() {
       return (node instanceof MiaBuiltInCall b && b.builtIn() == BuiltInTable.DECODE);
     }

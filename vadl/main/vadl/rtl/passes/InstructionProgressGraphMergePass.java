@@ -106,7 +106,7 @@ public class InstructionProgressGraphMergePass extends Pass {
     ipg.merge(ipgNodes.stream().filter(nodeClass::isInstance)
         .map(nodeClass::cast).collect(Collectors.toSet()),
         removed -> {
-          removeNodeFromContexts(mapping, removed);
+          mapping.removeNode(removed);
           ipgNodes.remove(removed);
           deleted.add(removed);
         },
@@ -114,13 +114,6 @@ public class InstructionProgressGraphMergePass extends Pass {
           var usage = mapping.ensureContext(added.usages().findFirst().orElseThrow());
           usage.ipgNodes().add(added);
         });
-  }
-
-  private void removeNodeFromContexts(MiaMapping mapping, Node node) {
-    mapping.contexts().forEach((miaNode, context) -> {
-      context.fixedIpgNodes().remove(node);
-      context.ipgNodes().remove(node);
-    });
   }
 
 }

@@ -34,6 +34,12 @@ public class OneHotDecodeNode extends ExpressionNode {
   @Input
   NodeList<ExpressionNode> values;
 
+  /**
+   * Create a new one-hot-decode node for a list of value inputs. The node's type is calculated
+   * based on the input count ({@code UInt<n>} with {@code n} large enough to encode values).
+   *
+   * @param values value inputs (all bool)
+   */
   public OneHotDecodeNode(List<ExpressionNode> values) {
     super(Type.unsignedInt(32 - Integer.numberOfLeadingZeros(values.size() - 1)));
     ensure(values.stream().allMatch(value ->

@@ -20,11 +20,13 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
+import vadl.rtl.ipg.nodes.InstructionWordSliceNode;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
@@ -106,6 +108,12 @@ public class MiaBuiltInCallMatcher {
    */
   private static boolean resolveDecode(Node node) {
     if (node instanceof ReadResourceNode || node instanceof WriteResourceNode) {
+      return false;
+    }
+    if (node instanceof InstructionWordSliceNode) {
+      return true;
+    }
+    if (node instanceof ExpressionNode expr && expr.type().asDataType().bitWidth() > 1) {
       return false;
     }
     return node.inputs().allMatch(MiaBuiltInCallMatcher::resolveDecode);

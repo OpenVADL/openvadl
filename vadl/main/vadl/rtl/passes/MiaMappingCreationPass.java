@@ -39,6 +39,7 @@ import vadl.types.MicroArchitectureType;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.StageOutput;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.MiaBuiltInCall;
@@ -205,6 +206,10 @@ public class MiaMappingCreationPass extends Pass {
         }
       }
     }
+
+    // check mapping
+    ViamError.ensure(ipg.getNodes().allMatch(n -> mapping.findContext(n).isPresent()),
+        "Not all nodes mapped in MiA mapping creation");
 
     // attach mapping to mia
     optMia.get().attachExtension(mapping);

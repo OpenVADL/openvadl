@@ -31,9 +31,13 @@ import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.ConstantValueMatcher;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.AdditionWithZeroSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.AndWithFalseSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.AndWithTrueSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.DivisionWithOneSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.MultiplicationWithOneSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.MultiplicationWithZeroSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithFalseSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithTrueSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithOneSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithZeroSimplificationRule;
 
@@ -51,6 +55,10 @@ public class RtlSimplificationRules {
     rules.add(new DivisionWithOneSimplificationRule());
     rules.add(new RemainderWithZeroSimplificationRule());
     rules.add(new RemainderWithOneSimplificationRule());
+    rules.add(new AndWithFalseSimplificationRule());
+    rules.add(new AndWithTrueSimplificationRule());
+    rules.add(new OrWithTrueSimplificationRule());
+    rules.add(new OrWithFalseSimplificationRule());
     rules.add(new AndWithZerosSimplificationRule());
     rules.add(new AndWithOnesSimplificationRule());
     rules.add(new OrWithOnesSimplificationRule());
