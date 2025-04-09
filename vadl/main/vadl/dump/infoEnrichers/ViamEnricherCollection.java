@@ -211,6 +211,28 @@ public class ViamEnricherCollection {
       });
 
   /**
+   * The header that is included in every pretty print source. It explains why the code looks
+   * different, because all macros are expanded and from where this code originated.
+   *
+   * @param location of the definition.
+   * @return the header text.
+   */
+  private static String sourceHeader(SourceLocation location) {
+    var header = new StringBuilder(
+        "// The code below has all macros expanded.\n// SourceLocation: %s \n".formatted(
+            location.toConciseString()
+        ));
+
+    for (var current = location; current.expandedFrom() != null; current = current.expandedFrom()) {
+      header.append("//     expanded from macro call at: %s \n".formatted(
+          current.expandedFrom().toConciseString()));
+    }
+
+    header.append("\n");
+    return header.toString();
+  }
+
+  /**
    * A {@link InfoEnricher} that adds an expandable to definition entities if
    * the verification failed.
    * This helps debugging and finding bugs in the VIAM.
@@ -230,15 +252,11 @@ public class ViamEnricherCollection {
         if (entity.origin() instanceof Function && entity.parentLevel() > 2) {
           return;
         }
-
         var sourceLocation = entity.origin().sourceLocation();
         if (entity.origin() instanceof Instruction) {
           sourceLocation = ((Instruction) entity.origin()).behavior().sourceLocation();
         }
-        if (!sourceLocation.isValid()) {
-          return;
-        }
-        var source = sourceLocation.toSourceString();
+        var source = sourceHeader(sourceLocation) + entity.origin().prettyPrintSource();
         var info = InfoUtils.createCodeBlockExpandable(
             "Source Code",
             source
