@@ -151,7 +151,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
 
     var result = definition.accept(this);
-    result.ifPresent(value -> value.setSourceLocationIfNotSet(definition.sourceLocation()));
+    result.ifPresent(value -> {
+      value.setSourceLocationIfNotSet(definition.sourceLocation());
+      value.setPrettyPrintSourceFunc(() -> {
+        var sb = new StringBuilder();
+        definition.prettyPrint(0, sb);
+        return sb.toString();
+      });
+    });
     definitionCache.put(definition, result);
     return result;
   }
