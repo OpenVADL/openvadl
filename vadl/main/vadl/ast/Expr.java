@@ -547,6 +547,10 @@ class IntegerLiteral extends Expr {
   }
 }
 
+/**
+ * A hex or binary integer literal.
+ * Example: `0xaf` for hex or `0b01` for binary.
+ */
 class BinaryLiteral extends Expr {
   String token;
   BigInteger number;
