@@ -20,6 +20,7 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.InlineMe;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
@@ -46,6 +47,9 @@ public abstract class Definition implements WithSourceLocation {
 
   public final Identifier identifier;
   private SourceLocation sourceLocation = SourceLocation.INVALID_SOURCE_LOCATION;
+
+  @Nullable
+  private Supplier<String> prettyPrintSourceFunc;
 
   // lazily constructed, as most definitions don't have annotations
   @SuppressWarnings("rawtypes")
@@ -133,6 +137,29 @@ public abstract class Definition implements WithSourceLocation {
 
   public abstract void accept(DefinitionVisitor visitor);
 
+  /**
+   * Sets a function that will be called to prettyprint the source code that generated this
+   * definition.
+   *
+   * @param prettyPrintSourceFunc that will be called.
+   */
+  public void setPrettyPrintSourceFunc(@Nullable Supplier<String> prettyPrintSourceFunc) {
+    this.prettyPrintSourceFunc = prettyPrintSourceFunc;
+  }
+
+  /**
+   * Pretty print the source code snippet that is responsible for this definition.
+   *
+   * @return the string if the prettyPrintSourceFunc is set, otherwise null.
+   */
+  @Nullable
+  public String prettyPrintSource() {
+    if (prettyPrintSourceFunc == null) {
+      return null;
+    }
+
+    return prettyPrintSourceFunc.get();
+  }
 
   // lazy construction of annotation map
   @SuppressWarnings("rawtypes")
