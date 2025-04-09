@@ -1651,6 +1651,9 @@ public class TypeChecker
   public Void visit(CpuFunctionDefinition definition) {
     if (definition.kind == CpuFunctionDefinition.BehaviorKind.START) {
       check(definition.expr);
+      if (definition.expr.type() instanceof ConstantType constantType) {
+        definition.expr = wrapImplicitCast(definition.expr, constantType.closestBits());
+      }
       var exprType = requireNonNull(definition.expr.type);
       // FIXME: the type must fit into the memory index (address).
       if (!(exprType instanceof DataType)) {
@@ -2114,7 +2117,7 @@ public class TypeChecker
 
   @Override
   public Void visit(BinaryLiteral expr) {
-    expr.type = Type.bits(expr.bitWidth);
+    expr.type = new ConstantType(expr.number);
     return null;
   }
 
