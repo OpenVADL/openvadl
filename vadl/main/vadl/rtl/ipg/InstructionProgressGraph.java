@@ -18,9 +18,11 @@ package vadl.rtl.ipg;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -206,7 +208,7 @@ public class InstructionProgressGraph extends Graph {
   public <T extends Node> void merge(Set<T> nodes, @Nullable Consumer<T> removed,
                                      @Nullable Consumer<Node> added) {
     var merged = GraphMergeUtils.merge(nodes,
-        new GraphMergeUtils.SelectByInstructionMergeStrategy<>(
+        new GraphMergeUtils.SelectByInstructionInputMergeStrategy<>(
             node -> getContext(node).instructions(),
             (n1, n2) -> getContext(n1).instructions().addAll(getContext(n2).instructions())
         ) {
@@ -273,6 +275,16 @@ public class InstructionProgressGraph extends Graph {
      */
     public Set<String> nameHints() {
       return nameHints;
+    }
+
+    /**
+     * Get the shortest name hint in terms of string length.
+     *
+     * @return shortest name hint
+     */
+    public Optional<String> shortestNameHint() {
+      return nameHints.stream()
+          .min(Comparator.comparing(String::length));
     }
 
   }

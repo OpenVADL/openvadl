@@ -209,7 +209,7 @@ public class GraphMergeUtils {
    *
    * @param <T> type of nodes to merge
    */
-  public static class SelectMergeStrategy<T extends Node> implements MergeStrategy<T> {
+  public static class SelectInputMergeStrategy<T extends Node> implements MergeStrategy<T> {
 
     private final Function<T, ExpressionNode> condition;
 
@@ -218,7 +218,7 @@ public class GraphMergeUtils {
      *
      * @param condition extraction function for condition from node
      */
-    public SelectMergeStrategy(Function<T, ExpressionNode> condition) {
+    public SelectInputMergeStrategy(Function<T, ExpressionNode> condition) {
       this.condition = condition;
     }
 
@@ -244,11 +244,12 @@ public class GraphMergeUtils {
   }
 
   /**
-   * Merge strategy that introduces select nodes on a node's inputs.
+   * Merge strategy that introduces select-by-instruction nodes on a node's inputs.
    *
    * @param <T> type of nodes to merge
    */
-  public static class SelectByInstructionMergeStrategy<T extends Node> implements MergeStrategy<T> {
+  public static class SelectByInstructionInputMergeStrategy<T extends Node>
+      implements MergeStrategy<T> {
 
     private final Function<T, Set<Instruction>> instructions;
     private final BiConsumer<Node, Node> merge;
@@ -260,8 +261,8 @@ public class GraphMergeUtils {
      * @param instructions extraction function for the instruction a node belongs to
      * @param merge        callback for merging the instructions on two nodes
      */
-    public SelectByInstructionMergeStrategy(Function<T, Set<Instruction>> instructions,
-                                            BiConsumer<Node, Node> merge) {
+    public SelectByInstructionInputMergeStrategy(Function<T, Set<Instruction>> instructions,
+                                                 BiConsumer<Node, Node> merge) {
       this.instructions = instructions;
       this.merge = merge;
     }
@@ -331,6 +332,65 @@ public class GraphMergeUtils {
     public void added(T n1, Node i1, T n2, Node i2, Node newInput) {
       merge.accept(newInput, n1);
       merge.accept(newInput, n2);
+    }
+  }
+
+  /**
+   * Merge strategy that merges select-by-instruction nodes. Does not need to modify inputs.
+   */
+  public static class SelectByInstructionMergeStrategy
+      implements MergeStrategy<SelectByInstructionNode> {
+
+    private final Function<SelectByInstructionNode, Set<Instruction>> instructions;
+    private final BiConsumer<Node, Node> merge;
+
+    /**
+     * Construct new merge strategy using an extraction function for the instruction set per node
+     * and a callback to merge the instructions associated with two nodes on the first one.
+     *
+     * @param instructions extraction function for the instruction a node belongs to
+     * @param merge        callback for merging the instructions on two nodes
+     */
+    public SelectByInstructionMergeStrategy(Function<SelectByInstructionNode,
+                                            Set<Instruction>> instructions,
+                                            BiConsumer<Node, Node> merge) {
+      this.instructions = instructions;
+      this.merge = merge;
+    }
+
+    @Override
+    public boolean filter(SelectByInstructionNode n1, SelectByInstructionNode n2) {
+      var ins1 = instructions.apply(n1);
+      var ins2 = instructions.apply(n2);
+      return ins1.stream().noneMatch(ins2::contains);
+    }
+
+    @Override
+    public int compare(Pair<SelectByInstructionNode, SelectByInstructionNode> pair1,
+                       Pair<SelectByInstructionNode, SelectByInstructionNode> pair2) {
+      // merge pairs with small number of instructions first
+      return Integer.compare(
+          instructions.apply(pair1.left()).size() + instructions.apply(pair1.right()).size(),
+          instructions.apply(pair2.left()).size() + instructions.apply(pair2.right()).size()
+      );
+    }
+
+    @Override
+    public Node mergeInput(SelectByInstructionNode n1, Node i1,
+                           SelectByInstructionNode n2, Node i2) {
+      return i1; // do nothing, merge in beforeMerge()
+    }
+
+    @Override
+    public void beforeMerge(SelectByInstructionNode n1, SelectByInstructionNode n2) {
+      merge.accept(n1, n2);
+      n1.merge(n2); // merge node here, merge algorithm does replaceAndDelete
+    }
+
+    @Override
+    public void added(SelectByInstructionNode n1, Node i1,
+                      SelectByInstructionNode n2, Node i2, Node newInput) {
+      // not called, because mergeInput() does nothing
     }
   }
 

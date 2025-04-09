@@ -186,7 +186,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
         var allWrites = branchWrites.stream().flatMap(Collection::stream)
             .collect(Collectors.toSet());
         var merged = GraphMergeUtils.merge(allWrites,
-            new GraphMergeUtils.SelectMergeStrategy<>(SideEffectNode::condition) {
+            new GraphMergeUtils.SelectInputMergeStrategy<>(SideEffectNode::condition) {
               @Override
               public boolean filter(WriteResourceNode n1, WriteResourceNode n2) {
                 return super.filter(n1, n2) && branchWrites.stream()

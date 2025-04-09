@@ -27,8 +27,11 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.SelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
+import vadl.rtl.utils.GraphMergeUtils;
+import vadl.types.Type;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
@@ -38,6 +41,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * Improve the MiA mapping by moving nodes on the fringe of two map nodes if they reduce the size of
  * registers needed between stages. If we encounter a select-by-instruction node that has inputs
  * from multiple stages, it is split up to reduce the number of results to pass between stages.
+ * We also introduce select-by-instruction nodes to reduce stage outputs.
  */
 public class MiaMappingOptimizePass extends Pass {
 
@@ -62,6 +66,8 @@ public class MiaMappingOptimizePass extends Pass {
       return null;
     }
 
+    var ipg = optIsa.get().expectExtension(InstructionProgressGraphExtension.class).ipg();
+
     var stages = optMia.get().stages();
     final var mapping = optMia.get().extension(MiaMapping.class);
     if (mapping == null) {
@@ -72,13 +78,17 @@ public class MiaMappingOptimizePass extends Pass {
     moveNodesUp(stages, mapping);
 
     // split select-by-instruction nodes by stages
-    splitSelectNodes(stages, mapping);
+    splitSelectNodes(stages, mapping, ipg);
     moveNodesUp(stages, mapping);
+
+    // share stage outputs by introducing select-by-instruction nodes
+    combineOutputs(stages, mapping, ipg);
 
     return null;
   }
 
-  private void splitSelectNodes(List<Stage> stages, MiaMapping mapping) {
+  private void splitSelectNodes(List<Stage> stages, MiaMapping mapping,
+                                InstructionProgressGraph ipg) {
     for (Stage stage : stages) {
       // split up select-by-instruction nodes
       var selects = mapping.stageContexts(stage)
@@ -103,6 +113,8 @@ public class MiaMappingOptimizePass extends Pass {
             if (!valStage.equals(stage) && vals.size() > 1) {
               var newSelect = select.split(vals);
               mapping.ensureContext(select).ipgNodes().add(newSelect);
+              ipg.getContext(newSelect).instructions()
+                  .addAll(ipg.getContext(select).instructions());
             }
           }
         }
@@ -127,6 +139,53 @@ public class MiaMappingOptimizePass extends Pass {
         }
       }
     } while (change);
+  }
+
+  private void combineOutputs(List<Stage> stages, MiaMapping mapping,
+                              InstructionProgressGraph ipg) {
+    for (Stage stage : stages) {
+      var outMap = new HashMap<Type, Set<ExpressionNode>>();
+      mapping.stageContexts(stage)
+          .flatMap(context -> context.ipgNodes().stream())
+          .filter(n -> bitWidth(n) > 1)
+          .filter(n -> n.usages()
+              .anyMatch(usage -> !mapping.containsInStage(stage, usage)))
+          .forEach(node -> {
+            if (node instanceof ExpressionNode expr) {
+              outMap.computeIfAbsent(expr.type(), k -> new HashSet<>()).add(expr);
+            }
+          });
+      for (Set<ExpressionNode> set : outMap.values()) {
+        // add select-by-instruction nodes we can try to merge
+        var selects = set.stream().map(expr -> {
+          var ins = ipg.getContext(expr).instructions();
+          var sel = ipg.add(new SelectByInstructionNode(expr.type()), ins);
+          ins.forEach(instr -> sel.add(instr, expr));
+          expr.replaceAtAllUsages(sel);
+          mapping.ensureContext(expr).ipgNodes().add(sel);
+          return sel;
+        }).toList();
+
+        // merge
+        GraphMergeUtils.merge(selects,
+            new GraphMergeUtils.SelectByInstructionMergeStrategy(
+                node -> ipg.getContext(node).instructions(),
+                (n1, n2) ->
+                    ipg.getContext(n1).instructions().addAll(ipg.getContext(n2).instructions())
+            ));
+
+        // remove select-by-instruction node again, if not merged or deleted
+        for (SelectByInstructionNode select : selects) {
+          if (select.isActive() && select.values().size() == 1) {
+            var expr = select.values().iterator().next();
+            select.replaceAndDelete(expr);
+          }
+          if (select.isDeleted()) {
+            mapping.removeNode(select);
+          }
+        }
+      }
+    }
   }
 
   // node can be moved if it has no inputs from the current stage and

@@ -28,15 +28,20 @@ import java.util.stream.Stream;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
+import vadl.rtl.analysis.HazardAnalysis;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.InstructionProgressGraphVisualizer;
 import vadl.rtl.map.MiaMapping;
 import vadl.rtl.passes.InstructionProgressGraphExtension;
+import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.MicroArchitecture;
+import vadl.viam.Resource;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
@@ -55,6 +60,61 @@ public class RtlEnricherCollection {
           }
         }
       });
+
+  public static InfoEnricher ENRICH_MIA_WITH_CLUSTERED_IPG =
+      forType(DefinitionEntity.class, (defEntity, passResults) -> {
+        if (defEntity.origin() instanceof MicroArchitecture mia) {
+          var mappingExt = mia.extension(MiaMapping.class);
+          var isaExt = mia.processor().isa().extension(InstructionProgressGraphExtension.class);
+          if (mappingExt != null && isaExt != null) {
+            var info = InfoUtils.createGraphModal(isaExt.ipg().name, isaExt.ipg().name,
+                viz(isaExt.ipg(), mappingExt));
+            defEntity.addInfo(info);
+          }
+        }
+      });
+
+  public static InfoEnricher ENRICH_RESOURCE_WITH_HAZARDS =
+      forType(DefinitionEntity.class, (defEntity, passResults) -> {
+        if (defEntity.origin() instanceof Resource resource) {
+          var ext = resource.extension(HazardAnalysis.class);
+          if (ext != null) {
+            var nodes = col("Nodes", ext.reads().stream()
+                .map(HazardAnalysis.ReadAnalysis::node).map(Node::toString)
+                .map(HtmlEscapers.htmlEscaper()::escape));
+            var eff = col("Effect", ext.reads().stream()
+                .map(HazardAnalysis.ReadAnalysis::effect).map(Stage::simpleName));
+            var cond = col("Condition", ext.reads().stream()
+                .map(HazardAnalysis.ReadAnalysis::condition).map(Stage::simpleName));
+            var addr = col("Address", ext.reads().stream()
+                .map(HazardAnalysis.ReadAnalysis::address)
+                .map(s -> (s == null) ? "" : s.simpleName()));
+            var val = col("Value", ext.reads().stream().map(r -> ""));
+
+            ext.writes().stream().map(HazardAnalysis.WriteAnalysis::node)
+                .map(Node::toString).map(HtmlEscapers.htmlEscaper()::escape).forEach(nodes::add);
+            ext.writes().stream().map(HazardAnalysis.WriteAnalysis::effect)
+                .map(Stage::simpleName).forEach(eff::add);
+            ext.writes().stream().map(HazardAnalysis.WriteAnalysis::condition)
+                .map(Stage::simpleName).forEach(cond::add);
+            ext.writes().stream().map(HazardAnalysis.WriteAnalysis::address)
+                .map(s -> (s == null) ? "" : s.simpleName()).forEach(addr::add);
+            ext.writes().stream().map(HazardAnalysis.WriteAnalysis::effect).map(Stage::simpleName)
+                .forEach(val::add);
+
+            defEntity.addInfo(InfoUtils.createTableExpandable(
+                "Read/Write Hazards",
+                List.of(nodes, eff, cond, addr, val)
+            ));
+          }
+        }
+      });
+
+  private static List<String> col(String title, Stream<String> stream) {
+    var list = new ArrayList<String>();
+    list.add(title);
+    return stream.collect(Collectors.toCollection(() -> list));
+  }
 
   public static InfoEnricher ENRICH_INSTRUCTION_WITH_IPG =
       forType(DefinitionEntity.class, (defEntity, passResults) -> {
@@ -129,16 +189,20 @@ public class RtlEnricherCollection {
         if (defEntity.origin() instanceof Stage stage) {
           var mapping = stage.mia().extension(MiaMapping.class);
           if (mapping != null) {
-            var inputs = stageNodes(Node.class, mapping, stage)
-                .flatMap(n -> n.inputs().filter(i -> !mapping.containsInStage(stage, i)))
-                .distinct()
+            var inputs = mapping.stageInputs(stage)
+                .sorted(RtlEnricherCollection.compareBitsReverse)
+                .toList();
+            var inputBits = inputs.stream().mapToInt(RtlEnricherCollection::bits).sum();
+            var inputList = inputs.stream()
                 .map(RtlEnricherCollection::stageIOName)
                 .map(HtmlEscapers.htmlEscaper()::escape)
                 .collect(Collectors.toCollection(ArrayList::new));
-            var outputs = stageNodes(Node.class, mapping, stage)
-                .filter(n -> n.usages().anyMatch(u -> !mapping.containsInStage(stage, u)))
+            var outputs = mapping.stageOutputs(stage)
                 .filter(n -> !(n instanceof ConstantNode))
-                .distinct()
+                .sorted(RtlEnricherCollection.compareBitsReverse)
+                .toList();
+            var outputBits = outputs.stream().mapToInt(RtlEnricherCollection::bits).sum();
+            var outputList = outputs.stream()
                 .map(RtlEnricherCollection::stageIOName)
                 .map(HtmlEscapers.htmlEscaper()::escape)
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -147,12 +211,14 @@ public class RtlEnricherCollection {
               return;
             }
 
-            inputs.add(0, "Inputs");
-            outputs.add(0, "Outputs");
+            inputList.add(0, "Inputs ("
+                + inputBits + " bits)");
+            outputList.add(0, "Outputs ("
+                + outputBits + " bits)");
 
             var info = InfoUtils.createTableExpandable(
-                "Instruction Inputs/Outputs",
-                List.of(inputs, outputs)
+                "Stage Inputs/Outputs",
+                List.of(inputList, outputList)
             );
             defEntity.addInfo(info);
           }
@@ -161,6 +227,15 @@ public class RtlEnricherCollection {
 
   private static String viz(InstructionProgressGraph ipg) {
     return new InstructionProgressGraphVisualizer()
+        .load(ipg)
+        .visualize();
+  }
+
+  private static String viz(InstructionProgressGraph ipg, MiaMapping mapping) {
+    return new InstructionProgressGraphVisualizer()
+        .withCluster(n -> mapping.findStageUnique(n)
+            .map(Definition::simpleName)
+            .orElse(null))
         .load(ipg)
         .visualize();
   }
@@ -181,19 +256,30 @@ public class RtlEnricherCollection {
 
   private static String stageIOName(Node node) {
     if (node.ensureGraph() instanceof InstructionProgressGraph ipg) {
-      return ipg.getContext(node).nameHints().stream()
-          .min(Comparator.comparing(String::length))
+      return ipg.getContext(node).shortestNameHint()
           .map(name -> name + ": " + node)
           .orElseGet(node::toString);
     }
     return node.toString();
   }
 
+  private static int bits(Node node) {
+    if (node instanceof ExpressionNode expressionNode) {
+      return expressionNode.type().asDataType().bitWidth();
+    }
+    return 0;
+  }
+
+  private static final Comparator<Node> compareBitsReverse =
+      Comparator.comparing(RtlEnricherCollection::bits, Comparator.reverseOrder());
+
   /**
    * A list of all info enrichers for the RTL generation.
    */
   public static List<InfoEnricher> all = List.of(
       ENRICH_ISA_WITH_IPG,
+      ENRICH_MIA_WITH_CLUSTERED_IPG,
+      ENRICH_RESOURCE_WITH_HAZARDS,
       ENRICH_INSTRUCTION_WITH_IPG,
       ENRICH_STAGE_WITH_IPG,
       RESOURCE_ACCESS_STAGE,

@@ -95,9 +95,11 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
+import vadl.rtl.passes.HazardAnalysisPass;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.InstructionProgressGraphLowerPass;
 import vadl.rtl.passes.InstructionProgressGraphMergePass;
+import vadl.rtl.passes.InstructionProgressGraphNamePass;
 import vadl.rtl.passes.MiaMappingCreationPass;
 import vadl.rtl.passes.MiaMappingOptimizePass;
 import vadl.rtl.passes.StageOrderingPass;
@@ -546,7 +548,10 @@ public class PassOrders {
         .add(new InstructionProgressGraphMergePass(config))
         .add(new MiaMappingOptimizePass(config))
         .add(new InstructionProgressGraphLowerPass(config))
-        .add(new MiaMappingOptimizePass(config));
+        .add(new MiaMappingOptimizePass(config))
+        .add(new InstructionProgressGraphNamePass(config));
+
+    order.add(new HazardAnalysisPass(config));
 
     addHtmlDump(order, config,
         "mia",
