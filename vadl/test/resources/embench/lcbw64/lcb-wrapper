@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -e
+set -x
+
+CLANG_CFLAGS="--target=riscv64 -mno-relax -march=rv32im -mabi=lp64"
+LCB_CFLAGS="--target=rv64im  -D__SIZEOF_POINTER__=8 -D__riscv_xlen=64"
+CLANG=/src/llvm-final/build/bin/clang
+
+last="${@:(-1):1}"
+extension="${last##*.}"
+filename="${last%.*}"
+basefilename=$(basename -- "$filename")
+
+array=( "$@" )
+unset "array[${#array[@]}-1]"
+unset "array[${#array[@]}-1]"
+unset "array[${#array[@]}-1]"
+
+if [ $extension != "c" ]
+then
+  $CLANG $CLANG_CFLAGS -c $@
+else
+  $CLANG $LCB_CFLAGS -S   ${array[@]} -o $basefilename.s $last
+  $CLANG $CLANG_CFLAGS -c ${array[@]} -o $basefilename.o $basefilename.s
+fi

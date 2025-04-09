@@ -4,13 +4,13 @@ set -e
 cd $(realpath $(dirname "$0"))
 
 # Spike
-../build_spike-clang-O3.sh
-./run-benchmark.sh "rv32-spike" ./benchmark_spike.sh
+../build_spike-clang-O0_rv64.sh
+./run-benchmark.sh "rv64-spike" ./benchmark_spike.sh
 
 # miscompile
 rm -r ../src/cubic
 # long jump problem
-#rm -r ../src/statemate
+rm -r ../src/statemate
 
 # aha-mont64
 # edn
@@ -38,6 +38,6 @@ rm -r ../src/cubic
 #rm -r ../src/ud
 #rm -r ../src/wikisort
 
-../build_spike-lcb-O3.sh
-./run-benchmark.sh "rv32-spike" ./benchmark_spike.sh
+../build_spike-lcb-O0_rv64_rv64.sh
+./run-benchmark.sh "rv64-spike" ./benchmark_spike.sh
 #cat /src/embench/benchmark-extras/results/rv32-spike/1.json
