@@ -37,6 +37,7 @@ import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
 import vadl.rtl.ipg.nodes.SelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
+import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
 import vadl.types.UIntType;
 import vadl.viam.Definition;
@@ -109,10 +110,10 @@ public class InstructionProgressGraphNamePass extends Pass {
         return null;
       }
       if (args.size() == 2) {
-        return args.get(0).orElse("") + "_" + node.builtIn().name().toLowerCase() + "_"
+        return args.get(0).orElse("") + "_" + builtInName(node.builtIn()) + "_"
             + args.get(1).orElse("");
       }
-      return node.builtIn().name().toLowerCase() + "_" + args.stream().filter(Optional::isPresent)
+      return builtInName(node.builtIn()) + "_" + args.stream().filter(Optional::isPresent)
           .map(Optional::get).collect(Collectors.joining("_"));
     });
     nameSelect(ipg);
@@ -140,6 +141,14 @@ public class InstructionProgressGraphNamePass extends Pass {
       }
     }
     return sb.toString();
+  }
+
+  private String builtInName(BuiltInTable.BuiltIn builtIn) {
+    var name = builtIn.name();
+    if (name.startsWith("VADL::")) {
+      name = name.substring("VADL::".length());
+    }
+    return name.replace(':', '_').toLowerCase();
   }
 
   private void name(InstructionProgressGraph ipg, @Nullable Node node, String nameHint) {
