@@ -20,10 +20,14 @@ import com.google.common.collect.Streams;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import vadl.rtl.ipg.nodes.SelectByInstructionNode;
+import vadl.types.DataType;
+import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
@@ -69,9 +73,47 @@ public class GraphMergeUtils {
         return (i1 == i2); // can merge non-expression nodes only if they are already equal
       }
       return e1.isActiveIn(e2.ensureGraph())
-          && e2.type().isTrivialCastTo(e1.type());
+          && mergeTypes(e1.type(), e2.type()) != null;
     })
     .allMatch(Boolean::booleanValue);
+  }
+
+  /**
+   * Merge types. If types are equal, return it. If the types converted to a bit type are equal,
+   * return the bit type. Null otherwise.
+   *
+   * @param t1 type 1
+   * @param t2 type 2
+   * @return merged type
+   */
+  public static @Nullable Type mergeTypes(Type t1, Type t2) {
+    if (t1 == t2) {
+      return t1;
+    }
+    if (t1 instanceof DataType d1 && t2 instanceof DataType d2) {
+      var b1 = d1.toBitsType();
+      var b2 = d2.toBitsType();
+      if (b1 == b2) {
+        if (b1.bitWidth() == 1) {
+          return Type.bool();
+        }
+        return b1;
+      }
+    }
+    return null;
+  }
+
+
+  /**
+   * Merge types. Select the type that the other one can be trivially cast to,
+   * throws NullPointerException otherwise.
+   *
+   * @param t1 type 1
+   * @param t2 type 2
+   * @return type that can be trivially cast to the other one.
+   */
+  public static Type ensureMergeTypes(Type t1, Type t2) {
+    return Objects.requireNonNull(mergeTypes(t1, t2));
   }
 
   /**
@@ -239,7 +281,8 @@ public class GraphMergeUtils {
     public Node mergeInput(T n1, Node i1, T n2, Node i2) {
       var e1 = (ExpressionNode) i1;
       var e2 = (ExpressionNode) i2;
-      return new SelectNode(condition.apply(n2), e2, e1);
+      return new SelectNode(ensureMergeTypes(e2.type(), e1.type()),
+          condition.apply(n2), e2, e1);
     }
   }
 
@@ -297,22 +340,25 @@ public class GraphMergeUtils {
       if (i1 instanceof SelectByInstructionNode sel1
           && i2 instanceof SelectByInstructionNode sel2) {
         sel1.merge(sel2);
+        sel1.setType(ensureMergeTypes(e1.type(), e2.type()));
         merge.accept(sel1, n2);
         return i1;
       } else if (i1 instanceof SelectByInstructionNode sel1) {
         for (Instruction instruction : instructions.apply(n2)) {
           sel1.add(instruction, e2);
         }
+        sel1.setType(ensureMergeTypes(e1.type(), e2.type()));
         merge.accept(sel1, n2);
         return i1;
       } else if (i2 instanceof SelectByInstructionNode sel2) {
         for (Instruction instruction : instructions.apply(n1)) {
           sel2.add(instruction, e1);
         }
+        sel2.setType(ensureMergeTypes(e1.type(), e2.type()));
         merge.accept(sel2, n1);
         return i2;
       } else {
-        var sel = new SelectByInstructionNode(e2.type());
+        var sel = new SelectByInstructionNode(ensureMergeTypes(e1.type(), e2.type()));
         for (Instruction instruction : instructions.apply(n1)) {
           sel.add(instruction, e1);
         }

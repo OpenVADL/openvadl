@@ -16,6 +16,7 @@
 
 package vadl.rtl.map;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -87,13 +88,23 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
   }
 
   /**
+   * Get stage IPG nodes.
+   *
+   * @param stage stage to filter for
+   * @return stream of nodes that are mapped to the stage
+   */
+  public Stream<Node> stageIpgNodes(Stage stage) {
+    return stageContexts(stage).flatMap(context -> context.ipgNodes.stream());
+  }
+
+  /**
    * Get stage inputs.
    *
    * @param stage stage to filter for
    * @return stream of expression nodes that are inputs to the stage
    */
   public Stream<ExpressionNode> stageInputs(Stage stage) {
-    return stageContexts(stage).flatMap(context -> context.ipgNodes.stream())
+    return stageIpgNodes(stage)
         .flatMap(Node::inputs)
         .filter(ExpressionNode.class::isInstance).map(ExpressionNode.class::cast)
         .filter(node -> !containsInStage(stage, node))
@@ -107,9 +118,19 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
    * @return stream of expression nodes that are outputs from the stage
    */
   public Stream<ExpressionNode> stageOutputs(Stage stage) {
-    return stageContexts(stage).flatMap(context -> context.ipgNodes.stream())
+    return stageIpgNodes(stage)
         .filter(ExpressionNode.class::isInstance).map(ExpressionNode.class::cast)
         .filter(node -> node.usages().anyMatch(u -> !containsInStage(stage, u)));
+  }
+
+  /**
+   * Find all node contexts for a given IPG node.
+   *
+   * @param ipgNode IPG node
+   * @return stream of all node contexts
+   */
+  public Stream<NodeContext> findContexts(Node ipgNode) {
+    return contexts.values().stream().filter(context -> context.ipgNodes.contains(ipgNode));
   }
 
   /**
@@ -119,8 +140,7 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
    * @return node context, if any
    */
   public Optional<NodeContext> findContext(Node ipgNode) {
-    return contexts.values().stream().filter(context -> context.ipgNodes.contains(ipgNode))
-        .findFirst();
+    return findContexts(ipgNode).findFirst();
   }
 
   /**

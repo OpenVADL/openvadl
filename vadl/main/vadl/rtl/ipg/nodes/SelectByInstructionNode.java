@@ -70,11 +70,27 @@ public class SelectByInstructionNode extends ExpressionNode {
    */
   public SelectByInstructionNode(Type type, List<Set<Instruction>> instructions,
                                  NodeList<ExpressionNode> values) {
+    this(type, instructions, values, null);
+  }
+
+  /**
+   * See {@link SelectByInstructionNode#SelectByInstructionNode(Type, List, NodeList)}.
+   * The selection input supplies an integer that addresses the value to choose.
+   *
+   * @param type result type
+   * @param instructions list of sets of instructions
+   * @param values list of values for the result
+   * @param selection selection input
+   */
+  public SelectByInstructionNode(Type type, List<Set<Instruction>> instructions,
+                                 NodeList<ExpressionNode> values,
+                                 @Nullable ExpressionNode selection) {
     super(type);
     ensure(instructions.size() == values.size(),
         "List of instruction sets must have same size as value inputs");
     this.instructions = instructions;
     this.values = values;
+    this.selection = selection;
   }
 
   /**
@@ -147,6 +163,7 @@ public class SelectByInstructionNode extends ExpressionNode {
     values.add(value);
     if (isActive()) {
       updateUsageOf(null, value);
+      setSelection(null);
     }
   }
 
@@ -154,18 +171,25 @@ public class SelectByInstructionNode extends ExpressionNode {
    * Remove value input from this select node.
    *
    * @param value expression node
+   * @return set of instructions value was selected by
    */
-  public void remove(ExpressionNode value) {
+  public Set<Instruction> remove(ExpressionNode value) {
+    var set = new HashSet<Instruction>();
     for (int i = 0; i < values.size(); i++) {
       if (values.get(i).equals(value)) {
+        set.addAll(instructions.get(i)); // collect instructions
+
         values.remove(i);
         instructions.remove(i);
+
         if (isActive()) {
           updateUsageOf(value, null);
         }
-        break;
+
+        i--; // skip removed index
       }
     }
+    return set;
   }
 
   /**
@@ -242,12 +266,13 @@ public class SelectByInstructionNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new SelectByInstructionNode(type(), instructions, values.copy());
+    return new SelectByInstructionNode(type(), instructions, values.copy(),
+        (selection != null) ? selection.copy() : null);
   }
 
   @Override
   public Node shallowCopy() {
-    return new SelectByInstructionNode(type(), instructions, values);
+    return new SelectByInstructionNode(type(), instructions, values, selection);
   }
 
   @Override

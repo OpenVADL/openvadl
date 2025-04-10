@@ -32,13 +32,12 @@ import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.SelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.RtlSimplificationRules;
+import vadl.rtl.utils.RtlSimplifier;
 import vadl.utils.GraphUtils;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
-import vadl.viam.passes.algebraic_simplication.AlgebraicSimplifier;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
@@ -86,43 +85,27 @@ public class InstructionProgressGraphLowerPass extends Pass {
 
     // add select-by-instruction selection inputs
     ipg.getNodes(SelectByInstructionNode.class).forEach(select -> {
-      // generate expression that selects output based on sets of instructions
-      var oneHot = select.instructions().stream()
-          .map(ins -> ipg.add(new IsInstructionNode(ins), ins))
-          .map(ExpressionNode.class::cast).toList();
-      added.addAll(oneHot);
-      var instructions = ipg.getContext(select).instructions();
-      var selection = ipg.add(new OneHotDecodeNode(oneHot), instructions);
-      added.add(selection);
-      select.setSelection(selection);
+      if (select.selection() == null) {
+        // generate expression that selects output based on sets of instructions
+        var oneHot = select.instructions().stream()
+            .map(ins -> ipg.add(new IsInstructionNode(ins), ins))
+            .map(ExpressionNode.class::cast).toList();
+        added.addAll(oneHot);
+        var instructions = ipg.getContext(select).instructions();
+        var selection = ipg.add(new OneHotDecodeNode(oneHot), instructions);
+        added.add(selection);
+        select.setSelection(selection);
 
-      // add MiA mapping to decode
-      var context = mapping.ensureDecode();
-      context.ipgNodes().addAll(oneHot);
-      context.ipgNodes().add(selection);
+        // add MiA mapping to decode
+        var context = mapping.ensureDecode();
+        context.ipgNodes().addAll(oneHot);
+        context.ipgNodes().add(selection);
+      }
     });
 
     // optimize
     Canonicalizer.canonicalize(ipg);
-    new AlgebraicSimplifier(RtlSimplificationRules.rules).run(ipg);
-
-    // clean up mapping (deleted nodes, mapping of constant nodes)
-    for (MiaMapping.NodeContext context : mapping.contexts().values()) {
-
-      // remove deleted nodes (from optimization)
-      context.ipgNodes().removeIf(Node::isDeleted);
-      context.fixedIpgNodes().removeIf(Node::isDeleted);
-
-      // add constant nodes only to mapping with usage (remove otherwise)
-      ipg.getNodes(ConstantNode.class).forEach(constantNode -> {
-        if (constantNode.usages().anyMatch(context.ipgNodes()::contains)) {
-          context.ipgNodes().add(constantNode);
-        } else {
-          context.ipgNodes().remove(constantNode);
-          context.fixedIpgNodes().remove(constantNode);
-        }
-      });
-    }
+    new RtlSimplifier(RtlSimplificationRules.rules).run(ipg, mapping);
 
     return added;
   }
