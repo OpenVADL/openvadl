@@ -4,7 +4,7 @@ set -e
 cd $(realpath $(dirname "$0"))
 
 # Spike
-../build_spike-clang-O0.sh
+../build_spike-clang-O0_rv32.sh
 ./run-benchmark.sh "rv32-spike" ./benchmark_spike.sh
 
 # miscompile
@@ -38,6 +38,6 @@ rm -r ../src/statemate
 #rm -r ../src/ud
 #rm -r ../src/wikisort
 
-../build_spike-lcb-O0.sh
+../build_spike-lcb-O0_rv32.sh
 ./run-benchmark.sh "rv32-spike" ./benchmark_spike.sh
 #cat /src/embench/benchmark-extras/results/rv32-spike/1.json
