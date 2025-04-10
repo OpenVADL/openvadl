@@ -145,8 +145,7 @@ public class RtlEnricherCollection {
 
   private static <T extends Node> Stream<T> stageNodes(Class<T> type, MiaMapping mapping,
                                                        Stage stage) {
-    return mapping.stageContexts(stage)
-        .map(MiaMapping.NodeContext::ipgNodes).flatMap(Collection::stream)
+    return mapping.stageIpgNodes(stage)
         .filter(type::isInstance).map(type::cast);
   }
 

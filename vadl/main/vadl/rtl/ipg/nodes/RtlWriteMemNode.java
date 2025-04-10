@@ -106,7 +106,7 @@ public class RtlWriteMemNode extends WriteResourceNode {
 
   @Override
   public Node copy() {
-    return new RtlWriteMemNode(memory, words.copy(), address().copy(), value,
+    return new RtlWriteMemNode(memory, words.copy(), address().copy(), value.copy(),
         (condition == null) ? null : condition.copy());
   }
 

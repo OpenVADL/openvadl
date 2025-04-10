@@ -85,7 +85,7 @@ public class RtlReadRegFileNode extends ReadRegFileNode implements RtlConditiona
 
   @Override
   public ExpressionNode copy() {
-    return new RtlReadRegFileNode(registerFile, address(), type(),
+    return new RtlReadRegFileNode(registerFile, address().copy(), type(),
         (condition == null) ? null : condition.copy());
   }
 

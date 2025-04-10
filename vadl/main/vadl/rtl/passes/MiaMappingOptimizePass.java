@@ -16,12 +16,18 @@
 
 package vadl.rtl.passes;
 
+import com.google.common.collect.Sets;
 import java.io.IOException;
+import java.sql.Array;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
@@ -31,11 +37,16 @@ import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.SelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.GraphMergeUtils;
+import vadl.rtl.utils.RtlSimplificationRules;
+import vadl.rtl.utils.RtlSimplifier;
 import vadl.types.Type;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
  * Improve the MiA mapping by moving nodes on the fringe of two map nodes if they reduce the size of
@@ -74,22 +85,39 @@ public class MiaMappingOptimizePass extends Pass {
       return null;
     }
 
-    // move nodes up where necessary
-    moveNodesUp(stages, mapping);
+    var added = new HashSet<Node>();
+    var removed = new HashSet<Node>();
+    int changes;
+    do {
+      added.clear();
+      removed.clear();
+      changes = 0;
 
-    // split select-by-instruction nodes by stages
-    splitSelectNodes(stages, mapping, ipg);
-    moveNodesUp(stages, mapping);
+      // move nodes up where necessary
+      changes += moveNodesUp(stages, mapping);
 
-    // share stage outputs by introducing select-by-instruction nodes
-    combineOutputs(stages, mapping, ipg);
+      // split select-by-instruction nodes by stages
+      splitSelectNodes(stages, mapping, ipg, added);
+      changes += moveNodesUp(stages, mapping);
+
+      // share stage outputs by introducing select-by-instruction nodes
+      combineOutputs(stages, mapping, ipg, added);
+      dedupNodes(stages, mapping, ipg, removed);
+
+    } while (changes > 0 || !Sets.symmetricDifference(added, removed).isEmpty());
+
+    // optimize
+    Canonicalizer.canonicalize(ipg);
+    new RtlSimplifier(RtlSimplificationRules.rules).run(ipg, mapping);
 
     return null;
   }
 
   private void splitSelectNodes(List<Stage> stages, MiaMapping mapping,
-                                InstructionProgressGraph ipg) {
-    for (Stage stage : stages) {
+                                InstructionProgressGraph ipg, Set<Node> added) {
+    var stagesRev = new ArrayList<>(stages);
+    Collections.reverse(stagesRev);
+    for (Stage stage : stagesRev) {
       // split up select-by-instruction nodes
       var selects = mapping.stageContexts(stage)
           .flatMap(MiaMapping.NodeContext::movableIpgNodes)
@@ -97,32 +125,29 @@ public class MiaMappingOptimizePass extends Pass {
           .map(SelectByInstructionNode.class::cast)
           .collect(Collectors.toSet());
       for (SelectByInstructionNode select : selects) {
-        var stageToVals = new HashMap<Stage, Set<ExpressionNode>>();
-
-        // partition value inputs by stage
-        for (ExpressionNode val : select.values()) {
+        var values = new HashSet<>(select.values());
+        var valOutStage = new HashSet<ExpressionNode>();
+        // partition value inputs by in/out stage
+        for (ExpressionNode val : values) {
           var valStage = mapping.ensureContext(val).stage();
-          stageToVals.computeIfAbsent(valStage, k -> new HashSet<>())
-              .add(val);
-        }
-        if (stageToVals.size() > 1) {
-          for (var entry : stageToVals.entrySet()) {
-            var valStage = entry.getKey();
-            var vals = entry.getValue();
-            // split only for stage different from the current and more than one value input
-            if (!valStage.equals(stage) && vals.size() > 1) {
-              var newSelect = select.split(vals);
-              mapping.ensureContext(select).ipgNodes().add(newSelect);
-              ipg.getContext(newSelect).instructions()
-                  .addAll(ipg.getContext(select).instructions());
-            }
+          if (!valStage.equals(stage)) {
+            valOutStage.add(val);
           }
+        }
+        // split for more than one value from outside stage, but not for all
+        if (valOutStage.size() > 1 && valOutStage.size() < values.size()) {
+          var newSelect = select.split(valOutStage);
+          mapping.ensureContext(select).ipgNodes().add(newSelect);
+          ipg.getContext(newSelect).instructions()
+              .addAll(newSelect.instructions().stream().flatMap(Collection::stream).toList());
+          added.add(newSelect);
         }
       }
     }
   }
 
-  private void moveNodesUp(List<Stage> stages, MiaMapping mapping) {
+  private int moveNodesUp(List<Stage> stages, MiaMapping mapping) {
+    int count = 0;
     boolean change;
     do {
       change = false;
@@ -136,34 +161,42 @@ public class MiaMappingOptimizePass extends Pass {
           context.ipgNodes().remove(candidate);
           context.pred().forEach(pred -> pred.ipgNodes().add(candidate));
           change = true;
+          count++;
         }
       }
     } while (change);
+    return count;
   }
 
   private void combineOutputs(List<Stage> stages, MiaMapping mapping,
-                              InstructionProgressGraph ipg) {
+                              InstructionProgressGraph ipg, Set<Node> added) {
     for (Stage stage : stages) {
-      var outMap = new HashMap<Type, Set<ExpressionNode>>();
-      mapping.stageContexts(stage)
-          .flatMap(context -> context.ipgNodes().stream())
+      var outMap = new HashMap<Integer, Set<ExpressionNode>>();
+      mapping.stageOutputs(stage)
           .filter(n -> bitWidth(n) > 1)
-          .filter(n -> n.usages()
-              .anyMatch(usage -> !mapping.containsInStage(stage, usage)))
           .forEach(node -> {
-            if (node instanceof ExpressionNode expr) {
-              outMap.computeIfAbsent(expr.type(), k -> new HashSet<>()).add(expr);
-            }
+            outMap.computeIfAbsent(bitWidth(node), k -> new HashSet<>()).add(node);
           });
       for (Set<ExpressionNode> set : outMap.values()) {
-        // add select-by-instruction nodes we can try to merge
-        var selects = set.stream().map(expr -> {
-          var ins = ipg.getContext(expr).instructions();
-          var sel = ipg.add(new SelectByInstructionNode(expr.type()), ins);
-          ins.forEach(instr -> sel.add(instr, expr));
-          expr.replaceAtAllUsages(sel);
-          mapping.ensureContext(expr).ipgNodes().add(sel);
-          return sel;
+        if (set.size() <= 1) {
+          continue;
+        }
+        // add select-by-instruction nodes for every usage as an output before we try to merge them
+        var selects = set.stream().flatMap(expr -> {
+          if (expr instanceof SelectByInstructionNode select) {
+            return Stream.of(select);
+          }
+          var outputUsages = expr.usages()
+              .filter(u -> !mapping.containsInStage(stage, u)).toList();
+          return outputUsages.stream().map(usage -> {
+            var ins = ipg.getContext(usage).instructions();
+            var sel = ipg.add(new SelectByInstructionNode(expr.type()), ins);
+            ins.forEach(instr -> sel.add(instr, expr));
+            usage.replaceInput(expr, sel);
+            mapping.ensureContext(expr).ipgNodes().add(sel);
+            added.add(sel);
+            return sel;
+          });
         }).toList();
 
         // merge
@@ -177,11 +210,12 @@ public class MiaMappingOptimizePass extends Pass {
         // remove select-by-instruction node again, if not merged or deleted
         for (SelectByInstructionNode select : selects) {
           if (select.isActive() && select.values().size() == 1) {
-            var expr = select.values().iterator().next();
+            var expr = select.values().getFirst();
             select.replaceAndDelete(expr);
           }
           if (select.isDeleted()) {
             mapping.removeNode(select);
+            added.remove(select);
           }
         }
       }
@@ -215,4 +249,26 @@ public class MiaMappingOptimizePass extends Pass {
     return node.usages().filter(n -> !self.equals(n))
         .anyMatch(other -> mapping.containsInStage(stage, other));
   }
+
+  private void dedupNodes(List<Stage> stages, MiaMapping mapping,
+                              InstructionProgressGraph ipg, Set<Node> removed) {
+    boolean change = true;
+    while (change) {
+      change = false;
+      for (Stage stage : stages) {
+        for (Node node : mapping.stageIpgNodes(stage).toList()) {
+          if (node.isDeleted() || node.inputs().findAny().isEmpty()) {
+            continue;
+          }
+          var dup = ipg.findDuplicate(node);
+          if (dup != null) {
+            dup.replaceAndDelete(node);
+            change = true;
+            removed.add(dup);
+          }
+        }
+      }
+    }
+  }
+
 }

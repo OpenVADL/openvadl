@@ -101,6 +101,7 @@ import vadl.rtl.passes.InstructionProgressGraphLowerPass;
 import vadl.rtl.passes.InstructionProgressGraphMergePass;
 import vadl.rtl.passes.InstructionProgressGraphNamePass;
 import vadl.rtl.passes.MiaMappingCreationPass;
+import vadl.rtl.passes.MiaMappingInlinePass;
 import vadl.rtl.passes.MiaMappingOptimizePass;
 import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -548,10 +549,11 @@ public class PassOrders {
         .add(new InstructionProgressGraphMergePass(config))
         .add(new MiaMappingOptimizePass(config))
         .add(new InstructionProgressGraphLowerPass(config))
-        .add(new MiaMappingOptimizePass(config))
         .add(new InstructionProgressGraphNamePass(config));
 
     order.add(new HazardAnalysisPass(config));
+
+    order.add(new MiaMappingInlinePass(config));
 
     addHtmlDump(order, config,
         "mia",

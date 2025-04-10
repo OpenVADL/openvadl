@@ -17,14 +17,18 @@
 package vadl.rtl.utils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import vadl.rtl.ipg.nodes.SelectByInstructionNode;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
@@ -63,6 +67,9 @@ public class RtlSimplificationRules {
     rules.add(new AndWithOnesSimplificationRule());
     rules.add(new OrWithOnesSimplificationRule());
     rules.add(new OrWithZerosSimplificationRule());
+    rules.add(new SelectWithEqCasesSimplificationRule());
+    rules.add(new SelectWithConstCondSimplificationRule());
+    rules.add(new SelByInstrEqCasesSimplificationRule());
   }
 
   /**
@@ -145,6 +152,64 @@ public class RtlSimplificationRules {
         var matchings = TreeMatcher.matches(Stream.of(node), matcher);
         if (!matchings.isEmpty()) {
           return Optional.ofNullable(n.inputs().toList().get(0));
+        }
+      }
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Simplify select with equal cases.
+   */
+  public static class SelectWithEqCasesSimplificationRule implements AlgebraicSimplificationRule {
+    @Override
+    public Optional<Node> simplify(Node node) {
+      if (node instanceof SelectNode n && n.trueCase() == n.falseCase()) {
+        return Optional.of(n.trueCase());
+      }
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Simplify select with constant condition.
+   */
+  public static class SelectWithConstCondSimplificationRule implements AlgebraicSimplificationRule {
+    @Override
+    public Optional<Node> simplify(Node node) {
+      if (node instanceof SelectNode n && n.condition() instanceof ConstantNode c) {
+        if (c.constant().asVal().bool()) {
+          return Optional.of(n.trueCase());
+        } else {
+          return Optional.of(n.falseCase());
+        }
+      }
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Simplify select-by-instruction nodes with equal cases.
+   */
+  public static class SelByInstrEqCasesSimplificationRule implements AlgebraicSimplificationRule {
+    @Override
+    public Optional<Node> simplify(Node node) {
+      if (node instanceof SelectByInstructionNode n && !n.values().isEmpty()) {
+        // check if all values are equal
+        var first = n.values().get(0);
+        if (n.values().stream().allMatch(first::equals)) {
+          return Optional.of(first);
+        }
+        // optimize values (merges equal values)
+        var values = new HashSet<>(n.values());
+        if (values.size() < n.values().size()) {
+          for (ExpressionNode value : values) {
+            if (n.values().stream().filter(value::equals).count() > 1) {
+              // by removing and re-adding the value
+              var ins = n.remove(value);
+              ins.forEach(i -> n.add(i, value));
+            }
+          }
         }
       }
       return Optional.empty();
