@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -242,11 +243,14 @@ class Parameter extends Node implements IdentifiableNode, TypedNode {
 }
 
 class ConstantDefinition extends Definition implements IdentifiableNode, TypedNode {
+  @Child
   IdentifierOrPlaceholder identifier;
 
+  @Child
   @Nullable
   TypeLiteral typeLiteral;
 
+  @Child
   Expr value;
   SourceLocation loc;
 
@@ -289,6 +293,7 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
       builder.append(" = ");
     }
     value.prettyPrint(indent + 1, builder);
+    builder.append("// " + ConstantDefinitionChildren.getChildren(this));
     builder.append("\n");
   }
 

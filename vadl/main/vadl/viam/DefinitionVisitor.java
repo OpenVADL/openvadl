@@ -102,7 +102,7 @@ public interface DefinitionVisitor {
    * It provides default implementations for the visit methods for all types of definitions in a
    * VADL specification, allowing for recursive traversal of the definition hierarchy.
    */
-  class Recursive implements DefinitionVisitor {
+  abstract class Recursive implements DefinitionVisitor {
 
     public void beforeTraversal(Definition definition) {
     }

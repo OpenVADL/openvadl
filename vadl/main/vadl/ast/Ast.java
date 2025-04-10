@@ -133,7 +133,12 @@ abstract class Node implements WithSourceLocation {
   abstract SyntaxType syntaxType();
 
   abstract void prettyPrint(int indent, StringBuilder builder);
+
+  List<Node> children() {
+    return NodeChildrenRegistry.getChildren(this);
+  }
 }
+
 
 interface IdentifiableNode {
   Identifier identifier();
