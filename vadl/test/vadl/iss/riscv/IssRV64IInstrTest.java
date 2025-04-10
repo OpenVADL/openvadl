@@ -90,6 +90,15 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     });
   }
 
+  private int calculateAlignment(int dataSizeInBits) {
+    if (dataSizeInBits <= 0) {
+      throw new IllegalArgumentException("Data size must be a positive integer.");
+    }
+
+    int dataSizeInBytes = (dataSizeInBits + 7) / 8; // Convert bits to bytes, rounding up
+    return Integer.highestOneBit(dataSizeInBytes);
+  }
+
   private Stream<DynamicTest> testLoadInstruction(String instruction, String testNamePrefix,
                                                   String storeInstruction, int dataSize)
       throws IOException {
@@ -98,7 +107,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
       var storeReg = b.anyTempReg().sample();
       b.fillReg(storeReg, dataSize);
       var addrReg = b.anyTempReg().sample();
-      b.fillReg(addrReg, BigInteger.valueOf(0x80000100L), BigInteger.valueOf(0x800F0000L));
+      b.fillReg(addrReg, BigInteger.valueOf(0x80000100L), BigInteger.valueOf(0x800F0000L),
+          calculateAlignment(dataSize));
       b.add("%s %s, 0(%s)", storeInstruction, storeReg, addrReg);
       var loadReg = b.anyTempReg().sample();
       b.add("%s %s, 0(%s)", instruction, loadReg, addrReg);
@@ -114,7 +124,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
       var storeReg = b.anyTempReg().sample();
       b.fillReg(storeReg, dataSize);
       var addrReg = b.anyTempReg().sample();
-      b.fillReg(addrReg, BigInteger.valueOf(0x80000100L), BigInteger.valueOf(0x800F0000L));
+      b.fillReg(addrReg, BigInteger.valueOf(0x80000100L), BigInteger.valueOf(0x800F0000L),
+          calculateAlignment(dataSize));
       b.add("%s %s, 0(%s)", instruction, storeReg, addrReg);
       var loadReg = b.anyTempReg()
           .filter(reg -> !reg.equals(storeReg)).sample();
