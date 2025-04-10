@@ -61,7 +61,7 @@ import vadl.iss.passes.tcgLowering.IssTcgContextPass;
 import vadl.iss.passes.tcgLowering.TcgBranchLoweringPass;
 import vadl.iss.passes.tcgLowering.TcgOpLoweringPass;
 import vadl.iss.template.gdb_xml.EmitIssGdbXmlPass;
-import vadl.iss.template.hw.EmitIssVirtCPass;
+import vadl.iss.template.hw.EmitIssHwMachineCPass;
 import vadl.iss.template.target.EmitIssCpuHeaderPass;
 import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
@@ -458,8 +458,8 @@ public class PassOrders {
         .add(issDefault("/hw/meson.build", config))
         .add(issDefault("/hw/gen-arch/Kconfig", config))
         .add(issDefault("/hw/gen-arch/meson.build", config))
-        .add(new EmitIssVirtCPass(config))
-        .add(issDefault("/hw/gen-arch/virt.h", config))
+        .add(new EmitIssHwMachineCPass(config))
+        .add(issDefault("/hw/gen-arch/gen-machine.h", config))
         .add(issDefault("/hw/gen-arch/boot.c", config))
         .add(issDefault("/hw/gen-arch/boot.h", config))
 

@@ -28,22 +28,22 @@ import vadl.viam.Specification;
 import vadl.viam.annotations.EnableHtifAnno;
 
 /**
- * Emits the {@code hw/gen-arch/virt.c} which is the core implementation for the
+ * Emits the {@code hw/gen-arch/gen-machine.c} which is the core implementation for the
  * virtual hardware board.
  * It defines things like memory, start address, HTIF, firmware loading, etc...
  *
  * @see IssFirmwareCodeGenerator
  * @see MemoryInfo
  */
-public class EmitIssVirtCPass extends IssTemplateRenderingPass {
+public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
 
-  public EmitIssVirtCPass(IssConfiguration configuration) {
+  public EmitIssHwMachineCPass(IssConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   protected String issTemplatePath() {
-    return "hw/gen-arch/virt.c";
+    return "hw/gen-arch/gen-machine.c";
   }
 
   @Override
@@ -85,7 +85,7 @@ public class EmitIssVirtCPass extends IssTemplateRenderingPass {
 
   private String firmwareWriteFunction(Procedure firmware, MemoryInfo memoryInfo) {
     return new IssFirmwareCodeGenerator(firmware, memoryInfo)
-        .fetch();
+        .fetch(configuration().machineName());
   }
 
 }

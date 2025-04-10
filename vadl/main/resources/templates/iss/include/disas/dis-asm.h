@@ -245,7 +245,7 @@ enum bfd_architecture
 
   // VADL generated start
   bfd_arch_[(${gen_arch})],    /* [(${gen_arch})] */
-#define bfs_mach_[(${gen_arch})]virt      0x420
+#define bfs_mach_[(${gen_arch})][(${gen_machine_lower})]      0x420
 // VADL generated end
 
   bfd_arch_last
