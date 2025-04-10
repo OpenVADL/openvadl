@@ -8,6 +8,7 @@ class Test:
     id: str
     asm_core: str
     regs: Optional[List[str]] = None
+    debug: bool = False
 
 @dataclass
 class Tool:

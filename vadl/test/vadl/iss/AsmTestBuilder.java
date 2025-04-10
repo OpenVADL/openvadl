@@ -39,8 +39,16 @@ public abstract class AsmTestBuilder {
 
   public abstract BigInteger fillReg(String reg, BigInteger value);
 
+  public BigInteger fillReg(String reg, BigInteger min, BigInteger max, int alignment) {
+    var val = arbitraryBetween(min, max)
+        .filter(i -> i.mod(BigInteger.valueOf(alignment)).equals(BigInteger.ZERO))
+        .sample();
+    return fillReg(reg, val);
+  }
+
   public BigInteger fillReg(String reg, BigInteger min, BigInteger max) {
-    var val = arbitraryBetween(min, max).sample();
+    var val = arbitraryBetween(min, max)
+        .sample();
     return fillReg(reg, val);
   }
 

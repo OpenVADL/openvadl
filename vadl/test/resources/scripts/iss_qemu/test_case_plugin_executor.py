@@ -1,4 +1,5 @@
 import os
+import shutil
 from pathlib import Path
 
 import yaml
@@ -97,3 +98,13 @@ class TestCasePluginExecutor:
     with open(filename, 'w') as f:
       yaml_str = yaml.safe_dump(data, default_flow_style=False, sort_keys=False)
       f.write(yaml_str)
+
+    if self.test.debug:
+      debug_dir = output_dir / f"{self.test.id}_debug"
+      # Ensure the output directory exists
+      os.makedirs(debug_dir, exist_ok=True)
+
+      # Copy compile data to result
+      shutil.copy(self.compinfo.elf, debug_dir)
+      shutil.copy(self.compinfo.asm, debug_dir)
+      shutil.copy(self.compinfo.lnscript, debug_dir)
