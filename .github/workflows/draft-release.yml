@@ -58,10 +58,10 @@ jobs:
       - name: Build Native Executable
         run: |
           VERSIONING_GIT_TAG=v${{ needs.update-draft-release.outputs.version }} ./gradlew nativeCompile
-          APPNAME=openvadl-${{ needs.update-draft-release.outputs.version }}-${{ matrix.platform }}-${{ matrix.architecture }}
-          mv vadl-cli/build/native/nativeCompile/openvadl $APPNAME
-          tar -czvf ${APPNAME}.tar.gz $APPNAME
-          echo "COMPRESSED_APP=${APPNAME}.tar.gz" >> $GITHUB_ENV
+          FULLNAME=openvadl-${{ needs.update-draft-release.outputs.version }}-${{ matrix.platform }}-${{ matrix.architecture }}
+          mv vadl-cli/build/native/nativeCompile/openvadl openvadl
+          tar --transform "s,^,${FULLNAME}/," -czvf ${FULLNAME}.tar.gz openvadl
+          echo "COMPRESSED_APP=${FULLNAME}.tar.gz" >> $GITHUB_ENV
 
       - name: Upload Executable to Draft Release
         uses: softprops/action-gh-release@v1
