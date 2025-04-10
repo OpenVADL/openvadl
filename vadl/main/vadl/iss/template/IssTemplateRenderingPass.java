@@ -91,7 +91,8 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     // however, if the path includes the generated architecture name, the template paths
     // use `gen-arch`, which must be replaced by the actual architecture name.
     return templatePath
-        .replaceAll("gen-arch", configuration().targetName());
+        .replaceAll("gen-arch", configuration().targetName())
+        .replaceAll("gen-machine", configuration().machineName().toLowerCase());
   }
 
   @Override
@@ -115,6 +116,9 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("gen_arch", configuration().targetName().toLowerCase());
     vars.put("gen_arch_upper", configuration().targetName().toUpperCase());
     vars.put("gen_arch_lower", configuration().targetName().toLowerCase());
+    vars.put("gen_machine", configuration().machineName());
+    vars.put("gen_machine_upper", configuration().machineName().toUpperCase());
+    vars.put("gen_machine_lower", configuration().machineName().toLowerCase());
     vars.put("register_files", mapRegFiles(specification));
     vars.put("registers", mapRegs(specification));
     vars.put("insn_count", configuration().isInsnCounting());

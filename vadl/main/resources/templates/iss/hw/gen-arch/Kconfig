@@ -1,9 +1,6 @@
 
-# TODO: Delete
-config [(${gen_arch_upper})]_VIRT_MCU
-    bool
 
-config [(${gen_arch_upper})]_VIRT
+config [(${gen_arch_upper})]_[(${gen_machine_upper})]
     bool
-    select [(${gen_arch_upper})]_VIRT_MCU
+    default y
     select HTIF

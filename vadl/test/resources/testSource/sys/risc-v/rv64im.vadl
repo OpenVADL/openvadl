@@ -119,7 +119,7 @@ application binary interface ABI for RV64IM = {
    }
 }
 
-micro processor CPU implements RV64IM with ABI = {
+micro processor Spike implements RV64IM with ABI = {
   start = 0x80000000
 
   // we will jump to lowest emitted firmware address by default.

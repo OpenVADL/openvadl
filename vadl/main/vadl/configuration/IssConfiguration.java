@@ -47,6 +47,7 @@ public class IssConfiguration extends GeneralConfiguration {
   // is set by the IssConfigurationPass
   private String targetName;
   private boolean insnCount;
+  private String machineName;
   private Tcg_32_64 targetSize;
   private EnumSet<IssOptsToSkip> optsToSkip;
 
@@ -56,6 +57,7 @@ public class IssConfiguration extends GeneralConfiguration {
   public IssConfiguration(GeneralConfiguration generalConfig) {
     super(generalConfig);
     targetName = "unknown";
+    machineName = "unknown";
     insnCount = false;
     targetSize = Tcg_32_64.i64;
     optsToSkip = EnumSet.noneOf(IssOptsToSkip.class);
@@ -78,12 +80,20 @@ public class IssConfiguration extends GeneralConfiguration {
     return targetName;
   }
 
+  public String machineName() {
+    return machineName;
+  }
+
   public Tcg_32_64 targetSize() {
     return targetSize;
   }
 
   public void setTargetName(String targetName) {
     this.targetName = targetName;
+  }
+
+  public void setMachineName(String machineName) {
+    this.machineName = machineName;
   }
 
   public boolean isInsnCounting() {

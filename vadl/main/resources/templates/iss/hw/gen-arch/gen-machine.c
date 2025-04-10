@@ -1,5 +1,5 @@
 
-#include "virt.h"
+#include "[(${gen_machine_lower})].h"
 #include "boot.h"
 #include "qapi/error.h"
 #include "qemu/qemu-print.h"
@@ -9,11 +9,11 @@
 #include "hw/char/riscv_htif.h"
 #include <stdlib.h>
 
-static const MemMapEntry virt_memmap[] = {
+static const MemMapEntry [(${gen_machine_lower})]_memmap[] = {
   [# th:if="${mem_info.rom_size} != 0"]
-  [VIRT_MROM] = {[(${mem_info.rom_start})], [(${mem_info.rom_size})]},
+  [ [(${gen_machine_upper})]_MROM] = {[(${mem_info.rom_start})], [(${mem_info.rom_size})]},
   [/]
-  [VIRT_DRAM] = {[(${dram_base})], 0x0},
+  [ [(${gen_machine_upper})]_DRAM] = {[(${dram_base})], 0x0},
 };
 
 
@@ -21,7 +21,7 @@ static const MemMapEntry virt_memmap[] = {
 static bool tofromhost_defined = false;
 [/]
 
-static void virt_sym_cb(const char *st_name, int st_info, uint64_t st_value,
+static void [(${gen_machine_lower})]_sym_cb(const char *st_name, int st_info, uint64_t st_value,
                         uint64_t st_size) {
    [# th:if="${htif_enabled}"]
    // Checks if a fromhost/tohost symbol was found. If at least one was found,
@@ -37,12 +37,12 @@ static void virt_sym_cb(const char *st_name, int st_info, uint64_t st_value,
 [(${setup_rom_reset_vec})]
 [/]
 
-static void virt_machine_ready(Notifier *notifier, void *data)
+static void [(${gen_machine_lower})]_machine_ready(Notifier *notifier, void *data)
 {
     // load the firmware
 
-    [(${gen_arch_upper})]VirtMachineState *s = container_of(notifier, [(${gen_arch_upper})]VirtMachineState, machine_ready);
-    const MemMapEntry *memmap = virt_memmap;
+    [(${gen_arch_upper})][(${gen_machine})]MachineState *s = container_of(notifier, [(${gen_arch_upper})][(${gen_machine})]MachineState, machine_ready);
+    const MemMapEntry *memmap = [(${gen_machine_lower})]_memmap;
     MachineState *machine = MACHINE(s);
     target_ulong start_addr = [(${start_addr})];
     target_ulong firmware_end_addr;
@@ -55,7 +55,7 @@ static void virt_machine_ready(Notifier *notifier, void *data)
         exit(1);
     }
 
-    firmware_end_addr = [(${gen_arch_lower})]_find_and_load_firmware(machine, start_addr, virt_sym_cb);
+    firmware_end_addr = [(${gen_arch_lower})]_find_and_load_firmware(machine, start_addr, [(${gen_machine_lower})]_sym_cb);
 
     if (firmware_end_addr == start_addr) {
         error_report("Failed to load firmware.");
@@ -73,10 +73,10 @@ static void virt_machine_ready(Notifier *notifier, void *data)
     }[/]
 }
 
-static void virt_machine_init(MachineState *machine)
+static void [(${gen_machine_lower})]_machine_init(MachineState *machine)
 {
-    const MemMapEntry *memmap = virt_memmap;
-    [(${gen_arch_upper})]VirtMachineState *s = [(${gen_arch_upper})]_VIRT_MACHINE(machine);
+    const MemMapEntry *memmap = [(${gen_machine_lower})]_memmap;
+    [(${gen_arch_upper})][(${gen_machine})]MachineState *s = [(${gen_arch_upper})]_[(${gen_machine_upper})]_MACHINE(machine);
 
     MemoryRegion *system_memory = get_system_memory();
 
@@ -86,27 +86,28 @@ static void virt_machine_init(MachineState *machine)
 
 
     // add the ram region
-    memory_region_add_subregion(system_memory, memmap[VIRT_DRAM].base, machine->ram);
+    memory_region_add_subregion(system_memory, memmap[ [(${gen_machine_upper})]_DRAM].base, machine->ram);
 
     [# th:if="${mem_info.rom_size} != 0"]
     MemoryRegion *mask_rom = g_new(MemoryRegion, 1);
-    memory_region_init_rom(mask_rom, NULL, "[(${gen_arch_lower})].virt.mrom",
-                           memmap[VIRT_MROM].size, &error_fatal);
-    memory_region_add_subregion(system_memory, memmap[VIRT_MROM].base,
+    memory_region_init_rom(mask_rom, NULL, "[(${gen_arch_lower})].[(${gen_machine_lower})].mrom",
+                           memmap[ [(${gen_machine_upper})]_MROM].size, &error_fatal);
+    memory_region_add_subregion(system_memory, memmap[ [(${gen_machine_upper})]_MROM].base,
                                 mask_rom);
     [/]
 
-    s->machine_ready.notify = virt_machine_ready;
+    s->machine_ready.notify = [(${gen_machine_lower})]_machine_ready;
     qemu_add_machine_init_done_notifier(&s->machine_ready);
 }
 
-	static void virt_machine_class_init(ObjectClass *oc, void *data) {
+	static void [(${gen_machine_lower})]_machine_class_init(ObjectClass *oc, void *data) {
     MachineClass *mc = MACHINE_CLASS(oc);
 
-    mc->desc = "[(${gen_arch})] VirtIO board";
+    mc->desc = "[(${gen_arch})] [(${gen_machine})] board";
 
-    mc->init = virt_machine_init;
+    mc->init = [(${gen_machine_lower})]_machine_init;
     mc->default_cpus = 1;
+    mc->is_default = true;
     mc->default_cpu_type = TYPE_[(${gen_arch_upper})]_CPU,
     mc->min_cpus = mc->default_cpus;
     mc->max_cpus = mc->default_cpus;
@@ -117,23 +118,23 @@ static void virt_machine_init(MachineState *machine)
     mc->default_ram_id = "ram";
 }
 
-static void virt_machine_instance_init(Object *obj) {
-    [(${gen_arch_upper})]VirtMachineState *m_state = [(${gen_arch_upper})]_VIRT_MACHINE(obj);
+static void [(${gen_machine_lower})]_machine_instance_init(Object *obj) {
+    [(${gen_arch_upper})][(${gen_machine})]MachineState *m_state = [(${gen_arch_upper})]_[(${gen_machine_upper})]_MACHINE(obj);
 
     // nothing to do
 }
 
-static const TypeInfo virt_machine_typeinfo = {
-    .name = TYPE_[(${gen_arch_upper})]_VIRT_MACHINE,
+static const TypeInfo [(${gen_machine_lower})]_machine_typeinfo = {
+    .name = TYPE_[(${gen_arch_upper})]_[(${gen_machine_upper})]_MACHINE,
     .parent = TYPE_MACHINE,
-    .class_init = virt_machine_class_init,
-    .instance_init = virt_machine_instance_init,
-    .instance_size = sizeof([(${gen_arch_upper})]VirtMachineState),
+    .class_init = [(${gen_machine_lower})]_machine_class_init,
+    .instance_init = [(${gen_machine_lower})]_machine_instance_init,
+    .instance_size = sizeof([(${gen_arch_upper})][(${gen_machine})]MachineState),
 };
 
-static void virt_machine_init_register_types(void)
+static void [(${gen_machine_lower})]_machine_init_register_types(void)
 {
-    type_register_static(&virt_machine_typeinfo);
+    type_register_static(&[(${gen_machine_lower})]_machine_typeinfo);
 }
 
-type_init(virt_machine_init_register_types)
+type_init([(${gen_machine_lower})]_machine_init_register_types)
