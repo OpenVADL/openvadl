@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- -->
+<!-- This program is free software: you can redistribute it and/or modify -->
+<!-- it under the terms of the GNU General Public License as published by -->
+<!-- the Free Software Foundation, either version 3 of the License, or -->
+<!-- (at your option) any later version. -->
+<!-- -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program.  If not, see <https://www.gnu.org/licenses/>. -->
+
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 196.99 166.29">
+    <defs>
+        <style>
+            .cls-1 {
+            fill: #632c83;
+            }
+        </style>
+    </defs>
+    <g id="Layer_1-2" data-name="Layer 1">
+        <g>
+            <rect class="cls-1" x="165.33" y="4.91" width="28.03" height="28.03" rx="1.12" ry="1.12"
+                  transform="translate(4.37 62.57) rotate(-20.03)"/>
+            <rect class="cls-1" x="1.42" y="4.91" width="28.03" height="28.03" rx="1.12" ry="1.12"
+                  transform="translate(-5.17 32.04) rotate(-83.29)"/>
+            <rect class="cls-1" x="10.69" y="114.54" width="28.03" height="28.03" rx="1.12" ry="1.12"
+                  transform="translate(-15.85 4.09) rotate(-7.17)"/>
+            <rect class="cls-1" x="156.59" y="116.63" width="28.03" height="28.03" rx="1.12" ry="1.12"
+                  transform="translate(14.09 277.87) rotate(-80.69)"/>
+            <circle class="cls-1" cx="82.81" cy="59.77" r="3.75"/>
+            <path class="cls-1"
+                  d="M189.67,40.09c-.39-1.15-4.32-.91-5.49-.83-22.67,1.42-12.99,32.75-25.84,44.16-4.31,3.82-11.73,6.18-17.28,4.03-4.61-1.78-3.33-5.52-2.49-9.51,1.57-7.45,4.57-14.54,6.19-21.98,3.03-13.99,1.73-26.26-7.42-37.64-19.68-24.47-57.14-24.34-77.07-.18-10.37,12.58-11,25.33-7.05,40.68,1.78,6.93,5.6,16.07,6,23.01.16,2.76.35,4.21-2.39,5.41-6.75,2.96-16.45-2.58-20.12-8.34-6.15-9.67-4.66-32.95-15.41-37.99-2.91-1.37-8.01-1.95-11.19-1.65-.72.07-1.24.21-1.66.86-1.21,1.86,1.48,3.39,2.52,4.61,11.28,13.3-.66,35.21,12.4,50.25,7.53,8.68,24.33,12,35.28,10.62,1.48-.19,4.34-1.12,5.47-1.09,3.42.09,2.57,4.21,2.18,6.49-1.89,11.22-9.82,31.07-20.54,36.43-6.35,3.17-18.68.95-21.97.84-3.3-.11-2.37,3.76-.83,6.18,11.01,17.17,32.84,13.57,46.03,1.07,9.58-9.07,12.72-17.93,18.7-29.02,2.92-5.42,8.28-8.9,14.71-7.13,5.45,1.5,6.37,6.95,8.56,11.42,5.51,11.27,14.74,25.75,26.03,31.78,8.65,4.62,18.95,5.36,27.32-.23,2.43-1.62,8.98-7.66,9.26-10.52.36-3.79-2.97-2.53-6.6-2.59-9.41-.16-20.06-2.15-26.5-9.47-5.9-6.69-10.19-20.3-10.82-29.12-.14-1.97-.35-6.09,2.42-6.21,20.34,5.61,45.17-.64,49.24-24.11,2.12-12.25-2.8-24.78,5.74-35.46,1.21-1.52,3.38-2.56,2.63-4.75ZM78.65,71.45c-5.75,0-10.42-5.49-10.42-12.26s4.66-12.26,10.42-12.26,10.42,5.49,10.42,12.26-4.67,12.26-10.42,12.26ZM119.45,71.56c-5.72,0-10.37-5.46-10.37-12.19s4.64-12.19,10.37-12.19,10.37,5.46,10.37,12.19-4.64,12.19-10.37,12.19Z"/>
+            <circle class="cls-1" cx="123.59" cy="59.94" r="3.73"/>
+        </g>
+    </g>
+</svg>
