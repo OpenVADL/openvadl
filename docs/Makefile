@@ -1,4 +1,5 @@
 DOXYGEN ?= ./doxygen
+LATEST_VERSION := $(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
 default: docs
 
@@ -30,6 +31,7 @@ latex: open-vadl-latex
 
 open-vadl-html-docs: doxygen
 	@echo "-- Generating HTML Documentation"
+	LATEST_VERSION=$(LATEST_VERSION) \
 	PROJECT_NAME="OpenVADL" \
 	PROJECT_NUMBER="(`(git describe --always --dirty)`)" \
 	PROJECT_BRIEF="open-vadl" \
