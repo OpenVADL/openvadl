@@ -30,6 +30,7 @@ def load_config(filename: str) -> Config:
         if 'path' not in data[name] or 'args' not in data[name]:
             raise ValueError(f"{name} must contain 'path' and 'args' keys. Invalid entry: {data[name]}")
 
+
     # Construct and return the Config instance
     return Config(
         sim=Tool(data['sim']),
