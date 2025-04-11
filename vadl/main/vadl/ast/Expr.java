@@ -18,9 +18,13 @@ package vadl.ast;
 
 import com.google.common.base.Preconditions;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import vadl.javaannotations.ast.Child;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
@@ -301,8 +305,10 @@ enum UnaryOperator {
  * Any kind of binary expression (often written with the infix notation in vadl).
  */
 class BinaryExpr extends Expr {
+  @Child
   Expr left;
   IsBinOp operator;
+  @Child
   Expr right;
   boolean hasBeenReordered = false;
 
@@ -420,6 +426,7 @@ class BinaryExpr extends Expr {
 
 class UnaryExpr extends Expr {
   IsUnOp operator;
+  @Child
   Expr operand;
 
   /**
@@ -1080,6 +1087,7 @@ final class IdToStrExpr extends Expr {
  */
 // FIXME: This should probably be two nodes as the semantics are so different.
 class GroupedExpr extends Expr {
+  @Child
   List<Expr> expressions;
   SourceLocation loc;
 
@@ -1138,7 +1146,9 @@ class GroupedExpr extends Expr {
 }
 
 class RangeExpr extends Expr {
+  @Child
   Expr from;
+  @Child
   Expr to;
 
   public RangeExpr(Expr from, Expr to) {
@@ -1257,6 +1267,13 @@ final class TypeLiteral extends Expr {
     }
   }
 
+  @Override
+  public List<Node> children() {
+    // This is too complicated for the @Child annotation
+    return sizeIndices.stream()
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+  }
 
   @Override
   SourceLocation location() {
@@ -1444,6 +1461,7 @@ final class IdentifierPath extends Expr implements IsId {
  */
 final class SymbolExpr extends Expr implements IsSymExpr {
   IsId path;
+  @Child
   Expr size;
   SourceLocation location;
 
@@ -1561,6 +1579,19 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     this.argsIndices = argsIndices;
     this.subCalls = subCalls;
     this.location = location;
+  }
+
+  @Override
+  List<Node> children() {
+    // This is too complicated for the @Child annotation
+    List<Node> childNodes = new ArrayList<>();
+    childNodes.add((Node) target);
+    childNodes.addAll(argsIndices.stream().flatMap(a -> a.values.stream()).toList());
+    childNodes.addAll(subCalls.stream()
+        .flatMap(subCall -> subCall.argsIndices.stream().
+            flatMap(a -> a.values.stream()))
+        .toList());
+    return childNodes;
   }
 
   void replaceArgsFor(int index, List<Expr> newArgs) {
@@ -1760,8 +1791,11 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
 }
 
 class IfExpr extends Expr {
+  @Child
   Expr condition;
+  @Child
   Expr thenExpr;
+  @Child
   Expr elseExpr;
   SourceLocation location;
 
@@ -1835,7 +1869,9 @@ class IfExpr extends Expr {
 
 class LetExpr extends Expr {
   List<Identifier> identifiers;
+  @Child
   Expr valueExpr;
+  @Child
   Expr body;
   SourceLocation location;
 
@@ -1939,7 +1975,9 @@ class LetExpr extends Expr {
 }
 
 class CastExpr extends Expr {
+  @Child
   Expr value;
+  @Child
   TypeLiteral typeLiteral;
   SourceLocation location;
 
@@ -2015,6 +2053,19 @@ class MatchExpr extends Expr {
     this.cases = cases;
     this.defaultResult = defaultResult;
     this.loc = loc;
+  }
+
+  @Override
+  List<Node> children() {
+    // This is too complicated for the @Child annotation
+    var childNodes = new ArrayList<Node>();
+    childNodes.add(candidate);
+    cases.forEach(c -> {
+      childNodes.addAll(c.patterns);
+      childNodes.add(c.result);
+    });
+    childNodes.add(defaultResult);
+    return childNodes;
   }
 
   @Override
@@ -2181,6 +2232,7 @@ class ExistsInExpr extends Expr {
 
 class ExistsInThenExpr extends Expr {
   List<Condition> conditions;
+  @Child
   Expr thenExpr;
   SourceLocation loc;
 
@@ -2259,7 +2311,9 @@ class ExistsInThenExpr extends Expr {
 }
 
 class ForallThenExpr extends Expr {
+  @Child
   List<ForallThenExpr.Index> indices;
+  @Child
   Expr thenExpr;
   SourceLocation loc;
 
@@ -2391,6 +2445,7 @@ class ForallExpr extends Expr {
   Operation operation;
   @Nullable
   Operator foldOperator;
+  @Child
   Expr expr;
   SourceLocation loc;
 
@@ -2531,6 +2586,7 @@ class SequenceCallExpr extends Expr {
 
   Identifier target;
   @Nullable
+  @Child
   Expr range;
   SourceLocation loc;
 

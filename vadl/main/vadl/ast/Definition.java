@@ -174,6 +174,7 @@ interface DefinitionVisitor<R> {
  */
 class Parameter extends Node implements IdentifiableNode, TypedNode {
   Identifier name;
+  @Child
   TypeLiteral typeLiteral;
 
   public Parameter(Identifier name, TypeLiteral typeLiteral) {
@@ -243,7 +244,6 @@ class Parameter extends Node implements IdentifiableNode, TypedNode {
 }
 
 class ConstantDefinition extends Definition implements IdentifiableNode, TypedNode {
-  @Child
   IdentifierOrPlaceholder identifier;
 
   @Child
@@ -293,7 +293,7 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
       builder.append(" = ");
     }
     value.prettyPrint(indent + 1, builder);
-    builder.append("// " + ConstantDefinitionChildren.getChildren(this));
+    builder.append("// " + children());
     builder.append("\n");
   }
 
@@ -340,8 +340,11 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
 
 class FormatDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
+  @Child
   TypeLiteral typeLiteral;
+  @Child
   List<FormatField> fields;
+  @Child
   List<AuxiliaryField> auxiliaryFields;
   SourceLocation loc;
 
@@ -353,16 +356,16 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
   record BitRange(int from, int to) {
   }
 
-  interface FormatField extends WithSourceLocation {
-    Identifier identifier();
-
-    void prettyPrint(int indent, StringBuilder builder);
+  static abstract class FormatField extends Node implements WithSourceLocation {
+    abstract Identifier identifier();
   }
 
 
-  static class RangeFormatField extends Node implements FormatField {
+  static class RangeFormatField extends FormatField {
     Identifier identifier;
+    @Child
     List<Expr> ranges;
+    @Child
     @Nullable
     TypeLiteral typeLiteral;
 
@@ -439,8 +442,9 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     }
   }
 
-  static class TypedFormatField extends Node implements FormatField {
+  static class TypedFormatField extends FormatField {
     final Identifier identifier;
+    @Child
     final TypeLiteral typeLiteral;
 
     // The range this field occupies in its parent format.
@@ -515,8 +519,9 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
    * }
    * </pre>
    */
-  static class DerivedFormatField extends Node implements FormatField {
+  static class DerivedFormatField extends FormatField {
     Identifier identifier;
+    @Child
     Expr expr;
 
     /**
@@ -615,6 +620,13 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     AuxiliaryField(AuxiliaryFieldKind kind, List<AuxiliaryFieldEntry> entries) {
       this.kind = kind;
       this.entries = entries;
+    }
+
+    @Override
+    List<Node> children() {
+      // This is too complicated for the @Child annotation
+      // This is a bit too complex for the @Child annotation
+      return entries.stream().map(e -> (Node) e.expr).toList();
     }
 
     @Override
@@ -771,7 +783,6 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     }
   }
 
-
   @Override
   public Identifier identifier() {
     return (Identifier) identifier;
@@ -867,6 +878,7 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
   Identifier identifier;
   @Nullable
   Identifier extending;
+  @Child
   List<Definition> definitions;
   SourceLocation loc;
 
@@ -958,6 +970,7 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
 class CounterDefinition extends Definition implements IdentifiableNode, TypedNode {
   CounterKind kind;
   IdentifierOrPlaceholder identifier;
+  @Child
   TypeLiteral typeLiteral;
   SourceLocation loc;
 
@@ -1044,7 +1057,9 @@ class CounterDefinition extends Definition implements IdentifiableNode, TypedNod
 
 class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
+  @Child
   TypeLiteral addressTypeLiteral;
+  @Child
   TypeLiteral dataTypeLiteral;
   SourceLocation loc;
 
@@ -1130,6 +1145,7 @@ class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode
 
 class RegisterDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
+  @Child
   TypeLiteral typeLiteral;
   SourceLocation loc;
 
@@ -1210,6 +1226,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
 
 class RegisterFileDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
+  @Child
   RelationTypeLiteral typeLiteral;
   SourceLocation loc;
 
@@ -1245,16 +1262,7 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
     builder.append("register file ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    var isFirst = true;
-    for (TypeLiteral argType : typeLiteral.argTypes) {
-      if (!isFirst) {
-        builder.append(" * ");
-      }
-      isFirst = false;
-      argType.prettyPrint(0, builder);
-    }
-    builder.append(" -> ");
-    typeLiteral.resultType.prettyPrint(indent, builder);
+    typeLiteral.prettyPrint(indent, builder);
     builder.append("\n");
   }
 
@@ -1296,13 +1304,81 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
     return Objects.requireNonNull(type);
   }
 
-  record RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
+  static final class RelationTypeLiteral extends Node {
+    @Child
+    final List<TypeLiteral> argTypes;
+    @Child
+    final TypeLiteral resultType;
+
+    RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
+      this.argTypes = argTypes;
+      this.resultType = resultType;
+    }
+
+    public List<TypeLiteral> argTypes() {
+      return argTypes;
+    }
+
+    public TypeLiteral resultType() {
+      return resultType;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (RelationTypeLiteral) obj;
+      return Objects.equals(this.argTypes, that.argTypes) &&
+          Objects.equals(this.resultType, that.resultType);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(argTypes, resultType);
+    }
+
+    @Override
+    public String toString() {
+      return "RelationTypeLiteral[" +
+          "argTypes=" + argTypes + ", " +
+          "resultType=" + resultType + ']';
+    }
+
+    @Override
+    SourceLocation location() {
+      return argTypes.get(0).location().join(resultType.location());
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      var isFirst = true;
+      for (TypeLiteral argType : argTypes) {
+        if (!isFirst) {
+          builder.append(" * ");
+        }
+        isFirst = false;
+        argType.prettyPrint(0, builder);
+      }
+      builder.append(" -> ");
+      resultType.prettyPrint(indent, builder);
+    }
   }
 }
 
 class InstructionDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
+  @Child
   IdentifierOrPlaceholder typeIdentifier;
+  @Child
   Statement behavior;
   SourceLocation loc;
 
@@ -1395,7 +1471,9 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
  * Class which is parent for {@link PseudoInstructionDefinition} and {@link AbiSequenceDefinition}.
  */
 abstract class InstructionSequenceDefinition extends Definition {
+  @Child
   List<Parameter> params;
+  @Child
   List<InstructionCallStatement> statements;
   SourceLocation loc;
 
@@ -1506,8 +1584,11 @@ class PseudoInstructionDefinition extends InstructionSequenceDefinition
 
 class RelocationDefinition extends Definition implements IdentifiableNode, TypedNode {
   Identifier identifier;
+  @Child
   List<Parameter> params;
+  @Child
   TypeLiteral resultTypeLiteral;
+  @Child
   Expr expr;
   SourceLocation loc;
 
@@ -1610,6 +1691,7 @@ sealed interface IsEncs permits EncodingDefinition.EncsNode,
 
 class EncodingDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder instrIdentifier;
+  @Child
   EncsNode encodings;
   SourceLocation loc;
 
@@ -1690,6 +1772,12 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
     EncsNode(List<IsEncs> items, SourceLocation loc) {
       this.items = items;
       this.loc = loc;
+    }
+
+    @Override
+    List<Node> children() {
+      // This is too complicated for the @Child annotation
+      return items.stream().map(i -> (Node) i).toList();
     }
 
     @Override
@@ -1784,6 +1872,7 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
 
 class AssemblyDefinition extends Definition {
   List<IdentifierOrPlaceholder> identifiers;
+  @Child
   Expr expr;
   SourceLocation loc;
 
@@ -1861,6 +1950,7 @@ class AssemblyDefinition extends Definition {
 
 class UsingDefinition extends Definition implements IdentifiableNode {
   final IdentifierOrPlaceholder id;
+  @Child
   final TypeLiteral typeLiteral;
   final SourceLocation loc;
 
@@ -1932,8 +2022,11 @@ class UsingDefinition extends Definition implements IdentifiableNode {
 
 class FunctionDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder name;
+  @Child
   List<Parameter> params;
+  @Child
   TypeLiteral retType;
+  @Child
   Expr expr;
   SourceLocation loc;
 
@@ -2028,9 +2121,12 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
   IdentifierOrPlaceholder id;
   AliasKind kind;
   @Nullable
+  @Child
   TypeLiteral aliasType;
   @Nullable
+  @Child
   TypeLiteral targetType;
+  @Child
   Expr value;
   SourceLocation loc;
 
@@ -2148,7 +2244,9 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
 final class EnumerationDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder id;
   @Nullable
+  @Child
   TypeLiteral enumType;
+  @Child
   List<Entry> entries;
   SourceLocation loc;
 
@@ -2304,6 +2402,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
 
 final class ExceptionDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder id;
+  @Child
   Statement statement;
   SourceLocation loc;
   List<Parameter> params;
@@ -2374,6 +2473,10 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
   }
 }
 
+/**
+ * An internal temporary placeholder of macro instantiations.
+ * This node should never leave the parser.
+ */
 final class PlaceholderDefinition extends Definition {
 
   List<String> segments;
@@ -2715,6 +2818,7 @@ final class Annotation {
 
 class DefinitionList extends Definition {
 
+  @Child
   List<Definition> items;
   SyntaxType syntaxType;
   SourceLocation location;
@@ -3050,9 +3154,13 @@ class TemplateParam extends Node implements IdentifiableNode {
 
 class ProcessDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder name;
+  @Child
   List<TemplateParam> templateParams;
+  @Child
   List<Parameter> inputs;
+  @Child
   List<Parameter> outputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
@@ -3155,6 +3263,11 @@ class OperationDefinition extends Definition implements IdentifiableNode {
     this.loc = loc;
   }
 
+  @Override
+  List<Node> children() {
+    // This is too complicated for the @Child annotation
+    return resources.stream().map(r -> (Node) r).toList();
+  }
 
   @Override
   SourceLocation location() {
@@ -3226,7 +3339,9 @@ class OperationDefinition extends Definition implements IdentifiableNode {
 class GroupDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder name;
   @Nullable
+  @Child
   TypeLiteral type;
+  @Child
   Group.Sequence groupSequence;
   SourceLocation loc;
 
@@ -3299,7 +3414,9 @@ class GroupDefinition extends Definition implements IdentifiableNode {
 
 class ApplicationBinaryInterfaceDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   IsId isa;
+  @Child
   List<Definition> definitions;
   SourceLocation loc;
 
@@ -3375,6 +3492,7 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
 class AbiPseudoInstructionDefinition extends Definition {
 
   Kind kind;
+  @Child
   IdentifierOrPlaceholder target;
   SourceLocation loc;
 
@@ -3526,6 +3644,7 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
 class SpecialPurposeRegisterDefinition extends Definition {
 
   Purpose purpose;
+  @Child
   List<SequenceCallExpr> exprs;
   SourceLocation loc;
 
@@ -3639,6 +3758,7 @@ class MicroProcessorDefinition extends Definition implements IdentifiableNode {
   List<IsId> implementedIsas;
   @Nullable
   IsId abi;
+  @Child
   List<Definition> definitions;
   SourceLocation loc;
 
@@ -3969,7 +4089,9 @@ class CpuFunctionDefinition extends Definition implements IdentifiableNode {
 
 class CpuProcessDefinition extends Definition {
   ProcessKind kind;
+  @Child
   List<Parameter> startupOutputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
@@ -4041,6 +4163,7 @@ class CpuProcessDefinition extends Definition {
 class MicroArchitectureDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   IsId processor;
+  @Child
   List<Definition> definitions;
   SourceLocation loc;
 
@@ -4109,8 +4232,11 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
 
 class MacroInstructionDefinition extends Definition {
   MacroBehaviorKind kind;
+  @Child
   List<Parameter> inputs;
+  @Child
   List<Parameter> outputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
@@ -4184,8 +4310,11 @@ class MacroInstructionDefinition extends Definition {
 class PortBehaviorDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   PortKind kind;
+  @Child
   List<Parameter> inputs;
+  @Child
   List<Parameter> outputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
@@ -4265,7 +4394,9 @@ class PortBehaviorDefinition extends Definition implements IdentifiableNode {
 
 class PipelineDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   List<Parameter> outputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
@@ -4333,7 +4464,9 @@ class PipelineDefinition extends Definition implements IdentifiableNode {
 
 class StageDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   List<Parameter> outputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
@@ -4399,7 +4532,9 @@ class StageDefinition extends Definition implements IdentifiableNode {
 
 class CacheDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   TypeLiteral sourceType;
+  @Child
   TypeLiteral targetType;
   SourceLocation loc;
 
@@ -4522,6 +4657,7 @@ class LogicDefinition extends Definition implements IdentifiableNode {
 
 class SignalDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   TypeLiteral type;
   SourceLocation loc;
 
@@ -4589,10 +4725,15 @@ class SignalDefinition extends Definition implements IdentifiableNode {
  */
 class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   Identifier abi;
+  @Child
   List<AsmModifierDefinition> modifiers;
+  @Child
   List<AsmDirectiveDefinition> directives;
+  @Child
   List<AsmGrammarRuleDefinition> rules;
+  @Child
   List<Definition> commonDefinitions;
   SourceLocation loc;
 
@@ -4714,8 +4855,11 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
  * e.g. <code>"hi" −> RV32I::HI`</code>
  */
 class AsmModifierDefinition extends Definition {
+  @Child
   Expr stringLiteral;
+  @Child
   Identifier isa;
+  @Child
   Identifier relocation;
   SourceLocation loc;
 
@@ -4777,7 +4921,9 @@ class AsmModifierDefinition extends Definition {
  * e.g. <code>".word"  -> Byte4</code>
  */
 class AsmDirectiveDefinition extends Definition {
+  @Child
   Expr stringLiteral;
+  @Child
   Identifier builtinDirective;
   SourceLocation loc;
 
@@ -4851,7 +4997,9 @@ interface AsmGrammarEntityVisitor<R> {
 class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   @Nullable
+  @Child
   AsmGrammarTypeDefinition asmTypeDefinition;
+  @Child
   AsmGrammarAlternativesDefinition alternatives;
   SourceLocation loc;
 
@@ -4953,6 +5101,15 @@ class AsmGrammarAlternativesDefinition extends Definition {
   }
 
   @Override
+  List<Node> children() {
+    // This is too complicated for the @Child annotation
+    return alternatives.stream()
+        .flatMap(l -> l.stream()
+            .flatMap(a -> a.children().stream()))
+        .toList();
+  }
+
+  @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
@@ -5042,22 +5199,30 @@ class AsmGrammarAlternativesDefinition extends Definition {
  */
 class AsmGrammarElementDefinition extends Definition {
   @Nullable
+  @Child
   AsmGrammarLocalVarDefinition localVar;
   @Nullable
+  @Child
   Identifier attribute;
   Boolean isPlusEqualsAttributeAssign;
   Boolean isAttributeLocalVar = false;
   @Nullable
+  @Child
   AsmGrammarLiteralDefinition asmLiteral;
   @Nullable
+  @Child
   AsmGrammarAlternativesDefinition groupAlternatives;
   @Nullable
+  @Child
   AsmGrammarAlternativesDefinition optionAlternatives;
   @Nullable
+  @Child
   AsmGrammarAlternativesDefinition repetitionAlternatives;
   @Nullable
+  @Child
   Expr semanticPredicate;
   @Nullable
+  @Child
   AsmGrammarTypeDefinition groupAsmTypeDefinition;
   SourceLocation loc;
 
@@ -5182,6 +5347,7 @@ class AsmGrammarElementDefinition extends Definition {
  */
 class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   AsmGrammarLiteralDefinition asmLiteral;
   SourceLocation loc;
 
@@ -5259,10 +5425,13 @@ class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNod
 class AsmGrammarLiteralDefinition extends Definition {
   @Nullable
   Identifier id;
+  @Child
   List<AsmGrammarLiteralDefinition> parameters;
   @Nullable
+  @Child
   Expr stringLiteral;
   @Nullable
+  @Child
   AsmGrammarTypeDefinition asmTypeDefinition;
   SourceLocation loc;
 

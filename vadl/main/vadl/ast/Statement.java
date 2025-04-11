@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.javaannotations.ast.Child;
 import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
@@ -103,6 +104,7 @@ interface StatementVisitor<T> {
 }
 
 final class BlockStatement extends Statement {
+  @Child
   List<Statement> statements;
   SourceLocation location;
 
@@ -162,7 +164,9 @@ final class BlockStatement extends Statement {
  */
 final class LetStatement extends Statement {
   List<Identifier> identifiers;
+  @Child
   Expr valueExpr;
+  @Child
   Statement body;
   SourceLocation location;
 
@@ -250,9 +254,12 @@ final class LetStatement extends Statement {
 }
 
 final class IfStatement extends Statement {
+  @Child
   Expr condition;
+  @Child
   Statement thenStmt;
   @Nullable
+  @Child
   Statement elseStmt;
   SourceLocation location;
 
@@ -311,7 +318,9 @@ final class IfStatement extends Statement {
 }
 
 final class AssignmentStatement extends Statement {
+  @Child
   Expr target;
+  @Child
   Expr valueExpression;
 
   AssignmentStatement(Expr target, Expr valueExpression) {
@@ -363,6 +372,7 @@ final class AssignmentStatement extends Statement {
 
 final class StatementList extends Statement {
 
+  @Child
   List<Statement> items;
   SourceLocation location;
 
@@ -389,6 +399,7 @@ final class StatementList extends Statement {
 
 final class RaiseStatement extends Statement {
 
+  @Child
   Statement statement;
   SourceLocation location;
 
@@ -431,6 +442,7 @@ final class RaiseStatement extends Statement {
 
 final class CallStatement extends Statement {
 
+  @Child
   Expr expr;
 
   CallStatement(Expr expr) {
@@ -614,6 +626,19 @@ final class MatchStatement extends Statement {
   }
 
   @Override
+  List<Node> children() {
+    // This is too complicated for the @Child annotation
+    var childNodes = new ArrayList<Node>();
+    childNodes.add(candidate);
+    cases.forEach(c -> {
+      childNodes.addAll(c.patterns);
+      childNodes.add(c.result);
+    });
+    childNodes.add(defaultResult);
+    return childNodes;
+  }
+
+  @Override
   SourceLocation location() {
     return loc;
   }
@@ -752,6 +777,15 @@ final class InstructionCallStatement extends Statement {
   }
 
   @Override
+  List<Node> children() {
+    // This is too complicated for the @Child annotation
+    var childNodes = new ArrayList<Node>();
+    childNodes.addAll(namedArguments.stream().map(n -> n.value).toList());
+    childNodes.addAll(unnamedArguments);
+    return childNodes;
+  }
+
+  @Override
   SourceLocation location() {
     return loc;
   }
@@ -854,7 +888,9 @@ final class InstructionCallStatement extends Statement {
 }
 
 final class LockStatement extends Statement {
+  @Child
   Expr expr;
+  @Child
   Statement statement;
   SourceLocation loc;
 
@@ -900,6 +936,7 @@ final class LockStatement extends Statement {
 
 final class ForallStatement extends Statement {
   List<Index> indices;
+  @Child
   Statement statement;
   SourceLocation loc;
 
