@@ -14,6 +14,63 @@
   </p>
 </p>
 
+**OpenVADL** is an open-source implementation of **VADL**, a processor description language. 
+VADL enables users to specify both instruction set architectures (ISA) and microarchitectures in a modern, intuitive way.
+For details, see the [official documentation](https://openvadl.github.io/openvadl/).
+
+OpenVADL can generate multiple artifacts from a single VADL specification:
+
+- **Instruction Set Simulator** via a custom QEMU frontend  
+- **Compiler** via a custom LLVM backend  
+- **Linker and Assembler** by integrating a generated parser into LLVM  
+
+Additional tools, such as a **Chisel** generator for hardware synthesis, are in development.
+
+Check out our [VADL-related publications](https://www.complang.tuwien.ac.at/vadl/pubs) for more background.
+
+## Getting Started
+
+If you want to use OpenVADL, please refer to [the documentation](https://openvadl.github.io/openvadl/).
+It covers everything you need to install OpenVADL, write a specification, and use the CLI to generate artifacts like a simulator or compiler.
+
+For working VADL specifications examples, check out our [reference specifications](https://github.com/OpenVADL/openvadl/tree/master/vadl/test/resources/testSource/sys).  
+These are tested and kept up to date with the current OpenVADL version.
+
+## Contribution
+
+If OpenVADL sounds like an interesting project and you'd like to collaborate or contribute, please reach out!
+
+There are plenty of open tasks, including:
+- A cycle-approximate simulator generator  
+- User-mode emulation in the generated ISS  
+- A documentation engine for embedding architecture specs directly in VADL  
+- Improvements to the QEMU-based ISS  
+- Enhancements to the LLVM-based compiler
+
+There are plenty of potential Bachelor and Master thesis topics available.
+
+## Q&A and Bugs
+
+If you have any questions, please use our [discussion panel](https://github.com/OpenVADL/openvadl/discussions/categories/q-a).  
+This helps others with similar issues find answers more easily.
+
+If you encounter a crash or incorrect behavior, please report it as an [issue](https://github.com/OpenVADL/openvadl/issues).  
+Before creating a new issue, check if one already exists for the same problem.
+
+# Development
+
+Before contributing, please read [OpenVADL's contribution guidelines](CONTRIBUTING.md).
+
+## Project Structure
+
+The `open-vadl` project includes multiple Gradle modules.
+
+- `vadl` is the main module that contains all the logic of OpenVADL
+- `vadl-cli` implements the CLI for OpenVADL users. It uses the `vadl` module as a library
+- `java-annotations` provides Java (!) annotations (e.g. `@Input`) that are used in the VIAM.
+  Additionally it provides `errorprone` bug detectors, that statically check if certain properties
+  in the VIAM are correctly implemented.
+
 ## Getting Started
 
 For example, you can create the iss (Instruction Set Simulator) for a minimal risc-v example with:
@@ -24,7 +81,7 @@ For example, you can create the iss (Instruction Set Simulator) for a minimal ri
 
 To get a description of the complete usage, you can run: `./gradlew run --args="--help"`
 
-## Building
+### Building
 
 You can build and run in two steps with
 
@@ -44,7 +101,7 @@ With that you can run:
 
 Which will create an executable at: `vadl-cli/build/native/nativeCompile/openvadl`
 
-## Run all tests
+### Run all tests
 
 To run all tests you need to have docker running on your system.
 
@@ -57,21 +114,7 @@ available, otherwise the tests might fail.
 
 Expect the tests to run a long time (up to an hour isn't unrealistic).
 
-## Development
-
-Before contributing, please read [OpenVADL's contribution guidelines](CONTRIBUTING.md).
-
-### Project Structure
-
-The `open-vadl` project includes multiple Gradle modules.
-
-- `vadl` is the main module that contains all the logic of OpenVADL
-- `vadl-cli` implements the CLI for OpenVADL users. It uses the `vadl` module as a library
-- `java-annotations` provides Java (!) annotations (e.g. `@Input`) that are used in the VIAM.
-  Additionally it provides `errorprone` bug detectors, that statically check if certain properties
-  in the VIAM are correctly implemented.
-
-### Checkstyle
+## Checkstyle
 
 We are using Checkstyle to ensure a consistent format and documentation of the source code.
 
@@ -80,7 +123,7 @@ The configuration is located under `config/checkstyle/checkstyle.xml`.
 
 To locally test if the checkstyle CI pipeline would fail, run the `checkstyleAll` gradle task.
 
-#### Using Intellij
+### Using Intellij
 
 To use the Checkstyle confirm IntelliJ code style follow these steps:
 
