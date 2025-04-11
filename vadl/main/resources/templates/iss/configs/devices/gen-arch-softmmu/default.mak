@@ -1,4 +1,4 @@
 # Default configuration for [(${gen_arch})]-softmmu
 
-# Virtual board config
-CONFIG_[(${gen_arch_upper})]_VIRT=y
+# Boards are selected by default, uncomment to keep out of the build.
+# CONFIG_[(${gen_arch_upper})]_[(${gen_machine_upper})]=n

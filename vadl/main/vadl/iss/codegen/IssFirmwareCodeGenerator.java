@@ -25,6 +25,7 @@ import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.MemoryInfo;
+import vadl.iss.template.hw.EmitIssHwMachineCPass;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.viam.MicroProcessor;
@@ -39,7 +40,8 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 
 /**
- * Generates the {@code setup_rom_reset_vec} function in the generated machine ({@code virt.c}).
+ * Generates the {@code setup_rom_reset_vec} function in the generated machine
+ * ({@code gen-machine.c}).
  * It is responsible for writing ROM memory as defined in the {@link MicroProcessor#firmware()}
  * definition.
  *
@@ -50,7 +52,7 @@ import vadl.viam.graph.dependency.WriteMemNode;
  *
  * @see MemoryInfo
  * @see vadl.iss.passes.IssMemoryDetectionPass
- * @see vadl.iss.template.hw.EmitIssVirtCPass
+ * @see EmitIssHwMachineCPass
  */
 @DispatchFor(
     value = Node.class,
@@ -87,7 +89,7 @@ public class IssFirmwareCodeGenerator implements CDefaultMixins.All,
    *
    * @return the full function code, including signature.
    */
-  public String fetch() {
+  public String fetch(String machineName) {
     ctx.wr("static void setup_rom_reset_vec() {\n")
         .spacedIn()
         .ln("uint8_t reset_vec[%d] = {0};", memoryInfo.firmwareSize);
@@ -98,7 +100,8 @@ public class IssFirmwareCodeGenerator implements CDefaultMixins.All,
     ctx.gen(current);
 
     ctx.ln("rom_add_blob_fixed_as(\"mrom.reset\", reset_vec, sizeof(reset_vec),")
-        .ln("virt_memmap[VIRT_MROM].base, &address_space_memory);")
+        .ln("%s_memmap[%s_MROM].base, &address_space_memory);", machineName.toLowerCase(),
+            machineName.toUpperCase())
         .spaceOut().ln("}");
     return builder.toString();
   }
