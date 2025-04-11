@@ -328,6 +328,11 @@ class AstFinder implements DefinitionVisitor<Void> {
   }
 
   @Override
+  public Void visit(Parameter definition) {
+    return null;
+  }
+
+  @Override
   public Void visit(PatchDefinition definition) {
     return null;
   }
@@ -415,7 +420,7 @@ class AstFinder implements DefinitionVisitor<Void> {
   }
 
   @Override
-  public Void visit(AbiPseudoInstructionDefinition abiPseudoInstructionDefinition) {
+  public Void visit(AbiPseudoInstructionDefinition definition) {
     return null;
   }
 }

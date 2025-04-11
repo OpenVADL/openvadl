@@ -686,6 +686,13 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(Parameter definition) {
+    var name = (Identifier) resolvePlaceholderOrIdentifier(definition.name);
+    var type = (TypeLiteral) expandExpr(definition.typeLiteral);
+    return new Parameter(name, type);
+  }
+
+  @Override
   public Definition visit(GroupDefinition groupDefinition) {
     return new GroupDefinition(
         resolvePlaceholderOrIdentifier(groupDefinition.name),

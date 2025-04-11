@@ -177,7 +177,7 @@ public abstract class BaseCommand implements Callable<Integer> {
       return;
     }
 
-    var startTime = System.currentTimeMillis();
+    final var startTime = System.currentTimeMillis();
     var content =
         new StringBuilder(
             "// AST Dump without types generated on %s\n".formatted(getTimeString()));
@@ -198,7 +198,7 @@ public abstract class BaseCommand implements Callable<Integer> {
       return;
     }
 
-    var startTime = System.currentTimeMillis();
+    final var startTime = System.currentTimeMillis();
     var content =
         new StringBuilder(
             "// AST Dump with types generated on %s\n".formatted(getTimeString()));

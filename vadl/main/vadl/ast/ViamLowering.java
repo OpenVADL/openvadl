@@ -1264,6 +1264,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
+  public Optional<vadl.viam.Definition> visit(Parameter definition) {
+    return Optional.of(new vadl.viam.Parameter(
+        generateIdentifier(definition.name.name, definition.name.location()),
+        getViamType(definition.typeLiteral.type())));
+    // FIXME: Do we need to add it to the parametercache?
+  }
+
+  @Override
   public Optional<vadl.viam.Definition> visit(PatchDefinition definition) {
     throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
         definition.getClass().getSimpleName()));

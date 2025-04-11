@@ -688,7 +688,7 @@ public class TypeChecker
   }
 
   @Override
-  public Void visit(AbiPseudoInstructionDefinition abiPseudoInstructionDefinition) {
+  public Void visit(AbiPseudoInstructionDefinition definition) {
     // Isn't type checked on purpose because there is nothing to type check.
     return null;
   }
@@ -886,6 +886,12 @@ public class TypeChecker
   @Override
   public Void visit(OperationDefinition operationDefinition) {
     throwUnimplemented(operationDefinition);
+    return null;
+  }
+
+  @Override
+  public Void visit(Parameter definition) {
+    check(definition.typeLiteral);
     return null;
   }
 

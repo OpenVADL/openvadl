@@ -153,10 +153,6 @@ final class BlockStatement extends Statement {
     return Objects.hash(statements);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 }
 
 /**
@@ -247,10 +243,7 @@ final class LetStatement extends Statement {
     return Objects.hash(identifiers, valueExpr, body);
   }
 
-  @Override
-  public String toString() {
-    return getClass().getSimpleName();
-  }
+
 }
 
 final class IfStatement extends Statement {
@@ -311,10 +304,7 @@ final class IfStatement extends Statement {
     return Objects.hash(condition, thenStmt, elseStmt);
   }
 
-  @Override
-  public String toString() {
-    return getClass().getSimpleName();
-  }
+
 }
 
 final class AssignmentStatement extends Statement {
@@ -364,10 +354,6 @@ final class AssignmentStatement extends Statement {
     return Objects.hash(target, valueExpression);
   }
 
-  @Override
-  public String toString() {
-    return getClass().getSimpleName();
-  }
 }
 
 final class StatementList extends Statement {
@@ -738,9 +724,7 @@ final class MatchStatement extends Statement {
 
     @Override
     public String toString() {
-      return "Case["
-          + "patterns=" + patterns + ", "
-          + "result=" + result + ']';
+      return this.getClass().getSimpleName();
     }
 
     @Override
@@ -752,8 +736,11 @@ final class MatchStatement extends Statement {
 
 final class InstructionCallStatement extends Statement {
 
+  @Child
   IdentifierOrPlaceholder id;
+  @Child
   List<NamedArgument> namedArguments;
+  @Child
   List<Expr> unnamedArguments;
   SourceLocation loc;
 
@@ -776,14 +763,6 @@ final class InstructionCallStatement extends Statement {
     return (Identifier) id;
   }
 
-  @Override
-  List<Node> children() {
-    // This is too complicated for the @Child annotation
-    var childNodes = new ArrayList<Node>();
-    childNodes.addAll(namedArguments.stream().map(n -> n.value).toList());
-    childNodes.addAll(unnamedArguments);
-    return childNodes;
-  }
 
   @Override
   SourceLocation location() {
@@ -793,7 +772,7 @@ final class InstructionCallStatement extends Statement {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
-    id.prettyPrint(0, builder);
+    id.prettyPrint(indent, builder);
     if (!namedArguments.isEmpty()) {
       builder.append("{");
       var isFirst = true;
@@ -802,9 +781,7 @@ final class InstructionCallStatement extends Statement {
           builder.append(", ");
         }
         isFirst = false;
-        namedArgument.name.prettyPrint(0, builder);
-        builder.append(" = ");
-        namedArgument.value.prettyPrint(0, builder);
+        namedArgument.prettyPrint(indent, builder);
       }
       builder.append("}");
     }
@@ -816,7 +793,7 @@ final class InstructionCallStatement extends Statement {
           builder.append(", ");
         }
         isFirst = false;
-        arg.prettyPrint(0, builder);
+        arg.prettyPrint(indent, builder);
       }
       builder.append(")");
     }
@@ -842,8 +819,10 @@ final class InstructionCallStatement extends Statement {
     return Objects.hash(id, namedArguments, unnamedArguments);
   }
 
-  static final class NamedArgument implements WithSourceLocation {
+  static final class NamedArgument extends Node {
+    @Child
     Identifier name;
+    @Child
     Expr value;
 
     NamedArgument(Identifier name, Expr value) {
@@ -851,11 +830,20 @@ final class InstructionCallStatement extends Statement {
       this.value = value;
     }
 
+
     @Override
-    public SourceLocation sourceLocation() {
-      return location();
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
     }
 
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      name.prettyPrint(0, builder);
+      builder.append(" = ");
+      value.prettyPrint(0, builder);
+    }
+
+    @Override
     public SourceLocation location() {
       return name.location().join(value.location());
     }
@@ -880,9 +868,7 @@ final class InstructionCallStatement extends Statement {
 
     @Override
     public String toString() {
-      return "NamedArgument["
-          + "name=" + name + ", "
-          + "value=" + value + ']';
+      return this.getClass().getSimpleName();
     }
   }
 }

@@ -180,6 +180,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(Parameter definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(GroupDefinition groupDefinition) {
     return groupDefinition;
   }

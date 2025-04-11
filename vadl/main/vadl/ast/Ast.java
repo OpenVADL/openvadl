@@ -145,6 +145,11 @@ abstract class Node implements WithSourceLocation {
   List<Node> children() {
     return NodeChildrenRegistry.getChildren(this);
   }
+
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName();
+  }
 }
 
 
@@ -460,6 +465,3 @@ final class MacroMatchNode extends Node implements IsMacroMatch, IsEncs, IsBinOp
 }
 
 
-interface AstVisitor<T> extends DefinitionVisitor<T>, StatementVisitor<T>, ExprVisitor<T> {
-
-}

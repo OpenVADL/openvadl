@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.types.BitsType;
@@ -142,11 +141,7 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
 
   @Override
   public String toString() {
-    if (type == null) {
-      return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
-    }
-    return "%s name: \"%s\", type: %s".formatted(this.getClass().getSimpleName(), this.name,
-        this.type);
+    return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
   }
 
   @Override
@@ -397,8 +392,7 @@ class BinaryExpr extends Expr {
 
   @Override
   public String toString() {
-    return "%s operator: %s, type: %s".formatted(this.getClass().getSimpleName(),
-        operator().symbol, this.type);
+    return "%s operator: %s".formatted(this.getClass().getSimpleName(), operator().symbol);
   }
 
   @Override
@@ -474,7 +468,7 @@ class UnaryExpr extends Expr {
 
   @Override
   public String toString() {
-    return "%s operator: %s, type: %s".formatted(this.getClass().getSimpleName(), operator, type);
+    return "%s operator: %s".formatted(this.getClass().getSimpleName(), operator);
   }
 
   @Override
@@ -535,8 +529,7 @@ class IntegerLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: %s (%d), type: %s".formatted(this.getClass().getSimpleName(), token, number,
-        type);
+    return "%s literal: %s (%d)".formatted(this.getClass().getSimpleName(), token, number);
   }
 
   @Override
@@ -608,8 +601,7 @@ class BinaryLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: %s (%d), type: %s".formatted(this.getClass().getSimpleName(), token, number,
-        type);
+    return "%s literal: %s (%d)".formatted(this.getClass().getSimpleName(), token, number);
   }
 
   @Override
@@ -664,7 +656,7 @@ class BoolLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: %s, type: %s".formatted(this.getClass().getSimpleName(), value, type);
+    return "%s literal: %s".formatted(this.getClass().getSimpleName(), value);
   }
 
   @Override
@@ -732,8 +724,7 @@ class StringLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: \"%s\" (%s), type: %s".formatted(this.getClass().getSimpleName(), value,
-        token, type);
+    return "%s literal: \"%s\" (%s)".formatted(this.getClass().getSimpleName(), value, token);
   }
 
   @Override
@@ -1178,10 +1169,6 @@ class RangeExpr extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1270,9 +1257,13 @@ final class TypeLiteral extends Expr {
   @Override
   public List<Node> children() {
     // This is too complicated for the @Child annotation
-    return sizeIndices.stream()
+    var childNodes = new ArrayList<Node>();
+    childNodes.add((Node) baseType);
+    childNodes.addAll(sizeIndices.stream()
         .flatMap(Collection::stream)
-        .collect(Collectors.toList());
+        .toList()
+    );
+    return childNodes;
   }
 
   @Override
@@ -1307,10 +1298,6 @@ final class TypeLiteral extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1432,10 +1419,6 @@ final class IdentifierPath extends Expr implements IsId {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1460,6 +1443,7 @@ final class IdentifierPath extends Expr implements IsId {
  * A representation of terms of form {@code "MEM<9>"}.
  */
 final class SymbolExpr extends Expr implements IsSymExpr {
+  @Child
   IsId path;
   @Child
   Expr size;
@@ -1504,10 +1488,6 @@ final class SymbolExpr extends Expr implements IsSymExpr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1588,8 +1568,8 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     childNodes.add((Node) target);
     childNodes.addAll(argsIndices.stream().flatMap(a -> a.values.stream()).toList());
     childNodes.addAll(subCalls.stream()
-        .flatMap(subCall -> subCall.argsIndices.stream().
-            flatMap(a -> a.values.stream()))
+        .flatMap(subCall -> subCall.argsIndices.stream()
+            .flatMap(a -> a.values.stream()))
         .toList());
     return childNodes;
   }
@@ -1655,10 +1635,6 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1723,12 +1699,6 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
       return Objects.hash(values);
     }
 
-    @Override
-    public String toString() {
-      return "Arguments["
-          + "args=" + values + ']';
-    }
-
 
   }
 
@@ -1778,13 +1748,6 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     @Override
     public int hashCode() {
       return Objects.hash(id, argsIndices);
-    }
-
-    @Override
-    public String toString() {
-      return "SubCall["
-          + "id=" + id + ", "
-          + "argsIndices=" + argsIndices + ']';
     }
 
   }
@@ -1838,10 +1801,6 @@ class IfExpr extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1945,10 +1904,6 @@ class LetExpr extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -2016,10 +1971,6 @@ class CastExpr extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -2118,10 +2069,6 @@ class MatchExpr extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -2584,6 +2531,7 @@ class ForallExpr extends Expr {
 
 class SequenceCallExpr extends Expr {
 
+  @Child
   Identifier target;
   @Nullable
   @Child

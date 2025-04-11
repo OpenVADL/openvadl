@@ -311,8 +311,8 @@ public class Ungrouper
   }
 
   @Override
-  public Void visit(AbiPseudoInstructionDefinition abiPseudoInstructionDefinition) {
-    ungroupAnnotations(abiPseudoInstructionDefinition);
+  public Void visit(AbiPseudoInstructionDefinition definition) {
+    ungroupAnnotations(definition);
     return null;
   }
 
@@ -409,6 +409,12 @@ public class Ungrouper
   @Override
   public Void visit(OperationDefinition operationDefinition) {
     ungroupAnnotations(operationDefinition);
+    return null;
+  }
+
+  @Override
+  public Void visit(Parameter definition) {
+    ungroupAnnotations(definition);
     return null;
   }
 
