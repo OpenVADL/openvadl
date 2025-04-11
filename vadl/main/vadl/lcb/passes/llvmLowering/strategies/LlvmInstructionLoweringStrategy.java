@@ -115,6 +115,7 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -302,27 +303,11 @@ public abstract class LlvmInstructionLoweringStrategy {
     }
 
     // Continue with lowering of nodes
-    var isLowerable = true;
     for (var endNode : copy.getNodes(SideEffectNode.class).toList()) {
       visitReplacementHooks(visitor, endNode);
-
-      if (!copy.getNodes(LlvmUnlowerableSD.class).toList().isEmpty()) {
-        DeferredDiagnosticStore.add(
-            Diagnostic.warning("Instruction is not lowerable and will be skipped",
-                instruction.sourceLocation()).build());
-        isLowerable = false;
-      }
     }
 
-    // If the behavior contains any registers then it is also not lowerable because LLVM's DAG
-    // has no concept of register in the IR.
-    if (copy.getNodes(ReadRegNode.class).findAny().isPresent()) {
-      DeferredDiagnosticStore.add(
-          Diagnostic.warning(
-              "Instruction is not lowerable because it tries to match fixed registers.",
-              instruction.sourceLocation()).build());
-      isLowerable = false;
-    }
+    var isLowerable = !hasRedFlags(instruction, copy);
 
     var info = lowerBaseInfo(copy);
 
@@ -353,6 +338,46 @@ public abstract class LlvmInstructionLoweringStrategy {
           Collections.emptyList()
       ));
     }
+  }
+
+  /**
+   * Check if some properties for the naive approach do not uphold.
+   * Return {@code true} if it is not lowerable.
+   */
+  private boolean hasRedFlags(
+      Instruction instruction,
+      Graph graph) {
+    if (!graph.getNodes(LlvmUnlowerableSD.class).toList().isEmpty()) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning("Instruction is not lowerable and will be skipped",
+              instruction.sourceLocation()).build());
+      return true;
+    }
+
+    // If the behavior contains any registers then it is also not lowerable because LLVM's DAG
+    // has no concept of register in the IR.
+    if (graph.getNodes(ReadRegNode.class).findAny().isPresent()) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning(
+              "Instruction is not lowerable because it tries to match fixed registers.",
+              instruction.sourceLocation()).build());
+      return true;
+    }
+
+    // If a sign extend node is right before a register file write then we cannot lower it.
+    // This removes the patterns for ADDW, SLLW ...
+    if (graph.getNodes(WriteRegFileNode.class)
+        .flatMap(Node::usages)
+        .anyMatch(x -> x instanceof SignExtendNode)) {
+      DeferredDiagnosticStore.add(
+          Diagnostic.warning(
+              "Instruction is not lowerable because it tries to sign extend "
+                  + "before writing a register file.",
+              instruction.sourceLocation()).build());
+      return true;
+    }
+
+    return false;
   }
 
   protected void visitReplacementHooks(

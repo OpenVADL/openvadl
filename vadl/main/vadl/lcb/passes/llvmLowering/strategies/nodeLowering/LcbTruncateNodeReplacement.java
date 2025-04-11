@@ -41,6 +41,7 @@ public class LcbTruncateNodeReplacement
     for (var usage : truncateNode.usages().toList()) {
       usage.replaceInput(truncateNode, truncateNode.value());
     }
+    
     visitApplicable(truncateNode.value());
     return truncateNode;
   }
