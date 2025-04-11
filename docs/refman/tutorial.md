@@ -1,5 +1,9 @@
 # VADL Tutorial {#tutorial}
 
+<!-- SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at> -->
+<!-- SPDX-License-Identifier: CC-BY-4.0                          -->
+
+
 ## Getting Started
 
 \lbl{tut_getting_started}
@@ -1182,6 +1186,73 @@ These built-in functions are used to specify instructions that handle operations
 ## Application Binary Interface Definition
 
 \lbl{tut_abi_definition}
+
+An \ac{ABI} ensures consistent and well-defined interoperation between different units of object code.
+A \ac{VADL} \ac{ABI} definition provides the necessary information to the compiler generator to generate an \ac{ABI} compliant compiler.
+Additionally information is supplied to support the compiler generator to generate an efficient compiler.
+The \ac{ABI} specification section in \ac{VADL} supports the definition of
+  - register aliases,
+  - special purpose registers with alignment information,
+  - pseudo instruction definitions,
+  - calling conventions and
+  - special instruction sequences.
+
+Listing \r{application_binary_interface} shows all elements of the \ac{ABI} section.
+
+\listing{application_binary_interface, Application Binary Interface Definition}
+~~~{.vadl}
+application binary interface ABI for RV32I = {
+  alias register ra = X(1)
+  alias register sp = X(2)
+//alias register ...
+  [ preferred alias ]
+  alias register fp = X(8)
+
+  return address    = ra
+  [ alignment : 16 ]
+  stack  pointer    = sp
+  global pointer    = gp
+  frame  pointer    = fp
+  thread pointer    = tp
+
+  pseudo return instruction = RET
+  pseudo call instruction = CALL
+  pseudo local address load instruction = LLA
+  pseudo global address load instruction = LGA_32
+  pseudo absolute address load instruction = LA
+
+  return value      = a{0..1}
+  function argument = a{0..7}
+
+  caller saved = [ a{0..7}, t{0..6} ]
+  callee saved = [ ra, gp, tp, fp, s{0..11} ]
+
+  constant sequence( rd : Bits<5>, val : SInt<32> ) = {
+    LUI  { rd = rd, imm = hi( val ) }
+    ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
+  }
+  register adjustment sequence( rd : Bits<5>, rs1: Bits<5>, imm : SInt<12> ) =
+  {
+     ADDI{ rd = rd, rs1 = rs1, imm = imm }
+  }
+}
+~~~
+\endlisting
+
+An \ac{ABI} section starts with the keyword `application binary interface` followed by a unique identifier.
+Since most elements inside the \ac{ABI} section rely on previously defined \ac{ISA} elements, it is required to reference an \ac{ISA} section
+using the `for` keyword after the identifier.
+Definitions from the referenced \ac{ISA} are available inside the \ac{ABI} section.
+In the example in Listing \r{application_binary_interface} the \ac{ABI} uses the register file `X` and the instructions `ADDI` and `LUI` from the \ac{ISA} `RV32I`.
+
+In order to reference registers with additional names, the \ac{ABI} section provides the `alias register` keyword.
+The keywords `alias register` is followed by the new identifier and after the equality symbol `"="` a reference to the original register.
+If multiple names are available for a specific register, the annotation `[preferred alias]` emits the preferred name in generated code (lines 2 to 5).
+
+In an \ac{ABI} some registers fulfill a certain purpose like being used to keep the `return address` or are used as a `stack pointer`.
+With the annotation `[alignment : ByteCount]` the stack pointer is aligned to `ByteCount` memory elements. 
+These special purposes are declared with the self explaining keywords.
+The `global pointer` is the register used to access data in a global memory area, the `frame pointer` register gives the access to the stack frame (activation record) of a function or method and the `thread pointer` register is used to acces thread local storage.
 
 
 ## Assembly Description Definition
