@@ -899,6 +899,10 @@ class SymbolTable {
       } else if (definition instanceof UsingDefinition using) {
         resolveSymbols(using.typeLiteral);
       } else if (definition instanceof FunctionDefinition function) {
+        for (Parameter param : function.params) {
+          resolveSymbols(param.typeLiteral);
+        }
+        resolveSymbols(function.retType);
         resolveSymbols(function.expr);
       } else if (definition instanceof FormatDefinition format) {
         resolveSymbols(format.typeLiteral);
