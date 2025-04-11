@@ -11,7 +11,6 @@ exclude-labels:
 include-labels:
   - 'enhancement'
   - 'bug'
-  - 'docs'
 
 sort-by: title
 sort-direction: ascending
@@ -22,9 +21,6 @@ categories:
   - title: 'Bug Fixes'
     labels:
       - 'bug'
-  - title: 'Documentation'
-    labels:
-      - 'docs'
 
 # We currently strictly increase the minor version.
 # This is going to change once we reach a stable state.
