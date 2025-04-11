@@ -1,0 +1,21 @@
+
+instruction set architecture Tests = {
+  using Index = Bits<5>
+  using Address  = Bits<32>
+
+  register file X: Index -> Bits<32>
+
+  instruction SHIFT_LEFT_1: TMP = {
+    X(ONE) := (X(ONE) << 1) as Bits<32>
+  }
+
+  encoding SHIFT_LEFT_1 = { ONE = 2 }
+
+  assembly SHIFT_LEFT_1 = "just a dummy"
+
+  format TMP: Address =
+  { ONE: Bits<5>
+  }
+}
+
+micro processor TEST implements Tests = { start = 0x1000 }
