@@ -1845,7 +1845,8 @@ public class TypeChecker
     }
 
     // The symbol resolver should have caught that
-    throw new IllegalStateException("Cannot find symbol %s".formatted(fullName));
+    throw new IllegalStateException(
+        "Cannot find symbol `%s` found at: %s".formatted(fullName, expr.location().toIDEString()));
   }
 
   @Override
