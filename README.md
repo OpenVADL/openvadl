@@ -9,7 +9,7 @@
   </a>
 </p>
   <p align="center">
-    <a href="https://openvadl.github.io/open-vadl/"><strong>Explore the docs »</strong></a>
+    <a href="https://openvadl.github.io/openvadl/"><strong>Explore the docs »</strong></a>
     <br />
   </p>
 </p>
