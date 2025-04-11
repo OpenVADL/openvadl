@@ -8,9 +8,6 @@ on:
     paths:
       - 'docs/**'
       - '.github/workflows/publish-docs.yml'
-  create:
-    tags:
-      - 'v*'
 
 permissions:
   contents: read
