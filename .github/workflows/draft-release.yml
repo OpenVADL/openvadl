@@ -59,8 +59,9 @@ jobs:
         run: |
           VERSIONING_GIT_TAG=v${{ needs.update-draft-release.outputs.version }} ./gradlew nativeCompile
           FULLNAME=openvadl-${{ needs.update-draft-release.outputs.version }}-${{ matrix.platform }}-${{ matrix.architecture }}
-          mv vadl-cli/build/native/nativeCompile/openvadl openvadl
-          tar --transform "s,^,${FULLNAME}/," -czvf ${FULLNAME}.tar.gz openvadl
+          mkdir ${FULLNAME}
+          mv vadl-cli/build/native/nativeCompile/openvadl ${FULLNAME}/openvadl
+          tar -czvf ${FULLNAME}.tar.gz ${FULLNAME}
           echo "COMPRESSED_APP=${FULLNAME}.tar.gz" >> $GITHUB_ENV
 
       - name: Upload Executable to Draft Release
