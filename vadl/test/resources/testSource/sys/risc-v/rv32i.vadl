@@ -99,6 +99,6 @@ application binary interface ABI for RV32I = {
   }
 }
 
-micro processor CPU implements RV32I with ABI = {
+micro processor Spike implements RV32I with ABI = {
   start = 0x80000000
 }
