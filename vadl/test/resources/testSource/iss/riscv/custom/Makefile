@@ -14,8 +14,7 @@ ASFLAGS = -march=$(ARCH) -mabi=$(ABI)
 LDFLAGS = -T link.ld
 
 QEMU=qemu-system-rv64im
-QMACHINE = virt
-QFLAGS = -nographic -M $(QMACHINE)
+QFLAGS = -nographic
 
 PREPROCESSED=$(TESTS:tests/%.S=$(OUT_DIR)/%.preprocessed.S)
 

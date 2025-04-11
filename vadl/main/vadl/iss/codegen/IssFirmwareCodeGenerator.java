@@ -40,7 +40,8 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 
 /**
- * Generates the {@code setup_rom_reset_vec} function in the generated machine ({@code gen-machine.c}).
+ * Generates the {@code setup_rom_reset_vec} function in the generated machine
+ * ({@code gen-machine.c}).
  * It is responsible for writing ROM memory as defined in the {@link MicroProcessor#firmware()}
  * definition.
  *

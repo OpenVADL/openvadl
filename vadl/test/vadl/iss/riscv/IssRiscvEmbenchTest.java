@@ -57,7 +57,7 @@ public class IssRiscvEmbenchTest extends QemuIssTest {
     var runCommand = String.format(
         "chmod -R +x /work/embench && cd /work/embench "
             + "&& bash ./%s --cpu-mhz=" + mhz
-            + "&& bash ./benchmark_qemu.sh %s -nographic -M virt -bios",
+            + "&& bash ./benchmark_qemu.sh %s -nographic -bios",
         buildScript, qemuSystem
     );
 

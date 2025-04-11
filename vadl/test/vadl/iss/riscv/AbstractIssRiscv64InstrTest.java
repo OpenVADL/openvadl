@@ -32,7 +32,7 @@ public abstract class AbstractIssRiscv64InstrTest extends IssInstrTest {
 
   @Override
   public Tool simulator() {
-    return new Tool("/qemu/build/qemu-system-rv64im", "-M virt -bios");
+    return new Tool("/qemu/build/qemu-system-rv64im", "-bios");
   }
 
   @Override
