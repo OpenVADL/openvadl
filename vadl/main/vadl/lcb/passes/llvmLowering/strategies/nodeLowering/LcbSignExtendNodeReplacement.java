@@ -50,10 +50,6 @@ public class LcbSignExtendNodeReplacement
           new LlvmTypeCastSD(new LlvmSExtLoad(readMemNode), makeSigned(node.type())));
       visitApplicable(readMemNode.address());
     } else {
-      // Remove all nodes
-      for (var usage : node.usages().toList()) {
-        usage.replaceInput(node, node.value());
-      }
       visitApplicable(node.value());
     }
 

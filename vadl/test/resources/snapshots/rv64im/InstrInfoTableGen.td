@@ -4429,12 +4429,8 @@ def : Pat<(add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm),
         (ADDI AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
 
 
-def : Pat<(add X:$rs1, RV3264I_Itype_immAsInt64:$imm),
-        (ADDIW X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
 
 
-def : Pat<(add X:$rs1, X:$rs2),
-        (ADDW X:$rs1, X:$rs2)>;
 
 
 def : Pat<(and X:$rs1, X:$rs2),
@@ -4524,12 +4520,8 @@ def : Pat<(udiv X:$rs1, X:$rs2),
         (DIVU X:$rs1, X:$rs2)>;
 
 
-def : Pat<(udiv X:$rs1, X:$rs2),
-        (DIVUW X:$rs1, X:$rs2)>;
 
 
-def : Pat<(sdiv X:$rs1, X:$rs2),
-        (DIVW X:$rs1, X:$rs2)>;
 
 
 
@@ -4679,8 +4671,6 @@ def : Pat<(mulhu X:$rs1, X:$rs2),
         (MULHU X:$rs1, X:$rs2)>;
 
 
-def : Pat<(mul X:$rs1, X:$rs2),
-        (MULW X:$rs1, X:$rs2)>;
 
 
 def : Pat<(or X:$rs1, X:$rs2),
@@ -4699,12 +4689,8 @@ def : Pat<(urem X:$rs1, X:$rs2),
         (REMU X:$rs1, X:$rs2)>;
 
 
-def : Pat<(urem X:$rs1, X:$rs2),
-        (REMUW X:$rs1, X:$rs2)>;
 
 
-def : Pat<(srem X:$rs1, X:$rs2),
-        (REMW X:$rs1, X:$rs2)>;
 
 
 def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV3264I_Stype_immAsInt64:$imm)),
@@ -4754,12 +4740,8 @@ def : Pat<(shl X:$rs1, RV3264I_Ftype_sftAsInt64:$sft),
         (SLLI X:$rs1, RV3264I_Ftype_sftAsInt64:$sft)>;
 
 
-def : Pat<(shl X:$rs1, RV3264I_Rtype_rs2AsInt64:$rs2),
-        (SLLIW X:$rs1, RV3264I_Rtype_rs2AsInt64:$rs2)>;
 
 
-def : Pat<(shl X:$rs1, X:$rs2),
-        (SLLW X:$rs1, X:$rs2)>;
 
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETLT),
@@ -4813,12 +4795,8 @@ def : Pat<(sra X:$rs1, RV3264I_Ftype_sftAsInt64:$sft),
         (SRAI X:$rs1, RV3264I_Ftype_sftAsInt64:$sft)>;
 
 
-def : Pat<(sra X:$rs1, RV3264I_Rtype_rs2AsInt64:$rs2),
-        (SRAIW X:$rs1, RV3264I_Rtype_rs2AsInt64:$rs2)>;
 
 
-def : Pat<(sra X:$rs1, X:$rs2),
-        (SRAW X:$rs1, X:$rs2)>;
 
 
 def : Pat<(srl X:$rs1, X:$rs2),
@@ -4829,20 +4807,14 @@ def : Pat<(srl X:$rs1, RV3264I_Ftype_sftAsInt64:$sft),
         (SRLI X:$rs1, RV3264I_Ftype_sftAsInt64:$sft)>;
 
 
-def : Pat<(srl X:$rs1, RV3264I_Rtype_rs2AsInt64:$rs2),
-        (SRLIW X:$rs1, RV3264I_Rtype_rs2AsInt64:$rs2)>;
 
 
-def : Pat<(srl X:$rs1, X:$rs2),
-        (SRLW X:$rs1, X:$rs2)>;
 
 
 def : Pat<(sub X:$rs1, X:$rs2),
         (SUB X:$rs1, X:$rs2)>;
 
 
-def : Pat<(sub X:$rs1, X:$rs2),
-        (SUBW X:$rs1, X:$rs2)>;
 
 
 def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV3264I_Stype_immAsInt64:$imm)),
