@@ -115,7 +115,7 @@ import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
@@ -364,10 +364,15 @@ public abstract class LlvmInstructionLoweringStrategy {
       return true;
     }
 
-    if (graph.getNodes(TruncateNode.class).findAny().isPresent()) {
+    // If a sign extend node is right before a register file write then we cannot lower it.
+    // This removes the patterns for ADDW, SLLW ...
+    if (graph.getNodes(WriteRegFileNode.class)
+        .flatMap(Node::usages)
+        .anyMatch(x -> x instanceof SignExtendNode)) {
       DeferredDiagnosticStore.add(
           Diagnostic.warning(
-              "Instruction is not lowerable because it tries to match truncate nodes.",
+              "Instruction is not lowerable because it tries to sign extend "
+                  + "before writing a register file.",
               instruction.sourceLocation()).build());
       return true;
     }
