@@ -37,6 +37,7 @@ import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithFalseSimplificat
 import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithTrueSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithOneSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithZeroSimplificationRule;
+import vadl.viam.passes.algebraic_simplication.rules.impl.RotateSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.ShiftSimplificationRule;
 
 /**
@@ -60,6 +61,7 @@ public class AlgebraicSimplificationPass extends Pass {
     rules.add(new OrWithTrueSimplificationRule());
     rules.add(new OrWithFalseSimplificationRule());
     rules.add(new ShiftSimplificationRule());
+    rules.add(new RotateSimplificationRule());
   }
 
   public AlgebraicSimplificationPass(GeneralConfiguration configuration) {
