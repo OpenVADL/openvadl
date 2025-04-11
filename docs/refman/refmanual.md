@@ -1,5 +1,8 @@
 # VADL Reference Manual {#refmanual}
 
+<!-- SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at> -->
+<!-- SPDX-License-Identifier: CC-BY-4.0                          -->
+
 ## General Language Features
 
 ## Type System
