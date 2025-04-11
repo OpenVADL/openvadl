@@ -158,11 +158,13 @@ public abstract class BaseCommand implements Callable<Integer> {
       return;
     }
 
+    var startTime = System.currentTimeMillis();
     var content =
         new StringBuilder(
             "// Sourcecode with expanded macros on %s\n\n".formatted(getTimeString()));
     content.append(ast.prettyPrint());
     dumpFile("expanded-macros.vadl", content);
+    timings.add(new Timing("Expanded Macros Dump", System.currentTimeMillis() - startTime));
   }
 
   /**
@@ -175,6 +177,7 @@ public abstract class BaseCommand implements Callable<Integer> {
       return;
     }
 
+    var startTime = System.currentTimeMillis();
     var content =
         new StringBuilder(
             "// AST Dump without types generated on %s\n".formatted(getTimeString()));
@@ -182,6 +185,7 @@ public abstract class BaseCommand implements Callable<Integer> {
         + "the type-checker has run.\n\n");
     content.append(new AstDumper().dump(ast));
     dumpFile("ast-dump-untyped.txt", content);
+    timings.add(new Timing("Untyped AST Dump", System.currentTimeMillis() - startTime));
   }
 
   /**
@@ -194,6 +198,7 @@ public abstract class BaseCommand implements Callable<Integer> {
       return;
     }
 
+    var startTime = System.currentTimeMillis();
     var content =
         new StringBuilder(
             "// AST Dump with types generated on %s\n".formatted(getTimeString()));
@@ -201,6 +206,7 @@ public abstract class BaseCommand implements Callable<Integer> {
         + "validated by the typechecker.\n\n");
     content.append(new AstDumper().dump(ast));
     dumpFile("ast-dump-typed.txt", content);
+    timings.add(new Timing("Typed AST Dump", System.currentTimeMillis() - startTime));
   }
 
   /**
@@ -213,14 +219,19 @@ public abstract class BaseCommand implements Callable<Integer> {
    */
   private Specification parseToVIAM() {
     var ast = parseToAst();
+    ast.passTimings.forEach(t -> timings.add(new Timing(t.description(), t.durationMS())));
+    ast.passTimings.clear();
     dumpExpaned(ast);
     dumpUntyped(ast);
+
     var typeChecker = new TypeChecker();
     typeChecker.verify(ast);
+    ast.passTimings.forEach(t -> timings.add(new Timing(t.description(), t.durationMS())));
+    ast.passTimings.clear();
     dumpTyped(ast);
+
     var viamGenerator = new ViamLowering();
     var spec = viamGenerator.generate(ast);
-
     ast.passTimings.forEach(t -> timings.add(new Timing(t.description(), t.durationMS())));
 
     return spec;
