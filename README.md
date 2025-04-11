@@ -47,7 +47,7 @@ There are plenty of open tasks, including:
 - Improvements to the QEMU-based ISS  
 - Enhancements to the LLVM-based compiler
 
-There are plenty of potential Bachelor and Master thesis topics available.
+There are also many potential Bachelor and Master thesis topics available.
 
 ## Q&A and Bugs
 
