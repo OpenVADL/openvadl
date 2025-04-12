@@ -1169,7 +1169,44 @@ These built-in functions are used to specify instructions that handle operations
 ### Assembly Definition
 
 
-### Pseudo Instructions
+### Pseudo Instruction Definition
+
+
+
+### Relocation Definition
+
+Symbol resolution of machine code and data sometimes cannot be performed at compile or assembly time.
+Linkers and loaders have to adjust code and data to reflect the assigned load addresses for position-dependent code and data.
+This process is called relocation.
+ 
+Relocations in object files identify parts of instructions or data that have to be resolved at link or load time.
+\ac{VADL} has the `relocation` keyword to define such relocations which initially are designed to support the \ac{ELF} object file format.
+Listing \r{relocation_definition} shows some relocation definitions and common annotations.
+
+\listing{relocation_definition, Relocation Definition}
+~~~{.vadl}
+  relocation hi( symbol : Bits<32> ) -> UInt<20> = 
+    ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
+  relocation lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
+
+  [relative]
+  relocation pcrel_hi( symbol : Bits<32> ) -> UInt<20> =
+    ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
+  [relative]
+  relocation pcrel_lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
+
+  [globalOffset]
+  relocation got_hi( symbol : Bits<32> ) -> UInt<20> =
+    ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
+~~~
+\endlisting
+
+The relocation definition is similar to a function definition, only the keyword `function` is replaced by `relocation`.
+Currently for relocations only a single argument is supported.
+With annotations different kinds of relocations are selected.
+For now the annotations `[absolute]`, `[relative]` and `[globalOffset]` are suported. 
+An `[absolute]` relocation is used for a symbol which represents an absolute address and is the default if no annotation is given.
+For position independent code the `[relative]` relocation represents a program counter relative symbol and a `[globalOffset]` relocation relies on a global offset table which adds an indirection to achieve position independent code.
 
 
 ### Operation Definition
@@ -1215,24 +1252,24 @@ application binary interface ABI for RV32I = {
   frame  pointer    = fp
   thread pointer    = tp
 
-  pseudo return instruction = RET
-  pseudo call instruction = CALL
-  pseudo local address load instruction = LLA
-  pseudo global address load instruction = LGA_32
-  pseudo absolute address load instruction = LA
-
   return value      = a{0..1}
   function argument = a{0..7}
 
   caller saved = [ a{0..7}, t{0..6} ]
   callee saved = [ ra, gp, tp, fp, s{0..11} ]
 
+  pseudo call instruction   = CALL
+  pseudo return instruction = RET
+  pseudo absolute address load instruction = LA
+  pseudo local address load instruction    = LLA
+  pseudo global address load instruction   = LGA_32
+
   constant sequence( rd : Bits<5>, val : SInt<32> ) = {
     LUI  { rd = rd, imm = hi( val ) }
     ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
   }
-  register adjustment sequence( rd : Bits<5>, rs1: Bits<5>, imm : SInt<12> ) =
-  {
+
+  register adjustment sequence( rd : Bits<5>, rs1: Bits<5>, imm : SInt<12> ) = {
      ADDI{ rd = rd, rs1 = rs1, imm = imm }
   }
 }
@@ -1253,6 +1290,30 @@ In an \ac{ABI} some registers fulfill a certain purpose like being used to keep 
 With the annotation `[alignment : ByteCount]` the stack pointer is aligned to `ByteCount` memory elements. 
 These special purposes are declared with the self explaining keywords.
 The `global pointer` is the register used to access data in a global memory area, the `frame pointer` register gives the access to the stack frame (activation record) of a function or method and the `thread pointer` register is used to acces thread local storage.
+
+Calling conventions describe rules which have to be obeyed during a function call.
+The specification contains information on which registers are used to pass arguments (`function argument`) or return values (`return value`), or which registers are managed by the caller or callee (`caller saved`, `callee saved`). 
+Each definition has the same structure, i.e., a descriptive keyword that declares which register or register group will be specified, followed by the equality symbol `"="` and one or more references to the actual registers.
+To be more concise, \ac{VADL} provides a special syntax to address multiple registers with similar names.
+In the example, the compact expression `a{0..7}` evaluates to `[a0, a1, a2, a3, a4, a5, a6, a7]`.
+
+The compiler generator cannot automatically deduce all necessary code sequences for its functionality.
+There exist two mechanisms to select such code sequences, referencing pseudo instructions and defining special sequences.
+
+The reference to a pseudo instruction starts with the keyword `pseudo` followed by some keywords describing the functionality, the keyword `instruction`, the equality symbol `"="` and the name of the referenced pseudo instruction.
+Five pseudo instruction references are available.
+`call` is a pseudo instruction implementing a function call.
+`return` is a pseudo instruction implementing a function return.
+`absolute address load` is a pseudo instruction implementing the loading of an absolute address.
+`local address load` is a pseudo instruction implementing the loading of a local program counter relative address.
+`global address load` is a pseudo instruction implementing the loading of an address using a global offset table.
+
+The definition of compiler sequences uses a syntax similarly to the definition of pseudo instructions.
+Instead of the keyword `pseudo instruction` they use `constant sequence` and `register adjustment sequence`.
+The constant sequences have two arguments, a register index and an immediate value.
+They define efficient code sequences to load immediate values in different sizes.
+The register adjustment sequences have three arguments, a destination register index, a source register index and an immediate value.
+They define efficient code sequences to add immediate values in different sizes to the source register and store the result in the destination register.
 
 
 ## Assembly Description Definition

@@ -11,6 +11,7 @@
 \acronym{DAG,  Directed Acyclic Graph}
 \acronym{DSL,  Domain-Specific Language}
 <!-- E -->
+\acronym{ELF,  Executable and Linking Format}
 <!-- F -->
 <!-- G -->
 \acronym{GCB,  Generic Compiler Backend}
