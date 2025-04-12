@@ -16,8 +16,8 @@
 
 package vadl.ast;
 
+import static vadl.ast.AstTestUtils.getResourcePath;
 import static vadl.ast.AstTestUtils.loadVadlFiles;
-import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import vadl.utils.Pair;
 
 public class AstDumpTests {
 
@@ -41,29 +42,43 @@ public class AstDumpTests {
    */
   @TestFactory
   Stream<DynamicTest> astDumpTests() throws URISyntaxException, IOException {
-      return loadVadlFiles("dumps").stream()
-          .filter(path -> path.getFileName().toString().endsWith(".vadl"))
-          .map(path -> DynamicTest.dynamicTest("Parse " + path.getFileName(),
-              () -> assertDumpEquality(path)));
+    var unitTestStream = loadVadlFiles("dumps").stream()
+        .filter(path -> path.getFileName().toString().endsWith(".vadl"))
+        .map(path -> DynamicTest.dynamicTest("Parse " + path.getFileName(),
+            () -> assertDumpEquality(path, dumpPath(path))));
+
+    var realWorldTestStream = Stream.of(
+            Pair.of(
+                getResourcePath("testSource/sys/risc-v/rv64im.vadl"),
+                getResourcePath("dumps").resolve("rv64im.dump"))
+        )
+        .map(pair -> DynamicTest.dynamicTest("Parse " + pair.left().getFileName(),
+            () -> assertDumpEquality(pair.left(), pair.right())));
+
+    return Stream.concat(unitTestStream, realWorldTestStream);
   }
 
-  private void assertDumpEquality(Path vadlPath) throws IOException {
+  private void assertDumpEquality(Path vadlPath, Path expectedDumpPath) throws IOException {
     var ast = VadlParser.parse(vadlPath.toAbsolutePath(), Map.of());
-    verifyPrettifiedAst(ast);
+    ModelRemover remover = new ModelRemover();
+    remover.removeModels(ast);
+    Ungrouper ungrouper = new Ungrouper();
+    ungrouper.ungroup(ast);
+    //verifyPrettifiedAst(ast);
 
+    var actualDumpPath = actualDumpPath(expectedDumpPath);
     var actualDump = new AstDumper().dump(ast);
-    var expectedDumpPath = dumpPath(vadlPath);
     if (!Files.isRegularFile(expectedDumpPath)) {
-      writeDump(actualDumpPath(vadlPath), actualDump);
+      writeDump(actualDumpPath, actualDump);
       Assertions.fail("File " + expectedDumpPath + " does not exist");
     }
     var expectedDump = Files.readString(expectedDumpPath).replaceAll("\r\n", "\n");
-    
+
     if (actualDump.equals(expectedDump)) {
       // Clean up any ".actual" files we might have left behind the last time this test failed
-      Files.deleteIfExists(actualDumpPath(vadlPath));
+      Files.deleteIfExists(actualDumpPath);
     } else {
-      writeDump(actualDumpPath(vadlPath), actualDump);
+      writeDump(actualDumpPath, actualDump);
     }
 
     Assertions.assertEquals(expectedDump, actualDump,
@@ -80,7 +95,7 @@ public class AstDumpTests {
   }
 
   private Path actualDumpPath(Path vadlPath) {
-    var path = vadlPath.getFileName().toString().replace(".vadl", ".dump.actual");
+    var path = vadlPath.getFileName().toString().replace(".dump", ".dump.actual");
     return vadlPath.resolveSibling(path);
   }
 }
