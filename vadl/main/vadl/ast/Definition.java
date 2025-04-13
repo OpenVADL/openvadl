@@ -2301,9 +2301,12 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder id;
   Statement statement;
   SourceLocation loc;
+  List<Parameter> params;
 
-  ExceptionDefinition(IdentifierOrPlaceholder id, Statement statement, SourceLocation location) {
+  ExceptionDefinition(IdentifierOrPlaceholder id, List<Parameter> params, Statement statement,
+                      SourceLocation location) {
     this.id = id;
+    this.params = params;
     this.statement = statement;
     this.loc = location;
   }
