@@ -68,8 +68,9 @@ import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
 import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssDecodeTreePass;
 import vadl.iss.template.target.EmitIssGdbStubPass;
+import vadl.iss.template.target.EmitIssInsnTransCIncPass;
 import vadl.iss.template.target.EmitIssMachinePass;
-import vadl.iss.template.target.EmitIssTranslatePass;
+import vadl.iss.template.target.EmitIssTranslateCPass;
 import vadl.lcb.passes.isaMatching.IsaPseudoInstructionMatchingPass;
 import vadl.lcb.passes.isaMatching.IsaRelocationMatchingPass;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenAbiSequenceInstructionRecordPass;
@@ -484,8 +485,10 @@ public class PassOrders {
         .add(new EmitIssCpuSourcePass(config))
         // target/gen-arch/vdt-decode.c
         .add(new EmitIssDecodeTreePass(config))
+        // target/gen-arch/insn_trans/trans_<isa>.c.inc
+        .add(new EmitIssInsnTransCIncPass(config))
         // target/gen-arch/translate.c
-        .add(new EmitIssTranslatePass(config))
+        .add(new EmitIssTranslateCPass(config))
         // target/gen-arch/machine.c
         .add(new EmitIssMachinePass(config))
 
