@@ -64,8 +64,12 @@ computer architecture.
   Place the `openvadl` directory in a suitable location, such as `~/.local/openvadl` and add the bin directory to your
   `PATH` to enable execution of OpenVADL from any terminal session.
 
+  **Note:** Your `$JAVA_HOME` must point to a JDK 17 installation.
+
 - <b class="tab-title">Build From Source</b>
-  Alternatively you may build OpenVADL from source:
+  Alternatively you may build OpenVADL from source.
+  Your `$JAVA_HOME` must point to a JDK 17 (or higher) installation.
+
   ```
   git clone git@github.com:OpenVADL/openvadl.git
   cd openvadl
