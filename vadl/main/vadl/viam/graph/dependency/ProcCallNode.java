@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
+import vadl.viam.ExceptionDef;
 import vadl.viam.Procedure;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
@@ -63,6 +64,13 @@ public class ProcCallNode extends SideEffectNode {
 
   public NodeList<ExpressionNode> arguments() {
     return arguments;
+  }
+
+  /**
+   * Indicates whether this call represents an exception raise.
+   */
+  public boolean exceptionRaise() {
+    return procedure instanceof ExceptionDef;
   }
 
   @Override

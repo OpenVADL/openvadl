@@ -26,6 +26,7 @@ import vadl.dump.entitySuppliers.ViamEntitySupplier;
 import vadl.dump.infoEnrichers.ViamEnricherCollection;
 import vadl.viam.Definition;
 import vadl.viam.Encoding;
+import vadl.viam.ExceptionDef;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -128,6 +129,7 @@ public class DefinitionEntity extends DumpEntity {
       is(InstructionSetArchitecture.class),
       is(Resource.class),
       is(Format.class),
+      is(ExceptionDef.class),
       is(Instruction.class),
       is(PseudoInstruction.class),
       is(Relocation.class),

@@ -1740,11 +1740,13 @@ public class TypeChecker
       origin = requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
       innerName = identifier.name;
       fullName = identifier.name;
+      identifier.target = origin;
     } else if (expr instanceof IdentifierPath path) {
       origin = requireNonNull(expr.symbolTable).findAs(path, Node.class);
       var segments = path.pathToSegments();
       innerName = segments.get(segments.size() - 1);
       fullName = path.pathToString();
+      path.target = origin;
     } else {
       throw new IllegalStateException();
     }

@@ -17,6 +17,8 @@
 package vadl.ast;
 
 
+import static vadl.error.Diagnostic.error;
+
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -263,7 +265,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // FIXME: Wrap input and output in casts
     // FIXME: Add conditions based on annotations
     var regFile = (RegisterFile) viamLowering.fetch(regFileDef).orElseThrow();
-    var regfileRead = new WriteRegFileNode(
+    var regfileWrite = new WriteRegFileNode(
         regFile,
         new FuncParamNode(indexParam),
         new FuncParamNode(valueParam),
@@ -271,7 +273,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         null
     );
 
-    var end = graph.addWithInputs(new ProcEndNode(new NodeList<>(regfileRead)));
+    var end = graph.addWithInputs(new ProcEndNode(new NodeList<>(regfileWrite)));
     graph.addWithInputs(new StartNode(end));
 
     // FIXME: Modify based on annotations
@@ -353,11 +355,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       computedTarget = Objects.requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
       innerName = identifier.name;
       fullName = identifier.name;
+      identifier.target = computedTarget;
     } else if (expr instanceof IdentifierPath path) {
       computedTarget = Objects.requireNonNull(expr.symbolTable).findAs(path, Node.class);
       var segments = path.pathToSegments();
       innerName = segments.get(segments.size() - 1);
       fullName = path.pathToString();
+      path.target = computedTarget;
     } else {
       throw new IllegalStateException();
     }    // Constant
@@ -1199,15 +1203,39 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public SubgraphContext visit(RaiseStatement statement) {
-    var name = statement.viamId + "::annonymousException";
-    var exceptionDef = new ExceptionDef(
-        viamLowering.generateIdentifier(name,
-            statement.statement),
-        new BehaviorLowering(this.viamLowering).getProcedureGraph(statement.statement, name),
-        ExceptionDef.Kind.ANONYMOUS
-    );
-    // FIXME: Add to a global store so that ISA can get a list of all exceptions
-    var raise = new ProcCallNode(exceptionDef, new NodeList<>());
+    ExceptionDef exception;
+    NodeList<ExpressionNode> args = new NodeList<>();
+
+    if (statement.statement instanceof CallStatement callStatement) {
+      var expr = callStatement.expr;
+
+      if (expr instanceof Identifier ident
+          && ident.target instanceof ExceptionDefinition exceptionDef) {
+        exception = (ExceptionDef) viamLowering.fetch(exceptionDef).get();
+      } else if (expr instanceof CallIndexExpr call
+          && call.computedTarget instanceof ExceptionDefinition exceptionDef) {
+        exception = (ExceptionDef) viamLowering.fetch(exceptionDef).get();
+        args = call.argsIndices.get(0).values.stream()
+            .map(this::fetch)
+            .collect(Collectors.toCollection(NodeList::new));
+      } else {
+        throw error("Invalid Raise Call", expr)
+            .locationDescription(expr, "Expected a call to an Exception.")
+            .build();
+      }
+    } else {
+      // FIXME: Add to a global store so that ISA can get a list of all exceptions
+      var name = statement.viamId + "::anonymousException";
+      exception = new ExceptionDef(
+          viamLowering.generateIdentifier(name, statement.statement),
+          new vadl.viam.Parameter[] {},
+          new BehaviorLowering(this.viamLowering).getProcedureGraph(statement.statement, name),
+          ExceptionDef.Kind.ANONYMOUS
+      );
+    }
+
+    var raise = new ProcCallNode(exception, args);
+    raise.setSourceLocation(statement.sourceLocation());
     return SubgraphContext.of(statement, raise);
   }
 
