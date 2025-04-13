@@ -177,8 +177,8 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
   }
 
   @Override
-  public Result constructResult() {
-    return new Result(getEmittedFile(), lastPass);
+  protected Result constructResult(Path emittedFile) {
+    return new Result(emittedFile, lastPass);
   }
 
   @Override
@@ -280,7 +280,7 @@ public class HtmlDumpPass extends AbstractTemplateRenderingPass {
         .map(p -> (Result) p.result())
         .filter(Objects::nonNull)
         .collect(Collectors.toMap((r) -> r.lastPass != null ? r.lastPass.value() : null,
-            (r) -> r.emittedFile.toString()));
+            (r) -> r.emittedFile().toString()));
   }
 
   private static Map<String, Object> mapPassResult(PassResults.SingleResult singleResult, int nr,

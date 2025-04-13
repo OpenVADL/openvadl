@@ -17,12 +17,15 @@
 package vadl.lcb.riscv.riscv64.template;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.com.google.common.io.Files;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.template.lib.Target.Utils.EmitImmediateFilePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.template.AbstractTemplateRenderingPass;
 
 public class EmitImmediateFilePassTest extends AbstractLcbTest {
   @Test
@@ -30,17 +33,15 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
     // Given
     var testSetup = runLcb(getConfiguration(false), "sys/risc-v/rv64im.vadl",
         new PassKey(EmitImmediateFilePass.class.getName()));
-    var passManager = testSetup.passManager();
-    var spec = testSetup.specification();
 
     // When
-    var template =
-        new EmitImmediateFilePass(getConfiguration(false));
+    var passResult =
+        (AbstractTemplateRenderingPass.Result) testSetup.passManager().getPassResults()
+            .lastResultOf(EmitImmediateFilePass.class);
 
-    // When
-    // TODO: Turn this into a normal rendering test
-    var result = template.renderToString(passManager.getPassResults(), spec);
-    var trimmed = result.trim();
+    // Then
+    var resultFile = passResult.emittedFile().toFile();
+    var trimmed = Files.asCharSource(resultFile, Charset.defaultCharset()).read().trim();
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""

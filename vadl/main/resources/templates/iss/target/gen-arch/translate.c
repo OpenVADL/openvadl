@@ -195,14 +195,11 @@ static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 // Include the generated VADL decode tree
 #include "vdt-decode.c"
 
-//// START OF TRANSLATE FUNCTIONS ////
-
-[# th:each="func, iterState : ${translate_functions}"]
-[(${func})]
+// Include translation functions
+[# th:each="func, iterState : ${trans_includes}"]
+#include "[(${func})]"
 [/]
 
-
-//// END OF TRANSLATE FUNCTIONS ////
 
 /*
  *  Core translation mechanism functions:
