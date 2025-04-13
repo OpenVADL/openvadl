@@ -1206,8 +1206,11 @@ Currently for relocations only a single argument is supported.
 With annotations different kinds of relocations are selected.
 For now the annotations `[absolute]`, `[relative]` and `[globalOffset]` are suported. 
 An `[absolute]` relocation is used for a symbol which represents an absolute address and is the default if no annotation is given.
-For position independent code the `[relative]` relocation represents a program counter relative symbol and a `[globalOffset]` relocation relies on a global offset table which adds an indirection to achieve position independent code.
-Both `[relative]` and `[globalOffset]` do not require to reference `PC` or `GOT` since the annotation indicates how the value has to change. For relative relocations, the compiler generator will subtract the program counter for the returned value. For global offset relocations, the offset of the global offset table, the offset of the symbol are added and the program counter is subtracted.
+For position independent code the `[relative]` relocation represents a program counter relative symbol and a `[globalOffset]` relocation relies on a global offset table (\ac{GOT}) which adds an indirection to achieve position independent code.
+Both `[relative]` and `[globalOffset]` do not require to reference `PC` or `GOT` since the annotation indicates how the value has to change.
+For relative relocations, the compiler generator will subtract the program counter for the returned value.
+For global offset relocations, the offset of the global offset table and the offset of the symbol are added and the program counter is subtracted.
+
 
 ### Operation Definition
 
@@ -1316,9 +1319,11 @@ Five pseudo instruction references are available.
 The definition of compiler sequences uses a syntax similarly to the definition of pseudo instructions.
 Instead of the keyword `pseudo instruction` they use `constant sequence` and `register adjustment sequence`.
 The constant sequences have two arguments, a register index and an immediate value.
-They define efficient code sequences to load immediate values in different sizes.
+They define efficient code sequences to load immediate values of different types in different sizes.
 The register adjustment sequences have three arguments, a destination register index, a source register index and an immediate value.
-They define efficient code sequences to add immediate values in different sizes to the source register and store the result in the destination register and will be used for the stack frame setup and destroyment. If an immediate does not fit into the immediate of register adjustment sequence then a constant sequence will be used. This is requires an extra register which can be more costly.‚
+They define efficient code sequences to add immediate values of different types in different sizes to the source register and store the result in the destination register and are used for the stack frame creation and unwinding.
+If an immediate does not fit into the immediate of a register adjustment sequence, then a constant sequence will be used.
+This requires an additional register which can be more costly.
 
 
 ## Assembly Description Definition
