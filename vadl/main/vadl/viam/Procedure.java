@@ -16,7 +16,9 @@
 
 package vadl.viam;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import vadl.utils.GraphUtils;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ProcEndNode;
@@ -70,6 +72,14 @@ public class Procedure extends Definition implements DefProp.WithBehavior {
     GraphUtils.getSingleNode(behavior, ProcEndNode.class);
 
     behavior.verify();
+  }
+
+  @Override
+  public String toString() {
+    return simpleName()
+        + "("
+        + Arrays.stream(parameters).map(Parameter::toString).collect(Collectors.joining(", "))
+        + ")";
   }
 
   @Override

@@ -41,8 +41,8 @@ public class ExceptionDef extends Procedure {
   /**
    * Constructs the exception.
    */
-  public ExceptionDef(Identifier identifier, Graph behavior, Kind kind) {
-    super(identifier, new Parameter[] {}, behavior);
+  public ExceptionDef(Identifier identifier, Parameter[] parameters, Graph behavior, Kind kind) {
+    super(identifier, parameters, behavior);
     this.kind = kind;
   }
 

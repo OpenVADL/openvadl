@@ -473,6 +473,14 @@ class SymbolTable {
           collectSymbols(symbols, param.typeLiteral);
         }
         collectSymbols(relocation.symbolTable, relocation.expr);
+      } else if (definition instanceof ExceptionDefinition exception) {
+        symbols.defineSymbol(exception);
+        exception.symbolTable = symbols.createChild();
+        for (Parameter param : exception.params) {
+          exception.symbolTable.defineSymbol(param);
+          collectSymbols(symbols, param.typeLiteral);
+        }
+        collectSymbols(exception.symbolTable, exception.statement);
       } else if (definition instanceof AssemblyDefinition assembly) {
         assembly.symbolTable = symbols.createChild();
         collectSymbols(assembly.symbolTable, assembly.expr);

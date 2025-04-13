@@ -105,6 +105,12 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   String name;
   SourceLocation loc;
 
+  /**
+   * The node this identifier refers to.
+   */
+  @Nullable
+  Node target;
+
   public Identifier(String name, SourceLocation location) {
     this.loc = location;
     this.name = name;
@@ -1355,8 +1361,11 @@ final class IdentifierPath extends Expr implements IsId {
    */
   List<IdentifierOrPlaceholder> segments;
 
+  /**
+   * The node this identifier refers to.
+   */
   @Nullable
-  Object refNode; // TODO should always be a Node
+  Node target;
 
   public IdentifierPath(List<IdentifierOrPlaceholder> segments) {
     Preconditions.checkArgument(!segments.isEmpty(),

@@ -820,12 +820,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       parameterCache.put(parameter, viamParameter);
       parameters.add(viamParameter);
     }
-    var behaivor = new BehaviorLowering(this).getFunctionGraph(expr, "behaviour");
+    var behavior = new BehaviorLowering(this).getFunctionGraph(expr, "behaviour");
 
     return new Function(identifier,
         parameters.toArray(new vadl.viam.Parameter[0]),
         returnType,
-        behaivor);
+        behavior);
   }
 
   @Override
@@ -876,8 +876,23 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(ExceptionDefinition definition) {
-    throw new RuntimeException("The ViamGenerator does not support `%s` yet".formatted(
-        definition.getClass().getSimpleName()));
+    var identifier = generateIdentifier(definition.viamId, definition.identifier());
+    var parameters = new ArrayList<vadl.viam.Parameter>();
+    for (var param : definition.params) {
+      var viamParameter = new vadl.viam.Parameter(
+          generateIdentifier(param.name.name, param.name.location()),
+          getViamType(param.typeLiteral.type())
+      );
+      parameterCache.put(param, viamParameter);
+      parameters.add(viamParameter);
+    }
+    var behavior = new BehaviorLowering(this).getProcedureGraph(definition.statement, "exception");
+    return Optional.of(new ExceptionDef(
+        identifier,
+        parameters.toArray(new vadl.viam.Parameter[0]),
+        behavior,
+        ExceptionDef.Kind.DECLARED
+    ));
   }
 
   @Override
@@ -1077,8 +1092,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var formats = filterAndCastToInstance(allDefinitions, Format.class);
     var functions = filterAndCastToInstance(allDefinitions, Function.class);
     var relocations = filterAndCastToInstance(allDefinitions, Relocation.class);
-    // TODO: @flofriday get exceptions
-    var exceptions = new ArrayList<ExceptionDef>();
+    var exceptions = filterAndCastToInstance(allDefinitions, ExceptionDef.class);
     var instructions = filterAndCastToInstance(allDefinitions, Instruction.class);
     var pseudoInstructions = filterAndCastToInstance(allDefinitions, PseudoInstruction.class);
     var registers = filterAndCastToInstance(allDefinitions, Register.class);
