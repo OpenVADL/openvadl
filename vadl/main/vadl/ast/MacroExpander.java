@@ -581,7 +581,8 @@ class MacroExpander
   @Override
   public Definition visit(ExceptionDefinition definition) {
     var id = resolvePlaceholderOrIdentifier(definition.id);
-    return new ExceptionDefinition(id, definition.statement.accept(this), copyLoc(definition.loc))
+    return new ExceptionDefinition(id, expandParams(definition.params),
+        definition.statement.accept(this), copyLoc(definition.loc))
         .withAnnotations(definition.annotations);
   }
 

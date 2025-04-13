@@ -651,11 +651,12 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                         (. def = new EnumerationDefinition(id, enumType, entries, start.join(loc())); .)
   .
 
-  exceptionDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  exceptionDefinition<out Definition def> (. var start = lookaheadLoc(); List<Parameter> params = new ArrayList<>(); .)
   = EXCEPTION
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    [ parameters<out params> ]
     SYM_EQ
-    statement<out Statement statement> (. def = new ExceptionDefinition(id, statement, start.join(loc())); .)
+    statement<out Statement statement> (. def = new ExceptionDefinition(id, params, statement, start.join(loc())); .)
   .
 
   recordDefinition<out RecordTypeDefinition def> (. var start = lookaheadLoc(); .)
