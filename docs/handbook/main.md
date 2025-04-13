@@ -30,7 +30,7 @@ computer architecture.
   the [Github Releases page](https://github.com/OpenVADL/openvadl/releases).  
   To download the latest version, run the following commands:
   <div class="fragment">
-  <div class="line">curl -L %https://github.com/openvadl/openvadl/releases/download/v$(LATEST_VERSION)/openvadl-$(LATEST_VERSION)-linux-x64.tar.gz</div>
+  <div class="line">curl -L -o openvadl-$(LATEST_VERSION)-linux-x64.tar.gz %https://github.com/openvadl/openvadl/releases/download/v$(LATEST_VERSION)/openvadl-$(LATEST_VERSION)-linux-x64.tar.gz</div>
   <div class="line">tar -xzf openvadl-$(LATEST_VERSION)-linux-x64.tar.gz</div>
   <div class="line">cd openvadl-$(LATEST_VERSION)-linux-x64</div>
   </div>
@@ -42,7 +42,7 @@ computer architecture.
   the [Github Releases page](https://github.com/OpenVADL/openvadl/releases).  
   To download the latest version, run the following commands:
   <div class="fragment">
-  <div class="line">curl -L %https://github.com/openvadl/openvadl/releases/download/v$(LATEST_VERSION)/openvadl-$(LATEST_VERSION)-macOS-arm64.tar.gz</div>
+  <div class="line">curl -L -o openvadl-$(LATEST_VERSION)-macOS-arm64.tar.gz %https://github.com/openvadl/openvadl/releases/download/v$(LATEST_VERSION)/openvadl-$(LATEST_VERSION)-macOS-arm64.tar.gz</div>
   <div class="line">tar -xzf openvadl-$(LATEST_VERSION)-macOS-arm64.tar.gz</div>
   <div class="line">cd openvadl-$(LATEST_VERSION)-macOS-arm64</div>
   </div>
@@ -53,7 +53,7 @@ computer architecture.
   the [Github Releases page](https://github.com/OpenVADL/openvadl/releases).  
   To download the latest version, run the following commands:
   <div class="fragment">
-  <div class="line">curl -L %https://github.com/openvadl/openvadl/releases/download/v$(LATEST_VERSION)/openvadl-$(LATEST_VERSION).tar</div>
+  <div class="line">curl -L -o openvadl-$(LATEST_VERSION).tar %https://github.com/openvadl/openvadl/releases/download/v$(LATEST_VERSION)/openvadl-$(LATEST_VERSION).tar</div>
   <div class="line">tar -xzf openvadl-$(LATEST_VERSION).tar</div>
   </div>
   Extracting the archive creates an `openvadl` directory containing the following structure:
