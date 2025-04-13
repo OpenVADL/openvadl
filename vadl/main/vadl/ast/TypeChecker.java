@@ -823,6 +823,7 @@ public class TypeChecker
 
   @Override
   public Void visit(ExceptionDefinition definition) {
+    definition.params.forEach(param -> check(param.typeLiteral));
     check(definition.statement);
     return null;
   }
@@ -1809,6 +1810,22 @@ public class TypeChecker
       return;
     }
 
+    if (origin instanceof ExceptionDefinition exceptionDef) {
+      // TODO: Check if exception was called with a raise
+      // It's a call without arguments
+      check(exceptionDef);
+
+      if (!exceptionDef.params.isEmpty()) {
+        throw Diagnostic.error("Invalid Exception Raise", expr)
+            .description("Expected `%s` arguments but got `%s`", exceptionDef.params.size(),
+                0)
+            .build();
+      }
+
+      expr.type = Type.void_();
+      return;
+    }
+
     if (origin instanceof RegisterDefinition
         || (origin instanceof AliasDefinition aliasDef && aliasDef.kind.equals(
         AliasDefinition.AliasKind.REGISTER))) {
@@ -2625,6 +2642,9 @@ public class TypeChecker
       return null;
     }
 
+    // FIXME: @flofriday, implementation of function definition and relocation definition
+    //    are identical. Exception definition is also very similar.
+    //    This should be refactored.
     // User defined functions
     if (callTarget instanceof FunctionDefinition functionDef) {
       check(functionDef);
@@ -2684,6 +2704,33 @@ public class TypeChecker
       expr.argsIndices.get(0).type = relocationType.resultType();
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
       visitSubCall(expr, expr.type());
+      return null;
+    }
+
+    if (callTarget instanceof ExceptionDefinition exceptionDef) {
+      // TODO: Check if exception was called with a raise
+      check(exceptionDef);
+      var expectedArgCount = exceptionDef.params.size();
+      var paramTypes = exceptionDef.params.stream().map(Parameter::type).toList();
+      var actualArgCount = expr.argsIndices.get(0).values.size();
+      if (expectedArgCount != actualArgCount) {
+        throw Diagnostic.error("Invalid Exception Raise", expr)
+            .description("Expected %s arguments but got `%s`", expectedArgCount, actualArgCount)
+            .build();
+      }
+      var args = expr.argsIndices.get(0);
+      args.values.forEach(this::check);
+      for (int i = 0; i < expectedArgCount; i++) {
+        var arg = args.values.get(i);
+        args.values.set(i, wrapImplicitCast(arg, paramTypes.get(i)));
+        arg = args.values.get(i);
+        if (!arg.type().equals(paramTypes.get(i))) {
+          throw typeMissmatchError(expr, paramTypes.get(i), arg.type());
+        }
+      }
+
+      expr.computedTarget = exceptionDef;
+      expr.type = Type.void_();
       return null;
     }
 
@@ -3051,7 +3098,10 @@ public class TypeChecker
 
   @Override
   public Void visit(CallStatement statement) {
-    throwUnimplemented(statement);
+    check(statement.expr);
+    if (statement.expr.type != Type.void_()) {
+      throw typeMissmatchError(statement.expr, Type.void_(), requireNonNull(statement.expr.type));
+    }
     return null;
   }
 
