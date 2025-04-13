@@ -15,6 +15,7 @@
 <!-- F -->
 <!-- G -->
 \acronym{GCB,  Generic Compiler Backend}
+\acronym{GOT,  Global Offset Table}
 <!-- H -->
 \acronym{HDL,  Hardware Description Language}
 <!-- I -->
