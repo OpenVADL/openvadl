@@ -14,15 +14,16 @@
   </p>
 </p>
 
-**OpenVADL** is an open-source implementation of **VADL**, a processor description language. 
-VADL enables users to specify both instruction set architectures (ISA) and microarchitectures in a modern, intuitive way.
+**OpenVADL** is an open-source implementation of **VADL**, a processor description language.
+VADL enables users to specify both instruction set architectures (ISA) and microarchitectures in a modern, intuitive
+way.
 For details, see the [official documentation](https://openvadl.github.io/openvadl/).
 
 OpenVADL can generate multiple artifacts from a single VADL specification:
 
-- **Instruction Set Simulator** via a custom QEMU frontend  
-- **Compiler** via a custom LLVM backend  
-- **Linker and Assembler** by integrating a generated parser into LLVM  
+- **Instruction Set Simulator** via a custom QEMU frontend
+- **Compiler** via a custom LLVM backend
+- **Linker and Assembler** by integrating a generated parser into LLVM
 
 Additional tools, such as a **Chisel** generator for hardware synthesis, are in development.
 
@@ -31,9 +32,11 @@ Check out our [VADL-related publications](https://www.complang.tuwien.ac.at/vadl
 ## Getting Started
 
 If you want to use OpenVADL, please refer to [the documentation](https://openvadl.github.io/openvadl/).
-It covers everything you need to install OpenVADL, write a specification, and use the CLI to generate artifacts like a simulator or compiler.
+It covers everything you need to install OpenVADL, write a specification, and use the CLI to generate artifacts like a
+simulator or compiler.
 
-For working VADL specifications examples, check out our [reference specifications](https://github.com/OpenVADL/openvadl/tree/master/vadl/test/resources/testSource/sys).  
+For working VADL specifications examples, check out
+our [reference specifications](https://github.com/OpenVADL/openvadl/tree/master/vadl/test/resources/testSource/sys).  
 These are tested and kept up to date with the current OpenVADL version.
 
 ## Contribution
@@ -41,20 +44,23 @@ These are tested and kept up to date with the current OpenVADL version.
 If OpenVADL sounds like an interesting project and you'd like to collaborate or contribute, please reach out!
 
 There are plenty of open tasks, including:
-- A cycle-approximate simulator generator  
-- User-mode emulation in the generated ISS  
-- A documentation engine for embedding architecture specs directly in VADL  
-- Improvements to the QEMU-based ISS  
+
+- A cycle-approximate simulator generator
+- User-mode emulation in the generated ISS
+- A documentation engine for embedding architecture specs directly in VADL
+- Improvements to the QEMU-based ISS
 - Enhancements to the LLVM-based compiler
 
 There are also many potential Bachelor and Master thesis topics available.
 
 ## Q&A and Bugs
 
-If you have any questions, please use our [discussion panel](https://github.com/OpenVADL/openvadl/discussions/categories/q-a).  
+If you have any questions, please use
+our [discussion panel](https://github.com/OpenVADL/openvadl/discussions/categories/q-a).  
 This helps others with similar issues find answers more easily.
 
-If you encounter a crash or incorrect behavior, please report it as an [issue](https://github.com/OpenVADL/openvadl/issues).  
+If you encounter a crash or incorrect behavior, please report it as
+an [issue](https://github.com/OpenVADL/openvadl/issues).  
 Before creating a new issue, check if one already exists for the same problem.
 
 # Development
@@ -73,7 +79,10 @@ The `open-vadl` project includes multiple Gradle modules.
 
 ## Getting Started
 
-For example, you can create the iss (Instruction Set Simulator) for a minimal risc-v example with:
+You need a working JDK 17 (or higher) installation on your `PATH` to build OpenVADL.
+To directly build and run OpenVADL without installing it, use the `./gradlew run --args="<args>"` command.
+
+For example, you can create the ISS (Instruction Set Simulator) for a minimal risc-v example with:
 
 ```bash
 ./gradlew run --args="iss sys/risc-v/rv64im.vadl"
