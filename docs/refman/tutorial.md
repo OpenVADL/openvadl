@@ -1094,11 +1094,75 @@ On the left hand side the register or memory is always written, on the right han
 
 #### If Statement
 
+Listing \r{if_match_raise_statement} shows the usage of an `if` statement in lines 33 to 36.
+In contrast to an `if` expression the `else` part is optional.
+When `if` statements are nested, an `else` part belongs to the closest `then` part.
+After the keywords `then` and `else` a single statement is allowed, which also could be a potentially empty block statement.
+
+\listing{if_match_raise_statement, If\, Match\, Raise Statement and Exception Definition (simplified MIPS Architecture)}
+~~~{.vadl}
+instruction set architecture R3000 = {
+ 
+  using Byte         = Bits<8>       //  8 bit byte
+  using Inst         = Bits<32>      // 32 bit instruction word
+  using Regs         = Bits<32>      // 32 bit register word
+  using IReg         = SInt<32>      // signed integer type with register word size
+  using Addr         = Regs          // address is same size as register
+  using Index        = Bits<5>       // register index for 32 registers
+
+  [next]                             // PC points to the next following instruction
+  program counter PC : Addr          // program pointer
+  register       EPC : Addr          // saved exception program counter
+
+  [zero : GPR(0)]                    // zero register
+  register       GPR : Index -> Regs // general purpose registers
+  memory MEM         : Addr  -> Byte // byte addressed memory aligned to 4 bytes
+
+  format I_Type : Inst =
+    { opcode    : Bits<6>            // operation code
+    , rs        : Index              // 1st source register
+    , rt        : Index              // destination register / 2nd source for store
+    , imm       : SInt<16>           // signed immediate value or offset
+    , immExt    = imm as IReg        // sign extended immediate value or offset
+    }
+
+  exception Overflow = {             // overflow exception
+    EPC := PC.current                // save exception raising PC
+    PC  := 0x8000'0180               // set PC to the exception handler address
+    }
+
+  instruction addi : I_Type = {      // add immediate with overflow
+    let result, status = VADL::adds(GPR(rs), immExt) in {
+      if status.overflow then
+        raise Overflow               // raise exits the instruction after Overflow is executed
+      else
+        GPR(rt) := result
+      }
+    }
+
+  instruction swr : I_Type = {       // store word right, unaligned least significant register part
+    let addr = GPR(rs) + immExt in
+      let val = GPR(rt) in
+        match addr as UInt<2> with
+          { 0 => MEM<4>(addr) := val(31..0)
+          , 1 => MEM<3>(addr) := val(23..0)
+          , 2 => MEM<2>(addr) := val(15..0)
+          , _ => MEM<1>(addr) := val( 7..0)
+          }
+    }
+}
+~~~
+\endlisting
+
 
 #### Match Statement
 
-
-#### Forall Statement and Expression
+A match statement selects a statement based on a pattern as demonstrated in lines 43 to 48 of Listing \r{if_match_raise_statement}.
+It starts with the `match` keyword, the selection expression and the `with` keyword followed by a list of entries separated by the comma symbol `","`.
+Each entry consists of possible candidate expression on the left hand side and an arbitrary statement on the right hand side of the double arrow symbol `=>`.
+At least one entry must contain the wildcard `_` as candidate, which always matches and prevents the match from being not evaluated.
+If a candidate expression is equal to the selection expression, the match statement evaluates to the right hand side of the matched entry.
+It is also possible to use a list of candidate expressions in curly braces separated by the comma symbol `","`.
 
 
 #### Raise Statement and Exception Definition
@@ -1106,58 +1170,22 @@ On the left hand side the register or memory is always written, on the right han
 \ac{VADL} has special notations to mark exceptional behavior.
 Technically, these notations are not necessary, as every exceptional behavior can be described with the base \ac{ISA} language constructs.
 However, neither a human reader nor the compiler generator can distinguish normal behavior from exceptional behavior.
-Therefore, it is required that exceptional behavior is marked by the keyword `raise` as shown in Listing \r{raise_exception} at line 32.
+Therefore, it is required that exceptional behavior is marked by the keyword `raise` as shown in Listing \r{if_match_raise_statement} at line 34.
 The code after the keyword `raise` can be any (block) statement or the call of an exception defined elsewhere.
 After the execution of the exception code the whole instruction is exited, no other statements are executed anymore.
-
-\listing{raise_exception, Exception Handling (simplified MIPS)}
-~~~{.vadl}
-instruction set architecture MIPSIV = {
-
-  using IWord        = Bits<32>        // 32 bit instruction word
-  using RWord        = Bits<64>        // 64 bit register word
-  using Address      = RWord           // 64 bit register word
-  using Index        = Bits<5>         // register index for 32 registers
-
-  [next]                               // PC points to the next following instruction
-  program counter PC : Address         // program pointer
-  register       EPC : Address         // saved exception program counter
-
-  [zero : GPR(0)]                      // zero register
-  register       GPR : Index -> RWord  // general purpose registers
-
-  format R_Type      : IWord =         // register 3 operand instruction word
-    { opcode : Bits<6>                 // operation code
-    , rs     : Index                   // 1st source register
-    , rt     : Index                   // 2nd source register
-    , rd     : Index                   // destination register
-    , shamt  : Bits<5>                 // unsigned shift amount
-    , funct  : Bits<6>                 // function code
-    }
-
-  exception Overflow = {               // overflow exception
-    EPC := PC - 4                      // save exception raising PC
-    PC  := 0xFFFF'FFFF'8000'0180       // set PC to the exception handler address
-    }
-
-  instruction add : R_Type = {         // add with overflow
-    let result, status = VADL::adds(GPR(rs), GPR(rt)) in {
-      if status.overflow then
-        raise Overflow                 // raise exits the instruction after Overflow is executed
-      GPR(rd) := result
-      }
-    }
-  }
-~~~
-\endlisting
+Therefore, in the example the `else` in line 35 could be deleted without changing the behavior of this instruction.
 
 Exception raising code is often quite similar.
 Exceptions can be specified similarly to functions to enable code reuse.
-In contrast to functions, exceptions do not return an expression but have side effects caused by assignment statements (see lines 24 to 27).
+An exception is defined by the keyword `exception` followed by the exception's name, optionally a parameter list in parentheses, the equality symbol `"="` and a statement which is usually a block statement.
+In contrast to functions, exceptions do not return a result, but have side effects caused by assignment statements (see lines 26 to 29).
 Nevertheless, it must be guaranteed that reads to a register or memory location precede all writes.
 
 To specify exceptional behavior like overflow, the basic \ac{VADL} built-in functions exist in a version which returns a status like the occurence of an overflow during the computation.
-These built-in functions are used to specify instructions that handle operations with overflow as demonstrated in the example in Listing \r{raise_exception}.
+These built-in functions are used to specify instructions that handle operations with overflow as demonstrated in the example in Listing \r{if_match_raise_statement}.
+
+
+#### Forall Statement and Expression
 
 
 #### Lock Statement
@@ -1233,8 +1261,8 @@ Additionally information is supplied to support the compiler generator to genera
 The \ac{ABI} specification section in \ac{VADL} supports the definition of
   - register aliases,
   - special purpose registers with alignment information,
-  - pseudo instruction definitions,
-  - calling conventions and
+  - calling conventions,
+  - pseudo instruction references and
   - special instruction sequences.
 
 Listing \r{application_binary_interface} shows all elements of the \ac{ABI} section.
