@@ -1207,7 +1207,7 @@ With annotations different kinds of relocations are selected.
 For now the annotations `[absolute]`, `[relative]` and `[globalOffset]` are suported. 
 An `[absolute]` relocation is used for a symbol which represents an absolute address and is the default if no annotation is given.
 For position independent code the `[relative]` relocation represents a program counter relative symbol and a `[globalOffset]` relocation relies on a global offset table which adds an indirection to achieve position independent code.
-
+Both `[relative]` and `[globalOffset]` do not require to reference `PC` or `GOT` since the annotation indicates how the value has to change. For relative relocations, the compiler generator will subtract the program counter for the returned value. For global offset relocations, the offset of the global offset table, the offset of the symbol are added and the program counter is subtracted.
 
 ### Operation Definition
 
@@ -1269,6 +1269,11 @@ application binary interface ABI for RV32I = {
     ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
   }
 
+  constant sequence( rd : Bits<5>, val : UInt<32> ) = {
+    LUI  { rd = rd, imm = hi( val ) }
+    ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
+  }
+
   register adjustment sequence( rd : Bits<5>, rs1: Bits<5>, imm : SInt<12> ) = {
      ADDI{ rd = rd, rs1 = rs1, imm = imm }
   }
@@ -1295,7 +1300,7 @@ Calling conventions describe rules which have to be obeyed during a function cal
 The specification contains information on which registers are used to pass arguments (`function argument`) or return values (`return value`), or which registers are managed by the caller or callee (`caller saved`, `callee saved`). 
 Each definition has the same structure, i.e., a descriptive keyword that declares which register or register group will be specified, followed by the equality symbol `"="` and one or more references to the actual registers.
 To be more concise, \ac{VADL} provides a special syntax to address multiple registers with similar names.
-In the example, the compact expression `a{0..7}` evaluates to `[a0, a1, a2, a3, a4, a5, a6, a7]`.
+In the example, the compact expression `a{0..7}` evaluates to `[a0, a1, a2, a3, a4, a5, a6, a7]`. Note that the callee saved sequence contains the return address `ra` on purpose in the example even though the official RISC-V ABI documentation states it as caller saved. This is [required](https://discourse.llvm.org/t/why-is-return-address-x1-defined-as-callee-saved-register/84736) because a function call changes the register whereas the return won't restore the old value. 
 
 The compiler generator cannot automatically deduce all necessary code sequences for its functionality.
 There exist two mechanisms to select such code sequences, referencing pseudo instructions and defining special sequences.
@@ -1313,7 +1318,7 @@ Instead of the keyword `pseudo instruction` they use `constant sequence` and `re
 The constant sequences have two arguments, a register index and an immediate value.
 They define efficient code sequences to load immediate values in different sizes.
 The register adjustment sequences have three arguments, a destination register index, a source register index and an immediate value.
-They define efficient code sequences to add immediate values in different sizes to the source register and store the result in the destination register.
+They define efficient code sequences to add immediate values in different sizes to the source register and store the result in the destination register and will be used for the stack frame setup and destroyment. If an immediate does not fit into the immediate of register adjustment sequence then a constant sequence will be used. This is requires an extra register which can be more costly.‚
 
 
 ## Assembly Description Definition
