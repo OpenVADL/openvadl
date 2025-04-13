@@ -141,8 +141,8 @@ location of your Java installation."
 fi
 
 # Add minimum Java major version check, see: https://github.com/OpenVADL/openvadl/pull/162
-JAVA_VERSION_STRING=$("$JAVACMD" -version 2>&1)
-JAVA_VERSION_MAJOR=$(echo "$JAVA_VERSION_STRING" | sed -n 's/.* version "\(1\.\|\)\([0-9]*\).*/\2/p')
+JAVA_VERSION_STRING=$("$JAVACMD" -version 2>&1 | grep 'version' | head -n 1 | cut -d '"' -f2)
+JAVA_VERSION_MAJOR=$(echo "$JAVA_VERSION_STRING" | cut -d '.' -f1)
 if [ "$JAVA_VERSION_MAJOR" -lt 17 ]; then
     echo "ERROR: Java 17 or higher is required. Found Java version $JAVA_VERSION_STRING."
     exit 1
