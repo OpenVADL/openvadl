@@ -69,7 +69,8 @@ public class EmitAsmBackendCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(
         "name", obj.name().value(),
         "kind", obj.kind(),
-        "valueRelocationName", new ValueRelocationFunctionCodeGenerator(obj.implementedRelocation(),
+        "valueRelocationName",
+        new ValueRelocationFunctionCodeGenerator(obj.implementedRelocation().relocation(),
             obj.implementedRelocation().valueRelocation()).genFunctionName()
     );
   }

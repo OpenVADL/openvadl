@@ -19,7 +19,6 @@ package vadl.gcb.passes.relocation.model;
 import java.util.HashMap;
 import java.util.Map;
 import vadl.template.Renderable;
-import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Relocation;
 
@@ -30,8 +29,6 @@ import vadl.viam.Relocation;
 public abstract class CompilerRelocation implements Renderable {
   protected final Identifier identifier;
   protected final CompilerRelocation.Kind kind;
-  protected final Format format;
-  protected final Format.Field immediate;
   protected final Relocation relocationRef;
 
   /**
@@ -106,14 +103,10 @@ public abstract class CompilerRelocation implements Renderable {
    */
   public CompilerRelocation(
       Identifier identifier,
-      Format format,
-      Format.Field immediate,
       Relocation relocationRef
   ) {
     this(identifier,
         Kind.fromRelocationKind(relocationRef.kind()),
-        format,
-        immediate,
         relocationRef);
   }
 
@@ -123,31 +116,19 @@ public abstract class CompilerRelocation implements Renderable {
   public CompilerRelocation(
       Identifier identifier,
       Kind kind,
-      Format format,
-      Format.Field immediate,
       Relocation relocationRef
   ) {
     this.identifier = identifier;
     this.kind = kind;
-    this.format = format;
     this.relocationRef = relocationRef;
-    this.immediate = immediate;
   }
 
   public Kind kind() {
     return kind;
   }
 
-  public Format format() {
-    return format;
-  }
-
   public Relocation relocation() {
     return relocationRef;
-  }
-
-  public Format.Field immediate() {
-    return immediate;
   }
 
   public Identifier identifier() {

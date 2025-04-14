@@ -32,15 +32,14 @@ import vadl.viam.Relocation;
  */
 public record Modifier(String value,
                        CompilerRelocation.Kind kind,
-                       Format.Field field,
                        Optional<RelocationFunctionLabel> relocationFunctionLabel)
     implements Renderable {
 
   /**
-   * Create a modifier.
+   * Create a modifier for a VIAM relocation.
    */
-  public static Modifier from(Relocation relocation, Format.Field field) {
-    var name = relocation.identifier.lower() + "_" + field.identifier.tail().lower();
+  public static Modifier from(Relocation relocation) {
+    var name = relocation.identifier.lower();
     var kind = relocation.isAbsolute() ? CompilerRelocation.Kind.ABSOLUTE
         : CompilerRelocation.Kind.RELATIVE;
 
@@ -48,24 +47,23 @@ public record Modifier(String value,
     var ctx = ensureNonNull(relocation.extension(RelocationCtx.class),
         () -> Diagnostic.error("Expected a relocation label", relocation.sourceLocation()));
 
-    return new Modifier("MO_" + name, kind, field, Optional.of(ctx.label()));
+    return new Modifier("MO_" + name, kind, Optional.of(ctx.label()));
   }
 
   /**
-   * Create an absolute modifier.
+   * Create an absolute modifier for an {@link AutomaticallyGeneratedRelocation}.
    */
   public static Modifier absolute(Format.Field imm) {
     return new Modifier("MO_ABS_" + imm.identifier.lower(),
         CompilerRelocation.Kind.ABSOLUTE,
-        imm,
         Optional.empty());
   }
 
   /**
-   * Create a relative modifier.
+   * Create a relative modifier for an {@link AutomaticallyGeneratedRelocation}.
    */
   public static Modifier relative(Format.Field imm) {
-    return new Modifier("MO_REL_" + imm.identifier.lower(), CompilerRelocation.Kind.RELATIVE, imm,
+    return new Modifier("MO_REL_" + imm.identifier.lower(), CompilerRelocation.Kind.RELATIVE,
         Optional.empty());
   }
 

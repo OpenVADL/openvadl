@@ -44,7 +44,15 @@ MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr* Expr) {
       [(${namespace})]MCExpr::VariantKind targetKind = targetExpr->getKind();
 
       switch(targetKind) {
-          // TODO: case for each relocation variant kind, if statement for each inst and for each immediate operand
+          [# th:each="targetFixup : ${targetFixups}" ]
+          case([(${namespace})]MCExpr::VariantKind::[(${targetFixup.variantKind})]):
+          {   [# th:each="operand : ${targetFixup.instructionOperands}" ]
+              if (Opcode == [(${namespace})]::[(${operand.instruction})] && OpNo == [(${operand.opIndex})]) {
+                  return MCFixupKind([(${namespace})]::[(${operand.fixup})]);
+              }
+             [/]
+          }
+          [/]
           default:
           {
               // This is an immediate variant kind. Emit fixup for sub expression.

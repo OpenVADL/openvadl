@@ -52,15 +52,18 @@ public class EmitLldTargetRelocationsHeaderFilePass extends LcbTemplateRendering
     var output =
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
-    var relocations = output.elfRelocations();
+
+    var relocations = output.relocationsBeforeElfExpansion().stream().map(
+        relocationsBeforeElfExpansion -> {
+          var generator =
+              new ValueRelocationFunctionCodeGenerator(relocationsBeforeElfExpansion.relocation(),
+                  relocationsBeforeElfExpansion.valueRelocation());
+          return generator.genFunctionDefinition();
+        }
+    ).toList();
+
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "relocations", relocations.stream()
-            .map(relocation -> {
-              var generator =
-                  new ValueRelocationFunctionCodeGenerator(relocation,
-                      relocation.valueRelocation());
-              return generator.genFunctionDefinition();
-            }).toList());
+        "relocations", relocations);
   }
 }

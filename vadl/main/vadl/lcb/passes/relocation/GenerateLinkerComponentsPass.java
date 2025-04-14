@@ -16,7 +16,6 @@
 
 package vadl.lcb.passes.relocation;
 
-import static vadl.viam.ViamError.ensure;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,13 +33,14 @@ import vadl.gcb.passes.relocation.model.Fixup;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.gcb.passes.relocation.model.ImplementedUserSpecifiedRelocation;
 import vadl.gcb.passes.relocation.model.Modifier;
+import vadl.gcb.passes.relocation.model.RelocationsBeforeElfExpansion;
+import vadl.gcb.passes.relocation.model.UserSpecifiedRelocation;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Format;
-import vadl.viam.Relocation;
 import vadl.viam.Specification;
 
 /**
@@ -63,11 +63,19 @@ public class GenerateLinkerComponentsPass extends Pass {
       List<Modifier> modifiers,
       List<VariantKind> variantKinds,
       List<Fixup> fixups,
-      List<HasRelocationComputationAndUpdate> elfRelocations,
+      List<AutomaticallyGeneratedRelocation> automaticallyGeneratedRelocations,
+      List<ImplementedUserSpecifiedRelocation> userSpecifiedRelocations,
       List<Pair<Modifier, VariantKind>> linkModifierToVariantKind,
-      List<Pair<Modifier, HasRelocationComputationAndUpdate>> linkModifierToRelocation,
-      VariantKindStore variantKindStore
+      VariantKindStore variantKindStore,
+      List<RelocationsBeforeElfExpansion> relocationsBeforeElfExpansion
   ) {
+
+    public List<HasRelocationComputationAndUpdate> elfRelocations() {
+      return Stream.concat(userSpecifiedRelocations.stream(),
+              automaticallyGeneratedRelocations.stream())
+          .map(HasRelocationComputationAndUpdate.class::cast)
+          .toList();
+    }
 
   }
 
@@ -75,7 +83,7 @@ public class GenerateLinkerComponentsPass extends Pass {
    * This data structure keeps track of the variant kind for relocations and immediates.
    */
   public record VariantKindStore(
-      Map<Relocation, VariantKind> userDefinedRelocation,
+      Map<RelocationsBeforeElfExpansion, VariantKind> relocationVariantKinds,
       Map<Format.FieldAccess, VariantKind> decodeVariantKinds
   ) {
     public static VariantKindStore empty() {
@@ -83,11 +91,11 @@ public class GenerateLinkerComponentsPass extends Pass {
     }
 
     /**
-     * Store the variant {@link VariantKind} of an {@link ImplementedUserSpecifiedRelocation}.
+     * Store the variant {@link VariantKind} of an {@link RelocationsBeforeElfExpansion}.
      */
-    public void addUserDefined(Relocation relocation,
+    public void addUserDefined(RelocationsBeforeElfExpansion relocation,
                                VariantKind kind) {
-      userDefinedRelocation.put(relocation, kind);
+      relocationVariantKinds.put(relocation, kind);
     }
 
     /**
@@ -115,11 +123,15 @@ public class GenerateLinkerComponentsPass extends Pass {
     final var modifiers = new ArrayList<Modifier>();
     final var variantKinds = new ArrayList<VariantKind>();
     final var linkModifierToVariantKind = new ArrayList<Pair<Modifier, VariantKind>>();
-    final var linkModifierToRelocation =
-        new ArrayList<Pair<Modifier, HasRelocationComputationAndUpdate>>();
+
     final var variantStore = VariantKindStore.empty();
-    final var compilerRelocations = new ArrayList<HasRelocationComputationAndUpdate>();
+    final var userSpecifiedRelocations =
+        new ArrayList<ImplementedUserSpecifiedRelocation>();
+    final var automaticallyGeneratedRelocations =
+        new ArrayList<AutomaticallyGeneratedRelocation>();
     final var fixups = new ArrayList<Fixup>();
+    final var relocationsBeforeElfExpansion = new ArrayList<RelocationsBeforeElfExpansion>();
+
 
     variantKinds.add(VariantKind.none());
     variantKinds.add(VariantKind.invalid());
@@ -131,60 +143,62 @@ public class GenerateLinkerComponentsPass extends Pass {
         viam.isa().map(isa -> isa.ownInstructions().stream()).orElseGet(Stream::empty).toList();
 
     // Fixups and relocations for user defined relocations
-    var candidates = new ArrayList<Pair<Relocation, Format.Field>>();
+    var candidates = new ArrayList<Pair<UserSpecifiedRelocation, Format.Field>>();
     for (var relocation : relocations) {
 
       // Create one variant per user defined relocation
       var variantKind = VariantKind.forUserDefinedRelocation(relocation);
       variantKinds.add(variantKind);
-      variantStore.addUserDefined(relocation, variantKind);
+
+      // Create one modifier per user defined relocation
+      var modifier = Modifier.from(relocation);
+      modifiers.add(modifier);
+
+      var gcbRelocationFunction =
+          AutomaticallyGeneratedRelocation.createGcbRelocationCppFunction(relocation);
+
+      var userSpecifiedRelocation =
+          new UserSpecifiedRelocation(relocation.identifier.append(""), modifier, variantKind,
+              gcbRelocationFunction, relocation);
+      relocationsBeforeElfExpansion.add(userSpecifiedRelocation);
+
+      variantStore.addUserDefined(userSpecifiedRelocation, variantKind);
 
       for (var instruction : instructions) {
         // We cannot use all the fields of a format because not all are immediates.
         // That's why we need the `fieldUsages`.
         var immediateFields = fieldUsages.getImmediates(instruction);
         for (var imm : immediateFields) {
-          candidates.add(new Pair<>(relocation, imm));
+          candidates.add(new Pair<>(userSpecifiedRelocation, imm));
         }
       }
     }
 
     for (var candidate : candidates.stream().distinct().toList()) {
-      var relocation = candidate.left();
+      var userSpecifiedRelocation = candidate.left();
       var field = candidate.right();
       var format = field.format();
-
-      // Get the VariantKind from the user defined relocation
-      var variantKind = variantStore.userDefinedRelocation().get(relocation);
-      ensure(variantKind != null,
-          "Variant kind for relocation %s not found", relocation);
-      var modifier = Modifier.from(relocation, field);
 
       // The `updateFieldFunction` is the cpp function which tells the compiler how
       // to update the field when a relocation has to be done.
       var updateFieldFunction =
           BitMaskFunctionGenerator.generateUpdateFunction(format, field);
-      var gcbRelocationFunction =
-          AutomaticallyGeneratedRelocation.createGcbRelocationCppFunction(relocation);
-
-      // TODO: save Instruction and Operand index on the ImplementedUserSpecifiedRelocation
 
       var liftedRelocation = new ImplementedUserSpecifiedRelocation(
-          relocation,
-          variantKind,
-          modifier,
-          gcbRelocationFunction,
+          userSpecifiedRelocation.relocation(),
+          userSpecifiedRelocation.variantKind(),
+          userSpecifiedRelocation.modifier(),
+          userSpecifiedRelocation.valueRelocation(),
           format,
           field,
           updateFieldFunction
       );
 
-      modifiers.add(modifier);
+      var fixup = new Fixup(liftedRelocation);
+      liftedRelocation.setFixup(fixup);
+      fixups.add(fixup);
 
-      fixups.add(new Fixup(liftedRelocation));
-      compilerRelocations.add(liftedRelocation);
-      linkModifierToRelocation.add(Pair.of(modifier, liftedRelocation));
-      linkModifierToVariantKind.add(Pair.of(modifier, variantKind));
+      userSpecifiedRelocations.add(liftedRelocation);
     }
 
     // Next, we need to generate relocations for every immediate in an instruction.
@@ -203,10 +217,14 @@ public class GenerateLinkerComponentsPass extends Pass {
       var imm = candidate.right();
 
       // Absolute
-      genAbs(imm, modifiers, format, fixups, compilerRelocations, linkModifierToRelocation);
+      genAbs(imm, format, fixups,
+          modifiers, variantKinds, variantStore, linkModifierToVariantKind,
+          automaticallyGeneratedRelocations, relocationsBeforeElfExpansion);
 
       // Relative
-      genRelative(imm, modifiers, format, fixups, compilerRelocations, linkModifierToRelocation);
+      genRelative(imm, format, fixups,
+          modifiers, variantKinds, variantStore, linkModifierToVariantKind,
+          automaticallyGeneratedRelocations, relocationsBeforeElfExpansion);
     }
 
 
@@ -225,56 +243,80 @@ public class GenerateLinkerComponentsPass extends Pass {
         modifiers,
         variantKinds,
         fixups,
-        compilerRelocations,
+        automaticallyGeneratedRelocations,
+        userSpecifiedRelocations,
         linkModifierToVariantKind,
-        linkModifierToRelocation,
-        variantStore
+        variantStore,
+        relocationsBeforeElfExpansion
     );
   }
 
   private static void genRelative(Format.Field imm,
-                                  List<Modifier> modifiers,
                                   Format format,
                                   List<Fixup> fixups,
-                                  List<HasRelocationComputationAndUpdate> compilerRelocations,
-                                  List<Pair<Modifier, HasRelocationComputationAndUpdate>>
-                                      linkModifierToRelocation) {
+                                  List<Modifier> modifiers,
+                                  List<VariantKind> variantKinds,
+                                  VariantKindStore variantStore,
+                                  List<Pair<Modifier, VariantKind>> linkModifierToVariantKind,
+                                  List<AutomaticallyGeneratedRelocation> compilerRelocations,
+                                  List<RelocationsBeforeElfExpansion> relocationsBeforeElfExpansion) {
     var modifier = Modifier.relative(imm);
-
     modifiers.add(modifier);
+
+    var variantKind = VariantKind.relative(imm);
+    variantKinds.add(variantKind);
+    linkModifierToVariantKind.add(Pair.of(modifier, variantKind));
 
     var updateFieldFunction =
         BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
     var generated = AutomaticallyGeneratedRelocation.create(CompilerRelocation.Kind.RELATIVE,
+        modifier,
+        variantKind,
         format,
         imm,
         updateFieldFunction);
 
+    var fixup = new Fixup(generated);
+    generated.setFixup(fixup);
+    fixups.add(fixup);
 
-    fixups.add(new Fixup(generated));
     compilerRelocations.add(generated);
-    linkModifierToRelocation.add(Pair.of(modifier, generated));
+    relocationsBeforeElfExpansion.add(generated);
+    variantStore.relocationVariantKinds.put(generated, variantKind);
   }
 
-  private static void genAbs(Format.Field imm, List<Modifier> modifiers,
+  private static void genAbs(Format.Field imm,
                              Format format,
                              List<Fixup> fixups,
-                             List<HasRelocationComputationAndUpdate> compilerRelocations,
-                             List<Pair<Modifier, HasRelocationComputationAndUpdate>>
-                                 linkModifierToRelocation) {
+                             List<Modifier> modifiers,
+                             List<VariantKind> variantKinds,
+                             VariantKindStore variantStore,
+                             List<Pair<Modifier, VariantKind>> linkModifierToVariantKind,
+                             List<AutomaticallyGeneratedRelocation> compilerRelocations,
+                             List<RelocationsBeforeElfExpansion> relocationsBeforeElfExpansion) {
+
     var modifier = Modifier.absolute(imm);
     modifiers.add(modifier);
+
+    var variantKind = VariantKind.absolute(imm);
+    variantKinds.add(variantKind);
+    linkModifierToVariantKind.add(Pair.of(modifier, variantKind));
 
     var updateFieldFunction =
         BitMaskFunctionGenerator.generateUpdateFunction(format, imm);
     var generated = AutomaticallyGeneratedRelocation.create(CompilerRelocation.Kind.ABSOLUTE,
+        modifier,
+        variantKind,
         format,
         imm,
         updateFieldFunction);
 
+    var fixup = new Fixup(generated);
+    generated.setFixup(fixup);
+    fixups.add(fixup);
 
-    fixups.add(new Fixup(generated));
     compilerRelocations.add(generated);
-    linkModifierToRelocation.add(Pair.of(modifier, generated));
+    relocationsBeforeElfExpansion.add(generated);
+    variantStore.relocationVariantKinds.put(generated, variantKind);
   }
 }

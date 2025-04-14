@@ -19,9 +19,9 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generateEncodeFunctions;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
@@ -32,6 +32,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.utils.Triple;
 import vadl.viam.Specification;
 
 /**
@@ -78,14 +79,16 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var immediates = generateImmediates(passResults);
-    var symbolRefFixups = generateInstructionsForSymbolRefFixups(passResults);
 
-    var x = generateTargetFixups(passResults);
+    var symbolRefFixups = generateInstructionsForSymbolRefFixups(passResults);
+    var targetFixups = generateTargetFixups(passResults);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "immediates", immediates,
-        "symbolRefFixups", symbolRefFixups);
+        "symbolRefFixups", symbolRefFixups,
+        "targetFixups", targetFixups
+    );
   }
 
 
@@ -97,25 +100,63 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  @Nullable
-  private List<Map<String, String>> generateTargetFixups(PassResults passResults) {
+  private List<Map<String, Object>> generateTargetFixups(PassResults passResults) {
+
+    var tableGenMachineInstructions =
+        (List<TableGenMachineInstruction>) passResults.lastResultOf(
+            GenerateTableGenMachineInstructionRecordPass.class);
+
     var linkerComponents = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
 
-    return linkerComponents.variantKindStore().userDefinedRelocation().entrySet().stream().map(
+    return linkerComponents.variantKindStore().relocationVariantKinds().entrySet().stream().map(
         entry -> {
-          var relocation = entry.getKey();
+          var relocationBeforeExpand = entry.getKey();
           var variantKind = entry.getValue();
 
-          var elfRelocations = linkerComponents.elfRelocations().stream().filter(
-              elfRelocation -> elfRelocation.relocation() == relocation
-          );
+          var userSpecifiedRelocations =
+              linkerComponents.elfRelocations().stream().filter(
+                      userReloc -> userReloc.relocation() == relocationBeforeExpand.relocation())
+                  .toList();
 
-          // TODO: get instruction name and OpIndex from elfRelocation
+          var opIndexFixupMap = new ArrayList<Triple<String, Integer, String>>();
+
+          tableGenMachineInstructions.stream()
+              .filter(tableGenMachineInstruction -> {
+                return !tableGenMachineInstruction.llvmLoweringRecord().info().inputImmediates()
+                    .isEmpty();
+              }).forEach(
+                  tableGenMachineInstruction -> {
+                    tableGenMachineInstruction.llvmLoweringRecord().info().inputImmediates()
+                        .forEach(
+                            immOp -> {
+                              var field = immOp.immediateOperand().fieldAccessRef().fieldRef();
+
+                              var opIndex = tableGenMachineInstruction.llvmLoweringRecord().info()
+                                  .findInputIndex(field);
+                              var loweredRelocationsForRelocationWithThisOperand =
+                                  userSpecifiedRelocations.stream().filter(
+                                      userReloc -> userReloc.field().equals(field));
+                              loweredRelocationsForRelocationWithThisOperand.forEach(
+                                  loweredReloc ->
+                                      opIndexFixupMap.add(
+                                          new Triple<>(tableGenMachineInstruction.getName(), opIndex,
+                                              loweredReloc.fixup().name().value()))
+
+                              );
+                            }
+                        );
+                  }
+              );
 
           return Map.of(
               "variantKind", variantKind.value(),
-              "instructionOperands", ""
+              "instructionOperands", opIndexFixupMap.stream().map(
+                  opFixups -> Map.of(
+                      "instruction", opFixups.left(),
+                      "opIndex", opFixups.middle(),
+                      "fixup", opFixups.right()
+                  )).toList()
           );
         }
     ).toList();
@@ -152,11 +193,9 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
                         .filter(fixup ->
                             fixup.implementedRelocation()
                                 instanceof AutomaticallyGeneratedRelocation relocation
-                                && relocation.immediate()
+                                && relocation.field()
                                 .equals(immediateOperand.fieldAccessRef().fieldRef())
-                        ).findFirst().get();
-
-                    // TODO: error if none found
+                        ).findFirst().orElseThrow();
 
                     return Map.of(
                         "opIndex", opIndex,

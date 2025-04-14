@@ -51,6 +51,16 @@ public interface HasRelocationComputationAndUpdate {
   Relocation relocation();
 
   /**
+   * Get the {@link Fixup} for the relocation.
+   */
+  Fixup fixup();
+
+  /**
+   * Get the {@link Format.Field} for the relocation.
+   */
+  Format.Field field();
+
+  /**
    * Get the cpp function for changing a value for a relocation.
    */
   GcbImmediateExtractionCppFunction valueRelocation();
