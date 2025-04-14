@@ -47,9 +47,9 @@ public class AlgebraicSimplificationSpecTest extends AbstractTest {
     );
 
     var spec = setup.specification();
-    return spec.definitions()
-        .filter(Instruction.class::isInstance)
-        .map(Instruction.class::cast)
+    return spec.isa()
+        .stream()
+        .flatMap(x -> x.ownInstructions().stream())
         .map(f -> DynamicTest.dynamicTest("Check " + f.simpleName(), () -> {
           assertTrue(f.behavior().getNodes(BuiltInCall.class).findAny().isEmpty());
         }));

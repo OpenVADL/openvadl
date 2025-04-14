@@ -20,14 +20,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.types.BuiltInTable;
-import vadl.types.DataType;
-import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
-import vadl.viam.matching.impl.ConstantValueMatcher;
+import vadl.viam.matching.impl.IsZeroConstantValueMatcher;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
 /**
@@ -41,8 +39,7 @@ public class RemainderWithZeroSimplificationRule implements AlgebraicSimplificat
       var matcher =
           new BuiltInMatcher(
               List.of(BuiltInTable.SMOD, BuiltInTable.UMOD, BuiltInTable.SMODS, BuiltInTable.UMODS),
-              List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                  Constant.Value.of(1, (DataType) n.type()))));
+              List.of(new AnyNodeMatcher(), new IsZeroConstantValueMatcher()));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {

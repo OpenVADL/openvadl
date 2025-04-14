@@ -29,6 +29,7 @@ import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.ConstantValueMatcher;
+import vadl.viam.matching.impl.IsZeroConstantValueMatcher;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
 /**
@@ -42,8 +43,7 @@ public class MultiplicationWithZeroSimplificationRule implements AlgebraicSimpli
           new BuiltInMatcher(
               List.of(BuiltInTable.MUL, BuiltInTable.MULS, BuiltInTable.SMULL, BuiltInTable.SMULLS,
                   BuiltInTable.UMULL, BuiltInTable.SUMULL, BuiltInTable.SUMULLS),
-              List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                  Constant.Value.of(0, (DataType) n.type()))));
+              List.of(new AnyNodeMatcher(), new IsZeroConstantValueMatcher()));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {

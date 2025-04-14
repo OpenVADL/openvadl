@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import vadl.types.BuiltInTable;
+import vadl.utils.Pair;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.matching.Matcher;
@@ -75,8 +76,18 @@ public class BuiltInMatcher implements Matcher {
       }
 
       // The matchers must perfectly fit because the inputs cannot be rearranged.
-      return Streams.zip(node.inputs(), this.matchers.stream(),
-          (inputNode, matcher) -> matcher.matches(inputNode)).allMatch(x -> x);
+      var checks = Streams.zip(node.inputs(), this.matchers.stream(),
+          Pair::of).toList();
+
+      boolean allOk = true;
+      for (var check : checks) {
+        var matcher = check.right();
+        var inputNode = check.left();
+
+        allOk &= matcher.matches(inputNode);
+      }
+
+      return allOk;
     }
 
     return false;

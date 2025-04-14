@@ -20,14 +20,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.types.BuiltInTable;
-import vadl.types.DataType;
-import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
-import vadl.viam.matching.impl.ConstantValueMatcher;
+import vadl.viam.matching.impl.IsZeroConstantValueMatcher;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
 /**
@@ -38,11 +36,8 @@ public class ShiftSimplificationRule implements AlgebraicSimplificationRule {
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
       var matcher =
-          new BuiltInMatcher(List.of(BuiltInTable.LSL, BuiltInTable.LSLS, BuiltInTable.LSLC,
-              BuiltInTable.LSR, BuiltInTable.LSRS, BuiltInTable.LSRC, BuiltInTable.ASR,
-              BuiltInTable.ASRS, BuiltInTable.ASRC),
-              List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                  Constant.Value.of(0, (DataType) n.type()))));
+          new BuiltInMatcher(List.of(BuiltInTable.LSL, BuiltInTable.LSR, BuiltInTable.ASR),
+              List.of(new AnyNodeMatcher(), new IsZeroConstantValueMatcher()));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {
