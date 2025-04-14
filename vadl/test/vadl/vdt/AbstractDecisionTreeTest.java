@@ -79,7 +79,7 @@ public class AbstractDecisionTreeTest {
 
     for (Map.Entry<String, String> entry : patternsByName.entrySet()) {
       String name = entry.getKey();
-      String insn = entry.getValue();
+      String insn = entry.getValue().replace(" ", "");
 
       // Prepare a dummy instruction with a unique name
       var id = Identifier.noLocation(name);

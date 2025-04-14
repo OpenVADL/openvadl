@@ -16,6 +16,7 @@
 
 package vadl.iss.template.target;
 
+import java.nio.ByteOrder;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.template.IssTemplateRenderingPass;
@@ -57,8 +58,11 @@ public class EmitIssDecodeTreePass extends IssTemplateRenderingPass {
       return variables;
     }
 
-    final var vdtRoot = passResults.lastResultOf(VdtLoweringPass.class, Node.class);
-    final var code = new IssDecisionTreeCodeGenerator().generate(vdtRoot);
+    // TODO: get the byte order from the VADL specification -> Implement memory annotations
+    final ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
+
+    final var vdt = passResults.lastResultOf(VdtLoweringPass.class, Node.class);
+    final var code = new IssDecisionTreeCodeGenerator(vdt, bo).generate();
 
     variables.put(VDT_CODE_KEY, code.toString());
     return variables;

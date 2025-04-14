@@ -16,10 +16,12 @@
 
 package vadl.vdt.target.iss;
 
+import static vadl.utils.MemOrderUtils.reverseByteOrder;
 import static vadl.utils.StringBuilderUtils.join;
 import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
 
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,41 +31,54 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.AccessFunctionCodeGenerator;
+import vadl.javaannotations.DispatchFor;
+import vadl.javaannotations.Handler;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.utils.codegen.CodeGeneratorAppendable;
 import vadl.utils.codegen.StringBuilderAppendable;
+import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
+import vadl.vdt.impl.irregular.tree.SingleDecisionNode;
 import vadl.vdt.impl.regular.InnerNodeImpl;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
 import vadl.vdt.model.impl.LeafNodeImpl;
+import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
+import vadl.viam.Constant;
+import vadl.viam.Constant.BitSlice.Part;
 import vadl.viam.Format;
 
 /**
  * Generate C/C++ code for a decision tree from an in-memory representation of the decision tree.
  */
+@DispatchFor(value = InnerNode.class, include = {"vadl.vdt"})
 public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
 
   private final CodeGeneratorAppendable appendable = new StringBuilderAppendable();
 
+  private final Node tree;
+  private final DecisionTreeStatistics stats;
+  private final ByteOrder byteOrder;
+
+  public IssDecisionTreeCodeGenerator(Node tree, ByteOrder byteOrder) {
+    this.tree = tree;
+    this.byteOrder = byteOrder;
+    this.stats = statistics(tree);
+  }
+
   /**
    * Generate the code for the given decision tree.
-   *
-   * @param tree The decode decision tree to generate code for
    */
-  public CharSequence generate(Node tree) {
+  public CharSequence generate() {
 
     // Imports (could be moved to the template)
     appendable
         .append("#include <stdint.h>\n")
         .append("#include \"vadl-builtins.h\"\n\n");
-
-    // TODO: Potentially pass the ISA here, so we don't have to traverse the tree for the format
-    //       and instruction definitions.
 
     // Step 0: Generate code for DTOs (structs) holding the decoded fields (one for each format)
 
@@ -77,8 +92,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
     generateTranslateDeclarations(insns);
 
     // Step 2: Generate code to extract the fields from the instruction word to the DTOs
-
-    final String insnWordCType = CppTypeMap.getCppTypeNameByVadlType(getInsnWordType(tree));
+    final String insnWordCType = CppTypeMap.getCppTypeNameByVadlType(getInsnWordType());
     generateFormatExtractors(insnWordCType, formats);
 
     // Step 3: Generate code for the decoding decision tree
@@ -121,13 +135,21 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
    */
   @Override
   public Void visit(InnerNode node) {
+    IssDecisionTreeCodeGeneratorDispatcher.dispatch(this, node);
+    return null;
+  }
 
-    if (!(node instanceof InnerNodeImpl n)) {
-      throw new IllegalArgumentException("Node type not supported: " + node.getClass());
-    }
+  /**
+   * An inner node represents a decision point in the decision tree. We generate a switch statement
+   * to select the correct child node based on relevant bits in the instruction word.
+   *
+   * @param node The inner node
+   */
+  @Handler
+  public Void handle(InnerNodeImpl node) {
 
-    final BigInteger mask = n.getMask().toValue();
-    final Map<BitPattern, Node> children = n.getChildren();
+    final BigInteger mask = node.getMask().toValue();
+    final Map<BitPattern, Node> children = node.getChildren();
 
     appendable.append("switch (insn & 0x")
         .append(mask.toString(16))
@@ -145,16 +167,96 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
       appendable.unindent();
     }
 
-    if (n.getFallback() != null) {
+    if (node.getFallback() != null) {
       appendable.append("default:\n");
       appendable.indent();
-      n.getFallback().accept(this);
+      node.getFallback().accept(this);
       appendable.unindent();
     } else {
       appendable.append("default:\n").indent().append("return false;\n").unindent();
     }
 
     appendable.unindent();
+    appendable.append("}\n");
+
+    return null;
+  }
+
+  @Handler
+  public Void handle(MultiDecisionNode node) {
+
+    final DataType insnType = getInsnWordType();
+    final int insnWidth = insnType.bitWidth();
+
+    final BigInteger mask = node.getMask().toValue();
+    final int offset = node.getOffset();
+    final int length = node.getLength();
+
+    final Map<BitPattern, Node> children = node.getChildren();
+
+    int shift = insnWidth - (node.getOffset() + length);
+    if (offset > 0 && shift > 0) {
+      appendable.append("switch ((insn >> %d) & 0x%s) {\n".formatted(
+          shift, mask.toString(16)
+      ));
+    } else {
+      appendable.append("switch (insn & 0x")
+          .append(mask.toString(16))
+          .append(") {\n");
+    }
+
+    appendable.indent();
+
+    for (Map.Entry<BitPattern, Node> entry : children.entrySet()) {
+      final BigInteger caseValue = entry.getKey().toBitVector().toValue();
+      appendable.append("case 0x").append(caseValue.toString(16))
+          .append(":\n");
+
+      appendable.indent();
+      entry.getValue().accept(this);
+      appendable.unindent();
+    }
+
+    appendable.append("default:\n")
+        .indent()
+        .append("return false;\n")
+        .unindent();
+
+    appendable.unindent();
+    appendable.append("}\n");
+
+    return null;
+  }
+
+  @Handler
+  public Void handle(SingleDecisionNode node) {
+
+    final DataType insnType = getInsnWordType();
+    final int insnWidth = insnType.bitWidth();
+
+    final BigInteger mask = node.getPattern().toBitVector().toValue();
+    final int offset = node.getOffset();
+    final int length = node.getLength();
+
+    int shift = insnWidth - (node.getOffset() + length);
+    if (offset > 0 && shift > 0) {
+      appendable.append("if ((insn >> %d) & 0x%s) {\n"
+          .formatted(shift, mask.toString(16)));
+    } else {
+      appendable.append("if (insn & 0x%s) {\n"
+          .formatted(mask.toString(16)));
+    }
+
+    appendable.indent();
+    node.getMatchingChild().accept(this);
+    appendable.unindent();
+
+    appendable.append("} else {");
+
+    appendable.indent();
+    node.getOtherChild().accept(this);
+    appendable.unindent();
+
     appendable.append("}\n");
 
     return null;
@@ -301,8 +403,22 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
   }
 
   private CharSequence extractField(Format.Field field) {
+
+    final int insnWidth = getInsnWordType().bitWidth();
+    final int formatWidth = field.format().type().bitWidth();
+    final int shift = insnWidth - formatWidth;
+
+    // Shift the bit slices according to the insn word width
     var parts = field.bitSlice().parts()
+        .map(p -> Part.of(p.msb() + shift, p.lsb() + shift))
         .toList();
+    var slice = new Constant.BitSlice(parts.toArray(new Part[0]));
+
+    // Possibly translate to little-endian format
+    if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
+      slice = reverseByteOrder(slice, insnWidth);
+      parts = slice.parts().toList();
+    }
 
     // Walk from the least significant part to the most significant part. This way we can calculate
     // the offset to shift the extracted value to the correct position in the field.
@@ -322,8 +438,15 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
         expr.append("(");
       }
 
-      expr.append("((insn >> ").append(lsb).append(") & 0x")
-          .append(BigInteger.valueOf((1L << width) - 1).toString(16)).append(")");
+      if (lsb == 0) {
+        expr.append("(insn");
+      } else {
+        expr.append("((insn >> ").append(lsb).append(")");
+      }
+
+      expr.append(" & 0x")
+          .append(BigInteger.valueOf((1L << width) - 1).toString(16))
+          .append(")");
 
       if (offset > 0) {
         expr.append(" << ").append(offset).append(")");
@@ -332,7 +455,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
       offset += width;
 
       // Insert at the front of the list to maintain the correct order (msb to lsb)
-      partExpressions.add(0, expr);
+      partExpressions.addFirst(expr);
     }
 
     return join(" | ", partExpressions);
@@ -387,11 +510,10 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
    * Determine the C++ type of the instruction word. We'll use the smallest unsigned integer type
    * that can hold the maximum instruction width.
    *
-   * @param tree the decision tree
    * @return the C++ type of the instruction word
    */
-  private DataType getInsnWordType(Node tree) {
-    var maxWidth = statistics(tree).getMaxInstructionWidth();
+  private DataType getInsnWordType() {
+    var maxWidth = stats.getMaxInstructionWidth();
     var insnType = BitsType.bits(fittingPowerOfTwo(maxWidth)).fittingCppType();
     if (insnType == null) {
       throw new IllegalArgumentException(

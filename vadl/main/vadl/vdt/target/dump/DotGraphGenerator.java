@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.NotImplementedException;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.utils.Pair;
@@ -155,11 +154,13 @@ public class DotGraphGenerator implements Visitor<Pair<Integer, List<CharSequenc
    */
   @Handler
   public Pair<Integer, List<CharSequence>> handle(MultiDecisionNode node) {
-    throw new NotImplementedException("Not implemented");
+    // TODO: Implement
+    return Pair.of(counter.get().getAndIncrement(), List.of());
   }
 
   @Handler
   public Pair<Integer, List<CharSequence>> handle(SingleDecisionNode node) {
-    throw new NotImplementedException("Not implemented");
+    // TODO: Implement
+    return Pair.of(counter.get().getAndIncrement(), List.of());
   }
 }

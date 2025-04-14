@@ -20,7 +20,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.NotImplementedException;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
@@ -128,11 +127,14 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
    */
   @Handler
   public List<StringBuilder> handle(MultiDecisionNode node) {
-    throw new NotImplementedException("Not implemented");
+    // TODO: Implement
+    return List.of();
+    //throw new NotImplementedException("Not implemented");
   }
 
   @Handler
   public List<StringBuilder> handle(SingleDecisionNode node) {
-    throw new NotImplementedException("Not implemented");
+    // TODO: Implement
+    return List.of();
   }
 }

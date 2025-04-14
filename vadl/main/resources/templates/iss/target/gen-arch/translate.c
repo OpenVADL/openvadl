@@ -61,7 +61,7 @@ void [(${gen_arch_lower})]_tcg_init(void)
 static target_ulong next_insn(DisasContext *ctx)
 {
     vaddr  pc_next = ctx->base.pc_next;
-    return translator_ld[(${insn_width.short})](ctx->env, &ctx->base, pc_next);
+    return translator_ld[(${insn_width.short})]_swap(ctx->env, &ctx->base, pc_next, true);
 }
 
 [# th:each="reg : ${register_tensors}"]

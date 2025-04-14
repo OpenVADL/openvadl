@@ -19,7 +19,6 @@ package vadl.vdt.target.dump;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.NotImplementedException;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
@@ -137,11 +136,13 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
    */
   @Handler
   public List<List<CharSequence>> handle(MultiDecisionNode node) {
-    throw new NotImplementedException("Not implemented");
+    // TODO: Implement
+    return List.of();
   }
 
   @Handler
   public List<List<CharSequence>> handle(SingleDecisionNode node) {
-    throw new NotImplementedException("Not implemented");
+    // TODO: Implement
+    return List.of();
   }
 }
