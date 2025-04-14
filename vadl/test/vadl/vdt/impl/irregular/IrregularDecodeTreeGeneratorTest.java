@@ -1,4 +1,4 @@
-package vadl.vdt.impl.katsumi;
+package vadl.vdt.impl.irregular;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,15 +8,15 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.vdt.AbstractDecisionTreeTest;
-import vadl.vdt.impl.katsumi.model.DecodeEntry;
-import vadl.vdt.impl.katsumi.model.ExclusionCondition;
+import vadl.vdt.impl.irregular.model.DecodeEntry;
+import vadl.vdt.impl.irregular.model.ExclusionCondition;
 import vadl.vdt.model.Node;
 import vadl.vdt.target.common.DecisionTreeDecoder;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
 
-class KatsumiDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
+class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
 
   @Test
   void testGenerate_simpleInstructions_succeeds() {
@@ -35,7 +35,7 @@ class KatsumiDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         .toList();
 
     /* WHEN */
-    final Node dt = new KatsumiDecodeTreeGenerator().generate(decodeEntries);
+    final Node dt = new IrregularDecodeTreeGenerator().generate(decodeEntries);
 
     /* THEN */
     final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
@@ -79,7 +79,7 @@ class KatsumiDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     }
 
     /* WHEN */
-    final Node dt = new KatsumiDecodeTreeGenerator().generate(decodeEntries);
+    final Node dt = new IrregularDecodeTreeGenerator().generate(decodeEntries);
 
     /* THEN */
     final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);

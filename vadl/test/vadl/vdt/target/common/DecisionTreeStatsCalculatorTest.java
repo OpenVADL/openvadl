@@ -20,7 +20,7 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.vdt.AbstractDecisionTreeTest;
-import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
+import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
 import vadl.vdt.model.Node;
 import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 
@@ -33,7 +33,7 @@ class DecisionTreeStatsCalculatorTest extends AbstractDecisionTreeTest {
     final var instructions = createInsns(List.of("1--", "01-", "00-"));
 
     /* WHEN */
-    final Node dt = new TheilingDecodeTreeGenerator().generate(instructions);
+    final Node dt = new RegularDecodeTreeGenerator().generate(instructions);
 
     /* THEN */
     final DecisionTreeStatsCalculator calculator = new DecisionTreeStatsCalculator();
@@ -53,7 +53,7 @@ class DecisionTreeStatsCalculatorTest extends AbstractDecisionTreeTest {
     final var instructions = createInsns(List.of("1--", "01-", "000", "001"));
 
     /* WHEN */
-    final Node dt = new TheilingDecodeTreeGenerator().generate(instructions);
+    final Node dt = new RegularDecodeTreeGenerator().generate(instructions);
 
     /* THEN */
     final DecisionTreeStatsCalculator calculator = new DecisionTreeStatsCalculator();
@@ -74,7 +74,7 @@ class DecisionTreeStatsCalculatorTest extends AbstractDecisionTreeTest {
         List.of("100", "101", "110", "111", "010", "011", "000", "001"));
 
     /* WHEN */
-    final Node dt = new TheilingDecodeTreeGenerator().generate(instructions);
+    final Node dt = new RegularDecodeTreeGenerator().generate(instructions);
 
     /* THEN */
     final DecisionTreeStatsCalculator calculator = new DecisionTreeStatsCalculator();

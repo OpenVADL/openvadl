@@ -1,4 +1,4 @@
-package vadl.vdt.impl.katsumi.tree;
+package vadl.vdt.impl.irregular.tree;
 
 import java.util.Collection;
 import java.util.HashSet;

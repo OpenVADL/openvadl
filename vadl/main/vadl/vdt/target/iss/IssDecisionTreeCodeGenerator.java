@@ -33,7 +33,7 @@ import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.utils.codegen.CodeGeneratorAppendable;
 import vadl.utils.codegen.StringBuilderAppendable;
-import vadl.vdt.impl.theiling.InnerNodeImpl;
+import vadl.vdt.impl.regular.InnerNodeImpl;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;

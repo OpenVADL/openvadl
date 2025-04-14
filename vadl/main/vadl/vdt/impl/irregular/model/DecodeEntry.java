@@ -1,4 +1,4 @@
-package vadl.vdt.impl.katsumi.model;
+package vadl.vdt.impl.irregular.model;
 
 import java.util.Set;
 import vadl.vdt.utils.BitPattern;
