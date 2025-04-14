@@ -18,19 +18,22 @@ package vadl.vdt.passes;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
+import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
+import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.model.Node;
 import vadl.vdt.utils.BitPattern;
-import vadl.vdt.utils.Instruction;
 import vadl.vdt.utils.PBit;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
+import vadl.viam.MicroProcessor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 
@@ -57,38 +60,42 @@ public class VdtLoweringPass extends AbstractIssPass {
   public @Nullable Node execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var isa = viam.isa().orElse(null);
+    // TODO: handle inheritance correctly
+    var isa = viam.mip().map(MicroProcessor::isa).orElse(null);
     if (isa == null) {
       throw new ViamError("No ISA found in the specification");
     }
 
+    // TODO: get the byte order from the VADL specification
+    final ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
+
     var insns = isa.ownInstructions()
         .stream()
-        .map(this::prepareInstruction)
+        .map(i -> {
+          final BitPattern pattern = getInsnPattern(i, bo);
+          // TODO: construct exclusion patterns from encoding constraints
+          return new DecodeEntry(i, pattern.width(), pattern, Set.of());
+        })
         .toList();
 
-    return new RegularDecodeTreeGenerator().generate(insns);
-  }
-
-  /**
-   * Prepares an instruction for the decode tree generation.
-   *
-   * @param insn The VIAM instruction
-   * @return The prepared instruction
-   */
-  private Instruction prepareInstruction(vadl.viam.Instruction insn) {
-    BitPattern pattern = getInsnPattern(insn);
-    return new Instruction(insn, pattern.width(), pattern);
+    return new IrregularDecodeTreeGenerator().generate(insns);
   }
 
   /**
    * Returns a bit pattern, where fixed bits in the instruction encoding are set to their respective
    * encoding value. All other bits are set to <i>don't care</i>.
+   * <br>
+   * The patterns will be constructed as the instructions appear in memory, i.e. in accordance with
+   * the architecture's endianness.
    *
-   * @param insn The instruction
+   * @param insn      The instruction
+   * @param byteOrder The architecture's byte order
    * @return The bit pattern
    */
-  private BitPattern getInsnPattern(vadl.viam.Instruction insn) {
+  private BitPattern getInsnPattern(vadl.viam.Instruction insn, ByteOrder byteOrder) {
+
+    // Instruction definitions are in natural order (big endian), i.e. with the most significant
+    // byte first.
 
     final PBit[] bits = new PBit[insn.format().type().bitWidth()];
 
@@ -106,6 +113,28 @@ public class VdtLoweringPass extends AbstractIssPass {
           var val = fixedValue.testBit(i - p.lsb()) ? PBit.Value.ONE : PBit.Value.ZERO;
           bits[bits.length - (i + 1)] = new PBit(val);
         }
+      }
+    }
+
+    if (byteOrder != ByteOrder.LITTLE_ENDIAN) {
+      // Pattern is already in the correct byte order
+      return new BitPattern(bits);
+    }
+
+    if (bits.length % 8 != 0) {
+      // TODO: handle misalignment gracefully
+      throw new IllegalArgumentException(
+          "Instruction format %s is not byte aligned.".formatted(insn.format()));
+    }
+
+    // Reverse the byte order
+    for (int i = 0; i < bits.length / 16; i++) {
+      for (int j = 0; j < 8; j++) {
+        int l = i * 8 + j;
+        int r = bits.length - (i + 1) * 8 + j;
+        PBit tmp = bits[l];
+        bits[l] = bits[r];
+        bits[r] = tmp;
       }
     }
 
