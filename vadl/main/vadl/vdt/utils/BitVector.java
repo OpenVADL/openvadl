@@ -170,6 +170,64 @@ public class BitVector implements Vector<Bit>, BitWise<BitVector> {
     return new BitVector(result);
   }
 
+  /**
+   * Left pads the bit vector with the given fill value until it reaches the target width. The
+   *
+   * @param target the target width
+   * @param fill   the value to fill with
+   * @return the padded bit vector
+   */
+  public BitVector leftPad(int target, Bit fill) {
+    if (target <= width()) {
+      return this;
+    }
+    final Bit[] result = new Bit[target];
+    for (int i = 0; i < target - width(); i++) {
+      result[i] = fill;
+    }
+    for (int i = target - width(); i < target; i++) {
+      result[i] = get(i - (target - width()));
+    }
+    return new BitVector(result);
+  }
+
+  /**
+   * Right pads the bit vector with the given fill value until it reaches the target width. The
+   *
+   * @param target the target width
+   * @param fill   the value to fill with
+   * @return the padded bit vector
+   */
+  public BitVector rightPad(int target, Bit fill) {
+    if (target <= width()) {
+      return this;
+    }
+    final Bit[] result = new Bit[target];
+    for (int i = 0; i < width(); i++) {
+      result[i] = get(i);
+    }
+    for (int i = width(); i < target; i++) {
+      result[i] = fill;
+    }
+    return new BitVector(result);
+  }
+
+  /**
+   * Truncates the bit vector to the given length, starting at the given offset. The bits that are
+   * not included in the truncated vector are lost.
+   *
+   * @param offset the offset to start truncating from
+   * @param length the length of the truncated vector
+   * @return the truncated bit vector
+   */
+  public BitVector truncate(int offset, int length) {
+    final Bit[] result = new Bit[length];
+    for (int i = 0; i < length; i++) {
+      result[i] = get(offset + i);
+    }
+    return new BitVector(result);
+  }
+
   @Override
   public int hashCode() {
     int result = 1;

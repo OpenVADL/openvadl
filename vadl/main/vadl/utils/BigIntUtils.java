@@ -165,11 +165,24 @@ public class BigIntUtils {
    */
   public static BigInteger reverseByteOrder(BigInteger value, int bitWidth) {
 
-    BigInteger result = BigInteger.ZERO;
+    if (bitWidth < 0) {
+      throw new IllegalArgumentException("Negative bit-width: " + bitWidth);
+    }
 
     if (bitWidth % 8 != 0) {
       throw new IllegalArgumentException(
           "Value of %d bit is not byte aligned".formatted(bitWidth));
+    }
+
+    if (bitWidth == 0) {
+      return BigInteger.ZERO;
+    }
+
+    // Truncate the value to the specified width
+    BigInteger result = value.and(BigInteger.ONE.shiftLeft(bitWidth).subtract(BigInteger.ONE));
+
+    if (bitWidth == 8) {
+      return result; // Nothing to swap
     }
 
     for (int i = 0; i < bitWidth / 16; i++) {
@@ -179,9 +192,14 @@ public class BigIntUtils {
 
         if (value.testBit(l)) {
           result = result.setBit(r);
+        } else {
+          result = result.clearBit(r);
         }
+
         if (value.testBit(r)) {
           result = result.setBit(l);
+        } else {
+          result = result.clearBit(l);
         }
       }
     }

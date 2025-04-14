@@ -20,6 +20,7 @@ import static vadl.vdt.utils.PBit.Value.ONE;
 import static vadl.vdt.utils.PBit.Value.ZERO;
 
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.List;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
@@ -36,13 +37,22 @@ public class PatternUtils {
   /**
    * Returns the bit pattern, where fixed bits in the instruction encoding are set to their
    * respective encoding value. All other bits are set to <i>don't care</i>.
+   * <br>
+   * The patterns will be constructed as the instructions appear in memory, i.e. in accordance with
+   * the architecture's endianness. For instructions which are not a byte-multiple, the pattern
+   * will be padded with <i>don't care</i> bits accordingly.
    *
-   * @param insn The instruction
+   * @param insn      The instruction
+   * @param byteOrder The architecture's byte order
    * @return The bit pattern
    */
-  public static BitPattern toFixedBitPattern(vadl.viam.Instruction insn) {
+  public static BitPattern toFixedBitPattern(vadl.viam.Instruction insn, ByteOrder byteOrder) {
 
-    final PBit[] bits = new PBit[insn.format().type().bitWidth()];
+    // Instruction definitions are in natural order (big endian), i.e. with the most significant
+    // byte first.
+    final int insnWidth = insn.format().type().bitWidth();
+    final int alignedWidth = insnWidth % 8 != 0 ? insnWidth + (8 - insnWidth % 8) : insnWidth;
+    final PBit[] bits = new PBit[alignedWidth];
 
     // Initialize all bits to "don't care"
     for (int i = 0; i < bits.length; i++) {
@@ -61,9 +71,25 @@ public class PatternUtils {
       for (Constant.BitSlice.Part p : parts) {
         for (int i = p.lsb(); i <= p.msb(); i++) {
           var val = fixedValue.testBit((offset + i) - p.lsb()) ? ONE : ZERO;
-          bits[bits.length - (i + 1)] = new PBit(val);
+          bits[insnWidth - (i + 1)] = new PBit(val);
         }
         offset += p.size();
+      }
+    }
+
+    if (byteOrder != ByteOrder.LITTLE_ENDIAN || alignedWidth <= 8) {
+      // Pattern is already in the correct byte order
+      return new BitPattern(bits);
+    }
+
+    // Reverse the byte order
+    for (int i = 0; i < alignedWidth / 16; i++) {
+      for (int j = 0; j < 8; j++) {
+        int l = i * 8 + j;
+        int r = alignedWidth - (i + 1) * 8 + j;
+        PBit tmp = bits[l];
+        bits[l] = bits[r];
+        bits[r] = tmp;
       }
     }
 
