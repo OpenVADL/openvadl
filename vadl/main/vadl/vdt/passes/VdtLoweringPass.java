@@ -17,16 +17,19 @@
 package vadl.vdt.passes;
 
 import java.io.IOException;
+import java.nio.ByteOrder;
+import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
+import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
+import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.model.Node;
 import vadl.vdt.utils.BitPattern;
-import vadl.vdt.utils.Instruction;
 import vadl.vdt.utils.PatternUtils;
+import vadl.viam.Processor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 
@@ -53,27 +56,24 @@ public class VdtLoweringPass extends AbstractIssPass {
   public @Nullable Node execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var isa = viam.isa().orElse(null);
+    // TODO: handle inheritance correctly
+    var isa = viam.processor().map(Processor::isa).orElse(null);
     if (isa == null) {
       throw new ViamError("No ISA found in the specification");
     }
 
+    // TODO: get the byte order from the VADL specification
+    final ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
+
     var insns = isa.ownInstructions()
         .stream()
-        .map(this::prepareInstruction)
+        .map(i -> {
+          BitPattern pattern = PatternUtils.toFixedBitPattern(i, bo);
+          // TODO: construct exclusion patterns from encoding constraints
+          return new DecodeEntry(i, pattern.width(), pattern, Set.of());
+        })
         .toList();
 
-    return new RegularDecodeTreeGenerator().generate(insns);
-  }
-
-  /**
-   * Prepares an instruction for the decode tree generation.
-   *
-   * @param insn The VIAM instruction
-   * @return The prepared instruction
-   */
-  private Instruction prepareInstruction(vadl.viam.Instruction insn) {
-    BitPattern pattern = PatternUtils.toFixedBitPattern(insn);
-    return new Instruction(insn, pattern.width(), pattern);
+    return new IrregularDecodeTreeGenerator().generate(insns);
   }
 }

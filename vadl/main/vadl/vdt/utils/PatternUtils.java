@@ -20,6 +20,7 @@ import static vadl.vdt.utils.PBit.Value.ONE;
 import static vadl.vdt.utils.PBit.Value.ZERO;
 
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.List;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
@@ -36,11 +37,18 @@ public class PatternUtils {
   /**
    * Returns the bit pattern, where fixed bits in the instruction encoding are set to their
    * respective encoding value. All other bits are set to <i>don't care</i>.
+   * <br>
+   * The patterns will be constructed as the instructions appear in memory, i.e. in accordance with
+   * the architecture's endianness.
    *
-   * @param insn The instruction
+   * @param insn      The instruction
+   * @param byteOrder The architecture's byte order
    * @return The bit pattern
    */
-  public static BitPattern toFixedBitPattern(vadl.viam.Instruction insn) {
+  public static BitPattern toFixedBitPattern(vadl.viam.Instruction insn, ByteOrder byteOrder) {
+
+    // Instruction definitions are in natural order (big endian), i.e. with the most significant
+    // byte first.
 
     final PBit[] bits = new PBit[insn.format().type().bitWidth()];
 
@@ -64,6 +72,28 @@ public class PatternUtils {
           bits[bits.length - (i + 1)] = new PBit(val);
         }
         offset += p.size();
+      }
+    }
+
+    if (byteOrder != ByteOrder.LITTLE_ENDIAN) {
+      // Pattern is already in the correct byte order
+      return new BitPattern(bits);
+    }
+
+    if (bits.length % 8 != 0) {
+      // TODO: handle misalignment gracefully
+      throw new IllegalArgumentException(
+          "Instruction format %s is not byte aligned.".formatted(insn.format()));
+    }
+
+    // Reverse the byte order
+    for (int i = 0; i < bits.length / 16; i++) {
+      for (int j = 0; j < 8; j++) {
+        int l = i * 8 + j;
+        int r = bits.length - (i + 1) * 8 + j;
+        PBit tmp = bits[l];
+        bits[l] = bits[r];
+        bits[r] = tmp;
       }
     }
 
