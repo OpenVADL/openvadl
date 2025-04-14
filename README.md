@@ -79,7 +79,7 @@ The `open-vadl` project includes multiple Gradle modules.
 
 ## Getting Started
 
-You need a working JDK 17 (or higher) installation on your `PATH` to build OpenVADL.
+You need a working JDK 21 (or higher) installation on your `PATH` to build OpenVADL.
 To directly build and run OpenVADL without installing it, use the `./gradlew run --args="<args>"` command.
 
 For example, you can create the ISS (Instruction Set Simulator) for a minimal risc-v example with:

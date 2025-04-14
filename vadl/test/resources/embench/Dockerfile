@@ -165,7 +165,7 @@ COPY --from=builder-qemu /opt/qemu /opt/qemu
 COPY --from=builder-qemu /opt/qemu-nojit /opt/qemu-nojit
 COPY --from=builder-gem5 /gem5/build/ARM_RISCV/gem5.fast /opt/gem5/build/ARM_RISCV/gem5.fast
 
-RUN apt-get install -y libglib2.0-dev python3-pandas build-essential device-tree-compiler libgoogle-perftools-dev curl yq unzip openjdk-17-jdk git-all scala apt-transport-https gnupg cmake ninja-build vim
+RUN apt-get install -y libglib2.0-dev python3-pandas build-essential device-tree-compiler libgoogle-perftools-dev curl yq unzip openjdk-21-jdk git-all scala apt-transport-https gnupg cmake ninja-build vim
 RUN apt-get install -y ccache libboost-all-dev
 
 RUN echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | tee /etc/apt/sources.list.d/sbt.list
