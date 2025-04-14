@@ -75,6 +75,30 @@ class RegularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     assertDecision(decoder, "011", "0--");
   }
 
+  @Test
+  void testGenerate_padVariableLengthInsns_succeeds() {
+
+    /* GIVEN */
+    final var instructions = createInsns(List.of("1--0", "01-", "00-"));
+
+    /* WHEN */
+    final Node dt = new RegularDecodeTreeGenerator().generate(instructions);
+
+    /* THEN */
+    final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
+
+    assertDecision(decoder, "1000", "1--0");
+    assertDecision(decoder, "1100", "1--0");
+    assertDecision(decoder, "1010", "1--0");
+    assertDecision(decoder, "1110", "1--0");
+
+    assertDecision(decoder, "0100", "01--");
+    assertDecision(decoder, "0110", "01--");
+
+    assertDecision(decoder, "0010", "00--");
+    assertDecision(decoder, "0000", "00--");
+  }
+
   private void assertDecision(DecisionTreeDecoder decoder, String insn, String expected) {
     Instruction decision = decoder.decide(BitVector.fromString(insn, insn.length()));
     Assertions.assertNotNull(decision);
