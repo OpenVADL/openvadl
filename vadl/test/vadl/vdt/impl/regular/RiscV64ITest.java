@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.impl.theiling;
+package vadl.vdt.impl.regular;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -35,7 +35,7 @@ class RiscV64ITest extends AbstractDecisionTreeTest {
     final List<Instruction> riscV = parseQemuDecoding("rv64i.decode");
 
     /* WHEN */
-    Node tree = new TheilingDecodeTreeGenerator().generate(riscV);
+    Node tree = new RegularDecodeTreeGenerator().generate(riscV);
 
     /* THEN */
 

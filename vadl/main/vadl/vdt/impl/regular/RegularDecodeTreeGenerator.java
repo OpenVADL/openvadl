@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.impl.theiling;
+package vadl.vdt.impl.regular;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -44,10 +44,13 @@ import vadl.vdt.utils.PBit;
  * <p>This implementation is limited to fixed-width instructions and does not support overlapping
  * instruction patterns (Except of subsumed instructions, through default nodes).
  */
-public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruction> {
+public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instruction> {
 
   @Override
   public Node generate(Collection<Instruction> instructions) {
+
+    // TODO: possibly pad the input instruction set, then validate
+
     validate(instructions);
 
     // Initially, the mask is set to consider all bits
