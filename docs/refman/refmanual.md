@@ -16,7 +16,7 @@ A vector is defined by appending the length of the vector in angle brackets to a
 `Bits<N>` represents an arbitrary bit vector type of length \f$N\f$.
 
 Indexing is used to acces an element of a vector.
-The index is enclosed in parantheses.
+The index is enclosed in parentheses.
 If `a` is defined as \n
 `constant a : Bits<16> = 1023`, \n
 then with the index expression `a(3)` the element with index `3` is selected.
@@ -103,35 +103,27 @@ type casting rules from `Bits<N>`:
 
 \lbl{refman_literals}
 
-For the type `Bool` there exist the two boolean literals `true` (value `1` as `Bits<1>`) and `false` (value `0` as
-`Bits<1>`).
+For the type `Bool` there exist the two boolean literals `true` (value `1` as `Bits<1>`) and `false` (value `0` as `Bits<1>`).
 
-Binary and hexadecimal literals are of the type `Bits` with the number of
-digits representing the length of a bit vector. Leading zeros are counted
-to determine the size. Binary literals start with `0b` and hexadecimal literals
-start with `0x`. The apostrophe can be used to make the representation
-more comprehensible (see Listing \r{lst_literals}).
+Binary literals start with `0b` and hexadecimal literals start with `0x`.
+Binary, decimal and hexadecimal literals represent signed integers with an arbitrary length, they are implemented as a `BigInteger`.
+In the evaluation of constant expressions no truncation can happen.
+The apostrophe can be used to make the representation more comprehensible (see Listing \r{lst_literals}).
 
 \listing{lst_literals, VADL Binary and Decimal Literals}
 
 ~~~{.vadl}
-constant binLit = 0b1'0011       // has the value 19 and is of type Bits<5>
-constant hexLit = 0x000f         // has the value 15 and is of type Bits<16>
+constant binLit = 0b1'0011       // has the value 19
+constant hexLit = 0x000f         // has the value 15
 
-constant decLit = 4              // has the value  4 and is of type SInt<*>
-constant decEx  = 4 * 3 + 1      // has the value 13 and is of type SInt<*>
+constant decLit = 4              // has the value  4
+constant decEx  = 4 * 3 + 1      // has the value 13
 
-constant bitEx  = binLit + decEx // has the value  0 and is of type Bits<5>
+constant bitEx  = binLit + decEx // has the value 32
 ~~~
 
 \endlisting
 
-Decimal literals represent signed integers with an arbitrary length, they can
-be viewed as `SInt<*>`. In the evaluation of constant expressions no truncation
-can happen. Type inference is used to determine the type of an expression. In
-Listing \r{lst_literals} the constant `bitEx` is of type `Bits<5>` as `binLit`
-is of type `Bits<5>` and the decimal value `13` of `decEx` then also is implicitly
-casted to `Bits<5>` and the addition of these two numbers gives `0`.
 
 ### Tensors
 
@@ -142,7 +134,7 @@ A one dimensional tensor commonly is called vector.
 A two dimensional tensor often is referred as matrix.
 A three dimensional tensor can be imagined as a cube.
 In \ac{VADL} tensors are specified by vectors of vectors with a bit vector for the innermost dimension.
-When indexing tensors the index of every dimension has to be enclosed separately in parantheses.
+When indexing tensors the index of every dimension has to be enclosed separately in parentheses.
 The outermost index is the first one, the innermost index is the last one.
 When tuples are used to initialize a tensor, the highest index comes first.
 This is different to an initializer in the programming language `C++`,
@@ -199,7 +191,7 @@ instruction instr2 : F =
 
 The behavior of instructions is described by expressions consisting of operations on bit vectors.
 These operations can be selected either using binary and unary operators or by calling \ac{VADL}'s builtin functions.
-To avoid excessive usage of parantheses an operator precedence inspired by `C++` has been defined as shown in the
+To avoid excessive usage of parentheses an operator precedence inspired by `C++` has been defined as shown in the
 following table (operators with lower precedence level bind stronger):
 
 | precedence |     symbols      |                                                                                             |
