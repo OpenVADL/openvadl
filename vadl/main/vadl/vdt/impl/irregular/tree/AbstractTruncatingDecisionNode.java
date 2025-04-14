@@ -14,27 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.impl.irregular.model;
+package vadl.vdt.impl.irregular.tree;
 
-import java.util.Set;
-import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
-import vadl.vdt.utils.BitPattern;
-import vadl.vdt.utils.Instruction;
+import vadl.vdt.model.InnerNode;
 
 /**
- * An decode entry as required by the {@link IrregularDecodeTreeGenerator}.
+ * A decision node which only uses the bits from a given offset up to a given length.
  */
-public class DecodeEntry extends Instruction {
+public abstract class AbstractTruncatingDecisionNode implements InnerNode {
 
-  private final Set<ExclusionCondition> exclusionConditions;
+  private final int offset;
+  private final int length;
 
-  public DecodeEntry(vadl.viam.Instruction source, int width, BitPattern pattern,
-                     Set<ExclusionCondition> exclusionConditions) {
-    super(source, width, pattern);
-    this.exclusionConditions = exclusionConditions;
+  /**
+   * Creates a new truncating decision node.
+   *
+   * @param offset The offset of bits to skip prior to matching
+   * @param length The number of bits to match
+   */
+  public AbstractTruncatingDecisionNode(int offset, int length) {
+    this.offset = offset;
+    this.length = length;
   }
 
-  public Set<ExclusionCondition> exclusionConditions() {
-    return exclusionConditions;
+  public int getOffset() {
+    return offset;
+  }
+
+  public int getLength() {
+    return length;
   }
 }

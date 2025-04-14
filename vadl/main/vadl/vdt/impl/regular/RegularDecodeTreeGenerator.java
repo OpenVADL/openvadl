@@ -115,7 +115,7 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
     final Map<BitPattern, Collection<Instruction>> partition = new LinkedHashMap<>();
 
     for (Instruction instruction : instructions) {
-      final BitPattern part = partition(mask, instruction);
+      final BitPattern part = applyMask(mask, instruction);
       partition.computeIfAbsent(part, k -> new ArrayList<>()).add(instruction);
     }
 
@@ -156,7 +156,7 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
    * @param instruction The instruction to compute the decision for
    * @return The decision bits
    */
-  private BitPattern partition(BitVector mask, Instruction instruction) {
+  private BitPattern applyMask(BitVector mask, Instruction instruction) {
     final PBit[] decisionBits = new PBit[instruction.width()];
     for (int i = 0; i < instruction.width(); i++) {
       if (mask.get(i).value()) {

@@ -79,6 +79,21 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
 
   /**
    * Convert a bit pattern to a bit vector. This is a helper method to convert the bit pattern with
+   * potentially ignored (don't care) bits to a bit vector. All bits not set to 'don't care' will
+   * be set to 1 in the resulting bit vector.
+   *
+   * @return the bit vector
+   */
+  public BitVector toMaskVector() {
+    Bit[] veBits = new Bit[width()];
+    for (int i = 0; i < veBits.length; i++) {
+      veBits[i] = new Bit(bits[i].getValue() != PBit.Value.DONT_CARE);
+    }
+    return new BitVector(veBits);
+  }
+
+  /**
+   * Convert a bit pattern to a bit vector. This is a helper method to convert the bit pattern with
    * potentially ignored (don't care) bits to a bit vector. The ignored bits in the pattern are
    * set to 0 in the resulting bit vector.
    *

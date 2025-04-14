@@ -18,6 +18,7 @@ package vadl.vdt.impl.regular;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,7 +42,7 @@ class RiscV64ITest extends AbstractDecisionTreeTest {
 
     assertNotNull(tree);
 
-    final var stats = getStats(tree);
+    final var stats = statistics(tree);
     assertEquals(riscV.size(), stats.getNumberOfLeafNodes(),
         "Expected one leaf node per instruction");
 

@@ -16,6 +16,8 @@
 
 package vadl.vdt.utils;
 
+import java.nio.ByteOrder;
+
 /**
  * Represents an instruction in the decode tree.
  *
@@ -29,10 +31,22 @@ public class Instruction {
   private final int width;
   private final BitPattern pattern;
 
+  /**
+   * The constructor.
+   *
+   * @param source  The VIAM instruction definition
+   * @param width   The width of this instruction
+   * @param pattern The bit pattern of this instruction
+   */
   public Instruction(vadl.viam.Instruction source, int width, BitPattern pattern) {
     this.source = source;
     this.width = width;
     this.pattern = pattern;
+  }
+
+  public static Instruction from(vadl.viam.Instruction insn, ByteOrder byteOrder) {
+    BitPattern pattern = PatternUtils.toFixedBitPattern(insn, byteOrder);
+    return new Instruction(insn, pattern.width(), pattern);
   }
 
   public vadl.viam.Instruction source() {

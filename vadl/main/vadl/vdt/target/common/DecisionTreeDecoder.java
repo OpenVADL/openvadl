@@ -47,16 +47,15 @@ public class DecisionTreeDecoder implements Visitor<Instruction> {
   }
 
   /**
-   * Decode an instruction in *big endian* byte order. The decision tree currently also assumes
-   * big endian encoding, thus it's not configurable (yet).
+   * Decode an instruction encoded in the given byte order.
    *
    * @param encoding The encoded instruction
    * @return The decoded instruction.
    */
-  public DecodedInstruction decode(Value encoding) {
+  public DecodedInstruction decode(Value encoding, ByteOrder byteOrder) {
     this.encoding = BitVector.fromValue(encoding.integer(), encoding.type().bitWidth());
     var insn = Objects.requireNonNull(decisionTree.accept(this));
-    return new DecodedInstruction(insn, encoding.integer(), ByteOrder.BIG_ENDIAN);
+    return new DecodedInstruction(insn, encoding.integer(), byteOrder);
   }
 
   @Override

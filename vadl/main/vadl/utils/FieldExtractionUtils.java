@@ -16,8 +16,8 @@
 
 package vadl.utils;
 
-import static vadl.utils.BigIntUtils.reverseByteOrder;
 import static vadl.utils.GraphUtils.getSingleNode;
+import static vadl.utils.MemOrderUtils.reverseByteOrder;
 
 import java.math.BigInteger;
 import java.nio.ByteOrder;

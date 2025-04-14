@@ -14,27 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.impl.irregular.model;
+package vadl.vdt.utils;
 
-import java.util.Set;
-import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
-import vadl.vdt.utils.BitPattern;
-import vadl.vdt.utils.Instruction;
+import java.math.BigInteger;
 
 /**
- * An decode entry as required by the {@link IrregularDecodeTreeGenerator}.
+ * Common bit vector operations.
  */
-public class DecodeEntry extends Instruction {
+public class BitVectorUtils {
 
-  private final Set<ExclusionCondition> exclusionConditions;
-
-  public DecodeEntry(vadl.viam.Instruction source, int width, BitPattern pattern,
-                     Set<ExclusionCondition> exclusionConditions) {
-    super(source, width, pattern);
-    this.exclusionConditions = exclusionConditions;
+  private BitVectorUtils() {
+    throw new IllegalStateException("Utility class");
   }
 
-  public Set<ExclusionCondition> exclusionConditions() {
-    return exclusionConditions;
+  /**
+   * Find the smallest power of two that is greater or equal to n.
+   *
+   * @param n the input number
+   * @return the smallest fitting power of two
+   */
+  public static int fittingPowerOfTwo(int n) {
+    final BigInteger bigN = BigInteger.valueOf(n);
+    if (bigN.compareTo(BigInteger.ZERO) <= 0) {
+      throw new IllegalArgumentException("Input must be a positive integer");
+    }
+    if (bigN.getLowestSetBit() == bigN.bitLength() - 1) {
+      // n is already a power of two
+      return n;
+    }
+    return BigInteger.ONE.shiftLeft(bigN.bitLength()).intValue();
   }
 }

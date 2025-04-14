@@ -16,11 +16,13 @@
 
 package vadl.vdt.target.dump;
 
+import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
+import static vadl.vdt.utils.BitVectorUtils.fittingPowerOfTwo;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.NotImplementedException;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
@@ -30,6 +32,7 @@ import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
+import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 
 /**
  * Generates a simple text tree representation of the VDT.
@@ -37,17 +40,29 @@ import vadl.vdt.model.Visitor;
 @DispatchFor(value = InnerNode.class, include = {"vadl.vdt"}, returnType = List.class)
 public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
 
+  private final Node tree;
+  private final DecisionTreeStatistics stats;
+
+  /**
+   * Construct the text graph generator.
+   *
+   * @param tree The vadl decode tree.
+   */
+  public TextGraphGenerator(Node tree) {
+    this.tree = tree;
+    this.stats = statistics(tree);
+  }
+
   /**
    * Generate a text representation of the given tree.
    *
-   * @param tree the tree
    * @return the text representation
    */
-  public static CharSequence generate(Node tree) {
+  public CharSequence generate() {
 
     var sb = new StringBuilder();
 
-    var result = tree.accept(new TextGraphGenerator());
+    var result = tree.accept(this);
 
     if (result != null) {
       result.forEach(l -> sb.append(l).append("\n"));
@@ -81,7 +96,7 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
 
     var label = new StringBuilder();
     BigInteger mask = node.getMask().toValue();
-    label.append("insn & 0x").append(mask.toString(16));
+    label.append("insn & 0x%x".formatted(mask));
 
     result.add(label);
 
@@ -90,8 +105,13 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
     if (defaultNode != null) {
       var childLines = defaultNode.accept(this);
       if (childLines != null) {
-        result.add(new StringBuilder("  |- default"));
-        childLines.stream().map(l -> l.insert(0, "|  ")).forEach(result::add);
+        var defLabel = new StringBuilder("  |- default");
+        result.add(defLabel);
+        if (childLines.size() == 1) {
+          defLabel.append(" -> ").append(childLines.getFirst());
+        } else {
+          childLines.stream().map(l -> l.insert(0, "  |  ")).forEach(result::add);
+        }
       }
     }
 
@@ -106,12 +126,12 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
       }
 
       var edgeLabel = new StringBuilder("  |- ");
-      edgeLabel.append("0x").append(child.getKey().toBitVector().toValue().toString(16));
+      edgeLabel.append("0x%x".formatted(child.getKey().toBitVector().toValue()));
 
       result.add(edgeLabel);
 
       if (childLines.size() == 1) {
-        edgeLabel.append(" -> ").append(childLines.get(0));
+        edgeLabel.append(" -> ").append(childLines.getFirst());
       } else {
         childLines.stream().map(l -> l.insert(0, "  |  ")).forEach(result::add);
       }
@@ -128,11 +148,104 @@ public class TextGraphGenerator implements Visitor<List<StringBuilder>> {
    */
   @Handler
   public List<StringBuilder> handle(MultiDecisionNode node) {
-    throw new NotImplementedException("Not implemented");
+
+    var result = new ArrayList<StringBuilder>();
+
+    final int insnWidth = fittingPowerOfTwo(stats.getMaxInstructionWidth());
+    final BigInteger mask = node.getMask().toValue();
+    final int offset = node.getOffset();
+    final int length = node.getLength();
+
+    var label = new StringBuilder();
+
+    int shift = insnWidth - (node.getOffset() + length);
+    if (offset > 0 && shift > 0) {
+      label.append("(insn >> %d) & 0x%x".formatted(shift, mask));
+    } else {
+      label.append("insn & 0x%x".formatted(mask));
+    }
+
+    result.add(label);
+
+    // Children
+    for (var child : node.getChildren().entrySet()) {
+      var childNode = child.getValue();
+
+      var childLines = childNode.accept(this);
+      if (childLines == null) {
+        continue;
+
+      }
+
+      var edgeLabel = new StringBuilder("  |- ");
+      edgeLabel.append("0x%x".formatted(child.getKey().toBitVector().toValue()));
+
+      result.add(edgeLabel);
+
+      if (childLines.size() == 1) {
+        edgeLabel.append(" -> ").append(childLines.getFirst());
+      } else {
+        childLines.stream().map(l -> l.insert(0, "  |  ")).forEach(result::add);
+      }
+    }
+
+    return result;
   }
 
+  /**
+   * Handler for {@link SingleDecisionNode}.
+   *
+   * @param node the inner node
+   * @return the text representations
+   */
   @Handler
   public List<StringBuilder> handle(SingleDecisionNode node) {
-    throw new NotImplementedException("Not implemented");
+
+    var result = new ArrayList<StringBuilder>();
+
+    final int insnWidth = fittingPowerOfTwo(stats.getMaxInstructionWidth());
+    final BigInteger mask = node.getPattern().toMaskVector().toValue();
+    final BigInteger value = node.getPattern().toBitVector().toValue();
+    final int offset = node.getOffset();
+    final int length = node.getLength();
+
+    var label = new StringBuilder();
+
+    int shift = insnWidth - (node.getOffset() + length);
+    if (offset > 0 && shift > 0) {
+      label.append("(insn >> %d) & 0x%x == 0x%x".formatted(shift, mask, value));
+    } else {
+      label.append("insn & 0x%x == 0x%x".formatted(mask, value));
+    }
+
+    result.add(label);
+
+    // Handle if/else case
+    var matchingResult = node.getMatchingChild().accept(this);
+    if (matchingResult != null) {
+
+      var edgeLabel = new StringBuilder("  |- True ");
+      result.add(edgeLabel);
+
+      if (matchingResult.size() == 1) {
+        edgeLabel.append(" -> ").append(matchingResult.getFirst());
+      } else {
+        matchingResult.stream().map(l -> l.insert(0, "  |  ")).forEach(result::add);
+      }
+    }
+
+    var otherResult = node.getOtherChild().accept(this);
+    if (otherResult != null) {
+      var edgeLabel = new StringBuilder("  |- False");
+      result.add(edgeLabel);
+
+      if (otherResult.size() == 1) {
+        edgeLabel.append(" -> ").append(otherResult.getFirst());
+      } else {
+        otherResult.stream().map(l -> l.insert(0, "  |  ")).forEach(result::add);
+      }
+    }
+
+    return result;
   }
 }

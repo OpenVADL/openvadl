@@ -18,6 +18,7 @@ package vadl.utils;
 
 import static vadl.utils.GraphUtils.getSingleNode;
 
+import java.nio.ByteOrder;
 import vadl.error.Diagnostic;
 import vadl.types.BuiltInTable;
 import vadl.vdt.model.DecodeTreeGenerator;
@@ -45,6 +46,7 @@ import vadl.viam.passes.functionInliner.Inliner;
 public class Disassembler {
 
   private final DecisionTreeDecoder decoder;
+  private final ByteOrder byteOrder;
 
   /**
    * Prints the disassembly of the given machine instruction.
@@ -52,10 +54,14 @@ public class Disassembler {
    * @param isa    the ISA that contains the instructions to disassemble
    * @param vdtGen the decode tree generator used to decode given machine instructions
    */
-  public Disassembler(InstructionSetArchitecture isa, DecodeTreeGenerator<Instruction> vdtGen) {
-    var vdtInstrs = isa.ownInstructions().stream().map(Instruction::from).toList();
+  public Disassembler(InstructionSetArchitecture isa, DecodeTreeGenerator<Instruction> vdtGen,
+                      ByteOrder byteOrder) {
+    var vdtInstrs = isa.ownInstructions().stream()
+        .map(i -> Instruction.from(i, byteOrder))
+        .toList();
     Node vdtRoot = vdtGen.generate(vdtInstrs);
     this.decoder = new DecisionTreeDecoder(vdtRoot);
+    this.byteOrder = byteOrder;
   }
 
   /**
@@ -66,7 +72,7 @@ public class Disassembler {
    */
   public String disassemble(Constant.Value machineInstr) {
     // TODO: Catch no decision found errors
-    var instr = decoder.decode(machineInstr);
+    var instr = decoder.decode(machineInstr, byteOrder);
     return new InstructionPrinter(instr).print();
   }
 

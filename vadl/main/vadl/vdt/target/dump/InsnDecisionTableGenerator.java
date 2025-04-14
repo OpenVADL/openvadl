@@ -16,10 +16,13 @@
 
 package vadl.vdt.target.dump;
 
+import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
+import static vadl.vdt.utils.BitVectorUtils.fittingPowerOfTwo;
+
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.NotImplementedException;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
@@ -29,6 +32,7 @@ import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
+import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 
 /**
  * Generates a simple text table to list the decision path for each instruction.
@@ -36,14 +40,26 @@ import vadl.vdt.model.Visitor;
 @DispatchFor(value = InnerNode.class, include = {"vadl.vdt"}, returnType = List.class)
 public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequence>>> {
 
+  private final Node tree;
+  private final DecisionTreeStatistics stats;
+
+  /**
+   * Construct the decision table generator.
+   *
+   * @param tree The vadl decode tree.
+   */
+  public InsnDecisionTableGenerator(Node tree) {
+    this.tree = tree;
+    this.stats = statistics(tree);
+  }
+
   /**
    * Generates the path table for the given tree.
    *
-   * @param tree the tree
    * @return the path table (a list of columns) or an empty list if the tree is empty
    */
-  public static List<List<CharSequence>> generate(Node tree) {
-    var rows = tree.accept(new InsnDecisionTableGenerator());
+  public List<List<CharSequence>> generate() {
+    var rows = tree.accept(this);
     if (rows == null) {
       return List.of();
     }
@@ -68,9 +84,9 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
     }
 
     // Add a header to each column
-    table.get(0).add(0, "Instruction");
+    table.getFirst().addFirst("Instruction");
     for (int i = 1; i < table.size(); i++) {
-      table.get(i).add(0, "DL" + (i - 1));
+      table.get(i).addFirst("DL" + (i - 1));
     }
 
     return table;
@@ -99,7 +115,7 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
   public List<List<CharSequence>> handle(InnerNodeImpl node) {
 
     var label = new StringBuilder();
-    label.append("insn & 0x").append(node.getMask().toValue().toString(16));
+    label.append("insn & 0x%x".formatted(node.getMask().toValue()));
 
     var result = new ArrayList<List<CharSequence>>();
 
@@ -137,11 +153,80 @@ public class InsnDecisionTableGenerator implements Visitor<List<List<CharSequenc
    */
   @Handler
   public List<List<CharSequence>> handle(MultiDecisionNode node) {
-    throw new NotImplementedException("Not implemented");
+
+    var label = new StringBuilder();
+
+    final int insnWidth = fittingPowerOfTwo(stats.getMaxInstructionWidth());
+    final BigInteger mask = node.getMask().toValue();
+    final int offset = node.getOffset();
+    final int length = node.getLength();
+    int shift = insnWidth - (node.getOffset() + length);
+
+    if (offset > 0 && shift > 0) {
+      label.append("(insn >> %d) & 0x%x".formatted(shift, mask));
+    } else {
+      label.append("insn & 0x%x".formatted(mask));
+    }
+
+    var result = new ArrayList<List<CharSequence>>();
+
+    // Decisions
+    for (var entry : node.getChildren().entrySet()) {
+
+      var childLines = entry.getValue().accept(this);
+      if (childLines == null) {
+        continue;
+      }
+
+      var childLabel = "%s == 0x%x".formatted(label, entry.getKey().toBitVector().toValue());
+      childLines.forEach(l -> l.add(1, childLabel));
+      result.addAll(childLines);
+    }
+
+    return result;
   }
 
+  /**
+   * Handler for {@link SingleDecisionNode}.
+   *
+   * @param node the inner node
+   * @return the path table
+   */
   @Handler
   public List<List<CharSequence>> handle(SingleDecisionNode node) {
-    throw new NotImplementedException("Not implemented");
+
+    var label = new StringBuilder();
+
+    final int insnWidth = fittingPowerOfTwo(stats.getMaxInstructionWidth());
+    final BigInteger mask = node.getPattern().toMaskVector().toValue();
+    final BigInteger value = node.getPattern().toBitVector().toValue();
+    final int offset = node.getOffset();
+    final int length = node.getLength();
+    int shift = insnWidth - (node.getOffset() + length);
+
+    if (offset > 0 && shift > 0) {
+      label.append("(insn >> %d) & 0x%x".formatted(shift, mask));
+    } else {
+      label.append("insn & 0x%x".formatted(mask));
+    }
+
+    var result = new ArrayList<List<CharSequence>>();
+
+    // If/Else cases
+    var matchingLines = node.getMatchingChild().accept(this);
+    if (matchingLines != null) {
+      var matchingLabel = "%s == 0x%x".formatted(label, value);
+      matchingLines.forEach(l -> l.add(1, matchingLabel));
+      result.addAll(matchingLines);
+    }
+
+    var otherLines = node.getOtherChild().accept(this);
+    if (otherLines != null) {
+      var otherLabel = "%s != 0x%x".formatted(label, value);
+      otherLines.forEach(l -> l.add(1, otherLabel));
+      result.addAll(otherLines);
+    }
+
+    return result;
   }
 }

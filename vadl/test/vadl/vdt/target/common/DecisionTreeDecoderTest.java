@@ -16,82 +16,20 @@
 
 package vadl.vdt.target.common;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteOrder;
-import java.nio.file.Path;
 import java.util.Arrays;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
-import vadl.configuration.GeneralConfiguration;
-import vadl.configuration.IssConfiguration;
-import vadl.pass.PassManager;
-import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.types.DataType;
 import vadl.utils.FieldExtractionUtils;
-import vadl.vdt.model.Node;
-import vadl.vdt.passes.VdtLoweringPass;
-import vadl.vdt.target.common.dto.DecodedInstruction;
 import vadl.viam.Constant.Value;
 import vadl.viam.Instruction;
 
 public class DecisionTreeDecoderTest extends AbstractTest {
 
   @Test
-  void testEvaluateAccessFunction() throws DuplicatedPassKeyException, IOException {
-
-    /* GIVEN */
-
-    // Parse input spec and create the decoder tree
-    var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
-
-    var config =
-        new IssConfiguration(new GeneralConfiguration(Path.of("build/test-output"), true));
-
-    var passManager = new PassManager();
-    passManager.add(new VdtLoweringPass(config));
-    passManager.run(spec);
-
-    var decodeTree = passManager.getPassResults().lastResultOf(VdtLoweringPass.class, Node.class);
-    var decoder = new DecisionTreeDecoder(decodeTree);
-
-    // bne x0, x0, 1234
-    // 01001100000000000001100101100011
-    var encoding = Value.fromInteger(
-        new BigInteger("01001100000000000001100101100011", 2),
-        DataType.unsignedInt(32));
-
-    /* WHEN */
-
-    DecodedInstruction decoded = decoder.decode(encoding);
-
-    /* THEN */
-
-    // Check that the instruction was decoded correctly
-    Assertions.assertNotNull(decoded);
-    Assertions.assertEquals("BNE", decoded.source().simpleName());
-
-    var imm = Arrays.stream(decoded.source().format().fields())
-        .filter(f -> "imm".equals(f.simpleName()))
-        .findFirst().orElse(null);
-    Assertions.assertNotNull(imm);
-
-    var immS = decoded.source().format().fieldAccesses().stream()
-        .filter(f -> "immS".equals(f.simpleName()))
-        .findFirst().orElse(null);
-    Assertions.assertNotNull(immS);
-
-    // Extract the immediate field (617)
-    Value immValue = decoded.get(imm);
-    Assertions.assertEquals(immValue.integer(), BigInteger.valueOf(617));
-
-    Value immSValue = decoded.get(immS);
-    Assertions.assertEquals(immSValue.integer(), BigInteger.valueOf(617 << 1));
-  }
-
-  @Test
-  void testEvaluateAccessFunction_littleEndian() {
+  void testEvaluateAccessFunction() {
 
     /* GIVEN */
     var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
