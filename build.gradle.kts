@@ -45,7 +45,7 @@ plugins {
 group = "openvadl"
 version = "0.0.0-SNAPSHOT"
 gitVersioning.apply {
-    
+
     refs {
         branch(".+") {
             version = "\${ref}-SNAPSHOT"
@@ -68,6 +68,12 @@ subprojects {
     plugins.apply("com.adarshr.test-logger")
 
     val errorProneVersion by extra("2.26.1")
+
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+    }
 
     extra {
         errorProneVersion
@@ -113,9 +119,6 @@ subprojects {
     }
 
     tasks.withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-
         if (!name.toLowerCase().contains("test")) {
             options.errorprone {
                 check("NullAway", CheckSeverity.ERROR)

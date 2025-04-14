@@ -72,7 +72,7 @@ import javax.tools.JavaFileObject;
     "vadl.javaannotations.Handler",
     "vadl.javaannotations.DispatchFor"
 })
-@SupportedSourceVersion(SourceVersion.RELEASE_17) // Adjust as needed
+@SupportedSourceVersion(SourceVersion.RELEASE_21) // Adjust as needed
 public class HandlerProcessor extends AbstractProcessor {
 
   private Filer filer;
