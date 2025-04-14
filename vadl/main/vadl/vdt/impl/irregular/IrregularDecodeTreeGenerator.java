@@ -6,9 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import vadl.utils.Pair;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.irregular.model.ExclusionCondition;
 import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
@@ -32,26 +34,54 @@ import vadl.vdt.utils.PBit;
  */
 public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeEntry> {
 
-
+  /**
+   * Entry point for the decode tree generator. This method will prepare the input entries and
+   * generate the decode tree.
+   *
+   * @param decodeEntries The entry set
+   * @return The generated decode tree
+   */
   @Override
   public Node generate(Collection<DecodeEntry> decodeEntries) {
 
-    // TODO: make sure the entries are properly padded
+    if (decodeEntries.isEmpty()) {
+      throw new IllegalArgumentException("Entry set must not be empty");
+    }
+
+    final var prepared = prepareEntries(decodeEntries);
+
+    final Pair<Integer, Integer> region = prepared.left();
+    final List<DecodeEntry> entries = prepared.right();
+
+    return generateInternal(region, entries);
+  }
+
+  /**
+   * Top level method to generate the decode tree. This method will recursively build the tree
+   * based on the input entries.
+   *
+   * @param region        The relevant region of the insn word to consider for decoding
+   * @param decodeEntries The entry set
+   * @return The generated decode (sub-) tree
+   */
+  private Node generateInternal(Pair<Integer, Integer> region,
+                                Collection<DecodeEntry> decodeEntries) {
 
     final List<DecodeEntry> entries = new ArrayList<>(decodeEntries);
+
     if (entries.size() == 1) {
       return new LeafNodeImpl(entries.get(0));
     }
 
-    return makeNode(entries);
+    return makeNode(region, entries);
   }
 
-  private Node makeNode(List<DecodeEntry> decodeEntries) {
+  private Node makeNode(Pair<Integer, Integer> region, List<DecodeEntry> decodeEntries) {
     final List<BitPattern> patterns = makePatterns(decodeEntries);
 
     if (patterns.isEmpty()) {
       // Split entry set by exclusion conditions instead
-      return makeConditionNode(decodeEntries);
+      return makeConditionNode(region, decodeEntries);
     }
 
     final Map<BitPattern, Node> children = new HashMap<>();
@@ -60,14 +90,15 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
       if (matchingEntries.isEmpty()) {
         continue;
       }
-      final Node childNode = generate(matchingEntries);
+
+      final Node childNode = generateInternal(region, matchingEntries);
       children.put(p, childNode);
     }
 
-    return new MultiDecisionNode(children);
+    return new MultiDecisionNode(region.left(), region.right(), children);
   }
 
-  private Node makeConditionNode(List<DecodeEntry> decodeEntries) {
+  private Node makeConditionNode(Pair<Integer, Integer> region, List<DecodeEntry> decodeEntries) {
 
     // Select best splitting pattern based on exclusion conditions
     final BitPattern pattern = selectPattern(decodeEntries);
@@ -77,10 +108,11 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     final List<DecodeEntry> others = makeOtherEntries(decodeEntries, pattern);
 
     // Recursively build child-trees
-    final Node matchingChild = generate(matching);
-    final Node otherChild = generate(others);
+    final Node matchingChild = generateInternal(region, matching);
+    final Node otherChild = generateInternal(region, others);
 
-    return new SingleDecisionNode(pattern, matchingChild, otherChild);
+    return new SingleDecisionNode(region.left(), region.right(), pattern, matchingChild,
+        otherChild);
   }
 
   private List<BitPattern> makePatterns(List<DecodeEntry> decodeEntries) {
@@ -307,5 +339,132 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     }
 
     return patterns;
+  }
+
+  /**
+   * Prepare the input decode entries for the generator. This includes padding the patterns to the
+   * same width and truncating them to the overall relevant region.
+   *
+   * @param decodeEntries The entry set
+   * @return The relevant region to truncate to and the prepared entry set
+   */
+  private Pair<Pair<Integer, Integer>, List<DecodeEntry>> prepareEntries(
+      Collection<DecodeEntry> decodeEntries) {
+
+    // Pad all patterns to the maximum occurring width
+    final int maxWidth = decodeEntries.stream()
+        .mapToInt(DecodeEntry::width)
+        .max()
+        .orElseThrow(() -> new IllegalArgumentException("Empty entry set"));
+
+    // Pad all patterns to the same width
+    List<DecodeEntry> entries = decodeEntries.stream()
+        .map(e -> transform(e, p -> pad(p, maxWidth)))
+        .toList();
+
+    // Collect all involved patterns, including the condition patterns
+    final Set<BitPattern> allPatterns = entries.stream()
+        .flatMap(e -> Stream.concat(
+            Stream.of(e.pattern()),
+            e.exclusionConditions().stream()
+                .flatMap(c -> Stream.concat(Stream.of(c.matching()),
+                    c.unmatching().stream()))))
+        .collect(Collectors.toSet());
+
+    // Determine the relevant region for decoding
+    final int fromIdx = allPatterns.stream()
+        .mapToInt(this::getFirstRelevantIdx)
+        .min()
+        .orElse(0);
+
+    final int toIdx = allPatterns.stream()
+        .mapToInt(this::getLastRelevantIdx)
+        .max()
+        .orElse(fromIdx);
+
+    if (toIdx < fromIdx) {
+      throw new IllegalArgumentException("Invalid entry set: " + entries);
+    }
+
+    // TODO: We should probably only do this for patterns which exceed a certain width, since it
+    // will introduce some shifting overhead at runtime. So if the padded patterns fit into a
+    // machine word, we should not slice them.
+
+    // Slice all patterns to the region relevant for decoding
+    entries = entries.stream()
+        .map(e -> transform(e, p -> slice(p, fromIdx, toIdx)))
+        .collect(Collectors.toList());
+
+    // Offset & Length of the relevant region
+    var region = Pair.of(fromIdx, (toIdx + 1) - fromIdx);
+    return Pair.of(region, entries);
+  }
+
+  private int getFirstRelevantIdx(BitPattern pattern) {
+    for (int i = 0; i < pattern.width(); i++) {
+      if (pattern.get(i).getValue() != PBit.Value.DONT_CARE) {
+        return i;
+      }
+    }
+    return pattern.width();
+  }
+
+  private int getLastRelevantIdx(BitPattern pattern) {
+    for (int i = pattern.width() - 1; i >= 0; i--) {
+      if (pattern.get(i).getValue() != PBit.Value.DONT_CARE) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
+  private DecodeEntry transform(DecodeEntry entry, Function<BitPattern, BitPattern> transformer) {
+
+    final BitPattern pattern = entry.pattern();
+    final BitPattern transformedPattern = transformer.apply(pattern);
+
+    final Set<ExclusionCondition> transformedExclusions = entry.exclusionConditions().stream()
+        .map(c -> new ExclusionCondition(transformer.apply(c.matching()),
+            c.unmatching().stream()
+                .map(transformer)
+                .collect(Collectors.toSet())))
+        .collect(Collectors.toSet());
+
+    return new DecodeEntry(entry.source(), transformedPattern.width(), transformedPattern,
+        transformedExclusions);
+  }
+
+  /**
+   * Pad the given pattern to the target width. The padding is done by adding don't care bits to
+   * the least significant bits.
+   *
+   * @param pattern     The pattern to pad
+   * @param targetWidth The target width
+   * @return The padded pattern
+   */
+  private BitPattern pad(BitPattern pattern, int targetWidth) {
+
+    if (pattern.width() >= targetWidth) {
+      return pattern;
+    }
+
+    final PBit[] bits = new PBit[targetWidth];
+    for (int i = 0; i < targetWidth; i++) {
+      if (i < pattern.width()) {
+        bits[i] = pattern.get(i);
+      } else {
+        bits[i] = new PBit(PBit.Value.DONT_CARE);
+      }
+    }
+
+    return new BitPattern(bits);
+  }
+
+  private BitPattern slice(BitPattern pattern, int from, int to) {
+    final PBit[] bits = new PBit[to - from + 1];
+    for (int i = from; i <= to; i++) {
+      bits[i - from] = pattern.get(i);
+    }
+    return new BitPattern(bits);
   }
 }
