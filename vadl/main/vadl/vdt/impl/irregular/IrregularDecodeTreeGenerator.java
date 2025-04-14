@@ -1,4 +1,4 @@
-package vadl.vdt.impl.katsumi;
+package vadl.vdt.impl.irregular;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,10 +9,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import vadl.vdt.impl.katsumi.model.DecodeEntry;
-import vadl.vdt.impl.katsumi.model.ExclusionCondition;
-import vadl.vdt.impl.katsumi.tree.MultiDecisionNode;
-import vadl.vdt.impl.katsumi.tree.SingleDecisionNode;
+import vadl.vdt.impl.irregular.model.DecodeEntry;
+import vadl.vdt.impl.irregular.model.ExclusionCondition;
+import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
+import vadl.vdt.impl.irregular.tree.SingleDecisionNode;
 import vadl.vdt.model.DecodeTreeGenerator;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.impl.LeafNodeImpl;
@@ -20,7 +20,7 @@ import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.PBit;
 
 /**
- * Implements the Katsumi algorithm to generate a decode tree for irregular instruction sets.
+ * Implements the Okuda et al. algorithm to generate a decode tree for irregular instruction sets.
  *
  * <p>See: <a
  * href="https://past.date-conference.com/proceedings-archive/2016/pdf/0066.pdf">Decision Tree Generation for
@@ -30,7 +30,7 @@ import vadl.vdt.utils.PBit;
  * the instruction entry set. As a result this generator is able to handle irregular instruction
  * sets, albeit the constraint conditions are quite limited.
  */
-public class KatsumiDecodeTreeGenerator implements DecodeTreeGenerator<DecodeEntry> {
+public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeEntry> {
 
 
   @Override
