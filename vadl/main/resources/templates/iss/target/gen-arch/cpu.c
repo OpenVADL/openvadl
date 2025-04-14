@@ -8,6 +8,7 @@
 #include "trace.h"
 #include "tcg/debug-assert.h"
 #include "hw/qdev-properties.h"
+#include "vadl-builtins.h"
 
 static [(${gen_arch_upper})]CPU* cpu_self;
 
@@ -125,6 +126,9 @@ static void [(${gen_arch_lower})]_cpu_set_pc(CPUState *cs, vaddr value)
     cpu->env.[(${gen_arch_upper})]_PC = value;
 }
 
+// include exception handling procedures
+#include "do_exception.c.inc"
+
 static void [(${gen_arch_lower})]_cpu_do_interrupt(CPUState *cs)
 {
     trace_[(${gen_arch_lower})]_cpu_call(__func__);
@@ -132,37 +136,11 @@ static void [(${gen_arch_lower})]_cpu_do_interrupt(CPUState *cs)
     [(${gen_arch_upper})]CPU *cpu      = [(${gen_arch_upper})]_CPU(cs);
     CPU[(${gen_arch_upper})]State *env = &cpu->env;
 
-    // if the interrupt flag (MSB) is not set, it is an exception (sync) not an interrupt (async)
-    bool async = !!(cs->exception_index & [(${gen_arch_upper})]_EXCP_INT_FLAG);
-    // actual cause is XLEN wide (target_ulong)
-    target_ulong cause = cs->exception_index & [(${gen_arch_upper})]_EXCP_INT_FLAG;
-
-    // here we skip delegation and more, currently we just handle M mode exceptions
-
-    // update the individual bits in the mstatus register
-    uint64_t s = env->mstatus;
-    // set previous interrupt enabled to current interrupt enabled
-    s = set_field(s, MSTATUS_MPIE, get_field(s, MSTATUS_MIE));
-    // set previous mode to current privilege mode
-    s = set_field(s, MSTATUS_MPP, env->priv);
-    // set interrupts enabled to false
-    s = set_field(s, MSTATUS_MIE, false);
-    // set back new mstatus
-    env->mstatus = s;
-
-    // set mcause to `async:1 cause:31`
-    env->mcause = cause | ~((target_ulong) -1 >> async);
-    // set exception program counter to current one.
-    // this is the address to jump to on mret
-    env->mepc = env->pc;
-    // currently we have no additional information added
-    env->mtval = 0;
-
-    env->pc = (env->mtvec >> 2 << 2) + // clear lower two bits to obtain base
-              // if async and mode == 1 the new pc is base + cause * 4, otherwise just base
-              (async && (env->mtvec & 0b11) == 1 ? cause * 4 : 0);
-
-    // TODO: Here we would update the privilege mode if applicable
+    switch (cs->exception_index) {
+       [# th:each="exc : ${exc_info.exceptions}"]
+       case [(${exc.enum_name})]: [(${exc.handling_func})](env); break;
+       [/]
+    }
 
     // mark handled
     cs->exception_index = [(${gen_arch_upper})]_EXCP_NONE;

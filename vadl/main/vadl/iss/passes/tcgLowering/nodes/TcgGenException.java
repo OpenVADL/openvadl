@@ -16,12 +16,18 @@
 
 package vadl.iss.passes.tcgLowering.nodes;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
+import vadl.viam.ExceptionDef;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 
 /**
  * A TCG node that represents the {@code generate_exception} function to raise an exception
@@ -31,20 +37,28 @@ import vadl.viam.graph.Node;
 public class TcgGenException extends TcgNode {
 
   @DataValue
-  int exceptionCode;
+  ExceptionDef exception;
 
-  public TcgGenException(int exceptionCode) {
-    this.exceptionCode = exceptionCode;
+  @Input
+  NodeList<TcgVRefNode> args;
+
+  public TcgGenException(ExceptionDef exception, NodeList<TcgVRefNode> args) {
+    this.exception = exception;
+    this.args = args;
   }
 
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
-    return "generate_exception(ctx, " + exceptionCode + ")";
+    // update PC before leaving TB and generate
+    return "gen_update_pc_diff(ctx, 0);\n\t"
+        + "gen_helper_raise_" + exception.simpleName().toLowerCase() + "(ctx, "
+        + args.stream().map(nodeToCCode).collect(Collectors.joining(", "))
+        + ")";
   }
 
   @Override
   public Set<TcgVRefNode> usedVars() {
-    return Set.of();
+    return new HashSet<>(args);
   }
 
   @Override
@@ -54,7 +68,7 @@ public class TcgGenException extends TcgNode {
 
   @Override
   public Node copy() {
-    return new TcgGenException(exceptionCode);
+    return new TcgGenException(exception, args.copy());
   }
 
   @Override
@@ -65,6 +79,20 @@ public class TcgGenException extends TcgNode {
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(exceptionCode);
+    collection.add(exception);
+  }
+
+  @Override
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
+    collection.addAll(args);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    args = args.stream().map(e ->
+            visitor.apply(this, e, TcgVRefNode.class))
+        .collect(Collectors.toCollection(NodeList::new));
   }
 }

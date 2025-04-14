@@ -58,7 +58,6 @@ public class IssTranslateCodeGenerator implements
     CInvalidMixins.InstrCall, CInvalidMixins.HardwareRelated {
 
   private Instruction insn;
-  private boolean generateInsnCount;
   private StringBuilder builder;
   private CNodeContext ctx;
   private String targetName;
@@ -69,7 +68,6 @@ public class IssTranslateCodeGenerator implements
   public IssTranslateCodeGenerator(Instruction instr,
                                    IssConfiguration configuration) {
     this.insn = instr;
-    this.generateInsnCount = configuration.isInsnCounting();
     this.builder = new StringBuilder();
     this.targetName = configuration.targetName();
     this.ctx = new CNodeContext(
@@ -99,14 +97,7 @@ public class IssTranslateCodeGenerator implements
     ctx.wr(name);
     ctx.ln(" *a) {");
 
-    ctx.wr("trace_" + this.targetName.toLowerCase() + "_instr_trans(__func__);");
-
-    if (generateInsnCount) {
-      //Add separate add instruction after each that increments special cpu_insn_count flag in
-      //QEMU CPU state
-      //see resources/templates/iss/target/cpu.h/CPUArchState
-      ctx.ln("\ttcg_gen_addi_i64(cpu_insn_count, cpu_insn_count, 1);");
-    }
+    ctx.ln("trace_" + this.targetName.toLowerCase() + "_instr_trans(__func__);");
 
     var start = getSingleNode(insn.behavior(), StartNode.class);
     var current = start.next();

@@ -1110,6 +1110,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var formats = filterAndCastToInstance(allDefinitions, Format.class);
     var functions = filterAndCastToInstance(allDefinitions, Function.class);
     var relocations = filterAndCastToInstance(allDefinitions, Relocation.class);
+    // TODO: @flofriday include anonymous exceptions as definitions
     var exceptions = filterAndCastToInstance(allDefinitions, ExceptionDef.class);
     var instructions = filterAndCastToInstance(allDefinitions, Instruction.class);
     var pseudoInstructions = filterAndCastToInstance(allDefinitions, PseudoInstruction.class);

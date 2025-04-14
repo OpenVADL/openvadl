@@ -22,6 +22,8 @@ import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.dependency.ProcCallNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -29,84 +31,119 @@ import vadl.viam.graph.dependency.WriteResourceNode;
  * This node is a {@link DirectionalNode} that signifies the completion of an instruction,
  * specifically handling the write to the program counter (PC).
  */
-public class InstrExitNode extends DirectionalNode {
+public abstract sealed class InstrExitNode extends DirectionalNode permits InstrExitNode.PcChange,
+    InstrExitNode.Raise {
 
-  /**
-   * The write operation to the program counter.
-   */
-  @Input
-  private WriteResourceNode pcWrite;
+  public static final class PcChange extends InstrExitNode {
 
-  /**
-   * Constructs an {@code InstrExitNode} with the specified PC write operation.
-   *
-   * @param pcWrite The {@link WriteResourceNode} representing the write to the program counter.
-   */
-  public InstrExitNode(WriteResourceNode pcWrite) {
-    this.pcWrite = pcWrite;
+    /**
+     * The side effect operation causing the instruction exit.
+     * This is either a {@link WriteResourceNode} to the PC or
+     * a {@link vadl.viam.graph.dependency.ProcCallNode} representing a raise.
+     */
+    @Input
+    private WriteResourceNode cause;
+
+    /**
+     * Constructs an {@code InstrExitNode} with the specified PC write operation.
+     *
+     * @param cause The {@link WriteResourceNode} representing the write to the program counter.
+     */
+    public PcChange(WriteResourceNode cause) {
+      this.cause = cause;
+    }
+
+    @Override
+    public WriteResourceNode cause() {
+      return cause;
+    }
+
+    @Override
+    public Node copy() {
+      return new InstrExitNode.PcChange(cause.copy(WriteResourceNode.class));
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new InstrExitNode.PcChange(cause);
+    }
+
+    @Override
+    public <T extends GraphNodeVisitor> void accept(T visitor) {
+      // not used
+    }
+
+    @Override
+    protected void collectInputs(List<Node> collection) {
+      super.collectInputs(collection);
+      collection.add(cause);
+    }
+
+    @Override
+    protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+      super.applyOnInputsUnsafe(visitor);
+      cause = visitor.apply(this, cause, WriteResourceNode.class);
+    }
   }
 
+  public static final class Raise extends InstrExitNode {
+
+    /**
+     * The side effect operation causing the instruction exit.
+     * This is either a {@link WriteResourceNode} to the PC or
+     * a {@link vadl.viam.graph.dependency.ProcCallNode} representing a raise.
+     */
+    @Input
+    private ProcCallNode cause;
+
+
+    /**
+     * Constructs an {@code InstrExitNode} with the specified PC write operation.
+     *
+     * @param cause The {@link WriteResourceNode} representing the write to the program counter.
+     */
+    public Raise(ProcCallNode cause) {
+      this.cause = cause;
+    }
+
+    @Override
+    public ProcCallNode cause() {
+      return cause;
+    }
+
+    @Override
+    public Node copy() {
+      return new InstrExitNode.Raise(cause.copy(ProcCallNode.class));
+    }
+
+    @Override
+    public Node shallowCopy() {
+      return new InstrExitNode.Raise(cause);
+    }
+
+    @Override
+    public <T extends GraphNodeVisitor> void accept(T visitor) {
+      // not used
+    }
+
+    @Override
+    protected void collectInputs(List<Node> collection) {
+      super.collectInputs(collection);
+      collection.add(cause);
+    }
+
+    @Override
+    protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+      super.applyOnInputsUnsafe(visitor);
+      cause = visitor.apply(this, cause, ProcCallNode.class);
+    }
+  }
+
+
   /**
-   * Returns the {@link WriteResourceNode} associated with this node.
+   * Returns the {@link SideEffectNode} that causes the instruction exit.
    *
    * @return The PC write operation.
    */
-  public WriteResourceNode pcWrite() {
-    return pcWrite;
-  }
-
-  /**
-   * Creates a deep copy of this node, including a copy of the {@code pcWrite} node.
-   *
-   * @return A new {@code InstrExitNode} that is a deep copy of this node.
-   */
-  @Override
-  public Node copy() {
-    return new InstrExitNode(pcWrite.copy(WriteResourceNode.class));
-  }
-
-  /**
-   * Creates a shallow copy of this node, reusing the same {@code pcWrite} node.
-   *
-   * @return A new {@code InstrExitNode} that is a shallow copy of this node.
-   */
-  @Override
-  public Node shallowCopy() {
-    return new InstrExitNode(pcWrite);
-  }
-
-  /**
-   * Accepts a graph node visitor. This method is not used in this implementation.
-   *
-   * @param visitor The visitor to accept.
-   * @param <T>     The type of the graph node visitor.
-   */
-  @Override
-  public <T extends GraphNodeVisitor> void accept(T visitor) {
-    // not used
-  }
-
-  /**
-   * Collects the input nodes of this node into the provided collection.
-   * This includes the {@code pcWrite} node.
-   *
-   * @param collection The list to collect input nodes into.
-   */
-  @Override
-  protected void collectInputs(List<Node> collection) {
-    super.collectInputs(collection);
-    collection.add(pcWrite);
-  }
-
-  /**
-   * Applies the given visitor to this node's inputs in an unsafe manner.
-   * This method updates the {@code pcWrite} node by applying the visitor.
-   *
-   * @param visitor The visitor to apply to the input nodes.
-   */
-  @Override
-  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
-    super.applyOnInputsUnsafe(visitor);
-    pcWrite = visitor.apply(this, pcWrite, WriteResourceNode.class);
-  }
+  public abstract SideEffectNode cause();
 }

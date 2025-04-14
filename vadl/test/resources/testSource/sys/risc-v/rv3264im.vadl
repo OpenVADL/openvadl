@@ -251,7 +251,7 @@
                                        funct3 = 0b000 ; ("(", register(rs1), ")"))
 
   $ECallInstr (ECALL ; 0)                              // environment (sys) call
-  $ECallInstr (EBREAK; 1)                              // environment (sys) break
+//   $ECallInstr (EBREAK; 1)                              // environment (sys) break
 
 $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 

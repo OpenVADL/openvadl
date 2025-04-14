@@ -17,46 +17,36 @@
 package vadl.iss.passes;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.extensions.ExceptionInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.viam.Instruction;
 import vadl.viam.Specification;
 
-/**
- * This pass manipulates the VIAM with hardcoded elements.
- * E.g. it adds an exception generation to {@code ECALL} instruction because
- * this is not yet supported in the VADL specification.
- */
-public class IssHardcodedTcgAddOnPass extends AbstractIssPass {
-
-  public IssHardcodedTcgAddOnPass(IssConfiguration configuration) {
+public class IssExceptionDetectionPass extends AbstractIssPass {
+  public IssExceptionDetectionPass(IssConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return PassName.of("ISS Hardcoded TCG Add-Ons");
+    return new PassName("ISS Exception Detection Pass");
   }
 
-  List<Consumer<Instruction>> instrAddOns = List.of(
-
-  );
-
+  @Nullable
   @Override
-  public @Nullable Object execute(PassResults passResults, Specification viam)
-      throws IOException {
+  public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-    viam.isa().ifPresent(isa ->
-        isa.ownInstructions()
-            .forEach(i ->
-                instrAddOns.forEach(f -> f.accept(i))));
+    var isa = viam.mip().get().isa();
+
+    var info = new ExceptionInfo(configuration());
+    isa.attachExtension(info);
+
+    for (var exception : isa.exceptions()) {
+      info.addException(exception);
+    }
 
     return null;
   }
-
-
 }
