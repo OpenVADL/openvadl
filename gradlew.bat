@@ -77,8 +77,8 @@ set "JAVA_VERSION_STRING=%%~v"
 for /f "tokens=1 delims=." %%m in ("%JAVA_VERSION_STRING%") do (
 set /a JAVA_VERSION_MAJOR=%%m
 )
-if %JAVA_VERSION_MAJOR% lss 17 (
-echo ERROR: Java 17 or higher is required. Found Java version %JAVA_VERSION_STRING%.
+if %JAVA_VERSION_MAJOR% lss 21 (
+echo ERROR: Java 21 or higher is required. Found Java version %JAVA_VERSION_STRING%.
 exit /b 1
 
 @rem Execute Gradle

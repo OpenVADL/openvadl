@@ -42,7 +42,6 @@ idea.project.settings {
 
         // Ensure <component name="VcsManagerConfiguration">
         val vcsManagerConfig = root.ensureChild("component", mutableMapOf("name" to "VcsManagerConfiguration"))
-            .also { it.attributes()?.put("test", "hallo") }
         // Ensure <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" /> inside VcsManagerConfiguration
         vcsManagerConfig.ensureChild(
             "option",

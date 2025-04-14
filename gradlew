@@ -143,8 +143,8 @@ fi
 # Add minimum Java major version check, see: https://github.com/OpenVADL/openvadl/pull/162
 JAVA_VERSION_STRING=$("$JAVACMD" -version 2>&1 | grep 'version' | head -n 1 | cut -d '"' -f2)
 JAVA_VERSION_MAJOR=$(echo "$JAVA_VERSION_STRING" | cut -d '.' -f1)
-if [ "$JAVA_VERSION_MAJOR" -lt 17 ]; then
-    echo "ERROR: Java 17 or higher is required. Found Java version $JAVA_VERSION_STRING."
+if [ "$JAVA_VERSION_MAJOR" -lt 21 ]; then
+    echo "ERROR: Java 21 or higher is required. Found Java version $JAVA_VERSION_STRING."
     exit 1
 fi
 
