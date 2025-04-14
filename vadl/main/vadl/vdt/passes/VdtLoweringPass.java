@@ -24,7 +24,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
+import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
 import vadl.vdt.model.Node;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
@@ -67,7 +67,7 @@ public class VdtLoweringPass extends AbstractIssPass {
         .map(this::prepareInstruction)
         .toList();
 
-    return new TheilingDecodeTreeGenerator().generate(insns);
+    return new RegularDecodeTreeGenerator().generate(insns);
   }
 
   /**
