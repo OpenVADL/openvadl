@@ -49,7 +49,16 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
   @Override
   public Node generate(Collection<Instruction> instructions) {
 
-    // TODO: possibly pad the input instruction set, then validate
+    var width = instructions.stream()
+        .map(Instruction::width)
+        .max(Integer::compareTo)
+        .orElseThrow(() -> new IllegalArgumentException("Instructions must not be empty"));
+
+    // Pad instructions to the same width. If this results in overlapping instruction patterns,
+    // the algorithm will throw an exception anyway.
+    instructions = instructions.stream()
+        .map(insn -> padInstruction(insn, width))
+        .toList();
 
     validate(instructions);
 
@@ -111,6 +120,32 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
     }
 
     return partition;
+  }
+
+  /**
+   * Pads the instruction to the target width by adding don't care bits as least significant bits.
+   *
+   * @param insn        The instruction to pad
+   * @param targetWidth The target width
+   * @return The padded instruction, if necessary
+   */
+  private Instruction padInstruction(Instruction insn, int targetWidth) {
+    var pattern = insn.pattern();
+
+    if (pattern.width() >= targetWidth) {
+      return insn;
+    }
+
+    final PBit[] bits = new PBit[targetWidth];
+    for (int i = 0; i < targetWidth; i++) {
+      if (i < pattern.width()) {
+        bits[i] = pattern.get(i);
+      } else {
+        bits[i] = new PBit(PBit.Value.DONT_CARE);
+      }
+    }
+
+    return new Instruction(insn.source(), targetWidth, new BitPattern(bits));
   }
 
   /**
