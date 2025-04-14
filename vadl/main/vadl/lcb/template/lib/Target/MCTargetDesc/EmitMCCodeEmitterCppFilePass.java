@@ -80,8 +80,8 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var immediates = generateImmediates(passResults);
 
-    var symbolRefFixups = generateInstructionsForSymbolRefFixups(passResults);
-    var targetFixups = generateTargetFixups(passResults);
+    var symbolRefFixups = generateSymbolRefFixupMappings(passResults);
+    var targetFixups = generateTargetFixupMappings(passResults);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
@@ -100,7 +100,7 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
         .toList();
   }
 
-  private List<Map<String, Object>> generateTargetFixups(PassResults passResults) {
+  private List<Map<String, Object>> generateTargetFixupMappings(PassResults passResults) {
 
     var tableGenMachineInstructions =
         (List<TableGenMachineInstruction>) passResults.lastResultOf(
@@ -122,26 +122,26 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
           var opIndexFixupMap = new ArrayList<Triple<String, Integer, String>>();
 
           tableGenMachineInstructions.stream()
-              .filter(tableGenMachineInstruction -> {
-                return !tableGenMachineInstruction.llvmLoweringRecord().info().inputImmediates()
-                    .isEmpty();
-              }).forEach(
+              .filter(tableGenMachineInstruction -> !tableGenMachineInstruction.llvmLoweringRecord()
+                  .info().inputImmediates().isEmpty()
+              ).forEach(
                   tableGenMachineInstruction -> {
                     tableGenMachineInstruction.llvmLoweringRecord().info().inputImmediates()
                         .forEach(
                             immOp -> {
                               var field = immOp.immediateOperand().fieldAccessRef().fieldRef();
 
-                              var opIndex = tableGenMachineInstruction.llvmLoweringRecord().info()
-                                  .findInputIndex(field);
+                              var info = tableGenMachineInstruction.llvmLoweringRecord().info();
+                              var opIndex = info.findInputIndex(field) + info.outputs().size();
                               var loweredRelocationsForRelocationWithThisOperand =
                                   userSpecifiedRelocations.stream().filter(
                                       userReloc -> userReloc.field().equals(field));
+
                               loweredRelocationsForRelocationWithThisOperand.forEach(
                                   loweredReloc ->
                                       opIndexFixupMap.add(
-                                          new Triple<>(tableGenMachineInstruction.getName(), opIndex,
-                                              loweredReloc.fixup().name().value()))
+                                          new Triple<>(tableGenMachineInstruction.getName(),
+                                              opIndex, loweredReloc.fixup().name().value()))
 
                               );
                             }
@@ -162,7 +162,7 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
     ).toList();
   }
 
-  private List<Map<String, Object>> generateInstructionsForSymbolRefFixups(
+  private List<Map<String, Object>> generateSymbolRefFixupMappings(
       PassResults passResults) {
     var tableGenMachineInstructions =
         (List<TableGenMachineInstruction>) passResults.lastResultOf(

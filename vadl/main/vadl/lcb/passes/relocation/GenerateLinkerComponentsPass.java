@@ -70,6 +70,10 @@ public class GenerateLinkerComponentsPass extends Pass {
       List<RelocationsBeforeElfExpansion> relocationsBeforeElfExpansion
   ) {
 
+    /**
+     * Get all elf relocations. These are all {@link ImplementedUserSpecifiedRelocation}
+     * and all {@link AutomaticallyGeneratedRelocation}.
+     */
     public List<HasRelocationComputationAndUpdate> elfRelocations() {
       return Stream.concat(userSpecifiedRelocations.stream(),
               automaticallyGeneratedRelocations.stream())
@@ -259,7 +263,7 @@ public class GenerateLinkerComponentsPass extends Pass {
                                   VariantKindStore variantStore,
                                   List<Pair<Modifier, VariantKind>> linkModifierToVariantKind,
                                   List<AutomaticallyGeneratedRelocation> compilerRelocations,
-                                  List<RelocationsBeforeElfExpansion> relocationsBeforeElfExpansion) {
+                                  List<RelocationsBeforeElfExpansion> relocationsBeforeExpansion) {
     var modifier = Modifier.relative(imm);
     modifiers.add(modifier);
 
@@ -281,7 +285,7 @@ public class GenerateLinkerComponentsPass extends Pass {
     fixups.add(fixup);
 
     compilerRelocations.add(generated);
-    relocationsBeforeElfExpansion.add(generated);
+    relocationsBeforeExpansion.add(generated);
     variantStore.relocationVariantKinds.put(generated, variantKind);
   }
 
@@ -293,7 +297,7 @@ public class GenerateLinkerComponentsPass extends Pass {
                              VariantKindStore variantStore,
                              List<Pair<Modifier, VariantKind>> linkModifierToVariantKind,
                              List<AutomaticallyGeneratedRelocation> compilerRelocations,
-                             List<RelocationsBeforeElfExpansion> relocationsBeforeElfExpansion) {
+                             List<RelocationsBeforeElfExpansion> relocationsBeforeExpansion) {
 
     var modifier = Modifier.absolute(imm);
     modifiers.add(modifier);
@@ -316,7 +320,7 @@ public class GenerateLinkerComponentsPass extends Pass {
     fixups.add(fixup);
 
     compilerRelocations.add(generated);
-    relocationsBeforeElfExpansion.add(generated);
+    relocationsBeforeExpansion.add(generated);
     variantStore.relocationVariantKinds.put(generated, variantKind);
   }
 }

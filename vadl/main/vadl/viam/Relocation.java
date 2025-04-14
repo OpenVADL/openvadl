@@ -38,6 +38,15 @@ public class Relocation extends Function {
     ABSOLUTE,
     RELATIVE,
     GLOBAL_OFFSET_TABLE;
+
+    @Override
+    public String toString() {
+      return switch (this) {
+        case ABSOLUTE -> "ABS";
+        case RELATIVE -> "PCREL";
+        case GLOBAL_OFFSET_TABLE -> "GOT";
+      };
+    }
   }
 
   private final Kind kind;

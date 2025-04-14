@@ -28,7 +28,6 @@ import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
-import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.MachineInstructionLabelGroup;
@@ -93,8 +92,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi = (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
-        IdentifyFieldUsagePass.class);
     var linkerInformation = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
     var registerFiles = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
@@ -146,29 +143,25 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("conditionalValueRangeLowest", conditionalValueRange.lowest());
     map.put("conditionalValueRangeHighest", conditionalValueRange.highest());
     map.put("addImmediateHighModifier",
-        findHighModifier(addi, linkerInformation, fieldUsages).value());
+        findHighModifier(addi, linkerInformation).value());
     map.put("addImmediateLowModifier",
-        findLowModifier(addi, linkerInformation, fieldUsages).value());
+        findLowModifier(addi, linkerInformation).value());
     map.put("expandableDagNodes", coverageSummary.notCoveredSelectionDagNodes());
     return map;
   }
 
   private Modifier findHighModifier(Instruction instruction,
-                                    GenerateLinkerComponentsPass.Output output,
-                                    IdentifyFieldUsagePass.ImmediateDetectionContainer
-                                        fieldUsages) {
-    return findModifier(instruction, output, fieldUsages, RelocationFunctionLabel.HI);
+                                    GenerateLinkerComponentsPass.Output output) {
+    return findModifier(instruction, output, RelocationFunctionLabel.HI);
   }
 
   private Modifier findLowModifier(Instruction instruction,
-                                   GenerateLinkerComponentsPass.Output output,
-                                   IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages) {
-    return findModifier(instruction, output, fieldUsages, RelocationFunctionLabel.LO);
+                                   GenerateLinkerComponentsPass.Output output) {
+    return findModifier(instruction, output, RelocationFunctionLabel.LO);
   }
 
   private Modifier findModifier(Instruction instruction,
                                 GenerateLinkerComponentsPass.Output output,
-                                IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
                                 RelocationFunctionLabel relocationFunctionLabel) {
 
     var modifiers = output.modifiers().stream()
