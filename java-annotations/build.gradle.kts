@@ -32,6 +32,9 @@ dependencies {
 }
 
 tasks.withType<JavaCompile> {
+    sourceCompatibility = "21"
+    targetCompatibility = "21"
+
     options.compilerArgs.addAll(
         listOf(
             "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",

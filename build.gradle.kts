@@ -119,7 +119,7 @@ subprojects {
     }
 
     tasks.withType<JavaCompile> {
-        if (!name.toLowerCase().contains("test")) {
+        if (!name.lowercase().contains("test")) {
             options.errorprone {
                 check("NullAway", CheckSeverity.ERROR)
                 option("NullAway:AnnotatedPackages", "vadl,java-annotations")
