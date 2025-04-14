@@ -101,7 +101,7 @@ You can build and run in two steps with
 Which will create an executable script at: `vadl-cli/build/install/openvadl/bin/openvadl`.
 
 To build a [GraalVM Native Image](https://www.graalvm.org/latest/reference-manual/native-image/) you first need to set
-`$JAVA_HOME` to point to your GraalVM installation.
+`$JAVA_HOME` or `$GRAALVM_HOME` to point to your GraalVM installation.
 With that you can run:
 
 ```bash
