@@ -1185,7 +1185,68 @@ To specify exceptional behavior like overflow, the basic \ac{VADL} built-in func
 These built-in functions are used to specify instructions that handle operations with overflow as demonstrated in the example in Listing \r{if_match_raise_statement}.
 
 
-#### Forall Statement and Expression
+#### Tensors, Forall Statement and Expression
+
+Tensors are multi-dimensional arrays with a uniform type.
+In \ac{VADL} tensors are specified by vectors of vectors with a bit vector for the innermost dimension.
+When defining tensors the size of every dimension has to be enclosed separately in angle brackets.
+When indexing tensors the index of every dimension has to be enclosed separately in parentheses.
+The outermost index is the first one, the innermost index is the last one (left to right).
+Listing \r{tensor_forall} gives some examples for the definition of multidimensional registers (lines 3 to 6).
+Note that register `A` and `Z` have the same layout, they are just defined with two different notations, `A` with a multidimensional notation, `Z` with a relational notation which is more restricted in the size of the dimension (power of two).
+
+\ac{VADL} provides the `forall` keyword which can be used as a statement or as an expression to avoid elaborate specifications of tensor operations.
+The \ac{VADL} `forall` looks similar to known `forall` or `for` constructs in other programming or specification languages.
+But the semantics has some subtle differences.
+The body of a \ac{VADL} `forall` statement or expression is executed in parallel, there is no sequential execution and update of registers.
+It is forbidden to write to the same resource twice (register or memory).
+A forall starts with the keyword `forall` and is followed by a list of comma separated triples consisting of an index identfier, the keyword `in` and a range, the keyword `do` and the statement which should executed in parallel using different indices.
+The ranges can be ascending or descending.
+The symbol binds each value in its range and can be used inside the body similar to the variables in a `let` statement.
+The instruction definitions for `Init4X`, `Init4Z` and `AddElementsStat` in Listing \r{tensor_forall} demonstrate the usage of a `forall` statement.
+
+\listing{tensor_forall, Tensors\, Forall Statement and Expression}
+~~~{.vadl}
+instruction set architecture Tensor = {
+  using Index = Bits<4>
+  register X : Index -> Bits<32>
+  register Y : Index -> Bits<2><2><16>
+  register Z : Index -> Bits<4><16>
+  alias register A : Bits<16><4><16> = Z   // is identical to Z
+
+  format F : Bits<16> = {opcode : Bits<4>, rs2: Index, rs1: Index, rd: Index}
+
+  instruction Init4X : F =          // initialize 4 consecutive X registers
+    forall i in 0 .. 3 do X(rd + i) := 0
+
+  instruction Init4Z : F =          // initialize one Z vector
+    forall i in 0 .. 3 do Z(rd)(i) := 0
+
+  instruction AddElementsStat : F = // add elements of matrices rs1 and rs2 into rsd 
+    forall i in 0 .. 1, j in 0 .. 1 do
+      Y(rd)(i)(j) :=  Y(rs1)(i)(j) + Y(rs2)(i)(j)
+
+  instruction AddElementsExpr : F = // add elements of matrices rs1 and rs2 into rsd 
+    Y(rd) := forall i in 0 .. 1, j in 0 .. 1 tensor Y(rs1)(i)(j) + Y(rs2)(i)(j)
+//  Y(rd) := ((Y(rs1)(0)(0) + Y(rs2)(0)(0), Y(rs1)(0)(1) + Y(rs2)(0)(1)),
+//            (Y(rs1)(1)(0) + Y(rs2)(1)(0), Y(rs1)(1)(1) + Y(rs2)(1)(1)))
+
+  instruction Dot : F =             // compute scalar product with double sized result in X
+    X(rd) := forall i in 0 .. 3 fold + with Z(rs1)(i) *# Z(rs2)(i)
+//  X(rd) := ( ((Z(rs1)(0) *# Z(rs2)(0)) + (Z(rs1)(1) *# Z(rs2)(1))) +
+//             ((Z(rs1)(2) *# Z(rs2)(2)) + (Z(rs1)(3) *# Z(rs2)(3))) )
+}
+~~~
+\endlisting
+
+In \ac{VADL} a `forall` expression with the keywords `tensor` or `fold` can be used to describe concise tensor expressions.
+The `forall` expression with the keywords `tensor` or `fold` has the same structure and variable binding behavior as the `forall` statement described above.
+Instead of the `do` keyword, the expression either has the `tensor` keyword followed by an arbitrary expression, or the `fold` keyword followed by one of the binary operators `+`, `-`, `*`, `&`, `|` and `^`, then the keyword `with` and an arbitrary expression.
+The `fold` expression chains each expression together with the provided operator.
+Therefore, the result type is the same as the type of the expression after `with`.
+Listing \r{tensor_forall} shows both `forall` expressions.
+The instruction `AddElementsExpr` does the same as the instruction `AddElementsStat` but uses a `tensor` expression instead of a `forall` statement.
+The instruction `Dot` computes the scalar product using a multiplication with a double sized result and stores the computed sum in a register which is double sized.
 
 
 #### Lock Statement
