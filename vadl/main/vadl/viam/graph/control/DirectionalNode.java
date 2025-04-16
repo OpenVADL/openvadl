@@ -111,11 +111,12 @@ public abstract class DirectionalNode extends ControlNode {
    *
    * @param replacement The replacement of the current node
    */
-  public void replaceAndLink(DirectionalNode replacement) {
-    replace(replacement);
+  public DirectionalNode replaceAndLink(DirectionalNode replacement) {
+    var actual = replace(replacement);
     var next = this.next();
     setNext(null);
     replacement.setNext(next);
+    return actual;
   }
 
   public ControlNode next() {

@@ -26,7 +26,7 @@ import vadl.pass.Pass;
  */
 public abstract class AbstractIssPass extends Pass {
 
-  protected AbstractIssPass(IssConfiguration configuration) {
+  public AbstractIssPass(IssConfiguration configuration) {
     super(configuration);
   }
 

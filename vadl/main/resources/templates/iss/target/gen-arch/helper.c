@@ -7,20 +7,13 @@
 #include "qemu/qemu-print.h"
 #include "cpu-bits.h"
 
-G_NORETURN void [(${gen_arch_lower})]_raise_exception(CPU[(${gen_arch_upper})]State *env, int32_t exception, uintptr_t pc) {
+G_NORETURN void [(${gen_arch_lower})]_raise_exception(CPU[(${gen_arch_upper})]State *env, int32_t exception) {
     CPUState *cs = env_cpu(env);
-
     cs->exception_index = exception;
-    cpu_loop_exit_restore(cs, pc);
+    cpu_loop_exit_restore(cs, 0);
 }
 
-
-void helper_raise_exception(CPU[(${gen_arch_upper})]State *env, uint32_t exception) {
-    // Exit cpu loop without restore.
-    // If this helper function is raised, it is also the end of the TB any ways, so no restore necessary.
-    [(${gen_arch_lower})]_raise_exception(env, exception, 0);
-}
-
+// TODO: Remove unsupported exception once supported in spec
 void helper_unsupported(CPU[(${gen_arch_upper})]State *env) {
     CPUState *cs = env_cpu(env);
 
@@ -29,14 +22,8 @@ void helper_unsupported(CPU[(${gen_arch_upper})]State *env) {
     cpu_loop_exit(cs);
 }
 
+[# th:each="exc : ${exc_info.exceptions}"]
+[(${exc.helper_impl})]
+[/]
 
-target_ulong helper_csrrw(CPU[(${gen_arch_upper})]State *env, int csr, target_ulong src) {
-    // Currently the only CSR to access is MTVEC.
-    if (csr != CSR_MTVEC) {
-      qemu_printf("[VADL] CSR is not MTVEC, was %x . Do nothing.", csr);
-    }
 
-    const target_ulong val = env->mtvec;
-    env->mtvec             = src;
-    return val;
-}

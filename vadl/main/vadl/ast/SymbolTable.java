@@ -362,6 +362,13 @@ class SymbolTable {
         .build());
   }
 
+  private void reportAlreadyDefined(String error, SourceLocation location,
+                                    SourceLocation firstOccurence) {
+    errors.add(Diagnostic.error(error, location)
+        .locationNote(firstOccurence, "Already defined here.")
+        .build());
+  }
+
   /**
    * Distributes "SymbolTable" instances across the nodes in the AST.
    * For "let" expressions and statements, symbols for the declared variables are created here.
@@ -951,10 +958,10 @@ class SymbolTable {
             assembly.instructionNodes.add(pseudoInstr);
             assembly.symbolTable().extendBy(pseudoInstr.symbolTable());
             if (pseudoInstr.assemblyDefinition != null) {
-              assembly.symbolTable().reportError(
-                  "Encoding for %s pseudo instruction is already defined".formatted(
+              assembly.symbolTable().reportAlreadyDefined(
+                  "Assembly for %s pseudo instruction is already defined".formatted(
                       identifier),
-                  identifier.location());
+                  identifier.location(), pseudoInstr.assemblyDefinition.location());
             }
             pseudoInstr.assemblyDefinition = assembly;
           } else {
@@ -964,10 +971,10 @@ class SymbolTable {
               assembly.instructionNodes.add(instr);
 
               if (instr.assemblyDefinition != null) {
-                assembly.symbolTable().reportError(
-                    "Encoding for %s instruction is already defined".formatted(
+                assembly.symbolTable().reportAlreadyDefined(
+                    "Assembly for %s instruction is already defined".formatted(
                         identifier),
-                    identifier.location());
+                    identifier.location(), instr.assemblyDefinition.location());
               }
               instr.assemblyDefinition = assembly;
             }
@@ -983,9 +990,9 @@ class SymbolTable {
             encoding.symbolTable().requireAs(encoding.identifier(), InstructionDefinition.class);
         if (inst != null) {
           if (inst.encodingDefinition != null) {
-            encoding.symbolTable().reportError(
+            encoding.symbolTable().reportAlreadyDefined(
                 "Encoding for %s instruction is already defined".formatted(encoding.identifier()),
-                encoding.location());
+                encoding.location(), inst.encodingDefinition.location());
           } else {
             inst.encodingDefinition = encoding;
           }

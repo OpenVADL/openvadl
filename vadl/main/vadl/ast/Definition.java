@@ -2419,7 +2419,8 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
     var that = (ExceptionDefinition) o;
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(id, that.id)
-        && Objects.equals(statement, that.statement);
+        && Objects.equals(statement, that.statement)
+        && Objects.equals(params, that.params);
   }
 
   @Override
@@ -2427,6 +2428,7 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(id);
     result = 31 * result + Objects.hashCode(statement);
+    result = 31 * result + Objects.hashCode(params);
     return result;
   }
 }

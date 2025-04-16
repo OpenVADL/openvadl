@@ -15,13 +15,13 @@
 #include "exec/helper-info.c.inc"
 #undef  HELPER_H
 
-static TCGv cpu_pc;
-
-[# th:if="${insn_count}"]
-static TCGv cpu_insn_count;
+// define the registers tcgs
+[# th:each="reg : ${registers}"]
+static TCGv cpu_[(${reg.name_lower})];
 [/]
 
-[# th:each="reg_file, iterState : ${register_files}"] // define the register file tcgs
+// define the register file tcgs
+[# th:each="reg_file : ${register_files}"]
 static TCGv cpu_[(${reg_file.name_lower})][(${"[" + reg_file["size"] + "]"})];
 [/]
 
@@ -52,11 +52,8 @@ void [(${gen_arch_lower})]_tcg_init(void)
 {
     int i;
 
-    // set the cpu_pc TCGv
-    cpu_pc         = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, [(${gen_arch_upper})]_PC), "[(${gen_arch_upper})]_PC");
-    //only generate if insn_count feature is enabled
-    [# th:if="${insn_count}"]
-    cpu_insn_count = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, insn_count), "[(${gen_arch_upper})]_INSN_COUNT");
+    [# th:each="reg : ${registers}"]
+    cpu_[(${reg.name_lower})] = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, [(${reg.name_lower})]), "[(${reg.name_upper})]");
     [/]
 
     [# th:each="reg_file, iterState : ${register_files}"]
@@ -78,33 +75,12 @@ void [(${gen_arch_lower})]_tcg_init(void)
 /*
  * Helper functions called during translation:
  *
- *    - next_instr() ... reads the next encoded instruction from pc
- *    - ex_shift_n() ... shifts an immediate by some amount
- *    - ex_plus_1()  ... adds one to given immediate
  *    - get_<reg_file>()     ... returns a TCGv (variable) for the given register
  *    - dest_<reg_file>()    ... returns a TCGv (variable) to store result in
  *    - gen_set_<reg_file>() ... generates a write of the given TCGv to the given register
  *    - gen_goto_tb()        ... generates a jump with a given diff
  *
  */
-
-// TODO: Could potentially be removed
-/*static int ex_plus_1(DisasContext *ctx, int nf)
-{
-    return nf + 1;
-}*/
-
-// TODO: Could potentially be removed
-/*#define EX_SH(amount) \
-static int ex_shift_##amount(DisasContext *ctx, int imm) \
-{                                         \
-    return imm << amount;                 \
-}
-EX_SH(1)
-EX_SH(2)
-EX_SH(3)
-EX_SH(4)
-EX_SH(12)*/
 
 static target_ulong next_insn(DisasContext *ctx)
 {
@@ -147,7 +123,12 @@ static void gen_set_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num, T
 [/]
 
 static void gen_update_pc(DisasContext *ctx, target_ulong pc) {
-    tcg_gen_movi_tl(cpu_pc, pc);
+    tcg_gen_movi_tl(cpu_[(${pc_reg.name_lower})], pc);
+}
+
+static void gen_update_pc_diff(DisasContext *ctx, target_long diff) {
+    target_ulong dest = ctx->base.pc_next + diff;
+    gen_update_pc(ctx, dest);
 }
 
 
@@ -169,11 +150,6 @@ static void gen_goto_tb(DisasContext *ctx, int8_t n, target_ulong target_pc)
     ctx->base.is_jmp = DISAS_NORETURN;
 }
 
-static void generate_exception(DisasContext *ctx, int excp) {
-	tcg_gen_movi_tl(cpu_pc, ctx->base.pc_next);
-	gen_helper_raise_exception(tcg_env, tcg_constant_i32(excp));
-	ctx->base.is_jmp = DISAS_NORETURN;
-}
 
 static inline void gen_trunc(TCGv dest, TCGv arg, int bitWidth) {
     tcg_gen_andi_tl(dest, arg, (int64_t)((1ULL << bitWidth) - 1));
@@ -214,7 +190,7 @@ static void translate(DisasContext *ctx)
     if(!decode_insn(ctx, insn)) {
         error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04llx , insn: 0x%04x\n", ctx->base.pc_next, insn);
 
-        tcg_gen_movi_tl(cpu_pc, ctx->base.pc_next);
+        gen_update_pc_diff(ctx, 0);
         gen_helper_unsupported(tcg_env);
         ctx->base.is_jmp = DISAS_NORETURN;
     }

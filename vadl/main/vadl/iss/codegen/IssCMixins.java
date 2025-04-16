@@ -49,8 +49,8 @@ public interface IssCMixins {
   interface IssExpr {
 
     @Handler
-    default void impl(CGenContext<Node> ctx,
-                      vadl.iss.passes.opDecomposition.nodes.IssExprNode node) {
+    default void handle(CGenContext<Node> ctx,
+                        vadl.iss.passes.opDecomposition.nodes.IssExprNode node) {
       throwNotAllowed(node, "IssExprNode");
     }
 
@@ -66,8 +66,8 @@ public interface IssCMixins {
      * Implements the C code representation of the {@link IssConstExtractNode}.
      */
     @Handler
-    default void impl(CGenContext<Node> ctx,
-                      IssConstExtractNode node) {
+    default void handle(CGenContext<Node> ctx,
+                        IssConstExtractNode node) {
       var sign = node.isSigned() ? "s" : "u";
       ctx.wr("VADL_" + sign + "extract(")
           .gen(node.value())

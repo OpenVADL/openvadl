@@ -45,6 +45,7 @@ import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredica
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssBuiltInSimplificationPass;
 import vadl.iss.passes.IssConfigurationPass;
+import vadl.iss.passes.IssExceptionDetectionPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
 import vadl.iss.passes.IssHardcodedTcgAddOnPass;
@@ -67,6 +68,7 @@ import vadl.iss.template.target.EmitIssCpuParamHeaderPass;
 import vadl.iss.template.target.EmitIssCpuQomHeaderPass;
 import vadl.iss.template.target.EmitIssCpuSourcePass;
 import vadl.iss.template.target.EmitIssDecodeTreePass;
+import vadl.iss.template.target.EmitIssDoExcCIncPass;
 import vadl.iss.template.target.EmitIssGdbStubPass;
 import vadl.iss.template.target.EmitIssInsnTransCIncPass;
 import vadl.iss.template.target.EmitIssMachinePass;
@@ -127,8 +129,13 @@ public class PassOrders {
     // at the stage directly after the VIAM creation.
     order.add(new ViamCreationPass(configuration));
 
-    addHtmlDump(order, configuration, "VIAM Creation",
-        "Dump directly after frontend generated VIAM.");
+    if (configuration.getClass() == GeneralConfiguration.class) {
+      // only emit this dump if it is no specialized configuration (e.g. check)
+      // this avoids unnecessary (long) dumps when generating the ISS or LCB
+      // which have their own dumps at a later point.
+      addHtmlDump(order, configuration, "VIAM Creation",
+          "Dump directly after frontend generated VIAM.");
+    }
 
     order.add(new ViamVerificationPass(configuration));
 
@@ -158,11 +165,6 @@ public class PassOrders {
 
     // verification after viam optimizations
     order.add(new ViamVerificationPass(configuration));
-
-    addHtmlDump(order, configuration, "viamOptimizations",
-        "All common VIAM optimization that are required by most generators are executed.",
-        InstructionResourceAccessAnalysisPass.class
-    );
 
     return order;
   }
@@ -395,6 +397,7 @@ public class PassOrders {
         .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config))
         .add(new IssMemoryDetectionPass(config))
+        .add(new IssExceptionDetectionPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))
@@ -475,6 +478,8 @@ public class PassOrders {
         .add(issDefault("/target/gen-arch/helper.c", config))
         .add(issDefault("/target/gen-arch/helper.h", config))
         .add(issDefault("/target/gen-arch/cpu-bits.h", config))
+        // target/gen-arch/do-exception.c.inc
+        .add(new EmitIssDoExcCIncPass(config))
         // target/gen-arch/cpu-qom.h
         .add(new EmitIssCpuQomHeaderPass(config))
         // target/gen-arch/cpu-param.h

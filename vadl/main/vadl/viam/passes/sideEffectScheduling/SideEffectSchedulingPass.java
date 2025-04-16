@@ -42,6 +42,7 @@ import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -154,13 +155,15 @@ class SideEffectScheduler {
 
     var pcReg = pc != null ? pc.registerRef() : null;
     var partitionedEffects = endNode.sideEffects().stream()
-        .map(WriteResourceNode.class::cast)
+        // find side effects that cause instruction exits
         .collect(Collectors.partitioningBy(
-            s -> s.resourceDefinition().equals(pcReg)
+            s ->
+                (s instanceof WriteResourceNode write && write.resourceDefinition().equals(pcReg))
+                    || (s instanceof ProcCallNode procCall && procCall.exceptionRaise())
         ));
 
     var nonPcUpdateEffects = partitionedEffects.getOrDefault(false, List.of());
-    var pcSideEffect = partitionedEffects.getOrDefault(true, List.of())
+    var instrExitSideEffects = partitionedEffects.getOrDefault(true, List.of())
         .stream().findFirst();
 
     // All non-PC updates should be inserted directly at the beginning of the branch
@@ -169,8 +172,16 @@ class SideEffectScheduler {
     }
 
     // Add PC update directly in front of branch end
-    pcSideEffect.ifPresent(pcUpdate ->
-        endNode.addBefore(new InstrExitNode((WriteResourceNode) pcUpdate))
+    instrExitSideEffects.ifPresent(exitCause -> {
+          if (exitCause instanceof ProcCallNode procCall) {
+            endNode.addBefore(new InstrExitNode.Raise(procCall));
+          } else if (exitCause instanceof WriteResourceNode write) {
+            endNode.addBefore(new InstrExitNode.PcChange(write));
+          } else {
+            throw new IllegalStateException("Unexpected exit cause: " + exitCause);
+          }
+        }
+
     );
 
     return endNode;

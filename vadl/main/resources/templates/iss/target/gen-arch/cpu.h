@@ -4,6 +4,7 @@
 #include "cpu-qom.h"
 #include "exec/cpu-defs.h"
 #include "qemu/typedefs.h"
+#include "cpu-bits.h"
 
 #define CPU_RESOLVING_TYPE TYPE_[(${gen_arch_upper})]_CPU
 
@@ -27,24 +28,18 @@ typedef struct CPUArchState {
   [# th:each="reg_file, iterState : ${register_files}"] // CPU register file(s)
   [(${reg_file.value_c_type})] [(${reg_file.name_lower})][[${'[' + gen_arch_upper + '_REG_FILE_' + reg_file.name_upper + '_SIZE' + ']'}]];
   [/]
-  [# th:each="reg, iterState : ${registers}"] // CPU registers
+  // CPU registers
+  [# th:each="reg, iterState : ${registers}"]
   [(${reg.c_type})] [(${reg.name_lower})];
-  [/]
-  [# th:if="${insn_count}"]
-  uint64_t insn_count;
   [/]
 
   // pc reset vector
   uint64_t reset_vec;
 
-  // hardcoded CSR and Privilege registers
-  target_ulong priv;
-
-  uint64_t mstatus;
-  target_ulong mtvec;
-  target_ulong mcause;
-  target_ulong mepc;
-  target_ulong mtval;
+  // Exception arguments (intermediate store during exception handling)
+  [# th:each="exc : ${exc_info.exceptions}"] [# th:each="p : ${exc.params}"]
+  [(${p.c_type})] [(${p.name_in_cpu})];
+  [/][/]
 } CPU[(${gen_arch_upper})]State;
 
 
