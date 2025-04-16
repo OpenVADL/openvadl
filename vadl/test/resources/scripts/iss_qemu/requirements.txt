@@ -1,3 +1,4 @@
 pyyaml
 qemu.qmp
 tomli
+posix-ipc
