@@ -16,6 +16,8 @@
 
 package vadl.ast;
 
+import static vadl.error.Diagnostic.error;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -116,7 +118,7 @@ public class VadlParser {
     } catch (DiagnosticList e) {
       errors.addAll(e.items);
     } catch (Exception e) {
-      errors.add(Diagnostic.error("Parsing Error", SourceLocation.INVALID_SOURCE_LOCATION)
+      errors.add(error("Parsing Error", SourceLocation.INVALID_SOURCE_LOCATION)
           .description("The following exception was thrown:\n%s", e)
           .build());
     }
@@ -141,7 +143,7 @@ public class VadlParser {
 
         var location =
             new SourceLocation(parser.sourceFile, new SourceLocation.Position(lineNum, colNum));
-        var error = Diagnostic.error("Parsing Error", location)
+        var error = error("Parsing Error", location)
             .locationDescription(location, "%s", message)
             .description(
                 "The parser got confused at this point, probably because of a "

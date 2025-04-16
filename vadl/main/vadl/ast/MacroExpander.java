@@ -16,6 +16,8 @@
 
 package vadl.ast;
 
+import static vadl.error.Diagnostic.error;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -1203,7 +1205,7 @@ class MacroExpander
   }
 
   private void reportError(String error, SourceLocation location) {
-    errors.add(Diagnostic.error(error, location).build());
+    errors.add(error(error, location).build());
   }
 
   private boolean isReplacementNode(Node node) {

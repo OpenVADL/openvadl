@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.error.Diagnostic.error;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -115,7 +116,7 @@ public class TypeChecker
 
     var nodeId = System.identityHashCode(expr);
     if (currentlyVisiting.contains(nodeId)) {
-      throw Diagnostic.error("Infinite Recursion", expr)
+      throw error("Infinite Recursion", expr)
           .description("The node is defined by itself.")
           .build();
     }
@@ -138,7 +139,7 @@ public class TypeChecker
 
     var nodeId = System.identityHashCode(stmt);
     if (currentlyVisiting.contains(nodeId)) {
-      throw Diagnostic.error("Infinite Recursion", stmt)
+      throw error("Infinite Recursion", stmt)
           .description("The node is defined by itself.")
           .build();
     }
@@ -167,7 +168,7 @@ public class TypeChecker
             "Definition `%s` is defined by itself.".formatted(identifiableNode.identifier().name);
       }
 
-      throw Diagnostic.error("Infinite Recursion", def)
+      throw error("Infinite Recursion", def)
           .description("%s", message)
           .build();
     }
@@ -207,7 +208,7 @@ public class TypeChecker
 
   private Diagnostic typeMissmatchError(WithSourceLocation locatable, String expectation,
                                         Type actual) {
-    return Diagnostic.error("Type Mismatch", locatable)
+    return error("Type Mismatch", locatable)
         .locationDescription(locatable, "Expected %s but got `%s`.",
             expectation, actual)
         .build();
@@ -220,7 +221,7 @@ public class TypeChecker
   }
 
   private void throwInvalidAsmCast(AsmType from, AsmType to, WithSourceLocation location) {
-    throw Diagnostic.error("Type Mismatch", location)
+    throw error("Type Mismatch", location)
         .description("Invalid cast from `%s` to `%s`.", from, to)
         .build();
   }
@@ -424,7 +425,7 @@ public class TypeChecker
     try {
       constantEvaluator.eval(definition.value);
     } catch (EvaluationError e) {
-      throw Diagnostic.error("Invalid constant value", definition.value)
+      throw error("Invalid constant value", definition.value)
           .locationDescription(e.location, "%s", Objects.requireNonNull(e.getMessage()))
           .description("All constants must be able to be evaluated")
           .build();
@@ -449,7 +450,7 @@ public class TypeChecker
         var fieldType = check(typedField.typeLiteral);
 
         if (!(fieldType instanceof BitsType fieldBitsType)) {
-          throw Diagnostic.error("Bits Type expected", typedField.typeLiteral)
+          throw error("Bits Type expected", typedField.typeLiteral)
               .description("Format fields can only be assigned a bits type.")
               .build();
         }
@@ -482,7 +483,7 @@ public class TypeChecker
           // NOTE: From is always larger than to
           var rangeSize = (from - to) + 1;
           if (rangeSize < 1) {
-            throw Diagnostic.error("Invalid Range", rangeField)
+            throw error("Invalid Range", rangeField)
                 .description("Range must be >= 1 but was %s", fieldBitWidth)
                 .build();
           }
@@ -492,7 +493,7 @@ public class TypeChecker
         }
 
         if (fieldBitWidth < 1) {
-          throw Diagnostic.error("Invalid Field", rangeField)
+          throw error("Invalid Field", rangeField)
               .description("Field must be at least one bit but was %s", fieldBitWidth)
               .build();
         }
@@ -504,7 +505,7 @@ public class TypeChecker
           // Verify the received type with the one provided in the literal.
           var rangeBitsType = Type.bits(fieldBitWidth);
           if (!canImplicitCast(rangeField.type, rangeBitsType)) {
-            throw Diagnostic.error("Type Mismatch", rangeField)
+            throw error("Type Mismatch", rangeField)
                 .description("Type declared as `%s`, but the range is `%s`", rangeField.type,
                     rangeBitsType)
                 .build();
@@ -519,7 +520,7 @@ public class TypeChecker
     }
 
     if (bitsVerifier.hasViolations()) {
-      throw Diagnostic.error("Invalid Format", definition)
+      throw error("Invalid Format", definition)
           .description("%s", requireNonNull(bitsVerifier.getViolationsMessage()))
           .build();
     }
@@ -562,7 +563,7 @@ public class TypeChecker
     check(definition.typeLiteral);
     if (!(definition.typeLiteral.type instanceof DataType regType)) {
       var type = definition.typeLiteral.type;
-      throw Diagnostic.error("Invalid Type", definition)
+      throw error("Invalid Type", definition)
           .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
           .note("Type was %s.", type == null ? "unknown" : type)
           .build();
@@ -591,12 +592,12 @@ public class TypeChecker
     check(definition.behavior);
 
     if (definition.assemblyDefinition == null) {
-      throw Diagnostic.error("Missing Assembly", definition.identifier())
+      throw error("Missing Assembly", definition.identifier())
           .description("Every instruction needs an matching assembly definition.")
           .build();
     }
     if (definition.encodingDefinition == null) {
-      throw Diagnostic.error("Missing Encoding", definition.identifier())
+      throw error("Missing Encoding", definition.identifier())
           .description("Every instruction needs an matching encoding definition.")
           .build();
     }
@@ -614,7 +615,7 @@ public class TypeChecker
 
     // Verify the existenc of a matching assemblyDefinition
     if (definition.assemblyDefinition == null) {
-      throw Diagnostic.error("Missing Assembly", definition.identifier())
+      throw error("Missing Assembly", definition.identifier())
           .description("Every pseudo instruction needs an matching assembly definition.")
           .build();
     }
@@ -637,7 +638,7 @@ public class TypeChecker
     definition.expr = wrapImplicitCast(definition.expr, definedType);
     var actualType = requireNonNull(definition.expr.type);
     if (!definedType.equals(actualType)) {
-      throw Diagnostic.error("Type Missmatch", definition.expr)
+      throw error("Type Missmatch", definition.expr)
           .description("Expected %s but got %s", definedType, actualType)
           .build();
     }
@@ -704,7 +705,7 @@ public class TypeChecker
     var exprType = requireNonNull(definition.expr.type);
 
     if (!exprType.equals(retType)) {
-      throw Diagnostic.error("Type Mismatch", definition.expr)
+      throw error("Type Mismatch", definition.expr)
           .locationDescription(definition.retType, "Return type defined here as `%s`", retType)
           .locationDescription(definition.expr, "Expected `%s` but got `%s`", retType, exprType)
           .build();
@@ -720,7 +721,7 @@ public class TypeChecker
   public Void visit(AliasDefinition definition) {
     if (definition.kind == AliasDefinition.AliasKind.REGISTER_FILE) {
       if (!(definition.value instanceof Identifier valIdent)) {
-        throw Diagnostic.error("Invalid alias", definition.value)
+        throw error("Invalid alias", definition.value)
             .locationDescription(definition.value, "The target must be an identifier but was `%s`",
                 definition.value.getClass().getSimpleName())
             .build();
@@ -730,7 +731,7 @@ public class TypeChecker
           requireNonNull(definition.symbolTable).findAs(valIdent, RegisterFileDefinition.class);
 
       if (regFile == null) {
-        throw Diagnostic.error("Invalid alias", valIdent)
+        throw error("Invalid alias", valIdent)
             .locationDescription(valIdent, "Doesn't point to a register file.")
             .build();
       }
@@ -755,7 +756,7 @@ public class TypeChecker
 
     if (definition.kind == AliasDefinition.AliasKind.REGISTER) {
       if (definition.targetType != null) {
-        throw Diagnostic.error("Invalid Register Alias", definition.targetType)
+        throw error("Invalid Register Alias", definition.targetType)
             .build();
       }
       var valType = check(definition.value);
@@ -777,7 +778,7 @@ public class TypeChecker
   public Void visit(EnumerationDefinition definition) {
     var type = definition.enumType != null ? check(definition.enumType) : null;
     if (type != null && !(type instanceof BitsType bitsType)) {
-      throw Diagnostic.error("Type mismatch", definition)
+      throw error("Type mismatch", definition)
           .locationDescription(requireNonNull(definition.enumType),
               "Expected bits type but got `%s`", type)
           .note("In future there will be support for Strings and other types as well.")
@@ -786,7 +787,7 @@ public class TypeChecker
 
     // check if there are enums
     if (definition.entries.isEmpty()) {
-      throw Diagnostic.error("No enumeration entries", definition)
+      throw error("No enumeration entries", definition)
           .locationDescription(definition,
               "The enumeration has no entries, but at least one is required.")
           .build();
@@ -910,18 +911,18 @@ public class TypeChecker
       switch (entry.getValue()) {
         case ONE -> {
           if (registers.isEmpty()) {
-            throw Diagnostic.error(
+            throw error(
                 "No " + purpose.name() + " registers were declared but one was expected",
                 definition.sourceLocation()).build();
           } else if (registers.size() != 1) {
-            throw Diagnostic.error(
+            throw error(
                 "Multiple " + purpose.name() + " registers were declared but only one was expected",
                 SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
           }
         }
         case OPTIONAL -> {
           if (!(registers.isEmpty() || registers.size() == 1)) {
-            throw Diagnostic.error(
+            throw error(
                 "Multiple " + purpose.name()
                     + " registers were declared but zero or one was expected",
                 SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
@@ -929,7 +930,7 @@ public class TypeChecker
         }
         case AT_LEAST_ONE -> {
           if (registers.isEmpty()) {
-            throw Diagnostic.error(
+            throw error(
                 "Zero " + purpose.name() + " registers were declared but at least one was expected",
                 definition.sourceLocation()).build();
           }
@@ -946,10 +947,10 @@ public class TypeChecker
           .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
           .toList();
 
-      var noValues = Diagnostic.error(
+      var noValues = error(
           "No " + kind.name() + " was declared but one was expected",
           definition.sourceLocation()).build();
-      var multipleValues = Diagnostic.error(
+      var multipleValues = error(
           "Multiple " + kind.name() + " were declared but one was expected",
           definition.sourceLocation()).build();
 
@@ -1058,7 +1059,7 @@ public class TypeChecker
     if (!asmRuleInvocationChain.add(definition.identifier().name)) {
       var cycle =
           String.join(" -> ", asmRuleInvocationChain) + " -> " + definition.identifier().name;
-      throw Diagnostic.error("Found a cycle in grammar rules: %s.".formatted(cycle),
+      throw error("Found a cycle in grammar rules: %s.".formatted(cycle),
           definition.sourceLocation()).build();
     }
 
@@ -1121,9 +1122,9 @@ public class TypeChecker
         if (element.localVar != null) {
           for (int j = 0; j < i; j++) {
             if (elements.get(j).localVar == null && elements.get(j).semanticPredicate == null) {
-              throw Diagnostic.error(
-                      "Local variable declaration is not at the beginning of a block.",
-                      element.sourceLocation())
+              throw error(
+                  "Local variable declaration is not at the beginning of a block.",
+                  element.sourceLocation())
                   .locationDescription(element.localVar.sourceLocation(),
                       "Local variable declared here.")
                   .locationDescription(elements.get(0).sourceLocation(), "Block starts here.")
@@ -1180,7 +1181,7 @@ public class TypeChecker
     if (element.attribute != null && !element.isAttributeLocalVar
         && !element.isWithinRepetitionBlock) {
       if (groupSubtypeMap.containsKey(element.attribute.name)) {
-        throw Diagnostic.error("Found multiple assignments to attribute.", element)
+        throw error("Found multiple assignments to attribute.", element)
             .description("Attribute %s has already been assigned to.",
                 element.attribute.name).build();
       }
@@ -1218,7 +1219,7 @@ public class TypeChecker
                                                              Map<String, AsmType> groupSubtypeMap,
                                                              String attributeToBeAdded) {
     if (groupSubtypeMap.containsKey(attributeToBeAdded)) {
-      throw Diagnostic.error("Found invalid attribute assignment.", element)
+      throw error("Found invalid attribute assignment.", element)
           .description(
               "Attribute %s assigned in this block is already assigned in enclosing block.",
               attributeToBeAdded)
@@ -1239,8 +1240,8 @@ public class TypeChecker
     }
 
     if (!allAlternativeType.equals(curAlternativeType)) {
-      throw Diagnostic.error(
-              "Found asm alternatives with differing AsmTypes.", definition.sourceLocation())
+      throw error(
+          "Found asm alternatives with differing AsmTypes.", definition.sourceLocation())
           .note("All alternatives must resolve to the same AsmType.")
           .locationDescription(allAlternativeTypeElement,
               "Found alternative with type %s,", allAlternativeType)
@@ -1274,7 +1275,7 @@ public class TypeChecker
     if (definition.semanticPredicate != null) {
       check(definition.semanticPredicate);
       if (definition.semanticPredicate.type != Type.bool()) {
-        throw Diagnostic.error("Semantic predicate expression does not evaluate to Boolean.",
+        throw error("Semantic predicate expression does not evaluate to Boolean.",
             definition.semanticPredicate).build();
       }
     }
@@ -1335,7 +1336,7 @@ public class TypeChecker
       requireNonNull(definition.asmType);
       requireNonNull(localVarDefinition.asmType);
       if (localVarDefinition.asmType != definition.asmType) {
-        throw Diagnostic.error("Type Mismatch", definition)
+        throw error("Type Mismatch", definition)
             .locationDescription(localVarDefinition, "Local variable %s is "
                     + "defined with AsmType %s.",
                 definition.attribute.name, localVarDefinition.asmType)
@@ -1350,21 +1351,21 @@ public class TypeChecker
   private void validateAttributeAsmType(AsmGrammarElementDefinition definition) {
     if (definition.attribute != null && !definition.isAttributeLocalVar) {
       if (!definition.isWithinRepetitionBlock && definition.isPlusEqualsAttributeAssign) {
-        throw Diagnostic.error("'+=' assignments are only allowed inside of repetition blocks.",
+        throw error("'+=' assignments are only allowed inside of repetition blocks.",
             definition.sourceLocation()).build();
       }
 
       if (definition.isWithinRepetitionBlock) {
         if (!definition.isPlusEqualsAttributeAssign) {
-          throw Diagnostic.error("Only '+=' assignments are allowed in repetition blocks.",
+          throw error("Only '+=' assignments are allowed in repetition blocks.",
               definition.sourceLocation()).build();
         }
 
         var parentAttributeElement = attributesAssignedInParent.get(definition.attribute.name);
         if (parentAttributeElement == null || parentAttributeElement.asmType == null) {
-          throw Diagnostic.error(
-                  "'%s' does not exist in the surrounding block."
-                      .formatted(definition.attribute.name), definition.sourceLocation())
+          throw error(
+              "'%s' does not exist in the surrounding block."
+                  .formatted(definition.attribute.name), definition.sourceLocation())
               .note("'+=' assignments have to reference an attribute in the surrounding block.")
               .build();
         }
@@ -1375,10 +1376,10 @@ public class TypeChecker
         }
 
         if (!definition.asmType.canBeCastTo(parentAttributeElement.asmType)) {
-          throw Diagnostic.error(
-                  "Element of AsmType %s cannot be '+=' assigned to attribute %s of AsmType %s."
-                      .formatted(definition.asmType, definition.attribute.name,
-                          parentAttributeElement.asmType), definition.sourceLocation())
+          throw error(
+              "Element of AsmType %s cannot be '+=' assigned to attribute %s of AsmType %s."
+                  .formatted(definition.asmType, definition.attribute.name,
+                      parentAttributeElement.asmType), definition.sourceLocation())
               .locationDescription(parentAttributeElement,
                   "Attribute %s is assigned to AsmType %s here.", definition.attribute.name,
                   parentAttributeElement.asmType)
@@ -1415,8 +1416,8 @@ public class TypeChecker
     } else if (invocationSymbolOrigin instanceof FunctionDefinition function) {
       visitAsmFunctionInvocation(definition, function);
     } else {
-      throw Diagnostic.error(("Symbol %s used in grammar rule does not reference a grammar rule "
-              + "/ function / local variable.").formatted(definition.id.name), definition)
+      throw error(("Symbol %s used in grammar rule does not reference a grammar rule "
+          + "/ function / local variable.").formatted(definition.id.name), definition)
           .locationDescription(invocationSymbolOrigin, "Symbol %s is defined here.",
               definition.id.name)
           .build();
@@ -1455,7 +1456,7 @@ public class TypeChecker
   private void visitAsmLocalVarUsage(AsmGrammarLiteralDefinition enclosingAsmLiteral,
                                      AsmGrammarLocalVarDefinition localVar) {
     if (!enclosingAsmLiteral.parameters.isEmpty()) {
-      throw Diagnostic.error("Local variable with parameters.", enclosingAsmLiteral)
+      throw error("Local variable with parameters.", enclosingAsmLiteral)
           .note("Usage of a local variable cannot have parameters.").build();
     }
 
@@ -1476,7 +1477,7 @@ public class TypeChecker
     check(function);
 
     if (enclosingAsmLiteral.parameters.size() != function.params.size()) {
-      throw Diagnostic.error("Arguments Mismatch", enclosingAsmLiteral)
+      throw error("Arguments Mismatch", enclosingAsmLiteral)
           .locationDescription(function, "Expected %d arguments.", function.params.size())
           .locationDescription(enclosingAsmLiteral, "But got %d arguments.",
               enclosingAsmLiteral.parameters.size())
@@ -1492,7 +1493,7 @@ public class TypeChecker
       requireNonNull(argumentType);
 
       if (!canImplicitCast(asmParam.asmType.toOperationalType(), argumentType)) {
-        throw Diagnostic.error("Type Mismatch in function argument", enclosingAsmLiteral)
+        throw error("Type Mismatch in function argument", enclosingAsmLiteral)
             .locationDescription(function.params.get(i), "Expected %s.", argumentType)
             .locationDescription(asmParam, "Got %s (from %s).",
                 asmParam.asmType.toOperationalType(), asmParam.asmType)
@@ -1536,7 +1537,7 @@ public class TypeChecker
         definition.asmType =
             getAsmTypeFromAsmTypeDefinition(definition.asmLiteral.asmTypeDefinition);
       } else {
-        throw Diagnostic.error("Local variable without AsmType", definition)
+        throw error("Local variable without AsmType", definition)
             .note("Local variables declarations with value 'null' must have an AsmType.")
             .build();
       }
@@ -1572,20 +1573,20 @@ public class TypeChecker
         SpecialPurposeRegisterDefinition.Purpose.numberOfExpectedArguments.get(definition.purpose);
 
     if (actual == null) {
-      throw Diagnostic.error("Cannot determine number of expected registers",
+      throw error("Cannot determine number of expected registers",
           definition.sourceLocation()).build();
     }
 
     if (actual == Occurrence.ONE) {
       if (definition.exprs.size() != 1) {
-        throw Diagnostic.error("Number of registers is incorrect. This definition expects only one",
+        throw error("Number of registers is incorrect. This definition expects only one",
             definition.sourceLocation()).build();
       }
     }
 
     if (actual == Occurrence.ONE) {
       if (definition.exprs.isEmpty()) {
-        throw Diagnostic.error(
+        throw error(
             "Number of registers is incorrect. This definition expects at least one.",
             definition.sourceLocation()).build();
       }
@@ -1603,7 +1604,7 @@ public class TypeChecker
 
     BiConsumer<Definition, String> addConflictDiag =
         (def, name) -> errors.add(
-            Diagnostic.error("Conflicting definitions.", definition.identifier())
+            error("Conflicting definitions.", definition.identifier())
                 .locationDescription(definition.identifier(), "Contains multiple `%s` definitions.",
                     name)
                 .note("Only one `%s` definition is allowed.", name)
@@ -1629,7 +1630,7 @@ public class TypeChecker
         .findFirst().orElse(null);
     if (start == null) {
       errors.add(
-          Diagnostic.error("Missing `start` address function.", definition.identifier()).build()
+          error("Missing `start` address function.", definition.identifier()).build()
       );
     }
 
@@ -1803,7 +1804,7 @@ public class TypeChecker
       check(functionDefinition);
 
       if (!functionDefinition.params.isEmpty()) {
-        throw Diagnostic.error("Invalid Function Call", expr)
+        throw error("Invalid Function Call", expr)
             .description("Expected `%s` arguments but got `%s`", functionDefinition.params.size(),
                 0)
             .build();
@@ -1818,7 +1819,7 @@ public class TypeChecker
       check(exceptionDef);
 
       if (!exceptionDef.params.isEmpty()) {
-        throw Diagnostic.error("Invalid Exception Raise", expr)
+        throw error("Invalid Exception Raise", expr)
             .description("Expected `%s` arguments but got `%s`", exceptionDef.params.size(),
                 0)
             .build();
@@ -1846,9 +1847,12 @@ public class TypeChecker
       // It's not a builtin but we don't handle it yet.
       // We might be here from a call expr and it might be necessary to handle the call for another
       // definition.
-      throw new RuntimeException(
-          "Don't handle class %s found in %s".formatted(origin.getClass().getName(),
-              expr.location().toIDEString()));
+
+      throw error("Invalid Expression", expr)
+          .locationDescription(expr,
+              "The name '%s' points to a `%s` which cannot be used as an expression.", fullName,
+              origin.getClass().getSimpleName())
+          .build();
     }
 
     // It's also possible to call functions without parenthesis if the function doesn't take any
@@ -1879,7 +1883,7 @@ public class TypeChecker
 
     // Both sides must be boolean
     if (!(leftTyp instanceof BoolType) && !canImplicitCast(leftTyp, Type.bool())) {
-      throw Diagnostic.error("Type Mismatch", expr)
+      throw error("Type Mismatch", expr)
           .locationDescription(expr, "Expected a `Bool` here but the left side was an `%s`",
               leftTyp)
           .description("The `%s` operator only works on booleans.", expr.operator())
@@ -1889,7 +1893,7 @@ public class TypeChecker
 
     var rightTyp = requireNonNull(expr.right.type);
     if (!(rightTyp instanceof BoolType) && !canImplicitCast(rightTyp, Type.bool())) {
-      throw Diagnostic.error("Type Mismatch", expr)
+      throw error("Type Mismatch", expr)
           .locationDescription(expr, "Expected a `Bool` here but the right side was an `%s`",
               rightTyp)
           .description("The `%s` operator only works on booleans.", expr.operator())
@@ -1934,7 +1938,7 @@ public class TypeChecker
       }
 
       if (!(leftTyp instanceof BitsType) && !(leftTyp instanceof ConstantType)) {
-        throw Diagnostic.error("Type Missmatch", expr)
+        throw error("Type Missmatch", expr)
             .locationDescription(expr, "Expected a number here but the left side was an `%s`",
                 leftTyp)
             .description("The `%s` operator only works on pairs of numbers or strings.",
@@ -1942,7 +1946,7 @@ public class TypeChecker
             .build();
       }
       if (!(rightTyp instanceof BitsType) && !(rightTyp instanceof ConstantType)) {
-        throw Diagnostic.error("Type Missmatch", expr)
+        throw error("Type Missmatch", expr)
             .locationDescription(expr, "Expected a number here but the right side was an `%s`",
                 rightTyp)
             .description("The `%s` operator only works on pairs of numbers or string.s",
@@ -1969,7 +1973,7 @@ public class TypeChecker
 
       if (!(rightTyp instanceof UIntType || rightTyp instanceof BitsType)
           && !canImplicitCast(rightTyp, closestUIntType)) {
-        throw Diagnostic.error("Type Missmatch", expr)
+        throw error("Type Missmatch", expr)
             .locationNote(expr, "The right type must be unsigned but is %s", rightTyp)
             .build();
       }
@@ -1983,7 +1987,7 @@ public class TypeChecker
       if (leftTyp instanceof ConstantType) {
 
         if (List.of(Operator.RotateLeft, Operator.RotateRight).contains(expr.operator())) {
-          throw Diagnostic.error("Type Missmatch", expr)
+          throw error("Type Missmatch", expr)
               .locationNote(expr, "The left side must be a concrete type but was %s", rightTyp)
               .description("Rotate operations require a type with a fixed bit width.")
               .build();
@@ -2021,7 +2025,7 @@ public class TypeChecker
       var leftBitWidth = ((BitsType) leftTyp).bitWidth();
       var rightBitWidth = ((BitsType) rightTyp).bitWidth();
       if (leftBitWidth != rightBitWidth) {
-        throw Diagnostic.error("Type Mismatch", expr)
+        throw error("Type Mismatch", expr)
             .description("Both sides must have the same width but left is `%s` while right is `%s`",
                 leftTyp, rightTyp)
             .build();
@@ -2077,7 +2081,7 @@ public class TypeChecker
     rightTyp = expr.right.type();
 
     if (!leftTyp.equals(rightTyp)) {
-      throw Diagnostic.error("Type Missmatch", expr)
+      throw error("Type Missmatch", expr)
           .locationNote(expr, "The left type is %s while right is %s", leftTyp, rightTyp)
           .description(
               "Both types on the left and right side of an binary operation should be equal.")
@@ -2121,7 +2125,7 @@ public class TypeChecker
       return null;
     }
 
-    throw Diagnostic.error("Type Mismatch", expr)
+    throw error("Type Mismatch", expr)
         .locationNote(expr, "Provided types: %s",
             String.join(", ", types.stream().map(Type::toString).toList()))
         .description(
@@ -2171,13 +2175,13 @@ public class TypeChecker
     var toType = check(expr.to);
 
     if (!(fromType instanceof BitsType) && !(fromType instanceof ConstantType)) {
-      throw Diagnostic.error("Type Mismatch", expr.from)
+      throw error("Type Mismatch", expr.from)
           .description("The from part of a range must be a number but was `%s`", fromType)
           .build();
     }
 
     if (!(toType instanceof BitsType) && !(toType instanceof ConstantType)) {
-      throw Diagnostic.error("Type Mismatch", expr.to)
+      throw error("Type Mismatch", expr.to)
           .description("The to part of a range must be a number but was `%s`", fromType)
           .build();
     }
@@ -2186,7 +2190,7 @@ public class TypeChecker
     var toVal = constantEvaluator.eval(expr.to).value();
 
     if (toVal.compareTo(fromVal) > 0) {
-      throw Diagnostic.error("Invalid range", expr)
+      throw error("Invalid range", expr)
           .description("From is %s but to is %s, but ranges must be decreasing", fromVal, toVal)
           .build();
     }
@@ -2214,7 +2218,7 @@ public class TypeChecker
 
     if (base.equals("Bool")) {
       if (!expr.sizeIndices.isEmpty()) {
-        throw Diagnostic.error("Invalid Type Notation", expr.location())
+        throw error("Invalid Type Notation", expr.location())
             .description("The Bool type doesn't use the size notation as it is always one bit.")
             .build();
       }
@@ -2223,7 +2227,7 @@ public class TypeChecker
 
     if (base.equals("String")) {
       if (!expr.sizeIndices.isEmpty()) {
-        throw Diagnostic.error("Invalid Type Notation", expr.location())
+        throw error("Invalid Type Notation", expr.location())
             .description("The String type doesn't use the size notation.")
             .build();
       }
@@ -2234,7 +2238,7 @@ public class TypeChecker
     if (Arrays.asList("SInt", "UInt", "Bits").contains(base)) {
 
       if (expr.sizeIndices.isEmpty() && preferredBitWidth == null) {
-        throw Diagnostic.error("Invalid Type Notation", expr.location())
+        throw error("Invalid Type Notation", expr.location())
             .description(
                 "Unsized `%s` can only be used in special places when it's obvious what the bit"
                     + " width should be.",
@@ -2245,7 +2249,7 @@ public class TypeChecker
 
       if (!expr.sizeIndices.isEmpty()
           && (expr.sizeIndices.size() != 1 || expr.sizeIndices.get(0).size() != 1)) {
-        throw Diagnostic.error("Invalid Type Notation", expr.location())
+        throw error("Invalid Type Notation", expr.location())
             .description("The %s type requires exactly one size parameter.", base)
             .build();
       }
@@ -2257,7 +2261,7 @@ public class TypeChecker
         bitWidth = constantEvaluator.eval(widthExpr).value().intValueExact();
 
         if (bitWidth < 1) {
-          throw Diagnostic.error("Invalid Type Notation", widthExpr.location())
+          throw error("Invalid Type Notation", widthExpr.location())
               .locationDescription(widthExpr.location(),
                   "Width must of a %s must be greater than 1 but was %s", base, bitWidth)
               .build();
@@ -2288,7 +2292,7 @@ public class TypeChecker
     var sb = new StringBuilder();
     expr.prettyPrint(0, sb);
     var typeName = sb.toString();
-    throw Diagnostic.error("Unknown Type `%s`".formatted(typeName), expr)
+    throw error("Unknown Type `%s`".formatted(typeName), expr)
         .description("No type with that name exists.")
         .build()
         ;
@@ -2314,8 +2318,7 @@ public class TypeChecker
       case NEGATIVE -> {
         expr.computedTarget = BuiltInTable.NEG;
         if (!(innerType instanceof BitsType) && !(innerType instanceof ConstantType)) {
-          throw Diagnostic
-              .error("Type Mismatch", expr)
+          throw error("Type Mismatch", expr)
               .description("Expected a numerical type but got `%s`", innerType)
               .build();
         }
@@ -2323,8 +2326,7 @@ public class TypeChecker
       case COMPLEMENT -> {
         expr.computedTarget = BuiltInTable.NOT;
         if (!(innerType instanceof BitsType)) {
-          throw Diagnostic
-              .error("Type Mismatch", expr)
+          throw error("Type Mismatch", expr)
               .description("Expected a numerical type with fixed bit-width but got `%s`", innerType)
               .build();
         }
@@ -2332,8 +2334,7 @@ public class TypeChecker
       case LOG_NOT -> {
         expr.computedTarget = BuiltInTable.NOT;
         if (!innerType.equals(Type.bool())) {
-          throw Diagnostic
-              .error("Type Mismatch: expected `Bool`, got `%s`".formatted(innerType), expr)
+          throw error("Type Mismatch: expected `Bool`, got `%s`".formatted(innerType), expr)
               .help("For numerical types you can negate them with a minus `-`")
               .build();
         }
@@ -2374,7 +2375,7 @@ public class TypeChecker
     // FIXME: Adjust for vectors in the future
     if (!(typeBeforeSlice instanceof BitsType targetBitsType)) {
       var loc = expr.target.location().join(args.location);
-      throw Diagnostic.error("Type Mismatch", loc)
+      throw error("Type Mismatch", loc)
           .description("Only bit types can be sliced but the target was a `%s`", typeBeforeSlice)
           .build();
     }
@@ -2388,18 +2389,18 @@ public class TypeChecker
       // NOTE: From is always larger than to
       var rangeSize = (from - to) + 1;
       if (rangeSize < 1) {
-        throw Diagnostic.error("Invalid Range", rangeExpr)
+        throw error("Invalid Range", rangeExpr)
             .description("Range must be >= 1 but was %s", rangeSize)
             .build();
       }
 
       if (from >= targetBitsType.bitWidth()) {
-        throw Diagnostic.error("Invalid Range", rangeExpr)
+        throw error("Invalid Range", rangeExpr)
             .description("Range start %d out of bounds for `%s`", from, targetBitsType)
             .build();
       }
       if (to < 0) {
-        throw Diagnostic.error("Invalid Range", rangeExpr)
+        throw error("Invalid Range", rangeExpr)
             .description("Range end must be at least zero but was %s", to)
             .build();
       }
@@ -2414,7 +2415,7 @@ public class TypeChecker
     if (args.values.size() != 1) {
       var loc = expr.target.location().join(args.location);
       // FIXME: This is wrong, you can also do it with multiple and they get concatinated
-      throw Diagnostic.error("Invalid call", loc)
+      throw error("Invalid call", loc)
           .description("You can only call `%s` with one argument", typeBeforeSlice)
           .build();
     }
@@ -2422,12 +2423,12 @@ public class TypeChecker
     check(args.values.get(0));
     int sliceIndex = constantEvaluator.eval(args.values.get(0)).value().intValueExact();
     if (sliceIndex >= targetBitsType.bitWidth()) {
-      throw Diagnostic.error("Invalid Index", args.values.get(0))
+      throw error("Invalid Index", args.values.get(0))
           .description("Index %d out of bounds for `%s`", sliceIndex, targetBitsType)
           .build();
     }
     if (sliceIndex < 0) {
-      throw Diagnostic.error("Invalid Index", args.values.get(0))
+      throw error("Invalid Index", args.values.get(0))
           .description("Index must be at least zero but was %s", sliceIndex)
           .build();
     }
@@ -2459,7 +2460,7 @@ public class TypeChecker
       return;
     }
 
-    throw Diagnostic.error("Invalid subcall", expr)
+    throw error("Invalid subcall", expr)
         .description("Calls to %s cannot have subcalls", targetName)
         .build();
   }
@@ -2489,7 +2490,7 @@ public class TypeChecker
         var fieldType = formatType.format.getFieldType(fieldName);
         if (fieldType == null) {
           var formatName = formatType.format.identifier().name;
-          throw Diagnostic.error("Unknown format field `%s`".formatted(fieldName), expr)
+          throw error("Unknown format field `%s`".formatted(fieldName), expr)
               .description("Format `%s` doesn't have any field named `%s`", formatName, fieldName)
               .build();
         }
@@ -2501,7 +2502,7 @@ public class TypeChecker
       } else if (type instanceof StatusType) {
         var allowedStatusfields = List.of("negative", "zero", "carry", "overflow");
         if (!allowedStatusfields.contains(fieldName)) {
-          throw Diagnostic.error("Unknown status field `%s`".formatted(fieldName), expr)
+          throw error("Unknown status field `%s`".formatted(fieldName), expr)
               .note("Allowed fields are: %s", String.join(", ", allowedStatusfields))
               .build();
         }
@@ -2510,7 +2511,7 @@ public class TypeChecker
         visitSliceIndexCall(expr, fieldType, subCall.argsIndices);
         type = expr.type;
       } else {
-        throw Diagnostic.error("Cannot resolve `%s`".formatted(fieldName), expr)
+        throw error("Cannot resolve `%s`".formatted(fieldName), expr)
             .description("Because the type up until it is not a format but `%s`",
                 requireNonNull(type))
             .build();
@@ -2534,7 +2535,7 @@ public class TypeChecker
         || (callTarget instanceof AliasDefinition aliasDef
         && aliasDef.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE))) {
       if (expr.argsIndices.isEmpty() || expr.argsIndices.get(0).values.size() != 1) {
-        throw Diagnostic.error("Invalid Register Usage", expr)
+        throw error("Invalid Register Usage", expr)
             .description("A register call must have exactly one argument.")
             .build();
       }
@@ -2567,7 +2568,7 @@ public class TypeChecker
     // Handle memory
     if (callTarget instanceof MemoryDefinition memDef) {
       if (expr.argsIndices.size() != 1 || expr.argsIndices.get(0).values.size() != 1) {
-        throw Diagnostic.error("Invalid Memory Usage", expr)
+        throw error("Invalid Memory Usage", expr)
             .description("Memory access must have exactly one argument.")
             .build();
       }
@@ -2615,7 +2616,7 @@ public class TypeChecker
       expr.type = counterType;
 
       if (!expr.argsIndices.isEmpty()) {
-        throw Diagnostic.error("Invalid Counter Usage", expr)
+        throw error("Invalid Counter Usage", expr)
             .description("A counter isn't a callable thing.")
             .build();
       }
@@ -2625,13 +2626,13 @@ public class TypeChecker
         var allowedSubcalls = List.of("next");
         // FIXME: better error message
         if (expr.subCalls.stream().anyMatch(s -> !allowedSubcalls.contains(s.id.name))) {
-          throw Diagnostic.error("Unknown counter access", expr)
+          throw error("Unknown counter access", expr)
               .description("Unknown counter access, only the following are allowed %s",
                   allowedSubcalls)
               .build();
         }
         if (expr.subCalls.stream().anyMatch(s -> !s.argsIndices.isEmpty())) {
-          throw Diagnostic.error("Invalid next of counter", expr)
+          throw error("Invalid next of counter", expr)
               .description("`.next` doesn't take any arguments")
               .build();
         }
@@ -2654,7 +2655,7 @@ public class TypeChecker
       var expectedArgCount = funcType.argTypes().size();
       var actualArgCount = expr.argsIndices.get(0).values.size();
       if (expectedArgCount != actualArgCount) {
-        throw Diagnostic.error("Invalid Function Call", expr)
+        throw error("Invalid Function Call", expr)
             .description("Expected `%s` arguments but got `%s`", expectedArgCount, actualArgCount)
             .build();
       }
@@ -2685,7 +2686,7 @@ public class TypeChecker
       var expectedArgCount = relocationType.argTypes().size();
       var actualArgCount = expr.argsIndices.get(0).values.size();
       if (expectedArgCount != actualArgCount) {
-        throw Diagnostic.error("Invalid Function Call", expr)
+        throw error("Invalid Function Call", expr)
             .description("Expected %s arguments but got `%s`", expectedArgCount, actualArgCount)
             .build();
       }
@@ -2716,7 +2717,7 @@ public class TypeChecker
       var paramTypes = exceptionDef.params.stream().map(Parameter::type).toList();
       var actualArgCount = expr.argsIndices.get(0).values.size();
       if (expectedArgCount != actualArgCount) {
-        throw Diagnostic.error("Invalid Exception Raise", expr)
+        throw error("Invalid Exception Raise", expr)
             .description("Expected %s arguments but got `%s`", expectedArgCount, actualArgCount)
             .build();
       }
@@ -2776,7 +2777,7 @@ public class TypeChecker
       argTypes = requireNonNull(expr.argsIndices.get(0).values.stream().map(v -> v.type)).toList();
       if (expr.type == null && !builtin.takes(argTypes)) {
         // FIXME: Better format that error
-        throw Diagnostic.error("Type Mismatch", expr)
+        throw error("Type Mismatch", expr)
             .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
             .build();
       }
@@ -2832,7 +2833,7 @@ public class TypeChecker
     // FIXME: Fix this with bidirectional checking in the future
     if (thenType instanceof ConstantType && elseType instanceof ConstantType
         && !thenType.equals(elseType)) {
-      throw Diagnostic.error("Type Mismatch", expr)
+      throw error("Type Mismatch", expr)
           .description("Both branches return different constant types.")
           .help("Add an explicit cast on one of the branches.")
           .note("In the future this will work without a cast.")
@@ -2846,7 +2847,7 @@ public class TypeChecker
     elseType = expr.elseExpr.type();
 
     if (!thenType.equals(elseType)) {
-      throw Diagnostic.error("Type Mismatch", expr)
+      throw error("Type Mismatch", expr)
           .description(
               "Both the than and else branch should have the same type "
                   + "but than is `%s` and else is `%s`.",
@@ -2865,14 +2866,14 @@ public class TypeChecker
     if (expr.identifiers.size() > 1) {
       if (!(valType instanceof TupleType valTupleType)) {
         var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
-        throw Diagnostic.error("Type Mismatch", loc)
+        throw error("Type Mismatch", loc)
             .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
             .build();
       }
 
       if (expr.identifiers.size() != valTupleType.size()) {
         var loc = expr.identifiers.get(0).loc.join(expr.valueExpr.location());
-        throw Diagnostic.error("Invalid Tuple Unpacking", loc)
+        throw error("Invalid Tuple Unpacking", loc)
             .description("Cannot unpack %d values form a `%s`.", expr.identifiers.size(),
                 valType)
             .build();
@@ -2891,7 +2892,7 @@ public class TypeChecker
     var litType = expr.typeLiteral.type();
 
     if (!canExplicitCast(valType, litType)) {
-      throw Diagnostic.error("Invalid cast", expr)
+      throw error("Invalid cast", expr)
           .locationDescription(expr, "Cannot cast `%s` to `%s`.", valType, litType)
           .build();
     }
@@ -2923,7 +2924,7 @@ public class TypeChecker
       for (var pattern : kase.patterns) {
         var patternType = pattern.type();
         if (!candidateType.equals(patternType)) {
-          throw Diagnostic.error("Type Mismatch", pattern)
+          throw error("Type Mismatch", pattern)
               .locationDescription(pattern, "Expected `%s`, but got `%s`", candidateType,
                   patternType)
               .note("The type of the candidate and the pattern must be the same.")
@@ -2958,7 +2959,7 @@ public class TypeChecker
       kase.result = wrapImplicitCast(kase.result, firstResultType);
       var resultType = kase.result.type();
       if (!resultType.equals(firstResultType)) {
-        throw Diagnostic.error("Type Mismatch", kase.result)
+        throw error("Type Mismatch", kase.result)
             .locationNote(kase.result, "All previous branches were of type `%s`, but this is `%s`",
                 firstResultType, resultType)
             .description("All branches of a match must have the same type")
@@ -2969,7 +2970,7 @@ public class TypeChecker
     expr.defaultResult = wrapImplicitCast(expr.defaultResult, firstResultType);
     var defaultResultType = expr.defaultResult.type();
     if (!defaultResultType.equals(firstResultType)) {
-      throw Diagnostic.error("Type Mismatch", expr.defaultResult)
+      throw error("Type Mismatch", expr.defaultResult)
           .locationNote(expr.defaultResult,
               "All previous branches were of type `%s`, but this is `%s`",
               firstResultType, defaultResultType)
@@ -3037,14 +3038,14 @@ public class TypeChecker
     if (statement.identifiers.size() > 1) {
       if (!(valType instanceof TupleType valTupleType)) {
         var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
-        throw Diagnostic.error("Type Mismatch", loc)
+        throw error("Type Mismatch", loc)
             .description("Tuple unpacking only works on tuples but the type was `%s`", valType)
             .build();
       }
 
       if (statement.identifiers.size() != valTupleType.size()) {
         var loc = statement.identifiers.get(0).loc.join(statement.valueExpr.location());
-        throw Diagnostic.error("Invalid Tuple Unpacking", loc)
+        throw error("Invalid Tuple Unpacking", loc)
             .description("Cannot unpack %d values form a `%s`.", statement.identifiers.size(),
                 valType)
             .build();
@@ -3134,7 +3135,7 @@ public class TypeChecker
       for (var pattern : kase.patterns) {
         var patternType = pattern.type();
         if (!candidateType.equals(patternType)) {
-          throw Diagnostic.error("Type Mismatch", pattern)
+          throw error("Type Mismatch", pattern)
               .locationDescription(pattern, "Expected `%s`, but got `%s`", candidateType,
                   patternType)
               .note("The type of the candidate and the pattern must be the same.")
@@ -3167,7 +3168,7 @@ public class TypeChecker
       if (!statement.unnamedArguments.isEmpty()) {
         var loc = statement.unnamedArguments.get(0).location()
             .join(statement.unnamedArguments.get(statement.unnamedArguments.size() - 1).location());
-        throw Diagnostic.error("Invalid Arguments", loc)
+        throw error("Invalid Arguments", loc)
             .description("Calls to instructions only accept named arguments")
             .build();
       }
@@ -3201,7 +3202,7 @@ public class TypeChecker
       if (!statement.namedArguments.isEmpty()) {
         var loc = statement.namedArguments.get(0).location()
             .join(statement.namedArguments.get(statement.namedArguments.size() - 1).location());
-        throw Diagnostic.error("Invalid Arguments", loc)
+        throw error("Invalid Arguments", loc)
             .description("Calls to pseudo instructions only accept unnamed (positional) arguments")
             .build();
       }
@@ -3210,7 +3211,7 @@ public class TypeChecker
       var paramCount = pseudoDef.params.size();
       var argCount = statement.unnamedArguments.size();
       if (paramCount != argCount) {
-        throw Diagnostic.error("Arguments Mismatch", statement.location())
+        throw error("Arguments Mismatch", statement.location())
             .description("Expected %s arguments but got %s", paramCount, argCount)
             .build();
       }

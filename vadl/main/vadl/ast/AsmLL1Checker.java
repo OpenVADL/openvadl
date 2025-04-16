@@ -16,6 +16,8 @@
 
 package vadl.ast;
 
+import static vadl.error.Diagnostic.error;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,12 +81,12 @@ public class AsmLL1Checker {
           && firstElement.semanticPredicate != null) {
 
         if (!getOverlappingTokens(previousAlternativesTokens, expected).isEmpty()) {
-          throw Diagnostic.error("Misplaced semantic predicate.", firstElement)
+          throw error("Misplaced semantic predicate.", firstElement)
               .note("This semantic predicate will never be evaluated."
                   + "Place it at previous conflicting alternative.").build();
         }
         if (getOverlappingTokens(allAlternativesTokens, expected).isEmpty()) {
-          throw Diagnostic.error("Misplaced semantic predicate.", firstElement)
+          throw error("Misplaced semantic predicate.", firstElement)
               .note("There is no LL(1) conflict here.").build();
         }
       }
@@ -102,8 +104,8 @@ public class AsmLL1Checker {
     var overlappingTokens = getOverlappingTokens(previousAlternativesTokens, expectedForConflict);
     if (!overlappingTokens.isEmpty()) {
       Objects.requireNonNull(currentRule);
-      throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
-              currentRule)
+      throw error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
+          currentRule)
           .note("%s %s the start of several alternatives.", String.join(", ",
                   overlappingTokens.stream().map(AsmToken::toString).toList()),
               overlappingTokens.size() > 1 ? "are" : "is")
@@ -119,7 +121,7 @@ public class AsmLL1Checker {
       var element = alternative.get(i);
 
       if (element.semanticPredicate != null && i > 0) {
-        throw Diagnostic.error("Misplaced semantic predicate.", element)
+        throw error("Misplaced semantic predicate.", element)
             .note("Semantic predicates must be at the beginning of an alternative or a block.")
             .build();
       }
@@ -154,7 +156,7 @@ public class AsmLL1Checker {
       if (firstElement.semanticPredicate != null) {
 
         if (getOverlappingTokens(expected, expectedTokensAfter).isEmpty()) {
-          throw Diagnostic.error("Misplaced semantic predicate.", firstElement)
+          throw error("Misplaced semantic predicate.", firstElement)
               .note("There is no LL(1) conflict here.").build();
         }
       }
@@ -167,8 +169,8 @@ public class AsmLL1Checker {
     var overlappingTokens = getOverlappingTokens(expectedTokens, expectedTokensAfter);
     if (!overlappingTokens.isEmpty()) {
       Objects.requireNonNull(currentRule);
-      throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
-              currentRule)
+      throw error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
+          currentRule)
           .locationDescription(alternatives, "%s %s start and successor of this block.",
               String.join(", ", overlappingTokens.stream().map(AsmToken::toString).toList()),
               overlappingTokens.size() > 1 ? "are" : "is")
@@ -244,8 +246,8 @@ public class AsmLL1Checker {
       AsmGrammarAlternativesDefinition alternatives) {
     Objects.requireNonNull(currentRule);
     if (deletableComputer.visit(alternatives)) {
-      throw Diagnostic.error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
-              currentRule)
+      throw error("LL(1) conflict in %s".formatted(currentRule.identifier().name),
+          currentRule)
           .locationDescription(alternatives, "Deletable block.")
           .note("Contents of [...] or {...} must not be deletable.")
           .build();
@@ -274,7 +276,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
                 "IDENTIFIER").map(s -> new AsmToken(s, null)).toList()
         );
       } else {
-        throw Diagnostic.error("Unknown builtin: " + entity.identifier().name, entity).build();
+        throw error("Unknown builtin: " + entity.identifier().name, entity).build();
       }
     } else {
       firstSet = entity.alternatives.accept(this);

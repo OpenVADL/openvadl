@@ -16,6 +16,8 @@
 
 package vadl.ast;
 
+import static vadl.error.Diagnostic.error;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -255,10 +257,10 @@ class SymbolTable {
     }
 
     if (origin == null) {
-      errors.add(Diagnostic.error("Unknown name " + usage.name, usage).build());
+      errors.add(error("Unknown name " + usage.name, usage).build());
     } else {
       // FIXME: write about how this is the wrong type.
-      errors.add(Diagnostic.error("Unknown name " + usage.name, usage).build());
+      errors.add(error("Unknown name " + usage.name, usage).build());
     }
     return null;
   }
@@ -321,7 +323,7 @@ class SymbolTable {
 
     var originLoc = getIdentifierLocation(origin);
 
-    var error = Diagnostic.error("Symbol name already used: " + name, originLoc)
+    var error = error("Symbol name already used: " + name, originLoc)
         .locationDescription(originLoc, "Second definition here.")
         .note("All symbols must have a unique name.");
 
@@ -344,7 +346,7 @@ class SymbolTable {
     }
 
     var originLocation = getIdentifierLocation(origin);
-    var error = Diagnostic.error("Macro name already used: " + name, originLocation)
+    var error = error("Macro name already used: " + name, originLocation)
         .locationDescription(originLocation, "Second definition here.")
         .note("All macros must have a unique name.");
 
@@ -356,7 +358,7 @@ class SymbolTable {
   }
 
   private void reportError(String error, SourceLocation location) {
-    errors.add(Diagnostic.error(error, location)
+    errors.add(error(error, location)
         .build());
   }
 
