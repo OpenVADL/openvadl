@@ -18,6 +18,7 @@ package vadl.ast;
 
 
 import static java.util.Objects.requireNonNull;
+import static vadl.error.Diagnostic.error;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
@@ -492,7 +493,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
               }
             }
           }
-          throw Diagnostic.error("Unknown annotation on assembly description", definition).build();
+          throw error("Unknown annotation on assembly description", definition).build();
         }
     );
   }
@@ -1500,7 +1501,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       Map<Identifier, Expr> aliasLookup,
       Identifier identifier) {
     var expr = ensureNonNull(aliasLookup.get(identifier),
-        () -> Diagnostic.error("Cannot alias for register definition",
+        () -> error("Cannot alias for register definition",
             identifier.sourceLocation()));
     var pair = getRegisterFile(expr);
     var registerFile = pair.left();
@@ -1522,17 +1523,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
                       callExpr.symbolTable.requireAs(identifier, RegisterFileDefinition.class))
                   .flatMap(this::fetch)
                   .map(x -> (RegisterFile) x),
-              () -> Diagnostic.error("Cannot find register file with the name "
+              () -> error("Cannot find register file with the name "
                       + identifier.name,
                   callExpr.location));
 
       ensure(callExpr.argsIndices.size() == 1 && callExpr.argsIndices.get(0).values.size() == 1,
-          () -> Diagnostic.error("Expected an index for the register file", callExpr.location));
+          () -> error("Expected an index for the register file", callExpr.location));
 
       var index = constantEvaluator.eval(callExpr.argsIndices.get(0).values.get(0));
       return Pair.of(registerFile, index.value().intValueExact());
     } else {
-      throw Diagnostic.error("This expression is not register file", expr.sourceLocation())
+      throw error("This expression is not register file", expr.sourceLocation())
           .build();
     }
   }
