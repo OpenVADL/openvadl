@@ -54,13 +54,17 @@ public interface CInvalidMixins {
   }
 
   @SuppressWarnings("MissingJavadocType")
+  interface AsmRelated extends AsmBuiltInC {
+  }
+
+  @SuppressWarnings("MissingJavadocType")
   interface ResourceReads extends ReadReg, ReadMem, ReadRegFile, ReadArtificialResource {
   }
 
   @SuppressWarnings("MissingJavadocType")
   interface WriteReg {
     @Handler
-    default void impl(CGenContext<Node> ctx, WriteRegNode node) {
+    default void handle(CGenContext<Node> ctx, WriteRegNode node) {
       throwNotAllowed(node, "Register writes");
     }
   }
@@ -68,7 +72,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface WriteRegFile {
     @Handler
-    default void impl(CGenContext<Node> ctx, WriteRegFileNode node) {
+    default void handle(CGenContext<Node> ctx, WriteRegFileNode node) {
       throwNotAllowed(node, "Register writes");
     }
   }
@@ -76,7 +80,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface WriteMem {
     @Handler
-    default void impl(CGenContext<Node> ctx, WriteMemNode node) {
+    default void handle(CGenContext<Node> ctx, WriteMemNode node) {
       throwNotAllowed(node, "Memory writes");
     }
   }
@@ -84,7 +88,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface WriteArtificialRes {
     @Handler
-    default void impl(CGenContext<Node> ctx, WriteArtificialResNode node) {
+    default void handle(CGenContext<Node> ctx, WriteArtificialResNode node) {
       throwNotAllowed(node, "Artificial resource writes");
     }
   }
@@ -92,7 +96,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface ProcCall {
     @Handler
-    default void impl(CGenContext<Node> ctx, ProcCallNode node) {
+    default void handle(CGenContext<Node> ctx, ProcCallNode node) {
       throwNotAllowed(node, "Procedure calls");
     }
   }
@@ -101,7 +105,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface ReadReg {
     @Handler
-    default void impl(CGenContext<Node> ctx, ReadRegNode node) {
+    default void handle(CGenContext<Node> ctx, ReadRegNode node) {
       throwNotAllowed(node, "Register reads");
     }
   }
@@ -109,7 +113,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface ReadRegFile {
     @Handler
-    default void impl(CGenContext<Node> ctx, ReadRegFileNode node) {
+    default void handle(CGenContext<Node> ctx, ReadRegFileNode node) {
       throwNotAllowed(node, "Register reads");
     }
   }
@@ -117,7 +121,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface ReadArtificialResource {
     @Handler
-    default void impl(CGenContext<Node> ctx, ReadArtificialResNode node) {
+    default void handle(CGenContext<Node> ctx, ReadArtificialResNode node) {
       throwNotAllowed(node, "Artificial reads");
     }
   }
@@ -125,7 +129,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface ReadMem {
     @Handler
-    default void impl(CGenContext<Node> ctx, ReadMemNode node) {
+    default void handle(CGenContext<Node> ctx, ReadMemNode node) {
       throwNotAllowed(node, "Memory reads");
     }
   }
@@ -133,7 +137,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface InstrCall {
     @Handler
-    default void impl(CGenContext<Node> ctx, InstrCallNode node) {
+    default void handle(CGenContext<Node> ctx, InstrCallNode node) {
       throwNotAllowed(node, "Instruction calls");
     }
   }
@@ -141,7 +145,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface AsmBuiltInC {
     @Handler
-    default void impl(CGenContext<Node> ctx, AsmBuiltInCall node) {
+    default void handle(CGenContext<Node> ctx, AsmBuiltInCall node) {
       throwNotAllowed(node, "Assembler built-in calls");
     }
   }
@@ -150,7 +154,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface WriteStageOutput {
     @Handler
-    default void impl(CGenContext<Node> ctx, WriteStageOutputNode node) {
+    default void handle(CGenContext<Node> ctx, WriteStageOutputNode node) {
       throwNotAllowed(node, "Write stage output");
     }
   }
@@ -158,7 +162,7 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface ReadStageOutput {
     @Handler
-    default void impl(CGenContext<Node> ctx, ReadStageOutputNode node) {
+    default void handle(CGenContext<Node> ctx, ReadStageOutputNode node) {
       throwNotAllowed(node, "Read stage output");
     }
   }

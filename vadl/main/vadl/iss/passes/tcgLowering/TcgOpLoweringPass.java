@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
@@ -43,6 +44,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtractNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgGenException;
 import vadl.iss.passes.tcgLowering.nodes.TcgGottoTb;
 import vadl.iss.passes.tcgLowering.nodes.TcgLoadMemory;
 import vadl.iss.passes.tcgLowering.nodes.TcgLookupAndGotoPtr;
@@ -68,6 +70,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
+import vadl.viam.ExceptionDef;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
@@ -270,7 +273,10 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       toReplace = scheduledNode;
       dispatch(scheduledNode.node());
     } else if ((dirNode instanceof InstrExitNode instrExitNode)) {
-      handle(instrExitNode);
+      switch (instrExitNode) {
+        case InstrExitNode.PcChange pcChange -> handle(pcChange);
+        case InstrExitNode.Raise raise -> handle(raise);
+      }
     }
     return next;
   }
@@ -364,14 +370,14 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    *
    * @param node The instruction exit node to handle.
    */
-  void handle(InstrExitNode node) {
-    if (isTcg(node.pcWrite())) {
+  void handle(InstrExitNode.PcChange node) {
+    if (isTcg(node.cause())) {
       // if the pc is not statically defined, we must jump to the current PC
       node.replaceAndLink(
           new TcgLookupAndGotoPtr()
       );
     } else {
-      var pcWrite = node.pcWrite();
+      var pcWrite = node.cause();
 
       var jmpSlot = TcgGottoTb.JmpSlot.LOOK_UP;
       if (!this.isJumpSlotTaken && optJumpSlot) {
@@ -386,6 +392,23 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       node.replaceAndLink(
           new TcgGottoTb(pcWrite.value(), jmpSlot));
     }
+  }
+
+  /**
+   * Handles the {@link InstrExitNode.Raise} by replacing it with an exception generation
+   * operation.
+   *
+   * @param node The instruction exit node to handle.
+   */
+  void handle(InstrExitNode.Raise node) {
+    var args = node.cause().arguments().stream()
+        .map(this::singleDestOf)
+        .collect(Collectors.toCollection(NodeList::new));
+    node.replaceAndLink(
+        new TcgGenException(
+            (ExceptionDef) node.cause().procedure(),
+            args
+        ));
   }
 
   // Handler methods for different node types

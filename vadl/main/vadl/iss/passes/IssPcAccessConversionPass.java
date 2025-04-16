@@ -31,7 +31,8 @@ import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
 /**
- * Determines if a {@link InstrExitNode instr exit} can be done with a statically known
+ * Determines if a {@link InstrExitNode.PcChange PC change instr exit}
+ * can be done with a statically known
  * PC (e.g. because of a jump to current PC + 4 which is known from the {@code DisasContext})
  * or if it is dependent of a statically unknown register (e.g. in {@code JALR} where the
  * new PC is read from a register in X).
@@ -79,24 +80,24 @@ class IssPcAccessConverter {
         .forEach(n -> n.replaceAndDelete(new IssStaticPcRegNode(n.register())));
 
     // handle the instr exits
-    graph.getNodes(InstrExitNode.class)
+    graph.getNodes(InstrExitNode.PcChange.class)
         .forEach(this::handleInstrExit);
   }
 
-  private void handleInstrExit(InstrExitNode node) {
+  private void handleInstrExit(InstrExitNode.PcChange node) {
     // if a pc write only uses nodes that are known at compile time (of TCG)
     // we potentially don't need a TCG operation
     // (we would produce gen_goto_tb())
     var targetPcStaticallyKnown =
-        !GraphUtils.hasDependencies(node.pcWrite().value(), n -> n instanceof ReadResourceNode);
+        !GraphUtils.hasDependencies(node.cause(), n -> n instanceof ReadResourceNode);
 
     // determine if the write is already scheduled
-    var alreadyScheduled = GraphUtils.hasUser(node.pcWrite(), n -> n instanceof ScheduledNode);
+    var alreadyScheduled = GraphUtils.hasUser(node.cause(), n -> n instanceof ScheduledNode);
 
     if (!alreadyScheduled && !targetPcStaticallyKnown) {
       // if the target is not statically known, we must schedule the PC write
       // before the instr exit
-      node.addBefore(new ScheduledNode(node.pcWrite()));
+      node.addBefore(new ScheduledNode(node.cause()));
     }
   }
 

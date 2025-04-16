@@ -50,7 +50,7 @@ public class InstructionSetArchitecture extends Definition {
    *
    * @param identifier    the identifier of the ISA
    * @param specification the parent specification of the ISA
-   * @param registers     the registers in the ISA. This also includes sub-registers
+   * @param registers     the registers in the ISA
    * @param registerFiles the register files in the ISA
    * @param pc            the program counter of the ISA
    * @param formats       the list of formats associated with the ISA

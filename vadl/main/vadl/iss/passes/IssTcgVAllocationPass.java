@@ -37,6 +37,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.viam.Register;
 import vadl.viam.RegisterFile;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
@@ -393,6 +394,10 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
 
     // get variables
     var directlyUsedVars = new HashSet<>(tcgNode.usedVars());
+
+    // however, if those variables are register files
+    // all variables of the same register file must be considered also used
+    // as the concrete register file index is not known
     for (var usedVar : directlyUsedVars.stream().toList()) {
       if (usedVar.var().kind() == TcgV.Kind.REG_FILE) {
         var regFile = (RegisterFile) usedVar.var().registerOrFile();
@@ -400,10 +405,20 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
       }
     }
 
+    // as we separate src and dest variables, even if they potentially origin from the same
+    // cpu register, we must set destination registers to be used if a source register
+    // to the same origin source was received.
+    // so e.g. if register xy is used, also register xy_dest is used at this operation.
+    for (var usedVar : directlyUsedVars.stream().toList()) {
+      if (usedVar.var().kind() == TcgV.Kind.REG) {
+        var reg = (Register) usedVar.var().registerOrFile();
+        var thisRegVariables = tempAssignments.tcgVariables().filter(v ->
+            v.var().kind() == TcgV.Kind.REG && v.var().registerOrFile() == reg
+        ).toList();
+        directlyUsedVars.addAll(thisRegVariables);
+      }
+    }
 
-    // however, if those variables are register files
-    // all variables of the same register file must be considered also used
-    // as the concrete register file index is not known
 
     return directlyUsedVars.stream().toList();
   }

@@ -27,10 +27,12 @@ import org.apache.commons.io.FilenameUtils;
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.formatting.CodeFormatter;
 import vadl.iss.codegen.QemuClangFormatter;
+import vadl.iss.passes.extensions.ExceptionInfo;
 import vadl.iss.passes.extensions.MemoryInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.viam.Register;
 import vadl.viam.Specification;
 
 /**
@@ -121,13 +123,26 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("gen_machine_lower", configuration().machineName().toLowerCase());
     vars.put("register_files", mapRegFiles(specification));
     vars.put("registers", mapRegs(specification));
-    vars.put("insn_count", configuration().isInsnCounting());
+    vars.put("pc_reg", getPcReg(specification));
     vars.put("target_size", configuration().targetSize().width);
     vars.put("mem_info", getMemoryInfo(specification));
+    vars.put("exc_info", getExceptionInfo(specification));
     return vars;
   }
 
   private MemoryInfo getMemoryInfo(Specification viam) {
     return viam.mip().get().expectExtension(MemoryInfo.class);
+  }
+
+  private ExceptionInfo getExceptionInfo(Specification viam) {
+    return viam.mip().get().isa().expectExtension(ExceptionInfo.class);
+  }
+
+  private Map<String, String> getPcReg(Specification viam) {
+    var pc = viam.mip().get().isa().pc();
+    if (pc == null) {
+      throw new IllegalStateException("PC is null");
+    }
+    return IssRenderUtils.map((Register) pc.registerResource());
   }
 }
