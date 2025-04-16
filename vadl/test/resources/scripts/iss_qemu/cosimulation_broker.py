@@ -6,11 +6,14 @@ import mmap
 import subprocess
 import posix_ipc as ipc
 import atexit
+import threading
+import subprocess
 
 import logging
-from typing import Optional
+from typing import Annotated, Any, Optional
 
 reference_ricsv64_exe = "/qemu-system-riscv64"
+our_riscv64_exe = "/qemu-system-rv64im"
 
 @dataclass
 class Options:
@@ -31,6 +34,11 @@ class SHMString(Structure):
         return {field[0]: getattr(self, field[0]) 
                 for field in self._fields_}
 
+    def __init__(self, *args: Any, **kw: Any) -> None:
+        super().__init__(*args, **kw)
+        self.len: Annotated[int, c_size_t]
+        self.value: Annotated[bytes, c_char * self.MAX_LEN]
+
 class TBInsnInfo(Structure):
     _fields_ = [("pc", c_uint64), ("size", c_size_t), ("symbol", SHMString), ("hwaddr", SHMString), ("disas", SHMString)]
 
@@ -41,6 +49,14 @@ class TBInsnInfo(Structure):
     def _asdict(self):
         return {field[0]: getattr(self, field[0]) 
                 for field in self._fields_}
+
+    def __init__(self, *args: Any, **kw: Any) -> None:
+        super().__init__(*args, **kw)
+        self.pc: Annotated[int, c_uint64]
+        self.size: Annotated[int, c_size_t]
+        self.symbol: Annotated[SHMString, SHMString]
+        self.hwaddr: Annotated[SHMString, SHMString]
+        self.disas: Annotated[SHMString, SHMString]
 
 class TBInfo(Structure):
     INSNS_INFOS_SIZE = 32
@@ -54,10 +70,22 @@ class TBInfo(Structure):
         return {field[0]: getattr(self, field[0]) 
                 for field in self._fields_}
 
+    def __init__(self, *args: Any, **kw: Any) -> None:
+        super().__init__(*args, **kw)
+        self.pc: Annotated[int, c_uint64]
+        self.insns: Annotated[int, c_size_t]
+        self.insns_info_size: Annotated[int, c_size_t]
+        self.insns_info: Annotated[list[TBInsnInfo], TBInsnInfo * self.INSNS_INFOS_SIZE]
+
 
 class SHMStruct(Structure):
     INFOS_SIZE = 1024
     _fields_ = [("size", c_size_t), ("infos", TBInfo * INFOS_SIZE)]
+
+    # __annotations__ = {
+    #     "size": c_size_t,
+    #     "infos": TBInfo * INFOS_SIZE
+    # }
 
     def __repr__(self):
         values = f"size={self.size}, infos={self.infos[:self.size]}"
@@ -66,6 +94,11 @@ class SHMStruct(Structure):
     def _asdict(self):
         return {field[0]: getattr(self, field[0]) 
                 for field in self._fields_}
+
+    def __init__(self, *args: Any, **kw: Any) -> None:
+        super().__init__(*args, **kw)
+        self.size: Annotated[int, c_size_t]
+        self.infos: Annotated[list[TBInfo], TBInfo * self.INFOS_SIZE]
 
 def format_tb_insn_info(insn: TBInsnInfo) -> str:
     _fields_ = [("pc", c_uint64), ("size", c_size_t), ("symbol", c_char_p), ("hwaddr", c_void_p), ("disas", c_char_p)]
@@ -88,9 +121,6 @@ class Client:
     # process: subprocess.Popen[bytes]
 
 clients: list[Client] = []
-
-import threading
-import subprocess
 
 def run_with_callback(command, on_complete, options: Options, client: Client):
     def runner():
@@ -124,6 +154,7 @@ def read(client: Client) -> Optional[TBInfo]:
 def collect_disas(client: Client) -> str:
     disas = []
     smh = client.shm_struct
+    smh.size
     for info in smh.infos:
         for insn in info.insns_info:
             if insn.pc > 0:
@@ -143,7 +174,8 @@ def main(options: Options):
         sem_client = ipc.Semaphore(f"/cosimulation-sem-client-{i}", ipc.O_CREX)
         logger.info(f"created shm and sems, spawning client with id: {i}")
 
-        executable_path = f"{options.qemu_dir}/{reference_ricsv64_exe}"
+        exe = reference_ricsv64_exe # if i == 1 else our_riscv64_exe
+        executable_path = f"{options.qemu_dir}{exe}"
         plugin_path = f"{options.qemu_dir}/contrib/plugins/libcosimulation.so,client-id={i}"
         args = ["-M", "spike", "-nographic", "-bios", options.test_exec, "-plugin", plugin_path]
         logger.info(f"starting client: {" ".join([executable_path, *args])}")
