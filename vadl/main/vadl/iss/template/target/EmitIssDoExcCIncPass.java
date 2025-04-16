@@ -25,6 +25,16 @@ import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Emits the {@code target/gen-arch/do_exception.c.inc} file which contains
+ * handling methods for each {@link vadl.viam.ExceptionDef}.
+ * They are called by the {@code do_interrupt()} in the {@code cpu.c} file.
+ *
+ * <p>The handling functions are generated from the {@link IssExceptionHandlingCodeGenerator}.</p>
+ *
+ * @see IssExceptionHandlingCodeGenerator
+ * @see ExceptionInfo
+ */
 public class EmitIssDoExcCIncPass extends IssTemplateRenderingPass {
   public EmitIssDoExcCIncPass(IssConfiguration configuration) {
     super(configuration);

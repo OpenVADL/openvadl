@@ -24,6 +24,10 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
+/**
+ * Collects information about exceptions that are raised by instructions in the ISA.
+ * It constructs a {@link ExceptionInfo} extension that is added to the ISA.
+ */
 public class IssExceptionDetectionPass extends AbstractIssPass {
   public IssExceptionDetectionPass(IssConfiguration configuration) {
     super(configuration);

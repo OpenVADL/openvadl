@@ -158,7 +158,7 @@ class SideEffectScheduler {
         // find side effects that cause instruction exits
         .collect(Collectors.partitioningBy(
             s ->
-                (s instanceof WriteResourceNode wRes && wRes.resourceDefinition().equals(pcReg))
+                (s instanceof WriteResourceNode write && write.resourceDefinition().equals(pcReg))
                     || (s instanceof ProcCallNode procCall && procCall.exceptionRaise())
         ));
 
@@ -175,8 +175,8 @@ class SideEffectScheduler {
     instrExitSideEffects.ifPresent(exitCause -> {
           if (exitCause instanceof ProcCallNode procCall) {
             endNode.addBefore(new InstrExitNode.Raise(procCall));
-          } else if (exitCause instanceof WriteResourceNode wRes) {
-            endNode.addBefore(new InstrExitNode.PcChange(wRes));
+          } else if (exitCause instanceof WriteResourceNode write) {
+            endNode.addBefore(new InstrExitNode.PcChange(write));
           } else {
             throw new IllegalStateException("Unexpected exit cause: " + exitCause);
           }

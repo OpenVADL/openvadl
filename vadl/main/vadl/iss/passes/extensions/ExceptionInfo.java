@@ -31,6 +31,17 @@ import vadl.viam.ExceptionDef;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Parameter;
 
+/**
+ * A {@link InstructionSetArchitecture} extension that provides information about existing
+ * {@link ExceptionDef}s. It is added by the {@link vadl.iss.passes.IssExceptionDetectionPass}.
+ * It consists of a list of {@link Entry}s that hold the information of an individual
+ * exception.
+ *
+ * @see Entry
+ * @see vadl.iss.passes.IssExceptionDetectionPass
+ * @see vadl.iss.codegen.IssExceptionHandlingCodeGenerator
+ * @see vadl.iss.template.IssTemplateRenderingPass
+ */
 public class ExceptionInfo extends DefinitionExtension<InstructionSetArchitecture>
     implements Renderable {
 
@@ -61,12 +72,30 @@ public class ExceptionInfo extends DefinitionExtension<InstructionSetArchitectur
     );
   }
 
+  /**
+   * Holds the information of a single exception.
+   * It provides methods required during QEMU generation, such as the name in the
+   * exception enum in {@code cpu-bits.h}.
+   *
+   * <p>It also holds a parameter map, that is constructed on initialization
+   * which provides ISS specific information about parameters, using the
+   * {@link Param} class.</p>
+   *
+   * @see ExceptionInfo
+   * @see vadl.iss.codegen.IssExceptionHandlingCodeGenerator
+   */
   public class Entry implements Renderable {
     public String name;
     public ExceptionDef def;
     public Map<Parameter, Param> params;
 
 
+    /**
+     * Construct the exception entry and processes the {@link Parameter} to
+     * construct a map of {@link Param}s.
+     *
+     * @param def the VIAM exception definition
+     */
     public Entry(ExceptionDef def) {
       this.name = def.simpleName();
       this.params = new HashMap<>();
@@ -80,29 +109,60 @@ public class ExceptionInfo extends DefinitionExtension<InstructionSetArchitectur
       this.def = def;
     }
 
+    /**
+     * The name used in the exception enum in {@code cpu-bits.h}.
+     */
     public String enumName() {
       return configuration.targetName().toUpperCase() + "_EXCP_" + name.toUpperCase();
     }
 
+    /**
+     * The name of the handling function in the {@code do_exceptions.c.inc}.
+     * E.g. {@code rv64im_do_exc}.
+     *
+     * @see vadl.iss.template.target.EmitIssDoExcCIncPass
+     * @see vadl.iss.template.target.EmitIssCpuSourcePass
+     */
     public String handlingFuncName() {
       return configuration.targetName().toLowerCase() + "_do_" + name.toLowerCase();
     }
 
+    /**
+     * The helper definition emitted in {@code helper.h}.
+     * E.g. {@code DEF_HELPER_2(raise_exc, noreturn, env, i64)} which produces the
+     * signatures for {@code gen_helper_raise_exc()} and the {@code helper_raise_exc}
+     * declaration which is provided by the {@link #helperImpl()}.
+     */
     public String helperDef() {
       // 1. env, ... parameter
       var nrArgs = 1 + def.parameters().length;
       var argTypes = Arrays.stream(def.parameters())
-          .map(p -> Tcg_32_64.nextFitting(p.type().asDataType().bitWidth()))
+          // all parameters are passed as target_size containers
+          .map(p -> configuration.targetSize())
+          // .map(p -> Tcg_32_64.nextFitting(p.type().asDataType().bitWidth()))
           .map(Enum::toString)
           .collect(Collectors.joining(", "));
       return "DEF_HELPER_" + nrArgs + "(raise_" + name.toLowerCase() + ", noreturn, env, "
           + argTypes + ")";
     }
 
+    /**
+     * Provides the implementation of the helper function defined by {@link #helperDef()}
+     * and emitted in {@code helper.c}.
+     * It is called during instruction execution, and its only job is to set the
+     * arguments for the exception in the CPU state, and calling {@code raise_exception()}.
+     *
+     * <pre>{@code
+     * void helper_raise_exc(CPURV64IMZICSRState *env, uint64_t cause) {
+     *   env->arg_exc_cause = (uint32_t) cause;
+     *   rv64imzicsr_raise_exception(env, RV64IMZICSR_EXCP_EXC);
+     * }
+     * }</pre>
+     */
     public String helperImpl() {
-      // 1. env, 2. index, ... parameter
+      // 1. env, 2. index, ... parameter (in target size container)
       var params = this.params.values().stream()
-          .map(p -> p.cType() + " " + p.param.simpleName())
+          .map(p -> "uint" + configuration.targetSize().width + "_t " + p.param.simpleName())
           .collect(Collectors.joining(", "));
       var targetUpper = configuration.targetName().toUpperCase();
       var targetLower = configuration.targetName().toLowerCase();
@@ -111,7 +171,8 @@ public class ExceptionInfo extends DefinitionExtension<InstructionSetArchitectur
           .append("(CPU" + targetUpper + "State *env, " + params)
           .append(") {\n");
       for (Param p : this.params.values()) {
-        sb.append("\tenv->" + p.nameInCpuState + " = " + p.param.simpleName() + ";\n");
+        sb.append("\tenv->" + p.nameInCpuState + " = (" + p.cType() + ") " + p.param.simpleName()
+            + ";\n");
       }
       sb.append("\t" + targetLower + "_raise_exception(env, ")
           .append(enumName() + ");\n}");
@@ -131,12 +192,26 @@ public class ExceptionInfo extends DefinitionExtension<InstructionSetArchitectur
     }
   }
 
+  /**
+   * An ISS internal representation of exception parameters.
+   * The most important field is the {@link #nameInCpuState} which defines the field name
+   * used in the CPU state to hold the parameter.
+   * We need this, as the exception handling function is not directly called, but
+   * from the exception handling step in the QEMU main execution loop.
+   * So instead when the exception is raise, we store the arguments in the CPU state and
+   * in the exception handling function, we get them from the CPU state.
+   *
+   * @param param          the VIAM parameter this corresponds to
+   * @param tcgWidth       of the parameter
+   * @param nameInCpuState field name in the CPU state
+   */
   public record Param(
       Parameter param,
       Tcg_32_64 tcgWidth,
       String nameInCpuState
   ) implements Renderable {
 
+    @SuppressWarnings("MethodName")
     public String cType() {
       return "uint" + tcgWidth.width + "_t";
     }

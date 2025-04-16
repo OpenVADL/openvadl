@@ -107,7 +107,7 @@ public class IssFirmwareCodeGenerator implements CDefaultMixins.All,
   }
 
   @Override
-  public void impl(CGenContext<Node> ctx, WriteMemNode node) {
+  public void handle(CGenContext<Node> ctx, WriteMemNode node) {
     // we normalize the node to an offset.
     var addr = ((ConstantNode) node.address()).constant().asVal().unsignedInteger();
     var offset = addr.subtract(memoryInfo.firmwareStart);

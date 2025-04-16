@@ -29,11 +29,23 @@ import vadl.viam.graph.dependency.WriteResourceNode;
 /**
  * Represents the exit point of an instruction in the side-effect scheduling pass.
  * This node is a {@link DirectionalNode} that signifies the completion of an instruction,
- * specifically handling the write to the program counter (PC).
+ * specifically handling the write to the program counter (PC) or raise of an exception.
+ *
+ * @see PcChange
+ * @see Raise
+ * @see vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass
+ * @see vadl.iss.passes.IssPcAccessConversionPass
+ * @see vadl.iss.passes.tcgLowering.TcgOpLoweringPass
  */
 public abstract sealed class InstrExitNode extends DirectionalNode permits InstrExitNode.PcChange,
     InstrExitNode.Raise {
 
+  /**
+   * An instruction exit that is caused by e PC change.
+   * If the PC is modified in an instruction, it means a jump from a QEMU perspective.
+   *
+   * @see InstrExitNode
+   */
   public static final class PcChange extends InstrExitNode {
 
     /**
@@ -86,6 +98,11 @@ public abstract sealed class InstrExitNode extends DirectionalNode permits Instr
     }
   }
 
+  /**
+   * An instruction exit that is caused by an exception raise.
+   *
+   * @see InstrExitNode
+   */
   public static final class Raise extends InstrExitNode {
 
     /**

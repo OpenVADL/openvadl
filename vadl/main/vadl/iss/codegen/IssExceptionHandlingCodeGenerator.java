@@ -31,22 +31,36 @@ import vadl.viam.MicroProcessor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.StartNode;
-import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
+import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
+/**
+ * Generates the exception handling functions in {@code /target/gen-arch/do_exception.c.inc}
+ * which is included to the {@code /target/gen-arch/cpu.c}.
+ * Those handling functions are called by the {@code do_interrupt()} function that is invoked
+ * by the main execution loop if the {@code cs->exception_index != 0}.
+ *
+ * <p>Register access are directly done using read and writes to the CPU state ({@code env->reg}).
+ * PC modification does not need special handling, as it is not a direct jump to anywhere.
+ * Exception arguments are store in the CPU state, so they are also accessed using
+ * {@code env->arg_xy}.
+ * </p>
+ */
 @DispatchFor(
     value = Node.class,
     context = CNodeContext.class,
     include = "vadl.viam"
 )
 public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
-    CInvalidMixins.ResourceReads, CInvalidMixins.SideEffect, CInvalidMixins.HardwareRelated {
+    CInvalidMixins.ResourceReads, CInvalidMixins.HardwareRelated, CInvalidMixins.AsmRelated {
 
   private final ExceptionInfo.Entry excInfo;
   private final IssConfiguration config;
@@ -56,7 +70,7 @@ public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
 
 
   /**
-   * Constructs the firmware setup code generator.
+   * Constructs the exception handling code generator.
    */
   public IssExceptionHandlingCodeGenerator(ExceptionInfo.Entry excInfo, IssConfiguration config) {
     this.excInfo = excInfo;
@@ -94,19 +108,23 @@ public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
     ctx.wr("env->" + param.nameInCpuState());
   }
 
-  @Override
-  public void impl(CGenContext<Node> ctx, WriteRegNode node) {
+  @Handler
+  public void handle(CGenContext<Node> ctx, WriteRegNode node) {
     ctx.wr("env->" + node.register().simpleName().toLowerCase() + " = ")
         .gen(node.value());
   }
 
   @Override
-  public void impl(CGenContext<Node> ctx, ReadRegNode node) {
+  public void handle(CGenContext<Node> ctx, ReadRegNode node) {
     ctx.wr("env->" + node.register().simpleName().toLowerCase());
   }
 
+  /**
+   * Directly call the cause and wrap it in a statement line.
+   * Then call the next control node.
+   */
   @Handler
-  public void impl(CGenContext<Node> ctx, InstrExitNode.PcChange node) {
+  public void handle(CGenContext<Node> ctx, InstrExitNode.PcChange node) {
     ctx.gen(node.cause())
         .ln(";")
         .gen(node.next());
@@ -115,13 +133,23 @@ public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
   ///  INVALID NODES  ///
 
   @Handler
-  public void impl(CGenContext<Node> ctx, InstrExitNode.Raise node) {
+  public void handle(CGenContext<Node> ctx, InstrExitNode.Raise node) {
     throwNotAllowed(node, "Raising exceptions");
   }
 
-  @Override
-  public void impl(CGenContext<Node> ctx, WriteMemNode node) {
-    throwNotAllowed(node, "Memory writes");
+  @Handler
+  public void handle(CGenContext<Node> ctx, WriteMemNode node) {
+    throw new UnsupportedOperationException("Type WriteMemNode not yet implemented");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, WriteArtificialResNode toHandle) {
+    throw new UnsupportedOperationException("Type WriteArtificialResNode not yet implemented");
+  }
+
+  @Handler
+  void handle(CGenContext<Node> ctx, WriteRegFileNode toHandle) {
+    throw new UnsupportedOperationException("Type WriteRegFileNode not yet implemented");
   }
 
   @Handler
@@ -140,8 +168,9 @@ public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
   }
 
   @Handler
-  void handle(CGenContext<Node> ctx, AsmBuiltInCall toHandle) {
-    throwNotAllowed(toHandle, "Assembler built-in calls");
+  public void handle(CGenContext<Node> ctx, ProcCallNode node) {
+    throwNotAllowed(node, "Procedure calls");
   }
+
 
 }
