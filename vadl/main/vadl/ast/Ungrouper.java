@@ -224,16 +224,34 @@ public class Ungrouper
   @Override
   public Void visit(FormatDefinition definition) {
     ungroupAnnotations(definition);
-    for (FormatDefinition.FormatField field : definition.fields) {
-      if (field instanceof FormatDefinition.RangeFormatField f) {
-        f.ranges.replaceAll(range -> range.accept(this));
-      } else if (field instanceof FormatDefinition.DerivedFormatField f) {
-        f.expr = f.expr.accept(this);
-      }
-    }
+    definition.fields.forEach(f -> f.accept(this));
     for (FormatDefinition.AuxiliaryField auxiliaryField : definition.auxiliaryFields) {
       auxiliaryField.entries().forEach(entry -> entry.expr = entry.expr.accept(this));
     }
+    return null;
+  }
+
+  @Override
+  public Void visit(DerivedFormatField definition) {
+    ungroupAnnotations(definition);
+    definition.expr = definition.expr.accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(RangeFormatField definition) {
+    ungroupAnnotations(definition);
+    if (definition.typeLiteral != null) {
+      definition.typeLiteral = (TypeLiteral) definition.typeLiteral.accept(this);
+    }
+    definition.ranges = definition.ranges.stream().map(e -> e.accept(this)).toList();
+    return null;
+  }
+
+  @Override
+  public Void visit(TypedFormatField definition) {
+    ungroupAnnotations(definition);
+    definition.typeLiteral = (TypeLiteral) definition.typeLiteral.accept(this);
     return null;
   }
 
@@ -311,8 +329,8 @@ public class Ungrouper
   }
 
   @Override
-  public Void visit(AbiPseudoInstructionDefinition abiPseudoInstructionDefinition) {
-    ungroupAnnotations(abiPseudoInstructionDefinition);
+  public Void visit(AbiPseudoInstructionDefinition definition) {
+    ungroupAnnotations(definition);
     return null;
   }
 
@@ -409,6 +427,12 @@ public class Ungrouper
   @Override
   public Void visit(OperationDefinition operationDefinition) {
     ungroupAnnotations(operationDefinition);
+    return null;
+  }
+
+  @Override
+  public Void visit(Parameter definition) {
+    ungroupAnnotations(definition);
     return null;
   }
 

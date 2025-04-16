@@ -284,7 +284,7 @@ save_vfp_d8_d15_regs
 
 
 // Note: long ago ARM processors did not have floating point hardware support.
-// Floating point was done in software and floating point parameters were 
+// Floating point was done in software and floating point parameters were
 // passed in integer registers.  When hardware support was added for floating
 // point, new *vfp functions were added to do the same operations but with 
 // floating point parameters in floating point registers.

@@ -48,6 +48,21 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(DerivedFormatField definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(RangeFormatField definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(TypedFormatField definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(InstructionSetDefinition definition) {
     definition.definitions.removeIf(this::shouldRemove);
     return definition;
@@ -177,6 +192,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   @Override
   public Definition visit(OperationDefinition operationDefinition) {
     return operationDefinition;
+  }
+
+  @Override
+  public Definition visit(Parameter definition) {
+    return definition;
   }
 
   @Override
