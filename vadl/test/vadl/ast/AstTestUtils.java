@@ -48,11 +48,15 @@ public class AstTestUtils {
     }
   }
 
-  static List<Path> loadVadlFiles(String directory) throws URISyntaxException, IOException {
+  static Path getResourcePath(String directory) throws URISyntaxException {
     var dir = Objects.requireNonNull(AstTestUtils.class.getClassLoader().getResource(directory));
     var sourceDir = Path.of(dir.toURI()).toAbsolutePath().toString()
         .replace("/build/resources/test", "/test/resources");
-    try (Stream<Path> files = Files.list(Path.of(sourceDir))) {
+    return Path.of(sourceDir);
+  }
+
+  static List<Path> loadVadlFiles(String directory) throws URISyntaxException, IOException {
+    try (Stream<Path> files = Files.list(getResourcePath(directory))) {
       return files.toList();
     }
   }

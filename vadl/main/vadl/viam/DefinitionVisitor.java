@@ -97,12 +97,12 @@ public interface DefinitionVisitor {
   void visit(CompilerInstruction compilerInstruction);
 
   /**
-   * DefinitionVisitor.Recursive is an abstract class that implements the DefinitionVisitor
+   * DefinitionVisitor.Recursive is an interface that extends the DefinitionVisitor
    * interface.
    * It provides default implementations for the visit methods for all types of definitions in a
    * VADL specification, allowing for recursive traversal of the definition hierarchy.
    */
-  class Recursive implements DefinitionVisitor {
+  abstract class Recursive implements DefinitionVisitor {
 
     public void beforeTraversal(Definition definition) {
     }

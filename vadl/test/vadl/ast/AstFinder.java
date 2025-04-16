@@ -235,6 +235,21 @@ class AstFinder implements DefinitionVisitor<Void> {
   }
 
   @Override
+  public Void visit(DerivedFormatField definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(RangeFormatField definition) {
+    return null;
+  }
+
+  @Override
+  public Void visit(TypedFormatField definition) {
+    return null;
+  }
+
+  @Override
   public Void visit(FunctionDefinition definition) {
     visitDefinition(definition);
     return null;
@@ -328,6 +343,11 @@ class AstFinder implements DefinitionVisitor<Void> {
   }
 
   @Override
+  public Void visit(Parameter definition) {
+    return null;
+  }
+
+  @Override
   public Void visit(PatchDefinition definition) {
     return null;
   }
@@ -415,7 +435,7 @@ class AstFinder implements DefinitionVisitor<Void> {
   }
 
   @Override
-  public Void visit(AbiPseudoInstructionDefinition abiPseudoInstructionDefinition) {
+  public Void visit(AbiPseudoInstructionDefinition definition) {
     return null;
   }
 }

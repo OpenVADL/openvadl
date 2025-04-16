@@ -18,9 +18,12 @@ package vadl.ast;
 
 import com.google.common.base.Preconditions;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
+import vadl.javaannotations.ast.Child;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
@@ -138,11 +141,7 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
 
   @Override
   public String toString() {
-    if (type == null) {
-      return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
-    }
-    return "%s name: \"%s\", type: %s".formatted(this.getClass().getSimpleName(), this.name,
-        this.type);
+    return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
   }
 
   @Override
@@ -301,8 +300,10 @@ enum UnaryOperator {
  * Any kind of binary expression (often written with the infix notation in vadl).
  */
 class BinaryExpr extends Expr {
+  @Child
   Expr left;
   IsBinOp operator;
+  @Child
   Expr right;
   boolean hasBeenReordered = false;
 
@@ -391,8 +392,7 @@ class BinaryExpr extends Expr {
 
   @Override
   public String toString() {
-    return "%s operator: %s, type: %s".formatted(this.getClass().getSimpleName(),
-        operator().symbol, this.type);
+    return "%s operator: %s".formatted(this.getClass().getSimpleName(), operator().symbol);
   }
 
   @Override
@@ -420,6 +420,7 @@ class BinaryExpr extends Expr {
 
 class UnaryExpr extends Expr {
   IsUnOp operator;
+  @Child
   Expr operand;
 
   /**
@@ -467,7 +468,7 @@ class UnaryExpr extends Expr {
 
   @Override
   public String toString() {
-    return "%s operator: %s, type: %s".formatted(this.getClass().getSimpleName(), operator, type);
+    return "%s operator: %s".formatted(this.getClass().getSimpleName(), operator);
   }
 
   @Override
@@ -528,8 +529,7 @@ class IntegerLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: %s (%d), type: %s".formatted(this.getClass().getSimpleName(), token, number,
-        type);
+    return "%s literal: %s (%d)".formatted(this.getClass().getSimpleName(), token, number);
   }
 
   @Override
@@ -601,8 +601,7 @@ class BinaryLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: %s (%d), type: %s".formatted(this.getClass().getSimpleName(), token, number,
-        type);
+    return "%s literal: %s (%d)".formatted(this.getClass().getSimpleName(), token, number);
   }
 
   @Override
@@ -657,7 +656,7 @@ class BoolLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: %s, type: %s".formatted(this.getClass().getSimpleName(), value, type);
+    return "%s literal: %s".formatted(this.getClass().getSimpleName(), value);
   }
 
   @Override
@@ -725,8 +724,7 @@ class StringLiteral extends Expr {
 
   @Override
   public String toString() {
-    return "%s literal: \"%s\" (%s), type: %s".formatted(this.getClass().getSimpleName(), value,
-        token, type);
+    return "%s literal: \"%s\" (%s)".formatted(this.getClass().getSimpleName(), value, token);
   }
 
   @Override
@@ -1080,6 +1078,7 @@ final class IdToStrExpr extends Expr {
  */
 // FIXME: This should probably be two nodes as the semantics are so different.
 class GroupedExpr extends Expr {
+  @Child
   List<Expr> expressions;
   SourceLocation loc;
 
@@ -1138,7 +1137,9 @@ class GroupedExpr extends Expr {
 }
 
 class RangeExpr extends Expr {
+  @Child
   Expr from;
+  @Child
   Expr to;
 
   public RangeExpr(Expr from, Expr to) {
@@ -1168,10 +1169,6 @@ class RangeExpr extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1257,6 +1254,17 @@ final class TypeLiteral extends Expr {
     }
   }
 
+  @Override
+  public List<Node> children() {
+    // This is too complicated for the @Child annotation
+    var childNodes = new ArrayList<Node>();
+    childNodes.add((Node) baseType);
+    childNodes.addAll(sizeIndices.stream()
+        .flatMap(Collection::stream)
+        .toList()
+    );
+    return childNodes;
+  }
 
   @Override
   SourceLocation location() {
@@ -1290,10 +1298,6 @@ final class TypeLiteral extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1415,10 +1419,6 @@ final class IdentifierPath extends Expr implements IsId {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1443,7 +1443,9 @@ final class IdentifierPath extends Expr implements IsId {
  * A representation of terms of form {@code "MEM<9>"}.
  */
 final class SymbolExpr extends Expr implements IsSymExpr {
+  @Child
   IsId path;
+  @Child
   Expr size;
   SourceLocation location;
 
@@ -1486,10 +1488,6 @@ final class SymbolExpr extends Expr implements IsSymExpr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1563,6 +1561,19 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     this.location = location;
   }
 
+  @Override
+  List<Node> children() {
+    // This is too complicated for the @Child annotation
+    List<Node> childNodes = new ArrayList<>();
+    childNodes.add((Node) target);
+    childNodes.addAll(argsIndices.stream().flatMap(a -> a.values.stream()).toList());
+    childNodes.addAll(subCalls.stream()
+        .flatMap(subCall -> subCall.argsIndices.stream()
+            .flatMap(a -> a.values.stream()))
+        .toList());
+    return childNodes;
+  }
+
   void replaceArgsFor(int index, List<Expr> newArgs) {
     var args = this.argsIndices.get(index);
     if (args.values.size() != newArgs.size()) {
@@ -1624,10 +1635,6 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1692,12 +1699,6 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
       return Objects.hash(values);
     }
 
-    @Override
-    public String toString() {
-      return "Arguments["
-          + "args=" + values + ']';
-    }
-
 
   }
 
@@ -1749,19 +1750,15 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
       return Objects.hash(id, argsIndices);
     }
 
-    @Override
-    public String toString() {
-      return "SubCall["
-          + "id=" + id + ", "
-          + "argsIndices=" + argsIndices + ']';
-    }
-
   }
 }
 
 class IfExpr extends Expr {
+  @Child
   Expr condition;
+  @Child
   Expr thenExpr;
+  @Child
   Expr elseExpr;
   SourceLocation location;
 
@@ -1804,10 +1801,6 @@ class IfExpr extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1835,7 +1828,9 @@ class IfExpr extends Expr {
 
 class LetExpr extends Expr {
   List<Identifier> identifiers;
+  @Child
   Expr valueExpr;
+  @Child
   Expr body;
   SourceLocation location;
 
@@ -1909,10 +1904,6 @@ class LetExpr extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1939,7 +1930,9 @@ class LetExpr extends Expr {
 }
 
 class CastExpr extends Expr {
+  @Child
   Expr value;
+  @Child
   TypeLiteral typeLiteral;
   SourceLocation location;
 
@@ -1978,10 +1971,6 @@ class CastExpr extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -2015,6 +2004,19 @@ class MatchExpr extends Expr {
     this.cases = cases;
     this.defaultResult = defaultResult;
     this.loc = loc;
+  }
+
+  @Override
+  List<Node> children() {
+    // This is too complicated for the @Child annotation
+    var childNodes = new ArrayList<Node>();
+    childNodes.add(candidate);
+    cases.forEach(c -> {
+      childNodes.addAll(c.patterns);
+      childNodes.add(c.result);
+    });
+    childNodes.add(defaultResult);
+    return childNodes;
   }
 
   @Override
@@ -2067,10 +2069,6 @@ class MatchExpr extends Expr {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s type: %s".formatted(this.getClass().getSimpleName(), type);
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -2181,6 +2179,7 @@ class ExistsInExpr extends Expr {
 
 class ExistsInThenExpr extends Expr {
   List<Condition> conditions;
+  @Child
   Expr thenExpr;
   SourceLocation loc;
 
@@ -2259,7 +2258,9 @@ class ExistsInThenExpr extends Expr {
 }
 
 class ForallThenExpr extends Expr {
+  @Child
   List<ForallThenExpr.Index> indices;
+  @Child
   Expr thenExpr;
   SourceLocation loc;
 
@@ -2391,6 +2392,7 @@ class ForallExpr extends Expr {
   Operation operation;
   @Nullable
   Operator foldOperator;
+  @Child
   Expr expr;
   SourceLocation loc;
 
@@ -2529,8 +2531,10 @@ class ForallExpr extends Expr {
 
 class SequenceCallExpr extends Expr {
 
+  @Child
   Identifier target;
   @Nullable
+  @Child
   Expr range;
   SourceLocation loc;
 

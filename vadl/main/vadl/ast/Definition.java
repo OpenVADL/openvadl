@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
@@ -56,6 +57,8 @@ abstract class Definition extends Node {
 }
 
 interface DefinitionVisitor<R> {
+  R visit(AbiPseudoInstructionDefinition definition);
+
   R visit(AbiSequenceDefinition definition);
 
   R visit(AliasDefinition definition);
@@ -102,6 +105,12 @@ interface DefinitionVisitor<R> {
 
   R visit(FormatDefinition definition);
 
+  R visit(DerivedFormatField definition);
+
+  R visit(RangeFormatField definition);
+
+  R visit(TypedFormatField definition);
+
   R visit(FunctionDefinition definition);
 
   R visit(GroupDefinition definition);
@@ -132,6 +141,8 @@ interface DefinitionVisitor<R> {
 
   R visit(OperationDefinition definition);
 
+  R visit(Parameter definition);
+
   R visit(PatchDefinition definition);
 
   R visit(PipelineDefinition definition);
@@ -161,8 +172,6 @@ interface DefinitionVisitor<R> {
   R visit(StageDefinition definition);
 
   R visit(UsingDefinition definition);
-
-  R visit(AbiPseudoInstructionDefinition abiPseudoInstructionDefinition);
 }
 
 /**
@@ -171,8 +180,9 @@ interface DefinitionVisitor<R> {
  * <p>name The declared name of this parameter.
  * type The declared type of this parameter.
  */
-class Parameter extends Node implements IdentifiableNode, TypedNode {
+class Parameter extends Definition implements IdentifiableNode, TypedNode {
   Identifier name;
+  @Child
   TypeLiteral typeLiteral;
 
   public Parameter(Identifier name, TypeLiteral typeLiteral) {
@@ -202,7 +212,8 @@ class Parameter extends Node implements IdentifiableNode, TypedNode {
     typeLiteral.prettyPrint(indent, builder);
   }
 
-  static void prettyPrintMultiple(int indent, List<Parameter> parameters, StringBuilder builder) {
+  static void prettyPrintMultiple(int indent, List<Parameter> parameters,
+                                  StringBuilder builder) {
     if (parameters.isEmpty()) {
       return;
     }
@@ -225,7 +236,8 @@ class Parameter extends Node implements IdentifiableNode, TypedNode {
     }
 
     Parameter parameter = (Parameter) o;
-    return name.equals(parameter.name) && typeLiteral.equals(parameter.typeLiteral);
+    return name.equals(parameter.name)
+        && typeLiteral.equals(parameter.typeLiteral);
   }
 
   @Override
@@ -239,14 +251,21 @@ class Parameter extends Node implements IdentifiableNode, TypedNode {
   public Type type() {
     return typeLiteral.type();
   }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 }
 
 class ConstantDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
 
+  @Child
   @Nullable
   TypeLiteral typeLiteral;
 
+  @Child
   Expr value;
   SourceLocation loc;
 
@@ -297,10 +316,6 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return "%s".formatted(this.getClass().getSimpleName());
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -333,10 +348,253 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 }
 
+abstract class FormatField extends Definition implements IdentifiableNode {
+}
+
+
+class RangeFormatField extends FormatField {
+  Identifier identifier;
+  @Child
+  List<Expr> ranges;
+  @Child
+  @Nullable
+  TypeLiteral typeLiteral;
+
+  @Nullable
+  Type type;
+
+  // While the ranges are expressions in diffrent forms, once computed they are stored here to
+  // make them easier to process.
+  @Nullable
+  List<FormatDefinition.BitRange> computedRanges;
+
+  public RangeFormatField(Identifier identifier, List<Expr> ranges,
+                          @Nullable TypeLiteral typeLiteral) {
+    this.identifier = identifier;
+    this.ranges = ranges;
+    this.typeLiteral = typeLiteral;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  @Override
+  SourceLocation location() {
+    return identifier.location().join(ranges.get(ranges.size() - 1).location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append("\t [");
+    ranges.get(0).prettyPrint(indent, builder);
+    for (int i = 1; i < ranges.size(); i++) {
+      builder.append(", ");
+      ranges.get(i).prettyPrint(indent, builder);
+    }
+    builder.append("]");
+    if (typeLiteral != null) {
+      builder.append(" : ");
+      typeLiteral.prettyPrint(0, builder);
+    }
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    RangeFormatField that = (RangeFormatField) o;
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(ranges, that.ranges);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(ranges);
+    return result;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+}
+
+class TypedFormatField extends FormatField {
+  final Identifier identifier;
+  @Child
+  TypeLiteral typeLiteral;
+
+  // The range this field occupies in its parent format.
+  @Nullable
+  FormatDefinition.BitRange range;
+
+  public TypedFormatField(Identifier identifier, TypeLiteral typeLiteral) {
+    this.identifier = identifier;
+    this.typeLiteral = typeLiteral;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  @Override
+  SourceLocation location() {
+    return identifier().location().join(typeLiteral.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append(" : ");
+    typeLiteral.prettyPrint(indent, builder);
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    TypedFormatField that = (TypedFormatField) o;
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(typeLiteral, that.typeLiteral);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(typeLiteral);
+    result = 31 * result + Objects.hashCode(symbolTable);
+    return result;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+}
+
+/**
+ * A (pseudo) field derived from another. In the VIAM this is called FieldAccess.
+ *
+ * <p><pre>
+ * {@code
+ * format ABC : Bits<8> =
+ *   { A  : Bits<2>
+ *   , B  : Bits<6>
+ *   , C = A as Bits<4>    // This is a derived format field
+ *   }
+ * }
+ * </pre>
+ */
+class DerivedFormatField extends FormatField {
+  Identifier identifier;
+  @Child
+  Expr expr;
+
+  /**
+   * Since the predicate doesn't have to follow the derived format field, the parser cannot
+   * connect link them together and instead the typechecker does this by understanding the
+   * semantic.
+   */
+  @Nullable
+  Expr predicate;
+
+  //    /**
+  //     * Since the predicate doesn't have to follow the derived format field, the parser cannot
+  //     * connect link them together and instead the typechecker does this by understanding the
+  //     * semantic.
+  //     */
+  //    @Nullable
+  //    Expr encoding;
+
+  public DerivedFormatField(Identifier identifier, Expr expr) {
+    this.identifier = identifier;
+    this.expr = expr;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  @Override
+  SourceLocation location() {
+    return identifier.location().join(expr.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append(" = ");
+    expr.prettyPrint(indent, builder);
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    DerivedFormatField that = (DerivedFormatField) o;
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(expr, that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(expr);
+    return result;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+}
+
 class FormatDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
+  @Child
   TypeLiteral typeLiteral;
+  @Child
   List<FormatField> fields;
+  @Child
   List<AuxiliaryField> auxiliaryFields;
   SourceLocation loc;
 
@@ -348,241 +606,6 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
   record BitRange(int from, int to) {
   }
 
-  interface FormatField extends WithSourceLocation {
-    Identifier identifier();
-
-    void prettyPrint(int indent, StringBuilder builder);
-  }
-
-
-  static class RangeFormatField extends Node implements FormatField {
-    Identifier identifier;
-    List<Expr> ranges;
-    @Nullable
-    TypeLiteral typeLiteral;
-
-    @Nullable
-    Type type;
-
-    // While the ranges are expressions in diffrent forms, once computed they are stored here to
-    // make them easier to process.
-    @Nullable
-    List<BitRange> computedRanges;
-
-    public RangeFormatField(Identifier identifier, List<Expr> ranges,
-                            @Nullable TypeLiteral typeLiteral) {
-      this.identifier = identifier;
-      this.ranges = ranges;
-      this.typeLiteral = typeLiteral;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return identifier;
-    }
-
-    @Override
-    SourceLocation location() {
-      return identifier.location().join(ranges.get(ranges.size() - 1).location());
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    public void prettyPrint(int indent, StringBuilder builder) {
-      identifier.prettyPrint(indent, builder);
-      builder.append("\t [");
-      ranges.get(0).prettyPrint(indent, builder);
-      for (int i = 1; i < ranges.size(); i++) {
-        builder.append(", ");
-        ranges.get(i).prettyPrint(indent, builder);
-      }
-      builder.append("]");
-      if (typeLiteral != null) {
-        builder.append(" : ");
-        typeLiteral.prettyPrint(0, builder);
-      }
-    }
-
-    @Override
-    public String toString() {
-      return this.getClass().getSimpleName();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      RangeFormatField that = (RangeFormatField) o;
-      return Objects.equals(identifier, that.identifier)
-          && Objects.equals(ranges, that.ranges);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Objects.hashCode(identifier);
-      result = 31 * result + Objects.hashCode(ranges);
-      return result;
-    }
-  }
-
-  static class TypedFormatField extends Node implements FormatField {
-    final Identifier identifier;
-    final TypeLiteral typeLiteral;
-
-    // The range this field occupies in its parent format.
-    @Nullable
-    BitRange range;
-
-    public TypedFormatField(Identifier identifier, TypeLiteral typeLiteral) {
-      this.identifier = identifier;
-      this.typeLiteral = typeLiteral;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return identifier;
-    }
-
-    @Override
-    SourceLocation location() {
-      return identifier().location().join(typeLiteral.location());
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    public void prettyPrint(int indent, StringBuilder builder) {
-      identifier.prettyPrint(indent, builder);
-      builder.append(" : ");
-      typeLiteral.prettyPrint(indent, builder);
-    }
-
-    @Override
-    public String toString() {
-      return this.getClass().getSimpleName();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      TypedFormatField that = (TypedFormatField) o;
-      return Objects.equals(identifier, that.identifier)
-          && Objects.equals(typeLiteral, that.typeLiteral);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Objects.hashCode(identifier);
-      result = 31 * result + Objects.hashCode(typeLiteral);
-      result = 31 * result + Objects.hashCode(symbolTable);
-      return result;
-    }
-  }
-
-  /**
-   * A (pseudo) field derived from another. In the VIAM this is called FieldAccess.
-   *
-   * <p><pre>
-   * {@code
-   * format ABC : Bits<8> =
-   *   { A  : Bits<2>
-   *   , B  : Bits<6>
-   *   , C = A as Bits<4>    // This is a derived format field
-   *   }
-   * }
-   * </pre>
-   */
-  static class DerivedFormatField extends Node implements FormatField {
-    Identifier identifier;
-    Expr expr;
-
-    /**
-     * Since the predicate doesn't have to follow the derived format field, the parser cannot
-     * connect link them together and instead the typechecker does this by understanding the
-     * semantic.
-     */
-    @Nullable
-    Expr predicate;
-
-    //    /**
-    //     * Since the predicate doesn't have to follow the derived format field, the parser cannot
-    //     * connect link them together and instead the typechecker does this by understanding the
-    //     * semantic.
-    //     */
-    //    @Nullable
-    //    Expr encoding;
-
-    public DerivedFormatField(Identifier identifier, Expr expr) {
-      this.identifier = identifier;
-      this.expr = expr;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return identifier;
-    }
-
-    @Override
-    SourceLocation location() {
-      return identifier.location().join(expr.location());
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    public void prettyPrint(int indent, StringBuilder builder) {
-      identifier.prettyPrint(indent, builder);
-      builder.append(" = ");
-      expr.prettyPrint(indent, builder);
-    }
-
-    @Override
-    public String toString() {
-      return this.getClass().getSimpleName();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      DerivedFormatField that = (DerivedFormatField) o;
-      return Objects.equals(identifier, that.identifier)
-          && Objects.equals(expr, that.expr);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Objects.hashCode(identifier);
-      result = 31 * result + Objects.hashCode(expr);
-      return result;
-    }
-  }
 
   /**
    * The predicate or encoding of a derived format field.
@@ -702,9 +725,7 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 
     @Override
     public String toString() {
-      return "AuxiliaryFieldEntry["
-          + "id=" + id + ", "
-          + "expr=" + expr + ']';
+      return this.getClass().getSimpleName();
     }
 
   }
@@ -766,7 +787,6 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     }
   }
 
-
   @Override
   public Identifier identifier() {
     return (Identifier) identifier;
@@ -825,10 +845,6 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -861,7 +877,9 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 class InstructionSetDefinition extends Definition implements IdentifiableNode {
   Identifier identifier;
   @Nullable
+  @Child
   Identifier extending;
+  @Child
   List<Definition> definitions;
   SourceLocation loc;
 
@@ -917,10 +935,6 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -953,6 +967,7 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
 class CounterDefinition extends Definition implements IdentifiableNode, TypedNode {
   CounterKind kind;
   IdentifierOrPlaceholder identifier;
+  @Child
   TypeLiteral typeLiteral;
   SourceLocation loc;
 
@@ -1039,7 +1054,9 @@ class CounterDefinition extends Definition implements IdentifiableNode, TypedNod
 
 class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
+  @Child
   TypeLiteral addressTypeLiteral;
+  @Child
   TypeLiteral dataTypeLiteral;
   SourceLocation loc;
 
@@ -1088,11 +1105,6 @@ class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode
   }
 
   @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -1125,6 +1137,7 @@ class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode
 
 class RegisterDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
+  @Child
   TypeLiteral typeLiteral;
   SourceLocation loc;
 
@@ -1170,11 +1183,6 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 
   @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -1205,6 +1213,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
 
 class RegisterFileDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
+  @Child
   RelationTypeLiteral typeLiteral;
   SourceLocation loc;
 
@@ -1240,16 +1249,7 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
     builder.append("register file ");
     identifier.prettyPrint(indent, builder);
     builder.append(": ");
-    var isFirst = true;
-    for (TypeLiteral argType : typeLiteral.argTypes) {
-      if (!isFirst) {
-        builder.append(" * ");
-      }
-      isFirst = false;
-      argType.prettyPrint(0, builder);
-    }
-    builder.append(" -> ");
-    typeLiteral.resultType.prettyPrint(indent, builder);
+    typeLiteral.prettyPrint(indent, builder);
     builder.append("\n");
   }
 
@@ -1258,10 +1258,6 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1291,13 +1287,75 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
     return Objects.requireNonNull(type);
   }
 
-  record RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
+  static final class RelationTypeLiteral extends Node {
+    @Child
+    final List<TypeLiteral> argTypes;
+    @Child
+    final TypeLiteral resultType;
+
+    RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
+      this.argTypes = argTypes;
+      this.resultType = resultType;
+    }
+
+    public List<TypeLiteral> argTypes() {
+      return argTypes;
+    }
+
+    public TypeLiteral resultType() {
+      return resultType;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj == null || obj.getClass() != this.getClass()) {
+        return false;
+      }
+      var that = (RelationTypeLiteral) obj;
+      return Objects.equals(this.argTypes, that.argTypes)
+          && Objects.equals(this.resultType, that.resultType);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(argTypes, resultType);
+    }
+
+
+    @Override
+    SourceLocation location() {
+      return argTypes.get(0).location().join(resultType.location());
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
+    }
+
+    @Override
+    void prettyPrint(int indent, StringBuilder builder) {
+      var isFirst = true;
+      for (TypeLiteral argType : argTypes) {
+        if (!isFirst) {
+          builder.append(" * ");
+        }
+        isFirst = false;
+        argType.prettyPrint(0, builder);
+      }
+      builder.append(" -> ");
+      resultType.prettyPrint(indent, builder);
+    }
   }
 }
 
 class InstructionDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
+  @Child
   IdentifierOrPlaceholder typeIdentifier;
+  @Child
   Statement behavior;
   SourceLocation loc;
 
@@ -1355,10 +1413,6 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1390,7 +1444,9 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
  * Class which is parent for {@link PseudoInstructionDefinition} and {@link AbiSequenceDefinition}.
  */
 abstract class InstructionSequenceDefinition extends Definition {
+  @Child
   List<Parameter> params;
+  @Child
   List<InstructionCallStatement> statements;
   SourceLocation loc;
 
@@ -1421,11 +1477,19 @@ class PseudoInstructionDefinition extends InstructionSequenceDefinition
   AssemblyDefinition assemblyDefinition;
 
   PseudoInstructionDefinition(IdentifierOrPlaceholder identifier, PseudoInstrKind kind,
-                              List<Parameter> params, List<InstructionCallStatement> statements,
+                              List<Parameter> params,
+                              List<InstructionCallStatement> statements,
                               SourceLocation loc) {
     super(params, statements, loc);
     this.identifier = identifier;
     this.kind = kind;
+  }
+
+  @Override
+  public List<Node> children() {
+    // Since this class has no @Child annotations the Annotationprocessor doesn't find it.
+    return NodeChildrenRegistry.unsafeGetChildrenDirect(this,
+        (Class<? extends Node>) getClass().getSuperclass());
   }
 
   @Override
@@ -1462,10 +1526,6 @@ class PseudoInstructionDefinition extends InstructionSequenceDefinition
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1501,15 +1561,19 @@ class PseudoInstructionDefinition extends InstructionSequenceDefinition
 
 class RelocationDefinition extends Definition implements IdentifiableNode, TypedNode {
   Identifier identifier;
+  @Child
   List<Parameter> params;
+  @Child
   TypeLiteral resultTypeLiteral;
+  @Child
   Expr expr;
   SourceLocation loc;
 
   @Nullable
   ConcreteRelationType type;
 
-  RelocationDefinition(Identifier identifier, List<Parameter> params, TypeLiteral resultTypeLiteral,
+  RelocationDefinition(Identifier identifier, List<Parameter> params,
+                       TypeLiteral resultTypeLiteral,
                        Expr expr, SourceLocation loc) {
     this.identifier = identifier;
     this.params = params;
@@ -1558,10 +1622,6 @@ class RelocationDefinition extends Definition implements IdentifiableNode, Typed
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1605,6 +1665,7 @@ sealed interface IsEncs permits EncodingDefinition.EncsNode,
 
 class EncodingDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder instrIdentifier;
+  @Child
   EncsNode encodings;
   SourceLocation loc;
 
@@ -1650,10 +1711,6 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1679,12 +1736,19 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
   }
 
   static final class EncsNode extends Node implements IsEncs {
+    @Child
     List<IsEncs> items;
     SourceLocation loc;
 
     EncsNode(List<IsEncs> items, SourceLocation loc) {
       this.items = items;
       this.loc = loc;
+    }
+
+    @Override
+    List<Node> children() {
+      // This is too complicated for the @Child annotation
+      return items.stream().map(i -> (Node) i).toList();
     }
 
     @Override
@@ -1728,8 +1792,10 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
     }
   }
 
-  static final class EncodingField implements IsEncs {
+  static final class EncodingField extends Node implements IsEncs {
+    @Child
     final Identifier field;
+    @Child
     Expr value;
 
     EncodingField(Identifier field, Expr value) {
@@ -1740,6 +1806,11 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
     @Override
     public SourceLocation location() {
       return field.location().join(value.location());
+    }
+
+    @Override
+    SyntaxType syntaxType() {
+      return BasicSyntaxType.INVALID;
     }
 
     @Override
@@ -1779,6 +1850,7 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
 
 class AssemblyDefinition extends Definition {
   List<IdentifierOrPlaceholder> identifiers;
+  @Child
   Expr expr;
   SourceLocation loc;
 
@@ -1825,10 +1897,6 @@ class AssemblyDefinition extends Definition {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1856,6 +1924,7 @@ class AssemblyDefinition extends Definition {
 
 class UsingDefinition extends Definition implements IdentifiableNode {
   final IdentifierOrPlaceholder id;
+  @Child
   final TypeLiteral typeLiteral;
   final SourceLocation loc;
 
@@ -1896,10 +1965,6 @@ class UsingDefinition extends Definition implements IdentifiableNode {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -1927,15 +1992,19 @@ class UsingDefinition extends Definition implements IdentifiableNode {
 
 class FunctionDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder name;
+  @Child
   List<Parameter> params;
+  @Child
   TypeLiteral retType;
+  @Child
   Expr expr;
   SourceLocation loc;
 
   @Nullable
   ConcreteRelationType type;
 
-  FunctionDefinition(IdentifierOrPlaceholder name, List<Parameter> params, TypeLiteral retType,
+  FunctionDefinition(IdentifierOrPlaceholder name, List<Parameter> params,
+                     TypeLiteral retType,
                      Expr expr, SourceLocation location) {
     this.name = name;
     this.params = params;
@@ -1981,10 +2050,6 @@ class FunctionDefinition extends Definition implements IdentifiableNode, TypedNo
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -2023,9 +2088,12 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
   IdentifierOrPlaceholder id;
   AliasKind kind;
   @Nullable
+  @Child
   TypeLiteral aliasType;
   @Nullable
+  @Child
   TypeLiteral targetType;
+  @Child
   Expr value;
   SourceLocation loc;
 
@@ -2101,10 +2169,6 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -2143,7 +2207,9 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
 final class EnumerationDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder id;
   @Nullable
+  @Child
   TypeLiteral enumType;
+  @Child
   List<Entry> entries;
   SourceLocation loc;
 
@@ -2213,10 +2279,6 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -2245,8 +2307,10 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
 
   static class Entry extends Node implements WithSourceLocation {
 
+    @Child
     Identifier name;
     @Nullable
+    @Child
     Expr value;
 
 
@@ -2299,11 +2363,13 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
 
 final class ExceptionDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder id;
+  @Child
   Statement statement;
   SourceLocation loc;
   List<Parameter> params;
 
-  ExceptionDefinition(IdentifierOrPlaceholder id, List<Parameter> params, Statement statement,
+  ExceptionDefinition(IdentifierOrPlaceholder id, List<Parameter> params,
+                      Statement statement,
                       SourceLocation location) {
     this.id = id;
     this.params = params;
@@ -2340,10 +2406,6 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -2369,6 +2431,10 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
   }
 }
 
+/**
+ * An internal temporary placeholder of macro instantiations.
+ * This node should never leave the parser.
+ */
 final class PlaceholderDefinition extends Definition {
 
   List<String> segments;
@@ -2635,10 +2701,7 @@ class ImportDefinition extends Definition {
     return Objects.hash(moduleAst, importedSymbols, fileId, filePath, args);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
-  }
+
 }
 
 record Annotations(List<Annotation> annotations) {
@@ -2701,15 +2764,13 @@ final class Annotation {
 
   @Override
   public String toString() {
-    return "Annotation["
-        + "expr=" + expr + ", "
-        + "type=" + type + ", "
-        + "property=" + property + ']';
+    return this.getClass().getSimpleName();
   }
 }
 
 class DefinitionList extends Definition {
 
+  @Child
   List<Definition> items;
   SyntaxType syntaxType;
   SourceLocation location;
@@ -3045,14 +3106,19 @@ class TemplateParam extends Node implements IdentifiableNode {
 
 class ProcessDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder name;
+  @Child
   List<TemplateParam> templateParams;
+  @Child
   List<Parameter> inputs;
+  @Child
   List<Parameter> outputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
   ProcessDefinition(IdentifierOrPlaceholder name, List<TemplateParam> templateParams,
-                    List<Parameter> inputs, List<Parameter> outputs, Statement statement,
+                    List<Parameter> inputs, List<Parameter> outputs,
+                    Statement statement,
                     SourceLocation loc) {
     this.name = name;
     this.templateParams = templateParams;
@@ -3110,10 +3176,6 @@ class ProcessDefinition extends Definition implements IdentifiableNode {
     return visitor.visit(this);
   }
 
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName() + " " + name;
-  }
 
   @Override
   public boolean equals(Object o) {
@@ -3150,6 +3212,11 @@ class OperationDefinition extends Definition implements IdentifiableNode {
     this.loc = loc;
   }
 
+  @Override
+  List<Node> children() {
+    // This is too complicated for the @Child annotation
+    return resources.stream().map(r -> (Node) r).toList();
+  }
 
   @Override
   SourceLocation location() {
@@ -3190,11 +3257,6 @@ class OperationDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  public String toString() {
-    return this.getClass().getSimpleName() + " " + name;
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -3221,7 +3283,9 @@ class OperationDefinition extends Definition implements IdentifiableNode {
 class GroupDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder name;
   @Nullable
+  @Child
   TypeLiteral type;
+  @Child
   Group.Sequence groupSequence;
   SourceLocation loc;
 
@@ -3269,11 +3333,6 @@ class GroupDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  public String toString() {
-    return this.getClass().getSimpleName() + " " + name;
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -3294,7 +3353,9 @@ class GroupDefinition extends Definition implements IdentifiableNode {
 
 class ApplicationBinaryInterfaceDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   IsId isa;
+  @Child
   List<Definition> definitions;
   SourceLocation loc;
 
@@ -3370,6 +3431,7 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
 class AbiPseudoInstructionDefinition extends Definition {
 
   Kind kind;
+  @Child
   IdentifierOrPlaceholder target;
   SourceLocation loc;
 
@@ -3460,6 +3522,13 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
   }
 
   @Override
+  public List<Node> children() {
+    // Since this class has no @Child annotations the Annotationprocessor doesn't find it.
+    return NodeChildrenRegistry.unsafeGetChildrenDirect(this,
+        (Class<? extends Node>) getClass().getSuperclass());
+  }
+
+  @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
@@ -3521,6 +3590,7 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
 class SpecialPurposeRegisterDefinition extends Definition {
 
   Purpose purpose;
+  @Child
   List<SequenceCallExpr> exprs;
   SourceLocation loc;
 
@@ -3631,12 +3701,18 @@ class SpecialPurposeRegisterDefinition extends Definition {
 
 class MicroProcessorDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   List<IsId> implementedIsas;
   @Nullable
+  @Child
   IsId abi;
+  @Child
   List<Definition> definitions;
   SourceLocation loc;
 
+  /**
+   * Linked by the typechecker.
+   */
   List<InstructionSetDefinition> implementedIsaNodes = new ArrayList<>();
   @Nullable
   ApplicationBinaryInterfaceDefinition abiNode;
@@ -3880,7 +3956,9 @@ class CpuFunctionDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   BehaviorKind kind;
   @Nullable
+  @Child
   IsId stopWithReference;
+  @Child
   Expr expr;
   SourceLocation loc;
 
@@ -3964,7 +4042,9 @@ class CpuFunctionDefinition extends Definition implements IdentifiableNode {
 
 class CpuProcessDefinition extends Definition {
   ProcessKind kind;
+  @Child
   List<Parameter> startupOutputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
@@ -4036,6 +4116,7 @@ class CpuProcessDefinition extends Definition {
 class MicroArchitectureDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   IsId processor;
+  @Child
   List<Definition> definitions;
   SourceLocation loc;
 
@@ -4104,13 +4185,17 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
 
 class MacroInstructionDefinition extends Definition {
   MacroBehaviorKind kind;
+  @Child
   List<Parameter> inputs;
+  @Child
   List<Parameter> outputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
   MacroInstructionDefinition(MacroBehaviorKind kind, List<Parameter> inputs,
-                             List<Parameter> outputs, Statement statement, SourceLocation loc) {
+                             List<Parameter> outputs, Statement statement,
+                             SourceLocation loc) {
     this.kind = kind;
     this.inputs = inputs;
     this.outputs = outputs;
@@ -4179,13 +4264,17 @@ class MacroInstructionDefinition extends Definition {
 class PortBehaviorDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   PortKind kind;
+  @Child
   List<Parameter> inputs;
+  @Child
   List<Parameter> outputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
   PortBehaviorDefinition(Identifier id, PortKind kind, List<Parameter> inputs,
-                         List<Parameter> outputs, Statement statement, SourceLocation loc) {
+                         List<Parameter> outputs, Statement statement,
+                         SourceLocation loc) {
     this.id = id;
     this.kind = kind;
     this.inputs = inputs;
@@ -4260,7 +4349,9 @@ class PortBehaviorDefinition extends Definition implements IdentifiableNode {
 
 class PipelineDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   List<Parameter> outputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
@@ -4328,7 +4419,9 @@ class PipelineDefinition extends Definition implements IdentifiableNode {
 
 class StageDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   List<Parameter> outputs;
+  @Child
   Statement statement;
   SourceLocation loc;
 
@@ -4394,7 +4487,9 @@ class StageDefinition extends Definition implements IdentifiableNode {
 
 class CacheDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   TypeLiteral sourceType;
+  @Child
   TypeLiteral targetType;
   SourceLocation loc;
 
@@ -4517,6 +4612,7 @@ class LogicDefinition extends Definition implements IdentifiableNode {
 
 class SignalDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   TypeLiteral type;
   SourceLocation loc;
 
@@ -4584,10 +4680,15 @@ class SignalDefinition extends Definition implements IdentifiableNode {
  */
 class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   Identifier abi;
+  @Child
   List<AsmModifierDefinition> modifiers;
+  @Child
   List<AsmDirectiveDefinition> directives;
+  @Child
   List<AsmGrammarRuleDefinition> rules;
+  @Child
   List<Definition> commonDefinitions;
   SourceLocation loc;
 
@@ -4709,8 +4810,11 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
  * e.g. <code>"hi" −> RV32I::HI`</code>
  */
 class AsmModifierDefinition extends Definition {
+  @Child
   Expr stringLiteral;
+  @Child
   Identifier isa;
+  @Child
   Identifier relocation;
   SourceLocation loc;
 
@@ -4772,7 +4876,9 @@ class AsmModifierDefinition extends Definition {
  * e.g. <code>".word"  -> Byte4</code>
  */
 class AsmDirectiveDefinition extends Definition {
+  @Child
   Expr stringLiteral;
+  @Child
   Identifier builtinDirective;
   SourceLocation loc;
 
@@ -4846,7 +4952,9 @@ interface AsmGrammarEntityVisitor<R> {
 class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   @Nullable
+  @Child
   AsmGrammarTypeDefinition asmTypeDefinition;
+  @Child
   AsmGrammarAlternativesDefinition alternatives;
   SourceLocation loc;
 
@@ -4948,6 +5056,15 @@ class AsmGrammarAlternativesDefinition extends Definition {
   }
 
   @Override
+  List<Node> children() {
+    // This is too complicated for the @Child annotation
+    return alternatives.stream()
+        .flatMap(l -> l.stream()
+            .flatMap(a -> a.children().stream()))
+        .toList();
+  }
+
+  @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
   }
@@ -5037,22 +5154,30 @@ class AsmGrammarAlternativesDefinition extends Definition {
  */
 class AsmGrammarElementDefinition extends Definition {
   @Nullable
+  @Child
   AsmGrammarLocalVarDefinition localVar;
   @Nullable
+  @Child
   Identifier attribute;
   Boolean isPlusEqualsAttributeAssign;
   Boolean isAttributeLocalVar = false;
   @Nullable
+  @Child
   AsmGrammarLiteralDefinition asmLiteral;
   @Nullable
+  @Child
   AsmGrammarAlternativesDefinition groupAlternatives;
   @Nullable
+  @Child
   AsmGrammarAlternativesDefinition optionAlternatives;
   @Nullable
+  @Child
   AsmGrammarAlternativesDefinition repetitionAlternatives;
   @Nullable
+  @Child
   Expr semanticPredicate;
   @Nullable
+  @Child
   AsmGrammarTypeDefinition groupAsmTypeDefinition;
   SourceLocation loc;
 
@@ -5177,6 +5302,7 @@ class AsmGrammarElementDefinition extends Definition {
  */
 class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNode {
   Identifier id;
+  @Child
   AsmGrammarLiteralDefinition asmLiteral;
   SourceLocation loc;
 
@@ -5254,10 +5380,13 @@ class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNod
 class AsmGrammarLiteralDefinition extends Definition {
   @Nullable
   Identifier id;
+  @Child
   List<AsmGrammarLiteralDefinition> parameters;
   @Nullable
+  @Child
   Expr stringLiteral;
   @Nullable
+  @Child
   AsmGrammarTypeDefinition asmTypeDefinition;
   SourceLocation loc;
 

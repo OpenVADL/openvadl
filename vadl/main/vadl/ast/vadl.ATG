@@ -382,13 +382,13 @@ PRODUCTIONS
 
   formatDefinition<out FormatDefinition def>                     (. var startLoc = lookaheadLoc(); .)
   = FORMAT
-  identifierOrPlaceholder<out IdentifierOrPlaceholder id>        (. var fields = new ArrayList<FormatDefinition.FormatField>();.)
+  identifierOrPlaceholder<out IdentifierOrPlaceholder id>        (. var fields = new ArrayList<FormatField>();.)
   SYM_COLON typeLiteral<out TypeLiteral type>                    (. var auxFields = new ArrayList<FormatDefinition.AuxiliaryField>();.)
   [
     SYM_EQ SYM_BRACE_OPEN
-    formatField<out FormatDefinition.FormatField f1>             (. fields.add(f1); .)
+    formatField<out FormatField f1>             (. fields.add(f1); .)
     {
-      SYM_COMMA formatField<out FormatDefinition.FormatField f2> (. fields.add(f2); .)
+      SYM_COMMA formatField<out FormatField f2> (. fields.add(f2); .)
     | SYM_COLON
       auxiliaryField<out FormatDefinition.AuxiliaryField aux>    (. auxFields.add(aux); .)
     }
@@ -396,7 +396,7 @@ PRODUCTIONS
   ]                                                              (. def = new FormatDefinition(id, type, fields, auxFields, startLoc.join(loc())); .)
   .
 
-  formatField<out FormatDefinition.FormatField field> (. field = null; .)
+  formatField<out FormatField field> (. field = null; .)
   = identifier<out Identifier id>
     ( formatFieldRange<out field, id>
     | formatFieldType<out field, id>
@@ -422,7 +422,7 @@ PRODUCTIONS
     SYM_BRACE_CLOSE                                            (. auxField = new FormatDefinition.AuxiliaryField(kind, auxEntries); .)
   .
 
-  formatFieldRange<out FormatDefinition.FormatField field, Identifier id>
+  formatFieldRange<out FormatField field, Identifier id>
   = SYM_BRACK_OPEN                      (. List<Expr> ranges = new ArrayList<>();.)
     rangeExpression<out Expr e1>        (. ranges.add(e1); .)
     {
@@ -434,17 +434,17 @@ PRODUCTIONS
       IF (la.kind == _SYM_COLON && !AUX_FIELD_TOKENS[la.kind])
       SYM_COLON
       typeLiteral<out type>
-    ]                                   (. field = new FormatDefinition.RangeFormatField(id, ranges, type); .)
+    ]                                   (. field = new RangeFormatField(id, ranges, type); .)
   .
 
-  formatFieldType<out FormatDefinition.FormatField field, Identifier id>
+  formatFieldType<out FormatField field, Identifier id>
   = SYM_COLON
-    typeLiteral<out TypeLiteral type> (. field = new FormatDefinition.TypedFormatField(id, type); .)
+    typeLiteral<out TypeLiteral type> (. field = new TypedFormatField(id, type); .)
   .
 
-  formatFieldDerived<out FormatDefinition.FormatField field, Identifier id>
+  formatFieldDerived<out FormatField field, Identifier id>
   = SYM_EQ
-    expression<out Expr expr, BIN_OPS> (. field = new FormatDefinition.DerivedFormatField(id, expr); .)
+    expression<out Expr expr, BIN_OPS> (. field = new DerivedFormatField(id, expr); .)
   .
 
   counterDefinition<out CounterDefinition def>  (. CounterDefinition.CounterKind kind = null; var startLocation = lookaheadLoc(); .)
