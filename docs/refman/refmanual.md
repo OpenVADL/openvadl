@@ -421,7 +421,6 @@ function rrx ( a : Bits<N>, c : Bool ) -> Bits<N>
 ## Bit Counting Operations
 
 \listing{basic_math_bit_counting, VADL Bit Counting Operations}
-
 ~~~{.vadl}
 function cob( a : Bits<N> ) -> UInt<N> // counting one bits
 function czb( a : Bits<N> ) -> UInt<N> // counting zero bits
@@ -429,5 +428,263 @@ function clz( a : Bits<N> ) -> UInt<N> // counting leading zeros
 function clo( a : Bits<N> ) -> UInt<N> // counting leading ones
 function cls( a : Bits<N> ) -> UInt<N> // counting leading sign bits (without sign bit)
 ~~~
+\endlisting
 
+
+## Assembly Directives
+
+\lbl{table_assembly_directives}
+
+
+| directive                 |  explanation                                                    |
+|:--------------------------|:----------------------------------------------------------------|
+| ABORT                     | stops the assembly                                              |
+| ADDRSIG                   |                                                                 |
+| ADDRSIG_SYM               |                                                                 |
+| ALIGN32_BYTE("align32")   |                                                                 |
+| ALIGN32_POW2("align32")   |                                                                 |
+| ALIGN_BYTE("align")       | .align [alignment [, fill_value, [, max_skip_count]]]           |
+| ALIGN_POW2("align")       | .align [exponent  [, fill_value, [, max_skip_count]]]           |
+| ALTMACRO                  |                                                                 |
+| ASCII                     | '.ascii "a", "b", "c"'; zero or more string literals            |
+| ASCIZ                     | like ASCII, but each string is followed by a zero byte          |
+| BALIGN                    | .balign  [alignment [, fill_value, [, max_skip_count]]]         |
+| BALIGNL                   | .balignl [alignment [, fill_value, [, max_skip_count]]]         |
+| BALIGNW                   | .balignw [alignment [, fill_value, [, max_skip_count]]]         |
+| BUNDLE_ALIGN_MODE         |                                                                 |
+| BUNDLE_LOCK               |                                                                 |
+| BUNDLE_UNLOCK             |                                                                 |
+| BYTE                      | .byte  expr* [, expr]*; zero or more 8-bit  integer expressions |
+| BYTE2("2byte")            | .short expr* [, expr]*; zero or more 16-bit integer expressions |
+| BYTE4("4byte")            | .word  expr* [, expr]*; zero or more 32-bit integer expressions |
+| BYTE8("8byte")            | .quad  expr* [, expr]*; zero or more 64-bit integer expressions |
+| CFI_ADJUST_CFA_OFFSET     |                                                                 |
+| CFI_B_KEY_FRAME           |                                                                 |
+| CFI_DEF_CFA               |                                                                 |
+| CFI_DEF_CFA_OFFSET        |                                                                 |
+| CFI_DEF_CFA_REGISTER      |                                                                 |
+| CFI_ENDPROC               |                                                                 |
+| CFI_ESCAPE                |                                                                 |
+| CFI_LLVM_DEF_ASPACE_CFA   |                                                                 |
+| CFI_LSDA                  |                                                                 |
+| CFI_MTE_TAGGED_FRAME      |                                                                 |
+| CFI_OFFSET                |                                                                 |
+| CFI_PERSONALITY           |                                                                 |
+| CFI_REGISTER              |                                                                 |
+| CFI_REL_OFFSET            |                                                                 |
+| CFI_REMEMBER_STATE        |                                                                 |
+| CFI_RESTORE               |                                                                 |
+| CFI_RESTORE_STATE         |                                                                 |
+| CFI_RETURN_COLUMN         |                                                                 |
+| CFI_SAME_VALUE            |                                                                 |
+| CFI_SECTIONS              |                                                                 |
+| CFI_SIGNAL_FRAME          |                                                                 |
+| CFI_STARTPROC             |                                                                 |
+| CFI_UNDEFINED             |                                                                 |
+| CFI_WINDOW_SAVE           |                                                                 |
+| CODE16                    |                                                                 |
+| CODE16GCC                 |                                                                 |
+| COLD                      |                                                                 |
+| COMM                      |                                                                 |
+| COMMON                    |                                                                 |
+| CV_DEF_RANGE              |                                                                 |
+| CV_FILE                   |                                                                 |
+| CV_FILECHECKSUMS          |                                                                 |
+| CV_FILECHECKSUM_OFFSET    |                                                                 |
+| CV_FPO_DATA               |                                                                 |
+| CV_FUNC_ID                |                                                                 |
+| CV_INLINE_LINETABLE       |                                                                 |
+| CV_INLINE_SITE_ID         |                                                                 |
+| CV_LINETABLE              |                                                                 |
+| CV_LOC                    |                                                                 |
+| CV_STRING                 |                                                                 |
+| CV_STRINGTABLE            |                                                                 |
+| DC                        |                                                                 |
+| DCB                       |                                                                 |
+| DCB_B("dcb.b")            |                                                                 |
+| DCB_D("dcb.d")            |                                                                 |
+| DCB_L("dcb.l")            |                                                                 |
+| DCB_S("dcb.s")            |                                                                 |
+| DCB_W("dcb.w")            |                                                                 |
+| DCB_X("dcb.x")            |                                                                 |
+| DC_A_CODEPOINTER4("dc.a") |                                                                 |
+| DC_A_CODEPOINTER8("dc.a") |                                                                 |
+| DC_B("dc.b")              |                                                                 |
+| DC_D("dc.d")              |                                                                 |
+| DC_L("dc.l")              |                                                                 |
+| DC_S("dc.s")              |                                                                 |
+| DC_W("dc.w")              |                                                                 |
+| DC_X("dc.x")              |                                                                 |
+| DOUBLE                    |                                                                 |
+| DS                        |                                                                 |
+| DS_B("ds.b")              |                                                                 |
+| DS_D("ds.d")              |                                                                 |
+| DS_L("ds.l")              |                                                                 |
+| DS_P("ds.p")              |                                                                 |
+| DS_S("ds.s")              |                                                                 |
+| DS_W("ds.w")              |                                                                 |
+| DS_X("ds.x")              |                                                                 |
+| ELSE                      | .else; is part of the support for conditional assembly          |
+| ELSEIF                    |                                                                 |
+| END                       |                                                                 |
+| ENDIF                     |                                                                 |
+| ENDM                      |                                                                 |
+| ENDMACRO                  |                                                                 |
+| ENDR                      |                                                                 |
+| EQU                       |                                                                 |
+| EQUIV                     |                                                                 |
+| ERR                       |                                                                 |
+| ERROR                     |                                                                 |
+| EXITM                     |                                                                 |
+| EXTERN                    |                                                                 |
+| FILE                      |                                                                 |
+| FILL                      | .fill repeat, size, value;                                      |
+| FLOAT                     |                                                                 |
+| GLOBAL                    |                                                                 |
+| GLOBL                     |                                                                 |
+| IF                        |                                                                 |
+| IFB                       |                                                                 |
+| IFC                       |                                                                 |
+| IFDEF                     |                                                                 |
+| IFEQ                      |                                                                 |
+| IFEQS                     |                                                                 |
+| IFGE                      |                                                                 |
+| IFGT                      |                                                                 |
+| IFLE                      |                                                                 |
+| IFLT                      |                                                                 |
+| IFNB                      |                                                                 |
+| IFNC                      |                                                                 |
+| IFNDEF                    |                                                                 |
+| IFNE                      |                                                                 |
+| IFNES                     |                                                                 |
+| IFNOTDEF                  |                                                                 |
+| INCBIN                    |                                                                 |
+| INCLUDE                   |                                                                 |
+| INT                       |                                                                 |
+| IRP                       |                                                                 |
+| IRPC                      |                                                                 |
+| LAZY_REFERENCE            |                                                                 |
+| LCOMM                     |                                                                 |
+| LINE                      |                                                                 |
+| LOC                       |                                                                 |
+| LONG                      |                                                                 |
+| LTO_DISCARD               |                                                                 |
+| LTO_SET_CONDITIONAL       |                                                                 |
+| MACRO                     |                                                                 |
+| MACROS_OFF                |                                                                 |
+| MACROS_ON                 |                                                                 |
+| MEMTAG                    |                                                                 |
+| NOALTMACRO                |                                                                 |
+| NO_DEAD_STRIP             |                                                                 |
+| OCTA                      |                                                                 |
+| ORG                       |                                                                 |
+| P2ALIGN                   |                                                                 |
+| P2ALIGNL                  |                                                                 |
+| P2ALIGNW                  |                                                                 |
+| PRINT                     |                                                                 |
+| PRIVATE_EXTERN            |                                                                 |
+| PSEUDO_PROBE              |                                                                 |
+| PURGEM                    |                                                                 |
+| QUAD                      |                                                                 |
+| REFERENCE                 |                                                                 |
+| RELOC                     |                                                                 |
+| REP                       |                                                                 |
+| REPT                      |                                                                 |
+| SET                       |                                                                 |
+| SHORT                     |                                                                 |
+| SINGLE                    |                                                                 |
+| SKIP                      |                                                                 |
+| SLEB128                   |                                                                 |
+| SPACE                     |                                                                 |
+| STABS                     |                                                                 |
+| STRING                    |                                                                 |
+| SYMBOL_RESOLVER           |                                                                 |
+| ULEB128                   |                                                                 |
+| VALUE                     |                                                                 |
+| WARNING                   |                                                                 |
+| WEAK_DEFINITION           |                                                                 |
+| WEAK_DEF_CAN_BE_HIDDEN    |                                                                 |
+| WEAK_REFERENCE            |                                                                 |
+| ZERO                      |                                                                 |
+
+
+## Assembly Grammar Rule Types
+
+| type         |  explanation     |
+|:-------------|:-----------------|
+| constant     |                  |
+| expression   |                  |
+| instruction  |                  |
+| instructions |                  |
+| modifier     |                  |
+| operand      |                  |
+| operands     |                  |
+| register     |                  |
+| statements   |                  |
+| string       |                  |
+| symbol       |                  |
+| void         |                  |
+
+
+## Assembly Terminal Rules
+
+\listing{assembly_terminals, Assembly Terminal Rules}
+~~~{.vadl}
+@string   | AMP            | "&"
+@string   | AMPAMP         | "&&"
+@string   | AT             | "@"
+@string   | BACKSLASH      | "\ "
+@string   | CARET          | "^"
+@string   | COLON          | ":"
+@string   | COMMA          | ","
+@string   | DOLLAR         | "$"
+@string   | DOT            | "."
+@void     | EOL            | "\\r\\n?|\\n"
+@string   | EQUAL          | "="
+@string   | EQUALEQUAL     | "=="
+@string   | EXCLAIM        | "!"
+@string   | EXCLAIMEQUAL   | "!="
+@string   | GREATER        | ">"
+@string   | GREATEREQUAL   | ">="
+@string   | GREATERGREATER | ">>"
+@string   | HASH           | "#"
+@string   | IDENTIFIER     | "[a-zA-Z_.][a-zA-Z0-9_$.@]*"
+@constant | INTEGER        | "0b[01]+|0[0-7]+|[1-9][0-9]*|0x[0-9a-fA-F]+"
+@string   | LBRAC          | "["
+@string   | LCURLY         | "{"
+@string   | LESS           | "<"
+@string   | LESSEQUAL      | "<="
+@string   | LESSGREATER    | "<>"
+@string   | LESSLESS       | "<<"
+@string   | LPAREN         | "("
+@string   | MINUS          | "-"
+@string   | MINUSGREATER   | "->"
+@string   | PERCENT        | "%"
+@string   | PIPE           | "|"
+@string   | PIPEPIPE       | "||"
+@string   | PLUS           | "+"
+@string   | RBRAC          | "]"
+@string   | RCURLY         | "}"
+@string   | RPAREN         | ")"
+@string   | SLASH          | "/"
+@string   | STAR           | "*"
+@string   | STRING         | "\\\".*\\\""
+@string   | TILDE          | "~"
+~~~
+\endlisting
+
+
+## Assembly Nonterminal Rules
+
+\listing{assembly_nonterminals, Assembly Nonterminal Rules}
+~~~{.vadl}
+@expression   | Expression
+@string       | Identifier
+@operand      | ImmediateOperand
+@instruction  | Instruction
+@symbol       | Label
+@constant     | Natural
+@register     | Register
+@instruction  | Statement
+~~~
 \endlisting

@@ -1509,6 +1509,133 @@ This requires an additional register which can be more costly.
 
 \lbl{tut_asm_definition}
 
+Assembly languages have no standardized structure like object files.
+However, many languages are alike.
+This similarity allows \ac{VADL} to make some assumptions about the structure of the assembly files to reduce specification effort.
+Firstly, labels have a predefined syntax: the name followed by a colon (e.g., `loop:`).
+Secondly, each statement must correspond either to an assembly directive or to a (pseudo) instruction of the processor's architecture.
+Lastly, the overall structure of the source file is a sequence of labels and statements.
+As the assembly directives for different architectures are the same, a \ac{VADL} specification thus can focus on defining the syntax of the assembly instructions.
+
+Listing \r{assembly_description} presents the structure of an assembly description definition, including its three subsections.
+An assembly description has to refer to an \ac{ABI}.
+By extension, the assembly description also depends on the \ac{ISA} linked to the \ac{ABI}.
+The commitment to a particular \ac{ABI} instead of an \ac{ISA} is necessary to provide additional information about the usage of some registers. For example, a generated linker could use the defined global pointer to optimize access to certain variables.
+As with any top-level element, annotations can provide additional information to the generators.
+
+The `directives` definition is the first subsection in the example.
+It starts with the keyword `directives` followed by the equality symbol `"="` and a list of directive mappings enclosed in curly braces separated by the comma symbol `","`.
+A directive mapping maps the string representation of a directive with the relation symbol `"->"` to an identfier representing a builtin directive.
+A list of all available builtin directives is contained in the reference manual \r{table_assembly_directives}.
+
+The `modifiers` definition is the second subsection in the example.
+It starts with the keyword `modifiers` followed by the equality symbol `"="` and a list of modifier mappings enclosed in curly braces separated by the comma symbol `","`.
+A modifier mapping maps the assembly string representation of a modifier with the relation symbol `"->"` to an identfier representing a relocation defined in the \ac{ISA}.
+
+The most crucial element of the assembly description is the grammar definition.
+It defines the structure of assembly instructions as a formal language grammar augmented with semantic information.
+For example, users can annotate sub-elements of an instruction with type information, thus capturing the role of an element (e.g., refers to a register).
+This tutorial will abstain from discussing all intricacies of the grammar element.
+However, the example in Listing \r{assembly_description} gives readers a good intuition of how the grammar element captures relevant information for the assembler generation.
+The example shows the definition of a rule that describes all RISC-V instructions with two registers as source operand and one register as destination operand.
+A second rule describes all compare against zero and branch pseudo instructions which have a register and an immediate value as source operands.
+`Register` and `ImmediateOperand` are non-terminals that have a default definition in the language.
+`Register` returns the parsed register if there was no error during parsing for a register.
+`ImmediateOperand` returns the value resulting from parsing and evaluating an expression if there was no error during parsing for an expression.
+Users can override these defaults by providing a rule with the corresponding name.
+Table \r{assembly_nonterminals} in the reference manual lists all available rules.
+
+\listing{assembly_description, Assembly Description Definition (subset of RV32IM)}
+~~~{.vadl}
+[commentString = "#"]
+assembly description ASM for ABI = {
+
+  directives = {                           // rename assembly directives
+    ".word" -> BYTE4      
+    ".quad" -> BYTE8      
+  }
+    
+  modifiers = {                            // modifiers for relocations
+    "hi" -> RV32IM::hi,
+    "lo" -> RV32IM::lo
+  }
+
+  grammar = {
+    RRIds : "ADD" | "SUB" | "AND" | "OR" | "XOR" | "SLT" | "SLTU" | "SLL" | "SRL" | "SRA"
+          | "MUL" | "MULH" | "MULHSU" | "MULHU" | "DIV" | "DIVU" | "REM" | "REMU"
+    ;
+
+    RRInstruction @instruction:            // instructions with 2 register source operands
+      mnemonic = RRIds @operand            // mnemonic is one of RRIds casted to @operand
+      rd    = Register @operand ","        // parse Register and cast it to @operand
+      rs1   = Register @operand ","
+      rs2   = Register @operand
+    ;
+
+    BranchPseudoIds : "BEQZ" | "BNEZ" | "BLEZ" | "BGEZ" | "BLTZ" | "BGTZ" ;
+
+    BranchPseudoInstruction @instruction : // instructions with 2 register source operands
+      mnemonic = BranchPseudoIds @operand  // mnemonic is one of BranchPseudoIds casted to @operand
+      rs       = Register @operand ","     // parse Register and cast it to @operand
+      offset   = ImmediateOperand
+    ;
+  }
+}
+~~~
+\endlisting
+
+The power of the grammar system is rooted in the type system of the language as it also models the semantic information.
+Usually, when parsing an assembly file, the algorithm receives tokens with primitive types from the lexical analysis.
+These tokens do not capture any semantic information.
+However, an assembler must check whether the tokens satisfy context-dependent criteria.
+For example, when the assembler encounters an `ADD` instruction, the first operand has to be a valid register.
+\ac{VADL} uses its type system to capture this information.
+By annotating elements of the grammar with a semantic type, the user instructs the parser generator to insert a conversion routine for the value of the given element.
+This routine depends on the input and output types and may include validation and transformation of the input value.
+For example, the conversion routine from the primitive string type to the register type checks whether a register has a matching name.
+The procedure's successful completion asserts that the value refers to a valid register.
+\ac{VADL}'s type system conveys this information to other parts of the grammar.
+A parser can generate a meaningful error message if the validation fails.
+
+Readers may wonder why \ac{VADL} requires a separate grammar for the assembly syntax even though the \ac{ISA} section describes assembly formatting functions.
+The idea is that the language could also define the grammar solely by the inversion of the formatting function.
+We decided against such an approach for two reasons.
+Firstly, \ac{VADL} does not always require grammar specifications for each instruction.
+By defining conventions for grammar rule names, generators may support users by synthesizing rules from the formatting functions.
+This approach allows for a graceful degradation of the required amount of specification as users may provide rules on a per-instruction basis.
+For example, a generator may create the grammar rule from Figure \ref{lst:lui_grammar} from the associated formatting function.
+Secondly, if the language relies solely on function inversion, generators must have sophisticated inversion routines, as the system has to support every possible formatting function.
+By defining the grammar separately, \ac{VADL} provides an escape hatch if the rule generation capabilities of a generator are not general enough.
+Lastly, a single assembly instruction may map to multiple valid text representations (e.g., multiple spaces instead of one).
+
+\listing{assembly_grammar_advanced, Advanced Assembly Grammar Features}
+~~~{.vadl}
+AddInstruction @instruction :
+  mnemonic = "ADD"      @operand
+  rd       = Register   @operand
+  rs1      = Register   @operand
+    ( rs2  = Register   @operand
+    | imm  = Expression @operand
+    )
+;
+
+JalrInstruction @instruction:  var tmp = null @operand
+  mnemonic = "JALR" @operand
+  tmp = Register    @operand
+  [ COMMA rs1 = tmp
+    tmp  = Register @operand ]
+  rd = tmp
+;
+
+AndInstruction @instruction :
+  mnemonic = "AND"      @operand
+  rd  = Register        @operand
+  rs1 = Register        @operand
+  imm = encode<INTEGER> @operand
+;
+~~~
+\endlisting
+
 ## Micro Architecture Definition
 
 \lbl{tut_mia_definition}
