@@ -103,7 +103,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   private final IdentityHashMap<Definition, Optional<vadl.viam.Definition>> definitionCache =
       new IdentityHashMap<>();
-  private final IdentityHashMap<FormatDefinition.FormatField, vadl.viam.Definition>
+  private final IdentityHashMap<FormatField, vadl.viam.Definition>
       formatFieldCache = new IdentityHashMap<>();
   private final IdentityHashMap<Parameter, vadl.viam.Parameter>
       parameterCache = new IdentityHashMap<>();
@@ -184,7 +184,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @param field for which we want to find the corresponding viam node.
    * @return the viam node.
    */
-  Optional<vadl.viam.Definition> fetch(FormatDefinition.FormatField field) {
+  Optional<vadl.viam.Definition> fetch(FormatField field) {
     // FIXME: Try to evaluate the format if it hasn't been seen before.
     var result = Optional.ofNullable(formatFieldCache.get(field));
     result.ifPresent(f -> f.setSourceLocationIfNotSet(field.sourceLocation()));
@@ -905,7 +905,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var fieldAccesses = new ArrayList<Format.FieldAccess>();
     for (var fieldDefinition : definition.fields) {
 
-      if (fieldDefinition instanceof FormatDefinition.TypedFormatField typedField) {
+      if (fieldDefinition instanceof TypedFormatField typedField) {
         var field = new Format.Field(
             generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
                 fieldDefinition.identifier()),
@@ -923,7 +923,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         continue;
       }
 
-      if (fieldDefinition instanceof FormatDefinition.RangeFormatField rangeField) {
+      if (fieldDefinition instanceof RangeFormatField rangeField) {
         var field = new Format.Field(
             generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
                 fieldDefinition.identifier()),
@@ -938,7 +938,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         continue;
       }
 
-      if (fieldDefinition instanceof FormatDefinition.DerivedFormatField derivedField) {
+      if (fieldDefinition instanceof DerivedFormatField derivedField) {
         var identifier =
             generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
                 fieldDefinition.identifier());
@@ -986,6 +986,24 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     format.setFieldAccesses(
         fieldAccesses.toArray(fieldAccesses.toArray(new Format.FieldAccess[0])));
     return Optional.of(format);
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(DerivedFormatField definition) {
+    // For now this is implemented when visiting FormatDefinition
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(RangeFormatField definition) {
+    // For now this is implemented when visiting FormatDefinition
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(TypedFormatField definition) {
+    // For now this is implemented when visiting FormatDefinition
+    return Optional.empty();
   }
 
   @Override

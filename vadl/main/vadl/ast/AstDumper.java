@@ -144,34 +144,6 @@ public class AstDumper extends RecursiveAstVisitor {
   }
 
   @Override
-  public Void visit(FormatDefinition definition) {
-    dumpNode(definition);
-    dumpChildren(definition.identifier(), definition.typeLiteral);
-    this.indent++;
-    for (var field : definition.fields) {
-      if (field instanceof FormatDefinition.RangeFormatField f) {
-        dumpNode(f);
-        dumpChildren(f.identifier);
-        dumpChildren(f.ranges);
-      } else if (field instanceof FormatDefinition.TypedFormatField f) {
-        dumpNode(f);
-        dumpChildren(f.identifier, f.typeLiteral);
-      } else if (field instanceof FormatDefinition.DerivedFormatField f) {
-        dumpNode(f);
-        dumpChildren(f.identifier, f.expr);
-      }
-    }
-    for (var auxField : definition.auxiliaryFields) {
-      for (FormatDefinition.AuxiliaryFieldEntry entry : auxField.entries()) {
-        dumpChildren(entry.id);
-        dumpChildren(entry.expr);
-      }
-    }
-    this.indent--;
-    return null;
-  }
-
-  @Override
   public Void visit(ImportDefinition importDefinition) {
     dumpNode(importDefinition);
     indent++;

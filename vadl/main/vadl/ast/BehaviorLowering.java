@@ -378,17 +378,17 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Format field
-    if (computedTarget instanceof FormatDefinition.TypedFormatField typedFormatField) {
+    if (computedTarget instanceof TypedFormatField typedFormatField) {
       return new FieldRefNode(
           (Format.Field) viamLowering.fetch(typedFormatField).orElseThrow(),
           (DataType) Objects.requireNonNull(expr.type));
     }
-    if (computedTarget instanceof FormatDefinition.RangeFormatField rangeFormatField) {
+    if (computedTarget instanceof RangeFormatField rangeFormatField) {
       return new FieldRefNode(
           (Format.Field) viamLowering.fetch(rangeFormatField).orElseThrow(),
           (DataType) Objects.requireNonNull(expr.type));
     }
-    if (computedTarget instanceof FormatDefinition.DerivedFormatField derivedFormatField) {
+    if (computedTarget instanceof DerivedFormatField derivedFormatField) {
       return new FieldAccessRefNode(
           (Format.FieldAccess) viamLowering.fetch(derivedFormatField).orElseThrow(),
           (DataType) Objects.requireNonNull(expr.type));

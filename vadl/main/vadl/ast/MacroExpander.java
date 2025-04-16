@@ -441,7 +441,7 @@ class MacroExpander
 
   @Override
   public Definition visit(FormatDefinition definition) {
-    var fields = expandFields(definition);
+    var fields = definition.fields.stream().map(f -> (FormatField) f.accept(this)).toList();
     var auxFields = new ArrayList<>(definition.auxiliaryFields);
     auxFields.replaceAll(auxField -> {
       var entries = new ArrayList<>(auxField.entries());
@@ -453,6 +453,27 @@ class MacroExpander
     return new FormatDefinition(id, definition.typeLiteral, fields, auxFields,
         copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
+  public Definition visit(DerivedFormatField definition) {
+    return new DerivedFormatField(definition.identifier,
+        expandExpr(definition.expr));
+  }
+
+  @Override
+  public Definition visit(RangeFormatField definition) {
+    return new RangeFormatField(
+        definition.identifier,
+        definition.ranges.stream().map(e -> e.accept(this)).toList(),
+        definition.typeLiteral == null ? null : (TypeLiteral) definition.typeLiteral.accept(this)
+    );
+  }
+
+  @Override
+  public Definition visit(TypedFormatField definition) {
+    return new TypedFormatField(definition.identifier,
+        (TypeLiteral) expandExpr(definition.typeLiteral));
   }
 
   @Override
@@ -1001,22 +1022,6 @@ class MacroExpander
         index -> new ForallStatement.Index(index.identifier(), expandExpr(index.domain)));
     var statement = expandStatement(forallStatement.statement);
     return new ForallStatement(indices, statement, copyLoc(forallStatement.loc));
-  }
-
-  private List<FormatDefinition.FormatField> expandFields(FormatDefinition definition) {
-    var fields = new ArrayList<>(definition.fields);
-    fields.replaceAll(field -> {
-      if (field instanceof FormatDefinition.DerivedFormatField derivedFormatField) {
-        return new FormatDefinition.DerivedFormatField(derivedFormatField.identifier,
-            expandExpr(derivedFormatField.expr));
-      } else if (field instanceof FormatDefinition.TypedFormatField typedFormatField) {
-        return new FormatDefinition.TypedFormatField(typedFormatField.identifier,
-            (TypeLiteral) expandExpr(typedFormatField.typeLiteral));
-      } else {
-        return field;
-      }
-    });
-    return fields;
   }
 
   private void assertValidMacro(Macro macro, SourceLocation sourceLocation)

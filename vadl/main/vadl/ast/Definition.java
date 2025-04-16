@@ -57,6 +57,8 @@ abstract class Definition extends Node {
 }
 
 interface DefinitionVisitor<R> {
+  R visit(AbiPseudoInstructionDefinition definition);
+
   R visit(AbiSequenceDefinition definition);
 
   R visit(AliasDefinition definition);
@@ -102,6 +104,12 @@ interface DefinitionVisitor<R> {
   R visit(ExceptionDefinition definition);
 
   R visit(FormatDefinition definition);
+
+  R visit(DerivedFormatField definition);
+
+  R visit(RangeFormatField definition);
+
+  R visit(TypedFormatField definition);
 
   R visit(FunctionDefinition definition);
 
@@ -164,8 +172,6 @@ interface DefinitionVisitor<R> {
   R visit(StageDefinition definition);
 
   R visit(UsingDefinition definition);
-
-  R visit(AbiPseudoInstructionDefinition definition);
 }
 
 /**
@@ -302,7 +308,6 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
       builder.append(" = ");
     }
     value.prettyPrint(indent + 1, builder);
-    builder.append("// " + children());
     builder.append("\n");
   }
 
@@ -343,6 +348,246 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 }
 
+abstract class FormatField extends Definition implements IdentifiableNode {
+}
+
+
+class RangeFormatField extends FormatField {
+  Identifier identifier;
+  @Child
+  List<Expr> ranges;
+  @Child
+  @Nullable
+  TypeLiteral typeLiteral;
+
+  @Nullable
+  Type type;
+
+  // While the ranges are expressions in diffrent forms, once computed they are stored here to
+  // make them easier to process.
+  @Nullable
+  List<FormatDefinition.BitRange> computedRanges;
+
+  public RangeFormatField(Identifier identifier, List<Expr> ranges,
+                          @Nullable TypeLiteral typeLiteral) {
+    this.identifier = identifier;
+    this.ranges = ranges;
+    this.typeLiteral = typeLiteral;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  @Override
+  SourceLocation location() {
+    return identifier.location().join(ranges.get(ranges.size() - 1).location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append("\t [");
+    ranges.get(0).prettyPrint(indent, builder);
+    for (int i = 1; i < ranges.size(); i++) {
+      builder.append(", ");
+      ranges.get(i).prettyPrint(indent, builder);
+    }
+    builder.append("]");
+    if (typeLiteral != null) {
+      builder.append(" : ");
+      typeLiteral.prettyPrint(0, builder);
+    }
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    RangeFormatField that = (RangeFormatField) o;
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(ranges, that.ranges);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(ranges);
+    return result;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+}
+
+class TypedFormatField extends FormatField {
+  final Identifier identifier;
+  @Child
+  TypeLiteral typeLiteral;
+
+  // The range this field occupies in its parent format.
+  @Nullable
+  FormatDefinition.BitRange range;
+
+  public TypedFormatField(Identifier identifier, TypeLiteral typeLiteral) {
+    this.identifier = identifier;
+    this.typeLiteral = typeLiteral;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  @Override
+  SourceLocation location() {
+    return identifier().location().join(typeLiteral.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append(" : ");
+    typeLiteral.prettyPrint(indent, builder);
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    TypedFormatField that = (TypedFormatField) o;
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(typeLiteral, that.typeLiteral);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(typeLiteral);
+    result = 31 * result + Objects.hashCode(symbolTable);
+    return result;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+}
+
+/**
+ * A (pseudo) field derived from another. In the VIAM this is called FieldAccess.
+ *
+ * <p><pre>
+ * {@code
+ * format ABC : Bits<8> =
+ *   { A  : Bits<2>
+ *   , B  : Bits<6>
+ *   , C = A as Bits<4>    // This is a derived format field
+ *   }
+ * }
+ * </pre>
+ */
+class DerivedFormatField extends FormatField {
+  Identifier identifier;
+  @Child
+  Expr expr;
+
+  /**
+   * Since the predicate doesn't have to follow the derived format field, the parser cannot
+   * connect link them together and instead the typechecker does this by understanding the
+   * semantic.
+   */
+  @Nullable
+  Expr predicate;
+
+  //    /**
+  //     * Since the predicate doesn't have to follow the derived format field, the parser cannot
+  //     * connect link them together and instead the typechecker does this by understanding the
+  //     * semantic.
+  //     */
+  //    @Nullable
+  //    Expr encoding;
+
+  public DerivedFormatField(Identifier identifier, Expr expr) {
+    this.identifier = identifier;
+    this.expr = expr;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  @Override
+  SourceLocation location() {
+    return identifier.location().join(expr.location());
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  public void prettyPrint(int indent, StringBuilder builder) {
+    identifier.prettyPrint(indent, builder);
+    builder.append(" = ");
+    expr.prettyPrint(indent, builder);
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    DerivedFormatField that = (DerivedFormatField) o;
+    return Objects.equals(identifier, that.identifier)
+        && Objects.equals(expr, that.expr);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(identifier);
+    result = 31 * result + Objects.hashCode(expr);
+    return result;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+}
+
 class FormatDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
   @Child
@@ -361,231 +606,6 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
   record BitRange(int from, int to) {
   }
 
-  abstract static class FormatField extends Node implements WithSourceLocation {
-    abstract Identifier identifier();
-  }
-
-
-  static class RangeFormatField extends FormatField {
-    Identifier identifier;
-    @Child
-    List<Expr> ranges;
-    @Child
-    @Nullable
-    TypeLiteral typeLiteral;
-
-    @Nullable
-    Type type;
-
-    // While the ranges are expressions in diffrent forms, once computed they are stored here to
-    // make them easier to process.
-    @Nullable
-    List<BitRange> computedRanges;
-
-    public RangeFormatField(Identifier identifier, List<Expr> ranges,
-                            @Nullable TypeLiteral typeLiteral) {
-      this.identifier = identifier;
-      this.ranges = ranges;
-      this.typeLiteral = typeLiteral;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return identifier;
-    }
-
-    @Override
-    SourceLocation location() {
-      return identifier.location().join(ranges.get(ranges.size() - 1).location());
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    public void prettyPrint(int indent, StringBuilder builder) {
-      identifier.prettyPrint(indent, builder);
-      builder.append("\t [");
-      ranges.get(0).prettyPrint(indent, builder);
-      for (int i = 1; i < ranges.size(); i++) {
-        builder.append(", ");
-        ranges.get(i).prettyPrint(indent, builder);
-      }
-      builder.append("]");
-      if (typeLiteral != null) {
-        builder.append(" : ");
-        typeLiteral.prettyPrint(0, builder);
-      }
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      RangeFormatField that = (RangeFormatField) o;
-      return Objects.equals(identifier, that.identifier)
-          && Objects.equals(ranges, that.ranges);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Objects.hashCode(identifier);
-      result = 31 * result + Objects.hashCode(ranges);
-      return result;
-    }
-  }
-
-  static class TypedFormatField extends FormatField {
-    final Identifier identifier;
-    @Child
-    final TypeLiteral typeLiteral;
-
-    // The range this field occupies in its parent format.
-    @Nullable
-    BitRange range;
-
-    public TypedFormatField(Identifier identifier, TypeLiteral typeLiteral) {
-      this.identifier = identifier;
-      this.typeLiteral = typeLiteral;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return identifier;
-    }
-
-    @Override
-    SourceLocation location() {
-      return identifier().location().join(typeLiteral.location());
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    public void prettyPrint(int indent, StringBuilder builder) {
-      identifier.prettyPrint(indent, builder);
-      builder.append(" : ");
-      typeLiteral.prettyPrint(indent, builder);
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      TypedFormatField that = (TypedFormatField) o;
-      return Objects.equals(identifier, that.identifier)
-          && Objects.equals(typeLiteral, that.typeLiteral);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Objects.hashCode(identifier);
-      result = 31 * result + Objects.hashCode(typeLiteral);
-      result = 31 * result + Objects.hashCode(symbolTable);
-      return result;
-    }
-  }
-
-  /**
-   * A (pseudo) field derived from another. In the VIAM this is called FieldAccess.
-   *
-   * <p><pre>
-   * {@code
-   * format ABC : Bits<8> =
-   *   { A  : Bits<2>
-   *   , B  : Bits<6>
-   *   , C = A as Bits<4>    // This is a derived format field
-   *   }
-   * }
-   * </pre>
-   */
-  static class DerivedFormatField extends FormatField {
-    Identifier identifier;
-    @Child
-    Expr expr;
-
-    /**
-     * Since the predicate doesn't have to follow the derived format field, the parser cannot
-     * connect link them together and instead the typechecker does this by understanding the
-     * semantic.
-     */
-    @Nullable
-    Expr predicate;
-
-    //    /**
-    //     * Since the predicate doesn't have to follow the derived format field, the parser cannot
-    //     * connect link them together and instead the typechecker does this by understanding the
-    //     * semantic.
-    //     */
-    //    @Nullable
-    //    Expr encoding;
-
-    public DerivedFormatField(Identifier identifier, Expr expr) {
-      this.identifier = identifier;
-      this.expr = expr;
-    }
-
-    @Override
-    public Identifier identifier() {
-      return identifier;
-    }
-
-    @Override
-    SourceLocation location() {
-      return identifier.location().join(expr.location());
-    }
-
-    @Override
-    SyntaxType syntaxType() {
-      return BasicSyntaxType.INVALID;
-    }
-
-    @Override
-    public void prettyPrint(int indent, StringBuilder builder) {
-      identifier.prettyPrint(indent, builder);
-      builder.append(" = ");
-      expr.prettyPrint(indent, builder);
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      DerivedFormatField that = (DerivedFormatField) o;
-      return Objects.equals(identifier, that.identifier)
-          && Objects.equals(expr, that.expr);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Objects.hashCode(identifier);
-      result = 31 * result + Objects.hashCode(expr);
-      return result;
-    }
-  }
 
   /**
    * The predicate or encoding of a derived format field.

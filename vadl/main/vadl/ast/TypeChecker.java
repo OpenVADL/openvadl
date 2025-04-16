@@ -445,7 +445,7 @@ public class TypeChecker
     var nextOccupiedBit = bitWidth - 1;
 
     for (var field : definition.fields) {
-      if (field instanceof FormatDefinition.TypedFormatField typedField) {
+      if (field instanceof TypedFormatField typedField) {
         var fieldType = check(typedField.typeLiteral);
 
         if (!(fieldType instanceof BitsType fieldBitsType)) {
@@ -458,7 +458,7 @@ public class TypeChecker
         nextOccupiedBit -= fieldBitsType.bitWidth();
         bitsVerifier.addType(fieldBitsType);
 
-      } else if (field instanceof FormatDefinition.RangeFormatField rangeField) {
+      } else if (field instanceof RangeFormatField rangeField) {
         if (rangeField.typeLiteral != null) {
           check(rangeField.typeLiteral);
           rangeField.type = requireNonNull(rangeField.typeLiteral.type);
@@ -511,7 +511,7 @@ public class TypeChecker
           }
         }
 
-      } else if (field instanceof FormatDefinition.DerivedFormatField dfField) {
+      } else if (field instanceof DerivedFormatField dfField) {
         check(dfField.expr);
       } else {
         throw new RuntimeException("Unknown FormatField Class ".concat(field.getClass().getName()));
@@ -524,6 +524,24 @@ public class TypeChecker
           .build();
     }
 
+    return null;
+  }
+
+  @Override
+  public Void visit(DerivedFormatField definition) {
+    // Do nothing on purpose for now, this definition is checked when visiting FormatDefinition.
+    return null;
+  }
+
+  @Override
+  public Void visit(RangeFormatField definition) {
+    // Do nothing on purpose for now, this definition is checked when visiting FormatDefinition.
+    return null;
+  }
+
+  @Override
+  public Void visit(TypedFormatField definition) {
+    // Do nothing on purpose for now, this definition is checked when visiting FormatDefinition.
     return null;
   }
 
@@ -1763,19 +1781,19 @@ public class TypeChecker
       return;
     }
 
-    if (origin instanceof FormatDefinition.RangeFormatField field) {
+    if (origin instanceof RangeFormatField field) {
       // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
       expr.type = field.type;
       return;
     }
 
-    if (origin instanceof FormatDefinition.TypedFormatField field) {
+    if (origin instanceof TypedFormatField field) {
       // FIXME: Unfortonatley the format fields need to be specified in declare-after-use for now
       expr.type = field.typeLiteral.type;
       return;
     }
 
-    if (origin instanceof FormatDefinition.DerivedFormatField field) {
+    if (origin instanceof DerivedFormatField field) {
       check(field.expr);
       expr.type = field.expr.type;
       return;

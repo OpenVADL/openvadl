@@ -431,16 +431,16 @@ class SymbolTable {
         format.symbolTable = symbols.createChild();
         symbols.defineSymbol(format);
         collectSymbols(symbols, format.typeLiteral);
-        for (FormatDefinition.FormatField field : format.fields) {
+        for (FormatField field : format.fields) {
           format.symbolTable().defineSymbol(field.identifier().name, (Node) field);
 
-          if (field instanceof FormatDefinition.RangeFormatField rangeField) {
+          if (field instanceof RangeFormatField rangeField) {
             if (rangeField.typeLiteral != null) {
               collectSymbols(symbols, rangeField.typeLiteral);
             }
-          } else if (field instanceof FormatDefinition.TypedFormatField typedField) {
+          } else if (field instanceof TypedFormatField typedField) {
             collectSymbols(symbols, typedField.typeLiteral);
-          } else if (field instanceof FormatDefinition.DerivedFormatField dfField) {
+          } else if (field instanceof DerivedFormatField dfField) {
             collectSymbols(format.symbolTable, dfField.expr);
           } else {
             throw new RuntimeException("Unknown class");
@@ -914,14 +914,14 @@ class SymbolTable {
         resolveSymbols(function.expr);
       } else if (definition instanceof FormatDefinition format) {
         resolveSymbols(format.typeLiteral);
-        for (FormatDefinition.FormatField field : format.fields) {
-          if (field instanceof FormatDefinition.RangeFormatField rangeField) {
+        for (FormatField field : format.fields) {
+          if (field instanceof RangeFormatField rangeField) {
             if (rangeField.typeLiteral != null) {
               resolveSymbols(rangeField.typeLiteral);
             }
-          } else if (field instanceof FormatDefinition.TypedFormatField typedField) {
+          } else if (field instanceof TypedFormatField typedField) {
             resolveSymbols(typedField.typeLiteral);
-          } else if (field instanceof FormatDefinition.DerivedFormatField dfField) {
+          } else if (field instanceof DerivedFormatField dfField) {
             resolveSymbols(dfField.expr);
           } else {
             throw new RuntimeException("Unknown class");
@@ -1182,7 +1182,7 @@ class SymbolTable {
         if (format != null) {
           instructionCall.instrDef = instr;
           for (var namedArgument : instructionCall.namedArguments) {
-            FormatDefinition.FormatField foundField = null;
+            FormatField foundField = null;
             for (var field : format.fields) {
               if (field.identifier().name.equals(namedArgument.name.name)) {
                 foundField = field;
@@ -1316,8 +1316,8 @@ class SymbolTable {
     }
 
     @Nullable
-    private static FormatDefinition.FormatField findField(FormatDefinition format, String name) {
-      for (FormatDefinition.FormatField f : format.fields) {
+    private static FormatField findField(FormatDefinition format, String name) {
+      for (FormatField f : format.fields) {
         if (f.identifier().name.equals(name)) {
           return f;
         }
