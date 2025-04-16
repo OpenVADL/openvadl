@@ -49,7 +49,7 @@ public class AstDumpTests {
 
     var realWorldTestStream = Stream.of(
             Pair.of(
-                getResourcePath("testSource/sys/risc-v/rv64im.vadl"),
+                getResourcePath("testSource/ast/riscv/rv64im.vadl"),
                 getResourcePath("dumps").resolve("rv64im.dump"))
         )
         .map(pair -> DynamicTest.dynamicTest("Parse " + pair.left().getFileName(),

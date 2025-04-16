@@ -636,13 +636,6 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     }
 
     @Override
-    List<Node> children() {
-      // This is too complicated for the @Child annotation
-      // This is a bit too complex for the @Child annotation
-      return entries.stream().map(e -> (Node) e.expr).toList();
-    }
-
-    @Override
     SourceLocation location() {
       return entries.get(0).id.location().join(entries.get(entries.size() - 1).expr.location());
     }
@@ -1495,7 +1488,7 @@ class PseudoInstructionDefinition extends InstructionSequenceDefinition
   @Override
   public List<Node> children() {
     // Since this class has no @Child annotations the Annotationprocessor doesn't find it.
-    return NodeChildrenRegistry.getChildrenDirect(this,
+    return NodeChildrenRegistry.unsafeGetChildrenDirect(this,
         (Class<? extends Node>) getClass().getSuperclass());
   }
 
@@ -3531,7 +3524,7 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
   @Override
   public List<Node> children() {
     // Since this class has no @Child annotations the Annotationprocessor doesn't find it.
-    return NodeChildrenRegistry.getChildrenDirect(this,
+    return NodeChildrenRegistry.unsafeGetChildrenDirect(this,
         (Class<? extends Node>) getClass().getSuperclass());
   }
 

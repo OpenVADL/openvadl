@@ -1,0 +1,268 @@
+// SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+// RISC-V 32 I instruction set
+
+import rv3264im::RV3264IM
+
+instruction set architecture RV32IM extending RV3264IM = {}
+
+application binary interface ABI for RV32IM = {
+   //
+   // Register alias definitions
+   //
+
+   alias register zero = X(0)
+
+   alias register ra = X(1)
+
+   alias register sp = X(2)
+
+   alias register gp = X(3)
+   alias register tp = X(4)
+
+   alias register t0 = X(5)
+   alias register t1 = X(6)
+   alias register t2 = X(7)
+
+   // [ preferred alias ]
+   alias register fp = X(8)
+
+   alias register s0 = X(8)
+   alias register s1 = X(9)
+
+   alias register a0 = X(10)
+   alias register a1 = X(11)
+   alias register a2 = X(12)
+   alias register a3 = X(13)
+   alias register a4 = X(14)
+   alias register a5 = X(15)
+   alias register a6 = X(16)
+   alias register a7 = X(17)
+
+   alias register s2 = X(18)
+   alias register s3 = X(19)
+   alias register s4 = X(20)
+   alias register s5 = X(21)
+   alias register s6 = X(22)
+   alias register s7 = X(23)
+   alias register s8 = X(24)
+   alias register s9 = X(25)
+   alias register s10 = X(26)
+   alias register s11 = X(27)
+
+   alias register t3 = X(28)
+   alias register t4 = X(29)
+   alias register t5 = X(30)
+   alias register t6 = X(31)
+
+   // [ alignment : HalfWord ]
+   stack pointer = sp
+   return address = ra
+   global pointer = gp
+   frame pointer = fp
+   thread pointer = tp
+
+   pseudo return instruction = RET
+   pseudo call instruction = CALL
+   pseudo local address load instruction = LLA
+   pseudo global address load instruction = LGA_32
+   pseudo absolute address load instruction = LA
+
+   return value = a{0..1}
+   function argument = a{0..7}
+
+   // ra is callee saved because it is used as normal register and has to be restored.
+   caller saved = [ a{0..7}, t{0..6} ]
+   callee saved = [ ra, gp, tp, fp, s{0..11} ]
+
+  constant sequence( rd : Bits<5>, val : SInt<32> ) =
+  {
+     LUI { rd = rd, imm = hi( val ) }
+     ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
+  }
+
+  constant sequence( rd : Bits<5>, val : UInt<32> ) =
+  {
+     LUI { rd = rd, imm = hi( val ) }
+     ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
+  }
+
+  constant sequence( rd : Bits<5>, imm : SInt<12> ) =
+  {
+     ADDI{ rd = rd, rs1 = 0, imm = imm }
+  }
+
+  register adjustment sequence( rd : Bits<5>, rs1: Bits<5>, imm : SInt<12> ) =
+  {
+     ADDI{ rd = rd, rs1 = rs1, imm = imm }
+  }
+}
+
+[commentString = "#"]
+assembly description ASM for ABI = {
+
+  modifiers = {
+    "hi" -> RV32IM::hi,
+    "lo" -> RV32IM::lo
+  }
+
+  grammar = {
+    RRIds : "ADD" | "SUB" | "AND" | "OR" | "XOR" | "SLT" | "SLTU" | "SLL" | "SRL" | "SRA"
+            | "MUL" | "MULH" | "MULHSU" | "MULHU" | "DIV" | "DIVU" | "REM" | "REMU"
+    ;
+
+    RRInstruction @instruction:
+      mnemonic = RRIds @operand
+      rd = Register@operand ","
+      rs1 = Register@operand ","
+      rs2 = Register@operand
+    ;
+
+
+    ITypeIds : "ANDI" | "ORI" | "XORI" | "SLTI" | "SLTIU" | "JALR" ;
+
+    ITypeInstruction @instruction:
+      mnemonic = ITypeIds @operand
+      rd = Register@operand ","
+      rs1 = Register@operand ","
+      imm = ImmediateOperand
+    ;
+
+    AddIInstruction @instruction:
+      mnemonic = "ADDI" @operand
+      rd = Register@operand ","
+      rs1 = Register@operand ","
+      imm = LoImmediateOperand
+    ;
+
+    LoImmediateOperand :
+      ImmediateOperand
+      | op = (
+          "%" mod="lo"@modifier
+          "(" val = Expression ")"
+        ) @operand
+    ;
+
+    LuiInstruction @instruction:
+      mnemonic = "LUI" @operand
+      rd = Register@operand ","
+      imm = LuiImmediateOperand
+    ;
+
+    LuiImmediateOperand :
+      ImmediateOperand
+      | op = (
+          "%" mod="hi"@modifier
+          "(" val = Expression ")"
+        ) @operand
+    ;
+
+    AuipcInstruction @instruction:
+      mnemonic = "AUIPC" @operand
+      rd = Register@operand ","
+      imm = ImmediateOperand
+    ;
+
+    LTypeIds : "LB" | "LBU" | "LH" | "LHU" | "LW" ;
+
+    LTypeInstruction @instruction:
+      mnemonic = LTypeIds @operand
+      rd = Register @operand ","
+      imm = LoImmediateOperand
+      "(" rs1 = Register @operand ")"
+    ;
+
+
+    STypeIds : "SB" | "SH" | "SW" ;
+
+    STypeInstruction @instruction:
+      mnemonic = STypeIds @operand
+      rs2 = Register @operand ","
+      imm = LoImmediateOperand
+      "(" rs1 = Register @operand ")"
+    ;
+
+    JalInstruction @instruction:
+      mnemonic = "JAL" @operand
+      rd = Register @operand ","
+      immS = ImmediateOperand
+    ;
+
+
+    BTypeIds : "BEQ" | "BNE" |  "BGE" | "BGEU" | "BLT" | "BLTU" ;
+
+    BTypeInstruction @instruction:
+      mnemonic = BTypeIds @operand
+      rs1 = Register@operand ","
+      rs2 = Register@operand ","
+      immS = ImmediateOperand@operand
+    ;
+
+
+    IShftTypeIds : "SLLI" | "SRLI" | "SRAI" ;
+
+    IShftTypeInstruction @instruction:
+      mnemonic = IShftTypeIds @operand
+      rd = Register@operand ","
+      rs1 = Register@operand ","
+      sft = ImmediateOperand
+    ;
+
+
+    NoOperandIds : "RET" | "NOP" | "ECALL" | "EBREAK" ;
+
+    NoOperandPseudoInstruction @instruction :
+      mnemonic = NoOperandIds @operand
+    ;
+
+
+    SymbolPseudoIds : "CALL" | "TAIL" ;
+
+    SymbolPseudoInstruction @instruction :
+      mnemonic = SymbolPseudoIds @operand
+      symbol = (Identifier @symbol) @operand
+    ;
+
+
+    JPseudoInstruction @instruction :
+      mnemonic = "J" @operand
+      offset = ImmediateOperand
+    ;
+
+
+    RRPseudoIds : "MV" | "NOT" | "NEG" | "SNEZ" | "SLTZ" | "SGTZ" ;
+
+    RRPseudoInstruction @instruction :
+      mnemonic = RRPseudoIds @operand
+      rd = Register @operand ","
+      rs1 = Register @operand
+    ;
+
+
+    BranchPseudoIds : "BEQZ" | "BNEZ" | "BLEZ" | "BGEZ" | "BLTZ" | "BGTZ" ;
+
+    BranchPseudoInstruction @instruction :
+      mnemonic = BranchPseudoIds @operand
+      rs = Register @operand ","
+      offset = ImmediateOperand
+    ;
+
+
+    LLAPseudoInstruction @instruction:
+      mnemonic = "LLA" @operand
+      rd = Register @operand ","
+      symbol = ImmediateOperand
+    ;
+
+    LIPseudoInstruction @instruction:
+      mnemonic = "LI" @operand
+      rd = Register @operand ","
+      symbol = ImmediateOperand
+    ;
+  }
+}
+
+micro processor Spike implements RV32IM with ABI = {
+  start = 0x80000000
+}

@@ -231,7 +231,7 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
       out.println("     * @return the children.");
       out.println("     */");
       out.println(
-          "    public static List<Node> getChildrenDirect(Node node, "
+          "    public static List<Node> unsafeGetChildrenDirect(Node node, "
               + "Class<? extends Node> nodeType) {");
       out.println("        Function<Node, List<Node>> collector = COLLECTORS.get(nodeType);");
       out.println("            if (collector == null) {");
