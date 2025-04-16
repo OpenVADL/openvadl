@@ -1,0 +1,12 @@
+site:
+  title: OpenVADL
+  start_page: openvadl::index.adoc
+
+content:
+  sources:
+    - url: ./../
+      start_path: vadl-docs
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true

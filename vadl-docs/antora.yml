@@ -1,0 +1,5 @@
+name: openvadl
+version: true
+title: OpenVADL
+nav:
+  - modules/ROOT/nav.adoc
