@@ -97,4 +97,5 @@ public class ViamLoweringTest {
         Assertions.assertThrows(Diagnostic.class, () -> new ViamLowering().generate(ast));
     Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
     Assertions.assertEquals("Cannot find the pseudo call instruction", throwable.reason);
-  }}
+  }
+}
