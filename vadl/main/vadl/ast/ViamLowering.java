@@ -100,9 +100,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   private static final String RELATIVE = "relative";
   private static final String GLOBAL_OFFSET_TABLE = "globalOffset";
-  private static final String
-      MAYBE_CHECK_IF_THIS_INSTRUCTION_REALLY_EXISTS_OR_WAS_SPELLED_INCORRECTLY =
-      "Maybe check if this instruction really exists or was spelled incorrectly?";
   private final ConstantEvaluator constantEvaluator = new ConstantEvaluator();
 
   private final IdentityHashMap<Definition, Optional<vadl.viam.Definition>> definitionCache =
@@ -376,11 +373,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow(() ->
         Diagnostic.error("Cannot find the pseudo return instruction", definition.sourceLocation())
-            .help(MAYBE_CHECK_IF_THIS_INSTRUCTION_REALLY_EXISTS_OR_WAS_SPELLED_INCORRECTLY)
+            .help("Maybe check if this instruction really exists or was spelled incorrectly?")
             .build());
     var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow(() ->
         Diagnostic.error("Cannot find the pseudo call instruction", definition.sourceLocation())
-            .help(MAYBE_CHECK_IF_THIS_INSTRUCTION_REALLY_EXISTS_OR_WAS_SPELLED_INCORRECTLY)
+            .help("Maybe check if this instruction really exists or was spelled incorrectly?")
             .build());
     var pseudoLocalAddressLoad = fetch(pseudoLocalAddressLoadDef).map(x -> (PseudoInstruction) x);
     var pseudoGlobalAddressLoad = fetch(pseudoGlobalAddressLoadDef).map(x -> (PseudoInstruction) x);
