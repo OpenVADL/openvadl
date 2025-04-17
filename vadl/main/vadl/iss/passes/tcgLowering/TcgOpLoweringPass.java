@@ -85,6 +85,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncCallNode;
+import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ProcCallNode;
@@ -806,6 +807,10 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     throw failShouldNotHappen(toHandle);
   }
 
+  @Handler
+  void handle(LabelNode toHandle) {
+    throw failShouldNotHappen(toHandle);
+  }
 
   /**
    * Throws a {@link ViamGraphError} indicating that the node should not be handled.
