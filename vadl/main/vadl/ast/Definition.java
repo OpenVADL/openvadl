@@ -1663,7 +1663,8 @@ sealed interface IsEncs permits EncodingDefinition.EncsNode,
   void prettyPrint(int indent, StringBuilder builder);
 }
 
-class EncodingDefinition extends Definition implements IdentifiableNode {
+class EncodingDefinition extends Definition {
+  @Child
   IdentifierOrPlaceholder instrIdentifier;
   @Child
   EncsNode encodings;
@@ -1679,7 +1680,6 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
     this.loc = location;
   }
 
-  @Override
   public Identifier identifier() {
     return (Identifier) instrIdentifier;
   }
@@ -1745,11 +1745,6 @@ class EncodingDefinition extends Definition implements IdentifiableNode {
       this.loc = loc;
     }
 
-    @Override
-    List<Node> children() {
-      // This is too complicated for the @Child annotation
-      return items.stream().map(i -> (Node) i).toList();
-    }
 
     @Override
     public SourceLocation location() {
@@ -2365,8 +2360,10 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder id;
   @Child
   Statement statement;
-  SourceLocation loc;
+  @Child
   List<Parameter> params;
+  SourceLocation loc;
+
 
   ExceptionDefinition(IdentifierOrPlaceholder id, List<Parameter> params,
                       Statement statement,
@@ -3212,12 +3209,6 @@ class OperationDefinition extends Definition implements IdentifiableNode {
     this.name = name;
     this.resources = resources;
     this.loc = loc;
-  }
-
-  @Override
-  List<Node> children() {
-    // This is too complicated for the @Child annotation
-    return resources.stream().map(r -> (Node) r).toList();
   }
 
   @Override
@@ -5063,6 +5054,7 @@ class AsmGrammarAlternativesDefinition extends Definition {
     return alternatives.stream()
         .flatMap(l -> l.stream()
             .flatMap(a -> a.children().stream()))
+        .filter(Objects::nonNull)
         .toList();
   }
 

@@ -423,7 +423,7 @@ class MacroExpander
     var indices = new ArrayList<>(expr.indices);
     indices.replaceAll(index -> new ForallExpr.Index((IsId) expandExpr((Expr) index.identifier()),
         expandExpr(index.domain)));
-    return new ForallExpr(indices, expr.operation, expr.foldOperator, expandExpr(expr.expr),
+    return new ForallExpr(indices, expr.operation, expr.foldOperator, expandExpr(expr.body),
         copyLoc(expr.loc));
   }
 
@@ -1022,7 +1022,7 @@ class MacroExpander
     var indices = new ArrayList<>(forallStatement.indices);
     indices.replaceAll(
         index -> new ForallStatement.Index(index.identifier(), expandExpr(index.domain)));
-    var statement = expandStatement(forallStatement.statement);
+    var statement = expandStatement(forallStatement.body);
     return new ForallStatement(indices, statement, copyLoc(forallStatement.loc));
   }
 

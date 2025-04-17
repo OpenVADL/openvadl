@@ -304,7 +304,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "ADD"
+. : ' EncodingDefinition
+. : ' | Identifier name: "ADD" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -357,7 +358,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SUB"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SUB" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -410,7 +412,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "AND"
+. : ' EncodingDefinition
+. : ' | Identifier name: "AND" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -463,7 +466,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "OR"
+. : ' EncodingDefinition
+. : ' | Identifier name: "OR" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -516,7 +520,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "XOR"
+. : ' EncodingDefinition
+. : ' | Identifier name: "XOR" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -569,7 +574,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SLT"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SLT" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -622,7 +628,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "UInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SLTU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SLTU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -675,7 +682,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "UShft" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SLL"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SLL" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -728,7 +736,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "UShft" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SRL"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SRL" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -781,7 +790,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "UShft" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SRA"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SRA" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -831,7 +841,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "ADDI"
+. : ' EncodingDefinition
+. : ' | Identifier name: "ADDI" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -879,7 +890,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "ANDI"
+. : ' EncodingDefinition
+. : ' | Identifier name: "ANDI" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -927,7 +939,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "ORI"
+. : ' EncodingDefinition
+. : ' | Identifier name: "ORI" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -975,7 +988,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "XORI"
+. : ' EncodingDefinition
+. : ' | Identifier name: "XORI" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1023,7 +1037,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SLTI"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SLTI" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1071,7 +1086,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "UInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SLTIU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SLTIU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1104,7 +1120,8 @@ ImportDefinition
 . : ' | . BinaryExpr operator: + type: null
 . : ' | . : Identifier name: "PC" type: null
 . : ' | . : Identifier name: "immUp" type: null
-. : ' EncodingDefinition name: "AUIPC"
+. : ' EncodingDefinition
+. : ' | Identifier name: "AUIPC" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'0111 (23) type: null
 . : ' AssemblyDefinition
@@ -1128,7 +1145,8 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . Identifier name: "immUp" type: null
-. : ' EncodingDefinition name: "LUI"
+. : ' EncodingDefinition
+. : ' | Identifier name: "LUI" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0111 (55) type: null
 . : ' AssemblyDefinition
@@ -1166,7 +1184,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "addr" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "LB"
+. : ' EncodingDefinition
+. : ' | Identifier name: "LB" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1212,7 +1231,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "addr" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "UIntR" type: null
-. : ' EncodingDefinition name: "LBU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "LBU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1260,7 +1280,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "addr" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "LH"
+. : ' EncodingDefinition
+. : ' | Identifier name: "LH" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1308,7 +1329,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "addr" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "UIntR" type: null
-. : ' EncodingDefinition name: "LHU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "LHU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1356,7 +1378,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "addr" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "LW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "LW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1402,7 +1425,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "rs2" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "Byte" type: null
-. : ' EncodingDefinition name: "SB"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SB" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b010'0011 (35) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1450,7 +1474,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "rs2" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "Half" type: null
-. : ' EncodingDefinition name: "SH"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SH" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b010'0011 (35) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1498,7 +1523,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "rs2" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "Word" type: null
-. : ' EncodingDefinition name: "SW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b010'0011 (35) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1543,7 +1569,8 @@ ImportDefinition
 . : ' | . : BinaryExpr operator: + type: null
 . : ' | . : ' Identifier name: "PC" type: null
 . : ' | . : ' Identifier name: "immS" type: null
-. : ' EncodingDefinition name: "BEQ"
+. : ' EncodingDefinition
+. : ' | Identifier name: "BEQ" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1587,7 +1614,8 @@ ImportDefinition
 . : ' | . : BinaryExpr operator: + type: null
 . : ' | . : ' Identifier name: "PC" type: null
 . : ' | . : ' Identifier name: "immS" type: null
-. : ' EncodingDefinition name: "BNE"
+. : ' EncodingDefinition
+. : ' | Identifier name: "BNE" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1631,7 +1659,8 @@ ImportDefinition
 . : ' | . : BinaryExpr operator: + type: null
 . : ' | . : ' Identifier name: "PC" type: null
 . : ' | . : ' Identifier name: "immS" type: null
-. : ' EncodingDefinition name: "BGE"
+. : ' EncodingDefinition
+. : ' | Identifier name: "BGE" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1675,7 +1704,8 @@ ImportDefinition
 . : ' | . : BinaryExpr operator: + type: null
 . : ' | . : ' Identifier name: "PC" type: null
 . : ' | . : ' Identifier name: "immS" type: null
-. : ' EncodingDefinition name: "BGEU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "BGEU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1719,7 +1749,8 @@ ImportDefinition
 . : ' | . : BinaryExpr operator: + type: null
 . : ' | . : ' Identifier name: "PC" type: null
 . : ' | . : ' Identifier name: "immS" type: null
-. : ' EncodingDefinition name: "BLT"
+. : ' EncodingDefinition
+. : ' | Identifier name: "BLT" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1763,7 +1794,8 @@ ImportDefinition
 . : ' | . : BinaryExpr operator: + type: null
 . : ' | . : ' Identifier name: "PC" type: null
 . : ' | . : ' Identifier name: "immS" type: null
-. : ' EncodingDefinition name: "BLTU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "BLTU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b110'0011 (99) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1815,7 +1847,8 @@ ImportDefinition
 . : ' | . : ' | ArgsIndices
 . : ' | . : ' | . Identifier name: "rd" type: null
 . : ' | . : ' Identifier name: "retaddr" type: null
-. : ' EncodingDefinition name: "JAL"
+. : ' EncodingDefinition
+. : ' | Identifier name: "JAL" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b110'1111 (111) type: null
 . : ' AssemblyDefinition
@@ -1864,7 +1897,8 @@ ImportDefinition
 . : ' | . : ' | ArgsIndices
 . : ' | . : ' | . Identifier name: "rd" type: null
 . : ' | . : ' Identifier name: "retaddr" type: null
-. : ' EncodingDefinition name: "JALR"
+. : ' EncodingDefinition
+. : ' | Identifier name: "JALR" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b110'0111 (103) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1892,7 +1926,8 @@ ImportDefinition
 . : ' InstructionDefinition name: "ECALL"
 . : ' | Identifier name: "Itype" type: null
 . : ' | BlockStatement
-. : ' EncodingDefinition name: "ECALL"
+. : ' EncodingDefinition
+. : ' | Identifier name: "ECALL" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b111'0011 (115) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1909,7 +1944,8 @@ ImportDefinition
 . : ' InstructionDefinition name: "EBREAK"
 . : ' | Identifier name: "Itype" type: null
 . : ' | BlockStatement
-. : ' EncodingDefinition name: "EBREAK"
+. : ' EncodingDefinition
+. : ' | Identifier name: "EBREAK" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b111'0011 (115) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -1977,7 +2013,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "addr" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "UIntR" type: null
-. : ' EncodingDefinition name: "LWU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "LWU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2025,7 +2062,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "addr" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "Dble" type: null
-. : ' EncodingDefinition name: "LD"
+. : ' EncodingDefinition
+. : ' | Identifier name: "LD" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b000'0011 (3) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2073,7 +2111,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "rs2" type: null
 . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | Identifier name: "Dble" type: null
-. : ' EncodingDefinition name: "SD"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SD" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b010'0011 (35) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2126,7 +2165,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "ADDIW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "ADDIW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'1011 (27) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2174,7 +2214,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "SLLIW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SLLIW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'1011 (27) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2224,7 +2265,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "SRLIW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SRLIW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'1011 (27) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2274,7 +2316,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "SRAIW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SRAIW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'1011 (27) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2331,7 +2374,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "ADDW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "ADDW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2388,7 +2432,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "SUBW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SUBW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2445,7 +2490,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "SLLW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SLLW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2502,7 +2548,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "SRLW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SRLW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2559,7 +2606,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "SRAW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SRAW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -2645,7 +2693,8 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "shamt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SLLI"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SLLI" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
 . : ' | Identifier name: "zero" type: null
@@ -2693,7 +2742,8 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "shamt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SRLI"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SRLI" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
 . : ' | Identifier name: "zero" type: null
@@ -2741,7 +2791,8 @@ ImportDefinition
 . : ' | . : ' | Identifier name: "shamt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "SRAI"
+. : ' EncodingDefinition
+. : ' | Identifier name: "SRAI" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b001'0011 (19) type: null
 . : ' | Identifier name: "zero" type: null
@@ -3647,7 +3698,8 @@ ImportDefinition
 . : ' | . : ' | . : ' Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "MUL"
+. : ' EncodingDefinition
+. : ' | Identifier name: "MUL" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -3704,7 +3756,8 @@ ImportDefinition
 . : ' | . : ' | RangeExpr type: null
 . : ' | . : ' | . Identifier name: "MLen2_1" type: null
 . : ' | . : ' | . Identifier name: "MLen" type: null
-. : ' EncodingDefinition name: "MULH"
+. : ' EncodingDefinition
+. : ' | Identifier name: "MULH" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -3761,7 +3814,8 @@ ImportDefinition
 . : ' | . : ' | RangeExpr type: null
 . : ' | . : ' | . Identifier name: "MLen2_1" type: null
 . : ' | . : ' | . Identifier name: "MLen" type: null
-. : ' EncodingDefinition name: "MULHSU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "MULHSU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -3818,7 +3872,8 @@ ImportDefinition
 . : ' | . : ' | RangeExpr type: null
 . : ' | . : ' | . Identifier name: "MLen2_1" type: null
 . : ' | . : ' | . Identifier name: "MLen" type: null
-. : ' EncodingDefinition name: "MULHU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "MULHU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -3930,7 +3985,8 @@ ImportDefinition
 . : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "DIV"
+. : ' EncodingDefinition
+. : ' | Identifier name: "DIV" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -4014,7 +4070,8 @@ ImportDefinition
 . : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "DIVU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "DIVU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -4126,7 +4183,8 @@ ImportDefinition
 . : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "REM"
+. : ' EncodingDefinition
+. : ' | Identifier name: "REM" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -4210,7 +4268,8 @@ ImportDefinition
 . : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "REMU"
+. : ' EncodingDefinition
+. : ' | Identifier name: "REMU" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'0011 (51) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -4267,7 +4326,8 @@ ImportDefinition
 . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
-. : ' EncodingDefinition name: "MULW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "MULW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -4379,7 +4439,8 @@ ImportDefinition
 . : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "DIVW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "DIVW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -4463,7 +4524,8 @@ ImportDefinition
 . : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "DIVUW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "DIVUW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -4575,7 +4637,8 @@ ImportDefinition
 . : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "REMW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "REMW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
 . : ' | Identifier name: "funct3" type: null
@@ -4659,7 +4722,8 @@ ImportDefinition
 . : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
-. : ' EncodingDefinition name: "REMUW"
+. : ' EncodingDefinition
+. : ' | Identifier name: "REMUW" type: null
 . : ' | Identifier name: "opcode" type: null
 . : ' | BinaryLiteral literal: 0b011'1011 (59) type: null
 . : ' | Identifier name: "funct3" type: null

@@ -685,7 +685,11 @@ class StringLiteral extends Expr {
 
   public StringLiteral(String token, SourceLocation loc) {
     this.token = token;
-    this.value = StringLiteralParser.parseString(token.substring(1, token.length() - 1));
+    if (token.length() > 1) {
+      this.value = StringLiteralParser.parseString(token.substring(1, token.length() - 1));
+    } else {
+      this.value = token;
+    }
     this.loc = loc;
   }
 
@@ -1263,7 +1267,7 @@ final class TypeLiteral extends Expr {
         .flatMap(Collection::stream)
         .toList()
     );
-    return childNodes;
+    return childNodes.stream().filter(Objects::nonNull).toList();
   }
 
   @Override
@@ -1571,7 +1575,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
         .flatMap(subCall -> subCall.argsIndices.stream()
             .flatMap(a -> a.values.stream()))
         .toList());
-    return childNodes;
+    return childNodes.stream().filter(Objects::nonNull).toList();
   }
 
   void replaceArgsFor(int index, List<Expr> newArgs) {
@@ -2016,7 +2020,7 @@ class MatchExpr extends Expr {
       childNodes.add(c.result);
     });
     childNodes.add(defaultResult);
-    return childNodes;
+    return childNodes.stream().filter(Objects::nonNull).toList();
   }
 
   @Override
@@ -2393,15 +2397,15 @@ class ForallExpr extends Expr {
   @Nullable
   Operator foldOperator;
   @Child
-  Expr expr;
+  Expr body;
   SourceLocation loc;
 
   ForallExpr(List<ForallExpr.Index> indices, Operation operation, @Nullable Operator foldOperator,
-             Expr expr, SourceLocation loc) {
+             Expr body, SourceLocation loc) {
     this.indices = indices;
     this.operation = operation;
     this.foldOperator = foldOperator;
-    this.expr = expr;
+    this.body = body;
     this.loc = loc;
   }
 
@@ -2430,12 +2434,12 @@ class ForallExpr extends Expr {
     if (foldOperator != null) {
       builder.append(" ").append(foldOperator.symbol).append(" with");
     }
-    if (isBlockLayout(expr)) {
+    if (isBlockLayout(body)) {
       builder.append("\n");
-      expr.prettyPrint(indent + 1, builder);
+      body.prettyPrint(indent + 1, builder);
     } else {
       builder.append(" ");
-      expr.prettyPrint(0, builder);
+      body.prettyPrint(0, builder);
       builder.append("\n");
     }
   }
@@ -2455,12 +2459,12 @@ class ForallExpr extends Expr {
     }
     ForallExpr that = (ForallExpr) o;
     return Objects.equals(indices, that.indices) && operation == that.operation
-        && Objects.equals(foldOperator, that.foldOperator) && Objects.equals(expr, that.expr);
+        && Objects.equals(foldOperator, that.foldOperator) && Objects.equals(body, that.body);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(indices, operation, foldOperator, expr);
+    return Objects.hash(indices, operation, foldOperator, body);
   }
 
   @Override

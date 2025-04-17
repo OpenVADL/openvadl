@@ -256,7 +256,7 @@ PRODUCTIONS
                                                 // Only call the symbol resolver if there were no errors, because other
                                                 // wise the AST might be invalid, causing a crash.
                                                 if (errors.count == 0) {
-                                                  new SymbolTable.SymbolCollector(ParserUtils.baseName(sourceFile)).collectSymbols(ast.rootSymbolTable(), def);
+                                                  new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def);
                                                 }
                                             .)
     | macroDef<out ModelDefinition def>     (.
@@ -264,7 +264,7 @@ PRODUCTIONS
                                                 // Only call the symbol resolver if there were no errors, because other
                                                 // wise the AST might be invalid, causing a crash.
                                                 if (errors.count == 0) {
-                                                new SymbolTable.SymbolCollector(ParserUtils.baseName(sourceFile)).collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def);
+                                                new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def);
                                                 }
                                             .)
   }.

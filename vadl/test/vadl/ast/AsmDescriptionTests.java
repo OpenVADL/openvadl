@@ -83,8 +83,8 @@ public class AsmDescriptionTests {
   void asmDescriptionDuplicateModifierString() {
     var prog = """
           instruction set architecture ISA = {
-            relocation HI ( symbol : Bits <32> ) -> Bits <16> = ( symbol >> 16 ) & 0xFFFF
-            relocation LO ( symbol : Bits <32> ) -> Bits <12> =   symbol         & 0xFFF
+            relocation HI ( symbol : Bits <32> ) -> Bits <16> = (( symbol >> 16 ) & 0xFFFF) as Bits<16>
+            relocation LO ( symbol : Bits <32> ) -> Bits <12> = (  symbol         & 0xFFF ) as Bits<12>
           }
           application binary interface ABI for ISA = {}
         
