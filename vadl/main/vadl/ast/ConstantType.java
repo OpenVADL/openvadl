@@ -45,7 +45,7 @@ public class ConstantType extends Type {
 
   int requiredBitWidth() {
     var isNegative = value.compareTo(BigInteger.ZERO) < 0;
-    return value.bitLength() + (isNegative ? 1 : 0);
+    return Math.max(1, value.bitLength() + (isNegative ? 1 : 0));
   }
 
   SIntType closestSInt() {
@@ -79,7 +79,7 @@ public class ConstantType extends Type {
       // If the number is positiver than required bit width doesn't include the sign bit and we need
       // to manually add it here.
       var bitsWidth = Math.max(targetSInt.bitWidth(),
-          requiredBitWidth() + (value.compareTo(BigInteger.ZERO) < 0 ? 0 : 1));
+          requiredBitWidth());
       return Type.signedInt(bitsWidth);
     }
 
