@@ -778,18 +778,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var identifier = generateIdentifier(definition.viamId, definition.identifier().location());
 
     // FIXME: Further research for the parameters (probably don't apply to counter)
-
-    Format format = null;
-    if (definition.type() instanceof FormatType) {
-      format = (Format) fetch(((FormatType) definition.type()).format).orElseThrow();
-    }
-
     var reg = new Register(identifier,
-        (DataType) getViamType(requireNonNull(definition.typeLiteral.type)),
-        Register.AccessKind.FULL,
-        Register.AccessKind.FULL,
-        format,
-        new Register[] {});
+        (DataType) getViamType(requireNonNull(definition.typeLiteral.type)));
 
     Map<CounterDefinition.CounterKind, Counter.Kind> kinds =
         Map.of(CounterDefinition.CounterKind.PROGRAM, Counter.Kind.PROGRAM_COUNTER,
@@ -1360,19 +1350,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterDefinition definition) {
-    // TODO: Support recursive sub registers
-    Format format = null;
-    if (definition.type() instanceof FormatType) {
-      format = (Format) fetch(((FormatType) definition.type()).format).orElseThrow();
-    }
-
     var reg = new Register(
         generateIdentifier(definition.viamId, definition.identifier()),
-        (DataType) getViamType(definition.type()),
-        Register.AccessKind.FULL,
-        Register.AccessKind.FULL,
-        format,
-        new Register[] {}
+        (DataType) getViamType(definition.type())
     );
     return Optional.of(reg);
   }

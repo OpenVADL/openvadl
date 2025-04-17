@@ -17,10 +17,12 @@
 package vadl.viam;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
-import vadl.types.ConcreteRelationType;
+import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.utils.Pair;
@@ -30,10 +32,7 @@ import vadl.utils.Pair;
  * it. It may also have constraints that restricts the possible values for statically defined
  * addresses.
  */
-public class RegisterFile extends Resource {
-
-  private final DataType addressType;
-  private final DataType resultType;
+public class RegisterFile extends RegisterTensor {
   private final Constraint[] constraints;
 
   /**
@@ -45,36 +44,24 @@ public class RegisterFile extends Resource {
    */
   public RegisterFile(Identifier identifier, DataType addressType, DataType resultType,
                       Constraint[] constraints) {
-    super(identifier);
-    this.addressType = addressType;
-    this.resultType = resultType;
+    super(identifier, initDims(addressType, resultType));
     this.constraints = constraints;
   }
 
+  private static List<Dimension> initDims(DataType addressType, DataType resultType) {
+    var innerDimType = Type.bits(BitsType.minimalRequiredWidthFor(resultType.bitWidth()));
+    var innerDim = new Dimension(innerDimType, resultType.toBitsType().bitWidth());
+    var outerDim = new Dimension(addressType, (int) Math.pow(2, addressType.bitWidth()));
+    return List.of(outerDim, innerDim);
+  }
 
   @Override
   public boolean hasAddress() {
     return true;
   }
 
-  @Override
-  @Nonnull
-  public DataType addressType() {
-    return addressType;
-  }
-
-  @Override
-  public DataType resultType() {
-    return resultType;
-  }
-
   public int numberOfRegisters() {
-    return (int) Math.pow(2, addressType.bitWidth());
-  }
-
-  @Override
-  public ConcreteRelationType relationType() {
-    return Type.concreteRelation(addressType, resultType);
+    return outermostDim().size();
   }
 
   public Constraint[] constraints() {
@@ -119,14 +106,20 @@ public class RegisterFile extends Resource {
     super.verify();
 
     for (Constraint constraint : constraints) {
-      ensure(constraint.value.type().isTrivialCastTo(resultType),
+      ensure(constraint.value.type().isTrivialCastTo(resultType()),
           "Type mismatch: Can't cast value type %s to register file result type %s.",
-          constraint.value.type(), this.resultType);
+          constraint.value.type(), this.resultType());
 
-      ensure(constraint.address.type().isTrivialCastTo(addressType),
+      ensure(constraint.address.type().isTrivialCastTo(addressType()),
           "Type mismatch: Can't cast address type %s to register file address type %s.",
-          constraint.address.type(), this.resultType);
+          constraint.address.type(), this.resultType());
     }
+  }
+
+  @Nonnull
+  @Override
+  public DataType addressType() {
+    return Objects.requireNonNull(super.addressType());
   }
 
   @Override
@@ -136,7 +129,7 @@ public class RegisterFile extends Resource {
 
   @Override
   public String toString() {
-    return identifier.simpleName() + ": " + addressType + " -> " + resultType;
+    return identifier.simpleName() + ": " + addressType() + " -> " + resultType();
   }
 
   /**

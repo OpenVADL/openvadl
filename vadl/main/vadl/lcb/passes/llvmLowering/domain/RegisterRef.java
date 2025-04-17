@@ -57,7 +57,6 @@ public class RegisterRef extends Resource {
   public RegisterRef(Register register) {
     super(register.identifier);
     this.resultType = register.resultType();
-    this.refFormat = register.refFormat();
     this.relationType = register.relationType();
     this.address = null;
     // When constructed over register then they are no constraints.
@@ -97,17 +96,27 @@ public class RegisterRef extends Resource {
   }
 
   @Override
+  public List<DataType> indexTypes() {
+    var addrType = addressType();
+    if (addrType == null) {
+      return List.of();
+    }
+    return List.of(addrType);
+  }
+
+  @Override
   public DataType resultType() {
     return resultType;
   }
 
   @Override
-  public ConcreteRelationType relationType() {
-    return relationType;
+  public DataType resultType(int providedDimensions) {
+    return resultType();
   }
 
-  public @Nullable Format refFormat() {
-    return refFormat;
+  @Override
+  public ConcreteRelationType relationType() {
+    return relationType;
   }
 
   @Override
