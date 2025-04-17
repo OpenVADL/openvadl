@@ -248,6 +248,11 @@ assembly description ASM for ABI = {
       offset = ImmediateOperand
     ;
 
+    LAPseudoInstruction @instruction :
+      mnemonic = "LA" @operand
+      rd = Register @operand ","
+      symbol = ImmediateOperand
+    ;
 
     LLAPseudoInstruction @instruction:
       mnemonic = "LLA" @operand

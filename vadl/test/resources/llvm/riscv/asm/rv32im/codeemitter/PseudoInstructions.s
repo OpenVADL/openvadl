@@ -1,6 +1,6 @@
 # RUN: /src/llvm-final/build/bin/llvm-mc -arch=rv32im -show-encoding < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
-# TODO: call, load pseudo instructions
+# TODO: CALL, LLA, LI, LA (support PIC)
 
 RET
 # CHECK: # encoding: [0x67,0x80,0x00,0x00]
@@ -14,8 +14,15 @@ ECALL
 EBREAK
 # CHECK: # encoding: [0x73,0x00,0x10,0x00]
 
+CALL my_function
+# CHECK-DISABLED: # encoding: [0x97,0x00,0x00,0x00,0xe7,0x80,0x00,0x00]
+# CHECK-NEXT-DISABLED: #   fixup A - offset: 0, value: %pcrel_hi(my_function), kind: fixup_pcrel_hi_RV3264I_Utype_RELATIVE_imm
+# CHECK-NEXT-DISABLED: #   fixup B - offset: 4, value: %pcrel_lo(my_function), kind: fixup_pcrel_lo_RV3264I_Itype_RELATIVE_imm
+
 TAIL my_function
 # CHECK: # encoding: [0x17,0x03,0x00,0x00,0x67,0x00,0x03,0x00]
+# CHECK-NEXT: #   fixup A - offset: 0, value: %hi(my_function), kind: fixup_hi_RV3264I_Utype_ABSOLUTE_imm
+# CHECK-NEXT: #   fixup B - offset: 4, value: %lo(my_function), kind: fixup_lo_RV3264I_Itype_ABSOLUTE_imm
 
 J 100
 # CHECK: # encoding: [0x6f,0x00,0x40,0x06]
@@ -50,8 +57,17 @@ BLEZ x3, 3
 BGEZ x4, 4
 # CHECK: [0x63,0x52,0x02,0x00]
 
+BGEZ x4, .lbl
+# CHECK: [0x63,0x50,0x02,0x00]
+# CHECK-NEXT: #   fixup A - offset: 0, value: .lbl, kind: fixup_imm_RV3264I_Btype_ABSOLUTE_imm
+
 BLTZ x5, 5
 # CHECK: [0x63,0xc2,0x02,0x00]
 
 BGTZ x6, 6
 # CHECK: [0x63,0x43,0x60,0x00]
+
+LLA x3, .lbl
+# CHECK: [0x97,0x01,0x00,0x00,0x93,0x81,0x01,0x00]
+# CHECK-NEXT: #   fixup A - offset: 0, value: %pcrel_hi(.lbl), kind: fixup_pcrel_hi_RV3264I_Utype_RELATIVE_imm
+# CHECK-NEXT: #   fixup B - offset: 4, value: %pcrel_lo(.lbl), kind: fixup_pcrel_lo_RV3264I_Itype_RELATIVE_imm

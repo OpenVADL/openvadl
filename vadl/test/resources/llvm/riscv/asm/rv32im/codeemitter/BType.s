@@ -2,6 +2,7 @@
 
 BEQ x1, x2, .label
 # CHECK: # encoding: [0x63,0x80,0x20,0x00]
+# CHECK-NEXT: #   fixup A - offset: 0, value: .label, kind: fixup_imm_RV3264I_Btype_ABSOLUTE_imm
 
 BNE x3, x4, 4
 # CHECK: # encoding: [0x63,0x92,0x41,0x00]
@@ -17,3 +18,4 @@ BLT x9, x10, -2048
 
 BLTU x11, x12, .label
 # CHECK: # encoding: [0x63,0xe0,0xc5,0x00]
+# CHECK-NEXT: #   fixup A - offset: 0, value: .label, kind: fixup_imm_RV3264I_Btype_ABSOLUTE_imm

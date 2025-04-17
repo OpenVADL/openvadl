@@ -95,3 +95,8 @@ LI x1, my_label
 # CHECK: <MCInst #{{[0-9]+}} LI
 # CHECK-NEXT: <MCOperand Reg:3>
 # CHECK-NEXT: <MCOperand Expr:(my_label)>>
+
+LA x2, my_label
+# CHECK: <MCInst #{{[0-9]+}} LA
+# CHECK-NEXT: <MCOperand Reg:4>
+# CHECK-NEXT: <MCOperand Expr:(my_label)>>
