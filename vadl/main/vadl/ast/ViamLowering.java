@@ -371,8 +371,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var pseudoGlobalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
         AbiPseudoInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD);
 
-    var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow();
-    var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow();
+    var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow(() ->
+        Diagnostic.error("Cannot find the pseudo return instruction", definition.sourceLocation())
+            .help("Maybe check if this instruction really exists or was spelled incorrectly?")
+            .build());
+    var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow(() ->
+        Diagnostic.error("Cannot find the pseudo call instruction", definition.sourceLocation())
+            .help("Maybe check if this instruction really exists or was spelled incorrectly?")
+            .build());
     var pseudoLocalAddressLoad = fetch(pseudoLocalAddressLoadDef).map(x -> (PseudoInstruction) x);
     var pseudoGlobalAddressLoad = fetch(pseudoGlobalAddressLoadDef).map(x -> (PseudoInstruction) x);
     var pseudoAbsoluteAddressLoad =
