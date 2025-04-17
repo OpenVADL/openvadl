@@ -16,12 +16,14 @@
 
 package vadl.viam.graph.control;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.List;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.Successor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.passes.CfgTraverser;
 
 /**
  * Represents a control flow node that causes diverging execution.
@@ -30,6 +32,9 @@ public abstract class ControlSplitNode extends ControlNode {
 
   @Successor
   private NodeList<BeginNode> branches;
+
+  @LazyInit
+  private MergeNode mergeNode;
 
   ControlSplitNode(NodeList<BeginNode> branches) {
     this.branches = branches;
@@ -51,5 +56,26 @@ public abstract class ControlSplitNode extends ControlNode {
     branches = branches.stream().map(e ->
             visitor.apply(this, e, BeginNode.class))
         .collect(Collectors.toCollection(NodeList::new));
+  }
+
+  public void clearPredecessor() {
+    this.setPredecessor(null);
+  }
+
+  /**
+   * Get the {@code mergeNode}.
+   */
+  public MergeNode mergeNode() {
+    if (mergeNode == null) {
+      var y = new CfgTraverser() {
+
+      };
+      var endNode = y.traverseBranch(this.branches.get(0));
+      mergeNode = endNode.usages().filter(x -> x instanceof MergeNode)
+          .map(x -> (MergeNode) x)
+          .findFirst().get();
+    }
+
+    return mergeNode;
   }
 }

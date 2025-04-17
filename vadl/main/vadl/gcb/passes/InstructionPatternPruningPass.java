@@ -1,7 +1,12 @@
 package vadl.gcb.passes;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -14,10 +19,20 @@ import vadl.utils.Pair;
 import vadl.viam.Specification;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.AbstractEndNode;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.ControlSplitNode;
+import vadl.viam.graph.control.DirectionalNode;
+import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrEndNode;
+import vadl.viam.graph.control.MergeNode;
+import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
+import vadl.viam.passes.CfgTraverser;
 
 /**
  * The problem is that when a user writes an instruction behavior where
@@ -80,32 +95,28 @@ public class InstructionPatternPruningPass extends Pass {
                           }
 
                           if (hasTrueCaseHasException) {
-                            // selectNode.replaceAndDelete(selectNode.falseCase());
                             workList.add(Pair.of(selectNode, selectNode.falseCase()));
                             selectNode.falseCase().applyOnInputs(this);
-                            return to; // selectNode.falseCase();
+                            return to;
                           }
 
                           if (hasFalseCaseHasException) {
-                            // selectNode.replaceAndDelete(selectNode.trueCase());
                             workList.add(Pair.of(selectNode, selectNode.trueCase()));
                             selectNode.trueCase().applyOnInputs(this);
-                            return to; //selectNode.trueCase();
+                            return to;
                           }
 
                           var likelihood = determineLikelihood(selectNode.condition());
                           switch (likelihood) {
                             case TRUE_CASE -> {
-                              // selectNode.replaceAndDelete(selectNode.trueCase());
                               workList.add(Pair.of(selectNode, selectNode.trueCase()));
                               selectNode.trueCase().applyOnInputs(this);
-                              return to; // selectNode.trueCase();
+                              return to;
                             }
                             case FALSE_CASE -> {
-                              // selectNode.replaceAndDelete(selectNode.falseCase());
                               workList.add(Pair.of(selectNode, selectNode.falseCase()));
                               selectNode.falseCase().applyOnInputs(this);
-                              return to; //selectNode.falseCase();
+                              return to;
                             }
                             default -> {
                               // We can't do anything.
@@ -128,7 +139,111 @@ public class InstructionPatternPruningPass extends Pass {
           });
     } while (!workList.isEmpty());
 
+    viam.isa()
+        .map(isa -> isa.ownInstructions().stream())
+        .orElse(Stream.empty())
+        .forEach(instruction -> {
+          var startNodes = instruction.behavior().getNodes(StartNode.class).toList();
+          for (var startNode : startNodes) {
+            var ifNodeTraversal = new ExceptionBranchElimination();
+            ifNodeTraversal.traverseBranch(startNode);
+          }
+        });
+
     return null;
+  }
+
+  static class ExceptionBranchElimination implements CfgTraverser {
+    private final ArrayDeque<IfNode> ifNodes = new ArrayDeque<>();
+    private final List<SideEffectNode> collection = new ArrayList<>();
+    private final Set<AbstractEndNode> markedForDeletion = new HashSet<>();
+
+    @Override
+    public ControlNode onControlSplit(ControlSplitNode controlNode) {
+      if (controlNode instanceof IfNode ifNode) {
+        ifNodes.add(ifNode);
+      }
+      return controlNode;
+    }
+
+    @Override
+    public ControlNode onEnd(AbstractEndNode endNode) {
+      if (endNode.sideEffects().stream().anyMatch(x -> x instanceof ProcCallNode procCallNode
+          && procCallNode.exceptionRaise())) {
+        markedForDeletion.add(endNode);
+      }
+      return endNode;
+    }
+
+    @Override
+    public ControlNode traverseControlSplit(ControlSplitNode splitNode) {
+      @Nullable AbstractEndNode someEnd = null;
+      var afterControlSplit = splitNode.mergeNode().next();
+      for (var branch : splitNode.branches()) {
+        someEnd = traverseBranch(branch);
+      }
+      splitNode.ensure(someEnd != null, "Control split has no branches.");
+
+      // Get the merge node from the end of the branch
+      return someEnd.usages().findFirst().map(x -> (ControlNode) x).orElse(afterControlSplit);
+    }
+
+    @Override
+    public ControlNode onDirectional(DirectionalNode directionalNode) {
+      if (!(directionalNode instanceof MergeNode mergeNode)) {
+        return directionalNode;
+      }
+
+      var ifNode = ifNodes.pop();
+      var oldNext = Objects.requireNonNull(ifNode.predecessor());
+
+      if (markedForDeletion.contains(mergeNode.trueBranchEnd())) {
+        if (mergeNode.next() instanceof AbstractEndNode abstractEndNode) {
+          // We have to delete the true branch, therefore we store the side effects of the
+          // false branch in the next end node.
+          eliminate(mergeNode, mergeNode.falseBranchEnd(), abstractEndNode, ifNode);
+          return (ControlNode) oldNext;
+        } else {
+          // We have to delete the true branch, but the next node has no side effects.
+          // Because it might be an IfNode.
+          collection.addAll(mergeNode.falseBranchEnd().sideEffects());
+        }
+      } else if (markedForDeletion.contains(mergeNode.falseBranchEnd())) {
+        if (mergeNode.next() instanceof AbstractEndNode abstractEndNode) {
+          // We have to delete the false branch, therefore we store the side effects of the
+          // true branch in the next end node.
+          eliminate(mergeNode, mergeNode.trueBranchEnd(), abstractEndNode, ifNode);
+          return (ControlNode) oldNext;
+        } else {
+          // We have to delete the false branch, but the next node has no side effects.
+          // Because it might be an IfNode.
+          collection.addAll(mergeNode.trueBranchEnd().sideEffects());
+        }
+      }
+
+      return mergeNode;
+    }
+
+    private void eliminate(MergeNode mergeNode,
+                           AbstractEndNode branchNodeToEliminate,
+                           AbstractEndNode abstractEndNode,
+                           IfNode ifNode) {
+
+      branchNodeToEliminate.sideEffects().forEach(abstractEndNode::addSideEffect);
+      collection.forEach(abstractEndNode::addSideEffect);
+      collection.clear();
+
+      if (ifNode.predecessor() != null) {
+        var dir = (DirectionalNode) ifNode.predecessor();
+        var mergeNext = mergeNode.next();
+        mergeNode.replaceSuccessor(mergeNode.next(), null);
+        dir.setNext(mergeNext);
+        ifNode.clearPredecessor();
+      }
+      ifNode.safeDelete();
+      mergeNode.safeDelete();
+      markedForDeletion.remove(branchNodeToEliminate);
+    }
   }
 
   /**
@@ -181,8 +296,7 @@ public class InstructionPatternPruningPass extends Pass {
    * Returns {@code true} when an exception is raised on *ALL* execution paths.
    */
   private boolean hasException() {
-    // TODO: VADL cannot raise exceptions at the moment.
+    // TODO: VADL cannot raise exceptions in the dataflow at the moment.
     return false;
   }
-
 }

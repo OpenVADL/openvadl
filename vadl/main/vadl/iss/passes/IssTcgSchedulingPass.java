@@ -163,7 +163,7 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
    * @param dir The directional node to process.
    */
   @Override
-  public void onDirectional(DirectionalNode dir) {
+  public ControlNode onDirectional(DirectionalNode dir) {
     if (dir instanceof ScheduledNode schNode) {
       // The node is scheduled, so we must also schedule its inputs
       // before the scheduling of itself.
@@ -174,6 +174,8 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
       // We start a new branch, so we have to push a new empty set on our stack
       stackOfNestedBranches.push(new HashSet<>());
     }
+
+    return dir;
   }
 
   /**
@@ -183,7 +185,7 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
    * @throws ViamGraphError If the control split type is not supported.
    */
   @Override
-  public void onControlSplit(ControlSplitNode controlSplit) {
+  public ControlNode onControlSplit(ControlSplitNode controlSplit) {
     if (controlSplit instanceof IfNode ifNode) {
       // If there is a control split, we have to schedule its condition
       currentRootUser = controlSplit;
@@ -194,6 +196,7 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
           controlSplit.getClass().getSimpleName())
           .addContext(controlSplit);
     }
+    return controlSplit;
   }
 
   /**
@@ -202,13 +205,14 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
    * @param endNode The end node of the branch.
    */
   @Override
-  public void onEnd(AbstractEndNode endNode) {
+  public ControlNode onEnd(AbstractEndNode endNode) {
     // We reached the end of the current branch.
     // We delete all results of this branch as they are no longer valid
     // and pop it, so the current branch is now the previous parent branch
     for (var node : stackOfNestedBranches.pop()) {
       super.processedNodes.remove(node);
     }
+    return endNode;
   }
 
   /**

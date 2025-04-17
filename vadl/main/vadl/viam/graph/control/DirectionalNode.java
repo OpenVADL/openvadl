@@ -125,7 +125,7 @@ public abstract class DirectionalNode extends ControlNode {
   }
 
   @Override
-  protected void collectSuccessors(List<Node> collection) {
+  public void collectSuccessors(List<Node> collection) {
     super.collectSuccessors(collection);
     if (this.next != null) {
       collection.add(next);
