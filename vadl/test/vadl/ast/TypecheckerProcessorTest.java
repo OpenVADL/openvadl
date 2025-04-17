@@ -41,13 +41,9 @@ public class TypecheckerProcessorTest {
         firmware = {}
         """;
     var spec = base.formatted(body);
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(spec), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var throwable = assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    TestUtils.assertErrors(throwable,
-        "Contains multiple `firmware` definitions",
-        "Contains multiple `start` definitions"
+    var throwable = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(spec)
     );
+    TestUtils.assertErrors(throwable, "Symbol name already used: start");
   }
 
 

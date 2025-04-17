@@ -384,8 +384,7 @@ class SymbolTable {
     private Deque<String> viamPath = new ArrayDeque<>();
     private Deque<SymbolTable> symbolTables = new ArrayDeque<>();
 
-    // FIXME: Why is the filename here?
-    public SymbolCollector(String fileName) {
+    public SymbolCollector() {
     }
 
     private SymbolTable currentSymbols() {
@@ -461,6 +460,7 @@ class SymbolTable {
 
     @Override
     public Void visit(AsmDescriptionDefinition definition) {
+      // More complex tasks like this require custom handling.
       beforeTravel(definition);
 
       var modifierSymbols = currentSymbols().createChild();
@@ -495,6 +495,7 @@ class SymbolTable {
 
     @Override
     public Void visit(AsmDirectiveDefinition definition) {
+      // Avoid creating a new scope since the directives must be visible in the parent scope
       currentSymbols().defineSymbol(definition.stringLiteral.toString(), definition);
       definition.symbolTable = currentSymbols();
       return null;
@@ -516,7 +517,16 @@ class SymbolTable {
     }
 
     @Override
+    public Void visit(AsmGrammarElementDefinition definition) {
+      // Avoid creating a new scope since the elements should share the same scope
+      definition.symbolTable = currentSymbols();
+      definition.children().forEach(this::travel);
+      return null;
+    }
+
+    @Override
     public Void visit(AsmModifierDefinition definition) {
+      // This isn't a identifyableNode so we need to add custom handling here.
       currentSymbols().defineSymbol(definition.stringLiteral.toString(), definition);
       definition.symbolTable = currentSymbols();
       return null;
@@ -525,6 +535,8 @@ class SymbolTable {
     @Override
     public Void visit(EnumerationDefinition definition) {
       beforeTravel(definition);
+
+      // Insert all fields into the symbol table.
       if (definition.enumType != null) {
         definition.enumType.accept(this);
       }
@@ -534,12 +546,14 @@ class SymbolTable {
           entry.value.accept(this);
         }
       }
+     
       afterTravel(definition);
       return null;
     }
 
     @Override
     public Void visit(ImportDefinition definition) {
+      // This isn't a identifyableNode so we need to add custom handling here.
       currentSymbols().importFrom(definition.moduleAst, definition.importedSymbols);
       return null;
     }
