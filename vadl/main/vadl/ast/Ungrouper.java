@@ -205,7 +205,7 @@ public class Ungrouper
   public Expr visit(ForallExpr expr) {
     expr.indices.forEach(
         index -> index.domain = index.domain.accept(this));
-    expr.expr = expr.expr.accept(this);
+    expr.body = expr.body.accept(this);
     return expr;
   }
 
@@ -688,7 +688,7 @@ public class Ungrouper
   @Override
   public Void visit(ForallStatement forallStatement) {
     forallStatement.indices.forEach(index -> index.domain = index.domain.accept(this));
-    forallStatement.statement.accept(this);
+    forallStatement.body.accept(this);
     return null;
   }
 

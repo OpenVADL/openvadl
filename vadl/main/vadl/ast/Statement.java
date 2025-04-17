@@ -621,7 +621,7 @@ final class MatchStatement extends Statement {
       childNodes.add(c.result);
     });
     childNodes.add(defaultResult);
-    return childNodes;
+    return childNodes.stream().filter(Objects::nonNull).toList();
   }
 
   @Override
@@ -923,12 +923,12 @@ final class LockStatement extends Statement {
 final class ForallStatement extends Statement {
   List<Index> indices;
   @Child
-  Statement statement;
+  Statement body;
   SourceLocation loc;
 
-  ForallStatement(List<Index> indices, Statement statement, SourceLocation loc) {
+  ForallStatement(List<Index> indices, Statement body, SourceLocation loc) {
     this.indices = indices;
-    this.statement = statement;
+    this.body = body;
     this.loc = loc;
   }
 
@@ -949,7 +949,7 @@ final class ForallStatement extends Statement {
       index.prettyPrint(indent, builder);
     }
     builder.append(" do\n");
-    statement.prettyPrint(indent + 1, builder);
+    body.prettyPrint(indent + 1, builder);
   }
 
   @Override
@@ -962,12 +962,12 @@ final class ForallStatement extends Statement {
     }
     ForallStatement that = (ForallStatement) o;
     return Objects.equals(indices, that.indices)
-        && Objects.equals(statement, that.statement);
+        && Objects.equals(body, that.body);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(indices, statement);
+    return Objects.hash(indices, body);
   }
 
   static final class Index extends Statement implements IdentifiableNode {

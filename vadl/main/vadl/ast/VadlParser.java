@@ -117,10 +117,6 @@ public class VadlParser {
       errors.add(e);
     } catch (DiagnosticList e) {
       errors.addAll(e.items);
-    } catch (Exception e) {
-      errors.add(error("Parsing Error", SourceLocation.INVALID_SOURCE_LOCATION)
-          .description("The following exception was thrown:\n%s", e)
-          .build());
     }
 
     if (parser.errors.count > 0) {

@@ -1762,6 +1762,9 @@ public class TypeChecker
     String fullName;
 
     if (expr instanceof Identifier identifier) {
+      if (null == expr.symbolTable) {
+        System.out.println();
+      }
       origin = requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
       innerName = identifier.name;
       fullName = identifier.name;

@@ -48,7 +48,7 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
 
-  private void travel(Node node) {
+  final protected void travel(Node node) {
     if (node instanceof Expr expr) {
       expr.accept(this);
       return;

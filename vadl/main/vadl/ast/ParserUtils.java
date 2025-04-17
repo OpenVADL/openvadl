@@ -16,7 +16,10 @@
 
 package vadl.ast;
 
+import static vadl.error.Diagnostic.error;
+
 import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Files;
@@ -576,8 +579,11 @@ class ParserUtils {
         return new ImportDefinition(ast, importedSymbols, fileId, filePath, args, loc);
       } catch (DiagnosticList | Diagnostic e) {
         throw e;
-      } catch (Exception e) {
-        parser.errors.SemErr("Error during module evaluation - " + e);
+      } catch (IOException e) {
+        throw error("Import Failed", loc)
+            .description("The following error occurred: %s",
+                e.getMessage() != null ? e.getMessage() : e)
+            .build();
       }
     }
     return new ConstantDefinition(new Identifier("invalid", parser.loc()), null,

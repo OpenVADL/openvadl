@@ -380,489 +380,250 @@ class SymbolTable {
    *
    * @see ResolutionPass
    */
-  static class SymbolCollector {
-    Deque<String> viamPath;
+  static class SymbolCollector extends RecursiveAstVisitor {
+    private Deque<String> viamPath = new ArrayDeque<>();
+    private Deque<SymbolTable> symbolTables = new ArrayDeque<>();
 
+    // FIXME: Why is the filename here?
     public SymbolCollector(String fileName) {
-      this.viamPath = new ArrayDeque<>();
+    }
+
+    private SymbolTable currentSymbols() {
+      return symbolTables.peekLast();
+    }
+
+    /**
+     * Temporarily substitutes the current symbol table with a provided one, runs the given
+     * operation, and restores the original symbol table afterwards.
+     *
+     * @param symbols  the new symbol table to be used temporarily during runnable execution
+     * @param runnable the operation to execute while the provided symbol table is active
+     */
+    private void withSymbols(SymbolTable symbols, Runnable runnable) {
+      this.symbolTables.addLast(symbols);
+      try {
+        runnable.run();
+      } finally {
+        this.symbolTables.pollLast();
+      }
     }
 
     void collectSymbols(SymbolTable symbols, Definition definition) {
-      if (definition instanceof IdentifiableNode idNode) {
-        viamPath.offerLast(idNode.identifier().name);
-      } else {
-        viamPath.offerLast("unknown");
-      }
-      definition.viamId = String.join("::", viamPath);
-
-      definition.symbolTable = symbols;
-      if (definition instanceof InstructionSetDefinition isa) {
-        symbols.defineSymbol(isa);
-        isa.symbolTable = symbols.createChild();
-        for (Definition childDef : isa.definitions) {
-          collectSymbols(isa.symbolTable, childDef);
-        }
-      } else if (definition instanceof ConstantDefinition constant) {
-        symbols.defineSymbol(constant);
-        if (constant.typeLiteral != null) {
-          collectSymbols(symbols, constant.typeLiteral);
-        }
-        collectSymbols(symbols, constant.value);
-      } else if (definition instanceof CounterDefinition counter) {
-        symbols.defineSymbol(counter);
-        collectSymbols(symbols, counter.typeLiteral);
-      } else if (definition instanceof RegisterDefinition register) {
-        symbols.defineSymbol(register);
-        collectSymbols(symbols, register.typeLiteral);
-      } else if (definition instanceof RegisterFileDefinition registerFile) {
-        symbols.defineSymbol(registerFile);
-        for (var argType : registerFile.typeLiteral.argTypes()) {
-          collectSymbols(symbols, argType);
-        }
-        collectSymbols(symbols, registerFile.typeLiteral.resultType());
-      } else if (definition instanceof MemoryDefinition memory) {
-        symbols.defineSymbol(memory);
-        collectSymbols(symbols, memory.addressTypeLiteral);
-        collectSymbols(symbols, memory.dataTypeLiteral);
-      } else if (definition instanceof UsingDefinition using) {
-        symbols.defineSymbol(using);
-        collectSymbols(symbols, using.typeLiteral);
-      } else if (definition instanceof FunctionDefinition function) {
-        symbols.defineSymbol(function);
-        collectSymbols(symbols, function.retType);
-        function.symbolTable = symbols.createChild();
-        for (Parameter param : function.params) {
-          function.symbolTable.defineSymbol(param);
-          collectSymbols(symbols, param.typeLiteral);
-        }
-        collectSymbols(function.symbolTable, function.expr);
-      } else if (definition instanceof FormatDefinition format) {
-        format.symbolTable = symbols.createChild();
-        symbols.defineSymbol(format);
-        collectSymbols(symbols, format.typeLiteral);
-        for (FormatField field : format.fields) {
-          format.symbolTable().defineSymbol(field.identifier().name, (Node) field);
-
-          if (field instanceof RangeFormatField rangeField) {
-            if (rangeField.typeLiteral != null) {
-              collectSymbols(symbols, rangeField.typeLiteral);
-            }
-          } else if (field instanceof TypedFormatField typedField) {
-            collectSymbols(symbols, typedField.typeLiteral);
-          } else if (field instanceof DerivedFormatField dfField) {
-            collectSymbols(format.symbolTable, dfField.expr);
-          } else {
-            throw new RuntimeException("Unknown class");
-          }
-          // FIXME: Add symboltables to all the fields and their children.
-        }
-      } else if (definition instanceof InstructionDefinition instr) {
-        symbols.defineSymbol(instr);
-        instr.symbolTable = symbols.createChild();
-        collectSymbols(instr.symbolTable, instr.behavior);
-      } else if (definition instanceof InstructionSequenceDefinition
-          instructionSequenceDefinition) {
-        if (instructionSequenceDefinition instanceof PseudoInstructionDefinition pseudo) {
-          symbols.defineSymbol(pseudo);
-        }
-        instructionSequenceDefinition.symbolTable = symbols.createChild();
-        for (var param : instructionSequenceDefinition.params) {
-          instructionSequenceDefinition.symbolTable.defineSymbol(param);
-          collectSymbols(symbols, param.typeLiteral);
-        }
-        for (InstructionCallStatement statement : instructionSequenceDefinition.statements) {
-          collectSymbols(instructionSequenceDefinition.symbolTable, statement);
-        }
-      } else if (definition instanceof RelocationDefinition relocation) {
-        symbols.defineSymbol(relocation);
-        relocation.symbolTable = symbols.createChild();
-        collectSymbols(symbols, relocation.resultTypeLiteral);
-        for (Parameter param : relocation.params) {
-          relocation.symbolTable.defineSymbol(param);
-          collectSymbols(symbols, param.typeLiteral);
-        }
-        collectSymbols(relocation.symbolTable, relocation.expr);
-      } else if (definition instanceof ExceptionDefinition exception) {
-        symbols.defineSymbol(exception);
-        exception.symbolTable = symbols.createChild();
-        for (Parameter param : exception.params) {
-          exception.symbolTable.defineSymbol(param);
-          collectSymbols(symbols, param.typeLiteral);
-        }
-        collectSymbols(exception.symbolTable, exception.statement);
-      } else if (definition instanceof AssemblyDefinition assembly) {
-        assembly.symbolTable = symbols.createChild();
-        collectSymbols(assembly.symbolTable, assembly.expr);
-      } else if (definition instanceof EncodingDefinition encoding) {
-        encoding.symbolTable = symbols.createChild();
-        for (var fieldEncoding : encoding.encodings.items) {
-          collectSymbols(encoding.symbolTable,
-              ((EncodingDefinition.EncodingField) fieldEncoding).value);
-        }
-      } else if (definition instanceof AliasDefinition alias) {
-        symbols.defineSymbol(alias);
-        collectSymbols(symbols, alias.value);
-        if (alias.aliasType != null) {
-          collectSymbols(symbols, alias.aliasType);
-        }
-        if (alias.targetType != null) {
-          collectSymbols(symbols, alias.targetType);
-        }
-      } else if (definition instanceof EnumerationDefinition enumeration) {
-        enumeration.symbolTable = symbols.createChild();
-        symbols.defineSymbol(enumeration);
-        if (enumeration.enumType != null) {
-          collectSymbols(symbols, enumeration.enumType);
-        }
-        for (EnumerationDefinition.Entry entry : enumeration.entries) {
-          enumeration.symbolTable().defineSymbol(entry.name.name, entry);
-          if (entry.value != null) {
-            collectSymbols(symbols, entry.value);
-          }
-        }
-      } else if (definition instanceof ExceptionDefinition exception) {
-        symbols.defineSymbol(exception);
-        collectSymbols(symbols, exception.statement);
-      } else if (definition instanceof ImportDefinition importDef) {
-        symbols.importFrom(importDef.moduleAst, importDef.importedSymbols);
-      } else if (definition instanceof ModelDefinition model) {
-        symbols.defineSymbol(model);
-      } else if (definition instanceof RecordTypeDefinition record) {
-        symbols.defineSymbol(record);
-      } else if (definition instanceof ModelTypeDefinition modelType) {
-        symbols.defineSymbol(modelType);
-      } else if (definition instanceof ProcessDefinition process) {
-        symbols.defineSymbol(process);
-        process.symbolTable = symbols.createChild();
-        for (TemplateParam templateParam : process.templateParams) {
-          process.symbolTable.defineSymbol(templateParam);
-          collectSymbols(symbols, templateParam.type);
-        }
-        for (Parameter input : process.inputs) {
-          process.symbolTable.defineSymbol(input);
-          collectSymbols(symbols, input.typeLiteral);
-        }
-        for (Parameter output : process.outputs) {
-          process.symbolTable.defineSymbol(output);
-          collectSymbols(symbols, output.typeLiteral);
-        }
-        collectSymbols(process.symbolTable, process.statement);
-      } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {
-        symbols.defineSymbol(abi);
-        abi.symbolTable = symbols.createChild();
-        for (Definition def : abi.definitions) {
-          collectSymbols(abi.symbolTable, def);
-        }
-      } else if (definition instanceof AbiSequenceDefinition abiSequence) {
-        abiSequence.symbolTable = symbols.createChild();
-        for (Parameter param : abiSequence.params) {
-          abiSequence.symbolTable.defineSymbol(param);
-        }
-        for (InstructionCallStatement statement : abiSequence.statements) {
-          collectSymbols(abiSequence.symbolTable, statement);
-        }
-      } else if (definition instanceof MicroProcessorDefinition mip) {
-        symbols.defineSymbol(mip);
-        mip.symbolTable = symbols.createChild();
-        for (Definition def : mip.definitions) {
-          collectSymbols(mip.symbolTable, def);
-        }
-      } else if (definition instanceof SpecialPurposeRegisterDefinition specialPurposeRegister) {
-        specialPurposeRegister.symbolTable = symbols.createChild();
-      } else if (definition instanceof AbiPseudoInstructionDefinition
-          abiPseudoInstructionDefinition) {
-        abiPseudoInstructionDefinition.symbolTable = symbols.createChild();
-      } else if (definition instanceof CpuFunctionDefinition cpuFunction) {
-        collectSymbols(symbols, cpuFunction.expr);
-      } else if (definition instanceof CpuProcessDefinition cpuProcess) {
-        cpuProcess.symbolTable = symbols.createChild();
-        for (Parameter startupOutput : cpuProcess.startupOutputs) {
-          cpuProcess.symbolTable.defineSymbol(startupOutput);
-        }
-        collectSymbols(cpuProcess.symbolTable, cpuProcess.statement);
-      } else if (definition instanceof MicroArchitectureDefinition mia) {
-        symbols.defineSymbol(mia);
-        mia.symbolTable = symbols.createChild();
-        for (Definition def : mia.definitions) {
-          collectSymbols(mia.symbolTable, def);
-        }
-      } else if (definition instanceof MacroInstructionDefinition macroInstruction) {
-        macroInstruction.symbolTable = symbols.createChild();
-        for (Parameter input : macroInstruction.inputs) {
-          macroInstruction.symbolTable.defineSymbol(input);
-        }
-        for (Parameter output : macroInstruction.outputs) {
-          macroInstruction.symbolTable.defineSymbol(output);
-        }
-        collectSymbols(macroInstruction.symbolTable, macroInstruction.statement);
-      } else if (definition instanceof PortBehaviorDefinition portBehavior) {
-        // TODO Clarify behavior - do special symbols "translation", "cachedData" exist?
-        collectSymbols(symbols, portBehavior.statement);
-      } else if (definition instanceof PipelineDefinition pipeline) {
-        pipeline.symbolTable = symbols.createChild();
-        pipeline.symbolTable.defineSymbol("stage", pipeline);
-        for (Parameter output : pipeline.outputs) {
-          pipeline.symbolTable.defineSymbol(output);
-        }
-        collectSymbols(pipeline.symbolTable, pipeline.statement);
-      } else if (definition instanceof StageDefinition stage) {
-        stage.symbolTable = symbols.createChild();
-        for (Parameter output : stage.outputs) {
-          stage.symbolTable.defineSymbol(output);
-        }
-        collectSymbols(stage.symbolTable, stage.statement);
-      } else if (definition instanceof CacheDefinition cache) {
-        symbols.defineSymbol(cache);
-        collectSymbols(symbols, cache.sourceType);
-        collectSymbols(symbols, cache.targetType);
-      } else if (definition instanceof SignalDefinition signal) {
-        symbols.defineSymbol(signal);
-        collectSymbols(symbols, signal.type);
-      } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
-        symbols.defineSymbol(asmDescription);
-        var asmDescSymbolTable = symbols.createChild();
-        asmDescription.symbolTable = asmDescSymbolTable;
-
-        var modifierSymbols = asmDescSymbolTable.createChild();
-        asmDescription.modifiers.forEach(
-            modifier -> collectSymbols(modifierSymbols, modifier));
-
-        var directiveSymbols = asmDescSymbolTable.createChild();
-        asmDescription.directives.forEach(
-            directive -> collectSymbols(directiveSymbols, directive));
-
-        // add integer negation function to common definitions if not already defined
-        // this function is used in the grammar default rules
-        if (asmDescription.commonDefinitions.stream().noneMatch(
-            def -> def instanceof FunctionDefinition functionDef
-                && functionDef.name.path().pathToString()
-                .equals(AsmGrammarDefaultRules.BUILTIN_ASM_NEG))) {
-          asmDescription.commonDefinitions.add(AsmGrammarDefaultRules.asmNegFunctionDefinition());
-        }
-        asmDescription.commonDefinitions.forEach(
-            commonDef -> collectSymbols(asmDescSymbolTable, commonDef));
-        asmDescription.rules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
-
-        // get default rules that are not yet defined,
-        // collect their symbols and add them to assembly description
-        var defaultRules = AsmGrammarDefaultRules.notIncludedDefaultRules(asmDescription.rules);
-        defaultRules.forEach(rule -> collectSymbols(asmDescSymbolTable, rule));
-        asmDescription.rules.addAll(defaultRules);
-      } else if (definition instanceof AsmModifierDefinition modifier) {
-        symbols.defineSymbol(modifier.stringLiteral.toString(), modifier);
-      } else if (definition instanceof AsmDirectiveDefinition directive) {
-        symbols.defineSymbol(directive.stringLiteral.toString(), directive);
-      } else if (definition instanceof AsmGrammarRuleDefinition rule) {
-        symbols.defineSymbol(rule);
-        collectSymbols(symbols, rule.alternatives);
-        if (rule.asmTypeDefinition != null) {
-          collectSymbols(symbols, rule.asmTypeDefinition);
-        }
-      } else if (definition instanceof AsmGrammarAlternativesDefinition alternativesDef) {
-        alternativesDef.alternatives.forEach(alternative -> {
-          // each sequence of elements has its own scope
-          var elementsSymbolTable = symbols.createChild();
-          alternative.forEach(element -> collectSymbols(elementsSymbolTable, element));
-        });
-      } else if (definition instanceof AsmGrammarElementDefinition element) {
-        if (element.localVar != null) {
-          collectSymbols(symbols, element.localVar);
-        }
-        if (element.asmLiteral != null) {
-          collectSymbols(symbols, element.asmLiteral);
-        }
-        if (element.semanticPredicate != null) {
-          collectSymbols(symbols, element.semanticPredicate);
-        }
-        if (element.groupAlternatives != null) {
-          collectSymbols(symbols, element.groupAlternatives);
-        }
-        if (element.optionAlternatives != null) {
-          collectSymbols(symbols, element.optionAlternatives);
-        }
-        if (element.repetitionAlternatives != null) {
-          collectSymbols(symbols, element.repetitionAlternatives);
-        }
-        if (element.groupAsmTypeDefinition != null) {
-          collectSymbols(symbols, element.groupAsmTypeDefinition);
-        }
-      } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
-        symbols.defineSymbol(localVar);
-        if (localVar.asmLiteral != null) {
-          collectSymbols(symbols, localVar.asmLiteral);
-        }
-      } else if (definition instanceof AsmGrammarLiteralDefinition asmLiteral) {
-        if (!asmLiteral.parameters.isEmpty()) {
-          asmLiteral.parameters.forEach(param -> collectSymbols(symbols, param));
-        }
-        if (asmLiteral.asmTypeDefinition != null) {
-          collectSymbols(symbols, asmLiteral.asmTypeDefinition);
-        }
-      }
-
-      viamPath.pollLast();
+      withSymbols(symbols, () -> definition.accept(this));
     }
 
     void collectSymbols(SymbolTable symbols, Statement stmt) {
-      if (stmt.symbolTable != null) {
-        throw new IllegalStateException("Tried to populate already set symbol table " + stmt);
-      }
-      stmt.symbolTable = symbols;
-      if (stmt instanceof BlockStatement block) {
-        for (Statement inner : block.statements) {
-          collectSymbols(symbols, inner);
-        }
-      } else if (stmt instanceof LetStatement let) {
-        collectSymbols(symbols, let.valueExpr);
-        var child = symbols.createChild();
-        for (var identifier : let.identifiers) {
-          child.defineSymbol(identifier.name, let);
-        }
-        collectSymbols(child, let.body);
-      } else if (stmt instanceof IfStatement ifStmt) {
-        collectSymbols(symbols, ifStmt.condition);
-        collectSymbols(symbols, ifStmt.thenStmt);
-        if (ifStmt.elseStmt != null) {
-          collectSymbols(symbols, ifStmt.elseStmt);
-        }
-      } else if (stmt instanceof AssignmentStatement assignment) {
-        collectSymbols(symbols, assignment.target);
-        collectSymbols(symbols, assignment.valueExpression);
-      } else if (stmt instanceof RaiseStatement raise) {
-        raise.viamId = String.join("::", viamPath);
-        collectSymbols(symbols, raise.statement);
-      } else if (stmt instanceof CallStatement call) {
-        collectSymbols(symbols, call.expr);
-      } else if (stmt instanceof MatchStatement match) {
-        collectSymbols(symbols, match.candidate);
-        if (match.defaultResult != null) {
-          collectSymbols(symbols, match.defaultResult);
-        }
-        for (MatchStatement.Case matchCase : match.cases) {
-          collectSymbols(symbols, matchCase.result);
-          for (Expr pattern : matchCase.patterns) {
-            collectSymbols(symbols, pattern);
-          }
-        }
-      } else if (stmt instanceof InstructionCallStatement instructionCall) {
-        for (var namedArgument : instructionCall.namedArguments) {
-          collectSymbols(symbols, namedArgument.value);
-        }
-        for (var unnamedArgument : instructionCall.unnamedArguments) {
-          collectSymbols(symbols, unnamedArgument);
-        }
-      } else if (stmt instanceof LockStatement lock) {
-        collectSymbols(symbols, lock.expr);
-        collectSymbols(symbols, lock.statement);
-      } else if (stmt instanceof ForallStatement forall) {
-        forall.symbolTable = symbols.createChild();
-        for (ForallStatement.Index index : forall.indices) {
-          forall.symbolTable.defineSymbol(index);
-          collectSymbols(symbols, index.domain);
-        }
-        collectSymbols(forall.symbolTable, forall.statement);
-      }
+      withSymbols(symbols, () -> stmt.accept(this));
     }
 
     void collectSymbols(SymbolTable symbols, Expr expr) {
-      expr.symbolTable = symbols;
-      if (expr instanceof LetExpr letExpr) {
-        letExpr.symbolTable = symbols.createChild();
-        for (var identifier : letExpr.identifiers) {
-          letExpr.symbolTable.defineSymbol(identifier.name, letExpr);
-        }
-        collectSymbols(symbols, letExpr.valueExpr);
-        collectSymbols(letExpr.symbolTable, letExpr.body);
-      } else if (expr instanceof IfExpr ifExpr) {
-        collectSymbols(symbols, ifExpr.condition);
-        collectSymbols(symbols, ifExpr.thenExpr);
-        collectSymbols(symbols, ifExpr.elseExpr);
-      } else if (expr instanceof GroupedExpr group) {
-        for (Expr inner : group.expressions) {
-          collectSymbols(symbols, inner);
-        }
-      } else if (expr instanceof UnaryExpr unary) {
-        collectSymbols(symbols, unary.operand);
-      } else if (expr instanceof BinaryExpr binary) {
-        collectSymbols(symbols, binary.left);
-        collectSymbols(symbols, binary.right);
-      } else if (expr instanceof CastExpr cast) {
-        collectSymbols(symbols, cast.value);
-        collectSymbols(symbols, cast.typeLiteral);
-      } else if (expr instanceof CallIndexExpr call) {
-        collectSymbols(symbols, (Expr) call.target);
-        for (CallIndexExpr.Arguments argsIndex : call.argsIndices) {
-          for (Expr index : argsIndex.values) {
-            collectSymbols(symbols, index);
-          }
-        }
-        for (CallIndexExpr.SubCall subCall : call.subCalls) {
-          for (CallIndexExpr.Arguments argsIndex : subCall.argsIndices) {
-            for (Expr index : argsIndex.values) {
-              collectSymbols(symbols, index);
-            }
-          }
-        }
-      } else if (expr instanceof SymbolExpr sym) {
-        collectSymbols(symbols, (Expr) sym.path());
-        collectSymbols(symbols, sym.size);
-      } else if (expr instanceof IdentifierPath path) {
-        for (IdentifierOrPlaceholder segment : path.segments) {
-          collectSymbols(symbols, (Expr) segment);
-        }
-      } else if (expr instanceof MatchExpr match) {
-        collectSymbols(symbols, match.candidate);
-        collectSymbols(symbols, match.defaultResult);
-        for (MatchExpr.Case matchCase : match.cases) {
-          collectSymbols(symbols, matchCase.result);
-          for (Expr pattern : matchCase.patterns) {
-            collectSymbols(symbols, pattern);
-          }
-        }
-      } else if (expr instanceof ExistsInExpr existsIn) {
-        for (IsId operation : existsIn.operations) {
-          ((Node) operation).symbolTable = symbols;
-        }
-      } else if (expr instanceof ExistsInThenExpr existsInThen) {
-        for (ExistsInThenExpr.Condition condition : existsInThen.conditions) {
-          ((Node) condition.id()).symbolTable = symbols;
-          for (IsId operation : condition.operations()) {
-            ((Node) operation).symbolTable = symbols;
-          }
-        }
-        collectSymbols(symbols, existsInThen.thenExpr);
-      } else if (expr instanceof ForallThenExpr forallThen) {
-        forallThen.symbolTable = symbols.createChild();
-        for (ForallThenExpr.Index index : forallThen.indices) {
-          forallThen.symbolTable().defineSymbol(index);
-          for (IsId operation : index.operations) {
-            ((Node) operation).symbolTable = symbols;
-          }
-        }
-        collectSymbols(forallThen.symbolTable(), forallThen.thenExpr);
-      } else if (expr instanceof ForallExpr forallExpr) {
-        forallExpr.symbolTable = symbols.createChild();
-        for (ForallExpr.Index index : forallExpr.indices) {
-          forallExpr.symbolTable().defineSymbol(index);
-          collectSymbols(symbols, index.domain);
-        }
-        collectSymbols(forallExpr.symbolTable(), forallExpr.expr);
-      } else if (expr instanceof SequenceCallExpr sequenceCall) {
-        collectSymbols(symbols, sequenceCall.target);
-        if (sequenceCall.range != null) {
-          collectSymbols(symbols, sequenceCall.range);
-        }
-      } else if (expr instanceof TypeLiteral typeLiteral) {
-        for (var sizeExprList : typeLiteral.sizeIndices) {
-          for (Expr sizeExpr : sizeExprList) {
-            collectSymbols(symbols, sizeExpr);
-          }
-        }
-      } else if (expr instanceof RangeExpr rangeExpr) {
-        collectSymbols(symbols, rangeExpr.from);
-        collectSymbols(symbols, rangeExpr.to);
+      withSymbols(symbols, () -> expr.accept(this));
+    }
+
+    @Override
+    public void beforeTravel(Expr expr) {
+      if (expr instanceof IdentifiableNode idNode) {
+        currentSymbols().defineSymbol(idNode.identifier().name, expr);
       }
 
+      expr.symbolTable = currentSymbols();
+    }
+
+    @Override
+    public void beforeTravel(Statement statement) {
+      if (statement instanceof IdentifiableNode idNode) {
+        currentSymbols().defineSymbol(idNode.identifier().name, statement);
+      }
+
+      statement.symbolTable = currentSymbols();
+    }
+
+    @Override
+    public void beforeTravel(Definition definition) {
+      if (definition instanceof IdentifiableNode idNode) {
+        var name = idNode.identifier().name;
+        currentSymbols().defineSymbol(name, definition);
+        viamPath.addLast(name);
+      } else {
+        viamPath.addLast("unknown");
+      }
+      definition.viamId = String.join("::", viamPath);
+
+      definition.symbolTable = currentSymbols().createChild();
+      symbolTables.addLast(definition.symbolTable);
+    }
+
+    @Override
+    public void afterTravel(Definition definition) {
+      viamPath.pollLast();
+      symbolTables.pollLast();
+    }
+
+    @Override
+    public Void visit(AsmDescriptionDefinition definition) {
+      beforeTravel(definition);
+
+      var modifierSymbols = currentSymbols().createChild();
+      withSymbols(modifierSymbols,
+          () -> definition.modifiers.forEach(modifier -> modifier.accept(this)));
+
+      var directiveSymbols = currentSymbols().createChild();
+      withSymbols(directiveSymbols,
+          () -> definition.directives.forEach(directive -> directive.accept(this)));
+
+      // add integer negation function to common definitions if not already defined
+      // this function is used in the grammar default rules
+      if (definition.commonDefinitions.stream().noneMatch(
+          def -> def instanceof FunctionDefinition functionDef
+              && functionDef.name.path().pathToString()
+              .equals(AsmGrammarDefaultRules.BUILTIN_ASM_NEG))) {
+        definition.commonDefinitions.add(AsmGrammarDefaultRules.asmNegFunctionDefinition());
+      }
+      definition.commonDefinitions.forEach(
+          commonDef -> commonDef.accept(this));
+      definition.rules.forEach(rule -> rule.accept(this));
+
+      // get default rules that are not yet defined,
+      // collect their symbols and add them to assembly description
+      var defaultRules = AsmGrammarDefaultRules.notIncludedDefaultRules(definition.rules);
+      defaultRules.forEach(rule -> rule.accept(this));
+      definition.rules.addAll(defaultRules);
+
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(AsmDirectiveDefinition definition) {
+      currentSymbols().defineSymbol(definition.stringLiteral.toString(), definition);
+      definition.symbolTable = currentSymbols();
+      return null;
+    }
+
+    @Override
+    public Void visit(AsmGrammarAlternativesDefinition definition) {
+      beforeTravel(definition);
+
+      // Each sequence of elements has its own scope
+      definition.alternatives.forEach(alternative -> {
+        var elementsSymbolTable = currentSymbols().createChild();
+        withSymbols(elementsSymbolTable,
+            () -> alternative.forEach(element -> element.accept(this)));
+      });
+
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(AsmModifierDefinition definition) {
+      currentSymbols().defineSymbol(definition.stringLiteral.toString(), definition);
+      definition.symbolTable = currentSymbols();
+      return null;
+    }
+
+    @Override
+    public Void visit(EnumerationDefinition definition) {
+      beforeTravel(definition);
+      if (definition.enumType != null) {
+        definition.enumType.accept(this);
+      }
+      for (EnumerationDefinition.Entry entry : definition.entries) {
+        currentSymbols().defineSymbol(entry.name.name, entry);
+        if (entry.value != null) {
+          entry.value.accept(this);
+        }
+      }
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(ImportDefinition definition) {
+      currentSymbols().importFrom(definition.moduleAst, definition.importedSymbols);
+      return null;
+    }
+
+    @Override
+    public Void visit(LetStatement statement) {
+      beforeTravel(statement);
+
+      // The identifiers of the let must be visible in it's children
+      var childTable = currentSymbols().createChild();
+      statement.symbolTable = childTable;
+      statement.identifiers.forEach(identifier -> {
+        childTable.defineSymbol(identifier.name, statement);
+      });
+      withSymbols(childTable, () -> statement.children().forEach(this::travel));
+
+      afterTravel(statement);
+      return null;
+    }
+
+    @Override
+    public Void visit(ForallStatement statement) {
+      beforeTravel(statement);
+
+      // The identifiers of the for must be visible in it's children
+      var childTable = currentSymbols().createChild();
+      statement.symbolTable = childTable;
+      statement.indices.forEach(index -> {
+        childTable.defineSymbol(index.name.name, statement);
+        index.domain.accept(this);
+      });
+      withSymbols(childTable, () -> statement.body.accept(this));
+
+      afterTravel(statement);
+      return null;
+    }
+
+    @Override
+    public Void visit(LetExpr expr) {
+      beforeTravel(expr);
+
+      // The identifiers of the let must be visible in it's children
+      var childTable = currentSymbols().createChild();
+      expr.symbolTable = childTable;
+      expr.identifiers.forEach(identifier -> {
+        childTable.defineSymbol(identifier.name, expr);
+      });
+      withSymbols(childTable, () -> expr.children().forEach(this::travel));
+
+      afterTravel(expr);
+      return null;
+    }
+
+    @Override
+    public Void visit(ForallExpr expr) {
+      beforeTravel(expr);
+
+      // The identifiers of the for must be visible in it's children
+      var childTable = currentSymbols().createChild();
+      expr.symbolTable = childTable;
+      expr.indices.forEach(index -> {
+        childTable.defineSymbol(index.identifier().name, expr);
+        index.domain.accept(this);
+      });
+      withSymbols(childTable, () -> expr.body.accept(this));
+
+      afterTravel(expr);
+      return null;
+    }
+
+    @Override
+    public Void visit(ForallThenExpr expr) {
+      beforeTravel(expr);
+
+      // The identifiers of the for must be visible in it's children
+      var childTable = currentSymbols().createChild();
+      expr.symbolTable = childTable;
+      expr.indices.forEach(index -> {
+        childTable.defineSymbol(index.identifier().name, expr);
+      });
+      withSymbols(childTable, () -> expr.thenExpr.accept(this));
+
+      afterTravel(expr);
+      return null;
     }
   }
 
@@ -1244,7 +1005,7 @@ class SymbolTable {
         for (ForallStatement.Index index : forall.indices) {
           resolveSymbols(index.domain);
         }
-        resolveSymbols(forall.statement);
+        resolveSymbols(forall.body);
       }
     }
 
@@ -1312,7 +1073,7 @@ class SymbolTable {
         for (ForallExpr.Index index : forallExpr.indices) {
           resolveSymbols(index.domain);
         }
-        resolveSymbols(forallExpr.expr);
+        resolveSymbols(forallExpr.body);
       } else if (expr instanceof SequenceCallExpr sequenceCall) {
         resolveSymbols(sequenceCall.target);
       } else if (expr instanceof TypeLiteral typeLiteral) {
