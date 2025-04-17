@@ -1,0 +1,6 @@
+= Hello world
+:doctype: book
+:xrefstyle: short
+
+
+include::modules/ROOT/pages/tutorial.adoc[]
