@@ -203,6 +203,26 @@ instruction set architecture RV3264IM = {
   }
   assembly J = (mnemonic, " ", decimal( offset ))
 
+  exception Exc = {
+  }
+
+  instruction ADDDIV6 : Rtype =
+    if rs2 = 0 then
+        raise Exc
+    else
+        X(rd) := (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+    encoding ADDDIV6 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+    assembly ADDDIV6 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+
+  instruction ADDDIV7 : Rtype =
+      if rs2 != 0 then
+        X(rd) := (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+      else
+        raise Exc
+      encoding ADDDIV7 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+      assembly ADDDIV7 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+
+
 }
 
 instruction set architecture RV32IM extending RV3264IM = {}

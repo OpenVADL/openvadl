@@ -38,8 +38,9 @@ public interface CfgTraverser {
    *
    * @param controlNode The control node being processed.
    */
-  default void onControlNode(ControlNode controlNode) {
+  default ControlNode onControlNode(ControlNode controlNode) {
     // do nothing by default
+    return controlNode;
   }
 
   /**
@@ -47,8 +48,9 @@ public interface CfgTraverser {
    *
    * @param dir The directional node being processed.
    */
-  default void onDirectional(DirectionalNode dir) {
+  default ControlNode onDirectional(DirectionalNode dir) {
     // do nothing by default
+    return dir;
   }
 
   /**
@@ -56,8 +58,9 @@ public interface CfgTraverser {
    *
    * @param endNode The end node being processed.
    */
-  default void onEnd(AbstractEndNode endNode) {
+  default ControlNode onEnd(AbstractEndNode endNode) {
     // do nothing by default
+    return endNode;
   }
 
   /**
@@ -65,9 +68,11 @@ public interface CfgTraverser {
    *
    * @param controlSplit The control split node being processed.
    */
-  default void onControlSplit(ControlSplitNode controlSplit) {
+  default ControlNode onControlSplit(ControlSplitNode controlSplit) {
     // do nothing by default
+    return controlSplit;
   }
+
 
   /**
    * Traverses the control flow graph starting from the given branch begin node.
@@ -79,7 +84,9 @@ public interface CfgTraverser {
     ControlNode currNode = branchBegin;
 
     while (true) {
-      handleControlNode(currNode);
+      // The handleControlNode method might delete the currNode, so we would lose the next node.
+      // That's why save it first.
+      currNode = handleControlNode(currNode);
 
       if (currNode instanceof AbstractEndNode) {
         // When we find the end node, we return it
@@ -89,7 +96,7 @@ public interface CfgTraverser {
       } else if (currNode instanceof ControlSplitNode splitNode) {
         // Handle all branches of the nested control split node
         currNode = traverseControlSplit(splitNode);
-      } else {
+      } else if (currNode != null) {
         currNode.ensure(false,
             "Expected directional or control split node, but got this node in CFG."
         );
@@ -102,17 +109,20 @@ public interface CfgTraverser {
    * more specific methods based on the type of the control node.
    *
    * @param controlNode The control node to handle.
+   * @return the next node because the handlers might delete the {@code controlNode}.
    */
-  private void handleControlNode(ControlNode controlNode) {
+  private ControlNode handleControlNode(ControlNode controlNode) {
     if (controlNode instanceof DirectionalNode direNode) {
-      onDirectional(direNode);
+      controlNode = onDirectional(direNode);
     } else if (controlNode instanceof ControlSplitNode splitNode) {
-      onControlSplit(splitNode);
+      controlNode = onControlSplit(splitNode);
     } else if (controlNode instanceof AbstractEndNode endNode) {
-      onEnd(endNode);
+      controlNode = onEnd(endNode);
     }
 
-    onControlNode(controlNode);
+    controlNode = onControlNode(controlNode);
+
+    return controlNode;
   }
 
   /**
@@ -138,7 +148,7 @@ public interface CfgTraverser {
       someEnd = traverseBranch(branch);
     }
     splitNode.ensure(someEnd != null, "Control split has no branches.");
-    splitNode.ensure(someEnd.usageCount() == 1, "End should have exactly one usage: MergeNode");
+
     // Get the merge node from the end of the branch
     return (MergeNode) someEnd.usages().findFirst().get();
   }

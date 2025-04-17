@@ -17,12 +17,17 @@
 package vadl.gcb.riscv.riscv32PatternTrees;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.gcb.AbstractGcbTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Instruction;
+import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchEndNode;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.dependency.SelectNode;
 
 class InstructionPatternPruningPassTest extends AbstractGcbTest {
@@ -162,6 +167,63 @@ class InstructionPatternPruningPassTest extends AbstractGcbTest {
 
     Assertions.assertThat(adddiv5).isPresent();
     Assertions.assertThat(adddiv5.get().getNodes(SelectNode.class)).isNotEmpty();
+  }
+
+  @Test
+  void shouldPruneAddDiv6()
+      throws IOException, DuplicatedPassKeyException {
+    // Given
+    var setup = runGcbAndCppCodeGen(getConfiguration(false), "lcb/riscv32_pattern_trees.vadl");
+
+    /*
+     instruction ADDDIV6 : Rtype =
+      if rs2 = 0 then
+          raise Exc
+      else
+          X(rd) := (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+      encoding ADDDIV6 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+      assembly ADDDIV6 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+     */
+
+
+    // Then
+    var adddiv6 = setup.specification().isa().map(x -> x.ownInstructions().stream())
+        .orElse(Stream.empty())
+        .filter(instruction -> instruction.simpleName().equals("ADDDIV6"))
+        .map(Instruction::behavior).findFirst();
+
+    Assertions.assertThat(adddiv6).isPresent();
+    Assertions.assertThat(adddiv6.get()
+            .getNodes(Set.of(IfNode.class, MergeNode.class, BeginNode.class, BranchEndNode.class)))
+        .isEmpty();
+  }
+
+  @Test
+  void shouldPruneAddDiv7()
+      throws IOException, DuplicatedPassKeyException {
+    // Given
+    var setup = runGcbAndCppCodeGen(getConfiguration(false), "lcb/riscv32_pattern_trees.vadl");
+
+    /*
+    instruction ADDDIV7 : Rtype =
+      if rs2 != 0 then
+        X(rd) := (((X(rs1) as Bits) + (X(rs2) as Bits)) / (X(rs2) as Bits)) as Regs
+      else
+        raise Exc
+      encoding ADDDIV7 = { opcode = 0b011'0011, funct3 = 0b000, funct7 = 0b000'0001 }
+      assembly ADDDIV7 = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
+     */
+
+    // Then
+    var adddiv6 = setup.specification().isa().map(x -> x.ownInstructions().stream())
+        .orElse(Stream.empty())
+        .filter(instruction -> instruction.simpleName().equals("ADDDIV7"))
+        .map(Instruction::behavior).findFirst();
+
+    Assertions.assertThat(adddiv6).isPresent();
+    Assertions.assertThat(adddiv6.get()
+            .getNodes(Set.of(IfNode.class, MergeNode.class, BeginNode.class, BranchEndNode.class)))
+        .isEmpty();
   }
 
 }

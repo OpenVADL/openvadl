@@ -358,7 +358,7 @@ class IssDominatorAnalysis implements CfgTraverser {
   }
 
   @Override
-  public void onControlNode(ControlNode n) {
+  public ControlNode onControlNode(ControlNode n) {
     if (n instanceof ControlSplitNode) {
       // Push index of splitNode
       splitDominatorIndexStack.push(dominators.size() - 1);
@@ -372,5 +372,6 @@ class IssDominatorAnalysis implements CfgTraverser {
 
     // Copy to dominator sets
     dominatorSets.put(n, new ArrayList<>(dominators));
+    return n;
   }
 }
