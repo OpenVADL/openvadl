@@ -27,6 +27,10 @@ public class BitsType extends DataType {
   protected final int bitWidth;
 
   protected BitsType(int bitWidth) {
+    if (bitWidth < 1) {
+      throw new IllegalArgumentException("bitWidth must be >= 1");
+    }
+
     this.bitWidth = bitWidth;
   }
 
