@@ -17,9 +17,7 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
@@ -34,16 +32,6 @@ import vadl.viam.graph.NodeList;
 // TODO: Remove once all generator adapted ReadRegTensorNode
 public class ReadRegFileNode extends ReadRegTensorNode implements HasRegisterFile {
 
-  // a register-file-read might read from a counter.
-  // if this can be inferred, the counter is set.
-  // however, not all counter-accesses are statically known, as if the register file
-  // is known, but the concrete index isn't,
-  // it could be a counter written, but doesn't have to be.
-  // it is generally set during the `StaticCounterAccessResolvingPass`
-  @DataValue
-  @Nullable
-  private Counter.RegisterFileCounter staticCounterAccess;
-
   /**
    * Constructs the node, which represents a read from a register file at some specific index.
    *
@@ -54,9 +42,8 @@ public class ReadRegFileNode extends ReadRegTensorNode implements HasRegisterFil
    *                            it is not known
    */
   public ReadRegFileNode(RegisterFile registerFile, ExpressionNode address,
-                         DataType type, @Nullable Counter.RegisterFileCounter staticCounterAccess) {
-    super(registerFile, new NodeList<>(address), type);
-    this.staticCounterAccess = staticCounterAccess;
+                         DataType type, @Nullable Counter staticCounterAccess) {
+    super(registerFile, new NodeList<>(address), type, staticCounterAccess);
   }
 
   @Override
@@ -64,19 +51,10 @@ public class ReadRegFileNode extends ReadRegTensorNode implements HasRegisterFil
     return (RegisterFile) resourceDefinition();
   }
 
-  @Nullable
-  public Counter.RegisterFileCounter staticCounterAccess() {
-    return staticCounterAccess;
-  }
-
-  public void setStaticCounterAccess(@Nonnull Counter.RegisterFileCounter staticCounterAccess) {
-    this.staticCounterAccess = staticCounterAccess;
-  }
 
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(staticCounterAccess);
   }
 
   @Override

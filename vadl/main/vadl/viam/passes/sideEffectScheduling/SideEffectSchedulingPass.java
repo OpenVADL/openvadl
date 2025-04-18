@@ -104,12 +104,12 @@ public class SideEffectSchedulingPass extends Pass {
 
     var isa = viam.isa().get();
     var pc = isa.pc();
-    isa.ensure(pc == null || pc instanceof Counter.RegisterCounter,
+    isa.ensure(pc == null || pc.registerTensor().isSingleRegister(),
         "Only RegisterCounters are currently supported for this pass. Got: %s", pc);
 
     for (var def : defs) {
       ((DefProp.WithBehavior) def).behaviors().forEach(behavior -> {
-        SideEffectScheduler.run(behavior, (Counter.RegisterCounter) pc);
+        SideEffectScheduler.run(behavior, pc);
       });
     }
     return null;
@@ -126,7 +126,7 @@ class SideEffectScheduler {
    * The program counter register counter, if available.
    */
   @Nullable
-  Counter.RegisterCounter pc;
+  Counter pc;
 
   /**
    * Runs the side effect scheduling on the given instruction.
@@ -134,7 +134,7 @@ class SideEffectScheduler {
    * @param behavior The behavior to process.
    * @param pc       The program counter register counter, or {@code null} if not available.
    */
-  public static void run(Graph behavior, @Nullable Counter.RegisterCounter pc) {
+  public static void run(Graph behavior, @Nullable Counter pc) {
     var startNode = getSingleNode(behavior, StartNode.class);
     var scheduler = new SideEffectScheduler();
     scheduler.pc = pc;
@@ -153,7 +153,7 @@ class SideEffectScheduler {
     // Process until the corresponding end node of the branch
     var endNode = traverseUntilMatchingBranchEnd(beginNode);
 
-    var pcReg = pc != null ? pc.registerRef() : null;
+    var pcReg = pc != null ? pc.registerTensor() : null;
     var partitionedEffects = endNode.sideEffects().stream()
         // find side effects that cause instruction exits
         .collect(Collectors.partitioningBy(

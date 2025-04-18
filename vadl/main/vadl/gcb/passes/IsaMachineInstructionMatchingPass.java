@@ -82,6 +82,7 @@ import vadl.types.Type;
 import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
@@ -157,10 +158,10 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       return new Result(Collections.emptyMap(), Collections.emptyMap());
     }
 
-    ensure(isa.pc() instanceof Counter.RegisterCounter,
+    var pc = isa.pc();
+    ensure(pc != null && pc.registerTensor().isSingleRegister(),
         () -> Diagnostic.error("Only counter to single registers are supported.",
             Objects.requireNonNull(isa.pc()).sourceLocation()));
-    var pc = (Counter.RegisterCounter) isa.pc();
 
     isa.ownInstructions().forEach(instruction -> {
       // Get uninlined or the normal behaviors if nothing was uninlined.
@@ -531,10 +532,10 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    * Match Jump and Link Register when {@link Instruction} writes PC, writes
    * a register file and has an operation (ADD, SUB) where one input is a registerfile.
    */
-  private boolean findJalr(UninlinedGraph behavior, Counter.RegisterCounter pcRegister) {
+  private boolean findJalr(UninlinedGraph behavior, Counter pcRegister) {
     var writesPc =
         behavior.getNodes(WriteRegNode.class)
-            .filter(x -> x.register().equals(pcRegister.registerRef()))
+            .filter(x -> x.register().equals(pcRegister.registerTensor()))
             .toList();
     var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
 
@@ -559,15 +560,15 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    * Match Jump and Link when {@link Instruction} writes PC, writes
    * a register file and has an operation (ADD, SUB) where one input is a PC.
    */
-  private boolean findJal(UninlinedGraph behavior, Counter.RegisterCounter pcRegister) {
+  private boolean findJal(UninlinedGraph behavior, Counter pcRegister) {
     var writesPc =
         behavior.getNodes(WriteRegNode.class)
-            .filter(x -> x.register().equals(pcRegister.registerRef()))
+            .filter(x -> x.register().equals(pcRegister.registerTensor()))
             .toList();
     var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
 
     var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
-        new AnyChildMatcher(new IsReadRegMatcher(pcRegister.registerRef())),
+        new AnyChildMatcher(new IsReadRegMatcher((Register) pcRegister.registerTensor())),
         new AnyNodeMatcher()
     ));
     Set<Matcher> matchers = Set.of(

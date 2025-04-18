@@ -781,14 +781,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var reg = new Register(identifier,
         (DataType) getViamType(requireNonNull(definition.typeLiteral.type)));
 
-    Map<CounterDefinition.CounterKind, Counter.Kind> kinds =
-        Map.of(CounterDefinition.CounterKind.PROGRAM, Counter.Kind.PROGRAM_COUNTER,
-            CounterDefinition.CounterKind.GROUP, Counter.Kind.GROUP_COUNTER);
-    var kind = requireNonNull(kinds.get(definition.kind));
-    var counter = new Counter.RegisterCounter(identifier,
+
+    var counter = new Counter(identifier,
         reg,
-        Counter.Position.CURRENT, //FIXME: read this from, annotation or somewhere?
-        kind);
+        List.of() // FIXME: List of indices in case of multi-dimensional counter
+    );
     return Optional.of(counter);
   }
 
@@ -1114,7 +1111,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var registers = filterAndCastToInstance(allDefinitions, Register.class);
     var registerFiles = filterAndCastToInstance(allDefinitions, RegisterFile.class);
     var programCounter = allDefinitions.stream()
-        .filter(d -> d instanceof Counter && ((Counter) d).kind() == Counter.Kind.PROGRAM_COUNTER)
+        .filter(d -> d instanceof Counter)
         .map(v -> (Counter) v)
         .findFirst().orElse(null);
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
@@ -1123,7 +1120,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
-    if (programCounter != null && programCounter.registerResource() instanceof Register pcReg) {
+    if (programCounter != null && programCounter.registerTensor() instanceof Register pcReg) {
       registers.add(pcReg);
     }
 

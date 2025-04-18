@@ -16,11 +16,9 @@
 
 package vadl.viam.graph.dependency;
 
-import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -41,15 +39,6 @@ import vadl.viam.graph.UniqueNode;
  */
 public class WriteRegFileNode extends WriteRegTensorNode implements HasRegisterFile {
 
-  // a register-file-write might write to a counter.
-  // if this is the case, the counter is set.
-  // however, not all counter-accesses are statically known, as if the register file
-  // is known, but the concrete index isn't,
-  // it could be a counter written, but doesn't have to be.
-  // it is generally set during the `StaticCounterAccessResolvingPass`
-  @DataValue
-  @Nullable
-  private Counter.RegisterFileCounter staticCounterAccess;
 
   /**
    * Writes a value to a register file node.
@@ -62,9 +51,8 @@ public class WriteRegFileNode extends WriteRegTensorNode implements HasRegisterF
    */
   public WriteRegFileNode(RegisterFile registerFile, ExpressionNode address,
                           ExpressionNode value,
-                          @Nullable Counter.RegisterFileCounter staticCounterAccess) {
-    super(registerFile, new NodeList<>(address), value);
-    this.staticCounterAccess = staticCounterAccess;
+                          @Nullable Counter staticCounterAccess) {
+    super(registerFile, new NodeList<>(address), value, staticCounterAccess);
   }
 
   /**
@@ -79,7 +67,7 @@ public class WriteRegFileNode extends WriteRegTensorNode implements HasRegisterF
    */
   public WriteRegFileNode(RegisterFile registerFile, ExpressionNode address,
                           ExpressionNode value,
-                          @Nullable Counter.RegisterFileCounter staticCounterAccess,
+                          @Nullable Counter staticCounterAccess,
                           @Nullable ExpressionNode condition) {
     this(registerFile, address, value, staticCounterAccess);
     this.condition = condition;
@@ -88,21 +76,6 @@ public class WriteRegFileNode extends WriteRegTensorNode implements HasRegisterF
   @Override
   public RegisterFile registerFile() {
     return (RegisterFile) resourceDefinition();
-  }
-
-  @Nullable
-  public Counter.RegisterFileCounter staticCounterAccess() {
-    return staticCounterAccess;
-  }
-
-  public void setStaticCounterAccess(@Nonnull Counter.RegisterFileCounter staticCounterAccess) {
-    this.staticCounterAccess = staticCounterAccess;
-  }
-
-  @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
-    collection.add(staticCounterAccess);
   }
 
   @Override
@@ -116,7 +89,7 @@ public class WriteRegFileNode extends WriteRegTensorNode implements HasRegisterF
     return new WriteRegFileNode(registerFile(),
         address().copy(),
         value.copy(),
-        staticCounterAccess,
+        staticCounterAccess(),
         (condition != null ? condition.copy() : null));
   }
 
@@ -125,7 +98,7 @@ public class WriteRegFileNode extends WriteRegTensorNode implements HasRegisterF
     return new WriteRegFileNode(registerFile(),
         address(),
         value,
-        staticCounterAccess,
+        staticCounterAccess(),
         condition);
   }
 

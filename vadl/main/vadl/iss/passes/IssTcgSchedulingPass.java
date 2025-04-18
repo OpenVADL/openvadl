@@ -92,11 +92,11 @@ public class IssTcgSchedulingPass extends AbstractIssPass {
 
     viam.isa().ifPresent(isa -> {
       var pc = requireNonNull(isa.pc());
-      pc.ensure(pc instanceof Counter.RegisterCounter, "Expected RegisterCounter");
+      pc.ensure(pc.registerTensor().isSingleRegister(), "Only one-dimensional PC supported yet");
 
       isa.ownInstructions()
           .forEach(instr ->
-              IssTcgScheduler.runOn(instr.behavior(), (Counter.RegisterCounter) pc));
+              IssTcgScheduler.runOn(instr.behavior(), pc));
     });
 
     return null;
@@ -113,7 +113,7 @@ public class IssTcgSchedulingPass extends AbstractIssPass {
  */
 class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements CfgTraverser {
 
-  private Counter.RegisterCounter pc;
+  private Counter pc;
 
   @LazyInit
   private ControlNode currentRootUser;
@@ -139,7 +139,7 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
    *
    * @param pc The program counter register counter.
    */
-  public IssTcgScheduler(Counter.RegisterCounter pc) {
+  public IssTcgScheduler(Counter pc) {
     this.pc = pc;
   }
 
@@ -149,7 +149,7 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
    * @param graph The control flow graph to process.
    * @param pc    The program counter register counter.
    */
-  static void runOn(Graph graph, Counter.RegisterCounter pc) {
+  static void runOn(Graph graph, Counter pc) {
     var start = getSingleNode(graph, StartNode.class);
     new IssTcgScheduler(pc).traverseBranch(start);
 
@@ -239,7 +239,7 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
     validateRegFileAccessAddress(toProcess);
 
     if (toProcess instanceof ReadResourceNode readResourceNode) {
-      if (readResourceNode.resourceDefinition() == pc.registerRef()) {
+      if (readResourceNode.resourceDefinition() == pc.registerTensor()) {
         // PC registers are not lowered to TCG as they can be accessed directly using
         // ctx->base.pc_next
         return Optional.empty();

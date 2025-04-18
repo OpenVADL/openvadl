@@ -16,10 +16,7 @@
 
 package vadl.viam.graph.dependency;
 
-import java.util.List;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Counter;
 import vadl.viam.Register;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -39,11 +36,6 @@ import vadl.viam.graph.UniqueNode;
  */
 public class WriteRegNode extends WriteRegTensorNode {
 
-  // a register-write might write to a counter.
-  // if this is the case, the counter is set.
-  @DataValue
-  @Nullable
-  private Counter.RegisterCounter staticCounterAccess;
 
   /**
    * Writes a value to a register node.
@@ -54,9 +46,8 @@ public class WriteRegNode extends WriteRegTensorNode {
    *                            or null if no counter is written
    */
   public WriteRegNode(Register register, ExpressionNode value,
-                      @Nullable Counter.RegisterCounter staticCounterAccess) {
-    super(register, new NodeList<>(), value);
-    this.staticCounterAccess = staticCounterAccess;
+                      @Nullable Counter staticCounterAccess) {
+    super(register, new NodeList<>(), value, staticCounterAccess);
   }
 
 
@@ -70,7 +61,7 @@ public class WriteRegNode extends WriteRegTensorNode {
    * @param condition           the side condition of the node.
    */
   public WriteRegNode(Register register, ExpressionNode value,
-                      @Nullable Counter.RegisterCounter staticCounterAccess,
+                      @Nullable Counter staticCounterAccess,
                       @Nullable ExpressionNode condition) {
     this(register, value, staticCounterAccess);
     this.condition = condition;
@@ -80,39 +71,17 @@ public class WriteRegNode extends WriteRegTensorNode {
     return (Register) resourceDefinition();
   }
 
-  @Nullable
-  public Counter.RegisterCounter staticCounterAccess() {
-    return staticCounterAccess;
-  }
-
-  /**
-   * Determines if the register is a PC based on whether staticCounterAccess is set.
-   */
-  public boolean isPcAccess() {
-    return staticCounterAccess != null;
-  }
-
-  public void setStaticCounterAccess(@Nonnull Counter.RegisterCounter staticCounterAccess) {
-    this.staticCounterAccess = staticCounterAccess;
-  }
-
-  @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
-    collection.add(staticCounterAccess);
-  }
-
   @Override
   public Node copy() {
     return new WriteRegNode(register(),
         value.copy(),
-        staticCounterAccess,
+        staticCounterAccess(),
         (condition != null ? condition.copy() : null));
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteRegNode(register(), value, staticCounterAccess, condition);
+    return new WriteRegNode(register(), value, staticCounterAccess(), condition);
   }
 
   @Override

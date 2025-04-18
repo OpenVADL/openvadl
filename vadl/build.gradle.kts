@@ -114,6 +114,7 @@ val generators = listOf("iss", "lcb")
 
 for (gen in generators) {
     tasks.register<Test>("test-$gen") {
+        group = "verification"
         // fail fast, so we don't try to rebuild all failing images over and over
         failFast = true
         val pkg = "vadl.$gen"
@@ -126,6 +127,7 @@ for (gen in generators) {
 
 
 tasks.register<Test>("test-others") {
+    group = "verification"
     val exclPkgs = generators.joinToString(", ") { "vadl.$it" }
     description = "Runs tests for vadl.* packages excluding $exclPkgs"
 

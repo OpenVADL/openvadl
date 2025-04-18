@@ -46,7 +46,7 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
   public LlvmReadRegFileNode(RegisterFile registerFile,
                              FieldRefNode address,
                              DataType type,
-                             @Nullable Counter.RegisterFileCounter staticCounterAccess) {
+                             @Nullable Counter staticCounterAccess) {
     super(registerFile, address, type, staticCounterAccess);
     instructionOperand = new TableGenInstructionRegisterFileOperand(this, address);
   }
@@ -57,7 +57,7 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
   public LlvmReadRegFileNode(RegisterFile registerFile,
                              ExpressionNode address,
                              DataType type,
-                             @Nullable Counter.RegisterFileCounter staticCounterAccess) {
+                             @Nullable Counter staticCounterAccess) {
     super(registerFile, address, type, staticCounterAccess);
     if (address instanceof FieldRefNode fieldRefNode) {
       instructionOperand = new TableGenInstructionRegisterFileOperand(this, fieldRefNode);

@@ -76,7 +76,7 @@ public class DummyMiaPass extends Pass {
 
     var regFile = viam.isa().orElseThrow().ownRegisterFiles().get(0);
     var mem = viam.isa().orElseThrow().ownMemories().get(0);
-    var pc = Objects.requireNonNull(viam.isa().orElseThrow().pc()).registerResource();
+    var pc = Objects.requireNonNull(viam.isa().orElseThrow().pc()).registerTensor();
 
     var ident = Identifier.noLocation("MiA");
     var bypass = bypass(ident);

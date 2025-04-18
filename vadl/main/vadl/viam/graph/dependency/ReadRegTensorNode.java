@@ -17,8 +17,11 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
+import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.NodeList;
@@ -32,18 +35,54 @@ public class ReadRegTensorNode extends ReadResourceNode {
   @DataValue
   protected RegisterTensor regTensor;
 
+  // a register-read might read from a counter.
+  // if this can be inferred, the counter is set.
+  // however, not all counter-accesses are statically known, as if the register file
+  // is known, but the concrete index isn't,
+  // it could be a counter written, but doesn't have to be.
+  // it is generally set during the `StaticCounterAccessResolvingPass`
+  @DataValue
+  @Nullable
+  private Counter staticCounterAccess;
+
   // TODO: Add static counter access
 
+  /**
+   * Construct the {@link ReadRegTensorNode}.
+   *
+   * @param regTensor           register to be read
+   * @param indices             indices to accessed certain dimension
+   * @param type                result type of the read-node (>= register tensor result type)
+   * @param staticCounterAccess if this read access a {@link Counter} (program counter)
+   */
   public ReadRegTensorNode(RegisterTensor regTensor, NodeList<ExpressionNode> indices,
-                           DataType type) {
+                           DataType type, @Nullable Counter staticCounterAccess) {
     super(indices, type);
     this.regTensor = regTensor;
+    this.staticCounterAccess = staticCounterAccess;
   }
 
   @Override
   public RegisterTensor resourceDefinition() {
     return regTensor;
   }
+
+  /**
+   * Determines if the register is a PC based on whether staticCounterAccess is set.
+   */
+  public boolean isPcAccess() {
+    return staticCounterAccess != null;
+  }
+
+  @Nullable
+  public Counter staticCounterAccess() {
+    return staticCounterAccess;
+  }
+
+  public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
+    this.staticCounterAccess = staticCounterAccess;
+  }
+
 
   @Override
   public void verifyState() {
@@ -58,12 +97,12 @@ public class ReadRegTensorNode extends ReadResourceNode {
 
   @Override
   public ReadRegTensorNode copy() {
-    return new ReadRegTensorNode(regTensor, indices.copy(), type());
+    return new ReadRegTensorNode(regTensor, indices.copy(), type(), staticCounterAccess);
   }
 
   @Override
   public ReadRegTensorNode shallowCopy() {
-    return new ReadRegTensorNode(regTensor, indices, type());
+    return new ReadRegTensorNode(regTensor, indices, type(), staticCounterAccess);
   }
 
   @Override
@@ -75,5 +114,6 @@ public class ReadRegTensorNode extends ReadResourceNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(regTensor);
+    collection.add(staticCounterAccess);
   }
 }

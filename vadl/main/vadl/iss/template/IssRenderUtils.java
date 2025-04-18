@@ -95,7 +95,7 @@ public class IssRenderUtils {
    */
   public static Map<String, String> mapPc(Specification spec) {
     var pcReg = (Register) Objects.requireNonNull(spec.isa().get()
-        .pc()).registerResource();
+        .pc()).registerTensor();
 
     return map(pcReg);
   }

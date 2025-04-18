@@ -263,26 +263,18 @@ public class RegisterTest extends AbstractTest {
   // @TestFactory
   public Stream<DynamicTest> testPcReg() {
     return Stream.of(
-        testPc("valid_pc_normal.vadl", "PcTest::PC", "PcTest::PC", null,
-            Counter.Kind.PROGRAM_COUNTER, Counter.Position.CURRENT),
-        testPc("valid_pc_alias_reg.vadl", "PcTest::PC", "PcTest::A", null,
-            Counter.Kind.PROGRAM_COUNTER, Counter.Position.CURRENT),
-        testPc("valid_pc_alias_regfile.vadl", "PcTest::PC", "PcTest::X", 31,
-            Counter.Kind.PROGRAM_COUNTER, Counter.Position.CURRENT),
-        testPc("valid_pc_current.vadl", "PcTest::PC", "PcTest::PC", null,
-            Counter.Kind.PROGRAM_COUNTER, Counter.Position.CURRENT),
-        testPc("valid_pc_next.vadl", "PcTest::PC", "PcTest::PC", null,
-            Counter.Kind.PROGRAM_COUNTER, Counter.Position.NEXT),
-        testPc("valid_pc_next_next.vadl", "PcTest::PC", "PcTest::PC", null,
-            Counter.Kind.PROGRAM_COUNTER, Counter.Position.NEXT_NEXT)
+        testPc("valid_pc_normal.vadl", "PcTest::PC", "PcTest::PC", null),
+        testPc("valid_pc_alias_reg.vadl", "PcTest::PC", "PcTest::A", null),
+        testPc("valid_pc_alias_regfile.vadl", "PcTest::PC", "PcTest::X", 31),
+        testPc("valid_pc_current.vadl", "PcTest::PC", "PcTest::PC", null),
+        testPc("valid_pc_next.vadl", "PcTest::PC", "PcTest::PC", null),
+        testPc("valid_pc_next_next.vadl", "PcTest::PC", "PcTest::PC", null)
     );
 
   }
 
   private DynamicTest testPc(String fileName, String counterName, String resourceName,
-                             @Nullable Integer index,
-                             Counter.Kind kind,
-                             Counter.Position position) {
+                             @Nullable Integer index) {
     return dynamicTest(fileName, () -> {
       var spec = runAndGetViamSpecification("unit/register/" + fileName);
       var resource = TestUtils.findDefinitionByNameIn(resourceName, spec, Resource.class);
@@ -292,10 +284,10 @@ public class RegisterTest extends AbstractTest {
       var writeInstr =
           TestUtils.findDefinitionByNameIn("PcTest::WRITE_PC", spec, Instruction.class);
 
-      Assertions.assertEquals(resource, counter.registerResource());
+      Assertions.assertEquals(resource, counter.registerTensor());
       if (index != null) {
-        assertInstanceOf(Counter.RegisterFileCounter.class, counter);
-        assertEquals(index, ((Counter.RegisterFileCounter) counter).index().intValue());
+        assertInstanceOf(Counter.class, counter);
+        assertEquals(index, counter.indices().getFirst().intValue());
       }
 
       if (resource instanceof Register) {
@@ -306,18 +298,13 @@ public class RegisterTest extends AbstractTest {
       } else {
         var readReg = getSingleNode(readInstr.behavior(), ReadRegFileNode.class);
         Assertions.assertEquals(resource, readReg.registerFile());
-        var regFileCoutner = (Counter.RegisterFileCounter) counter;
         var readAddrConst = getSingleLeafNode(readReg.address(), ConstantNode.class);
-        Assertions.assertEquals(regFileCoutner.index(), readAddrConst.constant().asVal());
+        Assertions.assertEquals(counter.indices().getFirst(), readAddrConst.constant().asVal());
         var writeReg = getSingleNode(writeInstr.behavior(), WriteRegFileNode.class);
         Assertions.assertEquals(resource, writeReg.registerFile());
         var writeAddrConst = getSingleLeafNode(writeReg.address(), ConstantNode.class);
-        Assertions.assertEquals(regFileCoutner.index(), (writeAddrConst.constant().asVal()));
+        Assertions.assertEquals(counter.indices().getFirst(), (writeAddrConst.constant().asVal()));
       }
-
-
-      Assertions.assertEquals(kind, counter.kind());
-      Assertions.assertEquals(position, counter.position());
     });
   }
 

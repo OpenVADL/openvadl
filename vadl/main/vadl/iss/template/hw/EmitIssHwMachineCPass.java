@@ -60,7 +60,6 @@ public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
     if (firmware != null) {
       vars.put("setup_rom_reset_vec",
           firmwareWriteFunction(firmware, processor.expectExtension(MemoryInfo.class)));
-      System.out.println(vars.get("firmware"));
     }
     return vars;
   }

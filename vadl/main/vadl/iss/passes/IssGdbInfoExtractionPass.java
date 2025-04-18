@@ -116,7 +116,7 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
 
     var pc = requireNonNull(viam.mip().get().isa().pc());
     // TODO: Also determine from ABI (also check for data pointer)
-    var isCodePtr = register == pc.registerResource();
+    var isCodePtr = register == pc.registerTensor();
 
     return new Result.Reg(
         name,

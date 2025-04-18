@@ -90,27 +90,27 @@ public class StaticCounterAccessResolvingPass extends Pass {
   }
 
   private static void resolveInBehavior(Graph behavior, Counter counter) {
-    if (counter instanceof Counter.RegisterCounter regCounter) {
+    if (counter.registerTensor().isSingleRegister()) {
       // if the counter is a register counter we only look at the register read/write nodes
-      processRegisterNodes(behavior, regCounter);
-    } else if (counter instanceof Counter.RegisterFileCounter fileCounter) {
+      processRegisterNodes(behavior, counter);
+    } else {
       // if the counter is a register file counter we only look at the register file read/write
       // nodes
-      processRegisterFileNodes(behavior, fileCounter);
+      processRegisterFileNodes(behavior, counter);
     }
   }
 
-  private static void processRegisterNodes(Graph behavior, Counter.RegisterCounter regCounter) {
+  private static void processRegisterNodes(Graph behavior, Counter regCounter) {
     behavior.getNodes(Set.of(ReadRegNode.class, WriteRegNode.class))
         .forEach(node -> {
-          if (node instanceof ReadRegNode read && read.register() == regCounter.registerRef()) {
+          if (node instanceof ReadRegNode read && read.register() == regCounter.registerTensor()) {
             // if the node is a read and
             // the register file matches the register file of the counter
             // we set the static counter access field of the read node
             read.setStaticCounterAccess(regCounter);
 
           } else if (node instanceof WriteRegNode write
-              && write.register() == regCounter.registerRef()) {
+              && write.register() == regCounter.registerTensor()) {
             // if the node is a write and
             // the register file matches the register file of the counter
             // we set the static counter access field of the write node
@@ -120,15 +120,21 @@ public class StaticCounterAccessResolvingPass extends Pass {
   }
 
   private static void processRegisterFileNodes(Graph behavior,
-                                               Counter.RegisterFileCounter fileCounter) {
+                                               Counter fileCounter) {
+    // TODO: Generalize this
+    if (fileCounter.indices().size() != 1) {
+      return;
+    }
+
     // get all register file read and write nodes
     behavior.getNodes(Set.of(ReadRegFileNode.class, WriteRegFileNode.class))
         .forEach(node -> {
 
           if (node instanceof ReadRegFileNode read
-              && read.registerFile() == fileCounter.registerFileRef()
+              && read.registerFile() == fileCounter.registerTensor()
               && read.address() instanceof ConstantNode constIndex
-              && constIndex.constant().asVal().intValue() == fileCounter.index().intValue()) {
+              && constIndex.constant().asVal().intValue()
+              == fileCounter.indices().getFirst().intValue()) {
             // if the node is a read and
             // the register file matches the register file of the counter and
             // the address(index) of the read is constant and
@@ -138,9 +144,10 @@ public class StaticCounterAccessResolvingPass extends Pass {
             read.setStaticCounterAccess(fileCounter);
 
           } else if (node instanceof WriteRegFileNode write
-              && write.registerFile() == fileCounter.registerFileRef()
+              && write.registerFile() == fileCounter.registerTensor()
               && write.address() instanceof ConstantNode constIndex
-              && constIndex.constant().asVal().intValue() == fileCounter.index().intValue()) {
+              && constIndex.constant().asVal().intValue()
+              == fileCounter.indices().getFirst().intValue()) {
 
             // if the node is a write and
             // the register file matches the register file of the counter and

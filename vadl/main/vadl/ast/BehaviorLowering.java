@@ -424,9 +424,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Counters
     if (computedTarget instanceof CounterDefinition counterDefinition) {
       if (counterDefinition.kind == CounterDefinition.CounterKind.PROGRAM) {
-        var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
+        var counter = (Counter) viamLowering.fetch(counterDefinition).orElseThrow();
 
-        return new ReadRegNode(counter.registerRef(), (DataType) Objects.requireNonNull(expr.type),
+        if (!counter.registerTensor().isSingleRegister()) {
+          throw new IllegalStateException(
+              "Only one-dimensional counters are supported at the moment.");
+        }
+
+        return new ReadRegNode((Register) counter.registerTensor(),
+            (DataType) Objects.requireNonNull(expr.type),
             null);
       }
       throw new IllegalStateException("Unsupported counter kind: " + counterDefinition.kind);
@@ -736,10 +742,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Program counter read
     if (expr.computedTarget instanceof CounterDefinition counterDefinition) {
       // Calls like PC.next are translated to PC + 8 (if address is 8)
-      var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
+      var counter = (Counter) viamLowering.fetch(counterDefinition).orElseThrow();
       var counterType = (DataType) Objects.requireNonNull(counterDefinition.typeLiteral.type);
 
-      var regRead = new ReadRegNode(counter.registerRef(),
+      var regRead = new ReadRegNode((Register) counter.registerTensor(),
           (DataType) Objects.requireNonNull(expr.type), null);
 
       // FIXME: @ffreitag this is currently hardcoded as was wrong before.
@@ -1023,8 +1029,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       // Counter (also register) Write
       if (computedTarget instanceof CounterDefinition counterDefinition) {
-        var counter = (Counter.RegisterCounter) viamLowering.fetch(counterDefinition).orElseThrow();
-        var write = new WriteRegNode(counter.registerRef(), value, null);
+        var counter = (Counter) viamLowering.fetch(counterDefinition).orElseThrow();
+        var write = new WriteRegNode((Register) counter.registerTensor(), value, null);
         return SubgraphContext.of(statement, write);
       }
 

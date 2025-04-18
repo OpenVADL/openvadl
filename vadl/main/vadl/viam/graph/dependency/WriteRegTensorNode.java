@@ -17,7 +17,10 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
+import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
@@ -32,15 +35,58 @@ public class WriteRegTensorNode extends WriteResourceNode {
   @DataValue
   protected RegisterTensor regTensor;
 
+  // a register-write might write to a counter.
+  // if this is the case, the counter is set.
+  // however, not all counter-accesses are statically known, as if the register file
+  // is known, but the concrete index isn't,
+  // it could be a counter written, but doesn't have to be.
+  // it is generally set during the `StaticCounterAccessResolvingPass`
+  @DataValue
+  @Nullable
+  private Counter staticCounterAccess;
+
+  /**
+   * Construct the {@link WriteRegTensorNode}.
+   *
+   * @param regTensor           register to be written
+   * @param indices             index that is written
+   *                            (start outermost dimension, end innermost dimension)
+   * @param value               the value that is written
+   * @param staticCounterAccess if this writes to a counter-register, this might be non-null
+   */
   public WriteRegTensorNode(RegisterTensor regTensor, NodeList<ExpressionNode> indices,
-                            ExpressionNode value) {
+                            ExpressionNode value, @Nullable Counter staticCounterAccess) {
     super(indices, value);
     this.regTensor = regTensor;
+    this.staticCounterAccess = staticCounterAccess;
   }
 
   @Override
   public RegisterTensor resourceDefinition() {
     return regTensor;
+  }
+
+  /**
+   * Determines if the register is a PC based on whether staticCounterAccess is set.
+   */
+  public boolean isPcAccess() {
+    return staticCounterAccess != null;
+  }
+
+  @Nullable
+  public Counter staticCounterAccess() {
+    return staticCounterAccess;
+  }
+
+  /**
+   * This is set by the
+   * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}.
+   *
+   * @param staticCounterAccess the counter that is accessed.
+   * @see vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass
+   */
+  public void setStaticCounterAccess(@Nonnull Counter staticCounterAccess) {
+    this.staticCounterAccess = staticCounterAccess;
   }
 
   @Override
@@ -54,12 +100,12 @@ public class WriteRegTensorNode extends WriteResourceNode {
 
   @Override
   public Node copy() {
-    return new WriteRegTensorNode(regTensor, indices.copy(), value.copy());
+    return new WriteRegTensorNode(regTensor, indices.copy(), value.copy(), staticCounterAccess());
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteRegTensorNode(regTensor, indices, value);
+    return new WriteRegTensorNode(regTensor, indices, value, staticCounterAccess());
   }
 
   @Override
@@ -71,5 +117,6 @@ public class WriteRegTensorNode extends WriteResourceNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(regTensor);
+    collection.add(staticCounterAccess);
   }
 }
