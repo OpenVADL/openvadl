@@ -27,6 +27,7 @@ import vadl.viam.Specification;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.LabelNode;
 
 /**
@@ -50,7 +51,7 @@ public class HardcodeLGALabelPass extends Pass {
         .ownPseudoInstructions()
         .stream().filter(instruction -> instruction.simpleName().equals("LGA_64"))
         .forEach(instruction -> {
-          var labelNode = new LabelNode(Type.signedInt(12));
+          var labelNode = new LabelNode(Type.signedInt(32));
           var startNode =
               instruction.behavior().getNodes(StartNode.class).findFirst().orElseThrow();
           var newlabelNode = new NewLabelNode(labelNode);
@@ -61,7 +62,8 @@ public class HardcodeLGALabelPass extends Pass {
               .findFirst()
               .orElseThrow();
 
-          ldInstruction.arguments().set(2, labelNode);
+          var pcrel = (FuncCallNode) ldInstruction.arguments().get(2);
+          pcrel.arguments().get(0).replaceAndDelete(labelNode);
         }));
 
     return null;
