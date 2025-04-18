@@ -36,6 +36,7 @@ import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
+import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.DependencyNode;
@@ -304,6 +305,7 @@ public class Graph {
   public boolean isPseudoInstruction() {
     return getNodes(ControlNode.class).allMatch(
         e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof InstrEndNode
+            || e instanceof NewLabelNode
     ) && getNodes(ParamNode.class).allMatch(e -> e instanceof FuncParamNode);
   }
 

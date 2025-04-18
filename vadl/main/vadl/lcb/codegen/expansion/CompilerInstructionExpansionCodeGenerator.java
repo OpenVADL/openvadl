@@ -18,7 +18,6 @@ package vadl.lcb.codegen.expansion;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.error.DiagUtils.throwNotAllowed;
-import static vadl.utils.GraphUtils.getNodes;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
@@ -53,7 +52,11 @@ import vadl.viam.Relocation;
 import vadl.viam.ViamError;
 import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.control.NewLabelNode;
+import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -61,12 +64,14 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
+import vadl.viam.passes.CfgTraverser;
 
 /**
  * A {@link PseudoInstruction} contains one or multiple {@link Instruction}. This generator
@@ -86,6 +91,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   private final SymbolTable symbolTable;
   private final GenerateLinkerComponentsPass.VariantKindStore variantKindStore;
   private final IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords;
+  private final IdentityHashMap<NewLabelNode, String> labelSymbolNameLookup;
 
 
   /**
@@ -109,6 +115,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     this.symbolTable = new SymbolTable();
     this.variantKindStore = variantKindStore;
     this.machineInstructionRecords = machineInstructionRecords;
+    this.labelSymbolNameLookup = new IdentityHashMap<>();
   }
 
   @Override
@@ -145,8 +152,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         ((CNodeWithBaggageContext) ctx).get(INSTRUCTION_CALL_NODE, InstrCallNode.class);
 
     var pseudoInstructionIndex =
-        getOperandIndexFromCompilerInstruction(field, toHandle,
-            toHandle.parameter().identifier);
+        getOperandIndexFromCompilerInstruction(field, toHandle, toHandle.parameter().identifier);
 
     var usage = fieldUsages.getFieldUsages(instruction).get(field);
     ensure(usage != null, "usage must not be null");
@@ -159,9 +165,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     switch (usage.get(0)) {
       case IMMEDIATE -> {
         var argumentSymbol = symbolTable.getNextVariable();
-        ctx.ln(
-            "const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));",
-            argumentSymbol,
+        ctx.ln("const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));", argumentSymbol,
             pseudoInstructionIndex);
 
         var argumentImmSymbol = symbolTable.getNextVariable();
@@ -169,33 +173,27 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         String variant = "VK_None";
 
         if (!instructionCallNode.isParameterFieldAccess(field)) {
-          var variants =
-              variantKindStore.decodeVariantKindsByField(field);
+          var variants = variantKindStore.decodeVariantKindsByField(field);
 
           ensure(variants.size() == 1, () -> Diagnostic.error(
               "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
               toHandle.sourceLocation()));
 
-          variant =
-              ensurePresent(
-                  requireNonNull(variants).stream().filter(VariantKind::isImmediate)
-                      .findFirst(),
-                  () -> Diagnostic.error("Expected a variant for an immediate. But haven't "
-                          + "found any",
-                      toHandle.sourceLocation())).value();
+          variant = ensurePresent(
+              requireNonNull(variants).stream().filter(VariantKind::isImmediate).findFirst(),
+              () -> Diagnostic.error(
+                  "Expected a variant for an immediate. But haven't " + "found any",
+                  toHandle.sourceLocation())).value();
         }
 
         ctx.ln(
-            "MCOperand %s = MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, "
-                + "Ctx));",
-            argumentImmSymbol, targetName.value(), argumentSymbol, targetName.value(),
+            "MCOperand %s = MCOperand::createExpr(%sMCExpr::create(%s, "
+                + "%sMCExpr::VariantKind::%s, " + "Ctx));", argumentImmSymbol, targetName.value(),
+            argumentSymbol, targetName.value(),
             requireNonNull(variant));
-        ctx.ln(String.format("%s.addOperand(%s);",
-            instructionSymbol,
-            argumentImmSymbol));
+        ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentImmSymbol));
       }
-      case REGISTER -> ctx.ln(
-          "%s.addOperand(instruction.getOperand(%d));", instructionSymbol,
+      case REGISTER -> ctx.ln("%s.addOperand(instruction.getOperand(%d));", instructionSymbol,
           pseudoInstructionIndex);
       default -> throw new ViamError("not supported");
     }
@@ -245,8 +243,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
           immediateValueString = decodingFunctionName + "(" + immediateValueString + ")";
         }
 
-        context.ln("%s.addOperand(MCOperand::createImm(%s));",
-            instructionSymbol,
+        context.ln("%s.addOperand(MCOperand::createImm(%s));", instructionSymbol,
             immediateValueString);
       }
       case REGISTER -> {
@@ -254,29 +251,22 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         // But we don't know which register file.
         // We look for the `field` in the machine instruction's behavior and return the usages.
         var registerFiles = instruction.behavior().getNodes(FieldRefNode.class)
-            .filter(x -> x.formatField().equals(field))
-            .flatMap(
+            .filter(x -> x.formatField().equals(field)).flatMap(
                 fieldRefNode -> fieldRefNode.usages().filter(y -> y instanceof HasRegisterFile))
-            .map(x -> ((HasRegisterFile) x).registerFile())
-            .distinct()
-            .toList();
+            .map(x -> ((HasRegisterFile) x).registerFile()).distinct().toList();
 
         ensure(registerFiles.size() == 1,
             () -> Diagnostic.error("Found multiple or none register files for this field.",
-                    field.sourceLocation())
-                .note(
-                    "The pseudo instruction expansion requires one register file to detect "
-                        + "the register file name. In this particular case is the field used by "
-                        + "multiple register files or none and we don't know which name to use.")
-        );
+                field.sourceLocation()).note(
+                "The pseudo instruction expansion requires one register file to detect "
+                    + "the register file name. In this particular case is the field used by "
+                    + "multiple register files or none and we don't know which name to use."));
 
         var registerFile =
             ensurePresent(registerFiles.stream().findFirst(), "Expected one register file");
 
-        context.ln("%s.addOperand(MCOperand::createReg(%s::%s%s));",
-            instructionSymbol,
-            targetName.value(),
-            registerFile.identifier.simpleName(),
+        context.ln("%s.addOperand(MCOperand::createReg(%s::%s%s));", instructionSymbol,
+            targetName.value(), registerFile.identifier.simpleName(),
             toHandle.constant().asVal().intValue());
       }
       default -> throw Diagnostic.error("Cannot generate cpp code for this argument",
@@ -287,33 +277,70 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   @Override
   public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
     var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
-    var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
     var relocation = (Relocation) toHandle.function();
 
-    var parameterName = ((FuncParamNode) toHandle.arguments().get(0)).parameter().identifier;
-    var pseudoInstructionIndex =
-        getOperandIndexFromCompilerInstruction(field, toHandle, parameterName);
 
-    var argumentSymbol = symbolTable.getNextVariable();
+    if (toHandle.arguments().get(0) instanceof FuncParamNode funcParamNode) {
+      /*
+        Here is the argument to `pcrel_lo` the `FuncParamNode`.
+
+        pseudo instruction XXX ( rd: Index, symbol: Bits<32> ) =
+        {
+            LD { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
+        }
+      */
+
+      var parameterName = funcParamNode.parameter().identifier;
+      var pseudoInstructionIndex =
+          getOperandIndexFromCompilerInstruction(field, toHandle, parameterName);
+
+      var argumentSymbol = symbolTable.getNextVariable();
+
+      ctx.ln("const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));", argumentSymbol,
+          pseudoInstructionIndex);
+
+      handleRelocationOperand(ctx, argumentSymbol, relocation);
+    } else if (toHandle.arguments().get(0) instanceof LabelNode labelNode) {
+      /*
+      Here is the argument to `pcrel_lo` the `LabelNode`.
+
+      pseudo instruction XXX ( rd: Index, symbol: Bits<32> ) =
+      {
+          new_label ( label )
+          LD { rd = rd, rs1 = rd, imm = pcrel_lo( label ) }
+      }
+      */
+
+      var newLabelNode =
+          labelNode.usages().filter(x -> x instanceof NewLabelNode).findFirst().orElseThrow();
+      var labelSymbolName =
+          ensureNonNull(labelSymbolNameLookup.get(newLabelNode), "must not be null");
+
+      var argumentSymbol = symbolTable.getNextVariable();
+      ctx.ln(
+          "const MCExpr* %s = MCOperandToMCExpr(MCOperand::createExpr("
+              + "MCSymbolRefExpr::create(%s, Ctx)));",
+          argumentSymbol, labelSymbolName);
+
+      handleRelocationOperand(ctx, argumentSymbol, relocation);
+    } else {
+      throw Diagnostic.error("Cannot handle node", toHandle.sourceLocation()).build();
+    }
+  }
+
+  private void handleRelocationOperand(CGenContext<Node> ctx, String argumentSymbol,
+                                       Relocation relocation) {
+    var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
     var argumentRelocationSymbol = symbolTable.getNextVariable();
-    var elfRelocation =
-        relocations.stream().filter(x -> x.relocation() == relocation)
-            .findFirst();
+    var elfRelocation = relocations.stream().filter(x -> x.relocation() == relocation).findFirst();
     ensure(elfRelocation.isPresent(), "elfRelocation must exist");
     var variant = elfRelocation.get().variantKind().value();
 
-    ctx.ln(
-            "const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));",
-            argumentSymbol,
-            pseudoInstructionIndex)
-        .ln(
-            "MCOperand %s = "
+    ctx.ln("MCOperand %s = "
                 + "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));",
-            argumentRelocationSymbol, targetName.value(), argumentSymbol, targetName.value(),
-            variant)
-        .ln(String.format("%s.addOperand(%s);",
-            instructionSymbol,
-            argumentRelocationSymbol));
+            argumentRelocationSymbol, targetName.value(), argumentSymbol,
+            targetName.value(), variant)
+        .ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentRelocationSymbol));
   }
 
   /**
@@ -324,8 +351,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
    * have to know that {@code arg2} has index {@code 1} to correctly map it to a machine
    * instruction later.
    */
-  private int getOperandIndexFromCompilerInstruction(Format.Field field,
-                                                     ExpressionNode argument,
+  private int getOperandIndexFromCompilerInstruction(Format.Field field, ExpressionNode argument,
                                                      Identifier parameter) {
     for (int i = 0; i < compilerInstruction.parameters().length; i++) {
       if (parameter.simpleName()
@@ -336,44 +362,50 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
     throw Diagnostic.error(
             String.format("Cannot assign field '%s' because the field is not a field.",
-                field.identifier.simpleName()),
-            parameter.sourceLocation())
+                field.identifier.simpleName()), parameter.sourceLocation())
         .locationDescription(argument.sourceLocation(), "Trying to match this argument.")
         .locationDescription(field.sourceLocation(), "Trying to assign this field.")
         .locationDescription(compilerInstruction.sourceLocation(),
             "This pseudo instruction is affected.")
         .help("The parameter '%s' must match any pseudo instruction's parameter names",
-            parameter.simpleName())
-        .build();
+            parameter.simpleName()).build();
   }
 
   @Override
   public String genFunctionDefinition() {
-    var nodes = getNodes(function.behavior(), InstrCallNode.class);
+    context.ln(genFunctionSignature()).ln("{").spacedIn().ln("std::vector< MCInst > result;");
 
-    context.ln(genFunctionSignature())
-        .ln("{")
-        .spacedIn()
-        .ln("std::vector< MCInst > result;");
+    var cfgTraversal = new CfgTraverser() {
+      @Override
+      public ControlNode onDirectional(DirectionalNode dir) {
+        if (dir instanceof InstrCallNode instrCallNode) {
+          var sym = symbolTable.getNextVariable();
+          context.ln("MCInst %s = MCInst();", sym)
+              .ln("%s.setOpcode(%s::%s);", sym, targetName.value(),
+                  instrCallNode.target().identifier.simpleName());
+          writeInstructionCall(context, instrCallNode, sym);
+          context.ln("result.push_back(%s);", sym);
+          context.ln("callback(%s);", sym);
+        } else if (dir instanceof NewLabelNode newLabelNode) {
+          var sym = symbolTable.getNextVariable();
+          context.ln("MCSymbol *%s = Ctx.createTempSymbol();", sym);
+          context.ln("callbackSymbol(%s);", sym);
+          labelSymbolNameLookup.put(newLabelNode, sym);
+        }
 
-    for (var node : nodes) {
-      var sym = symbolTable.getNextVariable();
-      context.ln("MCInst %s = MCInst();", sym)
-          .ln("%s.setOpcode(%s::%s);", sym, targetName.value(),
-              node.target().identifier.simpleName());
-      writeInstructionCall(context, node, sym);
-      context.ln("result.push_back(%s);", sym);
-    }
+        return dir;
+      }
+    };
 
-    context.ln("return result;")
-        .spaceOut()
-        .ln("}");
+    cfgTraversal.traverseBranch(
+        function.behavior().getNodes(StartNode.class).findFirst().orElseThrow());
+
+    context.ln("return result;").spaceOut().ln("}");
 
     return builder.toString();
   }
 
-  private void writeInstructionCall(CNodeContext context,
-                                    InstrCallNode instrCallNode,
+  private void writeInstructionCall(CNodeContext context, InstrCallNode instrCallNode,
                                     String instructionSymbol) {
     var pairs =
         Streams.zip(instrCallNode.getParamFields().stream(), instrCallNode.arguments().stream(),
@@ -395,10 +427,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
       var field = pair.left();
       var argument = pair.right();
 
-      var newContext = new CNodeWithBaggageContext(context)
-          .put(FIELD, field)
-          .put(INSTRUCTION_CALL_NODE, instrCallNode)
-          .put(INSTRUCTION, instrCallNode.target())
+      var newContext = new CNodeWithBaggageContext(context).put(FIELD, field)
+          .put(INSTRUCTION_CALL_NODE, instrCallNode).put(INSTRUCTION, instrCallNode.target())
           .put(INSTRUCTION_SYMBOL, instructionSymbol);
 
       if (argument instanceof ConstantNode cn) {
@@ -449,6 +479,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   public String genFunctionSignature() {
     return "std::vector<MCInst> %sMCInstExpander::%s_%s".formatted(targetName.value(),
         compilerInstruction.identifier.lower(), function.simpleName())
-        + "(const MCInst& instruction) const";
+        + "(const MCInst& instruction, std::function<void(const MCInst &)> callback, "
+        + "std::function<void(MCSymbol* )> callbackSymbol ) const";
   }
 }
