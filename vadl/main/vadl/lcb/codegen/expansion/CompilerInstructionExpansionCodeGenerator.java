@@ -479,6 +479,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   public String genFunctionSignature() {
     return "std::vector<MCInst> %sMCInstExpander::%s_%s".formatted(targetName.value(),
         compilerInstruction.identifier.lower(), function.simpleName())
-        + "(const MCInst& instruction, std::function<void(const MCInst &)> callback, std::function<void(MCSymbol* )> callbackSymbol ) const";
+        + "(const MCInst& instruction, std::function<void(const MCInst &)> callback, "
+        + "std::function<void(MCSymbol* )> callbackSymbol ) const";
   }
 }
