@@ -16,10 +16,14 @@
 
 package vadl.gcb.passes.relocation.model;
 
+import static vadl.viam.ViamError.ensure;
+
+import javax.annotation.Nullable;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.cppCodeGen.model.GcbUpdateFieldRelocationCppFunction;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.viam.Format;
+import vadl.viam.Identifier;
 import vadl.viam.Relocation;
 
 /**
@@ -28,12 +32,13 @@ import vadl.viam.Relocation;
  */
 public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
     implements HasRelocationComputationAndUpdate {
-  protected final VariantKind variantKind;
-  protected final Modifier modifier;
 
-  // This is the function which computes the value for the
-  // relocation.
-  protected final GcbImmediateExtractionCppFunction valueRelocation;
+  protected final Format format;
+  protected final Format.Field field;
+
+  @Nullable
+  protected Fixup fixup;
+
   // This is the function which updates the value in the format.
   protected final GcbUpdateFieldRelocationCppFunction fieldUpdateFunction;
 
@@ -48,11 +53,16 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
                                             Format.Field field,
                                             GcbUpdateFieldRelocationCppFunction
                                                 fieldUpdateFunction) {
-    super(format, field, originalRelocation);
-    this.variantKind = variantKind;
-    this.modifier = modifier;
-    this.valueRelocation = valueRelocation;
+    super(generateIdentifier(format, field,
+            CompilerRelocation.Kind.fromRelocationKind(originalRelocation.kind())),
+        modifier, variantKind, valueRelocation, originalRelocation);
+    this.format = format;
+    this.field = field;
     this.fieldUpdateFunction = fieldUpdateFunction;
+  }
+
+  private static Identifier generateIdentifier(Format format, Format.Field imm, Kind kind) {
+    return format.identifier.append(kind.name(), imm.identifier.simpleName());
   }
 
   @Override
@@ -60,6 +70,12 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
     return variantKind;
   }
 
+  @Override
+  public Format format() {
+    return format;
+  }
+
+  @Override
   public Modifier modifier() {
     return modifier;
   }
@@ -67,6 +83,33 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
   @Override
   public GcbImmediateExtractionCppFunction valueRelocation() {
     return valueRelocation;
+  }
+
+  @Override
+  public Relocation relocation() {
+    return relocationRef;
+  }
+
+
+  /**
+   * Set fixup for this relocation.
+   * Cannot be done in constructor because fixup and
+   * {@link HasRelocationComputationAndUpdate} reference each other.
+   */
+  public void setFixup(Fixup fixup) {
+    this.fixup = fixup;
+  }
+
+  @Override
+  public Fixup fixup() {
+    ensure(fixup != null,
+        "Fixup must be set before calling fixup()");
+    return fixup;
+  }
+
+  @Override
+  public Format.Field field() {
+    return field;
   }
 
   @Override
@@ -79,7 +122,7 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
     return new ElfRelocationName(
         "R_" + relocation().identifier.lower() + "_"
             + format.identifier.simpleName()
-            + "_" + immediate.identifier.simpleName()
+            + "_" + field.identifier.simpleName()
     );
   }
 }

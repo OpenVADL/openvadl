@@ -18,8 +18,8 @@ package vadl.gcb.passes.relocation.model;
 
 import java.util.Map;
 import java.util.Objects;
+import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.gcb.valuetypes.VariantKind;
-import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Relocation;
 
@@ -28,25 +28,25 @@ import vadl.viam.Relocation;
  * In contrast to {@link AutomaticallyGeneratedRelocation} are {@link UserSpecifiedRelocation}
  * always user generated like {@code %lo} or {@code %hi} in risc-v.
  */
-public class UserSpecifiedRelocation extends CompilerRelocation {
-  private final VariantKind variantKind;
+public class UserSpecifiedRelocation extends CompilerRelocation
+    implements RelocationsBeforeElfExpansion {
+  protected final Modifier modifier;
+  protected final VariantKind variantKind;
+  protected final GcbImmediateExtractionCppFunction valueRelocation;
 
   /**
    * Constructor.
    */
   public UserSpecifiedRelocation(
-      Format format,
-      Format.Field field,
+      Identifier identifier,
+      Modifier modifier,
+      VariantKind variantKind,
+      GcbImmediateExtractionCppFunction valueRelocation,
       Relocation originalRelocation) {
-    super(generateName(format,
-            field,
-            CompilerRelocation.Kind.fromRelocationKind(originalRelocation.kind())),
-        format, field, originalRelocation);
-    this.variantKind = new VariantKind(originalRelocation);
-  }
-
-  private static Identifier generateName(Format format, Format.Field imm, Kind kind) {
-    return format.identifier.append(kind.name(), imm.identifier.simpleName());
+    super(identifier, originalRelocation);
+    this.modifier = modifier;
+    this.variantKind = variantKind;
+    this.valueRelocation = valueRelocation;
   }
 
   @Override
@@ -58,12 +58,12 @@ public class UserSpecifiedRelocation extends CompilerRelocation {
       return false;
     }
     UserSpecifiedRelocation that = (UserSpecifiedRelocation) o;
-    return kind == that.kind && Objects.equals(format, that.format);
+    return relocationRef == that.relocationRef;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(kind, format);
+    return Objects.hash(relocationRef);
   }
 
   @Override
@@ -72,5 +72,20 @@ public class UserSpecifiedRelocation extends CompilerRelocation {
     obj.put("variantKind", variantKind);
     obj.put("name", identifier.simpleName());
     return obj;
+  }
+
+  @Override
+  public Modifier modifier() {
+    return modifier;
+  }
+
+  @Override
+  public VariantKind variantKind() {
+    return variantKind;
+  }
+
+  @Override
+  public GcbImmediateExtractionCppFunction valueRelocation() {
+    return valueRelocation;
   }
 }

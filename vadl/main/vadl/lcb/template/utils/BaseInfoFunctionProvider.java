@@ -54,21 +54,22 @@ public class BaseInfoFunctionProvider {
     var output =
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
-    var elfRelocations = output.elfRelocations();
-    return elfRelocations.stream()
-        .map(relocation -> {
+
+    return output.relocationsBeforeElfExpansion().stream().map(
+        relocationBeforeExpand -> {
           var generator =
-              new ValueRelocationFunctionCodeGenerator(relocation, relocation.valueRelocation(),
+              new ValueRelocationFunctionCodeGenerator(relocationBeforeExpand.relocation(),
+                  relocationBeforeExpand.valueRelocation(),
                   new ValueRelocationFunctionCodeGenerator.Options(
                       false, true
                   ));
           var function = new CppFunctionCode(generator.genFunctionDefinition());
           return new BaseInfoRecord(
               generator.genFunctionName(),
-              relocation.variantKind(),
+              relocationBeforeExpand.variantKind(),
               function
           );
-        })
-        .toList();
+        }
+    ).toList();
   }
 }

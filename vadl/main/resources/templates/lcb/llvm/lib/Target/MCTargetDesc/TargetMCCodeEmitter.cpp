@@ -37,6 +37,74 @@ using namespace llvm;
 {
 }
 
+MCFixupKind getFixupKind(unsigned Opcode, unsigned OpNo, const MCExpr* Expr) {
+  MCExpr::ExprKind kind = Expr->getKind();
+   if(kind == MCExpr::ExprKind::Target) {
+      const [(${namespace})]MCExpr* targetExpr = cast<[(${namespace})]MCExpr>(Expr);
+      [(${namespace})]MCExpr::VariantKind targetKind = targetExpr->getKind();
+
+      switch(targetKind) {
+          [# th:each="targetFixup : ${targetFixups}" ]
+          case([(${namespace})]MCExpr::VariantKind::[(${targetFixup.variantKind})]):
+          {   [# th:each="operand : ${targetFixup.instructionOperands}" ]
+              if (Opcode == [(${namespace})]::[(${operand.instruction})] && OpNo == [(${operand.opIndex})]) {
+                  return MCFixupKind([(${namespace})]::[(${operand.fixup})]);
+              }
+             [/]
+          }
+          [/]
+          default:
+          {
+              // This is an immediate variant kind. Emit fixup for sub expression.
+              return getFixupKind(Opcode, OpNo, targetExpr->getSubExpr());
+              break;
+          }
+      }
+
+   } else if (kind == MCExpr::ExprKind::SymbolRef) {
+      switch(Opcode)
+      {
+        [# th:each="symbolRefFixup : ${symbolRefFixups}" ]
+        case([(${namespace})]::[(${symbolRefFixup.instruction})]):
+            [# th:each="operand : ${symbolRefFixup.immediateOperands}" ]
+            if (OpNo == [(${operand.opIndex})]) {
+                return MCFixupKind([(${namespace})]::[(${operand.fixup})]);
+            }
+            [/]
+            assert(false && "No immediate operand found.");
+            return MCFixupKind::FK_NONE;
+        [/]
+      }
+   } else if (kind == MCExpr::ExprKind::Binary) {
+        const MCBinaryExpr *Bin = static_cast<const MCBinaryExpr *>(Expr);
+        MCFixupKind lhs = getFixupKind(Opcode, OpNo, Bin->getLHS());
+        MCFixupKind rhs = getFixupKind(Opcode, OpNo, Bin->getRHS());
+        if(lhs == MCFixupKind::FK_NONE) {
+            return rhs;
+        } else if(rhs == MCFixupKind::FK_NONE) {
+            return lhs;
+        } else if(lhs == rhs) {
+            return lhs;
+        } else {
+            report_fatal_error("Binary expression is too complex.");
+        }
+   }
+   return MCFixupKind::FK_NONE;
+}
+
+void [(${namespace})]MCCodeEmitter::emitFixups
+    (const MCInst MI
+    , unsigned OpNo
+    , const MCExpr *Expr
+    , SmallVectorImpl<MCFixup> &Fixups) const
+{
+    MCFixupKind fixupKind = getFixupKind(MI.getOpcode(), OpNo, Expr);
+    if(fixupKind != MCFixupKind::FK_NONE) {
+        Fixups.push_back(
+            MCFixup::create(Offset, Expr, fixupKind, MI.getLoc()));
+    }
+}
+
 [# th:each="imm : ${immediates}" ]
 unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &MI, unsigned OpNo, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {
@@ -49,11 +117,9 @@ unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &M
     if (AsmUtils::evaluateConstantImm(&MO, imm))
         return [(${imm.encode})](imm);
 
-    /*
     assert(MO.isExpr() && "[(${imm.encodeWrapper})] expects only expressions or immediates");
 
     emitFixups(MI, OpNo, MO.getExpr(), Fixups);
-    */
 
     return 0;
 }

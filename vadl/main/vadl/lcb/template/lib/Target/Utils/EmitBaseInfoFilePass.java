@@ -19,7 +19,6 @@ package vadl.lcb.template.lib.Target.Utils;
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -56,14 +55,14 @@ public class EmitBaseInfoFilePass extends LcbTemplateRenderingPass {
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
     var modifiers = output.modifiers();
-    var linkModifierToRelocation = output
-        .linkModifierToRelocation()
-        .stream()
-        .filter(distinctByKey(x -> x.left().value()))
-        .map(x -> Map.of("modifier", x.left(),
-            "relocation", new ValueRelocationFunctionCodeGenerator(x.right(),
-                x.right().valueRelocation()).genFunctionName()))
-        .toList();
+
+    var linkModifierToRelocation = output.relocationsBeforeElfExpansion().stream().map(
+        relocation -> Map.of(
+            "modifier", relocation.modifier(),
+            "relocation", relocation.valueRelocation().functionName().lower()
+        )
+    ).toList();
+
     var relocations = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
 
     return Map.of(CommonVarNames.NAMESPACE,
