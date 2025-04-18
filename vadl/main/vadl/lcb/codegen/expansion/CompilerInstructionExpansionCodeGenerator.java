@@ -421,7 +421,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
           context.ln("result.push_back(%s);", sym);
         } else if (dir instanceof NewLabelNode newLabelNode) {
           var sym = symbolTable.getNextVariable();
-          context.ln("MCSymbol %s = Ctx.createTempSymbol();", sym);
+          context.ln("MCSymbol *%s = Ctx.createTempSymbol();", sym);
           labelSymbolNameLookup.put(newLabelNode, sym);
         }
 
