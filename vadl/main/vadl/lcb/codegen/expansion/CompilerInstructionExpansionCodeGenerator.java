@@ -18,7 +18,6 @@ package vadl.lcb.codegen.expansion;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.error.DiagUtils.throwNotAllowed;
-import static vadl.utils.GraphUtils.getNodes;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
@@ -53,7 +52,11 @@ import vadl.viam.Relocation;
 import vadl.viam.ViamError;
 import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.DirectionalNode;
 import vadl.viam.graph.control.InstrCallNode;
+import vadl.viam.graph.control.NewLabelNode;
+import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -61,12 +64,14 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
+import vadl.viam.passes.CfgTraverser;
 
 /**
  * A {@link PseudoInstruction} contains one or multiple {@link Instruction}. This generator
@@ -86,6 +91,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   private final SymbolTable symbolTable;
   private final GenerateLinkerComponentsPass.VariantKindStore variantKindStore;
   private final IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords;
+  private final IdentityHashMap<NewLabelNode, String> labelSymbolNameLookup;
 
 
   /**
@@ -109,6 +115,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     this.symbolTable = new SymbolTable();
     this.variantKindStore = variantKindStore;
     this.machineInstructionRecords = machineInstructionRecords;
+    this.labelSymbolNameLookup = new IdentityHashMap<>();
   }
 
   @Override
@@ -287,14 +294,66 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   @Override
   public void handle(CGenContext<Node> ctx, FuncCallNode toHandle) {
     var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
-    var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
     var relocation = (Relocation) toHandle.function();
 
-    var parameterName = ((FuncParamNode) toHandle.arguments().get(0)).parameter().identifier;
-    var pseudoInstructionIndex =
-        getOperandIndexFromCompilerInstruction(field, toHandle, parameterName);
 
-    var argumentSymbol = symbolTable.getNextVariable();
+    if (toHandle.arguments().get(0) instanceof FuncParamNode funcParamNode) {
+      /*
+        Here is the argument to `pcrel_lo` the `FuncParamNode`.
+
+        pseudo instruction XXX ( rd: Index, symbol: Bits<32> ) =
+        {
+            LD { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
+        }
+      */
+
+      var parameterName = funcParamNode.parameter().identifier;
+      var pseudoInstructionIndex =
+          getOperandIndexFromCompilerInstruction(field, toHandle, parameterName);
+
+      var argumentSymbol = symbolTable.getNextVariable();
+
+      ctx.ln(
+          "const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));",
+          argumentSymbol,
+          pseudoInstructionIndex);
+
+      handleRelocationOperand(ctx, argumentSymbol, relocation);
+    } else if (toHandle.arguments().get(0) instanceof LabelNode labelNode) {
+       /*
+        Here is the argument to `pcrel_lo` the `LabelNode`.
+
+        pseudo instruction XXX ( rd: Index, symbol: Bits<32> ) =
+        {
+            new_label ( label )
+            LD { rd = rd, rs1 = rd, imm = pcrel_lo( label ) }
+        }
+      */
+
+      var newLabelNode = labelNode.usages()
+          .filter(x -> x instanceof NewLabelNode)
+          .findFirst()
+          .orElseThrow();
+      var labelSymbolName =
+          ensureNonNull(
+              labelSymbolNameLookup.get(newLabelNode),
+              "must not be null");
+
+      var argumentSymbol = symbolTable.getNextVariable();
+      ctx.ln(
+          "const MCExpr* %s = MCOperandToMCExpr(MCOperand::createExpr( MCSymbolRefExpr::create(%s, Ctx)));",
+          argumentSymbol,
+          labelSymbolName);
+
+      handleRelocationOperand(ctx, argumentSymbol, relocation);
+    } else {
+      throw Diagnostic.error("Cannot handle node", toHandle.sourceLocation()).build();
+    }
+  }
+
+  private void handleRelocationOperand(CGenContext<Node> ctx, String argumentSymbol,
+                                       Relocation relocation) {
+    var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
     var argumentRelocationSymbol = symbolTable.getNextVariable();
     var elfRelocation =
         relocations.stream().filter(x -> x.relocation() == relocation)
@@ -303,10 +362,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     var variant = elfRelocation.get().variantKind().value();
 
     ctx.ln(
-            "const MCExpr* %s = MCOperandToMCExpr(instruction.getOperand(%d));",
-            argumentSymbol,
-            pseudoInstructionIndex)
-        .ln(
             "MCOperand %s = "
                 + "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));",
             argumentRelocationSymbol, targetName.value(), argumentSymbol, targetName.value(),
@@ -349,21 +404,33 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   @Override
   public String genFunctionDefinition() {
-    var nodes = getNodes(function.behavior(), InstrCallNode.class);
-
     context.ln(genFunctionSignature())
         .ln("{")
         .spacedIn()
         .ln("std::vector< MCInst > result;");
 
-    for (var node : nodes) {
-      var sym = symbolTable.getNextVariable();
-      context.ln("MCInst %s = MCInst();", sym)
-          .ln("%s.setOpcode(%s::%s);", sym, targetName.value(),
-              node.target().identifier.simpleName());
-      writeInstructionCall(context, node, sym);
-      context.ln("result.push_back(%s);", sym);
-    }
+    var cfgTraversal = new CfgTraverser() {
+      @Override
+      public ControlNode onDirectional(DirectionalNode dir) {
+        if (dir instanceof InstrCallNode instrCallNode) {
+          var sym = symbolTable.getNextVariable();
+          context.ln("MCInst %s = MCInst();", sym)
+              .ln("%s.setOpcode(%s::%s);", sym, targetName.value(),
+                  instrCallNode.target().identifier.simpleName());
+          writeInstructionCall(context, instrCallNode, sym);
+          context.ln("result.push_back(%s);", sym);
+        } else if (dir instanceof NewLabelNode newLabelNode) {
+          var sym = symbolTable.getNextVariable();
+          context.ln("MCSymbol %s = Ctx.createTempSymbol();", sym);
+          labelSymbolNameLookup.put(newLabelNode, sym);
+        }
+
+        return dir;
+      }
+    };
+
+    cfgTraversal.traverseBranch(
+        function.behavior().getNodes(StartNode.class).findFirst().orElseThrow());
 
     context.ln("return result;")
         .spaceOut()

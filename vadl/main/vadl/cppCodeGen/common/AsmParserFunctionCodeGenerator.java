@@ -25,6 +25,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.StringType;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
