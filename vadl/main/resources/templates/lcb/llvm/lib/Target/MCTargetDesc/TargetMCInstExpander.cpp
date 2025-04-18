@@ -55,7 +55,7 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
     return false; // unreachable
 }
 
-bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCInst> &MCIExpansion) const
+bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::function<void(const MCInst &)> callback ) const
 {
     auto opcode = MCI.getOpcode();
     switch (opcode)
@@ -67,7 +67,7 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::vector<MCIns
     [# th:each="instruction : ${compilerInstructions}" ]
       case [(${namespace})]::[(${instruction.compilerInstruction.name})]:
       {
-        MCIExpansion = [(${instruction.header})](MCI);
+        [(${instruction.header})](MCI, callback );
         return true;
       }
     [/]

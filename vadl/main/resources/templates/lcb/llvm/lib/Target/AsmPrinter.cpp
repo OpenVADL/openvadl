@@ -90,20 +90,16 @@ void [(${namespace})]AsmPrinter::emitInstruction( const MachineInstr *MI )
 
     MCInst TmpInst;
     MCInstLowering.Lower(MI, TmpInst);
-    std::vector<MCInst> resultVec;
 
     if( MCInstExpander.isExpandable( TmpInst ) )
     {
-        MCInstExpander.expand( TmpInst, resultVec );
+        MCInstExpander.expand( TmpInst, [&](const MCInst &Inst) {
+          emitToStreamer(*OutStreamer, Inst);
+        });
     }
     else
     {
-        resultVec.push_back( TmpInst );
-    }
-
-    for(auto it = std::begin(resultVec); it != std::end(resultVec); ++it)
-    {
-        emitToStreamer( *OutStreamer, *it );
+        emitToStreamer( *OutStreamer, TmpInst );
     }
 }
 

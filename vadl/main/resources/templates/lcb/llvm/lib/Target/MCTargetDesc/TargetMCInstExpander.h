@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <functional>
 
 namespace llvm
 {
@@ -17,7 +18,7 @@ namespace llvm
         [(${namespace})]MCInstExpander(class MCContext & Ctx);
         bool needsExpansion(const MCInst &MCI) const;
         bool isExpandable(const MCInst &MCI) const;
-        bool expand(const MCInst &MCI, std::vector<MCInst> &expansion) const;
+        bool expand(const MCInst &MCI, std::function<void(const MCInst &)> callback ) const;
 
     private:
         MCContext & Ctx;
@@ -30,7 +31,7 @@ namespace llvm
         //
 
         [# th:each="instructionHeaders : ${compilerInstructionHeaders}" ]
-        std::vector<MCInst> [(${instructionHeaders})]( const MCInst& instruction ) const;
+        std::vector<MCInst> [(${instructionHeaders})]( const MCInst& instruction, std::function<void(const MCInst &)> callback ) const;
         [/]
     };
 }
