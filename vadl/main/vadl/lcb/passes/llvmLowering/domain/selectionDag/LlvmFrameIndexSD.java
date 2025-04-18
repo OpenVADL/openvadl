@@ -24,7 +24,6 @@ import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
 import vadl.viam.graph.GraphNodeVisitor;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 
@@ -45,13 +44,13 @@ public class LlvmFrameIndexSD extends ReadRegFileNode implements LlvmNodeLowerab
 
 
   @Override
-  public ExpressionNode copy() {
-    return new LlvmFrameIndexSD(registerFile(), (ExpressionNode) address().copy(), type(),
+  public LlvmFrameIndexSD copy() {
+    return new LlvmFrameIndexSD(registerFile(), address().copy(), type(),
         staticCounterAccess());
   }
 
   @Override
-  public Node shallowCopy() {
+  public LlvmFrameIndexSD shallowCopy() {
     return new LlvmFrameIndexSD(registerFile(), address(), type(), staticCounterAccess());
   }
 

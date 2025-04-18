@@ -28,11 +28,13 @@ import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
@@ -45,7 +47,8 @@ public interface CInvalidMixins {
 
   @SuppressWarnings("MissingJavadocType")
   interface SideEffect
-      extends WriteReg, WriteRegFile, WriteMem, WriteArtificialRes, ProcCall, WriteStageOutput {
+      extends WriteReg, WriteRegFile, WriteRegTensor, WriteMem, WriteArtificialRes, ProcCall,
+      WriteStageOutput {
 
   }
 
@@ -58,7 +61,8 @@ public interface CInvalidMixins {
   }
 
   @SuppressWarnings("MissingJavadocType")
-  interface ResourceReads extends ReadReg, ReadMem, ReadRegFile, ReadArtificialResource {
+  interface ResourceReads
+      extends ReadReg, ReadMem, ReadRegFile, ReadRegTensor, ReadArtificialResource {
   }
 
   @SuppressWarnings("MissingJavadocType")
@@ -73,6 +77,14 @@ public interface CInvalidMixins {
   interface WriteRegFile {
     @Handler
     default void handle(CGenContext<Node> ctx, WriteRegFileNode node) {
+      throwNotAllowed(node, "Register writes");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface WriteRegTensor {
+    @Handler
+    default void handle(CGenContext<Node> ctx, WriteRegTensorNode node) {
       throwNotAllowed(node, "Register writes");
     }
   }
@@ -106,6 +118,14 @@ public interface CInvalidMixins {
   interface ReadReg {
     @Handler
     default void handle(CGenContext<Node> ctx, ReadRegNode node) {
+      throwNotAllowed(node, "Register reads");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface ReadRegTensor {
+    @Handler
+    default void handle(CGenContext<Node> ctx, ReadRegTensorNode node) {
       throwNotAllowed(node, "Register reads");
     }
   }

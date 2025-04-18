@@ -16,8 +16,6 @@
 
 package vadl.viam;
 
-import static com.google.common.collect.Lists.reverse;
-
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
@@ -152,7 +150,7 @@ public class RegisterTensor extends Resource {
         "Too many dimensions provided, max is size - 1 dimensions.");
     // concatenate the reset of all returned dimensions by multiply the entries per
     // dimension
-    var width = reverse(dimensions).stream()
+    var width = dimensions.stream()
         .skip(accessedDimensions)
         .mapToInt(Dimension::size)
         .reduce(1, (a, b) -> a * b);

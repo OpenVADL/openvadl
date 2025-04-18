@@ -64,6 +64,10 @@ public abstract class WriteResourceNode extends SideEffectNode {
     return false;
   }
 
+  public NodeList<ExpressionNode> indices() {
+    return indices;
+  }
+
   public ExpressionNode address() {
     ensure(indices.size() == 1, "Indices size is not 1. Check hasAddress before access.");
     return indices.getFirst();

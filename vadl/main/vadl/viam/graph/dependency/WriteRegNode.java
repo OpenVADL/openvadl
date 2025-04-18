@@ -22,9 +22,9 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Counter;
 import vadl.viam.Register;
-import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.UniqueNode;
 
 /**
@@ -37,10 +37,7 @@ import vadl.viam.graph.UniqueNode;
  * <li>All reads must occur before all writes</li>
  * </p>
  */
-public class WriteRegNode extends WriteResourceNode {
-
-  @DataValue
-  protected Register register;
+public class WriteRegNode extends WriteRegTensorNode {
 
   // a register-write might write to a counter.
   // if this is the case, the counter is set.
@@ -58,8 +55,7 @@ public class WriteRegNode extends WriteResourceNode {
    */
   public WriteRegNode(Register register, ExpressionNode value,
                       @Nullable Counter.RegisterCounter staticCounterAccess) {
-    super((ExpressionNode) null, value);
-    this.register = register;
+    super(register, new NodeList<>(), value);
     this.staticCounterAccess = staticCounterAccess;
   }
 
@@ -76,14 +72,12 @@ public class WriteRegNode extends WriteResourceNode {
   public WriteRegNode(Register register, ExpressionNode value,
                       @Nullable Counter.RegisterCounter staticCounterAccess,
                       @Nullable ExpressionNode condition) {
-    super((ExpressionNode) null, value);
-    this.register = register;
-    this.staticCounterAccess = staticCounterAccess;
+    this(register, value, staticCounterAccess);
     this.condition = condition;
   }
 
   public Register register() {
-    return register;
+    return (Register) resourceDefinition();
   }
 
   @Nullable
@@ -103,28 +97,22 @@ public class WriteRegNode extends WriteResourceNode {
   }
 
   @Override
-  public Resource resourceDefinition() {
-    return register;
-  }
-
-  @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(register);
     collection.add(staticCounterAccess);
   }
 
   @Override
   public Node copy() {
-    return new WriteRegNode(register,
-        (ExpressionNode) value.copy(),
+    return new WriteRegNode(register(),
+        value.copy(),
         staticCounterAccess,
-        (condition != null ? (ExpressionNode) condition.copy() : null));
+        (condition != null ? condition.copy() : null));
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteRegNode(register, value, staticCounterAccess, condition);
+    return new WriteRegNode(register(), value, staticCounterAccess, condition);
   }
 
   @Override

@@ -92,6 +92,7 @@ import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -102,6 +103,7 @@ import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.CfgTraverser;
@@ -547,6 +549,13 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     throw new UnsupportedOperationException("Type ReadArtificialResNode not yet implemented");
   }
 
+  @Handler
+  void handle(ReadRegTensorNode toHandle) {
+    // Nothing to do; register reads are TCG variables created at instruction start
+    replaceCurrent();
+  }
+
+
   /**
    * Handles the {@link ReadRegFileNode}. Currently does nothing as TCG variables
    * represent register file reads.
@@ -589,6 +598,17 @@ class TcgOpLoweringExecutor implements CfgTraverser {
       replaceCurrent(new TcgMoveNode(destVar, srcVar));
     }
   }
+
+  /**
+   * Handles the {@link WriteRegFileNode} by generating a TCG move operation if necessary.
+   *
+   * @param toHandle The node to handle.
+   */
+  @Handler
+  void handle(WriteRegTensorNode toHandle) {
+    throw new UnsupportedOperationException("Type WriteRegTensorNode not yet implemented");
+  }
+
 
   /**
    * Handles the {@link WriteRegNode} by generating a TCG move operation if necessary.
