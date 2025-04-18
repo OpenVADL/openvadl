@@ -63,7 +63,8 @@ public class HardcodeLGALabelPass extends Pass {
               .orElseThrow();
 
           var pcrel = (FuncCallNode) ldInstruction.arguments().get(2);
-          pcrel.arguments().get(0).replaceAndDelete(labelNode);
+          var symbol = pcrel.arguments().getFirst();
+          pcrel.replaceInput(symbol, labelNode);
         }));
 
     return null;
