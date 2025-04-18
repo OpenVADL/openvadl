@@ -40,7 +40,7 @@ public class RemainderWithOneSimplificationRule implements AlgebraicSimplificati
     if (node instanceof ExpressionNode n) {
       var matcher =
           new BuiltInMatcher(
-              List.of(BuiltInTable.SMOD, BuiltInTable.UMOD, BuiltInTable.SMODS, BuiltInTable.UMODS),
+              List.of(BuiltInTable.SMOD, BuiltInTable.UMOD),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
                   Constant.Value.of(1, (DataType) n.type()))));
 
