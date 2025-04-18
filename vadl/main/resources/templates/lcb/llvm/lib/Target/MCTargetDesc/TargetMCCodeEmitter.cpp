@@ -137,6 +137,8 @@ void [(${namespace})]MCCodeEmitter::encodeInstruction(const MCInst &MCI, raw_ost
           const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
           unsigned Size = Desc.getSize();
           Offset += Size;
+        },
+        [&](MCSymbol* Symbol) {
         });
     }
     else

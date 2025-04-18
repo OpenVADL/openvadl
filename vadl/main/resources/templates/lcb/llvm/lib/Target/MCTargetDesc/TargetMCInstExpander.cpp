@@ -7,6 +7,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSymbol.h"
 
 #define DEBUG_TYPE "[(${namespace})]MCInstExpander"
 
@@ -55,7 +56,9 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
     return false; // unreachable
 }
 
-bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::function<void(const MCInst &)> callback ) const
+bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI,
+  std::function<void(const MCInst &)> callback,
+  std::function<void(MCSymbol*)> callbackSymbol  ) const
 {
     auto opcode = MCI.getOpcode();
     switch (opcode)
@@ -67,7 +70,7 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI, std::function<voi
     [# th:each="instruction : ${compilerInstructions}" ]
       case [(${namespace})]::[(${instruction.compilerInstruction.name})]:
       {
-        [(${instruction.header})](MCI, callback );
+        [(${instruction.header})](MCI, callback, callbackSymbol );
         return true;
       }
     [/]

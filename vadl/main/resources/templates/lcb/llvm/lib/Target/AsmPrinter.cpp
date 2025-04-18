@@ -95,6 +95,9 @@ void [(${namespace})]AsmPrinter::emitInstruction( const MachineInstr *MI )
     {
         MCInstExpander.expand( TmpInst, [&](const MCInst &Inst) {
           emitToStreamer(*OutStreamer, Inst);
+        },
+        [&](MCSymbol* Symbol) {
+          OutStreamer->emitLabel(Symbol);
         });
     }
     else

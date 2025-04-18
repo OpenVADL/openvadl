@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdint>
 #include <functional>
+#include "llvm/MC/MCSymbol.h"
 
 namespace llvm
 {
@@ -18,7 +19,7 @@ namespace llvm
         [(${namespace})]MCInstExpander(class MCContext & Ctx);
         bool needsExpansion(const MCInst &MCI) const;
         bool isExpandable(const MCInst &MCI) const;
-        bool expand(const MCInst &MCI, std::function<void(const MCInst &)> callback ) const;
+        bool expand(const MCInst &MCI, std::function<void(const MCInst &)> callback, std::function<void(MCSymbol* )> callbackSymbol ) const;
 
     private:
         MCContext & Ctx;
@@ -31,7 +32,9 @@ namespace llvm
         //
 
         [# th:each="instructionHeaders : ${compilerInstructionHeaders}" ]
-        std::vector<MCInst> [(${instructionHeaders})]( const MCInst& instruction, std::function<void(const MCInst &)> callback ) const;
+        std::vector<MCInst> [(${instructionHeaders})]( const MCInst& instruction,
+          std::function<void(const MCInst &)> callback,
+          std::function<void(MCSymbol*)> callbackSymbol ) const;
         [/]
     };
 }

@@ -389,6 +389,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         } else if (dir instanceof NewLabelNode newLabelNode) {
           var sym = symbolTable.getNextVariable();
           context.ln("MCSymbol *%s = Ctx.createTempSymbol();", sym);
+          context.ln("callbackSymbol(%s);", sym);
           labelSymbolNameLookup.put(newLabelNode, sym);
         }
 
@@ -478,6 +479,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   public String genFunctionSignature() {
     return "std::vector<MCInst> %sMCInstExpander::%s_%s".formatted(targetName.value(),
         compilerInstruction.identifier.lower(), function.simpleName())
-        + "(const MCInst& instruction, std::function<void(const MCInst &)> callback ) const";
+        + "(const MCInst& instruction, std::function<void(const MCInst &)> callback, std::function<void(MCSymbol* )> callbackSymbol ) const";
   }
 }
