@@ -126,16 +126,16 @@ public class WriteRegFileNode extends WriteResourceNode implements HasRegisterFi
   @Override
   public Node copy() {
     return new WriteRegFileNode(registerFile,
-        (ExpressionNode) address().copy(),
-        (ExpressionNode) value.copy(),
+        address().copy(),
+        value.copy(),
         staticCounterAccess,
-        (condition != null ? (ExpressionNode) condition.copy() : null));
+        (condition != null ? condition.copy() : null));
   }
 
   @Override
   public Node shallowCopy() {
     return new WriteRegFileNode(registerFile,
-        Objects.requireNonNull(address),
+        address(),
         value,
         staticCounterAccess,
         condition);

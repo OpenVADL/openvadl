@@ -18,12 +18,13 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.viam.Resource;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 
 /**
  * The ReadNode class is an abstract class that extends ExpressionNode
@@ -33,21 +34,25 @@ import vadl.viam.graph.Node;
 public abstract class ReadResourceNode extends ExpressionNode {
 
   @Input
-  @Nullable
-  protected ExpressionNode address;
+  protected NodeList<ExpressionNode> indices;
 
   public ReadResourceNode(@Nullable ExpressionNode address, DataType type) {
     super(type);
-    this.address = address;
+    this.indices = address == null ? new NodeList<>() : new NodeList<>(address);
+  }
+
+  public ReadResourceNode(NodeList<ExpressionNode> indices, DataType type) {
+    super(type);
+    this.indices = indices;
   }
 
   public ExpressionNode address() {
-    ensureNonNull(address, "Address is not set. Check hasAddress before access.");
-    return address;
+    ensure(indices.size() == 1, "Indices size is not 1. Check hasAddress before access.");
+    return indices.getFirst();
   }
 
   public boolean hasAddress() {
-    return address != null;
+    return indices.size() == 1;
   }
 
   @Override
@@ -57,6 +62,10 @@ public abstract class ReadResourceNode extends ExpressionNode {
 
   public abstract Resource resourceDefinition();
 
+  public NodeList<ExpressionNode> indices() {
+    return indices;
+  }
+
   @Override
   public void verifyState() {
     super.verifyState();
@@ -65,12 +74,12 @@ public abstract class ReadResourceNode extends ExpressionNode {
     ensure(resource.hasAddress() == hasAddress(),
         "Resource takes address but this node has no address node.");
 
-    if (address != null) {
-      var addressType = address.type();
+    if (hasAddress()) {
+      var addressType = address().type();
       var resAddrType = resource.addressType();
       Objects.requireNonNull(resAddrType); // just to satisfy errorprone
       ensure(addressType instanceof DataType,
-          "Address must be a DataValue, was %s", address.type());
+          "Address must be a DataValue, was %s", address().type());
       ensure(((DataType) addressType).isTrivialCastTo(resAddrType),
           "Address value cannot be trivially cast to resource's address type. %s vs %s",
           resource.addressType(), addressType);
@@ -80,15 +89,15 @@ public abstract class ReadResourceNode extends ExpressionNode {
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
-    if (this.address != null) {
-      collection.add(address);
-    }
+    collection.addAll(indices);
   }
 
   @Override
-  public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+  public void applyOnInputsUnsafe(
+      vadl.viam.graph.GraphVisitor.Applier<vadl.viam.graph.Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    address = visitor.applyNullable(this, address, ExpressionNode.class);
+    indices = indices.stream().map((e) -> visitor.apply(this, e, ExpressionNode.class))
+        .collect(Collectors.toCollection(NodeList::new));
   }
 
   /**
@@ -96,8 +105,7 @@ public abstract class ReadResourceNode extends ExpressionNode {
    */
   public boolean hasConstantAddress() {
     if (hasAddress()) {
-      ensureNonNull(address, "address must not be null");
-      return address.isConstant();
+      return address().isConstant();
     }
 
     return false;

@@ -58,7 +58,7 @@ public class WriteRegNode extends WriteResourceNode {
    */
   public WriteRegNode(Register register, ExpressionNode value,
                       @Nullable Counter.RegisterCounter staticCounterAccess) {
-    super(null, value);
+    super((ExpressionNode) null, value);
     this.register = register;
     this.staticCounterAccess = staticCounterAccess;
   }
@@ -76,7 +76,7 @@ public class WriteRegNode extends WriteResourceNode {
   public WriteRegNode(Register register, ExpressionNode value,
                       @Nullable Counter.RegisterCounter staticCounterAccess,
                       @Nullable ExpressionNode condition) {
-    super(null, value);
+    super((ExpressionNode) null, value);
     this.register = register;
     this.staticCounterAccess = staticCounterAccess;
     this.condition = condition;

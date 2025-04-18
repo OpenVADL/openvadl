@@ -53,7 +53,7 @@ public class ReadRegNode extends ReadResourceNode {
    */
   public ReadRegNode(Register register, DataType type,
                      @Nullable Counter.RegisterCounter staticCounterAccess) {
-    super(null, type);
+    super((ExpressionNode) null, type);
     this.register = register;
     this.staticCounterAccess = staticCounterAccess;
   }

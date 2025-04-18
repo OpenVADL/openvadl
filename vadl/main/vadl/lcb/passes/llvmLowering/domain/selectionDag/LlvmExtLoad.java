@@ -16,7 +16,6 @@
 
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
-import java.util.Objects;
 import vadl.lcb.passes.llvmLowering.LlvmMayLoadMemory;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
@@ -47,14 +46,14 @@ public class LlvmExtLoad extends ReadMemNode implements LlvmNodeLowerable,
 
   @Override
   public ExpressionNode copy() {
-    return new LlvmExtLoad((ExpressionNode) Objects.requireNonNull(address).copy(),
+    return new LlvmExtLoad(address().copy(),
         memory,
         words);
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmExtLoad(Objects.requireNonNull(address), memory, words);
+    return new LlvmExtLoad(address(), memory, words);
   }
 
   @Override

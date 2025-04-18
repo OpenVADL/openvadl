@@ -32,7 +32,10 @@ import vadl.types.Type;
  *
  * <p>The dimension list is sorted as in the VADL specification: outer dimensions are at the start,
  * inner ones are at the end.
- * The minimal accessible unit is the innermost dimension as a whole.</p>
+ * The minimal accessible unit is the innermost dimension as a whole.
+ * If users access more specific areas of a register by using formats, slices, or an index on the
+ * innermost dimension, these accesses are resolved by the frontend by using slice
+ * nodes in the graph.</p>
  *
  * <p>A {@link Register} has only a single dimension.
  * E.g. {@code register X: Bits<32>} has dimensions {@code { (Bits<5>, 32) }} and its result type
@@ -80,8 +83,24 @@ public class RegisterTensor extends Resource {
     return dimensions.size();
   }
 
+  /**
+   * The dimensions of this register tensor.
+   * The outermost dimension is at the start, the innermost at the end of the list.
+   */
   public List<Dimension> dimensions() {
     return dimensions;
+  }
+
+  public int maxNumberOfAccessIndices() {
+    return dimCount() - 1;
+  }
+
+  /**
+   * Returns whether this register tensor represents a single register.
+   * This the case if the number of dimensions is 1.
+   */
+  public boolean isSingleRegister() {
+    return dimCount() == 1;
   }
 
   public Dimension outermostDim() {
@@ -109,20 +128,34 @@ public class RegisterTensor extends Resource {
     return outermostDim().indexType();
   }
 
+  /**
+   * The Bits type of the innermost dimension.
+   * It assumes that dimCount - 1 dimensions are accessed.
+   */
   @Override
   public DataType resultType() {
     return DataType.bits(innermostDim().size());
   }
 
+  /**
+   * The concatenated bits type of all dimensions that were not accessed.
+   * E.g. given {@code register X: Bits<8><4><32>} then the result type of
+   * {@code X(2)} would be {@code Bits<4 * 32>}, as the provided number of dimensions
+   * was {@code 1}.
+   *
+   * @param accessedDimensions number of accessed dimensions (indexes when accessing register)
+   * @return a Bits type with the concatenation of all dimensions that were not accessed.
+   */
   @Override
-  public DataType resultType(int providedDimensions) {
-    ensure(providedDimensions < dimensions.size(),
+  public DataType resultType(int accessedDimensions) {
+    ensure(accessedDimensions < dimensions.size(),
         "Too many dimensions provided, max is size - 1 dimensions.");
-    // concatenate the reset of all returned dimensions
+    // concatenate the reset of all returned dimensions by multiply the entries per
+    // dimension
     var width = reverse(dimensions).stream()
-        .skip(providedDimensions)
+        .skip(accessedDimensions)
         .mapToInt(Dimension::size)
-        .sum();
+        .reduce(1, (a, b) -> a * b);
     return Type.bits(width);
   }
 

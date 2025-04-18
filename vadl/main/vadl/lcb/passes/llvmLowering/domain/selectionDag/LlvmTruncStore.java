@@ -17,7 +17,6 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
@@ -77,13 +76,13 @@ public class LlvmTruncStore extends WriteResourceNode implements LlvmNodeLowerab
   @Override
   public Node copy() {
     return new LlvmTruncStore(memory, words, truncatedType,
-        (ExpressionNode) Objects.requireNonNull(address).copy(),
-        (ExpressionNode) value.copy());
+        address().copy(),
+        value.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmTruncStore(memory, words, truncatedType, address, value);
+    return new LlvmTruncStore(memory, words, truncatedType, address(), value);
   }
 
   @Override

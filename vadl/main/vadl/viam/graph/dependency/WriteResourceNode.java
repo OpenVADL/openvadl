@@ -18,12 +18,13 @@ package vadl.viam.graph.dependency;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.viam.Resource;
-import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 
 /**
  * Represents a write operation to some location that produces a side
@@ -32,23 +33,23 @@ import vadl.viam.graph.Node;
 public abstract class WriteResourceNode extends SideEffectNode {
 
   @Input
-  @Nullable
-  protected ExpressionNode address;
+  protected NodeList<ExpressionNode> indices;
 
   @Input
   protected ExpressionNode value;
 
   public WriteResourceNode(@Nullable ExpressionNode address, ExpressionNode value) {
-    this.address = address;
+    this.indices = address == null ? new NodeList<>() : new NodeList<>(address);
     this.value = value;
   }
 
-  public void setAddress(ExpressionNode address) {
-    this.address = address;
+  public WriteResourceNode(NodeList<ExpressionNode> indices, ExpressionNode value) {
+    this.indices = indices;
+    this.value = value;
   }
 
   public boolean hasAddress() {
-    return address != null;
+    return indices.size() == 1;
   }
 
   /**
@@ -56,22 +57,22 @@ public abstract class WriteResourceNode extends SideEffectNode {
    */
   public boolean hasConstantAddress() {
     if (hasAddress()) {
-      ensureNonNull(address, "address must not be null");
-      return address.isConstant();
+      ensureNonNull(address(), "address must not be null");
+      return address().isConstant();
     }
 
     return false;
   }
 
   public ExpressionNode address() {
-    ensureNonNull(address, "Address is not set. Check hasAddress() first.");
-    return address;
+    ensure(indices.size() == 1, "Indices size is not 1. Check hasAddress before access.");
+    return indices.getFirst();
   }
 
   public ExpressionNode value() {
     return value;
   }
-  
+
 
   /**
    * The number of bits that is getting written to the resource.
@@ -94,13 +95,13 @@ public abstract class WriteResourceNode extends SideEffectNode {
     ensure(resource.hasAddress() == hasAddress(),
         "Resource takes address but this node has no address node.");
 
-    if (address != null) {
-      var addressType = address.type();
+    if (hasAddress()) {
+      var addressType = address().type();
       var resAddrType = resource.addressType();
       Objects.requireNonNull(resAddrType); // just to satisfy errorprone
       ensure(addressType instanceof DataType,
-          "Address must be a DataValue, was %s", address.type());
-      ensure(((DataType) addressType).isTrivialCastTo(resAddrType),
+          "Address must be a DataValue, was %s", address().type());
+      ensure(addressType.isTrivialCastTo(resAddrType),
           "Address value cannot be cast to resource's address type. %s vs %s",
           resource.addressType(), addressType);
     }
@@ -110,16 +111,16 @@ public abstract class WriteResourceNode extends SideEffectNode {
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
-    if (this.address != null) {
-      collection.add(address);
-    }
+    collection.addAll(indices);
     collection.add(value);
   }
 
   @Override
-  public void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+  public void applyOnInputsUnsafe(
+      vadl.viam.graph.GraphVisitor.Applier<vadl.viam.graph.Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    address = visitor.applyNullable(this, address, ExpressionNode.class);
+    indices = indices.stream().map((e) -> visitor.apply(this, e, ExpressionNode.class))
+        .collect(Collectors.toCollection(NodeList::new));
     value = visitor.apply(this, value, ExpressionNode.class);
   }
 

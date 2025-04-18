@@ -16,7 +16,6 @@
 
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
-import java.util.Objects;
 import vadl.lcb.passes.llvmLowering.LlvmMayStoreMemory;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.LlvmSideEffectPatternIncluded;
@@ -43,15 +42,15 @@ public class LlvmStoreSD extends WriteMemNode implements LlvmNodeLowerable,
 
   @Override
   public Node copy() {
-    return new LlvmStoreSD((ExpressionNode) Objects.requireNonNull(address).copy(),
-        (ExpressionNode) value.copy(),
+    return new LlvmStoreSD(address().copy(),
+        value.copy(),
         memory,
         words);
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmStoreSD(Objects.requireNonNull(address), value, memory, words);
+    return new LlvmStoreSD(address(), value, memory, words);
   }
 
   @Override

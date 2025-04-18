@@ -17,7 +17,6 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
@@ -109,14 +108,14 @@ public class WriteMemNode extends WriteResourceNode {
   @Override
   public Node copy() {
     return new WriteMemNode(memory, words,
-        (ExpressionNode) Objects.requireNonNull(address).copy(),
-        (ExpressionNode) value.copy(),
+        address().copy(),
+        value.copy(),
         (condition != null ? condition.copy() : null));
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteMemNode(memory, words, Objects.requireNonNull(address), value, condition);
+    return new WriteMemNode(memory, words, address(), value, condition);
   }
 
   @Override
