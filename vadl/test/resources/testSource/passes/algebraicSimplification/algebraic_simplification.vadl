@@ -1,0 +1,36 @@
+
+instruction set architecture Tests = {
+  using Index = Bits<5>
+  using Address  = Bits<32>
+
+  register file X: Index -> Bits<32>
+
+  instruction SHIFT_LEFT_0: TMP = {
+    X(ONE) := (X(ONE) << 0) as Bits<32>
+  }
+  encoding SHIFT_LEFT_0 = { ONE = 2 }
+  assembly SHIFT_LEFT_0 = "just a dummy"
+
+  instruction SHIFT_RIGHT_0: TMP = {
+    X(ONE) := (X(ONE) >> 0) as Bits<32>
+  }
+  encoding SHIFT_RIGHT_0 = { ONE = 2 }
+  assembly SHIFT_RIGHT_0 = "just a dummy"
+
+  instruction ROT_LEFT_0: TMP = {
+    X(ONE) := VADL::rol(X(ONE), 0 as UInt<32>) as Bits<32>
+  }
+  encoding ROT_LEFT_0 = { ONE = 2 }
+  assembly ROT_LEFT_0 = "just a dummy"
+
+  instruction ROT_RIGHT_0: TMP = {
+    X(ONE) := VADL::ror(X(ONE), 0 as UInt<32>) as Bits<32>
+  }
+  encoding ROT_RIGHT_0 = { ONE = 2 }
+  assembly ROT_RIGHT_0 = "just a dummy"
+  format TMP: Bits<5> =
+  { ONE: Bits<5>
+  }
+}
+
+micro processor TEST implements Tests = { start = 0x1000 }

@@ -20,34 +20,28 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import vadl.types.BuiltInTable;
-import vadl.types.DataType;
-import vadl.viam.Constant;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
-import vadl.viam.matching.impl.ConstantValueMatcher;
 import vadl.viam.matching.impl.IsZeroConstantValueMatcher;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 
 /**
- * Simplification rule when multiplication with zero then return 0.
+ * Simplification rule when rotate with zero then return the first operand.
  */
-public class MultiplicationWithZeroSimplificationRule implements AlgebraicSimplificationRule {
+public class RotateSimplificationRule implements AlgebraicSimplificationRule {
   @Override
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
       var matcher =
-          new BuiltInMatcher(
-              List.of(BuiltInTable.MUL, BuiltInTable.MULS, BuiltInTable.SMULL, BuiltInTable.SMULLS,
-                  BuiltInTable.UMULL, BuiltInTable.SUMULL, BuiltInTable.SUMULLS),
+          new BuiltInMatcher(List.of(BuiltInTable.ROL, BuiltInTable.ROR),
               List.of(new AnyNodeMatcher(), new IsZeroConstantValueMatcher()));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {
-        return Optional.of(new ConstantNode(Constant.Value.of(0, (DataType) n.type())));
+        return Optional.ofNullable(n.inputs().toList().get(0));
       }
     }
     return Optional.empty();

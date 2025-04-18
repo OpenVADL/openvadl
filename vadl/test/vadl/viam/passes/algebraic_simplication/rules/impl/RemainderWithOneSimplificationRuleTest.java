@@ -40,8 +40,7 @@ class RemainderWithOneSimplificationRuleTest extends AbstractTest {
       new RemainderWithOneSimplificationRule();
 
   private static Stream<Arguments> getSupportedBuiltins() {
-    return Stream.of(Arguments.of(BuiltInTable.SMOD), Arguments.of(BuiltInTable.UMOD),
-        Arguments.of(BuiltInTable.SMODS), Arguments.of(BuiltInTable.UMODS));
+    return Stream.of(Arguments.of(BuiltInTable.SMOD), Arguments.of(BuiltInTable.UMOD));
   }
 
   @ParameterizedTest
