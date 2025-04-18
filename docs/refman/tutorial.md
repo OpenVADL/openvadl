@@ -1640,6 +1640,195 @@ AndInstruction @instruction :
 
 \lbl{tut_mia_definition}
 
+The microarchitecture section aims to specify the processor implementation at a high level of abstraction.
+These abstractions enable a concise and understandable specification, as the generators handle many implementation details (e.g., hazard detection or pipeline registers).
+Users would have more flexibility and control with low level microarchitecture specifications (e.g., in a \ac{HDL}), but it would be impossible for generators to determine the purpose or the correctness of such specifications.
+Therefore, only predefined elements configurable by annotations are supported.
+If these predefined elements are not sufficient, further elements have to be added to the language and the affected generators have to be extended.
+
+Firstly, this section will present the core concepts of the MiA definition - pipeline stages and instructions.
+Then, these concepts are illustrated with the example of a 5-stage implementation of the RISC-V architecture.
+Finally, logic elements that model components outside of the stages (e.g., caches, control logic) are discussed.
+
+### Pipeline Stage
+
+Pipeline stages allow users to define the hardware structure of the processor.
+Each stage defines cyclic behavior, which the processor executes.
+For example, one processor stage might fetch instructions from memory while another computes arithmetic results.
+Users can specify the exact behavior using syntax similar to that used to express the instruction behavior in Section \r{tut_isa_definition}.
+It is easy to define a concise microarchitecture using powerful language built-ins.
+Section \r{tut_example_mia} provides some examples of pipeline stages.
+
+In addition to the provided examples, annotations can specify a stage's restart interval and latency period.
+The restart interval governs the frequency at which new inputs are allowed to enter the stage.
+In contrast, the latency period controls the number of machine cycles required to complete a single execution.
+Additionally, users can assign a range to the latency, thus providing pipeline stages of varying lengths.
+
+### Instruction Abstraction
+\lbl{tut_instruction_abstraction}
+
+The instruction abstraction is a central concept of the \ac{MiA}.
+Users can leverage this concept with `Instruction` typed variables.
+These variables abstract away two dimensions -- the kind of instruction and the progress of the instruction execution.
+The first aspect implies that the \ac{MiA} specification is not aware of the instructions present in the \ac{ISA}.
+Such variables may even represent VLIW bundles.
+The second aspect implies that the \ac{MiA} specification is not aware of the execution state.
+That is, it is not aware of which parts of the instruction semantics have already been computed at any point in the pipeline.
+The generator resolves these abstractions automatically during the microarchitecture synthesis.
+If the generator cannot entirely resolve the abstractions, it will raise an error.
+
+Because the \ac{MiA} is blissfully unaware of the complexity behind the `Instruction` variable, it can solely interact with the instruction using abstract operations on the variable.
+For example, it can specify that the instruction should make arithmetic computations using `instr.compute`.
+\ac{VADL} provides a set of such operations.
+We will refer to them as instruction mappings, or simply mappings.
+Some mappings are very general (e.g., read any register), while others are more specific (e.g., read register file `X`).
+This enables users to trade off between precise control and compatibility with other \acp{ISA}.
+
+### An Exemplary Pipeline
+\lbl{tut_example_mia}
+
+This Section describes the `FiveStage` microarchitecture depicted in Listing \r{mia_definition}.
+A microarchitecture must implement an \ac{ISA}, such as the `RV32IM` architecture (line 2) in our example.
+The pipeline consists of five stages.
+The specifications of each stage will be discussed in the following paragraphs.
+The `dataBusWidth` annotation determines the width of the memory interface.
+In this example, reading from and writing to memory is done in 32-bit blocks.
+
+\listing{mia_definition, Micro Architecture Definition}
+~~~{.vadlmia}
+[ dataBusWidth = 32 ]
+micro architecture FiveStage implements RV32IM = {
+  stage FETCH -> ( fr : FetchResult ) = {
+    fr := fetchNext
+  }
+
+  stage DECODE -> ( ir : Instruction ) = {
+    let instr = decode( FETCH.fr ) in {
+      instr.address( @X )
+      instr.read( @X )
+      instr.read( @PC )
+      ir := instr
+    }
+  }
+
+  stage EXECUTE -> ( ir : Instruction ) = {
+    let instr = DECODE.ir in {
+      if( instr.unknown ) then
+        raise invalid
+      instr.compute
+      instr.verify
+      instr.write( @PC )
+      ir := instr
+    }
+  }
+
+  stage MEMORY -> ( ir : Instruction ) = {
+    let instr = EXECUTE.ir in {
+      instr.write( @MEM )
+      instr.read( @MEM )
+      ir := instr
+    }
+  }
+
+  stage WRITE_BACK = {
+    let instr = MEMORY.ir in
+      instr.write( @X )
+  }
+}
+~~~
+\endlisting
+
+Listing \r{mia_definition} depicts the `FETCH` and `DECODE` stages of the pipeline.
+All stages but the final stage have to specify the result of the stage.
+The order of stages is defined by accessing the result of a previous stage.
+The `FETCH` stage makes use of the `fetchNext` built-in.
+The result type of this operation (`FetchResult`) abstracts the fetch size while the built-in automatically determines the next program counter.
+The generator determines the fetch size by analyzing the instructions in the \ac{ISA}.
+In the future, VADL users may provide additional options for the fetch operation (e.g., buffers, multiple instructions).
+To understand the \ac{MiA} specification, it is sufficient to know that the `fetchNext` built-in loads enough bytes from the correct memory position to represent a single instruction.
+
+The `DECODE` stage makes use of the `decode` built-in.
+The primary goal of this built-in is to represent a decoder for the implemented \ac{ISA}.
+The generator will synthesize a decoder automatically.
+It takes a `FetchResult` as input and produces an `Instruction` as output.
+This is the origin of the instruction abstraction, which was discussed in Section \r{tut_instruction_abstraction}.
+The `FetchResult` input is obtained from the preceding `FETCH` stage.
+Note that the generator can resolve the instruction abstraction because it has access to the \ac{ISA}.
+The decoded instruction then reads the source operands from the `X` register file.
+
+Listing \r{mia_definition} shows the specification for the `EXECUTE` stage.
+It is responsible for computing arithmetic operations and executing branches.
+Firstly, the stage obtains the current instruction from the `DECODE` stage (line 17).
+Then, the specification checks whether the instruction is valid (line 18).
+If not, the stage raises an invalid instruction exception, thus redirecting the control flow to the exception handler (line 19).
+If the instruction is valid, the stage computes arithmetic operations (line 20) and writes the new program counter (line 22).
+In addition, the stage verifies whether the instruction is on the correct program execution path (line 21).
+If this is not the case (branch misprediction), the control logic flushes the `EXECUTE` stage and all its predecessors.
+The `MEMORY` and `WRITE_BACK` stages in Listing \r{mia_definition} complete the 5-stage pipeline.
+The displayed definitions define a valid \ac{VADL} \ac{MiA} specification.
+
+### Logic Elements
+
+\ac{VADL} uses the concept of a logic element to model microarchitectural concepts besides stages.
+The complexity of logic elements varies greatly depending on its semantics.
+An annotation determines a logic element's type and, thus, its semantics.
+For example, Listing \r{forwarding} displays a logic element that allows users to define forwarding paths between stages.
+The generator must be aware of the logic element's semantics as it must derive the implementation in the microarchitecture synthesis.
+
+\listing{forwarding, Decode Stage with Forwarding Logic}
+~~~{.vadlmia}
+[forwarding]
+logic bypass
+
+stage DECODE -> (ir : Instruction) = {
+    let instr = decode( FETCH.fr ) in {
+        instr.readOrForward( @X, @bypass )
+        ir := instr
+    }
+}
+~~~
+\endlisting
+
+Connecting logic elements with the instruction abstraction realizes their full potential.
+Listing \r{forwarding} also shows how instructions may read and write values to the previously mentioned forwarding logic.
+As the generator is aware of the semantics, it can synthesize the logic of the forwarding network.
+Furthermore, it can also integrate this knowledge into the hazard detection logic element.
+After all, the control unit should not stall the pipeline if a forward can resolve the hazard.
+
+Readers familiar with microarchitecture design may have noticed that the specification does not contain elements for the necessary control logic and hazard detection.
+If the generator does not find a logic element that handles these circumstances, it inserts a default hazard detection and control element into the \ac{MiA}.
+Later, the microarchitecture synthesis determines the necessary control logic for the processor.
+
+
+### Caches
+
+To represent a memory sub-system, \ac{VADL} provides a `cache` definition to describe caches.
+The definition can be parameterized through annotations.
+Listing \r{cache_definition} defines a cache named `L1` with 1024 entries (cache lines).
+
+\listing{cache_definition, Cache Definition}
+~~~{.vadl}
+[ write through ]
+[ evict roundrobin ]
+[ entries = 1024 ]
+[ blocks = 4 ]
+[ n_set = 2 ]
+[ attached_to MEM ]
+cache L1 : VirtualAddress -> Bits<8>
+~~~
+\endlisting
+
+A single cache line has 4 blocks where a single block corresponds to one addressable unit.
+For instance, this would be eight bits on a byte-addressable architecture.
+Our cache is defined to be 2-way associative (`n_set`).
+Since the cache has 1024 entries and each set contains two entries, the cache has a total of 512 sets.
+Observe that setting (`n_set`) to 1 is equivalent to a direct mapped cache, while `n_set = entries` makes the cache fully associative.
+Most importantly, the `attached_to` annotation defines where the cache can fallback to in case of a miss.
+The fallback storage can be another cache (e.g., level 2), memory or a process.
+The latter can be used to translate a virtual address to a physical one before accessing main memory for instance.
+In addition, several behavioral aspects of the cache can be specified, such as write and eviction policy.
+
+
 ## Processor Definition
 
 \lbl{tut_prc_definition}
