@@ -162,7 +162,7 @@ public class GenerateLinkerComponentsPass extends Pass {
           AutomaticallyGeneratedRelocation.createGcbRelocationCppFunction(relocation);
 
       var userSpecifiedRelocation =
-          new UserSpecifiedRelocation(relocation.identifier.append(""), modifier, variantKind,
+          new UserSpecifiedRelocation(relocation.identifier, modifier, variantKind,
               gcbRelocationFunction, relocation);
       relocationsBeforeElfExpansion.add(userSpecifiedRelocation);
 

@@ -33,8 +33,6 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.gcb.passes.MachineInstructionLabelGroup;
 import vadl.gcb.passes.ValueRange;
 import vadl.gcb.passes.ValueRangeCtx;
-import vadl.gcb.passes.relocation.model.Modifier;
-import vadl.gcb.valuetypes.RelocationFunctionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.isaMatching.database.Database;
 import vadl.lcb.passes.isaMatching.database.Query;
@@ -42,7 +40,6 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.ISelLoweringOperationActionPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmMachineInstructionUtil;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
-import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -92,8 +89,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var abi = (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var linkerInformation = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
-        GenerateLinkerComponentsPass.class);
     var registerFiles = ((GenerateTableGenRegistersPass.Output) passResults.lastResultOf(
         GenerateTableGenRegistersPass.class)).registerClasses();
     var framePointer = renderRegister(abi.framePointer().registerFile(), abi.framePointer().addr());
@@ -112,7 +107,6 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var hasCMove64 = labelledMachineInstructions.containsKey(MachineInstructionLabel.CMOVE_64);
     var conditionalMove = getConditionalMove(hasCMove32, hasCMove64, labelledMachineInstructions);
     var database = new Database(passResults, specification);
-    var addi = database.getAddImmediate();
     var conditionalValueRange = getValueRangeCompareInstructions(database);
 
     var map = new HashMap<String, Object>();
@@ -142,37 +136,8 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("memoryInstructions", getMemoryInstructions(database));
     map.put("conditionalValueRangeLowest", conditionalValueRange.lowest());
     map.put("conditionalValueRangeHighest", conditionalValueRange.highest());
-    map.put("addImmediateHighModifier",
-        findHighModifier(addi, linkerInformation).value());
-    map.put("addImmediateLowModifier",
-        findLowModifier(addi, linkerInformation).value());
     map.put("expandableDagNodes", coverageSummary.notCoveredSelectionDagNodes());
     return map;
-  }
-
-  private Modifier findHighModifier(Instruction instruction,
-                                    GenerateLinkerComponentsPass.Output output) {
-    return findModifier(instruction, output, RelocationFunctionLabel.HI);
-  }
-
-  private Modifier findLowModifier(Instruction instruction,
-                                   GenerateLinkerComponentsPass.Output output) {
-    return findModifier(instruction, output, RelocationFunctionLabel.LO);
-  }
-
-  private Modifier findModifier(Instruction instruction,
-                                GenerateLinkerComponentsPass.Output output,
-                                RelocationFunctionLabel relocationFunctionLabel) {
-
-    var modifiers = output.modifiers().stream()
-        .filter(x -> x.kind().isAbsolute())
-        .filter(x -> x.relocationFunctionLabel().isPresent()
-            && x.relocationFunctionLabel().get() == relocationFunctionLabel)
-        .toList();
-
-    return ensurePresent(modifiers.stream().findFirst(),
-        () -> Diagnostic.error("Cannot find a modifier for the instruction.",
-            instruction.sourceLocation()));
   }
 
   private ISelInstruction getAddImmediate(Database database) {
