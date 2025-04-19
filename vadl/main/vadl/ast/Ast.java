@@ -108,7 +108,8 @@ abstract class Node implements WithSourceLocation {
   SymbolTable symbolTable() {
     if (symbolTable == null) {
       throw new IllegalStateException(
-          "Node " + this + " should have received a symbol table in a previous pass");
+          "Node `%s` should have received a symbol table in a previous pass, found at: %s"
+              .formatted(toString(), sourceLocation().toIDEString()));
     }
     return symbolTable;
   }

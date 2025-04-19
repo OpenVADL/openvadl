@@ -33,7 +33,6 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.asm.AsmToken;
 
@@ -2300,10 +2299,11 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     return result;
   }
 
-  static class Entry extends Node implements WithSourceLocation {
+  // FIXME: this should be a definition.
+  static class Entry extends Node implements IdentifiableNode {
 
-    @Child
     Identifier name;
+
     @Nullable
     @Child
     Expr value;
@@ -2352,6 +2352,11 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
       int result = name.hashCode();
       result = 31 * result + Objects.hashCode(value);
       return result;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return name;
     }
   }
 }
@@ -5052,8 +5057,7 @@ class AsmGrammarAlternativesDefinition extends Definition {
   List<Node> children() {
     // This is too complicated for the @Child annotation
     return alternatives.stream()
-        .flatMap(l -> l.stream()
-            .flatMap(a -> a.children().stream()))
+        .flatMap(l -> l.stream().map(a -> (Node) a))
         .filter(Objects::nonNull)
         .toList();
   }
@@ -5466,6 +5470,7 @@ class AsmGrammarLiteralDefinition extends Definition {
  * Contains the identifier of the type to be cast to.
  */
 class AsmGrammarTypeDefinition extends Definition {
+  @Child
   Identifier id;
   SourceLocation loc;
 
