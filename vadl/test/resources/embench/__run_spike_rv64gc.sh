@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-OUTPUT=$((time -p /opt/spike/bin/spike --isa=rv32ima $1 ) 2>&1)
+OUTPUT=$((time -p /opt/spike/bin/spike --isa=rv64gc $1 ) 2>&1)
 RET=$?
 echo $OUTPUT | sed -nE 's/real[[:space:]]*([0-9]+)\.([0-9]+).*/TIME=\1.\2/p'
 
