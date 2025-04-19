@@ -36,7 +36,7 @@ sealed interface Group {
     }
 
     @Override
-    SourceLocation location() {
+    public SourceLocation location() {
       return loc;
     }
 
@@ -78,7 +78,8 @@ sealed interface Group {
   final class Literal extends Node implements Group {
 
     IsId id;
-    @Nullable Expr size;
+    @Nullable
+    Expr size;
     SourceLocation loc;
 
     Literal(IsId id, @Nullable Expr size, SourceLocation loc) {
@@ -88,7 +89,7 @@ sealed interface Group {
     }
 
     @Override
-    SourceLocation location() {
+    public SourceLocation location() {
       return loc;
     }
 
@@ -136,7 +137,7 @@ sealed interface Group {
     }
 
     @Override
-    SourceLocation location() {
+    public SourceLocation location() {
       return loc;
     }
 
@@ -188,7 +189,7 @@ sealed interface Group {
     }
 
     @Override
-    SourceLocation location() {
+    public SourceLocation location() {
       return loc;
     }
 

@@ -95,7 +95,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     if (node.constant() instanceof Constant.Str str) {
       writer.write("std::string " + symbol + " = std::string(\"" + str.value() + "\");\n");
     } else {
-      throw Diagnostic.error("Not supported constant type", node.sourceLocation()).build();
+      throw Diagnostic.error("Not supported constant type", node.location()).build();
     }
   }
 
@@ -131,7 +131,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
           .or(() -> indexInOutputs(cast.formatField()))
           .orElseThrow(() -> Diagnostic.error(
               "Field is not part of an input or output operand in tablegen",
-              cast.sourceLocation()).build());
+              cast.location()).build());
       var symbol = symbolTable.getNextVariable();
 
       // We need this helper function "getRegisterName..." because
@@ -153,7 +153,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
       writeImmediateWithRadix(node, 16);
     } else {
       throw Diagnostic.error("Not supported builtin for assembly printing",
-              node.sourceLocation())
+              node.location())
           .build();
     }
   }
@@ -281,13 +281,13 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
   private void writeImmediateWithRadix(BuiltInCall node, int radix) {
     if (node.arguments().get(0) instanceof FieldRefNode fieldRefNode) {
-      writeImmediateWithRadix(fieldRefNode.formatField(), radix, fieldRefNode.sourceLocation());
+      writeImmediateWithRadix(fieldRefNode.formatField(), radix, fieldRefNode.location());
     } else if (node.arguments().get(0) instanceof FieldAccessRefNode fieldAccessRefNode) {
       writeImmediateWithRadix(fieldAccessRefNode.fieldAccess().fieldRef(), radix,
-          fieldAccessRefNode.sourceLocation());
+          fieldAccessRefNode.location());
     } else {
       throw Diagnostic.error("Not supported argument "
-              + "in assembly printing", node.sourceLocation())
+              + "in assembly printing", node.location())
           .build();
     }
   }
@@ -350,13 +350,13 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
           "Field is not used as register. Therefore the compiler generator cannot "
               +
               "detect the register file.",
-          fieldRefNode.sourceLocation()).build();
+          fieldRefNode.location()).build();
     } else if (candidates.size() > 1) {
       throw Diagnostic.error(
           "Field is by multiple register file. Therefore the compiler generator cannot "
               +
               "detect the register file for the assembly.",
-          fieldRefNode.sourceLocation()).build();
+          fieldRefNode.location()).build();
     } else {
       return candidates.iterator().next().registerFile().identifier.simpleName();
     }

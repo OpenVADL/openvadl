@@ -31,7 +31,6 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
-import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
 /**
@@ -66,7 +65,7 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                 ensurePresent(ValueType.from(upcastedType), () -> Diagnostic.error(
                     "Compiler generator was not able to change the type to the architecture's "
                         + "bit width: " + upcastedType.toString(),
-                    fieldAccess.sourceLocation()));
+                    fieldAccess.location()));
             return new TableGenImmediateRecord(fieldAccess,
                 upcastedValueType);
           } else {

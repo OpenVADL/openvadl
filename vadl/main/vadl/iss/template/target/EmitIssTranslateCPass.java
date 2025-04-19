@@ -96,7 +96,7 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
           "short", "q",
           "int", 64
       );
-      default -> throw error("Invalid instruction width", refFormat.identifier.sourceLocation())
+      default -> throw error("Invalid instruction width", refFormat.identifier.location())
           .description(
               "The ISS generator requires that every instruction width "
                   + "is one of [8, 16, 32, 64], but found %s",

@@ -109,7 +109,7 @@ public class IssTranslateCodeGenerator implements
 
     ensure(current instanceof InstrEndNode, () ->
         error("Instruction contains unsupported features (e.g. if-else on constants).",
-            insn.identifier.sourceLocation())
+            insn.identifier.location())
     );
 
     ctx.wr("\n\treturn true; \n}\n");

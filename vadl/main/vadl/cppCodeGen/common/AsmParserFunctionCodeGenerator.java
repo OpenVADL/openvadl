@@ -25,7 +25,6 @@ import vadl.types.BuiltInTable;
 import vadl.types.StringType;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -121,7 +120,7 @@ public class AsmParserFunctionCodeGenerator extends FunctionCodeGenerator {
       );
       ctx.wr("})");
     } else {
-      throw Diagnostic.error("Unknown AsmBuiltin.", toHandle.sourceLocation()).build();
+      throw Diagnostic.error("Unknown AsmBuiltin.", toHandle.location()).build();
     }
   }
 }

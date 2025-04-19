@@ -97,12 +97,12 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
         Objects.requireNonNull(labelledMachineInstructions.get(MachineInstructionLabel.LUI));
     var lui = ensurePresent(luiRaw.stream().findFirst(),
         () -> Diagnostic.error("There must be a load upper immediate instruction",
-            specification.sourceLocation()));
+            specification.location()));
     var rawAddi = addi64 != null ? addi64 : Objects.requireNonNull(addi32);
 
     var addi = ensurePresent(rawAddi.stream().findFirst(),
         () -> Diagnostic.error("Instruction set requires an addition with immediate",
-            specification.sourceLocation()));
+            specification.location()));
 
     var renderedImmediates = ((List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class))

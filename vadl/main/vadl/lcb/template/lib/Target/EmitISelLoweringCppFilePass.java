@@ -98,7 +98,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
         (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
         () -> Diagnostic.error("Cannot find semantics of the instructions",
-            specification.sourceLocation()))
+            specification.location()))
         .labels();
     var coverageSummary =
         (ISelLoweringOperationActionPass.CoverageSummary) passResults.lastResultOf(
@@ -149,7 +149,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     var instruction = queryResult.firstMachineInstruction();
     Supplier<DiagnosticBuilder> error =
         () -> Diagnostic.error("Addition-Register-Immediate requires a value range",
-            instruction.sourceLocation());
+            instruction.location());
     var valueRangeCtx = ensureNonNull(instruction.extension(ValueRangeCtx.class), error);
     var valueRange = ensurePresent(valueRangeCtx.getFirst(), error);
 
@@ -177,7 +177,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
       if (valueRangeCtx != null && !valueRangeCtx.ranges().isEmpty()) {
         var valueRange = ensurePresent(valueRangeCtx.getFirst(),
             () -> Diagnostic.error("Conditional instruction requires a value range",
-                instruction.sourceLocation()));
+                instruction.location()));
 
         if (valueRange.lowest() < smallest) {
           smallest = valueRange.lowest();
@@ -221,7 +221,7 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     return queryResult.machineInstructions().stream().map(instruction -> {
       Supplier<DiagnosticBuilder> error =
           () -> Diagnostic.error("Memory instruction requires a value range",
-              instruction.sourceLocation());
+              instruction.location());
 
       var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class), error);
       var valueRange = ensurePresent(ctx.getFirst(), error);
@@ -239,11 +239,11 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     return queryResult.machineInstructions().stream().map(instruction -> {
       var machineInstructionLabel = ensureNonNull(flipped.get(instruction),
           () -> Diagnostic.error("Cannot find a label to the instruction",
-              instruction.sourceLocation()));
+              instruction.location()));
       var condCode =
           ensureNonNull(LlvmMachineInstructionUtil.getLlvmCondCodeByLabel(machineInstructionLabel),
               () -> Diagnostic.error("There is no cond code for the machine instruction label.",
-                  instruction.sourceLocation()));
+                  instruction.location()));
       return new BranchInstruction(instruction.simpleName(), condCode.name());
     }).toList();
   }

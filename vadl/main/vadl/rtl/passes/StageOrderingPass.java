@@ -77,7 +77,7 @@ public class StageOrderingPass extends Pass {
     var onlyReadFrom = new HashSet<>(readFrom);
     onlyReadFrom.removeAll(reading);
     ViamError.ensure(onlyReadFrom.size() == 1, () -> Diagnostic.error(
-        "Exactly one start stage expected", mia.sourceLocation()));
+        "Exactly one start stage expected", mia.location()));
 
     // check we can order every stage
     var unordered = new HashSet<>(mia.stages());
@@ -85,15 +85,15 @@ public class StageOrderingPass extends Pass {
     unordered.removeAll(readFrom);
     var anyUnordered = unordered.stream().findAny();
     ViamError.ensure(anyUnordered.isEmpty(), () -> Diagnostic.error(
-        "All stages need to be ordered", anyUnordered.get().sourceLocation()));
+        "All stages need to be ordered", anyUnordered.get().location()));
 
     var start = onlyReadFrom.stream().findAny().orElseThrow(
-        () -> new ViamError("Exactly one start stage expected").addLocation(mia.sourceLocation()));
+        () -> new ViamError("Exactly one start stage expected").addLocation(mia.location()));
 
     var order = new ArrayList<Stage>();
     follow(dep, start, order);
     ViamError.ensure(order.size() == mia.stages().size(), () -> Diagnostic.error(
-        "All stages need to be ordered", mia.sourceLocation()));
+        "All stages need to be ordered", mia.location()));
 
     return order;
   }
@@ -104,7 +104,7 @@ public class StageOrderingPass extends Pass {
     // find successor
     var succ = dep.stream().filter(p -> p.left() == cur).toList();
     ViamError.ensure(succ.size() <= 1, () -> Diagnostic.error(
-        "Can not order stage, more than one successor", cur.sourceLocation()));
+        "Can not order stage, more than one successor", cur.location()));
 
     // recurse
     if (!succ.isEmpty()) {

@@ -77,7 +77,7 @@ public class IndexedCompilerRegister extends CompilerRegister {
           () -> Diagnostic.error(
               String.format("The aliases for a register file's register '%s' are not defined",
                   registerFile.generateName(addr)),
-              registerFile.sourceLocation().join(abi.sourceLocation())));
+              registerFile.location().join(abi.location())));
 
       int dwarfNumber = dwarfNumberOffset + addr;
 

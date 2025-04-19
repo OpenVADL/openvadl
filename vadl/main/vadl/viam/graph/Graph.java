@@ -202,7 +202,7 @@ public class Graph {
         return target;
       }
 
-      target.setSourceLocationIfNotSet(node.sourceLocation());
+      target.setSourceLocationIfNotSet(node.location());
       target.ensure(!target.isDeleted(), "cannot add deleted input node");
       var newT = addWithInputs(target);
       // just return the new target AND the node, as the original one is not initialized and thus

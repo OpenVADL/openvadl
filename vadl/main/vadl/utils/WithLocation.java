@@ -21,11 +21,11 @@ package vadl.utils;
  *
  * <p>Provides a method to retrieve the source location associated with the implementing entity.
  */
-public interface WithSourceLocation {
+public interface WithLocation {
   /**
    * Retrieves the source location associated with the entity.
    *
    * @return the {@link SourceLocation} object that represents the location in the source code.
    */
-  SourceLocation sourceLocation();
+  SourceLocation location();
 }

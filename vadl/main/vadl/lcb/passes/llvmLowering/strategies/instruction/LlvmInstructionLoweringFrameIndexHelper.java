@@ -90,7 +90,7 @@ public abstract class LlvmInstructionLoweringFrameIndexHelper
         && llvmReadRegFileNode.address() instanceof FuncParamNode funcParamNode) {
       return new TableGenInstructionFrameRegisterOperand(llvmReadRegFileNode, funcParamNode);
     } else {
-      throw Diagnostic.error("Node type is not supported to be replaced", node.sourceLocation())
+      throw Diagnostic.error("Node type is not supported to be replaced", node.location())
           .build();
     }
   }

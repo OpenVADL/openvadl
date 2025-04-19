@@ -252,7 +252,7 @@ public class ViamEnricherCollection {
         if (entity.origin() instanceof Function && entity.parentLevel() > 2) {
           return;
         }
-        var sourceLocation = entity.origin().sourceLocation();
+        var sourceLocation = entity.origin().location();
         if (entity.origin() instanceof Instruction) {
           sourceLocation = ((Instruction) entity.origin()).behavior().sourceLocation();
         }
@@ -303,7 +303,7 @@ public class ViamEnricherCollection {
 
         var nodesWithoutSourceLocation = withBehavior.behaviors()
             .stream().flatMap(Graph::getNodes)
-            .filter(n -> n.sourceLocation().equals(SourceLocation.INVALID_SOURCE_LOCATION))
+            .filter(n -> n.location().equals(SourceLocation.INVALID_SOURCE_LOCATION))
             .toList();
 
         if (nodesWithoutSourceLocation.isEmpty()) {

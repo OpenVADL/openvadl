@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 
 
 /**
@@ -61,8 +61,8 @@ public class Diagnostic extends RuntimeException {
 
   /**
    * It's generally recommended to not instantiate Diagnostics on their own but to make use of the
-   * {@link Diagnostic#error(String, WithSourceLocation)} and
-   * {@link Diagnostic#warning(String, WithSourceLocation)}
+   * {@link Diagnostic#error(String, WithLocation)} and
+   * {@link Diagnostic#warning(String, WithLocation)}
    * builders.
    */
   public Diagnostic(Level level, String reason, MultiLocation multiLocation,
@@ -81,8 +81,8 @@ public class Diagnostic extends RuntimeException {
    * @param location where the error occurred (primary location).
    * @return the builder.
    */
-  public static DiagnosticBuilder error(String reason, WithSourceLocation location) {
-    return new DiagnosticBuilder(Level.ERROR, reason, location.sourceLocation());
+  public static DiagnosticBuilder error(String reason, WithLocation location) {
+    return new DiagnosticBuilder(Level.ERROR, reason, location.location());
   }
 
 
@@ -94,8 +94,8 @@ public class Diagnostic extends RuntimeException {
    * @param location where the warning occurred (primary location).
    * @return the builder.
    */
-  public static DiagnosticBuilder warning(String reason, WithSourceLocation location) {
-    return new DiagnosticBuilder(Level.WARNING, reason, location.sourceLocation());
+  public static DiagnosticBuilder warning(String reason, WithLocation location) {
+    return new DiagnosticBuilder(Level.WARNING, reason, location.location());
   }
 
   /**
