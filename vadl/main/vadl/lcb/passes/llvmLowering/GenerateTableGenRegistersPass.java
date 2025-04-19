@@ -32,7 +32,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClas
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.viam.RegisterFile.Constraint;
+import vadl.viam.RegisterTensor.Constraint;
 import vadl.viam.Specification;
 
 /**
@@ -122,7 +122,7 @@ public class GenerateTableGenRegistersPass extends Pass {
     for (var rc : mainRegisterClasses) {
       var registerFile = rc.registerFileRef();
       for (var constraint : registerFile.constraints()) {
-        var addr = constraint.address().intValue();
+        var addr = constraint.indices().getFirst().intValue();
         var value = constraint.value().intValue();
 
         rc.registers().stream().filter(

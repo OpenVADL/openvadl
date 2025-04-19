@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import java.util.List;
 import javax.annotation.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
@@ -43,10 +44,14 @@ public abstract class Resource extends Definition implements DefProp.WithType {
    */
   public abstract @Nullable DataType addressType();
 
+  public abstract List<DataType> indexTypes();
+
   /**
    * Returns the result type of this resource.
    */
   public abstract DataType resultType();
+
+  public abstract DataType resultType(int providedDimensions);
 
   /**
    * Returns the type of this resource as a relation type.

@@ -28,6 +28,7 @@ import vadl.viam.DefinitionVisitor;
 import vadl.viam.Format;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
@@ -49,7 +50,7 @@ public class RegisterRef extends Resource {
   private Format refFormat;
   @Nullable
   private Constant address;
-  private final List<RegisterFile.Constraint> constraints;
+  private final List<RegisterTensor.Constraint> constraints;
 
   /**
    * Constructor.
@@ -57,7 +58,6 @@ public class RegisterRef extends Resource {
   public RegisterRef(Register register) {
     super(register.identifier);
     this.resultType = register.resultType();
-    this.refFormat = register.refFormat();
     this.relationType = register.relationType();
     this.address = null;
     // When constructed over register then they are no constraints.
@@ -77,7 +77,7 @@ public class RegisterRef extends Resource {
     // But types might not match, so just compare the values.
     this.constraints =
         Arrays.stream(registerFile.constraints())
-            .filter(x -> x.address().intValue() == address.asVal().intValue()).toList();
+            .filter(x -> x.indices().getFirst().intValue() == address.asVal().intValue()).toList();
   }
 
   @Override
@@ -97,8 +97,22 @@ public class RegisterRef extends Resource {
   }
 
   @Override
+  public List<DataType> indexTypes() {
+    var addrType = addressType();
+    if (addrType == null) {
+      return List.of();
+    }
+    return List.of(addrType);
+  }
+
+  @Override
   public DataType resultType() {
     return resultType;
+  }
+
+  @Override
+  public DataType resultType(int providedDimensions) {
+    return resultType();
   }
 
   @Override
@@ -106,16 +120,12 @@ public class RegisterRef extends Resource {
     return relationType;
   }
 
-  public @Nullable Format refFormat() {
-    return refFormat;
-  }
-
   @Override
   public void accept(DefinitionVisitor visitor) {
 
   }
 
-  public List<RegisterFile.Constraint> constraints() {
+  public List<RegisterTensor.Constraint> constraints() {
     return constraints;
   }
 

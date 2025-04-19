@@ -49,7 +49,7 @@ public class IssRenderUtils {
             .toList(),
         "constraints", Arrays.stream(rf.constraints())
             .map(c -> Map.of(
-                "index", c.address().intValue(),
+                "index", c.indices().getFirst().intValue(),
                 "value", c.value().intValue()
             )).toList()
     );
@@ -95,7 +95,7 @@ public class IssRenderUtils {
    */
   public static Map<String, String> mapPc(Specification spec) {
     var pcReg = (Register) Objects.requireNonNull(spec.isa().get()
-        .pc()).registerResource();
+        .pc()).registerTensor();
 
     return map(pcReg);
   }

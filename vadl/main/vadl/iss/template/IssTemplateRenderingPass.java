@@ -143,6 +143,6 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     if (pc == null) {
       throw new IllegalStateException("PC is null");
     }
-    return IssRenderUtils.map((Register) pc.registerResource());
+    return IssRenderUtils.map((Register) pc.registerTensor());
   }
 }

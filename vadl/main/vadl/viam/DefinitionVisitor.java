@@ -58,6 +58,8 @@ public interface DefinitionVisitor {
 
   void visit(PseudoInstruction pseudoInstruction);
 
+  void visit(RegisterTensor registerTensor);
+
   void visit(Register register);
 
   void visit(RegisterFile registerFile);
@@ -95,6 +97,7 @@ public interface DefinitionVisitor {
   void visit(AsmNonTerminalRule nonTerminalRule);
 
   void visit(CompilerInstruction compilerInstruction);
+
 
   /**
    * DefinitionVisitor.Recursive is an interface that extends the DefinitionVisitor
@@ -247,9 +250,14 @@ public interface DefinitionVisitor {
     }
 
     @Override
+    public void visit(RegisterTensor registerTensor) {
+      beforeTraversal(registerTensor);
+      afterTraversal(registerTensor);
+    }
+
+    @Override
     public void visit(Register register) {
       beforeTraversal(register);
-      // Do not travers sub registers, as they are included in upper call to registers
       afterTraversal(register);
     }
 
@@ -484,6 +492,11 @@ public interface DefinitionVisitor {
     @Override
     public void visit(PseudoInstruction pseudoInstruction) {
 
+    }
+
+    @Override
+    public void visit(RegisterTensor registerTensor) {
+      
     }
 
     @Override

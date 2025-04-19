@@ -46,12 +46,12 @@ public class ReadArtificialResNode extends ReadResourceNode {
 
   @Override
   public ExpressionNode copy() {
-    return new ReadArtificialResNode(resource, address != null ? address.copy() : null, type());
+    return new ReadArtificialResNode(resource, hasAddress() ? address().copy() : null, type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new ReadArtificialResNode(resource, address, type());
+    return new ReadArtificialResNode(resource, hasAddress() ? address() : null, type());
   }
 
   @Override

@@ -63,6 +63,7 @@ import vadl.viam.Procedure;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
@@ -778,27 +779,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var identifier = generateIdentifier(definition.viamId, definition.identifier().location());
 
     // FIXME: Further research for the parameters (probably don't apply to counter)
-
-    Format format = null;
-    if (definition.type() instanceof FormatType) {
-      format = (Format) fetch(((FormatType) definition.type()).format).orElseThrow();
-    }
-
     var reg = new Register(identifier,
-        (DataType) getViamType(requireNonNull(definition.typeLiteral.type)),
-        Register.AccessKind.FULL,
-        Register.AccessKind.FULL,
-        format,
-        new Register[] {});
+        (DataType) getViamType(requireNonNull(definition.typeLiteral.type)));
 
-    Map<CounterDefinition.CounterKind, Counter.Kind> kinds =
-        Map.of(CounterDefinition.CounterKind.PROGRAM, Counter.Kind.PROGRAM_COUNTER,
-            CounterDefinition.CounterKind.GROUP, Counter.Kind.GROUP_COUNTER);
-    var kind = requireNonNull(kinds.get(definition.kind));
-    var counter = new Counter.RegisterCounter(identifier,
+
+    var counter = new Counter(identifier,
         reg,
-        Counter.Position.CURRENT, //FIXME: read this from, annotation or somewhere?
-        kind);
+        List.of() // FIXME: List of indices in case of multi-dimensional counter
+    );
     return Optional.of(counter);
   }
 
@@ -1124,7 +1112,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var registers = filterAndCastToInstance(allDefinitions, Register.class);
     var registerFiles = filterAndCastToInstance(allDefinitions, RegisterFile.class);
     var programCounter = allDefinitions.stream()
-        .filter(d -> d instanceof Counter && ((Counter) d).kind() == Counter.Kind.PROGRAM_COUNTER)
+        .filter(d -> d instanceof Counter)
         .map(v -> (Counter) v)
         .findFirst().orElse(null);
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
@@ -1133,7 +1121,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
-    if (programCounter != null && programCounter.registerResource() instanceof Register pcReg) {
+    if (programCounter != null && programCounter.registerTensor() instanceof Register pcReg) {
       registers.add(pcReg);
     }
 
@@ -1360,19 +1348,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterDefinition definition) {
-    // TODO: Support recursive sub registers
-    Format format = null;
-    if (definition.type() instanceof FormatType) {
-      format = (Format) fetch(((FormatType) definition.type()).format).orElseThrow();
-    }
-
     var reg = new Register(
         generateIdentifier(definition.viamId, definition.identifier()),
-        (DataType) getViamType(definition.type()),
-        Register.AccessKind.FULL,
-        Register.AccessKind.FULL,
-        format,
-        new Register[] {}
+        (DataType) getViamType(definition.type())
     );
     return Optional.of(reg);
   }
@@ -1384,14 +1362,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // FIXME: Add proper constraints. This is currently only temporarily hardcoded to
     //    fix the riscv iss simulation.
-    var zeroConstraint = new RegisterFile.Constraint(Constant.Value.of(0, addrType),
+    var zeroConstraint = new RegisterTensor.Constraint(List.of(Constant.Value.of(0, addrType)),
         Constant.Value.of(0, resultType));
 
     var regFile = new RegisterFile(
         generateIdentifier(definition.viamId, definition.identifier()),
         addrType,
         resultType,
-        new RegisterFile.Constraint[] {zeroConstraint}
+        new RegisterTensor.Constraint[] {zeroConstraint}
     );
     return Optional.of(regFile);
   }

@@ -36,6 +36,7 @@ import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**
@@ -71,6 +72,9 @@ public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerato
 
   @Handler
   protected abstract void handle(CGenContext<Node> ctx, ReadRegFileNode toHandle);
+
+  @Handler
+  protected abstract void handle(CGenContext<Node> ctx, ReadRegTensorNode toHandle);
 
   @Handler
   protected abstract void handle(CGenContext<Node> ctx, ReadMemNode toHandle);

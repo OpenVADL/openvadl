@@ -484,7 +484,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         var registerFile = reg.right().right();
         var zeroRegisterAddr = registerFile.zeroRegister();
         if (zeroRegisterAddr.isPresent()) {
-          zeroRegister = registerFile.generateName(zeroRegisterAddr.get());
+          zeroRegister = registerFile.generateName(zeroRegisterAddr.get().getFirst());
           isCheckable = true;
         }
       }

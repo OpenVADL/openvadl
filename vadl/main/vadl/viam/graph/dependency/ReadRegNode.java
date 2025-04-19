@@ -17,31 +17,20 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.Register;
-import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
-import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 
 /**
  * The ReadRegNode class is a subclass of ReadNode that represents
  * a node that reads a value from a register location.
  */
-public class ReadRegNode extends ReadResourceNode {
+// TODO: Remove once all generator adapted ReadRegTensorNode
+public class ReadRegNode extends ReadRegTensorNode {
 
-  @DataValue
-  protected Register register;
-
-  // a register-read might read from a counter.
-  // if this can be inferred, the counter is set.
-  // it is generally set during the `StaticCounterAccessResolvingPass`
-  @DataValue
-  @Nullable
-  private Counter.RegisterCounter staticCounterAccess;
 
   /**
    * Reads a value from a register.
@@ -52,30 +41,12 @@ public class ReadRegNode extends ReadResourceNode {
    *                            or null if no counter is read
    */
   public ReadRegNode(Register register, DataType type,
-                     @Nullable Counter.RegisterCounter staticCounterAccess) {
-    super(null, type);
-    this.register = register;
-    this.staticCounterAccess = staticCounterAccess;
+                     @Nullable Counter staticCounterAccess) {
+    super(register, new NodeList<>(), type, staticCounterAccess);
   }
 
   public Register register() {
-    return register;
-  }
-
-  @Nullable
-  public Counter.RegisterCounter staticCounterAccess() {
-    return staticCounterAccess;
-  }
-
-  /**
-   * Determines if the register is a PC based on whether staticCounterAccess is set.
-   */
-  public boolean isPcAccess() {
-    return staticCounterAccess != null;
-  }
-
-  public void setStaticCounterAccess(@Nonnull Counter.RegisterCounter staticCounterAccess) {
-    this.staticCounterAccess = staticCounterAccess;
+    return (Register) super.resourceDefinition();
   }
 
   @Override
@@ -83,35 +54,19 @@ public class ReadRegNode extends ReadResourceNode {
     return false;
   }
 
-  @Override
-  public Resource resourceDefinition() {
-    return register;
-  }
-
-  @Override
-  public void verifyState() {
-    super.verifyState();
-
-    ensure(register.resultType().isTrivialCastTo(type()),
-        "Mismatching register type. Register's result type (%s) "
-            + "cannot be trivially cast to node's type (%s).",
-        register.resultType(), type());
-  }
 
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(register);
-    collection.add(staticCounterAccess);
   }
 
   @Override
-  public ExpressionNode copy() {
-    return new ReadRegNode(register, type(), staticCounterAccess);
+  public ReadRegNode copy() {
+    return new ReadRegNode(register(), type(), staticCounterAccess());
   }
 
   @Override
-  public Node shallowCopy() {
+  public ReadRegNode shallowCopy() {
     return copy();
   }
 
@@ -122,6 +77,6 @@ public class ReadRegNode extends ReadResourceNode {
 
   @Override
   public void prettyPrint(StringBuilder sb) {
-    sb.append(register.simpleName());
+    sb.append(register().simpleName());
   }
 }

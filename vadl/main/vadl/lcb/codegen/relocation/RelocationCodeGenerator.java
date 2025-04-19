@@ -38,6 +38,7 @@ import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**
@@ -77,6 +78,11 @@ public class RelocationCodeGenerator
 
   @Handler
   protected void handle(CGenContext<Node> ctx, ReadRegFileNode toHandle) {
+    throwNotAllowed(toHandle, "Register reads");
+  }
+
+  @Handler
+  protected void handle(CGenContext<Node> ctx, ReadRegTensorNode toHandle) {
     throwNotAllowed(toHandle, "Register reads");
   }
 

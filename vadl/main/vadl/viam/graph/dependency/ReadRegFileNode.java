@@ -17,35 +17,20 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
-import vadl.viam.Resource;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.HasRegisterFile;
-import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 
 /**
  * A read of a register file in the behaviour graph. It takes one expression node as input
  * that represents the address/index value.
  */
-public class ReadRegFileNode extends ReadResourceNode implements HasRegisterFile {
-
-  @DataValue
-  protected RegisterFile registerFile;
-
-  // a register-file-read might read from a counter.
-  // if this can be inferred, the counter is set.
-  // however, not all counter-accesses are statically known, as if the register file
-  // is known, but the concrete index isn't,
-  // it could be a counter written, but doesn't have to be.
-  // it is generally set during the `StaticCounterAccessResolvingPass`
-  @DataValue
-  @Nullable
-  private Counter.RegisterFileCounter staticCounterAccess;
+// TODO: Remove once all generator adapted ReadRegTensorNode
+public class ReadRegFileNode extends ReadRegTensorNode implements HasRegisterFile {
 
   /**
    * Constructs the node, which represents a read from a register file at some specific index.
@@ -57,57 +42,29 @@ public class ReadRegFileNode extends ReadResourceNode implements HasRegisterFile
    *                            it is not known
    */
   public ReadRegFileNode(RegisterFile registerFile, ExpressionNode address,
-                         DataType type, @Nullable Counter.RegisterFileCounter staticCounterAccess) {
-    super(address, type);
-    this.registerFile = registerFile;
-    this.staticCounterAccess = staticCounterAccess;
+                         DataType type, @Nullable Counter staticCounterAccess) {
+    super(registerFile, new NodeList<>(address), type, staticCounterAccess);
   }
 
   @Override
   public RegisterFile registerFile() {
-    return registerFile;
+    return (RegisterFile) resourceDefinition();
   }
 
-  @Nullable
-  public Counter.RegisterFileCounter staticCounterAccess() {
-    return staticCounterAccess;
-  }
-
-  public void setStaticCounterAccess(@Nonnull Counter.RegisterFileCounter staticCounterAccess) {
-    this.staticCounterAccess = staticCounterAccess;
-  }
-
-  @Override
-  public Resource resourceDefinition() {
-    return registerFile;
-  }
-
-  @Override
-  public void verifyState() {
-    super.verifyState();
-
-    ensure(registerFile.resultType().isTrivialCastTo(type()),
-        "Mismatching register file type. Register file's result type (%s) "
-            + "cannot be trivially cast to node's type (%s).",
-        registerFile.resultType(), type());
-  }
 
   @Override
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
-    collection.add(registerFile);
-    collection.add(staticCounterAccess);
   }
 
   @Override
-  public ExpressionNode copy() {
-    return new ReadRegFileNode(registerFile, (ExpressionNode) address().copy(), type(),
-        staticCounterAccess());
+  public ReadRegFileNode copy() {
+    return new ReadRegFileNode(registerFile(), address().copy(), type(), staticCounterAccess());
   }
 
   @Override
-  public Node shallowCopy() {
-    return new ReadRegFileNode(registerFile, address(), type(), staticCounterAccess());
+  public ReadRegFileNode shallowCopy() {
+    return new ReadRegFileNode(registerFile(), address(), type(), staticCounterAccess());
   }
 
   @Override
@@ -117,7 +74,7 @@ public class ReadRegFileNode extends ReadResourceNode implements HasRegisterFile
 
   @Override
   public void prettyPrint(StringBuilder sb) {
-    sb.append(registerFile.simpleName())
+    sb.append(registerFile().simpleName())
         .append("(");
     address().prettyPrint(sb);
     sb.append(")");

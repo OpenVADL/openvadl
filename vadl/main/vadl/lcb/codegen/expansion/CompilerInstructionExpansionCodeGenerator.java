@@ -69,6 +69,7 @@ import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.CfgTraverser;
@@ -125,6 +126,11 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   @Override
   protected void handle(CGenContext<Node> ctx, ReadRegFileNode toHandle) {
+    throwNotAllowed(toHandle, "Register reads");
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, ReadRegTensorNode toHandle) {
     throwNotAllowed(toHandle, "Register reads");
   }
 

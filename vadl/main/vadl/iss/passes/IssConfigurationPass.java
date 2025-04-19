@@ -50,9 +50,9 @@ public class IssConfigurationPass extends AbstractIssPass {
     var isaName = mip.targetName().toLowerCase();
     configuration.setTargetName(isaName);
     configuration.setMachineName(mip.simpleName());
-    
+
     viam.isa().ifPresent(isa -> {
-      var targetSize = requireNonNull(isa.pc()).registerResource().resultType().bitWidth();
+      var targetSize = requireNonNull(isa.pc()).registerTensor().resultType().bitWidth();
       configuration.setTargetSize(Tcg_32_64.fromWidth(targetSize));
     });
 

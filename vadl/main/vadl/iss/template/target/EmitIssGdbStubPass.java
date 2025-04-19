@@ -85,7 +85,8 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
 
       if (res instanceof RegisterFile regFile) {
         var cond =
-            Arrays.stream(regFile.constraints()).map(c -> "n == " + c.address().hexadecimal())
+            Arrays.stream(regFile.constraints())
+                .map(c -> "n == " + c.indices().getFirst().hexadecimal())
                 .collect(Collectors.joining(" && "));
         builder.appendLn("if (" + cond + ") { return " + writtenBytes + "; }");
       }

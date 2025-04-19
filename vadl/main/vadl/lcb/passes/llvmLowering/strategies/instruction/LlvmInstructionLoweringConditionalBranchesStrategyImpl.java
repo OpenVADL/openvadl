@@ -199,7 +199,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
                 .findFirst(),
             () -> Diagnostic.error("Cannot find zero constraint", registerFile.sourceLocation()));
     var constant =
-        new Constant.Str(registerFile.simpleName() + zeroConstraint.address().intValue());
+        new Constant.Str(
+            registerFile.simpleName() + zeroConstraint.indices().getFirst().intValue());
     return new ConstantNode(constant);
   }
 

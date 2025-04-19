@@ -17,7 +17,6 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.ArtificialResource;
@@ -75,7 +74,7 @@ public class WriteArtificialResNode extends WriteResourceNode {
   @Override
   public Node shallowCopy() {
     return new WriteArtificialResNode(resource,
-        Objects.requireNonNull(address),
+        address(),
         value,
         condition);
   }

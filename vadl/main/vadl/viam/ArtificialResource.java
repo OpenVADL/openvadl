@@ -16,6 +16,8 @@
 
 package vadl.viam;
 
+import java.util.List;
+import org.jetbrains.annotations.NotNull;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 
@@ -115,14 +117,25 @@ public class ArtificialResource extends Resource {
   }
 
   @Override
+  @NotNull
   public DataType addressType() {
     ensure(hasAddress(), "Resource has no address");
     return readFunction.parameters()[0].type().asDataType();
   }
 
   @Override
+  public List<DataType> indexTypes() {
+    return List.of(addressType());
+  }
+
+  @Override
   public DataType resultType() {
     return readFunction.returnType().asDataType();
+  }
+
+  @Override
+  public DataType resultType(int providedDimensions) {
+    return resultType();
   }
 
   @Override

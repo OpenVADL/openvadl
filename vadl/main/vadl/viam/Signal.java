@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
@@ -53,8 +54,18 @@ public class Signal extends Resource {
   }
 
   @Override
+  public List<DataType> indexTypes() {
+    return List.of();
+  }
+
+  @Override
   public DataType resultType() {
     return resultType;
+  }
+
+  @Override
+  public DataType resultType(int providedDimensions) {
+    return resultType();
   }
 
   @Override

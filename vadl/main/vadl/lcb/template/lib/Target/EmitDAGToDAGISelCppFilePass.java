@@ -86,7 +86,7 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
         Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
             .findFirst(),
         () -> Diagnostic.error("Cannot find a zero constraint", registerFile.sourceLocation()));
-    var zeroRegister = registerFile.identifier.simpleName() + zero.address().intValue();
+    var zeroRegister = registerFile.identifier.simpleName() + zero.indices().getFirst().intValue();
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),

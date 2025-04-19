@@ -22,21 +22,17 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
-import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.pseudo.PseudoFuncParamNode;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
-import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;
-import vadl.viam.Parameter;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.Node;
@@ -45,7 +41,6 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 
@@ -215,7 +210,7 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
 
                         var constraintValue =
                             Arrays.stream(cast.registerFile().constraints()).filter(
-                                c -> c.address().intValue()
+                                c -> c.indices().getFirst().intValue()
                                     == constantNode.constant().asVal().intValue()).findFirst();
 
                         if (constraintValue.isEmpty()) {
@@ -237,7 +232,7 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
                           && writeRegFileNode.hasConstantAddress()
                           // Check if there is a constraint for this register index.
                           && Arrays.stream(writeRegFileNode.registerFile().constraints())
-                          .anyMatch(constraint -> constraint.address().intValue()
+                          .anyMatch(constraint -> constraint.indices().getFirst().intValue()
                               == constantNode.constant().asVal().intValue()))
                       .forEach(Node::safeDelete);
                 } else {

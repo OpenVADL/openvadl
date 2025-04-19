@@ -16,25 +16,19 @@
 
 package vadl.viam;
 
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nonnull;
-import vadl.types.ConcreteRelationType;
+import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.utils.Pair;
 
 /**
  * The register file is related to the {@link Register} but takes an address/index when accessing
  * it. It may also have constraints that restricts the possible values for statically defined
  * addresses.
  */
-public class RegisterFile extends Resource {
-
-  private final DataType addressType;
-  private final DataType resultType;
-  private final Constraint[] constraints;
+public class RegisterFile extends RegisterTensor {
 
   /**
    * Constructs a new RegisterFile object.
@@ -45,58 +39,23 @@ public class RegisterFile extends Resource {
    */
   public RegisterFile(Identifier identifier, DataType addressType, DataType resultType,
                       Constraint[] constraints) {
-    super(identifier);
-    this.addressType = addressType;
-    this.resultType = resultType;
-    this.constraints = constraints;
+    super(identifier, initDims(addressType, resultType), constraints);
   }
 
+  private static List<Dimension> initDims(DataType addressType, DataType resultType) {
+    var innerDimType = Type.bits(BitsType.minimalRequiredWidthFor(resultType.bitWidth()));
+    var innerDim = new Dimension(innerDimType, resultType.toBitsType().bitWidth());
+    var outerDim = new Dimension(addressType, (int) Math.pow(2, addressType.bitWidth()));
+    return List.of(outerDim, innerDim);
+  }
 
   @Override
   public boolean hasAddress() {
     return true;
   }
 
-  @Override
-  @Nonnull
-  public DataType addressType() {
-    return addressType;
-  }
-
-  @Override
-  public DataType resultType() {
-    return resultType;
-  }
-
   public int numberOfRegisters() {
-    return (int) Math.pow(2, addressType.bitWidth());
-  }
-
-  @Override
-  public ConcreteRelationType relationType() {
-    return Type.concreteRelation(addressType, resultType);
-  }
-
-  public Constraint[] constraints() {
-    return constraints;
-  }
-
-  /**
-   * Get a stream over all the constant registers which are defined in {@link #constraints}.
-   */
-  public Stream<Pair<Constant.Value, Constant.Value>> constantRegisters() {
-    return Arrays.stream(constraints)
-        .map(constraint -> Pair.of(constraint.address, constraint.value));
-  }
-
-  /**
-   * Return the address of a zero register if it exists.
-   */
-  public Optional<Constant.Value> zeroRegister() {
-    return constantRegisters()
-        .filter(constantRegister -> constantRegister.right().intValue() == 0)
-        .map(Pair::left)
-        .findFirst();
+    return outermostDim().size();
   }
 
   /**
@@ -106,7 +65,6 @@ public class RegisterFile extends Resource {
     return identifier.simpleName() + index;
   }
 
-
   /**
    * Generate the name from this register file with an {@code index}.
    */
@@ -114,19 +72,10 @@ public class RegisterFile extends Resource {
     return generateName(index.intValue());
   }
 
+  @Nonnull
   @Override
-  public void verify() {
-    super.verify();
-
-    for (Constraint constraint : constraints) {
-      ensure(constraint.value.type().isTrivialCastTo(resultType),
-          "Type mismatch: Can't cast value type %s to register file result type %s.",
-          constraint.value.type(), this.resultType);
-
-      ensure(constraint.address.type().isTrivialCastTo(addressType),
-          "Type mismatch: Can't cast address type %s to register file address type %s.",
-          constraint.address.type(), this.resultType);
-    }
+  public DataType addressType() {
+    return Objects.requireNonNull(super.addressType());
   }
 
   @Override
@@ -136,28 +85,7 @@ public class RegisterFile extends Resource {
 
   @Override
   public String toString() {
-    return identifier.simpleName() + ": " + addressType + " -> " + resultType;
+    return identifier.simpleName() + ": " + addressType() + " -> " + resultType();
   }
 
-  /**
-   * A register file constraint that statically defines the result value for a specific
-   * address.
-   *
-   * <p>For example<pre>
-   *  {@code
-   * [X(0) = 0]
-   * register file X: Index -> Regs
-   * }
-   * </pre>
-   * defines that the address 0 always results in 0 on register file X.
-   * </p>
-   *
-   * @param address of constraint
-   * @param value   of constraint
-   */
-  public record Constraint(
-      Constant.Value address,
-      Constant.Value value
-  ) {
-  }
 }

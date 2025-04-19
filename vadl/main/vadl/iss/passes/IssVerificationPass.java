@@ -30,7 +30,6 @@ import vadl.error.DiagnosticList;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.ViamUtils;
-import vadl.viam.Counter;
 import vadl.viam.DefProp;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -106,7 +105,7 @@ public class IssVerificationPass extends AbstractIssPass {
     } else {
       var pc = isa.pc();
       Objects.requireNonNull(pc);
-      if (!(pc instanceof Counter.RegisterCounter)) {
+      if (!pc.registerTensor().isSingleRegister()) {
         diagnostics.add(
             error("Only `program counter` definitions supported",
                 pc.sourceLocation())
@@ -118,7 +117,7 @@ public class IssVerificationPass extends AbstractIssPass {
 
         );
       } else {
-        var pcReg = ((Counter.RegisterCounter) pc).registerRef();
+        var pcReg = pc.registerTensor();
         if (pcReg.resultType().bitWidth() != 64 && pcReg.resultType().bitWidth() != 32) {
           diagnostics.add(
               error("Unsupported PC size", pcReg.sourceLocation())

@@ -269,14 +269,14 @@ public class GraphUtils {
   }
 
   public static ReadRegNode readReg(Register register,
-                                    @Nullable Counter.RegisterCounter staticCounterAddress
+                                    @Nullable Counter staticCounterAddress
   ) {
     return new ReadRegNode(register, register.resultType(), staticCounterAddress);
   }
 
   public static WriteRegNode writeReg(Register register,
                                       ExpressionNode val,
-                                      @Nullable Counter.RegisterCounter staticCounterAddress) {
+                                      @Nullable Counter staticCounterAddress) {
     return new WriteRegNode(register, val, staticCounterAddress);
   }
 
