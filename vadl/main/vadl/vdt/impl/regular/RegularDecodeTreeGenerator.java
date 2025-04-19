@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.impl.theiling;
+package vadl.vdt.impl.regular;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import java.util.Set;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import vadl.vdt.model.DecodeTreeGenerator;
 import vadl.vdt.model.Node;
+import vadl.vdt.model.impl.LeafNodeImpl;
 import vadl.vdt.utils.Bit;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
@@ -43,10 +44,22 @@ import vadl.vdt.utils.PBit;
  * <p>This implementation is limited to fixed-width instructions and does not support overlapping
  * instruction patterns (Except of subsumed instructions, through default nodes).
  */
-public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruction> {
+public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instruction> {
 
   @Override
   public Node generate(Collection<Instruction> instructions) {
+
+    var width = instructions.stream()
+        .map(Instruction::width)
+        .max(Integer::compareTo)
+        .orElseThrow(() -> new IllegalArgumentException("Instructions must not be empty"));
+
+    // Pad instructions to the same width. If this results in overlapping instruction patterns,
+    // the algorithm will throw an exception anyway.
+    instructions = instructions.stream()
+        .map(insn -> padInstruction(insn, width))
+        .toList();
+
     validate(instructions);
 
     // Initially, the mask is set to consider all bits
@@ -107,6 +120,32 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
     }
 
     return partition;
+  }
+
+  /**
+   * Pads the instruction to the target width by adding don't care bits as least significant bits.
+   *
+   * @param insn        The instruction to pad
+   * @param targetWidth The target width
+   * @return The padded instruction, if necessary
+   */
+  private Instruction padInstruction(Instruction insn, int targetWidth) {
+    var pattern = insn.pattern();
+
+    if (pattern.width() >= targetWidth) {
+      return insn;
+    }
+
+    final PBit[] bits = new PBit[targetWidth];
+    for (int i = 0; i < targetWidth; i++) {
+      if (i < pattern.width()) {
+        bits[i] = pattern.get(i);
+      } else {
+        bits[i] = new PBit(PBit.Value.DONT_CARE);
+      }
+    }
+
+    return new Instruction(insn.source(), targetWidth, new BitPattern(bits));
   }
 
   /**
@@ -193,12 +232,6 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
    * @param instructions the instructions to validate
    */
   private void validate(Collection<Instruction> instructions) {
-    if (instructions == null) {
-      throw new IllegalArgumentException("Instructions cannot be null");
-    }
-    if (instructions.isEmpty()) {
-      throw new IllegalArgumentException("Instructions cannot be empty");
-    }
 
     final int expectedWidth = instructions.iterator().next().width();
 
