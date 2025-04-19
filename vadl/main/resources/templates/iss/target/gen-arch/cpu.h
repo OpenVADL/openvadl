@@ -11,26 +11,19 @@
 // no default memory ordering
 #define TCG_GUEST_DEFAULT_MO 0
 
-#define [(${gen_arch_upper})]_PC [(${pc_reg_name})]
-#define [(${gen_arch_upper})]_PC_TYPE [(${pc_reg_c_type})]
+#define [(${gen_arch_upper})]_PC [(${pc_reg.name_lower})]
+#define [(${gen_arch_upper})]_PC_TYPE [(${pc_reg.value_c_type})]
 
-[# th:each="reg_file, iterState : ${register_files}"] // define the register file sizes
-#define [[${gen_arch_upper + '_REG_FILE_' + reg_file.name_upper + '_SIZE'}]] [(${reg_file["size"]})]
-[/]
-
-[# th:each="reg_file, iterState : ${register_files}"] // define the register file sizes
-extern const char * const [(${gen_arch_lower})]_cpu_[(${reg_file.name_lower})]_names[(${"[" + reg_file["size"] + "]"})];
-[/]
+[# th:each="reg : ${register_tensors}"][# th:if="${reg.index_dims.size} > 0"]
+extern const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.c_array_def})];
+[/][/]
 
 // the CPU environment across all cores/ArchCPU instances.
 // e.g. it holds the state of all registers.
 typedef struct CPUArchState {
-  [# th:each="reg_file, iterState : ${register_files}"] // CPU register file(s)
-  [(${reg_file.value_c_type})] [(${reg_file.name_lower})][[${'[' + gen_arch_upper + '_REG_FILE_' + reg_file.name_upper + '_SIZE' + ']'}]];
-  [/]
   // CPU registers
-  [# th:each="reg, iterState : ${registers}"]
-  [(${reg.c_type})] [(${reg.name_lower})];
+  [# th:each="reg, iterState : ${register_tensors}"]
+  [(${reg.value_c_type})] [(${reg.name_lower})][(${reg.c_array_def})];
   [/]
 
   // pc reset vector

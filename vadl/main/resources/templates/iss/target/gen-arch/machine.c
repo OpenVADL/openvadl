@@ -12,13 +12,7 @@ const VMStateDescription vms_[(${gen_arch_lower})]_cpu = {
     .version_id = 1,
     .minimum_version_id = 1,
     .fields = (VMStateField[]) {
-      [# th:each="reg_file, iterState : ${register_files}"] // CPU register file(s)
-        VMSTATE_UINTTL_ARRAY(env.[(${reg_file.name_lower})], [(${gen_arch_upper})]CPU, [(${reg_file["size"]})]),
-      [/]
-      [# th:each="reg, iterState : ${registers}"] // CPU registers
-        VMSTATE_UINTTL(env.[(${reg.name_lower})], [(${gen_arch_upper})]CPU),
-      [/]
-
+        // TODO: persist registers
         VMSTATE_END_OF_LIST()
     }
 };

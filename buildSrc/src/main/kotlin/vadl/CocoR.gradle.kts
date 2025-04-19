@@ -17,7 +17,9 @@
 package vadl
 
 
-open class GenerateCocoParserTask : DefaultTask() {
+open class GenerateCocoParserTask @Inject constructor(
+    private val execOps: ExecOperations
+) : DefaultTask() {
     @InputFiles
     val inputFiles: ConfigurableFileCollection = project.files()
 
@@ -40,7 +42,7 @@ open class GenerateCocoParserTask : DefaultTask() {
 
         inputFiles.files.forEach {
             println("Generating from $it...")
-            project.exec {
+            execOps.exec {
                 commandLine("java", "-jar", cocoJar.get().asFile.absolutePath, "-o", outputDirFile.path, it)
             }
             println("------")

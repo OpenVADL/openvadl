@@ -49,6 +49,7 @@ public class ReadRegNode extends ReadRegTensorNode {
     return (Register) super.resourceDefinition();
   }
 
+  
   @Override
   public boolean hasAddress() {
     return false;

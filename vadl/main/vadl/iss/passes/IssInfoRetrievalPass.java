@@ -20,16 +20,19 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.extensions.ExceptionInfo;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Specification;
 
 /**
- * Collects information about exceptions that are raised by instructions in the ISA.
+ * Collects information about registers, exceptions that are raised by instructions in the ISA.
  * It constructs a {@link ExceptionInfo} extension that is added to the ISA.
+ * Additionally, it constructs a {@link RegInfo} extension and
+ * adds it to every register.
  */
-public class IssExceptionDetectionPass extends AbstractIssPass {
-  public IssExceptionDetectionPass(IssConfiguration configuration) {
+public class IssInfoRetrievalPass extends AbstractIssPass {
+  public IssInfoRetrievalPass(IssConfiguration configuration) {
     super(configuration);
   }
 
@@ -50,6 +53,10 @@ public class IssExceptionDetectionPass extends AbstractIssPass {
     for (var exception : isa.exceptions()) {
       info.addException(exception);
     }
+
+    isa.registerTensors().forEach(r -> {
+      r.attachExtension(new RegInfo());
+    });
 
     return null;
   }

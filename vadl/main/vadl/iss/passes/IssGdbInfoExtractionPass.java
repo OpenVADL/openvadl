@@ -18,19 +18,19 @@ package vadl.iss.passes;
 
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.collect.Streams;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
-import vadl.viam.Resource;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -60,11 +60,13 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
      */
     public record Reg(
         String name,
+        // same as index in XML
+        int gdbNr,
         int bitSize,
         String type,
         // only used if the origin is a register file
-        int fileIndex,
-        Resource origin
+        List<Integer> fileIndices,
+        RegisterTensor origin
     ) implements Renderable {
       @Override
       public Map<String, Object> renderObj() {
@@ -72,7 +74,7 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
             "name", name,
             "bitSize", bitSize,
             "type", type,
-            "fileIndex", fileIndex
+            "fileIndices", fileIndices
         );
       }
     }
@@ -87,44 +89,56 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
   @Override
   public Result execute(PassResults passResults, Specification viam) throws IOException {
     var isa = viam.mip().get().isa();
-    var regFiles = isa.ownRegisterFiles().stream().flatMap(e ->
-        IntStream.range(0, e.numberOfRegisters())
-            .mapToObj(i -> getRegOfFile(e, i))
-    );
-    var regs = isa.ownRegisters().stream().map(r -> getReg(r, viam));
+    var pc = requireNonNull(isa.pc()).registerTensor();
 
-    return new Result(
-        Streams.concat(regFiles, regs).toList()
-    );
+    AtomicInteger i = new AtomicInteger();
+    var res = new ArrayList<Result.Reg>();
+    for (var reg : isa.registerTensors()) {
+      getRegTensor(reg, i.get(), pc).forEach(r -> {
+        res.add(r);
+        i.getAndIncrement();
+      });
+    }
+
+    return new Result(res);
   }
 
-  private Result.Reg getRegOfFile(RegisterFile registerFile, int i) {
-    // TODO: Determine from ABI if it exists
-    var name = (registerFile.simpleName() + i).toLowerCase();
-    return new Result.Reg(
-        name,
-        registerFile.resultType().bitWidth(),
-        "int",
-        i,
-        registerFile
-    );
+  private Stream<Result.Reg> getRegTensor(RegisterTensor reg, int i, RegisterTensor pc) {
+    var idxDimSizes = reg.indexDimensions().stream().map(RegisterTensor.Dimension::size).toList();
+    var regs = regIndexes(idxDimSizes);
+    var isCodePtr = reg == pc;
+    return regs.stream().map(regIndices -> {
+      var idxNames = regIndices.stream().map(ri -> "" + ri).collect(Collectors.joining("_"));
+      return new Result.Reg(
+          reg.simpleName().toLowerCase() + idxNames,
+          i,
+          reg.resultType(reg.maxNumberOfAccessIndices()).bitWidth(),
+          isCodePtr ? "code_ptr" : "int",
+          regIndices,
+          reg
+      );
+    });
   }
 
-  private Result.Reg getReg(Register register, Specification viam) {
-    // TODO: Determine from ABI if it exists
-    var name = register.simpleName().toLowerCase();
-
-    var pc = requireNonNull(viam.mip().get().isa().pc());
-    // TODO: Also determine from ABI (also check for data pointer)
-    var isCodePtr = register == pc.registerTensor();
-
-    return new Result.Reg(
-        name,
-        register.resultType().bitWidth(),
-        isCodePtr ? "code_ptr" : "int",
-        0, // not used for registers
-        register
-    );
+  /**
+   * Generates a list of enumerations based on the given dimensions.
+   * E.g. { 2, 3 } would give a list of { (0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2) }.
+   */
+  private List<List<Integer>> regIndexes(List<Integer> dimensions) {
+    List<List<Integer>> res = new ArrayList<>();
+    res.add(new ArrayList<>());                 // start with empty prefix
+    for (int dim : dimensions) {                // outer‑to‑inner order
+      List<List<Integer>> next = new ArrayList<>();
+      for (List<Integer> prefix : res) {      // extend every prefix
+        for (int i = 0; i < dim; i++) {
+          List<Integer> tuple = new ArrayList<>(prefix);
+          tuple.add(i);                   // add current index
+          next.add(tuple);
+        }
+      }
+      res = next;                             // move on to next dimension
+    }
+    return res;
   }
 }
 

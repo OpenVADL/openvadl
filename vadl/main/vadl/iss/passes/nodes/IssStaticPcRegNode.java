@@ -18,7 +18,7 @@ package vadl.iss.passes.nodes;
 
 import java.util.List;
 import vadl.javaannotations.viam.DataValue;
-import vadl.viam.Register;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -31,14 +31,14 @@ import vadl.viam.graph.dependency.ExpressionNode;
 public class IssStaticPcRegNode extends ExpressionNode {
 
   @DataValue
-  private final Register pc;
+  private final RegisterTensor pc;
 
-  public IssStaticPcRegNode(Register pc) {
+  public IssStaticPcRegNode(RegisterTensor pc) {
     super(pc.resultType());
     this.pc = pc;
   }
 
-  public Register register() {
+  public RegisterTensor register() {
     return pc;
   }
 

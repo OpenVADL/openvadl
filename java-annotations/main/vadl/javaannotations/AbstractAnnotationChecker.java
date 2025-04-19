@@ -159,7 +159,7 @@ public abstract class AbstractAnnotationChecker extends BugChecker implements
   private String demoImplementation(List<String> paramNames, List<VariableTree> fields) {
     var builder = new StringBuilder();
 
-    builder.append("public ")
+    builder.append("protected ")
         .append(returnType)
         .append(" ")
         .append(methodName)

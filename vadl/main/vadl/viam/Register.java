@@ -36,6 +36,7 @@ public class Register extends RegisterTensor {
     // construct dimensions
     // e.g. Bits<16> -> { Bits<4>, 16 }
     super(identifier, List.of(new Dimension(
+            0,
             Type.bits(BitsType.minimalRequiredWidthFor(resultType.bitWidth())),
             resultType.toBitsType().bitWidth())
         ),

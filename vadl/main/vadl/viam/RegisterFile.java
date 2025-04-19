@@ -44,8 +44,8 @@ public class RegisterFile extends RegisterTensor {
 
   private static List<Dimension> initDims(DataType addressType, DataType resultType) {
     var innerDimType = Type.bits(BitsType.minimalRequiredWidthFor(resultType.bitWidth()));
-    var innerDim = new Dimension(innerDimType, resultType.toBitsType().bitWidth());
-    var outerDim = new Dimension(addressType, (int) Math.pow(2, addressType.bitWidth()));
+    var outerDim = new Dimension(0, addressType, (int) Math.pow(2, addressType.bitWidth()));
+    var innerDim = new Dimension(1, innerDimType, resultType.toBitsType().bitWidth());
     return List.of(outerDim, innerDim);
   }
 

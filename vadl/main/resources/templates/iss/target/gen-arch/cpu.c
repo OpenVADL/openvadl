@@ -12,11 +12,11 @@
 
 static [(${gen_arch_upper})]CPU* cpu_self;
 
-[# th:each="reg_file, iterState : ${register_files}"] // define the register file sizes
-const char * const [(${gen_arch_lower})]_cpu_[(${reg_file.name_lower})]_names[[(${"[" + reg_file["size"] + "]"})]] = {
-  "[(${#strings.arrayJoin(reg_file.names, '", "')})]"
+[# th:each="reg : ${register_tensors}"][# th:if="${reg.index_dims.size} > 0"]
+const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.c_array_def})] = {
+  "[(${#strings.arrayJoin(reg.names, '", "')})]"
 };
-[/]
+[/][/]
 
 static void [(${gen_arch_lower})]_cpu_disas_set_info(CPUState *cpu, disassemble_info *info)
 {
@@ -62,11 +62,10 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
         vcc->parent_phases.hold(obj, type);
     }
 
-    [# th:each="reg_file, iterState : ${register_files}"]
-    for(int i=0; i < [(${reg_file["size"]})]; i++){
-      env->[(${reg_file.name_lower})][i] = 0;
-    }
-    [/]
+    [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.index_dims.size} == 0"]
+    env->[(${reg.name_lower})] = 0; [/][/]
+    [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.index_dims.size} > 0"]
+    memset(env->[(${reg.name_lower})], 0, sizeof(env->[(${reg.name_lower})])); [/][/]
 
     // Start address of the execution.
     // Comes from firmware or start address definition in processor definition.
@@ -100,21 +99,8 @@ static void [(${gen_arch_lower})]_cpu_dump_state(CPUState *cs, FILE *f, int flag
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
     //The CPU environment is used to access the content of the emulated registers.
     CPU[(${gen_arch_upper})]State *env = &cpu->env;
-    [# th:each="reg, iterState : ${registers}"]
-    qemu_fprintf(f, " [(${reg.name})]:    " TARGET_FMT_lx "\n", env->[(${reg.name_lower})]);
-    [/]
-    int i;
-    [# th:each="reg_file, iterState : ${register_files}"]
-    for(i=0; i < [(${reg_file["size"]})]; i++){
-      qemu_fprintf(f, " %-8s " TARGET_FMT_lx, [(${gen_arch_lower})]_cpu_[(${reg_file.name_lower})]_names[i], env->[(${reg_file.name_lower})][i]);
-      if ((i & 3) == 3) {
-          qemu_fprintf(f, "\n");
-      }
-    }
-    [/]
-    [# th:if="${insn_count}"]
-    qemu_fprintf(f, " insn_count  %010" PRIx64 "\n", env->insn_count);
-    [/]
+
+[(${reg_dump_code})]
     qemu_fprintf(f, "\n");
 }
 

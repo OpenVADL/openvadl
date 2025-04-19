@@ -37,8 +37,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgGetVar;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -295,15 +294,15 @@ class IssVariableAllocator {
 class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
 
   private final TcgCtx.Assignment tempAssignments;
-  private final Map<RegisterFile, List<TcgVRefNode>> registerFileVars;
+  private final Map<RegisterTensor, List<TcgVRefNode>> registerVars;
 
   public LivenessAnalysis(TcgCtx.Assignment tempAssignments) {
     this.tempAssignments = tempAssignments;
     // collect all registerFileVariables to their respective registerFile
-    this.registerFileVars = tempAssignments.tcgVariables()
-        .filter(v -> v.var().kind() == TcgV.Kind.REG_FILE)
+    this.registerVars = tempAssignments.tcgVariables()
+        .filter(v -> v.var().kind() == TcgV.Kind.REG_TENSOR)
         .collect(Collectors.groupingBy(
-            v -> (RegisterFile) requireNonNull(v.var().registerOrFile())));
+            v -> requireNonNull(v.var().registerOrFile())));
   }
 
   @Override
@@ -347,13 +346,11 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
     // We have to assume that all registers and register files are used
     // after this instruciton. Thus we have to set them used at the end of the instruction.
     // We also use constants at the end, so they can't be reassigned
-    var endFlow = tempAssignments.tcgVariables()
+    return tempAssignments.tcgVariables()
         .filter(v ->
-            v.var().kind() == TcgV.Kind.REG
-                || v.var().kind() == TcgV.Kind.REG_FILE
+            v.var().kind() == TcgV.Kind.REG_TENSOR
                 || v.var().kind() == TcgV.Kind.CONST
         ).collect(Collectors.toSet());
-    return endFlow;
   }
 
   @Override
@@ -397,28 +394,17 @@ class LivenessAnalysis extends DataFlowAnalysis<Set<TcgVRefNode>> {
 
     // however, if those variables are register files
     // all variables of the same register file must be considered also used
-    // as the concrete register file index is not known
-    for (var usedVar : directlyUsedVars.stream().toList()) {
-      if (usedVar.var().kind() == TcgV.Kind.REG_FILE) {
-        var regFile = (RegisterFile) usedVar.var().registerOrFile();
-        directlyUsedVars.addAll(registerFileVars.get(regFile));
-      }
-    }
-
+    // as the concrete register file index is not known.
     // as we separate src and dest variables, even if they potentially origin from the same
     // cpu register, we must set destination registers to be used if a source register
     // to the same origin source was received.
     // so e.g. if register xy is used, also register xy_dest is used at this operation.
     for (var usedVar : directlyUsedVars.stream().toList()) {
-      if (usedVar.var().kind() == TcgV.Kind.REG) {
-        var reg = (Register) usedVar.var().registerOrFile();
-        var thisRegVariables = tempAssignments.tcgVariables().filter(v ->
-            v.var().kind() == TcgV.Kind.REG && v.var().registerOrFile() == reg
-        ).toList();
-        directlyUsedVars.addAll(thisRegVariables);
+      if (usedVar.var().kind() == TcgV.Kind.REG_TENSOR) {
+        var regFile = usedVar.var().registerOrFile();
+        directlyUsedVars.addAll(registerVars.get(regFile));
       }
     }
-
 
     return directlyUsedVars.stream().toList();
   }

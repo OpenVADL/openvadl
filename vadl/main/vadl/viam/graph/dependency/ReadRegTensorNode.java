@@ -79,6 +79,10 @@ public class ReadRegTensorNode extends ReadResourceNode {
     return regTensor;
   }
 
+  public RegisterTensor regTensor() {
+    return regTensor;
+  }
+
   /**
    * Determines if the register is a PC based on whether staticCounterAccess is set.
    */
