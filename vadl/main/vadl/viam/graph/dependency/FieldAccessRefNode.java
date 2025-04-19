@@ -57,8 +57,7 @@ public class FieldAccessRefNode extends ParamNode {
   public void verifyState() {
     super.verifyState();
 
-    // TODO: Replace by isTrivialCastTo
-    ensure(fieldAccess.type() == type(),
+    ensure(fieldAccess.type().isTrivialCastTo(type()),
         "Type of fieldAccess can't be trivially cast to node's type. %s vs %s", fieldAccess.type(),
         type());
 

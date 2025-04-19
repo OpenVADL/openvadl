@@ -167,7 +167,7 @@ public class LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrateg
               // (for the VIAM spec)
               var zeroRegister = new ConstantNode(
                   new Constant.Str(
-                      registerFile.simpleName() + zeroConstraint.address().intValue()));
+                      registerFile.simpleName() + zeroConstraint.indices().getFirst().intValue()));
 
               var newArgs = new LcbMachineInstructionNode(node.arguments(), xori);
               node.setArgs(

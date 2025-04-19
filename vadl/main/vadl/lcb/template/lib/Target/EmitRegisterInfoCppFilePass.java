@@ -152,7 +152,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
       for (var constraint : registerFile.constraints()) {
         reserved.add(
             new ReservedRegister(registerFile.identifier.simpleName(),
-                constraint.address().intValue()));
+                constraint.indices().getFirst().intValue()));
       }
     }
 

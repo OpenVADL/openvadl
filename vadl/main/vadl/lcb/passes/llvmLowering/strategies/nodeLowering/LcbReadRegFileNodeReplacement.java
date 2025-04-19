@@ -48,7 +48,7 @@ public class LcbReadRegFileNodeReplacement
     if (readRegFileNode.hasConstantAddress()) {
       var address = (ConstantNode) readRegFileNode.address();
       var constraint = Arrays.stream(readRegFileNode.registerFile().constraints())
-          .filter(c -> c.address().equals(address.constant()))
+          .filter(c -> c.indices().getFirst().equals(address.constant()))
           .findFirst();
 
       if (constraint.isPresent()) {

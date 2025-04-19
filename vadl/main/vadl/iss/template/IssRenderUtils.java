@@ -49,7 +49,7 @@ public class IssRenderUtils {
             .toList(),
         "constraints", Arrays.stream(rf.constraints())
             .map(c -> Map.of(
-                "index", c.address().intValue(),
+                "index", c.indices().getFirst().intValue(),
                 "value", c.value().intValue()
             )).toList()
     );

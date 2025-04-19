@@ -322,6 +322,6 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
                 registerFile.sourceLocation())
         );
 
-    return registerFile.simpleName() + constraint.address().intValue();
+    return registerFile.simpleName() + constraint.indices().getFirst().intValue();
   }
 }

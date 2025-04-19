@@ -63,6 +63,7 @@ import vadl.viam.Procedure;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
@@ -1361,14 +1362,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // FIXME: Add proper constraints. This is currently only temporarily hardcoded to
     //    fix the riscv iss simulation.
-    var zeroConstraint = new RegisterFile.Constraint(Constant.Value.of(0, addrType),
+    var zeroConstraint = new RegisterTensor.Constraint(List.of(Constant.Value.of(0, addrType)),
         Constant.Value.of(0, resultType));
 
     var regFile = new RegisterFile(
         generateIdentifier(definition.viamId, definition.identifier()),
         addrType,
         resultType,
-        new RegisterFile.Constraint[] {zeroConstraint}
+        new RegisterTensor.Constraint[] {zeroConstraint}
     );
     return Optional.of(regFile);
   }

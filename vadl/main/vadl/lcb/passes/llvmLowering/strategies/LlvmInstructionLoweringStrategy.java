@@ -672,7 +672,8 @@ public abstract class LlvmInstructionLoweringStrategy {
       // For example, the X0 register in RISC-V which always has a constant value.
       var constraints = Arrays.stream(node.registerFile().constraints()).toList();
       var constraintValue = constraints.stream()
-          .filter(x -> x.address().intValue() == constantNode.constant().asVal().intValue())
+          .filter(
+              x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())
           .findFirst();
       var constRegisterValue = ensurePresent(constraintValue,
           () -> Diagnostic.error("Register file with constant index has no constant value.",

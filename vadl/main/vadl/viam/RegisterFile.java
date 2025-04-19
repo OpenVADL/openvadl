@@ -16,16 +16,12 @@
 
 package vadl.viam;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.utils.Pair;
 
 /**
  * The register file is related to the {@link Register} but takes an address/index when accessing
@@ -33,7 +29,6 @@ import vadl.utils.Pair;
  * addresses.
  */
 public class RegisterFile extends RegisterTensor {
-  private final Constraint[] constraints;
 
   /**
    * Constructs a new RegisterFile object.
@@ -44,8 +39,7 @@ public class RegisterFile extends RegisterTensor {
    */
   public RegisterFile(Identifier identifier, DataType addressType, DataType resultType,
                       Constraint[] constraints) {
-    super(identifier, initDims(addressType, resultType));
-    this.constraints = constraints;
+    super(identifier, initDims(addressType, resultType), constraints);
   }
 
   private static List<Dimension> initDims(DataType addressType, DataType resultType) {
@@ -64,28 +58,6 @@ public class RegisterFile extends RegisterTensor {
     return outermostDim().size();
   }
 
-  public Constraint[] constraints() {
-    return constraints;
-  }
-
-  /**
-   * Get a stream over all the constant registers which are defined in {@link #constraints}.
-   */
-  public Stream<Pair<Constant.Value, Constant.Value>> constantRegisters() {
-    return Arrays.stream(constraints)
-        .map(constraint -> Pair.of(constraint.address, constraint.value));
-  }
-
-  /**
-   * Return the address of a zero register if it exists.
-   */
-  public Optional<Constant.Value> zeroRegister() {
-    return constantRegisters()
-        .filter(constantRegister -> constantRegister.right().intValue() == 0)
-        .map(Pair::left)
-        .findFirst();
-  }
-
   /**
    * Generate the name from this register file with an {@code index}.
    */
@@ -93,27 +65,11 @@ public class RegisterFile extends RegisterTensor {
     return identifier.simpleName() + index;
   }
 
-
   /**
    * Generate the name from this register file with an {@code index}.
    */
   public String generateName(Constant.Value index) {
     return generateName(index.intValue());
-  }
-
-  @Override
-  public void verify() {
-    super.verify();
-
-    for (Constraint constraint : constraints) {
-      ensure(constraint.value.type().isTrivialCastTo(resultType()),
-          "Type mismatch: Can't cast value type %s to register file result type %s.",
-          constraint.value.type(), this.resultType());
-
-      ensure(constraint.address.type().isTrivialCastTo(addressType()),
-          "Type mismatch: Can't cast address type %s to register file address type %s.",
-          constraint.address.type(), this.resultType());
-    }
   }
 
   @Nonnull
@@ -132,25 +88,4 @@ public class RegisterFile extends RegisterTensor {
     return identifier.simpleName() + ": " + addressType() + " -> " + resultType();
   }
 
-  /**
-   * A register file constraint that statically defines the result value for a specific
-   * address.
-   *
-   * <p>For example<pre>
-   *  {@code
-   * [X(0) = 0]
-   * register file X: Index -> Regs
-   * }
-   * </pre>
-   * defines that the address 0 always results in 0 on register file X.
-   * </p>
-   *
-   * @param address of constraint
-   * @param value   of constraint
-   */
-  public record Constraint(
-      Constant.Value address,
-      Constant.Value value
-  ) {
-  }
 }

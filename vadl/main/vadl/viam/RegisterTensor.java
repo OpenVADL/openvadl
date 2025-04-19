@@ -17,7 +17,9 @@
 package vadl.viam;
 
 import com.google.common.collect.Streams;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.ConcreteRelationType;
@@ -72,10 +74,16 @@ public class RegisterTensor extends Resource {
   }
 
   private final List<Dimension> dimensions;
+  private final Constraint[] constraints;
 
-  public RegisterTensor(Identifier identifier, List<Dimension> dimensions) {
+  /**
+   * Constructs the register tensor.
+   */
+  public RegisterTensor(Identifier identifier, List<Dimension> dimensions,
+                        Constraint[] constraints) {
     super(identifier);
     this.dimensions = dimensions;
+    this.constraints = constraints;
   }
 
   public int dimCount() {
@@ -110,9 +118,13 @@ public class RegisterTensor extends Resource {
     return dimensions.getLast();
   }
 
+  public Constraint[] constraints() {
+    return constraints;
+  }
+
   @Override
   public List<DataType> indexTypes() {
-    return dimensions.stream().map(Dimension::indexType).toList();
+    return dimensions.stream().limit(maxNumberOfAccessIndices()).map(Dimension::indexType).toList();
   }
 
   @Override
@@ -147,8 +159,9 @@ public class RegisterTensor extends Resource {
    */
   @Override
   public DataType resultType(int accessedDimensions) {
-    ensure(accessedDimensions < dimensions.size(),
-        "Too many dimensions provided, max is size - 1 dimensions.");
+    ensure(accessedDimensions <= maxNumberOfAccessIndices(),
+        "Too many dimensions provided, max is %s, got %s.", maxNumberOfAccessIndices(),
+        accessedDimensions);
     // concatenate the reset of all returned dimensions by multiply the entries per
     // dimension
     var width = dimensions.stream()
@@ -170,9 +183,30 @@ public class RegisterTensor extends Resource {
     return ConcreteRelationType.concreteRelation(args, result);
   }
 
+  /**
+   * Return the address of a zero register if it exists.
+   */
+  public Optional<List<Constant.Value>> zeroRegister() {
+    return Arrays.stream(constraints())
+        .filter(c -> c.value().intValue() == 0)
+        .map(c -> c.indices)
+        .findFirst();
+  }
+
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public void verify() {
+    super.verify();
+    for (Constraint constraint : constraints) {
+      ensureMatchingIndexTypes(constraint.indices.stream().map(Constant.Value::type).toList());
+      ensure(constraint.value.type().isTrivialCastTo(resultType(constraint.indices().size())),
+          "Type mismatch: Can't cast constraint value type %s to register tensor result type %s.",
+          constraint.value.type(), this.resultType());
+    }
   }
 
   /**
@@ -181,12 +215,35 @@ public class RegisterTensor extends Resource {
    */
   public void ensureMatchingIndexTypes(List<DataType> indexTypes) {
     ensure(indexTypes.size() <= maxNumberOfAccessIndices(),
-        "Too may indices provided, max is dims - 1");
+        "Too may indices provided, max is %s, got %s", maxNumberOfAccessIndices(),
+        indexTypes.size());
     var dims = dimensions().stream().limit(indexTypes.size()).map(Dimension::indexType);
     Streams.forEachPair(indexTypes.stream(), dims, (provided, actual) -> {
       ensure(provided.isTrivialCastTo(actual),
           "Provided index type does not match respective tensor image type: %s != %s",
           provided, actual);
     });
+  }
+
+  /**
+   * A register file constraint that statically defines the result value for a specific
+   * index.
+   *
+   * <p>For example<pre>
+   *  {@code
+   * [X(0) = 0]
+   * register file X: Index -> Regs
+   * }
+   * </pre>
+   * defines that the address 0 always results in 0 on register file X.
+   * </p>
+   *
+   * @param indices of constraint
+   * @param value   of constraint
+   */
+  public record Constraint(
+      List<Constant.Value> indices,
+      Constant.Value value
+  ) {
   }
 }

@@ -85,7 +85,7 @@ public class RegisterTest extends AbstractTest {
           // var constraints = y.constraints();
           // assertEquals(1, constraints.length);
           // var constraint = constraints[0];
-          // assertEquals(2, constraint.address().integer().intValue());
+          // assertEquals(2, constraint.indices().getFirst().integer().intValue());
           // assertEquals(0, constraint.value().integer().intValue());
         })
     );
