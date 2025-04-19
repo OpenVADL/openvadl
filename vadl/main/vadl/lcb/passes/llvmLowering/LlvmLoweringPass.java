@@ -123,7 +123,7 @@ public class LlvmLoweringPass extends Pass {
         }
       }
 
-      throw Diagnostic.error("Cannot find field in inputs.", field.sourceLocation()).build();
+      throw Diagnostic.error("Cannot find field in inputs.", field.location()).build();
     }
 
     /**
@@ -276,7 +276,7 @@ public class LlvmLoweringPass extends Pass {
       IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords,
       IdentityHashMap<PseudoInstruction, LlvmLoweringRecord.Pseudo> pseudoInstructionRecords,
       IdentityHashMap<CompilerInstruction, LlvmLoweringRecord.Compiler>
-          compilerInstructionRecords) {
+      compilerInstructionRecords) {
 
   }
 
@@ -291,11 +291,11 @@ public class LlvmLoweringPass extends Pass {
     var labelingResult = ensureNonNull(
         (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.location()));
     var labelingResultPseudo = ensureNonNull(
         (IsaPseudoInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.location()));
     var fieldUsages = (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
         IdentifyFieldUsagePass.class);
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().orElseThrow();
@@ -489,7 +489,7 @@ public class LlvmLoweringPass extends Pass {
                       .flatMap(x -> x.usages().filter(y -> y instanceof HasRegisterFile)
                           .map(y -> ((HasRegisterFile) y).registerFile()))
                       .findFirst(), () -> Diagnostic.error("Expected to find register file",
-                      field.sourceLocation()));
+                      field.location()));
           // We use the funcParamNode's name because we need to make sure that the register
           // renaming is handled.
           // pseudo instruction BEQZ( rs : Index, offset : Bits<12> ) =
@@ -510,7 +510,7 @@ public class LlvmLoweringPass extends Pass {
                       .flatMap(x -> x.usages().filter(y -> y instanceof HasRegisterFile)
                           .map(y -> ((HasRegisterFile) y).registerFile()))
                       .findFirst(), () -> Diagnostic.error("Expected to find register file",
-                      field.sourceLocation()));
+                      field.location()));
           args.add(new LcbMachineInstructionParameterNode(
               new TableGenInstructionOperand(null,
                   registerFile.generateName(constantNode.constant().asVal()))));
@@ -529,7 +529,7 @@ public class LlvmLoweringPass extends Pass {
                           x.fieldAccess().fieldRef().equals(field))
                       .findFirst(),
                   () -> Diagnostic.error("Cannot find field access function for field",
-                      field.sourceLocation()));
+                      field.location()));
           var operand =
               ensurePresent(
                   Stream.concat(machineRecord.info().inputs().stream(),
@@ -542,7 +542,7 @@ public class LlvmLoweringPass extends Pass {
                           z.immediateOperand().fieldAccessRef().equals(fieldAccess.fieldAccess()))
                       )
                       .findFirst(),
-                  () -> Diagnostic.error("Cannot find operand", argument.sourceLocation()));
+                  () -> Diagnostic.error("Cannot find operand", argument.location()));
 
           args.add(new LcbMachineInstructionParameterNode(operand));
         } else if (argument instanceof ConstantNode constantNode) {

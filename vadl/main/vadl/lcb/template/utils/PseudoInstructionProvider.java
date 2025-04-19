@@ -52,7 +52,7 @@ public class PseudoInstructionProvider {
                 DeferredDiagnosticStore.add(Diagnostic.warning(
                     "Instruction was not lowered. "
                         + "Therefore, it cannot be used in the pseudo instruction",
-                    i.sourceLocation()).build());
+                    i.location()).build());
               }
               return isSupported;
             }));

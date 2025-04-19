@@ -178,18 +178,18 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
   private static @Nonnull ValueType upcastFieldAccess(Format.FieldAccess fieldAccess) {
     return ensurePresent(ValueType.from(fieldAccess.type()),
         () -> Diagnostic.error("Cannot convert immediate type to LLVM type.",
-                fieldAccess.sourceLocation())
+                fieldAccess.location())
             .help("Check whether this type exists in LLVM"));
   }
 
   private static @Nonnull InstrCallNode getInstrCallNodeOrThrowError(PseudoInstruction pseudo) {
     ensure(pseudo.behavior().getNodes(InstrCallNode.class).count() == 1,
         () -> Diagnostic.error("Expected only one machine instruction",
-            pseudo.sourceLocation()));
+            pseudo.location()));
     return
         ensurePresent(pseudo.behavior().getNodes(InstrCallNode.class).findFirst(),
             () -> Diagnostic.error("Expected only one machine instruction",
-                pseudo.sourceLocation()));
+                pseudo.location()));
   }
 
   private static @Nonnull Format.FieldAccess getFieldAccessFunctionFromFormatOrThrowError(
@@ -198,10 +198,10 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
         Diagnostic.error(
             "Machine instruction must only have one field access function to be able to "
                 + "deduce the immediate layout for the machine instruction.",
-            machineInstruction.sourceLocation()));
+            machineInstruction.location()));
     return
         ensurePresent(machineInstruction.target().format().fieldAccesses().stream().findFirst(),
             () -> Diagnostic.error("Cannot find a field access function",
-                machineInstruction.sourceLocation()));
+                machineInstruction.location()));
   }
 }

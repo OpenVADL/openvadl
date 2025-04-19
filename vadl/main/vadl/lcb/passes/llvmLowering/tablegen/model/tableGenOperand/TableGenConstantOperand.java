@@ -54,7 +54,7 @@ public class TableGenConstantOperand extends TableGenInstructionOperand {
     var unpackedLlvmType = ensurePresent(llvmType, () -> Diagnostic.error(
         "Constant value at given index has an invalid type which is not supported by llvm: "
             + constant.type(),
-        origin != null ? origin.sourceLocation() : SourceLocation.INVALID_SOURCE_LOCATION));
+        origin != null ? origin.location() : SourceLocation.INVALID_SOURCE_LOCATION));
     return "(" + unpackedLlvmType.getLlvmType() + " " + constant.asVal().intValue() + ")";
   }
 }

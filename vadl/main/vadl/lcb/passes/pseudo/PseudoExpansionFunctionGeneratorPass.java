@@ -31,7 +31,6 @@ import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.viam.Abi;
-import vadl.viam.CompilerInstruction;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
 import vadl.viam.PseudoInstruction;

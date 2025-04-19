@@ -21,14 +21,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 
 /**
  * Represents an abstract annotation that can be associated with a definition.
  * This class provides mechanisms to ensure the correctness of its state and
  * the associated definition.
  */
-public abstract class Annotation<T extends Definition> implements WithSourceLocation {
+public abstract class Annotation<T extends Definition> implements WithLocation {
 
   @Nullable
   private T parentDefinition;
@@ -95,7 +95,7 @@ public abstract class Annotation<T extends Definition> implements WithSourceLoca
   }
 
   @Override
-  public final SourceLocation sourceLocation() {
+  public final SourceLocation location() {
     return sourceLocation;
   }
 

@@ -53,7 +53,7 @@ public class TableGenInstructionImmediateLabelOperand extends TableGenInstructio
     ensure(node.usage() == LlvmFieldAccessRefNode.Usage.BasicBlock,
         () -> Diagnostic.error(
             "Field reference has wrong type. It is expected to be basic block but it is not.",
-            node.sourceLocation()));
+            node.location()));
     this.immediateOperand = node.immediateOperand();
   }
 

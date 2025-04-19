@@ -57,7 +57,7 @@ public class LcbReadRegFileNodeReplacement
         DeferredDiagnosticStore.add(Diagnostic.warning(
             "Reading from a register file with constant index but the register has no "
                 + "constraint value.",
-            address.sourceLocation()).build());
+            address.location()).build());
         return readRegFileNode;
       }
     } else {

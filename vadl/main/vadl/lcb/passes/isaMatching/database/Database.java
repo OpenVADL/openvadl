@@ -51,11 +51,11 @@ public class Database {
     var labelingResult = ensureNonNull(
         (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaMachineInstructionMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.location()));
     var labelingPseudoResult = ensureNonNull(
         (IsaPseudoInstructionMatchingPass.Result) passResults.lastResultOf(
             IsaPseudoInstructionMatchingPass.class),
-        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.sourceLocation()));
+        () -> Diagnostic.error("Cannot find semantics of the instructions", viam.location()));
     this.labelledMachineInstructions = labelingResult.labels();
     this.labelledPseudoInstructions = labelingPseudoResult.labels();
   }

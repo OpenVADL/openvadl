@@ -25,7 +25,7 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 
 abstract sealed class Statement extends Node
     permits AssignmentStatement, BlockStatement, CallStatement, ForallStatement,
@@ -123,7 +123,7 @@ final class BlockStatement extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -202,7 +202,7 @@ final class LetStatement extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -265,7 +265,7 @@ final class IfStatement extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -319,7 +319,7 @@ final class AssignmentStatement extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return target.location().join(valueExpression.location());
   }
 
@@ -368,7 +368,7 @@ final class StatementList extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -398,7 +398,7 @@ final class RaiseStatement extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -436,7 +436,7 @@ final class CallStatement extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return expr.location();
   }
 
@@ -482,7 +482,7 @@ final class PlaceholderStatement extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -515,7 +515,7 @@ final class MacroInstanceStatement extends Statement implements IsMacroInstance 
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -625,7 +625,7 @@ final class MatchStatement extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -695,7 +695,7 @@ final class MatchStatement extends Statement {
     return result;
   }
 
-  static final class Case implements WithSourceLocation {
+  static final class Case implements WithLocation {
     List<Expr> patterns;
     Statement result;
 
@@ -728,7 +728,7 @@ final class MatchStatement extends Statement {
     }
 
     @Override
-    public SourceLocation sourceLocation() {
+    public SourceLocation location() {
       return patterns.get(0).location().join(result.location());
     }
   }
@@ -765,7 +765,7 @@ final class InstructionCallStatement extends Statement {
 
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -887,7 +887,7 @@ final class LockStatement extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -933,7 +933,7 @@ final class ForallStatement extends Statement {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -985,7 +985,7 @@ final class ForallStatement extends Statement {
     }
 
     @Override
-    SourceLocation location() {
+    public SourceLocation location() {
       return name.location().join(domain.location());
     }
 

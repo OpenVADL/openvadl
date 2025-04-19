@@ -68,7 +68,7 @@ public class Relocation extends Function {
 
     ViamError.ensure(parameters().length == 1,
         () -> Diagnostic.error("Relocations must have exactly one argument.",
-            this.sourceLocation()));
+            this.location()));
   }
 
   @Override

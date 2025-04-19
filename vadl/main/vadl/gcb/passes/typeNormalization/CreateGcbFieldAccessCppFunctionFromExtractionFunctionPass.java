@@ -53,7 +53,7 @@ public class CreateGcbFieldAccessCppFunctionFromExtractionFunctionPass extends P
    * Output of the pass.
    */
   public record Output(Map<Function, GcbCppFunctionForFieldAccess> byFunction,
-                Map<Format.Field, GcbCppFunctionForFieldAccess> byField) {
+                       Map<Format.Field, GcbCppFunctionForFieldAccess> byField) {
 
   }
 
@@ -73,7 +73,7 @@ public class CreateGcbFieldAccessCppFunctionFromExtractionFunctionPass extends P
                 () -> Diagnostic.error(
                     "Extraction function must not be null. Maybe it does not exist or was not "
                         + "generated?",
-                    fieldAccess.sourceLocation())
+                    fieldAccess.location())
             )))
         .forEach(pair -> {
           var function = createGcbFieldAccessCppFunction(pair.right(), pair.left());

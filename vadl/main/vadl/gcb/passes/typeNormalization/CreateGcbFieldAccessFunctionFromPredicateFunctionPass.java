@@ -51,7 +51,7 @@ public class CreateGcbFieldAccessFunctionFromPredicateFunctionPass extends Pass 
    * Output of the pass.
    */
   public record Output(Map<Function, GcbCppFunctionForFieldAccess> byFunction,
-                Map<Format.Field, GcbCppFunctionForFieldAccess> byField) {
+                       Map<Format.Field, GcbCppFunctionForFieldAccess> byField) {
 
   }
 
@@ -69,7 +69,7 @@ public class CreateGcbFieldAccessFunctionFromPredicateFunctionPass extends Pass 
             ensureNonNull(fieldAccess.predicate(),
                 () -> Diagnostic.error(
                     "Predicate must not be null. Maybe it does not exist or was not generated?",
-                    fieldAccess.sourceLocation())
+                    fieldAccess.location())
             )))
         .forEach(pair -> {
           var function = createGcbFieldAccessCppFunction(pair.right(), pair.left());

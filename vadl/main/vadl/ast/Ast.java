@@ -23,7 +23,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 
 /**
  * The abstract syntax tree for the vadl language.
@@ -101,7 +101,7 @@ public class Ast {
   }
 }
 
-abstract class Node implements WithSourceLocation {
+abstract class Node implements WithLocation {
   @Nullable
   SymbolTable symbolTable;
 
@@ -123,12 +123,6 @@ abstract class Node implements WithSourceLocation {
         || n instanceof Statement || n instanceof Definition;
   }
 
-  abstract SourceLocation location();
-
-  @Override
-  public final SourceLocation sourceLocation() {
-    return location();
-  }
 
   abstract SyntaxType syntaxType();
 
@@ -172,7 +166,7 @@ final class BinOp extends Node implements IsBinOp {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -220,7 +214,7 @@ final class UnOp extends Node implements IsUnOp {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -269,7 +263,7 @@ class RecordInstance extends Node {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return sourceLocation;
   }
 
@@ -305,7 +299,7 @@ class MacroReference extends Node {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return sourceLocation;
   }
 

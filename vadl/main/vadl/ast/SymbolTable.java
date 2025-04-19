@@ -546,7 +546,7 @@ class SymbolTable {
           entry.value.accept(this);
         }
       }
-     
+
       afterTravel(definition);
       return null;
     }

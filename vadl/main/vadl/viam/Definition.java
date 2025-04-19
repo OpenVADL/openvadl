@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 import vadl.viam.graph.Graph;
 
 /**
@@ -43,7 +43,7 @@ import vadl.viam.graph.Graph;
  * Those definition extensions are added by passes that want to directly associate
  * information to specific definitions. </p>
  */
-public abstract class Definition implements WithSourceLocation {
+public abstract class Definition implements WithLocation {
 
   public final Identifier identifier;
   private SourceLocation sourceLocation = SourceLocation.INVALID_SOURCE_LOCATION;
@@ -65,7 +65,7 @@ public abstract class Definition implements WithSourceLocation {
   }
 
   @Override
-  public SourceLocation sourceLocation() {
+  public SourceLocation location() {
     return sourceLocation;
   }
 
