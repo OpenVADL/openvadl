@@ -27,8 +27,20 @@ import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.NodeList;
 
 /**
- * Reads from a {@link RegisterTensor}.
- * TODO: Add more documentation
+ * Represents a read access to a {@link RegisterTensor}.
+ * The provided {@link #indices()} indicate which dimensions of the register tensor are read.
+ *
+ * <p>E.g., given {@code register A: Bits<4><32>}, we could read
+ * {@code A(0)} which would read register 0 in "register file" A.
+ * In this case the size of the provided indices list would be 1 (value 0).
+ * It is also possible to read {@code A}, which would write
+ * across all dimensions of the register tensor.
+ * In this case, the indices list would be empty.
+ * The result type can be computed with {@link RegisterTensor#resultType(int)}.
+ *
+ * <p>The {@link #staticCounterAccess()} indicates if this read is known to be
+ * (program) counter access. It is set by the
+ * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}</p>
  */
 public class ReadRegTensorNode extends ReadResourceNode {
 
@@ -92,7 +104,7 @@ public class ReadRegTensorNode extends ReadResourceNode {
         indices().size(), regTensor.maxNumberOfAccessIndices());
     ensure(type().bitWidth() >= regTensor.resultType(indices.size()).bitWidth(),
         "Read result width is smaller than register tensor result width.");
-    // TODO: Check index types
+    regTensor.ensureMatchingIndexTypes(indices.stream().map(e -> e.type().asDataType()).toList());
   }
 
   @Override

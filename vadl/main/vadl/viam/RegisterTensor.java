@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
@@ -174,4 +175,18 @@ public class RegisterTensor extends Resource {
     visitor.visit(this);
   }
 
+  /**
+   * Ensures that the types of the given indices match the types of the register tensor's
+   * dimension types.
+   */
+  public void ensureMatchingIndexTypes(List<DataType> indexTypes) {
+    ensure(indexTypes.size() <= maxNumberOfAccessIndices(),
+        "Too may indices provided, max is dims - 1");
+    var dims = dimensions().stream().limit(indexTypes.size()).map(Dimension::indexType);
+    Streams.forEachPair(indexTypes.stream(), dims, (provided, actual) -> {
+      ensure(provided.isTrivialCastTo(actual),
+          "Provided index type does not match respective tensor image type: %s != %s",
+          provided, actual);
+    });
+  }
 }

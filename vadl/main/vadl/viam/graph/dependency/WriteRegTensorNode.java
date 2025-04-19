@@ -27,8 +27,19 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 
 /**
- * Writes to a {@link RegisterTensor}.
- * TODO: Add more documentation
+ * Represents a write access to a {@link RegisterTensor}.
+ * The provided {@link #indices()} indicate which dimensions of the register tensor are written.
+ *
+ * <p>E.g., given {@code register A: Bits<4><32>}, we could write with
+ * {@code A(0) := 10 as Bits<32>} which would write register 0 in "register file" A.
+ * In this case the size of the provided indices list would be 1 (value 0).
+ * It is also possible to write {@code A := 10 as Bits<4 * 32>}, which would write
+ * across all dimensions of the register tensor.
+ * In this case, the indices list would be empty.
+ *
+ * <p>The {@link #staticCounterAccess()} indicates if this write is known to be
+ * (program) counter access. It is set by the
+ * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}</p>
  */
 public class WriteRegTensorNode extends WriteResourceNode {
 
@@ -95,7 +106,19 @@ public class WriteRegTensorNode extends WriteResourceNode {
     ensure(indices().size() <= regTensor.maxNumberOfAccessIndices(),
         "Too many indices for tensor access. Write uses %d indices, tensor has %d indices",
         indices().size(), regTensor.maxNumberOfAccessIndices());
-    // TODO: Check index types
+    ensure(
+        regTensor.resultType(indices.size()).isTrivialCastTo(
+            value().type()
+        ), "Try to write value of type %s to register tensor with write type %s",
+        value().type(), regTensor.resultType(indices.size())
+    );
+    ensure(
+        regTensor.resultType(indices.size()).isTrivialCastTo(
+            value().type()
+        ), "Try to write value of type %s to register tensor with write type %s",
+        value().type(), regTensor.resultType(indices.size())
+    );
+    regTensor.ensureMatchingIndexTypes(indices.stream().map(e -> e.type().asDataType()).toList());
   }
 
   @Override
