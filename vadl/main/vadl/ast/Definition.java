@@ -2299,10 +2299,11 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     return result;
   }
 
-  static class Entry extends Node {
+  // FIXME: this should be a definition.
+  static class Entry extends Node implements IdentifiableNode {
 
-    @Child
     Identifier name;
+
     @Nullable
     @Child
     Expr value;
@@ -2351,6 +2352,11 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
       int result = name.hashCode();
       result = 31 * result + Objects.hashCode(value);
       return result;
+    }
+
+    @Override
+    public Identifier identifier() {
+      return name;
     }
   }
 }
@@ -5051,8 +5057,7 @@ class AsmGrammarAlternativesDefinition extends Definition {
   List<Node> children() {
     // This is too complicated for the @Child annotation
     return alternatives.stream()
-        .flatMap(l -> l.stream()
-            .flatMap(a -> a.children().stream()))
+        .flatMap(l -> l.stream().map(a -> (Node) a))
         .filter(Objects::nonNull)
         .toList();
   }
@@ -5132,7 +5137,7 @@ class AsmGrammarAlternativesDefinition extends Definition {
  * Represents an element in an assembly grammar rule.
  * An element is the basic building block of which rules are made of.
  * <p>
- * An element can be any of:
+ * An element can be any, or multiple of:
  * <li>local variable definition</li>
  * <li>rule invocation</li>
  * <li>vadl function invocation</li>
@@ -5465,6 +5470,7 @@ class AsmGrammarLiteralDefinition extends Definition {
  * Contains the identifier of the type to be cast to.
  */
 class AsmGrammarTypeDefinition extends Definition {
+  @Child
   Identifier id;
   SourceLocation loc;
 

@@ -108,7 +108,8 @@ abstract class Node implements WithLocation {
   SymbolTable symbolTable() {
     if (symbolTable == null) {
       throw new IllegalStateException(
-          "Node " + this + " should have received a symbol table in a previous pass");
+          "Node `%s` should have received a symbol table in a previous pass, found at: %s"
+              .formatted(toString(), location().toIDEString()));
     }
     return symbolTable;
   }
@@ -146,7 +147,9 @@ abstract class Node implements WithLocation {
   }
 }
 
-
+/**
+ * A node that can be identified by an identifier.
+ */
 interface IdentifiableNode {
   Identifier identifier();
 }

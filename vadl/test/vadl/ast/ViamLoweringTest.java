@@ -18,25 +18,26 @@ package vadl.ast;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import vadl.error.Diagnostic;
+import vadl.TestUtils;
+import vadl.error.DiagnosticList;
 
 public class ViamLoweringTest {
 
   private final String base = """
        instruction set architecture ISA = {
         register file X : Bits<5> -> Bits<32>
-            
+      
         pseudo instruction NOP( symbol: Bits<5>) = {
         }
         assembly NOP = (mnemonic)
       }
-            
+      
       """;
 
   private String inputWrappedByValidAbi(String input) {
     return """
           %s
-                
+        
           application binary interface ABI for ISA = {
             %s
           }
@@ -61,14 +62,9 @@ public class ViamLoweringTest {
           caller saved = zero
           callee saved = zero
         """;
-    var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    typechecker.verify(ast);
-    var throwable =
-        Assertions.assertThrows(Diagnostic.class, () -> new ViamLowering().generate(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("Cannot find the pseudo return instruction", throwable.reason);
+    var throwable = Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAbi(prog)));
+    TestUtils.assertErrors(throwable, "Symbol not found: DOESNOTEXIST");
   }
 
   @Test
@@ -89,13 +85,8 @@ public class ViamLoweringTest {
           caller saved = zero
           callee saved = zero
         """;
-    var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    typechecker.verify(ast);
-    var throwable =
-        Assertions.assertThrows(Diagnostic.class, () -> new ViamLowering().generate(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("Cannot find the pseudo call instruction", throwable.reason);
+    var throwable = Assertions.assertThrows(DiagnosticList.class,
+        () -> VadlParser.parse(inputWrappedByValidAbi(prog)));
+    TestUtils.assertErrors(throwable, "Symbol not found: DOESNOTEXIST");
   }
 }
