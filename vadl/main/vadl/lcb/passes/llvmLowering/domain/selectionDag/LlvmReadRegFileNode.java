@@ -65,7 +65,7 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
     } else if (address instanceof FuncParamNode funcParamNode) {
       instructionOperand = new TableGenInstructionIndexedRegisterFileOperand(this, funcParamNode);
     } else {
-      throw Diagnostic.error("Not supported", address.sourceLocation()).build();
+      throw Diagnostic.error("Not supported", address.location()).build();
     }
   }
 

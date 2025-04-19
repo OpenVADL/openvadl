@@ -43,7 +43,7 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 import vadl.viam.Abi;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Assembly;
@@ -153,7 +153,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     var result = definition.accept(this);
     result.ifPresent(value -> {
-      value.setSourceLocationIfNotSet(definition.sourceLocation());
+      value.setSourceLocationIfNotSet(definition.location());
       value.setPrettyPrintSourceFunc(() -> {
         var sb = new StringBuilder();
         definition.prettyPrint(0, sb);
@@ -188,7 +188,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   Optional<vadl.viam.Definition> fetch(FormatField field) {
     // FIXME: Try to evaluate the format if it hasn't been seen before.
     var result = Optional.ofNullable(formatFieldCache.get(field));
-    result.ifPresent(f -> f.setSourceLocationIfNotSet(field.sourceLocation()));
+    result.ifPresent(f -> f.setSourceLocationIfNotSet(field.location()));
     return result;
   }
 
@@ -201,7 +201,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   Optional<vadl.viam.Parameter> fetch(Parameter parameter) {
     // FIXME: Try to evaluate the format if it hasn't been seen before.
     var result = Optional.ofNullable(parameterCache.get(parameter));
-    result.ifPresent(f -> f.setSourceLocationIfNotSet(parameter.sourceLocation()));
+    result.ifPresent(f -> f.setSourceLocationIfNotSet(parameter.location()));
     return result;
   }
 
@@ -232,9 +232,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @param locatable the location of the identifier in the ast.
    * @return the new identifier.
    */
-  vadl.viam.Identifier generateIdentifier(String viamId, WithSourceLocation locatable) {
+  vadl.viam.Identifier generateIdentifier(String viamId, WithLocation locatable) {
     var parts = viamId.split("::");
-    return new vadl.viam.Identifier(parts, locatable.sourceLocation());
+    return new vadl.viam.Identifier(parts, locatable.location());
   }
 
 
@@ -372,11 +372,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         AbiPseudoInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD);
 
     var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow(() ->
-        Diagnostic.error("Cannot find the pseudo return instruction", definition.sourceLocation())
+        Diagnostic.error("Cannot find the pseudo return instruction", definition.location())
             .help("Maybe check if this instruction really exists or was spelled incorrectly?")
             .build());
     var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow(() ->
-        Diagnostic.error("Cannot find the pseudo call instruction", definition.sourceLocation())
+        Diagnostic.error("Cannot find the pseudo call instruction", definition.location())
             .help("Maybe check if this instruction really exists or was spelled incorrectly?")
             .build());
     var pseudoLocalAddressLoad = fetch(pseudoLocalAddressLoadDef).map(x -> (PseudoInstruction) x);
@@ -514,7 +514,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         directive != AsmDirective.ALIGN_POW2 && directive != AsmDirective.ALIGN32_POW2;
     return Optional.of(
         new AsmDirectiveMapping(generateIdentifier(id, definition), id, directive.getAsmName(),
-            alignmentIsInBytes, definition.sourceLocation()));
+            alignmentIsInBytes, definition.location()));
   }
 
   @Override
@@ -570,7 +570,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     return Optional.of(
         new AsmNonTerminalRule(id, visitAsmAlternatives(definition.alternatives, false, false),
-            definition.asmType, definition.sourceLocation())
+            definition.asmType, definition.location())
     );
   }
 
@@ -603,7 +603,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       var semanticPredicateGraph = new BehaviorLowering(this)
           .getFunctionGraph(semPredExpr, "semanticPredicate");
       semPredFunction =
-          new Function(generateIdentifier("semanticPredicate", semPredExpr.sourceLocation()),
+          new Function(generateIdentifier("semanticPredicate", semPredExpr.location()),
               new vadl.viam.Parameter[0], Type.bool(), semanticPredicateGraph);
     }
 
@@ -625,7 +625,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       Function semPredFunction = null;
       if (semPredGraph != null) {
         semPredFunction = new Function(
-            generateIdentifier("semanticPredicate", definition.optionAlternatives.sourceLocation()),
+            generateIdentifier("semanticPredicate", definition.optionAlternatives.location()),
             new vadl.viam.Parameter[0], Type.bool(), semPredGraph);
       }
       var firstTokens =
@@ -640,7 +640,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       if (semPredGraph != null) {
         semPredFunction = new Function(
             generateIdentifier("semanticPredicate",
-                definition.repetitionAlternatives.sourceLocation()),
+                definition.repetitionAlternatives.location()),
             new vadl.viam.Parameter[0], Type.bool(), semPredGraph);
       }
       var firstTokens =
@@ -748,7 +748,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     return Optional.of(
         new AsmModifier(generateIdentifier(id, definition), relocation,
-            definition.sourceLocation()));
+            definition.location()));
   }
 
   @Override
@@ -1268,7 +1268,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   private SourceLocation findIsaLocation(List<InstructionSetDefinition> definitions) {
     // FIXME: If more than 1 isas, use some other location (or invalid location)
-    return definitions.get(0).sourceLocation();
+    return definitions.get(0).location();
   }
 
   @Override
@@ -1508,7 +1508,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       Identifier identifier) {
     var expr = ensureNonNull(aliasLookup.get(identifier),
         () -> error("Cannot alias for register definition",
-            identifier.sourceLocation()));
+            identifier.location()));
     var pair = getRegisterFile(expr);
     var registerFile = pair.left();
     var index = pair.right();
@@ -1539,7 +1539,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       var index = constantEvaluator.eval(callExpr.argsIndices.get(0).values.get(0));
       return Pair.of(registerFile, index.value().intValueExact());
     } else {
-      throw error("This expression is not register file", expr.sourceLocation())
+      throw error("This expression is not register file", expr.location())
           .build();
     }
   }

@@ -159,14 +159,14 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
 
     ensure(isa.pc() instanceof Counter.RegisterCounter,
         () -> Diagnostic.error("Only counter to single registers are supported.",
-            Objects.requireNonNull(isa.pc()).sourceLocation()));
+            Objects.requireNonNull(isa.pc()).location()));
     var pc = (Counter.RegisterCounter) isa.pc();
 
     isa.ownInstructions().forEach(instruction -> {
       // Get uninlined or the normal behaviors if nothing was uninlined.
       var behavior = ensureNonNull(uninlined.get(instruction),
           () -> Diagnostic.error("Cannot find the uninlined graph of this instruction",
-              instruction.sourceLocation()));
+              instruction.location()));
 
       var ty = getType(behavior);
 
@@ -394,7 +394,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
       ensure(hasAddi,
           () -> Diagnostic.error(
               "There must be an instruction (addition with immediate), but we haven't found any.",
-              viam.sourceLocation()));
+              viam.location()));
     });
   }
 

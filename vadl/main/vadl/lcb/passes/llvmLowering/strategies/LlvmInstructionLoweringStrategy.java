@@ -298,7 +298,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {
       DeferredDiagnosticStore.add(
           Diagnostic.warning("Instruction is not lowerable and will be skipped",
-              instruction.sourceLocation()).build());
+              instruction.location()).build());
       return Optional.empty();
     }
 
@@ -350,7 +350,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     if (!graph.getNodes(LlvmUnlowerableSD.class).toList().isEmpty()) {
       DeferredDiagnosticStore.add(
           Diagnostic.warning("Instruction is not lowerable and will be skipped",
-              instruction.sourceLocation()).build());
+              instruction.location()).build());
       return true;
     }
 
@@ -360,7 +360,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       DeferredDiagnosticStore.add(
           Diagnostic.warning(
               "Instruction is not lowerable because it tries to match fixed registers.",
-              instruction.sourceLocation()).build());
+              instruction.location()).build());
       return true;
     }
 
@@ -373,7 +373,7 @@ public abstract class LlvmInstructionLoweringStrategy {
           Diagnostic.warning(
               "Instruction is not lowerable because it tries to sign extend "
                   + "before writing a register file.",
-              instruction.sourceLocation()).build());
+              instruction.location()).build());
       return true;
     }
 
@@ -617,7 +617,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     } else {
       throw Diagnostic.error(
           "Cannot construct a tablegen instruction operand from the type.",
-          operand.sourceLocation()).build();
+          operand.location()).build();
     }
   }
 
@@ -653,7 +653,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
       return new TableGenInstructionFrameRegisterOperand(node, funcParamNode);
     } else {
-      throw Diagnostic.error("Node's address is not supported", node.address().sourceLocation())
+      throw Diagnostic.error("Node's address is not supported", node.address().location())
           .build();
     }
   }
@@ -676,7 +676,7 @@ public abstract class LlvmInstructionLoweringStrategy {
           .findFirst();
       var constRegisterValue = ensurePresent(constraintValue,
           () -> Diagnostic.error("Register file with constant index has no constant value.",
-                  constantNode.sourceLocation())
+                  constantNode.location())
               .help("Consider adding a constraint to register file for the given index."));
       // Update the type of the constant because it needs to be upcasted.
       // Heuristically, we take the type of the index because indices were also upcasted.
@@ -687,7 +687,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "
               + "address for a field but it does not support it.",
-          node.address().sourceLocation()).build();
+          node.address().location()).build();
     }
   }
 
@@ -703,7 +703,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       throw Diagnostic.error(
           "The compiler generator needs to generate a tablegen instruction operand from this "
               + "address for a field but it does not support it.",
-          node.address().sourceLocation()).build();
+          node.address().location()).build();
     }
   }
 
@@ -717,7 +717,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     } else if (node.usage() == LlvmFieldAccessRefNode.Usage.BasicBlock) {
       return new TableGenInstructionImmediateLabelOperand(node);
     } else {
-      throw Diagnostic.error("Not supported usage", node.sourceLocation()).build();
+      throw Diagnostic.error("Not supported usage", node.location()).build();
     }
   }
 

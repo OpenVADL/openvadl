@@ -217,7 +217,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     return ensurePresent(jump,
         () -> Diagnostic.error(
             "Compiler generator requires a pseudo instruction for an unconditional jump",
-            specification.sourceLocation()
+            specification.location()
         ));
   }
 
@@ -277,7 +277,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
                 .map(ReadRegFileNode::registerFile)
                 .findFirst(), () -> Diagnostic.error(
                 "Expected that the instruction has at least one register file",
-                instruction.sourceLocation()));
+                instruction.location()));
   }
 
   @Override
@@ -381,7 +381,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         var immediates = fieldUsages.getImmediates(machineInstruction);
         ensure(immediates.size() == 1,
             () -> Diagnostic.error("We only support branch instructions with one label.",
-                machineInstruction.sourceLocation()));
+                machineInstruction.location()));
         var immediate = unwrap(immediates.stream().findFirst());
         int bitWidth = immediate.size();
         branchInstructions.add(
@@ -411,7 +411,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
       var immediates = fieldUsages.getImmediates(machineInstruction);
       ensure(immediates.size() == 1,
           () -> Diagnostic.error("We only support branch instructions with one label.",
-              machineInstruction.sourceLocation()));
+              machineInstruction.location()));
       var immediate = unwrap(immediates.stream().findFirst());
       int bitWidth = immediate.size();
       branchInstructions.add(
@@ -456,18 +456,18 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
                       IdentifyFieldUsagePass.RegisterUsage.SOURCE)
                   .stream().findFirst(),
               () -> Diagnostic.error("Cannot find a register operand.",
-                  instruction.sourceLocation()));
+                  instruction.location()));
 
       var immediate =
           ensurePresent(fieldUsages.getImmediates(instruction).stream().findFirst(),
               () -> Diagnostic.error("Cannot find an immediate operand.",
-                  instruction.sourceLocation()));
+                  instruction.location()));
 
       var ctx = instruction.extension(TableGenInstructionCtx.class);
       var loweringRecord =
           ensureNonNull(ctx,
               () -> Diagnostic.error("Cannot find a TableGen record for this instruction.",
-                  instruction.sourceLocation())).record();
+                  instruction.location())).record();
 
       // MCInst have the output at the beginning.
       // Therefore, we need to offset the inputs.

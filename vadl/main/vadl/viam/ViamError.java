@@ -78,7 +78,7 @@ public class ViamError extends RuntimeException {
   public ViamError addContext(Definition definition) {
     return this.addContext("name", definition.identifier.name())
         .addContext("definition", definition)
-        .addLocation(definition.sourceLocation());
+        .addLocation(definition.location());
 
   }
 

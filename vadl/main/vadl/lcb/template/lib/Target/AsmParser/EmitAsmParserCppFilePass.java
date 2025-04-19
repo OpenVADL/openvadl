@@ -195,9 +195,9 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
 
   private ValueRange valueRange(Instruction instruction) {
     var ctx = ensureNonNull(instruction.extension(ValueRangeCtx.class),
-        () -> Diagnostic.error("Has no extension value range", instruction.sourceLocation()));
+        () -> Diagnostic.error("Has no extension value range", instruction.location()));
     return ensurePresent(ctx.getFirst(),
-        () -> Diagnostic.error("Has no value range", instruction.sourceLocation()));
+        () -> Diagnostic.error("Has no value range", instruction.location()));
   }
 
   @Override

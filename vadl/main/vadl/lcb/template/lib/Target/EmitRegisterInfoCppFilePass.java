@@ -200,10 +200,10 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
       for (var instruction : instructionLabels.getOrDefault(label, Collections.emptyList())) {
         var behavior = ensureNonNull(uninlined.get(instruction),
             () -> Diagnostic.error("No uninlined behavior was found.",
-                instruction.sourceLocation()));
+                instruction.location()));
         var immediate = ensurePresent(behavior.getNodes(FieldAccessRefNode.class).findAny(), () ->
             Diagnostic.error("Cannot find an immediate for frame index elimination.",
-                instruction.sourceLocation()));
+                instruction.location()));
         var indices =
             extractFrameIndexAndImmIndexFromMachineInstruction(tableGenMachineInstructions,
                 instruction);

@@ -74,18 +74,18 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
                 .getOrDefault(MachineInstructionLabel.LUI, Collections.emptyList())
                 .stream().findFirst(),
             () -> Diagnostic.error("Expected an instruction of load upper immediate",
-                specification.sourceLocation()));
+                specification.location()));
     var registerFile =
         ensurePresent(
             lui.behavior().getNodes(WriteRegFileNode.class)
                 .map(WriteRegFileNode::registerFile)
                 .findFirst(),
             () -> Diagnostic.error("Cannot find a register for load upper immediate",
-                lui.sourceLocation()));
+                lui.location()));
     var zero = ensurePresent(
         Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
             .findFirst(),
-        () -> Diagnostic.error("Cannot find a zero constraint", registerFile.sourceLocation()));
+        () -> Diagnostic.error("Cannot find a zero constraint", registerFile.location()));
     var zeroRegister = registerFile.identifier.simpleName() + zero.address().intValue();
 
     return Map.of(CommonVarNames.NAMESPACE,

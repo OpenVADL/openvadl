@@ -117,10 +117,10 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
       label.append(" -> ");
       label.append(((ExpressionNode) node).type().name());
     }
-    if (withSourceLocation && node.sourceLocation().isValid()) {
+    if (withSourceLocation && node.location().isValid()) {
       label
           .append("\\n@ ")
-          .append(node.sourceLocation().toConciseString());
+          .append(node.location().toConciseString());
     }
     return label.toString();
   }

@@ -105,9 +105,9 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
     var id = fieldRefId.append("accessFunction");
     var graph = new Graph(id.lower());
     ControlNode endNode = graph.addWithInputs(new ReturnNode(fieldRefNode.copy()));
-    endNode.setSourceLocation(fieldRefNode.sourceLocation());
+    endNode.setSourceLocation(fieldRefNode.location());
     ControlNode startNode = graph.add(new StartNode(endNode));
-    startNode.setSourceLocation(fieldRefNode.sourceLocation());
+    startNode.setSourceLocation(fieldRefNode.location());
     return new Function(id, new Parameter[] {}, fieldRefNode.type(), graph);
   }
 
@@ -117,9 +117,9 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
     var graph = new Graph(id.lower());
     ControlNode endNode =
         graph.addWithInputs(new ReturnNode(new ConstantNode(Constant.Value.fromBoolean(true))));
-    endNode.setSourceLocation(fieldRefNode.sourceLocation());
+    endNode.setSourceLocation(fieldRefNode.location());
     ControlNode startNode = graph.add(new StartNode(endNode));
-    startNode.setSourceLocation(fieldRefNode.sourceLocation());
+    startNode.setSourceLocation(fieldRefNode.location());
     return new Function(id, new Parameter[] {}, Type.bool(), graph);
   }
 }

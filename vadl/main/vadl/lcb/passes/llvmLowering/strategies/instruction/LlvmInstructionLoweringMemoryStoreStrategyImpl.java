@@ -117,7 +117,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
         var register = ensurePresent(
             addition.arguments().stream().filter(x -> x instanceof ReadRegFileNode).findFirst(),
             () -> Diagnostic.error("Expected a register node as child.",
-                addition.sourceLocation()));
+                addition.location()));
 
         addition.replaceAndDelete(register);
 
@@ -129,7 +129,7 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
         for (var imm : immediates) {
           var ty = ensurePresent(ValueType.from(register.type()),
               () -> Diagnostic.error("Register must have valid llvm type",
-                  register.sourceLocation()));
+                  register.location()));
           imm.replaceAndDelete(new LcbMachineInstructionValueNode(ty, Constant.Value.of(0,
               Type.signedInt(32))));
         }

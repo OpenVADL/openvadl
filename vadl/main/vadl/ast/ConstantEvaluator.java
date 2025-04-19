@@ -33,7 +33,7 @@ import vadl.types.DataType;
 import vadl.types.StringType;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 import vadl.viam.Constant;
 
 
@@ -464,8 +464,8 @@ class EvaluationError extends RuntimeException {
 
   SourceLocation location;
 
-  public EvaluationError(String message, WithSourceLocation location) {
+  public EvaluationError(String message, WithLocation location) {
     super(message);
-    this.location = location.sourceLocation();
+    this.location = location.location();
   }
 }

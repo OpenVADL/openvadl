@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.Contract;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 import vadl.viam.graph.dependency.DependencyNode;
 
 /**
@@ -37,7 +37,7 @@ import vadl.viam.graph.dependency.DependencyNode;
  * contains implicitly updated information like predecessor
  * and usages.
  */
-public abstract class Node implements WithSourceLocation {
+public abstract class Node implements WithLocation {
 
   public final Id id;
   private @Nullable Graph graph;
@@ -80,7 +80,7 @@ public abstract class Node implements WithSourceLocation {
   }
 
   @Override
-  public SourceLocation sourceLocation() {
+  public SourceLocation location() {
     return sourceLocation;
   }
 
