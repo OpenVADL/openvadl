@@ -1391,12 +1391,128 @@ For relative relocations, the compiler generator will subtract the program count
 For global offset relocations, the offset of the global offset table and the offset of the symbol are added and the program counter is subtracted.
 
 
+### Atomic Instruction Definition (lock)
+
+Atomic instructions can be specified using a lock statement.
+A lock statement `lock mem<n>(l) in Statement` locks the memory instance `m` at location `l` and all following `n` memory elements before it executes statement `Statement`.
+The lock is released at the end of statement `Statement`.
+All memory operations occurring within the range `[l,l + n)` and while the lock is held, are observed as a single atomic step.
+The memory operations can access less memory elements as are locked by the lock statement.
+
+\listing{lock_statement, Atomic Modify and Add using a Lock Statement (RISC-V RV32A)}
+~~~{.vadl}
+instruction AMOADD : Rtype = {
+  let addr = X(rs1) in
+  let val  = X(rs2) in
+  lock MEM<4>(addr) in
+    let memVal = MEM<4>(addr) in {
+      X(rd) := memVal
+      MEM<4>(addr) := memVal + val
+      }
+}
+~~~
+\endlisting
+
+Listing \r{lock_statement} demonstrates the use of a lock statement in the specification of a RISC-V RV32 atomic modify and add instruction.
+In line 4 a lock at adress `addr` on four memory elements is set.
+This lock is held till the end of the `let` instruction in line 8.
+
+Load Reserved (\ac{LR}) and Store Conditional (\ac{STC}) cannot be implemented with a lock statement alone.
+\ac{LR}/\ac{STC} are separate operations by definition but work only in conjunction with each other.
+However, the lock statement is restricted within the definition of a single instruction.
+This means it is necessary to cross instruction boundaries via some global state. 
+
+\ac{VADL} defines two builtins, `loadExclusive` and `isExclusive` with the following semantics: 
+
+The expression `MEM(addr).loadExclusive` requests exclusive memory access to location `addr` in addition to loading the value stored at `addr`.
+In addition, the address `addr` will be marked as reserved.
+Exclusivity means that the cache controller (of the simulator or generated hardware) requests read-only or writable access, depending on the underlying cache coherence protocol.
+
+The expression `MEM(addr).isExclusive` returns true if and only if there exists a correlating `loadExclusive`, called with the exact same address `addr`, that happened before and no other globally visible memory write on the same location or cache line occurred in-between.
+Otherwise, the expression returns false.
+Note that `isExclusive` specifically returns false, if there exists no correlating `loadExclusive` call, even though the cache line might coincidentally be owned exclusively.
+In addition it is required that the addresses match.
+The reason is that \ac{LR}/\ac{STC} pairs are often used for implementing read/modify/write operations and hence, operate on the exact same address.
+
+\listing{lr_sc_instruction, LoadReserved and StoreConditional Instruction using Builtin Method Calls}
+~~~{.vadl}
+instruction set architecture ISA = {
+  instruction LR : FormatB =
+    let addr = X(rs1) in
+      X(rd) := MEM<4>(addr).loadExclusive
+
+  instruction SC : FormatB = {
+    let addr = X(rs1) in
+    lock MEM<4>(addr) in 
+      if MEM<4>(addr).isExclusive then {
+        MEM<4>(addr) := X(rd)
+        X(0) := 0
+      } else
+        X(0) := 1
+  }
+}
+
+micro architecture MIA = {
+  [ granularity 32 ]
+  [ reservation manager ]
+  logic reservedAddress
+}
+~~~
+\endlisting
+
+Listing \r{lr_sc_instruction} shows the definition of a `LR` and `SC` instruction using the two primitives described above.
+The `LR` instruction (Lines 2-4) loads a value from memory and requests exclusive access to it.
+The function call to `loadExclusive` loads the value from cache or memory and additionally registers a reservation.
+The `SC` instruction (Lines 6-14) checks whether a certain memory location is still exclusively owned and reserved using the builtin method call `isExclusive`.
+If it returns true, the store will be performed.
+Additionally, the instruction must lock the memory location first in order to prevent a race condition between the address checking (Line 9) and the actual store (Line 10).
+
+Additionally in the \ac{MiA} section it must be defined how a processor handles memory reservation.
+\ac{VADL} provides a `logic` element called `reservation manager`, shown in Listing \r{lr_sc_instruction}.
+Line 19 specifies the primary purpose of the logic element with the annotation `reservation manager`.
+All other annotations describe the properties of the element.
+This example contains the `granularity` attribute on Line 18.
+Its purpose is to describe the size of the marked region.
+
+
 ### Operation Definition
 
 \lbl{tut_operation_definition}
 
+An operation definition classifies instructions into operation sets.
+These operation sets are used to filter instructions in the \ac{MiA} and are needed for the specification of \ac{VLIW} architectures.
+An `operation` is defined as a set of instructions or other operations.
+Instructions and operations can be added to an operation set either in the definition of the operation set or by an operation annotation to an instruction.
 
-### Group Definition
+\listing{operation_definition, Operation Definition}
+~~~{.vadl}
+instruction set architecture ISA = {
+  program counter PC : Bits<32>                 // program counter
+
+  format B_Type : Bits<32> =                    // branch format
+    { offset : SInt<24>                         // PC relative offset
+    , opcode : Bits<8>                          // operation code
+    }
+
+  [operation BranchOp]                          // Branch belongs to the set of BranchOp operations
+  instruction Branch : B_Type =                 // PC relative branch
+    PC := PC + offset as SInt<32> << 2          // set new PC relative to the old value
+
+  operation BranchOp   = {}                     // empty branch set, elements added by annotation 
+  operation AdditionOp = {Add, Sub}             // set of addition operations
+  operation LogicOp    = {And, Or, Xor}         // set of logic operations
+  operation AluOp      = {AdditionOp, LogicOp}  // AluOp is the set union of AdditionOp and LogicOp
+}
+~~~
+\endlisting
+
+Listing \r{operation_definition} shows the definition of the `BranchOp` operation set as an instruction annotation and the definition of an empty operation set.
+Operation identifiers used in operation annotations (see line 9) have to be defined in an operation definition (see line 13).
+The operation set definition of `AdditionOp` lists instruction names enclosed by curly braces separated by the comma symbol `","` (see line 14).
+The operation set definition of `AluOp` is build by the set union of the both operation sets `AdditionOp` and `LogicOp` (see line 16).
+
+
+### VLIW Architectures and Group Definition
 
 
 ### Process Definition
@@ -1699,40 +1815,40 @@ In this example, reading from and writing to memory is done in 32-bit blocks.
 [ dataBusWidth = 32 ]
 micro architecture FiveStage implements RV32IM = {
   stage FETCH -> ( fr : FetchResult ) = {
-    fr := fetchNext
+    fr := fetchNext                             // fetch next packet from memory (or cache)
   }
 
   stage DECODE -> ( ir : Instruction ) = {
-    let instr = decode( FETCH.fr ) in {
-      instr.address( @X )
-      instr.read( @X )
-      instr.read( @PC )
-      ir := instr
+    let instr = decode( FETCH.fr ) in {         // decode the fetch packet, gives an Instruction
+      instr.address( @X )                       // output computed address (X + offset) to memory
+      instr.read( @X )                          // read from the X register file
+      instr.read( @PC )                         // read from the PC
+      ir := instr                               // stage output is the Instruction ir
     }
   }
 
   stage EXECUTE -> ( ir : Instruction ) = {
     let instr = DECODE.ir in {
       if( instr.unknown ) then
-        raise invalid
-      instr.compute
-      instr.verify
-      instr.write( @PC )
+        raise invalid                           // raise an invalid instruction exception
+      instr.compute                             // evaluate all expressions
+      instr.verify                              // check and flush pipeline if branch misprediction
+      instr.write( @PC )                        // write PC
       ir := instr
     }
   }
 
   stage MEMORY -> ( ir : Instruction ) = {
     let instr = EXECUTE.ir in {
-      instr.write( @MEM )
-      instr.read( @MEM )
+      instr.write( @MEM )                       // write to memory
+      instr.read( @MEM )                        // receive data from memory read
       ir := instr
     }
   }
 
   stage WRITE_BACK = {
     let instr = MEMORY.ir in
-      instr.write( @X )
+      instr.write( @X )                         // write back to register file X
   }
 }
 ~~~
@@ -1781,10 +1897,10 @@ The generator must be aware of the logic element's semantics as it must derive t
 logic bypass
 
 stage DECODE -> (ir : Instruction) = {
-    let instr = decode( FETCH.fr ) in {
-        instr.readOrForward( @X, @bypass )
-        ir := instr
-    }
+  let instr = decode( FETCH.fr ) in {
+    instr.readOrForward( @X, @bypass )
+    ir := instr
+  }
 }
 ~~~
 \endlisting

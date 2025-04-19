@@ -28,8 +28,9 @@
 \acronym{JIT,  Just In Time}
 <!-- K -->
 <!-- L -->
-\acronym{LCB,   LLVM Compiler Backend}
-\acronym{LLVM,  Low Level Virtual Machine}
+\acronym{LCB,  LLVM Compiler Backend}
+\acronym{LLVM, Low Level Virtual Machine}
+\acronym{LR,   Load Reserved}
 <!-- M -->
 \acronym{MiA,  Micro-Architecture}
 <!-- N -->
@@ -39,12 +40,13 @@
 \acronym{PDL,  Processor Description Language}
 <!-- Q -->
 <!-- R -->
-\acronym{RISC,   Reduced Instruction Set Computer}
-\acronym{RTL,    Register Transfer Level}
+\acronym{RISC, Reduced Instruction Set Computer}
+\acronym{RTL,  Register Transfer Level}
 <!-- S -->
+\acronym{STC,  Store Conditional}
 <!-- T -->
 <!-- U -->
-\acronym{UME, User Mode Emulation}
+\acronym{UME,  User Mode Emulation}
 <!-- V -->
 \acronym{VADL, Vienna Architecture Description Language}
 \acronym{VDL,  Vienna Definition Language}
