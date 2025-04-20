@@ -53,14 +53,14 @@ public class CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass extends Pas
    * Output of the pass.
    */
   public record Output(Map<Function, GcbCppFunctionForFieldAccess> byFunction,
-                Map<Format.Field, GcbCppFunctionForFieldAccess> byField) {
+                       Map<Format.Field, GcbCppFunctionForFieldAccess> byField) {
 
   }
 
   @Nullable
   @Override
   public Output execute(PassResults passResults,
-                                                          Specification viam) throws IOException {
+                        Specification viam) throws IOException {
     var byFunction = new IdentityHashMap<Function, GcbCppFunctionForFieldAccess>();
     var byField = new IdentityHashMap<Format.Field, GcbCppFunctionForFieldAccess>();
 
@@ -71,7 +71,7 @@ public class CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass extends Pas
             ensureNonNull(fieldAccess.encoding(),
                 () -> Diagnostic.error(
                     "Encoding must not be null. Maybe it does not exist or was not generated?",
-                    fieldAccess.sourceLocation())
+                    fieldAccess.location())
             )))
         .forEach(pair -> {
           var function = createGcbFieldAccessCppFunction(pair.right(), pair.left());

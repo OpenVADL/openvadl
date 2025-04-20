@@ -101,7 +101,7 @@ public class GenerateCompilerRegistersPass extends Pass {
 
       var alignment = ensureNonNull(abi.registerFileAlignment().get(registerFile),
           () -> Diagnostic.error("There is not alignment for the register file defined",
-              registerFile.sourceLocation().join(abi.sourceLocation())));
+              registerFile.location().join(abi.location())));
 
       result.add(new CompilerRegisterClass(registerFile, registers, alignment));
     }

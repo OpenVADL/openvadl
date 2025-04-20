@@ -159,7 +159,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     ensure(usage.size() == 1, () -> {
       throw Diagnostic.error(
           "Cannot expand pseudo instruction because the usage of the field is unclear",
-          field.sourceLocation()).build();
+          field.location()).build();
     });
 
     switch (usage.get(0)) {
@@ -177,13 +177,13 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
           ensure(variants.size() == 1, () -> Diagnostic.error(
               "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
-              toHandle.sourceLocation()));
+              toHandle.location()));
 
           variant = ensurePresent(
               requireNonNull(variants).stream().filter(VariantKind::isImmediate).findFirst(),
               () -> Diagnostic.error(
                   "Expected a variant for an immediate. But haven't " + "found any",
-                  toHandle.sourceLocation())).value();
+                  toHandle.location())).value();
         }
 
         ctx.ln(
@@ -228,7 +228,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     ensure(usage.size() == 1, () -> {
       throw Diagnostic.error(
           "Cannot expand pseudo instruction because the usage of the field is unclear",
-          field.sourceLocation()).build();
+          field.location()).build();
     });
 
     switch (usage.get(0)) {
@@ -257,7 +257,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
         ensure(registerFiles.size() == 1,
             () -> Diagnostic.error("Found multiple or none register files for this field.",
-                field.sourceLocation()).note(
+                field.location()).note(
                 "The pseudo instruction expansion requires one register file to detect "
                     + "the register file name. In this particular case is the field used by "
                     + "multiple register files or none and we don't know which name to use."));
@@ -270,7 +270,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
             toHandle.constant().asVal().intValue());
       }
       default -> throw Diagnostic.error("Cannot generate cpp code for this argument",
-          field.sourceLocation()).build();
+          field.location()).build();
     }
   }
 
@@ -324,7 +324,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
       handleRelocationOperand(ctx, argumentSymbol, relocation);
     } else {
-      throw Diagnostic.error("Cannot handle node", toHandle.sourceLocation()).build();
+      throw Diagnostic.error("Cannot handle node", toHandle.location()).build();
     }
   }
 
@@ -362,10 +362,10 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
     throw Diagnostic.error(
             String.format("Cannot assign field '%s' because the field is not a field.",
-                field.identifier.simpleName()), parameter.sourceLocation())
-        .locationDescription(argument.sourceLocation(), "Trying to match this argument.")
-        .locationDescription(field.sourceLocation(), "Trying to assign this field.")
-        .locationDescription(compilerInstruction.sourceLocation(),
+                field.identifier.simpleName()), parameter.location())
+        .locationDescription(argument.location(), "Trying to match this argument.")
+        .locationDescription(field.location(), "Trying to assign this field.")
+        .locationDescription(compilerInstruction.location(),
             "This pseudo instruction is affected.")
         .help("The parameter '%s' must match any pseudo instruction's parameter names",
             parameter.simpleName()).build();
@@ -435,14 +435,14 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         handle(newContext, cn);
       } else if (argument instanceof FuncCallNode fn) {
         ensure(fn.function() instanceof Relocation,
-            () -> Diagnostic.error("Function must be a relocation", fn.sourceLocation()));
+            () -> Diagnostic.error("Function must be a relocation", fn.location()));
         handle(newContext, fn);
       } else if (argument instanceof FuncParamNode fn) {
         handle(newContext, fn);
       } else if (argument instanceof ZeroExtendNode zn) {
         handle(newContext, zn);
       } else {
-        throw Diagnostic.error("Not implemented for this node type.", argument.sourceLocation())
+        throw Diagnostic.error("Not implemented for this node type.", argument.location())
             .build();
       }
     });
@@ -461,14 +461,14 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
     var llvmRecord = ensureNonNull(machineInstructionRecords.get(instruction),
         () -> Diagnostic.error("Cannot find llvmRecord for instruction used in pseudo instruction",
-            instruction.sourceLocation()));
+            instruction.location()));
 
     var order = llvmRecord.info().outputInputOperandsFormatFields();
 
     for (var item : order) {
       var l = ensureNonNull(lookup.get(item),
           () -> Diagnostic.error("Cannot find format's field in pseudo instruction",
-              item.sourceLocation()));
+              item.location()));
       result.add(Pair.of(item, l));
     }
 

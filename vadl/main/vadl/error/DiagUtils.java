@@ -34,9 +34,9 @@ public class DiagUtils {
    * @param what The plural phrase that prefixes {@code are not allowed here}.
    */
   public static void throwNotAllowed(Node node, String what) {
-    SourceLocation loc = !node.sourceLocation().equals(SourceLocation.INVALID_SOURCE_LOCATION)
-        ? node.sourceLocation()
-        : node.ensureGraph().parentDefinition().sourceLocation();
+    SourceLocation loc = !node.location().equals(SourceLocation.INVALID_SOURCE_LOCATION)
+        ? node.location()
+        : node.ensureGraph().parentDefinition().location();
     throw Diagnostic.error(
             what + " are not allowed in " + Objects.requireNonNull(node.graph()).name, loc)
         .note("THIS IS AN INTERNAL ERROR")

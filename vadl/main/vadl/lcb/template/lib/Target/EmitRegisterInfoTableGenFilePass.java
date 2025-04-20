@@ -84,7 +84,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var registerClasses = output.registerClasses();
 
     if (registerClasses.size() > 1) {
-      throw Diagnostic.error("Supporting only one register file", specification.sourceLocation())
+      throw Diagnostic.error("Supporting only one register file", specification.location())
           .build();
     }
 

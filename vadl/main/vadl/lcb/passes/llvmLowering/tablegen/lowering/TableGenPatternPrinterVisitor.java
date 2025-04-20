@@ -99,7 +99,7 @@ public class TableGenPatternPrinterVisitor
             constant.intValue()));
       } else {
         throw Diagnostic.error(String.format("Constant has no valid LLVM type: '%s'.",
-            node.constant().type().toString()), node.sourceLocation()).build();
+            node.constant().type().toString()), node.location()).build();
       }
     } else if (node.constant() instanceof Constant.Str str) {
       writer.write(str.value());

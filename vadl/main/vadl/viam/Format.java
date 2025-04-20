@@ -328,7 +328,7 @@ public class Format extends Definition implements DefProp.WithType {
     public void setEncoding(Function encoding) {
       ViamError.ensure(this.encoding == null, () -> Diagnostic.error(
           "Cannot regenerate an encoding for a field access which already has an encoding.",
-          encoding.sourceLocation()));
+          encoding.location()));
       this.encoding = encoding;
       verify();
     }

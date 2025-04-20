@@ -45,7 +45,7 @@ public record Modifier(String value,
 
     // Check the label for the relocation
     var ctx = ensureNonNull(relocation.extension(RelocationCtx.class),
-        () -> Diagnostic.error("Expected a relocation label", relocation.sourceLocation()));
+        () -> Diagnostic.error("Expected a relocation label", relocation.location()));
 
     return new Modifier("MO_" + name, kind, Optional.of(ctx.label()));
   }

@@ -56,7 +56,7 @@ import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
@@ -202,11 +202,11 @@ public class TypeChecker
             node.getClass().getSimpleName(), node.location().toIDEString()));
   }
 
-  private Diagnostic typeMissmatchError(WithSourceLocation locatable, Type expected, Type actual) {
+  private Diagnostic typeMissmatchError(WithLocation locatable, Type expected, Type actual) {
     return typeMissmatchError(locatable, "`%s`".formatted(expected), actual);
   }
 
-  private Diagnostic typeMissmatchError(WithSourceLocation locatable, String expectation,
+  private Diagnostic typeMissmatchError(WithLocation locatable, String expectation,
                                         Type actual) {
     return error("Type Mismatch", locatable)
         .locationDescription(locatable, "Expected %s but got `%s`.",
@@ -220,7 +220,7 @@ public class TypeChecker
             node.getClass().getSimpleName(), node.location().toIDEString(), message));
   }
 
-  private void throwInvalidAsmCast(AsmType from, AsmType to, WithSourceLocation location) {
+  private void throwInvalidAsmCast(AsmType from, AsmType to, WithLocation location) {
     throw error("Type Mismatch", location)
         .description("Invalid cast from `%s` to `%s`.", from, to)
         .build();
@@ -937,11 +937,11 @@ public class TypeChecker
           if (registers.isEmpty()) {
             throw error(
                 "No " + purpose.name() + " registers were declared but one was expected",
-                definition.sourceLocation()).build();
+                definition.location()).build();
           } else if (registers.size() != 1) {
             throw error(
                 "Multiple " + purpose.name() + " registers were declared but only one was expected",
-                SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
+                SourceLocation.join(registers.stream().map(Node::location).toList())).build();
           }
         }
         case OPTIONAL -> {
@@ -949,14 +949,14 @@ public class TypeChecker
             throw error(
                 "Multiple " + purpose.name()
                     + " registers were declared but zero or one was expected",
-                SourceLocation.join(registers.stream().map(Node::sourceLocation).toList())).build();
+                SourceLocation.join(registers.stream().map(Node::location).toList())).build();
           }
         }
         case AT_LEAST_ONE -> {
           if (registers.isEmpty()) {
             throw error(
                 "Zero " + purpose.name() + " registers were declared but at least one was expected",
-                definition.sourceLocation()).build();
+                definition.location()).build();
           }
         }
         default -> throw new RuntimeException("enum variant not handled");
@@ -973,10 +973,10 @@ public class TypeChecker
 
       var noValues = error(
           "No " + kind.name() + " was declared but one was expected",
-          definition.sourceLocation()).build();
+          definition.location()).build();
       var multipleValues = error(
           "Multiple " + kind.name() + " were declared but one was expected",
-          definition.sourceLocation()).build();
+          definition.location()).build();
 
       switch (entry.getValue()) {
         case ONE -> {
@@ -1084,7 +1084,7 @@ public class TypeChecker
       var cycle =
           String.join(" -> ", asmRuleInvocationChain) + " -> " + definition.identifier().name;
       throw error("Found a cycle in grammar rules: %s.".formatted(cycle),
-          definition.sourceLocation()).build();
+          definition.location()).build();
     }
 
     check(definition.alternatives);
@@ -1148,10 +1148,10 @@ public class TypeChecker
             if (elements.get(j).localVar == null && elements.get(j).semanticPredicate == null) {
               throw error(
                   "Local variable declaration is not at the beginning of a block.",
-                  element.sourceLocation())
-                  .locationDescription(element.localVar.sourceLocation(),
+                  element.location())
+                  .locationDescription(element.localVar.location(),
                       "Local variable declared here.")
-                  .locationDescription(elements.get(0).sourceLocation(), "Block starts here.")
+                  .locationDescription(elements.get(0).location(), "Block starts here.")
                   .build();
             }
           }
@@ -1265,7 +1265,7 @@ public class TypeChecker
 
     if (!allAlternativeType.equals(curAlternativeType)) {
       throw error(
-          "Found asm alternatives with differing AsmTypes.", definition.sourceLocation())
+          "Found asm alternatives with differing AsmTypes.", definition.location())
           .note("All alternatives must resolve to the same AsmType.")
           .locationDescription(allAlternativeTypeElement,
               "Found alternative with type %s,", allAlternativeType)
@@ -1376,20 +1376,20 @@ public class TypeChecker
     if (definition.attribute != null && !definition.isAttributeLocalVar) {
       if (!definition.isWithinRepetitionBlock && definition.isPlusEqualsAttributeAssign) {
         throw error("'+=' assignments are only allowed inside of repetition blocks.",
-            definition.sourceLocation()).build();
+            definition.location()).build();
       }
 
       if (definition.isWithinRepetitionBlock) {
         if (!definition.isPlusEqualsAttributeAssign) {
           throw error("Only '+=' assignments are allowed in repetition blocks.",
-              definition.sourceLocation()).build();
+              definition.location()).build();
         }
 
         var parentAttributeElement = attributesAssignedInParent.get(definition.attribute.name);
         if (parentAttributeElement == null || parentAttributeElement.asmType == null) {
           throw error(
               "'%s' does not exist in the surrounding block."
-                  .formatted(definition.attribute.name), definition.sourceLocation())
+                  .formatted(definition.attribute.name), definition.location())
               .note("'+=' assignments have to reference an attribute in the surrounding block.")
               .build();
         }
@@ -1403,7 +1403,7 @@ public class TypeChecker
           throw error(
               "Element of AsmType %s cannot be '+=' assigned to attribute %s of AsmType %s."
                   .formatted(definition.asmType, definition.attribute.name,
-                      parentAttributeElement.asmType), definition.sourceLocation())
+                      parentAttributeElement.asmType), definition.location())
               .locationDescription(parentAttributeElement,
                   "Attribute %s is assigned to AsmType %s here.", definition.attribute.name,
                   parentAttributeElement.asmType)
@@ -1598,13 +1598,13 @@ public class TypeChecker
 
     if (actual == null) {
       throw error("Cannot determine number of expected registers",
-          definition.sourceLocation()).build();
+          definition.location()).build();
     }
 
     if (actual == Occurrence.ONE) {
       if (definition.exprs.size() != 1) {
         throw error("Number of registers is incorrect. This definition expects only one",
-            definition.sourceLocation()).build();
+            definition.location()).build();
       }
     }
 
@@ -1612,7 +1612,7 @@ public class TypeChecker
       if (definition.exprs.isEmpty()) {
         throw error(
             "Number of registers is incorrect. This definition expects at least one.",
-            definition.sourceLocation()).build();
+            definition.location()).build();
       }
     }
 

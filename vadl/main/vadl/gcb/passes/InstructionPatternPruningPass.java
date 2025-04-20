@@ -90,8 +90,8 @@ public class InstructionPatternPruningPass extends Pass {
                           if (hasTrueCaseHasException && hasFalseCaseHasException) {
                             throw Diagnostic.error(
                                 "Both branches raise an exception and are pruned",
-                                selectNode.trueCase().sourceLocation()
-                                    .join(selectNode.falseCase().sourceLocation())).build();
+                                selectNode.trueCase().location()
+                                    .join(selectNode.falseCase().location())).build();
                           }
 
                           if (hasTrueCaseHasException) {

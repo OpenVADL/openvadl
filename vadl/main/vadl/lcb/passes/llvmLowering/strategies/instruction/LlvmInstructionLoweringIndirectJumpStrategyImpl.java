@@ -224,10 +224,10 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
                 new Query.Builder().machineInstructionLabel(MachineInstructionLabel.JALR).build())
             .firstMachineInstruction();
     var immediate = ensurePresent(jalr.behavior().getNodes(FieldAccessRefNode.class).findFirst(),
-        () -> Diagnostic.error("Cannot find an immediate.", jalr.sourceLocation()));
+        () -> Diagnostic.error("Cannot find an immediate.", jalr.location()));
     var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
         () -> Diagnostic.error("Cannot construct llvm type from field access",
-            immediate.sourceLocation()));
+            immediate.location()));
     var fieldRef = new LlvmFieldAccessRefNode(immediate.fieldAccess(), immediate.type(), llvmType,
         LlvmFieldAccessRefNode.Usage.Immediate);
     var machine = new Graph("machine");
@@ -262,7 +262,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
             .firstMachineInstruction();
     var immediate = ensurePresent(
         jalr.behavior().getNodes(FieldAccessRefNode.class).findFirst(),
-        () -> Diagnostic.error("Cannot find immediate.", jalr.sourceLocation()));
+        () -> Diagnostic.error("Cannot find immediate.", jalr.location()));
 
     var selector = new Graph("selector");
     var ref = (ReadRegFileNode) inputRegister.reference().copy();
@@ -274,7 +274,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
 
     var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
         () -> Diagnostic.error("Cannot construct llvm type from field access",
-            immediate.sourceLocation()));
+            immediate.location()));
     var fieldRef = new LlvmFieldAccessRefNode(immediate.fieldAccess(), immediate.type(), llvmType,
         LlvmFieldAccessRefNode.Usage.Immediate);
     selector.addWithInputs(new LlvmBrindSD(new NodeList<>(
@@ -319,7 +319,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
             Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
                 .findFirst(),
             () -> Diagnostic.error("There must a constraint for the zero register.",
-                registerFile.sourceLocation())
+                registerFile.location())
         );
 
     return registerFile.simpleName() + constraint.address().intValue();
