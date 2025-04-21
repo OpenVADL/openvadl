@@ -66,8 +66,6 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
-import vadl.viam.annotations.AsmParserCaseSensitive;
-import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
@@ -322,6 +320,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
+  public Optional<vadl.viam.Definition> visit(AnnotationDefinition definition) {
+    // FIXME: Implement this
+    return Optional.empty();
+  }
+
+  @Override
   public Optional<vadl.viam.Definition> visit(ApplicationBinaryInterfaceDefinition definition) {
     var id = generateIdentifier(definition.viamId, definition.identifier());
     var aliasLookup = aliasLookupTable(definition.definitions);
@@ -487,33 +491,33 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private static void lowerAsmDescriptionAnnotations(AsmDescriptionDefinition definition,
                                                      AssemblyDescription asmDescription) {
     // FIXME: integrate with general annotation lowering once it is implemented
-    definition.annotations.annotations().forEach(
-        annotation -> {
-          // annotations of the form [ A = B ]
-          if (annotation.expr instanceof BinaryExpr binaryExpr
-              && binaryExpr.operator() == Operator.Equal) {
-
-            if (binaryExpr.left instanceof Identifier annoId) {
-              var annoName = annoId.name;
-
-              // [ commentString = ";" ]
-              if (binaryExpr.right instanceof StringLiteral string
-                  && annoName.equals("commentString") && !string.value.isEmpty()) {
-                asmDescription.addAnnotation(new AsmParserCommentString(string.value));
-                return;
-              }
-
-              // [ caseSensitive = true ]
-              if (binaryExpr.right instanceof BoolLiteral bool
-                  && annoName.equals("caseSensitive")) {
-                asmDescription.addAnnotation(new AsmParserCaseSensitive(bool.value));
-                return;
-              }
-            }
-          }
-          throw error("Unknown annotation on assembly description", definition).build();
-        }
-    );
+//    definition.annotations.annotations().forEach(
+//        annotation -> {
+//          // annotations of the form [ A = B ]
+//          if (annotation.expr instanceof BinaryExpr binaryExpr
+//              && binaryExpr.operator() == Operator.Equal) {
+//
+//            if (binaryExpr.left instanceof Identifier annoId) {
+//              var annoName = annoId.name;
+//
+//              // [ commentString = ";" ]
+//              if (binaryExpr.right instanceof StringLiteral string
+//                  && annoName.equals("commentString") && !string.value.isEmpty()) {
+//                asmDescription.addAnnotation(new AsmParserCommentString(string.value));
+//                return;
+//              }
+//
+//              // [ caseSensitive = true ]
+//              if (binaryExpr.right instanceof BoolLiteral bool
+//                  && annoName.equals("caseSensitive")) {
+//                asmDescription.addAnnotation(new AsmParserCaseSensitive(bool.value));
+//                return;
+//              }
+//            }
+//          }
+//          throw error("Unknown annotation on assembly description", definition).build();
+//        }
+//    );
   }
 
   @Override
@@ -1420,12 +1424,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         new BehaviorLowering(this).getFunctionGraph(definition.expr,
             identifier.name() + "::behavior");
 
-    var isRelative = definition.annotations.annotations().stream()
-        .anyMatch(x -> x.expr instanceof vadl.ast.Identifier id && id.name.equals(RELATIVE));
-    var isGlobalOffsetTable = definition.annotations.annotations().stream()
-        .anyMatch(
-            x -> x.expr instanceof vadl.ast.Identifier id && id.name.equals(GLOBAL_OFFSET_TABLE));
-
+    // FIXME: Implement into the big annotation processing.
+    var isRelative = false;
+    var isGlobalOffsetTable = false;
+//    var isRelative = definition.annotations.annotations().stream()
+//        .anyMatch(x -> x.expr instanceof vadl.ast.Identifier id && id.name.equals(RELATIVE));
+//    var isGlobalOffsetTable = definition.annotations.annotations().stream()
+//        .anyMatch(
+//            x -> x.expr instanceof vadl.ast.Identifier id && id.name.equals(GLOBAL_OFFSET_TABLE));
+//
     Relocation.Kind kind = Relocation.Kind.ABSOLUTE;
 
     if (isRelative) {

@@ -83,6 +83,14 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
+  public Void visit(AnnotationDefinition definition) {
+    beforeTravel(definition);
+    definition.children().forEach(this::travel);
+    afterTravel(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(ApplicationBinaryInterfaceDefinition definition) {
     beforeTravel(definition);
     definition.children().forEach(this::travel);

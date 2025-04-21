@@ -30,7 +30,7 @@ public class AnnotationTest {
     var prog = """
         instruction set architecture TEST =
         {
-          [ X(0) = 0 ]
+          [ zero : X(0) ]
           register file X : Bits<32> -> Bits<5>
         }
         """;
@@ -39,8 +39,8 @@ public class AnnotationTest {
     var regFile = isa.definitions.get(0);
 
     verifyPrettifiedAst(ast);
-    assertThat(regFile.annotations.annotations().size(), is(1));
-    assertThat(regFile.annotations.annotations().get(0).expr, is(instanceOf(BinaryExpr.class)));
+    assertThat(regFile.annotations.size(), is(1));
+    assertThat(regFile.annotations.get(0), is(instanceOf(BinaryExpr.class)));
   }
 
   @Test
@@ -60,14 +60,14 @@ public class AnnotationTest {
     var isa = (InstructionSetDefinition) ast.definitions.get(0);
     var current = isa.definitions.get(0);
 
-    assertThat(current.annotations.annotations().size(), is(1));
-    assertThat(current.annotations.annotations().get(0).expr, is(instanceOf(Identifier.class)));
-    assertThat(current.annotations.annotations().get(0).property, is(nullValue()));
+    assertThat(current.annotations.size(), is(1));
+    assertThat(current.annotations.get(0), is(instanceOf(Identifier.class)));
+    assertThat(current.annotations.get(0), is(nullValue()));
 
     var nextNext = isa.definitions.get(1);
-    assertThat(nextNext.annotations.annotations().size(), is(1));
-    assertThat(nextNext.annotations.annotations().get(0).expr, is(instanceOf(Identifier.class)));
-    assertThat(nextNext.annotations.annotations().get(0).property,
+    assertThat(nextNext.annotations.size(), is(1));
+    assertThat(nextNext.annotations.get(0), is(instanceOf(Identifier.class)));
+    assertThat(nextNext.annotations.get(0),
         is(instanceOf(Identifier.class)));
   }
 }

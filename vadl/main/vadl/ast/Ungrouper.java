@@ -362,6 +362,12 @@ public class Ungrouper
   }
 
   @Override
+  public Void visit(AnnotationDefinition definition) {
+    definition.values.replaceAll(e -> e.accept(this));
+    return null;
+  }
+
+  @Override
   public Void visit(EnumerationDefinition definition) {
     ungroupAnnotations(definition);
     for (var entry : definition.entries) {
@@ -706,7 +712,6 @@ public class Ungrouper
   }
 
   private void ungroupAnnotations(Definition definition) {
-    definition.annotations.annotations().forEach(
-        annotation -> annotation.expr = annotation.expr.accept(this));
+    definition.annotations.forEach(this::visit);
   }
 }

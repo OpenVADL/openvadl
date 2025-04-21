@@ -814,6 +814,12 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(AnnotationDefinition definition) {
+    // FIXME: Implemnt this
+    return null;
+  }
+
+  @Override
   public Void visit(EnumerationDefinition definition) {
     var type = definition.enumType != null ? check(definition.enumType) : null;
     if (type != null && !(type instanceof BitsType bitsType)) {

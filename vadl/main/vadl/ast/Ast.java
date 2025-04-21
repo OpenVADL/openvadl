@@ -119,6 +119,17 @@ abstract class Node implements WithLocation {
     return " ".repeat(indentBy * indent);
   }
 
+  static <T extends Node> void prettyPrintJoin(String separator, List<T> nodes, int indent,
+                                               StringBuilder builder) {
+    for (int i = 0; i < nodes.size(); i++) {
+      var node = nodes.get(i);
+      if (i > 0) {
+        builder.append(separator);
+      }
+      node.prettyPrint(indent, builder);
+    }
+  }
+
   static boolean isBlockLayout(Node n) {
     return n instanceof LetExpr || n instanceof IfExpr || n instanceof MatchExpr
         || n instanceof Statement || n instanceof Definition;

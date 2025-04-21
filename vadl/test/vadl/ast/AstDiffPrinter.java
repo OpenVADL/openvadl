@@ -61,8 +61,8 @@ public class AstDiffPrinter {
     if (!actual.annotations.equals(expected.annotations)) {
       StringBuilder actualPretty = new StringBuilder();
       StringBuilder expectedPretty = new StringBuilder();
-      actual.annotations.prettyPrint(2, actualPretty);
-      expected.annotations.prettyPrint(2, expectedPretty);
+      actual.annotations.forEach(a -> a.prettyPrint(2, actualPretty));
+      expected.annotations.forEach(a -> a.prettyPrint(2, actualPretty));
       return "ISA definition annotations:\nExpected:\n%s\nActual:\n%s\n"
           .formatted(expectedPretty, actualPretty);
     }
@@ -94,8 +94,8 @@ public class AstDiffPrinter {
     if (!actual.annotations.equals(expected.annotations)) {
       StringBuilder actualPretty = new StringBuilder();
       StringBuilder expectedPretty = new StringBuilder();
-      actual.annotations.prettyPrint(2, actualPretty);
-      expected.annotations.prettyPrint(2, expectedPretty);
+      actual.annotations.forEach(a -> a.prettyPrint(2, actualPretty));
+      expected.annotations.forEach(a -> a.prettyPrint(2, actualPretty));
       return "MiP definition annotations:\nExpected:\n%s\nActual:\n%s\n"
           .formatted(expectedPretty, actualPretty);
     }

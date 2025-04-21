@@ -1226,7 +1226,7 @@ instruction set architecture QDSP6 =
   //    00 = duplex instruction
   // An instruction packet can contain one duplex and up to two other (non-duplex) instructions.
   // The duplex must always appear as the last word in a packet.
-  [ let parse = VLIW(VLIW.length - 1).parse in ( ( parse = 0b00 ) | (parse = 0b11 ) ) stop ]
+  [ stop :  let parse = VLIW(VLIW.length - 1).parse in ( ( parse = 0b00 ) | (parse = 0b11 ) ) ]
 
   // The constant extender effectively serves as a prefix for an instruction: it is not executed in
   // a slot, nor does it consume any slot resources. Within a packet, a constant extender must be
@@ -1239,7 +1239,7 @@ instruction set architecture QDSP6 =
   // - Dot-new conditional instructions (Section 6.2.4) must be grouped in a packet with an
   //   instruction that generates dot-new predicates.
     //    TODO disabled because CONDITIONAL_NEW is empty
-    //    [ forall i in {CONDITIONAL_NEW} then ((i.dn = 0) | (exists j in {PRED_WRITING} then j.d2 = i.u2)) assert ]
+    //    [ assert :  forall i in {CONDITIONAL_NEW} then ((i.dn = 0) | (exists j in {PRED_WRITING} then j.d2 = i.u2)) ]
   // - ST-class instructions can be placed in Slot 1. However, in this case Slot 0 must contain a
   //   second ST-class instruction (Section 5.5). = "dual store"
   //   - Unlike most packetized operations, dual stores are not executed in parallel (Section
@@ -1250,13 +1250,13 @@ instruction set architecture QDSP6 =
   //   program flow instructions (J or JR) can be grouped together in a packet (Section 7.8).
   //   Otherwise, at most one program flow instruction is allowed in a packet. = "dual jump"
   //    - May not be first in dual jump: unconditional `jump`
-          [ !( (VLIW.length >= 2) & ((VLIW(0) ∈ JUMP_IMM) & (VLIW(1) ∈ J)) ) assert ]
+          [ assert :  !( (VLIW.length >= 2) & ((VLIW(0) ∈ JUMP_IMM) & (VLIW(1) ∈ J)) ) ]
   //    - May not be in dual jump: `if ([!]cmp.xx(Rs.new, Rt)) jump`
-          [ !( (VLIW.length >= 2) & (((VLIW(0) ∈ JUMP_CMP_NEW) & (VLIW(1) ∈ J)) | ((VLIW(0) ∈ J) & (VLIW(1) ∈ JUMP_CMP_NEW))) ) assert ]
+          [ assert :  !( (VLIW.length >= 2) & (((VLIW(0) ∈ JUMP_CMP_NEW) & (VLIW(1) ∈ J)) | ((VLIW(0) ∈ J) & (VLIW(1) ∈ JUMP_CMP_NEW))) ) ]
   //    - May not be in dual jump: all `jumpr` (JR is only allowed in slot 1)
-          [ !( (VLIW.length >= 2) & ((VLIW(0) ∈ J) & (VLIW(1) ∈ JR))) assert ]
+          [ assert :  !( (VLIW.length >= 2) & ((VLIW(0) ∈ J) & (VLIW(1) ∈ JR))) ]
   //    - May not be in dual jump: all `dealloc_return`
-          [ !( (VLIW.length >= 2) & (((VLIW(0) ∈ J) & (VLIW(1) ∈ J)) & exists in {DEALLOC_RETURN}) ) assert ]
+          [ assert :  !( (VLIW.length >= 2) & (((VLIW(0) ∈ J) & (VLIW(1) ∈ J)) & exists in {DEALLOC_RETURN}) ) ]
   //    - May not be in dual jump: `endloopN`
   //      - -> See loop section below
   // - JR-class instructions can be placed in Slot 2. However, when encoded in a duplex jumpr R31
@@ -1288,10 +1288,10 @@ instruction set architecture QDSP6 =
   //      - -> handled via regex
   //    - memw_locked,memd_locked,l2fetch,and trace must execute on Slot 0. They must be grouped
   //      only with ALU32 or (non-FP) XTYPE instructions.
-          [ implies(VLIW(VLIW.length-1) ∈ MEMLOCKED_L2FETCH_TRACE, forall j in {ALL} then ((j = VLIW(VLIW.length-1)) | (j ∈ ALU32_XTYPE_NON_FP)) ) assert ]
+          [ assert :  implies(VLIW(VLIW.length-1) ∈ MEMLOCKED_L2FETCH_TRACE, forall j in {ALL} then ((j = VLIW(VLIW.length-1)) | (j ∈ ALU32_XTYPE_NON_FP)) ) ]
   //    - dccleana,dcinva,dccleaninva,and dczeroa must execute on Slot 0. Slot 1 must be empty or an
   //      ALU32 instruction. Note that Slot 1 being empty means that Slot 2 or 3 follow immediately.
-          [ implies(VLIW(VLIW.length-1) ∈ CACHE_MAINTENANCE_SPECIAL, (VLIW.length = 1) | !(VLIW(VLIW.length-2) ∈ LD_ST)) assert ]
+          [ assert :  implies(VLIW(VLIW.length-1) ∈ CACHE_MAINTENANCE_SPECIAL, (VLIW.length = 1) | !(VLIW(VLIW.length-2) ∈ LD_ST)) ]
 
   // "Dependency constraints"
   // - Instructions in a packet cannot write to the same destination register. The assembler
@@ -1313,7 +1313,7 @@ instruction set architecture QDSP6 =
   //      - (floating point because it reads trap/rounding flags from USR)
   //      - l2fetch sets "L2 prefetch active". But it can only be together with ALU and non-FP XTYPE anyway
   //      - all instructions that set the OVF Sticky Saturation Overflow
-       [ !( (exists i in {TRANSFER_C_R,TRANSFER_CC_RR} then i.d5 = 8) & exists in {FLOATING_POINT, SATURATING} ) assert ]
+       [ assert :  !( (exists i in {TRANSFER_C_R,TRANSFER_CC_RR} then i.d5 = 8) & exists in {FLOATING_POINT, SATURATING} ) ]
   //    - Multiple compare instructions are allowed to target the same predicate register in order
   //      to perform a logical AND of the results (Section 6.2.3).
   //      - If a packet contains endloopN, it cannot perform an auto-AND with predicate register P3.
@@ -1322,16 +1322,16 @@ instruction set architecture QDSP6 =
   //        register, then no other instruction in the packet can write to the same predicate
   //        register. (As a result, a register transfer to P3:0 or C5:4 cannot be grouped with any
   //        other predicate-writing instruction.)
-            [ !( ((exists i in {TRANSFER_C_R,TRANSFER_CC_RR} then i.d5 = 4) | (exists in {TRANSFER_P_R})) &
-                 exists in {PRED_WRITING} ) assert ]
+            [ assert :  !( ((exists i in {TRANSFER_C_R,TRANSFER_CC_RR} then i.d5 = 4) | (exists in {TRANSFER_P_R})) &
+                 exists in {PRED_WRITING} ) ]
   //      - The instructions spNloop0, decbin, tlbmatch, memw_locked, memd_locked, add:carry,
   //        sub:carry, sfcmp, and dfcmp cannot be grouped with another instruction that sets the
   //        same predicate register.
-            [ forall i in {ARITH_CARRY /*, CMP_FP, TODO */} then !(
+            [ assert : forall i in {ARITH_CARRY /*, CMP_FP, TODO */} then !(
                 ((exists j in {PRED_WRITING} then (i != j) & (j.d2 = i.u2)) |
                  (exists j in {TRANSFER_C_R,TRANSFER_CC_RR} then j.d5 = 4)) |
                  (exists j in {TRANSFER_P_R} then j.d2 = i.u2 )
-              ) assert ]
+              ) ]
 
 
 	// Hexagon V60/V61 Programmer's Reference Manual p. 26
@@ -1346,7 +1346,7 @@ instruction set architecture QDSP6 =
   //   0. In memory, instructions in a packet must appear in strictly decreasing slot order.
   //   Additionally, if an instruction can go in a higher-numbered slot, and that slot is empty,
   //   then it must be moved into the higher-numbered slot.
-  [ VLIW.length <= 4 assert ]
+  [ assert :  VLIW.length <= 4 ]
   group VLIW = (
     (
       ( XTYPE<0..1> | ALU32<0..1> | J<0..1> | CR<0..1> ).
