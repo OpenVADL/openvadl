@@ -34,17 +34,17 @@ public class TypecheckerAsmTest {
   private final String base = """
        instruction set architecture ISA = {
         register file X : Bits<5> -> Bits<32>
-       
+      
         format Rtype : Bits<1> =
         { funct7 : Bits<1> }
-       
+      
         instruction DO : Rtype =
         {
            X(0) := 1
         }
         encoding DO = { funct7 = 0b0 }
         assembly DO = (mnemonic)
-       
+      
         pseudo instruction NOP( symbol: Bits<5>) = {
         }
         assembly NOP = (mnemonic)
@@ -60,8 +60,8 @@ public class TypecheckerAsmTest {
         global pointer = zero
         frame pointer = zero
         thread pointer = zero
-        
-        
+      
+      
         return value = zero
         function argument = zero
         caller saved = zero
@@ -72,7 +72,7 @@ public class TypecheckerAsmTest {
   private String inputWrappedByValidAsmDescription(String input) {
     return """
           %s
-                
+        
           assembly description AD for ABI = {
             %s
           }

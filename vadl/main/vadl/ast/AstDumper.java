@@ -173,6 +173,20 @@ public class AstDumper extends RecursiveAstVisitor {
   }
 
   @Override
+  public Void visit(EnumerationDefinition definition) {
+    dumpNode(definition);
+    indent++;
+    for (var entry : definition.entries) {
+      entry.name.accept(this);
+      if (entry.value != null) {
+        entry.value.accept(this);
+      }
+    }
+    indent--;
+    return null;
+  }
+
+  @Override
   public Void visit(LetExpr expr) {
     dumpNode(expr);
     dumpChildren(expr.identifiers);
