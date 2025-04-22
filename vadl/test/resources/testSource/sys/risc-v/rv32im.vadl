@@ -8,6 +8,8 @@ import rv3264im::RV3264IM
 instruction set architecture RV32IM extending RV3264IM = {}
 
 application binary interface ABI for RV32IM = {
+   size type = unsigned int
+
    //
    // Register alias definitions
    //
