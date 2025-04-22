@@ -65,17 +65,41 @@ public class Abi extends Definition {
       super(identifier);
     }
 
+    public abstract String typeName();
+
+    public abstract String value();
+
     public static final class NumericClangType extends AbstractClangType {
       @Override
       public void accept(DefinitionVisitor visitor) {
         visitor.visit(this);
       }
 
+      @Override
+      public String typeName() {
+        return typeName.llvm();
+      }
+
+      @Override
+      public String value() {
+        return width + "";
+      }
+
       public enum TypeName {
-        POINTER_WIDTH,
-        POINTER_ALIGN,
-        LONG_WIDTH,
-        LONG_ALIGN
+        POINTER_WIDTH("PointerWidth"),
+        POINTER_ALIGN("PointerAlign"),
+        LONG_WIDTH("LongWidth"),
+        LONG_ALIGN("LongAlign");
+
+        private final String llvm;
+
+        TypeName(String llvm) {
+          this.llvm = llvm;
+        }
+
+        public String llvm() {
+          return this.llvm;
+        }
       }
 
       TypeName typeName;
@@ -94,17 +118,47 @@ public class Abi extends Definition {
         visitor.visit(this);
       }
 
+      @Override
+      public String typeName() {
+        return typeName.llvm();
+      }
+
+      @Override
+      public String value() {
+        return size.llvm();
+      }
+
       public enum TypeName {
         // Type of the size_t in C.
-        SIZE_TYPE,
-        INT_MAX_TYPE
+        SIZE_TYPE("SizeType"),
+        INT_MAX_TYPE("IntMaxType");
+
+        private final String llvm;
+
+        TypeName(String llvm) {
+          this.llvm = llvm;
+        }
+
+        public String llvm() {
+          return this.llvm;
+        }
       }
 
       public enum TypeSize {
-        UNSIGNED_INT,
-        SIGNED_INT,
-        UNSIGNED_LONG,
-        SIGNED_LONG
+        UNSIGNED_INT("UnsignedInt"),
+        SIGNED_INT("SignedInt"),
+        UNSIGNED_LONG("UnsignedLong"),
+        SIGNED_LONG("SignedLong");
+
+        private final String llvm;
+
+        public String llvm() {
+          return llvm;
+        }
+
+        TypeSize(String llvm) {
+          this.llvm = llvm;
+        }
       }
 
       TypeName typeName;
@@ -310,5 +364,9 @@ public class Abi extends Definition {
 
   public List<CompilerInstruction> registerAdjustmentSequences() {
     return registerAdjustmentSequences;
+  }
+
+  public List<AbstractClangType> clangTypes() {
+    return clangTypes;
   }
 }

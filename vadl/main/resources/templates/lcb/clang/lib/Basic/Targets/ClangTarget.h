@@ -21,7 +21,12 @@ namespace clang
                     WIntType = UnsignedInt;
                     IntPtrType = SignedInt;
                     PtrDiffType = SignedInt;
-                    SizeType = UnsignedInt;
+                    // SizeType = UnsignedInt;
+
+                    [# th:each="ty : ${clangTypes}" ]
+                    [(${ty.name})]: [(${ty.value})]
+                    [/]
+
                     LongDoubleWidth = 128;
                     LongDoubleAlign = 128;
                     LongDoubleFormat = &llvm::APFloat::IEEEquad();
