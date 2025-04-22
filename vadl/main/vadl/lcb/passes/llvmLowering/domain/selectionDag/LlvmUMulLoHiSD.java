@@ -30,9 +30,9 @@ import vadl.viam.graph.dependency.ExpressionNode;
 /**
  * LLVM node for unsigned multiplication.
  */
-public class LlvmUMulSD extends BuiltInCall implements LlvmNodeLowerable {
-  public LlvmUMulSD(NodeList<ExpressionNode> args,
-                    Type type) {
+public class LlvmUMulLoHiSD extends BuiltInCall implements LlvmNodeLowerable {
+  public LlvmUMulLoHiSD(NodeList<ExpressionNode> args,
+                        Type type) {
     super(BuiltInTable.UMULL, args, type);
   }
 
@@ -55,13 +55,13 @@ public class LlvmUMulSD extends BuiltInCall implements LlvmNodeLowerable {
 
   @Override
   public ExpressionNode copy() {
-    return new LlvmUMulSD(
+    return new LlvmUMulLoHiSD(
         new NodeList<>(args.stream().map(x -> (ExpressionNode) x.copy()).toList()),
         type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmUMulSD(args, type());
+    return new LlvmUMulLoHiSD(args, type());
   }
 }
