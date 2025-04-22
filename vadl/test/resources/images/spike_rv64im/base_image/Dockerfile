@@ -14,7 +14,7 @@ RUN git checkout 9a28c809a5d355874def06a414aa5f272fae564d
 RUN git submodule update --init --depth=1 -- gcc
 RUN git submodule update --init --depth=1 -- glibc
 RUN git submodule update --init --depth=1 -- binutils
-RUN ./configure --with-arch=rv64gc --with-abi=lp64 --prefix=/opt/riscv-cross
+RUN ./configure --with-arch=rv64gc --with-abi=lp64 --with-cmodel=medany --prefix=/opt/riscv-cross
 RUN make linux -j$num_jobs 
 RUN make clean
 
