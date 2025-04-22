@@ -171,6 +171,10 @@ interface DefinitionVisitor<R> {
   R visit(StageDefinition definition);
 
   R visit(UsingDefinition definition);
+
+  R visit(AbiClangTypeDefinition abiClangTypeDefinition);
+
+  R visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition);
 }
 
 /**
@@ -3694,6 +3698,107 @@ class SpecialPurposeRegisterDefinition extends Definition {
           Purpose.CALLEE_SAVED, Occurrence.ONE,
           Purpose.FUNCTION_ARGUMENT, Occurrence.ONE);
     }
+  }
+}
+
+/**
+ * The compiler does not only generate a compiler backend but also a clang frontend.
+ * This frontend requires information about the types like: What is the alignment of an integer?
+ * The difference between {@link AbiClangTypeDefinition} and {@link AbiClangNumericTypeDefinition}
+ * is that {@link AbiClangNumericTypeDefinition} requires an integer as property.
+ */
+class AbiClangNumericTypeDefinition extends Definition {
+  TypeName typeName;
+  Expr size;
+  SourceLocation loc;
+
+  enum TypeName {
+    POINTER_WIDTH,
+    POINTER_ALIGN,
+    LONG_WIDTH,
+    LONG_ALIGN
+  }
+
+  public AbiClangNumericTypeDefinition(SourceLocation loc,
+                                       TypeName typeName,
+                                       Expr size) {
+    this.loc = loc;
+    this.typeName = typeName;
+    this.size = size;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("clang numeric type: ").append(typeName).append(" with");
+    size.prettyPrint(indent + 1, builder);
+  }
+}
+
+/**
+ * The compiler does not only generate a compiler backend but also a clang frontend.
+ * This frontend requires information about the types like: What is the size of an integer?
+ * Is it unsigned or signed?
+ */
+class AbiClangTypeDefinition extends Definition {
+  TypeName typeName;
+  TypeSize typeSize;
+  SourceLocation loc;
+
+  enum TypeName {
+    // Type of the size_t in C.
+    SIZE_TYPE,
+    INT_MAX_TYPE
+  }
+
+  enum TypeSize {
+    UNSIGNED_INT,
+    SIGNED_INT,
+    UNSIGNED_LONG,
+    SIGNED_LONG
+  }
+
+  public AbiClangTypeDefinition(SourceLocation loc,
+                                TypeName typeName,
+                                TypeSize typeSize) {
+    this.loc = loc;
+    this.typeName = typeName;
+    this.typeSize = typeSize;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("clang type: ")
+        .append(typeName).append(" with ").append(typeSize);
   }
 }
 

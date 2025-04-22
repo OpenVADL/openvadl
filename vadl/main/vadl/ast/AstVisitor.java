@@ -523,6 +523,22 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
+  public Void visit(AbiClangTypeDefinition definition) {
+    beforeTravel(definition);
+    definition.children().forEach(this::travel);
+    afterTravel(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(AbiClangNumericTypeDefinition definition) {
+    beforeTravel(definition);
+    definition.children().forEach(this::travel);
+    afterTravel(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(AbiPseudoInstructionDefinition definition) {
     beforeTravel(definition);
     definition.children().forEach(this::travel);

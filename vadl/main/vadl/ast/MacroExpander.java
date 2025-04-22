@@ -567,6 +567,24 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(AbiClangTypeDefinition abiClangTypeDefinition) {
+    return new AbiClangTypeDefinition(
+        copyLoc(abiClangTypeDefinition.loc),
+        abiClangTypeDefinition.typeName,
+        abiClangTypeDefinition.typeSize
+    );
+  }
+
+  @Override
+  public Definition visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition) {
+    return new AbiClangNumericTypeDefinition(
+        copyLoc(abiClangNumericTypeDefinition.loc),
+        abiClangNumericTypeDefinition.typeName,
+        abiClangNumericTypeDefinition.size
+    );
+  }
+
+  @Override
   public Definition visit(AbiPseudoInstructionDefinition definition) {
     return new AbiPseudoInstructionDefinition(definition.kind,
         resolvePlaceholderOrIdentifier(definition.target),

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import vadl.utils.Pair;
+import vadl.utils.SourceLocation;
 
 /**
  * VADL ABI representation.
@@ -51,6 +52,69 @@ public class Abi extends Definition {
 
     public int bitAlignment() {
       return byteAlignment() * 8;
+    }
+  }
+
+  /**
+   * The {@link Abi} also defines the memory layout of types. So, how many bits an integer has or
+   * whether it is signed or unsigned.
+   */
+  public static abstract sealed class AbstractClangType extends Definition {
+
+    public AbstractClangType(Identifier identifier) {
+      super(identifier);
+    }
+
+    public static final class NumericClangType extends AbstractClangType {
+      @Override
+      public void accept(DefinitionVisitor visitor) {
+        visitor.visit(this);
+      }
+
+      public enum TypeName {
+        POINTER_WIDTH,
+        POINTER_ALIGN,
+        LONG_WIDTH,
+        LONG_ALIGN
+      }
+
+      TypeName typeName;
+      int width;
+
+      public NumericClangType(TypeName typeName, int width, SourceLocation loc) {
+        super(new Identifier(typeName.name(), loc));
+        this.typeName = typeName;
+        this.width = width;
+      }
+    }
+
+    public static final class ClangType extends AbstractClangType {
+      @Override
+      public void accept(DefinitionVisitor visitor) {
+        visitor.visit(this);
+      }
+
+      public enum TypeName {
+        // Type of the size_t in C.
+        SIZE_TYPE,
+        INT_MAX_TYPE
+      }
+
+      public enum TypeSize {
+        UNSIGNED_INT,
+        SIGNED_INT,
+        UNSIGNED_LONG,
+        SIGNED_LONG
+      }
+
+      TypeName typeName;
+      TypeSize size;
+
+      public ClangType(TypeName typeName, TypeSize size, SourceLocation loc) {
+        super(new Identifier(typeName.name(), loc));
+        this.typeName = typeName;
+        this.size = size;
+      }
     }
   }
 
@@ -97,6 +161,7 @@ public class Abi extends Definition {
   private final Alignment stackAlignment;
   private final List<CompilerInstruction> constantSequences;
   private final List<CompilerInstruction> registerAdjustmentSequences;
+  private final List<AbstractClangType> clangTypes;
 
   /**
    * This property is stricter than `stackAlignment` because it
@@ -130,7 +195,8 @@ public class Abi extends Definition {
              Alignment transientStackAlignment,
              Map<RegisterTensor, Abi.Alignment> registerFileAlignment,
              List<CompilerInstruction> constantSequences,
-             List<CompilerInstruction> registerAdjustmentSequences
+             List<CompilerInstruction> registerAdjustmentSequences,
+             List<AbstractClangType> clangTypes
   ) {
     super(identifier);
     this.returnAddress = returnAddress;
@@ -153,6 +219,7 @@ public class Abi extends Definition {
     this.registerFileAlignment = registerFileAlignment;
     this.constantSequences = constantSequences;
     this.registerAdjustmentSequences = registerAdjustmentSequences;
+    this.clangTypes = clangTypes;
   }
 
   @Override

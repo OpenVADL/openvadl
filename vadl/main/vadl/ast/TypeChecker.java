@@ -707,6 +707,18 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(AbiClangTypeDefinition abiClangTypeDefinition) {
+    // Check nothing on purpose
+    return null;
+  }
+
+  @Override
+  public Void visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition) {
+    // Check nothing on purpose
+    return null;
+  }
+
+  @Override
   public Void visit(AbiPseudoInstructionDefinition definition) {
     // Isn't type checked on purpose because there is nothing to type check.
     return null;
