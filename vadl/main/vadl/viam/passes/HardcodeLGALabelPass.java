@@ -67,6 +67,25 @@ public class HardcodeLGALabelPass extends Pass {
           pcrel.replaceInput(symbol, labelNode);
         }));
 
+    viam.isa().ifPresent(isa -> isa
+        .ownPseudoInstructions()
+        .stream().filter(instruction -> instruction.simpleName().equals("LLA"))
+        .forEach(instruction -> {
+          var labelNode = new LabelNode(Type.signedInt(32));
+          var startNode =
+              instruction.behavior().getNodes(StartNode.class).findFirst().orElseThrow();
+          var newlabelNode = new NewLabelNode(labelNode);
+          startNode.addAfter(newlabelNode);
+
+          var addiInstruction = instruction.behavior().getNodes(InstrCallNode.class)
+              .filter(x -> x.target().simpleName().equals("ADDI"))
+              .findFirst()
+              .orElseThrow();
+
+          var pcrel = (FuncCallNode) addiInstruction.arguments().get(2);
+          var symbol = pcrel.arguments().getFirst();
+          pcrel.replaceInput(symbol, labelNode);
+        }));
     return null;
   }
 }
