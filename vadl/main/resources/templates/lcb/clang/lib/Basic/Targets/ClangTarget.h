@@ -21,10 +21,9 @@ namespace clang
                     WIntType = UnsignedInt;
                     IntPtrType = SignedInt;
                     PtrDiffType = SignedInt;
-                    // SizeType = UnsignedInt;
 
                     [# th:each="ty : ${clangTypes}" ]
-                    [(${ty.name})]: [(${ty.value})]
+                    [(${ty.name})] = [(${ty.value})];
                     [/]
 
                     LongDoubleWidth = 128;
