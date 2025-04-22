@@ -1712,7 +1712,7 @@ For example, the conversion routine from the primitive string type to the regist
 The procedure's successful completion asserts that the value refers to a valid register.
 \ac{VADL}'s type system conveys this information to other parts of the grammar.
 A parser can generate a meaningful error message if the validation fails.
-
+<!--
 Readers may wonder why \ac{VADL} requires a separate grammar for the assembly syntax even though the \ac{ISA} section describes assembly formatting functions.
 The idea is that the language could also define the grammar solely by the inversion of the formatting function.
 We decided against such an approach for two reasons.
@@ -1723,13 +1723,17 @@ For example, a generator may create the grammar rule from Figure \ref{lst:lui_gr
 Secondly, if the language relies solely on function inversion, generators must have sophisticated inversion routines, as the system has to support every possible formatting function.
 By defining the grammar separately, \ac{VADL} provides an escape hatch if the rule generation capabilities of a generator are not general enough.
 Lastly, a single assembly instruction may map to multiple valid text representations (e.g., multiple spaces instead of one).
+-->
+
+One advanced feature of the assembly grammar specification allows the definition alternatives as seen for `RRIds` or `BranchPseudoIds` in listing \r{assembly_description}.
+Other advanced features include the definition of optional blocks by `[]` as seen in the `JalrInstruction` in listing \r{assembly_grammar_advanced} and calling arbitrary \ac{VADL} functions with grammar rules passed as arguments as seen with `encode<Integer>` in `AndInstruction`. 
 
 \listing{assembly_grammar_advanced, Advanced Assembly Grammar Features}
 ~~~{.vadl}
 AddInstruction @instruction :
   mnemonic = "ADD"      @operand
-  rd       = Register   @operand
-  rs1      = Register   @operand
+  rd       = Register   @operand ","
+  rs1      = Register   @operand ","
     ( rs2  = Register   @operand
     | imm  = Expression @operand
     )
@@ -1740,14 +1744,17 @@ JalrInstruction @instruction:  var tmp = null @operand
   tmp = Register    @operand
   [ COMMA rs1 = tmp
     tmp  = Register @operand ]
+  COMMA
   rd = tmp
 ;
 
+function encode(x: SInt<64>): SInt<64> = x << 1
+
 AndInstruction @instruction :
   mnemonic = "AND"      @operand
-  rd  = Register        @operand
-  rs1 = Register        @operand
-  imm = encode<INTEGER> @operand
+  rd  = Register        @operand ","
+  rs1 = Register        @operand ","
+  imm = encode<Integer> @operand
 ;
 ~~~
 \endlisting

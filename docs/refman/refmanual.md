@@ -610,21 +610,40 @@ function cls( a : Bits<N> ) -> UInt<N> // counting leading sign bits (without si
 
 ## Assembly Grammar Rule Types
 
-| type         |  explanation     |
-|:-------------|:-----------------|
-| constant     |                  |
-| expression   |                  |
-| instruction  |                  |
-| instructions |                  |
-| modifier     |                  |
-| operand      |                  |
-| operands     |                  |
-| register     |                  |
-| statements   |                  |
-| string       |                  |
-| symbol       |                  |
-| void         |                  |
+| type          | explanation                                                                                                 |
+|:--------------|:------------------------------------------------------------------------------------------------------------|
+| @constant     | represents an integer value.                                                                                |
+| @expression   | represents a complex expression for an immediate operand. The `Expression` default rule is of this type.    |
+| @instruction  | represents an entire machine or pseudo instruction. It needs to consist of at least the `mnemonic` operand. |
+| @modifier     | represents a modifier defined in the `modifier` mappings of the assembly description.                       |
+| @operand      | represents a machine operand, which is used to build an instruction in the parser.                          |
+| @operands     | represents a sequence of `@operands`.                                                                       |
+| @register     | represents a register of the instruction set architecture corresponding to the assembly description.        |
+| @statements   | represents a sequence of `@instruction`, where each instruction is followed by an `EOL`.                    |
+| @string       | represents a sequence of characters. Most terminal rules are of this type.                                  |
+| @symbol       | represents a reference to a symbol, such as an assembly label.                                              |
+| @void         | represents the empty type. For rules like `EOL`.                                                            |
 
+
+## Assembly Grammar Rule Type Casts
+
+| from                       | to           | explanation                                                               |
+|:---------------------------|:-------------|:--------------------------------------------------------------------------|
+| @instruction               | @statements  | create a sequence of statements containing a single instruction           |
+| @operands                  | @instruction | create an instruction from a sequence of operands                         |
+| @operand                   | @instruction | create an instruction from a single operand                               |
+| @operand                   | @operands    | create a sequence of operands containing a single operand                 |
+| @register                  | @operand     | wrap register in an operand                                               |
+| @constant                  | @operand     | wrap constant in an operand                                               |
+| @string                    | @operand     | wrap string in an operand                                                 |
+| @expression                | @operand     | wrap expression in an operand                                             |
+| @symbol                    | @operand     | wrap symbol in an operand                                                 |
+| @modifier with @expression | @operand     | create a new expression from a modified expression and wrap in an operand |
+| @constant                  | @register    | interpret integer as register index                                       |
+| @string                    | @register    | interpret string value as register name                                   |
+| @string                    | @modifier    | the cast string needs to be a defined modifier                            |
+| @string                    | @symbol      | interpret string value as symbol                                          |
+| any                        | @void        | drop all data                                                             |
 
 ## Assembly Terminal Rules
 
