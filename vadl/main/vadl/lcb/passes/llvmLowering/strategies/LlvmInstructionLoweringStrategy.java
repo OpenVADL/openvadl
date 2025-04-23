@@ -549,8 +549,8 @@ public abstract class LlvmInstructionLoweringStrategy {
               // Why?
               // Because LLVM cannot handle static registers in input or output operands.
               // They belong to defs and uses instead.
-              if (node instanceof ReadRegTensorNode readRegTensorNode &&
-                  readRegTensorNode.regTensor().isRegisterFile()) {
+              if (node instanceof ReadRegTensorNode readRegTensorNode
+                  && readRegTensorNode.regTensor().isRegisterFile()) {
                 return !readRegTensorNode.hasConstantAddress();
               }
               return true;
@@ -663,6 +663,20 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
+  private static TableGenInstructionOperand generateInstructionOperand(
+      LlvmFieldAccessRefNode node) {
+    if (node.usage() == LlvmFieldAccessRefNode.Usage.Immediate) {
+      return new TableGenInstructionImmediateOperand(node);
+    } else if (node.usage() == LlvmFieldAccessRefNode.Usage.BasicBlock) {
+      return new TableGenInstructionImmediateLabelOperand(node);
+    } else {
+      throw Diagnostic.error("Not supported usage", node.sourceLocation()).build();
+    }
+  }
+
+  /**
+   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
+   */
   private static TableGenInstructionOperand generateInstructionOperandRegisterFile(
       ReadRegTensorNode node) {
     if (node.address() instanceof FieldRefNode field) {
@@ -709,20 +723,6 @@ public abstract class LlvmInstructionLoweringStrategy {
           "The compiler generator needs to generate a tablegen instruction operand from this "
               + "address for a field but it does not support it.",
           node.address().sourceLocation()).build();
-    }
-  }
-
-  /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
-   */
-  private static TableGenInstructionOperand generateInstructionOperand(
-      LlvmFieldAccessRefNode node) {
-    if (node.usage() == LlvmFieldAccessRefNode.Usage.Immediate) {
-      return new TableGenInstructionImmediateOperand(node);
-    } else if (node.usage() == LlvmFieldAccessRefNode.Usage.BasicBlock) {
-      return new TableGenInstructionImmediateLabelOperand(node);
-    } else {
-      throw Diagnostic.error("Not supported usage", node.sourceLocation()).build();
     }
   }
 

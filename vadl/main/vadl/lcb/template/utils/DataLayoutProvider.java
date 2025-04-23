@@ -29,6 +29,9 @@ public class DataLayoutProvider {
   public record DataLayout(boolean isBigEndian, int pointerSize, int pointerAlignment) {
   }
 
+  /**
+   * Creates a string representation from register file.
+   */
   public static DataLayout createDataLayout(RegisterTensor generalPurposeRegisterFile) {
     generalPurposeRegisterFile.ensure(generalPurposeRegisterFile.isRegisterFile(),
         "must not be null");

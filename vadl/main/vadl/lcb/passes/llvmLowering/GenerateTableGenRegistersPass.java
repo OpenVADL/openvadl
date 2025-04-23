@@ -94,8 +94,8 @@ public class GenerateTableGenRegistersPass extends Pass {
         var register = new TableGenRegister(
             configuration.targetName(),
             compilerRegister,
-            Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth() -
-                1,
+            Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
+                - 1,
             Optional.of(compilerRegister.hwEncodingValue())
         );
         registers.add(register);

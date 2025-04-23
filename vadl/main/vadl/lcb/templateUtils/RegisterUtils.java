@@ -93,7 +93,8 @@ public class RegisterUtils {
       RegisterTensor registerFile,
       @Nullable Map<Pair<RegisterTensor, Integer>, List<Abi.RegisterAlias>> aliases) {
     return new RegisterClass(registerFile,
-        IntStream.range(0, (int) Math.pow(2, Objects.requireNonNull(registerFile.addressType()).bitWidth()))
+        IntStream.range(0,
+                (int) Math.pow(2, Objects.requireNonNull(registerFile.addressType()).bitWidth()))
             .mapToObj(i -> {
               var name = registerFile.identifier.simpleName() + i;
 
