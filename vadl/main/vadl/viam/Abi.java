@@ -59,7 +59,7 @@ public class Abi extends Definition {
    * The {@link Abi} also defines the memory layout of types. So, how many bits an integer has or
    * whether it is signed or unsigned.
    */
-  public static abstract sealed class AbstractClangType extends Definition {
+  public abstract static sealed class AbstractClangType extends Definition {
 
     public AbstractClangType(Identifier identifier) {
       super(identifier);
@@ -69,6 +69,9 @@ public class Abi extends Definition {
 
     public abstract String value();
 
+    /**
+     * Memory layout of types where the user can define a number e.g. long width.
+     */
     public static final class NumericClangType extends AbstractClangType {
       @Override
       public void accept(DefinitionVisitor visitor) {
@@ -85,6 +88,9 @@ public class Abi extends Definition {
         return width + "";
       }
 
+      /**
+       * Predefined values which can be set for clang.
+       */
       public enum TypeName {
         POINTER_WIDTH("PointerWidth"),
         POINTER_ALIGN("PointerAlign"),
@@ -102,16 +108,23 @@ public class Abi extends Definition {
         }
       }
 
-      TypeName typeName;
+      NumericClangType.TypeName typeName;
       int width;
 
-      public NumericClangType(TypeName typeName, int width, SourceLocation loc) {
+      /**
+       * Constructor.
+       */
+      public NumericClangType(NumericClangType.TypeName typeName, int width, SourceLocation loc) {
         super(new Identifier(typeName.name(), loc));
         this.typeName = typeName;
         this.width = width;
       }
     }
 
+    /**
+     * Memory layout of types where the user can only define a predefined value e.g. it is unsigned
+     * or signed.
+     */
     public static final class ClangType extends AbstractClangType {
       @Override
       public void accept(DefinitionVisitor visitor) {
@@ -128,6 +141,9 @@ public class Abi extends Definition {
         return size.llvm();
       }
 
+      /**
+       * Predefined values which can be set for clang.
+       */
       public enum TypeName {
         // Type of the size_t in C.
         SIZE_TYPE("SizeType"),
@@ -144,6 +160,9 @@ public class Abi extends Definition {
         }
       }
 
+      /**
+       * Predefined values which can be set for clang.
+       */
       public enum TypeSize {
         UNSIGNED_INT("UnsignedInt"),
         SIGNED_INT("SignedInt"),
@@ -161,10 +180,13 @@ public class Abi extends Definition {
         }
       }
 
-      TypeName typeName;
-      TypeSize size;
+      ClangType.TypeName typeName;
+      ClangType.TypeSize size;
 
-      public ClangType(TypeName typeName, TypeSize size, SourceLocation loc) {
+      /**
+       * Constructor.
+       */
+      public ClangType(ClangType.TypeName typeName, ClangType.TypeSize size, SourceLocation loc) {
         super(new Identifier(typeName.name(), loc));
         this.typeName = typeName;
         this.size = size;

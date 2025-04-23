@@ -1475,7 +1475,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var typeName = Abi.AbstractClangType.ClangType.TypeName.valueOf(definition.typeName.name());
     var typeSize = Abi.AbstractClangType.ClangType.TypeSize.valueOf(definition.typeSize.name());
     return Optional.of(
-        new Abi.AbstractClangType.ClangType(typeName, typeSize, definition.sourceLocation()));
+        new Abi.AbstractClangType.ClangType(typeName, typeSize, definition.location()));
   }
 
   @Override
@@ -1485,7 +1485,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         Abi.AbstractClangType.NumericClangType.TypeName.valueOf(definition.typeName.name());
     var value = constantEvaluator.eval(definition.size).toViamConstant().intValue();
     return Optional.of(
-        new Abi.AbstractClangType.NumericClangType(typeName, value, definition.sourceLocation()));
+        new Abi.AbstractClangType.NumericClangType(typeName, value, definition.location()));
   }
 
   @Override

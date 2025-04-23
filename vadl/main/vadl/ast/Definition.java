@@ -3708,7 +3708,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
  * is that {@link AbiClangNumericTypeDefinition} requires an integer as property.
  */
 class AbiClangNumericTypeDefinition extends Definition {
-  TypeName typeName;
+  AbiClangNumericTypeDefinition.TypeName typeName;
   Expr size;
   SourceLocation loc;
 
@@ -3720,7 +3720,7 @@ class AbiClangNumericTypeDefinition extends Definition {
   }
 
   public AbiClangNumericTypeDefinition(SourceLocation loc,
-                                       TypeName typeName,
+                                       AbiClangNumericTypeDefinition.TypeName typeName,
                                        Expr size) {
     this.loc = loc;
     this.typeName = typeName;
@@ -3733,7 +3733,7 @@ class AbiClangNumericTypeDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3744,7 +3744,8 @@ class AbiClangNumericTypeDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent)).append("clang numeric type: ").append(typeName).append(" with");
+    builder.append(prettyIndentString(indent)).append("clang numeric type: ").append(typeName)
+        .append(" with");
     size.prettyPrint(indent + 1, builder);
   }
 }
@@ -3755,7 +3756,7 @@ class AbiClangNumericTypeDefinition extends Definition {
  * Is it unsigned or signed?
  */
 class AbiClangTypeDefinition extends Definition {
-  TypeName typeName;
+  AbiClangTypeDefinition.TypeName typeName;
   TypeSize typeSize;
   SourceLocation loc;
 
@@ -3773,8 +3774,8 @@ class AbiClangTypeDefinition extends Definition {
   }
 
   public AbiClangTypeDefinition(SourceLocation loc,
-                                TypeName typeName,
-                                TypeSize typeSize) {
+                                AbiClangTypeDefinition.TypeName typeName,
+                                AbiClangTypeDefinition.TypeSize typeSize) {
     this.loc = loc;
     this.typeName = typeName;
     this.typeSize = typeSize;
@@ -3786,7 +3787,7 @@ class AbiClangTypeDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
