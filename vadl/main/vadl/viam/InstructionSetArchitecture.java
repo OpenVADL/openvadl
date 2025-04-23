@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -160,6 +161,19 @@ public class InstructionSetArchitecture extends Definition {
   public List<RegisterFile> ownRegisterFiles() {
     return registerFiles;
   }
+
+  /**
+   * Returns the {@link RegisterFile}s <b>owned</b> by this ISA.
+   * So it might not include definitions accessible through the super ISA.
+   */
+  public List<RegisterTensor> registerTensors() {
+    // TODO: Refactor when we only have a registerTensor list
+    return Streams.concat(
+        ownRegisters().stream(),
+        ownRegisterFiles().stream()
+    ).toList();
+  }
+
 
   /**
    * Returns the {@link Format}s <b>owned</b> by this ISA.

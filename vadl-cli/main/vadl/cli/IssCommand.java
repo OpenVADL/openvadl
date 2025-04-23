@@ -22,6 +22,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -92,13 +94,13 @@ public class IssCommand extends BaseCommand {
   private boolean setup() {
     try {
       return init();
-    } catch (IOException | NoSuchAlgorithmException e) {
+    } catch (IOException | NoSuchAlgorithmException | URISyntaxException e) {
       System.err.println("Error: " + e.getMessage());
       return false;
     }
   }
 
-  private boolean init() throws IOException, NoSuchAlgorithmException {
+  private boolean init() throws IOException, NoSuchAlgorithmException, URISyntaxException {
     if (!init) {
       return true;
     }
@@ -187,8 +189,8 @@ public class IssCommand extends BaseCommand {
     }
   }
 
-  private void downloadFile(String fileURL, Path savePath) throws IOException {
-    URL url = new URL(fileURL);
+  private void downloadFile(String fileURL, Path savePath) throws IOException, URISyntaxException {
+    URL url = new URI(fileURL).toURL();
     HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
     httpConn.setRequestProperty("User-Agent", "Mozilla/5.0");
     int responseCode = httpConn.getResponseCode();

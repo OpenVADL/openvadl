@@ -16,8 +16,7 @@
 
 package vadl.iss.template;
 
-import static vadl.iss.template.IssRenderUtils.mapRegFiles;
-import static vadl.iss.template.IssRenderUtils.mapRegs;
+import static vadl.iss.template.IssRenderUtils.mapRegTensors;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,10 +28,10 @@ import vadl.cppCodeGen.formatting.CodeFormatter;
 import vadl.iss.codegen.QemuClangFormatter;
 import vadl.iss.passes.extensions.ExceptionInfo;
 import vadl.iss.passes.extensions.MemoryInfo;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.AbstractTemplateRenderingPass;
-import vadl.viam.Register;
 import vadl.viam.Specification;
 
 /**
@@ -121,8 +120,7 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("gen_machine", configuration().machineName());
     vars.put("gen_machine_upper", configuration().machineName().toUpperCase());
     vars.put("gen_machine_lower", configuration().machineName().toLowerCase());
-    vars.put("register_files", mapRegFiles(specification));
-    vars.put("registers", mapRegs(specification));
+    vars.put("register_tensors", mapRegTensors(specification));
     vars.put("pc_reg", getPcReg(specification));
     vars.put("target_size", configuration().targetSize().width);
     vars.put("mem_info", getMemoryInfo(specification));
@@ -138,11 +136,11 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     return viam.mip().get().isa().expectExtension(ExceptionInfo.class);
   }
 
-  private Map<String, String> getPcReg(Specification viam) {
+  private RegInfo getPcReg(Specification viam) {
     var pc = viam.mip().get().isa().pc();
     if (pc == null) {
       throw new IllegalStateException("PC is null");
     }
-    return IssRenderUtils.map((Register) pc.registerTensor());
+    return pc.registerTensor().expectExtension(RegInfo.class);
   }
 }

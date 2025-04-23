@@ -18,12 +18,19 @@ package vadl.iss.template.target;
 
 import static vadl.error.Diagnostic.error;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.template.IssRenderUtils;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.AbstractMultiTemplateRenderingPass;
+import vadl.utils.Pair;
+import vadl.utils.codegen.CodeGeneratorAppendable;
+import vadl.utils.codegen.StringBuilderAppendable;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -48,8 +55,8 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
     var vars = super.createVariables(passResults, specification);
     vars.put("insn_width", getInstructionWidth(specification));
     vars.put("mem_word_size", getMemoryWordSize(specification));
-    vars.put("trans_includes",
-        translationIncludes(passResults));
+    vars.put("trans_includes", translationIncludes(passResults));
+    vars.put("tcg_v_init_code", genRegInitCode(specification));
     return vars;
   }
 
@@ -103,6 +110,59 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
               width)
           .build();
     };
+  }
+
+  private String genRegInitCode(Specification specification) {
+    var sb = new StringBuilderAppendable();
+    var isa = specification.mip().get().isa();
+    sb.indent();
+    isa.registerTensors().forEach(tensor -> {
+      regInitCode(sb, tensor);
+      sb.append("\n");
+    });
+    return sb.toString();
+  }
+
+  private void regInitCode(CodeGeneratorAppendable sb, RegisterTensor reg) {
+    var layers = reg.indexDimensions().stream()
+        .map(d -> Pair.of("d" + d.index(), d.size()))
+        .toList();
+    var indexAccess = layers.stream().map(l -> "[" + l.left() + "]")
+        .collect(Collectors.joining());
+
+    var nameLower = reg.simpleName().toLowerCase();
+    var targetUpper = configuration().targetName().toUpperCase();
+
+    IssRenderUtils.generateNestedLoops(sb, layers, (b) -> {
+      if (layers.isEmpty()) {
+        b.append(
+            "cpu_" + nameLower + " = tcg_global_mem_new(tcg_env, offsetof(CPU" + targetUpper
+                + "State, " + nameLower + "), \"" + reg.simpleName() + "\");");
+      } else {
+        var target = configuration().targetName().toLowerCase();
+        var names = target + "_cpu_" + nameLower + "_names";
+
+        for (var c : reg.constraints()) {
+          var check = genInitConstraintCheck(reg, c);
+          b.appendLn("if (" + check + ") continue;");
+        }
+
+        // cpu_x[i] = tcg_global_mem_new(tcg_env,
+        //       offsetof(CPURV64IMState, x[i]),
+        //       rv64im_cpu_x_names[i]);
+        b.append("cpu_" + nameLower + indexAccess + "= tcg_global_mem_new(tcg_env, ")
+            .append("offsetof(CPU" + targetUpper + "State, " + nameLower + indexAccess + "), ")
+            .append(names + indexAccess + ");");
+      }
+    });
+  }
+
+  private String genInitConstraintCheck(RegisterTensor reg, RegisterTensor.Constraint constraint) {
+    return Streams.zip(constraint.indices().stream(),
+            reg.indexDimensions().stream().limit(constraint.indices().size()),
+            (index, dimension) -> "d" + dimension.index() + " == " + index.intValue())
+        .collect(Collectors.joining(" && "));
+
   }
 
 

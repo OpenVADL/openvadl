@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
@@ -33,8 +34,11 @@ import vadl.utils.ViamUtils;
 import vadl.viam.DefProp;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * A pass that verifies that all necessary information required to generate a QEMU ISS are present.
@@ -61,13 +65,16 @@ public class IssVerificationPass extends AbstractIssPass {
 
     checkMipExists(viam, diagnostics);
     checkProgramCounter(viam, diagnostics);
-    checkRegister(viam, diagnostics);
-    checkRegisterFiles(viam, diagnostics);
+    checkRegisterTensors(viam, diagnostics);
     checkFormats(viam, diagnostics);
     checkMemory(viam, diagnostics);
 
     // behavior checks
     checkSlice(viam, diagnostics);
+
+    // check that all resources access provide every index and only
+    // access the innermost dimension
+    checkResourceAccesses(viam, diagnostics);
 
     if (!diagnostics.isEmpty()) {
       // if we found diagnostics, we throw them
@@ -133,39 +140,15 @@ public class IssVerificationPass extends AbstractIssPass {
     }
   }
 
-  private void checkRegister(Specification viam, List<DiagnosticBuilder> diagnostics) {
-    withIsa(viam, isa -> {
-      isa.ownRegisters()
-          .stream()
-          .map(f -> {
-            var resWidth = f.resultType().bitWidth();
-            if (resWidth != 64 && resWidth != 32) {
-              return error("Invalid register result size", f)
-                  .description("ISS only supports register of size 32 or 64 bits.")
-                  ;
-            }
-            if (targetWidth(resWidth) != resWidth) {
-              return error("Different register result sizes", f)
-                  .locationDescription(f, "Also found result size of %s in ISA.", foundTargetWidth)
-                  .description(
-                      "The ISS requires all registers and register files "
-                          + "to have the same result size.");
-            }
-            return null;
-          })
-          .filter(Objects::nonNull)
-          .forEach(diagnostics::add);
-    });
-  }
-
-  private void checkRegisterFiles(Specification viam, List<DiagnosticBuilder> diagnostics) {
-    var optIsa = viam.isa();
-    if (optIsa.isEmpty()) {
-      return;
-    }
-    optIsa.get().ownRegisterFiles()
+  private void checkRegisterTensors(Specification viam, List<DiagnosticBuilder> diagnostics) {
+    withIsa(viam, isa -> isa.registerTensors()
         .stream()
         .map(f -> {
+          if (f.dimCount() > 2) {
+            return error("Invalid register dimension", f)
+                .description("The ISS currently only supports 1D and 2D register tensors");
+          }
+
           var resWidth = f.resultType().bitWidth();
           if (resWidth != 64 && resWidth != 32) {
             return error("Invalid register file result width", f)
@@ -182,7 +165,7 @@ public class IssVerificationPass extends AbstractIssPass {
           return null;
         })
         .filter(Objects::nonNull)
-        .forEach(diagnostics::add);
+        .forEach(diagnostics::add));
   }
 
   private void checkFormats(Specification viam, List<DiagnosticBuilder> diagnostics) {
@@ -265,6 +248,34 @@ public class IssVerificationPass extends AbstractIssPass {
               .description("Currently the ISS requires slices to be less or equal 64 bit.")
               .note("This is because the QEMU implementation only handles 64 bit.")
           );
+        });
+  }
+
+  // checks if all slices are not greater than 64 bit
+  private void checkResourceAccesses(Specification viam, List<DiagnosticBuilder> diagnostics) {
+    ViamUtils.findDefinitionsByFilter(viam, d -> d instanceof DefProp.WithBehavior)
+        .stream()
+        .map(DefProp.WithBehavior.class::cast)
+        .flatMap(b -> b.behaviors().stream())
+        .flatMap(b -> b.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class)))
+        .forEach(n -> {
+          RegisterTensor tensor;
+          int accessIndicesCount;
+          if (n instanceof ReadRegTensorNode read) {
+            tensor = read.resourceDefinition();
+            accessIndicesCount = read.indices().size();
+          } else {
+            var write = (WriteRegTensorNode) n;
+            tensor = write.resourceDefinition();
+            accessIndicesCount = write.indices().size();
+          }
+
+          if (tensor.maxNumberOfAccessIndices() != accessIndicesCount) {
+            diagnostics.add(error("Invalid register access", n)
+                .description(
+                    "Currently the ISS only allows register accesses to the innermost dimension.")
+            );
+          }
         });
   }
 

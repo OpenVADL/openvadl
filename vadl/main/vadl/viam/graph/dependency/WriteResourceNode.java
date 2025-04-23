@@ -48,6 +48,12 @@ public abstract class WriteResourceNode extends SideEffectNode {
     this.value = value;
   }
 
+  /**
+   * Check if this node has one index.
+   *
+   * @deprecated use {@link #indices()} instead.
+   */
+  @Deprecated
   public boolean hasAddress() {
     return indices.size() == 1;
   }
@@ -68,6 +74,12 @@ public abstract class WriteResourceNode extends SideEffectNode {
     return indices;
   }
 
+  /**
+   * Get the index of this node.
+   *
+   * @deprecated use {@link #indices()} instead.
+   */
+  @Deprecated
   public ExpressionNode address() {
     ensure(indices.size() == 1, "Indices size is not 1. Check hasAddress before access.");
     return indices.getFirst();

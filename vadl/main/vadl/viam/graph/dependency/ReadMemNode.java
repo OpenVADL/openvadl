@@ -66,6 +66,11 @@ public class ReadMemNode extends ReadResourceNode {
   }
 
   @Override
+  public ExpressionNode address() {
+    return indices().getFirst();
+  }
+
+  @Override
   public Resource resourceDefinition() {
     return memory;
   }

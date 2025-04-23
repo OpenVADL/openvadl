@@ -35,12 +35,9 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ProcCallNode;
-import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -111,26 +108,19 @@ public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
   }
 
   @Handler
-  public void handle(CGenContext<Node> ctx, WriteRegNode node) {
-    ctx.wr("env->" + node.register().simpleName().toLowerCase() + " = ")
-        .gen(node.value());
-  }
-
-  @Handler
   void handle(CGenContext<Node> ctx, WriteRegTensorNode toHandle) {
-    throw new UnsupportedOperationException("Type WriteRegTensorNode not yet implemented");
-  }
-
-  @Override
-  public void handle(CGenContext<Node> ctx, ReadRegNode node) {
-    ctx.wr("env->" + node.register().simpleName().toLowerCase());
+    toHandle.ensure(toHandle.regTensor().isSingleRegister(),
+        "Only registers supported at the moment.");
+    ctx.wr("env->" + toHandle.regTensor().simpleName().toLowerCase() + " = ")
+        .gen(toHandle.value());
   }
 
   @Override
   public void handle(CGenContext<Node> ctx, ReadRegTensorNode node) {
-    throw new UnsupportedOperationException("Type ReadRegTensorNode not yet implemented");
+    node.ensure(node.regTensor().isSingleRegister(),
+        "Only registers supported at the moment.");
+    ctx.wr("env->" + node.regTensor().simpleName().toLowerCase());
   }
-
 
   /**
    * Directly call the cause and wrap it in a statement line.
@@ -158,11 +148,6 @@ public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
   @Handler
   void handle(CGenContext<Node> ctx, WriteArtificialResNode toHandle) {
     throw new UnsupportedOperationException("Type WriteArtificialResNode not yet implemented");
-  }
-
-  @Handler
-  void handle(CGenContext<Node> ctx, WriteRegFileNode toHandle) {
-    throw new UnsupportedOperationException("Type WriteRegFileNode not yet implemented");
   }
 
   @Handler

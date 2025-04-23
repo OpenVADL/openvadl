@@ -77,6 +77,10 @@ public class WriteRegTensorNode extends WriteResourceNode {
     return regTensor;
   }
 
+  public RegisterTensor regTensor() {
+    return regTensor;
+  }
+
   /**
    * Determines if the register is a PC based on whether staticCounterAccess is set.
    */

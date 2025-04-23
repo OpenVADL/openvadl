@@ -73,6 +73,7 @@ tasks.withType<Checkstyle> {
 
 // Register the custom task with your configuration
 tasks.register<CocoR_gradle.GenerateCocoParserTask>("generateCocoParser") {
+    group = "build"
     inputFiles.from("main/vadl/ast/vadl.ATG")
     outputDir.set(outputDir.get().dir("vadl/ast"))
     cocoJar.set(project.file("libs/Coco.jar"))

@@ -54,10 +54,11 @@ public class RegisterTensor extends Resource {
    *
    * <p>The size argument must fit in the index type.</p>
    *
+   * @param index     the index of this dimension (0 is the outermost dimension)
    * @param indexType index type required to access an element of this dimension
    * @param size      number of elements in this dimension
    */
-  public record Dimension(DataType indexType, int size) {
+  public record Dimension(int index, DataType indexType, int size) {
 
     /**
      * Constructs the dimension and checks whether the provided properties are
@@ -96,6 +97,10 @@ public class RegisterTensor extends Resource {
    */
   public List<Dimension> dimensions() {
     return dimensions;
+  }
+
+  public List<Dimension> indexDimensions() {
+    return dimensions.subList(0, maxNumberOfAccessIndices());
   }
 
   public int maxNumberOfAccessIndices() {

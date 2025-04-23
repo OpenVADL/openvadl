@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.IssInfoRetrievalPass;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.template.Renderable;
 import vadl.viam.Definition;
@@ -33,12 +34,12 @@ import vadl.viam.Parameter;
 
 /**
  * A {@link InstructionSetArchitecture} extension that provides information about existing
- * {@link ExceptionDef}s. It is added by the {@link vadl.iss.passes.IssExceptionDetectionPass}.
+ * {@link ExceptionDef}s. It is added by the {@link IssInfoRetrievalPass}.
  * It consists of a list of {@link Entry}s that hold the information of an individual
  * exception.
  *
  * @see Entry
- * @see vadl.iss.passes.IssExceptionDetectionPass
+ * @see IssInfoRetrievalPass
  * @see vadl.iss.codegen.IssExceptionHandlingCodeGenerator
  * @see vadl.iss.template.IssTemplateRenderingPass
  */

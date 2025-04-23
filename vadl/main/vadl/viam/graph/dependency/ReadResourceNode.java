@@ -46,11 +46,23 @@ public abstract class ReadResourceNode extends ExpressionNode {
     this.indices = indices;
   }
 
+  /**
+   * Get first index expression.
+   *
+   * @deprecated handle all indices instead ({@link #indices()}).
+   */
+  @Deprecated
   public ExpressionNode address() {
     ensure(indices.size() == 1, "Indices size is not 1. Check hasAddress before access.");
     return indices.getFirst();
   }
 
+  /**
+   * Check if this node has one index.
+   *
+   * @deprecated use {@link #indices()} instead.
+   */
+  @Deprecated
   public boolean hasAddress() {
     return indices.size() == 1;
   }

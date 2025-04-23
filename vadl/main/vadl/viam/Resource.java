@@ -48,7 +48,10 @@ public abstract class Resource extends Definition implements DefProp.WithType {
 
   /**
    * Returns the result type of this resource.
+   *
+   * @deprecated Use {@link #resultType(int)} instead.
    */
+  @Deprecated
   public abstract DataType resultType();
 
   public abstract DataType resultType(int providedDimensions);
