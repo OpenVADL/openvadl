@@ -1542,6 +1542,9 @@ application binary interface ABI for RV32I = {
 //alias register ...
   [ preferred alias ]
   alias register fp = X(8)
+  
+  // Configuration for clang
+  size type = unsigned int
 
   return address    = ra
   [ alignment : 16 ]
@@ -1620,6 +1623,7 @@ They define efficient code sequences to add immediate values of different types 
 If an immediate does not fit into the immediate of a register adjustment sequence, then a constant sequence will be used.
 This requires an additional register which can be more costly.
 
+The compiler generator does not only generate a compiler backend but also a C frontend. To lower C code correctly, the generator requires additional information about the memory layout of types. In the example above, this indicated with `size type = unsigned int` which makes the `size_t` datatype 4 bytes long without a sign bit.
 
 ## Assembly Description Definition
 
