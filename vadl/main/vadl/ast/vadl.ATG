@@ -1819,6 +1819,7 @@ PRODUCTIONS
   allowedIdentifierKeywords
   = ADDRESS
   | ALIAS
+  | ALIGN
   // | ASSERT
   | APPEND
   | BINARY
@@ -1831,8 +1832,11 @@ PRODUCTIONS
   | FIRMWARE
   | GROUP
   | INSTRUCTION
+  | INT
   // | INVALID
   // | LABEL
+  | LONG
+  | MAX
   | MEMORY
   // | MNEMONIC
   // | MODE
@@ -1849,6 +1853,8 @@ PRODUCTIONS
   | REGISTER
   | RETURN
   | SEQUENCE
+  | SIGNED
+  | SIZE
   | STAGE
   | START
   | STARTUP
@@ -1872,9 +1878,12 @@ PRODUCTIONS
   | T_UN_OP
   | T_VAL
   | TRANSLATION
+  | TYPE
+  | UNSIGNED
   // | UNIT
   // | USER
   | WRITE
+  | WIDTH
   // TODO Add all allowed keywords
   .
 
