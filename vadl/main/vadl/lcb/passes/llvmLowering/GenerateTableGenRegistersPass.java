@@ -19,6 +19,7 @@ package vadl.lcb.passes.llvmLowering;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
@@ -93,7 +94,8 @@ public class GenerateTableGenRegistersPass extends Pass {
         var register = new TableGenRegister(
             configuration.targetName(),
             compilerRegister,
-            compilerRegisterClass.registerFile().addressType().bitWidth() - 1,
+            Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth() -
+                1,
             Optional.of(compilerRegister.hwEncodingValue())
         );
         registers.add(register);

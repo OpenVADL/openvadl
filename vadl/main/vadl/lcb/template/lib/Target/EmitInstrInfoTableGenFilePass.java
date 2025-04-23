@@ -50,7 +50,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -183,7 +183,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     return map;
   }
 
-  private Map<String, Object> map(RegisterFile obj) {
+  private Map<String, Object> map(RegisterTensor obj) {
     return Map.of(
         "resultWidth", obj.resultType().bitWidth(),
         "name", obj.simpleName()

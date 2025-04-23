@@ -45,7 +45,7 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
  * Lowering of less-than-unsigned conditionals into TableGen.
@@ -300,8 +300,9 @@ public class LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl
 
               var registerFile =
                   ensurePresent(
-                      xor.behavior().getNodes(ReadRegFileNode.class).map(
-                              ReadRegFileNode::registerFile)
+                      xor.behavior().getNodes(ReadRegTensorNode.class)
+                          .filter(x -> x.regTensor().isRegisterFile())
+                          .map(ReadRegTensorNode::regTensor)
                           .findFirst(),
                       () -> Diagnostic.error("Cannot find a register", xor.sourceLocation()));
 

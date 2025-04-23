@@ -16,7 +16,7 @@
 
 package vadl.lcb.template.utils;
 
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 
 /**
  * LLVM requires the data layout on multiple places in the code. This class
@@ -29,7 +29,9 @@ public class DataLayoutProvider {
   public record DataLayout(boolean isBigEndian, int pointerSize, int pointerAlignment) {
   }
 
-  public static DataLayout createDataLayout(RegisterFile generalPurposeRegisterFile) {
+  public static DataLayout createDataLayout(RegisterTensor generalPurposeRegisterFile) {
+    generalPurposeRegisterFile.ensure(generalPurposeRegisterFile.isRegisterFile(),
+        "must not be null");
     // TODO(kper): update this when abi is defined
     return new DataLayout(false, generalPurposeRegisterFile.resultType().bitWidth(), 32);
   }

@@ -16,14 +16,14 @@
 
 package vadl.viam.graph;
 
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 
 /**
- * Interface to indicate that the implementing class has {@link RegisterFile}.
+ * Interface to indicate that the implementing class has register file.
  */
 public interface HasRegisterFile {
   /**
    * Get register file.
    */
-  RegisterFile registerFile();
+  RegisterTensor registerFile();
 }

@@ -54,13 +54,13 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
@@ -171,12 +171,12 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         behavior.getNodes(LlvmBrCcSD.class)
             .findFirst(), () -> Diagnostic.error("Cannot find a comparison in the behavior",
             instruction.sourceLocation()));
-    var register = (ReadRegFileNode) brcc.first();
+    var rawRegister = (ReadRegTensorNode) brcc.first();
     var llvmRegisterNode =
-        new LlvmReadRegFileNode(register.registerFile(),
-            register.address().copy(),
-            register.type(), register.staticCounterAccess());
-    var registerFile = register.registerFile();
+        new LlvmReadRegFileNode(rawRegister.regTensor(),
+            rawRegister.indices().getLast().copy(),
+            rawRegister.type(), rawRegister.staticCounterAccess());
+    var registerFile = rawRegister.regTensor();
     var zeroRegister = getZeroRegister(registerFile);
 
     var selector = new Graph("selector");
@@ -192,7 +192,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     return new TableGenSelectionWithOutputPattern(selector, machine);
   }
 
-  private ConstantNode getZeroRegister(RegisterFile registerFile) {
+  private ConstantNode getZeroRegister(RegisterTensor registerFile) {
     var zeroConstraint =
         ensurePresent(
             Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)

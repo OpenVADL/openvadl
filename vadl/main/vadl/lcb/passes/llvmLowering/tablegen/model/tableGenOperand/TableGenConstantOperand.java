@@ -24,11 +24,10 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.NoTableGenParameter;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
-import vadl.viam.RegisterFile;
 import vadl.viam.graph.dependency.ConstantNode;
 
 /**
- * Indicates that the operand is a {@link Constant} index of a {@link RegisterFile}. It
+ * Indicates that the operand is a {@link Constant} index of a register file. It
  * can be only lowered when the register file at that constant is also a constant.
  */
 public class TableGenConstantOperand extends TableGenInstructionOperand {

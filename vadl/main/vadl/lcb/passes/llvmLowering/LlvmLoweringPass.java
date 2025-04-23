@@ -276,7 +276,7 @@ public class LlvmLoweringPass extends Pass {
       IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords,
       IdentityHashMap<PseudoInstruction, LlvmLoweringRecord.Pseudo> pseudoInstructionRecords,
       IdentityHashMap<CompilerInstruction, LlvmLoweringRecord.Compiler>
-          compilerInstructionRecords) {
+      compilerInstructionRecords) {
 
   }
 
@@ -513,7 +513,8 @@ public class LlvmLoweringPass extends Pass {
                       field.sourceLocation()));
           args.add(new LcbMachineInstructionParameterNode(
               new TableGenInstructionOperand(null,
-                  registerFile.generateName(constantNode.constant().asVal()))));
+                  registerFile.generateRegisterFileName(
+                      constantNode.constant().asVal().intValue()))));
         }
       } else {
         // There are two cases:

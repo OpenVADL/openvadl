@@ -24,7 +24,7 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
- * Indicates that the operand is a {@link Register} which is the frame pointer.
+ * Indicates that the operand is a register which is the frame pointer.
  */
 public class TableGenInstructionFrameRegisterOperand extends TableGenInstructionOperand {
 

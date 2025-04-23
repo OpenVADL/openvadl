@@ -18,21 +18,20 @@ package vadl.lcb.passes.llvmLowering.tablegen.model.register;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 
 /**
  * Represents a single register file in TableGen. This is the lowered representation of a
- * {@link RegisterFile}.
+ * register file.
  */
 public record TableGenRegisterClass(TargetName namespace,
                                     String name,
                                     int alignment,
                                     List<ValueType> regTypes,
                                     List<TableGenRegister> registers,
-                                    RegisterFile registerFileRef) {
+                                    RegisterTensor registerFileRef) {
   public String regTypesString() {
     return regTypes.stream().map(ValueType::getLlvmType).collect(Collectors.joining(", "));
   }

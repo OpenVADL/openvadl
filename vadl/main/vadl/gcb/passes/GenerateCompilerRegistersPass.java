@@ -34,7 +34,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
 import vadl.viam.Register;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -90,7 +90,7 @@ public class GenerateCompilerRegistersPass extends Pass {
     return compilerRegisters;
   }
 
-  private List<CompilerRegisterClass> registerClasses(List<RegisterFile> registerFiles,
+  private List<CompilerRegisterClass> registerClasses(List<RegisterTensor> registerFiles,
                                                       Abi abi,
                                                       int dwarfOffset) {
     var result = new ArrayList<CompilerRegisterClass>();

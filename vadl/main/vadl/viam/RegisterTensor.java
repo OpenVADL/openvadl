@@ -115,6 +115,14 @@ public class RegisterTensor extends Resource {
     return dimCount() == 1;
   }
 
+  /**
+   * Returns whether this register tensor represents a register file.
+   * This the case if the number of dimensions is 2.
+   */
+  public boolean isRegisterFile() {
+    return dimCount() == 2;
+  }
+
   public Dimension outermostDim() {
     return dimensions.getFirst();
   }
@@ -196,6 +204,14 @@ public class RegisterTensor extends Resource {
         .filter(c -> c.value().intValue() == 0)
         .map(c -> c.indices)
         .findFirst();
+  }
+
+  /**
+   * Generate the name from this register file with an {@code index}.
+   */
+  public String generateRegisterFileName(int index) {
+    ensure(isRegisterFile(), "must be registerFile");
+    return identifier.simpleName() + index;
   }
 
   @Override

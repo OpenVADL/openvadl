@@ -104,7 +104,6 @@ import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.IfNode;
-import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -113,6 +112,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -440,13 +440,14 @@ public abstract class LlvmInstructionLoweringStrategy {
    * @param filterConstraints whether registers with constraints should be considered.
    */
   private static List<RegisterRef> getRegisterUses(Graph behavior, boolean filterConstraints) {
-    return Stream.concat(behavior.getNodes(ReadRegNode.class)
-                .filter(node -> node.staticCounterAccess() == null)
-                .map(ReadRegNode::register)
+    return Stream.concat(behavior.getNodes(ReadRegTensorNode.class)
+                .filter(node -> node.staticCounterAccess() == null
+                    && node.regTensor().isSingleRegister())
+                .map(ReadRegTensorNode::regTensor)
                 .map(RegisterRef::new),
-            behavior.getNodes(ReadRegFileNode.class)
-                .filter(ReadResourceNode::hasConstantAddress)
-                .map(x -> new RegisterRef(x.registerFile(),
+            behavior.getNodes(ReadRegTensorNode.class)
+                .filter(node -> node.hasConstantAddress() && node.regTensor().isRegisterFile())
+                .map(x -> new RegisterRef(x.regTensor(),
                     ((ConstantNode) x.address()).constant()))
         )
         // Register should not have any constraints. When it does then there is no
@@ -548,8 +549,9 @@ public abstract class LlvmInstructionLoweringStrategy {
               // Why?
               // Because LLVM cannot handle static registers in input or output operands.
               // They belong to defs and uses instead.
-              if (node instanceof ReadRegFileNode readRegFileNode) {
-                return !readRegFileNode.hasConstantAddress();
+              if (node instanceof ReadRegTensorNode readRegTensorNode &&
+                  readRegTensorNode.regTensor().isRegisterFile()) {
+                return !readRegTensorNode.hasConstantAddress();
               }
               return true;
             })
@@ -602,8 +604,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   public static TableGenInstructionOperand generateTableGenInputOutput(Node operand) {
     if (operand instanceof LlvmFrameIndexSD node) {
       return generateInstructionOperand(node);
-    } else if (operand instanceof ReadRegFileNode node) {
-      return generateInstructionOperand(node);
+    } else if (operand instanceof ReadRegTensorNode node && node.regTensor().isRegisterFile()) {
+      return generateInstructionOperandRegisterFile(node);
     } else if (operand instanceof LlvmFieldAccessRefNode node) {
       return generateInstructionOperand(node);
     } else if (operand instanceof FieldRefNode node) {
@@ -611,7 +613,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     } else if (operand instanceof LlvmBasicBlockSD node) {
       return generateInstructionOperand(node);
     } else if (operand instanceof WriteRegFileNode node) {
-      return generateInstructionOperand(node);
+      return generateInstructionOperandRegisterFile(node);
     } else if (operand instanceof FuncParamNode node) {
       return generateInstructionOperand(node);
     } else {
@@ -661,7 +663,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
-  private static TableGenInstructionOperand generateInstructionOperand(ReadRegFileNode node) {
+  private static TableGenInstructionOperand generateInstructionOperandRegisterFile(
+      ReadRegTensorNode node) {
     if (node.address() instanceof FieldRefNode field) {
       return new TableGenInstructionRegisterFileOperand(node, field);
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
@@ -670,7 +673,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       // The register file has a constant as address.
       // This is ok as long as the value of the register file at the address is also constant.
       // For example, the X0 register in RISC-V which always has a constant value.
-      var constraints = Arrays.stream(node.registerFile().constraints()).toList();
+      var constraints = Arrays.stream(node.regTensor().constraints()).toList();
       var constraintValue = constraints.stream()
           .filter(
               x -> x.indices().getFirst().intValue() == constantNode.constant().asVal().intValue())
@@ -695,7 +698,8 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
-  private static TableGenInstructionOperand generateInstructionOperand(WriteRegFileNode node) {
+  private static TableGenInstructionOperand generateInstructionOperandRegisterFile(
+      WriteRegFileNode node) {
     if (node.address() instanceof FieldRefNode field) {
       return new TableGenInstructionRegisterFileOperand(node, field);
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
@@ -727,7 +731,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   private static List<Node> getInputOperands(Graph graph) {
     // First, the registers
-    var x = graph.getNodes(ReadRegFileNode.class);
+    var x = graph.getNodes(ReadRegTensorNode.class).filter(k -> k.regTensor().isRegisterFile());
     // Then, immediates
     var y = graph.getNodes(FieldAccessRefNode.class);
     // Then, the rest
@@ -778,20 +782,6 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     Node root = sideEffectNode instanceof LlvmSideEffectPatternIncluded ? sideEffectNode.copy() :
         sideEffectNode.value().copy();
-    root.clearUsages();
-    graph.addWithInputs(root);
-    return graph;
-  }
-
-  /**
-   * Constructs from the given dataflow node a new graph which is the pattern selector.
-   */
-  @Nonnull
-  protected Graph getPatternSelector(BuiltInCall builtInCall) {
-    var graph = new Graph(builtInCall.id().toString() + ".selector.lowering");
-    graph.setParentDefinition(Objects.requireNonNull(builtInCall.graph()).parentDefinition());
-
-    Node root = builtInCall.copy();
     root.clearUsages();
     graph.addWithInputs(root);
     return graph;

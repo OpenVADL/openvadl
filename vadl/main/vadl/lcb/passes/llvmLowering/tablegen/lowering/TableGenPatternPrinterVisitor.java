@@ -28,7 +28,9 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrindSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
@@ -59,6 +61,7 @@ import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -147,12 +150,28 @@ public class TableGenPatternPrinterVisitor
 
   @Override
   public void visit(ReadRegNode readRegNode) {
-    writer.write(readRegNode.register().identifier.simpleName());
+
   }
 
   @Override
   public void visit(ReadRegFileNode readRegFileNode) {
+    throw new RuntimeException("not implemented");
+  }
+
+  @Override
+  public void visit(ReadRegTensorNode readRegNode) {
+    writer.write(readRegNode.regTensor().identifier.simpleName());
+  }
+
+  @Override
+  public void visit(LlvmReadRegFileNode readRegFileNode) {
     var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(readRegFileNode);
+    writer.write(operand.render());
+  }
+
+  @Override
+  public void visit(LlvmFrameIndexSD node) {
+    var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(node);
     writer.write(operand.render());
   }
 

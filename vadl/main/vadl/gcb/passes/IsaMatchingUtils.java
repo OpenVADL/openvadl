@@ -32,7 +32,6 @@ import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.RegisterFile;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -132,7 +131,7 @@ public interface IsaMatchingUtils {
   }
 
   /**
-   * Return {@code true} if there is only one side effect which writes a {@link RegisterFile}.
+   * Return {@code true} if there is only one side effect which writes a register file.
    */
   default boolean writesExactlyOneRegisterClass(UninlinedGraph graph) {
     var writesRegFiles = graph.getNodes(WriteRegFileNode.class).toList();
@@ -151,8 +150,8 @@ public interface IsaMatchingUtils {
   }
 
   /**
-   * Return {@code true} if there is only one side effect which writes a {@link RegisterFile} with
-   * the given {@link Type} as result type for the {@link RegisterFile}.
+   * Return {@code true} if there is only one side effect which writes a register file with
+   * the given {@link Type} as result type for the register file.
    */
   default boolean writesExactlyOneRegisterClassWithType(UninlinedGraph graph, Type resultType) {
     var writesRegFiles = graph.getNodes(WriteRegFileNode.class).toList();

@@ -94,9 +94,9 @@ public class Specification extends Definition {
    */
   public Optional<MicroArchitecture> mia() {
     return definitions()
-            .filter(MicroArchitecture.class::isInstance)
-            .map(MicroArchitecture.class::cast)
-            .findFirst();
+        .filter(MicroArchitecture.class::isInstance)
+        .map(MicroArchitecture.class::cast)
+        .findFirst();
   }
 
   /**
@@ -121,11 +121,11 @@ public class Specification extends Definition {
   /**
    * Returns all register files as stream.
    */
-  public Stream<RegisterFile> registerFiles() {
+  public Stream<RegisterTensor> registerFiles() {
     return isa()
         .map(x -> x.ownRegisterFiles().stream())
         .orElseGet(Stream::empty)
-        .map(RegisterFile.class::cast);
+        .map(RegisterTensor.class::cast);
   }
 
   /**
@@ -136,8 +136,8 @@ public class Specification extends Definition {
    */
   public Stream<Format> findAllFormats() {
     var innerFormats = isa().map(
-            i -> i.ownFormats().stream()
-        ).orElse(Stream.empty());
+        i -> i.ownFormats().stream()
+    ).orElse(Stream.empty());
 
     return Stream.concat(formats(), innerFormats);
   }

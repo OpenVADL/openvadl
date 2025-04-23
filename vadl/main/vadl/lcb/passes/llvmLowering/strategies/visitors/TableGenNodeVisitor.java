@@ -23,7 +23,9 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrindSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
@@ -32,6 +34,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTypeCastSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmZExtLoad;
 import vadl.lcb.visitors.LcbGraphNodeVisitor;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
  * Visitor for TableGen patterns.
@@ -111,4 +114,19 @@ public interface TableGenNodeVisitor extends LcbGraphNodeVisitor {
    * Visit {@link LlvmBrindSD}.
    */
   void visit(LlvmBrindSD node);
+
+  /**
+   * Visit {@link ReadRegTensorNode}.
+   */
+  void visit(ReadRegTensorNode node);
+
+  /**
+   * Visit {@link LlvmReadRegFileNode}.
+   */
+  void visit(LlvmReadRegFileNode node);
+
+  /**
+   * Visit {@link LlvmFrameIndexSD}.
+   */
+  void visit(LlvmFrameIndexSD node);
 }
