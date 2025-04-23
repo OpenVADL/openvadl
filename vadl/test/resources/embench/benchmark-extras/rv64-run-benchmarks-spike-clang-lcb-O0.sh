@@ -15,6 +15,11 @@ rm -r ../src/wikisort
 ./run-benchmark.sh "rv64-spike" ./benchmark_spike_rv64gc.sh
 
 # miscompile
+rm -r ../src/picojpeg
+rm -r ../src/sglib-combined
+rm -r ../src/slre
+rm -r ../src/qrduino
+rm -r ../src/nettle-sha256
 # long jump problem
 rm -r ../src/statemate
 
