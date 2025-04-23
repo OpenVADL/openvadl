@@ -61,9 +61,7 @@ public class Ast {
    */
   public CharSequence prettyPrint() {
     StringBuilder builder = new StringBuilder();
-    for (var definition : definitions) {
-      definition.prettyPrint(0, builder);
-    }
+    Definition.prettyPrintDefinitions(0, builder, definitions);
     return builder;
   }
 

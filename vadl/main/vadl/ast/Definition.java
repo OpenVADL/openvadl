@@ -50,15 +50,28 @@ abstract class Definition extends Node {
 
   Definition withAnnotations(List<AnnotationDefinition> annotations) {
     this.annotations = annotations;
+    annotations.forEach(a -> {
+      a.target = this;
+    });
     return this;
   }
 
   void prettyPrintAnnotations(int indent, StringBuilder builder) {
-    if (annotations.isEmpty()) {
-      return;
-    }
-    builder.append("\n");
     annotations.forEach(annotation -> annotation.prettyPrint(indent, builder));
+  }
+
+  static void prettyPrintDefinitions(int indent, StringBuilder builder,
+                                     List<Definition> definitions) {
+    Definition previousDefinition = null;
+    for (Definition definition : definitions) {
+      if (previousDefinition != null
+          && (!definition.getClass().equals(previousDefinition.getClass()) ||
+          !definition.annotations.isEmpty())) {
+        builder.append("\n");
+      }
+      definition.prettyPrint(indent, builder);
+      previousDefinition = definition;
+    }
   }
 
   abstract <R> R accept(DefinitionVisitor<R> visitor);
@@ -932,15 +945,7 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
       builder.append(" extending ").append(extending.name);
     }
     builder.append(" = {\n");
-    Definition previousDefinition = null;
-    for (Definition definition : definitions) {
-      if (previousDefinition != null
-          && !definition.getClass().equals(previousDefinition.getClass())) {
-        builder.append("\n");
-      }
-      definition.prettyPrint(indent + 1, builder);
-      previousDefinition = definition;
-    }
+    prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append("}\n");
   }
 
@@ -2733,6 +2738,19 @@ final class AnnotationDefinition extends Definition {
   @Child
   List<Expr> values;
 
+  /**
+   * The Definition on which it is defined.
+   * Set by the parser.
+   */
+  @LazyInit
+  Definition target;
+
+  /**
+   * Set by the symboltable.
+   */
+  @Nullable
+  Annotation annotation;
+
   SourceLocation loc;
 
   public AnnotationDefinition(List<IdentifierOrPlaceholder> keywords, List<Expr> values,
@@ -2740,6 +2758,12 @@ final class AnnotationDefinition extends Definition {
     this.keywords = keywords;
     this.values = values;
     this.loc = loc;
+  }
+
+  String name() {
+    return keywords.stream()
+        .map(i -> ((Identifier) i).name)
+        .collect(Collectors.joining(" "));
   }
 
   @Override
@@ -3407,9 +3431,7 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
     builder.append(" for ");
     isa.prettyPrint(indent, builder);
     builder.append(" = {\n");
-    for (Definition definition : definitions) {
-      definition.prettyPrint(indent + 1, builder);
-    }
+    prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append(prettyIndentString(indent)).append("}\n");
   }
 
@@ -3944,9 +3966,7 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
       abi.prettyPrint(0, builder);
     }
     builder.append(" = {\n");
-    for (Definition definition : definitions) {
-      definition.prettyPrint(indent + 1, builder);
-    }
+    prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append(prettyIndentString(indent)).append("}\n");
   }
 
@@ -4312,9 +4332,7 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
     builder.append(" implements ");
     processor.prettyPrint(0, builder);
     builder.append(" = {\n");
-    for (Definition definition : definitions) {
-      definition.prettyPrint(indent + 1, builder);
-    }
+    prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append(prettyIndentString(indent)).append("}\n");
   }
 
