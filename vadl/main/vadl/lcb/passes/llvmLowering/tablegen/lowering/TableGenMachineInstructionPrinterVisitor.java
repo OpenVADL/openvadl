@@ -43,16 +43,14 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -140,12 +138,7 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   }
 
   @Override
-  public void visit(WriteRegNode writeRegNode) {
-    throw new RuntimeException("not implemented");
-  }
-
-  @Override
-  public void visit(WriteRegFileNode writeRegFileNode) {
+  public void visit(WriteRegTensorNode writeRegNode) {
     throw new RuntimeException("not implemented");
   }
 
@@ -165,12 +158,7 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
   }
 
   @Override
-  public void visit(ReadRegNode readRegNode) {
-    throw new RuntimeException("not implemented");
-  }
-
-  @Override
-  public void visit(ReadRegFileNode readRegFileNode) {
+  public void visit(ReadRegTensorNode node) {
     throw new RuntimeException("not implemented");
   }
 

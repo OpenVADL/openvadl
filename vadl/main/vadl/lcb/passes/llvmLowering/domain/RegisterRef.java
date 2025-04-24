@@ -29,15 +29,15 @@ import vadl.viam.Format;
 import vadl.viam.Register;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
-import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
  * A {@link RegisterRef} can be a register which comes from {@link ReadResourceNode} or
- * {@link WriteResourceNode}. But it can also come from {@link ReadRegFileNode} or
- * {@link WriteRegFileNode} when the address is constant. Since, we have no way to reduce a
+ * {@link WriteResourceNode}. But it can also come from {@link ReadRegTensorNode} or
+ * {@link WriteRegTensorNode} when the address is constant. Since, we have no way to reduce a
  * RegisterFile to a {@link Register}, we use {@link RegisterRef} as joined type for
  * both "worlds".
  */
