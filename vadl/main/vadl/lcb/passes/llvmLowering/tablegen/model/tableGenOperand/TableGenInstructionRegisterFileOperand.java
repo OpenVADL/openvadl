@@ -23,7 +23,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Indicates that the operand is a register file when the address is a {@link Format.Field}.
@@ -50,10 +50,10 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
   /**
    * Constructor.
    */
-  public TableGenInstructionRegisterFileOperand(WriteRegFileNode node, FieldRefNode address) {
-    super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
+  public TableGenInstructionRegisterFileOperand(WriteRegTensorNode node, FieldRefNode address) {
+    super(node, new TableGenParameterTypeAndName(node.regTensor().simpleName(),
         address.formatField().identifier.simpleName()));
-    this.registerFile = node.registerFile();
+    this.registerFile = node.regTensor();
     this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
     this.formatField = address.formatField();
     this.reference = node;

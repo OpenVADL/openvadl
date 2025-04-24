@@ -106,6 +106,7 @@ import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
@@ -117,8 +118,7 @@ import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -230,7 +230,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * @return the flags of an {@link Graph}.
    */
   protected LlvmLoweringPass.Flags getFlags(Graph graph) {
-    var isTerminator = graph.getNodes(WriteRegNode.class)
+    var isTerminator = graph.getNodes(WriteRegTensorNode.class)
         .anyMatch(node -> node.staticCounterAccess() != null);
 
     var isBranch = isTerminator
@@ -356,7 +356,8 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     // If the behavior contains any registers then it is also not lowerable because LLVM's DAG
     // has no concept of register in the IR.
-    if (graph.getNodes(ReadRegNode.class).findAny().isPresent()) {
+    if (graph.getNodes(ReadRegTensorNode.class)
+        .anyMatch(n -> n.regTensor().isSingleRegister())) {
       DeferredDiagnosticStore.add(
           Diagnostic.warning(
               "Instruction is not lowerable because it tries to match fixed registers.",
@@ -366,7 +367,8 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     // If a sign extend node is right before a register file write then we cannot lower it.
     // This removes the patterns for ADDW, SLLW ...
-    if (graph.getNodes(WriteRegFileNode.class)
+    if (graph.getNodes(WriteRegTensorNode.class)
+        .filter(n -> n.regTensor().isRegisterFile())
         .flatMap(Node::usages)
         .anyMatch(x -> x instanceof SignExtendNode)) {
       DeferredDiagnosticStore.add(
@@ -390,7 +392,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
   /**
    * Get a list of {@link RegisterRef} which are written. It is considered a
-   * register definition when a {@link WriteRegNode} or a {@link WriteRegFileNode} with a
+   * register definition when a {@link WriteRegTensorNode} with a
    * constant address exists. However, the only registers without any constraints on the
    * register file will be returned. Also program containers are not part of a "Def".
    *
@@ -398,15 +400,20 @@ public abstract class LlvmInstructionLoweringStrategy {
    * @param filterConstraints whether registers with constraints should be considered.
    */
   private static List<RegisterRef> getRegisterDefs(Graph behavior, boolean filterConstraints) {
-    return Stream.concat(behavior.getNodes(WriteRegNode.class)
-                .filter(node -> node.staticCounterAccess() == null)
-                .map(WriteRegNode::register)
-                .map(RegisterRef::new),
-            behavior.getNodes(WriteRegFileNode.class)
-                .filter(WriteRegFileNode::hasConstantAddress)
-                .map(x -> new RegisterRef(x.registerFile(),
-                    ((ConstantNode) x.address()).constant()))
-        )
+    return behavior.getNodes(WriteRegTensorNode.class)
+        .filter(node -> node.staticCounterAccess() == null)
+        // all indices must be constant
+        .filter(n -> n.indices().stream().allMatch(ExpressionNode::isConstant))
+        .map(node -> {
+          var reg = node.regTensor();
+          reg.ensure(reg.indexDimensions().size() < 2,
+              "Only register and register files supported");
+          if (reg.isSingleRegister()) {
+            return new RegisterRef(reg);
+          } else {
+            return new RegisterRef(reg, ((ConstantNode) node.indices().getFirst()).constant());
+          }
+        })
         // Register should not have any constraints. When it does then there is no
         // need that LLVM knows about it because it should not be a dependency.
         .filter(register -> filterConstraints || register.constraints().isEmpty())
@@ -415,7 +422,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
   /**
    * Get a list of {@link RegisterRef} which are written. It is considered a
-   * register definition when a {@link WriteRegNode} or a {@link WriteRegFileNode} with a
+   * register definition when a {@link WriteRegTensorNode} with a
    * constant address exists. However, the only registers without any constraints on the
    * register file will be returned.
    */
@@ -612,7 +619,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       return generateInstructionOperand(node);
     } else if (operand instanceof LlvmBasicBlockSD node) {
       return generateInstructionOperand(node);
-    } else if (operand instanceof WriteRegFileNode node) {
+    } else if (operand instanceof WriteRegTensorNode node && node.regTensor().isRegisterFile()) {
       return generateInstructionOperandRegisterFile(node);
     } else if (operand instanceof FuncParamNode node) {
       return generateInstructionOperand(node);
@@ -713,7 +720,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperandRegisterFile(
-      WriteRegFileNode node) {
+      WriteRegTensorNode node) {
     if (node.address() instanceof FieldRefNode field) {
       return new TableGenInstructionRegisterFileOperand(node, field);
     } else if (node.address() instanceof FuncParamNode funcParamNode) {
@@ -752,8 +759,10 @@ public abstract class LlvmInstructionLoweringStrategy {
   /**
    * Most instruction's behaviors have outputs. Those are the results which the instruction emits.
    */
-  private static List<WriteRegFileNode> getOutputOperands(Graph graph) {
-    return graph.getNodes(WriteRegFileNode.class).toList();
+  private static List<WriteRegTensorNode> getOutputOperands(Graph graph) {
+    return graph.getNodes(WriteRegTensorNode.class)
+        .filter(e -> e.regTensor().isRegisterFile())
+        .toList();
   }
 
   protected List<TableGenPattern> generatePatterns(
