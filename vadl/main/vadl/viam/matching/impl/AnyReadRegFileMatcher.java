@@ -17,12 +17,11 @@
 package vadl.viam.matching.impl;
 
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.matching.Matcher;
 
 /**
- * Matches any {@link ReadRegFileNode}.
+ * Matches any {@link ReadRegTensorNode} that is a register file (two dimensions).
  */
 public class AnyReadRegFileMatcher implements Matcher {
 

@@ -38,7 +38,6 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
@@ -71,7 +70,7 @@ public interface GraphNodeVisitor {
   void visit(BuiltInCall node);
 
   /**
-   * Visit {@link WriteRegNode}.
+   * Visit {@link WriteRegTensorNode}.
    */
   void visit(WriteRegTensorNode node);
 

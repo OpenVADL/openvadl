@@ -43,8 +43,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -144,8 +143,7 @@ class DuplicateWriteDetector {
    * in the same execution path.
    */
   void run() {
-    checkResourceType(WriteRegNode.class, "Register is written twice");
-    checkResourceType(WriteRegFileNode.class, "Register in register file is written twice");
+    checkResourceType(WriteRegTensorNode.class, "Register is written twice");
     checkResourceType(WriteMemNode.class, "Memory address is written twice");
   }
 
@@ -153,9 +151,7 @@ class DuplicateWriteDetector {
                                                                String diagError) {
     var regToWrites = behavior.getNodes(resourceWriteType)
         .collect(Collectors.groupingBy(writeNode ->
-            writeNode.hasAddress()
-                ? Objects.hash(writeNode.resourceDefinition(), writeNode.address())
-                : writeNode.resourceDefinition()
+            Objects.hash(writeNode.resourceDefinition(), writeNode.indices())
         ));
 
     for (var regWriteSet : regToWrites.entrySet()) {

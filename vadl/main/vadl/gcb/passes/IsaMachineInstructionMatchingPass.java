@@ -93,8 +93,6 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.matching.Matcher;
@@ -407,8 +405,13 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   }
 
   private boolean findLoadMem(UninlinedGraph graph) {
-    var writesRegFile = graph.getNodes(WriteRegFileNode.class).toList().size();
-    var writesReg = graph.getNodes(WriteRegNode.class).toList().size();
+    // TODO: @kper refactor (duplicated code)
+    var writesRegFile = graph.getNodes(WriteRegTensorNode.class)
+        .filter(e -> e.regTensor().isRegisterFile())
+        .toList().size();
+    var writesReg = graph.getNodes(WriteRegTensorNode.class)
+        .filter(e -> e.regTensor().isSingleRegister())
+        .toList().size();
 
     if ((writesRegFile == 1) == (writesReg == 1)) {
       return false;
@@ -529,7 +532,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
             .anyMatch(
                 x -> x.condition() instanceof BuiltInCall
                     && builtins.contains(((BuiltInCall) x.condition()).builtIn()));
-    var writesPc = behavior.getNodes(WriteRegNode.class)
+    var writesPc = behavior.getNodes(WriteRegTensorNode.class)
         .anyMatch(x -> x.staticCounterAccess() != null);
 
     return hasCondition && writesPc;
@@ -541,10 +544,11 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    */
   private boolean findJalr(UninlinedGraph behavior, Counter pcRegister) {
     var writesPc =
-        behavior.getNodes(WriteRegNode.class)
-            .filter(x -> x.register().equals(pcRegister.registerTensor()))
+        behavior.getNodes(WriteRegTensorNode.class)
+            .filter(x -> x.regTensor().equals(pcRegister.registerTensor()))
             .toList();
-    var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
+    var writesRegFile = behavior.getNodes(WriteRegTensorNode.class)
+        .filter(w -> w.regTensor().isRegisterFile()).toList();
 
     var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
         new AnyChildMatcher(new AnyReadRegFileMatcher()),
@@ -569,10 +573,11 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
    */
   private boolean findJal(UninlinedGraph behavior, Counter pcRegister) {
     var writesPc =
-        behavior.getNodes(WriteRegNode.class)
-            .filter(x -> x.register().equals(pcRegister.registerTensor()))
+        behavior.getNodes(WriteRegTensorNode.class)
+            .filter(x -> x.regTensor().equals(pcRegister.registerTensor()))
             .toList();
-    var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
+    var writesRegFile = behavior.getNodes(WriteRegTensorNode.class)
+        .filter(w -> w.regTensor().isRegisterFile()).toList();
 
     var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
         new AnyChildMatcher(new IsReadRegMatcher(pcRegister.registerTensor())),

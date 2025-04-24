@@ -25,15 +25,12 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 
@@ -98,16 +95,6 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
     this.fieldAccess = fieldAccess;
     this.functionName = functionName == null ? function.simpleName() : functionName;
     this.fieldName = fieldName == null ? fieldAccess.fieldRef().simpleName() : fieldName;
-  }
-
-  @Override
-  protected void handle(CGenContext<Node> ctx, ReadRegNode toHandle) {
-    throwNotAllowed(toHandle, "Register reads");
-  }
-
-  @Override
-  protected void handle(CGenContext<Node> ctx, ReadRegFileNode toHandle) {
-    throwNotAllowed(toHandle, "Register reads");
   }
 
   @Override

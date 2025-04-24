@@ -40,8 +40,6 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
@@ -221,7 +219,7 @@ public class IdentifyFieldUsagePass extends Pass {
      *
      * @return a list of pairs. The left indicates the field and the right whether it is
      *     referencing register or register file.
-     *     referencing {@link Register} or {@link RegisterFile}.
+     *     referencing {@link RegisterTensor}.
      */
     public List<Pair<Field, RegisterEither>> fieldsByRegisterUsage(
         Instruction instruction,
@@ -292,10 +290,12 @@ public class IdentifyFieldUsagePass extends Pass {
               .map(usage -> ((ReadRegTensorNode) usage).regTensor())
               .findFirst();
 
+          // TODO: @kper, this is duplicated logic
           var registerWrite = fieldRefNode.usages()
-              .filter(usage -> usage instanceof WriteRegNode)
+              .filter(usage -> usage instanceof WriteRegTensorNode node &&
+                  node.regTensor().isSingleRegister())
               .filter(usage -> {
-                var cast = (WriteRegNode) usage;
+                var cast = (WriteRegTensorNode) usage;
                 var nodes = new ArrayList<Node>();
                 // The field should be marked as REGISTER when the field is used as a register
                 // index. Therefore, we need to check whether the node is in the address tree.
@@ -305,14 +305,14 @@ public class IdentifyFieldUsagePass extends Pass {
                 return cast.hasAddress()
                     && (cast.address() == fieldRefNode || nodes.contains(fieldRefNode));
               })
-              .map(usage -> ((WriteRegNode) usage).register())
+              .map(usage -> ((WriteRegTensorNode) usage).regTensor())
               .findFirst();
 
           var registerFileWrite = fieldRefNode.usages()
               .filter(usage -> usage instanceof WriteRegTensorNode node
                   && node.regTensor().isRegisterFile())
               .filter(usage -> {
-                var cast = (WriteRegFileNode) usage;
+                var cast = (WriteRegTensorNode) usage;
                 var nodes = new ArrayList<Node>();
                 // The field should be marked as REGISTER when the field is used as a register
                 // index. Therefore, we need to check whether the node is in the address tree.
@@ -322,7 +322,7 @@ public class IdentifyFieldUsagePass extends Pass {
                 return cast.hasAddress()
                     && (cast.address() == fieldRefNode || nodes.contains(fieldRefNode));
               })
-              .map(usage -> ((WriteRegFileNode) usage).registerFile())
+              .map(usage -> ((WriteRegTensorNode) usage).regTensor())
               .findFirst();
 
           container.addInstruction(instruction);

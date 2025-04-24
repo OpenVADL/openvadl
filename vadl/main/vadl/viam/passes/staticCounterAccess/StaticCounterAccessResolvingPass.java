@@ -30,17 +30,15 @@ import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * The Static Counter Access Resolving Pass adds a {@link Counter} reference to some
  * register(-file) read/write nodes.
  * Essentially it tries to mark nodes that access a {@link Counter} (mostly the program counter),
  * so generators like the LCB can determine if the user intended a PC read/write or not
- * (e.g. {@link WriteRegNode#staticCounterAccess()} returns the (nullable) counter that
+ * (e.g. {@link WriteRegTensorNode#staticCounterAccess()} returns the (nullable) counter that
  * it writes to).
  *
  * <p>You might ask why we need this, as the user can use the {@code program counter} definition
@@ -48,7 +46,7 @@ import vadl.viam.graph.dependency.WriteRegNode;
  * However, users can also use alias definitions like
  * {@code alias program counter PC: Regs = X(31)}, which
  * means that the program counter is one register in the register file {@code X}.
- * Now giving a {@link WriteRegFileNode} in a behavior, in general, we cannot determine
+ * Now giving a {@link WriteRegTensorNode} in a behavior, in general, we cannot determine
  * if the node writes the {@code PC} or not (e.g. if the index comes from a format field).
  * So most generators (such as the simulator) must add runtime checks to know if this node
  * actually writes to the PC.
@@ -101,16 +99,17 @@ public class StaticCounterAccessResolvingPass extends Pass {
   }
 
   private static void processRegisterNodes(Graph behavior, Counter regCounter) {
-    behavior.getNodes(Set.of(ReadRegNode.class, WriteRegNode.class))
+    behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
         .forEach(node -> {
-          if (node instanceof ReadRegNode read && read.register() == regCounter.registerTensor()) {
+          if (node instanceof ReadRegTensorNode read &&
+              read.regTensor() == regCounter.registerTensor()) {
             // if the node is a read and
             // the register file matches the register file of the counter
             // we set the static counter access field of the read node
             read.setStaticCounterAccess(regCounter);
 
-          } else if (node instanceof WriteRegNode write
-              && write.register() == regCounter.registerTensor()) {
+          } else if (node instanceof WriteRegTensorNode write
+              && write.regTensor() == regCounter.registerTensor()) {
             // if the node is a write and
             // the register file matches the register file of the counter
             // we set the static counter access field of the write node
@@ -127,12 +126,12 @@ public class StaticCounterAccessResolvingPass extends Pass {
     }
 
     // get all register file read and write nodes
-    behavior.getNodes(Set.of(ReadRegFileNode.class, WriteRegFileNode.class))
+    behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
         .forEach(node -> {
 
-          if (node instanceof ReadRegFileNode read
-              && read.registerFile() == fileCounter.registerTensor()
-              && read.address() instanceof ConstantNode constIndex
+          if (node instanceof ReadRegTensorNode read
+              && read.regTensor() == fileCounter.registerTensor()
+              && read.indices().getFirst() instanceof ConstantNode constIndex
               && constIndex.constant().asVal().intValue()
               == fileCounter.indices().getFirst().intValue()) {
             // if the node is a read and
@@ -143,9 +142,9 @@ public class StaticCounterAccessResolvingPass extends Pass {
 
             read.setStaticCounterAccess(fileCounter);
 
-          } else if (node instanceof WriteRegFileNode write
-              && write.registerFile() == fileCounter.registerTensor()
-              && write.address() instanceof ConstantNode constIndex
+          } else if (node instanceof WriteRegTensorNode write
+              && write.regTensor() == fileCounter.registerTensor()
+              && write.indices().getFirst() instanceof ConstantNode constIndex
               && constIndex.constant().asVal().intValue()
               == fileCounter.indices().getFirst().intValue()) {
 

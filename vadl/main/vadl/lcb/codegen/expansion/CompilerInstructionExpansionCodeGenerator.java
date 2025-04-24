@@ -67,8 +67,6 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -117,18 +115,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     this.variantKindStore = variantKindStore;
     this.machineInstructionRecords = machineInstructionRecords;
     this.labelSymbolNameLookup = new IdentityHashMap<>();
-  }
-
-  @Override
-  //TODO: Remove
-  protected void handle(CGenContext<Node> ctx, ReadRegNode toHandle) {
-    throwNotAllowed(toHandle, "Register reads");
-  }
-
-  @Override
-  //TODO: Remove
-  protected void handle(CGenContext<Node> ctx, ReadRegFileNode toHandle) {
-    throwNotAllowed(toHandle, "Register reads");
   }
 
   @Override
