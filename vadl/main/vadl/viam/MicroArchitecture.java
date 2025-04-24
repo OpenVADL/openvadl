@@ -34,8 +34,7 @@ public class MicroArchitecture extends Definition {
 
   // Resources
   private final List<Signal> signals;
-  private final List<Register> registers;
-  private final List<RegisterFile> registerFiles;
+  private final List<RegisterTensor> registers;
   private final List<Memory> memories;
 
   private final List<Function> functions;
@@ -44,14 +43,13 @@ public class MicroArchitecture extends Definition {
    * Create a micro architecture definition.
    *
    * @param identifier identifier
-   * @param processor micro processor definition
-   * @param stages list of stages
-   * @param logic list of logic elements
+   * @param processor  micro processor definition
+   * @param stages     list of stages
+   * @param logic      list of logic elements
    */
   public MicroArchitecture(Identifier identifier, MicroProcessor processor, List<Stage> stages,
                            List<Logic> logic) {
     this(identifier, processor, stages, logic, new ArrayList<>(), new ArrayList<>(),
-        new ArrayList<>(),
         new ArrayList<>(), new ArrayList<>());
   }
 
@@ -59,26 +57,23 @@ public class MicroArchitecture extends Definition {
    * Create a micro architecture definition.
    *
    * @param identifier identifier
-   * @param processor micro processor definition
-   * @param stages list of stages
-   * @param logic list of logic elements
-   * @param signals list of signals
-   * @param registers list of registers
-   * @param registerFiles list of register files
-   * @param memories list of memories
-   * @param functions list of functions
+   * @param processor  micro processor definition
+   * @param stages     list of stages
+   * @param logic      list of logic elements
+   * @param signals    list of signals
+   * @param registers  list of registers (tensors)
+   * @param memories   list of memories
+   * @param functions  list of functions
    */
   public MicroArchitecture(Identifier identifier, MicroProcessor processor, List<Stage> stages,
-                           List<Logic> logic, List<Signal> signals, List<Register> registers,
-                           List<RegisterFile> registerFiles, List<Memory> memories,
-                           List<Function> functions) {
+                           List<Logic> logic, List<Signal> signals, List<RegisterTensor> registers,
+                           List<Memory> memories, List<Function> functions) {
     super(identifier);
     this.processor = processor;
     this.stages = stages;
     this.logic = logic;
     this.signals = signals;
     this.registers = registers;
-    this.registerFiles = registerFiles;
     this.memories = memories;
     this.functions = functions;
 
@@ -124,12 +119,8 @@ public class MicroArchitecture extends Definition {
     return signals;
   }
 
-  public List<Register> ownRegisters() {
+  public List<RegisterTensor> ownRegisters() {
     return registers;
-  }
-
-  public List<RegisterFile> ownRegisterFiles() {
-    return registerFiles;
   }
 
   public List<Memory> ownMemories() {

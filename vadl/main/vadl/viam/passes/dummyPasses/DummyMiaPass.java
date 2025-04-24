@@ -33,7 +33,7 @@ import vadl.viam.Identifier;
 import vadl.viam.Logic;
 import vadl.viam.Memory;
 import vadl.viam.MicroArchitecture;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
@@ -163,13 +163,13 @@ public class DummyMiaPass extends Pass {
    * }
    * </pre>.
    */
-  private static Stage decode(Identifier ident, StageOutput fetchIr, RegisterFile regFile,
+  private static Stage decode(Identifier ident, StageOutput fetchIr, RegisterTensor regFile,
                               Logic bypass) {
     var ir = stageOutput(ident.append("ir"), MicroArchitectureType.instruction());
     return new Stage(ident, decodeBehavior(fetchIr, ir, regFile, bypass), List.of(ir));
   }
 
-  private static Graph decodeBehavior(StageOutput fetchIr, StageOutput ir, RegisterFile regFile,
+  private static Graph decodeBehavior(StageOutput fetchIr, StageOutput ir, RegisterTensor regFile,
                                       Logic bypass) {
     var rd = new ReadStageOutputNode(fetchIr);
     var i1 = new MiaBuiltInCall(BuiltInTable.DECODE, new NodeList<>(rd),
@@ -204,13 +204,13 @@ public class DummyMiaPass extends Pass {
    * </pre>.
    */
   private static Stage exec(Identifier ident, StageOutput decodeIr, Resource pc,
-                            RegisterFile regFile, Logic bypass) {
+                            RegisterTensor regFile, Logic bypass) {
     var ir = stageOutput(ident.append("ir"), MicroArchitectureType.instruction());
     return new Stage(ident, executeBehavior(decodeIr, ir, pc, regFile, bypass), List.of(ir));
   }
 
   private static Graph executeBehavior(StageOutput decodeIr, StageOutput ir, Resource pc,
-                                       RegisterFile regFile, Logic bypass) {
+                                       RegisterTensor regFile, Logic bypass) {
     var rd = new ReadStageOutputNode(decodeIr);
     var i1 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_READ, new NodeList<>(rd),
         MicroArchitectureType.instruction());
@@ -275,11 +275,11 @@ public class DummyMiaPass extends Pass {
    * }
    * </pre>.
    */
-  private static Stage writeBack(Identifier ident, StageOutput memoryIr, RegisterFile regFile) {
+  private static Stage writeBack(Identifier ident, StageOutput memoryIr, RegisterTensor regFile) {
     return new Stage(ident, writeBackBehavior(memoryIr, regFile), Collections.emptyList());
   }
 
-  private static Graph writeBackBehavior(StageOutput memoryIr, RegisterFile regFile) {
+  private static Graph writeBackBehavior(StageOutput memoryIr, RegisterTensor regFile) {
     var beh = new Graph("WRITE_BACK");
     var rd = new ReadStageOutputNode(memoryIr);
     var i1 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_WRITE, new NodeList<>(rd),

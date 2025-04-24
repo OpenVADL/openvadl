@@ -157,7 +157,7 @@ public class InstructionSetArchitecture extends Definition {
   }
 
   /**
-   * Returns the {@link RegisterFile}s <b>owned</b> by this ISA.
+   * Returns the {@link RegisterTensor}s <b>owned</b> by this ISA.
    * So it might not include definitions accessible through the super ISA.
    */
   public List<RegisterTensor> registerTensors() {

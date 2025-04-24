@@ -330,7 +330,6 @@ public interface DefinitionVisitor {
       microArchitecture.logic().forEach(logic -> logic.accept(this));
       microArchitecture.signals().forEach(signal -> signal.accept(this));
       microArchitecture.ownRegisters().forEach(register -> register.accept(this));
-      microArchitecture.ownRegisterFiles().forEach(registerFile -> registerFile.accept(this));
       microArchitecture.ownMemories().forEach(memory -> memory.accept(this));
       microArchitecture.ownFunctions().forEach(function -> function.accept(this));
       afterTraversal(microArchitecture);
@@ -496,7 +495,7 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(RegisterTensor registerTensor) {
-      
+
     }
 
     @Override

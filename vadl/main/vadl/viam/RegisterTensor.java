@@ -38,10 +38,10 @@ import vadl.types.Type;
  * innermost dimension, these accesses are resolved by the frontend by using slice
  * nodes in the graph.</p>
  *
- * <p>A {@link Register} has only a single dimension.
+ * <p>A register has only a single dimension.
  * E.g. {@code register X: Bits<32>} has dimensions {@code { (Bits<5>, 32) }} and its result type
  * is calculated from this dimension.
- * A {@link RegisterFile} has two dimensions.
+ * A register file has two dimensions.
  * E.g. {@code register X: Bits<5> -> Bits<64>} has dimensions
  * {@code { (Bits<5>, 32), (Bits<6>, 64)}}.</p>
  */
