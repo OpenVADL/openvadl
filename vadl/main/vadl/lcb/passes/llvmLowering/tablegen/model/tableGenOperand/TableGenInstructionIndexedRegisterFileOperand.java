@@ -18,13 +18,13 @@ package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
- * Indicates that the operand is a {@link RegisterFile} when the address is *not*
+ * Indicates that the operand is a registerFile when the address is *not*
  * a {@link Format.Field} but is indexed by a function. This is useful when we have to generate
  * tablegen instruction operands from operands.
  * In the example below we have {@code rd} and {@code rs1} which are both indexes and have no
@@ -37,29 +37,31 @@ import vadl.viam.graph.dependency.WriteRegFileNode;
  * </code>
  */
 public class TableGenInstructionIndexedRegisterFileOperand extends TableGenInstructionOperand {
-  private final RegisterFile registerFile;
+  private final RegisterTensor registerFile;
 
   /**
    * Constructor.
    */
-  public TableGenInstructionIndexedRegisterFileOperand(ReadRegFileNode node,
+  public TableGenInstructionIndexedRegisterFileOperand(ReadRegTensorNode node,
                                                        FuncParamNode address) {
-    super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
+    super(node, new TableGenParameterTypeAndName(node.regTensor().simpleName(),
         address.parameter().identifier.simpleName()));
-    this.registerFile = node.registerFile();
+    this.registerFile = node.regTensor();
+    node.regTensor().ensure(node.regTensor().isRegisterFile(), "must be a register file");
   }
 
   /**
    * Constructor.
    */
-  public TableGenInstructionIndexedRegisterFileOperand(WriteRegFileNode node,
+  public TableGenInstructionIndexedRegisterFileOperand(WriteRegTensorNode node,
                                                        FuncParamNode address) {
-    super(node, new TableGenParameterTypeAndName(node.registerFile().simpleName(),
+    super(node, new TableGenParameterTypeAndName(node.regTensor().simpleName(),
         address.parameter().identifier.simpleName()));
-    this.registerFile = node.registerFile();
+    this.registerFile = node.regTensor();
+    node.regTensor().ensure(node.regTensor().isRegisterFile(), "must be a register file");
   }
 
-  public RegisterFile registerFile() {
+  public RegisterTensor registerFile() {
     return registerFile;
   }
 }

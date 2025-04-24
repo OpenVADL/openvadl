@@ -23,6 +23,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Definition;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -51,6 +52,7 @@ public class EmitRegisterInfoHeaderFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "registerClasses", specification.registerFiles().map(Definition::simpleName).toList());
+        "registerClasses", specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+            .map(Definition::simpleName).toList());
   }
 }

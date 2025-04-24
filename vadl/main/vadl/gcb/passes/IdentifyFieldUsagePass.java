@@ -23,29 +23,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.utils.Either;
 import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Format.Field;
 import vadl.viam.Instruction;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * This pass goes over all instructions and determines
@@ -64,12 +61,25 @@ public class IdentifyFieldUsagePass extends Pass {
   }
 
   /**
-   * Wrapper around {@link RegisterUsage} to also store the {@link RegisterFile} or
-   * {@link Register}.
+   * Wrapper around {@link RegisterUsage} to also store the register file or register.
    */
   public record RegisterUsageAggregate(RegisterUsage registerUsage,
-                                       Either<Register, RegisterFile> ref) {
+                                       RegisterEither ref) {
 
+  }
+
+  /**
+   * Helper structure to hold a register or register file.
+   */
+  public record RegisterEither(@Nullable RegisterTensor register,
+                               @Nullable RegisterTensor registerFile) {
+    public static RegisterEither createRegister(RegisterTensor register) {
+      return new RegisterEither(register, null);
+    }
+
+    public static RegisterEither createRegisterFile(RegisterTensor registerFile) {
+      return new RegisterEither(null, registerFile);
+    }
   }
 
   /**
@@ -113,26 +123,17 @@ public class IdentifyFieldUsagePass extends Pass {
       f.computeIfAbsent(field, k -> new ArrayList<>()).add(kind);
     }
 
-    /**
-     * Adding a {@link RegisterUsage} to the result.
-     * If a {@link Field} is already stored then {@code kind} is ignored and
-     * {@link RegisterUsage#BOTH} is added.
-     */
-    public void addRegisterUsage(Instruction instruction,
-                                 Field field,
-                                 RegisterUsage kind,
-                                 RegisterFile registerFile) {
-      var f = registerUsage.get(instruction);
-      if (f == null) {
-        throw new ViamError("Format must not be null");
-      }
-
-      if (f.containsKey(field)) {
-        // It already exists therefore, we add `BOTH`.
-        f.put(field,
-            new RegisterUsageAggregate(RegisterUsage.BOTH, new Either<>(null, registerFile)));
+    private void addRegisterUsage(Instruction instruction,
+                                  Field field,
+                                  RegisterUsage kind,
+                                  RegisterTensor registerTensor) {
+      if (registerTensor.isSingleRegister()) {
+        addSingleRegisterUsage(instruction, field, kind, registerTensor);
+      } else if (registerTensor.isRegisterFile()) {
+        addRegisterFileUsage(instruction, field, kind, registerTensor);
       } else {
-        f.put(field, new RegisterUsageAggregate(kind, new Either<>(null, registerFile)));
+        throw Diagnostic.error("Not supported register tensor", registerTensor.location())
+            .build();
       }
     }
 
@@ -141,10 +142,11 @@ public class IdentifyFieldUsagePass extends Pass {
      * If a {@link Field} is already stored then {@code kind} is ignored and
      * {@link RegisterUsage#BOTH} is added.
      */
-    public void addRegisterUsage(Instruction instruction,
-                                 Field field,
-                                 RegisterUsage kind,
-                                 Register register) {
+    private void addRegisterFileUsage(Instruction instruction,
+                                      Field field,
+                                      RegisterUsage kind,
+                                      RegisterTensor registerFile) {
+      registerFile.ensure(registerFile.isRegisterFile(), "Only a register file is allowed");
       var f = registerUsage.get(instruction);
       if (f == null) {
         throw new ViamError("Format must not be null");
@@ -153,9 +155,36 @@ public class IdentifyFieldUsagePass extends Pass {
       if (f.containsKey(field)) {
         // It already exists therefore, we add `BOTH`.
         f.put(field,
-            new RegisterUsageAggregate(RegisterUsage.BOTH, new Either<>(register, null)));
+            new RegisterUsageAggregate(RegisterUsage.BOTH,
+                RegisterEither.createRegisterFile(registerFile)));
       } else {
-        f.put(field, new RegisterUsageAggregate(kind, new Either<>(register, null)));
+        f.put(field,
+            new RegisterUsageAggregate(kind, RegisterEither.createRegisterFile(registerFile)));
+      }
+    }
+
+    /**
+     * Adding a {@link RegisterUsage} to the result.
+     * If a {@link Field} is already stored then {@code kind} is ignored and
+     * {@link RegisterUsage#BOTH} is added.
+     */
+    private void addSingleRegisterUsage(Instruction instruction,
+                                        Field field,
+                                        RegisterUsage kind,
+                                        RegisterTensor register) {
+      register.ensure(register.isSingleRegister(), "Only a single register is allowed");
+      var f = registerUsage.get(instruction);
+      if (f == null) {
+        throw new ViamError("Format must not be null");
+      }
+
+      if (f.containsKey(field)) {
+        // It already exists therefore, we add `BOTH`.
+        f.put(field,
+            new RegisterUsageAggregate(RegisterUsage.BOTH,
+                RegisterEither.createRegister(register)));
+      } else {
+        f.put(field, new RegisterUsageAggregate(kind, RegisterEither.createRegister(register)));
       }
     }
 
@@ -191,9 +220,10 @@ public class IdentifyFieldUsagePass extends Pass {
      * then it also returned.
      *
      * @return a list of pairs. The left indicates the field and the right whether it is
+     *     referencing register or register file.
      *     referencing {@link Register} or {@link RegisterFile}.
      */
-    public List<Pair<Field, Either<Register, RegisterFile>>> fieldsByRegisterUsage(
+    public List<Pair<Field, RegisterEither>> fieldsByRegisterUsage(
         Instruction instruction,
         RegisterUsage usage) {
       var obj = registerUsage.getOrDefault(instruction, new IdentityHashMap<>());
@@ -223,9 +253,7 @@ public class IdentifyFieldUsagePass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var container = new ImmediateDetectionContainer();
 
-    for (var instruction : viam.isa()
-        .map(isa -> isa.ownInstructions().stream())
-        .orElse(Stream.empty())
+    for (var instruction : viam.isa().stream().flatMap(isa -> isa.ownInstructions().stream())
         .toList()) {
       container.addInstruction(instruction);
       handleFields(instruction, container);
@@ -253,13 +281,15 @@ public class IdentifyFieldUsagePass extends Pass {
           var fieldRef = fieldRefNode.formatField();
           var registerRead = fieldRefNode.usages()
               .filter(
-                  usage -> usage instanceof ReadRegNode)
-              .map(usage -> ((ReadRegNode) usage).register())
+                  usage -> usage instanceof ReadRegTensorNode node
+                      && node.regTensor().isSingleRegister())
+              .map(usage -> ((ReadRegTensorNode) usage).regTensor())
               .findFirst();
           var registerFileRead = fieldRefNode.usages()
               .filter(
-                  usage -> usage instanceof ReadRegFileNode)
-              .map(usage -> ((ReadRegFileNode) usage).registerFile())
+                  usage -> usage instanceof ReadRegTensorNode node
+                      && node.regTensor().isRegisterFile())
+              .map(usage -> ((ReadRegTensorNode) usage).regTensor())
               .findFirst();
 
           var registerWrite = fieldRefNode.usages()
@@ -279,7 +309,8 @@ public class IdentifyFieldUsagePass extends Pass {
               .findFirst();
 
           var registerFileWrite = fieldRefNode.usages()
-              .filter(usage -> usage instanceof WriteRegFileNode)
+              .filter(usage -> usage instanceof WriteRegTensorNode node
+                  && node.regTensor().isRegisterFile())
               .filter(usage -> {
                 var cast = (WriteRegFileNode) usage;
                 var nodes = new ArrayList<Node>();

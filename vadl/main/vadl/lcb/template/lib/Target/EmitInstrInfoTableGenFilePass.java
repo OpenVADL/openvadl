@@ -50,7 +50,7 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -176,14 +176,16 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("compiler", renderedTableGenCompilerInstructionsRecords);
     map.put("instAliases", renderedTableGenInstAliases);
     map.put("patterns", renderedPatterns);
-    map.put("registerFiles", specification.registerFiles().map(this::map).toList());
+    map.put("registerFiles",
+        specification.registerTensors().filter(RegisterTensor::isRegisterFile).map(this::map)
+            .toList());
     map.put("returnInstruction", abi.returnSequence().identifier.simpleName());
     map.put("callInstruction", abi.callSequence().identifier.simpleName());
     map.put("lga", abi.globalAddressLoad().map(x -> x.identifier.simpleName()).orElse(""));
     return map;
   }
 
-  private Map<String, Object> map(RegisterFile obj) {
+  private Map<String, Object> map(RegisterTensor obj) {
     return Map.of(
         "resultWidth", obj.resultType().bitWidth(),
         "name", obj.simpleName()

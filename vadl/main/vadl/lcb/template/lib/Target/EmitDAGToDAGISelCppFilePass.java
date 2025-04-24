@@ -33,8 +33,9 @@ import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * This file contains the transformation from DAG to InstructionSelectionDag.
@@ -77,8 +78,9 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
                 specification.location()));
     var registerFile =
         ensurePresent(
-            lui.behavior().getNodes(WriteRegFileNode.class)
-                .map(WriteRegFileNode::registerFile)
+            lui.behavior().getNodes(WriteRegTensorNode.class)
+                .map(WriteRegTensorNode::regTensor)
+                .filter(RegisterTensor::isRegisterFile)
                 .findFirst(),
             () -> Diagnostic.error("Cannot find a register for load upper immediate",
                 lui.location()));

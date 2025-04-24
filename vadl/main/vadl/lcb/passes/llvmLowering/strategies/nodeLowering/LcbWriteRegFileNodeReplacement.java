@@ -20,13 +20,13 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Replacement strategy for nodes.
  */
 public class LcbWriteRegFileNodeReplacement
-    implements GraphVisitor.NodeApplier<WriteRegFileNode, WriteRegFileNode> {
+    implements GraphVisitor.NodeApplier<WriteRegTensorNode, WriteRegTensorNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
   public LcbWriteRegFileNodeReplacement(
@@ -36,7 +36,7 @@ public class LcbWriteRegFileNodeReplacement
 
   @Nullable
   @Override
-  public WriteRegFileNode visit(WriteRegFileNode node) {
+  public WriteRegTensorNode visit(WriteRegTensorNode node) {
     if (node.hasAddress()) {
       visitApplicable(node.address());
     }
@@ -47,7 +47,8 @@ public class LcbWriteRegFileNodeReplacement
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof WriteRegFileNode;
+    return node instanceof WriteRegTensorNode writeRegTensorNode
+        && writeRegTensorNode.regTensor().isRegisterFile();
   }
 
   @Override

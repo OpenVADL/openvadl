@@ -82,20 +82,20 @@ import vadl.types.Type;
 import vadl.viam.Counter;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.Register;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.matching.Matcher;
 import vadl.viam.matching.TreeMatcher;
@@ -301,13 +301,20 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
   private Optional<BitsType> getType(UninlinedGraph behavior) {
     var candidates =
         Stream.concat(
-                behavior.getNodes(WriteRegFileNode.class).map(x -> (DataType) x.value().type()),
+                behavior.getNodes(WriteRegTensorNode.class)
+                    .filter(x -> x.regTensor().isRegisterFile())
+                    .map(x -> (DataType) x.value().type()),
                 Stream.concat(
-                    behavior.getNodes(WriteRegNode.class).map(x -> (DataType) x.value().type()),
+                    behavior.getNodes(WriteRegTensorNode.class)
+                        .filter(x -> x.regTensor().isSingleRegister())
+                        .map(x -> (DataType) x.value().type()),
                     Stream.concat(
-                        behavior.getNodes(ReadRegNode.class).map(x -> x.register().resultType()),
-                        behavior.getNodes(ReadRegFileNode.class)
-                            .map(x -> x.registerFile().resultType())
+                        behavior.getNodes(ReadRegTensorNode.class)
+                            .filter(x -> x.regTensor().isSingleRegister())
+                            .map(x -> x.regTensor().resultType()),
+                        behavior.getNodes(ReadRegTensorNode.class)
+                            .filter(x -> x.regTensor().isRegisterFile())
+                            .map(x -> x.regTensor().resultType())
                     )
                 )
             )
@@ -568,7 +575,7 @@ public class IsaMachineInstructionMatchingPass extends Pass implements IsaMatchi
     var writesRegFile = behavior.getNodes(WriteRegFileNode.class).toList();
 
     var matcher = new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, SUB), List.of(
-        new AnyChildMatcher(new IsReadRegMatcher((Register) pcRegister.registerTensor())),
+        new AnyChildMatcher(new IsReadRegMatcher(pcRegister.registerTensor())),
         new AnyNodeMatcher()
     ));
     Set<Matcher> matchers = Set.of(

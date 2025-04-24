@@ -28,7 +28,9 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrindSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmLoadSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSExtLoad;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSetccSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
@@ -57,16 +59,14 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -121,12 +121,7 @@ public class TableGenPatternPrinterVisitor
   }
 
   @Override
-  public void visit(WriteRegNode writeRegNode) {
-
-  }
-
-  @Override
-  public void visit(WriteRegFileNode writeRegFileNode) {
+  public void visit(WriteRegTensorNode node) {
 
   }
 
@@ -146,13 +141,23 @@ public class TableGenPatternPrinterVisitor
   }
 
   @Override
-  public void visit(ReadRegNode readRegNode) {
-    writer.write(readRegNode.register().identifier.simpleName());
+  public void visit(ReadRegTensorNode readRegNode) {
+    if (readRegNode.regTensor().isSingleRegister()) {
+      writer.write(readRegNode.regTensor().identifier.simpleName());
+    } else {
+      throw new RuntimeException("not implemented");
+    }
   }
 
   @Override
-  public void visit(ReadRegFileNode readRegFileNode) {
+  public void visit(LlvmReadRegFileNode readRegFileNode) {
     var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(readRegFileNode);
+    writer.write(operand.render());
+  }
+
+  @Override
+  public void visit(LlvmFrameIndexSD node) {
+    var operand = LlvmInstructionLoweringStrategy.generateTableGenInputOutput(node);
     writer.write(operand.render());
   }
 

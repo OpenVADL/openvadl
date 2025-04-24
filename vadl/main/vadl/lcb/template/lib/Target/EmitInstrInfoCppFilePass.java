@@ -50,13 +50,13 @@ import vadl.template.Renderable;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * This file contains the logic for adjusting registers in instructions.
@@ -87,8 +87,9 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    * @param srcRegisterFile  is the register file for the source register in LLVM.
    * @param destRegisterFile is the register file for the destination register in LLVM.
    */
-  record CopyPhysRegInstruction(Instruction instruction, RegisterFile srcRegisterFile,
-                                RegisterFile destRegisterFile) {
+  record CopyPhysRegInstruction(Instruction instruction,
+                                RegisterTensor srcRegisterFile,
+                                RegisterTensor destRegisterFile) {
   }
 
   /**
@@ -98,7 +99,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    * @param destRegisterFile is the register file for the destination register in LLVM.
    * @param words            indicates how many words are stored.
    */
-  record StoreRegSlot(Instruction instruction, RegisterFile destRegisterFile, int words) {
+  record StoreRegSlot(Instruction instruction, RegisterTensor destRegisterFile, int words) {
 
   }
 
@@ -109,7 +110,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
    * @param destRegisterFile is the register file for the destination register in LLVM.
    * @param words            indicates how many words are stored.
    */
-  record LoadRegSlot(Instruction instruction, RegisterFile destRegisterFile, int words) {
+  record LoadRegSlot(Instruction instruction, RegisterTensor destRegisterFile, int words) {
 
   }
 
@@ -124,14 +125,16 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   private List<StoreRegSlot> getStoreMemoryInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
     var instructions =
-        (List<Instruction>) isaMatching.getOrDefault(MachineInstructionLabel.STORE_MEM,
+        isaMatching.getOrDefault(MachineInstructionLabel.STORE_MEM,
             Collections.emptyList());
 
     return instructions.stream()
         .map(i -> {
           var destRegisterFile =
-              ensurePresent(i.behavior().getNodes(ReadRegFileNode.class).findFirst(),
-                  "There must be destination register").registerFile();
+              ensurePresent(i.behavior().getNodes(ReadRegTensorNode.class)
+                      .filter(x -> x.regTensor().isRegisterFile())
+                      .findFirst(),
+                  "There must be destination register").regTensor();
           var words =
               ensurePresent(i.behavior().getNodes(WriteMemNode.class).findFirst(),
                   "There must be a write mem node").words();
@@ -145,14 +148,16 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   private List<LoadRegSlot> getLoadMemoryInstructions(
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
     var instructions =
-        (List<Instruction>) isaMatching.getOrDefault(MachineInstructionLabel.LOAD_MEM,
+        isaMatching.getOrDefault(MachineInstructionLabel.LOAD_MEM,
             Collections.emptyList());
 
     return instructions.stream()
         .map(i -> {
           var destRegisterFile =
-              ensurePresent(i.behavior().getNodes(WriteRegFileNode.class).findFirst(),
-                  "There must be destination register").registerFile();
+              ensurePresent(i.behavior().getNodes(WriteRegTensorNode.class)
+                      .filter(x -> x.regTensor().isRegisterFile())
+                      .findFirst(),
+                  "There must be destination register").regTensor();
           var words =
               ensurePresent(i.behavior().getNodes(ReadMemNode.class).findFirst(),
                   "There must be a read mem node").words();
@@ -166,17 +171,21 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
   private List<CopyPhysRegInstruction> mapWithInstructionLabel(
       MachineInstructionLabel label,
       Map<MachineInstructionLabel, List<Instruction>> isaMatching) {
-    var instructions = (List<Instruction>)
+    var instructions =
         isaMatching.getOrDefault(label, Collections.emptyList());
 
     return instructions.stream()
         .map(i -> {
           var destRegisterFile =
-              ensurePresent(i.behavior().getNodes(WriteRegFileNode.class).findFirst(),
-                  "There must be destination register").registerFile();
+              ensurePresent(i.behavior().getNodes(WriteRegTensorNode.class)
+                      .filter(x -> x.regTensor().isRegisterFile())
+                      .findFirst(),
+                  "There must be destination register").regTensor();
           var srcRegisterFile =
-              ensurePresent(i.behavior().getNodes(ReadRegFileNode.class).findFirst(),
-                  "There must be source register").registerFile();
+              ensurePresent(i.behavior().getNodes(ReadRegTensorNode.class)
+                      .filter(x -> x.regTensor().isRegisterFile())
+                      .findFirst(),
+                  "There must be source register").regTensor();
 
           return new CopyPhysRegInstruction(i, srcRegisterFile, destRegisterFile);
         })
@@ -269,12 +278,13 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
-  private RegisterFile getRegisterClassFromInstruction(Instruction instruction) {
+  private RegisterTensor getRegisterClassFromInstruction(Instruction instruction) {
     return
         ensurePresent(
             instruction.behavior()
-                .getNodes(ReadRegFileNode.class)
-                .map(ReadRegFileNode::registerFile)
+                .getNodes(ReadRegTensorNode.class)
+                .filter(x -> x.regTensor().isRegisterFile())
+                .map(ReadRegTensorNode::regTensor)
                 .findFirst(), () -> Diagnostic.error(
                 "Expected that the instruction has at least one register file",
                 instruction.location()));
@@ -450,13 +460,15 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
         .machineInstructions().stream().toList();
 
     for (var instruction : instructions) {
-      var reg =
+      var pair =
           ensurePresent(
               fieldUsages.fieldsByRegisterUsage(instruction,
                       IdentifyFieldUsagePass.RegisterUsage.SOURCE)
                   .stream().findFirst(),
               () -> Diagnostic.error("Cannot find a register operand.",
                   instruction.location()));
+      var field = pair.left();
+      var registerOrRegisterFile = pair.right();
 
       var immediate =
           ensurePresent(fieldUsages.getImmediates(instruction).stream().findFirst(),
@@ -472,7 +484,7 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
       // MCInst have the output at the beginning.
       // Therefore, we need to offset the inputs.
       var regIndex =
-          loweringRecord.info().outputs().size() + loweringRecord.info().findInputIndex(reg.left());
+          loweringRecord.info().outputs().size() + loweringRecord.info().findInputIndex(field);
       var immIndex =
           loweringRecord.info().outputs().size() + loweringRecord.info().findInputIndex(immediate);
 
@@ -480,11 +492,12 @@ public class EmitInstrInfoCppFilePass extends LcbTemplateRenderingPass {
       var zeroRegister = "";
 
       // Is it a register file?
-      if (reg.right().isRight()) {
-        var registerFile = reg.right().right();
+      if (registerOrRegisterFile.registerFile() != null) {
+        var registerFile = registerOrRegisterFile.registerFile();
         var zeroRegisterAddr = registerFile.zeroRegister();
         if (zeroRegisterAddr.isPresent()) {
-          zeroRegister = registerFile.generateName(zeroRegisterAddr.get().getFirst());
+          zeroRegister =
+              registerFile.generateRegisterFileName(zeroRegisterAddr.get().getFirst().intValue());
           isCheckable = true;
         }
       }

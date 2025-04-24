@@ -513,7 +513,8 @@ public class LlvmLoweringPass extends Pass {
                       field.location()));
           args.add(new LcbMachineInstructionParameterNode(
               new TableGenInstructionOperand(null,
-                  registerFile.generateName(constantNode.constant().asVal()))));
+                  registerFile.generateRegisterFileName(
+                      constantNode.constant().asVal().intValue()))));
         }
       } else {
         // There are two cases:

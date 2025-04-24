@@ -26,39 +26,40 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
 import vadl.types.DataType;
 import vadl.viam.Counter;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
  * LLVM node for the selection dag.
  */
-public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowerable,
+public class LlvmReadRegFileNode extends ReadRegTensorNode implements LlvmNodeLowerable,
     LlvmNodeReplaceable {
   protected TableGenInstructionOperand instructionOperand;
 
   /**
    * Constructor.
    */
-  public LlvmReadRegFileNode(RegisterFile registerFile,
+  public LlvmReadRegFileNode(RegisterTensor registerFile,
                              FieldRefNode address,
                              DataType type,
                              @Nullable Counter staticCounterAccess) {
-    super(registerFile, address, type, staticCounterAccess);
+    super(registerFile, new NodeList<>(address), type, staticCounterAccess);
     instructionOperand = new TableGenInstructionRegisterFileOperand(this, address);
   }
 
   /**
    * Constructor.
    */
-  public LlvmReadRegFileNode(RegisterFile registerFile,
+  public LlvmReadRegFileNode(RegisterTensor registerFile,
                              ExpressionNode address,
                              DataType type,
                              @Nullable Counter staticCounterAccess) {
-    super(registerFile, address, type, staticCounterAccess);
+    super(registerFile, new NodeList<>(address), type, staticCounterAccess);
     if (address instanceof FieldRefNode fieldRefNode) {
       instructionOperand = new TableGenInstructionRegisterFileOperand(this, fieldRefNode);
     } else if (address instanceof FuncParamNode funcParamNode) {
@@ -75,13 +76,13 @@ public class LlvmReadRegFileNode extends ReadRegFileNode implements LlvmNodeLowe
 
   @Override
   public LlvmReadRegFileNode copy() {
-    return new LlvmReadRegFileNode(registerFile(), address().copy(), type(),
+    return new LlvmReadRegFileNode(regTensor, address().copy(), type(),
         staticCounterAccess());
   }
 
   @Override
   public LlvmReadRegFileNode shallowCopy() {
-    return new LlvmReadRegFileNode(registerFile(), address(), type(), staticCounterAccess());
+    return new LlvmReadRegFileNode(regTensor, address(), type(), staticCounterAccess());
   }
 
   @Override

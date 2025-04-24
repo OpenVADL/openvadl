@@ -18,23 +18,24 @@ package vadl.gcb.valuetypes;
 
 import java.util.List;
 import vadl.viam.Abi;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 
 /**
  * Extends the concept of the register class for the compiler.
  */
 public class CompilerRegisterClass {
   private final String name;
-  private final RegisterFile registerFile;
+  private final RegisterTensor registerFile;
   private final List<CompilerRegister> registers;
   private final Abi.Alignment alignment;
 
   /**
    * Constructor.
    */
-  public CompilerRegisterClass(RegisterFile registerFile,
+  public CompilerRegisterClass(RegisterTensor registerFile,
                                List<CompilerRegister> registers,
                                Abi.Alignment alignment) {
+    registerFile.ensure(registerFile.isRegisterFile(), "must be register file");
     this.name = registerFile.identifier.simpleName();
     this.registerFile = registerFile;
     this.registers = registers;
@@ -45,7 +46,7 @@ public class CompilerRegisterClass {
     return name;
   }
 
-  public RegisterFile registerFile() {
+  public RegisterTensor registerFile() {
     return registerFile;
   }
 

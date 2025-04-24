@@ -91,12 +91,6 @@ public class InstructionSetArchitecture extends Definition {
     }
   }
 
-  @Nullable
-  // TODO: Remove
-  public InstructionSetArchitecture dependencyRef() {
-    return null;
-  }
-
   /**
    * Returns the memory definition that holds executable code.
    * If a specification only contains a single memory definition, it is returned.

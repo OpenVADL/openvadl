@@ -52,7 +52,7 @@ import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -60,7 +60,7 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
@@ -167,7 +167,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       Abi abi,
       TableGenInstructionRegisterFileOperand inputRegister) {
     var selector = new Graph("selector");
-    var ref = (ReadRegFileNode) inputRegister.reference().copy();
+    var ref = (ReadRegTensorNode) inputRegister.reference().copy();
     var address = (FieldRefNode) ref.address().copy();
     selector.addWithInputs(new LlvmTargetCallSD(new NodeList<>(new LlvmReadRegFileNode(
         inputRegister.registerFile(), address, inputRegister.formatField().type(),
@@ -215,7 +215,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
      */
 
     var selector = new Graph("selector");
-    var ref = (ReadRegFileNode) inputRegister.reference().copy();
+    var ref = (ReadRegTensorNode) inputRegister.reference().copy();
     var address = (FieldRefNode) ref.address().copy();
 
     var database = new Database(supportedInstructions);
@@ -265,7 +265,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         () -> Diagnostic.error("Cannot find immediate.", jalr.location()));
 
     var selector = new Graph("selector");
-    var ref = (ReadRegFileNode) inputRegister.reference().copy();
+    var ref = (ReadRegTensorNode) inputRegister.reference().copy();
     var address = (FieldRefNode) ref.address().copy();
     var llvmRegister = new LlvmReadRegFileNode(
         inputRegister.registerFile(), address, inputRegister.formatField().type(),
@@ -293,7 +293,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   private TableGenPattern generateBranchIndirectWithZero(
       TableGenInstructionRegisterFileOperand inputRegister) {
     var selector = new Graph("selector");
-    var ref = (ReadRegFileNode) inputRegister.reference().copy();
+    var ref = (ReadRegTensorNode) inputRegister.reference().copy();
     var address = (FieldRefNode) ref.address().copy();
     var llvmRegister = new LlvmReadRegFileNode(
         inputRegister.registerFile(), address, inputRegister.formatField().type(),
@@ -313,7 +313,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     return new TableGenSelectionWithOutputPattern(selector, machine);
   }
 
-  private static String zeroRegister(RegisterFile registerFile) {
+  private static String zeroRegister(RegisterTensor registerFile) {
     var constraint =
         ensurePresent(
             Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
