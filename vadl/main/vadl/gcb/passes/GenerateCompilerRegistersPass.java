@@ -33,7 +33,6 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
-import vadl.viam.Register;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -67,14 +66,18 @@ public class GenerateCompilerRegistersPass extends Pass {
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
 
-    var generalRegisters = generalRegisters(viam.registers().toList());
+    var generalRegisters = generalRegisters(viam.registerTensors()
+        .filter(RegisterTensor::isSingleRegister).toList());
     int dwarfOffset = generalRegisters.size();
-    var registerClasses = registerClasses(viam.registerFiles().toList(), abi, dwarfOffset);
+    var registerClasses =
+        registerClasses(viam.registerTensors().filter(RegisterTensor::isRegisterFile)
+                .toList(), abi,
+            dwarfOffset);
 
     return new Output(generalRegisters, registerClasses);
   }
 
-  private List<CompilerRegister> generalRegisters(List<Register> registers) {
+  private List<CompilerRegister> generalRegisters(List<RegisterTensor> registers) {
     var compilerRegisters = new ArrayList<CompilerRegister>();
     int dwarfOffset = 0;
 

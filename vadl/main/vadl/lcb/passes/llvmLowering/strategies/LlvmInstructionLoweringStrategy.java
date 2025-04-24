@@ -111,8 +111,6 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SideEffectNode;
@@ -439,7 +437,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
   /**
    * Get a list of {@link RegisterRef} which are read. It is considered a
-   * register usage when a {@link ReadRegNode} or a {@link ReadRegFileNode} with a
+   * register usage when a {@link ReadRegTensorNode} with a
    * constant address exists. However, the only registers without any constraints on the
    * register file will be returned. Also program containers are not part of a "Use".
    *
@@ -465,7 +463,7 @@ public abstract class LlvmInstructionLoweringStrategy {
 
   /**
    * Get a list of {@link RegisterRef} which are read. It is considered a
-   * register usage when a {@link ReadRegNode} or a {@link ReadRegFileNode} with a
+   * register usage when a {@link ReadRegTensorNode} with a
    * constant address exists. However, the only registers without any constraints on the
    * register file will be returned.
    */

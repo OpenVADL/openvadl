@@ -109,23 +109,23 @@ public class Specification extends Definition {
   }
 
   /**
-   * Returns all registers as stream.
+   * Returns all register tensors in the ISA as a stream.
    */
-  public Stream<Register> registers() {
+  public Stream<RegisterTensor> registerTensors() {
     return isa()
-        .map(x -> x.ownRegisters().stream())
-        .orElseGet(Stream::empty)
-        .map(Register.class::cast);
+        .map(x -> x.registerTensors().stream())
+        .orElseGet(Stream::empty);
   }
 
   /**
    * Returns all register files as stream.
+   * So all register tensors that have one index dimension (two dimensions in total).
+   *
+   * @deprecated Use the {@link #registerTensors()} method instead.
    */
+  @Deprecated
   public Stream<RegisterTensor> registerFiles() {
-    return isa()
-        .map(x -> x.ownRegisterFiles().stream())
-        .orElseGet(Stream::empty)
-        .map(RegisterTensor.class::cast);
+    return registerTensors().filter(RegisterTensor::isRegisterFile);
   }
 
   /**

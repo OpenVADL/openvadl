@@ -220,9 +220,7 @@ public class TranslationValidation {
 
   private String getVariableDefinitions(Specification specification, Instruction before) {
     return Streams.concat(
-        specification.registerFiles()
-            .map(this::declareVariable),
-        specification.registers()
+        specification.registerTensors()
             .map(this::declareVariable),
         before.behavior().getNodes(FuncCallNode.class)
             .map(this::declareVariable),

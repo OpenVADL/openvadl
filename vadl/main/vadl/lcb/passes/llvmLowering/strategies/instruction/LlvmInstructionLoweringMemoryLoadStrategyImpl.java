@@ -46,7 +46,7 @@ import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
-import vadl.viam.Register;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -180,7 +180,7 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
    * {@link Memory}. However, LLVM has a special selection dag node for frame indexes.
    * Function's variables are placed on the stack and will be accessed relative to a frame pointer.
    * LLVM has for the lowering a frame index leaf node which requires additional patterns.
-   * The goal of this method is to replace a {@link Register} with {@link LlvmFrameIndexSD}
+   * The goal of this method is to replace a {@link RegisterTensor} with {@link LlvmFrameIndexSD}
    * which has a LLVM's {@code ComplexPattern} hardcoded.
    */
   private List<TableGenPattern> replaceRegisterWithFrameIndex(List<TableGenPattern> patterns) {

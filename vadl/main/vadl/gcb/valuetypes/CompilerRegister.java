@@ -17,7 +17,6 @@
 package vadl.gcb.valuetypes;
 
 import java.util.List;
-import vadl.viam.Register;
 
 /**
  * Extends the register with information which a compiler requires.

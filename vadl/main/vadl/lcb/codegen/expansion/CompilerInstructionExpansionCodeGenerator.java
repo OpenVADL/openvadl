@@ -113,11 +113,13 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   }
 
   @Override
+  //TODO: Remove
   protected void handle(CGenContext<Node> ctx, ReadRegNode toHandle) {
     throwNotAllowed(toHandle, "Register reads");
   }
 
   @Override
+  //TODO: Remove
   protected void handle(CGenContext<Node> ctx, ReadRegFileNode toHandle) {
     throwNotAllowed(toHandle, "Register reads");
   }

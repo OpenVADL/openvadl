@@ -26,20 +26,16 @@ import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Format;
-import vadl.viam.Register;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
- * A {@link RegisterRef} can be a register which comes from {@link ReadResourceNode} or
- * {@link WriteResourceNode}. But it can also come from {@link ReadRegTensorNode} or
- * {@link WriteRegTensorNode} when the address is constant. Since, we have no way to reduce a
- * RegisterFile to a {@link Register}, we use {@link RegisterRef} as joined type for
- * both "worlds".
+ * A {@link RegisterRef} can be a register which comes from {@link ReadRegTensorNode} or
+ * {@link WriteRegTensorNode} when the address is constant (or its a single register).
+ * Since, we have no way to reduce a RegisterFile to a single register,
+ * we use {@link RegisterRef} as joined type for both "worlds".
  */
 public class RegisterRef extends Resource {
   private final DataType resultType;
