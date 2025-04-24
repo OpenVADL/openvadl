@@ -1544,7 +1544,7 @@ application binary interface ABI for RV32I = {
   alias register fp = X(8)
   
   // Configuration for clang
-  size type = unsigned int
+  size_t type = unsigned int
 
   return address    = ra
   [ alignment : 16 ]

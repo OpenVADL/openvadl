@@ -179,7 +179,7 @@ TOKENS
   SET          = "set".
   SIGNAL       = "signal".
   SIGNED       = "signed".
-  SIZE         = "size".
+  SIZE_T       = "size_t".
   SOURCE       = "source".
   STACK        = "stack".
   STAGE        = "stage".
@@ -874,7 +874,7 @@ PRODUCTIONS
   clangTypeDefinition<out Definition def>                     (. def = DUMMY_DEF; .)
   =
   (
-    SIZE TYPE SYM_EQ typeSizeDefinition<out AbiClangTypeDefinition.TypeSize size1> (. def = new AbiClangTypeDefinition(loc(), AbiClangTypeDefinition.TypeName.SIZE_TYPE, size1); .)
+    SIZE_T TYPE SYM_EQ typeSizeDefinition<out AbiClangTypeDefinition.TypeSize size1> (. def = new AbiClangTypeDefinition(loc(), AbiClangTypeDefinition.TypeName.SIZE_TYPE, size1); .)
     | INT MAX TYPE SYM_EQ typeSizeDefinition<out AbiClangTypeDefinition.TypeSize size2> (. def = new AbiClangTypeDefinition(loc(), AbiClangTypeDefinition.TypeName.INT_MAX_TYPE, size2); .)
   )
   .
@@ -1854,7 +1854,7 @@ PRODUCTIONS
   | RETURN
   | SEQUENCE
   | SIGNED
-  | SIZE
+  | SIZE_T
   | STAGE
   | START
   | STARTUP
