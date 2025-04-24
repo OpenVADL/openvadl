@@ -32,6 +32,7 @@ import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithLocation;
 
 /**
  * The Expression node of the AST.
@@ -365,7 +366,7 @@ class BinaryExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return left.location().join(right.location());
   }
 
@@ -440,7 +441,7 @@ class UnaryExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return operand.location().join(operand.location());
   }
 
@@ -508,7 +509,7 @@ class IntegerLiteral extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -580,7 +581,7 @@ class BinaryLiteral extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -635,7 +636,7 @@ class BoolLiteral extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -707,7 +708,7 @@ class StringLiteral extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1098,7 +1099,7 @@ class GroupedExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1152,7 +1153,7 @@ class RangeExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return from.location().join(to.location());
   }
 
@@ -1271,7 +1272,7 @@ final class TypeLiteral extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1325,13 +1326,11 @@ final class TypeLiteral extends Expr {
   }
 }
 
-sealed interface IsCallExpr permits CallIndexExpr, IsSymExpr {
+sealed interface IsCallExpr extends WithLocation permits CallIndexExpr, IsSymExpr {
   IsId path();
 
   @Nullable
   Expr size();
-
-  SourceLocation location();
 
   void prettyPrint(int indent, StringBuilder builder);
 }
@@ -1774,7 +1773,7 @@ class IfExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -1873,7 +1872,7 @@ class LetExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -1954,7 +1953,7 @@ class CastExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -2024,7 +2023,7 @@ class MatchExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2135,7 +2134,7 @@ class ExistsInExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2194,7 +2193,7 @@ class ExistsInThenExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2275,7 +2274,7 @@ class ForallThenExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2344,7 +2343,7 @@ class ForallThenExpr extends Expr {
     }
 
     @Override
-    SourceLocation location() {
+    public SourceLocation location() {
       var loc = id.location();
       if (!operations.isEmpty()) {
         loc = loc.join(operations.get(operations.size() - 1).location());
@@ -2410,7 +2409,7 @@ class ForallExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2488,7 +2487,7 @@ class ForallExpr extends Expr {
     }
 
     @Override
-    SourceLocation location() {
+    public SourceLocation location() {
       return id.location().join(domain.location());
     }
 
@@ -2554,7 +2553,7 @@ class SequenceCallExpr extends Expr {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 

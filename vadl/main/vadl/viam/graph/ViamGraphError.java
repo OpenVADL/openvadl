@@ -84,7 +84,7 @@ public class ViamGraphError extends ViamError {
   }
 
 
-  //// STATIC HELPER
+  /// / STATIC HELPER
 
   @FormatMethod
   private static void ensureInternal(boolean condition, @Nullable Graph graph, @Nullable Node node1,

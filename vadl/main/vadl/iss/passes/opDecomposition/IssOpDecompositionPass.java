@@ -271,8 +271,8 @@ class OpDecomposer {
 
 
   private void checkUserSliceOrTruncate(BuiltInCall call, Node user) {
-    var callLoc = call.sourceLocation();
-    var userLoc = user.sourceLocation().orDefault(behavior.sourceLocation());
+    var callLoc = call.location();
+    var userLoc = user.location().orDefault(behavior.sourceLocation());
     if (!(user instanceof SliceNode || user instanceof TruncateNode)) {
       throw Diagnostic.error("Slice or cast required", userLoc)
           .description(

@@ -1391,12 +1391,128 @@ For relative relocations, the compiler generator will subtract the program count
 For global offset relocations, the offset of the global offset table and the offset of the symbol are added and the program counter is subtracted.
 
 
+### Atomic Instruction Definition (lock)
+
+Atomic instructions can be specified using a lock statement.
+A lock statement `lock mem<n>(l) in Statement` locks the memory instance `m` at location `l` and all following `n` memory elements before it executes statement `Statement`.
+The lock is released at the end of statement `Statement`.
+All memory operations occurring within the range `[l,l + n)` and while the lock is held, are observed as a single atomic step.
+The memory operations can access less memory elements as are locked by the lock statement.
+
+\listing{lock_statement, Atomic Modify and Add using a Lock Statement (RISC-V RV32A)}
+~~~{.vadl}
+instruction AMOADD : Rtype = {
+  let addr = X(rs1) in
+  let val  = X(rs2) in
+  lock MEM<4>(addr) in
+    let memVal = MEM<4>(addr) in {
+      X(rd) := memVal
+      MEM<4>(addr) := memVal + val
+      }
+}
+~~~
+\endlisting
+
+Listing \r{lock_statement} demonstrates the use of a lock statement in the specification of a RISC-V RV32 atomic modify and add instruction.
+In line 4 a lock at adress `addr` on four memory elements is set.
+This lock is held till the end of the `let` instruction in line 8.
+
+Load Reserved (\ac{LR}) and Store Conditional (\ac{STC}) cannot be implemented with a lock statement alone.
+\ac{LR}/\ac{STC} are separate operations by definition but work only in conjunction with each other.
+However, the lock statement is restricted within the definition of a single instruction.
+This means it is necessary to cross instruction boundaries via some global state. 
+
+\ac{VADL} defines two builtins, `loadExclusive` and `isExclusive` with the following semantics: 
+
+The expression `MEM(addr).loadExclusive` requests exclusive memory access to location `addr` in addition to loading the value stored at `addr`.
+In addition, the address `addr` will be marked as reserved.
+Exclusivity means that the cache controller (of the simulator or generated hardware) requests read-only or writable access, depending on the underlying cache coherence protocol.
+
+The expression `MEM(addr).isExclusive` returns true if and only if there exists a correlating `loadExclusive`, called with the exact same address `addr`, that happened before and no other globally visible memory write on the same location or cache line occurred in-between.
+Otherwise, the expression returns false.
+Note that `isExclusive` specifically returns false, if there exists no correlating `loadExclusive` call, even though the cache line might coincidentally be owned exclusively.
+In addition it is required that the addresses match.
+The reason is that \ac{LR}/\ac{STC} pairs are often used for implementing read/modify/write operations and hence, operate on the exact same address.
+
+\listing{lr_sc_instruction, LoadReserved and StoreConditional Instruction using Builtin Method Calls}
+~~~{.vadl}
+instruction set architecture ISA = {
+  instruction LR : FormatB =
+    let addr = X(rs1) in
+      X(rd) := MEM<4>(addr).loadExclusive
+
+  instruction SC : FormatB = {
+    let addr = X(rs1) in
+    lock MEM<4>(addr) in 
+      if MEM<4>(addr).isExclusive then {
+        MEM<4>(addr) := X(rd)
+        X(0) := 0
+      } else
+        X(0) := 1
+  }
+}
+
+micro architecture MIA = {
+  [ granularity 32 ]
+  [ reservation manager ]
+  logic reservedAddress
+}
+~~~
+\endlisting
+
+Listing \r{lr_sc_instruction} shows the definition of a `LR` and `SC` instruction using the two primitives described above.
+The `LR` instruction (Lines 2-4) loads a value from memory and requests exclusive access to it.
+The function call to `loadExclusive` loads the value from cache or memory and additionally registers a reservation.
+The `SC` instruction (Lines 6-14) checks whether a certain memory location is still exclusively owned and reserved using the builtin method call `isExclusive`.
+If it returns true, the store will be performed.
+Additionally, the instruction must lock the memory location first in order to prevent a race condition between the address checking (Line 9) and the actual store (Line 10).
+
+Additionally in the \ac{MiA} section it must be defined how a processor handles memory reservation.
+\ac{VADL} provides a `logic` element called `reservation manager`, shown in Listing \r{lr_sc_instruction}.
+Line 19 specifies the primary purpose of the logic element with the annotation `reservation manager`.
+All other annotations describe the properties of the element.
+This example contains the `granularity` attribute on Line 18.
+Its purpose is to describe the size of the marked region.
+
+
 ### Operation Definition
 
 \lbl{tut_operation_definition}
 
+An operation definition classifies instructions into operation sets.
+These operation sets are used to filter instructions in the \ac{MiA} and are needed for the specification of \ac{VLIW} architectures.
+An `operation` is defined as a set of instructions or other operations.
+Instructions and operations can be added to an operation set either in the definition of the operation set or by an operation annotation to an instruction.
 
-### Group Definition
+\listing{operation_definition, Operation Definition}
+~~~{.vadl}
+instruction set architecture ISA = {
+  program counter PC : Bits<32>                 // program counter
+
+  format B_Type : Bits<32> =                    // branch format
+    { offset : SInt<24>                         // PC relative offset
+    , opcode : Bits<8>                          // operation code
+    }
+
+  [operation BranchOp]                          // Branch belongs to the set of BranchOp operations
+  instruction Branch : B_Type =                 // PC relative branch
+    PC := PC + offset as SInt<32> << 2          // set new PC relative to the old value
+
+  operation BranchOp   = {}                     // empty branch set, elements added by annotation 
+  operation AdditionOp = {Add, Sub}             // set of addition operations
+  operation LogicOp    = {And, Or, Xor}         // set of logic operations
+  operation AluOp      = {AdditionOp, LogicOp}  // AluOp is the set union of AdditionOp and LogicOp
+}
+~~~
+\endlisting
+
+Listing \r{operation_definition} shows the definition of the `BranchOp` operation set as an instruction annotation and the definition of an empty operation set.
+Operation identifiers used in operation annotations (see line 9) have to be defined in an operation definition (see line 13).
+The operation set definition of `AdditionOp` lists instruction names enclosed by curly braces separated by the comma symbol `","` (see line 14).
+The operation set definition of `AluOp` is build by the set union of the both operation sets `AdditionOp` and `LogicOp` (see line 16).
+
+
+### VLIW Architectures and Group Definition
 
 
 ### Process Definition
@@ -1596,7 +1712,7 @@ For example, the conversion routine from the primitive string type to the regist
 The procedure's successful completion asserts that the value refers to a valid register.
 \ac{VADL}'s type system conveys this information to other parts of the grammar.
 A parser can generate a meaningful error message if the validation fails.
-
+<!--
 Readers may wonder why \ac{VADL} requires a separate grammar for the assembly syntax even though the \ac{ISA} section describes assembly formatting functions.
 The idea is that the language could also define the grammar solely by the inversion of the formatting function.
 We decided against such an approach for two reasons.
@@ -1607,13 +1723,17 @@ For example, a generator may create the grammar rule from Figure \ref{lst:lui_gr
 Secondly, if the language relies solely on function inversion, generators must have sophisticated inversion routines, as the system has to support every possible formatting function.
 By defining the grammar separately, \ac{VADL} provides an escape hatch if the rule generation capabilities of a generator are not general enough.
 Lastly, a single assembly instruction may map to multiple valid text representations (e.g., multiple spaces instead of one).
+-->
+
+One advanced feature of the assembly grammar specification allows the definition alternatives as seen for `RRIds` or `BranchPseudoIds` in listing \r{assembly_description}.
+Other advanced features include the definition of optional blocks by `[]` as seen in the `JalrInstruction` in listing \r{assembly_grammar_advanced} and calling arbitrary \ac{VADL} functions with grammar rules passed as arguments as seen with `encode<Integer>` in `AndInstruction`. 
 
 \listing{assembly_grammar_advanced, Advanced Assembly Grammar Features}
 ~~~{.vadl}
 AddInstruction @instruction :
   mnemonic = "ADD"      @operand
-  rd       = Register   @operand
-  rs1      = Register   @operand
+  rd       = Register   @operand ","
+  rs1      = Register   @operand ","
     ( rs2  = Register   @operand
     | imm  = Expression @operand
     )
@@ -1624,14 +1744,17 @@ JalrInstruction @instruction:  var tmp = null @operand
   tmp = Register    @operand
   [ COMMA rs1 = tmp
     tmp  = Register @operand ]
+  COMMA
   rd = tmp
 ;
 
+function encode(x: SInt<64>): SInt<64> = x << 1
+
 AndInstruction @instruction :
   mnemonic = "AND"      @operand
-  rd  = Register        @operand
-  rs1 = Register        @operand
-  imm = encode<INTEGER> @operand
+  rd  = Register        @operand ","
+  rs1 = Register        @operand ","
+  imm = encode<Integer> @operand
 ;
 ~~~
 \endlisting
@@ -1639,6 +1762,195 @@ AndInstruction @instruction :
 ## Micro Architecture Definition
 
 \lbl{tut_mia_definition}
+
+The microarchitecture section aims to specify the processor implementation at a high level of abstraction.
+These abstractions enable a concise and understandable specification, as the generators handle many implementation details (e.g., hazard detection or pipeline registers).
+Users would have more flexibility and control with low level microarchitecture specifications (e.g., in a \ac{HDL}), but it would be impossible for generators to determine the purpose or the correctness of such specifications.
+Therefore, only predefined elements configurable by annotations are supported.
+If these predefined elements are not sufficient, further elements have to be added to the language and the affected generators have to be extended.
+
+Firstly, this section will present the core concepts of the MiA definition - pipeline stages and instructions.
+Then, these concepts are illustrated with the example of a 5-stage implementation of the RISC-V architecture.
+Finally, logic elements that model components outside of the stages (e.g., caches, control logic) are discussed.
+
+### Pipeline Stage
+
+Pipeline stages allow users to define the hardware structure of the processor.
+Each stage defines cyclic behavior, which the processor executes.
+For example, one processor stage might fetch instructions from memory while another computes arithmetic results.
+Users can specify the exact behavior using syntax similar to that used to express the instruction behavior in Section \r{tut_isa_definition}.
+It is easy to define a concise microarchitecture using powerful language built-ins.
+Section \r{tut_example_mia} provides some examples of pipeline stages.
+
+In addition to the provided examples, annotations can specify a stage's restart interval and latency period.
+The restart interval governs the frequency at which new inputs are allowed to enter the stage.
+In contrast, the latency period controls the number of machine cycles required to complete a single execution.
+Additionally, users can assign a range to the latency, thus providing pipeline stages of varying lengths.
+
+### Instruction Abstraction
+\lbl{tut_instruction_abstraction}
+
+The instruction abstraction is a central concept of the \ac{MiA}.
+Users can leverage this concept with `Instruction` typed variables.
+These variables abstract away two dimensions -- the kind of instruction and the progress of the instruction execution.
+The first aspect implies that the \ac{MiA} specification is not aware of the instructions present in the \ac{ISA}.
+Such variables may even represent VLIW bundles.
+The second aspect implies that the \ac{MiA} specification is not aware of the execution state.
+That is, it is not aware of which parts of the instruction semantics have already been computed at any point in the pipeline.
+The generator resolves these abstractions automatically during the microarchitecture synthesis.
+If the generator cannot entirely resolve the abstractions, it will raise an error.
+
+Because the \ac{MiA} is blissfully unaware of the complexity behind the `Instruction` variable, it can solely interact with the instruction using abstract operations on the variable.
+For example, it can specify that the instruction should make arithmetic computations using `instr.compute`.
+\ac{VADL} provides a set of such operations.
+We will refer to them as instruction mappings, or simply mappings.
+Some mappings are very general (e.g., read any register), while others are more specific (e.g., read register file `X`).
+This enables users to trade off between precise control and compatibility with other \acp{ISA}.
+
+### An Exemplary Pipeline
+\lbl{tut_example_mia}
+
+This Section describes the `FiveStage` microarchitecture depicted in Listing \r{mia_definition}.
+A microarchitecture must implement an \ac{ISA}, such as the `RV32IM` architecture (line 2) in our example.
+The pipeline consists of five stages.
+The specifications of each stage will be discussed in the following paragraphs.
+The `dataBusWidth` annotation determines the width of the memory interface.
+In this example, reading from and writing to memory is done in 32-bit blocks.
+
+\listing{mia_definition, Micro Architecture Definition}
+~~~{.vadlmia}
+[ dataBusWidth = 32 ]
+micro architecture FiveStage implements RV32IM = {
+  stage FETCH -> ( fr : FetchResult ) = {
+    fr := fetchNext                             // fetch next packet from memory (or cache)
+  }
+
+  stage DECODE -> ( ir : Instruction ) = {
+    let instr = decode( FETCH.fr ) in {         // decode the fetch packet, gives an Instruction
+      instr.address( @X )                       // output computed address (X + offset) to memory
+      instr.read( @X )                          // read from the X register file
+      instr.read( @PC )                         // read from the PC
+      ir := instr                               // stage output is the Instruction ir
+    }
+  }
+
+  stage EXECUTE -> ( ir : Instruction ) = {
+    let instr = DECODE.ir in {
+      if( instr.unknown ) then
+        raise invalid                           // raise an invalid instruction exception
+      instr.compute                             // evaluate all expressions
+      instr.verify                              // check and flush pipeline if branch misprediction
+      instr.write( @PC )                        // write PC
+      ir := instr
+    }
+  }
+
+  stage MEMORY -> ( ir : Instruction ) = {
+    let instr = EXECUTE.ir in {
+      instr.write( @MEM )                       // write to memory
+      instr.read( @MEM )                        // receive data from memory read
+      ir := instr
+    }
+  }
+
+  stage WRITE_BACK = {
+    let instr = MEMORY.ir in
+      instr.write( @X )                         // write back to register file X
+  }
+}
+~~~
+\endlisting
+
+Listing \r{mia_definition} depicts the `FETCH` and `DECODE` stages of the pipeline.
+All stages but the final stage have to specify the result of the stage.
+The order of stages is defined by accessing the result of a previous stage.
+The `FETCH` stage makes use of the `fetchNext` built-in.
+The result type of this operation (`FetchResult`) abstracts the fetch size while the built-in automatically determines the next program counter.
+The generator determines the fetch size by analyzing the instructions in the \ac{ISA}.
+In the future, VADL users may provide additional options for the fetch operation (e.g., buffers, multiple instructions).
+To understand the \ac{MiA} specification, it is sufficient to know that the `fetchNext` built-in loads enough bytes from the correct memory position to represent a single instruction.
+
+The `DECODE` stage makes use of the `decode` built-in.
+The primary goal of this built-in is to represent a decoder for the implemented \ac{ISA}.
+The generator will synthesize a decoder automatically.
+It takes a `FetchResult` as input and produces an `Instruction` as output.
+This is the origin of the instruction abstraction, which was discussed in Section \r{tut_instruction_abstraction}.
+The `FetchResult` input is obtained from the preceding `FETCH` stage.
+Note that the generator can resolve the instruction abstraction because it has access to the \ac{ISA}.
+The decoded instruction then reads the source operands from the `X` register file.
+
+Listing \r{mia_definition} shows the specification for the `EXECUTE` stage.
+It is responsible for computing arithmetic operations and executing branches.
+Firstly, the stage obtains the current instruction from the `DECODE` stage (line 17).
+Then, the specification checks whether the instruction is valid (line 18).
+If not, the stage raises an invalid instruction exception, thus redirecting the control flow to the exception handler (line 19).
+If the instruction is valid, the stage computes arithmetic operations (line 20) and writes the new program counter (line 22).
+In addition, the stage verifies whether the instruction is on the correct program execution path (line 21).
+If this is not the case (branch misprediction), the control logic flushes the `EXECUTE` stage and all its predecessors.
+The `MEMORY` and `WRITE_BACK` stages in Listing \r{mia_definition} complete the 5-stage pipeline.
+The displayed definitions define a valid \ac{VADL} \ac{MiA} specification.
+
+### Logic Elements
+
+\ac{VADL} uses the concept of a logic element to model microarchitectural concepts besides stages.
+The complexity of logic elements varies greatly depending on its semantics.
+An annotation determines a logic element's type and, thus, its semantics.
+For example, Listing \r{forwarding} displays a logic element that allows users to define forwarding paths between stages.
+The generator must be aware of the logic element's semantics as it must derive the implementation in the microarchitecture synthesis.
+
+\listing{forwarding, Decode Stage with Forwarding Logic}
+~~~{.vadlmia}
+[forwarding]
+logic bypass
+
+stage DECODE -> (ir : Instruction) = {
+  let instr = decode( FETCH.fr ) in {
+    instr.readOrForward( @X, @bypass )
+    ir := instr
+  }
+}
+~~~
+\endlisting
+
+Connecting logic elements with the instruction abstraction realizes their full potential.
+Listing \r{forwarding} also shows how instructions may read and write values to the previously mentioned forwarding logic.
+As the generator is aware of the semantics, it can synthesize the logic of the forwarding network.
+Furthermore, it can also integrate this knowledge into the hazard detection logic element.
+After all, the control unit should not stall the pipeline if a forward can resolve the hazard.
+
+Readers familiar with microarchitecture design may have noticed that the specification does not contain elements for the necessary control logic and hazard detection.
+If the generator does not find a logic element that handles these circumstances, it inserts a default hazard detection and control element into the \ac{MiA}.
+Later, the microarchitecture synthesis determines the necessary control logic for the processor.
+
+
+### Caches
+
+To represent a memory sub-system, \ac{VADL} provides a `cache` definition to describe caches.
+The definition can be parameterized through annotations.
+Listing \r{cache_definition} defines a cache named `L1` with 1024 entries (cache lines).
+
+\listing{cache_definition, Cache Definition}
+~~~{.vadl}
+[ write through ]
+[ evict roundrobin ]
+[ entries = 1024 ]
+[ blocks = 4 ]
+[ n_set = 2 ]
+[ attached_to MEM ]
+cache L1 : VirtualAddress -> Bits<8>
+~~~
+\endlisting
+
+A single cache line has 4 blocks where a single block corresponds to one addressable unit.
+For instance, this would be eight bits on a byte-addressable architecture.
+Our cache is defined to be 2-way associative (`n_set`).
+Since the cache has 1024 entries and each set contains two entries, the cache has a total of 512 sets.
+Observe that setting (`n_set`) to 1 is equivalent to a direct mapped cache, while `n_set = entries` makes the cache fully associative.
+Most importantly, the `attached_to` annotation defines where the cache can fallback to in case of a miss.
+The fallback storage can be another cache (e.g., level 2), memory or a process.
+The latter can be used to translate a virtual address to a physical one before accessing main memory for instance.
+In addition, several behavioral aspects of the cache can be specified, such as write and eviction policy.
+
 
 ## Processor Definition
 

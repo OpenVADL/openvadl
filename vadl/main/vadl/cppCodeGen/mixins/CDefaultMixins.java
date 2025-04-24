@@ -36,6 +36,7 @@ import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
+import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.ScheduledNode;
@@ -44,6 +45,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -146,7 +148,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface AllControl
       extends Scheduled, InstrExit, IfElse, Begin, Start, Merge, BranchEnd, Return, InstrEnd,
-      ProcEnd {
+      ProcEnd, NewLabel {
 
   }
 
@@ -239,6 +241,14 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
+  interface NewLabel {
+    @Handler
+    default void handle(CGenContext<Node> ctx, NewLabelNode node) {
+      // nothing
+    }
+  }
+
   ///  DEPENDENCY HANDLERS ///
 
   @SuppressWarnings("MissingJavadocType")
@@ -250,7 +260,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface AllExpressions
       extends TypeCasts, Constant, FuncCall, BuiltIns, Slice, LetNode, Select, FuncParam,
-      TupleAccess {
+      TupleAccess, Label {
 
   }
 
@@ -408,4 +418,12 @@ public interface CDefaultMixins {
     }
   }
 
+  @SuppressWarnings("MissingJavadocType")
+  interface Label {
+    @Handler
+    @SuppressWarnings("MissingJavadocMethod")
+    default void handle(CGenContext<Node> ctx, LabelNode label) {
+      // nothing
+    }
+  }
 }

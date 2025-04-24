@@ -46,7 +46,7 @@ public record SourceLocation(
     Position begin,
     Position end,
     @Nullable SourceLocation expandedFrom
-) implements WithSourceLocation {
+) implements WithLocation {
 
   private static final URI INVALID_MEMORY = URI.create("memory://unknown");
 
@@ -283,7 +283,7 @@ public record SourceLocation(
   }
 
   @Override
-  public SourceLocation sourceLocation() {
+  public SourceLocation location() {
     return this;
   }
 

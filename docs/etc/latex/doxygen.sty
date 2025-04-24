@@ -151,6 +151,83 @@
 
 
 %\lstdefinestyle{vadl}
+\lstdefinelanguage{vadlmia}
+{ basicstyle=\footnotesize\sffamily\color{black}
+, backgroundcolor=\color{black!2.5}
+, commentstyle=\color{comment}
+, frame=none
+, captionpos=b
+, aboveskip          = 5mm
+, belowskip          = 5mm
+, framexleftmargin   = 1mm
+, framexrightmargin  = 1mm
+, framextopmargin    = 1mm
+, framexbottommargin = 1mm
+, framerule          = 0mm
+, xleftmargin        = 5mm
+, xrightmargin       = 5mm
+, frame              = tb
+, numbers=left
+, numbersep=5pt
+, numberstyle=\tiny\color{gray}
+, alsoletter={-},
+, keywords=[1]
+  { architecture
+  , as
+  , cache
+  , else
+  , exception
+  , fetch
+  , if
+  , implements
+  , import
+  , input
+  , instruction
+  , interface
+  , in
+  , let
+  , logic
+  , match
+  , memory
+  , micro
+  , model-type
+  , model
+  , operation
+  , pipeline
+  , pointer
+  , prediction
+  , processor
+  , process
+  , raise
+  , register
+  , results
+  , set
+  , signal
+  , stage
+  , startup
+  , start
+  , stop
+  , system
+  , then
+  , thread
+  , translation
+  , unit
+  , using
+  , with
+  }
+, keywordstyle=[1]\color{blue}\bfseries
+, keywords=[2]{address, compute, decode, immediate, operands, read, readOrForward, unknown, verify, write}
+, keywordstyle=[2]\color{violet}\bfseries
+, string=[b][\color{red}]"
+, comment=[l][\color{ForestGreen}]{//}
+, morecomment=[s][\color{ForestGreen}]{/*}{*/}
+, morecomment=[l][\color{ForestGreen}]{\#}
+, showspaces=false
+, showstringspaces=false
+, stringstyle=\color{red}
+, tabsize=4
+}
+
 \lstdefinelanguage{vadl}
 { basicstyle=\footnotesize\sffamily\color{black}
 , backgroundcolor=\color{black!2.5}
@@ -228,9 +305,10 @@
   , interface
   , in
   , let
-  , logic
   , load
   , local
+  , lock
+  , logic
   , match
   , memory
   , micro

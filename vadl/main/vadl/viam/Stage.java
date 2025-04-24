@@ -50,8 +50,8 @@ public class Stage extends Definition implements DefProp.WithBehavior {
    * Instantiate a new stage definition.
    *
    * @param identifier stage identifier
-   * @param behavior behavior graph
-   * @param outputs list of stage outputs
+   * @param behavior   behavior graph
+   * @param outputs    list of stage outputs
    */
   public Stage(Identifier identifier, Graph behavior, List<StageOutput> outputs) {
     super(identifier);
@@ -148,7 +148,7 @@ public class Stage extends Definition implements DefProp.WithBehavior {
 
   @Override
   public String toString() {
-    return "Stage{ name='" + simpleName() + "', sourceLocation=" + sourceLocation() + "}";
+    return "Stage{ name='" + simpleName() + "', sourceLocation=" + location() + "}";
   }
 
   @Override

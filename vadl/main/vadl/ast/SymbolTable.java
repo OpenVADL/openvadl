@@ -373,12 +373,12 @@ class SymbolTable {
    * Distributes "SymbolTable" instances across the nodes in the AST.
    * For "let" expressions and statements, symbols for the declared variables are created here.
    * For "instruction" and "assembly" definitions, only an empty child table is created,
-   * with a further pass {@link ResolutionPass} actually gathering the fields declared
+   * with a further pass {@link SymbolResolver} actually gathering the fields declared
    * in the linked "format" definition.
    * Before: Ast is fully Macro-expanded
    * After: Ast is fully Macro-expanded and all relevant nodes have "symbolTable" set.
    *
-   * @see ResolutionPass
+   * @see SymbolResolver
    */
   static class SymbolCollector extends RecursiveAstVisitor {
     private Deque<String> viamPath = new ArrayDeque<>();
@@ -418,6 +418,37 @@ class SymbolTable {
     void collectSymbols(SymbolTable symbols, Expr expr) {
       withSymbols(symbols, () -> expr.accept(this));
     }
+
+    /**
+     * In most cases the nodes in a definition are in their own scope but in rare cases that's not
+     * the desired behavior.
+     *
+     * @param definition which shouldn't create a new scope.
+     */
+    private void beforeTravelWithoutScope(Definition definition) {
+      if (definition instanceof IdentifiableNode idNode) {
+        var name = idNode.identifier().name;
+        currentSymbols().defineSymbol(name, definition);
+        viamPath.addLast(name);
+      } else {
+        viamPath.addLast("unknown");
+      }
+      definition.viamId = String.join("::", viamPath);
+
+      definition.symbolTable = currentSymbols();
+    }
+
+    /**
+     * In most cases the nodes in a definition are in their own scope but in rare cases that's not
+     * the desired behavior.
+     *
+     * @param definition which shouldn't create a new scope.
+     */
+    @SuppressWarnings("UnusedVariable")
+    private void afterTravelWithoutScope(Definition definition) {
+      viamPath.pollLast();
+    }
+
 
     @Override
     public void beforeTravel(Expr expr) {
@@ -463,6 +494,8 @@ class SymbolTable {
       // More complex tasks like this require custom handling.
       beforeTravel(definition);
 
+      definition.abi.accept(this);
+
       var modifierSymbols = currentSymbols().createChild();
       withSymbols(modifierSymbols,
           () -> definition.modifiers.forEach(modifier -> modifier.accept(this)));
@@ -496,8 +529,9 @@ class SymbolTable {
     @Override
     public Void visit(AsmDirectiveDefinition definition) {
       // Avoid creating a new scope since the directives must be visible in the parent scope
+      beforeTravelWithoutScope(definition);
       currentSymbols().defineSymbol(definition.stringLiteral.toString(), definition);
-      definition.symbolTable = currentSymbols();
+      afterTravelWithoutScope(definition);
       return null;
     }
 
@@ -512,6 +546,7 @@ class SymbolTable {
             () -> alternative.forEach(element -> element.accept(this)));
       });
 
+
       afterTravel(definition);
       return null;
     }
@@ -519,16 +554,26 @@ class SymbolTable {
     @Override
     public Void visit(AsmGrammarElementDefinition definition) {
       // Avoid creating a new scope since the elements should share the same scope
+      beforeTravelWithoutScope(definition);
       definition.symbolTable = currentSymbols();
       definition.children().forEach(this::travel);
+      afterTravelWithoutScope(definition);
       return null;
     }
 
     @Override
     public Void visit(AsmModifierDefinition definition) {
+      beforeTravelWithoutScope(definition);
+      definition.symbolTable = currentSymbols();
+
       // This isn't a identifyableNode so we need to add custom handling here.
       currentSymbols().defineSymbol(definition.stringLiteral.toString(), definition);
-      definition.symbolTable = currentSymbols();
+
+      definition.children().stream()
+          .filter(c -> c != definition.stringLiteral)
+          .forEach(this::travel);
+
+      afterTravelWithoutScope(definition);
       return null;
     }
 
@@ -541,12 +586,13 @@ class SymbolTable {
         definition.enumType.accept(this);
       }
       for (EnumerationDefinition.Entry entry : definition.entries) {
+        entry.name.symbolTable = currentSymbols();
         currentSymbols().defineSymbol(entry.name.name, entry);
         if (entry.value != null) {
           entry.value.accept(this);
         }
       }
-     
+
       afterTravel(definition);
       return null;
     }
@@ -647,466 +693,405 @@ class SymbolTable {
    * Before: AST is fully Macro-expanded and all relevant nodes have "symbolTable" set.
    * After: AST nodes have their resolved node references set.
    */
-  static class ResolutionPass {
-    static List<Diagnostic> resolveSymbols(Ast ast) {
+  static class SymbolResolver extends RecursiveAstVisitor {
+
+    public List<Diagnostic> resolveSymbols(Ast ast) {
       var resolveStartTime = System.nanoTime();
       for (Definition definition : ast.definitions) {
-        resolveSymbols(definition);
+        definition.accept(this);
       }
       ast.passTimings.add(new Ast.PassTimings("Symbol resolution",
           (System.nanoTime() - resolveStartTime) / 1000_000));
       return Objects.requireNonNull(ast.rootSymbolTable).errors;
     }
 
-    static void resolveSymbols(Definition definition) {
-      if (definition instanceof InstructionSetDefinition isa) {
-        if (isa.extending != null) {
-          var extending =
-              isa.symbolTable().requireAs(isa.extending, InstructionSetDefinition.class);
-          isa.extendingNode = extending;
-          if (extending != null) {
-            isa.symbolTable().extendBy(extending.symbolTable());
-          }
-        }
-        for (Definition childDef : isa.definitions) {
-          resolveSymbols(childDef);
-        }
-      } else if (definition instanceof ConstantDefinition constant) {
-        if (constant.typeLiteral != null) {
-          resolveSymbols(constant.typeLiteral);
-        }
-        resolveSymbols(constant.value);
-      } else if (definition instanceof CounterDefinition counterDefinition) {
-        resolveSymbols(counterDefinition.typeLiteral);
-      } else if (definition instanceof RegisterDefinition registerDefinition) {
-        resolveSymbols(registerDefinition.typeLiteral);
-      } else if (definition instanceof RegisterFileDefinition registerFile) {
-        for (var argType : registerFile.typeLiteral.argTypes()) {
-          resolveSymbols(argType);
-        }
-        resolveSymbols(registerFile.typeLiteral.resultType());
-      } else if (definition instanceof MemoryDefinition memory) {
-        resolveSymbols(memory.addressTypeLiteral);
-        resolveSymbols(memory.dataTypeLiteral);
-      } else if (definition instanceof UsingDefinition using) {
-        resolveSymbols(using.typeLiteral);
-      } else if (definition instanceof FunctionDefinition function) {
-        for (Parameter param : function.params) {
-          resolveSymbols(param.typeLiteral);
-        }
-        resolveSymbols(function.retType);
-        resolveSymbols(function.expr);
-      } else if (definition instanceof FormatDefinition format) {
-        resolveSymbols(format.typeLiteral);
-        for (FormatField field : format.fields) {
-          if (field instanceof RangeFormatField rangeField) {
-            if (rangeField.typeLiteral != null) {
-              resolveSymbols(rangeField.typeLiteral);
-            }
-          } else if (field instanceof TypedFormatField typedField) {
-            resolveSymbols(typedField.typeLiteral);
-          } else if (field instanceof DerivedFormatField dfField) {
-            resolveSymbols(dfField.expr);
-          } else {
-            throw new RuntimeException("Unknown class");
-          }
-        }
-      } else if (definition instanceof InstructionDefinition instr) {
-        var format = instr.symbolTable().requireAs(instr.typeIdentifier(), FormatDefinition.class);
-        if (format != null) {
-          instr.symbolTable().extendBy(format.symbolTable());
-          instr.formatNode = format;
-        }
-        resolveSymbols(instr.behavior);
-      } else if (definition instanceof InstructionSequenceDefinition
-          instructionSequenceDefinition) {
-        for (InstructionCallStatement statement : instructionSequenceDefinition.statements) {
-          resolveSymbols(statement);
-        }
-      } else if (definition instanceof RelocationDefinition relocation) {
-        resolveSymbols(relocation.expr);
-      } else if (definition instanceof AssemblyDefinition assembly) {
-        for (IdentifierOrPlaceholder identifier : assembly.identifiers) {
-          var pseudoInstr = assembly.symbolTable()
-              .findAs((Identifier) identifier, PseudoInstructionDefinition.class);
-          if (pseudoInstr != null) {
-            assembly.instructionNodes.add(pseudoInstr);
-            assembly.symbolTable().extendBy(pseudoInstr.symbolTable());
-            if (pseudoInstr.assemblyDefinition != null) {
-              assembly.symbolTable().reportAlreadyDefined(
-                  "Assembly for %s pseudo instruction is already defined".formatted(
-                      identifier),
-                  identifier.location(), pseudoInstr.assemblyDefinition.location());
-            }
-            pseudoInstr.assemblyDefinition = assembly;
-          } else {
-            var instr =
-                assembly.symbolTable().findAs((Identifier) identifier, InstructionDefinition.class);
-            if (instr != null) {
-              assembly.instructionNodes.add(instr);
 
-              if (instr.assemblyDefinition != null) {
-                assembly.symbolTable().reportAlreadyDefined(
-                    "Assembly for %s instruction is already defined".formatted(
-                        identifier),
-                    identifier.location(), instr.assemblyDefinition.location());
-              }
-              instr.assemblyDefinition = assembly;
-            }
-            var format = assembly.symbolTable().requireInstructionFormat((Identifier) identifier);
-            if (format != null) {
-              assembly.symbolTable().extendBy(format.symbolTable());
-            }
-          }
-        }
-        resolveSymbols(assembly.expr);
-      } else if (definition instanceof EncodingDefinition encoding) {
-        var inst =
-            encoding.symbolTable().requireAs(encoding.identifier(), InstructionDefinition.class);
-        if (inst != null) {
-          if (inst.encodingDefinition != null) {
-            encoding.symbolTable().reportAlreadyDefined(
-                "Encoding for %s instruction is already defined".formatted(encoding.identifier()),
-                encoding.location(), inst.encodingDefinition.location());
-          } else {
-            inst.encodingDefinition = encoding;
-          }
-        }
-
-        var format = encoding.symbolTable().requireInstructionFormat(encoding.identifier());
-        if (format != null) {
-          encoding.formatNode = format;
-          for (var item : encoding.encodings.items) {
-            var fieldEncoding = (EncodingDefinition.EncodingField) item;
-            var field = fieldEncoding.field;
-            if (findField(format, field.name) == null) {
-              encoding.symbolTable()
-                  .reportError("Format field %s not found".formatted(field.name), field.location());
-            }
-          }
-        }
-      } else if (definition instanceof AliasDefinition alias) {
-        resolveSymbols(alias.value);
-      } else if (definition instanceof EnumerationDefinition enumeration) {
-        for (EnumerationDefinition.Entry entry : enumeration.entries) {
-          if (entry.value != null) {
-            resolveSymbols(entry.value);
-          }
-        }
-      } else if (definition instanceof ExceptionDefinition exception) {
-        resolveSymbols(exception.statement);
-      } else if (definition instanceof ProcessDefinition process) {
-        resolveSymbols(process.statement);
-      } else if (definition instanceof ApplicationBinaryInterfaceDefinition abi) {
-        var isa =
-            abi.symbolTable().requireAs((Identifier) abi.isa, InstructionSetDefinition.class);
-        if (isa != null) {
-          abi.isaNode = isa;
-          abi.symbolTable().extendBy(isa.symbolTable());
-          for (Definition def : abi.definitions) {
-            resolveSymbols(def);
-          }
-        }
-      } else if (definition instanceof MicroProcessorDefinition mip) {
-        for (IsId implementedIsa : mip.implementedIsas) {
-          InstructionSetDefinition isa = mip.symbolTable()
-              .requireAs((Identifier) implementedIsa, InstructionSetDefinition.class);
-          if (isa != null) {
-            mip.implementedIsaNodes.add(isa);
-          }
-        }
-        if (mip.abi != null) {
-          var abi = mip.symbolTable()
-              .requireAs((Identifier) mip.abi, ApplicationBinaryInterfaceDefinition.class);
-          if (abi != null) {
-            mip.abiNode = abi;
-            mip.symbolTable().extendBy(abi.symbolTable());
-            for (Definition def : mip.definitions) {
-              resolveSymbols(def);
-            }
-          }
-        }
-      } else if (definition instanceof CpuFunctionDefinition cpuFunction) {
-        resolveSymbols(cpuFunction.expr);
-      } else if (definition instanceof CpuProcessDefinition cpuProcess) {
-        resolveSymbols(cpuProcess.statement);
-      } else if (definition instanceof MicroArchitectureDefinition mia) {
-        for (Definition def : mia.definitions) {
-          resolveSymbols(def);
-        }
-      } else if (definition instanceof MacroInstructionDefinition macroInstruction) {
-        resolveSymbols(macroInstruction.statement);
-      } else if (definition instanceof PortBehaviorDefinition portBehavior) {
-        resolveSymbols(portBehavior.statement);
-      } else if (definition instanceof PipelineDefinition pipeline) {
-        resolveSymbols(pipeline.statement);
-      } else if (definition instanceof StageDefinition stage) {
-        resolveSymbols(stage.statement);
-      } else if (definition instanceof AsmDescriptionDefinition asmDescription) {
-        var abi = asmDescription.symbolTable()
-            .requireAs(asmDescription.abi, ApplicationBinaryInterfaceDefinition.class);
-        if (abi != null) {
-          asmDescription.symbolTable().extendBy(abi.symbolTable());
-        }
-        asmDescription.modifiers.forEach(ResolutionPass::resolveSymbols);
-        asmDescription.directives.forEach(ResolutionPass::resolveSymbols);
-        asmDescription.rules.forEach(ResolutionPass::resolveSymbols);
-      } else if (definition instanceof AsmModifierDefinition modifier) {
-        var relocation = modifier.relocation;
-        var symbol = modifier.symbolTable().resolveSymbol(relocation.pathToString());
-        if (symbol == null) {
-          modifier.symbolTable()
-              .reportError("Unknown relocation symbol: " + relocation.pathToString(),
-                  relocation.location());
-        }
-      } else if (definition instanceof AsmDirectiveDefinition directive) {
-        if (!AsmDirective.isAsmDirective(directive.builtinDirective.name)) {
-          directive.symbolTable()
-              .reportError("Unknown asm directive: " + directive.builtinDirective.name,
-                  directive.builtinDirective.location());
-        }
-      } else if (definition instanceof AsmGrammarRuleDefinition rule) {
-        resolveSymbols(rule.alternatives);
-        if (rule.asmTypeDefinition != null) {
-          resolveSymbols(rule.asmTypeDefinition);
-        }
-      } else if (definition instanceof AsmGrammarAlternativesDefinition alternativesDefinition) {
-        alternativesDefinition.alternatives.forEach(
-            alternative -> alternative.forEach(ResolutionPass::resolveSymbols));
-      } else if (definition instanceof AsmGrammarElementDefinition element) {
-        if (element.localVar != null) {
-          resolveSymbols(element.localVar);
-        }
-        if (element.semanticPredicate != null) {
-          resolveSymbols(element.semanticPredicate);
-        }
-        if (element.groupAlternatives != null) {
-          resolveSymbols(element.groupAlternatives);
-        }
-        if (element.optionAlternatives != null) {
-          resolveSymbols(element.optionAlternatives);
-        }
-        if (element.repetitionAlternatives != null) {
-          resolveSymbols(element.repetitionAlternatives);
-        }
-        if (element.asmLiteral != null) {
-          resolveSymbols(element.asmLiteral);
-        }
-        if (element.groupAsmTypeDefinition != null) {
-          resolveSymbols(element.groupAsmTypeDefinition);
-        }
-        if (element.attribute != null) {
-          // if attrSymbol is not null, attribute refers to local variable
-          // else attribute is handled by matching in the AsmParser
-          var attrSymbol = element.symbolTable().resolveNode(element.attribute.name);
-          element.isAttributeLocalVar = attrSymbol instanceof AsmGrammarLocalVarDefinition;
-        }
-      } else if (definition instanceof AsmGrammarLocalVarDefinition localVar) {
-        if (localVar.asmLiteral.id != null && !localVar.asmLiteral.id.name.equals("null")) {
-          resolveSymbols(localVar.asmLiteral);
-        }
-      } else if (definition instanceof AsmGrammarLiteralDefinition asmLiteral) {
-        if (asmLiteral.id != null) {
-          var idSymbol = asmLiteral.symbolTable().resolveSymbol(asmLiteral.id.name);
-          if (idSymbol == null) {
-            asmLiteral.symbolTable()
-                .reportError("Unknown symbol in asm grammar rule: " + asmLiteral.id.name,
-                    asmLiteral.id.location());
-          }
-        }
-        if (asmLiteral.asmTypeDefinition != null) {
-          resolveSymbols(asmLiteral.asmTypeDefinition);
-        }
-        asmLiteral.parameters.forEach(ResolutionPass::resolveSymbols);
-      } else if (definition instanceof AsmGrammarTypeDefinition asmTypeDefinition) {
-        if (!AsmType.isInputAsmType(asmTypeDefinition.id.name)) {
-          asmTypeDefinition.symbolTable()
-              .reportError("Unknown asm type: " + asmTypeDefinition.id.name,
-                  asmTypeDefinition.id.location());
-        }
-      }
-    }
-
-    static void resolveSymbols(Statement stmt) {
-      if (stmt instanceof BlockStatement block) {
-        for (Statement inner : block.statements) {
-          resolveSymbols(inner);
-        }
-      } else if (stmt instanceof LetStatement let) {
-        resolveSymbols(let.valueExpr);
-        resolveSymbols(let.body);
-      } else if (stmt instanceof IfStatement ifStmt) {
-        resolveSymbols(ifStmt.condition);
-        resolveSymbols(ifStmt.thenStmt);
-        if (ifStmt.elseStmt != null) {
-          resolveSymbols(ifStmt.elseStmt);
-        }
-      } else if (stmt instanceof AssignmentStatement assignment) {
-        resolveSymbols(assignment.target);
-        resolveSymbols(assignment.valueExpression);
-      } else if (stmt instanceof RaiseStatement raise) {
-        resolveSymbols(raise.statement);
-      } else if (stmt instanceof CallStatement call) {
-        resolveSymbols(call.expr);
-      } else if (stmt instanceof MatchStatement match) {
-        resolveSymbols(match.candidate);
-        if (match.defaultResult != null) {
-          resolveSymbols(match.defaultResult);
-        }
-        for (MatchStatement.Case matchCase : match.cases) {
-          resolveSymbols(matchCase.result);
-          for (Expr pattern : matchCase.patterns) {
-            resolveSymbols(pattern);
-          }
-        }
-      } else if (stmt instanceof InstructionCallStatement instructionCall) {
-        var instr =
-            instructionCall.symbolTable().findAs(instructionCall.id(), InstructionDefinition.class);
-        var format = instructionCall.symbolTable().findInstructionFormat(instructionCall.id());
-        if (format != null) {
-          instructionCall.instrDef = instr;
-          for (var namedArgument : instructionCall.namedArguments) {
-            FormatField foundField = null;
-            for (var field : format.fields) {
-              if (field.identifier().name.equals(namedArgument.name.name)) {
-                foundField = field;
-                break;
-              }
-            }
-            if (foundField == null) {
-              instructionCall.symbolTable()
-                  .reportError("Unknown format field " + namedArgument.name.name,
-                      namedArgument.name.location());
-            }
-            resolveSymbols(namedArgument.value);
-          }
-        } else {
-          var pseudoInstr =
-              instructionCall.symbolTable()
-                  .findAs(instructionCall.id(), PseudoInstructionDefinition.class);
-          if (pseudoInstr != null) {
-            instructionCall.instrDef = pseudoInstr;
-            for (var namedArgument : instructionCall.namedArguments) {
-              Parameter foundParam = null;
-              for (var param : pseudoInstr.params) {
-                if (param.identifier().name.equals(namedArgument.name.name)) {
-                  foundParam = param;
-                  break;
-                }
-              }
-              if (foundParam == null) {
-                instructionCall.symbolTable()
-                    .reportError(
-                        "Unknown instruction param %s (%s)".formatted(namedArgument.name.name,
-                            pseudoInstr.identifier().name),
-                        namedArgument.name.location());
-              }
-              resolveSymbols(namedArgument.value);
-            }
-          } else {
-            instructionCall.symbolTable()
-                .reportError("Unknown instruction " + instructionCall.id().name,
-                    instructionCall.loc);
-          }
-        }
-        for (Expr unnamedArgument : instructionCall.unnamedArguments) {
-          resolveSymbols(unnamedArgument);
-        }
-      } else if (stmt instanceof LockStatement lock) {
-        resolveSymbols(lock.expr);
-        resolveSymbols(lock.statement);
-      } else if (stmt instanceof ForallStatement forall) {
-        for (ForallStatement.Index index : forall.indices) {
-          resolveSymbols(index.domain);
-        }
-        resolveSymbols(forall.body);
-      }
-    }
-
-    static void resolveSymbols(Expr expr) {
-      if (expr instanceof LetExpr letExpr) {
-        resolveSymbols(letExpr.valueExpr);
-        resolveSymbols(letExpr.body);
-      } else if (expr instanceof IfExpr ifExpr) {
-        resolveSymbols(ifExpr.condition);
-        resolveSymbols(ifExpr.thenExpr);
-        resolveSymbols(ifExpr.elseExpr);
-      } else if (expr instanceof GroupedExpr group) {
-        for (Expr inner : group.expressions) {
-          resolveSymbols(inner);
-        }
-      } else if (expr instanceof UnaryExpr unary) {
-        resolveSymbols(unary.operand);
-      } else if (expr instanceof BinaryExpr binary) {
-        resolveSymbols(binary.left);
-        resolveSymbols(binary.right);
-      } else if (expr instanceof CastExpr cast) {
-        resolveSymbols(cast.value);
-      } else if (expr instanceof CallIndexExpr call) {
-        resolveSymbols((Expr) call.target);
-        for (var argsIndex : call.argsIndices) {
-          for (Expr index : argsIndex.values) {
-            resolveSymbols(index);
-          }
-        }
-        for (CallIndexExpr.SubCall subCall : call.subCalls) {
-          for (var argsIndex : subCall.argsIndices) {
-            for (Expr index : argsIndex.values) {
-              resolveSymbols(index);
-            }
-          }
-        }
-      } else if (expr instanceof SymbolExpr sym) {
-        resolveSymbols((Expr) sym.path());
-        resolveSymbols(sym.size);
-      } else if (expr instanceof IdentifierPath path) {
-        var symbol = expr.symbolTable().resolveSymbolPath(path.pathToSegments());
-        if (symbol == null) {
-          expr.symbolTable()
-              .reportError("Symbol not found: " + path.pathToString(), path.location());
-        }
-      } else if (expr instanceof IsId id) {
-        var symbol = expr.symbolTable().resolveSymbol(id.pathToString());
-        if (symbol == null) {
-          expr.symbolTable().reportError("Symbol not found: " + id.pathToString(), id.location());
-        }
-      } else if (expr instanceof MatchExpr match) {
-        resolveSymbols(match.candidate);
-        resolveSymbols(match.defaultResult);
-        for (MatchExpr.Case matchCase : match.cases) {
-          resolveSymbols(matchCase.result);
-          for (Expr pattern : matchCase.patterns) {
-            resolveSymbols(pattern);
-          }
-        }
-      } else if (expr instanceof ExistsInThenExpr existsInThen) {
-        resolveSymbols(existsInThen.thenExpr);
-      } else if (expr instanceof ForallThenExpr forAllThen) {
-        resolveSymbols(forAllThen.thenExpr);
-      } else if (expr instanceof ForallExpr forallExpr) {
-        for (ForallExpr.Index index : forallExpr.indices) {
-          resolveSymbols(index.domain);
-        }
-        resolveSymbols(forallExpr.body);
-      } else if (expr instanceof SequenceCallExpr sequenceCall) {
-        resolveSymbols(sequenceCall.target);
-      } else if (expr instanceof TypeLiteral typeLiteral) {
-        for (var sizeExprList : typeLiteral.sizeIndices) {
-          for (Expr sizeExpr : sizeExprList) {
-            resolveSymbols(sizeExpr);
-          }
-        }
-      }
-    }
-
-    @Nullable
-    private static FormatField findField(FormatDefinition format, String name) {
-      for (FormatField f : format.fields) {
-        if (f.identifier().name.equals(name)) {
-          return f;
-        }
+    @Override
+    public Void visit(Identifier expr) {
+      var symbol = expr.symbolTable().resolveSymbol(expr.pathToString());
+      if (symbol == null) {
+        expr.symbolTable()
+            .reportError("Symbol not found: " + expr.pathToString(), expr.location());
       }
       return null;
     }
+
+    @Override
+    public Void visit(IdentifierPath expr) {
+      var symbol = expr.symbolTable().resolveSymbolPath(expr.pathToSegments());
+      if (symbol == null) {
+        expr.symbolTable()
+            .reportError("Symbol not found: " + expr.pathToString(), expr.location());
+      }
+      return null;
+    }
+
+    @Override
+    public Void visit(ModelDefinition expr) {
+      // Skip Model Definitions at all.
+      // They will be resolved once they are expanded.
+      return null;
+    }
+
+    @Override
+    public Void visit(TypeLiteral expr) {
+      // Skip the basetype of the expr and let the typechecker verify it's correct.
+      beforeTravel(expr);
+
+      expr.sizeIndices.forEach(index -> index.forEach(e -> e.accept(this)));
+
+      afterTravel(expr);
+      return null;
+    }
+
+    @Override
+    public Void visit(InstructionSetDefinition definition) {
+      // Import all symbols from the extending ISA.
+      beforeTravel(definition);
+
+      if (definition.extending != null) {
+        var extending =
+            definition.symbolTable()
+                .requireAs(definition.extending, InstructionSetDefinition.class);
+        definition.extendingNode = extending;
+        definition.symbolTable().extendBy(Objects.requireNonNull(extending).symbolTable());
+      }
+
+      definition.children().forEach(this::travel);
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(InstructionDefinition definition) {
+      // Import all symbols from the format.
+      beforeTravel(definition);
+
+      var format =
+          definition.symbolTable().requireAs(definition.typeIdentifier(), FormatDefinition.class);
+      if (format != null) {
+        definition.symbolTable().extendBy(format.symbolTable());
+        definition.formatNode = format;
+      }
+
+      definition.children().forEach(this::travel);
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(AssemblyDefinition definition) {
+      // Link instruction and import all symbols from the instruction format.
+      beforeTravel(definition);
+
+      for (IdentifierOrPlaceholder identifier : definition.identifiers) {
+        var pseudoInstr = definition.symbolTable()
+            .findAs((Identifier) identifier, PseudoInstructionDefinition.class);
+        if (pseudoInstr != null) {
+          definition.instructionNodes.add(pseudoInstr);
+          definition.symbolTable().extendBy(pseudoInstr.symbolTable());
+          if (pseudoInstr.assemblyDefinition != null) {
+            definition.symbolTable().reportAlreadyDefined(
+                "Assembly for %s pseudo instruction is already defined".formatted(
+                    identifier),
+                identifier.location(), pseudoInstr.assemblyDefinition.location());
+          }
+          pseudoInstr.assemblyDefinition = definition;
+        } else {
+          var instr =
+              definition.symbolTable().findAs((Identifier) identifier, InstructionDefinition.class);
+          if (instr != null) {
+            definition.instructionNodes.add(instr);
+
+            if (instr.assemblyDefinition != null) {
+              definition.symbolTable().reportAlreadyDefined(
+                  "Assembly for %s instruction is already defined".formatted(
+                      identifier),
+                  identifier.location(), instr.assemblyDefinition.location());
+            }
+            instr.assemblyDefinition = definition;
+          }
+          var format = definition.symbolTable().requireInstructionFormat((Identifier) identifier);
+          // FIXME: Isn't there a bug if an assembly inherits from multiple instructions?
+          // Because I think this code would just import all symbols but actually none of the
+          // formats should be imported because they wouldn't be visible in all instructinos.
+          if (format != null) {
+            definition.symbolTable().extendBy(format.symbolTable());
+          }
+        }
+      }
+
+      definition.children().forEach(this::travel);
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(EncodingDefinition definition) {
+      // Link instruction and import all symbols from the instruction format.
+      beforeTravel(definition);
+
+      var inst =
+          definition.symbolTable().requireAs(definition.identifier(), InstructionDefinition.class);
+      if (inst != null) {
+        if (inst.encodingDefinition != null) {
+          definition.symbolTable().reportAlreadyDefined(
+              "Encoding for %s instruction is already defined".formatted(definition.identifier()),
+              definition.location(), inst.encodingDefinition.location());
+        } else {
+          inst.encodingDefinition = definition;
+        }
+      }
+
+      var format = definition.symbolTable().requireInstructionFormat(definition.identifier());
+      if (format != null) {
+        definition.formatNode = format;
+        for (var item : definition.encodings.items) {
+          var fieldEncoding = (EncodingDefinition.EncodingField) item;
+
+          // Verify that the field specified really is a field in the encoding
+          var field = fieldEncoding.field;
+          if (format.getField(field.name) == null) {
+            definition.symbolTable()
+                .reportError("Format field %s not found".formatted(field.name), field.location());
+          }
+
+          // Verify that the value is visited.
+          fieldEncoding.value.accept(this);
+        }
+      }
+
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(ApplicationBinaryInterfaceDefinition definition) {
+      beforeTravel(definition);
+
+      var isa =
+          definition.symbolTable()
+              .requireAs((Identifier) definition.isa, InstructionSetDefinition.class);
+      if (isa != null) {
+        definition.isaNode = isa;
+        definition.symbolTable().extendBy(isa.symbolTable());
+      }
+
+      definition.children().forEach(this::travel);
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(MicroProcessorDefinition definition) {
+      beforeTravel(definition);
+
+      for (IsId implementedIsa : definition.implementedIsas) {
+        InstructionSetDefinition isa = definition.symbolTable()
+            .requireAs((Identifier) implementedIsa, InstructionSetDefinition.class);
+        if (isa != null) {
+          definition.implementedIsaNodes.add(isa);
+        }
+      }
+      if (definition.abi != null) {
+        var abi = definition.symbolTable()
+            .requireAs((Identifier) definition.abi, ApplicationBinaryInterfaceDefinition.class);
+        if (abi != null) {
+          definition.abiNode = abi;
+          definition.symbolTable().extendBy(abi.symbolTable());
+        }
+      }
+
+      definition.children().forEach(this::travel);
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(InstructionCallStatement statement) {
+      beforeTravel(statement);
+
+      var instr =
+          statement.symbolTable().findAs(statement.id(), InstructionDefinition.class);
+      var format = statement.symbolTable().findInstructionFormat(statement.id());
+      if (format != null) {
+        statement.instrDef = instr;
+        for (var namedArgument : statement.namedArguments) {
+          FormatField foundField = null;
+          for (var field : format.fields) {
+            if (field.identifier().name.equals(namedArgument.name.name)) {
+              foundField = field;
+              break;
+            }
+          }
+          if (foundField == null) {
+            statement.symbolTable()
+                .reportError("Unknown format field " + namedArgument.name.name,
+                    namedArgument.name.location());
+          }
+          namedArgument.value.accept(this);
+        }
+      } else {
+        var pseudoInstr =
+            statement.symbolTable()
+                .findAs(statement.id(), PseudoInstructionDefinition.class);
+        if (pseudoInstr != null) {
+          statement.instrDef = pseudoInstr;
+          for (var namedArgument : statement.namedArguments) {
+            Parameter foundParam = null;
+            for (var param : pseudoInstr.params) {
+              if (param.identifier().name.equals(namedArgument.name.name)) {
+                foundParam = param;
+                break;
+              }
+            }
+            if (foundParam == null) {
+              statement.symbolTable()
+                  .reportError(
+                      "Unknown instruction param %s (%s)".formatted(namedArgument.name.name,
+                          pseudoInstr.identifier().name),
+                      namedArgument.name.location());
+            }
+            namedArgument.value.accept(this);
+          }
+        } else {
+          statement.symbolTable()
+              .reportError("Unknown instruction " + statement.id().name,
+                  statement.loc);
+        }
+      }
+      for (Expr unnamedArgument : statement.unnamedArguments) {
+        unnamedArgument.accept(this);
+      }
+
+      afterTravel(statement);
+      return null;
+    }
+
+    @Override
+    public Void visit(AsmDescriptionDefinition definition) {
+      beforeTravel(definition);
+
+      var abi = definition.symbolTable()
+          .requireAs(definition.abi, ApplicationBinaryInterfaceDefinition.class);
+      if (abi != null) {
+        definition.symbolTable().extendBy(abi.symbolTable());
+      }
+
+      definition.children().forEach(this::travel);
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(AsmModifierDefinition definition) {
+      beforeTravel(definition);
+
+      var relocation = definition.relocation;
+      var symbol = definition.symbolTable().resolveSymbol(relocation.pathToString());
+      if (symbol == null) {
+        definition.symbolTable()
+            .reportError("Unknown relocation symbol: " + relocation.pathToString(),
+                relocation.location());
+      }
+
+      definition.children().forEach(this::travel);
+      afterTravel(definition);
+      return null;
+    }
+
+
+    @Override
+    public Void visit(AsmDirectiveDefinition definition) {
+      beforeTravel(definition);
+
+      // Only do rudimentary checks here, the rest is done in the typechecker.
+      if (!AsmDirective.isAsmDirective(definition.builtinDirective.name)) {
+        definition.symbolTable()
+            .reportError("Unknown asm directive: " + definition.builtinDirective.name,
+                definition.builtinDirective.location());
+      }
+
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(AsmGrammarElementDefinition definition) {
+      beforeTravel(definition);
+
+      // The attribute needs special handling here
+      if (definition.attribute != null) {
+        // If attrSymbol is not null, attribute refers to local variable
+        // Else attribute is handled by matching in the AsmParser
+        var attrSymbol = definition.symbolTable().resolveNode(definition.attribute.name);
+        definition.isAttributeLocalVar = attrSymbol instanceof AsmGrammarLocalVarDefinition;
+      }
+
+      // All other children have the default handling
+      definition.children().stream()
+          .filter(c -> c != definition.attribute)
+          .forEach(this::travel);
+
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(AsmGrammarLocalVarDefinition definition) {
+      beforeTravel(definition);
+
+      // FIXME: @benjaminkasper99 should we maybe make "null" a symbol that is always in the
+      // symboltable so we can avoid this special treatment here?
+      if (definition.asmLiteral.id != null && !definition.asmLiteral.id.name.equals("null")) {
+        definition.asmLiteral.accept(this);
+      }
+
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(AsmGrammarLiteralDefinition definition) {
+      beforeTravel(definition);
+
+      // Id needs special treatment
+      if (definition.id != null) {
+        var idSymbol = definition.symbolTable().resolveSymbol(definition.id.name);
+        if (idSymbol == null) {
+          definition.symbolTable()
+              .reportError("Unknown symbol in asm grammar rule: " + definition.id.name,
+                  definition.id.location());
+        }
+      }
+
+
+      // Resolve all other children like always
+      // FIXME: At the moment id isn't even a child but I'm not sure if it should be so check in
+      // later once we know it.
+      definition.children().stream()
+          .filter(c -> c != definition.id)
+          .forEach(this::travel);
+
+
+      afterTravel(definition);
+      return null;
+    }
+
+    @Override
+    public Void visit(AsmGrammarTypeDefinition definition) {
+      beforeTravel(definition);
+
+      if (!AsmType.isInputAsmType(definition.id.name)) {
+        definition.symbolTable()
+            .reportError("Unknown asm type: " + definition.id.name,
+                definition.id.location());
+      }
+
+      afterTravel(definition);
+      return null;
+    }
+
+
   }
 }

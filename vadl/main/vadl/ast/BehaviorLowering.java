@@ -36,7 +36,7 @@ import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.Either;
 import vadl.utils.Pair;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 import vadl.viam.ArtificialResource;
 import vadl.viam.Constant;
 import vadl.viam.Counter;
@@ -119,9 +119,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     currentGraph = graph;
 
     ControlNode endNode = graph.addWithInputs(new ReturnNode(exprNode));
-    endNode.setSourceLocation(expr.sourceLocation());
+    endNode.setSourceLocation(expr.location());
     ControlNode startNode = graph.add(new StartNode(endNode));
-    startNode.setSourceLocation(expr.sourceLocation());
+    startNode.setSourceLocation(expr.location());
     return graph;
   }
 
@@ -134,7 +134,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
     var end = graph.addWithInputs(new ProcEndNode(sideEffects));
-    end.setSourceLocation(stmt.sourceLocation());
+    end.setSourceLocation(stmt.location());
 
     ControlNode startSuccessor = end;
     if (stmtCtx.hasControlBlock()) {
@@ -143,7 +143,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       startSuccessor = controlBlock.firstNode();
     }
     var start = new StartNode(startSuccessor);
-    start.setSourceLocation(stmt.sourceLocation());
+    start.setSourceLocation(stmt.location());
     graph.addWithInputs(start);
 
     return graph;
@@ -151,14 +151,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   Graph getInstructionGraph(InstructionDefinition definition) {
     var graph = new Graph("%s Behavior".formatted(definition.identifier().name));
-    graph.setSourceLocation(definition.sourceLocation());
+    graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
     var stmtCtx = definition.behavior.accept(this);
     var sideEffects = stmtCtx.sideEffectsOrEmptyList();
 
     var end = graph.addWithInputs(new InstrEndNode(sideEffects));
-    end.setSourceLocation(definition.sourceLocation());
+    end.setSourceLocation(definition.location());
 
     ControlNode startSuccessor = end;
     if (stmtCtx.hasControlBlock()) {
@@ -167,7 +167,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       startSuccessor = controlBlock.firstNode();
     }
     var start = new StartNode(startSuccessor);
-    start.setSourceLocation(definition.sourceLocation());
+    start.setSourceLocation(definition.location());
     graph.addWithInputs(start);
 
     return graph;
@@ -180,7 +180,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     currentGraph = graph;
 
     var end = graph.addWithInputs(new InstrEndNode(new NodeList<>()));
-    end.setSourceLocation(definition.sourceLocation());
+    end.setSourceLocation(definition.location());
 
     var calls = definition.statements.stream()
         .map(s -> (InstrCallNode) Objects.requireNonNull(s.accept(this).controlBlock()).firstNode())
@@ -194,7 +194,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var start = new StartNode(curr);
-    start.setSourceLocation(definition.sourceLocation());
+    start.setSourceLocation(definition.location());
     graph.addWithInputs(start);
 
     return graph;
@@ -202,7 +202,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   Function getRegisterFileAliasReadFunc(AliasDefinition definition) {
     var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
-    graph.setSourceLocation(definition.sourceLocation());
+    graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
     var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
@@ -213,7 +213,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var param = new vadl.viam.Parameter(
         viamLowering.generateIdentifier(
             identifier.name() + "::readFunc::index",
-            identifier.sourceLocation()),
+            identifier.location()),
         type.argTypes().get(0));
 
     // FIXME: Wrap input and output in casts
@@ -232,7 +232,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // FIXME: Modify based on annotations
     return new Function(
         viamLowering.generateIdentifier(identifier.name() + "::readFunc",
-            identifier.sourceLocation()),
+            identifier.location()),
         new vadl.viam.Parameter[] {param},
         type.resultType(),
         graph
@@ -241,7 +241,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   Procedure getRegisterFileAliasWriteProc(AliasDefinition definition) {
     var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
-    graph.setSourceLocation(definition.sourceLocation());
+    graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
     var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
@@ -252,13 +252,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var indexParam = new vadl.viam.Parameter(
         viamLowering.generateIdentifier(
             identifier.name() + "::writeProc::index",
-            identifier.sourceLocation()),
+            identifier.location()),
         type.argTypes().get(0));
 
     var valueParam = new vadl.viam.Parameter(
         viamLowering.generateIdentifier(
             identifier.name() + "::writeProc::value",
-            identifier.sourceLocation()),
+            identifier.location()),
         type.resultType());
 
 
@@ -279,7 +279,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // FIXME: Modify based on annotations
     return new Procedure(
         viamLowering.generateIdentifier(identifier.name() + "::readFunc",
-            identifier.sourceLocation()),
+            identifier.location()),
         new vadl.viam.Parameter[] {indexParam, valueParam},
         graph
     );
@@ -295,7 +295,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
 
   private Pair<BeginNode, BranchEndNode> buildBranch(SubgraphContext branchCtx,
-                                                     WithSourceLocation locatable) {
+                                                     WithLocation locatable) {
     var endNode = addToGraph(new BranchEndNode(branchCtx.sideEffectsOrEmptyList()));
 
     BeginNode beginNode;
@@ -307,8 +307,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
     beginNode = addToGraph(beginNode);
 
-    endNode.setSourceLocation(locatable.sourceLocation());
-    beginNode.setSourceLocation(locatable.sourceLocation());
+    endNode.setSourceLocation(locatable.location());
+    beginNode.setSourceLocation(locatable.location());
     return new Pair<>(beginNode, endNode);
   }
 
@@ -325,7 +325,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   private static BuiltInCall produceNeqToZero(ExpressionNode node) {
     var constNode = new ConstantNode(Constant.Value.of(0, (DataType) node.type()));
-    constNode.setSourceLocation(node.sourceLocation());
+    constNode.setSourceLocation(node.location());
     return BuiltInCall.of(BuiltInTable.NEQ, node, constNode);
   }
 
@@ -336,7 +336,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var result = expr.accept(this);
-    result.setSourceLocationIfNotSet(expr.sourceLocation());
+    result.setSourceLocationIfNotSet(expr.location());
     expressionCache.put(expr, result);
     return result;
   }
@@ -445,7 +445,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       if (letStatement.identifiers.size() > 1) {
         expression = new TupleGetFieldNode(index, expression, letStatement.getTypeOf(innerName));
       }
-      return new LetNode(new LetNode.Name(innerName, letStatement.sourceLocation()), expression);
+      return new LetNode(new LetNode.Name(innerName, letStatement.location()), expression);
     }
     if (computedTarget instanceof LetExpr letExpr) {
       var expression = fetch(letExpr.valueExpr);
@@ -453,7 +453,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       if (letExpr.identifiers.size() > 1) {
         expression = new TupleGetFieldNode(index, expression, letExpr.getTypeOf(innerName));
       }
-      return new LetNode(new LetNode.Name(innerName, letExpr.sourceLocation()), expression);
+      return new LetNode(new LetNode.Name(innerName, letExpr.location()), expression);
     }
 
     // Parameter of a function
@@ -953,7 +953,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
             value,
             null,
             null);
-        write.setSourceLocation(statement.sourceLocation());
+        write.setSourceLocation(statement.location());
         write = Objects.requireNonNull(currentGraph).addWithInputs(write);
         return SubgraphContext.of(statement, write);
       }
@@ -1241,7 +1241,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     var raise = new ProcCallNode(exception, args);
-    raise.setSourceLocation(statement.sourceLocation());
+    raise.setSourceLocation(statement.location());
     return SubgraphContext.of(statement, raise);
   }
 
@@ -1297,7 +1297,7 @@ class SubgraphContext {
           if (blockStart != null && blockStart != node) {
             throw new IllegalStateException(
                 "tried to add %s, but blockStart already set: %s @%s".formatted(node, blockStart,
-                    root.sourceLocation()));
+                    root.location()));
           }
           blockStart = controlNode;
         }
@@ -1307,7 +1307,7 @@ class SubgraphContext {
           if (blockEnd != null && directionalNode.successors().count() == 0) {
             throw new IllegalStateException(
                 "tried to add %s, but blockEnd already set: %s @%s".formatted(node, blockEnd,
-                    root.sourceLocation()));
+                    root.location()));
           }
           blockEnd = directionalNode;
         }
@@ -1323,7 +1323,7 @@ class SubgraphContext {
 
     if ((blockStart == null) != (blockEnd == null)) {
       throw new IllegalStateException(
-          "blockStart and blockEnd must be both set or not set @ " + root.sourceLocation());
+          "blockStart and blockEnd must be both set or not set @ " + root.location());
     }
     if (blockStart != null) {
       ctx.controlBlock = new ControlBlock(blockStart, blockEnd);
@@ -1369,7 +1369,7 @@ class SubgraphContext {
     if (hasControlBlock()) {
       throw new IllegalStateException(
           "expected control block to be null but was " + controlBlock + " @ "
-              + root.sourceLocation());
+              + root.location());
     }
     return this;
   }
@@ -1377,7 +1377,7 @@ class SubgraphContext {
   SubgraphContext ensureNoSideEffects() {
     if (sideEffects != null) {
       throw new IllegalStateException(
-          "expected sideEffects to be null but was " + sideEffects + " @ " + root.sourceLocation());
+          "expected sideEffects to be null but was " + sideEffects + " @ " + root.location());
     }
     return this;
   }
@@ -1386,7 +1386,7 @@ class SubgraphContext {
     if (sideEffects == null || sideEffects.isEmpty()) {
       throw new IllegalStateException(
           "expected sideEffects to exist, but it was " + sideEffects + " @ "
-              + root.sourceLocation());
+              + root.location());
     }
     return this;
   }

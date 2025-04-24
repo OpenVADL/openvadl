@@ -25,6 +25,7 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;

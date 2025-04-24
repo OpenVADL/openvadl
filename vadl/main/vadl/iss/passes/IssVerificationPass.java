@@ -103,10 +103,10 @@ public class IssVerificationPass extends AbstractIssPass {
     var isa = optIsa.get();
     if (isa.pc() == null) {
       diagnostics.add(
-          error("No Program Counter found", isa.identifier.sourceLocation())
-              .locationDescription(isa.sourceLocation(),
+          error("No Program Counter found", isa.identifier.location())
+              .locationDescription(isa.location(),
                   "No `program counter` definition found.")
-              .locationHelp(isa.sourceLocation(), "Add a `program counter` definition.")
+              .locationHelp(isa.location(), "Add a `program counter` definition.")
 
       );
     } else {
@@ -115,8 +115,8 @@ public class IssVerificationPass extends AbstractIssPass {
       if (!pc.registerTensor().isSingleRegister()) {
         diagnostics.add(
             error("Only `program counter` definitions supported",
-                pc.sourceLocation())
-                .locationDescription(pc.sourceLocation(),
+                pc.location())
+                .locationDescription(pc.location(),
                     "This is an alias program counter to a register file. "
                         + "However the ISS generator currently only supports register "
                         + "cell program counters.")
@@ -127,9 +127,9 @@ public class IssVerificationPass extends AbstractIssPass {
         var pcReg = pc.registerTensor();
         if (pcReg.resultType().bitWidth() != 64 && pcReg.resultType().bitWidth() != 32) {
           diagnostics.add(
-              error("Unsupported PC size", pcReg.sourceLocation())
+              error("Unsupported PC size", pcReg.location())
                   .locationDescription(
-                      pcReg.sourceLocation(),
+                      pcReg.location(),
                       "The PC has %s.", pcReg.resultType().bitWidth())
                   .description("We currently only support PCs with a bit-width of 64 or 32.")
                   .note("We have to implement this!")
@@ -188,7 +188,7 @@ public class IssVerificationPass extends AbstractIssPass {
           .findFirst()
           .get()
       ).toList();
-      var location = isa.identifier.sourceLocation();
+      var location = isa.identifier.location();
       var errBuilder = error("Different format sizes", location)
           .locationDescription(location,
               "Found %s different format sizes", formatWidths.size())

@@ -8,8 +8,9 @@
 define ptr @f1() nounwind {
 ; CHECK-LABEL: f1: # @f1
 ; CHECK-LABEL: # %bb.0: # %entry
+; CHECK-LABEL: .Ltmp0:
 ; CHECK-NEXT: AUIPC a0,%got_hi(external_var)
-; CHECK-NEXT: LD a0,%pcrel_lo(external_var)(a0)
+; CHECK-NEXT: LD a0,%pcrel_lo(.Ltmp0)(a0)
 ; CHECK-NEXT: JALR zero,0(ra)
 entry:
   ret ptr @external_var

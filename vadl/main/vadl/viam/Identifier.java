@@ -20,15 +20,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 
 /**
  * Source level identifier class.
  */
 public record Identifier(
     String[] parts,
-    SourceLocation sourceLocation
-) implements WithSourceLocation {
+    SourceLocation location
+) implements WithLocation {
 
   /**
    * Normalize the parts of the identifier by removing leading and trailing dots.
@@ -64,7 +64,7 @@ public record Identifier(
   public Identifier prepend(Identifier scope) {
     return new Identifier(
         Stream.concat(Arrays.stream(scope.parts), Arrays.stream(this.parts)).toArray(String[]::new),
-        this.sourceLocation
+        this.location
     );
   }
 
@@ -81,7 +81,7 @@ public record Identifier(
   public Identifier append(String... parts) {
     return new Identifier(
         Stream.concat(Arrays.stream(this.parts), Arrays.stream(parts)).toArray(String[]::new),
-        this.sourceLocation
+        this.location
     );
   }
 
@@ -91,7 +91,7 @@ public record Identifier(
   public Identifier extendSimpleName(String suffix) {
     return new Identifier(
         Arrays.copyOf(this.parts, this.parts.length - 1),
-        this.sourceLocation
+        this.location
     ).append(this.parts[this.parts.length - 1] + suffix);
   }
 
@@ -113,7 +113,7 @@ public record Identifier(
    */
   public Identifier tail() {
     return new Identifier(Arrays.stream(this.parts()).skip(1).toArray(String[]::new),
-        sourceLocation);
+        location);
   }
 
   @Override

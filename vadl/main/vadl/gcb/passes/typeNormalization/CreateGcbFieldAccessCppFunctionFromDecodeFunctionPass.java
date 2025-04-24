@@ -71,7 +71,7 @@ public class CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass extends Pass 
                 () -> Diagnostic.error(
                     "Decoding function must not be null. Maybe it does not exist "
                         + "or was not generated?",
-                    fieldAccess.sourceLocation())
+                    fieldAccess.location())
             )))
         .forEach(pair -> {
           var function = createGcbFieldAccessCppFunction(pair.right(), pair.left());

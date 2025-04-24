@@ -152,7 +152,7 @@ public class LlvmInstructionLoweringLessThanSignedConditionalsStrategyImpl
     return ensurePresent(supportedInstructions.getOrDefault(label, Collections.emptyList())
             .stream().findFirst(),
         () -> Diagnostic.error(String.format("No instruction with label '%s' detected.", label),
-            instruction.sourceLocation()));
+            instruction.location()));
   }
 
   /**

@@ -126,7 +126,7 @@ public class AsmParserFunctionCodeGenerator extends FunctionCodeGenerator {
       );
       ctx.wr("})");
     } else {
-      throw Diagnostic.error("Unknown AsmBuiltin.", toHandle.sourceLocation()).build();
+      throw Diagnostic.error("Unknown AsmBuiltin.", toHandle.location()).build();
     }
   }
 }

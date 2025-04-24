@@ -23,7 +23,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
+import vadl.utils.WithLocation;
 
 /**
  * The abstract syntax tree for the vadl language.
@@ -101,14 +101,15 @@ public class Ast {
   }
 }
 
-abstract class Node implements WithSourceLocation {
+abstract class Node implements WithLocation {
   @Nullable
   SymbolTable symbolTable;
 
   SymbolTable symbolTable() {
     if (symbolTable == null) {
       throw new IllegalStateException(
-          "Node " + this + " should have received a symbol table in a previous pass");
+          "Node `%s` should have received a symbol table in a previous pass, found at: %s"
+              .formatted(toString(), location().toIDEString()));
     }
     return symbolTable;
   }
@@ -123,12 +124,6 @@ abstract class Node implements WithSourceLocation {
         || n instanceof Statement || n instanceof Definition;
   }
 
-  abstract SourceLocation location();
-
-  @Override
-  public final SourceLocation sourceLocation() {
-    return location();
-  }
 
   abstract SyntaxType syntaxType();
 
@@ -152,7 +147,9 @@ abstract class Node implements WithSourceLocation {
   }
 }
 
-
+/**
+ * A node that can be identified by an identifier.
+ */
 interface IdentifiableNode {
   Identifier identifier();
 }
@@ -172,7 +169,7 @@ final class BinOp extends Node implements IsBinOp {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -220,7 +217,7 @@ final class UnOp extends Node implements IsUnOp {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -269,7 +266,7 @@ class RecordInstance extends Node {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return sourceLocation;
   }
 
@@ -305,7 +302,7 @@ class MacroReference extends Node {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return sourceLocation;
   }
 

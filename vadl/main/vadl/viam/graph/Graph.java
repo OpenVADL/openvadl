@@ -36,6 +36,7 @@ import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.InstrEndNode;
+import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.DependencyNode;
@@ -201,7 +202,7 @@ public class Graph {
         return target;
       }
 
-      target.setSourceLocationIfNotSet(node.sourceLocation());
+      target.setSourceLocationIfNotSet(node.location());
       target.ensure(!target.isDeleted(), "cannot add deleted input node");
       var newT = addWithInputs(target);
       // just return the new target AND the node, as the original one is not initialized and thus
@@ -304,6 +305,7 @@ public class Graph {
   public boolean isPseudoInstruction() {
     return getNodes(ControlNode.class).allMatch(
         e -> e instanceof InstrCallNode || e instanceof StartNode || e instanceof InstrEndNode
+            || e instanceof NewLabelNode
     ) && getNodes(ParamNode.class).allMatch(e -> e instanceof FuncParamNode);
   }
 

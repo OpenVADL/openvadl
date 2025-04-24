@@ -107,7 +107,7 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
                       .filter(x -> x.relocation().equals(mapping.getRelocation()))
                       .findFirst(), () -> Diagnostic.error(
                       "Cannot find an ELF relocation for the given relocation function.",
-                      mapping.getRelocation().sourceLocation()));
+                      mapping.getRelocation().location()));
 
           var variantKind = elfRelocation.variantKind();
           return Map.of(

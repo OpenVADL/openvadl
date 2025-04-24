@@ -63,11 +63,11 @@ public class LcbConstantNodeReplacement
       DeferredDiagnosticStore.add(
           Diagnostic.warning("Constant must be upcasted but it has multiple candidates. "
                   + "The compiler generator considered only the first type as upcast.",
-              node.sourceLocation()).build());
+              node.location()).build());
     } else if (distinctTypes.isEmpty()) {
       DeferredDiagnosticStore.add(
           Diagnostic.warning("Constant must be upcasted but it has no candidates.",
-              node.sourceLocation()).build());
+              node.location()).build());
       return node;
     }
 

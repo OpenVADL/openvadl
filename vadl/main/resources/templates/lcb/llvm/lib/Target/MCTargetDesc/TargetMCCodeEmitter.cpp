@@ -132,18 +132,19 @@ void [(${namespace})]MCCodeEmitter::encodeInstruction(const MCInst &MCI, raw_ost
 
     if (MCInstExpander.isExpandable(MCI))
     {
-        MCInstExpander.expand(MCI, resultVec);
+        MCInstExpander.expand(MCI, [&](const MCInst &MI) {
+          encodeNonPseudoInstruction(MI, OS, Fixups, STI);
+          const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
+          unsigned Size = Desc.getSize();
+          Offset += Size;
+        },
+        [&](MCSymbol* Symbol) {
+        });
     }
     else
     {
-        resultVec.push_back(MCI);
-    }
-
-    for (auto it = std::begin(resultVec); it != std::end(resultVec); ++it)
-    {
-        MCInst MI = *it;
-        encodeNonPseudoInstruction(MI, OS, Fixups, STI);
-        const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
+        encodeNonPseudoInstruction(MCI, OS, Fixups, STI);
+        const MCInstrDesc &Desc = MCII.get(MCI.getOpcode());
         unsigned Size = Desc.getSize();
         Offset += Size;
     }

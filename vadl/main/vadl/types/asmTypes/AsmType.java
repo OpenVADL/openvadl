@@ -58,7 +58,6 @@ public interface AsmType {
       Map.entry(SymbolAsmType.instance().name(), SymbolAsmType.instance()),
       Map.entry(VoidAsmType.instance().name(), VoidAsmType.instance()),
       Map.entry(StatementsAsmType.instance().name(), StatementsAsmType.instance()),
-      Map.entry(InstructionsAsmType.instance().name(), InstructionsAsmType.instance()),
       Map.entry(OperandsAsmType.instance().name(), OperandsAsmType.instance())
   ));
 

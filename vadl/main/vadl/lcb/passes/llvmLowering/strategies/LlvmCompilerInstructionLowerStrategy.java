@@ -78,7 +78,7 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
           Diagnostic.warning(
               "Cannot generate instruction selectors for pseudo instruction with multiple "
                   + "machine instructions",
-              compilerInstruction.sourceLocation()).build());
+              compilerInstruction.location()).build());
     }
 
 
@@ -218,7 +218,7 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
                               "There is no constraint value for this register. "
                                   +
                                   "Therefore, we cannot generate instruction selectors for it.",
-                              occurrence.sourceLocation()).build());
+                              occurrence.location()).build());
                         }
                       });
 

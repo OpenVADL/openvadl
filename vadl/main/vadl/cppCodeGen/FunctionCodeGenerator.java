@@ -26,6 +26,7 @@ import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;

@@ -170,7 +170,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     var brcc = ensurePresent(
         behavior.getNodes(LlvmBrCcSD.class)
             .findFirst(), () -> Diagnostic.error("Cannot find a comparison in the behavior",
-            instruction.sourceLocation()));
+            instruction.location()));
     var register = (ReadRegFileNode) brcc.first();
     var llvmRegisterNode =
         new LlvmReadRegFileNode(register.registerFile(),
@@ -197,7 +197,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
         ensurePresent(
             Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
                 .findFirst(),
-            () -> Diagnostic.error("Cannot find zero constraint", registerFile.sourceLocation()));
+            () -> Diagnostic.error("Cannot find zero constraint", registerFile.location()));
     var constant =
         new Constant.Str(
             registerFile.simpleName() + zeroConstraint.indices().getFirst().intValue());

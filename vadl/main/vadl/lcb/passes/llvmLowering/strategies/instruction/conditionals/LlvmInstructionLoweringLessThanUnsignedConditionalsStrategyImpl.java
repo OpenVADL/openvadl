@@ -151,7 +151,7 @@ public class LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl
     return ensurePresent(supportedInstructions.getOrDefault(label, Collections.emptyList())
             .stream().findFirst(),
         () -> Diagnostic.error(String.format("No instruction with label '%s' detected.", label),
-            instruction.sourceLocation()));
+            instruction.location()));
   }
 
   /**
@@ -303,7 +303,7 @@ public class LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl
                       xor.behavior().getNodes(ReadRegFileNode.class).map(
                               ReadRegFileNode::registerFile)
                           .findFirst(),
-                      () -> Diagnostic.error("Cannot find a register", xor.sourceLocation()));
+                      () -> Diagnostic.error("Cannot find a register", xor.location()));
 
               var zeroConstraint =
                   ensurePresent(
@@ -311,7 +311,7 @@ public class LlvmInstructionLoweringLessThanUnsignedConditionalsStrategyImpl
                           .filter(x -> x.value().intValue() == 0)
                           .findFirst(),
                       () -> Diagnostic.error("Cannot find zero register for register file",
-                          registerFile.sourceLocation()));
+                          registerFile.location()));
               // Cannot construct a `ReadReg` because this register does not really exist.
               // (for the VIAM spec)
               var zeroRegister = new ConstantNode(

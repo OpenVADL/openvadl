@@ -24,7 +24,7 @@ frontend:
       - any-glob-to-any-file:
           - vadl/main/vadl/ast/**
 
-rtl:
+hardware:
   - changed-files:
       - any-glob-to-any-file:
           - vadl/main/vadl/rtl/**

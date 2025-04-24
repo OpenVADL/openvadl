@@ -33,7 +33,6 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
-import vadl.utils.WithSourceLocation;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.asm.AsmToken;
 
@@ -196,7 +195,7 @@ class Parameter extends Definition implements IdentifiableNode, TypedNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return name.location().join(typeLiteral.location());
   }
 
@@ -284,7 +283,7 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -381,7 +380,7 @@ class RangeFormatField extends FormatField {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return identifier.location().join(ranges.get(ranges.size() - 1).location());
   }
 
@@ -454,7 +453,7 @@ class TypedFormatField extends FormatField {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return identifier().location().join(typeLiteral.location());
   }
 
@@ -544,7 +543,7 @@ class DerivedFormatField extends FormatField {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return identifier.location().join(expr.location());
   }
 
@@ -636,7 +635,7 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     }
 
     @Override
-    SourceLocation location() {
+    public SourceLocation location() {
       return entries.get(0).id.location().join(entries.get(entries.size() - 1).expr.location());
     }
 
@@ -793,7 +792,7 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -900,7 +899,7 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -996,7 +995,7 @@ class CounterDefinition extends Definition implements IdentifiableNode, TypedNod
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1077,7 +1076,7 @@ class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1157,7 +1156,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1233,7 +1232,7 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1326,7 +1325,7 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
 
 
     @Override
-    SourceLocation location() {
+    public SourceLocation location() {
       return argTypes.get(0).location().join(resultType.location());
     }
 
@@ -1386,7 +1385,7 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1459,7 +1458,7 @@ abstract class InstructionSequenceDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 }
@@ -1588,7 +1587,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode, Typed
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1658,7 +1657,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode, Typed
 
 sealed interface IsEncs permits EncodingDefinition.EncsNode,
     EncodingDefinition.EncodingField, PlaceholderNode, MacroInstanceNode, MacroMatchNode {
-  SourceLocation location();
+  public SourceLocation location();
 
   void prettyPrint(int indent, StringBuilder builder);
 }
@@ -1685,7 +1684,7 @@ class EncodingDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1860,7 +1859,7 @@ class AssemblyDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -1936,7 +1935,7 @@ class UsingDefinition extends Definition implements IdentifiableNode {
 
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2014,7 +2013,7 @@ class FunctionDefinition extends Definition implements IdentifiableNode, TypedNo
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2125,7 +2124,7 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
 
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2234,7 +2233,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2300,10 +2299,11 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     return result;
   }
 
-  static class Entry extends Node implements WithSourceLocation {
+  // FIXME: this should be a definition.
+  static class Entry extends Node implements IdentifiableNode {
 
-    @Child
     Identifier name;
+
     @Nullable
     @Child
     Expr value;
@@ -2315,10 +2315,10 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
     }
 
     @Override
-    SourceLocation location() {
-      var loc = name.sourceLocation();
+    public SourceLocation location() {
+      var loc = name.location();
       if (value != null) {
-        loc = loc.join(value.sourceLocation());
+        loc = loc.join(value.location());
       }
       return loc;
     }
@@ -2353,6 +2353,11 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
       result = 31 * result + Objects.hashCode(value);
       return result;
     }
+
+    @Override
+    public Identifier identifier() {
+      return name;
+    }
   }
 }
 
@@ -2380,7 +2385,7 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2452,7 +2457,7 @@ final class PlaceholderDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2491,7 +2496,7 @@ final class MacroInstanceDefinition extends Definition implements IsMacroInstanc
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2628,7 +2633,7 @@ class ImportDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2781,7 +2786,7 @@ class DefinitionList extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return location;
   }
 
@@ -2861,7 +2866,7 @@ final class ModelDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2933,7 +2938,7 @@ final class RecordTypeDefinition extends Definition implements IdentifiableNode 
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -2998,7 +3003,7 @@ final class ModelTypeDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3060,7 +3065,7 @@ class TemplateParam extends Node implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     if (value != null) {
       return name.location().join(value.location());
     }
@@ -3133,7 +3138,7 @@ class ProcessDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3212,7 +3217,7 @@ class OperationDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3296,7 +3301,7 @@ class GroupDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3369,7 +3374,7 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3440,7 +3445,7 @@ class AbiPseudoInstructionDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3527,7 +3532,7 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3601,7 +3606,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3730,7 +3735,7 @@ class MicroProcessorDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3837,7 +3842,7 @@ class PatchDefinition extends Definition {
 
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3907,7 +3912,7 @@ class SourceDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -3971,7 +3976,7 @@ class CpuFunctionDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4055,7 +4060,7 @@ class CpuProcessDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4132,7 +4137,7 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4202,7 +4207,7 @@ class MacroInstructionDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4282,7 +4287,7 @@ class PortBehaviorDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4362,7 +4367,7 @@ class PipelineDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4432,7 +4437,7 @@ class StageDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4500,7 +4505,7 @@ class CacheDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4562,7 +4567,7 @@ class LogicDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4621,7 +4626,7 @@ class SignalDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4706,7 +4711,7 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4825,7 +4830,7 @@ class AsmModifierDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4888,7 +4893,7 @@ class AsmDirectiveDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -4976,7 +4981,7 @@ class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -5052,8 +5057,7 @@ class AsmGrammarAlternativesDefinition extends Definition {
   List<Node> children() {
     // This is too complicated for the @Child annotation
     return alternatives.stream()
-        .flatMap(l -> l.stream()
-            .flatMap(a -> a.children().stream()))
+        .flatMap(l -> l.stream().map(a -> (Node) a))
         .filter(Objects::nonNull)
         .toList();
   }
@@ -5068,7 +5072,7 @@ class AsmGrammarAlternativesDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -5133,7 +5137,7 @@ class AsmGrammarAlternativesDefinition extends Definition {
  * Represents an element in an assembly grammar rule.
  * An element is the basic building block of which rules are made of.
  * <p>
- * An element can be any of:
+ * An element can be any, or multiple of:
  * <li>local variable definition</li>
  * <li>rule invocation</li>
  * <li>vadl function invocation</li>
@@ -5212,7 +5216,7 @@ class AsmGrammarElementDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -5320,7 +5324,7 @@ class AsmGrammarLocalVarDefinition extends Definition implements IdentifiableNod
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -5409,7 +5413,7 @@ class AsmGrammarLiteralDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 
@@ -5466,6 +5470,7 @@ class AsmGrammarLiteralDefinition extends Definition {
  * Contains the identifier of the type to be cast to.
  */
 class AsmGrammarTypeDefinition extends Definition {
+  @Child
   Identifier id;
   SourceLocation loc;
 
@@ -5480,7 +5485,7 @@ class AsmGrammarTypeDefinition extends Definition {
   }
 
   @Override
-  SourceLocation location() {
+  public SourceLocation location() {
     return loc;
   }
 

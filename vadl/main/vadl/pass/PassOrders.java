@@ -99,6 +99,7 @@ import vadl.template.AbstractTemplateRenderingPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.viam.Specification;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
+import vadl.viam.passes.HardcodeLGALabelPass;
 import vadl.viam.passes.InstructionResourceAccessAnalysisPass;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
@@ -162,6 +163,9 @@ public class PassOrders {
     order.add(new AlgebraicSimplificationPass(configuration));
     order.add(new BehaviorRewritePass(configuration));
     order.add(new InstructionResourceAccessAnalysisPass(configuration));
+
+    // Hardcoded
+    order.add(new HardcodeLGALabelPass(configuration));
 
     // verification after viam optimizations
     order.add(new ViamVerificationPass(configuration));
