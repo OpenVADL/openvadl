@@ -48,4 +48,9 @@ public class AsmParserRiscv32FileCheckTest extends AsmFileCheckTest {
   protected String getComponent() {
     return "parser";
   }
+
+  @Override
+  protected String getAbi() {
+    return "ilp32";
+  }
 }

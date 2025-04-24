@@ -31,7 +31,6 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.AbstractLcbTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -51,6 +50,8 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
   protected abstract String getSpecPath();
 
   protected abstract String getSpikeTarget();
+
+  protected abstract String getAbi();
 
   private static Stream<String> inputFilesFromCFile() {
     return Arrays.stream(
@@ -85,7 +86,7 @@ public abstract class LlvmRiscvAssemblyTest extends AbstractLcbTest {
 
     var cachedImage =
         SpikeRiscvImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
-            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), false);
+            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), getAbi(), false);
 
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
