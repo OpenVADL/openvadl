@@ -44,11 +44,11 @@ import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
-import vadl.viam.Register;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -115,7 +115,9 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
             ensurePresent(selector.getNodes(LlvmAddSD.class).findFirst(),
                 "There must be an addition");
         var register = ensurePresent(
-            addition.arguments().stream().filter(x -> x instanceof ReadRegFileNode).findFirst(),
+            addition.arguments().stream()
+                .filter(x -> x instanceof ReadRegTensorNode readRegTensorNode
+                    && readRegTensorNode.regTensor().isRegisterFile()).findFirst(),
             () -> Diagnostic.error("Expected a register node as child.",
                 addition.sourceLocation()));
 
@@ -142,11 +144,11 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   }
 
   /**
-   * Instructions in {@link MachineInstructionLabel#STORE_MEM} write from a {@link Register} into
+   * Instructions in {@link MachineInstructionLabel#STORE_MEM} write from a register into
    * {@link Memory}. However, LLVM has a special selection dag node for frame indexes.
    * Function's variables are placed on the stack and will be accessed relative to a frame pointer.
    * LLVM has for the lowering a frame index leaf node which requires additional patterns.
-   * The goal of this method is to replace a {@link Register} with {@link LlvmFrameIndexSD}
+   * The goal of this method is to replace a {@link RegisterTensor} with {@link LlvmFrameIndexSD}
    * which has a LLVM's {@code ComplexPattern} hardcoded.
    */
   private List<TableGenPattern> replaceRegisterWithFrameIndex(List<TableGenPattern> patterns) {

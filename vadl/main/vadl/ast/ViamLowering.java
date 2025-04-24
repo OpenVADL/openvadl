@@ -386,7 +386,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         (PseudoInstruction) fetch(pseudoAbsoluteAddressLoadDef).orElseThrow();
 
     // Aliases
-    Map<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>> aliases =
+    Map<Pair<RegisterTensor, Integer>, List<Abi.RegisterAlias>> aliases =
         aliasLookup.entrySet()
             .stream()
             .collect(
@@ -402,7 +402,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
                       return existing;
                     }));
 
-    Map<RegisterFile, Abi.Alignment> registerFileAlignment =
+    Map<RegisterTensor, Abi.Alignment> registerFileAlignment =
         definitionCache.keySet()
             .stream().filter(x -> x instanceof RegisterFileDefinition)
             .map(x -> (RegisterFileDefinition) x)
@@ -1497,7 +1497,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   /**
    * An expression {@code X(0)} should be returned as a pair.
    */
-  private Pair<RegisterFile, Integer> getRegisterFile(Expr expr) {
+  private Pair<RegisterTensor, Integer> getRegisterFile(Expr expr) {
     if (expr instanceof CallIndexExpr callExpr
         && callExpr.symbolTable != null
         && callExpr.target instanceof Identifier identifier) {

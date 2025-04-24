@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
@@ -47,7 +48,7 @@ import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -70,13 +71,14 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     return "llvm/lib/Target/" + processorName + "/" + processorName + "ISelLowering.cpp";
   }
 
-  static class LlvmRegisterFile extends RegisterFile {
+  static class LlvmRegisterFile extends RegisterTensor {
 
     /**
      * Constructs a new RegisterFile object.
      **/
-    public LlvmRegisterFile(RegisterFile registerFile) {
-      super(registerFile.identifier, registerFile.addressType(), registerFile.resultType(),
+    public LlvmRegisterFile(RegisterTensor registerFile) {
+      super(registerFile.identifier,
+          registerFile.dimensions(),
           registerFile.constraints());
     }
 

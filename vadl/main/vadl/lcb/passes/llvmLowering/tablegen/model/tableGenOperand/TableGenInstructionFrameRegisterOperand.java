@@ -18,13 +18,12 @@ package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
-import vadl.viam.Register;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
- * Indicates that the operand is a {@link Register} which is the frame pointer.
+ * Indicates that the operand is a register which is the frame pointer.
  */
 public class TableGenInstructionFrameRegisterOperand extends TableGenInstructionOperand {
 

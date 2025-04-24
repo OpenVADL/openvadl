@@ -21,11 +21,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import org.apache.commons.io.FilenameUtils;
 import vadl.configuration.GeneralConfiguration;
 import vadl.configuration.LcbConfiguration;
 import vadl.template.AbstractTemplateRenderingPass;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 
 /**
  * Abstracts the subdir under the output.
@@ -39,7 +38,7 @@ public abstract class LcbTemplateRenderingPass extends AbstractTemplateRendering
     return (LcbConfiguration) configuration();
   }
 
-  protected String renderRegister(RegisterFile registerFile, int addr) {
+  protected String renderRegister(RegisterTensor registerFile, int addr) {
     return registerFile.identifier.simpleName() + addr;
   }
 

@@ -20,13 +20,13 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
  * Replacement strategy for nodes.
  */
 public class LcbReadRegNodeReplacement
-    implements GraphVisitor.NodeApplier<ReadRegNode, ReadRegNode> {
+    implements GraphVisitor.NodeApplier<ReadRegTensorNode, ReadRegTensorNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
   public LcbReadRegNodeReplacement(
@@ -36,7 +36,7 @@ public class LcbReadRegNodeReplacement
 
   @Nullable
   @Override
-  public ReadRegNode visit(ReadRegNode node) {
+  public ReadRegTensorNode visit(ReadRegTensorNode node) {
     if (node.hasAddress()) {
       visitApplicable(node.address());
     }
@@ -46,7 +46,8 @@ public class LcbReadRegNodeReplacement
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof ReadRegNode;
+    return node instanceof ReadRegTensorNode readRegTensorNode
+        && readRegTensorNode.regTensor().isSingleRegister();
   }
 
   @Override

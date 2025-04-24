@@ -17,17 +17,16 @@
 package vadl.gcb.valuetypes;
 
 import java.util.List;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 
 /**
  * Like a {@link CompilerRegister} but it is the concrete implementation which are not indexed.
  * This distinction is important since not all {@link CompilerRegister} are indexed e.g. PC.
  * A {@link GeneralCompilerRegister} is exactly for registers like PC which are not defined over a
- * {@link RegisterFile}.
+ * register file.
  */
 public class GeneralCompilerRegister extends CompilerRegister {
-  public GeneralCompilerRegister(Register register,
+  public GeneralCompilerRegister(RegisterTensor register,
                                  String asmName,
                                  List<String> altNames,
                                  int dwarfNumber) {
@@ -35,9 +34,10 @@ public class GeneralCompilerRegister extends CompilerRegister {
   }
 
   /**
-   * Generate the internal compiler name from a {@link Register}.
+   * Generate the internal compiler name from a register.
    */
-  public static String generateName(Register register) {
+  public static String generateName(RegisterTensor register) {
+    register.ensure(register.isSingleRegister(), "must be single register");
     return register.simpleName();
   }
 }

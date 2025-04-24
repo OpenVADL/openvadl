@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.NodeList;
@@ -41,7 +42,7 @@ public class ReadRegFileNode extends ReadRegTensorNode implements HasRegisterFil
    * @param staticCounterAccess the {@link Counter} this node reads from, or null if
    *                            it is not known
    */
-  public ReadRegFileNode(RegisterFile registerFile, ExpressionNode address,
+  public ReadRegFileNode(RegisterTensor registerFile, ExpressionNode address,
                          DataType type, @Nullable Counter staticCounterAccess) {
     super(registerFile, new NodeList<>(address), type, staticCounterAccess);
   }

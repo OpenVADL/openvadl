@@ -26,13 +26,13 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.cppCodeGen.SymbolTable;
+import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.viam.Instruction;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -219,9 +219,7 @@ public class TranslationValidation {
 
   private String getVariableDefinitions(Specification specification, Instruction before) {
     return Streams.concat(
-        specification.registerFiles()
-            .map(this::declareVariable),
-        specification.registers()
+        specification.registerTensors()
             .map(this::declareVariable),
         before.behavior().getNodes(FuncCallNode.class)
             .map(this::declareVariable),
@@ -247,16 +245,19 @@ public class TranslationValidation {
   }
 
 
-  private String declareVariable(RegisterFile registerFile) {
-    var name = registerFile.identifier.simpleName();
-    var addrSort = getZ3Sort(registerFile.addressType());
-    var resSort = getZ3Sort(registerFile.resultType());
-    return String.format("%s = Array('%s', %s, %s)", name, name, addrSort, resSort);
-  }
+  private String declareVariable(RegisterTensor registerTensor) {
+    if (registerTensor.isRegisterFile()) {
+      var name = registerTensor.identifier.simpleName();
+      var addrSort = getZ3Sort(Objects.requireNonNull(registerTensor.addressType()));
+      var resSort = getZ3Sort(registerTensor.resultType());
+      return String.format("%s = Array('%s', %s, %s)", name, name, addrSort, resSort);
+    } else if (registerTensor.isSingleRegister()) {
+      var name = registerTensor.identifier.simpleName();
+      return String.format("%s = %s", name, getZ3Type(name, registerTensor.resultType()));
+    }
 
-  private String declareVariable(Register register) {
-    var name = register.identifier.simpleName();
-    return String.format("%s = %s", name, getZ3Type(name, register.resultType()));
+    throw Diagnostic.error("Cannot validate register tensor", registerTensor.sourceLocation())
+        .build();
   }
 
   private String declareVariable(FuncCallNode node) {

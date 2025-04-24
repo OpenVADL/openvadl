@@ -27,13 +27,13 @@ import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Replacement strategy for nodes.
  */
 public class LcbWriteRegNodeReplacement
-    implements GraphVisitor.NodeApplier<WriteRegNode, WriteRegNode> {
+    implements GraphVisitor.NodeApplier<WriteRegTensorNode, WriteRegTensorNode> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
   public LcbWriteRegNodeReplacement(
@@ -43,7 +43,7 @@ public class LcbWriteRegNodeReplacement
 
   @Nullable
   @Override
-  public WriteRegNode visit(WriteRegNode writeRegNode) {
+  public WriteRegTensorNode visit(WriteRegTensorNode writeRegNode) {
     if (writeRegNode.hasAddress()) {
       visitApplicable(writeRegNode.address());
     }
@@ -67,6 +67,9 @@ public class LcbWriteRegNodeReplacement
         if (condCond == null) {
           throw new ViamError("CondCode must be not null");
         }
+
+        visitApplicable(conditional.arguments().get(0));
+        visitApplicable(conditional.arguments().get(1));
 
         var first = conditional.arguments().get(0);
         var second = conditional.arguments().get(1);
@@ -92,7 +95,8 @@ public class LcbWriteRegNodeReplacement
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof WriteRegNode;
+    return node instanceof WriteRegTensorNode writeRegTensorNode
+        && writeRegTensorNode.regTensor().isSingleRegister();
   }
 
   @Override

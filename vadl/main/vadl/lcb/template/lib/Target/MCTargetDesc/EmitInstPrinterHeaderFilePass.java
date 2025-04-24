@@ -22,6 +22,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -53,7 +54,8 @@ public class EmitInstPrinterHeaderFilePass extends LcbTemplateRenderingPass {
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
     var registerFiles =
-        specification.registerFiles().map(x -> new RegisterClass(x.identifier.simpleName()))
+        specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+            .map(x -> new RegisterClass(x.identifier.simpleName()))
             .toList();
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),

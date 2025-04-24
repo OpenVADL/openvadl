@@ -42,7 +42,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Abstract class to lower {@link CompilerInstruction} to {@link LlvmLoweringRecord.Compiler}.
@@ -228,10 +228,11 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
                   // constant node as address which has a constraint. If that's the case, then we
                   // can remove the side effect.
                   occurrence.usages()
-                      .filter(node -> node instanceof WriteRegFileNode writeRegFileNode
-                          && writeRegFileNode.hasConstantAddress()
+                      .filter(node -> node instanceof WriteRegTensorNode writeRegTensorNode
+                          && writeRegTensorNode.regTensor().isRegisterFile()
+                          && writeRegTensorNode.hasConstantAddress()
                           // Check if there is a constraint for this register index.
-                          && Arrays.stream(writeRegFileNode.registerFile().constraints())
+                          && Arrays.stream(writeRegTensorNode.regTensor().constraints())
                           .anyMatch(constraint -> constraint.indices().getFirst().intValue()
                               == constantNode.constant().asVal().intValue()))
                       .forEach(Node::safeDelete);

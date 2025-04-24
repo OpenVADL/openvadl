@@ -33,16 +33,14 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.matching.Matcher;
 
@@ -91,12 +89,7 @@ public class AnyChildMatcher implements Matcher {
     }
 
     @Override
-    public void visit(WriteRegNode node) {
-      matched |= matcher.matches(node);
-    }
-
-    @Override
-    public void visit(WriteRegFileNode node) {
+    public void visit(WriteRegTensorNode node) {
       matched |= matcher.matches(node);
     }
 
@@ -122,12 +115,7 @@ public class AnyChildMatcher implements Matcher {
     }
 
     @Override
-    public void visit(ReadRegNode node) {
-      matched |= matcher.matches(node);
-    }
-
-    @Override
-    public void visit(ReadRegFileNode node) {
+    public void visit(ReadRegTensorNode node) {
       matched |= matcher.matches(node);
     }
 

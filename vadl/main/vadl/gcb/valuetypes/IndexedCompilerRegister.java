@@ -22,15 +22,16 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import vadl.error.Diagnostic;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 
 /**
- * Like a {@link CompilerRegister} but contains the index in the {@link RegisterFile}.
+ * Like a {@link CompilerRegister} but contains the index in the register file.
  * This distinction is important since not all {@link CompilerRegister} are indexed e.g. PC.
  */
 public class IndexedCompilerRegister extends CompilerRegister {
@@ -40,29 +41,29 @@ public class IndexedCompilerRegister extends CompilerRegister {
   /**
    * Constructor.
    */
-  public IndexedCompilerRegister(RegisterFile registerFile,
+  public IndexedCompilerRegister(RegisterTensor registerFile,
                                  int index,
                                  String asmName,
                                  List<String> altNames,
                                  int dwarfNumber) {
-    super(registerFile.generateName(index), asmName, altNames, dwarfNumber, index);
+    super(registerFile.generateRegisterFileName(index), asmName, altNames, dwarfNumber, index);
     this.index = index;
   }
 
   /**
-   * Generate {@link CompilerRegister} from {@link RegisterFile}.
+   * Generate {@link CompilerRegister} from registerFile.
    *
    * @param registerFile      is the register file from which the registers should be generated
    *                          from.
    * @param abi               for the compiler.
    * @param dwarfNumberOffset is the offset for calculating the dwarf numbers because we cannot
-   *                          assume that there is only one {@link RegisterFile}.
+   *                          assume that there is only one register file.
    * @return a list of registers generated from the register file.
    */
-  public static List<CompilerRegister> fromRegisterFile(RegisterFile registerFile,
+  public static List<CompilerRegister> fromRegisterFile(RegisterTensor registerFile,
                                                         Abi abi,
                                                         int dwarfNumberOffset) {
-    var bitWidth = registerFile.addressType().bitWidth();
+    var bitWidth = Objects.requireNonNull(registerFile.addressType()).bitWidth();
     var numberOfRegisters = (int) Math.pow(2, bitWidth);
     var all = IntStream.range(0, numberOfRegisters).boxed().collect(Collectors.toSet());
 
@@ -76,7 +77,7 @@ public class IndexedCompilerRegister extends CompilerRegister {
               .stream().findFirst(),
           () -> Diagnostic.error(
               String.format("The aliases for a register file's register '%s' are not defined",
-                  registerFile.generateName(addr)),
+                  registerFile.generateRegisterFileName(addr)),
               registerFile.sourceLocation().join(abi.sourceLocation())));
 
       int dwarfNumber = dwarfNumberOffset + addr;
