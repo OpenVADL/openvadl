@@ -129,7 +129,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
             tableGenMachineInstructions).stream()
             .sorted(Comparator.comparing(o -> o.instruction.identifier.name())).toList(),
         "registerClasses",
-        specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
+        specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+            .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
             .toList());
   }
 
@@ -146,7 +147,8 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
 
   private List<ReservedRegister> getConstraints(Specification specification) {
     var reserved = new ArrayList<ReservedRegister>();
-    var registerFiles = specification.registerFiles().toList();
+    var registerFiles =
+        specification.registerTensors().filter(RegisterTensor::isRegisterFile).toList();
 
     for (var registerFile : registerFiles) {
       for (var constraint : registerFile.constraints()) {

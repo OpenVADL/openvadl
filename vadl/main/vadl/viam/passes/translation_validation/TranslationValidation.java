@@ -32,7 +32,6 @@ import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.viam.Instruction;
-import vadl.viam.Register;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
@@ -259,11 +258,6 @@ public class TranslationValidation {
 
     throw Diagnostic.error("Cannot validate register tensor", registerTensor.sourceLocation())
         .build();
-  }
-
-  private String declareVariable(Register register) {
-    var name = register.identifier.simpleName();
-    return String.format("%s = %s", name, getZ3Type(name, register.resultType()));
   }
 
   private String declareVariable(FuncCallNode node) {

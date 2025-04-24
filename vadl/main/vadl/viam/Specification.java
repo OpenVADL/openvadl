@@ -118,17 +118,6 @@ public class Specification extends Definition {
   }
 
   /**
-   * Returns all register files as stream.
-   * So all register tensors that have one index dimension (two dimensions in total).
-   *
-   * @deprecated Use the {@link #registerTensors()} method instead.
-   */
-  @Deprecated
-  public Stream<RegisterTensor> registerFiles() {
-    return registerTensors().filter(RegisterTensor::isRegisterFile);
-  }
-
-  /**
    * Returns a stream of all format definitions within the specification, including the ones
    * nested within instruction set architectures.
    *

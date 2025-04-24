@@ -176,7 +176,9 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("compiler", renderedTableGenCompilerInstructionsRecords);
     map.put("instAliases", renderedTableGenInstAliases);
     map.put("patterns", renderedPatterns);
-    map.put("registerFiles", specification.registerFiles().map(this::map).toList());
+    map.put("registerFiles",
+        specification.registerTensors().filter(RegisterTensor::isRegisterFile).map(this::map)
+            .toList());
     map.put("returnInstruction", abi.returnSequence().identifier.simpleName());
     map.put("callInstruction", abi.callSequence().identifier.simpleName());
     map.put("lga", abi.globalAddressLoad().map(x -> x.identifier.simpleName()).orElse(""));
