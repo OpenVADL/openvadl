@@ -52,7 +52,7 @@ public class WriteRegFileNode extends WriteRegTensorNode implements HasRegisterF
   public WriteRegFileNode(RegisterFile registerFile, ExpressionNode address,
                           ExpressionNode value,
                           @Nullable Counter staticCounterAccess) {
-    super(registerFile, new NodeList<>(address), value, staticCounterAccess);
+    super(registerFile, new NodeList<>(address), value, staticCounterAccess, null);
   }
 
   /**

@@ -38,12 +38,16 @@ public abstract class WriteResourceNode extends SideEffectNode {
   @Input
   protected ExpressionNode value;
 
+  // TODO: Remove
   public WriteResourceNode(@Nullable ExpressionNode address, ExpressionNode value) {
+    super(null);
     this.indices = address == null ? new NodeList<>() : new NodeList<>(address);
     this.value = value;
   }
 
-  public WriteResourceNode(NodeList<ExpressionNode> indices, ExpressionNode value) {
+  public WriteResourceNode(NodeList<ExpressionNode> indices, ExpressionNode value,
+                           @Nullable ExpressionNode condition) {
+    super(condition);
     this.indices = indices;
     this.value = value;
   }

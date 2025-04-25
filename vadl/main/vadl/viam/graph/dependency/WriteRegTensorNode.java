@@ -66,8 +66,9 @@ public class WriteRegTensorNode extends WriteResourceNode {
    * @param staticCounterAccess if this writes to a counter-register, this might be non-null
    */
   public WriteRegTensorNode(RegisterTensor regTensor, NodeList<ExpressionNode> indices,
-                            ExpressionNode value, @Nullable Counter staticCounterAccess) {
-    super(indices, value);
+                            ExpressionNode value, @Nullable Counter staticCounterAccess,
+                            @Nullable ExpressionNode condition) {
+    super(indices, value, condition);
     this.regTensor = regTensor;
     this.staticCounterAccess = staticCounterAccess;
   }
@@ -127,12 +128,13 @@ public class WriteRegTensorNode extends WriteResourceNode {
 
   @Override
   public Node copy() {
-    return new WriteRegTensorNode(regTensor, indices.copy(), value.copy(), staticCounterAccess());
+    return new WriteRegTensorNode(regTensor, indices.copy(), value.copy(), staticCounterAccess(),
+        condition);
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteRegTensorNode(regTensor, indices, value, staticCounterAccess());
+    return new WriteRegTensorNode(regTensor, indices, value, staticCounterAccess(), condition);
   }
 
   @Override

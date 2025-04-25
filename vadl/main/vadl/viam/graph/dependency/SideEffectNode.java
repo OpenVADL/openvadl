@@ -38,6 +38,10 @@ public abstract class SideEffectNode extends DependencyNode {
   @Nullable
   protected ExpressionNode condition;
 
+  public SideEffectNode(@Nullable ExpressionNode condition) {
+    this.condition = condition;
+  }
+
   @Override
   public void verifyState() {
     super.verifyState();

@@ -49,6 +49,7 @@ import vadl.viam.Memory;
 import vadl.viam.Procedure;
 import vadl.viam.Register;
 import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
@@ -75,8 +76,8 @@ import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
 import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -87,6 +88,7 @@ import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegFileNode;
 import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
@@ -218,11 +220,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // FIXME: Wrap input and output in casts
     // FIXME: Add conditions based on annotations
-    var regFile = (RegisterFile) viamLowering.fetch(regFileDef).orElseThrow();
-    var regfileRead = new ReadRegFileNode(
+    var regFile = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
+    var regfileRead = new ReadRegTensorNode(
         regFile,
-        new FuncParamNode(param),
-        (DataType) ((ConcreteRelationType) regFileDef.type()).resultType(),
+        new NodeList<>(new FuncParamNode(param)),
+        (DataType) regFileDef.type().resultType(),
         null
     );
 
@@ -702,9 +704,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     // Register file read
     if (expr.computedTarget instanceof RegisterFileDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
-      var regFile = (RegisterFile) viamLowering.fetch(expr.computedTarget).orElseThrow();
+      var regFile = (RegisterTensor) viamLowering.fetch(expr.computedTarget).orElseThrow();
       var type = (DataType) expr.argsIndices.get(0).type();
-      var readRegFile = new ReadRegFileNode(regFile, args.get(0), type, null);
+      var readRegFile = new ReadRegTensorNode(regFile, new NodeList<>(args.get(0)), type, null);
       var slicedNode = visitSliceIndexCall(expr, readRegFile,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
       return visitSubCall(expr, slicedNode);
@@ -947,9 +949,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
         var regFile = viamLowering.fetch(regFileTarget).orElseThrow();
         var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
-        var write = new WriteRegFileNode(
-            (RegisterFile) regFile,
-            address,
+        var write = new WriteRegTensorNode(
+            (RegisterTensor) regFile,
+            new NodeList<>(address),
             value,
             null,
             null);
