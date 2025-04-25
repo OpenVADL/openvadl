@@ -47,7 +47,7 @@ public class WriteRegNode extends WriteRegTensorNode {
    */
   public WriteRegNode(Register register, ExpressionNode value,
                       @Nullable Counter staticCounterAccess) {
-    super(register, new NodeList<>(), value, staticCounterAccess, null);
+    super(register, new NodeList<>(), value, staticCounterAccess);
   }
 
 

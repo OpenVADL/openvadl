@@ -60,6 +60,10 @@ public interface DefinitionVisitor {
 
   void visit(RegisterTensor registerTensor);
 
+  void visit(Register register);
+
+  void visit(RegisterFile registerFile);
+
   void visit(Memory memory);
 
   void visit(ArtificialResource artificialResource);
@@ -126,7 +130,8 @@ public interface DefinitionVisitor {
       isa.ownFunctions().forEach(e -> e.accept(this));
       isa.exceptions().forEach(e -> e.accept(this));
       isa.ownRelocations().forEach(e -> e.accept(this));
-      isa.registerTensors().forEach(e -> e.accept(this));
+      isa.ownRegisters().forEach(e -> e.accept(this));
+      isa.ownRegisterFiles().forEach(e -> e.accept(this));
       isa.ownMemories().forEach(e -> e.accept(this));
       isa.artificialResources().forEach(e -> e.accept(this));
       isa.ownInstructions().forEach(e -> e.accept(this));
@@ -248,6 +253,18 @@ public interface DefinitionVisitor {
     public void visit(RegisterTensor registerTensor) {
       beforeTraversal(registerTensor);
       afterTraversal(registerTensor);
+    }
+
+    @Override
+    public void visit(Register register) {
+      beforeTraversal(register);
+      afterTraversal(register);
+    }
+
+    @Override
+    public void visit(RegisterFile registerFile) {
+      beforeTraversal(registerFile);
+      afterTraversal(registerFile);
     }
 
     @Override
@@ -478,6 +495,16 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(RegisterTensor registerTensor) {
+
+    }
+
+    @Override
+    public void visit(Register register) {
+
+    }
+
+    @Override
+    public void visit(RegisterFile registerFile) {
 
     }
 

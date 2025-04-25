@@ -40,11 +40,10 @@ public class WriteStageOutputNode extends SideEffectNode {
    * Construct a new WriteStageOutputNode.
    *
    * @param stageOutput stage output that is written
-   * @param value       value to be written
+   * @param value value to be written
    */
 
   public WriteStageOutputNode(StageOutput stageOutput, ExpressionNode value) {
-    super(null);
     this.stageOutput = stageOutput;
     this.value = value;
   }
@@ -53,14 +52,14 @@ public class WriteStageOutputNode extends SideEffectNode {
    * Construct a new WriteStageOutputNode.
    *
    * @param stageOutput stage output that is written
-   * @param value       value to be written
-   * @param condition   write enable condition
+   * @param value value to be written
+   * @param condition write enable condition
    */
   public WriteStageOutputNode(StageOutput stageOutput, ExpressionNode value,
                               @Nullable ExpressionNode condition) {
-    super(condition);
     this.stageOutput = stageOutput;
     this.value = value;
+    this.condition = condition;
   }
 
   public StageOutput stageOutput() {

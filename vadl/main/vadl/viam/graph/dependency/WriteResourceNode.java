@@ -43,21 +43,11 @@ public abstract class WriteResourceNode extends SideEffectNode {
    */
   // TODO: Remove
   public WriteResourceNode(@Nullable ExpressionNode address, ExpressionNode value) {
-    super(null);
     this.indices = address == null ? new NodeList<>() : new NodeList<>(address);
     this.value = value;
   }
 
-  /**
-   * Construct the resource write access.
-   *
-   * @param indices   used to access specific parts of the resource
-   * @param value     the value that is written
-   * @param condition under which condition the value is written
-   */
-  public WriteResourceNode(NodeList<ExpressionNode> indices, ExpressionNode value,
-                           @Nullable ExpressionNode condition) {
-    super(condition);
+  public WriteResourceNode(NodeList<ExpressionNode> indices, ExpressionNode value) {
     this.indices = indices;
     this.value = value;
   }

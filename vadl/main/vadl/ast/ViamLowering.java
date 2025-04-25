@@ -23,7 +23,6 @@ import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
-import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1135,7 +1134,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         relocations,
         instructions,
         pseudoInstructions,
-        Streams.concat(registers.stream(), registerFiles.stream()).toList(),
+        registers,
+        registerFiles,
         programCounter,
         memories,
         artificialResources

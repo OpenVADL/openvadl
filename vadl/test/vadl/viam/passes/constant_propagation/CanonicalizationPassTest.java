@@ -91,6 +91,7 @@ class CanonicalizationPassTest extends AbstractTest {
             encoding)),
         Collections.emptyList(),
         Collections.emptyList(),
+        Collections.emptyList(),
         null,
         Collections.emptyList(),
         Collections.emptyList()
