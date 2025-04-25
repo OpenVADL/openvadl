@@ -143,7 +143,7 @@ class DuplicateWriteDetector {
    * in the same execution path.
    */
   void run() {
-    checkResourceType(WriteRegTensorNode.class, "Register is written twice");
+    checkResourceType(WriteRegTensorNode.class, "Register is written twice at same index");
     checkResourceType(WriteMemNode.class, "Memory address is written twice");
   }
 

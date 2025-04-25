@@ -19,11 +19,11 @@ package vadl.lcb.clang.lib.Basic.Targets;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -55,9 +55,9 @@ public class EmitClangTargetCppFilePass extends LcbTemplateRenderingPass {
   }
 
   private List<Map<String, String>> extractRegisters(Specification specification) {
-    return specification.isa()
-        .map(x -> x.ownRegisters().stream())
-        .orElseGet(Stream::empty)
+    return specification.isa().stream()
+        .flatMap(x -> x.registerTensors().stream())
+        .filter(RegisterTensor::isSingleRegister)
         .map(x -> Map.of("name", x.simpleName()))
         .toList();
   }

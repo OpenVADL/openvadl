@@ -74,7 +74,8 @@ public class DummyMiaPass extends Pass {
       return null;
     }
 
-    var regFile = viam.isa().orElseThrow().ownRegisterFiles().get(0);
+    var regFile = viam.isa().orElseThrow().registerTensors()
+        .stream().filter(RegisterTensor::isRegisterFile).findFirst().get();
     var mem = viam.isa().orElseThrow().ownMemories().get(0);
     var pc = Objects.requireNonNull(viam.isa().orElseThrow().pc()).registerTensor();
 

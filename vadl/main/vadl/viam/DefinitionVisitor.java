@@ -130,8 +130,7 @@ public interface DefinitionVisitor {
       isa.ownFunctions().forEach(e -> e.accept(this));
       isa.exceptions().forEach(e -> e.accept(this));
       isa.ownRelocations().forEach(e -> e.accept(this));
-      isa.ownRegisters().forEach(e -> e.accept(this));
-      isa.ownRegisterFiles().forEach(e -> e.accept(this));
+      isa.registerTensors().forEach(e -> e.accept(this));
       isa.ownMemories().forEach(e -> e.accept(this));
       isa.artificialResources().forEach(e -> e.accept(this));
       isa.ownInstructions().forEach(e -> e.accept(this));

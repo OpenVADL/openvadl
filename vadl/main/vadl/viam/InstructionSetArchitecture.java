@@ -16,7 +16,6 @@
 
 package vadl.viam;
 
-import com.google.common.collect.Streams;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -28,8 +27,7 @@ public class InstructionSetArchitecture extends Definition {
   private final List<Instruction> instructions;
   private final List<PseudoInstruction> pseudoInstructions;
 
-  private final List<Register> registers;
-  private final List<RegisterFile> registerFiles;
+  private final List<RegisterTensor> registers;
   private final List<Memory> memories;
   private final List<ArtificialResource> artificialResources;
 
@@ -52,7 +50,6 @@ public class InstructionSetArchitecture extends Definition {
    * @param identifier    the identifier of the ISA
    * @param specification the parent specification of the ISA
    * @param registers     the registers in the ISA
-   * @param registerFiles the register files in the ISA
    * @param pc            the program counter of the ISA
    * @param formats       the list of formats associated with the ISA
    * @param instructions  the list of instructions associated with the ISA
@@ -65,8 +62,7 @@ public class InstructionSetArchitecture extends Definition {
                                     List<Relocation> relocations,
                                     List<Instruction> instructions,
                                     List<PseudoInstruction> pseudoInstructions,
-                                    List<Register> registers,
-                                    List<RegisterFile> registerFiles,
+                                    List<RegisterTensor> registers,
                                     @Nullable Counter pc,
                                     List<Memory> memories,
                                     List<ArtificialResource> artificialResources
@@ -80,7 +76,6 @@ public class InstructionSetArchitecture extends Definition {
     this.registers = registers;
     this.instructions = instructions;
     this.pseudoInstructions = pseudoInstructions;
-    this.registerFiles = registerFiles;
     this.pc = pc;
     this.memories = memories;
     this.artificialResources = artificialResources;
@@ -141,31 +136,12 @@ public class InstructionSetArchitecture extends Definition {
   }
 
   /**
-   * Returns the {@link Register}s <b>owned</b> by this ISA.
-   * So it might not include definitions accessible through the super ISA.
-   */
-  public List<Register> ownRegisters() {
-    return registers;
-  }
-
-  /**
-   * Returns the {@link RegisterFile}s <b>owned</b> by this ISA.
-   * So it might not include definitions accessible through the super ISA.
-   */
-  public List<RegisterFile> ownRegisterFiles() {
-    return registerFiles;
-  }
-
-  /**
    * Returns the {@link RegisterTensor}s <b>owned</b> by this ISA.
    * So it might not include definitions accessible through the super ISA.
    */
   public List<RegisterTensor> registerTensors() {
     // TODO: Refactor when we only have a registerTensor list
-    return Streams.concat(
-        ownRegisters().stream(),
-        ownRegisterFiles().stream()
-    ).toList();
+    return registers;
   }
 
 
