@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.arbitraries.BigIntegerArbitrary;
@@ -112,7 +111,7 @@ public class TestUtils {
     var r = definitions.stream()
         .filter(InstructionSetArchitecture.class::isInstance)
         .map(InstructionSetArchitecture.class::cast)
-        .flatMap(i -> Stream.concat(i.ownRegisters().stream(), i.ownRegisterFiles().stream()))
+        .flatMap(i -> i.registerTensors().stream())
         .filter(i -> i.identifier.name().equals(name))
         .toList();
 

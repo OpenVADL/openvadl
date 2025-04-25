@@ -25,13 +25,13 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
  * Replacement strategy for nodes.
  */
 public class LcbReadRegFileNodeReplacement
-    implements GraphVisitor.NodeApplier<ReadRegFileNode, Node> {
+    implements GraphVisitor.NodeApplier<ReadRegTensorNode, Node> {
   private final List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacer;
 
   public LcbReadRegFileNodeReplacement(
@@ -41,14 +41,17 @@ public class LcbReadRegFileNodeReplacement
 
   @Nullable
   @Override
-  public Node visit(ReadRegFileNode readRegFileNode) {
+  public Node visit(ReadRegTensorNode readRegFileNode) {
     // If the address is constant and register file has a constraint for, then we should replace it
     // by the constraint value.
 
+    readRegFileNode.regTensor()
+        .ensure(readRegFileNode.regTensor().isRegisterFile(), "must be register file");
+
     if (readRegFileNode.hasConstantAddress()) {
       var address = (ConstantNode) readRegFileNode.address();
-      var constraint = Arrays.stream(readRegFileNode.registerFile().constraints())
-          .filter(c -> c.address().equals(address.constant()))
+      var constraint = Arrays.stream(readRegFileNode.regTensor().constraints())
+          .filter(c -> c.indices().getFirst().equals(address.constant()))
           .findFirst();
 
       if (constraint.isPresent()) {
@@ -63,14 +66,15 @@ public class LcbReadRegFileNodeReplacement
     } else {
       visitApplicable(readRegFileNode.address());
 
-      return new LlvmReadRegFileNode(readRegFileNode.registerFile(), readRegFileNode.address(),
+      return new LlvmReadRegFileNode(readRegFileNode.regTensor(), readRegFileNode.address(),
           readRegFileNode.type(), readRegFileNode.staticCounterAccess());
     }
   }
 
   @Override
   public boolean acceptable(Node node) {
-    return node instanceof ReadRegFileNode;
+    return node instanceof ReadRegTensorNode readRegTensorNode
+        && readRegTensorNode.regTensor().isRegisterFile();
   }
 
   @Override

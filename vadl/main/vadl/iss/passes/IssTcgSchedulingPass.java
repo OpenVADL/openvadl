@@ -44,10 +44,10 @@ import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.DependencyNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.CfgTraverser;
 import vadl.viam.passes.GraphProcessor;
@@ -92,11 +92,11 @@ public class IssTcgSchedulingPass extends AbstractIssPass {
 
     viam.isa().ifPresent(isa -> {
       var pc = requireNonNull(isa.pc());
-      pc.ensure(pc instanceof Counter.RegisterCounter, "Expected RegisterCounter");
+      pc.ensure(pc.registerTensor().isSingleRegister(), "Only one-dimensional PC supported yet");
 
       isa.ownInstructions()
           .forEach(instr ->
-              IssTcgScheduler.runOn(instr.behavior(), (Counter.RegisterCounter) pc));
+              IssTcgScheduler.runOn(instr.behavior(), pc));
     });
 
     return null;
@@ -113,7 +113,7 @@ public class IssTcgSchedulingPass extends AbstractIssPass {
  */
 class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements CfgTraverser {
 
-  private Counter.RegisterCounter pc;
+  private Counter pc;
 
   @LazyInit
   private ControlNode currentRootUser;
@@ -139,7 +139,7 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
    *
    * @param pc The program counter register counter.
    */
-  public IssTcgScheduler(Counter.RegisterCounter pc) {
+  public IssTcgScheduler(Counter pc) {
     this.pc = pc;
   }
 
@@ -149,7 +149,7 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
    * @param graph The control flow graph to process.
    * @param pc    The program counter register counter.
    */
-  static void runOn(Graph graph, Counter.RegisterCounter pc) {
+  static void runOn(Graph graph, Counter pc) {
     var start = getSingleNode(graph, StartNode.class);
     new IssTcgScheduler(pc).traverseBranch(start);
 
@@ -236,10 +236,10 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
 
     // Validate that register file accesses are not scheduled.
     // This is because those addresses are not TCG opcodes later on (but C++ evaluated immediates)
-    validateRegFileAccessAddress(toProcess);
+    validateRegTensorAccessIndices(toProcess);
 
     if (toProcess instanceof ReadResourceNode readResourceNode) {
-      if (readResourceNode.resourceDefinition() == pc.registerRef()) {
+      if (readResourceNode.resourceDefinition() == pc.registerTensor()) {
         // PC registers are not lowered to TCG as they can be accessed directly using
         // ctx->base.pc_next
         return Optional.empty();
@@ -278,31 +278,35 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
   }
 
   /**
-   * Validates that the address of a register file access is not scheduled.
+   * Validates that the indices of a register tensor accesses are not scheduled.
    * <p>
-   * The address must be determined at compile time, not at TCG code generation time.
+   * The indices must be determined at translation time, not at TCG code run time.
    * </p>
    *
-   * @param toProcess The node representing the register file access.
+   * @param toProcess The node representing the register tensor access.
    */
-  private void validateRegFileAccessAddress(Node toProcess) {
-    if (toProcess instanceof ReadRegFileNode readRegFileNode) {
-      // Check that the address is not a TCG resource.
-      // The address must be determined at "compile" time
-      var addressRes = getResultOf(readRegFileNode.address(), Optional.class);
-      toProcess.ensure(addressRes.isEmpty(),
-          "Node's address is not allowed to be TCG time but must "
-              + "be compile-time annotated (immediates): %s",
-          readRegFileNode.address());
+  private void validateRegTensorAccessIndices(Node toProcess) {
+    if (toProcess instanceof ReadRegTensorNode regRead) {
+      // Check that the indices are not a TCG resource.
+      // The indices must be determined at "translation" time
+      for (var i : regRead.indices()) {
+        var addressRes = getResultOf(i, Optional.class);
+        toProcess.ensure(addressRes.isEmpty(),
+            "Node's index is not allowed to be TCG time but must "
+                + "be compile-time annotated (immediates): %s",
+            regRead.indices());
+      }
     }
 
-    if (toProcess instanceof WriteRegFileNode writeResourceNode) {
-      var addressRes = getResultOf(writeResourceNode.address(), Optional.class);
-      writeResourceNode.ensure(addressRes.isEmpty(),
-          "Node's address is not allowed to be TCG time but must "
-              + "be compile-time annotated (immediates): %s",
-          writeResourceNode.address()
-      );
+    if (toProcess instanceof WriteRegTensorNode regWrite) {
+      for (var i : regWrite.indices()) {
+        var addressRes = getResultOf(i, Optional.class);
+        regWrite.ensure(addressRes.isEmpty(),
+            "Node's address is not allowed to be TCG time but must "
+                + "be compile-time annotated (immediates): %s",
+            regWrite.indices()
+        );
+      }
     }
   }
 
@@ -360,8 +364,9 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
             // it is used as value -> required to be TCGv
             return true;
           }
-          // if it is the address -> required to be TCGv, otherwise not.
-          return write.hasAddress() && write.address() == cond;
+
+          return write.indices().stream()
+              .anyMatch(ind -> ind == cond);
         });
 
     if (!mustBeTcg) {

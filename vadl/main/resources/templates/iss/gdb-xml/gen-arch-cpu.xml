@@ -6,6 +6,6 @@
      notice and this notice are preserved.  -->
 
 <!DOCTYPE feature SYSTEM "gdb-target.dtd">
-<feature name="org.gnu.gdb.[(${gen_arch_lower})].cpu">
+<feature th:name="${'org.gnu.gdb.' + gen_arch_lower + '.cpu'}">
     <reg th:each="reg: ${regs}" th:name="${reg.name}" th:bitsize="${reg.bitSize}" th:type="${reg.type}"/>
 </feature>

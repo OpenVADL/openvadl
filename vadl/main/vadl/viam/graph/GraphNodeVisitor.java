@@ -31,16 +31,14 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -72,14 +70,9 @@ public interface GraphNodeVisitor {
   void visit(BuiltInCall node);
 
   /**
-   * Visit {@link WriteRegNode}.
+   * Visit {@link WriteRegTensorNode}.
    */
-  void visit(WriteRegNode writeRegNode);
-
-  /**
-   * Visit {@link WriteRegFileNode}.
-   */
-  void visit(WriteRegFileNode writeRegFileNode);
+  void visit(WriteRegTensorNode node);
 
   /**
    * Visit {@link WriteMemNode}.
@@ -97,14 +90,9 @@ public interface GraphNodeVisitor {
   void visit(SelectNode selectNode);
 
   /**
-   * Visit {@link ReadRegNode}.
+   * Visit {@link ReadRegTensorNode}.
    */
-  void visit(ReadRegNode readRegNode);
-
-  /**
-   * Visit {@link ReadRegFileNode}.
-   */
-  void visit(ReadRegFileNode readRegFileNode);
+  void visit(ReadRegTensorNode node);
 
   /**
    * Visit {@link ReadMemNode}.

@@ -18,6 +18,7 @@ package vadl.lcb.template.lib.TargetParser;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -52,7 +53,8 @@ public class EmitTripleCppFilePass extends LcbTemplateRenderingPass {
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        "pointerBitWidth", abi.stackPointer().registerFile().addressType().bitWidth(),
+        "pointerBitWidth",
+        Objects.requireNonNull(abi.stackPointer().registerFile().addressType()).bitWidth(),
         "isLittleEndian", true); // TODO kper make adjustable
   }
 }

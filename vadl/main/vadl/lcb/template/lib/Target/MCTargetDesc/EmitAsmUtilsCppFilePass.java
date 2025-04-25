@@ -35,6 +35,7 @@ import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Definition;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 
@@ -138,10 +139,12 @@ public class EmitAsmUtilsCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "registers",
-        specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
+        specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+            .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
             .flatMap(x -> x.registers().stream()).toList(),
         "registerClasses",
-        specification.registerFiles().map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
+        specification.registerTensors().filter(RegisterTensor::isRegisterFile)
+            .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
             .toList(),
         "asmCompareFunction", stringCompareFunction(specification),
         "instructionNames", instructionsNames(specification),

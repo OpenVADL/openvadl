@@ -94,9 +94,9 @@ public class Specification extends Definition {
    */
   public Optional<MicroArchitecture> mia() {
     return definitions()
-            .filter(MicroArchitecture.class::isInstance)
-            .map(MicroArchitecture.class::cast)
-            .findFirst();
+        .filter(MicroArchitecture.class::isInstance)
+        .map(MicroArchitecture.class::cast)
+        .findFirst();
   }
 
   /**
@@ -109,23 +109,12 @@ public class Specification extends Definition {
   }
 
   /**
-   * Returns all registers as stream.
+   * Returns all register tensors in the ISA as a stream.
    */
-  public Stream<Register> registers() {
+  public Stream<RegisterTensor> registerTensors() {
     return isa()
-        .map(x -> x.ownRegisters().stream())
-        .orElseGet(Stream::empty)
-        .map(Register.class::cast);
-  }
-
-  /**
-   * Returns all register files as stream.
-   */
-  public Stream<RegisterFile> registerFiles() {
-    return isa()
-        .map(x -> x.ownRegisterFiles().stream())
-        .orElseGet(Stream::empty)
-        .map(RegisterFile.class::cast);
+        .map(x -> x.registerTensors().stream())
+        .orElseGet(Stream::empty);
   }
 
   /**
@@ -136,8 +125,8 @@ public class Specification extends Definition {
    */
   public Stream<Format> findAllFormats() {
     var innerFormats = isa().map(
-            i -> i.ownFormats().stream()
-        ).orElse(Stream.empty());
+        i -> i.ownFormats().stream()
+    ).orElse(Stream.empty());
 
     return Stream.concat(formats(), innerFormats);
   }

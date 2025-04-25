@@ -26,6 +26,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -51,7 +52,8 @@ public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var gpr = ensurePresent(specification.registerFiles().findFirst(),
+    var gpr = ensurePresent(
+        specification.registerTensors().filter(RegisterTensor::isRegisterFile).findFirst(),
         "Specification requires at least one register file");
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),

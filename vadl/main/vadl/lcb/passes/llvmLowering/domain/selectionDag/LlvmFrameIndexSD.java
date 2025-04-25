@@ -22,37 +22,39 @@ import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructi
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.types.DataType;
 import vadl.viam.Counter;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
-import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 
 /**
  * LLVM node which represents the frame index as selection dag node.
  */
-public class LlvmFrameIndexSD extends ReadRegFileNode implements LlvmNodeLowerable {
+public class LlvmFrameIndexSD extends ReadRegTensorNode implements LlvmNodeLowerable {
   public static final String NAME = "AddrFI";
 
-  public LlvmFrameIndexSD(ReadRegFileNode obj) {
-    this(obj.registerFile(), obj.address(), obj.type(), obj.staticCounterAccess());
+  public LlvmFrameIndexSD(ReadRegTensorNode obj) {
+    this(obj.regTensor(), obj.indices(), obj.type(), obj.staticCounterAccess());
+    obj.regTensor().ensure(obj.regTensor().isRegisterFile(), "must be register file");
   }
 
-  private LlvmFrameIndexSD(RegisterFile registerFile, ExpressionNode address, DataType type,
-                           @Nullable Counter.RegisterFileCounter staticCounterAccess) {
-    super(registerFile, address, type, staticCounterAccess);
+  private LlvmFrameIndexSD(RegisterTensor registerFile, NodeList<ExpressionNode> addresses,
+                           DataType type,
+                           @Nullable Counter staticCounterAccess) {
+    super(registerFile, addresses, type, staticCounterAccess);
   }
 
 
   @Override
-  public ExpressionNode copy() {
-    return new LlvmFrameIndexSD(registerFile(), (ExpressionNode) address().copy(), type(),
+  public LlvmFrameIndexSD copy() {
+    return new LlvmFrameIndexSD(regTensor, indices.copy(), type(),
         staticCounterAccess());
   }
 
   @Override
-  public Node shallowCopy() {
-    return new LlvmFrameIndexSD(registerFile(), address(), type(), staticCounterAccess());
+  public LlvmFrameIndexSD shallowCopy() {
+    return new LlvmFrameIndexSD(regTensor, indices, type(), staticCounterAccess());
   }
 
   @Override

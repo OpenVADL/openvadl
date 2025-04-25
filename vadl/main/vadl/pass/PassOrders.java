@@ -45,10 +45,10 @@ import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredica
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
 import vadl.iss.passes.IssBuiltInSimplificationPass;
 import vadl.iss.passes.IssConfigurationPass;
-import vadl.iss.passes.IssExceptionDetectionPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
 import vadl.iss.passes.IssHardcodedTcgAddOnPass;
+import vadl.iss.passes.IssInfoRetrievalPass;
 import vadl.iss.passes.IssMemoryAccessTransformationPass;
 import vadl.iss.passes.IssMemoryDetectionPass;
 import vadl.iss.passes.IssNormalizationPass;
@@ -401,7 +401,7 @@ public class PassOrders {
         .add(new IssVerificationPass(config))
         .add(new IssConfigurationPass(config))
         .add(new IssMemoryDetectionPass(config))
-        .add(new IssExceptionDetectionPass(config))
+        .add(new IssInfoRetrievalPass(config))
         .add(new IssOpDecompositionPass(config))
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))

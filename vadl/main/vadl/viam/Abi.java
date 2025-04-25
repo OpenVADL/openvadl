@@ -62,7 +62,7 @@ public class Abi extends Definition {
    *                     E.g., RISC-V's X11 would have {@code addr = 11}.
    * @param alignment    for the spilling of the register.
    */
-  public record RegisterRef(RegisterFile registerFile,
+  public record RegisterRef(RegisterTensor registerFile,
                             int addr,
                             Alignment alignment) {
     public String render() {
@@ -84,7 +84,7 @@ public class Abi extends Definition {
   private final Optional<RegisterRef> threadPointer;
 
 
-  private final Map<Pair<RegisterFile, Integer>, List<RegisterAlias>> aliases;
+  private final Map<Pair<RegisterTensor, Integer>, List<RegisterAlias>> aliases;
   private final List<RegisterRef> callerSaved;
   private final List<RegisterRef> calleeSaved;
   private final List<RegisterRef> argumentRegisters;
@@ -105,7 +105,7 @@ public class Abi extends Definition {
    */
   private final Alignment transientStackAlignment;
 
-  private final Map<RegisterFile, Abi.Alignment> registerFileAlignment;
+  private final Map<RegisterTensor, Abi.Alignment> registerFileAlignment;
 
   /**
    * Constructor.
@@ -116,7 +116,7 @@ public class Abi extends Definition {
              RegisterRef framePointer,
              RegisterRef globalPointer,
              Optional<RegisterRef> threadPointer,
-             Map<Pair<RegisterFile, Integer>, List<RegisterAlias>> aliases,
+             Map<Pair<RegisterTensor, Integer>, List<RegisterAlias>> aliases,
              List<RegisterRef> callerSaved,
              List<RegisterRef> calleeSaved,
              List<RegisterRef> argumentRegisters,
@@ -128,7 +128,7 @@ public class Abi extends Definition {
              Optional<PseudoInstruction> globalAddressLoad,
              Alignment stackAlignment,
              Alignment transientStackAlignment,
-             Map<RegisterFile, Abi.Alignment> registerFileAlignment,
+             Map<RegisterTensor, Abi.Alignment> registerFileAlignment,
              List<CompilerInstruction> constantSequences,
              List<CompilerInstruction> registerAdjustmentSequences
   ) {
@@ -181,7 +181,7 @@ public class Abi extends Definition {
     return threadPointer;
   }
 
-  public Map<Pair<RegisterFile, Integer>, List<RegisterAlias>> aliases() {
+  public Map<Pair<RegisterTensor, Integer>, List<RegisterAlias>> aliases() {
     return aliases;
   }
 
@@ -233,7 +233,7 @@ public class Abi extends Definition {
     return transientStackAlignment;
   }
 
-  public Map<RegisterFile, Alignment> registerFileAlignment() {
+  public Map<RegisterTensor, Alignment> registerFileAlignment() {
     return registerFileAlignment;
   }
 

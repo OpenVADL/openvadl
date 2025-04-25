@@ -26,7 +26,6 @@ import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.NewLabelNode;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -34,8 +33,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**
@@ -67,10 +65,7 @@ public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerato
   }
 
   @Handler
-  protected abstract void handle(CGenContext<Node> ctx, ReadRegNode toHandle);
-
-  @Handler
-  protected abstract void handle(CGenContext<Node> ctx, ReadRegFileNode toHandle);
+  protected abstract void handle(CGenContext<Node> ctx, ReadRegTensorNode toHandle);
 
   @Handler
   protected abstract void handle(CGenContext<Node> ctx, ReadMemNode toHandle);

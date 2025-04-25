@@ -42,7 +42,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Abstract class to lower {@link CompilerInstruction} to {@link LlvmLoweringRecord.Compiler}.
@@ -204,13 +204,14 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
                   // Go over the usages to emit warnings.
                   // We need the usage because we need to find out what the register file
                   // to check for constraints.
-                  occurrence.usages().filter(node -> (node instanceof HasRegisterFile))
+                  occurrence.usages()
+                      .filter(node -> (node instanceof HasRegisterFile x && x.hasRegisterFile()))
                       .forEach(node -> {
                         var cast = (HasRegisterFile) node;
 
                         var constraintValue =
                             Arrays.stream(cast.registerFile().constraints()).filter(
-                                c -> c.address().intValue()
+                                c -> c.indices().getFirst().intValue()
                                     == constantNode.constant().asVal().intValue()).findFirst();
 
                         if (constraintValue.isEmpty()) {
@@ -228,11 +229,12 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
                   // constant node as address which has a constraint. If that's the case, then we
                   // can remove the side effect.
                   occurrence.usages()
-                      .filter(node -> node instanceof WriteRegFileNode writeRegFileNode
-                          && writeRegFileNode.hasConstantAddress()
+                      .filter(node -> node instanceof WriteRegTensorNode writeRegTensorNode
+                          && writeRegTensorNode.regTensor().isRegisterFile()
+                          && writeRegTensorNode.hasConstantAddress()
                           // Check if there is a constraint for this register index.
-                          && Arrays.stream(writeRegFileNode.registerFile().constraints())
-                          .anyMatch(constraint -> constraint.address().intValue()
+                          && Arrays.stream(writeRegTensorNode.regTensor().constraints())
+                          .anyMatch(constraint -> constraint.indices().getFirst().intValue()
                               == constantNode.constant().asVal().intValue()))
                       .forEach(Node::safeDelete);
                 } else {

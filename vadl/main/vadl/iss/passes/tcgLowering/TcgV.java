@@ -18,11 +18,10 @@ package vadl.iss.passes.tcgLowering;
 
 import static vadl.viam.ViamError.ensure;
 
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
-import vadl.viam.Resource;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
@@ -37,8 +36,7 @@ public class TcgV {
   public enum Kind {
     TMP,
     CONST,
-    REG,
-    REG_FILE
+    REG_TENSOR
   }
 
   private final String name;
@@ -48,9 +46,9 @@ public class TcgV {
   @Nullable
   private final ExpressionNode constValue;
   @Nullable
-  private final Resource registerOrFile;
+  private final RegisterTensor registerOrFile;
   @Nullable
-  private final ExpressionNode regFileIndex;
+  private final List<ExpressionNode> regIndices;
   // indicates if the register is a destination register.
   // this is only useful for register file variables
   private final boolean isDest;
@@ -64,20 +62,20 @@ public class TcgV {
    * @param constValue     expression of the variable (must be set if kind is CONST)
    * @param registerOrFile register or register file represented by the variable
    *                       (must be set if kind is REG or REG_FILE)
-   * @param regFileIndex   index of register file (must be set if kind is REG_FILE)
+   * @param regIndices     index of register file (must be set if kind is REG_FILE)
    * @param isDest         must be true if the variable is used as write location of a side-effect.
    */
   public TcgV(String name, Tcg_32_64 width, Kind kind,
               @Nullable ExpressionNode constValue,
-              @Nullable Resource registerOrFile,
-              @Nullable ExpressionNode regFileIndex,
+              @Nullable RegisterTensor registerOrFile,
+              @Nullable List<ExpressionNode> regIndices,
               boolean isDest
   ) {
     this.name = name;
     this.width = width;
     this.kind = kind;
     this.registerOrFile = registerOrFile;
-    this.regFileIndex = regFileIndex;
+    this.regIndices = regIndices;
     this.isDest = isDest;
     this.constValue = constValue;
   }
@@ -90,13 +88,9 @@ public class TcgV {
     return new TcgV(name, width, Kind.CONST, constValue, null, null, false);
   }
 
-  public static TcgV reg(String name, Tcg_32_64 width, Register reg) {
-    return new TcgV(name, width, Kind.REG, null, reg, null, false);
-  }
-
-  public static TcgV regFile(String name, Tcg_32_64 width, RegisterFile regFile,
-                             ExpressionNode regFileIndex, boolean isDest) {
-    return new TcgV(name, width, Kind.REG_FILE, null, regFile, regFileIndex, isDest);
+  public static TcgV reg(String name, Tcg_32_64 width, RegisterTensor regFile,
+                         List<ExpressionNode> indices, boolean isDest) {
+    return new TcgV(name, width, Kind.REG_TENSOR, null, regFile, indices, isDest);
   }
 
   public Tcg_32_64 width() {
@@ -116,14 +110,14 @@ public class TcgV {
     return constValue;
   }
 
-  public Resource registerOrFile() {
+  public RegisterTensor registerOrFile() {
     ensure(registerOrFile != null, "registerOrFile is null");
     return registerOrFile;
   }
 
-  public ExpressionNode regFileIndex() {
-    ensure(regFileIndex != null, "regFileIndex is null");
-    return regFileIndex;
+  public List<ExpressionNode> regIndices() {
+    ensure(regIndices != null, "regFileIndex is null");
+    return regIndices;
   }
 
   public boolean isDest() {

@@ -17,7 +17,7 @@
 package vadl.iss.passes.nodes;
 
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.javaannotations.viam.DataValue;
@@ -25,6 +25,7 @@ import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -38,22 +39,19 @@ public class TcgVRefNode extends DependencyNode {
   private TcgV var;
 
   @Input
-  @Nullable
-  // the immediate(constant) value or register file index.
-  private ExpressionNode dependency;
+  private NodeList<ExpressionNode> indices;
 
-  public TcgVRefNode(TcgV var, @Nullable ExpressionNode dependency) {
+  public TcgVRefNode(TcgV var, NodeList<ExpressionNode> indices) {
     this.var = var;
-    this.dependency = dependency;
+    this.indices = indices;
   }
 
   public TcgV var() {
     return var;
   }
 
-  @Nullable
-  public ExpressionNode dependency() {
-    return dependency;
+  public NodeList<ExpressionNode> indices() {
+    return indices;
   }
 
   public void setVar(TcgV var) {
@@ -75,12 +73,12 @@ public class TcgVRefNode extends DependencyNode {
 
   @Override
   public TcgVRefNode copy() {
-    return new TcgVRefNode(var, dependency == null ? null : dependency.copy());
+    return new TcgVRefNode(var, indices.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgVRefNode(var, dependency);
+    return new TcgVRefNode(var, indices);
   }
 
   @Override
@@ -97,14 +95,13 @@ public class TcgVRefNode extends DependencyNode {
   @Override
   protected void collectInputs(List<Node> collection) {
     super.collectInputs(collection);
-    if (this.dependency != null) {
-      collection.add(dependency);
-    }
+    collection.addAll(indices);
   }
 
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    dependency = visitor.applyNullable(this, dependency, ExpressionNode.class);
+    indices = indices.stream().map((e) -> visitor.apply(this, e, ExpressionNode.class))
+        .collect(Collectors.toCollection(NodeList::new));
   }
 }

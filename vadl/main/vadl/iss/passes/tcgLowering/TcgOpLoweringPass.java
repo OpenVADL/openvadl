@@ -91,8 +91,7 @@ import vadl.viam.graph.dependency.ParamNode;
 import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -101,8 +100,7 @@ import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.CfgTraverser;
@@ -322,7 +320,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   private TcgVRefNode tmp(int i) {
     return localTmps.computeIfAbsent(i, k -> {
       var name = "tmp_l" + k + "_" + tmpCounter++;
-      return graph.addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize), null));
+      return graph.addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize), new NodeList<>()));
     });
   }
 
@@ -531,32 +529,14 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     replaceCurrent(result.replacements().toArray(TcgNode[]::new));
   }
 
-  /**
-   * Handles the {@link ReadRegNode}. Currently does nothing as TCG variables
-   * represent register reads.
-   *
-   * @param toHandle The node to handle.
-   */
-  @Handler
-  void handle(ReadRegNode toHandle) {
-    // Nothing to do; register reads are TCG variables created at instruction start
-    replaceCurrent();
-  }
-
   @Handler
   void handle(ReadArtificialResNode toHandle) {
     throw new UnsupportedOperationException("Type ReadArtificialResNode not yet implemented");
   }
 
-  /**
-   * Handles the {@link ReadRegFileNode}. Currently does nothing as TCG variables
-   * represent register file reads.
-   *
-   * @param toHandle The node to handle.
-   */
   @Handler
-  void handle(ReadRegFileNode toHandle) {
-    // Nothing to do; register file reads are TCG variables created at instruction start
+  void handle(ReadRegTensorNode toHandle) {
+    // Nothing to do; register reads are TCG variables created at instruction start
     replaceCurrent();
   }
 
@@ -574,33 +554,16 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     );
   }
 
-
   /**
-   * Handles the {@link WriteRegFileNode} by generating a TCG move operation if necessary.
+   * Handles the {@link WriteRegTensorNode} by generating a TCG move operation if necessary.
    *
    * @param toHandle The node to handle.
    */
   @Handler
-  void handle(WriteRegFileNode toHandle) {
+  void handle(WriteRegTensorNode toHandle) {
     var destVar = singleDestOf(toHandle);
     var srcVar = singleDestOf(toHandle.value());
     if (destVar.equals(srcVar)) {
-      replaceCurrent();
-    } else {
-      replaceCurrent(new TcgMoveNode(destVar, srcVar));
-    }
-  }
-
-  /**
-   * Handles the {@link WriteRegNode} by generating a TCG move operation if necessary.
-   *
-   * @param toHandle The node to handle.
-   */
-  @Handler
-  void handle(WriteRegNode toHandle) {
-    var destVar = singleDestOf(toHandle);
-    var srcVar = singleDestOf(toHandle.value());
-    if (destVar.width() != srcVar.width()) {
       replaceCurrent();
     } else {
       replaceCurrent(new TcgMoveNode(destVar, srcVar));
@@ -1051,7 +1014,7 @@ class BuiltInTcgLoweringExecutor {
     private TcgVRefNode tmp(int i) {
       return localTmps.computeIfAbsent(i, (k) -> {
         var name = "tmp_" + call.id + "_" + k;
-        return graph().addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize), null));
+        return graph().addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize), new NodeList<>()));
       });
     }
 

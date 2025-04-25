@@ -67,8 +67,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.CfgTraverser;
@@ -119,12 +118,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   }
 
   @Override
-  protected void handle(CGenContext<Node> ctx, ReadRegNode toHandle) {
-    throwNotAllowed(toHandle, "Register reads");
-  }
-
-  @Override
-  protected void handle(CGenContext<Node> ctx, ReadRegFileNode toHandle) {
+  protected void handle(CGenContext<Node> ctx, ReadRegTensorNode toHandle) {
     throwNotAllowed(toHandle, "Register reads");
   }
 
@@ -252,7 +246,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         // We look for the `field` in the machine instruction's behavior and return the usages.
         var registerFiles = instruction.behavior().getNodes(FieldRefNode.class)
             .filter(x -> x.formatField().equals(field)).flatMap(
-                fieldRefNode -> fieldRefNode.usages().filter(y -> y instanceof HasRegisterFile))
+                fieldRefNode -> fieldRefNode.usages()
+                    .filter(y -> y instanceof HasRegisterFile z && z.hasRegisterFile()))
             .map(x -> ((HasRegisterFile) x).registerFile()).distinct().toList();
 
         ensure(registerFiles.size() == 1,

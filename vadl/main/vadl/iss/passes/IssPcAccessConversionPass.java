@@ -26,7 +26,7 @@ import vadl.utils.GraphUtils;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ScheduledNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -75,9 +75,9 @@ class IssPcAccessConverter {
   void run() {
 
     // replace read reg nodes of pcs to be just a CpuReg access of the ISS (No tcg op required)
-    graph.getNodes(ReadRegNode.class)
-        .filter(ReadRegNode::isPcAccess)
-        .forEach(n -> n.replaceAndDelete(new IssStaticPcRegNode(n.register())));
+    graph.getNodes(ReadRegTensorNode.class)
+        .filter(ReadRegTensorNode::isPcAccess)
+        .forEach(n -> n.replaceAndDelete(new IssStaticPcRegNode(n.regTensor())));
 
     // handle the instr exits
     graph.getNodes(InstrExitNode.PcChange.class)

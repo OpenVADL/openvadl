@@ -19,6 +19,7 @@ package vadl.lcb.passes.llvmLowering;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
@@ -32,7 +33,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClas
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.viam.RegisterFile.Constraint;
+import vadl.viam.RegisterTensor.Constraint;
 import vadl.viam.Specification;
 
 /**
@@ -93,7 +94,8 @@ public class GenerateTableGenRegistersPass extends Pass {
         var register = new TableGenRegister(
             configuration.targetName(),
             compilerRegister,
-            compilerRegisterClass.registerFile().addressType().bitWidth() - 1,
+            Objects.requireNonNull(compilerRegisterClass.registerFile().addressType()).bitWidth()
+                - 1,
             Optional.of(compilerRegister.hwEncodingValue())
         );
         registers.add(register);
@@ -122,7 +124,7 @@ public class GenerateTableGenRegistersPass extends Pass {
     for (var rc : mainRegisterClasses) {
       var registerFile = rc.registerFileRef();
       for (var constraint : registerFile.constraints()) {
-        var addr = constraint.address().intValue();
+        var addr = constraint.indices().getFirst().intValue();
         var value = constraint.value().intValue();
 
         rc.registers().stream().filter(

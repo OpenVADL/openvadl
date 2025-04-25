@@ -41,7 +41,7 @@ import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.matching.Matcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.ConstantValueMatcher;
@@ -52,7 +52,7 @@ public class SideEffectConditionResolvingPassTest extends AbstractTest {
 
   private void testTrivial(Instruction instr) {
     var behavior = instr.behavior();
-    var write = getSingleNode(behavior, WriteRegNode.class);
+    var write = getSingleNode(behavior, WriteRegTensorNode.class);
     assertTrue(new ConstantValueMatcher(Constant.Value.of(true))
         .matches(write.condition()));
   }

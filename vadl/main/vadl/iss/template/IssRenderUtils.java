@@ -16,14 +16,12 @@
 
 package vadl.iss.template;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.IntStream;
-import vadl.cppCodeGen.CppTypeMap;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
+import java.util.function.Consumer;
+import vadl.iss.passes.extensions.RegInfo;
+import vadl.utils.Pair;
+import vadl.utils.codegen.CodeGeneratorAppendable;
 import vadl.viam.Specification;
 
 /**
@@ -32,72 +30,47 @@ import vadl.viam.Specification;
 public class IssRenderUtils {
 
   /**
-   * Maps a given {@link RegisterFile} to a map of values.
+   * Maps given {@link Specification} to a list of {@link RegInfo}, which can be rendered.
    */
-  public static Map<String, Object> map(RegisterFile rf) {
-    var size = (int) Math.pow(2, rf.addressType().bitWidth());
-    var name = rf.identifier.simpleName();
-    return Map.of(
-        "name", name,
-        "name_upper", name.toUpperCase(),
-        "name_lower", name.toLowerCase(),
-        "size", String.valueOf(size),
-        "value_width", rf.resultType().bitWidth(),
-        "value_c_type", CppTypeMap.getCppTypeNameByVadlType(rf.resultType()),
-        "names", IntStream.range(0, size)
-            .mapToObj(i -> name + i)
-            .toList(),
-        "constraints", Arrays.stream(rf.constraints())
-            .map(c -> Map.of(
-                "index", c.address().intValue(),
-                "value", c.value().intValue()
-            )).toList()
-    );
-  }
-
-  /**
-   * Maps a given {@link Register} to a map of values.
-   */
-  public static Map<String, String> map(Register reg) {
-    return Map.of(
-        "name", reg.identifier.simpleName(),
-        "name_upper", reg.identifier.simpleName().toUpperCase(),
-        "name_lower", reg.identifier.simpleName().toLowerCase(),
-        "c_type", CppTypeMap.getCppTypeNameByVadlType(reg.type())
-    );
-  }
-
-  /**
-   * Maps given {@link Specification} to a list of register mappings using
-   * {@link #map(Register)}.
-   */
-  public static List<Map<String, String>> mapRegs(Specification spec) {
+  public static List<RegInfo> mapRegTensors(Specification spec) {
     return spec.isa().get()
-        .ownRegisters()
-        .stream().map(IssRenderUtils::map)
-        .toList();
-  }
-
-
-  /**
-   * Maps given {@link Specification} to a list of register file mappings using
-   * {@link #map(Register)}.
-   */
-  public static List<Map<String, Object>> mapRegFiles(Specification spec) {
-    return spec.isa().get()
-        .ownRegisterFiles()
-        .stream().map(IssRenderUtils::map)
+        .registerTensors()
+        .stream().map(reg -> reg.expectExtension(RegInfo.class))
         .toList();
   }
 
   /**
    * Maps given {@link Specification} to the register mapping of the ISA's PC.
    */
-  public static Map<String, String> mapPc(Specification spec) {
-    var pcReg = (Register) Objects.requireNonNull(spec.isa().get()
-        .pc()).registerResource();
+  public static RegInfo mapPc(Specification spec) {
+    return Objects.requireNonNull(spec.isa().get()
+            .pc()).registerTensor()
+        .expectExtension(RegInfo.class);
+  }
 
-    return map(pcReg);
+
+  /**
+   * A helper function that generates a nested C loop for the provided layers.
+   *
+   * @param sb          the code builder to generate the C code.
+   * @param layers      one layer per loop, containing the running var name and the upper integer
+   *                    bound
+   * @param bodyBuilder a function that appends c code as body to the code generator
+   */
+  public static void generateNestedLoops(CodeGeneratorAppendable sb,
+                                         List<Pair<String, Integer>> layers,
+                                         Consumer<CodeGeneratorAppendable> bodyBuilder) {
+    for (Pair<String, Integer> layer : layers) {
+      sb.append("for(int ").append(layer.left()).append(" = 0; ")
+          .append(layer.left()).append(" < ").append(layer.right()).append("; ")
+          .append(layer.left()).appendLn("++) {")
+          .indent();
+    }
+    bodyBuilder.accept(sb);
+    sb.appendLn("");
+    for (Pair<String, Integer> ignored : layers) {
+      sb.unindent().appendLn("}");
+    }
   }
 
 }

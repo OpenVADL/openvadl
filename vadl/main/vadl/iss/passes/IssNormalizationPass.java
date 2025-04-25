@@ -54,8 +54,7 @@ import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -223,7 +222,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   }
 
   @Handler
-  void handle(ReadRegNode toHandle) {
+  void handle(ReadRegTensorNode toHandle) {
     // do nothing
   }
 
@@ -260,11 +259,6 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
       );
     }
     truncateResult(toHandle, sizeOf(toHandle));
-  }
-
-  @Handler
-  void handle(ReadRegFileNode toHandle) {
-    // do nothing
   }
 
   @Handler

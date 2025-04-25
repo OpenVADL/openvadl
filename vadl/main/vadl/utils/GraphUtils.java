@@ -26,8 +26,6 @@ import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.viam.Constant;
-import vadl.viam.Counter;
-import vadl.viam.Register;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -36,11 +34,9 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.ReadRegNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
-import vadl.viam.graph.dependency.WriteRegNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -266,18 +262,6 @@ public class GraphUtils {
 
   public static ConstantNode bitsNode(long val, int width) {
     return new ConstantNode(bits(val, width));
-  }
-
-  public static ReadRegNode readReg(Register register,
-                                    @Nullable Counter.RegisterCounter staticCounterAddress
-  ) {
-    return new ReadRegNode(register, register.resultType(), staticCounterAddress);
-  }
-
-  public static WriteRegNode writeReg(Register register,
-                                      ExpressionNode val,
-                                      @Nullable Counter.RegisterCounter staticCounterAddress) {
-    return new WriteRegNode(register, val, staticCounterAddress);
   }
 
   /**

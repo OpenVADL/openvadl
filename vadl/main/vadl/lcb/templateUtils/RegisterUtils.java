@@ -19,6 +19,7 @@ package vadl.lcb.templateUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.IntStream;
 import javax.annotation.Nonnull;
@@ -26,7 +27,7 @@ import javax.annotation.Nullable;
 import vadl.template.Renderable;
 import vadl.utils.Pair;
 import vadl.viam.Abi;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 
 /**
  * Utility class for registers.
@@ -65,10 +66,11 @@ public class RegisterUtils {
   }
 
   /**
-   * Wrapper class for {@link RegisterFile} because the {@link RegisterFile} does
+   * Wrapper class for register file because the register file does
    * not specify the individual registers.
    */
-  public record RegisterClass(RegisterFile registerFile, List<Register> registers) implements
+  public record RegisterClass(RegisterTensor registerFile, List<Register> registers)
+      implements
       Renderable {
 
     @Override
@@ -84,14 +86,15 @@ public class RegisterUtils {
 
 
   /**
-   * Constructing a {@link RegisterClass} from {@link RegisterFile}.
+   * Constructing a {@link RegisterClass} from registerFile.
    */
   @Nonnull
   public static RegisterClass getRegisterClass(
-      RegisterFile registerFile,
-      @Nullable Map<Pair<RegisterFile, Integer>, List<Abi.RegisterAlias>> aliases) {
+      RegisterTensor registerFile,
+      @Nullable Map<Pair<RegisterTensor, Integer>, List<Abi.RegisterAlias>> aliases) {
     return new RegisterClass(registerFile,
-        IntStream.range(0, (int) Math.pow(2, registerFile.addressType().bitWidth()))
+        IntStream.range(0,
+                (int) Math.pow(2, Objects.requireNonNull(registerFile.addressType()).bitWidth()))
             .mapToObj(i -> {
               var name = registerFile.identifier.simpleName() + i;
 

@@ -41,8 +41,7 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -50,8 +49,7 @@ import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.UnaryNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -124,13 +122,8 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   }
 
   @Override
-  public void visit(WriteRegNode writeRegNode) {
+  public void visit(WriteRegTensorNode writeRegNode) {
     visit(writeRegNode.value());
-  }
-
-  @Override
-  public void visit(WriteRegFileNode writeRegFileNode) {
-    visit(writeRegFileNode.value());
   }
 
   @Override
@@ -164,18 +157,19 @@ public class Z3CodeGeneratorVisitor implements GraphNodeVisitor {
   }
 
   @Override
-  public void visit(ReadRegNode readRegNode) {
-    writer.write(readRegNode.register().identifier.simpleName());
-  }
-
-  @Override
-  public void visit(ReadRegFileNode readRegFileNode) {
-    // Do not write the register file because we actually care about the address.
-    // a = X << X (wrong)
-    // a = rs1 << rs2 (correct)
-    writer.write("Select(" + readRegFileNode.registerFile().identifier.simpleName() + ", ");
-    visit(readRegFileNode.address());
-    writer.write(")");
+  public void visit(ReadRegTensorNode readRegNode) {
+    if (readRegNode.regTensor().isSingleRegister()) {
+      writer.write(readRegNode.regTensor().identifier.simpleName());
+    } else if (readRegNode.regTensor().isRegisterFile()) {
+      // Do not write the register file because we actually care about the address.
+      // a = X << X (wrong)
+      // a = rs1 << rs2 (correct)
+      writer.write("Select(" + readRegNode.regTensor().identifier.simpleName() + ", ");
+      visit(readRegNode.indices().getFirst());
+      writer.write(")");
+    } else {
+      throw new RuntimeException("not implemented");
+    }
   }
 
   @Override

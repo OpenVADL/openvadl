@@ -16,24 +16,25 @@
 
 package vadl.viam.matching.impl;
 
-import vadl.viam.Register;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.matching.Matcher;
 
 /**
- * Matches any {@link vadl.viam.graph.dependency.ReadRegNode}.
+ * Matches any {@link ReadRegTensorNode}.
  */
 public class IsReadRegMatcher implements Matcher {
 
-  private final Register register;
+  private final RegisterTensor register;
 
-  public IsReadRegMatcher(Register register) {
+  public IsReadRegMatcher(RegisterTensor register) {
+    register.ensure(register.isSingleRegister(), "must be single register");
     this.register = register;
   }
 
   @Override
   public boolean matches(Node node) {
-    return node instanceof ReadRegNode n && n.register().equals(register);
+    return node instanceof ReadRegTensorNode n && n.regTensor().equals(register);
   }
 }

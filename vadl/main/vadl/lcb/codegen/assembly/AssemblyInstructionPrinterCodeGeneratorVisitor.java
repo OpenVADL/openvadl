@@ -52,16 +52,14 @@ import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 /**
@@ -159,12 +157,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   }
 
   @Override
-  public void visit(WriteRegNode writeRegNode) {
-
-  }
-
-  @Override
-  public void visit(WriteRegFileNode writeRegFileNode) {
+  public void visit(WriteRegTensorNode writeRegNode) {
 
   }
 
@@ -184,12 +177,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   }
 
   @Override
-  public void visit(ReadRegNode readRegNode) {
-
-  }
-
-  @Override
-  public void visit(ReadRegFileNode readRegFileNode) {
+  public void visit(ReadRegTensorNode readRegNode) {
 
   }
 
@@ -341,7 +329,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     var candidates = behavior.getNodes(FieldRefNode.class)
         .filter(x -> x.formatField().equals(fieldRefNode.formatField()))
         .flatMap(Node::usages)
-        .filter(x -> x instanceof HasRegisterFile)
+        .filter(x -> x instanceof HasRegisterFile y && y.hasRegisterFile())
         .map(x -> (HasRegisterFile) x)
         .collect(Collectors.toSet());
 

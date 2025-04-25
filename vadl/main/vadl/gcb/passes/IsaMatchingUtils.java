@@ -32,14 +32,12 @@ import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.RegisterFile;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.matching.Matcher;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyChildMatcher;
@@ -132,11 +130,13 @@ public interface IsaMatchingUtils {
   }
 
   /**
-   * Return {@code true} if there is only one side effect which writes a {@link RegisterFile}.
+   * Return {@code true} if there is only one side effect which writes a register file.
    */
   default boolean writesExactlyOneRegisterClass(UninlinedGraph graph) {
-    var writesRegFiles = graph.getNodes(WriteRegFileNode.class).toList();
-    var writesReg = graph.getNodes(WriteRegNode.class).toList();
+    var writesRegFiles = graph.getNodes(WriteRegTensorNode.class)
+        .filter(w -> w.regTensor().isRegisterFile()).toList();
+    var writesReg = graph.getNodes(WriteRegTensorNode.class)
+        .filter(w -> w.regTensor().isSingleRegister()).toList();
     var writesMem = graph.getNodes(WriteMemNode.class).toList();
     var readMem = graph.getNodes(ReadMemNode.class).toList();
 
@@ -151,12 +151,14 @@ public interface IsaMatchingUtils {
   }
 
   /**
-   * Return {@code true} if there is only one side effect which writes a {@link RegisterFile} with
-   * the given {@link Type} as result type for the {@link RegisterFile}.
+   * Return {@code true} if there is only one side effect which writes a register file with
+   * the given {@link Type} as result type for the register file.
    */
   default boolean writesExactlyOneRegisterClassWithType(UninlinedGraph graph, Type resultType) {
-    var writesRegFiles = graph.getNodes(WriteRegFileNode.class).toList();
-    var writesReg = graph.getNodes(WriteRegNode.class).toList();
+    var writesRegFiles = graph.getNodes(WriteRegTensorNode.class)
+        .filter(w -> w.regTensor().isRegisterFile()).toList();
+    var writesReg = graph.getNodes(WriteRegTensorNode.class)
+        .filter(w -> w.regTensor().isSingleRegister()).toList();
     var writesMem = graph.getNodes(WriteMemNode.class).toList();
     var readMem = graph.getNodes(ReadMemNode.class).toList();
 
@@ -167,7 +169,7 @@ public interface IsaMatchingUtils {
       return false;
     }
 
-    return writesRegFiles.get(0).registerFile().resultType() == resultType;
+    return writesRegFiles.get(0).regTensor().resultType() == resultType;
   }
 
   /**

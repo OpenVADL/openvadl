@@ -19,32 +19,29 @@ package vadl.iss.passes.tcgLowering;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.types.TupleType;
-import vadl.utils.Pair;
 import vadl.utils.Triple;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.Instruction;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ScheduledNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ProcCallNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
@@ -144,32 +141,21 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
     }
 
     @Handler
-    List<TcgVRefNode> destOf(WriteRegNode toHandle) {
+    List<TcgVRefNode> destOf(WriteRegTensorNode toHandle) {
       return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.register(), true));
-    }
-
-    @Handler
-    List<TcgVRefNode> destOf(WriteRegFileNode toHandle) {
-      return assignments.computeIfAbsent(toHandle,
-          n -> createRegFileVar(toHandle.registerFile(), toHandle.address(), true));
+          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), true));
     }
 
     @Handler
     List<TcgVRefNode> destOf(WriteArtificialResNode toHandle) {
-      throw new UnsupportedOperationException("Type WriteRegFileNode not yet implemented");
+      throw new UnsupportedOperationException("Type WriteArtificialResNode not yet implemented");
     }
 
-    @Handler
-    List<TcgVRefNode> destOf(ReadRegNode toHandle) {
-      return assignments.computeIfAbsent(toHandle,
-          n -> createRegVar(toHandle.register(), false));
-    }
 
     @Handler
-    List<TcgVRefNode> destOf(ReadRegFileNode toHandle) {
+    List<TcgVRefNode> destOf(ReadRegTensorNode toHandle) {
       return assignments.computeIfAbsent(toHandle,
-          n -> createRegFileVar(toHandle.registerFile(), toHandle.address(), false));
+          n -> createRegVar(toHandle.resourceDefinition(), toHandle.indices(), false));
     }
 
     @Handler
@@ -196,11 +182,15 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
 
 
     private TcgVRefNode toNode(TcgV tcgV) {
-      return toNode(tcgV, null);
+      return toNode(tcgV, new NodeList<>());
     }
 
-    private TcgVRefNode toNode(TcgV tcgV, @Nullable ExpressionNode dependency) {
-      return graph.addWithInputs(new TcgVRefNode(tcgV, dependency));
+    private TcgVRefNode toNode(TcgV tcgV, ExpressionNode indices) {
+      return graph.addWithInputs(new TcgVRefNode(tcgV, new NodeList<>(indices)));
+    }
+
+    private TcgVRefNode toNode(TcgV tcgV, NodeList<ExpressionNode> indices) {
+      return graph.addWithInputs(new TcgVRefNode(tcgV, indices));
     }
 
     private TcgVRefNode createConstExprVar(ExpressionNode expr) {
@@ -230,34 +220,20 @@ public class TcgCtx extends DefinitionExtension<Instruction> {
      * @param reg The register.
      * @return The variable corresponding to the register.
      */
-    private List<TcgVRefNode> createRegVar(Register reg, boolean isDest) {
-      var key = Pair.of(reg, isDest);
-      var dest = isDest ? "_dest" : "";
-      return tcgVCache.computeIfAbsent(key, k -> List.of(toNode(TcgV.reg(
-          "reg_" + reg.simpleName().toLowerCase() + dest,
-          targetSize,
-          reg
-      ))));
-    }
-
-    /**
-     * Creates a variable for the given register file and index.
-     *
-     * @param regFile The register file.
-     * @param index   The index expression node.
-     * @return The variable corresponding to the register file at the given index.
-     */
-    private List<TcgVRefNode> createRegFileVar(RegisterFile regFile, ExpressionNode index,
-                                               boolean isDest) {
-      var key = Triple.of(regFile, index, isDest);
+    private List<TcgVRefNode> createRegVar(RegisterTensor reg,
+                                           NodeList<ExpressionNode> indices, boolean isDest) {
+      var key = Triple.of(reg, indices, isDest);
       var dest = isDest ? "_dest" : "";
       return tcgVCache.computeIfAbsent(key, k -> {
-        var regFileVar = TcgV.regFile("regfile_" + regFile.simpleName().toLowerCase()
-                + "_" + TcgPassUtils.exprVarName(index) + dest,
-            targetSize, regFile, index, isDest);
+        var idxStr = indices.stream().map(TcgPassUtils::exprVarName)
+            .collect(Collectors.joining("_"));
+        idxStr = idxStr.isEmpty() ? "" : "_" + idxStr;
+        idxStr += dest;
+        var regFileVar = TcgV.reg("reg_" + reg.simpleName().toLowerCase() + idxStr,
+            targetSize, reg, indices, isDest);
 
         // add index as dependency to var reference node
-        return List.of(toNode(regFileVar, index));
+        return List.of(toNode(regFileVar, indices));
       });
     }
   }

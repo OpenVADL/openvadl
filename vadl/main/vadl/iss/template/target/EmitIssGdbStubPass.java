@@ -29,9 +29,7 @@ import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.utils.codegen.CodeGeneratorAppendable;
 import vadl.utils.codegen.StringBuilderAppendable;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
-import vadl.viam.Resource;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -66,8 +64,13 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
 
   private String createRead(List<IssGdbInfoExtractionPass.Result.Reg> regs) {
     var read = createIfChainOverN(regs, (i, res, builder) -> {
+      res.ensure(res.indexDimensions().size() < 2,
+          "Only one or two dimensional registers supported");
       var resName = res.simpleName().toLowerCase();
-      var envAccess = res instanceof RegisterFile ? resName + "[n]" : resName;
+      var fileSize = res.isSingleRegister() ? 0 : res.outermostDim().size();
+      // adjust acccess by index based on gdb nr n
+      var n = fileSize == 0 ? "n" : "n - " + (i - fileSize + 1);
+      var envAccess = !res.isSingleRegister() ? resName + "[" + n + "]" : resName;
       builder.appendLn("return gdb_get_regl(mem_buf, env->" + envAccess + ");");
     });
 
@@ -78,17 +81,26 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
 
   private String createWrite(List<IssGdbInfoExtractionPass.Result.Reg> regs) {
     var write = createIfChainOverN(regs, (i, res, builder) -> {
+      res.ensure(res.indexDimensions().size() < 2,
+          "Only one or two dimensional registers supported");
       var resName = res.simpleName().toLowerCase();
-      var envAccess = res instanceof RegisterFile ? resName + "[n]" : resName;
+      var envAccess = !res.isSingleRegister() ? resName + "[n]" : resName;
       var ldFucn = "ld" + shortMachineWord(res) + "_p";
       var writtenBytes = res.resultType().bitWidth() / 8;
 
-      if (res instanceof RegisterFile regFile) {
-        var cond =
-            Arrays.stream(regFile.constraints()).map(c -> "n == " + c.address().hexadecimal())
-                .collect(Collectors.joining(" && "));
+      var cond =
+          Arrays.stream(res.constraints())
+              .map(c -> {
+                var fileSize = res.outermostDim().size();
+                // finds the constraint index based on gdb nr n
+                var normalizedRegIndex = c.indices().getFirst().intValue() + i - fileSize + 1;
+                return "n == " + normalizedRegIndex;
+              })
+              .collect(Collectors.joining(" && "));
+      if (!cond.isEmpty()) {
         builder.appendLn("if (" + cond + ") { return " + writtenBytes + "; }");
       }
+
 
       builder.appendLn("env->" + envAccess + " = " + ldFucn + "(mem_buf);")
           .appendLn("return " + writtenBytes + ";");
@@ -100,33 +112,34 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
   }
 
   private CodeGeneratorAppendable createIfChainOverN(List<IssGdbInfoExtractionPass.Result.Reg> regs,
-                                                     TriConsumer<Integer, Resource,
+                                                     TriConsumer<Integer, RegisterTensor,
                                                          CodeGeneratorAppendable> accessBuilder) {
     var read = new StringBuilderAppendable("\s\s\s\s").indent();
 
     int i = 0;
-    Resource currentFile = null;
+    RegisterTensor prevReg = null;
 
     for (var reg : regs) {
-      Resource origin = reg.origin();
-      if (currentFile == null || !currentFile.equals(origin)) {
-        if (currentFile != null) {
-          emitIfCondition(read, accessBuilder, i - 1, currentFile);
+      RegisterTensor origin = reg.origin();
+      if (prevReg == null || !prevReg.equals(origin)) {
+        if (prevReg != null) {
+          // new reg was found, emit previous reg
+          emitIfCondition(read, accessBuilder, i - 1, prevReg);
         }
-        currentFile = origin;
+        prevReg = origin;
       }
       i++;
     }
 
-    emitIfCondition(read, accessBuilder, i - 1, requireNonNull(currentFile));
+    emitIfCondition(read, accessBuilder, i - 1, requireNonNull(prevReg));
     return read;
   }
 
   @SuppressWarnings("LineLength")
   private void emitIfCondition(CodeGeneratorAppendable read,
-                               TriConsumer<Integer, Resource, CodeGeneratorAppendable> accessBuilder,
-                               int index, Resource file) {
-    var comp = file instanceof Register ? "==" : "<=";
+                               TriConsumer<Integer, RegisterTensor, CodeGeneratorAppendable> accessBuilder,
+                               int index, RegisterTensor file) {
+    var comp = file.isSingleRegister() ? "==" : "<=";
     read.appendLn("if ( n " + comp + " " + index + ") {")
         .indent();
     accessBuilder.accept(index, file, read);
@@ -134,7 +147,7 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
         .appendLn("}");
   }
 
-  private static String shortMachineWord(Resource res) {
+  private static String shortMachineWord(RegisterTensor res) {
     int width = res.resultType().bitWidth();
     res.ensure(isStandard(width),
         "The resource with is none of 8, 16, 32, 64. "

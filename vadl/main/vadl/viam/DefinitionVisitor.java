@@ -58,9 +58,7 @@ public interface DefinitionVisitor {
 
   void visit(PseudoInstruction pseudoInstruction);
 
-  void visit(Register register);
-
-  void visit(RegisterFile registerFile);
+  void visit(RegisterTensor registerTensor);
 
   void visit(Memory memory);
 
@@ -96,6 +94,7 @@ public interface DefinitionVisitor {
 
   void visit(CompilerInstruction compilerInstruction);
 
+
   /**
    * DefinitionVisitor.Recursive is an interface that extends the DefinitionVisitor
    * interface.
@@ -127,8 +126,7 @@ public interface DefinitionVisitor {
       isa.ownFunctions().forEach(e -> e.accept(this));
       isa.exceptions().forEach(e -> e.accept(this));
       isa.ownRelocations().forEach(e -> e.accept(this));
-      isa.ownRegisters().forEach(e -> e.accept(this));
-      isa.ownRegisterFiles().forEach(e -> e.accept(this));
+      isa.registerTensors().forEach(e -> e.accept(this));
       isa.ownMemories().forEach(e -> e.accept(this));
       isa.artificialResources().forEach(e -> e.accept(this));
       isa.ownInstructions().forEach(e -> e.accept(this));
@@ -247,16 +245,9 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(Register register) {
-      beforeTraversal(register);
-      // Do not travers sub registers, as they are included in upper call to registers
-      afterTraversal(register);
-    }
-
-    @Override
-    public void visit(RegisterFile registerFile) {
-      beforeTraversal(registerFile);
-      afterTraversal(registerFile);
+    public void visit(RegisterTensor registerTensor) {
+      beforeTraversal(registerTensor);
+      afterTraversal(registerTensor);
     }
 
     @Override
@@ -322,7 +313,6 @@ public interface DefinitionVisitor {
       microArchitecture.logic().forEach(logic -> logic.accept(this));
       microArchitecture.signals().forEach(signal -> signal.accept(this));
       microArchitecture.ownRegisters().forEach(register -> register.accept(this));
-      microArchitecture.ownRegisterFiles().forEach(registerFile -> registerFile.accept(this));
       microArchitecture.ownMemories().forEach(memory -> memory.accept(this));
       microArchitecture.ownFunctions().forEach(function -> function.accept(this));
       afterTraversal(microArchitecture);
@@ -487,12 +477,7 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(Register register) {
-
-    }
-
-    @Override
-    public void visit(RegisterFile registerFile) {
+    public void visit(RegisterTensor registerTensor) {
 
     }
 

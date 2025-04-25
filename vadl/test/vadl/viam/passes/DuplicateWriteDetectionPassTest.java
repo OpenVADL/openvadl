@@ -35,18 +35,17 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 public class DuplicateWriteDetectionPassTest extends AbstractTest {
 
   static Stream<Arguments> invalidTestArgs() {
-    var regErrMsg = "Register is written twice";
-    var regFileErrMsg = "Register in register file is written twice";
+    var regErrMsg = "Register is written twice at same index";
     var memErrMsg = "Memory address is written twice";
     return Stream.of(
         of("reg_single_branch", 1, regErrMsg),
         of("reg_dual_branch", 1, regErrMsg),
         of("reg_triple_branch", 1, regErrMsg),
         of("reg_potential_branch", 1, regErrMsg),
-        of("regfile_1", 1, regFileErrMsg),
-        of("regfile_2", 1, regFileErrMsg),
-        of("regfile_3", 2, regFileErrMsg),
-        of("regfile_4", 1, regFileErrMsg),
+        of("regfile_1", 1, regErrMsg),
+        of("regfile_2", 1, regErrMsg),
+        of("regfile_3", 2, regErrMsg),
+        of("regfile_4", 1, regErrMsg),
         of("mem_1", 1, memErrMsg),
         of("mem_2", 1, memErrMsg),
         of("mem_3", 2, memErrMsg),

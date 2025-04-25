@@ -19,14 +19,15 @@ package vadl.iss.passes.tcgLowering.nodes;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 // TODO: This should extend TcgVarnode instead
@@ -34,9 +35,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 /**
  * Abstract sealed class representing a variable retrieval operation in the TCG.
  */
-public abstract sealed class TcgGetVar extends TcgOpNode
-    permits TcgGetVar.TcgGetConst, TcgGetVar.TcgGetReg, TcgGetVar.TcgGetRegFile,
-    TcgGetVar.TcgGetTemp {
+public abstract sealed class TcgGetVar extends TcgOpNode {
 
   public TcgGetVar(TcgVRefNode dest) {
     super(dest, dest.var().width());
@@ -49,13 +48,12 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     return switch (varRef.var().kind()) {
       case TMP -> new TcgGetTemp(varRef);
       case CONST -> new TcgGetConst(varRef, varRef.var().constValue());
-      case REG -> new TcgGetReg((Register) varRef.var().registerOrFile(), varRef);
-      case REG_FILE -> {
-        var kind =
-            varRef.var().isDest() ? TcgGetRegFile.Kind.DEST : TcgGetRegFile.Kind.SRC;
-        yield new TcgGetRegFile((RegisterFile) varRef.var().registerOrFile(),
-            varRef.var().regFileIndex(), kind, varRef);
-      }
+      case REG_TENSOR -> new TcgGetRegTensor(
+          varRef.var().registerOrFile(),
+          varRef.indices(),
+          varRef.var().isDest() ? TcgGetRegTensor.Kind.DEST : TcgGetRegTensor.Kind.SRC,
+          varRef
+      );
     };
   }
 
@@ -141,63 +139,15 @@ public abstract sealed class TcgGetVar extends TcgOpNode
   }
 
   /**
-   * Represents an operation in the TCG for retrieving a value from a register.
-   */
-  public static final class TcgGetReg extends TcgGetVar {
-
-    @DataValue
-    Register register;
-
-    public TcgGetReg(Register reg, TcgVRefNode dest) {
-      super(dest);
-      register = reg;
-    }
-
-    public Register register() {
-      return register;
-    }
-
-    @Override
-    public String cCode(Function<Node, String> nodeToCCode) {
-      return "TCGv_" + firstDest().var().width() + " " + firstDest().cCode() + " = "
-          + "cpu_" + register.simpleName().toLowerCase() + ";";
-    }
-
-    @Override
-    public Set<TcgVRefNode> usedVars() {
-      // tcg get regs are also reads, so it can't be shared
-      var sup = super.usedVars();
-      sup.add(firstDest());
-      return sup;
-    }
-
-    @Override
-    public Node copy() {
-      return new TcgGetTemp(firstDest());
-    }
-
-    @Override
-    public Node shallowCopy() {
-      return new TcgGetTemp(firstDest());
-    }
-
-    @Override
-    protected void collectData(List<Object> collection) {
-      super.collectData(collection);
-      collection.add(register);
-    }
-  }
-
-  /**
    * Represents an operation in the TCG for retrieving a value from a register file.
    * This is emitted as e.g. {@code get_x(ctx, a->rs1)} in the instruction translation.
    */
-  public static final class TcgGetRegFile extends TcgGetVar {
+  public static final class TcgGetRegTensor extends TcgGetVar {
 
     @DataValue
-    RegisterFile registerFile;
+    RegisterTensor registerTensor;
     @Input
-    ExpressionNode index;
+    NodeList<ExpressionNode> indices;
 
     /**
      * The kind of the register file retrieval.
@@ -216,17 +166,16 @@ public abstract sealed class TcgGetVar extends TcgOpNode
      * Constructs a TcgGetRegFile object representing an operation in the TCG for retrieving a value
      * from a register file.
      *
-     * @param registerFile The register file from which the variable is to be retrieved.
-     * @param index        The index expression node specifying
-     *                     the address within the register file.
-     * @param kind         The kind of the register file retrieval, either SRC or dest()
-     * @param res          The result variable representing the output of this operation.
+     * @param registerTensor The register tensor from which the variable is to be retrieved.
+     * @param kind           The kind of the register file retrieval, either SRC or dest()
+     * @param res            The result variable representing the output of this operation.
      */
-    public TcgGetRegFile(RegisterFile registerFile, ExpressionNode index, Kind kind,
-                         TcgVRefNode res) {
+    public TcgGetRegTensor(RegisterTensor registerTensor, NodeList<ExpressionNode> indices,
+                           Kind kind,
+                           TcgVRefNode res) {
       super(res);
-      this.registerFile = registerFile;
-      this.index = index;
+      this.registerTensor = registerTensor;
+      this.indices = indices;
       this.kind = kind;
     }
 
@@ -234,22 +183,22 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     public void verifyState() {
       super.verifyState();
 
-      var cppType = registerFile.resultType().fittingCppType();
+      var cppType = registerTensor.resultType(indices.size()).fittingCppType();
       ensure(cppType != null, "Couldn't fit cpp type");
       ensure(firstDest().var().width().width <= cppType.bitWidth(),
           "register file result width does not fit in node's result var width");
     }
 
-    public RegisterFile registerFile() {
-      return registerFile;
+    public RegisterTensor registerTensor() {
+      return registerTensor;
     }
 
     public Kind kind() {
       return kind;
     }
 
-    public ExpressionNode index() {
-      return index;
+    public NodeList<ExpressionNode> indices() {
+      return indices;
     }
 
     @Override
@@ -263,39 +212,42 @@ public abstract sealed class TcgGetVar extends TcgOpNode
     @Override
     public String cCode(Function<Node, String> nodeToCCode) {
       var prefix = kind() == Kind.DEST ? "dest" : "get";
+      var args = indices.stream().map(nodeToCCode).collect(Collectors.joining(", "));
+      args = args.isEmpty() ? "" : ", " + args;
       return "TCGv_" + firstDest().var().width() + " " + firstDest().var().varName() + " = "
-          + prefix + "_" + registerFile.simpleName().toLowerCase()
-          + "(ctx, " + nodeToCCode.apply(index)
-          + ");";
+          + prefix + "_" + registerTensor.simpleName().toLowerCase()
+          + "(ctx" + args + ");";
     }
 
     @Override
     public Node copy() {
-      return new TcgGetRegFile(registerFile, index.copy(ExpressionNode.class), kind, firstDest());
+      return new TcgGetRegTensor(registerTensor, indices.copy(), kind, firstDest());
     }
 
     @Override
     public Node shallowCopy() {
-      return new TcgGetRegFile(registerFile, index, kind, firstDest());
+      return new TcgGetRegTensor(registerTensor, indices, kind, firstDest());
     }
 
     @Override
     protected void collectData(List<Object> collection) {
       super.collectData(collection);
-      collection.add(registerFile);
+      collection.add(registerTensor);
       collection.add(kind);
     }
 
     @Override
     protected void collectInputs(List<Node> collection) {
       super.collectInputs(collection);
-      collection.add(index);
+      collection.addAll(indices);
     }
 
     @Override
-    protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    protected void applyOnInputsUnsafe(
+        vadl.viam.graph.GraphVisitor.Applier<vadl.viam.graph.Node> visitor) {
       super.applyOnInputsUnsafe(visitor);
-      index = visitor.apply(this, index, ExpressionNode.class);
+      indices = indices.stream().map((e) -> visitor.apply(this, e, ExpressionNode.class))
+          .collect(Collectors.toCollection(NodeList::new));
     }
   }
 }

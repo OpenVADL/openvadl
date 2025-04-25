@@ -17,10 +17,9 @@
 package vadl.gcb.valuetypes;
 
 import java.util.List;
-import vadl.viam.Register;
 
 /**
- * Extends the {@link Register} with information which a compiler requires.
+ * Extends the register with information which a compiler requires.
  */
 public abstract class CompilerRegister {
   protected final String name;

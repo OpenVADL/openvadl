@@ -16,13 +16,8 @@
 #undef  HELPER_H
 
 // define the registers tcgs
-[# th:each="reg : ${registers}"]
-static TCGv cpu_[(${reg.name_lower})];
-[/]
-
-// define the register file tcgs
-[# th:each="reg_file : ${register_files}"]
-static TCGv cpu_[(${reg_file.name_lower})][(${"[" + reg_file["size"] + "]"})];
+[# th:each="reg : ${register_tensors}"]
+static TCGv cpu_[(${reg.name_lower})][(${reg.c_array_def})];
 [/]
 
 /* We have a single condition exit.
@@ -40,9 +35,9 @@ typedef struct DisasContext {
 
   target_ulong pc_curr;
 
-  [# th:each="reg_file, iterState : ${register_files}"] // constraint value constants
-  [# th:each="constraint, iterState : ${reg_file.constraints}"]
-  TCGv const[(${reg_file.name_lower})][(${constraint.value})];
+  [# th:each="reg, iterState : ${register_tensors}"] // constraint value constants
+  [# th:each="constraint, iterState : ${reg.constraints}"]
+  TCGv [(${constraint.tcg_name})];
   [/][/]
 
 } DisasContext;
@@ -50,26 +45,7 @@ typedef struct DisasContext {
 
 void [(${gen_arch_lower})]_tcg_init(void)
 {
-    int i;
-
-    [# th:each="reg : ${registers}"]
-    cpu_[(${reg.name_lower})] = tcg_global_mem_new(tcg_env, offsetof(CPU[(${gen_arch_upper})]State, [(${reg.name_lower})]), "[(${reg.name_upper})]");
-    [/]
-
-    [# th:each="reg_file, iterState : ${register_files}"]
-    [# th:each="constraint, iterState : ${reg_file.constraints}"]
-    // Register [(${reg_file.names[constraint.index]})] is placeholder for [(${constraint.value})]. DO NOT USE IT.
-    // Use gen_set_[(${reg_file.name_lower})] and get_[(${reg_file.name_lower})] helper functions when accessing.
-    cpu_[(${reg_file.name_lower})][(${"[" + constraint.index + "]"})] = NULL;
-    [/]
-    for (i = 0; i < [(${reg_file["size"]})]; i++) {
-        [# th:each="constraint, iterState : ${reg_file.constraints}"]
-        if (i == [(${constraint.index})]) continue; // Skip index as it should stay NULL;
-        [/]
-        cpu_[(${reg_file.name_lower})][i] = tcg_global_mem_new(tcg_env,
-                                        offsetof(CPU[(${gen_arch_upper})]State, [(${reg_file.name_lower})][i]),
-                                        [(${gen_arch_lower})]_cpu_[(${reg_file.name_lower})]_names[i]);
-    }[/]
+[(${tcg_v_init_code})]
 }
 
 /*
@@ -88,37 +64,23 @@ static target_ulong next_insn(DisasContext *ctx)
     return translator_ld[(${insn_width.short})](ctx->env, &ctx->base, pc_next);
 }
 
-[# th:each="reg_file, iterState : ${register_files}"]
-static TCGv get_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num)
-{
-    assert(reg_num < [(${reg_file["size"]})]);
-    [# th:each="constraint, iterState : ${reg_file.constraints}"]
-    if (reg_num == [(${constraint.index})]) return ctx->const[(${reg_file.name_lower})][(${constraint.value})];
+[# th:each="reg : ${register_tensors}"]
+static TCGv get_[(${reg.name_lower})](DisasContext *ctx [(${reg.getter_params})])
+{   [# th:each="dim : ${reg.index_dims}"]
+    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
+    [# th:each="constraint : ${reg.constraints}"]
+    if ([(${constraint.check})]) return ctx->[(${constraint.tcg_name})];
     [/]
-    return cpu_[(${reg_file.name_lower})][reg_num];
+    return cpu_[(${reg.name_lower})][# th:each="dim : ${reg.index_dims}"][ [(${dim.arg_name})]][/];
 }
 
-static TCGv dest_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num)
-{
-    assert(reg_num < [(${reg_file["size"]})]);
-    [# th:each="constraint, iterState : ${reg_file.constraints}"]
-    // TODO: This should be temporary instead
-    if (reg_num == [(${constraint.index})]) return tcg_temp_new();
+static TCGv dest_[(${reg.name_lower})](DisasContext *ctx [(${reg.getter_params})])
+{   [# th:each="dim : ${reg.index_dims}"]
+    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
+    [# th:each="constraint : ${reg.constraints}"]
+    if ([(${constraint.check})]) return tcg_temp_new();
     [/]
-    return cpu_[(${reg_file.name_lower})][reg_num];
-}
-
-static void gen_set_[(${reg_file.name_lower})](DisasContext *ctx, int reg_num, TCGv t)
-{
-    if (
-    true
-    [# th:each="constraint, iterState : ${reg_file.constraints}"]
-    && reg_num != [(${constraint.index})]
-    [/]
-    ) {
-        // TODO: check if tl is fine. Better would be register file specific call
-        tcg_gen_mov_tl(cpu_[(${reg_file.name_lower})][reg_num], t);
-    }
+    return cpu_[(${reg.name_lower})][# th:each="dim : ${reg.index_dims}"][ [(${dim.arg_name})]][/];
 }
 [/]
 
@@ -204,9 +166,9 @@ static void [(${gen_arch_lower})]_tr_init_disas_context(DisasContextBase *db, CP
     [(${gen_arch_upper})]CPU *cpu = [(${gen_arch_upper})]_CPU(cs);
 
     ctx->env = env;
-    [# th:each="reg_file, iterState : ${register_files}"]
-    [# th:each="constraint, iterState : ${reg_file.constraints}"]
-    ctx->const[(${reg_file.name_lower})][(${constraint.value})] = tcg_constant_i[(${reg_file.value_width})]([(${constraint.value})]);
+    [# th:each="reg, iterState : ${register_tensors}"]
+    [# th:each="constraint, iterState : ${reg.constraints}"]
+    ctx->[(${constraint.tcg_name})] = tcg_constant_i[(${reg.value_width})]([(${constraint.value})]);
     [/][/]
 }
 

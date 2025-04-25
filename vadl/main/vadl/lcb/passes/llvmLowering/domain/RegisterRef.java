@@ -26,20 +26,16 @@ import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.DefinitionVisitor;
 import vadl.viam.Format;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Resource;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadResourceNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
- * A {@link RegisterRef} can be a {@link Register} which comes from {@link ReadResourceNode} or
- * {@link WriteResourceNode}. But it can also come from {@link ReadRegFileNode} or
- * {@link WriteRegFileNode} when the address is constant. Since, we have no way to reduce a
- * {@link RegisterFile} to a {@link Register}, we use {@link RegisterRef} as joined type for
- * both "worlds".
+ * A {@link RegisterRef} can be a register which comes from {@link ReadRegTensorNode} or
+ * {@link WriteRegTensorNode} when the address is constant (or its a single register).
+ * Since, we have no way to reduce a RegisterFile to a single register,
+ * we use {@link RegisterRef} as joined type for both "worlds".
  */
 public class RegisterRef extends Resource {
   private final DataType resultType;
@@ -49,15 +45,15 @@ public class RegisterRef extends Resource {
   private Format refFormat;
   @Nullable
   private Constant address;
-  private final List<RegisterFile.Constraint> constraints;
+  private final List<RegisterTensor.Constraint> constraints;
 
   /**
    * Constructor.
    */
-  public RegisterRef(Register register) {
+  public RegisterRef(RegisterTensor register) {
     super(register.identifier);
+    register.ensure(register.isSingleRegister(), "must be single register");
     this.resultType = register.resultType();
-    this.refFormat = register.refFormat();
     this.relationType = register.relationType();
     this.address = null;
     // When constructed over register then they are no constraints.
@@ -67,7 +63,7 @@ public class RegisterRef extends Resource {
   /**
    * Constructor.
    */
-  public RegisterRef(RegisterFile registerFile, Constant address) {
+  public RegisterRef(RegisterTensor registerFile, Constant address) {
     super(registerFile.identifier);
     this.resultType = registerFile.resultType();
     this.relationType = registerFile.relationType();
@@ -77,7 +73,7 @@ public class RegisterRef extends Resource {
     // But types might not match, so just compare the values.
     this.constraints =
         Arrays.stream(registerFile.constraints())
-            .filter(x -> x.address().intValue() == address.asVal().intValue()).toList();
+            .filter(x -> x.indices().getFirst().intValue() == address.asVal().intValue()).toList();
   }
 
   @Override
@@ -97,8 +93,22 @@ public class RegisterRef extends Resource {
   }
 
   @Override
+  public List<DataType> indexTypes() {
+    var addrType = addressType();
+    if (addrType == null) {
+      return List.of();
+    }
+    return List.of(addrType);
+  }
+
+  @Override
   public DataType resultType() {
     return resultType;
+  }
+
+  @Override
+  public DataType resultType(int providedDimensions) {
+    return resultType();
   }
 
   @Override
@@ -106,16 +116,12 @@ public class RegisterRef extends Resource {
     return relationType;
   }
 
-  public @Nullable Format refFormat() {
-    return refFormat;
-  }
-
   @Override
   public void accept(DefinitionVisitor visitor) {
 
   }
 
-  public List<RegisterFile.Constraint> constraints() {
+  public List<RegisterTensor.Constraint> constraints() {
     return constraints;
   }
 

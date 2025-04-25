@@ -17,9 +17,15 @@
 package vadl.iss.template.target;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.template.IssRenderUtils;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.utils.Pair;
+import vadl.utils.codegen.CodeGeneratorAppendable;
+import vadl.utils.codegen.StringBuilderAppendable;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -40,7 +46,44 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
   protected Map<String, Object> createVariables(PassResults passResults,
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
-
+    vars.put("reg_dump_code", dumpRegsCode(specification));
     return vars;
   }
+
+  private String dumpRegsCode(Specification specification) {
+    var sb = new StringBuilderAppendable();
+    var isa = specification.mip().get().isa();
+    sb.indent();
+    isa.registerTensors().forEach(tensor -> {
+      dumpRegsCode(sb, tensor);
+      sb.append("\n");
+    });
+    return sb.toString();
+  }
+
+  private void dumpRegsCode(CodeGeneratorAppendable sb, RegisterTensor reg) {
+    var layers = reg.indexDimensions().stream()
+        .map(d -> Pair.of("d" + d.index(), d.size()))
+        .toList();
+    var indexAccess = layers.stream().map(l -> "[" + l.left() + "]")
+        .collect(Collectors.joining());
+
+    var nameLower = reg.simpleName().toLowerCase();
+
+    IssRenderUtils.generateNestedLoops(sb, layers, (b) -> {
+      if (layers.isEmpty()) {
+        b.append("qemu_fprintf(f, \" %s:    \" TARGET_FMT_lx \"\\n\", env->%s);"
+            .formatted(reg.simpleName(), nameLower));
+      } else {
+        var target = configuration().targetName().toLowerCase();
+        var names = target + "_cpu_" + nameLower + "_names";
+        var innerLayer = layers.getLast().left();
+        b.appendLn("qemu_fprintf(f, \" %-8s \" TARGET_FMT_lx, "
+            + names + indexAccess + ", env->"
+            + nameLower + indexAccess + ");");
+        b.append("if (" + innerLayer + " & 3 == 3) qemu_fprintf(f, \"\\n\");");
+      }
+    });
+  }
+
 }

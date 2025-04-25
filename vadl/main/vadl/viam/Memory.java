@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import vadl.types.ConcreteRelationType;
@@ -65,8 +66,18 @@ public class Memory extends Resource {
   }
 
   @Override
+  public List<DataType> indexTypes() {
+    return List.of(addressType());
+  }
+
+  @Override
   public DataType resultType() {
     return resultType;
+  }
+
+  @Override
+  public DataType resultType(int providedDimensions) {
+    return resultType();
   }
 
   @Override
