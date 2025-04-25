@@ -44,6 +44,7 @@ public class WriteStageOutputNode extends SideEffectNode {
    */
 
   public WriteStageOutputNode(StageOutput stageOutput, ExpressionNode value) {
+    super(null);
     this.stageOutput = stageOutput;
     this.value = value;
   }
@@ -57,6 +58,7 @@ public class WriteStageOutputNode extends SideEffectNode {
    */
   public WriteStageOutputNode(StageOutput stageOutput, ExpressionNode value,
                               @Nullable ExpressionNode condition) {
+    super(condition);
     this.stageOutput = stageOutput;
     this.value = value;
     this.condition = condition;

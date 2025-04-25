@@ -1240,7 +1240,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       );
     }
 
-    var raise = new ProcCallNode(exception, args);
+    var raise = new ProcCallNode(exception, args, null);
     raise.setSourceLocation(statement.location());
     return SubgraphContext.of(statement, raise);
   }

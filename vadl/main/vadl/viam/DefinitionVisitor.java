@@ -60,10 +60,6 @@ public interface DefinitionVisitor {
 
   void visit(RegisterTensor registerTensor);
 
-  void visit(Register register);
-
-  void visit(RegisterFile registerFile);
-
   void visit(Memory memory);
 
   void visit(ArtificialResource artificialResource);
@@ -252,18 +248,6 @@ public interface DefinitionVisitor {
     public void visit(RegisterTensor registerTensor) {
       beforeTraversal(registerTensor);
       afterTraversal(registerTensor);
-    }
-
-    @Override
-    public void visit(Register register) {
-      beforeTraversal(register);
-      afterTraversal(register);
-    }
-
-    @Override
-    public void visit(RegisterFile registerFile) {
-      beforeTraversal(registerFile);
-      afterTraversal(registerFile);
     }
 
     @Override
@@ -494,16 +478,6 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(RegisterTensor registerTensor) {
-
-    }
-
-    @Override
-    public void visit(Register register) {
-
-    }
-
-    @Override
-    public void visit(RegisterFile registerFile) {
 
     }
 

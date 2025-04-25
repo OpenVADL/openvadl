@@ -19,6 +19,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.ExceptionDef;
@@ -43,7 +44,9 @@ public class ProcCallNode extends SideEffectNode {
   /**
    * Construct the procedure call node.
    */
-  public ProcCallNode(Procedure procedure, NodeList<ExpressionNode> arguments) {
+  public ProcCallNode(Procedure procedure, NodeList<ExpressionNode> arguments,
+                      @Nullable ExpressionNode condition) {
+    super(condition);
     this.procedure = procedure;
     this.arguments = arguments;
   }
@@ -68,7 +71,7 @@ public class ProcCallNode extends SideEffectNode {
   public NodeList<ExpressionNode> arguments() {
     return arguments;
   }
-
+  
   /**
    * Indicates whether this call represents an exception raise.
    */
@@ -78,12 +81,13 @@ public class ProcCallNode extends SideEffectNode {
 
   @Override
   public Node copy() {
-    return new ProcCallNode(procedure, arguments.copy());
+    return new ProcCallNode(procedure, arguments.copy(),
+        condition() != null ? condition().copy() : null);
   }
 
   @Override
   public Node shallowCopy() {
-    return new ProcCallNode(procedure, arguments);
+    return new ProcCallNode(procedure, arguments, condition());
   }
 
   @Override
