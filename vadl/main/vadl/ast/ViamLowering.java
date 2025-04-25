@@ -23,7 +23,6 @@ import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
-import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,8 +61,6 @@ import vadl.viam.Memory;
 import vadl.viam.MicroProcessor;
 import vadl.viam.Procedure;
 import vadl.viam.PseudoInstruction;
-import vadl.viam.Register;
-import vadl.viam.RegisterFile;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.Resource;
@@ -407,7 +404,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         definitionCache.keySet()
             .stream().filter(x -> x instanceof RegisterFileDefinition)
             .map(x -> (RegisterFileDefinition) x)
-            .map(x -> (RegisterFile) fetch(x).orElseThrow())
+            .map(x -> (RegisterTensor) fetch(x).orElseThrow())
             .collect(Collectors.toMap(
                 x -> x,
                 x -> Abi.Alignment.HALF_WORD
@@ -779,10 +776,13 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(CounterDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier().location());
 
-    // FIXME: Further research for the parameters (probably don't apply to counter)
-    var reg = new Register(identifier,
-        (DataType) getViamType(requireNonNull(definition.typeLiteral.type)));
+    var resultType = (DataType) getViamType(requireNonNull(definition.typeLiteral.type));
 
+    // FIXME: Further research for the parameters (probably don't apply to counter)
+    var reg = new RegisterTensor(identifier,
+        List.of(dimFromType(0, resultType)),
+        new RegisterTensor.Constraint[] {}
+    );
 
     var counter = new Counter(identifier,
         reg,
@@ -1110,8 +1110,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var exceptions = filterAndCastToInstance(allDefinitions, ExceptionDef.class);
     var instructions = filterAndCastToInstance(allDefinitions, Instruction.class);
     var pseudoInstructions = filterAndCastToInstance(allDefinitions, PseudoInstruction.class);
-    var registers = filterAndCastToInstance(allDefinitions, Register.class);
-    var registerFiles = filterAndCastToInstance(allDefinitions, RegisterFile.class);
+    var registers = filterAndCastToInstance(allDefinitions, RegisterTensor.class);
     var programCounter = allDefinitions.stream()
         .filter(d -> d instanceof Counter)
         .map(v -> (Counter) v)
@@ -1122,7 +1121,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
-    if (programCounter != null && programCounter.registerTensor() instanceof Register pcReg) {
+    if (programCounter != null && programCounter.registerTensor() instanceof RegisterTensor pcReg) {
       registers.add(pcReg);
     }
 
@@ -1135,7 +1134,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         relocations,
         instructions,
         pseudoInstructions,
-        Streams.concat(registers.stream(), registerFiles.stream()).toList(),
+        registers,
         programCounter,
         memories,
         artificialResources
@@ -1346,11 +1345,26 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         definition.getClass().getSimpleName()));
   }
 
+  private RegisterTensor.Dimension dimFromMappingType(int index, DataType dataType) {
+    // e.g. for `register: Bits<5> -> Bits<32>` the Bits<5> is a mapping type.
+    // the corresponding dimension is (index: 0, type: Bits<5>, 32)
+    return new RegisterTensor.Dimension(index, dataType, (int) Math.pow(2, dataType.bitWidth()));
+  }
+
+  private RegisterTensor.Dimension dimFromType(int index, DataType dataType) {
+    // e.g. for `register: Bits<5> -> Bits<32>` the inner type is Bits<32>.
+    // the corresponding dimension is (index: 1, type: Bits<5>, 32)
+    var innerDimType = Type.bits(BitsType.minimalRequiredWidthFor(dataType.bitWidth()));
+    return new RegisterTensor.Dimension(index, innerDimType, dataType.toBitsType().bitWidth());
+  }
+
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterDefinition definition) {
-    var reg = new Register(
+    var resultType = (DataType) getViamType(definition.type());
+    var reg = new RegisterTensor(
         generateIdentifier(definition.viamId, definition.identifier()),
-        (DataType) getViamType(definition.type())
+        List.of(dimFromType(0, resultType)),
+        new RegisterTensor.Constraint[] {}
     );
     return Optional.of(reg);
   }
@@ -1365,10 +1379,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var zeroConstraint = new RegisterTensor.Constraint(List.of(Constant.Value.of(0, addrType)),
         Constant.Value.of(0, resultType));
 
-    var regFile = new RegisterFile(
+    var regFile = new RegisterTensor(
         generateIdentifier(definition.viamId, definition.identifier()),
-        addrType,
-        resultType,
+        List.of(
+            dimFromMappingType(0, addrType),
+            dimFromType(1, resultType)
+        ),
         new RegisterTensor.Constraint[] {zeroConstraint}
     );
     return Optional.of(regFile);
@@ -1506,7 +1522,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
               Optional.ofNullable(
                       callExpr.symbolTable.requireAs(identifier, RegisterFileDefinition.class))
                   .flatMap(this::fetch)
-                  .map(x -> (RegisterFile) x),
+                  .map(x -> (RegisterTensor) x),
               () -> error("Cannot find register file with the name "
                       + identifier.name,
                   callExpr.location));
