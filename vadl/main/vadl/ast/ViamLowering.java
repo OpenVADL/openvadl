@@ -1121,8 +1121,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
-    if (programCounter != null && programCounter.registerTensor() instanceof RegisterTensor pcReg) {
-      registers.add(pcReg);
+    if (programCounter != null) {
+      registers.add(programCounter.registerTensor());
     }
 
     return new vadl.viam.InstructionSetArchitecture(
