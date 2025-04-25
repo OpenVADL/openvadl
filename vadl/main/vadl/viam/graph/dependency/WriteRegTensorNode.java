@@ -129,12 +129,12 @@ public class WriteRegTensorNode extends WriteResourceNode {
   @Override
   public Node copy() {
     return new WriteRegTensorNode(regTensor, indices.copy(), value.copy(), staticCounterAccess(),
-        condition() != null ? condition().copy() : null);
+        condition != null ? condition.copy() : null);
   }
 
   @Override
   public Node shallowCopy() {
-    return new WriteRegTensorNode(regTensor, indices, value, staticCounterAccess(), condition());
+    return new WriteRegTensorNode(regTensor, indices, value, staticCounterAccess(), condition);
   }
 
   @Override

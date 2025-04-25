@@ -71,7 +71,7 @@ public class ProcCallNode extends SideEffectNode {
   public NodeList<ExpressionNode> arguments() {
     return arguments;
   }
-  
+
   /**
    * Indicates whether this call represents an exception raise.
    */
@@ -82,12 +82,12 @@ public class ProcCallNode extends SideEffectNode {
   @Override
   public Node copy() {
     return new ProcCallNode(procedure, arguments.copy(),
-        condition() != null ? condition().copy() : null);
+        condition != null ? condition.copy() : null);
   }
 
   @Override
   public Node shallowCopy() {
-    return new ProcCallNode(procedure, arguments, condition());
+    return new ProcCallNode(procedure, arguments, condition);
   }
 
   @Override
