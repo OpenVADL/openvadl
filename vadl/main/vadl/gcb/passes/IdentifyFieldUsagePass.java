@@ -290,25 +290,8 @@ public class IdentifyFieldUsagePass extends Pass {
               .map(usage -> ((ReadRegTensorNode) usage).regTensor())
               .findFirst();
 
-          // TODO: @kper, this is duplicated logic
-          var registerWrite = fieldRefNode.usages()
-              .filter(usage -> usage instanceof WriteRegTensorNode node &&
-                  node.regTensor().isSingleRegister())
-              .filter(usage -> {
-                var cast = (WriteRegTensorNode) usage;
-                var nodes = new ArrayList<Node>();
-                // The field should be marked as REGISTER when the field is used as a register
-                // index. Therefore, we need to check whether the node is in the address tree.
-                // We avoid a direct check because it is theoretically possible to do
-                // arithmetic with the register file's index. However, this is very unlikely.
-                Objects.requireNonNull(cast.address()).collectInputsWithChildren(nodes);
-                return cast.hasAddress()
-                    && (cast.address() == fieldRefNode || nodes.contains(fieldRefNode));
-              })
-              .map(usage -> ((WriteRegTensorNode) usage).regTensor())
-              .findFirst();
-
-          var registerFileWrite = fieldRefNode.usages()
+          // can be single register or register file
+          var registerTensorWrite = fieldRefNode.usages()
               .filter(usage -> usage instanceof WriteRegTensorNode node
                   && node.regTensor().isRegisterFile())
               .filter(usage -> {
@@ -328,8 +311,7 @@ public class IdentifyFieldUsagePass extends Pass {
           container.addInstruction(instruction);
           if (registerRead.isPresent()
               || registerFileRead.isPresent()
-              || registerWrite.isPresent()
-              || registerFileWrite.isPresent()) {
+              || registerTensorWrite.isPresent()) {
             container.addFieldUsage(instruction, fieldRef,
                 FieldUsage.REGISTER);
           } else {
@@ -343,12 +325,12 @@ public class IdentifyFieldUsagePass extends Pass {
           } else if (registerFileRead.isPresent()) {
             container.addRegisterUsage(instruction, fieldRef,
                 RegisterUsage.SOURCE, registerFileRead.get());
-          } else if (registerWrite.isPresent()) {
+          } else if (registerTensorWrite.isPresent()) {
             container.addRegisterUsage(instruction, fieldRef,
-                RegisterUsage.DESTINATION, registerWrite.get());
+                RegisterUsage.DESTINATION, registerTensorWrite.get());
           } else {
             container.addRegisterUsage(instruction, fieldRef,
-                RegisterUsage.DESTINATION, registerFileWrite.get());
+                RegisterUsage.DESTINATION, registerTensorWrite.orElseThrow());
           }
         });
   }
