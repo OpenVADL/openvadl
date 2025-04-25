@@ -42,11 +42,9 @@ import vadl.viam.graph.control.IfNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.FuncCallNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SelectNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.matching.impl.BuiltInMatcher;
 import vadl.viam.matching.impl.ConstantValueMatcher;
 
@@ -71,7 +69,7 @@ public class RegisterTest extends AbstractTest {
 
     return Stream.of(
         dynamicTest("Test::X", () -> {
-          var x = (RegisterFile) TestUtils.findResourceByName("Test::X", spec);
+          var x = (RegisterTensor) TestUtils.findResourceByName("Test::X", spec);
           assertTrue(x.hasAddress());
           assertEquals(Type.bits(5), x.addressType());
           assertEquals(Type.bits(32), x.resultType());
@@ -80,7 +78,7 @@ public class RegisterTest extends AbstractTest {
           //assertEquals(0, x.constraints().length);
         }),
         dynamicTest("Test::Y", () -> {
-          var y = (RegisterFile) TestUtils.findResourceByName("Test::Y", spec);
+          var y = (RegisterTensor) TestUtils.findResourceByName("Test::Y", spec);
           // FIXME: Renable once we parse annotations
           // var constraints = y.constraints();
           // assertEquals(1, constraints.length);
@@ -95,11 +93,11 @@ public class RegisterTest extends AbstractTest {
   // @TestFactory
   Stream<DynamicTest> testRegRead() {
     var spec = runAndGetViamSpecification("unit/register/valid_reg_read.vadl");
-    var a = (Register) TestUtils.findResourceByName("Test::A", spec);
-    var b = (Register) TestUtils.findResourceByName("Test::B", spec);
-    var b_one = (Register) TestUtils.findResourceByName("Test::B_ONE", spec);
-    var c = (Register) TestUtils.findResourceByName("Test::C", spec);
-    var d = (RegisterFile) TestUtils.findResourceByName("Test::D", spec);
+    var a = (RegisterTensor) TestUtils.findResourceByName("Test::A", spec);
+    var b = (RegisterTensor) TestUtils.findResourceByName("Test::B", spec);
+    var b_one = (RegisterTensor) TestUtils.findResourceByName("Test::B_ONE", spec);
+    var c = (RegisterTensor) TestUtils.findResourceByName("Test::C", spec);
+    var d = (RegisterTensor) TestUtils.findResourceByName("Test::D", spec);
 
     return Stream.of(
 
@@ -110,20 +108,20 @@ public class RegisterTest extends AbstractTest {
           var depNodes = behavior.getNodes(DependencyNode.class).toList();
           Assertions.assertEquals(2, depNodes.size());
 
-          var readNodeOpt = first.behavior().getNodes(ReadRegNode.class).findFirst();
+          var readNodeOpt = first.behavior().getNodes(ReadRegTensorNode.class).findFirst();
           Assertions.assertTrue(readNodeOpt.isPresent());
           var readNode = readNodeOpt.get();
 
           Assertions.assertFalse(readNode.hasAddress());
-          Assertions.assertEquals(b, readNode.register());
+          Assertions.assertEquals(b, readNode.regTensor());
 
-          var writeNodeOpt = first.behavior().getNodes(WriteRegNode.class).findFirst();
+          var writeNodeOpt = first.behavior().getNodes(WriteRegTensorNode.class).findFirst();
           Assertions.assertTrue(writeNodeOpt.isPresent());
           var writeNode = writeNodeOpt.get();
 
           Assertions.assertEquals(readNode, writeNode.value());
           Assertions.assertFalse(writeNode.hasAddress());
-          Assertions.assertEquals(a, writeNode.register());
+          Assertions.assertEquals(a, writeNode.regTensor());
         }),
 
         dynamicTest("Test::SECOND", () -> {
@@ -133,20 +131,20 @@ public class RegisterTest extends AbstractTest {
           var depNodes = behavior.getNodes(DependencyNode.class).toList();
           Assertions.assertEquals(2, depNodes.size());
 
-          var readNodeOpt = second.behavior().getNodes(ReadRegNode.class).findFirst();
+          var readNodeOpt = second.behavior().getNodes(ReadRegTensorNode.class).findFirst();
           Assertions.assertTrue(readNodeOpt.isPresent());
           var readNode = readNodeOpt.get();
 
           Assertions.assertFalse(readNode.hasAddress());
-          Assertions.assertEquals(b_one, readNode.register());
+          Assertions.assertEquals(b_one, readNode.regTensor());
 
-          var writeNodeOpt = second.behavior().getNodes(WriteRegNode.class).findFirst();
+          var writeNodeOpt = second.behavior().getNodes(WriteRegTensorNode.class).findFirst();
           Assertions.assertTrue(writeNodeOpt.isPresent());
           var writeNode = writeNodeOpt.get();
 
           Assertions.assertEquals(readNode, writeNode.value());
           Assertions.assertFalse(writeNode.hasAddress());
-          Assertions.assertEquals(a, writeNode.register());
+          Assertions.assertEquals(a, writeNode.regTensor());
         }),
 
         dynamicTest("Test::THIRD", () -> {
@@ -156,24 +154,24 @@ public class RegisterTest extends AbstractTest {
           var depNodes = behavior.getNodes(DependencyNode.class).toList();
           Assertions.assertEquals(3, depNodes.size());
 
-          var readNodeOpt = third.behavior().getNodes(ReadRegNode.class).findFirst();
+          var readNodeOpt = third.behavior().getNodes(ReadRegTensorNode.class).findFirst();
           Assertions.assertTrue(readNodeOpt.isPresent());
           var readNode = readNodeOpt.get();
 
           Assertions.assertFalse(readNode.hasAddress());
-          Assertions.assertEquals(c, readNode.register());
+          Assertions.assertEquals(c, readNode.regTensor());
 
           var funcCallNode = behavior.getNodes(FuncCallNode.class).findFirst().get();
           Assertions.assertEquals(1, funcCallNode.arguments().size());
           Assertions.assertEquals(readNode, funcCallNode.arguments().get(0));
 
-          var writeNodeOpt = third.behavior().getNodes(WriteRegNode.class).findFirst();
+          var writeNodeOpt = third.behavior().getNodes(WriteRegTensorNode.class).findFirst();
           Assertions.assertTrue(writeNodeOpt.isPresent());
           var writeNode = writeNodeOpt.get();
 
           Assertions.assertEquals(funcCallNode, writeNode.value());
           Assertions.assertFalse(writeNode.hasAddress());
-          Assertions.assertEquals(a, writeNode.register());
+          Assertions.assertEquals(a, writeNode.regTensor());
         }),
 
         dynamicTest("Test::FOURTH", () -> {
@@ -183,16 +181,16 @@ public class RegisterTest extends AbstractTest {
           var depNodes = behavior.getNodes(DependencyNode.class).toList();
           Assertions.assertEquals(3, depNodes.size());
 
-          var readNode = behavior.getNodes(ReadRegNode.class).findFirst().get();
-          Assertions.assertEquals(b_one, readNode.register());
+          var readNode = behavior.getNodes(ReadRegTensorNode.class).findFirst().get();
+          Assertions.assertEquals(b_one, readNode.regTensor());
 
-          var readFileNode = behavior.getNodes(ReadRegFileNode.class).findFirst().get();
+          var readFileNode = behavior.getNodes(ReadRegTensorNode.class).findFirst().get();
           Assertions.assertEquals(readNode, readFileNode.address());
-          Assertions.assertEquals(d, readFileNode.registerFile());
+          Assertions.assertEquals(d, readFileNode.regTensor());
 
-          var writeNode = behavior.getNodes(WriteRegNode.class).findFirst().get();
+          var writeNode = behavior.getNodes(WriteRegTensorNode.class).findFirst().get();
           Assertions.assertEquals(readFileNode, writeNode.value());
-          Assertions.assertEquals(a, writeNode.register());
+          Assertions.assertEquals(a, writeNode.regTensor());
         })
     );
   }
@@ -201,9 +199,9 @@ public class RegisterTest extends AbstractTest {
   //@TestFactory
   Stream<DynamicTest> testWriteReg() {
     var spec = runAndGetViamSpecification("unit/register/valid_reg_write.vadl");
-    var b = (Register) TestUtils.findResourceByName("Test::B", spec);
-    var b_one = (Register) TestUtils.findResourceByName("Test::B_ONE", spec);
-    var d = (RegisterFile) TestUtils.findResourceByName("Test::D", spec);
+    var b = (RegisterTensor) TestUtils.findResourceByName("Test::B", spec);
+    var b_one = (RegisterTensor) TestUtils.findResourceByName("Test::B_ONE", spec);
+    var d = (RegisterTensor) TestUtils.findResourceByName("Test::D", spec);
 
     return Stream.of(
 
@@ -214,10 +212,10 @@ public class RegisterTest extends AbstractTest {
           var depNodes = behavior.getNodes(DependencyNode.class).toList();
           Assertions.assertEquals(2, depNodes.size());
 
-          var readNode = behavior.getNodes(ReadRegNode.class).findFirst().get();
-          var writeNode = behavior.getNodes(WriteRegNode.class).findFirst().get();
+          var readNode = behavior.getNodes(ReadRegTensorNode.class).findFirst().get();
+          var writeNode = behavior.getNodes(WriteRegTensorNode.class).findFirst().get();
           Assertions.assertEquals(readNode, writeNode.value());
-          Assertions.assertEquals(writeNode.register(), b);
+          Assertions.assertEquals(writeNode.regTensor(), b);
         }),
 
         dynamicTest("Test::SECOND", () -> {
@@ -227,10 +225,10 @@ public class RegisterTest extends AbstractTest {
           var depNodes = behavior.getNodes(DependencyNode.class).toList();
           Assertions.assertEquals(2, depNodes.size());
 
-          var readNode = behavior.getNodes(ReadRegNode.class).findFirst().get();
-          var writeNode = behavior.getNodes(WriteRegNode.class).findFirst().get();
+          var readNode = behavior.getNodes(ReadRegTensorNode.class).findFirst().get();
+          var writeNode = behavior.getNodes(WriteRegTensorNode.class).findFirst().get();
           Assertions.assertEquals(readNode, writeNode.value());
-          Assertions.assertEquals(writeNode.register(), b_one);
+          Assertions.assertEquals(writeNode.regTensor(), b_one);
         }),
 
         dynamicTest("Test::FOURTH", () -> {
@@ -240,18 +238,18 @@ public class RegisterTest extends AbstractTest {
           var depNodes = behavior.getNodes(DependencyNode.class).toList();
           Assertions.assertEquals(3, depNodes.size());
 
-          var readNodes = behavior.getNodes(ReadRegNode.class).toList();
+          var readNodes = behavior.getNodes(ReadRegTensorNode.class).toList();
           Assertions.assertEquals(2, readNodes.size());
           var addrReadNode =
-              readNodes.stream().filter(e -> e.register() == b_one).findFirst().get();
-          var writeNode = behavior.getNodes(WriteRegFileNode.class).findFirst().get();
+              readNodes.stream().filter(e -> e.regTensor() == b_one).findFirst().get();
+          var writeNode = behavior.getNodes(WriteRegTensorNode.class).findFirst().get();
           Assertions.assertEquals(addrReadNode, writeNode.address());
-          Assertions.assertEquals(writeNode.registerFile(), d);
+          Assertions.assertEquals(writeNode.regTensor(), d);
         })
     );
   }
 
-  private DynamicTest testRegister(Register reg, Type resType) {
+  private DynamicTest testRegister(RegisterTensor reg, Type resType) {
     return dynamicTest(reg.simpleName(), () -> {
       assertFalse(false);
       assertEquals(resType, reg.resultType());
@@ -290,18 +288,18 @@ public class RegisterTest extends AbstractTest {
         assertEquals(index, counter.indices().getFirst().intValue());
       }
 
-      if (resource instanceof Register) {
-        var readReg = getSingleNode(readInstr.behavior(), ReadRegNode.class);
-        Assertions.assertEquals(resource, readReg.register());
-        var writeReg = getSingleNode(writeInstr.behavior(), WriteRegNode.class);
-        Assertions.assertEquals(resource, writeReg.register());
+      if (resource instanceof RegisterTensor) {
+        var readReg = getSingleNode(readInstr.behavior(), ReadRegTensorNode.class);
+        Assertions.assertEquals(resource, readReg.regTensor());
+        var writeReg = getSingleNode(writeInstr.behavior(), WriteRegTensorNode.class);
+        Assertions.assertEquals(resource, writeReg.regTensor());
       } else {
-        var readReg = getSingleNode(readInstr.behavior(), ReadRegFileNode.class);
-        Assertions.assertEquals(resource, readReg.registerFile());
+        var readReg = getSingleNode(readInstr.behavior(), ReadRegTensorNode.class);
+        Assertions.assertEquals(resource, readReg.regTensor());
         var readAddrConst = getSingleLeafNode(readReg.address(), ConstantNode.class);
         Assertions.assertEquals(counter.indices().getFirst(), readAddrConst.constant().asVal());
-        var writeReg = getSingleNode(writeInstr.behavior(), WriteRegFileNode.class);
-        Assertions.assertEquals(resource, writeReg.registerFile());
+        var writeReg = getSingleNode(writeInstr.behavior(), WriteRegTensorNode.class);
+        Assertions.assertEquals(resource, writeReg.regTensor());
         var writeAddrConst = getSingleLeafNode(writeReg.address(), ConstantNode.class);
         Assertions.assertEquals(counter.indices().getFirst(), (writeAddrConst.constant().asVal()));
       }
@@ -350,9 +348,9 @@ public class RegisterTest extends AbstractTest {
         Assertions.assertEquals(0, instr.behavior().getNodes(IfNode.class).count());
       }
 
-      var x = (RegisterFile) TestUtils.findResourceByName("Test::X", spec);
-      var readRegFile = getSingleNode(instr.behavior(), ReadRegFileNode.class);
-      Assertions.assertEquals(x, readRegFile.registerFile());
+      var x = (RegisterTensor) TestUtils.findResourceByName("Test::X", spec);
+      var readRegFile = getSingleNode(instr.behavior(), ReadRegTensorNode.class);
+      Assertions.assertEquals(x, readRegFile.regTensor());
     });
   }
 
@@ -377,9 +375,9 @@ public class RegisterTest extends AbstractTest {
         Assertions.assertEquals(0, instr.behavior().getNodes(SelectNode.class).count());
       }
 
-      var x = (RegisterFile) TestUtils.findResourceByName("Test::X", spec);
-      var readRegFile = getSingleNode(instr.behavior(), WriteRegFileNode.class);
-      Assertions.assertEquals(x, readRegFile.registerFile());
+      var x = (RegisterTensor) TestUtils.findResourceByName("Test::X", spec);
+      var readRegFile = getSingleNode(instr.behavior(), WriteRegTensorNode.class);
+      Assertions.assertEquals(x, readRegFile.regTensor());
     });
   }
 
