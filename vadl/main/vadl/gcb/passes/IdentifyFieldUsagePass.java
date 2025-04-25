@@ -330,7 +330,7 @@ public class IdentifyFieldUsagePass extends Pass {
                 RegisterUsage.DESTINATION, registerTensorWrite.get());
           } else {
             container.addRegisterUsage(instruction, fieldRef,
-                RegisterUsage.DESTINATION, registerTensorWrite.get());
+                RegisterUsage.DESTINATION, registerTensorWrite.orElseThrow());
           }
         });
   }
