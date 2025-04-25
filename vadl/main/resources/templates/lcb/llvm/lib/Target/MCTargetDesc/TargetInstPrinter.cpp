@@ -43,29 +43,13 @@ void [(${namespace})]InstPrinter::printInst
     printAnnotation(O, Annot);
 }
 
-MCOperand [(${namespace})]InstPrinter::adjustImmediateOp
-    (const MCInst *MI, unsigned OpIndex) const
-{
-    unsigned OpCode = MI->getOpcode();
-    MCOperand original = MI->getOperand(OpIndex);
-    int64_t value;
-    if(AsmUtils::evaluateConstantImm(&original, value))
-    {
-        switch(OpCode)
-        {
-          [# th:each="instruction : ${instructionWithEncodedImmediate}" ]
-          case [(${namespace})]::[(${instruction.identifier})]:
-          {
-            if(OpIndex == [(${instruction.opIndex})]) {
-              auto newOp = [(${instruction.rawEncoderMethod})](value);
-              return MCOperand::createImm(newOp);
-            }
-          }
-          [/]
-        }
+template <size_t N>
+int64_t signExtendBitset(const std::bitset<N>& bits) {
+    int64_t value = static_cast<int64_t>(bits.to_ulong());
+    if (bits[N - 1]) {
+        value |= ~((1 << N) - 1);
     }
-
-    return original;
+    return value;
 }
 
 [#th:block th:each="register : ${systemRegisters}" ]

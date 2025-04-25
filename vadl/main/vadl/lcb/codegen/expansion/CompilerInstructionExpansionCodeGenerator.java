@@ -325,17 +325,47 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   private void handleRelocationOperand(CGenContext<Node> ctx, String argumentSymbol,
                                        Relocation relocation) {
-    var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
+    final var instructionSymbol = ((CNodeWithBaggageContext) ctx).getString(INSTRUCTION_SYMBOL);
+    final var field = ((CNodeWithBaggageContext) ctx).get(FIELD, Format.Field.class);
+    final var instructionCallNode =
+        ((CNodeWithBaggageContext) ctx).get(INSTRUCTION_CALL_NODE, InstrCallNode.class);
+
     var argumentRelocationSymbol = symbolTable.getNextVariable();
     var elfRelocation = relocations.stream().filter(x -> x.relocation() == relocation).findFirst();
     ensure(elfRelocation.isPresent(), "elfRelocation must exist");
     var variant = elfRelocation.get().variantKind().value();
 
-    ctx.ln("MCOperand %s = "
-                + "MCOperand::createExpr(%sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx));",
-            argumentRelocationSymbol, targetName.value(), argumentSymbol,
-            targetName.value(), variant)
-        .ln(String.format("%s.addOperand(%s);", instructionSymbol, argumentRelocationSymbol));
+    ctx.ln("const MCExpr* %s = %sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx);",
+        argumentRelocationSymbol, targetName.value(), argumentSymbol,
+        targetName.value(), variant);
+
+    String mcExprSymbol = argumentRelocationSymbol;
+
+    // build a nested MCExpr with the decode variant
+    // to call the decoding function
+    if (!instructionCallNode.isParameterFieldAccess(field)) {
+      var decodeVariants = variantKindStore.decodeVariantKindsByField(field);
+      ensure(decodeVariants.size() == 1, () -> Diagnostic.error(
+          "There are unexpectedly multiple variant kinds for the pseudo expansion available.",
+          field.location()));
+
+      var decodeVariant = ensurePresent(
+          requireNonNull(decodeVariants).stream().filter(VariantKind::isImmediate).findFirst(),
+          () -> Diagnostic.error(
+              "Expected a variant for an immediate. But haven't " + "found any",
+              field.location())).value();
+
+      mcExprSymbol = symbolTable.getNextVariable();
+
+      ctx.ln(
+          "const MCExpr* %s = %sMCExpr::create(%s, %sMCExpr::VariantKind::%s, Ctx);",
+          mcExprSymbol, targetName.value(), argumentRelocationSymbol,
+          targetName.value(), decodeVariant);
+    }
+
+    var operandSymbol = symbolTable.getNextVariable();
+    ctx.ln("MCOperand %s = MCOperand::createExpr(%s);", operandSymbol, mcExprSymbol);
+    ctx.ln(String.format("%s.addOperand(%s);", instructionSymbol, operandSymbol));
   }
 
   /**
