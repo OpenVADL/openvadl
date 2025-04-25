@@ -24,6 +24,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -56,8 +57,9 @@ public class EmitClangTargetCppFilePass extends LcbTemplateRenderingPass {
 
   private List<Map<String, String>> extractRegisters(Specification specification) {
     return specification.isa()
-        .map(x -> x.ownRegisters().stream())
+        .map(x -> x.registerTensors().stream())
         .orElseGet(Stream::empty)
+        .filter(RegisterTensor::isSingleRegister)
         .map(x -> Map.of("name", x.simpleName()))
         .toList();
   }

@@ -33,6 +33,7 @@ import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
 import vadl.viam.Format;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
@@ -81,8 +82,10 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
   private List<RegisterUtils.RegisterClass> extractRegisterClasses(Specification specification,
                                                                    Abi abi) {
-    return specification.isa().map(x -> x.ownRegisterFiles().stream())
+    return specification.isa()
+        .map(x -> x.registerTensors().stream())
         .orElse(Stream.empty())
+        .filter(RegisterTensor::isRegisterFile)
         .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
         .toList();
   }
