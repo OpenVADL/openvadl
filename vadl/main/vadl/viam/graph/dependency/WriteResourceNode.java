@@ -38,6 +38,9 @@ public abstract class WriteResourceNode extends SideEffectNode {
   @Input
   protected ExpressionNode value;
 
+  /**
+   * Construct write access.
+   */
   // TODO: Remove
   public WriteResourceNode(@Nullable ExpressionNode address, ExpressionNode value) {
     super(null);
@@ -45,6 +48,13 @@ public abstract class WriteResourceNode extends SideEffectNode {
     this.value = value;
   }
 
+  /**
+   * Construct the resource write access.
+   *
+   * @param indices   used to access specific parts of the resource
+   * @param value     the value that is written
+   * @param condition under which condition the value is written
+   */
   public WriteResourceNode(NodeList<ExpressionNode> indices, ExpressionNode value,
                            @Nullable ExpressionNode condition) {
     super(condition);

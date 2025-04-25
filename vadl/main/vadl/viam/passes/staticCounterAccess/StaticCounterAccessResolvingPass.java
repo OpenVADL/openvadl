@@ -101,8 +101,8 @@ public class StaticCounterAccessResolvingPass extends Pass {
   private static void processRegisterNodes(Graph behavior, Counter regCounter) {
     behavior.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class))
         .forEach(node -> {
-          if (node instanceof ReadRegTensorNode read &&
-              read.regTensor() == regCounter.registerTensor()) {
+          if (node instanceof ReadRegTensorNode read
+              && read.regTensor() == regCounter.registerTensor()) {
             // if the node is a read and
             // the register file matches the register file of the counter
             // we set the static counter access field of the read node

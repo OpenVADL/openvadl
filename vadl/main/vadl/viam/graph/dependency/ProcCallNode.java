@@ -40,6 +40,9 @@ public class ProcCallNode extends SideEffectNode {
   @Input
   NodeList<ExpressionNode> arguments;
 
+  /**
+   * Construct the procedure call node.
+   */
   public ProcCallNode(Procedure procedure, NodeList<ExpressionNode> arguments) {
     super(null);
     this.procedure = procedure;
