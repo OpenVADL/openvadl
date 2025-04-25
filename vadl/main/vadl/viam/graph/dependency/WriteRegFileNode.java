@@ -37,7 +37,7 @@ import vadl.viam.graph.UniqueNode;
  * <li>All reads must occur before all writes</li>
  * </p>
  */
-public class WriteRegFileNode extends WriteRegTensorNode implements HasRegisterFile {
+public class WriteRegFileNode extends WriteRegTensorNode {
 
 
   /**

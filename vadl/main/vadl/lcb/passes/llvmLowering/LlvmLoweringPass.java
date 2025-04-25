@@ -486,7 +486,8 @@ public class LlvmLoweringPass extends Pass {
           var registerFile =
               ensurePresent(
                   instruction.target().behavior().getNodes(FieldRefNode.class)
-                      .flatMap(x -> x.usages().filter(y -> y instanceof HasRegisterFile)
+                      .flatMap(x -> x.usages()
+                          .filter(y -> y instanceof HasRegisterFile z && z.hasRegisterFile())
                           .map(y -> ((HasRegisterFile) y).registerFile()))
                       .findFirst(), () -> Diagnostic.error("Expected to find register file",
                       field.location()));
@@ -507,7 +508,8 @@ public class LlvmLoweringPass extends Pass {
           var registerFile =
               ensurePresent(
                   instruction.target().behavior().getNodes(FieldRefNode.class)
-                      .flatMap(x -> x.usages().filter(y -> y instanceof HasRegisterFile)
+                      .flatMap(x -> x.usages()
+                          .filter(y -> y instanceof HasRegisterFile z && z.hasRegisterFile())
                           .map(y -> ((HasRegisterFile) y).registerFile()))
                       .findFirst(), () -> Diagnostic.error("Expected to find register file",
                       field.location()));

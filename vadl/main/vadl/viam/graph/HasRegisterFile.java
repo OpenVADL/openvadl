@@ -26,4 +26,9 @@ public interface HasRegisterFile {
    * Get register file.
    */
   RegisterTensor registerFile();
+
+  /**
+   * Checks whether the node has a register file.
+   */
+  boolean hasRegisterFile();
 }

@@ -329,7 +329,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     var candidates = behavior.getNodes(FieldRefNode.class)
         .filter(x -> x.formatField().equals(fieldRefNode.formatField()))
         .flatMap(Node::usages)
-        .filter(x -> x instanceof HasRegisterFile)
+        .filter(x -> x instanceof HasRegisterFile y && y.hasRegisterFile())
         .map(x -> (HasRegisterFile) x)
         .collect(Collectors.toSet());
 

@@ -204,7 +204,8 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
                   // Go over the usages to emit warnings.
                   // We need the usage because we need to find out what the register file
                   // to check for constraints.
-                  occurrence.usages().filter(node -> (node instanceof HasRegisterFile))
+                  occurrence.usages()
+                      .filter(node -> (node instanceof HasRegisterFile x && x.hasRegisterFile()))
                       .forEach(node -> {
                         var cast = (HasRegisterFile) node;
 

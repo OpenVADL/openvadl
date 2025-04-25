@@ -31,7 +31,7 @@ import vadl.viam.graph.NodeList;
  * that represents the address/index value.
  */
 // TODO: Remove once all generator adapted ReadRegTensorNode
-public class ReadRegFileNode extends ReadRegTensorNode implements HasRegisterFile {
+public class ReadRegFileNode extends ReadRegTensorNode {
 
   /**
    * Constructs the node, which represents a read from a register file at some specific index.

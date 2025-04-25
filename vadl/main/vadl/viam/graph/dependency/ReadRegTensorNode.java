@@ -24,6 +24,7 @@ import vadl.types.DataType;
 import vadl.viam.Counter;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphNodeVisitor;
+import vadl.viam.graph.HasRegisterFile;
 import vadl.viam.graph.NodeList;
 
 /**
@@ -42,7 +43,7 @@ import vadl.viam.graph.NodeList;
  * (program) counter access. It is set by the
  * {@link vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass}</p>
  */
-public class ReadRegTensorNode extends ReadResourceNode {
+public class ReadRegTensorNode extends ReadResourceNode implements HasRegisterFile {
 
   @DataValue
   protected RegisterTensor regTensor;
@@ -123,7 +124,7 @@ public class ReadRegTensorNode extends ReadResourceNode {
 
   @Override
   public <T extends GraphNodeVisitor> void accept(T visitor) {
-
+    visitor.visit(this);
   }
 
   @Override
@@ -131,5 +132,15 @@ public class ReadRegTensorNode extends ReadResourceNode {
     super.collectData(collection);
     collection.add(regTensor);
     collection.add(staticCounterAccess);
+  }
+
+  @Override
+  public RegisterTensor registerFile() {
+    return regTensor;
+  }
+
+  @Override
+  public boolean hasRegisterFile() {
+    return regTensor.isRegisterFile();
   }
 }

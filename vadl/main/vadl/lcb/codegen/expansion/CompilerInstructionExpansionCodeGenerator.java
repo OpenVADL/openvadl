@@ -246,7 +246,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         // We look for the `field` in the machine instruction's behavior and return the usages.
         var registerFiles = instruction.behavior().getNodes(FieldRefNode.class)
             .filter(x -> x.formatField().equals(field)).flatMap(
-                fieldRefNode -> fieldRefNode.usages().filter(y -> y instanceof HasRegisterFile))
+                fieldRefNode -> fieldRefNode.usages()
+                    .filter(y -> y instanceof HasRegisterFile z && z.hasRegisterFile()))
             .map(x -> ((HasRegisterFile) x).registerFile()).distinct().toList();
 
         ensure(registerFiles.size() == 1,
