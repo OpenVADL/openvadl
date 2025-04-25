@@ -325,10 +325,12 @@ public class IdentifyFieldUsagePass extends Pass {
           } else if (registerFileRead.isPresent()) {
             container.addRegisterUsage(instruction, fieldRef,
                 RegisterUsage.SOURCE, registerFileRead.get());
+          } else if (registerTensorWrite.isPresent()) {
+            container.addRegisterUsage(instruction, fieldRef,
+                RegisterUsage.DESTINATION, registerTensorWrite.get());
           } else {
-            registerTensorWrite.ifPresent(
-                registerTensor -> container.addRegisterUsage(instruction, fieldRef,
-                    RegisterUsage.DESTINATION, registerTensor));
+            throw Diagnostic.error("Unknown usage of a field",
+                fieldRefNode.location()).build();
           }
         });
   }
