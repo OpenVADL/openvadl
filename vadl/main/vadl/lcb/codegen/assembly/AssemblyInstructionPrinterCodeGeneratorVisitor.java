@@ -28,7 +28,9 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
 import vadl.types.BuiltInTable;
+import vadl.types.DataType;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
@@ -268,11 +270,14 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
   }
 
   private void writeImmediateWithRadix(BuiltInCall node, int radix) {
+    var type = node.arguments().getFirst().type().asDataType();
+
     if (node.arguments().get(0) instanceof FieldRefNode fieldRefNode) {
-      writeImmediateWithRadix(fieldRefNode.formatField(), radix, fieldRefNode.location());
+      writeImmediateWithRadix(fieldRefNode.formatField(), radix,
+          type, fieldRefNode.location());
     } else if (node.arguments().get(0) instanceof FieldAccessRefNode fieldAccessRefNode) {
       writeImmediateWithRadix(fieldAccessRefNode.fieldAccess().fieldRef(), radix,
-          fieldAccessRefNode.location());
+          type, fieldAccessRefNode.location());
     } else {
       throw Diagnostic.error("Not supported argument "
               + "in assembly printing", node.location())
@@ -280,20 +285,69 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     }
   }
 
-  private void writeImmediateWithRadix(Format.Field field, int radix,
+  private void writeImmediateWithRadix(Format.Field field, int radix, DataType argumentType,
                                        SourceLocation sourceLocation) {
     var index = ensurePresent(indexInInputs(field), () ->
         Diagnostic.error("Immediate must be part of an tablegen input.",
             sourceLocation)
     );
+
+    var operandSymbol = symbolTable.getNextVariable();
+    var valueSymbol = symbolTable.getNextVariable();
+
+    writer.write(String.format(
+        """
+            MCOperand %s = MI->getOperand(%d);
+            int64_t %s;
+            if (AsmUtils::evaluateConstantImm(&%s, %s)) {
+            """,
+        operandSymbol,
+        index,
+        valueSymbol,
+        operandSymbol,
+        valueSymbol
+    ));
+
+
+    var fieldAccesses = instruction.assembly().fieldAccesses().stream();
+    if (fieldAccesses.noneMatch(fieldAccess -> fieldAccess.fieldRef().equals(field))) {
+      var indexInInputs = index - tableGenInstruction.getOutOperands().size();
+      var tableGenImmediate = tableGenInstruction.getInOperands().get(indexInInputs);
+      var immediateRecord =
+          ((TableGenInstructionImmediateOperand) tableGenImmediate).immediateOperand();
+      var encodeMethod = immediateRecord.rawEncoderMethod();
+
+      var encodedSymbol = symbolTable.getNextVariable();
+
+      writer.write(String.format("\tauto %s = %s(%s);\n",
+          encodedSymbol, encodeMethod, valueSymbol));
+
+      if (argumentType.isSigned()) {
+        var bitWith = argumentType.bitWidth();
+        var bitsetSymbol = symbolTable.getNextVariable();
+
+        writer.write(
+            String.format("\tstd::bitset<%d> %s(%s);\n", bitWith, bitsetSymbol, encodedSymbol));
+
+        writer.write(
+            String.format("\tint64_t %s = signExtendBitset(%s);\n", valueSymbol, bitsetSymbol));
+
+      } else {
+        writer.write(String.format("\n%s = %s;\n", valueSymbol, encodedSymbol));
+      }
+    }
+
+
+    writer.write(String.format("\t%s =  MCOperand::createImm(%s);\n", operandSymbol, valueSymbol));
+    writer.write("}\n");
+
     var symbol = symbolTable.getNextVariable();
     writer.write(String.format(
         """
-            std::string %s = AsmUtils::formatImm(MCOperandWrapper(
-              adjustImmediateOp(MI, %d)), %d, &MAI);
+            std::string %s = AsmUtils::formatImm(MCOperandWrapper(%s), %d, &MAI);
             """,
         symbol,
-        index,
+        operandSymbol,
         radix
     ));
     operands.add(symbol);

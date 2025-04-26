@@ -812,6 +812,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (sourceType.isTrivialCastTo(targetType)) {
       // match 1. rule: same bit representation
       // -> no casting needs to be applied
+      source.setType(targetType);
       return source;
     }
 

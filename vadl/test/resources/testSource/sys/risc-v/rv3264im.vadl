@@ -152,7 +152,7 @@
     instruction $name : Itype =                        // immediate instructions
       X(rd) := ((X(rs1) as $exTy) $op (immS as $exTy)) as Regs
     encoding $name = {opcode = 0b001'0011, funct3 = $funct3}
-    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
+    assembly $name = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm as SInt<12>))
     }
 
   model WItypInstr (name : Id, op : BinOp, funct3 : Bin, exTy : Id) : IsaDefs = {
@@ -174,7 +174,7 @@
       let addr = X(rs1) + immS in
         X(rd) := $memEx as $exTy
     encoding $name = {opcode = 0b000'0011, funct3 = $funct3}
-    assembly $name = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
+    assembly $name = (mnemonic, " ", register(rd), ",", decimal(imm as SInt<12>), "(", register(rs1), ")")
     }
 
   model StypeInstr (name : Id, funct3 : Bin, memEx : CallEx, exTy: Id) : IsaDefs = {
@@ -182,7 +182,7 @@
       let addr = X(rs1) + immS in
         $memEx := X(rs2) as $exTy
     encoding $name = {opcode = 0b010'0011, funct3 = $funct3}
-    assembly $name = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
+    assembly $name = (mnemonic, " ", register(rs2), ",", decimal(imm as SInt<12>), "(", register(rs1), ")")
     }
 
   model BtypeInstr (name : Id, relOp : BinOp, funct3 : Bin, lhsTy : Id) : IsaDefs = {
@@ -193,14 +193,14 @@
     assembly $name = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(immS))
     }
 
-  model JLinkInstr (name : Id, iFormat : Id, reg : Ex, opcode : Encs, asm : Ex) : IsaDefs = {
+  model JLinkInstr (name : Id, iFormat : Id, reg : Ex, opcode : Encs, asmImm: Ex, asm : Ex) : IsaDefs = {
     instruction $name : $iFormat =                     // jump and link (register)
       let retaddr = PC.next in {
         PC    := ($reg + immS) & (-(2 as SIntR))       // $reg could be equal to X(rd)
         X(rd) := retaddr                               // when rs1 is equal to rd
         }
     encoding $name = {$opcode}
-    assembly $name = (mnemonic, " ", register(rd), ",", decimal(immS), $asm)
+    assembly $name = (mnemonic, " ", register(rd), ",", decimal($asmImm), $asm)
     }
 
   model ECallInstr (name : Id, imm : Lit) : IsaDefs = {
@@ -246,9 +246,9 @@
   $BtypeInstr (BLT  ; <  ; 0b100 ; SInt)               // branch less than
   $BtypeInstr (BLTU ; <  ; 0b110 ; UInt)               // branch less than unsigned
 
-  $JLinkInstr (JAL  ; Jtype ; PC     ; opcode = 0b110'1111 ; "") // jump and link
-  $JLinkInstr (JALR ; Itype ; X(rs1) ; opcode = 0b110'0111,      // jump and link register
-                                       funct3 = 0b000 ; ("(", register(rs1), ")"))
+  $JLinkInstr (JAL  ; Jtype ; PC     ; opcode = 0b110'1111 ; immS ; "")   // jump and link
+  $JLinkInstr (JALR ; Itype ; X(rs1) ; opcode = 0b110'0111,               // jump and link register
+                                       funct3 = 0b000 ; imm as SInt<12> ; ("(", register(rs1), ")"))
 
   $ECallInstr (ECALL ; 0)                              // environment (sys) call
   $ECallInstr (EBREAK; 1)                              // environment (sys) break
