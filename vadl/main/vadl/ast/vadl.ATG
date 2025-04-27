@@ -871,24 +871,24 @@ PRODUCTIONS
                                                 } .)
   .
 
-  clangTypeDefinition<out Definition def>                     (. def = DUMMY_DEF; .)
+  clangTypeDefinition<out Definition def>                     (. def = DUMMY_DEF; var startLoc = lookaheadLoc(); .)
   =
   (
-    SIZE_T TYPE SYM_EQ typeSizeDefinition<out AbiClangTypeDefinition.TypeSize size1> (. def = new AbiClangTypeDefinition(loc(), AbiClangTypeDefinition.TypeName.SIZE_TYPE, size1); .)
-    | INT MAX TYPE SYM_EQ typeSizeDefinition<out AbiClangTypeDefinition.TypeSize size2> (. def = new AbiClangTypeDefinition(loc(), AbiClangTypeDefinition.TypeName.INT_MAX_TYPE, size2); .)
+    SIZE_T TYPE SYM_EQ typeSizeDefinition<out AbiClangTypeDefinition.TypeSize size1> (. def = new AbiClangTypeDefinition(AbiClangTypeDefinition.TypeName.SIZE_TYPE, size1, startLoc.join(loc())); .)
+    | INT MAX TYPE SYM_EQ typeSizeDefinition<out AbiClangTypeDefinition.TypeSize size2> (. def = new AbiClangTypeDefinition(AbiClangTypeDefinition.TypeName.INT_MAX_TYPE, size2, startLoc.join(loc())); .)
   )
   .
 
-  clangNumericTypeDefinition<out Definition def>                     (. def = DUMMY_DEF; .)
+  clangNumericTypeDefinition<out Definition def>                     (. def = DUMMY_DEF; var startLoc = lookaheadLoc(); .)
   =
   (
     POINTER (
-      WIDTH SYM_EQ expression<out Expr expr1, BIN_OPS>               (. def = new AbiClangNumericTypeDefinition(loc(), AbiClangNumericTypeDefinition.TypeName.POINTER_WIDTH, expr1); .)
-      |  ALIGN SYM_EQ expression<out Expr expr2, BIN_OPS>            (. def = new AbiClangNumericTypeDefinition(loc(), AbiClangNumericTypeDefinition.TypeName.POINTER_ALIGN, expr2); .)
+      WIDTH SYM_EQ expression<out Expr expr1, BIN_OPS>               (. def = new AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName.POINTER_WIDTH, expr1, startLoc.join(loc())); .)
+      |  ALIGN SYM_EQ expression<out Expr expr2, BIN_OPS>            (. def = new AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName.POINTER_ALIGN, expr2, startLoc.join(loc())); .)
     )
     | LONG (
-      WIDTH SYM_EQ expression<out Expr expr3, BIN_OPS>               (. def = new AbiClangNumericTypeDefinition(loc(), AbiClangNumericTypeDefinition.TypeName.LONG_WIDTH, expr3); .)
-      |  ALIGN SYM_EQ expression<out Expr expr4, BIN_OPS>            (. def = new AbiClangNumericTypeDefinition(loc(), AbiClangNumericTypeDefinition.TypeName.LONG_ALIGN, expr4); .)
+      WIDTH SYM_EQ expression<out Expr expr3, BIN_OPS>               (. def = new AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName.LONG_WIDTH, expr3, startLoc.join(loc())); .)
+      |  ALIGN SYM_EQ expression<out Expr expr4, BIN_OPS>            (. def = new AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName.LONG_ALIGN, expr4, startLoc.join(loc())); .)
     )
   )
   .

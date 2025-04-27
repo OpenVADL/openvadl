@@ -72,7 +72,7 @@ public class TypeChecker
 
   /**
    * Describes whether all branches are checked and the result of all branches must be equal, or
-   * if we must evaluate the condition and propergate the type from the chosen branch.
+   * if we must evaluate the condition and propagate the type from the chosen branch.
    */
   enum BranchStrategy {
     ALL,
@@ -714,7 +714,14 @@ public class TypeChecker
 
   @Override
   public Void visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition) {
-    // Check nothing on purpose
+    check(abiClangNumericTypeDefinition.size);
+    var ty = requireNonNull(abiClangNumericTypeDefinition.size.type);
+    if (!(ty instanceof ConstantType)) {
+      throw error("Type Mismatch", abiClangNumericTypeDefinition.size)
+          .description("Expected a number as data type")
+          .build();
+    }
+
     return null;
   }
 

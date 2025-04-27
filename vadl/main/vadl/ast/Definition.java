@@ -3709,8 +3709,28 @@ class SpecialPurposeRegisterDefinition extends Definition {
  */
 class AbiClangNumericTypeDefinition extends Definition {
   AbiClangNumericTypeDefinition.TypeName typeName;
+  @Child
   Expr size;
   SourceLocation loc;
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(typeName, size);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    AbiClangNumericTypeDefinition that = (AbiClangNumericTypeDefinition) o;
+    return typeName == that.typeName
+        && Objects.equals(size, that.size);
+  }
 
   enum TypeName {
     POINTER_WIDTH,
@@ -3719,9 +3739,9 @@ class AbiClangNumericTypeDefinition extends Definition {
     LONG_ALIGN
   }
 
-  public AbiClangNumericTypeDefinition(SourceLocation loc,
-                                       AbiClangNumericTypeDefinition.TypeName typeName,
-                                       Expr size) {
+  public AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName typeName,
+                                       Expr size,
+                                       SourceLocation loc) {
     this.loc = loc;
     this.typeName = typeName;
     this.size = size;
@@ -3760,6 +3780,25 @@ class AbiClangTypeDefinition extends Definition {
   TypeSize typeSize;
   SourceLocation loc;
 
+  @Override
+  public int hashCode() {
+    return Objects.hash(typeName, typeSize);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    AbiClangTypeDefinition that = (AbiClangTypeDefinition) o;
+    return typeName == that.typeName
+        && typeSize == that.typeSize;
+  }
+
   enum TypeName {
     // Type of the size_t in C.
     SIZE_TYPE,
@@ -3773,9 +3812,9 @@ class AbiClangTypeDefinition extends Definition {
     SIGNED_LONG
   }
 
-  public AbiClangTypeDefinition(SourceLocation loc,
-                                AbiClangTypeDefinition.TypeName typeName,
-                                AbiClangTypeDefinition.TypeSize typeSize) {
+  public AbiClangTypeDefinition(AbiClangTypeDefinition.TypeName typeName,
+                                AbiClangTypeDefinition.TypeSize typeSize,
+                                SourceLocation loc) {
     this.loc = loc;
     this.typeName = typeName;
     this.typeSize = typeSize;

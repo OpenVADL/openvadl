@@ -569,18 +569,18 @@ class MacroExpander
   @Override
   public Definition visit(AbiClangTypeDefinition abiClangTypeDefinition) {
     return new AbiClangTypeDefinition(
-        copyLoc(abiClangTypeDefinition.loc),
         abiClangTypeDefinition.typeName,
-        abiClangTypeDefinition.typeSize
+        abiClangTypeDefinition.typeSize,
+        copyLoc(abiClangTypeDefinition.loc)
     );
   }
 
   @Override
   public Definition visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition) {
     return new AbiClangNumericTypeDefinition(
-        copyLoc(abiClangNumericTypeDefinition.loc),
         abiClangNumericTypeDefinition.typeName,
-        abiClangNumericTypeDefinition.size
+        expandExpr(abiClangNumericTypeDefinition.size),
+        copyLoc(abiClangNumericTypeDefinition.loc)
     );
   }
 

@@ -337,6 +337,7 @@ public class Ungrouper
   @Override
   public Void visit(AbiClangNumericTypeDefinition definition) {
     ungroupAnnotations(definition);
+    definition.size = definition.size.accept(this);
     return null;
   }
 
