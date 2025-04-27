@@ -26,8 +26,8 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.RegisterTensor;
 import vadl.template.Renderable;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
 /**
