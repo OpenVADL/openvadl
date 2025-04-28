@@ -28,7 +28,7 @@ import vadl.viam.graph.Graph;
  */
 // TODO: Instruction should have information about source and destination registers
 //  (not from AST, computed by analysis).
-public class Instruction extends Definition implements DefProp.WithBehavior {
+public class Instruction extends Definition implements DefProp.WithBehavior, PrintableInstruction {
 
   private final Graph behavior;
   private final Assembly assembly;
@@ -70,10 +70,17 @@ public class Instruction extends Definition implements DefProp.WithBehavior {
     behavior.setParentDefinition(this);
   }
 
+  @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  @Override
   public Graph behavior() {
     return behavior;
   }
 
+  @Override
   public Assembly assembly() {
     return assembly;
   }

@@ -17,6 +17,7 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
+import java.util.Objects;
 import vadl.javaannotations.viam.DataValue;
 import vadl.viam.Definition;
 import vadl.viam.Parameter;
@@ -75,5 +76,23 @@ public class FuncParamNode extends ParamNode {
   @Override
   public void prettyPrint(StringBuilder sb) {
     sb.append(parameter.simpleName());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(parameter);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+
+    if (obj instanceof FuncParamNode that) {
+      return Objects.equals(parameter, that.parameter);
+    } else {
+      return false;
+    }
   }
 }

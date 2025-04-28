@@ -23,15 +23,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.model.CppFunctionCode;
 import vadl.lcb.codegen.assembly.AssemblyInstructionPrinterCodeGenerator;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
+import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
 /**
@@ -70,6 +74,18 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var machineInstructions = machineInstructions(passResults, specification);
+    var pseudoInstructions = pseudoInstructions(passResults, specification);
+
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().targetName().value().toLowerCase(),
+        "instructions",
+        Stream.concat(machineInstructions.stream(), pseudoInstructions.stream()).toList());
+  }
+
+  @Nonnull
+  private List<PrintableInstruction> machineInstructions(PassResults passResults,
+                                                         Specification specification) {
     var machineRecords = (List<TableGenMachineInstruction>) passResults.lastResultOf(
         GenerateTableGenMachineInstructionRecordPass.class);
     var supported = machineRecords.stream().map(TableGenMachineInstruction::instruction)
@@ -89,9 +105,44 @@ public class EmitInstPrinterCppFilePass extends LcbTemplateRenderingPass {
           return new PrintableInstruction(instruction.identifier.simpleName(), result);
         })
         .toList();
+    return printableInstructions;
+  }
 
-    return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().targetName().value().toLowerCase(),
-        "instructions", printableInstructions);
+  /**
+   * Return {@code true} when the given {@code pseudoInstruction} is {@code CALL} or {@code RET}.
+   */
+  private boolean isCallOrRet(Specification specification, PseudoInstruction pseudoInstruction) {
+    var abi = specification.abi().orElseThrow();
+
+    return pseudoInstruction == abi.callSequence()
+        || pseudoInstruction == abi.returnSequence();
+  }
+
+  @Nonnull
+  private List<PrintableInstruction> pseudoInstructions(PassResults passResults,
+                                                        Specification specification) {
+    var pseudoRecords = (List<TableGenPseudoInstruction>) passResults.lastResultOf(
+        GenerateTableGenPseudoInstructionRecordPass.class);
+
+    // We only support CALL or RET.
+    var supported = pseudoRecords.stream().map(TableGenPseudoInstruction::pseudoInstruction)
+        .filter(x -> isCallOrRet(specification, x))
+        .collect(Collectors.toSet());
+    var tableGenLookup = pseudoRecords.stream().collect(Collectors.toMap(
+        TableGenPseudoInstruction::pseudoInstruction,
+        x -> x));
+    var printableInstructions = specification
+        .isa().map(isa -> isa.ownPseudoInstructions().stream())
+        .orElse(Stream.empty())
+        .filter(supported::contains)
+        .map(instruction -> {
+          var codeGen = new AssemblyInstructionPrinterCodeGenerator();
+          var tableGenRecord =
+              ensureNonNull(tableGenLookup.get(instruction), "tablegen record must exist");
+          var result = codeGen.generateFunctionBody(instruction, tableGenRecord);
+          return new PrintableInstruction(instruction.identifier.simpleName(), result);
+        })
+        .toList();
+    return printableInstructions;
   }
 }
