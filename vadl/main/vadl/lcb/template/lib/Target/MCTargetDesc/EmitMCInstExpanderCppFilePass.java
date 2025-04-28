@@ -45,6 +45,7 @@ import vadl.template.Renderable;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
 /**
@@ -86,6 +87,11 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
     }
   }
 
+  /**
+   * Returns the pseudo instructions except the call and return pseudo instruction, which
+   * is defined in the ABI. Actually, we only need to keep the CALL pseudo instruction out of
+   * convenience. This has to do with {@code @plt} suffix / modifier when using PIC.
+   */
   private List<RenderedInstruction> pseudoInstructions(
       Specification specification,
       Map<CompilerInstruction, GcbExpandPseudoInstructionCppFunction> cppFunctions,
@@ -95,6 +101,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
       GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
       IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords) {
     return PseudoInstructionProvider.getSupportedPseudoInstructions(specification, passResults)
+        .filter(x -> !isCallOrRet(specification, x))
         .map(pseudoInstruction -> renderPseudoInstruction(cppFunctions, fieldUsages,
             relocations,
             passResults,
@@ -102,6 +109,16 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             variantKindStore,
             machineInstructionRecords))
         .toList();
+  }
+
+  /**
+   * Return {@code true} when the given {@code pseudoInstruction} is {@code CALL} or {@code RET}.
+   */
+  private boolean isCallOrRet(Specification specification, PseudoInstruction pseudoInstruction) {
+    var abi = specification.abi().orElseThrow();
+
+    return pseudoInstruction == abi.callSequence()
+        || pseudoInstruction == abi.returnSequence();
   }
 
   private List<RenderedInstruction> constantSequences(
