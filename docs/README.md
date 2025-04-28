@@ -17,5 +17,5 @@ DOXYGEN=/path/to/doxygen make html
 ```
 
 to build the HTML version. This also works with the official doxygen.
-The [hosted documentation](https://openvadl.github.io/open-vadl/) is build with Doxygen 1.13.2
+The [hosted documentation](https://openvadl.github.io/openvadl/) is build with Doxygen 1.13.2
 using [this image](https://github.com/orgs/OpenVADL/packages/container/package/doxygen).
