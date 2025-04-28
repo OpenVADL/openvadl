@@ -103,7 +103,7 @@ public class FunctionInlinerPass extends Pass {
               Arrays.stream(functionCall.function().parameters()), Pair::new)
           .forEach(
               pair -> behaviorCopy.getNodes(FuncParamNode.class)
-                  .filter(n -> n.parameter() == pair.right())
+                  .filter(n -> n.parameter().equals(pair.right()))
                   .forEach(usedParam -> usedParam.replaceAndDelete(pair.left().copy())));
 
       // replace the function call by a copy of the return value of the function
