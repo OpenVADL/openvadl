@@ -454,21 +454,6 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     return Optional.empty();
   }
 
-
-  private Optional<Integer> indexInOutputs(FuncParamNode needle) {
-    for (int i = 0; i < tableGenInstruction.getOutOperands().size(); i++) {
-      var operand = tableGenInstruction.getOutOperands().get(i);
-      if (operand instanceof TableGenInstructionBareSymbolOperand symbolOperand
-          && symbolOperand.origin() instanceof FuncParamNode funcParamNodeOfOperand
-          && needle.parameter().equals(funcParamNodeOfOperand.parameter())) {
-        return Optional.of( i);
-      }
-    }
-
-    return Optional.empty();
-  }
-
-
   private String getRegisterFile(Graph behavior, FieldRefNode fieldRefNode) {
     var candidates = behavior.getNodes(FieldRefNode.class)
         .filter(x -> x.formatField().equals(fieldRefNode.formatField()))
