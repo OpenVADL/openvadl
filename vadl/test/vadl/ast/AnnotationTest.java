@@ -31,7 +31,7 @@ public class AnnotationTest {
         instruction set architecture TEST =
         {
           [ X(0) = 0 ]
-          register file X : Bits<32> -> Bits<5>
+          register X : Bits<32> -> Bits<5>
         }
         """;
     var ast = VadlParser.parse(prog);

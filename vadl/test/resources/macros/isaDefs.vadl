@@ -3,7 +3,7 @@
 
 instruction set architecture IsaDefsTest = {
 
-  register file X : Bits<5> -> Bits<32>
+  register X : Bits<5> -> Bits<32>
 
   format Rtype : Bits<32> =
     { rd: Bits<5>

@@ -141,8 +141,8 @@ public class NameResolutionTest {
   void resolveTwoOverlappingRegisterFileDefinitions() {
     var prog = """
         instruction set architecture FLO = {
-          register file X : Bits<5> -> Bits<32>
-          register file X : Bits<2> -> Bits<4>
+          register X : Bits<5> -> Bits<32>
+          register X : Bits<2> -> Bits<4>
         }
         """;
     var thrown = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog),

@@ -23,18 +23,18 @@ import vadl.error.Diagnostic;
 public class AsmLL1CheckerTest {
   private final String base = """
        instruction set architecture ISA = {
-        register file X : Bits<5> -> Bits<32>
-        
+        register X : Bits<5> -> Bits<32>
+      
         format Rtype : Bits<1> =
         { funct7 : Bits<1> }
-        
+      
         instruction DO : Rtype =
         {
            X(0) := 1
         }
         encoding DO = { funct7 = 0b0 }
         assembly DO = (mnemonic)
-        
+      
         pseudo instruction NOP( symbol: Bits<5>) = {
         }
         assembly NOP = (mnemonic)
@@ -50,10 +50,10 @@ public class AsmLL1CheckerTest {
         global pointer = zero
         frame pointer = zero
         thread pointer = zero
-        
+      
         return value = zero
         function argument = zero
-        
+      
         caller saved = zero
         callee saved = zero
       }
@@ -62,7 +62,7 @@ public class AsmLL1CheckerTest {
   private String inputWrappedByValidAsmDescription(String input) {
     return """
           %s
-                
+        
           assembly description AD for ABI = {
             %s
           }
@@ -171,10 +171,10 @@ public class AsmLL1CheckerTest {
     var prog = """
           instruction set architecture ISA = {}
           application binary interface ABI for ISA = {}
-                
+        
           assembly description AD for ABI = {
             function minusOne (x : SInt<64>) -> SInt<64> = x - 1
-                
+        
             grammar = {
               RuleA :
                 attr = minusOne<Integer>
@@ -195,11 +195,11 @@ public class AsmLL1CheckerTest {
     var prog = """
           instruction set architecture ISA = {}
           application binary interface ABI for ISA = {}
-                
+        
           assembly description AD for ABI = {
             function one -> SInt<64> = 1
             function add (a: SInt<64>, b: SInt<64>) -> SInt<64> = a + b
-                
+        
             grammar = {
               RuleA :
                 (
@@ -490,7 +490,7 @@ public class AsmLL1CheckerTest {
               ?(laideq(0,"r1")) A
               | B
             ) @instruction ;
-                
+        
             A : Register @operand ;
             B : Register @operand ;
           }

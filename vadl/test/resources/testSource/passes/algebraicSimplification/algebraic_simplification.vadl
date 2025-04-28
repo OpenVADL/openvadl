@@ -3,7 +3,7 @@ instruction set architecture Tests = {
   using Index = Bits<5>
   using Address  = Bits<32>
 
-  register file X: Index -> Bits<32>
+  register X: Index -> Bits<32>
 
   instruction SHIFT_LEFT_0: TMP = {
     X(ONE) := (X(ONE) << 0) as Bits<32>

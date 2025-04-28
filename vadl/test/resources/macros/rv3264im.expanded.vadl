@@ -26,7 +26,7 @@ instruction set architecture RV3264I = {
   using UShft = UInt<SftLen>
 
   [(X(0) = 0) ]
-  register file X: Index -> Regs
+  register X: Index -> Regs
 
   program counter PC: Address
 

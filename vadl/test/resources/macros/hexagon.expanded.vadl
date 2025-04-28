@@ -18,7 +18,7 @@ instruction set architecture QDSP6 = {
   [littleEndian ]
   memory MEM: Address -> Byte
 
-  register file R: Index -> Word
+  register R: Index -> Word
 
   alias register SP : Word = R(29)
   alias register FP : Word = R(30)
@@ -32,7 +32,7 @@ instruction set architecture QDSP6 = {
   constant C_INDEX_P: Index = 4
   constant C_INDEX_PC: Index = 9
 
-  register file C: Index -> Word
+  register C: Index -> Word
 
   alias register SA0 = C(0)
   alias register LC0 = C(1)

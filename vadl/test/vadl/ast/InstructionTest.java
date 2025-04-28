@@ -27,7 +27,7 @@ public class InstructionTest {
   void parseCombinedInstructionDefinition() {
     var prog = """
         instruction set architecture RV32I = {
-          register file X : Bits<5> -> Bits<32>
+          register X : Bits<5> -> Bits<32>
           format R_TYPE : Bits<32> = {
             funct7 [31..25],
             rs2    [24..20],
@@ -36,17 +36,17 @@ public class InstructionTest {
             rd     [11..7],
             opcode [6..0]
           }
-
+        
           instruction ADD : R_TYPE = {
             X(rd) := X(rs1) + X(rs2)
           }
-
+        
           encoding ADD = {
             opcode = 0b011'0011,
             funct3 = 0b000,
             funct7 = 0b000'0000
           }
-
+        
           assembly ADD = (mnemonic, " ", rd, ", ", rs1, ", ", rs2)
         }
         """;
@@ -68,9 +68,9 @@ public class InstructionTest {
           format R_TYPE : Bits<32> = {
             a: Bits<10>, b: Bits<10>, c: Bits<10>, d: Bits<10>
           }
-
+        
           instruction ADD : R_TYPE = {}
-
+        
           encoding ADD = {
             a = 1,
             $Encoding(b = 2, none, c=3)

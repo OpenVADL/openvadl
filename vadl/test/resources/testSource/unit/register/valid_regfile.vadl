@@ -4,10 +4,10 @@ instruction set architecture Test = {
   using Index = Bits<5>
   using Regs  = Bits<32>
 
-  register file X: Index -> Regs
+  register X: Index -> Regs
 
   [ Y(2) = 0 ]
-  register file Y: Index -> Regs
+  register Y: Index -> Regs
 
 }
 

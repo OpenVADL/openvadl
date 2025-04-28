@@ -33,7 +33,7 @@ public class TypecheckerAsmTest {
 
   private final String base = """
        instruction set architecture ISA = {
-        register file X : Bits<5> -> Bits<32>
+        register X : Bits<5> -> Bits<32>
       
         format Rtype : Bits<1> =
         { funct7 : Bits<1> }

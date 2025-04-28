@@ -1,7 +1,7 @@
 
 instruction set architecture ValidRegFileWrites = {
 
-  register file X: Bits<8> -> Bits<32>
+  register X: Bits<8> -> Bits<32>
 
   instruction TEST1: TMP = {
     if F1 = 1 then {

@@ -17,7 +17,7 @@ instruction set architecture QDSP6 =
   using SWord = SInt<32>
   using SDouble = SInt<64>
 
-  using Index          = Bits<5>           // register file index for 32 registers
+  using Index          = Bits<5>           // register index for 32 registers
   using PredicateIndex = Bits<2>           // predicate index for 4 predicates
 
   [littleEndian]
@@ -26,7 +26,7 @@ instruction set architecture QDSP6 =
   // Data must be aligned to its native access size.
   // Any unaligned memory access will cause a memory-alignment exception.
 
-  register file R   : Index -> Word   // general purpose register file
+  register R   : Index -> Word   // general purpose register
   alias register SP : Word = R(29)    // stack pointer
   alias register FP : Word = R(30)    // frame pointer
   alias register LR : Word = R(31)    // link register
@@ -38,7 +38,7 @@ instruction set architecture QDSP6 =
 
   constant C_INDEX_P  : Index = 4
   constant C_INDEX_PC : Index = 9
-  register file C   : Index -> Word        // control register file
+  register C   : Index -> Word        // control register
   alias register SA0             = C(0)    // Loop start address register 0
   alias register LC0             = C(1)    // Loop count register 0
   alias register SA1             = C(2)    // Loop start address register 1

@@ -52,7 +52,7 @@ instruction set architecture RV3264I = {
   using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift ammount
 
   [X(0) = 0]                              // register with index 0 always is 0
-  register file    X : Index   -> Regs    // integer register file with 32 registers of 32 bits
+  register    X : Index   -> Regs    // integer register with 32 registers of 32 bits
   program counter PC : Address            // PC points to the start of the current instruction
   memory         MEM : Address -> Byte    // byte addressed memory
 

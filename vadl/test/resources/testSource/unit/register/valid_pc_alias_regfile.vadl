@@ -3,7 +3,7 @@ instruction set architecture PcTest = {
   using Regs = Bits<32>
   using Index = Bits<5>
 
-  register file X: Index -> Regs
+  register X: Index -> Regs
   alias program counter PC: Regs = X(31)
 
   instruction READ_PC: F = A := PC

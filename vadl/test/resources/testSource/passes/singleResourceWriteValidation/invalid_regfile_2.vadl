@@ -3,7 +3,7 @@
 
 instruction set architecture RegDualBranch = {
 
-  register file X: Bits<8> -> Bits<32>
+  register X: Bits<8> -> Bits<32>
 
   instruction TEST: TMP = {
     if (F1 = 2) then {
