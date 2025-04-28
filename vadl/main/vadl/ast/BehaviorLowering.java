@@ -197,74 +197,103 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return graph;
   }
 
-  Function getRegisterFileAliasReadFunc(AliasDefinition definition) {
+  Function getRegisterAliasReadFunc(AliasDefinition definition) {
     var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
     var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
-    var type = (ConcreteRelationType) definition.type();
-    var regFileDef = (RegisterFileDefinition) Objects.requireNonNull(definition.computedTarget);
+    var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
 
+    DataType resultType;
+    var indices = new NodeList<ExpressionNode>();
+    var params = new ArrayList<>();
+    // FIXME: Support pre-indexed registers, for example:
+    //  register X = Bits<3><4><32>
+    //  register alias Z = X(1, 2)
+    if (definition.type() instanceof ConcreteRelationType relType) {
+      // FIXME: Wrap input and output in casts
+      // FIXME: Add conditions based on annotations
+      var param = new vadl.viam.Parameter(
+          viamLowering.generateIdentifier(
+              identifier.name() + "::readFunc::index",
+              identifier.location()),
+          relType.argTypes().getFirst());
+      params.add(param);
+      indices.add(new FuncParamNode(param));
+      resultType = relType.resultType().asDataType();
+    } else {
+      resultType = definition.type().asDataType();
+    }
 
-    var param = new vadl.viam.Parameter(
-        viamLowering.generateIdentifier(
-            identifier.name() + "::readFunc::index",
-            identifier.location()),
-        type.argTypes().get(0));
-
-    // FIXME: Wrap input and output in casts
-    // FIXME: Add conditions based on annotations
-    var regFile = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
-    var regfileRead = new ReadRegTensorNode(
-        regFile,
-        new NodeList<>(new FuncParamNode(param)),
-        (DataType) regFileDef.type().resultType(),
+    var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
+    var regReadType = regFileDef.type() instanceof ConcreteRelationType relType
+        ? relType.resultType().asDataType() : resultType.asDataType();
+    var regRead = new ReadRegTensorNode(
+        reg,
+        indices,
+        regReadType,
         null
     );
 
-    var returnNode = graph.addWithInputs(new ReturnNode(regfileRead));
+    var returnNode = graph.addWithInputs(new ReturnNode(regRead));
     graph.addWithInputs(new StartNode(returnNode));
 
     // FIXME: Modify based on annotations
     return new Function(
         viamLowering.generateIdentifier(identifier.name() + "::readFunc",
             identifier.location()),
-        new vadl.viam.Parameter[] {param},
-        type.resultType(),
+        params.toArray(vadl.viam.Parameter[]::new),
+        resultType,
         graph
     );
   }
 
-  Procedure getRegisterFileAliasWriteProc(AliasDefinition definition) {
+  Procedure getRegisterAliasWriteProc(AliasDefinition definition) {
     var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
     var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
-    var type = (ConcreteRelationType) definition.type();
-    var regFileDef = (RegisterFileDefinition) Objects.requireNonNull(definition.computedTarget);
+    var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
 
-
-    var indexParam = new vadl.viam.Parameter(
-        viamLowering.generateIdentifier(
-            identifier.name() + "::writeProc::index",
-            identifier.location()),
-        type.argTypes().get(0));
+    DataType resultType;
+    var indices = new NodeList<ExpressionNode>();
+    var params = new ArrayList<>();
+    // FIXME: Support pre-indexed registers, for example:
+    //  register X = Bits<3><4><32>
+    //  register alias Z = X(1, 2)
+    if (definition.type() instanceof ConcreteRelationType relType) {
+      // FIXME: Wrap input and output in casts
+      // FIXME: Add conditions based on annotations
+      var param = new vadl.viam.Parameter(
+          viamLowering.generateIdentifier(
+              identifier.name() + "::writeProc::index",
+              identifier.location()),
+          relType.argTypes().getFirst());
+      params.add(param);
+      indices.add(new FuncParamNode(param));
+      resultType = relType.resultType().asDataType();
+    } else {
+      resultType = definition.type().asDataType();
+    }
 
     var valueParam = new vadl.viam.Parameter(
         viamLowering.generateIdentifier(
             identifier.name() + "::writeProc::value",
             identifier.location()),
-        type.resultType());
+        resultType);
+    params.add(valueParam);
 
-
+    // FIXME: Support pre-indexed registers, for example:
+    //  register X = Bits<3><4><32>
+    //  register alias Z = X(1, 2)
     // FIXME: Wrap input and output in casts
     // FIXME: Add conditions based on annotations
     var regFile = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regfileWrite = new WriteRegTensorNode(
         regFile,
-        new NodeList<>(new FuncParamNode(indexParam)),
+        indices,
         new FuncParamNode(valueParam),
         null,
         null
@@ -277,7 +306,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return new Procedure(
         viamLowering.generateIdentifier(identifier.name() + "::readFunc",
             identifier.location()),
-        new vadl.viam.Parameter[] {indexParam, valueParam},
+        params.toArray(vadl.viam.Parameter[]::new),
         graph
     );
   }
@@ -698,8 +727,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       return visitSubCall(expr, slicedNode);
     }
 
-    // Register file read
-    if (expr.computedTarget instanceof RegisterFileDefinition) {
+    // Register(file) read
+    if (expr.computedTarget instanceof RegisterDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var regFile = (RegisterTensor) viamLowering.fetch(expr.computedTarget).orElseThrow();
       var type = (DataType) expr.argsIndices.get(0).type();
@@ -711,7 +740,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // Alias to registerfile read
     if (expr.computedTarget instanceof AliasDefinition aliasDefinition
-        && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE)) {
+        && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
 
       var artificialResource =
           (ArtificialResource) viamLowering.fetch(expr.computedTarget).orElseThrow();
@@ -744,7 +773,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       var counter = (Counter) viamLowering.fetch(counterDefinition).orElseThrow();
       var counterType = (DataType) Objects.requireNonNull(counterDefinition.typeLiteral.type);
 
-      var regRead = new ReadRegTensorNode((RegisterTensor) counter.registerTensor(),
+      var regRead = new ReadRegTensorNode(counter.registerTensor(),
           new NodeList<>(),
           (DataType) Objects.requireNonNull(expr.type), null);
 
@@ -945,12 +974,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // FIXME: Ensure that no slicing is happending and handle format field masking access
 
       // Register File Write
-      if (callTarget.computedTarget instanceof RegisterFileDefinition regFileTarget) {
-        var regFile = viamLowering.fetch(regFileTarget).orElseThrow();
-        var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
+      if (callTarget.computedTarget instanceof RegisterDefinition regFileTarget) {
+        var reg = (RegisterTensor) viamLowering.fetch(regFileTarget).orElseThrow();
+        var indices = callTarget.argsIndices.getFirst().values.stream().map(this::fetch)
+            .collect(Collectors.toCollection(NodeList::new));
         var write = new WriteRegTensorNode(
-            (RegisterTensor) regFile,
-            new NodeList<>(address),
+            reg,
+            indices,
             value,
             null,
             null);
@@ -961,17 +991,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       // Alias Register File Write
       if (callTarget.computedTarget instanceof AliasDefinition aliasDefinition
-          && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE)) {
+          && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
         var resource = (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
+        // FIXME: Support alias register writes
         var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
         var write = new WriteArtificialResNode(resource, address, value);
-        return SubgraphContext.of(statement, write);
-      }
-
-      // Register Write
-      if (callTarget.computedTarget instanceof RegisterDefinition registerDefinition) {
-        var reg = (RegisterTensor) viamLowering.fetch(registerDefinition).orElseThrow();
-        var write = new WriteRegTensorNode(reg, new NodeList<>(), value, null, null);
         return SubgraphContext.of(statement, write);
       }
 

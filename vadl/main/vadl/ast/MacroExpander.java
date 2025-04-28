@@ -508,13 +508,6 @@ class MacroExpander
   }
 
   @Override
-  public Definition visit(RegisterFileDefinition definition) {
-    var id = resolvePlaceholderOrIdentifier(definition.identifier);
-    return new RegisterFileDefinition(id, definition.typeLiteral,
-        copyLoc(definition.loc)).withAnnotations(expandAnnotations(definition.annotations));
-  }
-
-  @Override
   public Definition visit(InstructionDefinition definition) {
     var identifier = resolvePlaceholderOrIdentifier(definition.identifier);
     var typeId = resolvePlaceholderOrIdentifier(definition.typeIdentifier);

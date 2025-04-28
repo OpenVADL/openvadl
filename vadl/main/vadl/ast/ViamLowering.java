@@ -34,9 +34,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
+import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
@@ -63,7 +65,6 @@ import vadl.viam.Procedure;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
-import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
@@ -294,23 +295,18 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(AliasDefinition definition) {
 
-    if (definition.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE)) {
+    if (definition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
       var identifier = generateIdentifier(definition.viamId, definition.loc);
       var innerResource =
-          (Resource) fetch(Objects.requireNonNull(definition.computedTarget)).orElseThrow();
+          (RegisterTensor) fetch(Objects.requireNonNull(definition.computedTarget)).orElseThrow();
 
       return Optional.of(new ArtificialResource(
           identifier,
-          ArtificialResource.Kind.REG_FILE_ALIAS,
+          ArtificialResource.Kind.REG_ALIAS,
           innerResource,
-          new BehaviorLowering(this).getRegisterFileAliasReadFunc(definition),
-          new BehaviorLowering(this).getRegisterFileAliasWriteProc(definition)
+          new BehaviorLowering(this).getRegisterAliasReadFunc(definition),
+          new BehaviorLowering(this).getRegisterAliasWriteProc(definition)
       ));
-    }
-
-    if (definition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
-      // FIXME: Do nothing for now, the VIAM cannot represent that yet
-      return Optional.empty();
     }
 
     throw new RuntimeException("The ViamGenerator does not support `%s` of kind %s yet".formatted(
@@ -402,9 +398,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     Map<RegisterTensor, Abi.Alignment> registerFileAlignment =
         definitionCache.keySet()
-            .stream().filter(x -> x instanceof RegisterFileDefinition)
-            .map(x -> (RegisterFileDefinition) x)
+            .stream().filter(x -> x instanceof RegisterDefinition)
+            .map(x -> (RegisterDefinition) x)
             .map(x -> (RegisterTensor) fetch(x).orElseThrow())
+            .filter(RegisterTensor::isRegisterFile)
             .collect(Collectors.toMap(
                 x -> x,
                 x -> Abi.Alignment.HALF_WORD
@@ -1360,34 +1357,43 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterDefinition definition) {
-    var resultType = (DataType) getViamType(definition.type());
+    var type = getViamType(definition.type());
+
+    DataType resultType;
+    var dimensions = new ArrayList<RegisterTensor.Dimension>();
+    if (type instanceof ConcreteRelationType relType) {
+      // if it is a relation type, it is a register file of the form x -> y, otherwise
+      var argTypes = relType.argTypes();
+      IntStream.range(0, argTypes.size()).forEach(i -> {
+        var t = argTypes.get(i).asDataType();
+        dimensions.add(dimFromMappingType(i, t));
+      });
+      resultType = relType.resultType().asDataType();
+    } else {
+      // the type is no mapping type
+      resultType = type.asDataType();
+    }
+
+    // FIXME: Handle mutli-dimension types
+    // now we add the dimensions of the form T<d0><d1>..
+    dimensions.add(dimFromType(dimensions.size(), resultType));
+
+    // FIXME: Remove this and add it using the [zero: ..] annotation
+    var constraints = new ArrayList<RegisterTensor.Constraint>();
+    if (type instanceof ConcreteRelationType relType) {
+      var zeroConstraint = new RegisterTensor.Constraint(
+          List.of(Constant.Value.of(0, relType.argTypes().getFirst().asDataType())),
+          Constant.Value.of(0, resultType));
+      constraints.add(zeroConstraint);
+    }
+
+
     var reg = new RegisterTensor(
         generateIdentifier(definition.viamId, definition.identifier()),
-        List.of(dimFromType(0, resultType)),
-        new RegisterTensor.Constraint[] {}
+        dimensions,
+        constraints.toArray(new RegisterTensor.Constraint[0])
     );
     return Optional.of(reg);
-  }
-
-  @Override
-  public Optional<vadl.viam.Definition> visit(RegisterFileDefinition definition) {
-    var addrType = (DataType) getViamType(requireNonNull(definition.type).argTypes().get(0));
-    var resultType = (DataType) getViamType(requireNonNull(definition.type).resultType());
-
-    // FIXME: Add proper constraints. This is currently only temporarily hardcoded to
-    //    fix the riscv iss simulation.
-    var zeroConstraint = new RegisterTensor.Constraint(List.of(Constant.Value.of(0, addrType)),
-        Constant.Value.of(0, resultType));
-
-    var regFile = new RegisterTensor(
-        generateIdentifier(definition.viamId, definition.identifier()),
-        List.of(
-            dimFromMappingType(0, addrType),
-            dimFromType(1, resultType)
-        ),
-        new RegisterTensor.Constraint[] {zeroConstraint}
-    );
-    return Optional.of(regFile);
   }
 
   @Override
@@ -1520,7 +1526,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       var registerFile =
           ensurePresent(
               Optional.ofNullable(
-                      callExpr.symbolTable.requireAs(identifier, RegisterFileDefinition.class))
+                      callExpr.symbolTable.requireAs(identifier, RegisterDefinition.class))
                   .flatMap(this::fetch)
                   .map(x -> (RegisterTensor) x),
               () -> error("Cannot find register file with the name "

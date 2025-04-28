@@ -39,7 +39,7 @@ public class ArtificialResource extends Resource {
    * A hint what the artificial resources were created from.
    */
   public enum Kind {
-    REG_FILE_ALIAS
+    REG_ALIAS
   }
 
   private final Kind kind;

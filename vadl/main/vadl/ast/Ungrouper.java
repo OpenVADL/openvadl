@@ -281,12 +281,6 @@ public class Ungrouper
   }
 
   @Override
-  public Void visit(RegisterFileDefinition definition) {
-    ungroupAnnotations(definition);
-    return null;
-  }
-
-  @Override
   public Void visit(InstructionDefinition definition) {
     ungroupAnnotations(definition);
     definition.behavior.accept(this);

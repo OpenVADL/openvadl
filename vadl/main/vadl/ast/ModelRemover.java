@@ -84,11 +84,6 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
-  public Definition visit(RegisterFileDefinition definition) {
-    return definition;
-  }
-
-  @Override
   public Definition visit(InstructionDefinition definition) {
     return definition;
   }

@@ -249,6 +249,15 @@ class SymbolTable {
     return null;
   }
 
+  <T extends Node> @Nullable T findIdAs(IsId id, Class<T> type) {
+    return switch (id) {
+      case Identifier i -> findAs(i, type);
+      case IdentifierPath i -> findAs(i, type);
+      case IdentifierOrPlaceholder ignored ->
+          throw new IllegalStateException("Placeholder should never be found here.");
+    };
+  }
+
   // FIXME: I don't like how it's called require but still returns null
   <T extends Node> @Nullable T requireAs(Identifier usage, Class<T> type) {
     var origin = resolveNode(usage.name);
