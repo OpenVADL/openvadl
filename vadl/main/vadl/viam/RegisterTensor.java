@@ -20,6 +20,7 @@ import com.google.common.collect.Streams;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.ConcreteRelationType;
@@ -244,6 +245,12 @@ public class RegisterTensor extends Resource {
           "Provided index type does not match respective tensor image type: %s != %s",
           provided, actual);
     });
+  }
+
+  @Override
+  public String toString() {
+    var dims = dimensions.stream().map(d -> "<" + d.size + ">").collect(Collectors.joining());
+    return simpleName() + ": " + dims;
   }
 
   /**

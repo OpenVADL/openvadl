@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
-import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.Type;
@@ -205,34 +204,29 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
     var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
 
-    DataType resultType;
+    var regType = (TensorType) regFileDef.type();
     var indices = new NodeList<ExpressionNode>();
     var params = new ArrayList<>();
-    // FIXME: Support pre-indexed registers, for example:
-    //  register X = Bits<3><4><32>
-    //  register alias Z = X(1, 2)
-    if (definition.type() instanceof ConcreteRelationType relType) {
-      // FIXME: Wrap input and output in casts
-      // FIXME: Add conditions based on annotations
+
+    // FIXME: Add reads of sub-ranges (over multiple dimensions)
+    // FIXME: Wrap input and output in casts
+    // FIXME: Add conditions based on annotations
+    for (var index : regType.indices) {
       var param = new vadl.viam.Parameter(
           viamLowering.generateIdentifier(
-              identifier.name() + "::readFunc::index",
+              identifier.name() + "::readFunc::index" + index,
               identifier.location()),
-          relType.argTypes().getFirst());
+          index.viamType());
       params.add(param);
       indices.add(new FuncParamNode(param));
-      resultType = relType.resultType().asDataType();
-    } else {
-      resultType = definition.type().asDataType();
     }
 
+
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
-    var regReadType = regFileDef.type() instanceof ConcreteRelationType relType
-        ? relType.resultType().asDataType() : resultType.asDataType();
     var regRead = new ReadRegTensorNode(
         reg,
         indices,
-        regReadType,
+        regType.baseType,
         null
     );
 
@@ -244,7 +238,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         viamLowering.generateIdentifier(identifier.name() + "::readFunc",
             identifier.location()),
         params.toArray(vadl.viam.Parameter[]::new),
-        resultType,
+        regType.baseType,
         graph
     );
   }
@@ -257,39 +251,30 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
     var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
 
-    DataType resultType;
+    var regType = (TensorType) regFileDef.type();
     var indices = new NodeList<ExpressionNode>();
     var params = new ArrayList<>();
-    // FIXME: Support pre-indexed registers, for example:
-    //  register X = Bits<3><4><32>
-    //  register alias Z = X(1, 2)
-    if (definition.type() instanceof ConcreteRelationType relType) {
-      // FIXME: Wrap input and output in casts
-      // FIXME: Add conditions based on annotations
+
+    // FIXME: Add writes of sub-ranges (over multiple dimensions)
+    // FIXME: Wrap input and output in casts
+    // FIXME: Add conditions based on annotations
+    for (var index : regType.indices) {
       var param = new vadl.viam.Parameter(
           viamLowering.generateIdentifier(
-              identifier.name() + "::writeProc::index",
+              identifier.name() + "::writeProc::index" + index,
               identifier.location()),
-          relType.argTypes().getFirst());
+          index.viamType());
       params.add(param);
       indices.add(new FuncParamNode(param));
-      resultType = relType.resultType().asDataType();
-    } else {
-      resultType = definition.type().asDataType();
     }
 
     var valueParam = new vadl.viam.Parameter(
         viamLowering.generateIdentifier(
             identifier.name() + "::writeProc::value",
             identifier.location()),
-        resultType);
+        regType.baseType);
     params.add(valueParam);
 
-    // FIXME: Support pre-indexed registers, for example:
-    //  register X = Bits<3><4><32>
-    //  register alias Z = X(1, 2)
-    // FIXME: Wrap input and output in casts
-    // FIXME: Add conditions based on annotations
     var regFile = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regfileWrite = new WriteRegTensorNode(
         regFile,

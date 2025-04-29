@@ -16,7 +16,10 @@
 
 package vadl.ast;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.math.BigInteger;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import vadl.error.Diagnostic;
@@ -1012,4 +1015,49 @@ public class TypecheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
   }
+
+  @Test
+  public void multiDimRegister() {
+    var prog = """
+        instruction set architecture TEST = {
+        
+        register A: Bits<5><32>
+        register B: Bits<5> -> Bits<5><32>
+        register C: Bits<32><5><32>
+        register D: Bits<32>
+        
+        function t1 -> Bits<32> = A(0)
+        function t2 -> Bits<32> = B(A(0) as Bits<5>)(2)
+        function t3 -> Bits<32> = B(2, A(0) as Bits<3>)
+        function t4 -> Bits<32> = C(B(A(0) as Bits<5>, 4) as Bits<5>, 2)        
+        function t5 -> Bits<1> = C(B(A(0) as Bits<5>, 4) as Bits<5>, 2)(2)
+        function t6 -> Bits<32> = D
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    var regB = finder.findDefinition(ast, "B", RegisterDefinition.class);
+    var expType = TensorType.of(List.of(
+            new TensorType.Index(32, Type.bits(5)),
+            new TensorType.Index(5, null)),
+        Type.bits(32));
+    Assertions.assertEquals(expType, regB.type);
+  }
+
+  @Test
+  public void invalidMultiDimRegAcc() {
+    var prog = """
+        instruction set architecture TEST = {
+          register A: Bits<5><32>
+          function t1 -> Bits<32> = A(0, 0) // invalid, must be in separate (groups)
+        }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    var diagnostic = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    assertThat(diagnostic.getMessage()).contains("Index number missmatchr");
+  }
+
 }

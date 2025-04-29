@@ -42,7 +42,6 @@ import vadl.error.DiagnosticList;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
-import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.SIntType;
 import vadl.types.StatusType;
@@ -279,6 +278,12 @@ public class TypeChecker
    * @return true if the cast can happen implicitly, false otherwise.
    */
   private static boolean canImplicitCast(Type from, Type to) {
+    if (from instanceof TensorType fromTensorType) {
+      // if the from type is tensor, we want to check whether its mergeType (whole access)
+      // can be cast implicitly
+      from = fromTensorType.mergedType();
+    }
+
     if (from.equals(to)) {
       return true;
     }
@@ -369,6 +374,7 @@ public class TypeChecker
    */
   private static Expr wrapImplicitCast(Expr inner, Type to) {
     var innerType = requireNonNull(inner.type);
+
     if (innerType.equals(to)) {
       return inner;
     }
@@ -600,25 +606,43 @@ public class TypeChecker
 
   @Override
   public Void visit(RegisterDefinition definition) {
-    definition.typeLiteral.argTypes().forEach(this::check);
-    check(definition.typeLiteral.resultType());
-    if (definition.typeLiteral.argTypes().isEmpty()) {
-      // relation without args is not a register file (normal single type)
-      var typeLit = definition.typeLiteral.resultType;
-      if (!(typeLit.type instanceof DataType regType)) {
-        var type = definition.type;
+    var argTypes = definition.typeLiteral.argTypes().stream().map(this::check).toList();
+    var resultType = check(definition.typeLiteral.resultType());
+
+    if (!(resultType instanceof DataType || resultType instanceof TensorType)) {
+      var type = definition.type;
+      throw error("Invalid Type", definition)
+          .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
+          .note("Type was %s.", type == null ? "unknown" : type)
+          .build();
+    }
+
+    // register files are converted to tensor typed registers
+    var typeIndices = new ArrayList<TensorType.Index>();
+    for (var type : argTypes) {
+      if (!(type instanceof BitsType bitsType)) {
         throw error("Invalid Type", definition)
-            .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
+            .description("Expected register index type to be one of Bits, SInt, or UInt.")
             .note("Type was %s.", type == null ? "unknown" : type)
             .build();
       }
-      definition.type = regType;
-    } else {
-      // is a register file
-      definition.type = Type.concreteRelation(
-          definition.typeLiteral.argTypes().stream().map(arg -> arg.type).toList(),
-          requireNonNull(definition.typeLiteral.resultType().type));
+      typeIndices.add(TensorType.Index.ofMappingArg(bitsType));
     }
+
+    DataType baseType;
+    if (resultType instanceof DataType dataType) {
+      baseType = dataType;
+    } else {
+      var tensorType = (TensorType) resultType;
+      typeIndices.addAll(tensorType.indices);
+      baseType = tensorType.baseType;
+    }
+
+    // is a register file
+    definition.type = TensorType.of(
+        typeIndices,
+        baseType
+    );
 
     return null;
   }
@@ -2257,15 +2281,17 @@ public class TypeChecker
    */
   private Type parseTypeLiteral(TypeLiteral expr, @Nullable Integer preferredBitWidth) {
     var base = expr.baseType.pathToString();
-
-    if (base.equals("Bool")) {
-      if (!expr.sizeIndices.isEmpty()) {
-        throw error("Invalid Type Notation", expr.location())
-            .description("The Bool type doesn't use the size notation as it is always one bit.")
+    var sizeIndices = expr.sizeIndices().stream().map(widthExpr -> {
+      check(widthExpr);
+      var val = constantEvaluator.eval(widthExpr).value().intValueExact();
+      if (val < 1) {
+        throw error("Invalid Type Notation", widthExpr.location())
+            .locationDescription(widthExpr.location(),
+                "Width must of a %s must be greater than 1 but was %s", base, val)
             .build();
       }
-      return Type.bool();
-    }
+      return new TensorType.Index(val, null);
+    }).toList();
 
     if (base.equals("String")) {
       if (!expr.sizeIndices.isEmpty()) {
@@ -2276,10 +2302,17 @@ public class TypeChecker
       return Type.string();
     }
 
+    if (base.equals("Bool")) {
+      if (!sizeIndices.isEmpty()) {
+        return TensorType.of(sizeIndices, Type.bool());
+      }
+      return Type.bool();
+    }
+
     // The basic types SINT<n>, UINT<n> and BITS<n>
     if (Arrays.asList("SInt", "UInt", "Bits").contains(base)) {
 
-      if (expr.sizeIndices.isEmpty() && preferredBitWidth == null) {
+      if (sizeIndices.isEmpty() && preferredBitWidth == null) {
         throw error("Invalid Type Notation", expr.location())
             .description(
                 "Unsized `%s` can only be used in special places when it's obvious what the bit"
@@ -2289,35 +2322,31 @@ public class TypeChecker
             .build();
       }
 
-      if (!expr.sizeIndices.isEmpty()
-          && (expr.sizeIndices.size() != 1 || expr.sizeIndices.get(0).size() != 1)) {
-        throw error("Invalid Type Notation", expr.location())
-            .description("The %s type requires exactly one size parameter.", base)
-            .build();
-      }
-
-      int bitWidth;
-      if (!expr.sizeIndices.isEmpty()) {
-        var widthExpr = expr.sizeIndices.get(0).get(0);
-        check(widthExpr);
-        bitWidth = constantEvaluator.eval(widthExpr).value().intValueExact();
-
-        if (bitWidth < 1) {
-          throw error("Invalid Type Notation", widthExpr.location())
-              .locationDescription(widthExpr.location(),
-                  "Width must of a %s must be greater than 1 but was %s", base, bitWidth)
-              .build();
-        }
+      int baseWidth;
+      List<TensorType.Index> dims = List.of();
+      if (sizeIndices.isEmpty()) {
+        baseWidth = requireNonNull(preferredBitWidth);
       } else {
-        bitWidth = requireNonNull(preferredBitWidth);
+        baseWidth = sizeIndices.getLast().size();
+        dims = sizeIndices.subList(0, sizeIndices.size() - 1);
       }
 
-      return switch (base) {
-        case "SInt" -> Type.signedInt(bitWidth);
-        case "UInt" -> Type.unsignedInt(bitWidth);
-        case "Bits" -> Type.bits(bitWidth);
+      var baseType = switch (base) {
+        case "SInt" -> Type.signedInt(baseWidth);
+        case "UInt" -> Type.unsignedInt(baseWidth);
+        case "Bits" -> Type.bits(baseWidth);
         default -> throw new IllegalStateException("Unexpected value: " + base);
       };
+
+      if (!dims.isEmpty()) {
+        return TensorType.of(dims, baseType);
+      }
+      return baseType;
+    }
+
+    if (!sizeIndices.isEmpty()) {
+      throw new IllegalStateException(
+          "Multidimension on non-primitive type %s is not yet supported.".formatted(base));
     }
 
     // Find the type from the symbol table
@@ -2576,36 +2605,51 @@ public class TypeChecker
     if (callTarget instanceof RegisterDefinition
         || (callTarget instanceof AliasDefinition aliasDef
         && aliasDef.kind.equals(AliasDefinition.AliasKind.REGISTER))) {
-      if (expr.argsIndices.isEmpty() || expr.argsIndices.get(0).values.size() != 1) {
-        throw error("Invalid Register Usage", expr)
-            .description("A register call must have exactly one argument.")
-            .build();
-      }
 
       expr.computedTarget = callTarget;
       check(callTarget);
 
-      // the start of the index calls (might be 1 if the destination is a reg file)
-      var indexSubListStart = 0;
-      var callTargetType = ((TypedNode) callTarget).type();
-      var typeBeforeIndex = callTargetType;
-      if (callTargetType instanceof ConcreteRelationType relType) {
-        // If the call type is a relation type, it is a register file, so the first
-        // argument list must be treated as a list of arguments to the register file.
-        // FIXME: This must be more generic if the relation has multiple arguments
-        var argList = expr.argsIndices.get(0);
-        var arg = argList.values.get(0);
-        check(arg);
-        var requiredArgType = relType.argTypes().get(0);
-        argList.values.set(0, tryWrapImplicitCast(arg, requiredArgType));
-        typeBeforeIndex = relType.resultType();
-        argList.type = typeBeforeIndex;
-        indexSubListStart = 1;
+      var reg = callTarget instanceof AliasDefinition aliasDef
+          ? (RegisterDefinition) requireNonNull(aliasDef.computedTarget)
+          : (RegisterDefinition) callTarget;
+      var regType = (TensorType) reg.type();
+
+      // unwrap the multidimensional tensor type with the given arg indices.
+      // each arg bundle is assigned the respective partially unpacked type.
+      var indexCount = regType.indices.size();
+      var argsCount = expr.argsIndices.size();
+      var currIndex = 0;
+      var currArgs = 0;
+      Type lastType = regType;
+      while (currIndex < indexCount && currArgs < argsCount) {
+        var args = expr.argsIndices.get(currArgs);
+        for (var i = 0; i < args.values.size(); i++, currIndex++) {
+          if (currIndex >= indexCount) {
+            // every index bundle `(i1,i2,..)` cannot cross the boundary between dimension access
+            // and slice access.
+            throw error("Index number missmatch", args.location)
+                .locationDescription(args.location, "Too many indices")
+                .locationNote(reg.typeLiteral, "%d indices can be used to access this", indexCount)
+                .build();
+          }
+          var index = regType.indices.get(currIndex);
+          var arg = args.values.get(i);
+          check(arg);
+          // FIXME: If the index type is not given, we need some other strategy to make the check.
+          //   Consider X: Bits<5><32>, which has a index with a viamType() of Bits<3>.
+          //   This would cause an error when accessing it with X(3 as Bits<5>), which should not
+          //   be the case IMO, as the user did not specify any type, just a range.
+          args.values.set(i, tryWrapImplicitCast(arg, index.viamType()));
+        }
+        // the bundled call type is the type of the currently accessed index
+        lastType = regType.typeAfterNIndices(currIndex).unpack();
+        args.type = lastType;
+        currArgs++;
       }
 
       // all further argument indices are slice calls
-      visitSliceIndexCall(expr, typeBeforeIndex,
-          expr.argsIndices.subList(indexSubListStart, expr.argsIndices.size()));
+      visitSliceIndexCall(expr, lastType,
+          expr.argsIndices.subList(currArgs, expr.argsIndices.size()));
       // the after the index slice we might have a type that can be called like .next
       visitSubCall(expr, expr.type());
       return null;

@@ -1259,6 +1259,14 @@ final class TypeLiteral extends Expr {
     }
   }
 
+  /**
+   * Returns a flat list of dimension sizes of the type to a single list.
+   */
+  List<Expr> sizeIndices() {
+    return sizeIndices.stream()
+        .flatMap(Collection::stream).toList();
+  }
+
   @Override
   public List<Node> children() {
     // This is too complicated for the @Child annotation

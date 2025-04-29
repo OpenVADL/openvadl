@@ -34,11 +34,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
-import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
@@ -1342,12 +1340,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         definition.getClass().getSimpleName()));
   }
 
-  private RegisterTensor.Dimension dimFromMappingType(int index, DataType dataType) {
-    // e.g. for `register: Bits<5> -> Bits<32>` the Bits<5> is a mapping type.
-    // the corresponding dimension is (index: 0, type: Bits<5>, 32)
-    return new RegisterTensor.Dimension(index, dataType, (int) Math.pow(2, dataType.bitWidth()));
-  }
-
   private RegisterTensor.Dimension dimFromType(int index, DataType dataType) {
     // e.g. for `register: Bits<5> -> Bits<32>` the inner type is Bits<32>.
     // the corresponding dimension is (index: 1, type: Bits<5>, 32)
@@ -1357,33 +1349,23 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(RegisterDefinition definition) {
-    var type = getViamType(definition.type());
-
-    DataType resultType;
+    var type = (TensorType) definition.type();
     var dimensions = new ArrayList<RegisterTensor.Dimension>();
-    if (type instanceof ConcreteRelationType relType) {
-      // if it is a relation type, it is a register file of the form x -> y, otherwise
-      var argTypes = relType.argTypes();
-      IntStream.range(0, argTypes.size()).forEach(i -> {
-        var t = argTypes.get(i).asDataType();
-        dimensions.add(dimFromMappingType(i, t));
-      });
-      resultType = relType.resultType().asDataType();
-    } else {
-      // the type is no mapping type
-      resultType = type.asDataType();
-    }
 
-    // FIXME: Handle mutli-dimension types
-    // now we add the dimensions of the form T<d0><d1>..
-    dimensions.add(dimFromType(dimensions.size(), resultType));
+    var idx = 0;
+    for (var i : type.indices) {
+      // first add all indices as dimensions to the registe definition
+      dimensions.add(new RegisterTensor.Dimension(idx++, i.viamType(), i.size()));
+    }
+    // then the base type
+    dimensions.add(dimFromType(idx, type.baseType));
 
     // FIXME: Remove this and add it using the [zero: ..] annotation
     var constraints = new ArrayList<RegisterTensor.Constraint>();
-    if (type instanceof ConcreteRelationType relType) {
+    if (!type.indices.isEmpty()) {
       var zeroConstraint = new RegisterTensor.Constraint(
-          List.of(Constant.Value.of(0, relType.argTypes().getFirst().asDataType())),
-          Constant.Value.of(0, resultType));
+          List.of(Constant.Value.of(0, requireNonNull(type.indices.getFirst().viamType()))),
+          Constant.Value.of(0, type.baseType));
       constraints.add(zeroConstraint);
     }
 

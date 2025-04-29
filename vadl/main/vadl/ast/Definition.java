@@ -1138,7 +1138,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
   SourceLocation loc;
 
   @Nullable
-  Type type;
+  TensorType type;
 
   public RegisterDefinition(IdentifierOrPlaceholder identifier, RelationTypeLiteral typeLiteral,
                             SourceLocation location) {
@@ -1247,7 +1247,10 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
 
     @Override
     public SourceLocation location() {
-      return argTypes.get(0).location().join(resultType.location());
+      if (argTypes.isEmpty()) {
+        return resultType.location();
+      }
+      return argTypes.getFirst().location().join(resultType.location());
     }
 
     @Override
