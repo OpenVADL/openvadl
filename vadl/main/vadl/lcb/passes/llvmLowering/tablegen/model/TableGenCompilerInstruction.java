@@ -22,7 +22,6 @@ import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.RegisterRef;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.CompilerInstruction;
-import vadl.viam.PseudoInstruction;
 
 /**
  * Represents a record in tablegen for {@link CompilerInstruction}.

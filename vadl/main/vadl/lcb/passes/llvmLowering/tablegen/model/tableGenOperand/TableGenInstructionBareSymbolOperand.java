@@ -16,15 +16,16 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
-import javax.annotation.Nullable;
+import java.util.Objects;
 import vadl.viam.graph.Node;
 
 /**
  * Represents a bare symbol operand in TableGen.
  */
-public class TableGenInstructionBareSymbolOperand extends TableGenInstructionOperand {
+public class TableGenInstructionBareSymbolOperand
+    extends TableGenDefaultInstructionOperand {
   public TableGenInstructionBareSymbolOperand(
-      @Nullable Node origin, String type, String name) {
-    super(origin, type, name);
+      Node origin, String name) {
+    super(origin, "bare_symbol", name);
   }
 }

@@ -302,7 +302,7 @@ public final class TableGenInstructionRenderer {
    * Renders an operand into a string.
    */
   public static String lower(TableGenInstructionOperand operand) {
-    return operand.parameter().render();
+    return operand.render();
   }
 
   private static String lower(TableGenMachineInstruction.BitBlock bitBlock) {

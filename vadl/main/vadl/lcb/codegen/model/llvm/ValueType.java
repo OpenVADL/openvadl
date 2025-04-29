@@ -18,6 +18,7 @@ package vadl.lcb.codegen.model.llvm;
 
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import vadl.template.Renderable;
 import vadl.types.BitsType;
 import vadl.types.SIntType;
@@ -70,8 +71,10 @@ public enum ValueType implements Renderable {
   /**
    * Map {@link Type} into a {@link ValueType}.
    */
-  public static Optional<ValueType> from(Type type) {
-    if (type instanceof SIntType sint) {
+  public static Optional<ValueType> from(@Nullable Type type) {
+    if (type == null) {
+      return Optional.empty();
+    } else if (type instanceof SIntType sint) {
       if (sint.bitWidth() == 8) {
         return Optional.of(ValueType.I8);
       } else if (sint.bitWidth() == 16) {

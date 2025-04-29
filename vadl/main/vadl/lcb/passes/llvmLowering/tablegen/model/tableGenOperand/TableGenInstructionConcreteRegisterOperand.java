@@ -14,45 +14,32 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
-import java.util.Objects;
+import vadl.viam.PseudoInstruction;
+import vadl.viam.RegisterTensor;
+import vadl.viam.graph.Node;
 
 /**
- * Parameter with a name of a {@link TableGenParameter}.
+ * A user can specify a concrete register in a {@link PseudoInstruction}.
  */
-public class TableGenParameterName extends TableGenParameter {
-  private final String name;
+public class TableGenInstructionConcreteRegisterOperand extends TableGenInstructionOperand {
+  private final RegisterTensor registerTensor;
+  private final int address;
 
-  public TableGenParameterName(String name) {
-    this.name = name;
+  /**
+   * Constructor.
+   */
+  public TableGenInstructionConcreteRegisterOperand(RegisterTensor registerTensor,
+                                                    int address,
+                                                    Node origin) {
+    super(origin);
+    this.registerTensor = registerTensor;
+    this.address = address;
   }
 
   @Override
   public String render() {
-    return name;
-  }
-
-  public String name() {
-    return name;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-
-    if (o instanceof TableGenParameterName casted) {
-      return name.equals(casted.name);
-    }
-
-    return false;
-  }
-
-
-  @Override
-  public int hashCode() {
-    return 31 * Objects.hashCode(name);
+    return registerTensor.simpleName() + address;
   }
 }

@@ -164,7 +164,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
     machine.addWithInputs(new LcbPseudoInstructionNode(
         new NodeList<>(
             new LcbMachineInstructionParameterNode(new TableGenInstructionBareSymbolOperand(
-                new LlvmBasicBlockSD(fieldAccess, fieldAccess.type(), upcasted), "type",
+                new LlvmBasicBlockSD(fieldAccess, fieldAccess.type(), upcasted),
                 fieldAccess.simpleName()))
         ), pseudo));
 

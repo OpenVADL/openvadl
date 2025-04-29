@@ -21,6 +21,9 @@ import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.InstructionOperandPrintable;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenDefaultInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionIndexedRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
@@ -39,7 +42,7 @@ import vadl.viam.graph.dependency.ReadRegTensorNode;
  */
 public class LlvmReadRegFileNode extends ReadRegTensorNode implements LlvmNodeLowerable,
     LlvmNodeReplaceable {
-  protected TableGenInstructionOperand instructionOperand;
+  protected TableGenDefaultInstructionOperand instructionOperand;
 
   /**
    * Constructor.

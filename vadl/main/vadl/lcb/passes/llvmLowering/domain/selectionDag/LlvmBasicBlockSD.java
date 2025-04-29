@@ -22,8 +22,6 @@ import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -39,8 +37,6 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
   private final TableGenImmediateRecord immediateOperand;
 
 
-  protected final TableGenParameter parameter;
-
   /**
    * Creates an {@link LlvmBasicBlockSD} object that holds a reference to a format field
    * access. But in the selection dag, the immediate is a reference to a basic block.
@@ -55,8 +51,6 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
     super(fieldAccess, originalType);
     this.immediateOperand =
         new TableGenImmediateRecord(fieldAccess, llvmType);
-    this.parameter = new TableGenParameterTypeAndName(lower(),
-        fieldAccess.fieldRef().identifier.simpleName());
     this.llvmType = llvmType;
   }
 
@@ -86,10 +80,6 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
 
   @Override
   public String lower() {
-    return "bb";
-  }
-
-  public TableGenParameter parameter() {
-    return parameter;
+    return "bb:$" + immediateOperand.fieldAccessRef().fieldRef().simpleName();
   }
 }

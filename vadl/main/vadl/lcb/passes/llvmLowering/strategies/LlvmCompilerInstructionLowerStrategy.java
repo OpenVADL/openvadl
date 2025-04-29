@@ -109,8 +109,9 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
         isBranch |= flags.isBranch();
         defs.addAll(baseInstructionInfo.defs());
         uses.addAll(baseInstructionInfo.uses());
-        inputOperands.addAll(baseInstructionInfo.inputs());
-        outputOperands.addAll(baseInstructionInfo.outputs());
+
+        addWithoutDuplicates(inputOperands, baseInstructionInfo.inputs());
+        addWithoutDuplicates(outputOperands, baseInstructionInfo.outputs());
 
         break;
       }
@@ -139,6 +140,24 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
     return Optional.of(new LlvmLoweringRecord.Compiler(
         info
     ));
+  }
+
+  private void addWithoutDuplicates(List<TableGenInstructionOperand> dest,
+                                    List<TableGenInstructionOperand> src) {
+    for (var element : src) {
+      boolean exists = false;
+      for (var needle : dest) {
+        if (needle.equals(element)) {
+          exists = true;
+          break;
+        }
+      }
+
+      if (!exists) {
+        dest.add(element);
+      }
+    }
+
   }
 
   /**

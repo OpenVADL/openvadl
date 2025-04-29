@@ -14,17 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 /**
- * The idea of a parameter identity is that operands in the selection and machine pattern
- * can be both matched and replaced. This can be useful to change operands like {@code AddrFI}.
+ * Interface which indicates that the instruction operand is printable.
  */
-public abstract class TableGenParameter {
-  public static final String AS_LABEL = "AsLabel";
-
+public interface InstructionOperandPrintable {
   /**
-   * Render the parameter identity to a string.
+   * Create a string for TableGen.
    */
-  public abstract String render();
+  String render();
 }
