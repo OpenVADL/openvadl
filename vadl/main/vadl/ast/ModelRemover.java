@@ -119,6 +119,16 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(AbiClangTypeDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AbiClangNumericTypeDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(AbiPseudoInstructionDefinition definition) {
     return definition;
   }

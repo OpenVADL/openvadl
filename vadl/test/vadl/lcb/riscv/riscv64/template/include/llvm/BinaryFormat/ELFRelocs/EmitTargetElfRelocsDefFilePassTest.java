@@ -50,11 +50,11 @@ public class EmitTargetElfRelocsDefFilePassTest extends AbstractLcbTest {
         #ifndef ELF_RELOC
         #error "ELF_RELOC must be defined"
         #endif
-                
+        
         ELF_RELOC(R_processornamevalue_NONE, 0)
         ELF_RELOC(R_processornamevalue_32, 1)
         ELF_RELOC(R_processornamevalue_64, 2)
-                
+        
         ELF_RELOC(R_RV3264I_hi_Itype_imm, 3)
         ELF_RELOC(R_RV3264I_hi_Utype_imm, 4)
         ELF_RELOC(R_RV3264I_hi_Stype_imm, 5)
@@ -111,13 +111,13 @@ public class EmitTargetElfRelocsDefFilePassTest extends AbstractLcbTest {
         ELF_RELOC(R_RV3264I_pcrel_lo_Jtype_imm, 56)
         ELF_RELOC(R_RV3264I_pcrel_lo_Rtype_rs2, 57)
         ELF_RELOC(R_RV3264I_pcrel_lo_Ftype_sft, 58)
-        ELF_RELOC(R_RV3264I_got_hi_Itype_imm, 59)
-        ELF_RELOC(R_RV3264I_got_hi_Utype_imm, 60)
-        ELF_RELOC(R_RV3264I_got_hi_Stype_imm, 61)
-        ELF_RELOC(R_RV3264I_got_hi_Btype_imm, 62)
-        ELF_RELOC(R_RV3264I_got_hi_Jtype_imm, 63)
-        ELF_RELOC(R_RV3264I_got_hi_Rtype_rs2, 64)
-        ELF_RELOC(R_RV3264I_got_hi_Ftype_sft, 65)
+        ELF_RELOC(R_RV3264I_got_pcrel_hi_Itype_imm, 59)
+        ELF_RELOC(R_RV3264I_got_pcrel_hi_Utype_imm, 60)
+        ELF_RELOC(R_RV3264I_got_pcrel_hi_Stype_imm, 61)
+        ELF_RELOC(R_RV3264I_got_pcrel_hi_Btype_imm, 62)
+        ELF_RELOC(R_RV3264I_got_pcrel_hi_Jtype_imm, 63)
+        ELF_RELOC(R_RV3264I_got_pcrel_hi_Rtype_rs2, 64)
+        ELF_RELOC(R_RV3264I_got_pcrel_hi_Ftype_sft, 65)
         ELF_RELOC(R_RV3264I_Itype_ABSOLUTE_imm, 66)
         ELF_RELOC(R_RV3264I_Itype_RELATIVE_imm, 67)
         ELF_RELOC(R_RV3264I_Utype_ABSOLUTE_imm, 68)

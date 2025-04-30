@@ -35,6 +35,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShlPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSraPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSrlPartsSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulLoHiSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.pass.Pass;
@@ -62,6 +63,7 @@ public class ISelLoweringOperationActionPass extends Pass {
     expandableSelectionDagNodes.add(LlvmSrlPartsSD.class);
     expandableSelectionDagNodes.add(LlvmSraPartsSD.class);
     expandableSelectionDagNodes.add(LlvmBSwapSD.class);
+    expandableSelectionDagNodes.add(LlvmUMulLoHiSD.class);
   }
 
   public ISelLoweringOperationActionPass(GeneralConfiguration configuration) {

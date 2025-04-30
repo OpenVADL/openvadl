@@ -49,6 +49,8 @@ public abstract class AsmFileCheckTest extends AbstractLcbTest {
 
   protected abstract String getComponent();
 
+  protected abstract String getAbi();
+
 
   @TestFactory
   List<DynamicTest> execute() throws IOException, DuplicatedPassKeyException {
@@ -75,7 +77,7 @@ public abstract class AsmFileCheckTest extends AbstractLcbTest {
 
     var cachedImage =
         SpikeRiscvImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
-            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), false);
+            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), getAbi(), false);
 
     return inputFilesFromFile(target, getComponent()).map(
         input -> DynamicTest.dynamicTest(input, () -> {

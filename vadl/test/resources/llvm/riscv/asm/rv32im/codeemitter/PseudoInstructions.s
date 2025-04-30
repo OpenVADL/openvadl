@@ -17,7 +17,7 @@ EBREAK
 CALL my_function
 # CHECK-DISABLED: # encoding: [0x97,0x00,0x00,0x00,0xe7,0x80,0x00,0x00]
 # CHECK-NEXT-DISABLED: #   fixup A - offset: 0, value: %pcrel_hi(my_function), kind: fixup_pcrel_hi_RV3264I_Utype_RELATIVE_imm
-# CHECK-NEXT-DISABLED: #   fixup B - offset: 4, value: %pcrel_lo(my_function), kind: fixup_pcrel_lo_RV3264I_Itype_RELATIVE_imm
+# CHECK-NEXT-DISABLED: #   fixup B - offset: 4, value: %pcrel_lo(.Ltmp0), kind: fixup_pcrel_lo_RV3264I_Itype_RELATIVE_imm
 
 TAIL my_function
 # CHECK: # encoding: [0x17,0x03,0x00,0x00,0x67,0x00,0x03,0x00]
@@ -70,7 +70,7 @@ BGTZ x6, 6
 LLA x3, .lbl
 # CHECK: [0x97,0x01,0x00,0x00,0x93,0x81,0x01,0x00]
 # CHECK-NEXT: #   fixup A - offset: 0, value: %pcrel_hi(.lbl), kind: fixup_pcrel_hi_RV3264I_Utype_RELATIVE_imm
-# CHECK-NEXT: #   fixup B - offset: 4, value: %pcrel_lo(.lbl), kind: fixup_pcrel_lo_RV3264I_Itype_RELATIVE_imm
+# CHECK-NEXT: #   fixup B - offset: 4, value: %pcrel_lo(.Ltmp0), kind: fixup_pcrel_lo_RV3264I_Itype_RELATIVE_imm
 
 LI x3, 0x12345
 # CHECK: [0xb7,0x21,0x01,0x00,0x93,0x81,0x51,0x34]

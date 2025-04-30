@@ -94,6 +94,9 @@ public interface DefinitionVisitor {
 
   void visit(CompilerInstruction compilerInstruction);
 
+  void visit(Abi.AbstractClangType.NumericClangType numericClangType);
+
+  void visit(Abi.AbstractClangType.ClangType clangType);
 
   /**
    * DefinitionVisitor.Recursive is an interface that extends the DefinitionVisitor
@@ -396,6 +399,18 @@ public interface DefinitionVisitor {
       beforeTraversal(compilerInstruction);
       afterTraversal(compilerInstruction);
     }
+
+    @Override
+    public void visit(Abi.AbstractClangType.NumericClangType numericClangType) {
+      beforeTraversal(numericClangType);
+      afterTraversal(numericClangType);
+    }
+
+    @Override
+    public void visit(Abi.AbstractClangType.ClangType clangType) {
+      beforeTraversal(clangType);
+      afterTraversal(clangType);
+    }
   }
 
   /**
@@ -570,6 +585,16 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(CompilerInstruction compilerInstruction) {
+
+    }
+
+    @Override
+    public void visit(Abi.AbstractClangType.NumericClangType numericClangType) {
+
+    }
+
+    @Override
+    public void visit(Abi.AbstractClangType.ClangType clangType) {
 
     }
   }

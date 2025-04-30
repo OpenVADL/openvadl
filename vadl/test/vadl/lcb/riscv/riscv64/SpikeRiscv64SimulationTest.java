@@ -35,6 +35,11 @@ public class SpikeRiscv64SimulationTest extends SpikeRiscvSimulationTest {
   }
 
   @Override
+  protected String getAbi() {
+    return "lp64";
+  }
+
+  @Override
   protected String getUpstreamBuildTarget() {
     return "RISCV";
   }

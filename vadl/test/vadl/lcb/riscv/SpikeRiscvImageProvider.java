@@ -39,6 +39,7 @@ public class SpikeRiscvImageProvider {
    * @param upstreamClangTarget is the name for the LLVM clang option to invoke the upstream
    *                            compiler.
    * @param spikeTarget         is the ISA for spike to run the executable.
+   * @param abi                 which should be chosen for the gcc linker.
    * @param doDebug             if the flag is {@code true} then the image will not be deleted.
    * @throws RuntimeException when the {@code isCI} environment variable and {@code doDebug} are
    *                          activated.
@@ -49,6 +50,7 @@ public class SpikeRiscvImageProvider {
                                           String upstreamBuildTarget,
                                           String upstreamClangTarget,
                                           String spikeTarget,
+                                          String abi,
                                           boolean doDebug) {
     var image = images.get(target);
     if (image == null) {
@@ -65,6 +67,7 @@ public class SpikeRiscvImageProvider {
           .withBuildArg("TARGET", target)
           .withBuildArg("UPSTREAM_BUILD_TARGET", upstreamBuildTarget)
           .withBuildArg("UPSTREAM_CLANG_TARGET", upstreamClangTarget)
+          .withBuildArg("ABI", abi)
           .withBuildArg("SPIKE_TARGET", spikeTarget));
       images.put(target, img);
       return img;

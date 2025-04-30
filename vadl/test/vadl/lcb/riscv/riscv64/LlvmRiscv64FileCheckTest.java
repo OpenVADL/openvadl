@@ -43,4 +43,9 @@ public class LlvmRiscv64FileCheckTest extends LlvmRiscvFileCheckTest {
   protected String getSpikeTarget() {
     return "rv64gc";
   }
+
+  @Override
+  protected String getAbi() {
+    return "lp64";
+  }
 }

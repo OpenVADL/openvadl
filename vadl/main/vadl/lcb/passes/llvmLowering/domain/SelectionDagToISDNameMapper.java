@@ -24,6 +24,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmRotrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmShlPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSraPartsSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmSrlPartsSD;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUMulLoHiSD;
 import vadl.utils.SourceLocation;
 
 /**
@@ -50,6 +51,8 @@ public class SelectionDagToISDNameMapper {
       return "SRL_PARTS";
     } else if (nodeLowerable.isAssignableFrom(LlvmSraPartsSD.class)) {
       return "SRA_PARTS";
+    } else if (nodeLowerable.isAssignableFrom(LlvmUMulLoHiSD.class)) {
+      return "UMUL_LOHI";
     }
 
     throw Diagnostic.error("Cannot map to class name", SourceLocation.INVALID_SOURCE_LOCATION)

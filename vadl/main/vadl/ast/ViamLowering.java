@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.types.BitsType;
@@ -422,6 +423,14 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .map(x -> (CompilerInstruction) fetch(x).orElseThrow())
         .toList();
 
+    var clangTypes = definition.definitions
+        .stream().filter(x -> x instanceof AbiClangTypeDefinition)
+        .map(x -> (Abi.AbstractClangType.ClangType) fetch(x).orElseThrow());
+
+    var numericClangTypes = definition.definitions
+        .stream().filter(x -> x instanceof AbiClangNumericTypeDefinition)
+        .map(x -> (Abi.AbstractClangType.NumericClangType) fetch(x).orElseThrow());
+
     return Optional.of(new Abi(id,
         returnAddress,
         stackPointer,
@@ -442,7 +451,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         Abi.Alignment.DOUBLE_WORD,
         registerFileAlignment,
         constantSequences,
-        registerAdjustmentSequences
+        registerAdjustmentSequences,
+        Stream.concat(clangTypes, numericClangTypes).toList()
     ));
   }
 
@@ -1458,6 +1468,24 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // Do nothing on purpose.
     // The typechecker already resolved all types they are no longer needed.
     return Optional.empty();
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(AbiClangTypeDefinition definition) {
+    var typeName = Abi.AbstractClangType.ClangType.TypeName.valueOf(definition.typeName.name());
+    var typeSize = Abi.AbstractClangType.ClangType.TypeSize.valueOf(definition.typeSize.name());
+    return Optional.of(
+        new Abi.AbstractClangType.ClangType(typeName, typeSize, definition.location()));
+  }
+
+  @Override
+  public Optional<vadl.viam.Definition> visit(
+      AbiClangNumericTypeDefinition definition) {
+    var typeName =
+        Abi.AbstractClangType.NumericClangType.TypeName.valueOf(definition.typeName.name());
+    var value = constantEvaluator.eval(definition.size).toViamConstant().intValue();
+    return Optional.of(
+        new Abi.AbstractClangType.NumericClangType(typeName, value, definition.location()));
   }
 
   @Override

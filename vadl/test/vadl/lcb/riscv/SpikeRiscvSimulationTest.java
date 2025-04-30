@@ -47,6 +47,8 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
 
   protected abstract String getSpikeTarget();
 
+  protected abstract String getAbi();
+
   private static Stream<String> inputFilesFromCFile() {
     return Arrays.stream(
             Objects.requireNonNull(new File("test/resources/llvm/riscv/spike")
@@ -88,7 +90,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
     var redisCache = getRunningRedisCache();
     var cachedImage =
         SpikeRiscvImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
-            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), doDebug);
+            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), getAbi(), doDebug);
 
     // The container is complete and has generated the assembly files.
     return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {

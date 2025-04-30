@@ -107,6 +107,7 @@ class ParserUtils {
     ID_TOKENS[Parser._identifierToken] = true;
     ID_TOKENS[Parser._ADDRESS] = true;
     ID_TOKENS[Parser._ALIAS] = true;
+    ID_TOKENS[Parser._ALIGN] = true;
     ID_TOKENS[Parser._APPEND] = true;
     ID_TOKENS[Parser._BINARY] = true;
     ID_TOKENS[Parser._CALL] = true;
@@ -117,7 +118,10 @@ class ParserUtils {
     ID_TOKENS[Parser._FIRMWARE] = true;
     ID_TOKENS[Parser._GROUP] = true;
     ID_TOKENS[Parser._INSTRUCTION] = true;
+    ID_TOKENS[Parser._INT] = true;
+    ID_TOKENS[Parser._LONG] = true;
     ID_TOKENS[Parser._MEMORY] = true;
+    ID_TOKENS[Parser._MAX] = true;
     ID_TOKENS[Parser._NONE] = true;
     ID_TOKENS[Parser._NOP] = true;
     ID_TOKENS[Parser._OPERATION] = true;
@@ -127,11 +131,14 @@ class ParserUtils {
     ID_TOKENS[Parser._REGISTER] = true;
     ID_TOKENS[Parser._RETURN] = true;
     ID_TOKENS[Parser._SEQUENCE] = true;
+    ID_TOKENS[Parser._SIGNED] = true;
+    ID_TOKENS[Parser._SIZE_T] = true;
     ID_TOKENS[Parser._STAGE] = true;
     ID_TOKENS[Parser._START] = true;
     ID_TOKENS[Parser._STARTUP] = true;
     ID_TOKENS[Parser._STOP] = true;
     ID_TOKENS[Parser._SYM_IN] = true;
+    ID_TOKENS[Parser._TYPE] = true;
     ID_TOKENS[Parser._T_BIN] = true;
     ID_TOKENS[Parser._T_BIN_OP] = true;
     ID_TOKENS[Parser._T_BOOL] = true;
@@ -149,6 +156,8 @@ class ParserUtils {
     ID_TOKENS[Parser._T_UN_OP] = true;
     ID_TOKENS[Parser._T_VAL] = true;
     ID_TOKENS[Parser._TRANSLATION] = true;
+    ID_TOKENS[Parser._UNSIGNED] = true;
+    ID_TOKENS[Parser._WIDTH] = true;
     ID_TOKENS[Parser._WRITE] = true;
 
     AUX_FIELD_TOKENS = NO_OPS.clone();

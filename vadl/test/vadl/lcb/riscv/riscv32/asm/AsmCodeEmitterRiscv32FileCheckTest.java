@@ -48,4 +48,9 @@ public class AsmCodeEmitterRiscv32FileCheckTest extends AsmFileCheckTest {
   protected String getComponent() {
     return "codeemitter";
   }
+
+  @Override
+  protected String getAbi() {
+    return "ilp32";
+  }
 }

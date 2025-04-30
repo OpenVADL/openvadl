@@ -171,6 +171,10 @@ interface DefinitionVisitor<R> {
   R visit(StageDefinition definition);
 
   R visit(UsingDefinition definition);
+
+  R visit(AbiClangTypeDefinition abiClangTypeDefinition);
+
+  R visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition);
 }
 
 /**
@@ -3694,6 +3698,147 @@ class SpecialPurposeRegisterDefinition extends Definition {
           Purpose.CALLEE_SAVED, Occurrence.ONE,
           Purpose.FUNCTION_ARGUMENT, Occurrence.ONE);
     }
+  }
+}
+
+/**
+ * The compiler does not only generate a compiler backend but also a clang frontend.
+ * This frontend requires information about the types like: What is the alignment of an integer?
+ * The difference between {@link AbiClangTypeDefinition} and {@link AbiClangNumericTypeDefinition}
+ * is that {@link AbiClangNumericTypeDefinition} requires an integer as property.
+ */
+class AbiClangNumericTypeDefinition extends Definition {
+  AbiClangNumericTypeDefinition.TypeName typeName;
+  @Child
+  Expr size;
+  SourceLocation loc;
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(typeName, size);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    AbiClangNumericTypeDefinition that = (AbiClangNumericTypeDefinition) o;
+    return typeName == that.typeName
+        && Objects.equals(size, that.size);
+  }
+
+  enum TypeName {
+    POINTER_WIDTH,
+    POINTER_ALIGN,
+    LONG_WIDTH,
+    LONG_ALIGN
+  }
+
+  public AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName typeName,
+                                       Expr size,
+                                       SourceLocation loc) {
+    this.loc = loc;
+    this.typeName = typeName;
+    this.size = size;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("clang numeric type: ").append(typeName)
+        .append(" with");
+    size.prettyPrint(indent + 1, builder);
+  }
+}
+
+/**
+ * The compiler does not only generate a compiler backend but also a clang frontend.
+ * This frontend requires information about the types like: What is the size of an integer?
+ * Is it unsigned or signed?
+ */
+class AbiClangTypeDefinition extends Definition {
+  AbiClangTypeDefinition.TypeName typeName;
+  TypeSize typeSize;
+  SourceLocation loc;
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(typeName, typeSize);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    AbiClangTypeDefinition that = (AbiClangTypeDefinition) o;
+    return typeName == that.typeName
+        && typeSize == that.typeSize;
+  }
+
+  enum TypeName {
+    // Type of the size_t in C.
+    SIZE_TYPE,
+    INT_MAX_TYPE
+  }
+
+  enum TypeSize {
+    UNSIGNED_INT,
+    SIGNED_INT,
+    UNSIGNED_LONG,
+    SIGNED_LONG
+  }
+
+  public AbiClangTypeDefinition(AbiClangTypeDefinition.TypeName typeName,
+                                AbiClangTypeDefinition.TypeSize typeSize,
+                                SourceLocation loc) {
+    this.loc = loc;
+    this.typeName = typeName;
+    this.typeSize = typeSize;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    builder.append(prettyIndentString(indent)).append("clang type: ")
+        .append(typeName).append(" with ").append(typeSize);
   }
 }
 

@@ -29,3 +29,10 @@ ArrayRef<TargetInfo::GCCRegAlias> [(${namespace})]TargetInfo::getGCCRegAliases()
     };
     return llvm::makeArrayRef( GCCRegAliases );
 }
+
+void [(${namespace})]TargetInfo::getTargetDefines(const LangOptions &Opts,
+		MacroBuilder &Builder) const {
+	Builder.defineMacro("__ELF__");
+	Builder.defineMacro("__riscv");
+	Builder.defineMacro("__riscv_cmodel_medlow");
+}
