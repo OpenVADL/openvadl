@@ -694,16 +694,29 @@ function cls( a : Bits<N> ) -> UInt<N> // counting leading sign bits (without si
 
 
 ## Assembly Nonterminal Rules
+The following grammar rules are default rules that can be used in other rule definitions.
+Default grammar rules can be overwritten by defining a new rule with the exact same name.
+
+- Expression: An expression can be a signed integer, a complex expression (e.g., `2 + 3`) or a symbol reference (e.g., `.foo`).
+- Identifier: Identifier is used to allow any string.
+- ImmediateOperand: ImmediateOperand is an expression with a cast to @operand.
+- Instruction: The instruction default rule is an alternative over all grammar rules with the type @instruction.
+- Label: Label is a symbol reference (e.g., `.foo`).
+- Natural: Natural is an unsigned integer number.
+- Integer: Integer is a signed integer number.
+- Register: Register is any of the registers defined in the \ac{ISA} or an register alias of the \ac{ABI}.
+- Statement: Statement is the Instruction default rule followed by an End-Of-Line token.
 
 \listing{assembly_nonterminals, Assembly Nonterminal Rules}
 ~~~{.vadl}
-@expression   | Expression
-@string       | Identifier
-@operand      | ImmediateOperand
-@instruction  | Instruction
-@symbol       | Label
-@constant     | Natural
-@register     | Register
-@instruction  | Statement
+ Expression        | @expression
+ Identifier        | @string
+ ImmediateOperand  | @operand
+ Instruction       | @instruction
+ Label             | @symbol
+ Natural           | @constant
+ Integer           | @constant
+ Register          | @register
+ Statement         | @instruction
 ~~~
 \endlisting
