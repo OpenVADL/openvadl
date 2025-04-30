@@ -83,11 +83,8 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
       Abi abi) {
     var alternativePatterns = new ArrayList<TableGenPattern>();
     var storesWithoutImmediates = createStoreFromsWithoutImmediate(patterns);
-    var frameIndexPatterns = replaceRegisterWithFrameIndex(
-        Stream.concat(patterns.stream(), storesWithoutImmediates.stream()).toList());
 
     alternativePatterns.addAll(storesWithoutImmediates);
-    alternativePatterns.addAll(frameIndexPatterns);
 
     return alternativePatterns;
   }
@@ -138,50 +135,6 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
 
         alternativePatterns.add(new TableGenSelectionWithOutputPattern(selector, machine));
       }
-    }
-
-    return alternativePatterns;
-  }
-
-  /**
-   * Instructions in {@link MachineInstructionLabel#STORE_MEM} write from a register into
-   * {@link Memory}. However, LLVM has a special selection dag node for frame indexes.
-   * Function's variables are placed on the stack and will be accessed relative to a frame pointer.
-   * LLVM has for the lowering a frame index leaf node which requires additional patterns.
-   * The goal of this method is to replace a {@link RegisterTensor} with {@link LlvmFrameIndexSD}
-   * which has a LLVM's {@code ComplexPattern} hardcoded.
-   */
-  private List<TableGenPattern> replaceRegisterWithFrameIndex(List<TableGenPattern> patterns) {
-    var alternativePatterns = new ArrayList<TableGenPattern>();
-
-    for (var pattern : patterns.stream()
-        .filter(x -> x instanceof TableGenSelectionWithOutputPattern)
-        .map(x -> (TableGenSelectionWithOutputPattern) x)
-        .toList()) {
-      var selector = pattern.selector().copy();
-      var machine = pattern.machine().copy();
-
-      // We are only interested in the `address` subtree of a memory store (or truncstore)
-      // because the value register should remain unchanged.
-      // Afterward, we get all the children of the `WriteResource` and only filter for
-      // `LlvmReadRegFileNode` because we wil only change registers.
-      var affectedNodes = selector.getNodes(Set.of(LlvmTruncStore.class, LlvmStoreSD.class))
-          .map(x -> (WriteResourceNode) x)
-          .filter(WriteResourceNode::hasAddress)
-          .flatMap(x -> {
-            var inputs = new ArrayList<Node>();
-            var address = x.address();
-            ensure(address != null, "address must not be null");
-            inputs.add(address);
-            address.collectInputsWithChildren(inputs);
-            return inputs.stream();
-          })
-          .filter(x -> x instanceof LlvmReadRegFileNode)
-          .map(x -> (LlvmReadRegFileNode) x)
-          .toList();
-
-      alternativePatterns.add(
-          super.replaceRegisterWithFrameIndex(selector, machine, affectedNodes));
     }
 
     return alternativePatterns;

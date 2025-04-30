@@ -20,8 +20,6 @@ import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameter;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.types.Type;
 import vadl.viam.Format;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -36,7 +34,6 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
   private final ValueType llvmType;
   private final TableGenImmediateRecord immediateOperand;
-  protected final TableGenParameter parameter;
   private final Usage usage;
 
   /**
@@ -67,11 +64,6 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
     super(fieldAccess, originalType);
     this.immediateOperand =
         new TableGenImmediateRecord(fieldAccess, llvmType);
-    this.parameter = usage == Usage.Immediate
-        ? new TableGenParameterTypeAndName(immediateOperand.fullname(),
-        fieldAccess.fieldRef().identifier.simpleName()) :
-        new TableGenParameterTypeAndName(immediateOperand.rawName() + TableGenParameter.AS_LABEL,
-            fieldAccess.fieldRef().identifier.simpleName());
     this.llvmType = llvmType;
     this.usage = usage;
   }

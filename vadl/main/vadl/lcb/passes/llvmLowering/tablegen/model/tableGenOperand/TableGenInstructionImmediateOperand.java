@@ -21,13 +21,12 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
 
 /**
  * Indicates that the operand is an immediate.
  */
-public class TableGenInstructionImmediateOperand extends TableGenInstructionOperand
+public class TableGenInstructionImmediateOperand extends TableGenDefaultInstructionOperand
     implements ReferencesFormatField, ReferencesImmediateOperand {
   private final TableGenImmediateRecord immediateOperand;
 
@@ -35,8 +34,8 @@ public class TableGenInstructionImmediateOperand extends TableGenInstructionOper
    * Constructor.
    */
   public TableGenInstructionImmediateOperand(LlvmFieldAccessRefNode node) {
-    super(node, new TableGenParameterTypeAndName(node.immediateOperand().fullname(),
-        node.fieldAccess().fieldRef().identifier.simpleName()));
+    super(node, node.immediateOperand().fullname(),
+        node.fieldAccess().fieldRef().identifier.simpleName());
     this.immediateOperand = node.immediateOperand();
   }
 
@@ -53,7 +52,7 @@ public class TableGenInstructionImmediateOperand extends TableGenInstructionOper
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (!super.equals(o)) {
+    if (!immediateOperand.equals(((TableGenInstructionImmediateOperand) o).immediateOperand)) {
       return false;
     }
     TableGenInstructionImmediateOperand that = (TableGenInstructionImmediateOperand) o;

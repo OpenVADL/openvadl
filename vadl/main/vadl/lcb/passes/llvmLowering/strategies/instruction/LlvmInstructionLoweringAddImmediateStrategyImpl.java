@@ -19,7 +19,6 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 import static vadl.gcb.passes.MachineInstructionLabel.ADDI_32;
 import static vadl.gcb.passes.MachineInstructionLabel.ADDI_64;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
@@ -27,10 +26,8 @@ import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
@@ -78,25 +75,6 @@ public class LlvmInstructionLoweringAddImmediateStrategyImpl
       List<TableGenInstructionOperand> outputOperands,
       List<TableGenPattern> patterns,
       Abi abi) {
-    var alternativePatterns = new ArrayList<TableGenPattern>();
-
-    // We are only interested in the pattern with selector and machine pattern.
-    patterns.stream()
-        .filter(p -> p instanceof TableGenSelectionWithOutputPattern)
-        .map(p -> (TableGenSelectionWithOutputPattern) p)
-        .forEach(pattern -> {
-          var selector = pattern.selector().copy();
-          var machine = pattern.machine().copy();
-
-          var affectedNodes = selector.getNodes(LlvmReadRegFileNode.class).toList();
-          // Only add a new pattern when something is affected.
-          // Otherwise, we get a duplicated pattern.
-          if (!affectedNodes.isEmpty()) {
-            alternativePatterns.add(
-                super.replaceRegisterWithFrameIndex(selector, machine, affectedNodes));
-          }
-        });
-
-    return alternativePatterns;
+    return List.of();
   }
 }

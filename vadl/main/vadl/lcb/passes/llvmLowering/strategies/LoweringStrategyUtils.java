@@ -20,7 +20,7 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParam
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBasicBlockSD;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 
 /**
  * Utilities for lowering.
@@ -42,7 +42,7 @@ public class LoweringStrategyUtils {
       for (var candidate : candidates) {
         if (candidate.instructionOperand().origin() instanceof LlvmBasicBlockSD basicBlockSD) {
           candidate.setInstructionOperand(
-              new TableGenInstructionImmediateLabelOperand(basicBlockSD));
+              new TableGenInstructionLabelOperand(basicBlockSD));
         }
       }
     }

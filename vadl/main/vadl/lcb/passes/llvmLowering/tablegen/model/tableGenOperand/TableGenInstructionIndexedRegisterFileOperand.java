@@ -16,9 +16,10 @@
 
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
+import java.util.Objects;
 import vadl.viam.Format;
 import vadl.viam.RegisterTensor;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -36,7 +37,8 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
  * }
  * </code>
  */
-public class TableGenInstructionIndexedRegisterFileOperand extends TableGenInstructionOperand {
+public class TableGenInstructionIndexedRegisterFileOperand
+    extends TableGenDefaultInstructionOperand {
   private final RegisterTensor registerFile;
 
   /**
@@ -44,8 +46,7 @@ public class TableGenInstructionIndexedRegisterFileOperand extends TableGenInstr
    */
   public TableGenInstructionIndexedRegisterFileOperand(ReadRegTensorNode node,
                                                        FuncParamNode address) {
-    super(node, new TableGenParameterTypeAndName(node.regTensor().simpleName(),
-        address.parameter().identifier.simpleName()));
+    super(node, node.regTensor().simpleName(), address.parameter().identifier.simpleName());
     this.registerFile = node.regTensor();
     node.regTensor().ensure(node.regTensor().isRegisterFile(), "must be a register file");
   }
@@ -55,13 +56,40 @@ public class TableGenInstructionIndexedRegisterFileOperand extends TableGenInstr
    */
   public TableGenInstructionIndexedRegisterFileOperand(WriteRegTensorNode node,
                                                        FuncParamNode address) {
-    super(node, new TableGenParameterTypeAndName(node.regTensor().simpleName(),
-        address.parameter().identifier.simpleName()));
+    super(node, node.regTensor().simpleName(), address.parameter().identifier.simpleName());
     this.registerFile = node.regTensor();
     node.regTensor().ensure(node.regTensor().isRegisterFile(), "must be a register file");
   }
 
+  /**
+   * Constructor.
+   */
+  public TableGenInstructionIndexedRegisterFileOperand(RegisterTensor registerFile,
+                                                       ConstantNode address) {
+    super(address, registerFile.identifier.simpleName(),
+        address.constant().asVal().intValue() + "");
+    this.registerFile = registerFile;
+    registerFile.ensure(registerFile.isRegisterFile(), "must be a register file");
+  }
+
   public RegisterTensor registerFile() {
     return registerFile;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(registerFile, type(), name());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TableGenInstructionIndexedRegisterFileOperand that =
+        (TableGenInstructionIndexedRegisterFileOperand) o;
+    return Objects.equals(registerFile, that.registerFile)
+        && Objects.equals(name(), that.name())
+        && Objects.equals(type(), that.type());
   }
 }

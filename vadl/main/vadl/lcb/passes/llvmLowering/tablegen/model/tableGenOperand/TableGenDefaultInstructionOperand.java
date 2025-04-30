@@ -14,18 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter;
+package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import java.util.Objects;
+import vadl.viam.graph.Node;
 
 /**
- * Parameter with a type and a name of a {@link TableGenParameter}.
+ * The default tablegen instruction operand has always a type and a name.
  */
-public class TableGenParameterTypeAndName extends TableGenParameter {
+public class TableGenDefaultInstructionOperand extends TableGenInstructionOperand {
   private final String type;
   private final String name;
 
-  public TableGenParameterTypeAndName(String type, String name) {
+  /**
+   * Constructor.
+   */
+  public TableGenDefaultInstructionOperand(Node origin, String type, String name) {
+    super(origin);
     this.type = type;
     this.name = name;
   }
@@ -35,36 +40,25 @@ public class TableGenParameterTypeAndName extends TableGenParameter {
     return String.format("%s:$%s", type, name);
   }
 
-  public TableGenParameterTypeAndName withType(String type) {
-    return new TableGenParameterTypeAndName(type, name);
+  public String type() {
+    return type;
   }
 
   public String name() {
     return name;
   }
 
-  public String type() {
-    return type;
+  @Override
+  public int hashCode() {
+    return Objects.hash(origin, name());
   }
 
   @Override
   public boolean equals(Object o) {
-    if (o == this) {
-      return true;
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
-
-    if (o instanceof TableGenParameterTypeAndName casted) {
-      return type.equals(casted.type) && name.equals(casted.name);
-    }
-
-    return false;
-  }
-
-
-  @Override
-  public int hashCode() {
-    int result = Objects.hashCode(type);
-    result = 31 * result + Objects.hashCode(name);
-    return result;
+    TableGenDefaultInstructionOperand that = (TableGenDefaultInstructionOperand) o;
+    return Objects.equals(type, that.type) && Objects.equals(name, that.name);
   }
 }

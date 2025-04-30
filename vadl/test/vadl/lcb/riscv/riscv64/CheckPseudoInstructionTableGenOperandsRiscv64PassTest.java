@@ -27,6 +27,7 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenPseudoInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPseudoInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenDefaultInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
