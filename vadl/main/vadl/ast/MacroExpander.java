@@ -577,11 +577,12 @@ class MacroExpander
 
   @Override
   public Definition visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition) {
+    var size = expandExpr(abiClangNumericTypeDefinition.size);
     return new AbiClangNumericTypeDefinition(
         abiClangNumericTypeDefinition.typeName,
-        expandExpr(abiClangNumericTypeDefinition.size),
+        size,
         copyLoc(abiClangNumericTypeDefinition.loc)
-    );
+    ).withAnnotations(expandAnnotations(abiClangNumericTypeDefinition.annotations));
   }
 
   @Override

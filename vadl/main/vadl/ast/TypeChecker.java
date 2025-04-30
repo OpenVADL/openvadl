@@ -715,7 +715,7 @@ public class TypeChecker
   @Override
   public Void visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition) {
     check(abiClangNumericTypeDefinition.size);
-    var ty = requireNonNull(abiClangNumericTypeDefinition.size.type);
+    var ty = abiClangNumericTypeDefinition.size.type();
     if (!(ty instanceof ConstantType)) {
       throw error("Type Mismatch", abiClangNumericTypeDefinition.size)
           .description("Expected a number as data type")
