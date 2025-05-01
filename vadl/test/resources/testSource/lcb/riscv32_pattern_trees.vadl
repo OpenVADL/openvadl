@@ -282,6 +282,6 @@ application binary interface ABI for RV32IM = {
    callee saved = [ sp, fp, s{0..11}, ra ]
 }
 
-micro processor CPU implements RV32IM with ABI = {
+processor CPU implements RV32IM with ABI = {
   start = 0x80000000
 }

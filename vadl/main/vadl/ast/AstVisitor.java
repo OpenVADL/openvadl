@@ -363,7 +363,7 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(MicroProcessorDefinition definition) {
+  public Void visit(ProcessorDefinition definition) {
     beforeTravel(definition);
     definition.children().forEach(this::travel);
     afterTravel(definition);

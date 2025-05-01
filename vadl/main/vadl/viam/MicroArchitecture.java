@@ -43,7 +43,7 @@ public class MicroArchitecture extends Definition {
    * Create a micro architecture definition.
    *
    * @param identifier identifier
-   * @param processor  micro processor definition
+   * @param processor  processor definition
    * @param stages     list of stages
    * @param logic      list of logic elements
    */
@@ -57,7 +57,7 @@ public class MicroArchitecture extends Definition {
    * Create a micro architecture definition.
    *
    * @param identifier identifier
-   * @param processor  micro processor definition
+   * @param processor  processor definition
    * @param stages     list of stages
    * @param logic      list of logic elements
    * @param signals    list of signals

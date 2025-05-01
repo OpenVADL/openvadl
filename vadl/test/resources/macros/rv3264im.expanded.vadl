@@ -660,5 +660,5 @@ instruction set architecture RV3264IM extending RV3264I = {
 }
 application binary interface ABI for RV3264IM = {
 }
-micro processor CPU implements RV3264IM with ABI = {
+processor CPU implements RV3264IM with ABI = {
 }

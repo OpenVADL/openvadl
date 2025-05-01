@@ -283,8 +283,7 @@ PRODUCTIONS
   = annotations<out Annotations annotations>
   ( instructionsetDefinition<out def>
   | applicationBinaryInterfaceDefinition<out def>
-  | IF (la.kind == _MICRO && scanner.Peek().kind == _PROCESSOR)
-    microProcessorDefinition<out def>
+  | processorDefinition<out def>
   | microArchitectureDefinition<out def>
   | commonDefinition<out def>
   | importDefinition<out def>
@@ -959,9 +958,8 @@ PRODUCTIONS
 
 
   // -- CPU DEFINITIONS-----------------------------------------------------------------------------------------------
-  microProcessorDefinition<out Definition def> (. var start = lookaheadLoc(); .)
-  = MICRO
-    PROCESSOR
+  processorDefinition<out Definition def> (. var start = lookaheadLoc(); .)
+  = PROCESSOR
     identifier<out Identifier id>
     IMPLEMENTS                             (. var implementedIsas = new ArrayList<IsId>(); .)
     identifierPath<out IsId isa>           (. implementedIsas.add(isa); .)
@@ -978,7 +976,7 @@ PRODUCTIONS
     {
       cpuDefinition<out Definition cpuDef> (. addDef(definitions, cpuDef); .)
     }
-    SYM_BRACE_CLOSE                        (. def = new MicroProcessorDefinition(id, implementedIsas, abi, definitions, start.join(loc())); .)
+    SYM_BRACE_CLOSE                        (. def = new ProcessorDefinition(id, implementedIsas, abi, definitions, start.join(loc())); .)
   .
 
   cpuDefinition<out Definition def> (. def = DUMMY_DEF; .)

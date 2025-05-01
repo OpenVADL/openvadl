@@ -230,7 +230,7 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
-  public Definition visit(MicroProcessorDefinition definition) {
+  public Definition visit(ProcessorDefinition definition) {
     definition.definitions.removeIf(this::shouldRemove);
     definition.definitions.replaceAll(def -> def.accept(this));
     return definition;

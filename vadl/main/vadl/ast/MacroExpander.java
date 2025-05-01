@@ -768,9 +768,9 @@ class MacroExpander
   }
 
   @Override
-  public Definition visit(MicroProcessorDefinition definition) {
+  public Definition visit(ProcessorDefinition definition) {
     var definitions = expandDefinitions(definition.definitions);
-    return new MicroProcessorDefinition(definition.id, definition.implementedIsas, definition.abi,
+    return new ProcessorDefinition(definition.id, definition.implementedIsas, definition.abi,
         definitions, copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
   }

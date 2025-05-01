@@ -132,7 +132,7 @@ interface DefinitionVisitor<R> {
 
   R visit(MicroArchitectureDefinition definition);
 
-  R visit(MicroProcessorDefinition definition);
+  R visit(ProcessorDefinition definition);
 
   R visit(ModelDefinition definition);
 
@@ -3842,7 +3842,7 @@ class AbiClangTypeDefinition extends Definition {
   }
 }
 
-class MicroProcessorDefinition extends Definition implements IdentifiableNode {
+class ProcessorDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   @Child
   List<IsId> implementedIsas;
@@ -3860,8 +3860,8 @@ class MicroProcessorDefinition extends Definition implements IdentifiableNode {
   @Nullable
   ApplicationBinaryInterfaceDefinition abiNode;
 
-  MicroProcessorDefinition(Identifier id, List<IsId> implementedIsas, @Nullable IsId abi,
-                           List<Definition> definitions, SourceLocation loc) {
+  ProcessorDefinition(Identifier id, List<IsId> implementedIsas, @Nullable IsId abi,
+                      List<Definition> definitions, SourceLocation loc) {
     this.id = id;
     this.implementedIsas = implementedIsas;
     this.abi = abi;
@@ -3916,7 +3916,7 @@ class MicroProcessorDefinition extends Definition implements IdentifiableNode {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     annotations.prettyPrint(indent, builder);
-    builder.append(prettyIndentString(indent)).append("micro processor ");
+    builder.append(prettyIndentString(indent)).append("processor ");
     id.prettyPrint(0, builder);
     builder.append(" implements ");
     var isFirst = true;
@@ -3946,7 +3946,7 @@ class MicroProcessorDefinition extends Definition implements IdentifiableNode {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    MicroProcessorDefinition that = (MicroProcessorDefinition) o;
+    ProcessorDefinition that = (ProcessorDefinition) o;
     return Objects.equals(id, that.id)
         && Objects.equals(implementedIsas, that.implementedIsas)
         && Objects.equals(abi, that.abi)

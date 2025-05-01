@@ -27,7 +27,7 @@ public class TypecheckerProcessorTest {
 
   private static String base = """
       instruction set architecture ISA = {}
-      micro processor MiP implements ISA = {
+      processor MiP implements ISA = {
         %s
       }
       """;

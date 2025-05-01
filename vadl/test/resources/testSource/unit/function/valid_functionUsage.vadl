@@ -18,6 +18,6 @@ instruction set architecture FunctionCallTest = {
 
 }
 
-micro processor CPU implements FunctionCallTest = {
+processor CPU implements FunctionCallTest = {
   start = 0x80000000
 }

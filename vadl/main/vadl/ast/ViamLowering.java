@@ -1198,7 +1198,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
-  public Optional<vadl.viam.Definition> visit(MicroProcessorDefinition definition) {
+  public Optional<vadl.viam.Definition> visit(ProcessorDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
     // create empty list of ast definitions
     // for each isa in mip add definitions to definition list

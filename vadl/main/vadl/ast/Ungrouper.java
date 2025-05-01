@@ -475,7 +475,7 @@ public class Ungrouper
   }
 
   @Override
-  public Void visit(MicroProcessorDefinition definition) {
+  public Void visit(ProcessorDefinition definition) {
     ungroupAnnotations(definition);
     definition.definitions.forEach(def -> def.accept(this));
     return null;

@@ -4751,7 +4751,7 @@ else
 }
 application binary interface ABI for QDSP6 = {
 }
-micro processor CPU implements QDSP6 with ABI = {
+processor CPU implements QDSP6 with ABI = {
   start = 0x80000000
   stop with @Brkpt = (PC = 0xeeee'eeee)
   startup -> (ok : Bool) =
