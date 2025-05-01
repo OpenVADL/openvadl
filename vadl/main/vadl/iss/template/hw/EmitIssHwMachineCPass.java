@@ -55,7 +55,7 @@ public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
     vars.put("htif_enabled", htifEnabled(specification));
 
     // firmware
-    var processor = specification.mip().get();
+    var processor = specification.processor().get();
     var firmware = processor.firmware();
     if (firmware != null) {
       vars.put("setup_rom_reset_vec",
@@ -71,13 +71,13 @@ public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
   }
 
   private String getStartAddrExpr(Specification specification) {
-    var mip = specification.mip().orElse(null);
+    var mip = specification.processor().orElse(null);
     specification.ensure(mip != null, "No MicroProcessor definition found");
     return new PureFunctionCodeGenerator(mip.start()).genReturnExpression();
   }
 
   private boolean htifEnabled(Specification specification) {
-    var mip = specification.mip().orElse(null);
+    var mip = specification.processor().orElse(null);
     specification.ensure(mip != null, "No MicroProcessor definition found");
     return mip.hasAnnotation(EnableHtifAnno.class);
   }

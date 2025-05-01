@@ -114,7 +114,7 @@ public class EmitIssTranslateCPass extends IssTemplateRenderingPass {
 
   private String genRegInitCode(Specification specification) {
     var sb = new StringBuilderAppendable();
-    var isa = specification.mip().get().isa();
+    var isa = specification.processor().get().isa();
     sb.indent();
     isa.registerTensors().forEach(tensor -> {
       regInitCode(sb, tensor);

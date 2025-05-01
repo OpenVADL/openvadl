@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  * additional information like the emulation start address, emulation stop condition,
  * default firmware, and startup functionality.
  */
-public class MicroProcessor extends Definition {
+public class Processor extends Definition {
 
   private final String targetName;
 
@@ -46,9 +46,9 @@ public class MicroProcessor extends Definition {
   /**
    * Constructs the microprocessor.
    */
-  public MicroProcessor(Identifier identifier, InstructionSetArchitecture isa, @Nullable Abi abi,
-                        @Nullable Function start, @Nullable Function stop,
-                        @Nullable Procedure firmware, @Nullable String targetName) {
+  public Processor(Identifier identifier, InstructionSetArchitecture isa, @Nullable Abi abi,
+                   @Nullable Function start, @Nullable Function stop,
+                   @Nullable Procedure firmware, @Nullable String targetName) {
     super(identifier);
     this.isa = isa;
     this.abi = abi;

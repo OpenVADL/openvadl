@@ -68,7 +68,7 @@ public interface DefinitionVisitor {
 
   void visit(Abi abi);
 
-  void visit(MicroProcessor microProcessor);
+  void visit(Processor microProcessor);
 
   void visit(MicroArchitecture microArchitecture);
 
@@ -291,7 +291,7 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(MicroProcessor microProcessor) {
+    public void visit(Processor microProcessor) {
       beforeTraversal(microProcessor);
       var start = microProcessor.startNullable();
       if (start != null) {
@@ -524,7 +524,7 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(MicroProcessor microProcessor) {
+    public void visit(Processor microProcessor) {
 
     }
 

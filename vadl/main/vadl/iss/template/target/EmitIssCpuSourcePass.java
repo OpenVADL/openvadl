@@ -52,7 +52,7 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
 
   private String dumpRegsCode(Specification specification) {
     var sb = new StringBuilderAppendable();
-    var isa = specification.mip().get().isa();
+    var isa = specification.processor().get().isa();
     sb.indent();
     isa.registerTensors().forEach(tensor -> {
       dumpRegsCode(sb, tensor);

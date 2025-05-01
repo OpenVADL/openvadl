@@ -46,7 +46,7 @@ public class IssConfigurationPass extends AbstractIssPass {
       throws IOException {
     var configuration = configuration();
 
-    var mip = viam.mip().get();
+    var mip = viam.processor().get();
     var isaName = mip.targetName().toLowerCase();
     configuration.setTargetName(isaName);
     configuration.setMachineName(mip.simpleName());

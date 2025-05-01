@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class MicroArchitecture extends Definition {
 
-  private final MicroProcessor processor;
+  private final Processor processor;
 
   // Stages and Logic elements
   private final List<Stage> stages;
@@ -47,7 +47,7 @@ public class MicroArchitecture extends Definition {
    * @param stages     list of stages
    * @param logic      list of logic elements
    */
-  public MicroArchitecture(Identifier identifier, MicroProcessor processor, List<Stage> stages,
+  public MicroArchitecture(Identifier identifier, Processor processor, List<Stage> stages,
                            List<Logic> logic) {
     this(identifier, processor, stages, logic, new ArrayList<>(), new ArrayList<>(),
         new ArrayList<>(), new ArrayList<>());
@@ -65,7 +65,7 @@ public class MicroArchitecture extends Definition {
    * @param memories   list of memories
    * @param functions  list of functions
    */
-  public MicroArchitecture(Identifier identifier, MicroProcessor processor, List<Stage> stages,
+  public MicroArchitecture(Identifier identifier, Processor processor, List<Stage> stages,
                            List<Logic> logic, List<Signal> signals, List<RegisterTensor> registers,
                            List<Memory> memories, List<Function> functions) {
     super(identifier);
@@ -85,7 +85,7 @@ public class MicroArchitecture extends Definition {
     }
   }
 
-  public MicroProcessor processor() {
+  public Processor processor() {
     return processor;
   }
 

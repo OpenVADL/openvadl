@@ -54,7 +54,7 @@ public class Specification extends Definition {
         .map(InstructionSetArchitecture.class::cast)
         .findFirst();
     if (isaDef.isEmpty()) {
-      return mip().map(MicroProcessor::isa);
+      return processor().map(Processor::isa);
     }
     return isaDef;
   }
@@ -80,12 +80,12 @@ public class Specification extends Definition {
   }
 
   /**
-   * Returns the instruction set architecture of the specification.
+   * Returns the {@link Processor} of the specification.
    */
-  public Optional<MicroProcessor> mip() {
+  public Optional<Processor> processor() {
     return definitions()
-        .filter(MicroProcessor.class::isInstance)
-        .map(MicroProcessor.class::cast)
+        .filter(Processor.class::isInstance)
+        .map(Processor.class::cast)
         .findFirst();
   }
 

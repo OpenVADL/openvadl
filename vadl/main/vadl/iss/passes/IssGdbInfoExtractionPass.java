@@ -88,7 +88,7 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
   @Nullable
   @Override
   public Result execute(PassResults passResults, Specification viam) throws IOException {
-    var isa = viam.mip().get().isa();
+    var isa = viam.processor().get().isa();
     var pc = requireNonNull(isa.pc()).registerTensor();
 
     AtomicInteger i = new AtomicInteger();

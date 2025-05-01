@@ -129,15 +129,15 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
   }
 
   private MemoryInfo getMemoryInfo(Specification viam) {
-    return viam.mip().get().expectExtension(MemoryInfo.class);
+    return viam.processor().get().expectExtension(MemoryInfo.class);
   }
 
   private ExceptionInfo getExceptionInfo(Specification viam) {
-    return viam.mip().get().isa().expectExtension(ExceptionInfo.class);
+    return viam.processor().get().isa().expectExtension(ExceptionInfo.class);
   }
 
   private RegInfo getPcReg(Specification viam) {
-    var pc = viam.mip().get().isa().pc();
+    var pc = viam.processor().get().isa().pc();
     if (pc == null) {
       throw new IllegalStateException("PC is null");
     }

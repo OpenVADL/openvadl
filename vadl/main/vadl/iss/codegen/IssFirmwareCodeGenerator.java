@@ -28,8 +28,8 @@ import vadl.iss.passes.extensions.MemoryInfo;
 import vadl.iss.template.hw.EmitIssHwMachineCPass;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
-import vadl.viam.MicroProcessor;
 import vadl.viam.Procedure;
+import vadl.viam.Processor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.StartNode;
@@ -42,7 +42,7 @@ import vadl.viam.graph.dependency.WriteMemNode;
 /**
  * Generates the {@code setup_rom_reset_vec} function in the generated machine
  * ({@code gen-machine.c}).
- * It is responsible for writing ROM memory as defined in the {@link MicroProcessor#firmware()}
+ * It is responsible for writing ROM memory as defined in the {@link Processor#firmware()}
  * definition.
  *
  * <p>It does this, by creating a reset vector array representing the ROM.
@@ -85,7 +85,7 @@ public class IssFirmwareCodeGenerator implements CDefaultMixins.All,
 
   /**
    * Produces the {@code setup_rom_reset_vec()} function setup the ROM, which correspond
-   * to the {@link MicroProcessor#firmware()} definition in the specification.
+   * to the {@link Processor#firmware()} definition in the specification.
    *
    * @return the full function code, including signature.
    */
