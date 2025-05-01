@@ -282,7 +282,7 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
       AUIPC { rd = rd, imm = got_pcrel_hi( symbol ) }
       LD { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
   }
-  assembly LGA_64 = ("LGA", " ", register(rd), hex( symbol ))
+  assembly LGA_64 = ("LGA", " ", register(rd), ",", hex( symbol ))
 
 )           // ))))))))))))))))))))))))))))))))))))))))
 
@@ -428,21 +428,21 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
       LUI { rd = rd, imm = hi( symbol ) }
       ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
   }
-  assembly LA = (mnemonic, " ", register(rd), hex( symbol ))
+  assembly LA = (mnemonic, " ", register(rd), ",", hex( symbol ))
 
   pseudo instruction LGA_32( rd: Index, symbol: Bits<32> ) =
   {
       AUIPC { rd = rd, imm = got_pcrel_hi( symbol ) }
       LW { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
   }
-  assembly LGA_32 = ("LGA", " ", register(rd), hex( symbol ))
+  assembly LGA_32 = ("LGA", " ", register(rd), ",", hex( symbol ))
 
   pseudo instruction LLA( rd: Index, symbol: Bits<32> ) =
   {
       AUIPC { rd = rd, imm = pcrel_hi( symbol ) }
       ADDI { rd = rd, rs1 = rd, imm = pcrel_lo( symbol ) }
   }
-  assembly LLA = (mnemonic, " ", register(rd), hex( symbol ))
+  assembly LLA = (mnemonic, " ", register(rd), ",", hex( symbol ))
 
   pseudo instruction LI( rd : Index, symbol : Bits<32> ) =
   {

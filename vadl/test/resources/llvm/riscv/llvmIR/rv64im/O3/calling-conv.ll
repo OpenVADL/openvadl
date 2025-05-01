@@ -18,8 +18,7 @@ define void @callee() nounwind {
 ; CHECK-NEXT: SD s9,192(sp)                           # 8-byte Folded Spill
 ; CHECK-NEXT: SD s10,184(sp)                          # 8-byte Folded Spill
 ; CHECK-NEXT: SD s11,176(sp)                          # 8-byte Folded Spill
-; CHECK-NEXT: LUI s1,%hi(var)
-; CHECK-NEXT: ADDI s1,s1,%lo(var)
+; CHECK-NEXT: LA s1,var
 ; CHECK-NEXT: ADDI a0,s1,4
 ; CHECK-NEXT: LW a0,0(a0)
 ; CHECK-NEXT: SD a0,168(sp)                           # 8-byte Folded Spill
@@ -105,8 +104,7 @@ define void @callee() nounwind {
 ; CHECK-NEXT: LW s2,0(a0)
 ; CHECK-NEXT: LW a0,0(s1)
 ; CHECK-NEXT: SD a0,0(sp)                             # 8-byte Folded Spill
-; CHECK-NEXT: LUI ra,%hi(callee)
-; CHECK-NEXT: JALR ra,%lo(callee)(ra)
+; CHECK-NEXT: CALL callee
 ; CHECK-NEXT: SW s2,124(s1)
 ; CHECK-NEXT: SW s11,120(s1)
 ; CHECK-NEXT: SW s10,116(s1)

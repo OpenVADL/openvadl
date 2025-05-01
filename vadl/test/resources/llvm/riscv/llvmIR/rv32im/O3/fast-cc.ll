@@ -32,8 +32,7 @@ define i32 @caller(<16 x i32> %A) nounwind {
 ; CHECK-NEXT: SW t0,4(sp)
 ; CHECK-NEXT: LW t0,48(sp)
 ; CHECK-NEXT: SW t0,0(sp)
-; CHECK-NEXT: LUI ra,%hi(callee)
-; CHECK-NEXT: JALR ra,%lo(callee)(ra)
+; CHECK-NEXT: CALL callee
 ; CHECK-NEXT: LW ra,44(sp)                            # 4-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,48
 ; CHECK-NEXT: RET
