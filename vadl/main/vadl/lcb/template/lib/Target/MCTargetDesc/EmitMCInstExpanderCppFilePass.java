@@ -18,6 +18,7 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import static vadl.viam.ViamError.ensureNonNull;
 
+import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -211,8 +212,15 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             fieldUsages, relocations, passResults,
             output.variantKindStore(), machineInstructionRecords);
 
+    // Why are there two different `assemblyCompilerInstructions` and `compilerInstructions`?
+    // Pseudo instructions are printed just like regular machine instructions.
+    // However, register adjustment and constant sequences have no assembly representation.
+    // Therefore, they also need to be expanded (even for assembly printing).
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
+        "assemblyCompilerInstructions", Streams.concat(
+            constantSequences.stream(), registerAdjustmentSequences.stream()
+        ).toList(),
         "compilerInstructions", Stream.concat(pseudoInstructions.stream(),
                 Stream.concat(constantSequences.stream(), registerAdjustmentSequences.stream()))
             .toList()

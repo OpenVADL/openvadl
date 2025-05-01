@@ -91,7 +91,7 @@ void [(${namespace})]AsmPrinter::emitInstruction( const MachineInstr *MI )
     MCInst TmpInst;
     MCInstLowering.Lower(MI, TmpInst);
 
-    if( MCInstExpander.isExpandable( TmpInst ) )
+    if( MCInstExpander.isExpandableForAssembly( TmpInst ) )
     {
         MCInstExpander.expand( TmpInst, [&](const MCInst &Inst) {
           emitToStreamer(*OutStreamer, Inst);
