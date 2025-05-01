@@ -174,7 +174,7 @@ define void @callee() nounwind {
 ; CHECK-NEXT: LD s1,256(sp)                           # 8-byte Folded Reload
 ; CHECK-NEXT: LD ra,264(sp)                           # 8-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,272
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %val = load [32 x i32], ptr @var
   call void @callee()
   store volatile [32 x i32] %val, ptr @var

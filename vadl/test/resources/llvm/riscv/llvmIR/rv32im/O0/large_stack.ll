@@ -49,7 +49,7 @@ define void @test_emergency_spill_slot(i32 %a) {
 ; CHECK-NEXT: LUI a0,0x62
 ; CHECK-NEXT: ADDI a0,a0,-1408
 ; CHECK-NEXT: ADD sp,sp,a0
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %data = alloca [ 100000 x i32 ] , align 4
   %ptr = getelementptr inbounds [100000 x i32], ptr %data, i32 0, i32 80000
   %1 = tail call { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 } asm sideeffect "nop", "=r,=r,=r,=r,=r,=r,=r,=r,=r,=r,=r,=r,=r,=r,=r"()

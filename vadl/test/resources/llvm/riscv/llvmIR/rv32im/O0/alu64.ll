@@ -10,7 +10,7 @@ define i64 @addi(i64 %a) nounwind {
 ; CHECK-NEXT: XOR a2,a0,a2
 ; CHECK-NEXT: SLTIU a2,a2,1
 ; CHECK-NEXT: ADD a1,a1,a2
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = add i64 %a, 1
   ret i64 %1
 }
@@ -43,7 +43,7 @@ define i64 @sltiu(i64 %a) nounwind {
 ; CHECK-NEXT: LW a1,8(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: LW a0,12(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = icmp ult i64 %a, 3
   %2 = zext i1 %1 to i64
   ret i64 %2
@@ -53,7 +53,7 @@ define i64 @xori(i64 %a) nounwind {
 ; CHECK-LABEL: xori: # @xori
 ; CHECK-LABEL: # %bb.0:
 ; CHECK: XORI a0,a0,4
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = xor i64 %a, 4
   ret i64 %1
 }
@@ -62,7 +62,7 @@ define i64 @ori(i64 %a) nounwind {
 ; CHECK-LABEL: ori: # @ori
 ; CHECK-LABEL: # %bb.0:
 ; CHECK: ORI a0,a0,5
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = or i64 %a, 5
   ret i64 %1
 }
@@ -72,7 +72,7 @@ define i64 @andi(i64 %a) nounwind {
 ; CHECK-LABEL: # %bb.0:
 ; CHECK: ANDI a0,a0,6
 ; CHECK-NEXT: ADDI a1,zero,0
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = and i64 %a, 6
   ret i64 %1
 }
@@ -84,7 +84,7 @@ define i64 @slli(i64 %a) nounwind {
 ; CHECK-NEXT: SLLI a1,a1,7
 ; CHECK-NEXT: OR a1,a1,a2
 ; CHECK-NEXT: SLLI a0,a0,7
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = shl i64 %a, 7
   ret i64 %1
 }
@@ -96,7 +96,7 @@ define i64 @srli(i64 %a) nounwind {
 ; CHECK-NEXT: SRLI a0,a0,8
 ; CHECK-NEXT: OR a0,a0,a2
 ; CHECK-NEXT: SRLI a1,a1,8
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = lshr i64 %a, 8
   ret i64 %1
 }
@@ -108,7 +108,7 @@ define i64 @srai(i64 %a) nounwind {
 ; CHECK-NEXT: SRLI a0,a0,9
 ; CHECK-NEXT: OR a0,a0,a2
 ; CHECK-NEXT: SRAI a1,a1,9
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = ashr i64 %a, 9
   ret i64 %1
 }
@@ -127,7 +127,7 @@ define i64 @add(i64 %a, i64 %b) nounwind {
 ; CHECK-NEXT: SLTU a2,a0,a2
 ; CHECK-NEXT: ADD a1,a1,a2
 ; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = add i64 %a, %b
   ret i64 %1
 }
@@ -140,7 +140,7 @@ define i64 @sub(i64 %a, i64 %b) nounwind {
 ; CHECK-NEXT: SUB a1,a1,a4
 ; CHECK-NEXT: SUB a1,a1,a3
 ; CHECK-NEXT: SUB a0,a0,a2
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = sub i64 %a, %b
   ret i64 %1
 }
@@ -171,7 +171,7 @@ define i64 @slt(i64 %a, i64 %b) nounwind {
 ; CHECK-NEXT: LW a0,12(sp) # 4-byte Folded Reload
 ; CHECK-NEXT: ADDI a1,zero,0
 ; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = icmp slt i64 %a, %b
   %2 = zext i1 %1 to i64
   ret i64 %2
@@ -182,7 +182,7 @@ define i64 @xor(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: # %bb.0:
 ; CHECK: XOR a0,a0,a2
 ; CHECK-NEXT: XOR a1,a1,a3
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = xor i64 %a, %b
   ret i64 %1
 }
@@ -212,7 +212,7 @@ define i64 @or(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: # %bb.0:
 ; CHECK: OR a0,a0,a2
 ; CHECK-NEXT: OR a1,a1,a3
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = or i64 %a, %b
   ret i64 %1
 }
@@ -222,7 +222,7 @@ define i64 @and(i64 %a, i64 %b) nounwind {
 ; CHECK-LABEL: # %bb.0:
 ; CHECK: AND a0,a0,a2
 ; CHECK-NEXT: AND a1,a1,a3
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %1 = and i64 %a, %b
   ret i64 %1
 }

@@ -21,7 +21,7 @@ define dso_local i32 @foo(i32 noundef %i) local_unnamed_addr #0 {
 ; CHECK-NEXT: LW fp,8(sp)                             # 4-byte Folded Reload
 ; CHECK-NEXT: LW ra,12(sp)                            # 4-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 entry:
   %cmp = icmp slt i32 %i, 1000
   br i1 %cmp, label %while.body.us, label %while.end
