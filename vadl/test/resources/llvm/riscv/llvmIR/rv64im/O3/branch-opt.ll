@@ -10,12 +10,12 @@ define void @u_case1_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-NEXT:  # %bb.1: # %block1
 ; CHECK-NEXT:    LD a0,0(sp)
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
 ; CHECK-NEXT:  .LBB0_2: # %block2
 ; CHECK-NEXT:    LD a0,8(sp)
 ; CHECK-NEXT:    ADDI a1,zero,87
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
   store i32 32, ptr %a
   %p = icmp ule i32 %b, 31
   br i1 %p, label %block1, label %block2
@@ -47,12 +47,12 @@ define void @case1_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL:   # %bb.1: # %block1
 ; CHECK-NEXT:    LD a0,0(sp)
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
 ; CHECK-NEXT:  .LBB1_2: # %block2
 ; CHECK-NEXT:    LD a0,8(sp)
 ; CHECK-NEXT:    ADDI a1,zero,87
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
   store i32 -1, ptr %a
   %p = icmp sle i32 %b, -2
   br i1 %p, label %block1, label %block2
@@ -79,12 +79,12 @@ define void @u_case2_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-NEXT:  # %bb.1: # %block1
 ; CHECK-NEXT:    LD a0,0(sp)
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
 ; CHECK-NEXT:  .LBB2_2: # %block2
 ; CHECK-NEXT:    LD a0,8(sp)
 ; CHECK-NEXT:    ADDI a1,zero,87
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
   store i32 32, ptr %a
   %p = icmp uge i32 %b, 33
   br i1 %p, label %block1, label %block2
@@ -116,12 +116,12 @@ define void @case2_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL: # %bb.1: # %block1
 ; CHECK-NEXT: LD a0,0(sp)
 ; CHECK-NEXT: SW a1,0(a0)
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 ; CHECK-LABEL: .LBB3_2: # %block2
 ; CHECK-NEXT: LD a0,8(sp)
 ; CHECK-NEXT: ADDI a1,zero,87
 ; CHECK-NEXT: SW a1,0(a0)
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   store i32 -4, ptr %a
   %p = icmp sge i32 %b, -3
   br i1 %p, label %block1, label %block2

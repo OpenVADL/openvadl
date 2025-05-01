@@ -143,7 +143,7 @@ define void @callee() nounwind {
 ; CHECK-NEXT: LW s1,136(sp)                           # 4-byte Folded Reload
 ; CHECK-NEXT: LW ra,140(sp)                           # 4-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,144
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %val = load [32 x i32], ptr @var
   call void @callee()
   store volatile [32 x i32] %val, ptr @var

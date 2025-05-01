@@ -29,7 +29,7 @@ define void @init_heap_beebs(ptr noundef %heap, i64 noundef %heap_size) #0 {
 ; CHECK-NEXT: ADDI a1,zero,0
 ; CHECK-NEXT: SD a1,0(a0)
 ; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 entry:
   %heap.addr = alloca ptr, align 8
   %heap_size.addr = alloca i64, align 8

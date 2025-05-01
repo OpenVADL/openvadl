@@ -11,7 +11,7 @@ define void @bool_eq(i1 zeroext %a, i1 zeroext %b, ptr nocapture %c) nounwind {
 ; CHECK-NEXT: .LBB0_2: # %if.end
 ; CHECK-NEXT: LD ra,8(sp) # 8-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 entry:
   %0 = xor i1 %a, %b
   br i1 %0, label %if.end, label %if.then
@@ -36,7 +36,7 @@ define void @bool_ne(i1 zeroext %a, i1 zeroext %b, ptr nocapture %c) nounwind {
 ; CHECK-NEXT: .LBB1_2: # %if.end
 ; CHECK-NEXT: LD ra,8(sp) # 8-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,16
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 entry:
   %cmp = xor i1 %a, %b
   br i1 %cmp, label %if.then, label %if.end

@@ -3,7 +3,7 @@
 define fastcc i32 @callee(<16 x i32> %A) nounwind {
 ; CHECK-LABEL: callee:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 ;
 	%B = extractelement <16 x i32> %A, i32 0
 	ret i32 %B
@@ -48,7 +48,7 @@ define i32 @caller(<16 x i32> %A) nounwind {
 ; CHECK-NEXT: JALR ra,%lo(callee)(ra)
 ; CHECK-NEXT: LD ra,120(sp)                           # 8-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,128
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 	%C = call fastcc i32 @callee(<16 x i32> %A)
 	ret i32 %C
 }

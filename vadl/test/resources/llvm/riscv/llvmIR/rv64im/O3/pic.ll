@@ -11,7 +11,7 @@ define ptr @f1() nounwind {
 ; CHECK-LABEL: .Ltmp0:
 ; CHECK-NEXT: AUIPC a0,%got_pcrel_hi(external_var)
 ; CHECK-NEXT: LD a0,%pcrel_lo(.Ltmp0)(a0)
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 entry:
   ret ptr @external_var
 }
@@ -22,7 +22,7 @@ define ptr @f2() nounwind {
 ; CHECK-LABEL: .Ltmp1:
 ; CHECK-NEXT: AUIPC a0,%pcrel_hi(internal_var)
 ; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Ltmp1)
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 entry:
   ret ptr @internal_var
 }

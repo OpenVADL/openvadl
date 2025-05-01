@@ -88,7 +88,7 @@ define signext i32 @foo(i32 signext %a, ptr %b) nounwind {
 ; CHECK-NEXT: .LBB0_15:
 ; CHECK-NEXT: SLLI a0,a0,32
 ; CHECK-NEXT: SRAI a0,a0,32
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 ; CHECK-NEXT: .LBB0_16:
 ; CHECK-NEXT: ADDI a0,a3,0
 ; CHECK-NEXT: AND a4,a0,a2
@@ -158,7 +158,7 @@ define signext i32 @foo(i32 signext %a, ptr %b) nounwind {
 ; CHECK-NEXT: ADDI a0,a1,0
 ; CHECK-NEXT: SLLI a0,a0,32
 ; CHECK-NEXT: SRAI a0,a0,32
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %val1 = load volatile i32, ptr %b
   %tst1 = icmp eq i32 %a, %val1
   %val2 = select i1 %tst1, i32 %a, i32 %val1
@@ -229,7 +229,7 @@ define i32 @select_sge_int16min(i32 signext %x, i32 signext %y, i32 signext %z) 
 ; CHECK-NEXT: LD a1,0(sp)
 ; CHECK-NEXT: .LBB1_2:
 ; CHECK-NEXT: ADDI a0,a1,0
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %a = icmp sge i32 %x, -65536
   %b = select i1 %a, i32 %y, i32 %z
   ret i32 %b
@@ -249,7 +249,7 @@ define i64 @select_sge_int32min(i64 %x, i64 %y, i64 %z) {
 ; CHECK-NEXT: LD a1,0(sp)
 ; CHECK-LABEL: .LBB2_2:
 ; CHECK-NEXT: ADDI a0,a1,0
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %a = icmp sge i64 %x, -2147483648
   %b = select i1 %a, i64 %y, i64 %z
   ret i64 %b

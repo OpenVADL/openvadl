@@ -6,7 +6,7 @@ define i32 @indirectbr(ptr %target) nounwind {
   ; CHECK-NEXT: JALR zero,0(a0)
   ; CHECK-LABEL: LBB0_1: # %test_label
   ; CHECK: ADDI a0,zero,0
-  ; CHECK-NEXT: JALR zero,0(ra)
+  ; CHECK-NEXT: RET
    indirectbr ptr %target, [label %test_label]
 test_label:
   br label %ret
@@ -20,7 +20,7 @@ define i32 @indirectbr_with_offset(ptr %a) nounwind {
   ; CHECK-NEXT: JALR zero,1380(a0)
   ; CHECK-LABEL: LBB1_1:
   ; CHECK-NEXT: ADDI a0,zero,0
-  ; CHECK-NEXT: JALR zero,0(ra)
+  ; CHECK-NEXT: RET
 
   %target = getelementptr inbounds i8, ptr %a, i32 1380
   indirectbr ptr %target, [label %test_label]
