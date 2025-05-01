@@ -97,9 +97,9 @@ public class InstrCallNode extends DirectionalNode {
    * @return the list of {@link Format.Field}s
    */
   public List<Format.Field> getParamFields() {
-    return paramFieldsOrAccesses.stream().map(
-        paramField -> paramField.isLeft() ? paramField.left() : paramField.right().fieldRef()
-    ).toList();
+    return paramFieldsOrAccesses.stream()
+        .map(paramField -> paramField.isLeft() ? paramField.left() : paramField.right().fieldRef())
+        .toList();
   }
 
   public List<Either<Format.Field, Format.FieldAccess>> getParamFieldsOrAccesses() {
@@ -113,7 +113,8 @@ public class InstrCallNode extends DirectionalNode {
   /**
    * Get a zipped stream for parameter and argument.
    */
-  public Stream<Pair<Either<Format.Field, Format.FieldAccess>, ExpressionNode>> getZippedArgumentsWithParameters() {
+  public Stream<Pair<Either<Format.Field, Format.FieldAccess>,
+      ExpressionNode>> getZippedArgumentsWithParameters() {
     return Streams.zip(getParamFieldsOrAccesses().stream(), arguments.stream(), Pair::of);
   }
 
@@ -141,13 +142,9 @@ public class InstrCallNode extends DirectionalNode {
       arg.ensure(arg.type() instanceof DataType,
           "Instruction Call arguments must have a DataType type, but got %s", arg.type());
     }
-    ensure(
-        IntStream.range(0, paramFieldsOrAccesses.size() - 1)
-            .allMatch(
-                i -> ((DataType) arguments.get(i).type()).isTrivialCastTo(
-                    getParamFields().get(i).type())),
-        "Parameter fields do not match concrete argument fields"
-    );
+    ensure(IntStream.range(0, paramFieldsOrAccesses.size() - 1).allMatch(
+            i -> arguments.get(i).type().isTrivialCastTo(getParamFields().get(i).type())),
+        "Parameter fields do not match concrete argument fields");
   }
 
   @Override
@@ -171,8 +168,7 @@ public class InstrCallNode extends DirectionalNode {
   @Override
   protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
     super.applyOnInputsUnsafe(visitor);
-    arguments = arguments.stream().map(e ->
-            visitor.apply(this, e, ExpressionNode.class))
+    arguments = arguments.stream().map(e -> visitor.apply(this, e, ExpressionNode.class))
         .collect(Collectors.toCollection(NodeList::new));
   }
 

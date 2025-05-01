@@ -154,128 +154,6 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     }
   }
 
-  /**
-   * The assembly string contains a {@code register(rd) }, but the given {@code fieldRefNode}
-   * comes from a {@link Format} and is therefore a {@link FieldRefNode}.
-   */
-  private void printRegister(FieldRefNode fieldRefNode) {
-    var index = indexInInputs(fieldRefNode.formatField())
-        .or(() -> indexInOutputs(fieldRefNode.formatField()))
-        .orElseThrow(() -> Diagnostic.error(
-            "Field is not part of an input or output operand in tablegen",
-            fieldRefNode.location()).build());
-    var symbol = symbolTable.getNextVariable();
-
-    // We need this helper function "getRegisterName..." because
-    // we might need to support multiple register files.
-    var registerFileName = getRegisterFile(instruction.behavior(), fieldRefNode);
-    writer.write(
-        String.format(
-            "std::string %s = "
-                + "getRegisterNameFrom%sByIndex("
-                + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral());" + " // "
-                + fieldRefNode.formatField().identifier.simpleName() + "\n",
-            symbol, registerFileName, index));
-    operands.add(symbol);
-  }
-
-
-  /**
-   * The assembly string contains a {@code register(rd) }, but it is not part of a {@link Format}
-   * because it might come from a {@link PseudoInstruction}.
-   * For example the {@code MV} pseudo instruction in RISCV.
-   *
-   * <pre>
-   *   pseudo instruction MV( rd : Index, rs1 : Index ) =
-   *   {
-   *       ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits<12> }
-   *   }
-   *   assembly MV = (mnemonic, " ", register( rd ), ",", register( rs1 ))
-   * </pre>
-   * Note that the emitted {@code rd} is given as a pseudo instruction operand and does not belong
-   * to any {@link Format} and instruction behavior. Therefore, we must use the {@code ADDI}
-   * register usages to determine what register file the "field" {@code rd} belongs to. When
-   * multiple machine instructions with multiple register files exist, then we cannot determine it
-   * automatically.
-   */
-  private void printRegister(FuncParamNode funcParamNode) {
-    funcParamNode.ensure(instruction.behavior().isPseudoInstruction(),
-        "instruction must be pseudo instruction");
-    var instrCallNodes = instruction.behavior().getNodes(InstrCallNode.class).toList();
-
-    /*
-     * Stores all the uses of a register operand of an instruction to determine later
-     * what the pseudo instruction needs as a register file.
-     */
-    record RegisterFileCandidates(Instruction instruction, Format.Field field) {
-
-    }
-    var candidates = new ArrayList<RegisterFileCandidates>();
-
-    // First get all fields which use this funcParamNode
-    for (var instrCallNode : instrCallNodes) {
-      for (var pair : instrCallNode.getZippedArgumentsWithParameters().toList()) {
-        // ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits<12> }
-        //            ^___ argument
-        //       ^___ param
-        var parameter = pair.left();
-        var argument = pair.right();
-
-        if (parameter.isLeft() && argument instanceof FuncParamNode funcParam &&
-            funcParam.equals(funcParamNode)) {
-          // is a field and not a field access function.
-          // and it is exactly a node which we need to check
-          candidates.add(new RegisterFileCandidates(instrCallNode.target(), parameter.left()));
-        }
-      }
-    }
-
-    // Go over all the candidates and check all the usages of the fields.
-    // When the usage references a register file then we collect it.
-    var registerFiles = candidates
-        .stream()
-        .flatMap(candidate ->
-            candidate.instruction().behavior().getNodes(FieldRefNode.class)
-                .filter(x -> x.formatField() == candidate.field)
-                .flatMap(x -> x.usages()
-                    .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile()))
-                .map(x -> ((HasRegisterTensor) x).registerTensor()))
-        .collect(Collectors.toSet());
-
-    // We have set of register files derived by the machine instructions.
-    // When we have only one element then it is clear what the pseudo instruction has to print
-    // for a register file.
-    // When we have multiple then we cannot say automatically what to choose.
-    if (registerFiles.isEmpty()) {
-      throw Diagnostic.error(
-          "No machine instruction uses this parameter. It is not known which register "
-              + "file to use.",
-          funcParamNode.location()).build();
-    } else if (registerFiles.size() > 1) {
-      throw Diagnostic.error(
-          "Multiple machine instructions use different register files for this index. "
-              + "It is not clear what register file the pseudo instruction must use.",
-          funcParamNode.location()).build();
-    }
-
-    var registerFileName = registerFiles.stream().findFirst().orElseThrow().identifier.simpleName();
-    var index = indexInInputs(funcParamNode)
-        .or(() -> indexInOutputs(funcParamNode))
-        .orElseThrow(() -> Diagnostic.error(
-            "Parameter is not part of an input or output operand in tablegen",
-            funcParamNode.location()).build());
-    var symbol = symbolTable.getNextVariable();
-
-    writer.write(
-        String.format(
-            "std::string %s = "
-                + "getRegisterNameFrom%sByIndex("
-                + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral());" + " // "
-                + funcParamNode.parameter().simpleName() + "\n",
-            symbol, registerFileName, index));
-    operands.add(symbol);
-  }
-
   @Override
   public void visit(WriteRegTensorNode writeRegNode) {
 
@@ -530,8 +408,8 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
         return Optional.of(outputOffset + i);
       } else if (operand instanceof TableGenInstructionLabelOperand) {
         return Optional.of(outputOffset + i);
-      } else if(operand instanceof TableGenDefaultInstructionOperand x
-        && x.name().equals(needle.parameter().identifier.simpleName())) {
+      } else if (operand instanceof TableGenDefaultInstructionOperand x
+          && x.name().equals(needle.parameter().identifier.simpleName())) {
         return Optional.of(outputOffset + i);
       }
     }
@@ -599,5 +477,128 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     } else {
       return candidates.iterator().next().registerTensor().identifier.simpleName();
     }
+  }
+
+  /**
+   * The assembly string contains a {@code register(rd) }, but the given {@code fieldRefNode}
+   * comes from a {@link Format} and is therefore a {@link FieldRefNode}.
+   */
+  private void printRegister(FieldRefNode fieldRefNode) {
+    var index = indexInInputs(fieldRefNode.formatField())
+        .or(() -> indexInOutputs(fieldRefNode.formatField()))
+        .orElseThrow(() -> Diagnostic.error(
+            "Field is not part of an input or output operand in tablegen",
+            fieldRefNode.location()).build());
+    var symbol = symbolTable.getNextVariable();
+
+    // We need this helper function "getRegisterName..." because
+    // we might need to support multiple register files.
+    var registerFileName = getRegisterFile(instruction.behavior(), fieldRefNode);
+    writer.write(
+        String.format(
+            "std::string %s = "
+                + "getRegisterNameFrom%sByIndex("
+                + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral());" + " // "
+                + fieldRefNode.formatField().identifier.simpleName() + "\n",
+            symbol, registerFileName, index));
+    operands.add(symbol);
+  }
+
+
+  /**
+   * The assembly string contains a {@code register(rd) }, but it is not part of a {@link Format}
+   * because it might come from a {@link PseudoInstruction}.
+   * For example the {@code MV} pseudo instruction in RISCV.
+   *
+   * <pre>
+   *   pseudo instruction MV( rd : Index, rs1 : Index ) =
+   *   {
+   *       ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits<12> }
+   *   }
+   *   assembly MV = (mnemonic, " ", register( rd ), ",", register( rs1 ))
+   * </pre>
+   * Note that the emitted {@code rd} is given as a pseudo instruction operand and does not belong
+   * to any {@link Format} and instruction behavior. Therefore, we must use the {@code ADDI}
+   * register usages to determine what register file the "field" {@code rd} belongs to. When
+   * multiple machine instructions with multiple register files exist, then we cannot determine it
+   * automatically.
+   */
+  private void printRegister(FuncParamNode funcParamNode) {
+    funcParamNode.ensure(instruction.behavior().isPseudoInstruction(),
+        "instruction must be pseudo instruction");
+    var instrCallNodes = instruction.behavior().getNodes(InstrCallNode.class).toList();
+
+    /*
+     * Stores all the uses of a register operand of an instruction to determine later
+     * what the pseudo instruction needs as a register file.
+     */
+    record RegisterFileCandidates(Instruction instruction, Format.Field field) {
+
+    }
+
+    var candidates = new ArrayList<RegisterFileCandidates>();
+
+    // First get all fields which use this funcParamNode
+    for (var instrCallNode : instrCallNodes) {
+      for (var pair : instrCallNode.getZippedArgumentsWithParameters().toList()) {
+        // ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits<12> }
+        //            ^___ argument
+        //       ^___ param
+        var parameter = pair.left();
+        var argument = pair.right();
+
+        if (parameter.isLeft() && argument instanceof FuncParamNode funcParam
+            && funcParam.equals(funcParamNode)) {
+          // is a field and not a field access function.
+          // and it is exactly a node which we need to check
+          candidates.add(new RegisterFileCandidates(instrCallNode.target(), parameter.left()));
+        }
+      }
+    }
+
+    // Go over all the candidates and check all the usages of the fields.
+    // When the usage references a register file then we collect it.
+    var registerFiles = candidates
+        .stream()
+        .flatMap(candidate ->
+            candidate.instruction().behavior().getNodes(FieldRefNode.class)
+                .filter(x -> x.formatField().equals(candidate.field))
+                .flatMap(x -> x.usages()
+                    .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile()))
+                .map(x -> ((HasRegisterTensor) x).registerTensor()))
+        .collect(Collectors.toSet());
+
+    // We have set of register files derived by the machine instructions.
+    // When we have only one element then it is clear what the pseudo instruction has to print
+    // for a register file.
+    // When we have multiple then we cannot say automatically what to choose.
+    if (registerFiles.isEmpty()) {
+      throw Diagnostic.error(
+          "No machine instruction uses this parameter. It is not known which register "
+              + "file to use.",
+          funcParamNode.location()).build();
+    } else if (registerFiles.size() > 1) {
+      throw Diagnostic.error(
+          "Multiple machine instructions use different register files for this index. "
+              + "It is not clear what register file the pseudo instruction must use.",
+          funcParamNode.location()).build();
+    }
+
+    var registerFileName = registerFiles.stream().findFirst().orElseThrow().identifier.simpleName();
+    var index = indexInInputs(funcParamNode)
+        .or(() -> indexInOutputs(funcParamNode))
+        .orElseThrow(() -> Diagnostic.error(
+            "Parameter is not part of an input or output operand in tablegen",
+            funcParamNode.location()).build());
+    var symbol = symbolTable.getNextVariable();
+
+    writer.write(
+        String.format(
+            "std::string %s = "
+                + "getRegisterNameFrom%sByIndex("
+                + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral());" + " // "
+                + funcParamNode.parameter().simpleName() + "\n",
+            symbol, registerFileName, index));
+    operands.add(symbol);
   }
 }

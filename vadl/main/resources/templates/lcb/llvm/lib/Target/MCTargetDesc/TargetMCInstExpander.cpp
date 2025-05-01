@@ -38,7 +38,7 @@ bool [(${namespace})]MCInstExpander::isExpandableForAssembly(const MCInst &MCI) 
     auto opcode = MCI.getOpcode();
     switch (opcode)
     {[# th:each="instruction : ${assemblyCompilerInstructions}" ]
-    case [(${namespace})]::[(${instruction.compilerInstruction.name})]:[/]
+    case [(${namespace})]::[(${instruction})]:[/]
     {
         return true;
     }
