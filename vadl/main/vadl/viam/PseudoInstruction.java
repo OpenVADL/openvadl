@@ -55,6 +55,7 @@ public class PseudoInstruction extends CompilerInstruction implements PrintableI
     return identifier;
   }
 
+  @Override
   public Assembly assembly() {
     return assembly;
   }

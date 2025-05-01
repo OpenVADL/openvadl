@@ -75,10 +75,12 @@ public class Instruction extends Definition implements DefProp.WithBehavior, Pri
     return identifier;
   }
 
+  @Override
   public Graph behavior() {
     return behavior;
   }
 
+  @Override
   public Assembly assembly() {
     return assembly;
   }

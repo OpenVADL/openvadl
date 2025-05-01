@@ -16,13 +16,16 @@
 
 package vadl.viam.graph.control;
 
+import com.google.common.collect.Streams;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.utils.Either;
+import vadl.utils.Pair;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
 import vadl.viam.graph.GraphNodeVisitor;
@@ -105,6 +108,13 @@ public class InstrCallNode extends DirectionalNode {
 
   public NodeList<ExpressionNode> arguments() {
     return arguments;
+  }
+
+  /**
+   * Get a zipped stream for parameter and argument.
+   */
+  public Stream<Pair<Either<Format.Field, Format.FieldAccess>, ExpressionNode>> getZippedArgumentsWithParameters() {
+    return Streams.zip(getParamFieldsOrAccesses().stream(), arguments.stream(), Pair::of);
   }
 
   public ExpressionNode getArgument(Format.Field field) {

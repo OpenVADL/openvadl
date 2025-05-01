@@ -21,6 +21,7 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.io.StringWriter;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +29,7 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenDefaultInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
@@ -36,10 +38,12 @@ import vadl.types.DataType;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.Instruction;
 import vadl.viam.PrintableInstruction;
+import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphNodeVisitor;
-import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.BranchEndNode;
@@ -126,27 +130,17 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
       operands.add(symbol);
     } else if (node.builtIn() == BuiltInTable.REGISTER) {
       ensure(node.arguments().size() == 1, "Expected only one argument");
-      ensure(node.arguments().get(0) instanceof FieldRefNode,
-          "Register argument is not a FieldRefNode");
-      var cast = (FieldRefNode) node.arguments().get(0);
-      var index = indexInInputs(cast.formatField())
-          .or(() -> indexInOutputs(cast.formatField()))
-          .orElseThrow(() -> Diagnostic.error(
-              "Field is not part of an input or output operand in tablegen",
-              cast.location()).build());
-      var symbol = symbolTable.getNextVariable();
 
-      // We need this helper function "getRegisterName..." because
-      // we might need to support multiple register files.
-      var registerFileName = getRegisterFile(instruction.behavior(), cast);
-      writer.write(
-          String.format(
-              "std::string %s = "
-                  + "getRegisterNameFrom%sByIndex("
-                  + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral());" + " // "
-                  + cast.formatField().identifier.simpleName() + "\n",
-              symbol, registerFileName, index));
-      operands.add(symbol);
+      var argument = node.arguments().getFirst();
+      if (argument instanceof FieldRefNode fieldRefNode) {
+        printRegister(fieldRefNode);
+      } else if (argument instanceof FuncParamNode funcParamNode) {
+        printRegister(funcParamNode);
+      } else {
+        throw Diagnostic.error("not supported argument for register builtin",
+                argument.location())
+            .build();
+      }
     } else if (node.builtIn() == BuiltInTable.DECIMAL) {
       ensure(node.arguments().size() == 1, "Expected only one argument");
       writeImmediateWithRadix(node, 10);
@@ -158,6 +152,128 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
               node.location())
           .build();
     }
+  }
+
+  /**
+   * The assembly string contains a {@code register(rd) }, but the given {@code fieldRefNode}
+   * comes from a {@link Format} and is therefore a {@link FieldRefNode}.
+   */
+  private void printRegister(FieldRefNode fieldRefNode) {
+    var index = indexInInputs(fieldRefNode.formatField())
+        .or(() -> indexInOutputs(fieldRefNode.formatField()))
+        .orElseThrow(() -> Diagnostic.error(
+            "Field is not part of an input or output operand in tablegen",
+            fieldRefNode.location()).build());
+    var symbol = symbolTable.getNextVariable();
+
+    // We need this helper function "getRegisterName..." because
+    // we might need to support multiple register files.
+    var registerFileName = getRegisterFile(instruction.behavior(), fieldRefNode);
+    writer.write(
+        String.format(
+            "std::string %s = "
+                + "getRegisterNameFrom%sByIndex("
+                + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral());" + " // "
+                + fieldRefNode.formatField().identifier.simpleName() + "\n",
+            symbol, registerFileName, index));
+    operands.add(symbol);
+  }
+
+
+  /**
+   * The assembly string contains a {@code register(rd) }, but it is not part of a {@link Format}
+   * because it might come from a {@link PseudoInstruction}.
+   * For example the {@code MV} pseudo instruction in RISCV.
+   *
+   * <pre>
+   *   pseudo instruction MV( rd : Index, rs1 : Index ) =
+   *   {
+   *       ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits<12> }
+   *   }
+   *   assembly MV = (mnemonic, " ", register( rd ), ",", register( rs1 ))
+   * </pre>
+   * Note that the emitted {@code rd} is given as a pseudo instruction operand and does not belong
+   * to any {@link Format} and instruction behavior. Therefore, we must use the {@code ADDI}
+   * register usages to determine what register file the "field" {@code rd} belongs to. When
+   * multiple machine instructions with multiple register files exist, then we cannot determine it
+   * automatically.
+   */
+  private void printRegister(FuncParamNode funcParamNode) {
+    funcParamNode.ensure(instruction.behavior().isPseudoInstruction(),
+        "instruction must be pseudo instruction");
+    var instrCallNodes = instruction.behavior().getNodes(InstrCallNode.class).toList();
+
+    /*
+     * Stores all the uses of a register operand of an instruction to determine later
+     * what the pseudo instruction needs as a register file.
+     */
+    record RegisterFileCandidates(Instruction instruction, Format.Field field) {
+
+    }
+    var candidates = new ArrayList<RegisterFileCandidates>();
+
+    // First get all fields which use this funcParamNode
+    for (var instrCallNode : instrCallNodes) {
+      for (var pair : instrCallNode.getZippedArgumentsWithParameters().toList()) {
+        // ADDI{ rd = rd, rs1 = rs1, imm = 0 as Bits<12> }
+        //            ^___ argument
+        //       ^___ param
+        var parameter = pair.left();
+        var argument = pair.right();
+
+        if (parameter.isLeft() && argument instanceof FuncParamNode funcParam &&
+            funcParam.equals(funcParamNode)) {
+          // is a field and not a field access function.
+          // and it is exactly a node which we need to check
+          candidates.add(new RegisterFileCandidates(instrCallNode.target(), parameter.left()));
+        }
+      }
+    }
+
+    // Go over all the candidates and check all the usages of the fields.
+    // When the usage references a register file then we collect it.
+    var registerFiles = candidates
+        .stream()
+        .flatMap(candidate ->
+            candidate.instruction().behavior().getNodes(FieldRefNode.class)
+                .filter(x -> x.formatField() == candidate.field)
+                .flatMap(x -> x.usages()
+                    .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile()))
+                .map(x -> ((HasRegisterTensor) x).registerTensor()))
+        .collect(Collectors.toSet());
+
+    // We have set of register files derived by the machine instructions.
+    // When we have only one element then it is clear what the pseudo instruction has to print
+    // for a register file.
+    // When we have multiple then we cannot say automatically what to choose.
+    if (registerFiles.isEmpty()) {
+      throw Diagnostic.error(
+          "No machine instruction uses this parameter. It is not known which register "
+              + "file to use.",
+          funcParamNode.location()).build();
+    } else if (registerFiles.size() > 1) {
+      throw Diagnostic.error(
+          "Multiple machine instructions use different register files for this index. "
+              + "It is not clear what register file the pseudo instruction must use.",
+          funcParamNode.location()).build();
+    }
+
+    var registerFileName = registerFiles.stream().findFirst().orElseThrow().identifier.simpleName();
+    var index = indexInInputs(funcParamNode)
+        .or(() -> indexInOutputs(funcParamNode))
+        .orElseThrow(() -> Diagnostic.error(
+            "Parameter is not part of an input or output operand in tablegen",
+            funcParamNode.location()).build());
+    var symbol = symbolTable.getNextVariable();
+
+    writer.write(
+        String.format(
+            "std::string %s = "
+                + "getRegisterNameFrom%sByIndex("
+                + "MCOperandWrapper(MI->getOperand(%d)).unwrapToIntegral());" + " // "
+                + funcParamNode.parameter().simpleName() + "\n",
+            symbol, registerFileName, index));
+    operands.add(symbol);
   }
 
   @Override
@@ -405,15 +521,6 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
           needle.location()).build();
     }
 
-    if (tableGenInstruction.getInOperands().stream()
-        .anyMatch(x -> x instanceof TableGenInstructionLabelOperand)
-        && tableGenInstruction.getInOperands().size() > 1) {
-      // When we see an immediate label operand, we do not know which operand it is.
-      // Therefore, the support is limited at the moment.
-      throw Diagnostic.error("Currently we cannot support mixed labels when printing",
-          needle.location()).build();
-    }
-
     int outputOffset = tableGenInstruction.getOutOperands().size();
     for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
       var operand = tableGenInstruction.getInOperands().get(i);
@@ -422,6 +529,9 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
           && needle.parameter().equals(funcParamNodeOfOperand.parameter())) {
         return Optional.of(outputOffset + i);
       } else if (operand instanceof TableGenInstructionLabelOperand) {
+        return Optional.of(outputOffset + i);
+      } else if(operand instanceof TableGenDefaultInstructionOperand x
+        && x.name().equals(needle.parameter().identifier.simpleName())) {
         return Optional.of(outputOffset + i);
       }
     }
@@ -454,12 +564,24 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     return Optional.empty();
   }
 
+  private Optional<Integer> indexInOutputs(FuncParamNode needle) {
+    for (int i = 0; i < tableGenInstruction.getOutOperands().size(); i++) {
+      var operand = tableGenInstruction.getOutOperands().get(i);
+      if (operand instanceof TableGenDefaultInstructionOperand x
+          && x.name().equals(needle.parameter().identifier.simpleName())) {
+        return Optional.of(i);
+      }
+    }
+
+    return Optional.empty();
+  }
+
   private String getRegisterFile(Graph behavior, FieldRefNode fieldRefNode) {
     var candidates = behavior.getNodes(FieldRefNode.class)
         .filter(x -> x.formatField().equals(fieldRefNode.formatField()))
         .flatMap(Node::usages)
-        .filter(x -> x instanceof HasRegisterFile y && y.hasRegisterFile())
-        .map(x -> (HasRegisterFile) x)
+        .filter(x -> x instanceof HasRegisterTensor y && y.hasRegisterFile())
+        .map(x -> (HasRegisterTensor) x)
         .collect(Collectors.toSet());
 
     if (candidates.isEmpty()) {
@@ -475,7 +597,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
               "detect the register file for the assembly.",
           fieldRefNode.location()).build();
     } else {
-      return candidates.iterator().next().registerFile().identifier.simpleName();
+      return candidates.iterator().next().registerTensor().identifier.simpleName();
     }
   }
 }

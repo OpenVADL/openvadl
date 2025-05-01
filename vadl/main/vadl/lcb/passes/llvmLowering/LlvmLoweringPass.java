@@ -80,7 +80,7 @@ import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -490,8 +490,8 @@ public class LlvmLoweringPass extends Pass {
               ensurePresent(
                   instruction.target().behavior().getNodes(FieldRefNode.class)
                       .flatMap(x -> x.usages()
-                          .filter(y -> y instanceof HasRegisterFile z && z.hasRegisterFile())
-                          .map(y -> ((HasRegisterFile) y).registerFile()))
+                          .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile())
+                          .map(y -> ((HasRegisterTensor) y).registerTensor()))
                       .findFirst(), () -> Diagnostic.error("Expected to find register file",
                       field.location()));
           // We use the funcParamNode's name because we need to make sure that the register
@@ -513,8 +513,8 @@ public class LlvmLoweringPass extends Pass {
               ensurePresent(
                   instruction.target().behavior().getNodes(FieldRefNode.class)
                       .flatMap(x -> x.usages()
-                          .filter(y -> y instanceof HasRegisterFile z && z.hasRegisterFile())
-                          .map(y -> ((HasRegisterFile) y).registerFile()))
+                          .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile())
+                          .map(y -> ((HasRegisterTensor) y).registerTensor()))
                       .findFirst(), () -> Diagnostic.error("Expected to find register file",
                       field.location()));
           args.add(new LcbMachineInstructionParameterNode(
