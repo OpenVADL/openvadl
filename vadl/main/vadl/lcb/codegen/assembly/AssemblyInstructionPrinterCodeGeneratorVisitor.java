@@ -29,8 +29,8 @@ import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.utils.SourceLocation;
@@ -398,7 +398,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
   private Optional<Integer> indexInInputs(FuncParamNode needle) {
     if (tableGenInstruction.getInOperands().stream()
-        .filter(x -> x instanceof TableGenInstructionImmediateLabelOperand).count() > 1) {
+        .filter(x -> x instanceof TableGenInstructionLabelOperand).count() > 1) {
       // When we see an immediate label operand, we do not know which operand it is.
       // Therefore, the support is limited at the moment.
       throw Diagnostic.error("Currently we cannot support multiple labels when printing",
@@ -406,7 +406,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     }
 
     if (tableGenInstruction.getInOperands().stream()
-        .anyMatch(x -> x instanceof TableGenInstructionImmediateLabelOperand)
+        .anyMatch(x -> x instanceof TableGenInstructionLabelOperand)
         && tableGenInstruction.getInOperands().size() > 1) {
       // When we see an immediate label operand, we do not know which operand it is.
       // Therefore, the support is limited at the moment.
@@ -421,7 +421,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
           && symbolOperand.origin() instanceof FuncParamNode funcParamNodeOfOperand
           && needle.parameter().equals(funcParamNodeOfOperand.parameter())) {
         return Optional.of(outputOffset + i);
-      } else if (operand instanceof TableGenInstructionImmediateLabelOperand) {
+      } else if (operand instanceof TableGenInstructionLabelOperand) {
         return Optional.of(outputOffset + i);
       }
     }
