@@ -28,13 +28,15 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.HasRegisterFile;
@@ -69,7 +71,7 @@ import vadl.viam.graph.dependency.ZeroExtendNode;
  */
 public class AssemblyInstructionPrinterCodeGeneratorVisitor
     implements GraphNodeVisitor {
-  private final Instruction instruction;
+  private final PrintableInstruction instruction;
   private final SymbolTable symbolTable = new SymbolTable();
   private final StringWriter writer;
   private final Deque<String> operands = new ArrayDeque<>();
@@ -80,7 +82,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
    */
   public AssemblyInstructionPrinterCodeGeneratorVisitor(
       StringWriter writer,
-      Instruction instruction,
+      PrintableInstruction instruction,
       TableGenInstruction tableGenInstruction) {
     this.writer = writer;
     this.instruction = instruction;
@@ -106,7 +108,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
       operands.add(symbol);
 
       writer.write(String.format("std::string %s = std::string(\"%s\");\n", symbol,
-          instruction.identifier.simpleName()));
+          instruction.identifier().simpleName()));
     } else if (node.builtIn() == BuiltInTable.CONCATENATE_STRINGS) {
       for (var arg : node.arguments()) {
         visit(arg);
@@ -278,11 +280,52 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     } else if (node.arguments().get(0) instanceof FieldAccessRefNode fieldAccessRefNode) {
       writeImmediateWithRadix(fieldAccessRefNode.fieldAccess().fieldRef(), radix,
           type, fieldAccessRefNode.location());
+    } else if (node.arguments().get(0) instanceof FuncParamNode funcParamNode) {
+      // This case is for pseudo instructions because they arguments are not fields,
+      // but function parameter nodes.
+      writeImmediateWithRadix(funcParamNode, radix, funcParamNode.location());
     } else {
       throw Diagnostic.error("Not supported argument "
               + "in assembly printing", node.location())
           .build();
     }
+  }
+
+  private void writeImmediateWithRadix(FuncParamNode paramNode, int radix,
+                                       SourceLocation sourceLocation) {
+    var index = ensurePresent(indexInInputs(paramNode), () ->
+        Diagnostic.error("Immediate must be part of an tablegen input.",
+            sourceLocation)
+    );
+
+    var operandSymbol = symbolTable.getNextVariable();
+    var valueSymbol = symbolTable.getNextVariable();
+
+    writer.write(String.format(
+        """
+            MCOperand %s = MI->getOperand(%d);
+            int64_t %s;
+            if (AsmUtils::evaluateConstantImm(&%s, %s)) {
+            """,
+        operandSymbol,
+        index,
+        valueSymbol,
+        operandSymbol,
+        valueSymbol
+    ));
+    writer.write(String.format("\t%s =  MCOperand::createImm(%s);\n", operandSymbol, valueSymbol));
+    writer.write("}\n");
+
+    var symbol = symbolTable.getNextVariable();
+    writer.write(String.format(
+        """
+            std::string %s = AsmUtils::formatImm(MCOperandWrapper(%s), %d, &MAI);
+            """,
+        symbol,
+        operandSymbol,
+        radix
+    ));
+    operands.add(symbol);
   }
 
   private void writeImmediateWithRadix(Format.Field field, int radix, DataType argumentType,
@@ -353,6 +396,39 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
     operands.add(symbol);
   }
 
+  private Optional<Integer> indexInInputs(FuncParamNode needle) {
+    if (tableGenInstruction.getInOperands().stream()
+        .filter(x -> x instanceof TableGenInstructionLabelOperand).count() > 1) {
+      // When we see an immediate label operand, we do not know which operand it is.
+      // Therefore, the support is limited at the moment.
+      throw Diagnostic.error("Currently we cannot support multiple labels when printing",
+          needle.location()).build();
+    }
+
+    if (tableGenInstruction.getInOperands().stream()
+        .anyMatch(x -> x instanceof TableGenInstructionLabelOperand)
+        && tableGenInstruction.getInOperands().size() > 1) {
+      // When we see an immediate label operand, we do not know which operand it is.
+      // Therefore, the support is limited at the moment.
+      throw Diagnostic.error("Currently we cannot support mixed labels when printing",
+          needle.location()).build();
+    }
+
+    int outputOffset = tableGenInstruction.getOutOperands().size();
+    for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
+      var operand = tableGenInstruction.getInOperands().get(i);
+      if (operand instanceof TableGenInstructionBareSymbolOperand symbolOperand
+          && symbolOperand.origin() instanceof FuncParamNode funcParamNodeOfOperand
+          && needle.parameter().equals(funcParamNodeOfOperand.parameter())) {
+        return Optional.of(outputOffset + i);
+      } else if (operand instanceof TableGenInstructionLabelOperand) {
+        return Optional.of(outputOffset + i);
+      }
+    }
+
+    return Optional.empty();
+  }
+
   private Optional<Integer> indexInInputs(Format.Field needle) {
     int outputOffset = tableGenInstruction.getOutOperands().size();
     for (int i = 0; i < tableGenInstruction.getInOperands().size(); i++) {
@@ -377,7 +453,6 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
 
     return Optional.empty();
   }
-
 
   private String getRegisterFile(Graph behavior, FieldRefNode fieldRefNode) {
     var candidates = behavior.getNodes(FieldRefNode.class)
