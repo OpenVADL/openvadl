@@ -33,6 +33,23 @@ bool [(${namespace})]MCInstExpander::needsExpansion(const MCInst &MCI) const
     return false; // unreachable
 }
 
+bool [(${namespace})]MCInstExpander::isExpandableForAssembly(const MCInst &MCI) const
+{
+    auto opcode = MCI.getOpcode();
+    switch (opcode)
+    {[# th:each="instruction : ${assemblyCompilerInstructions}" ]
+    case [(${namespace})]::[(${instruction})]:[/]
+    {
+        return true;
+    }
+    default:
+    {
+        return false;
+    }
+    }
+    return false; // unreachable
+}
+
 bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
 {
     auto opcode = MCI.getOpcode();

@@ -14,40 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.riscv.riscv64;
+package vadl.viam;
 
-import org.junit.jupiter.api.Disabled;
-import vadl.lcb.riscv.SpikeRiscvSimulationTest;
 
-@Disabled
-public class SpikeRiscv64SimulationTest extends SpikeRiscvSimulationTest {
-  @Override
-  protected String getTarget() {
-    return "rv64im";
-  }
+import vadl.viam.graph.Graph;
 
-  @Override
-  protected String getSpecPath() {
-    return "sys/risc-v/rv64im.vadl";
-  }
+/**
+ * Indicates that an instruction is printable because it has a behavior and assembly.
+ */
+public interface PrintableInstruction {
+  /**
+   * Get the identifier of an instruction.
+   */
+  Identifier identifier();
 
-  @Override
-  protected String getSpikeTarget() {
-    return "rv64gc";
-  }
+  /**
+   * Get the behavior of an instruction.
+   */
+  Graph behavior();
 
-  @Override
-  protected String getAbi() {
-    return "lp64";
-  }
-
-  @Override
-  protected String getUpstreamBuildTarget() {
-    return "RISCV";
-  }
-
-  @Override
-  protected String getUpstreamClangTarget() {
-    return "riscv64";
-  }
+  /**
+   * Get the {@link Assembly} of an instruction.
+   */
+  Assembly assembly();
 }

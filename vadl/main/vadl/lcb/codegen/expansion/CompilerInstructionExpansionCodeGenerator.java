@@ -50,7 +50,7 @@ import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Relocation;
 import vadl.viam.ViamError;
-import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.DirectionalNode;
@@ -247,8 +247,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
         var registerFiles = instruction.behavior().getNodes(FieldRefNode.class)
             .filter(x -> x.formatField().equals(field)).flatMap(
                 fieldRefNode -> fieldRefNode.usages()
-                    .filter(y -> y instanceof HasRegisterFile z && z.hasRegisterFile()))
-            .map(x -> ((HasRegisterFile) x).registerFile()).distinct().toList();
+                    .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile()))
+            .map(x -> ((HasRegisterTensor) x).registerTensor()).distinct().toList();
 
         ensure(registerFiles.size() == 1,
             () -> Diagnostic.error("Found multiple or none register files for this field.",

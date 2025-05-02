@@ -18,10 +18,12 @@ package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import static vadl.viam.ViamError.ensureNonNull;
 
+import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
@@ -211,8 +213,26 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             fieldUsages, relocations, passResults,
             output.variantKindStore(), machineInstructionRecords);
 
+    var abi = specification.abi().orElseThrow();
+    var loadInstructions = Stream.of(
+            Optional.of(abi.absoluteAddressLoad()),
+            abi.localAddressLoad(),
+            abi.globalAddressLoad()
+        ).filter(Optional::isPresent).map(Optional::orElseThrow)
+        .map(x -> x.identifier.simpleName());
+
+    // Why are there two different `assemblyCompilerInstructions` and `compilerInstructions`?
+    // Pseudo instructions are printed just like regular machine instructions.
+    // However, register adjustment and constant sequences have no assembly representation.
+    // Therefore, they also need to be expanded (even for assembly printing).
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
+        "assemblyCompilerInstructions", Streams.concat(
+            constantSequences.stream().map(x -> x.identifier().simpleName()),
+            Stream.concat(
+                registerAdjustmentSequences.stream().map(x -> x.identifier().simpleName()),
+                loadInstructions)
+        ).toList(),
         "compilerInstructions", Stream.concat(pseudoInstructions.stream(),
                 Stream.concat(constantSequences.stream(), registerAdjustmentSequences.stream()))
             .toList()

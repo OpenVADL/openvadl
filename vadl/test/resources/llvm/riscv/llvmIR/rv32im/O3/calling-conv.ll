@@ -74,8 +74,7 @@ define void @callee() nounwind {
 ; CHECK-NEXT: LW s11,116(s1)
 ; CHECK-NEXT: LW s2,120(s1)
 ; CHECK-NEXT: LW s3,124(s1)
-; CHECK-NEXT: LUI ra,%hi(callee)
-; CHECK-NEXT: JALR ra,%lo(callee)(ra)
+; CHECK-NEXT: CALL callee
 ; CHECK-NEXT: SW s3,124(s1)
 ; CHECK-NEXT: SW s2,120(s1)
 ; CHECK-NEXT: SW s11,116(s1)

@@ -19,6 +19,7 @@ namespace llvm
         [(${namespace})]MCInstExpander(class MCContext & Ctx);
         bool needsExpansion(const MCInst &MCI) const;
         bool isExpandable(const MCInst &MCI) const;
+        bool isExpandableForAssembly(const MCInst &MCI) const;
         bool expand(const MCInst &MCI, std::function<void(const MCInst &)> callback, std::function<void(MCSymbol* )> callbackSymbol ) const;
 
     private:

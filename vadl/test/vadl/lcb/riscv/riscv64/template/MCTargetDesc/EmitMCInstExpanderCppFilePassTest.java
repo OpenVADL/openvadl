@@ -108,6 +108,31 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             return false; // unreachable
         }
         
+        bool processornamevalueMCInstExpander::isExpandableForAssembly(const MCInst &MCI) const
+        {
+            auto opcode = MCI.getOpcode();
+            switch (opcode)
+            {
+            case processornamevalue::constMat0:
+            case processornamevalue::constMat1:
+            case processornamevalue::constMat2:
+            case processornamevalue::constMat3:
+            case processornamevalue::constMat4:
+            case processornamevalue::registerAdjustment0:
+            case processornamevalue::LA:
+            case processornamevalue::LLA:
+            case processornamevalue::LGA_64:
+            {
+                return true;
+            }
+            default:
+            {
+                return false;
+            }
+            }
+            return false; // unreachable
+        }
+        
         bool processornamevalueMCInstExpander::isExpandable(const MCInst &MCI) const
         {
             auto opcode = MCI.getOpcode();

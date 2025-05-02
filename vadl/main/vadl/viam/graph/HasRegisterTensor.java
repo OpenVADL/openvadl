@@ -21,11 +21,11 @@ import vadl.viam.RegisterTensor;
 /**
  * Interface to indicate that the implementing class has register file.
  */
-public interface HasRegisterFile {
+public interface HasRegisterTensor {
   /**
    * Get register file.
    */
-  RegisterTensor registerFile();
+  RegisterTensor registerTensor();
 
   /**
    * Checks whether the node has a register file.

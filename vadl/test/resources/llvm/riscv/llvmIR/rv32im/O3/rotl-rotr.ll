@@ -48,16 +48,14 @@ define i64 @rotl_64(i64 %x, i64 %y) nounwind {
 ; CHECK-NEXT: ADDI s1,a2,0
 ; CHECK-NEXT: ADDI s2,a1,0
 ; CHECK-NEXT: ADDI s3,a0,0
-; CHECK-NEXT: LUI ra,%hi(__ashldi3)
-; CHECK-NEXT: JALR ra,%lo(__ashldi3)(ra)
+; CHECK-NEXT: CALL __ashldi3
 ; CHECK-NEXT: ADDI s4,a0,0
 ; CHECK-NEXT: ADDI s5,a1,0
 ; CHECK-NEXT: ADDI a0,zero,64
 ; CHECK-NEXT: SUB a2,a0,s1
 ; CHECK-NEXT: ADDI a0,s3,0
 ; CHECK-NEXT: ADDI a1,s2,0
-; CHECK-NEXT: LUI ra,%hi(__lshrdi3)
-; CHECK-NEXT: JALR ra,%lo(__lshrdi3)(ra)
+; CHECK-NEXT: CALL __lshrdi3
 ; CHECK-NEXT: OR a0,s4,a0
 ; CHECK-NEXT: OR a1,s5,a1
 ; CHECK-NEXT: LW s5,8(sp) # 4-byte Folded Reload
@@ -88,16 +86,14 @@ define i64 @rotr_64(i64 %x, i64 %y) nounwind {
 ; CHECK-NEXT: ADDI s1,a2,0
 ; CHECK-NEXT: ADDI s2,a1,0
 ; CHECK-NEXT: ADDI s3,a0,0
-; CHECK-NEXT: LUI ra,%hi(__lshrdi3)
-; CHECK-NEXT: JALR ra,%lo(__lshrdi3)(ra)
+; CHECK-NEXT: CALL __lshrdi3
 ; CHECK-NEXT: ADDI s4,a0,0
 ; CHECK-NEXT: ADDI s5,a1,0
 ; CHECK-NEXT: ADDI a0,zero,64
 ; CHECK-NEXT: SUB a2,a0,s1
 ; CHECK-NEXT: ADDI a0,s3,0
 ; CHECK-NEXT: ADDI a1,s2,0
-; CHECK-NEXT: LUI ra,%hi(__ashldi3)
-; CHECK-NEXT: JALR ra,%lo(__ashldi3)(ra)
+; CHECK-NEXT: CALL __ashldi3
 ; CHECK-NEXT: OR a0,s4,a0
 ; CHECK-NEXT: OR a1,s5,a1
 ; CHECK-NEXT: LW s5,8(sp) # 4-byte Folded Reload
@@ -228,16 +224,14 @@ define i64 @rotl_64_mask(i64 %x, i64 %y) nounwind {
 ; CHECK-NEXT: ADDI s1,a2,0
 ; CHECK-NEXT: ADDI s2,a1,0
 ; CHECK-NEXT: ADDI s3,a0,0
-; CHECK-NEXT: LUI ra,%hi(__ashldi3)
-; CHECK-NEXT: JALR ra,%lo(__ashldi3)(ra)
+; CHECK-NEXT: CALL __ashldi3
 ; CHECK-NEXT: ADDI s4,a0,0
 ; CHECK-NEXT: ADDI s5,a1,0
 ; CHECK-NEXT: SUB a0,zero,s1
 ; CHECK-NEXT: ANDI a2,a0,63
 ; CHECK-NEXT: ADDI a0,s3,0
 ; CHECK-NEXT: ADDI a1,s2,0
-; CHECK-NEXT: LUI ra,%hi(__lshrdi3)
-; CHECK-NEXT: JALR ra,%lo(__lshrdi3)(ra)
+; CHECK-NEXT: CALL __lshrdi3
 ; CHECK-NEXT: OR a0,s4,a0
 ; CHECK-NEXT: OR a1,s5,a1
 ; CHECK-NEXT: LW s5,8(sp) # 4-byte Folded Reload

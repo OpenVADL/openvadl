@@ -28,7 +28,7 @@ import vadl.viam.graph.dependency.FuncParamNode;
  * using the {@link Graph#isPseudoInstruction()} method. The most
  * important graph node to handle is the {@link vadl.viam.graph.control.InstrCallNode}.</p>
  */
-public class PseudoInstruction extends CompilerInstruction {
+public class PseudoInstruction extends CompilerInstruction implements PrintableInstruction {
 
   private final Assembly assembly;
 
@@ -50,6 +50,12 @@ public class PseudoInstruction extends CompilerInstruction {
     this.assembly = assembly;
   }
 
+  @Override
+  public Identifier identifier() {
+    return identifier;
+  }
+
+  @Override
   public Assembly assembly() {
     return assembly;
   }
