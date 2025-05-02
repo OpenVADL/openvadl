@@ -35,10 +35,9 @@ public class Processor extends Definition {
   private final Abi abi;
 
   @Nullable
-  private final Function start;
-
-  @Nullable
   private final Function stop;
+
+  private final Procedure reset;
 
   @Nullable
   private final Procedure firmware;
@@ -47,13 +46,14 @@ public class Processor extends Definition {
    * Constructs the microprocessor.
    */
   public Processor(Identifier identifier, InstructionSetArchitecture isa, @Nullable Abi abi,
-                   @Nullable Function start, @Nullable Function stop,
-                   @Nullable Procedure firmware, @Nullable String targetName) {
+                   @Nullable Function stop,
+                   Procedure reset, @Nullable Procedure firmware,
+                   @Nullable String targetName) {
     super(identifier);
     this.isa = isa;
     this.abi = abi;
-    this.start = start;
     this.stop = stop;
+    this.reset = reset;
     this.firmware = firmware;
     if (targetName != null) {
       this.targetName = targetName;
@@ -83,20 +83,8 @@ public class Processor extends Definition {
     return isa;
   }
 
-  /**
-   * Returns the start and throws if it isn't set.
-   *
-   * @return the start.
-   */
-  public Function start() {
-    if (start == null) {
-      throw new IllegalStateException("start must be set");
-    }
-    return start;
-  }
-
-  public @Nullable Function startNullable() {
-    return start;
+  public Procedure reset() {
+    return reset;
   }
 
   @Nullable

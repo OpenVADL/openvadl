@@ -106,7 +106,6 @@ import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyPasses.DummyMiaPass;
-import vadl.viam.passes.dummyPasses.DummyMipPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
@@ -393,9 +392,6 @@ public class PassOrders {
 
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
-
-    // TODO: Remove once frontend creates it
-    order.add(new DummyMipPass(config));
 
     // iss function passes
     order

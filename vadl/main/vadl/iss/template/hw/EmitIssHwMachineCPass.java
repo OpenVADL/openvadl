@@ -18,7 +18,6 @@ package vadl.iss.template.hw;
 
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
-import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.iss.codegen.IssFirmwareCodeGenerator;
 import vadl.iss.passes.extensions.MemoryInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
@@ -51,7 +50,7 @@ public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
     vars.put("dram_base", getDramBaseExpr());
-    vars.put("start_addr", getStartAddrExpr(specification));
+    vars.put("start_addr", getStartAddrExpr());
     vars.put("htif_enabled", htifEnabled(specification));
 
     // firmware
@@ -70,10 +69,9 @@ public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
     return "0x80000000";
   }
 
-  private String getStartAddrExpr(Specification specification) {
-    var mip = specification.processor().orElse(null);
-    specification.ensure(mip != null, "No MicroProcessor definition found");
-    return new PureFunctionCodeGenerator(mip.start()).genReturnExpression();
+  private String getStartAddrExpr() {
+    // TODO: Don't hardcode this
+    return "0x80000000";
   }
 
   private boolean htifEnabled(Specification specification) {

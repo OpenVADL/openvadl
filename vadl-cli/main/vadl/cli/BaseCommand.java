@@ -319,7 +319,7 @@ public abstract class BaseCommand implements Callable<Integer> {
                                      | (__|   / / _ \\\\__ \\ __ |    
                                       \\___|_|_\\/_/ \\_\\___/_||_| 
           
-                                   🔥 The vadl compiler crashed 🔥  
+                                 🔥 The OpenVADL compiler crashed 🔥  
           
           This shouldn't have happened, please open an issue with the stacktrace below at:
           https://github.com/OpenVADL/open-vadl/issues/new

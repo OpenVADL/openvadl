@@ -31,6 +31,9 @@ class ParserUtilsTest {
   /**
    * Tests whether all tokens that are accepted as "identifier" by the generated parser
    * are also marked as "ID_TOKENS" in the lookup table.
+   *
+   * <p>If this test fails after adding a keyword to the {@code allowedIdentifierKeywords},
+   * you probably forgot to add this keyword to the {@link ParserUtils#ID_TOKENS}.</p>
    */
   @Test
   void identifierTokens() {

@@ -291,22 +291,19 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(Processor microProcessor) {
-      beforeTraversal(microProcessor);
-      var start = microProcessor.startNullable();
-      if (start != null) {
-        start.accept(this);
-      }
-      var stop = microProcessor.stop();
+    public void visit(Processor processor) {
+      beforeTraversal(processor);
+      var stop = processor.stop();
       if (stop != null) {
         stop.accept(this);
       }
-      var firmware = microProcessor.firmware();
+      var firmware = processor.firmware();
       if (firmware != null) {
         firmware.accept(this);
       }
-      microProcessor.isa().accept(this);
-      afterTraversal(microProcessor);
+      processor.reset().accept(this);
+      processor.isa().accept(this);
+      afterTraversal(processor);
     }
 
     @Override

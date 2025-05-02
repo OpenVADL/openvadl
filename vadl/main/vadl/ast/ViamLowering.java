@@ -91,6 +91,9 @@ import vadl.viam.asm.rules.AsmGrammarRule;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
 import vadl.viam.asm.rules.AsmTerminalRule;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.ProcEndNode;
+import vadl.viam.graph.control.StartNode;
 
 /**
  * The lowering that converts the AST to the VIAM.
@@ -837,13 +840,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(CpuProcessDefinition definition) {
     switch (definition.kind) {
-      case FIRMWARE -> { /* supported */ }
+      case FIRMWARE, RESET -> { /* supported */ }
       default -> throw new RuntimeException(
           "The ViamGenerator does not support %s in `%s` yet".formatted(
               definition.kind,
               definition.getClass().getSimpleName()));
     }
-
     var behavior =
         new BehaviorLowering(this).getProcedureGraph(definition.statement, definition.kind.keyword);
 
@@ -1207,17 +1209,18 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // visitIsa on created isa ast node
     var isa = visitIsa(mergeIsa(definition.implementedIsaNodes));
 
-    // existence already checked in type checker
-    var start = (Function) definition.findCpuFuncDef(CpuFunctionDefinition.BehaviorKind.START)
-        .findFirst()
-        .flatMap(this::fetch).orElseThrow();
-
     var firmware = (Procedure) definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.FIRMWARE)
         .findFirst()
         .flatMap(this::fetch).orElse(null);
 
+    var reset = (Procedure) definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.RESET)
+        .findFirst()
+        .flatMap(this::fetch)
+        .orElseGet(() -> new Procedure(generateIdentifier("reset", definition),
+            new vadl.viam.Parameter[] {}, emptyProcedureGraph("reset behavior")));
+
     var abi = definition.abiNode != null ? (Abi) fetch(definition.abiNode).orElse(null) : null;
-    var mip = new Processor(identifier, isa, abi, start, null, firmware, null);
+    var mip = new Processor(identifier, isa, abi, null, reset, firmware, null);
 
     // FIXME: Remove this, once annotation framework is supported
     mip.addAnnotation(new EnableHtifAnno());
@@ -1615,4 +1618,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     return pseudoInstructions.stream().findFirst().map(x -> (AbiPseudoInstructionDefinition) x);
   }
+
+  public static Graph emptyProcedureGraph(String name) {
+    var graph = new Graph(name);
+    var end = graph.add(new ProcEndNode(new NodeList<>()));
+    graph.add(new StartNode(end));
+    return graph;
+  }
+
 }

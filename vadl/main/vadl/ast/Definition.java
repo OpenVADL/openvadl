@@ -4173,7 +4173,7 @@ class CpuFunctionDefinition extends Definition implements IdentifiableNode {
   }
 
   enum BehaviorKind {
-    START("start"), STOP("stop");
+    STOP("stop");
 
     final String keyword;
 

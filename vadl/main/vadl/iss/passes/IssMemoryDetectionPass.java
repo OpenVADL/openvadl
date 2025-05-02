@@ -18,7 +18,6 @@ package vadl.iss.passes;
 
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
-import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -27,21 +26,17 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.extensions.MemoryInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.types.Type;
 import vadl.utils.Pair;
-import vadl.viam.Constant;
 import vadl.viam.Processor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
-import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 
 /**
  * Collects information about memory regions in the generated ISS.
  * This includes the reset vector of the program counter, which is either
- * the start of the {@link Processor#firmware()} definition (ROM) or the
- * {@link Processor#start()}.
+ * the start of the {@link Processor#firmware()} definition (ROM).
  * It also determines the start and size of the used firmware.
  * If no firmware is specified, the firmware size ({@link MemoryInfo#firmwareSize}) defaults
  * to 0, indicating no firmware.
@@ -67,36 +62,10 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
     var processor = viam.processor().get();
     var firmwareInfo = findFirmwareInfo(processor);
 
-    var pcResetAddress = findPcResetAddress(firmwareInfo, processor);
-
-    var memInfo = new MemoryInfo(pcResetAddress, firmwareInfo.left(), firmwareInfo.right());
+    var memInfo = new MemoryInfo(firmwareInfo.left(), firmwareInfo.right());
     processor.attachExtension(memInfo);
 
     return null;
-  }
-
-  /**
-   * Find the PC reset address by checking the firmware start and `start` definition expression.
-   * If the firmware size is 0, we take the start expression as reset address.
-   */
-  private Constant.Value findPcResetAddress(Pair<BigInteger, Integer> firmwareInfo,
-                                            Processor processor
-  ) {
-    if (firmwareInfo.right().equals(0)) {
-      // we must use the `start` address definition
-      var valNode = getSingleNode(processor.start().behavior(), ReturnNode.class)
-          .value();
-      if (!(valNode instanceof ConstantNode val)) {
-        throw error("Start address not constant", processor.start())
-            .help("Simplify the expression to a constant value.")
-            .build();
-      }
-      return val.constant().asVal().toBits();
-    }
-
-    // we use the firmware start
-    var addressSize = processor.isa().codeMemory().addressType().bitWidth();
-    return Constant.Value.fromInteger(firmwareInfo.left(), Type.bits(addressSize));
   }
 
   /**

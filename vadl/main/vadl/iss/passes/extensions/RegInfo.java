@@ -17,6 +17,7 @@
 package vadl.iss.passes.extensions;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -72,18 +73,21 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
       var dims = renderIndexDims();
       var valueCType = CppTypeMap.getCppTypeNameByVadlType(resultType);
       var nameLower = name().toLowerCase();
-      renderObj = Map.of(
-          "name", name(),
-          "name_lower", nameLower,
-          "name_upper", name().toUpperCase(),
-          "index_dims", dims,
-          "value_width", resultType.bitWidth(),
-          "value_c_type", valueCType,
-          "names", names(),
-          "constraints", renderConstraints(dims),
-          "getter_params", renderGetterArgs(dims),
-          "c_array_def", renderCArrayDef()
-      );
+      var renderParams = renderGetterArgs(dims);
+      renderObj = new HashMap<>();
+      renderObj.put("name", name());
+      renderObj.put("name_lower", nameLower);
+      renderObj.put("name_upper", name().toUpperCase());
+      renderObj.put("index_dims", dims);
+      renderObj.put("value_width", resultType.bitWidth());
+      renderObj.put("value_c_type", valueCType);
+      renderObj.put("names", names());
+      renderObj.put("constraints", renderConstraints(dims));
+      renderObj.put("getter_params", renderParams.isEmpty() ? "" : ", " + renderParams);
+      // as getter_params but without leading comma
+      renderObj.put("getter_params_no_comma", renderParams);
+      renderObj.put("getter_params_post_comma", renderParams.isEmpty() ? "" : renderParams + ", ");
+      renderObj.put("c_array_def", renderCArrayDef());
     }
     return renderObj;
   }
@@ -116,7 +120,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
           return dim.get("index_ctype") + " " + dim.get("arg_name");
         })
         .collect(Collectors.joining(", "));
-    return args.isEmpty() ? args : ", " + args;
+    return args;
   }
 
   private List<?> renderConstraints(List<?> dims) {

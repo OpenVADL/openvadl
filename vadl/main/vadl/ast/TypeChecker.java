@@ -18,6 +18,7 @@ package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
+import static vadl.error.Diagnostic.warning;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -37,6 +38,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.types.BitsType;
@@ -1669,11 +1671,14 @@ public class TypeChecker
       }
     }
 
-    var start = definition.findCpuFuncDef(CpuFunctionDefinition.BehaviorKind.START)
+    var start = definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.RESET)
         .findFirst().orElse(null);
     if (start == null) {
-      errors.add(
-          error("Missing `start` address function.", definition.identifier()).build()
+      DeferredDiagnosticStore.add(
+          warning("Missing `reset` definition.", definition.identifier())
+              .description(
+                  "Without `reset`, the program counter and every other register is initialized with 0x0 by default. ")
+              .build()
       );
     }
 
@@ -1694,29 +1699,14 @@ public class TypeChecker
 
   @Override
   public Void visit(CpuFunctionDefinition definition) {
-    if (definition.kind == CpuFunctionDefinition.BehaviorKind.START) {
-      check(definition.expr);
-      if (definition.expr.type() instanceof ConstantType constantType) {
-        definition.expr = wrapImplicitCast(definition.expr, constantType.closestBits());
-      }
-      var exprType = requireNonNull(definition.expr.type);
-      // FIXME: the type must fit into the memory index (address).
-      if (!(exprType instanceof DataType)) {
-        throw typeMissmatchError(definition.expr, "DataType", exprType);
-      }
-    } else {
-      throw new IllegalStateException("Not implemented behavior kind: " + definition.kind);
-    }
-
-    return null;
+    throw new IllegalStateException("Not implemented behavior kind: " + definition.kind);
   }
 
   @Override
   public Void visit(CpuProcessDefinition definition) {
-    if (definition.kind == CpuProcessDefinition.ProcessKind.FIRMWARE) {
-      check(definition.statement);
-    } else {
-      throwUnimplemented(definition);
+    switch (definition.kind) {
+      case FIRMWARE, RESET -> check(definition.statement);
+      default -> throwUnimplemented(definition);
     }
     return null;
   }

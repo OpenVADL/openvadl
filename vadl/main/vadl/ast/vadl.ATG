@@ -183,7 +183,6 @@ TOKENS
   SOURCE       = "source".
   STACK        = "stack".
   STAGE        = "stage".
-  START        = "start".
   STARTUP      = "startup".
   RESET        = "reset".
   STOP         = "stop".
@@ -1018,8 +1017,7 @@ PRODUCTIONS
 
   cpuFunctionDefinition<out Definition def> (. var start = lookaheadLoc(); Identifier ident = null;.)
   =                                         (. CpuFunctionDefinition.BehaviorKind kind = null; IsId stopWithRef = null; .)
-  ( START                                   (. ident = new Identifier(t.val, loc()); kind = CpuFunctionDefinition.BehaviorKind.START; .)
-  | STOP                                    (. ident = new Identifier(t.val, loc()); kind = CpuFunctionDefinition.BehaviorKind.STOP; .)
+  ( STOP                                    (. ident = new Identifier(t.val, loc()); kind = CpuFunctionDefinition.BehaviorKind.STOP; .)
     [ WITH referenceLiteral<out stopWithRef> ]
     /* TODO Verify if "redirect" is needed - "redirect is unstable and must not be used"
     | REDIRECT
@@ -1855,7 +1853,6 @@ PRODUCTIONS
   | SIGNED
   | SIZE_T
   | STAGE
-  | START
   | STARTUP
   | RESET
   | STOP

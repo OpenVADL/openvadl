@@ -19,7 +19,6 @@ package vadl.iss.passes.extensions;
 import java.math.BigInteger;
 import java.util.Map;
 import vadl.template.Renderable;
-import vadl.viam.Constant;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
 import vadl.viam.Processor;
@@ -48,21 +47,16 @@ public class MemoryInfo extends DefinitionExtension<Processor>
   // if the firmwareSize == 0, then no firmware is emitted
   public final int firmwareSize;
 
-  public final Constant.Value pcResetAddress;
-
   /**
    * Construct the memory info.
    *
-   * @param pcResetAddress The initial PC address on startup.
-   * @param firmwareStart  The start (base) address of the firmware (ROM) memory region.
-   * @param firmwareSize   The size of the ROM memory region.
-   *                       This is {@code 0} if no firmware was specified.
+   * @param firmwareStart The start (base) address of the firmware (ROM) memory region.
+   * @param firmwareSize  The size of the ROM memory region.
+   *                      This is {@code 0} if no firmware was specified.
    */
   public MemoryInfo(
-      Constant.Value pcResetAddress,
       BigInteger firmwareStart,
       int firmwareSize) {
-    this.pcResetAddress = pcResetAddress;
     this.firmwareStart = firmwareStart;
     this.firmwareSize = firmwareSize;
   }
@@ -77,8 +71,7 @@ public class MemoryInfo extends DefinitionExtension<Processor>
   public Map<String, Object> renderObj() {
     return Map.of(
         "rom_start", "0x" + firmwareStart.toString(16),
-        "rom_size", firmwareSize,
-        "pc_reset_addr", pcResetAddress.hexadecimal()
+        "rom_size", firmwareSize
     );
   }
 }
