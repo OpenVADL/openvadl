@@ -10,27 +10,31 @@ instruction set architecture RV32IM extending RV3264IM = {}
 instruction set architecture RV32Zicsr extending RV32IM = {
 
   enumeration CsrDef : Bits<12> = // defined control and status register indices
-    { ustatus  =   0 // 0x000  User mode restricted view of mstatus
-    , uie      =   4 // 0x004  User mode Interrupt Enable
-    , utvec    =   5 // 0x005  User mode Trap VECtor base address
-    , uscratch =  64 // 0x040  User mode SCRATCH
-    , uepc     =  65 // 0x041  User mode Exception Program Counter
-    , ucause   =  66 // 0x042  User mode exception CAUSE
-    , utval    =  67 // 0x043  User mode Trap VALue
-    , uip      =  68 // 0x044  User mode Interrupt Pending
-    , mstatus  = 768 // 0x300  Machine STATUS
-    , misa     = 769 // 0x301  Machine ISA
-    , mie      = 772 // 0x304  Machine Interrupt Enable register
-    , mtvec    = 773 // 0x305  Machine Trap VECtor base address
-    , mtvt     = 775 // 0x307  Machine Trap Vector Table base address
-    , mscratch = 832 // 0x340  Machine SCRATCH
-    , mepc     = 833 // 0x341  Machine Exception Program Counter
-    , mcause   = 834 // 0x342  Machine exception CAUSE
-    , mtval    = 835 // 0x343  Machine Trap VALue
-    , mip      = 836 // 0x344  Machine Interrupt Pending
+    { ustatus  = 0x000  //   0 User mode restricted view of mstatus
+    , uie      = 0x004  //   4 User mode Interrupt Enable
+    , utvec    = 0x005  //   5 User mode Trap VECtor base address
+    , uscratch = 0x040  //  64 User mode SCRATCH
+    , uepc     = 0x041  //  65 User mode Exception Program Counter
+    , ucause   = 0x042  //  66 User mode exception CAUSE
+    , utval    = 0x043  //  67 User mode Trap VALue
+    , uip      = 0x044  //  68 User mode Interrupt Pending
+    , mstatus  = 0x300  // 768 Machine STATUS
+    , misa     = 0x301  // 769 Machine ISA
+    , mie      = 0x304  // 772 Machine Interrupt Enable register
+    , mtvec    = 0x305  // 773 Machine Trap VECtor base address
+    , mtvt     = 0x307  // 775 Machine Trap Vector Table base address
+    , mscratch = 0x340  // 832 Machine SCRATCH
+    , mepc     = 0x341  // 833 Machine Exception Program Counter
+    , mcause   = 0x342  // 834 Machine exception CAUSE
+    , mtval    = 0x343  // 835 Machine Trap VALue
+    , mip      = 0x344  // 836 Machine Interrupt Pending
     }
 
-  enumeration CsrImpl : Bits<12> =  // implemented control and status register indices
+  //constant CsrIndexSize = if CsrImpl::ImplLength < 16 then 4 else if CsrImpl::ImplLength < 32 then 5 else 6
+  constant CsrIndexSize = 5
+  using    CsrImplIndex = Bits<CsrIndexSize>
+
+  enumeration CsrImpl : CsrImplIndex =  // implemented control and status register indices
     { ustatus        // 0x000  User mode restricted view of mstatus
     , uie            // 0x004  User mode Interrupt Enable
     , utvec          // 0x005  User mode Trap VECtor base address
@@ -52,7 +56,7 @@ instruction set architecture RV32Zicsr extending RV32IM = {
     , ImplLength     // count of implemented registers
     }
 
-  function CsrDefToImpl (csr : Bits<12>) -> Bits<12> = // map defined to index to implemented index
+  function CsrDefToImpl (csr : Bits<12>) -> CsrImplIndex = // map defined to index to implemented index
     match csr with
       { CsrDef::ustatus  => CsrImpl::ustatus        // 0x000  User mode restricted view of mstatus
       , CsrDef::uie      => CsrImpl::uie            // 0x004  User mode Interrupt Enable
@@ -72,7 +76,7 @@ instruction set architecture RV32Zicsr extending RV32IM = {
       , CsrDef::mcause   => CsrImpl::mcause         // 0x342  Machine exception CAUSE
       , CsrDef::mtval    => CsrImpl::mtval          // 0x343  Machine Trap VALue
       , CsrDef::mip      => CsrImpl::mip            // 0x344  Machine Interrupt Pending
-      , _                => -1 as Bits<12>
+      , _                => CsrImpl::ImplLength     // invalid csr register
       }
 
   function CsrString(index : Bits<12>) -> String = 
@@ -98,33 +102,55 @@ instruction set architecture RV32Zicsr extending RV32IM = {
       , _                => hex( index )   
       }
 
-  register CSR : Regs<CsrImpl::ImplLength>
+//  register CSR : Regs<CsrImpl::ImplLength>
+  register file CSR : CsrImplIndex -> Regs
 
   exception IllegalInstruction = {}
 
-  instruction CSRRW : Itype =            // atomic CSR Read / Write
-    let csridx = CsrDefToImpl(imm) in
-      if csridx = -1 as Bits<12> then
-        raise {}  // IllegalInstruction
-      else
-        let xrs1 = X(rs1) in {
-          if rd != 0 then
-            X(rd)     := CSR(csridx)
-          CSR(csridx) := xrs1
-        }
-  encoding CSRRW = { opcode = 0b111'0011, funct3 = 0b001 }
-  assembly CSRRW = (mnemonic, ' ', register(rd), ',', CsrString(imm), ',', register(rs1))
+  model CsrBaseInstr (name : Id, funct3 : Bin, offset : Int, csrStat : Stat) : IsaDefs = {
+    instruction $name : Itype =
+      let csridx = CsrDefToImpl(imm) in
+        if csridx = CsrImpl::ImplLength then
+          raise IllegalInstruction         // IllegalInstruction
+        else
+          $csrStat
+    encoding $name = { opcode = 0b111'0011, funct3 = $funct3 + $offset}
+    assembly $name = (mnemonic, ' ', register(rd), ',', CsrString(imm), ',', register(rs1))
+    }
 
-  instruction CSRRS : Itype =           // atomic CSR Read and Set bits
-    let csridx = CsrDefToImpl(imm) in
-      if csridx = -1 as Bits<12> then
-        raise {}  // IllegalInstruction
-      else
-        let csr_csridx = CSR(csridx) in {
-          if rs1 != 0 then
-            CSR(csridx) := csr_csridx | X(rs1)
-          X(rd)         := csr_csridx
-      }
-  encoding CSRRS = { opcode = 0b111'0011, funct3 = 0b010 }
-  assembly CSRRS = (mnemonic, ' ', register(rd), ',', CsrString(imm), ',', register(rs1))
+  /*
+   *  | Instruction |  rd | rs1 |read CSR?|write CSR?|
+   *  | CSRRW/I     |  x0 |  -  |    no   |    yes   |
+   *  | CSRRW/I     | !x0 |  -  |   yes   |    yes   |
+   *  | CSRRS/C/I   |  -  |  x0 |   yes   |     no   |
+   *  | CSRRS/C/I   |  -  | !x0 |   yes   |    yes   |
+   */
+
+  // extend = "" or "I", offset = 0 or 4, rs1imm = X(rs1) or rs1 as Regs
+  model CsrInstr (extend : Str, offset : Int, rs1imm : Ex) : IsaDefs = {
+    $CsrBaseInstr (ExtendId(CSRRW, $extend) ; 0b001 ; $offset ; // atomic CSR Read / Write
+            let rs1imm = $rs1imm in {
+              if rd != 0 then
+                X(rd)     := CSR(csridx)
+              CSR(csridx) := rs1imm
+            }
+      )
+    $CsrBaseInstr (ExtendId(CSRRS, $extend) ; 0b010 ; $offset ; // atomic CSR Read and Set bits
+            let csr_csridx = CSR(csridx) in {
+              if rs1 != 0 then
+                CSR(csridx) := csr_csridx | $rs1imm
+              X(rd)         := csr_csridx
+            }
+      )
+    $CsrBaseInstr (ExtendId(CSRRC, $extend) ; 0b011 ; $offset ; // atomic CSR Read and Clear bits
+            let csr_csridx = CSR(csridx) in {
+              if rs1 != 0 then
+                CSR(csridx) := csr_csridx & ( -1 as Regs ^ $rs1imm)
+              X(rd)         := csr_csridx
+            }
+      )
   }
+
+  $CsrInstr (  "" ; 0 ; X(rs1)      )    // CSR register instructions
+  $CsrInstr ( "I" ; 4 ; rs1 as Regs )    // CSR immediate instructions
+}
