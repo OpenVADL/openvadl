@@ -39,4 +39,4 @@ instruction set architecture ValidRegFileWrites = {
   }
 }
 
-processor TEST implements ValidRegFileWrites = { start = 0x1000 }
+processor TEST implements ValidRegFileWrites = { }

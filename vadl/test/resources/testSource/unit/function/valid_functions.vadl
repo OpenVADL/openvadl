@@ -24,5 +24,4 @@ function outSideISA -> Bits<30> = 20
 function callFuncInsideISA -> Bits<30> = FunctionTest::noArg
 
 processor CPU implements FunctionTest = {
-  start = 0x80000000
-}
+  }

@@ -271,5 +271,5 @@ assembly description ASM for ABI = {
 }
 
 processor Spike implements RV32IM with ABI = {
-  start = 0x80000000
+  reset = PC := 0x80000000
 }

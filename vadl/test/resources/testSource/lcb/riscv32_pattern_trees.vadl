@@ -283,5 +283,4 @@ application binary interface ABI for RV32IM = {
 }
 
 processor CPU implements RV32IM with ABI = {
-  start = 0x80000000
-}
+  }

@@ -127,7 +127,7 @@ application binary interface ABI for RV64IM = {
 }
 
 processor Spike implements RV64IM with ABI = {
-  constant start_addr = 0x80000000
+  constant start_addr = 0x1000
 
   reset = {
     PC := start_addr
