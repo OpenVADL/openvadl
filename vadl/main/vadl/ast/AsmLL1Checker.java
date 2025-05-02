@@ -339,7 +339,7 @@ class FirstSetComputer implements AsmGrammarEntityVisitor<Set<AsmToken>> {
     }
 
     Objects.requireNonNull(entity.id);
-    var invocationSymbolOrigin = entity.symbolTable().resolveNode(entity.id.name);
+    var invocationSymbolOrigin = entity.symbolTable().resolve(entity.id);
 
     if (invocationSymbolOrigin instanceof AsmGrammarRuleDefinition rule) {
       if (firstSetCache.containsKey(rule.identifier().name)) {
@@ -533,7 +533,7 @@ class FollowSetSetComputer implements AsmGrammarEntityVisitor<Void> {
       return null;
     }
 
-    var invocationSymbolOrigin = entity.symbolTable().resolveNode(entity.id.name);
+    var invocationSymbolOrigin = entity.symbolTable().resolve(entity.id);
     if (invocationSymbolOrigin == null) {
       return null;
     }
@@ -609,7 +609,7 @@ class EntityDeletableComputer implements AsmGrammarEntityVisitor<Boolean> {
       return false;
     }
 
-    var invocationSymbolOrigin = entity.symbolTable().resolveNode(entity.id.name);
+    var invocationSymbolOrigin = entity.symbolTable().resolve(entity.id);
     if (invocationSymbolOrigin == null) {
       return false;
     }

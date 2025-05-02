@@ -1372,7 +1372,7 @@ public class TypeChecker
   private void validateLocalVarAssignment(AsmGrammarElementDefinition definition) {
     if (definition.attribute != null && definition.isAttributeLocalVar) {
       var localVarDefinition = (AsmGrammarLocalVarDefinition) definition.symbolTable()
-          .resolveNode(definition.attribute.name);
+          .resolve(definition.attribute);
       if (localVarDefinition == null) {
         throw buildIllegalStateException(definition,
             "Assigning to unknown local variable %s.".formatted(definition.attribute.name));
@@ -1450,7 +1450,7 @@ public class TypeChecker
               + "and does not reference a grammar rule / function / local variable.");
     }
 
-    var invocationSymbolOrigin = definition.symbolTable().resolveNode(definition.id.name);
+    var invocationSymbolOrigin = definition.symbolTable().resolve(definition.id);
     if (invocationSymbolOrigin == null) {
       throw buildIllegalStateException(definition, "Symbol %s used in grammar rule does not exist."
           .formatted(definition.id.name));
@@ -1705,7 +1705,10 @@ public class TypeChecker
 
   @Override
   public Void visit(CpuMemoryRegionDefinition definition) {
-    throw new IllegalStateException("Not implemented: " + definition.kind);
+    if (definition.stmt != null) {
+      check(definition.stmt);
+    }
+    return null;
   }
 
   @Override
@@ -2567,7 +2570,7 @@ public class TypeChecker
     // If no target matches, we can assume a slice and index call (depending on the type).
 
     var callTarget = requireNonNull(expr.symbolTable)
-        .findAs(expr.target.path().pathToString(), Definition.class);
+        .findAs(expr.target.path(), Definition.class);
 
     // Handle register File
     if (callTarget instanceof RegisterFileDefinition

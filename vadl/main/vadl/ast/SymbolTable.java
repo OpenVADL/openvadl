@@ -186,23 +186,32 @@ class SymbolTable {
   }
 
   @Nullable
-  Node resolveNode(String name) {
-    var symbol = resolveSymbol(name);
+  Node resolve(Identifier ident) {
+    var symbol = resolveSymbol(ident.name);
     if (!(symbol instanceof AstSymbol astSymbol)) {
       return null;
     }
-
+    ident.target = astSymbol.origin;
     return astSymbol.origin;
   }
 
   @Nullable
-  Node resolveNodePath(List<String> path) {
-    var symbol = resolveSymbolPath(path);
+  Node resolve(IdentifierPath path) {
+    var symbol = resolveSymbolPath(path.pathToSegments());
     if (!(symbol instanceof AstSymbol astSymbol)) {
       return null;
     }
-
+    path.target = astSymbol.origin;
     return astSymbol.origin;
+  }
+
+  @Nullable
+  Node resolve(IsId id) {
+    return switch (id) {
+      case Identifier ident -> resolve(ident);
+      case IdentifierPath path -> resolve(path);
+      default -> throw new IllegalArgumentException("Illegal identifier type: " + id.getClass());
+    };
   }
 
   @Nullable
@@ -229,20 +238,9 @@ class SymbolTable {
     return null;
   }
 
-  <T extends Node> @Nullable T findAs(IdentifierPath usage, Class<T> type) {
-    var origin = resolveNodePath(usage.pathToSegments());
-    if (type.isInstance(origin)) {
-      return type.cast(origin);
-    }
-    return null;
-  }
 
-  <T extends Node> @Nullable T findAs(Identifier usage, Class<T> type) {
-    return findAs(usage.name, type);
-  }
-
-  <T extends Node> @Nullable T findAs(String name, Class<T> type) {
-    var origin = resolveNode(name);
+  <T extends Node> @Nullable T findAs(IsId usage, Class<T> type) {
+    var origin = resolve(usage);
     if (type.isInstance(origin)) {
       return type.cast(origin);
     }
@@ -250,17 +248,17 @@ class SymbolTable {
   }
 
   // FIXME: I don't like how it's called require but still returns null
-  <T extends Node> @Nullable T requireAs(Identifier usage, Class<T> type) {
-    var origin = resolveNode(usage.name);
+  <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
+    var origin = resolve(usage);
     if (type.isInstance(origin)) {
       return type.cast(origin);
     }
 
     if (origin == null) {
-      errors.add(error("Unknown name " + usage.name, usage).build());
+      errors.add(error("Unknown name " + usage.pathToString(), usage).build());
     } else {
       // FIXME: write about how this is the wrong type.
-      errors.add(error("Unknown name " + usage.name, usage).build());
+      errors.add(error("Unknown name " + usage.pathToString(), usage).build());
     }
     return null;
   }
@@ -908,6 +906,17 @@ class SymbolTable {
     }
 
     @Override
+    public Void visit(CpuMemoryRegionDefinition def) {
+      beforeTravel(def);
+
+      def.symbolTable().requireAs(def.memoryRef, MemoryDefinition.class);
+
+      def.children().forEach(this::travel);
+      afterTravel(def);
+      return null;
+    }
+
+    @Override
     public Void visit(InstructionCallStatement statement) {
       beforeTravel(statement);
 
@@ -1024,7 +1033,7 @@ class SymbolTable {
       if (definition.attribute != null) {
         // If attrSymbol is not null, attribute refers to local variable
         // Else attribute is handled by matching in the AsmParser
-        var attrSymbol = definition.symbolTable().resolveNode(definition.attribute.name);
+        var attrSymbol = definition.symbolTable().resolve(definition.attribute);
         definition.isAttributeLocalVar = attrSymbol instanceof AsmGrammarLocalVarDefinition;
       }
 
