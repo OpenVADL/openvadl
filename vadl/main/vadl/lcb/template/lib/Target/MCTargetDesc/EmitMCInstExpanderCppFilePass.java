@@ -47,7 +47,6 @@ import vadl.template.Renderable;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
-import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 
 /**
@@ -230,7 +229,8 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
         lcbConfiguration().targetName().value().toLowerCase(),
         "assemblyCompilerInstructions", Streams.concat(
             constantSequences.stream().map(x -> x.identifier().simpleName()),
-            Stream.concat(registerAdjustmentSequences.stream().map(x -> x.identifier().simpleName()),
+            Stream.concat(
+                registerAdjustmentSequences.stream().map(x -> x.identifier().simpleName()),
                 loadInstructions)
         ).toList(),
         "compilerInstructions", Stream.concat(pseudoInstructions.stream(),
