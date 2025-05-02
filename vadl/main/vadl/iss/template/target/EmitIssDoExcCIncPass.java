@@ -54,7 +54,7 @@ public class EmitIssDoExcCIncPass extends IssTemplateRenderingPass {
   }
 
   private List<String> doExcFuncs(Specification specification) {
-    var isa = specification.mip().get().isa();
+    var isa = specification.processor().get().isa();
     var excInfo = isa.expectExtension(ExceptionInfo.class);
 
     return excInfo.entries().stream()

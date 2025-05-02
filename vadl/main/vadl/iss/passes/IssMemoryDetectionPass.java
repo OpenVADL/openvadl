@@ -30,7 +30,7 @@ import vadl.pass.PassResults;
 import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.viam.Constant;
-import vadl.viam.MicroProcessor;
+import vadl.viam.Processor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.control.ReturnNode;
@@ -40,8 +40,8 @@ import vadl.viam.graph.dependency.WriteMemNode;
 /**
  * Collects information about memory regions in the generated ISS.
  * This includes the reset vector of the program counter, which is either
- * the start of the {@link MicroProcessor#firmware()} definition (ROM) or the
- * {@link MicroProcessor#start()}.
+ * the start of the {@link Processor#firmware()} definition (ROM) or the
+ * {@link Processor#start()}.
  * It also determines the start and size of the used firmware.
  * If no firmware is specified, the firmware size ({@link MemoryInfo#firmwareSize}) defaults
  * to 0, indicating no firmware.
@@ -64,7 +64,7 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-    var processor = viam.mip().get();
+    var processor = viam.processor().get();
     var firmwareInfo = findFirmwareInfo(processor);
 
     var pcResetAddress = findPcResetAddress(firmwareInfo, processor);
@@ -80,7 +80,7 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
    * If the firmware size is 0, we take the start expression as reset address.
    */
   private Constant.Value findPcResetAddress(Pair<BigInteger, Integer> firmwareInfo,
-                                            MicroProcessor processor
+                                            Processor processor
   ) {
     if (firmwareInfo.right().equals(0)) {
       // we must use the `start` address definition
@@ -102,7 +102,7 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
   /**
    * Find the start and size of the firmware written to memory.
    */
-  private Pair<BigInteger, Integer> findFirmwareInfo(MicroProcessor processor) {
+  private Pair<BigInteger, Integer> findFirmwareInfo(Processor processor) {
     var firmware = processor.firmware();
     if (firmware == null) {
       return Pair.of(BigInteger.ZERO, 0);

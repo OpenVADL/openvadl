@@ -29,4 +29,4 @@ instruction set architecture RegDualBranch = {
   }
 }
 
-micro processor TEST implements RegDualBranch =  { start = 0x1000 }
+processor TEST implements RegDualBranch =  { start = 0x1000 }

@@ -81,7 +81,7 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    viam.mip().ifPresent(m -> m.isa().ownInstructions()
+    viam.processor().ifPresent(m -> m.isa().ownInstructions()
         .forEach(i -> new OpDecomposer(i.behavior(), configuration().targetSize())
             .decompose())
     );

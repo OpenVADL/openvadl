@@ -883,7 +883,7 @@ class SymbolTable {
     }
 
     @Override
-    public Void visit(MicroProcessorDefinition definition) {
+    public Void visit(ProcessorDefinition definition) {
       beforeTravel(definition);
 
       for (IsId implementedIsa : definition.implementedIsas) {

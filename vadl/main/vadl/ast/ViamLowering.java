@@ -59,8 +59,8 @@ import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Memory;
-import vadl.viam.MicroProcessor;
 import vadl.viam.Procedure;
+import vadl.viam.Processor;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
@@ -1198,7 +1198,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
-  public Optional<vadl.viam.Definition> visit(MicroProcessorDefinition definition) {
+  public Optional<vadl.viam.Definition> visit(ProcessorDefinition definition) {
     var identifier = generateIdentifier(definition.viamId, definition.identifier());
     // create empty list of ast definitions
     // for each isa in mip add definitions to definition list
@@ -1216,7 +1216,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .flatMap(this::fetch).orElse(null);
 
     var abi = definition.abiNode != null ? (Abi) fetch(definition.abiNode).orElse(null) : null;
-    var mip = new MicroProcessor(identifier, isa, abi, start, null, firmware, null);
+    var mip = new Processor(identifier, isa, abi, start, null, firmware, null);
 
     // FIXME: Remove this, once annotation framework is supported
     mip.addAnnotation(new EnableHtifAnno());

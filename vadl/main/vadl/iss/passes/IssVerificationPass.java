@@ -86,7 +86,7 @@ public class IssVerificationPass extends AbstractIssPass {
   @SuppressWarnings("UnusedVariable")
   @Deprecated
   private void checkMipExists(Specification viam, List<DiagnosticBuilder> diagnostics) {
-    if (viam.mip().isEmpty()) {
+    if (viam.processor().isEmpty()) {
       diagnostics.add(
           error("No Processor Definition found",
               viam)

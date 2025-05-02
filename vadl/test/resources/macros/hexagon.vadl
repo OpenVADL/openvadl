@@ -1363,7 +1363,7 @@ application binary interface ABI for QDSP6 =
 {
 }
 
-micro processor CPU implements QDSP6 with ABI =
+processor CPU implements QDSP6 with ABI =
 {
   start = 0x80000000
 

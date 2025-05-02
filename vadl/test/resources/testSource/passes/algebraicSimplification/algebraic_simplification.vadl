@@ -33,4 +33,4 @@ instruction set architecture Tests = {
   }
 }
 
-micro processor TEST implements Tests = { start = 0x1000 }
+processor TEST implements Tests = { start = 0x1000 }

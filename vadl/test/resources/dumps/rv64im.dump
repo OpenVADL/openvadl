@@ -5246,7 +5246,7 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . : ' Identifier name: "rs1" type: null
 . : ' Identifier name: "imm" type: null
 . : ' Identifier name: "imm" type: null
-MicroProcessorDefinition name: "Spike"
+ProcessorDefinition name: "Spike"
 . Identifier name: "RV64IM" type: null
 . Identifier name: "ABI" type: null
 . CpuFunctionDefinition name: "start"

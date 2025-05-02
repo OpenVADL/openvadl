@@ -26,8 +26,8 @@ import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
-import vadl.viam.MicroProcessor;
 import vadl.viam.Parameter;
+import vadl.viam.Processor;
 import vadl.viam.Specification;
 import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.graph.Graph;
@@ -37,7 +37,7 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
- * Adds a hardcoded RISC-V {@link MicroProcessor} definition to the VIAM specification.
+ * Adds a hardcoded RISC-V {@link Processor} definition to the VIAM specification.
  * This is deleted as soon as the frontend can handle the translation.
  */
 public class DummyMipPass extends Pass {
@@ -55,7 +55,7 @@ public class DummyMipPass extends Pass {
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    if (viam.mip().isPresent()) {
+    if (viam.processor().isPresent()) {
       return null;
     }
 
@@ -68,7 +68,7 @@ public class DummyMipPass extends Pass {
     }
 
     var ident = Identifier.noLocation("VADL");
-    var mip = new MicroProcessor(
+    var mip = new Processor(
         ident,
         isa,
         abi,

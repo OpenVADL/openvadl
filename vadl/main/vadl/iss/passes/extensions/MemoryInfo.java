@@ -22,26 +22,26 @@ import vadl.template.Renderable;
 import vadl.viam.Constant;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionExtension;
-import vadl.viam.MicroProcessor;
+import vadl.viam.Processor;
 
 /**
- * A {@link MicroProcessor} extension containing information about the memory layout and regions
+ * A {@link Processor} extension containing information about the memory layout and regions
  * in the generated QEMU frontend.
  * This includes the PC reset vector address, which defines the initial(reset) value of
  * the program counter during simulation.
  *
- * <p>It also contains the {@link MicroProcessor#firmware()} (ROM) start and size.
+ * <p>It also contains the {@link Processor#firmware()} (ROM) start and size.
  * If the specification does not specify firmware, the firmwareSize is 0, indicating
  * no firmware.
  *
- * <p>This information is collected and added to the {@link MicroProcessor} by the
+ * <p>This information is collected and added to the {@link Processor} by the
  * {@link vadl.iss.passes.IssMemoryDetectionPass}.</p>
  *
  * @see vadl.iss.passes.IssMemoryDetectionPass
  * @see vadl.iss.codegen.IssFirmwareCodeGenerator
- * @see MicroProcessor
+ * @see Processor
  */
-public class MemoryInfo extends DefinitionExtension<MicroProcessor>
+public class MemoryInfo extends DefinitionExtension<Processor>
     implements Renderable {
 
   public final BigInteger firmwareStart;
@@ -70,7 +70,7 @@ public class MemoryInfo extends DefinitionExtension<MicroProcessor>
 
   @Override
   public Class<? extends Definition> extendsDefClass() {
-    return MicroProcessor.class;
+    return Processor.class;
   }
 
   @Override

@@ -18,4 +18,4 @@ instruction set architecture PcTest = {
   }
 }
 
-micro processor TEST implements PcTest = {}
+processor TEST implements PcTest = {}

@@ -27,7 +27,7 @@ import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.ExceptionInfo;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
-import vadl.viam.MicroProcessor;
+import vadl.viam.Processor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.StartNode;
@@ -83,7 +83,7 @@ public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
 
   /**
    * Produces the {@code setup_rom_reset_vec()} function setup the ROM, which correspond
-   * to the {@link MicroProcessor#firmware()} definition in the specification.
+   * to the {@link Processor#firmware()} definition in the specification.
    *
    * @return the full function code, including signature.
    */

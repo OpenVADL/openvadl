@@ -1639,7 +1639,7 @@ public class TypeChecker
   }
 
   @Override
-  public Void visit(MicroProcessorDefinition definition) {
+  public Void visit(ProcessorDefinition definition) {
     definition.definitions.forEach(this::check);
 
     // FIXME: Do we need to limit certain operations here?

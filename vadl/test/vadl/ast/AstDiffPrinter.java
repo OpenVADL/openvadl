@@ -36,8 +36,8 @@ public class AstDiffPrinter {
             && expectedDef instanceof InstructionSetDefinition expectedIsa) {
           return "Top-level definition %d:\n%s".formatted(i, printDiff(actualIsa, expectedIsa));
         }
-        if (actualDef instanceof MicroProcessorDefinition actualMiP
-            && expectedDef instanceof MicroProcessorDefinition expectedMiP) {
+        if (actualDef instanceof ProcessorDefinition actualMiP
+            && expectedDef instanceof ProcessorDefinition expectedMiP) {
           return "Top-level definition %d:\n%s".formatted(i, printDiff(actualMiP, expectedMiP));
         }
         StringBuilder actualPretty = new StringBuilder();
@@ -85,8 +85,8 @@ public class AstDiffPrinter {
     return "Expected:\n%s\nActual:\n%s\n".formatted(expectedPretty, actualPretty);
   }
 
-  private static String printDiff(MicroProcessorDefinition actual,
-                                  MicroProcessorDefinition expected) {
+  private static String printDiff(ProcessorDefinition actual,
+                                  ProcessorDefinition expected) {
     if (actual.definitions.size() != expected.definitions.size()) {
       return "Mismatched definitions: Expected %d, Actual %d".formatted(
           expected.definitions.size(), actual.definitions.size());
