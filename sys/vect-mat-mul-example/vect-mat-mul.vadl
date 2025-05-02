@@ -1,0 +1,55 @@
+// ISA with Vector Matrix Multiplication
+// ./gradlew run --args="check vect-mat-mul.vadl"
+// The type checker can not handle this.
+// We use this only to see if the parser accepts it.
+
+instruction set architecture VMM = {
+  constant WSize   = 4
+
+  using Byte       = Bits<8>
+  using Word       = Byte<WSize>
+  using Address    = Word
+  using Index      = Bits<5>
+
+  memory MEM : Address -> Byte
+  register file X  : Index -> Word
+
+  format frmt : Word =
+  { op     : Bits<7>
+  , rd     : Index
+  , rs1    : Index
+  , rs2    : Index
+  , func10 : Bits<10>
+  }
+
+
+  constant VEL     = 6           // Words in a Vector
+  constant VBytes  = VEL*WSize
+  constant Rows    = 4           // Rows  in a Matrix
+
+  using Vector   = Word<VEL>
+  using Matrix   = Vector<Rows>
+
+  register file V  : Index -> Vector
+  register file M  : Index -> Matrix
+
+  instruction LV : frmt = { V(rd) := MEM< VBytes >(X(rs1)) }
+
+  instruction SV : frmt = { MEM< VBytes >(X(rd)) := V(rs1) }
+
+  instruction LM : frmt = {
+    M(rd) := forall i in (Row-1)..0 tensor
+      //            addr   + i * stride
+      MEM< VBytes >(X(rs1) + i * X(rs2))
+  }
+
+  instruction VMM : frmt = {
+    let v = V(rs1) in                         // Input vector has 'Row' elements
+    let m = M(rs2) in
+    let mult = forall i in (Row-1)..0, j in (VEL-1)..0 tensor
+      v(i) as UInt<32> * m(i)(j) in
+    let mac =  forall j in (VEL-1)..0 tensor  // Output vector has 'VEL' elements
+              (forall i in (Row-1)..0 fold + with mult(i)(j)) in
+    V(rd) := mac
+  }
+} // End of instruction set architecture VMM
