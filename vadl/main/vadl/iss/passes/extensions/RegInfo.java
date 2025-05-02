@@ -66,21 +66,25 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return reg().simpleName();
   }
 
+  public String valueCType() {
+    return CppTypeMap.getCppTypeNameByVadlType(reg().resultType(reg().maxNumberOfAccessIndices()));
+  }
+
   @Override
+  @SuppressWarnings("VariableDeclarationUsageDistance")
   public Map<String, Object> renderObj() {
     if (renderObj == null) {
-      var resultType = reg().resultType(reg().maxNumberOfAccessIndices());
       var dims = renderIndexDims();
-      var valueCType = CppTypeMap.getCppTypeNameByVadlType(resultType);
       var nameLower = name().toLowerCase();
       var renderParams = renderGetterArgs(dims);
+      var resultType = reg().resultType(reg().maxNumberOfAccessIndices());
       renderObj = new HashMap<>();
       renderObj.put("name", name());
       renderObj.put("name_lower", nameLower);
       renderObj.put("name_upper", name().toUpperCase());
       renderObj.put("index_dims", dims);
       renderObj.put("value_width", resultType.bitWidth());
-      renderObj.put("value_c_type", valueCType);
+      renderObj.put("value_c_type", valueCType());
       renderObj.put("names", names());
       renderObj.put("constraints", renderConstraints(dims));
       renderObj.put("getter_params", renderParams.isEmpty() ? "" : ", " + renderParams);

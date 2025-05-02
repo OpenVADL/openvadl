@@ -1619,7 +1619,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return pseudoInstructions.stream().findFirst().map(x -> (AbiPseudoInstructionDefinition) x);
   }
 
-  public static Graph emptyProcedureGraph(String name) {
+  /**
+   * Constructs an empty graph for a procedure.
+   */
+  private static Graph emptyProcedureGraph(String name) {
     var graph = new Graph(name);
     var end = graph.add(new ProcEndNode(new NodeList<>()));
     graph.add(new StartNode(end));

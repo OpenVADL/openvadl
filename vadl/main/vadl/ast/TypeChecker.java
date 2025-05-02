@@ -1677,7 +1677,8 @@ public class TypeChecker
       DeferredDiagnosticStore.add(
           warning("Missing `reset` definition.", definition.identifier())
               .description(
-                  "Without `reset`, the program counter and every other register is initialized with 0x0 by default. ")
+                  "Without `reset`, the program counter and every other "
+                      + "register is initialized with 0x0 by default. ")
               .build()
       );
     }

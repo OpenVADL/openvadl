@@ -22,9 +22,15 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.viam.Procedure;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
+/**
+ * Generates the code for the {@link vadl.viam.Processor#reset()} definition.
+ * It runs in the {@code cpu.c#reset_hold} callback, which takes care of setting up the
+ * CPU state after a reset.
+ */
 public class IssResetGen extends IssProcGen {
 
   private final Procedure reset;
@@ -49,12 +55,23 @@ public class IssResetGen extends IssProcGen {
     ctx().gen(toHandle.value()).wr(")");
   }
 
+  @Override
+  public void handle(CGenContext<Node> ctx, ReadRegTensorNode node) {
+    // use register variables defined at start
+    ctx().wr(readRegVariable(node));
+  }
+
+  /**
+   * Generate the C-Code of the reset definition.
+   */
   public String fetch() {
+    ctx().spacedIn();
+    // we read all used registers at the start
+    initReadRegs(reset.behavior());
+    // then we generate c code from the graph
     var start = getSingleNode(reset.behavior(), StartNode.class);
     var current = start.next();
-    ctx()
-        .spacedIn()
-        .gen(current);
+    ctx().gen(current);
     return builder().toString();
   }
 
