@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -136,9 +137,9 @@ public class GenerateLinkerComponentsPass extends Pass {
     final var fixups = new ArrayList<Fixup>();
     final var relocationsBeforeElfExpansion = new ArrayList<RelocationsBeforeElfExpansion>();
 
-
     variantKinds.add(VariantKind.none());
-    variantKinds.add(VariantKind.invalid());
+    var pltVariantKind = VariantKind.plt();
+    variantKinds.add(pltVariantKind);
 
     var relocations =
         viam.isa().map(isa -> isa.ownRelocations().stream()).orElseGet(Stream::empty).toList();
@@ -242,6 +243,13 @@ public class GenerateLinkerComponentsPass extends Pass {
       variantKinds.add(variantKind);
       variantStore.decodeVariantKinds.put(fieldAccess, variantKind);
     }
+
+    var modifier = new Modifier("MO_PLT", CompilerRelocation.Kind.ABSOLUTE, Optional.empty());
+    modifiers.add(modifier);
+
+    // Needs to be the last one.
+    variantKinds.add(VariantKind.invalid());
+    linkModifierToVariantKind.add(Pair.of(modifier, pltVariantKind));
 
     return new Output(
         modifiers,
