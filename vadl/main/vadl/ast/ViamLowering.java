@@ -814,6 +814,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     ));
   }
 
+  @Override
+  public Optional<vadl.viam.Definition> visit(CpuMemoryRegionDefinition definition) {
+    throw new IllegalStateException("CPU memory regions are not supported yet.");
+  }
+
   private <T extends Definition & IdentifiableNode> Function produceFunction(
       T definition,
       List<Parameter> params,

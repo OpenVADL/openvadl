@@ -1704,6 +1704,11 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(CpuMemoryRegionDefinition definition) {
+    throw new IllegalStateException("Not implemented: " + definition.kind);
+  }
+
+  @Override
   public Void visit(CpuProcessDefinition definition) {
     switch (definition.kind) {
       case FIRMWARE, RESET -> check(definition.statement);

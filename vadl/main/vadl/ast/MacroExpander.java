@@ -796,6 +796,13 @@ class MacroExpander
   }
 
   @Override
+  public Definition visit(CpuMemoryRegionDefinition definition) {
+    return new CpuMemoryRegionDefinition(definition.id, definition.kind, definition.memoryRef,
+        definition.stmt == null ? null : expandStatement(definition.stmt), copyLoc(definition.loc))
+        .withAnnotations(expandAnnotations(definition.annotations));
+  }
+
+  @Override
   public Definition visit(CpuProcessDefinition definition) {
     return new CpuProcessDefinition(definition.kind, definition.startupOutputs,
         definition.statement.accept(this), copyLoc(definition.loc)

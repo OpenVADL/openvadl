@@ -501,6 +501,15 @@ public class Ungrouper
   }
 
   @Override
+  public Void visit(CpuMemoryRegionDefinition definition) {
+    ungroupAnnotations(definition);
+    if (definition.stmt != null) {
+      definition.stmt.accept(this);
+    }
+    return null;
+  }
+
+  @Override
   public Void visit(CpuProcessDefinition definition) {
     ungroupAnnotations(definition);
     definition.statement.accept(this);

@@ -169,11 +169,15 @@ TOKENS
   PROGRAM      = "program".
   PSEUDO       = "pseudo".
   RAISE        = "raise".
+  RAM          = "RAM".
   READ         = "read".
   RECORD       = "record".
   REGISTER     = "register".
+  REGION       = "region".
   RELOCATION   = "relocation".
+  RESET        = "reset".
   RETURN       = "return".
+  ROM          = "ROM".
   SAVED        = "saved".
   SEQUENCE     = "sequence".
   SET          = "set".
@@ -184,7 +188,6 @@ TOKENS
   STACK        = "stack".
   STAGE        = "stage".
   STARTUP      = "startup".
-  RESET        = "reset".
   STOP         = "stop".
   TENSOR       = "tensor".
   THEN         = "then".
@@ -993,6 +996,21 @@ PRODUCTIONS
                                        if (def instanceof DefinitionList list) {
                                          readMacroSymbols(macroTable, list.items);
                                        } .)
+  .
+
+  // memory region [ROM] MROM in MEM = {...}
+  memoryRegionDefinition<out Definition def>  (. var start = lookaheadLoc(); CpuMemoryRegionDefinition.MemKind kind = null; .)
+  =                                           (. Statement stmt = null; .)
+    MEMORY REGION
+    SYM_BRACK_OPEN
+    ( RAM                                     (. kind = CpuMemoryRegionDefinition.MemKind.RAM; .)
+    | ROM                                     (. kind = CpuMemoryRegionDefinition.MemKind.ROM; .)
+    )
+    SYM_BRACK_CLOSE
+    identifier<out Identifier id>
+    SYM_IN identifierPath<out IsId mem>
+    SYM_EQ
+    [ statement<out stmt> ]         (. def = new CpuMemoryRegionDefinition(id, kind, mem, stmt, start.join(loc())); .)
   .
 
   patchDefinition<out Definition def>     (. var start = lookaheadLoc(); .)
