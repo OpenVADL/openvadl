@@ -17,7 +17,8 @@ define dso_local i32 @foo(i32 noundef %i) local_unnamed_addr #0 {
 ; CHECK-NEXT: # =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT: J .LBB0_1
 ; CHECK-LABEL: .LBB0_2:                                # %while.end
-; CHECK-NEXT: LA a0,global
+; CHECK-NEXT: LUI a0,%hi(global)
+; CHECK-NEXT: ADDI a0,a0,%lo(global)
 ; CHECK-NEXT: LW a0,0(a0)
 ; CHECK-NEXT: LD fp,0(sp)                            # 8-byte Folded Reload
 ; CHECK-NEXT: LD ra,8(sp)                            # 8-byte Folded Reload

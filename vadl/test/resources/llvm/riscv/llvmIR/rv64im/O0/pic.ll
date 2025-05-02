@@ -8,7 +8,9 @@
 define ptr @f1() nounwind {
 ; CHECK-LABEL: f1: # @f1
 ; CHECK-LABEL: # %bb.0: # %entry
-; CHECK-NEXT: LGA a0,external_var
+; CHECK-LABEL: .Ltmp0:
+; CHECK-NEXT: AUIPC a0,%got_pcrel_hi(external_var)
+; CHECK-NEXT: LD a0,%pcrel_lo(.Ltmp0)(a0)
 ; CHECK-NEXT: RET
 entry:
   ret ptr @external_var
@@ -17,7 +19,9 @@ entry:
 define ptr @f2() nounwind {
 ; CHECK-LABEL: f2: # @f2
 ; CHECK-LABEL: # %bb.0: # %entry
-; CHECK-NEXT: LLA a0,internal_var
+; CHECK-LABEL: .Ltmp1:
+; CHECK-NEXT: AUIPC a0,%pcrel_hi(internal_var)
+; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Ltmp1)
 ; CHECK-NEXT: RET
 entry:
   ret ptr @internal_var
