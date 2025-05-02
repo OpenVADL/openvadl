@@ -4754,12 +4754,11 @@ application binary interface ABI for QDSP6 = {
 processor CPU implements QDSP6 with ABI = {
   start = 0x80000000
   stop with @Brkpt = (PC = 0xeeee'eeee)
-  startup -> (ok : Bool) =
+  reset =
     {
       FRAMEKEY := 0
       SP := 0x40000000
       PC := start
-      ok := (PC = start)
       if executable then
         halt
       firmware    }

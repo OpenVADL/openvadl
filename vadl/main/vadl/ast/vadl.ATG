@@ -185,6 +185,7 @@ TOKENS
   STAGE        = "stage".
   START        = "start".
   STARTUP      = "startup".
+  RESET        = "reset".
   STOP         = "stop".
   TENSOR       = "tensor".
   THEN         = "then".
@@ -1032,14 +1033,14 @@ PRODUCTIONS
   .
 
   cpuProcessDefinition<out Definition def> (. var start = lookaheadLoc(); .)
-  =                                        (. CpuProcessDefinition.ProcessKind kind = null; List<Parameter> startupOutputs = List.of(); .)
+  =                                        (. CpuProcessDefinition.ProcessKind kind = null; List<Parameter> outputs = List.of(); .)
   ( FIRMWARE                               (. kind = CpuProcessDefinition.ProcessKind.FIRMWARE; .)
-  | STARTUP                                (. kind = CpuProcessDefinition.ProcessKind.STARTUP; .)
-    SYM_ARROW
-    parameters<out startupOutputs>
+  | RESET                                (. kind = CpuProcessDefinition.ProcessKind.RESET; .)
+    [ SYM_ARROW
+    parameters<out outputs> ]
   )
     SYM_EQ
-    statement<out Statement stmt>          (. def = new CpuProcessDefinition(kind, startupOutputs, stmt, start.join(loc())); .)
+    statement<out Statement stmt>          (. def = new CpuProcessDefinition(kind, outputs, stmt, start.join(loc())); .)
   .
 
   // -- MiA DEFINITIONS-----------------------------------------------------------------------------------------------
@@ -1856,6 +1857,7 @@ PRODUCTIONS
   | STAGE
   | START
   | STARTUP
+  | RESET
   | STOP
   // | SYMBOL
   | SYM_IN

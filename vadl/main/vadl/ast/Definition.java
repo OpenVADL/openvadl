@@ -4219,7 +4219,7 @@ class CpuProcessDefinition extends Definition {
     annotations.prettyPrint(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
-    if (kind == ProcessKind.STARTUP) {
+    if (!startupOutputs.isEmpty()) {
       builder.append(" -> ");
       Parameter.prettyPrintMultiple(indent, startupOutputs, builder);
     }
@@ -4246,7 +4246,8 @@ class CpuProcessDefinition extends Definition {
   }
 
   enum ProcessKind {
-    FIRMWARE("firmware"), STARTUP("startup");
+    FIRMWARE("firmware"),
+    RESET("reset");
 
     final String keyword;
 

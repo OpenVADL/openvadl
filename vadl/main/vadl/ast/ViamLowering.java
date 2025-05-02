@@ -838,8 +838,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   public Optional<vadl.viam.Definition> visit(CpuProcessDefinition definition) {
     switch (definition.kind) {
       case FIRMWARE -> { /* supported */ }
-      case STARTUP -> throw new RuntimeException(
-          "The ViamGenerator does not support STARTUP in `%s` yet".formatted(
+      default -> throw new RuntimeException(
+          "The ViamGenerator does not support %s in `%s` yet".formatted(
+              definition.kind,
               definition.getClass().getSimpleName()));
     }
 

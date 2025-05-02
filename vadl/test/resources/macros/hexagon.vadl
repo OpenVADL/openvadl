@@ -1369,13 +1369,12 @@ processor CPU implements QDSP6 with ABI =
 
   stop with @Brkpt = PC = 0xeeee'eeee
 
-  startup -> ( ok : Bool ) =
+  reset =
   {
     FRAMEKEY := 0
     SP       := 0x40000000
 
     PC := start
-    ok := PC = start
     if executable then halt
 
     firmware

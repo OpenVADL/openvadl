@@ -136,6 +136,7 @@ class ParserUtils {
     ID_TOKENS[Parser._STAGE] = true;
     ID_TOKENS[Parser._START] = true;
     ID_TOKENS[Parser._STARTUP] = true;
+    ID_TOKENS[Parser._RESET] = true;
     ID_TOKENS[Parser._STOP] = true;
     ID_TOKENS[Parser._SYM_IN] = true;
     ID_TOKENS[Parser._TYPE] = true;
