@@ -985,6 +985,7 @@ PRODUCTIONS
   cpuDefinition<out Definition def> (. def = DUMMY_DEF; .)
   = annotations<out Annotations annotations>
     ( commonDefinition<out def>
+    | memoryRegionDefinition<out def>
     | patchDefinition<out def>
     | sourceDefinition<out def>
     | exceptionDefinition<out def>
@@ -1008,9 +1009,8 @@ PRODUCTIONS
     )
     SYM_BRACK_CLOSE
     identifier<out Identifier id>
-    SYM_IN identifierPath<out IsId mem>
-    SYM_EQ
-    [ statement<out stmt> ]         (. def = new CpuMemoryRegionDefinition(id, kind, mem, stmt, start.join(loc())); .)
+    SYM_IN identifier<out Identifier mem>
+    [ SYM_EQ statement<out stmt> ]         (. def = new CpuMemoryRegionDefinition(id, kind, mem, stmt, start.join(loc())); .)
   .
 
   patchDefinition<out Definition def>     (. var start = lookaheadLoc(); .)

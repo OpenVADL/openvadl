@@ -4123,13 +4123,13 @@ class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   MemKind kind;
   @Child
-  IsId memoryRef;
+  Identifier memoryRef;
   @Child
   @Nullable
   Statement stmt;
   SourceLocation loc;
 
-  CpuMemoryRegionDefinition(Identifier id, MemKind kind, IsId memoryRef,
+  CpuMemoryRegionDefinition(Identifier id, MemKind kind, Identifier memoryRef,
                             @Nullable Statement stmt,
                             SourceLocation loc) {
     this.id = id;
@@ -4142,6 +4142,10 @@ class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
   @Override
   <R> R accept(DefinitionVisitor<R> visitor) {
     return visitor.visit(this);
+  }
+
+  MemoryDefinition memoryNode() {
+    return (MemoryDefinition) Objects.requireNonNull(memoryRef.target);
   }
 
   @Override

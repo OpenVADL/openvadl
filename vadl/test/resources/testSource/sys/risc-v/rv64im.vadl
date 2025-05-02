@@ -135,6 +135,9 @@ processor Spike implements RV64IM with ABI = {
 
   memory region [RAM] DRAM in MEM
 
+  memory region [ROM] MROM in MEM = {
+  }
+
   // we will jump to lowest emitted firmware address by default.
   // if this is not correct, we can override it with
   // [start: 0x1000]
