@@ -43,21 +43,17 @@ class AnnotationTable {
       annotationFactories = new java.util.HashMap<>();
 
   static {
-    on(AsmDescriptionDefinition.class)
-        .add("case sensitive", EnableAnnotation::new)
+    annotationOn(AsmDescriptionDefinition.class, "case sensitive", EnableAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
           var asmDescription = (AssemblyDescription) def;
-          var enableAnnotation = (EnableAnnotation) annotation;
-          asmDescription.addAnnotation(new AsmParserCaseSensitive(enableAnnotation.isEnabled));
+          asmDescription.addAnnotation(new AsmParserCaseSensitive(annotation.isEnabled));
         })
         .build();
 
-    on(AsmDescriptionDefinition.class)
-        .add("comment string", StringAnnotation::new)
+    annotationOn(AsmDescriptionDefinition.class, "comment string", StringAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
           var asmDescription = (AssemblyDescription) def;
-          var stringAnnotation = (StringAnnotation) annotation;
-          asmDescription.addAnnotation(new AsmParserCommentString(stringAnnotation.value));
+          asmDescription.addAnnotation(new AsmParserCommentString(annotation.value));
         })
         .build();
 
@@ -71,8 +67,7 @@ class AnnotationTable {
         // FIXME: Apply to AST
         .build();
 
-    on(RegisterFileDefinition.class)
-        .add("zero", ExprAnnotation::new)
+    annotationOn(RegisterFileDefinition.class, "zero", ExprAnnotation::new)
         // FIXME: Typecheck
         // FIXME: Apply to VIAM
         .build();
@@ -96,7 +91,6 @@ class AnnotationTable {
           relocation.setKind(requireNonNull(mappings.get(annotation.name)));
         })
         .build();
-
   }
 
 
@@ -168,8 +162,9 @@ class AnnotationTable {
    * @param klass to which the annotation is bound.
    * @return a new annotation builder for the given class.
    */
-  static AnnotationBuilder on(Class<? extends Definition> klass) {
-    return new AnnotationBuilder(klass);
+  static <D extends Definition, A extends Annotation> AnnotationBuilder<D, A> annotationOn(
+      Class<D> klass, String name, Supplier<A> annotationFactory) {
+    return new AnnotationBuilder<>(klass, name, annotationFactory);
   }
 
   /**
@@ -178,32 +173,27 @@ class AnnotationTable {
    * @param klass to which the annotations are bound.
    * @return a new annotation builder for the given class.
    */
-  static GroupedAnnotationBuilder groupOn(Class<? extends Definition> klass) {
-    return new GroupedAnnotationBuilder(klass);
+  static <D extends Definition> GroupedAnnotationBuilder<D> groupOn(
+      Class<D> klass) {
+    return new GroupedAnnotationBuilder<D>(klass);
   }
 
-  private static class AnnotationBuilder {
-    private final Class<? extends Definition> targetClass;
+  private static class AnnotationBuilder<D extends Definition, A extends Annotation> {
+    private final Class<D> targetClass;
+
+    private final String name;
+
+    private final Supplier<A> annotationFactory;
 
     @Nullable
-    private String name;
+    private TriConsumer<D, A, TypeChecker> checkCallback;
 
     @Nullable
-    private Supplier<Annotation> annotationFactory;
+    private BiConsumer<D, A> applyAstCallback;
 
     @Nullable
-    private TriConsumer<Definition, Annotation, TypeChecker> checkCallback;
+    private TriConsumer<vadl.viam.Definition, A, ViamLowering> applyViamCallback;
 
-    @Nullable
-    private BiConsumer<Definition, Annotation> applyAstCallback;
-
-    @Nullable
-    private TriConsumer<vadl.viam.Definition, Annotation, ViamLowering> applyViamCallback;
-
-
-    AnnotationBuilder(Class<? extends Definition> targetClass) {
-      this.targetClass = targetClass;
-    }
 
     /**
      * Specifies an annotation name and an annotation factory.
@@ -211,18 +201,16 @@ class AnnotationTable {
      * <p>The factory doesn't have to set the name, groupProvider or definition. These fiedls will
      * be set by the builder.
      *
+     * @param targetClass       to which the annotation is bound.
      * @param name              of the annotation.
      * @param annotationFactory that creates the annotation.
-     * @return itself.
      */
-    AnnotationBuilder add(String name, Supplier<Annotation> annotationFactory) {
-      if (this.name != null) {
-        throw new IllegalStateException("Annotation name already set");
-      }
+    AnnotationBuilder(Class<D> targetClass, String name, Supplier<A> annotationFactory) {
+      this.targetClass = targetClass;
       this.name = name;
       this.annotationFactory = annotationFactory;
-      return this;
     }
+
 
     /**
      * Adds a check for arbitrary constraints on the annotation. The check is executed after
@@ -232,7 +220,7 @@ class AnnotationTable {
      * @param checkCallback to be executed.
      * @return itself.
      */
-    AnnotationBuilder check(TriConsumer<Definition, Annotation, TypeChecker> checkCallback) {
+    AnnotationBuilder<D, A> check(TriConsumer<D, A, TypeChecker> checkCallback) {
       if (this.checkCallback != null) {
         throw new IllegalStateException("Check callback already set");
       }
@@ -248,7 +236,7 @@ class AnnotationTable {
      * @param applyCallback to be executed to add the annotation to the VIAM.
      * @return itself.
      */
-    AnnotationBuilder applyAst(BiConsumer<Definition, Annotation> applyCallback) {
+    AnnotationBuilder<D, A> applyAst(BiConsumer<D, A> applyCallback) {
       if (this.applyAstCallback != null) {
         throw new IllegalStateException("Apply callback already set");
       }
@@ -263,8 +251,8 @@ class AnnotationTable {
      * @param applyCallback to be executed to add the annotation to the VIAM.
      * @return itself.
      */
-    AnnotationBuilder applyViam(
-        TriConsumer<vadl.viam.Definition, Annotation, ViamLowering> applyCallback) {
+    AnnotationBuilder<D, A> applyViam(
+        TriConsumer<vadl.viam.Definition, A, ViamLowering> applyCallback) {
       if (this.applyViamCallback != null) {
         throw new IllegalStateException("Apply callback already set");
       }
@@ -275,6 +263,7 @@ class AnnotationTable {
     /**
      * Inserts the annotation into the annotationFactories table.
      */
+    @SuppressWarnings("unchecked")
     void build() {
       if (name == null || annotationFactory == null) {
         throw new IllegalStateException("Not all required are fields set");
@@ -283,7 +272,8 @@ class AnnotationTable {
       TriConsumer<Definition, List<Annotation>, TypeChecker> groupCheckCallback;
       if (checkCallback != null) {
         groupCheckCallback = (definition, annotations, typeChecker) -> {
-          requireNonNull(checkCallback).accept(definition, annotations.getFirst(), typeChecker);
+          requireNonNull(checkCallback).accept((D) definition, (A) annotations.getFirst(),
+              typeChecker);
         };
       } else {
         groupCheckCallback = (definition, annotations, typeChecker) -> {
@@ -293,7 +283,7 @@ class AnnotationTable {
       BiConsumer<Definition, List<Annotation>> groupApplyAstCallback;
       if (applyAstCallback != null) {
         groupApplyAstCallback = (definition, annotations) -> {
-          requireNonNull(applyAstCallback).accept(definition, annotations.getFirst());
+          requireNonNull(applyAstCallback).accept((D) definition, (A) annotations.getFirst());
         };
       } else {
         groupApplyAstCallback = (definition, annotations) -> {
@@ -304,7 +294,8 @@ class AnnotationTable {
       if (applyViamCallback != null) {
         groupApplyViamCallback = (definition, annotations, lowering
         ) -> {
-          requireNonNull(applyViamCallback).accept(definition, annotations.getFirst(), lowering);
+          requireNonNull(applyViamCallback).accept(definition, (A) annotations.getFirst(),
+              lowering);
         };
       } else {
         groupApplyViamCallback = (definition, annotations, lowering) -> {
@@ -352,23 +343,23 @@ class AnnotationTable {
 
   }
 
-  private static class GroupedAnnotationBuilder {
+  private static class GroupedAnnotationBuilder<D extends Definition> {
 
-    private Class<? extends Definition> targetClass;
+    private final Class<D> targetClass;
 
-    private List<Pair<String, Supplier<Annotation>>> namedFactories = new ArrayList<>();
-
-    @Nullable
-    private TriConsumer<Definition, List<Annotation>, TypeChecker> checkCallback;
+    private final List<Pair<String, Supplier<Annotation>>> namedFactories = new ArrayList<>();
 
     @Nullable
-    private BiConsumer<Definition, List<Annotation>> applyAstCallback;
+    private TriConsumer<D, List<Annotation>, TypeChecker> checkCallback;
+
+    @Nullable
+    private BiConsumer<D, List<Annotation>> applyAstCallback;
 
     @Nullable
     private TriConsumer<vadl.viam.Definition, List<Annotation>, ViamLowering> applyViamCallback;
 
 
-    GroupedAnnotationBuilder(Class<? extends Definition> targetClass) {
+    GroupedAnnotationBuilder(Class<D> targetClass) {
       this.targetClass = targetClass;
     }
 
@@ -382,7 +373,7 @@ class AnnotationTable {
      * @param annotationFactory that creates the annotation.
      * @return itself.
      */
-    GroupedAnnotationBuilder add(String name, Supplier<Annotation> annotationFactory) {
+    GroupedAnnotationBuilder<D> add(String name, Supplier<Annotation> annotationFactory) {
       if (namedFactories.stream().anyMatch(p -> p.left().equals(name))) {
         throw new IllegalStateException("Annotation with the name %s already set".formatted(name));
       }
@@ -398,8 +389,8 @@ class AnnotationTable {
      * @param checkCallback to be executed.
      * @return itself.
      */
-    GroupedAnnotationBuilder check(
-        TriConsumer<Definition, List<Annotation>, TypeChecker> checkCallback) {
+    GroupedAnnotationBuilder<D> check(
+        TriConsumer<D, List<Annotation>, TypeChecker> checkCallback) {
       if (this.checkCallback != null) {
         throw new IllegalStateException("Check callback already set");
       }
@@ -414,8 +405,8 @@ class AnnotationTable {
      * @param applyCallback to be executed to add the annotation to the VIAM.
      * @return itself.
      */
-    GroupedAnnotationBuilder applyAst(
-        BiConsumer<Definition, List<Annotation>> applyCallback) {
+    GroupedAnnotationBuilder<D> applyAst(
+        BiConsumer<D, List<Annotation>> applyCallback) {
       if (this.applyAstCallback != null) {
         throw new IllegalStateException("Apply callback already set");
       }
@@ -430,7 +421,7 @@ class AnnotationTable {
      * @param applyCallback to be executed to add the annotation to the VIAM.
      * @return itself.
      */
-    GroupedAnnotationBuilder applyViam(
+    GroupedAnnotationBuilder<D> applyViam(
         TriConsumer<vadl.viam.Definition, List<Annotation>, ViamLowering> applyCallback) {
       if (this.applyViamCallback != null) {
         throw new IllegalStateException("Apply callback already set");
@@ -442,13 +433,14 @@ class AnnotationTable {
     /**
      * Inserts all annotation of the group into the annotationFactories table.
      */
+    @SuppressWarnings("unchecked")
     void build() {
       // FIXME: apply should be optional.
       if (namedFactories.isEmpty()) {
         throw new IllegalStateException("Not all required are fields set");
       }
 
-      TriConsumer<Definition, List<Annotation>, TypeChecker> realCheckCallback;
+      TriConsumer<D, List<Annotation>, TypeChecker> realCheckCallback;
       if (checkCallback == null) {
         realCheckCallback = (definition, annotations, typeChecker) -> {
         };
@@ -456,7 +448,7 @@ class AnnotationTable {
         realCheckCallback = requireNonNull(checkCallback);
       }
 
-      BiConsumer<Definition, List<Annotation>> realApplyAstCallback;
+      BiConsumer<D, List<Annotation>> realApplyAstCallback;
       if (applyAstCallback != null) {
         realApplyAstCallback = (definition, annotations) -> {
           requireNonNull(applyAstCallback).accept(definition, annotations);
@@ -483,12 +475,12 @@ class AnnotationTable {
         @Override
         public void check(Definition definition, List<Annotation> annotations,
                           TypeChecker typeChecker) {
-          realCheckCallback.accept(definition, annotations, typeChecker);
+          realCheckCallback.accept((D) definition, annotations, typeChecker);
         }
 
         @Override
         public void applyAst(Definition definition, List<Annotation> annotations) {
-          realApplyAstCallback.accept(definition, annotations);
+          realApplyAstCallback.accept((D) definition, annotations);
         }
 
         @Override

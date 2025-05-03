@@ -171,6 +171,7 @@ public class TypeChecker
     // Find annotations in groups and execute the check of the groups.
     AnnotationTable.groupings(def).forEach((group, annotations) -> {
       group.check(def, annotations, this);
+      group.applyAst(def, annotations);
     });
   }
 
