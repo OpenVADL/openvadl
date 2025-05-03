@@ -356,6 +356,7 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
     SDValue Chain = CLI.Chain;
     SDValue Callee = CLI.Callee;
     CallingConv::ID CallConv = CLI.CallConv;
+    MachineFunction &MF = DAG.getMachineFunction();
     const bool isVarArg = CLI.IsVarArg;
 
     // No support for tail calls for now
@@ -422,10 +423,19 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
     unsigned OpFlag = [(${namespace})]BaseInfo::MO_None;
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     {
+        const GlobalValue *GV = G->getGlobal();
+        if (!getTargetMachine().shouldAssumeDSOLocal(*GV->getParent(), GV)) {
+            OpFlag = [(${namespace})]BaseInfo::MO_PLT;
+        }
+
         Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, getPointerTy(DAG.getDataLayout()), /* Offset */ 0, OpFlag);
     }
     else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     {
+        if (!getTargetMachine().shouldAssumeDSOLocal(*MF.getFunction().getParent(), nullptr)) {
+            OpFlag = [(${namespace})]BaseInfo::MO_PLT;
+        }
+
         Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(DAG.getDataLayout()), OpFlag);
     }
 
@@ -441,7 +451,6 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
 
     // Add a register mask operand representing the call-preserved registers.
     const uint32_t *Mask;
-    MachineFunction &MF = DAG.getMachineFunction();
     const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
     Mask = TRI->getCallPreservedMask(MF, CallConv);
 

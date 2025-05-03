@@ -89,7 +89,8 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
         "immediates", immediates,
         "variantKinds", variantKinds,
         "mappingVariantKindsIntoBaseInfos", baseInfos,
-        "decodeMappings", decodeMappings
+        "decodeMappings", decodeMappings,
+        "pltVariantKindName", VariantKind.plt().value()
     );
   }
 

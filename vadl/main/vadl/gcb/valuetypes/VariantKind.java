@@ -35,6 +35,10 @@ public record VariantKind(String value, String human, boolean isImmediate) imple
     return new VariantKind("VK_None", "None", false);
   }
 
+  public static VariantKind plt() {
+    return new VariantKind("VK_PLT", "plt", false);
+  }
+
   public static VariantKind invalid() {
     return new VariantKind("VK_Invalid", "Invalid", false);
   }
