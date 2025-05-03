@@ -2231,6 +2231,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
                         List<Entry> entries, SourceLocation location) {
     this.id = id;
     this.enumType = enumType;
+    entries.forEach(e -> e.enumDef = this);
     this.entries = entries;
     this.loc = location;
   }
@@ -2324,9 +2325,20 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
 
     Identifier name;
 
+    /**
+     * Potentially set by the typechecker if no value was explicitly assigned.
+     * In that case the typechecker will increment the value of the last entry by one and insert
+     * it here as a {@link IntegerLiteral}.
+     */
     @Nullable
     @Child
     Expr value;
+
+    /**
+     * Points to the parent definition of the entry, is set in the constructor of the parent.
+     */
+    @LazyInit
+    EnumerationDefinition enumDef;
 
 
     public Entry(Identifier name, @Nullable Expr value) {
