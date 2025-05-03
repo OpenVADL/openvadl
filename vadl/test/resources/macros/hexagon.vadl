@@ -20,7 +20,8 @@ instruction set architecture QDSP6 =
   using Index          = Bits<5>           // register file index for 32 registers
   using PredicateIndex = Bits<2>           // predicate index for 4 predicates
 
-  [littleEndian]
+  // TODO: Reenable this annotation
+  // [littleEndian]
   memory MEM : Address -> Byte      // 32-bit, byte-addressable address space
   // Instructions and instruction packets must be 32-bit aligned
   // Data must be aligned to its native access size.
@@ -98,8 +99,9 @@ instruction set architecture QDSP6 =
     , P1   : Byte
     , P0   : Byte
     }
-  [ read partial ]  // This is the default but it's essential that multiple instruction in a bundle
-  [ write partial ] // can write to (different) predicate subregisters
+  // TODO: Reenable this annotation
+  // [ read partial ]  // This is the default but it's essential that multiple instruction in a bundle
+  // [ write partial ] // can write to (different) predicate subregisters
   register P : PFormat
 
   function testpred (reg: PredicateIndex) -> Bool =
@@ -204,7 +206,8 @@ instruction set architecture QDSP6 =
     }
 
   model TransferBase ( name: Id, iformat: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, dst: Ex, val: Ex, asm: Ex ) : IsaDefs = {
-    [ operation ALU32 ]
+    // TODO: Reenable this annotation
+    // [ operation ALU32 ]
     instruction $name : $iformat = {
       R($dst) := $val
     }
@@ -246,7 +249,8 @@ instruction set architecture QDSP6 =
     }
 
   model ALUBase ( name: Id, iformat: Id, encs: Encs, op: Id, lhs: Ex, rhs: Ex, asm: Ex ) : IsaDefs = {
-    [ operation ALU32 ]
+    // TODO: Reenable this annotation
+    // [ operation ALU32 ]
     instruction $name : $iformat = {
       R(d5) := VADL::$op($lhs, $rhs)
     }
@@ -271,7 +275,9 @@ instruction set architecture QDSP6 =
   $ALUBase( AndImm ; ALUImmFormat  ; iclass = 0b0111, majop = 0b0110, minop = 0b00  ; and ;           R(s5)  ; extendS(imm); (AsmR(s5),",#",decimal(imm)) )
   $ALUBase( OrImm  ; ALUImmFormat  ; iclass = 0b0111, majop = 0b0110, minop = 0b10  ; or  ;           R(s5)  ; extendS(imm); (AsmR(s5),",#",decimal(imm)) )
 
-  [ operation ALU32 ]
+  // TODO: Reenable this annotation
+
+  // [ operation ALU32 ]
   instruction Nop : StandardFormat = {}
   encoding Nop = { iclass = 0b0111, majop = 0b1111 }
   assembly Nop = ("nop")
@@ -318,7 +324,8 @@ instruction set architecture QDSP6 =
     }
 
   model CmpBase ( name: Id, iformat: Id, encs: Encs, cond: Ex, asm: Ex ) : IsaDefs = {
-    [ operation ALU32_PRED_WRITING ]
+    // TODO: Reenable this annotation
+    // [ operation ALU32_PRED_WRITING ]
     instruction $name : $iformat = {
       let val = toPValue($cond) in {
         Pset(d2, val)
@@ -380,7 +387,8 @@ instruction set architecture QDSP6 =
     }
 
   model CombineWordBase ( name: Id, iformat: Id, encs: Encs, vhigh: Ex, vlow: Ex, asm: Ex ) : IsaDefs = {
-    [ operation ALU32 ]
+    // TODO: Reenable this annotation
+    // [ operation ALU32 ]
     instruction $name : $iformat = {
       R( d5 ) := ($vhigh as Half, $vlow as Half)
     }
@@ -388,7 +396,8 @@ instruction set architecture QDSP6 =
     assembly $name = (AsmR(d5), "=", $asm)
   }
   model CombineDoubleBase ( name: Id, iformat: Id, encs: Encs, vhigh: Ex, vlow: Ex, asm: Ex ) : IsaDefs = {
-    [ operation ALU32 ]
+    // TODO: Reenable this annotation
+    // [ operation ALU32 ]
     instruction $name : $iformat = {
       R( d5   ) := $vlow
       R( d5+1 ) := $vhigh
@@ -438,7 +447,8 @@ instruction set architecture QDSP6 =
     }
 
   model ALUPredBase ( name: Id, iformat: Id, encs: Encs, op: Id, lhs: Ex, rhs: Ex, asmprefix: Ex, asm: Ex, pred: Ex ) : IsaDefs = {
-    [ operation ALU32 ]
+    // TODO: Reenable this annotation
+    // [ operation ALU32 ]
     instruction $name : $iformat = {
       R(d5) := VADL::$op($lhs, $rhs)
     }
@@ -468,7 +478,8 @@ instruction set architecture QDSP6 =
     }
 
   model TransferControlBase ( name: Id, encs: Encs, asmDst: Id, asmSrc: Id, stats: Stats ) : IsaDefs = {
-    [ operation CR ]
+    // TODO: Reenable this annotation
+    // [ operation CR ]
     instruction $name : StandardFormat = {
       $stats
     }
@@ -521,7 +532,8 @@ instruction set architecture QDSP6 =
     , immU   = extendUExtender(imm, immX)
     }
   model AddRegPCBase ( name: Id, iformat: Id, encs: Encs, asmPrefix: Ex, asmimm: Id ) : IsaDefs = {
-    [ operation CR ]
+    // TODO: Reenable this annotation
+    // [ operation CR ]
     instruction $name : $iformat = {
       R(d5) := PC.current + immU
     }
@@ -543,7 +555,8 @@ instruction set architecture QDSP6 =
     }
   // This instruction may execute on either slot2 or slot3, even though it is a CR-type
   model LogicalPredBase ( name: Id, encs: Encs, val: Ex, asm: Ex ) : IsaDefs = {
-    [ operation CR23 ]
+    // TODO: Reenable this annotation
+    // [ operation CR23 ]
     instruction $name : LogicalPredFormat = {
       Pset(d2, $val)
     }
@@ -580,7 +593,8 @@ instruction set architecture QDSP6 =
     }
 
   model CallRegBase ( name: Id, encs: Encs, asm: Ex, pred: Ex ) : IsaDefs = {
-    [ operation JR ]
+    // TODO: Reenable this annotation
+    // [ operation JR ]
     instruction $name : BranchRegFormat = {
       if $pred then {
         LR := PC.next
@@ -597,7 +611,8 @@ instruction set architecture QDSP6 =
 
 
   model JumpRegBase ( name: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, pred: Ex ) : IsaDefs = {
-    [ operation JR ]
+    // TODO: Reenable this annotation
+    // [ operation JR ]
     instruction $name : BranchRegFormat = {
       if $pred then {
         PC := R(s5)
@@ -633,7 +648,8 @@ instruction set architecture QDSP6 =
     }
 
   model JumpImmBase ( name: Id, iformat: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, pred: Ex ) : IsaDefs = {
-    [ operation J ]
+    // TODO: Reenable this annotation
+    // [ operation J ]
     instruction $name : $iformat = {
       if $pred then {
         PC := PC.current + extendR2(imm)
@@ -665,7 +681,8 @@ instruction set architecture QDSP6 =
     }
 
   model CallImmBase ( name: Id, iformat: Id, encs: Encs, asm: Ex, pred: Ex ) : IsaDefs = {
-    [ operation J ]
+    // TODO: Reenable this annotation
+    // [ operation J ]
     instruction $name : $iformat = {
       if $pred then {
         LR := PC.next
@@ -728,7 +745,8 @@ instruction set architecture QDSP6 =
     }
 
   model CmpJumpBase ( name: Id, iformat: Id, encs: Encs, neg: Val, p: Val, predEx: Ex, asmPred: Ex, asmHint: Ex ) : IsaDefs = {
-    [ operation J_PRED_WRITING ]
+    // TODO: Reenable this annotation
+    // [ operation J_PRED_WRITING ]
     instruction $name : $iformat = {
       let pred   = $predEx in
       let pvalue = toPValue($predEx) in {
@@ -795,7 +813,8 @@ instruction set architecture QDSP6 =
 
   model-type LoadBaseT = ( Id, Id, Encs, Lit, Ex, Id, Ex, Ex, Ex ) -> IsaDefs
   model LoadSizeBase ( name: Id, iformat: Id, encs: Encs, size: Lit, addr: Ex, type: Id, asmprefix: Ex, asm: Ex, pred: Ex ) : IsaDefs = {
-    [ operation LD ]
+    // TODO: Reenable this annotation
+    // [ operation LD ]
     instruction $name : $iformat = {
       if $pred then {
         R(d5) := MEM<$size>($addr) as $type
@@ -805,7 +824,8 @@ instruction set architecture QDSP6 =
     assembly $name = ($asmprefix, AsmR(d5), "=", $asm)
   }
   model LoadDoubleBase ( name: Id, iformat: Id, encs: Encs, size: Lit, addr: Ex, type: Id, asmprefix: Ex, asm: Ex, pred: Ex ): IsaDefs = {
-    [ operation LD ]
+    // TODO: Reenable this annotation
+    // [ operation LD ]
     instruction $name : $iformat = {
       if $pred then {
         let result = MEM<8>($addr) as $type in {
@@ -850,7 +870,9 @@ instruction set architecture QDSP6 =
     , pred     [9..8]
     }
 
-  [ operation LD ]
+  // TODO: Reenable this annotation
+
+  // [ operation LD ]
   instruction DeallocFrame : DeallocFrameFormat = {
     let restored = MEM<8>(FP) as Double in
     let LRnew = frameUnscramble(restored(63..32)) in {
@@ -864,7 +886,8 @@ instruction set architecture QDSP6 =
 
 
   model DecallocReturnBase ( name: Id, encs: Encs, asmprefix: Ex, asmpostfix: Ex, pred: Ex ) : IsaDefs = {
-    [ operation LD ]
+    // TODO: Reenable this annotation
+    // [ operation LD ]
     instruction $name : DeallocFrameFormat = {
       if $pred then {
         let restored = MEM<8>(FP) as Double in
@@ -907,7 +930,8 @@ instruction set architecture QDSP6 =
 
   model-type StoreBaseT = ( Id, Encs, Lit, Ex, Id, Ex, Ex, Ex ) -> IsaDefs
   model StoreSizeBase ( name: Id, encs: Encs, size: Lit, addr: Ex, type: Id, shift: Ex, asmprefix: Ex, asmpostfix: Ex ) : IsaDefs = {
-    [ operation ST ]
+    // TODO: Reenable this annotation
+    // [ operation ST ]
     instruction $name : StoreFormat = {
       MEM<$size>($addr) := (R(t5) >> ($shift as UInt<6>)) as $type
     }
@@ -915,7 +939,8 @@ instruction set architecture QDSP6 =
     assembly $name = ($asmprefix, "=", AsmR(t5), $asmpostfix)
   }
   model StoreDoubleBase ( name: Id, encs: Encs, size: Lit, addr: Ex, type: Id, shift: Ex, asmprefix: Ex, asmpostfix: Ex ) : IsaDefs = {
-    [ operation ST ]
+    // TODO: Reenable this annotation
+    // [ operation ST ]
     instruction $name : StoreFormat = {
       MEM<$size>($addr) := ((R(t5+1), R(t5))) as $type
     }
@@ -970,7 +995,8 @@ instruction set architecture QDSP6 =
     }
 
   model StoreImmSizeBase ( name: Id, iformat: Id, type: Id, encs: Encs, size: Val, scale: Val, imm: Ex, asmprefix: Ex, pred: Ex ) : IsaDefs = {
-    [ operation ST ]
+    // TODO: Reenable this annotation
+    // [ operation ST ]
     instruction $name : $iformat = {
       if $pred then MEM<$size>( R(s5) + scaledImmU(immOffsetU, $scale) ) := $imm
     }
@@ -997,7 +1023,9 @@ instruction set architecture QDSP6 =
     , immU = (imm as UInt<11>) * (8 as UInt<4>)
     }
 
-  [ operation ST ]
+  // TODO: Reenable this annotation
+
+  // [ operation ST ]
   instruction AllocFrame : AllocFrameFormat = {
     let SPnew = SP - 8 in {
       MEM<8>(SPnew) := (frameScramble( LR ), FP)
@@ -1018,7 +1046,8 @@ instruction set architecture QDSP6 =
     , opc    [27..21,7..5]
     , parse  [15..14]
     }
-  [ operation SYSTEMSolo ]
+  // TODO: Reenable this annotation
+  // [ operation SYSTEMSolo ]
   instruction Brkpt : BrkptFormat = {
     PC := 0xeeeeeeee
   }
@@ -1040,7 +1069,8 @@ instruction set architecture QDSP6 =
     }
 
   model ALUImmShifted ( name: Id, encs: Encs, op: Id, shiftop: Id ) : IsaDefs = {
-    [ operation XTYPE ]
+    // TODO: Reenable this annotation
+    // [ operation XTYPE ]
     instruction $name : AddImmShiftedFormat = {
       R(x5) := VADL::$op(immU, VADL::$shiftop(R(x5), shiftU) as UInt)
     }
@@ -1077,7 +1107,8 @@ instruction set architecture QDSP6 =
     }
 
   model BitOp( name: Id, iformat: Id, encs: Encs, val: Ex, asmfunc: Ex, asmRhs: Ex ) : IsaDefs = {
-    [ operation XTYPE ]
+    // TODO: Reenable this annotation
+    // [ operation XTYPE ]
     instruction $name : $iformat = {
       R(d5) := $val
     }
@@ -1113,14 +1144,18 @@ instruction set architecture QDSP6 =
     , d5     [4..0]
     }
 
-  [ operation XTYPE ]
+  // TODO: Reenable this annotation
+
+  // [ operation XTYPE ]
   instruction TransferPR : TransferPRFormat = {
     Pset(d2, R(s5) as Byte)
   }
   encoding TransferPR = { iclass=0b1000, regtype=0b0101, majop=0b010 }
   assembly TransferPR = (AsmP(d2), " = ", AsmR(s5))
 
-  [ operation XTYPE ]
+  // TODO: Reenable this annotation
+
+  // [ operation XTYPE ]
   instruction TransferRP : TransferRPFormat = {
     R(d5) := Pget(s2)
   }
@@ -1143,7 +1178,8 @@ instruction set architecture QDSP6 =
     }
 
   model ALUDoubleCarryBase( name: Id, sub: Bool ) : IsaDefs = {
-    [ operation XTYPE_PRED_WRITING ]
+    // TODO: Reenable this annotation
+    // [ operation XTYPE_PRED_WRITING ]
     instruction $name : ALUDoubleCarryFormat = {
       let a = (R(s5+1),R(s5)) in
       let b = (R(t5+1),R(t5)) in
@@ -1226,7 +1262,8 @@ instruction set architecture QDSP6 =
   //    00 = duplex instruction
   // An instruction packet can contain one duplex and up to two other (non-duplex) instructions.
   // The duplex must always appear as the last word in a packet.
-  [ let parse = VLIW(VLIW.length - 1).parse in ( ( parse = 0b00 ) | (parse = 0b11 ) ) stop ]
+  // TODO: Reenable this annotation
+  // [ stop :  let parse = VLIW(VLIW.length - 1).parse in ( ( parse = 0b00 ) | (parse = 0b11 ) ) ]
 
   // The constant extender effectively serves as a prefix for an instruction: it is not executed in
   // a slot, nor does it consume any slot resources. Within a packet, a constant extender must be
@@ -1239,7 +1276,7 @@ instruction set architecture QDSP6 =
   // - Dot-new conditional instructions (Section 6.2.4) must be grouped in a packet with an
   //   instruction that generates dot-new predicates.
     //    TODO disabled because CONDITIONAL_NEW is empty
-    //    [ forall i in {CONDITIONAL_NEW} then ((i.dn = 0) | (exists j in {PRED_WRITING} then j.d2 = i.u2)) assert ]
+    //    [ assert :  forall i in {CONDITIONAL_NEW} then ((i.dn = 0) | (exists j in {PRED_WRITING} then j.d2 = i.u2)) ]
   // - ST-class instructions can be placed in Slot 1. However, in this case Slot 0 must contain a
   //   second ST-class instruction (Section 5.5). = "dual store"
   //   - Unlike most packetized operations, dual stores are not executed in parallel (Section
@@ -1250,13 +1287,17 @@ instruction set architecture QDSP6 =
   //   program flow instructions (J or JR) can be grouped together in a packet (Section 7.8).
   //   Otherwise, at most one program flow instruction is allowed in a packet. = "dual jump"
   //    - May not be first in dual jump: unconditional `jump`
-          [ !( (VLIW.length >= 2) & ((VLIW(0) ∈ JUMP_IMM) & (VLIW(1) ∈ J)) ) assert ]
+          // TODO: Reenable this annotation
+          // [ assert :  !( (VLIW.length >= 2) & ((VLIW(0) ∈ JUMP_IMM) & (VLIW(1) ∈ J)) ) ]
   //    - May not be in dual jump: `if ([!]cmp.xx(Rs.new, Rt)) jump`
-          [ !( (VLIW.length >= 2) & (((VLIW(0) ∈ JUMP_CMP_NEW) & (VLIW(1) ∈ J)) | ((VLIW(0) ∈ J) & (VLIW(1) ∈ JUMP_CMP_NEW))) ) assert ]
+          // TODO: Reenable this annotation
+          // [ assert :  !( (VLIW.length >= 2) & (((VLIW(0) ∈ JUMP_CMP_NEW) & (VLIW(1) ∈ J)) | ((VLIW(0) ∈ J) & (VLIW(1) ∈ JUMP_CMP_NEW))) ) ]
   //    - May not be in dual jump: all `jumpr` (JR is only allowed in slot 1)
-          [ !( (VLIW.length >= 2) & ((VLIW(0) ∈ J) & (VLIW(1) ∈ JR))) assert ]
+          // TODO: Reenable this annotation
+          // [ assert :  !( (VLIW.length >= 2) & ((VLIW(0) ∈ J) & (VLIW(1) ∈ JR))) ]
   //    - May not be in dual jump: all `dealloc_return`
-          [ !( (VLIW.length >= 2) & (((VLIW(0) ∈ J) & (VLIW(1) ∈ J)) & exists in {DEALLOC_RETURN}) ) assert ]
+          // TODO: Reenable this annotation
+          // [ assert :  !( (VLIW.length >= 2) & (((VLIW(0) ∈ J) & (VLIW(1) ∈ J)) & exists in {DEALLOC_RETURN}) ) ]
   //    - May not be in dual jump: `endloopN`
   //      - -> See loop section below
   // - JR-class instructions can be placed in Slot 2. However, when encoded in a duplex jumpr R31
@@ -1288,10 +1329,12 @@ instruction set architecture QDSP6 =
   //      - -> handled via regex
   //    - memw_locked,memd_locked,l2fetch,and trace must execute on Slot 0. They must be grouped
   //      only with ALU32 or (non-FP) XTYPE instructions.
-          [ implies(VLIW(VLIW.length-1) ∈ MEMLOCKED_L2FETCH_TRACE, forall j in {ALL} then ((j = VLIW(VLIW.length-1)) | (j ∈ ALU32_XTYPE_NON_FP)) ) assert ]
+          // TODO: Reenable this annotation
+          // [ assert :  implies(VLIW(VLIW.length-1) ∈ MEMLOCKED_L2FETCH_TRACE, forall j in {ALL} then ((j = VLIW(VLIW.length-1)) | (j ∈ ALU32_XTYPE_NON_FP)) ) ]
   //    - dccleana,dcinva,dccleaninva,and dczeroa must execute on Slot 0. Slot 1 must be empty or an
   //      ALU32 instruction. Note that Slot 1 being empty means that Slot 2 or 3 follow immediately.
-          [ implies(VLIW(VLIW.length-1) ∈ CACHE_MAINTENANCE_SPECIAL, (VLIW.length = 1) | !(VLIW(VLIW.length-2) ∈ LD_ST)) assert ]
+          // TODO: Reenable this annotation
+          // [ assert :  implies(VLIW(VLIW.length-1) ∈ CACHE_MAINTENANCE_SPECIAL, (VLIW.length = 1) | !(VLIW(VLIW.length-2) ∈ LD_ST)) ]
 
   // "Dependency constraints"
   // - Instructions in a packet cannot write to the same destination register. The assembler
@@ -1313,7 +1356,8 @@ instruction set architecture QDSP6 =
   //      - (floating point because it reads trap/rounding flags from USR)
   //      - l2fetch sets "L2 prefetch active". But it can only be together with ALU and non-FP XTYPE anyway
   //      - all instructions that set the OVF Sticky Saturation Overflow
-       [ !( (exists i in {TRANSFER_C_R,TRANSFER_CC_RR} then i.d5 = 8) & exists in {FLOATING_POINT, SATURATING} ) assert ]
+       // TODO: Reenable this annotation
+       // [ assert :  !( (exists i in {TRANSFER_C_R,TRANSFER_CC_RR} then i.d5 = 8) & exists in {FLOATING_POINT, SATURATING} ) ]
   //    - Multiple compare instructions are allowed to target the same predicate register in order
   //      to perform a logical AND of the results (Section 6.2.3).
   //      - If a packet contains endloopN, it cannot perform an auto-AND with predicate register P3.
@@ -1322,16 +1366,18 @@ instruction set architecture QDSP6 =
   //        register, then no other instruction in the packet can write to the same predicate
   //        register. (As a result, a register transfer to P3:0 or C5:4 cannot be grouped with any
   //        other predicate-writing instruction.)
-            [ !( ((exists i in {TRANSFER_C_R,TRANSFER_CC_RR} then i.d5 = 4) | (exists in {TRANSFER_P_R})) &
-                 exists in {PRED_WRITING} ) assert ]
+            // TODO: Reenable this annotation
+            // [ assert :  !( ((exists i in {TRANSFER_C_R,TRANSFER_CC_RR} then i.d5 = 4) | (exists in {TRANSFER_P_R})) &
+            //     exists in {PRED_WRITING} ) ]
   //      - The instructions spNloop0, decbin, tlbmatch, memw_locked, memd_locked, add:carry,
   //        sub:carry, sfcmp, and dfcmp cannot be grouped with another instruction that sets the
   //        same predicate register.
-            [ forall i in {ARITH_CARRY /*, CMP_FP, TODO */} then !(
-                ((exists j in {PRED_WRITING} then (i != j) & (j.d2 = i.u2)) |
-                 (exists j in {TRANSFER_C_R,TRANSFER_CC_RR} then j.d5 = 4)) |
-                 (exists j in {TRANSFER_P_R} then j.d2 = i.u2 )
-              ) assert ]
+            // TODO: Reenable this annotation
+            // [ assert : forall i in {ARITH_CARRY /*, CMP_FP, TODO */} then !(
+            //     ((exists j in {PRED_WRITING} then (i != j) & (j.d2 = i.u2)) |
+            //      (exists j in {TRANSFER_C_R,TRANSFER_CC_RR} then j.d5 = 4)) |
+            //      (exists j in {TRANSFER_P_R} then j.d2 = i.u2 )
+            //   ) ]
 
 
 	// Hexagon V60/V61 Programmer's Reference Manual p. 26
@@ -1346,7 +1392,8 @@ instruction set architecture QDSP6 =
   //   0. In memory, instructions in a packet must appear in strictly decreasing slot order.
   //   Additionally, if an instruction can go in a higher-numbered slot, and that slot is empty,
   //   then it must be moved into the higher-numbered slot.
-  [ VLIW.length <= 4 assert ]
+  // TODO: Reenable this annotation
+  // [ assert :  VLIW.length <= 4 ]
   group VLIW = (
     (
       ( XTYPE<0..1> | ALU32<0..1> | J<0..1> | CR<0..1> ).

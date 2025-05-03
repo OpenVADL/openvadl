@@ -144,6 +144,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(AnnotationDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(EnumerationDefinition definition) {
     return definition;
   }

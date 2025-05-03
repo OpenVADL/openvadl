@@ -280,7 +280,7 @@ PRODUCTIONS
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
   topLevelDefinitions<out Definition def> (. def = DUMMY_DEF; .)
-  = annotations<out Annotations annotations>
+  = annotations<. out List<AnnotationDefinition> annotations.>
   ( instructionsetDefinition<out def>
   | applicationBinaryInterfaceDefinition<out def>
   | processorDefinition<out def>
@@ -293,7 +293,7 @@ PRODUCTIONS
 
   commonDefinitionList<.out List<Definition> definitions.> (. definitions = new ArrayList<>(); .)
   = {
-    annotations<out Annotations annotations>
+    annotations<.out List<AnnotationDefinition> annotations.>
     commonDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
   | macroDef<out ModelDefinition def>                      (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.COMMON_DEFS))
@@ -333,7 +333,7 @@ PRODUCTIONS
 
   isaDefinitionList<.out List<Definition> definitions.> (. definitions = new ArrayList<>(); .)
   = {
-    annotations<out Annotations annotations>
+    annotations<.out List<AnnotationDefinition> annotations.>
     isaDefinition<out Definition def>                   (. def.withAnnotations(annotations); definitions.add(def); .)
   | macroDef<out ModelDefinition def>                   (. addDef(definitions, def); macroTable.addModelDefinition(def); .)
   | // IF (isMacroReplacementOfType(this, BasicSyntaxType.ISA_DEFS))
@@ -345,19 +345,27 @@ PRODUCTIONS
   }
   .
 
-  annotations<out Annotations annotations> (. var list = new ArrayList<Annotation>(); .)
+  annotations<out List<AnnotationDefinition> annotations> (. var list = new ArrayList<AnnotationDefinition>(); .)
   = {
-    annotation<out Annotation annotation>  (. list.add(annotation); .)
-  }                                        (. annotations = new Annotations(list); .)
+    annotation<out AnnotationDefinition annotation>       (. list.add(annotation); .)
+  }                                                       (. annotations = new ArrayList<AnnotationDefinition>(list); .)
   .
 
-  annotation<out Annotation annotation> (. TypeLiteral type = null; IdentifierOrPlaceholder property = null; .)
+  annotation<out AnnotationDefinition annotation> (. var startLocation = lookaheadLoc(); var keywords = new ArrayList<IdentifierOrPlaceholder>(); var values = new ArrayList<Expr>(); .)
   = SYM_BRACK_OPEN
-    expression<out Expr expr, BIN_OPS>
-    [ (SYM_COLON typeLiteral<out type>)
-    | identifierOrPlaceholder<out property>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>   (. keywords.add(id); .)
+    {
+      identifierOrPlaceholder<out IdentifierOrPlaceholder id2> (. keywords.add(id2); .)
+    }
+    [
+      SYM_COLON
+      expression<out Expr expr, BIN_OPS>                               (. values.add(expr); .)
+      {
+        SYM_COMMA
+        expression<out Expr expr2, BIN_OPS>                             (. values.add(expr2); .)
+      }
     ]
-    SYM_BRACK_CLOSE                     (. annotation = new Annotation(expr, type, property); .)
+    SYM_BRACK_CLOSE                     (. annotation = new AnnotationDefinition(keywords, values, startLocation.join(loc())); .)
   .
 
   isaDefinition<out Definition def> (. def = DUMMY_DEF; .)
@@ -855,7 +863,7 @@ PRODUCTIONS
   .
 
   abiElementDefinition<out Definition def>   (. def = DUMMY_DEF; .)
-  = annotations<out Annotations annotations> (. var peek = scanner.Peek(); .)
+  = annotations<.out List<AnnotationDefinition> annotations.> (. var peek = scanner.Peek(); .)
     ( specialPurposeRegisterSingleDef<out def>
     | aliasDefinition<out def>
     | abiPseudoInstructionDefinition<out def>
@@ -980,7 +988,7 @@ PRODUCTIONS
   .
 
   cpuDefinition<out Definition def> (. def = DUMMY_DEF; .)
-  = annotations<out Annotations annotations>
+  = annotations<.out List<AnnotationDefinition> annotations.>
     ( commonDefinition<out def>
     | patchDefinition<out def>
     | sourceDefinition<out def>
@@ -1057,7 +1065,7 @@ PRODUCTIONS
   .
 
   miaDefinition<out Definition def> (. def = DUMMY_DEF; .)
-  = annotations<out Annotations annotations>
+  = annotations<.out List<AnnotationDefinition> annotations.>
     ( macroInstructionDefinition<out def>
     | portBehaviorDefinition<out def>
     | pipelineDefinition<out def>
@@ -1827,6 +1835,7 @@ PRODUCTIONS
   | EXCEPTION
   | FETCH
   | FIRMWARE
+  | GLOBAL
   | GROUP
   | INSTRUCTION
   | INT

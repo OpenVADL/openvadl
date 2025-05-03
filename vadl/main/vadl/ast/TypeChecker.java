@@ -72,6 +72,7 @@ public class TypeChecker
 
   private BranchStrategy branchStrategy = BranchStrategy.ALL;
 
+
   /**
    * Describes whether all branches are checked and the result of all branches must be equal, or
    * if we must evaluate the condition and propagate the type from the chosen branch.
@@ -82,7 +83,7 @@ public class TypeChecker
   }
 
   private final List<Diagnostic> errors = new ArrayList<>();
-  private final ConstantEvaluator constantEvaluator;
+  final ConstantEvaluator constantEvaluator;
 
   /**
    * We are keeping a list of all the nodes (well, the identities of them) we are currently
@@ -104,13 +105,14 @@ public class TypeChecker
     constantEvaluator = new ConstantEvaluator();
   }
 
+
   /**
    * Typecheck the expression if not yet checked.
    *
    * @param expr to check.
    * @return the type of the expression.
    */
-  private Type check(Expr expr) {
+  Type check(Expr expr) {
     // Expressions store their type so we can look at them to see if they were already evaluated.
     if (expr.type != null) {
       return requireNonNull(expr.type);
@@ -134,7 +136,7 @@ public class TypeChecker
    *
    * @param stmt to check.
    */
-  private void check(Statement stmt) {
+  void check(Statement stmt) {
     if (checkedStatements.contains(stmt)) {
       return;
     }
@@ -150,6 +152,27 @@ public class TypeChecker
     stmt.accept(this);
     currentlyVisiting.pop();
     checkedStatements.add(stmt);
+  }
+
+  private void verifyAnnotations(Definition def) {
+    // NOTE: This could have been done in the symbol resolver
+    // Disallow the same annotation multiple times
+    Map<String, AnnotationDefinition> annotationNames = new HashMap<>();
+    def.annotations.forEach(annotation -> {
+      if (annotationNames.containsKey(annotation.name())) {
+        throw error("Duplicate Annotation", def)
+            .locationNote(annotationNames.get(annotation.name()), "First used here")
+            .build();
+      }
+
+      annotationNames.put(annotation.name(), annotation);
+    });
+
+    // Find annotations in groups and execute the check of the groups.
+    AnnotationTable.groupings(def).forEach((group, annotations) -> {
+      group.check(def, annotations, this);
+      group.applyAst(def, annotations);
+    });
   }
 
   /**
@@ -175,10 +198,13 @@ public class TypeChecker
           .build();
     }
 
+    // Visit the definitions
     currentlyVisiting.add(nodeId);
     def.accept(this);
     currentlyVisiting.pop();
     checkedDefinitions.add(def);
+
+    verifyAnnotations(def);
   }
 
   /**
@@ -811,6 +837,14 @@ public class TypeChecker
         "Kind %s not yet implemented, found at: %s".formatted(definition.kind.toString(),
             definition.loc.toIDEString()));
 
+  }
+
+  @Override
+  public Void visit(AnnotationDefinition definition) {
+    // NOTE: I have the suspicion that we might have to delay the typechecking until the definition
+    // on which the annotation is placed is completely typed checked.
+    requireNonNull(definition.annotation).typeCheck(definition, this);
+    return null;
   }
 
   @Override

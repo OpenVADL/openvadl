@@ -1,8 +1,10 @@
 using SInt16 = SInt<16>
 using SInt32 = SInt<32>
 using SInt64 = SInt<64>
+
 instruction set architecture ISA = {
   function add1632(left : SInt16, right : SInt16) -> SInt32 = VADL::adds(left, right) as SInt32
 }
+
 application binary interface ABI for ISA = {
 }
