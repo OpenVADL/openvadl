@@ -183,8 +183,8 @@ TOKENS
   SOURCE       = "source".
   STACK        = "stack".
   STAGE        = "stage".
-  START        = "start".
   STARTUP      = "startup".
+  RESET        = "reset".
   STOP         = "stop".
   TENSOR       = "tensor".
   THEN         = "then".
@@ -1017,8 +1017,7 @@ PRODUCTIONS
 
   cpuFunctionDefinition<out Definition def> (. var start = lookaheadLoc(); Identifier ident = null;.)
   =                                         (. CpuFunctionDefinition.BehaviorKind kind = null; IsId stopWithRef = null; .)
-  ( START                                   (. ident = new Identifier(t.val, loc()); kind = CpuFunctionDefinition.BehaviorKind.START; .)
-  | STOP                                    (. ident = new Identifier(t.val, loc()); kind = CpuFunctionDefinition.BehaviorKind.STOP; .)
+  ( STOP                                    (. ident = new Identifier(t.val, loc()); kind = CpuFunctionDefinition.BehaviorKind.STOP; .)
     [ WITH referenceLiteral<out stopWithRef> ]
     /* TODO Verify if "redirect" is needed - "redirect is unstable and must not be used"
     | REDIRECT
@@ -1032,14 +1031,14 @@ PRODUCTIONS
   .
 
   cpuProcessDefinition<out Definition def> (. var start = lookaheadLoc(); .)
-  =                                        (. CpuProcessDefinition.ProcessKind kind = null; List<Parameter> startupOutputs = List.of(); .)
+  =                                        (. CpuProcessDefinition.ProcessKind kind = null; List<Parameter> outputs = List.of(); .)
   ( FIRMWARE                               (. kind = CpuProcessDefinition.ProcessKind.FIRMWARE; .)
-  | STARTUP                                (. kind = CpuProcessDefinition.ProcessKind.STARTUP; .)
-    SYM_ARROW
-    parameters<out startupOutputs>
+  | RESET                                (. kind = CpuProcessDefinition.ProcessKind.RESET; .)
+    [ SYM_ARROW
+    parameters<out outputs> ]
   )
     SYM_EQ
-    statement<out Statement stmt>          (. def = new CpuProcessDefinition(kind, startupOutputs, stmt, start.join(loc())); .)
+    statement<out Statement stmt>          (. def = new CpuProcessDefinition(kind, outputs, stmt, start.join(loc())); .)
   .
 
   // -- MiA DEFINITIONS-----------------------------------------------------------------------------------------------
@@ -1854,8 +1853,8 @@ PRODUCTIONS
   | SIGNED
   | SIZE_T
   | STAGE
-  | START
   | STARTUP
+  | RESET
   | STOP
   // | SYMBOL
   | SYM_IN

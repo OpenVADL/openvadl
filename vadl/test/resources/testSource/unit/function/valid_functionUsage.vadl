@@ -19,5 +19,4 @@ instruction set architecture FunctionCallTest = {
 }
 
 processor CPU implements FunctionCallTest = {
-  start = 0x80000000
-}
+  }

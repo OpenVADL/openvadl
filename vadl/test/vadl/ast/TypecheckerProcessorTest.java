@@ -16,13 +16,6 @@
 
 package vadl.ast;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import vadl.TestUtils;
-import vadl.error.DiagnosticList;
-
 public class TypecheckerProcessorTest {
 
   private static String base = """
@@ -32,32 +25,5 @@ public class TypecheckerProcessorTest {
       }
       """;
 
-  @Test
-  void shouldThrow_duplicatedDefinitions() {
-    var body = """
-        start = 0x8000000
-        start = 0x8000000
-        firmware = {}
-        firmware = {}
-        """;
-    var spec = base.formatted(body);
-    var throwable = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(spec)
-    );
-    TestUtils.assertErrors(throwable, "Symbol name already used: start");
-  }
-
-
-  @Test
-  void shouldThrow_missingStart() {
-    var body = """
-        """;
-    var spec = base.formatted(body);
-    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(spec), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var throwable = assertThrows(DiagnosticList.class, () -> typechecker.verify(ast));
-    TestUtils.assertErrors(throwable,
-        "Missing `start` address function."
-    );
-  }
 
 }

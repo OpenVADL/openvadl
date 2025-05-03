@@ -18,6 +18,26 @@ const char * const [(${gen_arch_lower})]_cpu_[(${reg.name_lower})]_names[(${reg.
 };
 [/][/]
 
+[# th:each="reg : ${register_tensors}"]
+static [(${reg.value_c_type})] get_[(${reg.name_lower})]([(${reg.getter_params_no_comma})])
+{   [# th:each="dim : ${reg.index_dims}"]
+    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
+    [# th:each="constraint : ${reg.constraints}"]
+    if ([(${constraint.check})]) return [(${constraint.value})];
+    [/]
+    return cpu_self->env.[(${reg.name_lower})][# th:each="dim : ${reg.index_dims}"][ [(${dim.arg_name})]][/];
+}
+
+static void set_[(${reg.name_lower})]([(${reg.getter_params_post_comma})] [(${reg.value_c_type})] val)
+{   [# th:each="dim : ${reg.index_dims}"]
+    assert( [(${dim.arg_name})] < [(${dim["size"]})]); [/]
+    [# th:each="constraint : ${reg.constraints}"]
+    if ([(${constraint.check})]) return;
+    [/]
+    cpu_self->env.[(${reg.name_lower})][# th:each="dim : ${reg.index_dims}"][ [(${dim.arg_name})]][/] = val;
+}
+[/]
+
 static void [(${gen_arch_lower})]_cpu_disas_set_info(CPUState *cpu, disassemble_info *info)
 {
     trace_[(${gen_arch_lower})]_cpu_call(__func__);
@@ -67,12 +87,7 @@ static void [(${gen_arch_lower})]_cpu_reset_hold(Object *obj, ResetType type)
     [# th:each="reg, iterState : ${register_tensors}"][# th:if="${reg.index_dims.size} > 0"]
     memset(env->[(${reg.name_lower})], 0, sizeof(env->[(${reg.name_lower})])); [/][/]
 
-    // Start address of the execution.
-    // Comes from firmware or start address definition in processor definition.
-    env->[(${gen_arch_upper})]_PC = env->reset_vec;
-    [# th:if="${insn_count}"]
-    env->insn_count = 0;
-    [/]
+[(${reset})]
 }
 
 static ObjectClass* [(${gen_arch_lower})]_cpu_class_by_name(const char *cpu_model)
@@ -213,10 +228,6 @@ static const struct TCGCPUOps [(${gen_arch_lower})]_tcg_ops = {
 };
 
 static Property [(${gen_arch_lower})]_cpu_properties[] = {
-#ifndef CONFIG_USER_ONLY
-    // Default comes from firmware or start address definition in processor definition.
-    DEFINE_PROP_UINT64("reset_vec", [(${gen_arch_upper})]CPU, env.reset_vec, [(${mem_info.pc_reset_addr})]),
-#endif
     DEFINE_PROP_END_OF_LIST(),
 };
 

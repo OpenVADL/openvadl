@@ -49,7 +49,7 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
 
     Assertions.assertLinesMatch("""
         int64_t RV3264I_hi(uint32_t symbol) {
-           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
+           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
         int64_t RV3264I_lo(uint32_t symbol) {
            return  VADL_sextract(VADL_uextract(symbol, 12), 12);
@@ -67,13 +67,13 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
            return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
         int64_t RV3264I_pcrel_hi(uint32_t symbol) {
-           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
+           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
         int64_t RV3264I_pcrel_lo(uint32_t symbol) {
            return  VADL_sextract(VADL_uextract(symbol, 12), 12);
         }
         int64_t RV3264I_got_pcrel_hi(uint32_t symbol) {
-           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x00000800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
+           return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
         int64_t RV3264I_Itype_ABSOLUTE_imm(int64_t input) {
            return input;

@@ -53,7 +53,6 @@ public class ExceptionTest {
         }
       }
       processor MiP implements ISA = {
-        start = 0x1000
       }
       """;
 

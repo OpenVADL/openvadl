@@ -32,4 +32,4 @@ instruction set architecture Test = {
 
 }
 
-processor TEST implements Test = { start = 0x1000}
+processor TEST implements Test = {}
