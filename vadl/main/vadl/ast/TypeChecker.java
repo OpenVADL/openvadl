@@ -1907,6 +1907,7 @@ public class TypeChecker
     }
 
     if (origin instanceof EnumerationDefinition.Entry enumEntry) {
+      check(enumEntry.enumDef);
       expr.type = check(requireNonNull(enumEntry.value));
       return;
     }
