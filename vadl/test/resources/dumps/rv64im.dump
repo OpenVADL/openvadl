@@ -2967,7 +2967,8 @@ ImportDefinition
 . : ' | . : IntegerLiteral literal: 12 (12) type: null
 . : ' RelocationDefinition name: "got_hi"
 . : ' | AnnotationDefinition
-. : ' | . Identifier name: "globalOffset" type: null
+. : ' | . Identifier name: "global" type: null
+. : ' | . Identifier name: "offset" type: null
 . : ' | Parameter name: "symbol"
 . : ' | . TypeLiteral type: null
 . : ' | . : Identifier name: "Bits" type: null

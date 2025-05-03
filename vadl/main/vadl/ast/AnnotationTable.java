@@ -44,7 +44,7 @@ class AnnotationTable {
 
   static {
     on(AsmDescriptionDefinition.class)
-        .add("caseSensitive", EnableAnnotation::new)
+        .add("case sensitive", EnableAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
           var asmDescription = (AssemblyDescription) def;
           var enableAnnotation = (EnableAnnotation) annotation;
@@ -53,7 +53,7 @@ class AnnotationTable {
         .build();
 
     on(AsmDescriptionDefinition.class)
-        .add("commentString", StringAnnotation::new)
+        .add("comment string", StringAnnotation::new)
         .applyViam((def, annotation, lowering) -> {
           var asmDescription = (AssemblyDescription) def;
           var stringAnnotation = (StringAnnotation) annotation;
@@ -78,7 +78,7 @@ class AnnotationTable {
         .build();
 
     groupOn(RelocationDefinition.class)
-        .add("globalOffset", EnableAnnotation::new)
+        .add("global offset", EnableAnnotation::new)
         .add("relative", EnableAnnotation::new)
         .add("absolute", EnableAnnotation::new)
         .check((def, annotations, typeChecker) -> {
@@ -86,7 +86,7 @@ class AnnotationTable {
         })
         .applyViam((def, annotations, lowering) -> {
           var mappings = Map.of(
-              "globalOffset", Relocation.Kind.GLOBAL_OFFSET_TABLE,
+              "global offset", Relocation.Kind.GLOBAL_OFFSET_TABLE,
               "relative", Relocation.Kind.RELATIVE,
               "absolute", Relocation.Kind.ABSOLUTE
           );
@@ -582,6 +582,14 @@ abstract class Annotation {
           .build();
     }
   }
+
+  protected void verifyValuesNonEmpty(AnnotationDefinition definition) {
+    if (definition.values.isEmpty()) {
+      throw error("Invalid annotation arguments", definition)
+          .locationDescription(definition, "Expected at leat one argument but got none")
+          .build();
+    }
+  }
 }
 
 /**
@@ -659,7 +667,7 @@ class ConstantAnnotation extends Annotation {
 }
 
 /**
- * A simple annotation that stores a single string
+ * A simple annotation that stores a single string.
  *
  * <p>Examples for such annotations:
  * <pre>
@@ -691,6 +699,59 @@ class StringAnnotation extends Annotation {
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     var valueExpr = definition.values.getFirst();
     typeChecker.check(valueExpr);
+  }
+}
+
+/**
+ * A annotation that can take one of the specified fields.
+ *
+ * <p>Examples for such annotations:
+ * <pre>
+ * [ commentString : "lava cake" ]
+ * </pre>
+ */
+class EnumAnnotation extends Annotation {
+  List<String> possibleValues;
+
+  @LazyInit
+  String value;
+
+  public EnumAnnotation(List<String> possibleValues) {
+    super();
+    this.possibleValues = possibleValues;
+  }
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    verifyValuesNonEmpty(definition);
+
+    for (var value : definition.values) {
+      if (!(value instanceof Identifier)) {
+        throw error("Invalid Annotation Argument", value)
+            .locationDescription(value, "Expected an identifier but got %s",
+                value.getClass().getSimpleName())
+            .build();
+      }
+    }
+
+    value = definition.values.stream()
+        .map(v -> ((Identifier) v).name)
+        .collect(Collectors.joining(" "));
+
+    if (!possibleValues.contains(value)) {
+      throw error("Invalid Annotation Argument", definition)
+          .locationDescription(definition, "Expected one of %s but got %s",
+              String.join(", ", possibleValues), value)
+          .build();
+    }
+
+    // Do not symbol resolve on purpose as the identifiers here aren't pointing to anything in the
+    // AST.
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    // Do nothing on purpose as the identifiers don't need to be checked.
   }
 }
 

@@ -1374,7 +1374,7 @@ Listing \r{relocation_definition} shows some relocation definitions and common a
   [relative]
   relocation pcrel_lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
-  [globalOffset]
+  [ global offset ]
   relocation got_hi( symbol : Bits<32> ) -> UInt<20> =
     ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
 ~~~
@@ -1383,10 +1383,10 @@ Listing \r{relocation_definition} shows some relocation definitions and common a
 The relocation definition is similar to a function definition, only the keyword `function` is replaced by `relocation`.
 Currently for relocations only a single argument is supported.
 With annotations different kinds of relocations are selected.
-For now the annotations `[absolute]`, `[relative]` and `[globalOffset]` are suported.
+For now the annotations `[absolute]`, `[relative]` and `[ global offset ]` are suported.
 An `[absolute]` relocation is used for a symbol which represents an absolute address and is the default if no annotation is given.
-For position independent code the `[relative]` relocation represents a program counter relative symbol and a `[globalOffset]` relocation relies on a global offset table (\ac{GOT}) which adds an indirection to achieve position independent code.
-Both `[relative]` and `[globalOffset]` do not require to reference `PC` or `GOT` since the annotation indicates how the value has to change.
+For position independent code the `[relative]` relocation represents a program counter relative symbol and a `[ global offset ]` relocation relies on a global offset table (\ac{GOT}) which adds an indirection to achieve position independent code.
+Both `[relative]` and `[ global offset ]` do not require to reference `PC` or `GOT` since the annotation indicates how the value has to change.
 For relative relocations, the compiler generator will subtract the program counter for the returned value.
 For global offset relocations, the offset of the global offset table and the offset of the symbol are added and the program counter is subtracted.
 
