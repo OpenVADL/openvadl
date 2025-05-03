@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -37,7 +38,7 @@ import vadl.viam.Relocation;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
 
-@SuppressWarnings("UnusedMethod")
+@SuppressWarnings({"UnusedMethod", "UnusedVariable"})
 class AnnotationTable {
   private static final Map<Class<? extends Definition>, Map<String, Supplier<Annotation>>>
       annotationFactories = new java.util.HashMap<>();
@@ -61,9 +62,7 @@ class AnnotationTable {
         .add("current", EnableAnnotation::new)
         .add("next", EnableAnnotation::new)
         .add("next next", EnableAnnotation::new)
-        .check((def, annotations, typeChecker) -> {
-          verifyOnlyOneOfGroup(annotations);
-        })
+        .check(GroupedAnnotationBuilder.GroupCheckContext::verifyOnlyOneOfGroup)
         // FIXME: Apply to AST
         .build();
 
@@ -76,18 +75,16 @@ class AnnotationTable {
         .add("global offset", EnableAnnotation::new)
         .add("relative", EnableAnnotation::new)
         .add("absolute", EnableAnnotation::new)
-        .check((def, annotations, typeChecker) -> {
-          verifyOnlyOneOfGroup(annotations);
-        })
-        .applyViam((def, annotations, lowering) -> {
+        .check(GroupedAnnotationBuilder.GroupCheckContext::verifyOnlyOneOfGroup)
+        .applyViam(context -> {
           var mappings = Map.of(
               "global offset", Relocation.Kind.GLOBAL_OFFSET_TABLE,
               "relative", Relocation.Kind.RELATIVE,
               "absolute", Relocation.Kind.ABSOLUTE
           );
 
-          var annotation = annotations.getFirst();
-          var relocation = (Relocation) def;
+          var annotation = context.annotations.getFirst();
+          var relocation = (Relocation) context.targetDefinition;
           relocation.setKind(requireNonNull(mappings.get(annotation.name)));
         })
         .build();
@@ -116,26 +113,6 @@ class AnnotationTable {
     return annotation;
   }
 
-
-  /**
-   * Verifies that only one annotation exists in the group. If more than one annotation is
-   * present an error is thrown.
-   *
-   * @param annotations a list of {@link Annotation} objects to verify.
-   * @throws vadl.error.Diagnostic if more than one annotation is present in the group.
-   */
-  static void verifyOnlyOneOfGroup(List<Annotation> annotations) {
-    if (annotations.size() > 1) {
-      var diagnostic = error("Annotation clash", annotations.getFirst().definition)
-          .locationDescription(annotations.getFirst().definition, "First defined here");
-      for (int i = 1; i < annotations.size(); i++) {
-        diagnostic.locationDescription(annotations.get(i).definition,
-            "Conflicting defined here");
-      }
-      diagnostic.description("Only one of these annotations can be defined.");
-      throw diagnostic.build();
-    }
-  }
 
   /**
    * Groups annotations from the provided definition into a map where the key is
@@ -350,13 +327,13 @@ class AnnotationTable {
     private final List<Pair<String, Supplier<Annotation>>> namedFactories = new ArrayList<>();
 
     @Nullable
-    private TriConsumer<D, List<Annotation>, TypeChecker> checkCallback;
+    private Consumer<GroupCheckContext<D>> checkCallback;
 
     @Nullable
-    private BiConsumer<D, List<Annotation>> applyAstCallback;
+    private Consumer<GroupAstApplyContext<D>> applyAstCallback;
 
     @Nullable
-    private TriConsumer<vadl.viam.Definition, List<Annotation>, ViamLowering> applyViamCallback;
+    private Consumer<GroupViamApplyContext> applyViamCallback;
 
 
     GroupedAnnotationBuilder(Class<D> targetClass) {
@@ -390,7 +367,7 @@ class AnnotationTable {
      * @return itself.
      */
     GroupedAnnotationBuilder<D> check(
-        TriConsumer<D, List<Annotation>, TypeChecker> checkCallback) {
+        Consumer<GroupCheckContext<D>> checkCallback) {
       if (this.checkCallback != null) {
         throw new IllegalStateException("Check callback already set");
       }
@@ -406,7 +383,7 @@ class AnnotationTable {
      * @return itself.
      */
     GroupedAnnotationBuilder<D> applyAst(
-        BiConsumer<D, List<Annotation>> applyCallback) {
+        Consumer<GroupAstApplyContext<D>> applyCallback) {
       if (this.applyAstCallback != null) {
         throw new IllegalStateException("Apply callback already set");
       }
@@ -422,7 +399,7 @@ class AnnotationTable {
      * @return itself.
      */
     GroupedAnnotationBuilder<D> applyViam(
-        TriConsumer<vadl.viam.Definition, List<Annotation>, ViamLowering> applyCallback) {
+        Consumer<GroupViamApplyContext> applyCallback) {
       if (this.applyViamCallback != null) {
         throw new IllegalStateException("Apply callback already set");
       }
@@ -440,32 +417,31 @@ class AnnotationTable {
         throw new IllegalStateException("Not all required are fields set");
       }
 
-      TriConsumer<D, List<Annotation>, TypeChecker> realCheckCallback;
+      Consumer<GroupCheckContext<D>> realCheckCallback;
       if (checkCallback == null) {
-        realCheckCallback = (definition, annotations, typeChecker) -> {
+        realCheckCallback = (context) -> {
         };
       } else {
         realCheckCallback = requireNonNull(checkCallback);
       }
 
-      BiConsumer<D, List<Annotation>> realApplyAstCallback;
+      Consumer<GroupAstApplyContext<D>> realApplyAstCallback;
       if (applyAstCallback != null) {
-        realApplyAstCallback = (definition, annotations) -> {
-          requireNonNull(applyAstCallback).accept(definition, annotations);
+        realApplyAstCallback = (context) -> {
+          requireNonNull(applyAstCallback).accept(context);
         };
       } else {
-        realApplyAstCallback = (definition, annotations) -> {
+        realApplyAstCallback = (context) -> {
         };
       }
 
-      TriConsumer<vadl.viam.Definition, List<Annotation>, ViamLowering> realApplyViamCallback;
+      Consumer<GroupViamApplyContext> realApplyViamCallback;
       if (applyViamCallback != null) {
-        realApplyViamCallback = (definition, annotations, lowering
-        ) -> {
-          requireNonNull(applyViamCallback).accept(definition, annotations, lowering);
+        realApplyViamCallback = (context) -> {
+          requireNonNull(applyViamCallback).accept(context);
         };
       } else {
-        realApplyViamCallback = (definition, annotations, lowering) -> {
+        realApplyViamCallback = (context) -> {
         };
       }
 
@@ -475,18 +451,20 @@ class AnnotationTable {
         @Override
         public void check(Definition definition, List<Annotation> annotations,
                           TypeChecker typeChecker) {
-          realCheckCallback.accept((D) definition, annotations, typeChecker);
+          realCheckCallback.accept(
+              new GroupCheckContext<>((D) definition, annotations, typeChecker));
         }
 
         @Override
         public void applyAst(Definition definition, List<Annotation> annotations) {
-          realApplyAstCallback.accept((D) definition, annotations);
+          realApplyAstCallback.accept(new GroupAstApplyContext<>((D) definition, annotations));
         }
 
         @Override
         public void applyViam(vadl.viam.Definition definition, List<Annotation> annotations,
                               ViamLowering lowering) {
-          realApplyViamCallback.accept(definition, annotations, lowering);
+          realApplyViamCallback.accept(
+              new GroupViamApplyContext(definition, annotations, lowering));
         }
       };
 
@@ -505,6 +483,62 @@ class AnnotationTable {
         };
 
         annotationFactories.get(targetClass).put(name, realAnnotationFactory);
+      }
+    }
+
+    private static class GroupCheckContext<D> {
+      final D targetDefinition;
+      final List<Annotation> annotations;
+      final TypeChecker typeChecker;
+
+      public GroupCheckContext(D targetDefinition, List<Annotation> annotations,
+                               TypeChecker typeChecker) {
+        this.targetDefinition = targetDefinition;
+        this.annotations = annotations;
+        this.typeChecker = typeChecker;
+      }
+
+      /**
+       * Verifies that only one annotation exists in the group. If more than one annotation is
+       * present an error is thrown.
+       *
+       * @throws vadl.error.Diagnostic if more than one annotation is present in the group.
+       */
+      void verifyOnlyOneOfGroup() {
+        if (annotations.size() > 1) {
+          var diagnostic = error("Annotation clash", annotations.getFirst().definition)
+              .locationDescription(annotations.getFirst().definition, "First defined here");
+          for (int i = 1; i < annotations.size(); i++) {
+            diagnostic.locationDescription(annotations.get(i).definition,
+                "Conflicting defined here");
+          }
+          diagnostic.description("Only one of these annotations can be defined.");
+          throw diagnostic.build();
+        }
+      }
+    }
+
+    private static class GroupAstApplyContext<D> {
+      final D targetDefinition;
+      final List<Annotation> annotations;
+
+      public GroupAstApplyContext(D targetDefinition, List<Annotation> annotations) {
+        this.targetDefinition = targetDefinition;
+        this.annotations = annotations;
+      }
+    }
+
+    private static class GroupViamApplyContext {
+      final vadl.viam.Definition targetDefinition;
+      final List<Annotation> annotations;
+      final ViamLowering lowering;
+
+      public GroupViamApplyContext(vadl.viam.Definition targetDefinition,
+                                   List<Annotation> annotations,
+                                   ViamLowering lowering) {
+        this.targetDefinition = targetDefinition;
+        this.annotations = annotations;
+        this.lowering = lowering;
       }
     }
   }
