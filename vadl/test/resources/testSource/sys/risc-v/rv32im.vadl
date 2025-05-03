@@ -272,4 +272,9 @@ assembly description ASM for ABI = {
 
 processor Spike implements RV32IM with ABI = {
   reset = PC := 0x80000000
+
+  [ firmware ]
+  [ base = 0x80000000 ]
+  memory region [RAM] DRAM in MEM
+
 }

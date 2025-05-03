@@ -115,7 +115,6 @@ class ParserUtils {
     ID_TOKENS[Parser._ENCODE] = true;
     ID_TOKENS[Parser._EXCEPTION] = true;
     ID_TOKENS[Parser._FETCH] = true;
-    ID_TOKENS[Parser._FIRMWARE] = true;
     ID_TOKENS[Parser._GROUP] = true;
     ID_TOKENS[Parser._INSTRUCTION] = true;
     ID_TOKENS[Parser._INT] = true;

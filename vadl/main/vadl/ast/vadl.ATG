@@ -122,7 +122,6 @@ TOKENS
   FALSE        = "false".
   FETCH        = "fetch".
   FILE         = "file".
-  FIRMWARE     = "firmware".
   FOLD         = "fold".
   FOR          = "for".
   FORALL       = "forall".
@@ -1050,8 +1049,7 @@ PRODUCTIONS
 
   cpuProcessDefinition<out Definition def> (. var start = lookaheadLoc(); .)
   =                                        (. CpuProcessDefinition.ProcessKind kind = null; List<Parameter> outputs = List.of(); .)
-  ( FIRMWARE                               (. kind = CpuProcessDefinition.ProcessKind.FIRMWARE; .)
-  | RESET                                (. kind = CpuProcessDefinition.ProcessKind.RESET; .)
+  ( RESET                                (. kind = CpuProcessDefinition.ProcessKind.RESET; .)
     [ SYM_ARROW
     parameters<out outputs> ]
   )
@@ -1844,7 +1842,6 @@ PRODUCTIONS
   | ENCODE
   | EXCEPTION
   | FETCH
-  | FIRMWARE
   | GROUP
   | INSTRUCTION
   | INT

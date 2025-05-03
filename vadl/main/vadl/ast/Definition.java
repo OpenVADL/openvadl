@@ -4188,7 +4188,7 @@ class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
     CpuMemoryRegionDefinition that = (CpuMemoryRegionDefinition) o;
     return Objects.equals(id, that.id) && kind == that.kind
         && Objects.equals(memoryRef, that.memoryRef)
-        && Objects.equals(stmt, that.stmt) && Objects.equals(loc, that.loc);
+        && Objects.equals(stmt, that.stmt);
   }
 
   @Override
@@ -4197,7 +4197,6 @@ class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + Objects.hashCode(kind);
     result = 31 * result + Objects.hashCode(memoryRef);
     result = 31 * result + Objects.hashCode(stmt);
-    result = 31 * result + Objects.hashCode(loc);
     return result;
   }
 
@@ -4358,7 +4357,6 @@ class CpuProcessDefinition extends Definition {
   }
 
   enum ProcessKind {
-    FIRMWARE("firmware"),
     RESET("reset");
 
     final String keyword;

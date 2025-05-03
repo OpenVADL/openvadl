@@ -1714,7 +1714,7 @@ public class TypeChecker
   @Override
   public Void visit(CpuProcessDefinition definition) {
     switch (definition.kind) {
-      case FIRMWARE, RESET -> check(definition.statement);
+      case RESET -> check(definition.statement);
       default -> throwUnimplemented(definition);
     }
     return null;

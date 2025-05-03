@@ -871,7 +871,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(CpuProcessDefinition definition) {
     switch (definition.kind) {
-      case FIRMWARE, RESET -> { /* supported */ }
+      case RESET -> { /* supported */ }
       default -> throw new RuntimeException(
           "The ViamGenerator does not support %s in `%s` yet".formatted(
               definition.kind,
@@ -1240,10 +1240,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // visitIsa on created isa ast node
     var isa = visitIsa(mergeIsa(definition.implementedIsaNodes));
 
-    var firmware = (Procedure) definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.FIRMWARE)
-        .findFirst()
-        .flatMap(this::fetch).orElse(null);
-
     var reset = (Procedure) definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.RESET)
         .findFirst()
         .flatMap(this::fetch)
@@ -1254,7 +1250,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .map(d -> (MemoryRegion) d.get()).toList();
 
     var abi = definition.abiNode != null ? (Abi) fetch(definition.abiNode).orElse(null) : null;
-    var mip = new Processor(identifier, isa, abi, null, reset, firmware, memRegions, null);
+    var mip = new Processor(identifier, isa, abi, null, reset, memRegions, null);
 
     // FIXME: Remove this, once annotation framework is supported
     mip.addAnnotation(new EnableHtifAnno());
