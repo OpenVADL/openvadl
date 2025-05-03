@@ -889,6 +889,7 @@ class SymbolTable {
             .requireAs((Identifier) implementedIsa, InstructionSetDefinition.class);
         if (isa != null) {
           definition.implementedIsaNodes.add(isa);
+          definition.symbolTable().extendBy(isa.symbolTable());
         }
       }
       if (definition.abi != null) {
