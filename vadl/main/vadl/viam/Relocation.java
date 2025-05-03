@@ -49,7 +49,7 @@ public class Relocation extends Function {
     }
   }
 
-  private final Kind kind;
+  private Kind kind;
 
   public Relocation(Identifier identifier, Kind kind, Parameter[] parameters, Type returnType) {
     super(identifier, parameters, returnType);
@@ -59,6 +59,10 @@ public class Relocation extends Function {
   public Relocation(Identifier identifier, Kind kind, Parameter[] parameters, Type returnType,
                     Graph behavior) {
     super(identifier, parameters, returnType, behavior);
+    this.kind = kind;
+  }
+
+  public void setKind(Kind kind) {
     this.kind = kind;
   }
 

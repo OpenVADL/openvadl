@@ -32,6 +32,10 @@ import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.utils.functionInterfaces.TriConsumer;
+import vadl.viam.AssemblyDescription;
+import vadl.viam.Relocation;
+import vadl.viam.annotations.AsmParserCaseSensitive;
+import vadl.viam.annotations.AsmParserCommentString;
 
 @SuppressWarnings("UnusedMethod")
 class AnnotationTable {
@@ -40,8 +44,21 @@ class AnnotationTable {
 
   static {
     on(AsmDescriptionDefinition.class)
-        .add("commentString", EnableAnnotation::new)
-        // FIXME: Apply to VIAM
+        .add("caseSensitive", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var asmDescription = (AssemblyDescription) def;
+          var enableAnnotation = (EnableAnnotation) annotation;
+          asmDescription.addAnnotation(new AsmParserCaseSensitive(enableAnnotation.isEnabled));
+        })
+        .build();
+
+    on(AsmDescriptionDefinition.class)
+        .add("commentString", StringAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var asmDescription = (AssemblyDescription) def;
+          var stringAnnotation = (StringAnnotation) annotation;
+          asmDescription.addAnnotation(new AsmParserCommentString(stringAnnotation.value));
+        })
         .build();
 
     groupOn(CounterDefinition.class)
@@ -49,15 +66,7 @@ class AnnotationTable {
         .add("next", EnableAnnotation::new)
         .add("next next", EnableAnnotation::new)
         .check((def, annotations, typeChecker) -> {
-          if (annotations.size() > 1) {
-            var diagnostic = error("Annotation clash", annotations.getFirst().definition)
-                .locationDescription(annotations.getFirst().definition, "First defined here");
-            for (int i = 1; i < annotations.size(); i++) {
-              diagnostic.locationDescription(annotations.get(i).definition,
-                  "Conflicting defined here");
-            }
-            throw diagnostic.build();
-          }
+          verifyOnlyOneOfGroup(annotations);
         })
         // FIXME: Apply to AST
         .build();
@@ -68,15 +77,26 @@ class AnnotationTable {
         // FIXME: Apply to VIAM
         .build();
 
-    on(RelocationDefinition.class)
+    groupOn(RelocationDefinition.class)
         .add("globalOffset", EnableAnnotation::new)
-        // FIXME: Apply to VIAM
+        .add("relative", EnableAnnotation::new)
+        .add("absolute", EnableAnnotation::new)
+        .check((def, annotations, typeChecker) -> {
+          verifyOnlyOneOfGroup(annotations);
+        })
+        .applyViam((def, annotations, lowering) -> {
+          var mappings = Map.of(
+              "globalOffset", Relocation.Kind.GLOBAL_OFFSET_TABLE,
+              "relative", Relocation.Kind.RELATIVE,
+              "absolute", Relocation.Kind.ABSOLUTE
+          );
+
+          var annotation = annotations.getFirst();
+          var relocation = (Relocation) def;
+          relocation.setKind(requireNonNull(mappings.get(annotation.name)));
+        })
         .build();
 
-    on(RelocationDefinition.class)
-        .add("relative", EnableAnnotation::new)
-        // FIXME: Apply to VIAM
-        .build();
   }
 
 
@@ -100,6 +120,27 @@ class AnnotationTable {
     var annotation = annotationFactory.get();
     annotation.definition = definition;
     return annotation;
+  }
+
+
+  /**
+   * Verifies that only one annotation exists in the group. If more than one annotation is
+   * present an error is thrown.
+   *
+   * @param annotations a list of {@link Annotation} objects to verify.
+   * @throws vadl.error.Diagnostic if more than one annotation is present in the group.
+   */
+  static void verifyOnlyOneOfGroup(List<Annotation> annotations) {
+    if (annotations.size() > 1) {
+      var diagnostic = error("Annotation clash", annotations.getFirst().definition)
+          .locationDescription(annotations.getFirst().definition, "First defined here");
+      for (int i = 1; i < annotations.size(); i++) {
+        diagnostic.locationDescription(annotations.get(i).definition,
+            "Conflicting defined here");
+      }
+      diagnostic.description("Only one of these annotations can be defined.");
+      throw diagnostic.build();
+    }
   }
 
   /**
@@ -614,6 +655,42 @@ class ConstantAnnotation extends Annotation {
     typeChecker.check(valueExpr);
 
     constant = typeChecker.constantEvaluator.eval(valueExpr);
+  }
+}
+
+/**
+ * A simple annotation that stores a single string
+ *
+ * <p>Examples for such annotations:
+ * <pre>
+ * [ commentString : "lava cake" ]
+ * </pre>
+ */
+class StringAnnotation extends Annotation {
+  @LazyInit
+  String value;
+
+  public StringAnnotation() {
+    super();
+  }
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    verifyValuesCnt(definition, 1);
+    var firstValue = definition.values.getFirst();
+
+    if (!(firstValue instanceof StringLiteral)) {
+      throw error("Invalid Annotation Argument", firstValue)
+          .locationDescription(firstValue, "Expected a string but got %s",
+              firstValue.getClass().getSimpleName())
+          .build();
+    }
+  }
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    var valueExpr = definition.values.getFirst();
+    typeChecker.check(valueExpr);
   }
 }
 

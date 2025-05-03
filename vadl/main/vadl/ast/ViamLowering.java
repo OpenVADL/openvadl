@@ -1393,23 +1393,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         new BehaviorLowering(this).getFunctionGraph(definition.expr,
             identifier.name() + "::behavior");
 
-    // FIXME: Implement into the big annotation processing.
-    var isRelative = false;
-    var isGlobalOffsetTable = false;
-    //    var isRelative = definition.annotations.annotations().stream()
-    //        .anyMatch(x -> x.expr instanceof vadl.ast.Identifier id && id.name.equals(RELATIVE));
-    //    var isGlobalOffsetTable = definition.annotations.annotations().stream()
-    //        .anyMatch(
-    //            x -> x.expr instanceof vadl.ast.Identifier id
-    //            && id.name.equals(GLOBAL_OFFSET_TABLE));
-    //
+    // Kind may be later overwritten by an annotation.
     Relocation.Kind kind = Relocation.Kind.ABSOLUTE;
-
-    if (isRelative) {
-      kind = Relocation.Kind.RELATIVE;
-    } else if (isGlobalOffsetTable) {
-      kind = Relocation.Kind.GLOBAL_OFFSET_TABLE;
-    }
 
     return Optional.of(
         new Relocation(
