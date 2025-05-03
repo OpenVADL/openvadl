@@ -68,7 +68,7 @@ public interface DefinitionVisitor {
 
   void visit(Abi abi);
 
-  void visit(Processor microProcessor);
+  void visit(Processor processor);
 
   void visit(MicroArchitecture microArchitecture);
 
@@ -521,7 +521,7 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(Processor microProcessor) {
+    public void visit(Processor processor) {
 
     }
 

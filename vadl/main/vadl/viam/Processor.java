@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -42,12 +43,14 @@ public class Processor extends Definition {
   @Nullable
   private final Procedure firmware;
 
+  private final List<MemoryRegion> memoryRegions;
+
   /**
    * Constructs the microprocessor.
    */
   public Processor(Identifier identifier, InstructionSetArchitecture isa, @Nullable Abi abi,
                    @Nullable Function stop,
-                   Procedure reset, @Nullable Procedure firmware,
+                   Procedure reset, @Nullable Procedure firmware, List<MemoryRegion> memoryRegions,
                    @Nullable String targetName) {
     super(identifier);
     this.isa = isa;
@@ -55,6 +58,7 @@ public class Processor extends Definition {
     this.stop = stop;
     this.reset = reset;
     this.firmware = firmware;
+    this.memoryRegions = memoryRegions;
     if (targetName != null) {
       this.targetName = targetName;
     } else {
@@ -95,6 +99,10 @@ public class Processor extends Definition {
   @Nullable
   public Function stop() {
     return stop;
+  }
+
+  public List<MemoryRegion> memoryRegions() {
+    return memoryRegions;
   }
 
   public Stream<Instruction> instructions() {

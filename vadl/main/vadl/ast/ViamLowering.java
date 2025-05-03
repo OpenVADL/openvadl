@@ -24,6 +24,7 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,6 +60,7 @@ import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Memory;
+import vadl.viam.MemoryRegion;
 import vadl.viam.Procedure;
 import vadl.viam.Processor;
 import vadl.viam.PseudoInstruction;
@@ -115,7 +117,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private int registerAdjustmentSequence = 0;
 
   @LazyInit
-  private vadl.viam.Specification currentSpecification;
+  private Specification currentSpecification;
 
   /**
    * Generates a VIAM specification from an AST.
@@ -126,7 +128,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @return the viam specification.
    * @throws Diagnostic if something goes wrong.
    */
-  public vadl.viam.Specification generate(Ast ast) {
+  public Specification generate(Ast ast) {
     var startTime = System.nanoTime();
     var spec = new Specification(
         new vadl.viam.Identifier(ParserUtils.baseName(ast.fileUri),
@@ -301,7 +303,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     if (definition.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE)) {
       var identifier = generateIdentifier(definition.viamId, definition.loc);
       var innerResource =
-          (Resource) fetch(Objects.requireNonNull(definition.computedTarget)).orElseThrow();
+          (Resource) fetch(requireNonNull(definition.computedTarget)).orElseThrow();
 
       return Optional.of(new ArtificialResource(
           identifier,
@@ -375,11 +377,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         AbiPseudoInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD);
 
     var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow(() ->
-        Diagnostic.error("Cannot find the pseudo return instruction", definition.location())
+        error("Cannot find the pseudo return instruction", definition.location())
             .help("Maybe check if this instruction really exists or was spelled incorrectly?")
             .build());
     var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow(() ->
-        Diagnostic.error("Cannot find the pseudo call instruction", definition.location())
+        error("Cannot find the pseudo call instruction", definition.location())
             .help("Maybe check if this instruction really exists or was spelled incorrectly?")
             .build());
     var pseudoLocalAddressLoad = fetch(pseudoLocalAddressLoadDef).map(x -> (PseudoInstruction) x);
@@ -641,7 +643,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             new vadl.viam.Parameter[0], Type.bool(), semPredGraph);
       }
       var firstTokens =
-          Objects.requireNonNull(definition.optionAlternatives.enclosingBlockFirstTokens);
+          requireNonNull(definition.optionAlternatives.enclosingBlockFirstTokens);
       var alternatives = visitAsmAlternatives(definition.optionAlternatives, true, false);
       return new AsmOption(semPredFunction, firstTokens, alternatives);
     }
@@ -656,7 +658,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             new vadl.viam.Parameter[0], Type.bool(), semPredGraph);
       }
       var firstTokens =
-          Objects.requireNonNull(definition.repetitionAlternatives.enclosingBlockFirstTokens);
+          requireNonNull(definition.repetitionAlternatives.enclosingBlockFirstTokens);
       var alternatives = visitAsmAlternatives(definition.repetitionAlternatives, true, true);
       return new AsmRepetition(semPredFunction, firstTokens, alternatives);
     }
@@ -816,7 +818,31 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(CpuMemoryRegionDefinition definition) {
-    throw new IllegalStateException("CPU memory regions are not supported yet.");
+    var behavior = definition.stmt != null
+        ? new BehaviorLowering(this)
+        .getProcedureGraph(definition.stmt, definition.identifier().name)
+        : emptyProcedureGraph(definition.identifier().name);
+
+    var kind = switch (definition.kind) {
+      case RAM -> MemoryRegion.Kind.RAM;
+      case ROM -> MemoryRegion.Kind.ROM;
+    };
+
+    var memory = (Memory) fetch(definition.memoryNode()).get();
+    var region = new MemoryRegion(
+        generateIdentifier(definition.viamId, definition),
+        kind,
+        memory,
+        behavior
+    );
+
+    // TODO: remove this once we can implement it using annotations
+    if (kind == MemoryRegion.Kind.RAM && region.simpleName().equals("DRAM")) {
+      region.setBase(BigInteger.valueOf(0x80000000L));
+      region.setHoldsFirmware(true);
+    }
+
+    return Optional.of(region);
   }
 
   private <T extends Definition & IdentifiableNode> Function produceFunction(
@@ -1097,7 +1123,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(InstructionDefinition definition) {
-    fetch(Objects.requireNonNull(definition.formatNode));
+    fetch(requireNonNull(definition.formatNode));
     var behavior = new BehaviorLowering(this).getInstructionGraph(definition);
 
     var assembly = visitAssembly(requireNonNull(definition.assemblyDefinition),
@@ -1143,7 +1169,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       registers.add(programCounter.registerTensor());
     }
 
-    return new vadl.viam.InstructionSetArchitecture(
+    return new InstructionSetArchitecture(
         identifier,
         currentSpecification,
         formats,
@@ -1224,8 +1250,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .orElseGet(() -> new Procedure(generateIdentifier("reset", definition),
             new vadl.viam.Parameter[] {}, emptyProcedureGraph("reset behavior")));
 
+    var memRegions = definition.findMemoryRegionDefs().map(this::fetch)
+        .map(d -> (MemoryRegion) d.get()).toList();
+
     var abi = definition.abiNode != null ? (Abi) fetch(definition.abiNode).orElse(null) : null;
-    var mip = new Processor(identifier, isa, abi, null, reset, firmware, null);
+    var mip = new Processor(identifier, isa, abi, null, reset, firmware, memRegions, null);
 
     // FIXME: Remove this, once annotation framework is supported
     mip.addAnnotation(new EnableHtifAnno());
@@ -1426,10 +1455,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
             identifier.name() + "::behavior");
 
     var isRelative = definition.annotations.annotations().stream()
-        .anyMatch(x -> x.expr instanceof vadl.ast.Identifier id && id.name.equals(RELATIVE));
+        .anyMatch(x -> x.expr instanceof Identifier id && id.name.equals(RELATIVE));
     var isGlobalOffsetTable = definition.annotations.annotations().stream()
         .anyMatch(
-            x -> x.expr instanceof vadl.ast.Identifier id && id.name.equals(GLOBAL_OFFSET_TABLE));
+            x -> x.expr instanceof Identifier id && id.name.equals(GLOBAL_OFFSET_TABLE));
 
     Relocation.Kind kind = Relocation.Kind.ABSOLUTE;
 

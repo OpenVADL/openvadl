@@ -3915,6 +3915,12 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
         .map(e -> (CpuFunctionDefinition) e);
   }
 
+  Stream<CpuMemoryRegionDefinition> findMemoryRegionDefs() {
+    return definitions.stream()
+        .filter(e -> e instanceof CpuMemoryRegionDefinition region)
+        .map(e -> (CpuMemoryRegionDefinition) e);
+  }
+
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     annotations.prettyPrint(indent, builder);
@@ -4180,9 +4186,9 @@ class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
     }
 
     CpuMemoryRegionDefinition that = (CpuMemoryRegionDefinition) o;
-    return Objects.equals(id, that.id) && kind == that.kind &&
-        Objects.equals(memoryRef, that.memoryRef) &&
-        Objects.equals(stmt, that.stmt) && Objects.equals(loc, that.loc);
+    return Objects.equals(id, that.id) && kind == that.kind
+        && Objects.equals(memoryRef, that.memoryRef)
+        && Objects.equals(stmt, that.stmt) && Objects.equals(loc, that.loc);
   }
 
   @Override
