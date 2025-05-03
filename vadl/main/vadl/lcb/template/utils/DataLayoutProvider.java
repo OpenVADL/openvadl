@@ -16,6 +16,8 @@
 
 package vadl.lcb.template.utils;
 
+import vadl.error.Diagnostic;
+import vadl.viam.Abi;
 import vadl.viam.RegisterTensor;
 
 /**
@@ -32,11 +34,12 @@ public class DataLayoutProvider {
   /**
    * Creates a string representation from register file.
    */
-  public static DataLayout createDataLayout(RegisterTensor generalPurposeRegisterFile) {
+  public static DataLayout createDataLayout(Abi abi, RegisterTensor generalPurposeRegisterFile) {
     generalPurposeRegisterFile.ensure(generalPurposeRegisterFile.isRegisterFile(),
         "must not be null");
-    // TODO(kper): update this when abi is defined
-    return new DataLayout(false, generalPurposeRegisterFile.resultType().bitWidth(), 32);
+    return new DataLayout(false,
+        generalPurposeRegisterFile.resultType().bitWidth(),
+        pointerAlignment(abi));
   }
 
   /**
@@ -48,5 +51,20 @@ public class DataLayoutProvider {
         String.format("p:%d:%d-", dataLayout.pointerSize, dataLayout.pointerSize);
     return String.format("%sm:e-%sS0-a:0:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64",
         loweredEndian, loweredPointer);
+  }
+
+  /**
+   * Extract the pointer alignment from {@link Abi}. It will throw an error when it does not exist.
+   */
+  public static int pointerAlignment(Abi abi) {
+    return abi.clangTypes().stream()
+        .filter(x -> x instanceof Abi.AbstractClangType.NumericClangType numericClangType
+            && numericClangType.typeName() ==
+            Abi.AbstractClangType.NumericClangType.TypeName.POINTER_ALIGN)
+        .findFirst()
+        .map(x -> Integer.parseInt(x.value()))
+        .orElseThrow(
+            () -> Diagnostic.error("Pointer alignment is not defined",
+                abi.location()).build());
   }
 }

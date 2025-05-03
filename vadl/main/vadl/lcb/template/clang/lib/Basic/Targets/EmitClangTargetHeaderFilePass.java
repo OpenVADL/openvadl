@@ -69,12 +69,12 @@ public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
         "Specification requires at least one register file");
 
     var abi = specification.abi().orElseThrow();
-    var types = abi.clangTypes().stream().map(x -> new ClangType(x.typeName(), x.value()))
+    var types = abi.clangTypes().stream().map(x -> new ClangType(x.typeNameAsString(), x.value()))
         .toList();
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        CommonVarNames.DATALAYOUT, createDataLayoutString(createDataLayout(gpr)),
+        CommonVarNames.DATALAYOUT, createDataLayoutString(createDataLayout(abi, gpr)),
         "clangTypes", types);
   }
 }

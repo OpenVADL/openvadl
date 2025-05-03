@@ -128,6 +128,7 @@ void [(${namespace})]FrameLowering::emitPrologue(MachineFunction &MF, MachineBas
     DebugLoc DL;
 
     uint64_t StackSize = getStackSize(MF);
+    MF.getFrameInfo().setStackSize(StackSize);
 
     // Early exit if there is no need to allocate on the stack
     if (StackSize == 0 && !MFI.adjustsStack())

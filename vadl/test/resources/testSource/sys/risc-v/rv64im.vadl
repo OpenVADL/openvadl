@@ -9,7 +9,7 @@ instruction set architecture RV64IM extending RV3264IM = {}
 
 application binary interface ABI for RV64IM = {
    long width = 64
-   long align = 8
+   long align = 64
    size_t type = unsigned long
    int max type = signed long
    pointer width = 64

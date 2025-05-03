@@ -65,7 +65,7 @@ public class Abi extends Definition {
       super(identifier);
     }
 
-    public abstract String typeName();
+    public abstract String typeNameAsString();
 
     public abstract String value();
 
@@ -79,7 +79,7 @@ public class Abi extends Definition {
       }
 
       @Override
-      public String typeName() {
+      public String typeNameAsString() {
         return typeName.llvm();
       }
 
@@ -119,6 +119,14 @@ public class Abi extends Definition {
         this.typeName = typeName;
         this.width = width;
       }
+
+      public TypeName typeName() {
+        return typeName;
+      }
+
+      public int width() {
+        return width;
+      }
     }
 
     /**
@@ -132,7 +140,7 @@ public class Abi extends Definition {
       }
 
       @Override
-      public String typeName() {
+      public String typeNameAsString() {
         return typeName.llvm();
       }
 
