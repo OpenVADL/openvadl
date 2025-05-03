@@ -16,23 +16,25 @@
 
 package vadl.iss.passes;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.error.DiagnosticBuilder;
 import vadl.error.DiagnosticList;
-import vadl.iss.passes.extensions.MemoryInfo;
+import vadl.iss.codegen.IssMemoryRegionInitCodeGen;
+import vadl.iss.passes.extensions.MemoryRegionInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.MemoryRegion;
-import vadl.viam.Processor;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -41,15 +43,13 @@ import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 
 /**
- * Collects information about memory regions in the generated ISS.
- * This includes the reset vector of the program counter, which is either
- * the start of the {@link Processor#firmware()} definition (ROM).
- * It also determines the start and size of the used firmware.
- * If no firmware is specified, the firmware size ({@link MemoryInfo#firmwareSize}) defaults
- * to 0, indicating no firmware.
+ * Analyzes and updates the {@link MemoryRegion}s for the generated ISS.
+ * It calculates missing properties like the base and size of a memory region, if they
+ * can be inferred from other properties of the region.
+ * If there are inconsistencies, user errors are thrown.
  *
- * @see MemoryInfo
- * @see vadl.iss.codegen.IssFirmwareCodeGenerator
+ * @see MemoryRegion
+ * @see IssMemoryRegionInitCodeGen
  */
 @SuppressWarnings("LineLength")
 public class IssMemoryDetectionPass extends AbstractIssPass {
@@ -88,6 +88,22 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
       throw new DiagnosticList(errors.stream().map(DiagnosticBuilder::build).toList());
     }
 
+    MemoryRegion mainRam;
+    if (infinteRamRegion != null) {
+      mainRam = infinteRamRegion;
+    } else {
+      mainRam = processor.memoryRegions().stream().filter(m -> m.kind() == MemoryRegion.Kind.RAM)
+          .max(Comparator.comparing(r -> requireNonNull(r.size())))
+          .orElseThrow(() -> error("Missing RAM memory region", processor.identifier)
+              .locationDescription(processor.identifier,
+                  "At least one RAM memory region is required.")
+              .build());
+    }
+
+    for (var region : processor.memoryRegions()) {
+      region.attachExtension(new MemoryRegionInfo(mainRam == region, configuration()));
+    }
+
     return null;
   }
 
@@ -106,7 +122,7 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
 
     // check that the base is set if there is no implementation.
     // check that ROM has a implementation
-    if (!region.hasImpl()) {
+    if (!region.hasInitialization()) {
       if (region.base() == null) {
         errors.add(error("Missing base annotation", region.identifier)
             .locationDescription(region.identifier,
@@ -136,7 +152,7 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
           infinteRamRegion = region;
         }
         case ROM -> {
-          if (!region.hasImpl()) {
+          if (!region.hasInitialization()) {
             errors.add(error("Missing size annotation", region.identifier)
                 .locationDescription(region.identifier,
                     "This ROM region requires a [ size = <size> ] annotation."));
@@ -148,7 +164,7 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
     // if the region has an implementation, we analyze it and check that everything
     // is in bounds of the specified [base] and [size] annotations.
     // additionally, if those annotations aren't set, we set them based on the analysis results.
-    if (region.hasImpl()) {
+    if (region.hasInitialization()) {
       var base = region.base();
       var size = region.base();
       var lowerBound = base == null ? BigInteger.ZERO : base;

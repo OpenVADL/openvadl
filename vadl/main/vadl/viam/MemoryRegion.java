@@ -75,7 +75,7 @@ public class MemoryRegion extends Procedure {
     this.holdsFirmware = false;
   }
 
-  public boolean hasImpl() {
+  public boolean hasInitialization() {
     return behavior().getNodes().count() > 2;
   }
 
