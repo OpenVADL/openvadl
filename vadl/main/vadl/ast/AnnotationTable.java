@@ -33,6 +33,7 @@ import vadl.types.Type;
 import vadl.utils.Pair;
 import vadl.utils.functionInterfaces.TriConsumer;
 
+@SuppressWarnings("UnusedMethod")
 class AnnotationTable {
   private static final Map<Class<? extends Definition>, Map<String, Supplier<Annotation>>>
       annotationFactories = new java.util.HashMap<>();

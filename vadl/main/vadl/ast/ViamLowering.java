@@ -484,42 +484,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var asmDescription =
         new AssemblyDescription(id, modifiers, directives, rules, commonDefinitions);
 
-    lowerAsmDescriptionAnnotations(definition, asmDescription);
 
     return Optional.of(asmDescription);
   }
 
-  private static void lowerAsmDescriptionAnnotations(AsmDescriptionDefinition definition,
-                                                     AssemblyDescription asmDescription) {
-    // FIXME: integrate with general annotation lowering once it is implemented
-    //    definition.annotations.annotations().forEach(
-    //        annotation -> {
-    //          // annotations of the form [ A = B ]
-    //          if (annotation.expr instanceof BinaryExpr binaryExpr
-    //              && binaryExpr.operator() == Operator.Equal) {
-    //
-    //            if (binaryExpr.left instanceof Identifier annoId) {
-    //              var annoName = annoId.name;
-    //
-    //              // [ commentString = ";" ]
-    //              if (binaryExpr.right instanceof StringLiteral string
-    //                  && annoName.equals("commentString") && !string.value.isEmpty()) {
-    //                asmDescription.addAnnotation(new AsmParserCommentString(string.value));
-    //                return;
-    //              }
-    //
-    //              // [ caseSensitive = true ]
-    //              if (binaryExpr.right instanceof BoolLiteral bool
-    //                  && annoName.equals("caseSensitive")) {
-    //                asmDescription.addAnnotation(new AsmParserCaseSensitive(bool.value));
-    //                return;
-    //              }
-    //            }
-    //          }
-    //          throw error("Unknown annotation on assembly description", definition).build();
-    //        }
-    //    );
-  }
 
   @Override
   public Optional<vadl.viam.Definition> visit(AsmDirectiveDefinition definition) {

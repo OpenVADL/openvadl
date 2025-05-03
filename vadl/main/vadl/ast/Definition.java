@@ -65,8 +65,8 @@ abstract class Definition extends Node {
     Definition previousDefinition = null;
     for (Definition definition : definitions) {
       if (previousDefinition != null
-          && (!definition.getClass().equals(previousDefinition.getClass()) ||
-          !definition.annotations.isEmpty())) {
+          && (!definition.getClass().equals(previousDefinition.getClass())
+          || !definition.annotations.isEmpty())) {
         builder.append("\n");
       }
       definition.prettyPrint(indent, builder);
