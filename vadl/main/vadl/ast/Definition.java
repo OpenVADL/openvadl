@@ -42,14 +42,36 @@ import vadl.viam.asm.AsmToken;
  * anything.
  */
 abstract class Definition extends Node {
-  Annotations annotations = new Annotations();
+  @Child
+  List<AnnotationDefinition> annotations = new ArrayList<>();
 
   @LazyInit
   String viamId;
 
-  Definition withAnnotations(Annotations annotations) {
+  Definition withAnnotations(List<AnnotationDefinition> annotations) {
     this.annotations = annotations;
+    annotations.forEach(a -> {
+      a.target = this;
+    });
     return this;
+  }
+
+  void prettyPrintAnnotations(int indent, StringBuilder builder) {
+    annotations.forEach(annotation -> annotation.prettyPrint(indent, builder));
+  }
+
+  static void prettyPrintDefinitions(int indent, StringBuilder builder,
+                                     List<Definition> definitions) {
+    Definition previousDefinition = null;
+    for (Definition definition : definitions) {
+      if (previousDefinition != null
+          && (!definition.getClass().equals(previousDefinition.getClass())
+          || !definition.annotations.isEmpty())) {
+        builder.append("\n");
+      }
+      definition.prettyPrint(indent, builder);
+      previousDefinition = definition;
+    }
   }
 
   abstract <R> R accept(DefinitionVisitor<R> visitor);
@@ -61,6 +83,8 @@ interface DefinitionVisitor<R> {
   R visit(AbiSequenceDefinition definition);
 
   R visit(AliasDefinition definition);
+
+  R visit(AnnotationDefinition definition);
 
   R visit(ApplicationBinaryInterfaceDefinition definition);
 
@@ -300,7 +324,7 @@ class ConstantDefinition extends Definition implements IdentifiableNode, TypedNo
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("constant %s".formatted(identifier().name));
     if (typeLiteral != null) {
@@ -809,7 +833,7 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("format ");
     identifier.prettyPrint(indent, builder);
@@ -916,22 +940,14 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("instruction set architecture ").append(identifier.name);
     if (extending != null) {
       builder.append(" extending ").append(extending.name);
     }
     builder.append(" = {\n");
-    Definition previousDefinition = null;
-    for (Definition definition : definitions) {
-      if (previousDefinition != null
-          && !definition.getClass().equals(previousDefinition.getClass())) {
-        builder.append("\n");
-      }
-      definition.prettyPrint(indent + 1, builder);
-      previousDefinition = definition;
-    }
+    prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append("}\n");
   }
 
@@ -1012,7 +1028,7 @@ class CounterDefinition extends Definition implements IdentifiableNode, TypedNod
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("%s counter ".formatted(kind.toString().toLowerCase(Locale.ENGLISH)));
     identifier.prettyPrint(indent, builder);
@@ -1093,7 +1109,7 @@ class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("memory ");
     identifier.prettyPrint(indent, builder);
@@ -1173,7 +1189,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("register ");
     identifier.prettyPrint(indent, builder);
@@ -1249,7 +1265,7 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("register file ");
     identifier.prettyPrint(indent, builder);
@@ -1402,7 +1418,7 @@ class InstructionDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("instruction ");
     identifier.prettyPrint(indent, builder);
@@ -1510,7 +1526,7 @@ class PseudoInstructionDefinition extends InstructionSequenceDefinition
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     var kindStr = switch (kind) {
       case PSEUDO -> "pseudo";
@@ -1604,7 +1620,7 @@ class RelocationDefinition extends Definition implements IdentifiableNode, Typed
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("relocation ");
     identifier.prettyPrint(indent, builder);
@@ -1701,7 +1717,7 @@ class EncodingDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("encoding ");
     instrIdentifier.prettyPrint(0, builder);
@@ -1876,7 +1892,7 @@ class AssemblyDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("assembly ");
     var isFirst = true;
@@ -2141,7 +2157,7 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent)).append("alias ");
     switch (kind) {
       case REGISTER -> builder.append("register ");
@@ -2217,6 +2233,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
                         List<Entry> entries, SourceLocation location) {
     this.id = id;
     this.enumType = enumType;
+    entries.forEach(e -> e.enumDef = this);
     this.entries = entries;
     this.loc = location;
   }
@@ -2310,9 +2327,20 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
 
     Identifier name;
 
+    /**
+     * Potentially set by the typechecker if no value was explicitly assigned.
+     * In that case the typechecker will increment the value of the last entry by one and insert
+     * it here as a {@link IntegerLiteral}.
+     */
     @Nullable
     @Child
     Expr value;
+
+    /**
+     * Points to the parent definition of the entry, is set in the constructor of the parent.
+     */
+    @LazyInit
+    EnumerationDefinition enumDef;
 
 
     public Entry(Identifier name, @Nullable Expr value) {
@@ -2714,67 +2742,87 @@ class ImportDefinition extends Definition {
 
 }
 
-record Annotations(List<Annotation> annotations) {
-  Annotations() {
-    this(new ArrayList<>());
-  }
 
-  void prettyPrint(int indent, StringBuilder builder) {
-    annotations.forEach(annotation -> annotation.prettyPrint(indent, builder));
-  }
-}
+// FIXME: I don't love this inheriting from Definition, since definitions have a list of annotations
+// and now annotations have annotations that have annotation....
+final class AnnotationDefinition extends Definition {
 
-final class Annotation {
-  Expr expr;
+  List<IdentifierOrPlaceholder> keywords;
+
+  @Child
+  List<Expr> values;
+
+  /**
+   * The Definition on which it is defined.
+   * Set by the parser.
+   */
+  @LazyInit
+  Definition target;
+
+  /**
+   * Set by the symboltable.
+   */
   @Nullable
-  TypeLiteral type;
-  @Nullable
-  IdentifierOrPlaceholder property;
+  Annotation annotation;
 
-  Annotation(Expr expr, @Nullable TypeLiteral type,
-             @Nullable IdentifierOrPlaceholder property) {
-    this.expr = expr;
-    this.type = type;
-    this.property = property;
+  SourceLocation loc;
+
+  public AnnotationDefinition(List<IdentifierOrPlaceholder> keywords, List<Expr> values,
+                              SourceLocation loc) {
+    this.keywords = keywords;
+    this.values = values;
+    this.loc = loc;
   }
 
+  String name() {
+    return keywords.stream()
+        .map(i -> ((Identifier) i).name)
+        .collect(Collectors.joining(" "));
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(Node.prettyIndentString(indent));
-    builder.append('[');
-    expr.prettyPrint(indent, builder);
-    if (type != null) {
+    builder.append("[ ");
+    prettyPrintJoin(" ", keywords.stream().map(k -> (Node) k).toList(), indent, builder);
+
+    if (!values.isEmpty()) {
       builder.append(" : ");
-      type.prettyPrint(indent, builder);
-    }
-    if (property != null) {
-      builder.append(' ');
-      property.prettyPrint(indent, builder);
+      prettyPrintJoin(", ", values, indent, builder);
     }
     builder.append(" ]\n");
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (obj == this) {
-      return true;
-    }
-    if (obj == null || obj.getClass() != this.getClass()) {
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    var that = (Annotation) obj;
-    return Objects.equals(this.expr, that.expr)
-        && Objects.equals(this.type, that.type)
-        && Objects.equals(this.property, that.property);
+
+    AnnotationDefinition that = (AnnotationDefinition) o;
+    return keywords.equals(that.keywords) && Objects.equals(values, that.values);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(expr, type, property);
-  }
-
-  @Override
-  public String toString() {
-    return this.getClass().getSimpleName();
+    int result = keywords.hashCode();
+    result = 31 * result + Objects.hashCode(values);
+    return result;
   }
 }
 
@@ -3155,7 +3203,7 @@ class ProcessDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("process ");
     name.prettyPrint(indent, builder);
@@ -3234,7 +3282,7 @@ class OperationDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("operation ");
     name.prettyPrint(indent, builder);
@@ -3318,7 +3366,7 @@ class GroupDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("group ");
     name.prettyPrint(indent, builder);
@@ -3391,15 +3439,13 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent)).append("application binary interface ");
     id.prettyPrint(indent, builder);
     builder.append(" for ");
     isa.prettyPrint(indent, builder);
     builder.append(" = {\n");
-    for (Definition definition : definitions) {
-      definition.prettyPrint(indent + 1, builder);
-    }
+    prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append(prettyIndentString(indent)).append("}\n");
   }
 
@@ -3462,7 +3508,7 @@ class AbiPseudoInstructionDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
     builder.append(" = ");
@@ -3549,7 +3595,7 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
     builder.append(" sequence ");
@@ -3623,7 +3669,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(purpose.keyword);
     builder.append(" = ");
@@ -3923,7 +3969,7 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent)).append("processor ");
     id.prettyPrint(0, builder);
     builder.append(" implements ");
@@ -3940,9 +3986,7 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
       abi.prettyPrint(0, builder);
     }
     builder.append(" = {\n");
-    for (Definition definition : definitions) {
-      definition.prettyPrint(indent + 1, builder);
-    }
+    prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append(prettyIndentString(indent)).append("}\n");
   }
 
@@ -4006,7 +4050,7 @@ class PatchDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("patch ");
     generator.prettyPrint(0, builder);
@@ -4166,7 +4210,7 @@ class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("memory region [").append(kind.keyword()).append("] ");
     id.prettyPrint(indent, builder);
@@ -4243,7 +4287,7 @@ class CpuFunctionDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
     if (stopWithReference != null) {
@@ -4327,7 +4371,7 @@ class CpuProcessDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
     if (!startupOutputs.isEmpty()) {
@@ -4410,9 +4454,7 @@ class MicroArchitectureDefinition extends Definition implements IdentifiableNode
     builder.append(" implements ");
     processor.prettyPrint(0, builder);
     builder.append(" = {\n");
-    for (Definition definition : definitions) {
-      definition.prettyPrint(indent + 1, builder);
-    }
+    prettyPrintDefinitions(indent + 1, builder, definitions);
     builder.append(prettyIndentString(indent)).append("}\n");
   }
 
@@ -4474,7 +4516,7 @@ class MacroInstructionDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
     Parameter.prettyPrintMultiple(indent, inputs, builder);
@@ -4554,7 +4596,7 @@ class PortBehaviorDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(kind.keyword);
     id.prettyPrint(0, builder);
@@ -4634,7 +4676,7 @@ class PipelineDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("pipeline");
     id.prettyPrint(0, builder);
@@ -4704,7 +4746,7 @@ class StageDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("stage ");
     id.prettyPrint(0, builder);
@@ -4772,7 +4814,7 @@ class CacheDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("cache ");
     id.prettyPrint(0, builder);
@@ -4834,7 +4876,7 @@ class LogicDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("logic ");
     id.prettyPrint(0, builder);
@@ -4893,7 +4935,7 @@ class SignalDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("signal ");
     id.prettyPrint(0, builder);
@@ -4978,7 +5020,7 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    annotations.prettyPrint(indent, builder);
+    prettyPrintAnnotations(indent, builder);
 
     builder.append(prettyIndentString(indent));
     builder.append("assembly description ");

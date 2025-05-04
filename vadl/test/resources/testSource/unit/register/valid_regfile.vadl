@@ -6,7 +6,7 @@ instruction set architecture Test = {
 
   register file X: Index -> Regs
 
-  [ Y(2) = 0 ]
+  [ zero: Y(2) ]
   register file Y: Index -> Regs
 
 }

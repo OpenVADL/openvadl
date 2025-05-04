@@ -55,6 +55,12 @@ std::string [(${namespace})]MCExpr::format(uint8_t Radix, const MCAsmInfo *MAI) 
         return subexpr;
     }
 
+    if (Kind == [(${namespace})]MCExpr::VariantKind::[(${pltVariantKindName})])
+    {
+        std::string suffix = "@plt";
+        return subexpr + suffix;
+    }
+
     std::string result = "";
     result += "%";
     result += AsmUtils::FormatModifier(getKind());

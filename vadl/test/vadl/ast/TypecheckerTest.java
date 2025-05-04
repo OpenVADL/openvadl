@@ -810,6 +810,25 @@ public class TypecheckerTest {
   }
 
   @Test
+  public void enumEntryReferenceBeforeDefinition() {
+    // There once was a crash with code like that:
+    // https://github.com/OpenVADL/openvadl/issues/190
+    var prog = """
+          constant friday:  Bits<Nums::second> = 5
+        
+          enumeration Nums : Bits<4> =
+            { first = 10
+            , second
+            }
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var finder = new AstFinder();
+    Assertions.assertEquals(Type.bits(11), finder.getConstantType(ast, "friday"));
+  }
+
+  @Test
   public void validIfExprTest() {
     var prog = """
           constant x = if 4 = 7 then 3 as Bits<32> else 4 as Bits<32>

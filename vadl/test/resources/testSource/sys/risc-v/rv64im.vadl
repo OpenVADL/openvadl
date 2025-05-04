@@ -134,7 +134,7 @@ processor Spike implements RV64IM with ABI = {
   }
 
   [ firmware ]
-  [ base = 0x80000000 ]
+  [ base: 0x80000000 ]
   memory region [RAM] DRAM in MEM
 
   memory region [ROM] MROM in MEM = {

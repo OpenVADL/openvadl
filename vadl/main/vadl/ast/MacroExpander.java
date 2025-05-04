@@ -146,12 +146,10 @@ class MacroExpander
     return stmts;
   }
 
-  Annotations expandAnnotations(Annotations annotations) {
-    var list = new ArrayList<>(annotations.annotations());
-    list.replaceAll(annotation -> new Annotation(
-        expandExpr(annotation.expr), annotation.type, annotation.property == null ? null :
-        resolvePlaceholderOrIdentifier(annotation.property)));
-    return new Annotations(list);
+  List<AnnotationDefinition> expandAnnotations(List<AnnotationDefinition> annotations) {
+    var list = new ArrayList<>(annotations);
+    list.replaceAll(a -> (AnnotationDefinition) a.accept(this));
+    return list;
   }
 
   public Node expandNode(Node node) {
@@ -608,6 +606,14 @@ class MacroExpander
     var value = expandExpr(definition.value);
     return new AliasDefinition(id, definition.kind, definition.aliasType, definition.targetType,
         value, copyLoc(definition.loc)).withAnnotations(definition.annotations);
+  }
+
+  @Override
+  public Definition visit(AnnotationDefinition definition) {
+    return new AnnotationDefinition(
+        definition.keywords.stream().map(this::resolvePlaceholderOrIdentifier).toList(),
+        definition.values.stream().map(this::expandExpr).toList(),
+        copyLoc(definition.loc));
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package vadl.ast;
 
+import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 
 import java.util.ArrayDeque;
@@ -24,7 +25,6 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.types.BuiltInTable;
@@ -491,6 +491,7 @@ class SymbolTable {
     public Void visit(AsmDescriptionDefinition definition) {
       // More complex tasks like this require custom handling.
       beforeTravel(definition);
+      definition.annotations.forEach(annotation -> annotation.accept(this));
 
       definition.abi.accept(this);
 
@@ -528,6 +529,7 @@ class SymbolTable {
     public Void visit(AsmDirectiveDefinition definition) {
       // Avoid creating a new scope since the directives must be visible in the parent scope
       beforeTravelWithoutScope(definition);
+      definition.annotations.forEach(annotation -> annotation.accept(this));
       currentSymbols().defineSymbol(definition.stringLiteral.toString(), definition);
       afterTravelWithoutScope(definition);
       return null;
@@ -536,6 +538,7 @@ class SymbolTable {
     @Override
     public Void visit(AsmGrammarAlternativesDefinition definition) {
       beforeTravel(definition);
+      definition.annotations.forEach(annotation -> annotation.accept(this));
 
       // Each sequence of elements has its own scope
       definition.alternatives.forEach(alternative -> {
@@ -578,6 +581,7 @@ class SymbolTable {
     @Override
     public Void visit(EnumerationDefinition definition) {
       beforeTravel(definition);
+      definition.annotations.forEach(annotation -> annotation.accept(this));
 
       // Insert all fields into the symbol table.
       if (definition.enumType != null) {
@@ -700,7 +704,7 @@ class SymbolTable {
       }
       ast.passTimings.add(new Ast.PassTimings("Symbol resolution",
           (System.nanoTime() - resolveStartTime) / 1000_000));
-      return Objects.requireNonNull(ast.rootSymbolTable).errors;
+      return requireNonNull(ast.rootSymbolTable).errors;
     }
 
 
@@ -732,6 +736,30 @@ class SymbolTable {
     }
 
     @Override
+    public Void visit(AnnotationDefinition definition) {
+      definition.annotation = AnnotationTable.createAnnotation(definition);
+
+
+      if (definition.annotation == null) {
+        // FIXME: Add a more descriptive error message and a body.
+        requireNonNull(definition.symbolTable).errors.add(
+            error("Unknown Annotation", definition)
+                .locationDescription(definition.location(),
+                    "No annotation with the name \"%s\" exists on %s", definition.name(),
+                    definition.target)
+                .build());
+        return null;
+      }
+
+      try {
+        definition.annotation.resolveName(definition, this);
+      } catch (Diagnostic d) {
+        requireNonNull(definition.symbolTable).errors.add(d);
+      }
+      return null;
+    }
+
+    @Override
     public Void visit(TypeLiteral expr) {
       // Skip the basetype of the expr and let the typechecker verify it's correct.
       beforeTravel(expr);
@@ -752,7 +780,7 @@ class SymbolTable {
             definition.symbolTable()
                 .requireAs(definition.extending, InstructionSetDefinition.class);
         definition.extendingNode = extending;
-        definition.symbolTable().extendBy(Objects.requireNonNull(extending).symbolTable());
+        definition.symbolTable().extendBy(requireNonNull(extending).symbolTable());
       }
 
       definition.children().forEach(this::travel);

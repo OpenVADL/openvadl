@@ -45,7 +45,7 @@ instruction set architecture VarRISC32 = {
 
   program counter PC : Addr              // program counter has address type
 
-  [ R(0) = 0 ]
+  [zero: R(0) ]
   register file R : Index -> Regs        // 32 register sized integer registers
 
   memory MEM : Addr -> Byte              // byte addressed memory

@@ -61,9 +61,7 @@ public class Ast {
    */
   public CharSequence prettyPrint() {
     StringBuilder builder = new StringBuilder();
-    for (var definition : definitions) {
-      definition.prettyPrint(0, builder);
-    }
+    Definition.prettyPrintDefinitions(0, builder, definitions);
     return builder;
   }
 
@@ -117,6 +115,17 @@ abstract class Node implements WithLocation {
   static String prettyIndentString(int indent) {
     var indentBy = 2;
     return " ".repeat(indentBy * indent);
+  }
+
+  static <T extends Node> void prettyPrintJoin(String separator, List<T> nodes, int indent,
+                                               StringBuilder builder) {
+    for (int i = 0; i < nodes.size(); i++) {
+      var node = nodes.get(i);
+      if (i > 0) {
+        builder.append(separator);
+      }
+      node.prettyPrint(indent, builder);
+    }
   }
 
   static boolean isBlockLayout(Node n) {

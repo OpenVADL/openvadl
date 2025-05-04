@@ -115,6 +115,7 @@ class ParserUtils {
     ID_TOKENS[Parser._ENCODE] = true;
     ID_TOKENS[Parser._EXCEPTION] = true;
     ID_TOKENS[Parser._FETCH] = true;
+    ID_TOKENS[Parser._GLOBAL] = true;
     ID_TOKENS[Parser._GROUP] = true;
     ID_TOKENS[Parser._INSTRUCTION] = true;
     ID_TOKENS[Parser._INT] = true;
@@ -594,8 +595,8 @@ class ParserUtils {
             .build();
       }
     }
-    return new ConstantDefinition(new Identifier("invalid", parser.loc()), null,
-        new Identifier("invalid", parser.loc()), parser.loc());
+    return new ConstantDefinition(new Identifier("invalid", parser.lastTokenLoc()), null,
+        new Identifier("invalid", parser.lastTokenLoc()), parser.lastTokenLoc());
   }
 
   static @Nullable Path resolveUri(Parser parser, IsId importPath) {

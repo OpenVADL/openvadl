@@ -15,7 +15,6 @@ instruction set architecture QDSP6 = {
   using Index = Bits<5>
   using PredicateIndex = Bits<2>
 
-  [littleEndian ]
   memory MEM: Address -> Byte
 
   register file R: Index -> Word
@@ -54,7 +53,7 @@ instruction set architecture QDSP6 = {
   alias register UTIMERLO = C(30)
   alias register UTIMERHI = C(31)
 
-  [next ]
+  [ next ]
   group counter PC: Address
 
   function AsmR(reg : Index) -> String = ("R", decimal(reg))
@@ -86,8 +85,6 @@ else
   , P0 : Byte
   }
 
-  [read partial ]
-  [write partial ]
   register P: PFormat
 
   function testpred(reg : PredicateIndex) -> Bool =
@@ -191,7 +188,6 @@ match reg with
   , immS = extendSExtender(imm, immX)
   }
 
-  [operation ALU32 ]
   instruction TransferImmLow : TransferImmHalfFormat =   {
     R(x5) := ((R(x5) & 0xFFFF0000) | immU as UInt<32>)
   }
@@ -206,7 +202,6 @@ match reg with
 
   assembly TransferImmLow = ("", AsmR(x5), ".L", " = ", ("#", decimal(immU)))
 
-  [operation ALU32 ]
   instruction TransferImmHigh : TransferImmHalfFormat =   {
     R(x5) := ((R(x5) & 0x0000FFFF) | (immU as UInt<32> << 16))
   }
@@ -221,7 +216,6 @@ match reg with
 
   assembly TransferImmHigh = ("", AsmR(x5), ".H", " = ", ("#", decimal(immU)))
 
-  [operation ALU32 ]
   instruction TransferImm : TransferImmFormat =   {
     R(d5) := immS
   }
@@ -235,7 +229,6 @@ match reg with
 
   assembly TransferImm = ("", AsmR(d5), "", " = ", ("#", decimal(immS)))
 
-  [operation ALU32 ]
   instruction TransferImmX : TransferImmXFormat =   {
     R(d5) := immS
   }
@@ -250,7 +243,6 @@ match reg with
 
   assembly TransferImmX = (AsmImmextU(immX), AsmR(d5), "", " = ", ("#", decimal(immS)))
 
-  [operation ALU32 ]
   instruction TransferReg : StandardFormat =   {
     R(d5) := R(s5)
   }
@@ -292,7 +284,6 @@ match reg with
   , d5	 [4..0]
   }
 
-  [operation ALU32 ]
   instruction AddImm : AddImmFormat =   {
     R(d5) := VADL::add(R(s5), extendS(imm))
   }
@@ -304,7 +295,6 @@ match reg with
 
   assembly AddImm = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",#", decimal(imm)), ")")
 
-  [operation ALU32 ]
   instruction AddReg : ALURegFormat =   {
     R(d5) := VADL::add(R(s5), R(t5))
   }
@@ -319,7 +309,6 @@ match reg with
 
   assembly AddReg = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",", AsmR(t5)), ")")
 
-  [operation ALU32 ]
   instruction SubImm : ALUImmFormat =   {
     R(d5) := VADL::sub(extendS(imm), R(s5))
   }
@@ -333,7 +322,6 @@ match reg with
 
   assembly SubImm = (AsmR(d5), " = ", "op", "(", (decimal(imm), ",#", AsmR(s5)), ")")
 
-  [operation ALU32 ]
   instruction SubReg : ALURegFormat =   {
     R(d5) := VADL::sub(R(t5), R(s5))
   }
@@ -348,7 +336,6 @@ match reg with
 
   assembly SubReg = (AsmR(d5), " = ", "op", "(", (AsmR(t5), ",", AsmR(s5)), ")")
 
-  [operation ALU32 ]
   instruction AndReg : StandardFormat =   {
     R(d5) := VADL::and(R(s5), R(t5))
   }
@@ -362,7 +349,6 @@ match reg with
 
   assembly AndReg = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",", AsmR(t5)), ")")
 
-  [operation ALU32 ]
   instruction OrReg : StandardFormat =   {
     R(d5) := VADL::or(R(s5), R(t5))
   }
@@ -376,7 +362,6 @@ match reg with
 
   assembly OrReg = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",", AsmR(t5)), ")")
 
-  [operation ALU32 ]
   instruction XorReg : StandardFormat =   {
     R(d5) := VADL::xor(R(s5), R(t5))
   }
@@ -390,7 +375,6 @@ match reg with
 
   assembly XorReg = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",", AsmR(t5)), ")")
 
-  [operation ALU32 ]
   instruction AndNReg : StandardFormat =   {
     R(d5) := VADL::and(VADL::not(R(s5)), R(t5))
   }
@@ -404,7 +388,6 @@ match reg with
 
   assembly AndNReg = (AsmR(d5), " = ", "op", "(", (AsmR(t5), ",~", AsmR(s5)), ")")
 
-  [operation ALU32 ]
   instruction OrNReg : StandardFormat =   {
     R(d5) := VADL::or(VADL::not(R(s5)), R(t5))
   }
@@ -418,7 +401,6 @@ match reg with
 
   assembly OrNReg = (AsmR(d5), " = ", "op", "(", (AsmR(t5), ",~", AsmR(s5)), ")")
 
-  [operation ALU32 ]
   instruction AndImm : ALUImmFormat =   {
     R(d5) := VADL::and(R(s5), extendS(imm))
   }
@@ -432,7 +414,6 @@ match reg with
 
   assembly AndImm = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",#", decimal(imm)), ")")
 
-  [operation ALU32 ]
   instruction OrImm : ALUImmFormat =   {
     R(d5) := VADL::or(R(s5), extendS(imm))
   }
@@ -446,7 +427,6 @@ match reg with
 
   assembly OrImm = (AsmR(d5), " = ", "op", "(", (AsmR(s5), ",#", decimal(imm)), ")")
 
-  [operation ALU32 ]
   instruction Nop : StandardFormat =   {
   }
 
@@ -497,7 +477,6 @@ match reg with
   , d2	 [1..0]
   }
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpImmEq : CmpImmFormat =   {
     let val = toPValue((R(s5) = extendS(immS))) in
       {
@@ -516,7 +495,6 @@ match reg with
 
   assembly CmpImmEq = (AsmP(d2), "=", ("cmp.eq(", AsmR(s5), ",#", decimal(immS), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpImmNeq : CmpImmFormat =   {
     let val = toPValue(!(R(s5) = extendS(immS))) in
       {
@@ -535,7 +513,6 @@ match reg with
 
   assembly CmpImmNeq = (AsmP(d2), "=", ("!cmp.eq(", AsmR(s5), ",#", decimal(immS), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpImmGt : CmpImmFormat =   {
     let val = toPValue((R(s5) as SInt > extendS(immS))) in
       {
@@ -554,7 +531,6 @@ match reg with
 
   assembly CmpImmGt = (AsmP(d2), "=", ("cmp.gt(", AsmR(s5), ",#", decimal(immS), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpImmLte : CmpImmFormat =   {
     let val = toPValue((!R(s5) as SInt > extendS(immS))) in
       {
@@ -573,7 +549,6 @@ match reg with
 
   assembly CmpImmLte = (AsmP(d2), "=", ("!cmp.gt(", AsmR(s5), ",#", decimal(immS), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpImmGtu : CmpImmUFormat =   {
     let val = toPValue((R(s5) as UInt > extendU(immU))) in
       {
@@ -592,7 +567,6 @@ match reg with
 
   assembly CmpImmGtu = (AsmP(d2), "=", ("cmp.gtu(", AsmR(s5), ",#", decimal(immU), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpImmLteu : CmpImmUFormat =   {
     let val = toPValue((R(s5) as UInt > extendU(immU))) in
       {
@@ -611,7 +585,6 @@ match reg with
 
   assembly CmpImmLteu = (AsmP(d2), "=", ("!cmp.gtu(", AsmR(s5), ",#", decimal(immU), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpRegEq : CmpRegFormat =   {
     let val = toPValue((R(s5) = R(t5))) in
       {
@@ -630,7 +603,6 @@ match reg with
 
   assembly CmpRegEq = (AsmP(d2), "=", ("cmp.eq(", AsmR(s5), ",", AsmR(t5), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpRegNeq : CmpRegFormat =   {
     let val = toPValue(!(R(s5) = R(t5))) in
       {
@@ -649,7 +621,6 @@ match reg with
 
   assembly CmpRegNeq = (AsmP(d2), "=", ("!cmp.eq(", AsmR(s5), ",", AsmR(t5), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpRegGt : CmpRegFormat =   {
     let val = toPValue((R(s5) as SInt > R(t5) as SInt)) in
       {
@@ -668,7 +639,6 @@ match reg with
 
   assembly CmpRegGt = (AsmP(d2), "=", ("cmp.gt(", AsmR(s5), ",", AsmR(t5), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpRegLte : CmpRegFormat =   {
     let val = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in
       {
@@ -687,7 +657,6 @@ match reg with
 
   assembly CmpRegLte = (AsmP(d2), "=", ("!cmp.gt(", AsmR(s5), ",", AsmR(t5), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpRegGtu : CmpRegFormat =   {
     let val = toPValue((R(s5) as UInt > R(t5) as UInt)) in
       {
@@ -706,7 +675,6 @@ match reg with
 
   assembly CmpRegGtu = (AsmP(d2), "=", ("cmp.gtu(", AsmR(s5), ",", AsmR(t5), ")"))
 
-  [operation ALU32_PRED_WRITING ]
   instruction CmpRegLteu : CmpRegFormat =   {
     let val = toPValue(!(R(s5) as UInt > R(t5) as UInt)) in
       {
@@ -761,7 +729,6 @@ match reg with
   , d5	 [4..0]
   }
 
-  [operation ALU32 ]
   instruction CombineDoubleRegImm : CombineRegImmFormat =   {
     R(d5) := extendS(immS)
     R((d5 + 1)) := R(rs)
@@ -778,7 +745,6 @@ match reg with
 
   assembly CombineDoubleRegImm = (AsmRR(d5), "=combine(", (AsmR(rs), ",#", decimal(immS)), ")")
 
-  [operation ALU32 ]
   instruction CombineDoubleImmReg : CombineRegImmFormat =   {
     R(d5) := R(rs)
     R((d5 + 1)) := extendS(immS)
@@ -795,7 +761,6 @@ match reg with
 
   assembly CombineDoubleImmReg = (AsmRR(d5), "=combine(", ("#", decimal(immS), ",", AsmR(rs)), ")")
 
-  [operation ALU32 ]
   instruction CombineDoubleImmSS : CombineImmFormat =   {
     R(d5) := immlowS
     R((d5 + 1)) := extendS(immhighS)
@@ -811,7 +776,6 @@ match reg with
 
   assembly CombineDoubleImmSS = (AsmRR(d5), "=combine(", ("#", decimal(immhighS), ",#", decimal(immlowS)), ")")
 
-  [operation ALU32 ]
   instruction CombineDoubleImmSU : CombineImmFormat =   {
     R(d5) := immlowU
     R((d5 + 1)) := extendS(immhighS)
@@ -827,7 +791,6 @@ match reg with
 
   assembly CombineDoubleImmSU = (AsmRR(d5), "=combine(", ("#", decimal(immhighS), ",#", decimal(immlowU)), ")")
 
-  [operation ALU32 ]
   instruction CombineWordRegHH : CombineRegWordFormat =   {
     R(d5) := ((R(t5) >> 16) as Half, (R(s5) >> 16) as Half)
   }
@@ -842,7 +805,6 @@ match reg with
 
   assembly CombineWordRegHH = (AsmR(d5), "=", (AsmR(t5), ".H,", AsmR(s5), ".H"))
 
-  [operation ALU32 ]
   instruction CombineWordRegHL : CombineRegWordFormat =   {
     R(d5) := ((R(t5) >> 16) as Half, R(s5) as Half)
   }
@@ -857,7 +819,6 @@ match reg with
 
   assembly CombineWordRegHL = (AsmR(d5), "=", (AsmR(t5), ".H,", AsmR(s5), ".L"))
 
-  [operation ALU32 ]
   instruction CombineWordRegLH : CombineRegWordFormat =   {
     R(d5) := (R(t5) as Half, (R(s5) >> 16) as Half)
   }
@@ -872,7 +833,6 @@ match reg with
 
   assembly CombineWordRegLH = (AsmR(d5), "=", (AsmR(t5), ".L,", AsmR(s5), ".H"))
 
-  [operation ALU32 ]
   instruction CombineWordRegLL : CombineRegWordFormat =   {
     R(d5) := (R(t5) as Half, R(s5) as Half)
   }
@@ -914,7 +874,6 @@ match reg with
   , d5	 [4..0]
   }
 
-  [operation ALU32 ]
   instruction AddImmPredPos : AddPredImmFormat =   {
     R(d5) := VADL::add(R(s5), extendS(immS))
   }
@@ -930,7 +889,6 @@ match reg with
 
   assembly AddImmPredPos = (AsmPred(u2, false, false), AsmR(d5), " = ", "add", "(", (AsmR(s5), ",#", decimal(immS)), ")")
 
-  [operation ALU32 ]
   instruction AddImmPredNeg : AddPredImmFormat =   {
     R(d5) := VADL::add(R(s5), extendS(immS))
   }
@@ -946,7 +904,6 @@ match reg with
 
   assembly AddImmPredNeg = (AsmPred(u2, true, false), AsmR(d5), " = ", "add", "(", (AsmR(s5), ",#", decimal(immS)), ")")
 
-  [operation ALU32 ]
   instruction AddRegPredPos : ALUPredRegFormat =   {
     R(d5) := VADL::add(R(s5), R(t5))
   }
@@ -963,7 +920,6 @@ match reg with
 
   assembly AddRegPredPos = (AsmPred(u2, false, false), AsmR(d5), " = ", "add", "(", (AsmR(s5), ",", AsmR(t5)), ")")
 
-  [operation ALU32 ]
   instruction AddRegPredNeg : ALUPredRegFormat =   {
     R(d5) := VADL::add(R(s5), R(t5))
   }
@@ -980,7 +936,6 @@ match reg with
 
   assembly AddRegPredNeg = (AsmPred(u2, true, false), AsmR(d5), " = ", "add", "(", (AsmR(s5), ",", AsmR(t5)), ")")
 
-  [operation ALU32 ]
   instruction SubRegPredPos : ALUPredRegFormat =   {
     R(d5) := VADL::sub(R(t5), R(s5))
   }
@@ -997,7 +952,6 @@ match reg with
 
   assembly SubRegPredPos = (AsmPred(u2, false, false), AsmR(d5), " = ", "sub", "(", (AsmR(t5), ",", AsmR(s5)), ")")
 
-  [operation ALU32 ]
   instruction SubRegPredNeg : ALUPredRegFormat =   {
     R(d5) := VADL::sub(R(t5), R(s5))
   }
@@ -1022,7 +976,6 @@ match reg with
       }
 
 
-  [operation CR ]
   instruction TransferCR : StandardFormat =   {
     {
       let val = R(s5) in
@@ -1048,7 +1001,6 @@ match reg with
 
   assembly TransferCR = (AsmC(d5), "=", AsmR(s5))
 
-  [operation CR ]
   instruction TransferCCRR : StandardFormat =   {
     {
       let valLo = R(s5) in
@@ -1079,7 +1031,6 @@ match reg with
 
   assembly TransferCCRR = (AsmCC(d5), "=", AsmRR(s5))
 
-  [operation CR ]
   instruction TransferRRCC : StandardFormat =   {
     R(d5) := getCIsa(s5)
     R((d5 + 1)) := getCIsa((s5 + 1))
@@ -1094,7 +1045,6 @@ match reg with
 
   assembly TransferRRCC = (AsmRR(d5), "=", AsmCC(s5))
 
-  [operation CR ]
   instruction TransferRC : StandardFormat =   {
     R(d5) := getCIsa(s5)
   }
@@ -1128,7 +1078,6 @@ match reg with
   , immU = extendUExtender(imm, immX)
   }
 
-  [operation CR ]
   instruction AddRegPC : AddRegPCFormat =   {
     R(d5) := (PC.current + immU)
   }
@@ -1142,7 +1091,6 @@ match reg with
 
   assembly AddRegPC = ("", AsmR(d5), "=add(pc,", AsmImmU(immU), ")")
 
-  [operation CR ]
   instruction AddRegPCX : AddRegPCXFormat =   {
     R(d5) := (PC.current + immU)
   }
@@ -1167,7 +1115,6 @@ match reg with
   , d2	 [1..0]
   }
 
-  [operation CR23 ]
   instruction LogicalPredAnd : LogicalPredFormat =   {
     Pset(d2, VADL::and(Pget(t2), Pget(s2)))  }
 
@@ -1180,7 +1127,6 @@ match reg with
 
   assembly LogicalPredAnd = (AsmP(d2), "=", ("and(", AsmP(t2), ",", AsmP(s2), ")"))
 
-  [operation CR23 ]
   instruction LogicalPredAndAnd : LogicalPredFormat =   {
     Pset(d2, VADL::and(Pget(s2), VADL::and(Pget(t2), Pget(u2))))  }
 
@@ -1193,7 +1139,6 @@ match reg with
 
   assembly LogicalPredAndAnd = (AsmP(d2), "=", ("and(", AsmP(s2), ",and(", AsmP(t2), ",", AsmP(u2), "))"))
 
-  [operation CR23 ]
   instruction LogicalPredOr : LogicalPredFormat =   {
     Pset(d2, VADL::or(Pget(t2), Pget(s2)))  }
 
@@ -1206,7 +1151,6 @@ match reg with
 
   assembly LogicalPredOr = (AsmP(d2), "=", ("or(", AsmP(t2), ",", AsmP(s2), ")"))
 
-  [operation CR23 ]
   instruction LogicalPredAndOr : LogicalPredFormat =   {
     Pset(d2, VADL::and(Pget(s2), VADL::or(Pget(t2), Pget(u2))))  }
 
@@ -1219,7 +1163,6 @@ match reg with
 
   assembly LogicalPredAndOr = (AsmP(d2), "=", ("and(", AsmP(s2), ",or(", AsmP(t2), ",", AsmP(u2), "))"))
 
-  [operation CR23 ]
   instruction LogicalPredXor : LogicalPredFormat =   {
     Pset(d2, VADL::xor(Pget(s2), Pget(t2)))  }
 
@@ -1232,7 +1175,6 @@ match reg with
 
   assembly LogicalPredXor = (AsmP(d2), "=", ("xor(", AsmP(s2), ",", AsmP(t2), ")"))
 
-  [operation CR23 ]
   instruction LogicalPredOrAnd : LogicalPredFormat =   {
     Pset(d2, VADL::or(Pget(s2), VADL::and(Pget(t2), Pget(u2))))  }
 
@@ -1245,7 +1187,6 @@ match reg with
 
   assembly LogicalPredOrAnd = (AsmP(d2), "=", ("or(", AsmP(s2), ",and(", AsmP(t2), ",", AsmP(u2), "))"))
 
-  [operation CR23 ]
   instruction LogicalPredAndNot : LogicalPredFormat =   {
     Pset(d2, VADL::and(Pget(t2), !Pget(s2)))  }
 
@@ -1258,7 +1199,6 @@ match reg with
 
   assembly LogicalPredAndNot = (AsmP(d2), "=", ("and(", AsmP(t2), ",!", AsmP(s2), ")"))
 
-  [operation CR23 ]
   instruction LogicalPredOrOr : LogicalPredFormat =   {
     Pset(d2, VADL::or(Pget(s2), VADL::or(Pget(t2), Pget(u2))))  }
 
@@ -1271,7 +1211,6 @@ match reg with
 
   assembly LogicalPredOrOr = (AsmP(d2), "=", ("or(", AsmP(s2), ",or(", AsmP(t2), ",", AsmP(u2), "))"))
 
-  [operation CR23 ]
   instruction LogicalPredAndAndNot : LogicalPredFormat =   {
     Pset(d2, VADL::and(Pget(s2), VADL::and(Pget(t2), VADL::not(Pget(u2)))))  }
 
@@ -1284,7 +1223,6 @@ match reg with
 
   assembly LogicalPredAndAndNot = (AsmP(d2), "=", ("and(", AsmP(s2), ",and(", AsmP(t2), ",!", AsmP(u2), "))"))
 
-  [operation CR23 ]
   instruction LogicalPredAndOrNot : LogicalPredFormat =   {
     Pset(d2, VADL::and(Pget(s2), VADL::or(Pget(t2), VADL::not(Pget(u2)))))  }
 
@@ -1297,7 +1235,6 @@ match reg with
 
   assembly LogicalPredAndOrNot = (AsmP(d2), "=", ("and(", AsmP(s2), ",or(", AsmP(t2), ",!", AsmP(u2), "))"))
 
-  [operation CR23 ]
   instruction LogicalPredNot : LogicalPredFormat =   {
     Pset(d2, VADL::not(Pget(s2)))  }
 
@@ -1310,7 +1247,6 @@ match reg with
 
   assembly LogicalPredNot = (AsmP(d2), "=", ("not(", AsmP(s2), ")"))
 
-  [operation CR23 ]
   instruction LogicalPredOrAndNot : LogicalPredFormat =   {
     Pset(d2, VADL::or(Pget(s2), VADL::and(Pget(t2), VADL::not(Pget(u2)))))  }
 
@@ -1323,7 +1259,6 @@ match reg with
 
   assembly LogicalPredOrAndNot = (AsmP(d2), "=", ("or(", AsmP(s2), ",and(", AsmP(t2), ",!", AsmP(u2), "))"))
 
-  [operation CR23 ]
   instruction LogicalPredOrNot : LogicalPredFormat =   {
     Pset(d2, VADL::or(Pget(t2), !Pget(s2)))  }
 
@@ -1336,7 +1271,6 @@ match reg with
 
   assembly LogicalPredOrNot = (AsmP(d2), "=", ("or(", AsmP(t2), ",!", AsmP(s2), ")"))
 
-  [operation CR23 ]
   instruction LogicalPredOrOrNot : LogicalPredFormat =   {
     Pset(d2, VADL::or(Pget(s2), VADL::or(Pget(t2), VADL::not(Pget(u2)))))  }
 
@@ -1358,7 +1292,6 @@ match reg with
   , hintnew	 [12..11]
   }
 
-  [operation JR ]
   instruction CallReg : BranchRegFormat =   {
     if true then
       {
@@ -1376,7 +1309,6 @@ match reg with
 
   assembly CallReg = ("", "callr ", AsmR(s5))
 
-  [operation JR ]
   instruction CallRegPredPos : BranchRegFormat =   {
     if testpred(u2) then
       {
@@ -1394,7 +1326,6 @@ match reg with
 
   assembly CallRegPredPos = (AsmPred(u2, false, false), "callr ", AsmR(s5))
 
-  [operation JR ]
   instruction CallRegPredNeg : BranchRegFormat =   {
     if !testpred(u2) then
       {
@@ -1412,7 +1343,6 @@ match reg with
 
   assembly CallRegPredNeg = (AsmPred(u2, true, false), "callr ", AsmR(s5))
 
-  [operation JR ]
   instruction JumpReg : BranchRegFormat =   {
     if true then
       {
@@ -1429,7 +1359,6 @@ match reg with
 
   assembly JumpReg = ("", "jumpr", "", " ", AsmR(s5))
 
-  [operation JR ]
   instruction JumpRegPredPosNT : BranchRegFormat =   {
     if testpred(u2) then
       {
@@ -1447,7 +1376,6 @@ match reg with
 
   assembly JumpRegPredPosNT = (AsmPred(u2, false, false), "jumpr", ":nt ", " ", AsmR(s5))
 
-  [operation JR ]
   instruction JumpRegPredPosT : BranchRegFormat =   {
     if testpred(u2) then
       {
@@ -1465,7 +1393,6 @@ match reg with
 
   assembly JumpRegPredPosT = (AsmPred(u2, false, false), "jumpr", ":t ", " ", AsmR(s5))
 
-  [operation JR ]
   instruction JumpRegPredNegNT : BranchRegFormat =   {
     if !testpred(u2) then
       {
@@ -1483,7 +1410,6 @@ match reg with
 
   assembly JumpRegPredNegNT = (AsmPred(u2, true, false), "jumpr", ":nt ", " ", AsmR(s5))
 
-  [operation JR ]
   instruction JumpRegPredNegT : BranchRegFormat =   {
     if !testpred(u2) then
       {
@@ -1518,7 +1444,6 @@ match reg with
   , immS = scaledImmR2(imm)
   }
 
-  [operation J ]
   instruction JumpImm : JumpImmFormat =   {
     if true then
       {
@@ -1535,7 +1460,6 @@ match reg with
 
   assembly JumpImm = ("", "jump", "", " ", decimal(immS))
 
-  [operation J ]
   instruction JumpImmPredPosNT : JumpImmPredFormat =   {
     if testpred(u2) then
       {
@@ -1553,7 +1477,6 @@ match reg with
 
   assembly JumpImmPredPosNT = (AsmPred(u2, false, false), "jump", ":nt ", " ", decimal(immS))
 
-  [operation J ]
   instruction JumpImmPredPosT : JumpImmPredFormat =   {
     if testpred(u2) then
       {
@@ -1571,7 +1494,6 @@ match reg with
 
   assembly JumpImmPredPosT = (AsmPred(u2, false, false), "jump", ":t ", " ", decimal(immS))
 
-  [operation J ]
   instruction JumpImmPredNegNT : JumpImmPredFormat =   {
     if !testpred(u2) then
       {
@@ -1589,7 +1511,6 @@ match reg with
 
   assembly JumpImmPredNegNT = (AsmPred(u2, true, false), "jump", ":nt ", " ", decimal(immS))
 
-  [operation J ]
   instruction JumpImmPredNegT : JumpImmPredFormat =   {
     if !testpred(u2) then
       {
@@ -1622,7 +1543,6 @@ match reg with
   , imm	 [23, 22, 20..16, 13, 7..1]
   }
 
-  [operation J ]
   instruction CallImm : CallImmFormat =   {
     if true then
       {
@@ -1640,7 +1560,6 @@ match reg with
 
   assembly CallImm = ("", "call #", decimal(imm))
 
-  [operation J ]
   instruction CallImmPredPos : CallImmPredFormat =   {
     if testpred(pred) then
       {
@@ -1659,7 +1578,6 @@ match reg with
 
   assembly CallImmPredPos = (AsmPred(pred, false, false), "call #", decimal(imm))
 
-  [operation J ]
   instruction CallImmPredNeg : CallImmPredFormat =   {
     if !testpred(pred) then
       {
@@ -1734,7 +1652,6 @@ match reg with
   , d2 = d1 as PredicateIndex
   }
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqMinus1P0PosNT : CmpJumpFormat =   {
     let pred = (R(s5) = -1) in
       let pvalue = toPValue((R(s5) = -1)) in
@@ -1758,7 +1675,6 @@ match reg with
 
   assembly CmpJumpEqMinus1P0PosNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqMinus1P1PosNT : CmpJumpFormat =   {
     let pred = (R(s5) = -1) in
       let pvalue = toPValue((R(s5) = -1)) in
@@ -1782,7 +1698,6 @@ match reg with
 
   assembly CmpJumpEqMinus1P1PosNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqMinus1P0NegNT : CmpJumpFormat =   {
     let pred = !(R(s5) = -1) in
       let pvalue = toPValue(!(R(s5) = -1)) in
@@ -1806,7 +1721,6 @@ match reg with
 
   assembly CmpJumpEqMinus1P0NegNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqMinus1P1NegNT : CmpJumpFormat =   {
     let pred = !(R(s5) = -1) in
       let pvalue = toPValue(!(R(s5) = -1)) in
@@ -1830,7 +1744,6 @@ match reg with
 
   assembly CmpJumpEqMinus1P1NegNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqMinus1P0PosT : CmpJumpFormat =   {
     let pred = (R(s5) = -1) in
       let pvalue = toPValue((R(s5) = -1)) in
@@ -1854,7 +1767,6 @@ match reg with
 
   assembly CmpJumpEqMinus1P0PosT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqMinus1P1PosT : CmpJumpFormat =   {
     let pred = (R(s5) = -1) in
       let pvalue = toPValue((R(s5) = -1)) in
@@ -1878,7 +1790,6 @@ match reg with
 
   assembly CmpJumpEqMinus1P1PosT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqMinus1P0NegT : CmpJumpFormat =   {
     let pred = !(R(s5) = -1) in
       let pvalue = toPValue(!(R(s5) = -1)) in
@@ -1902,7 +1813,6 @@ match reg with
 
   assembly CmpJumpEqMinus1P0NegT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqMinus1P1NegT : CmpJumpFormat =   {
     let pred = !(R(s5) = -1) in
       let pvalue = toPValue(!(R(s5) = -1)) in
@@ -1926,7 +1836,6 @@ match reg with
 
   assembly CmpJumpEqMinus1P1NegT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtMinus1P0PosNT : CmpJumpFormat =   {
     let pred = (R(s5) as SInt > -1 as SInt) in
       let pvalue = toPValue((R(s5) as SInt > -1 as SInt)) in
@@ -1950,7 +1859,6 @@ match reg with
 
   assembly CmpJumpGtMinus1P0PosNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtMinus1P1PosNT : CmpJumpFormat =   {
     let pred = (R(s5) as SInt > -1 as SInt) in
       let pvalue = toPValue((R(s5) as SInt > -1 as SInt)) in
@@ -1974,7 +1882,6 @@ match reg with
 
   assembly CmpJumpGtMinus1P1PosNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtMinus1P0NegNT : CmpJumpFormat =   {
     let pred = !(R(s5) as SInt > -1 as SInt) in
       let pvalue = toPValue(!(R(s5) as SInt > -1 as SInt)) in
@@ -1998,7 +1905,6 @@ match reg with
 
   assembly CmpJumpGtMinus1P0NegNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtMinus1P1NegNT : CmpJumpFormat =   {
     let pred = !(R(s5) as SInt > -1 as SInt) in
       let pvalue = toPValue(!(R(s5) as SInt > -1 as SInt)) in
@@ -2022,7 +1928,6 @@ match reg with
 
   assembly CmpJumpGtMinus1P1NegNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtMinus1P0PosT : CmpJumpFormat =   {
     let pred = (R(s5) as SInt > -1 as SInt) in
       let pvalue = toPValue((R(s5) as SInt > -1 as SInt)) in
@@ -2046,7 +1951,6 @@ match reg with
 
   assembly CmpJumpGtMinus1P0PosT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtMinus1P1PosT : CmpJumpFormat =   {
     let pred = (R(s5) as SInt > -1 as SInt) in
       let pvalue = toPValue((R(s5) as SInt > -1 as SInt)) in
@@ -2070,7 +1974,6 @@ match reg with
 
   assembly CmpJumpGtMinus1P1PosT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtMinus1P0NegT : CmpJumpFormat =   {
     let pred = !(R(s5) as SInt > -1 as SInt) in
       let pvalue = toPValue(!(R(s5) as SInt > -1 as SInt)) in
@@ -2094,7 +1997,6 @@ match reg with
 
   assembly CmpJumpGtMinus1P0NegT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtMinus1P1NegT : CmpJumpFormat =   {
     let pred = !(R(s5) as SInt > -1 as SInt) in
       let pvalue = toPValue(!(R(s5) as SInt > -1 as SInt)) in
@@ -2118,7 +2020,6 @@ match reg with
 
   assembly CmpJumpGtMinus1P1NegT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#-1)"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpTstBit0P0PosNT : CmpJumpFormat =   {
     let pred = ((R(s5) & 0b1) = 1) in
       let pvalue = toPValue(((R(s5) & 0b1) = 1)) in
@@ -2142,7 +2043,6 @@ match reg with
 
   assembly CmpJumpTstBit0P0PosNT = (AsmP(0), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpTstBit0P1PosNT : CmpJumpFormat =   {
     let pred = ((R(s5) & 0b1) = 1) in
       let pvalue = toPValue(((R(s5) & 0b1) = 1)) in
@@ -2166,7 +2066,6 @@ match reg with
 
   assembly CmpJumpTstBit0P1PosNT = (AsmP(1), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpTstBit0P0NegNT : CmpJumpFormat =   {
     let pred = !((R(s5) & 0b1) = 1) in
       let pvalue = toPValue(!((R(s5) & 0b1) = 1)) in
@@ -2190,7 +2089,6 @@ match reg with
 
   assembly CmpJumpTstBit0P0NegNT = (AsmP(0), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpTstBit0P1NegNT : CmpJumpFormat =   {
     let pred = !((R(s5) & 0b1) = 1) in
       let pvalue = toPValue(!((R(s5) & 0b1) = 1)) in
@@ -2214,7 +2112,6 @@ match reg with
 
   assembly CmpJumpTstBit0P1NegNT = (AsmP(1), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpTstBit0P0PosT : CmpJumpFormat =   {
     let pred = ((R(s5) & 0b1) = 1) in
       let pvalue = toPValue(((R(s5) & 0b1) = 1)) in
@@ -2238,7 +2135,6 @@ match reg with
 
   assembly CmpJumpTstBit0P0PosT = (AsmP(0), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpTstBit0P1PosT : CmpJumpFormat =   {
     let pred = ((R(s5) & 0b1) = 1) in
       let pvalue = toPValue(((R(s5) & 0b1) = 1)) in
@@ -2262,7 +2158,6 @@ match reg with
 
   assembly CmpJumpTstBit0P1PosT = (AsmP(1), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpTstBit0P0NegT : CmpJumpFormat =   {
     let pred = !((R(s5) & 0b1) = 1) in
       let pvalue = toPValue(!((R(s5) & 0b1) = 1)) in
@@ -2286,7 +2181,6 @@ match reg with
 
   assembly CmpJumpTstBit0P0NegT = (AsmP(0), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpTstBit0P1NegT : CmpJumpFormat =   {
     let pred = !((R(s5) & 0b1) = 1) in
       let pvalue = toPValue(!((R(s5) & 0b1) = 1)) in
@@ -2310,7 +2204,6 @@ match reg with
 
   assembly CmpJumpTstBit0P1NegT = (AsmP(1), "=", ("tstbit(", AsmR(s5), "#0)"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqImmP0PosNT : CmpJumpImmFormat =   {
     let pred = (R(s5) = immU) in
       let pvalue = toPValue((R(s5) = immU)) in
@@ -2334,7 +2227,6 @@ match reg with
 
   assembly CmpJumpEqImmP0PosNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqImmP1PosNT : CmpJumpImmFormat =   {
     let pred = (R(s5) = immU) in
       let pvalue = toPValue((R(s5) = immU)) in
@@ -2358,7 +2250,6 @@ match reg with
 
   assembly CmpJumpEqImmP1PosNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqImmP0NegNT : CmpJumpImmFormat =   {
     let pred = !(R(s5) = immU) in
       let pvalue = toPValue(!(R(s5) = immU)) in
@@ -2382,7 +2273,6 @@ match reg with
 
   assembly CmpJumpEqImmP0NegNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqImmP1NegNT : CmpJumpImmFormat =   {
     let pred = !(R(s5) = immU) in
       let pvalue = toPValue(!(R(s5) = immU)) in
@@ -2406,7 +2296,6 @@ match reg with
 
   assembly CmpJumpEqImmP1NegNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqImmP0PosT : CmpJumpImmFormat =   {
     let pred = (R(s5) = immU) in
       let pvalue = toPValue((R(s5) = immU)) in
@@ -2430,7 +2319,6 @@ match reg with
 
   assembly CmpJumpEqImmP0PosT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqImmP1PosT : CmpJumpImmFormat =   {
     let pred = (R(s5) = immU) in
       let pvalue = toPValue((R(s5) = immU)) in
@@ -2454,7 +2342,6 @@ match reg with
 
   assembly CmpJumpEqImmP1PosT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqImmP0NegT : CmpJumpImmFormat =   {
     let pred = !(R(s5) = immU) in
       let pvalue = toPValue(!(R(s5) = immU)) in
@@ -2478,7 +2365,6 @@ match reg with
 
   assembly CmpJumpEqImmP0NegT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqImmP1NegT : CmpJumpImmFormat =   {
     let pred = !(R(s5) = immU) in
       let pvalue = toPValue(!(R(s5) = immU)) in
@@ -2502,7 +2388,6 @@ match reg with
 
   assembly CmpJumpEqImmP1NegT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtImmP0PosNT : CmpJumpImmFormat =   {
     let pred = (R(s5)(15..0) as UWord > immU) in
       let pvalue = toPValue((R(s5)(15..0) as UWord > immU)) in
@@ -2526,7 +2411,6 @@ match reg with
 
   assembly CmpJumpGtImmP0PosNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtImmP1PosNT : CmpJumpImmFormat =   {
     let pred = (R(s5)(15..0) as UWord > immU) in
       let pvalue = toPValue((R(s5)(15..0) as UWord > immU)) in
@@ -2550,7 +2434,6 @@ match reg with
 
   assembly CmpJumpGtImmP1PosNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtImmP0NegNT : CmpJumpImmFormat =   {
     let pred = !(R(s5)(15..0) as UWord > immU) in
       let pvalue = toPValue(!(R(s5)(15..0) as UWord > immU)) in
@@ -2574,7 +2457,6 @@ match reg with
 
   assembly CmpJumpGtImmP0NegNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtImmP1NegNT : CmpJumpImmFormat =   {
     let pred = !(R(s5)(15..0) as UWord > immU) in
       let pvalue = toPValue(!(R(s5)(15..0) as UWord > immU)) in
@@ -2598,7 +2480,6 @@ match reg with
 
   assembly CmpJumpGtImmP1NegNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtImmP0PosT : CmpJumpImmFormat =   {
     let pred = (R(s5)(15..0) as UWord > immU) in
       let pvalue = toPValue((R(s5)(15..0) as UWord > immU)) in
@@ -2622,7 +2503,6 @@ match reg with
 
   assembly CmpJumpGtImmP0PosT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtImmP1PosT : CmpJumpImmFormat =   {
     let pred = (R(s5)(15..0) as UWord > immU) in
       let pvalue = toPValue((R(s5)(15..0) as UWord > immU)) in
@@ -2646,7 +2526,6 @@ match reg with
 
   assembly CmpJumpGtImmP1PosT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtImmP0NegT : CmpJumpImmFormat =   {
     let pred = !(R(s5)(15..0) as UWord > immU) in
       let pvalue = toPValue(!(R(s5)(15..0) as UWord > immU)) in
@@ -2670,7 +2549,6 @@ match reg with
 
   assembly CmpJumpGtImmP0NegT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtImmP1NegT : CmpJumpImmFormat =   {
     let pred = !(R(s5)(15..0) as UWord > immU) in
       let pvalue = toPValue(!(R(s5)(15..0) as UWord > immU)) in
@@ -2694,7 +2572,6 @@ match reg with
 
   assembly CmpJumpGtImmP1NegT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuImmP0PosNT : CmpJumpImmFormat =   {
     let pred = (R(s5) as UInt > immU) in
       let pvalue = toPValue((R(s5) as UInt > immU)) in
@@ -2718,7 +2595,6 @@ match reg with
 
   assembly CmpJumpGtuImmP0PosNT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuImmP1PosNT : CmpJumpImmFormat =   {
     let pred = (R(s5) as UInt > immU) in
       let pvalue = toPValue((R(s5) as UInt > immU)) in
@@ -2742,7 +2618,6 @@ match reg with
 
   assembly CmpJumpGtuImmP1PosNT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuImmP0NegNT : CmpJumpImmFormat =   {
     let pred = !(R(s5) as UInt > immU) in
       let pvalue = toPValue(!(R(s5) as UInt > immU)) in
@@ -2766,7 +2641,6 @@ match reg with
 
   assembly CmpJumpGtuImmP0NegNT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuImmP1NegNT : CmpJumpImmFormat =   {
     let pred = !(R(s5) as UInt > immU) in
       let pvalue = toPValue(!(R(s5) as UInt > immU)) in
@@ -2790,7 +2664,6 @@ match reg with
 
   assembly CmpJumpGtuImmP1NegNT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuImmP0PosT : CmpJumpImmFormat =   {
     let pred = (R(s5) as UInt > immU) in
       let pvalue = toPValue((R(s5) as UInt > immU)) in
@@ -2814,7 +2687,6 @@ match reg with
 
   assembly CmpJumpGtuImmP0PosT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuImmP1PosT : CmpJumpImmFormat =   {
     let pred = (R(s5) as UInt > immU) in
       let pvalue = toPValue((R(s5) as UInt > immU)) in
@@ -2838,7 +2710,6 @@ match reg with
 
   assembly CmpJumpGtuImmP1PosT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuImmP0NegT : CmpJumpImmFormat =   {
     let pred = !(R(s5) as UInt > immU) in
       let pvalue = toPValue(!(R(s5) as UInt > immU)) in
@@ -2862,7 +2733,6 @@ match reg with
 
   assembly CmpJumpGtuImmP0NegT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuImmP1NegT : CmpJumpImmFormat =   {
     let pred = !(R(s5) as UInt > immU) in
       let pvalue = toPValue(!(R(s5) as UInt > immU)) in
@@ -2886,7 +2756,6 @@ match reg with
 
   assembly CmpJumpGtuImmP1NegT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "#", decimal(immU), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqRegP0PosNT : CmpJumpRegFormat =   {
     let pred = (R(s5) = R(t5)) in
       let pvalue = toPValue((R(s5) = R(t5))) in
@@ -2910,7 +2779,6 @@ match reg with
 
   assembly CmpJumpEqRegP0PosNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqRegP1PosNT : CmpJumpRegFormat =   {
     let pred = (R(s5) = R(t5)) in
       let pvalue = toPValue((R(s5) = R(t5))) in
@@ -2934,7 +2802,6 @@ match reg with
 
   assembly CmpJumpEqRegP1PosNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqRegP0NegNT : CmpJumpRegFormat =   {
     let pred = !(R(s5) = R(t5)) in
       let pvalue = toPValue(!(R(s5) = R(t5))) in
@@ -2958,7 +2825,6 @@ match reg with
 
   assembly CmpJumpEqRegP0NegNT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqRegP1NegNT : CmpJumpRegFormat =   {
     let pred = !(R(s5) = R(t5)) in
       let pvalue = toPValue(!(R(s5) = R(t5))) in
@@ -2982,7 +2848,6 @@ match reg with
 
   assembly CmpJumpEqRegP1NegNT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqRegP0PosT : CmpJumpRegFormat =   {
     let pred = (R(s5) = R(t5)) in
       let pvalue = toPValue((R(s5) = R(t5))) in
@@ -3006,7 +2871,6 @@ match reg with
 
   assembly CmpJumpEqRegP0PosT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqRegP1PosT : CmpJumpRegFormat =   {
     let pred = (R(s5) = R(t5)) in
       let pvalue = toPValue((R(s5) = R(t5))) in
@@ -3030,7 +2894,6 @@ match reg with
 
   assembly CmpJumpEqRegP1PosT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqRegP0NegT : CmpJumpRegFormat =   {
     let pred = !(R(s5) = R(t5)) in
       let pvalue = toPValue(!(R(s5) = R(t5))) in
@@ -3054,7 +2917,6 @@ match reg with
 
   assembly CmpJumpEqRegP0NegT = (AsmP(0), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpEqRegP1NegT : CmpJumpRegFormat =   {
     let pred = !(R(s5) = R(t5)) in
       let pvalue = toPValue(!(R(s5) = R(t5))) in
@@ -3078,7 +2940,6 @@ match reg with
 
   assembly CmpJumpEqRegP1NegT = (AsmP(1), "=", ("cmp.eq(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtRegP0PosNT : CmpJumpRegFormat =   {
     let pred = (R(s5) as SInt > R(t5) as SInt) in
       let pvalue = toPValue((R(s5) as SInt > R(t5) as SInt)) in
@@ -3102,7 +2963,6 @@ match reg with
 
   assembly CmpJumpGtRegP0PosNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtRegP1PosNT : CmpJumpRegFormat =   {
     let pred = (R(s5) as SInt > R(t5) as SInt) in
       let pvalue = toPValue((R(s5) as SInt > R(t5) as SInt)) in
@@ -3126,7 +2986,6 @@ match reg with
 
   assembly CmpJumpGtRegP1PosNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtRegP0NegNT : CmpJumpRegFormat =   {
     let pred = !(R(s5) as SInt > R(t5) as SInt) in
       let pvalue = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in
@@ -3150,7 +3009,6 @@ match reg with
 
   assembly CmpJumpGtRegP0NegNT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtRegP1NegNT : CmpJumpRegFormat =   {
     let pred = !(R(s5) as SInt > R(t5) as SInt) in
       let pvalue = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in
@@ -3174,7 +3032,6 @@ match reg with
 
   assembly CmpJumpGtRegP1NegNT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtRegP0PosT : CmpJumpRegFormat =   {
     let pred = (R(s5) as SInt > R(t5) as SInt) in
       let pvalue = toPValue((R(s5) as SInt > R(t5) as SInt)) in
@@ -3198,7 +3055,6 @@ match reg with
 
   assembly CmpJumpGtRegP0PosT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtRegP1PosT : CmpJumpRegFormat =   {
     let pred = (R(s5) as SInt > R(t5) as SInt) in
       let pvalue = toPValue((R(s5) as SInt > R(t5) as SInt)) in
@@ -3222,7 +3078,6 @@ match reg with
 
   assembly CmpJumpGtRegP1PosT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtRegP0NegT : CmpJumpRegFormat =   {
     let pred = !(R(s5) as SInt > R(t5) as SInt) in
       let pvalue = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in
@@ -3246,7 +3101,6 @@ match reg with
 
   assembly CmpJumpGtRegP0NegT = (AsmP(0), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtRegP1NegT : CmpJumpRegFormat =   {
     let pred = !(R(s5) as SInt > R(t5) as SInt) in
       let pvalue = toPValue(!(R(s5) as SInt > R(t5) as SInt)) in
@@ -3270,7 +3124,6 @@ match reg with
 
   assembly CmpJumpGtRegP1NegT = (AsmP(1), "=", ("cmp.gt(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuRegP0PosNT : CmpJumpRegFormat =   {
     let pred = (R(s5)(15..0) as UWord > R(t5)) in
       let pvalue = toPValue((R(s5)(15..0) as UWord > R(t5))) in
@@ -3294,7 +3147,6 @@ match reg with
 
   assembly CmpJumpGtuRegP0PosNT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuRegP1PosNT : CmpJumpRegFormat =   {
     let pred = (R(s5)(15..0) as UWord > R(t5)) in
       let pvalue = toPValue((R(s5)(15..0) as UWord > R(t5))) in
@@ -3318,7 +3170,6 @@ match reg with
 
   assembly CmpJumpGtuRegP1PosNT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuRegP0NegNT : CmpJumpRegFormat =   {
     let pred = !(R(s5)(15..0) as UWord > R(t5)) in
       let pvalue = toPValue(!(R(s5)(15..0) as UWord > R(t5))) in
@@ -3342,7 +3193,6 @@ match reg with
 
   assembly CmpJumpGtuRegP0NegNT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuRegP1NegNT : CmpJumpRegFormat =   {
     let pred = !(R(s5)(15..0) as UWord > R(t5)) in
       let pvalue = toPValue(!(R(s5)(15..0) as UWord > R(t5))) in
@@ -3366,7 +3216,6 @@ match reg with
 
   assembly CmpJumpGtuRegP1NegNT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 1, true), " jump:", "nt", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuRegP0PosT : CmpJumpRegFormat =   {
     let pred = (R(s5)(15..0) as UWord > R(t5)) in
       let pvalue = toPValue((R(s5)(15..0) as UWord > R(t5))) in
@@ -3390,7 +3239,6 @@ match reg with
 
   assembly CmpJumpGtuRegP0PosT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuRegP1PosT : CmpJumpRegFormat =   {
     let pred = (R(s5)(15..0) as UWord > R(t5)) in
       let pvalue = toPValue((R(s5)(15..0) as UWord > R(t5))) in
@@ -3414,7 +3262,6 @@ match reg with
 
   assembly CmpJumpGtuRegP1PosT = (AsmP(1), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(1, 0, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuRegP0NegT : CmpJumpRegFormat =   {
     let pred = !(R(s5)(15..0) as UWord > R(t5)) in
       let pvalue = toPValue(!(R(s5)(15..0) as UWord > R(t5))) in
@@ -3438,7 +3285,6 @@ match reg with
 
   assembly CmpJumpGtuRegP0NegT = (AsmP(0), "=", ("cmp.gtu(", AsmR(s5), "", AsmR(t5), ")"), "; ", AsmPred(0, 1, true), " jump:", "t", " #", decimal(dispS))
 
-  [operation J_PRED_WRITING ]
   instruction CmpJumpGtuRegP1NegT : CmpJumpRegFormat =   {
     let pred = !(R(s5)(15..0) as UWord > R(t5)) in
       let pvalue = toPValue(!(R(s5)(15..0) as UWord > R(t5))) in
@@ -3490,7 +3336,6 @@ match reg with
   , immRegRel = imm as UInt
   }
 
-  [operation LD ]
   instruction LoadByteGPRel : LoadFormat =   {
     if true then
       {
@@ -3510,7 +3355,6 @@ match reg with
 
   assembly LoadByteGPRel = ("", AsmR(d5), "=", ("memb", AsmAddrGPRel(immGPRel)))
 
-  [operation LD ]
   instruction LoadByteRegRel : LoadFormat =   {
     if true then
       {
@@ -3530,7 +3374,6 @@ match reg with
 
   assembly LoadByteRegRel = ("", AsmR(d5), "=", ("memb", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadBytePredPosRegRel : LoadRegRelPredFormat =   {
     if testpred(t2) then
       {
@@ -3551,7 +3394,6 @@ match reg with
 
   assembly LoadBytePredPosRegRel = (AsmPred(t2, false, false), AsmR(d5), "=", ("memb", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadBytePredNegRegRel : LoadRegRelPredFormat =   {
     if !testpred(t2) then
       {
@@ -3572,7 +3414,6 @@ match reg with
 
   assembly LoadBytePredNegRegRel = (AsmPred(t2, true, false), AsmR(d5), "=", ("memb", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadUByteGPRel : LoadFormat =   {
     if true then
       {
@@ -3592,7 +3433,6 @@ match reg with
 
   assembly LoadUByteGPRel = ("", AsmR(d5), "=", ("memub", AsmAddrGPRel(immGPRel)))
 
-  [operation LD ]
   instruction LoadUByteRegRel : LoadFormat =   {
     if true then
       {
@@ -3612,7 +3452,6 @@ match reg with
 
   assembly LoadUByteRegRel = ("", AsmR(d5), "=", ("memub", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadHalfGPRel : LoadFormat =   {
     if true then
       {
@@ -3632,7 +3471,6 @@ match reg with
 
   assembly LoadHalfGPRel = ("", AsmR(d5), "=", ("memh", AsmAddrGPRel(immGPRel)))
 
-  [operation LD ]
   instruction LoadHalfRegRel : LoadFormat =   {
     if true then
       {
@@ -3652,7 +3490,6 @@ match reg with
 
   assembly LoadHalfRegRel = ("", AsmR(d5), "=", ("memh", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadHalfPredPosRegRel : LoadRegRelPredFormat =   {
     if testpred(t2) then
       {
@@ -3673,7 +3510,6 @@ match reg with
 
   assembly LoadHalfPredPosRegRel = (AsmPred(t2, false, false), AsmR(d5), "=", ("memh", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadHalfPredNegRegRel : LoadRegRelPredFormat =   {
     if !testpred(t2) then
       {
@@ -3694,7 +3530,6 @@ match reg with
 
   assembly LoadHalfPredNegRegRel = (AsmPred(t2, true, false), AsmR(d5), "=", ("memh", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadUHalfGPRel : LoadFormat =   {
     if true then
       {
@@ -3714,7 +3549,6 @@ match reg with
 
   assembly LoadUHalfGPRel = ("", AsmR(d5), "=", ("memuh", AsmAddrGPRel(immGPRel)))
 
-  [operation LD ]
   instruction LoadUHalfRegRel : LoadFormat =   {
     if true then
       {
@@ -3734,7 +3568,6 @@ match reg with
 
   assembly LoadUHalfRegRel = ("", AsmR(d5), "=", ("memuh", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadWordGPRel : LoadFormat =   {
     if true then
       {
@@ -3754,7 +3587,6 @@ match reg with
 
   assembly LoadWordGPRel = ("", AsmR(d5), "=", ("memw", AsmAddrGPRel(immGPRel)))
 
-  [operation LD ]
   instruction LoadWordRegRel : LoadFormat =   {
     if true then
       {
@@ -3774,7 +3606,6 @@ match reg with
 
   assembly LoadWordRegRel = ("", AsmR(d5), "=", ("memw", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadWordPredPosRegRel : LoadRegRelPredFormat =   {
     if testpred(t2) then
       {
@@ -3795,7 +3626,6 @@ match reg with
 
   assembly LoadWordPredPosRegRel = (AsmPred(t2, false, false), AsmR(d5), "=", ("memw", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadWordPredNegRegRel : LoadRegRelPredFormat =   {
     if !testpred(t2) then
       {
@@ -3816,7 +3646,6 @@ match reg with
 
   assembly LoadWordPredNegRegRel = (AsmPred(t2, true, false), AsmR(d5), "=", ("memw", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadDoubleGPRel : LoadFormat =   {
     if true then
       {
@@ -3840,7 +3669,6 @@ match reg with
 
   assembly LoadDoubleGPRel = ("", AsmRR(d5), "=", ("memd", AsmAddrGPRel(immGPRel)))
 
-  [operation LD ]
   instruction LoadDoubleRegRel : LoadFormat =   {
     if true then
       {
@@ -3864,7 +3692,6 @@ match reg with
 
   assembly LoadDoubleRegRel = ("", AsmRR(d5), "=", ("memd", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadDoublePredPosRegRel : LoadRegRelPredFormat =   {
     if testpred(t2) then
       {
@@ -3889,7 +3716,6 @@ match reg with
 
   assembly LoadDoublePredPosRegRel = (AsmPred(t2, false, false), AsmRR(d5), "=", ("memd", AsmAddrRegRel(s5, immRegRel)))
 
-  [operation LD ]
   instruction LoadDoublePredNegRegRel : LoadRegRelPredFormat =   {
     if !testpred(t2) then
       {
@@ -3928,7 +3754,6 @@ match reg with
   , pred	 [9..8]
   }
 
-  [operation LD ]
   instruction DeallocFrame : DeallocFrameFormat =   {
     let restored = MEM< 8 >(FP) as Double in
       let LRnew = frameUnscramble(restored(63..32)) in
@@ -3952,7 +3777,6 @@ match reg with
 
   assembly DeallocFrame = ("deallocframe")
 
-  [operation LD ]
   instruction DecallocReturn : DeallocFrameFormat =   {
     if true then
       {
@@ -3983,7 +3807,6 @@ match reg with
 
   assembly DecallocReturn = ("", "dealloc_return", "")
 
-  [operation LD ]
   instruction DecallocReturnPredPos : DeallocFrameFormat =   {
     if testpred(pred) then
       {
@@ -4014,7 +3837,6 @@ match reg with
 
   assembly DecallocReturnPredPos = (AsmPred(pred, false, false), "dealloc_return", "")
 
-  [operation LD ]
   instruction DecallocReturnPredNeg : DeallocFrameFormat =   {
     if !testpred(pred) then
       {
@@ -4059,7 +3881,6 @@ match reg with
   , s5 = data(13..9)
   }
 
-  [operation ST ]
   instruction StoreByteGPRel : StoreFormat =   {
     MEM< 1 >((GP + scaledImmU(immGPRel, 0))) := (R(t5) >> 0 as UInt<6>) as Byte
   }
@@ -4075,7 +3896,6 @@ match reg with
 
   assembly StoreByteGPRel = (("memb", AsmAddrGPRel(immGPRel)), "=", AsmR(t5), "")
 
-  [operation ST ]
   instruction StoreByteRegRel : StoreFormat =   {
     MEM< 1 >((R(s5) + scaledImmS(immRegRel, 0))) := (R(t5) >> 0 as UInt<6>) as Byte
   }
@@ -4091,7 +3911,6 @@ match reg with
 
   assembly StoreByteRegRel = (("memb", AsmAddrRegRel(s5, immRegRel)), "=", AsmR(t5), "")
 
-  [operation ST ]
   instruction StoreHalfGPRel : StoreFormat =   {
     MEM< 2 >((GP + scaledImmU(immGPRel, 1))) := (R(t5) >> 0 as UInt<6>) as Half
   }
@@ -4107,7 +3926,6 @@ match reg with
 
   assembly StoreHalfGPRel = (("memh", AsmAddrGPRel(immGPRel)), "=", AsmR(t5), "")
 
-  [operation ST ]
   instruction StoreHalfRegRel : StoreFormat =   {
     MEM< 2 >((R(s5) + scaledImmS(immRegRel, 1))) := (R(t5) >> 0 as UInt<6>) as Half
   }
@@ -4123,7 +3941,6 @@ match reg with
 
   assembly StoreHalfRegRel = (("memh", AsmAddrRegRel(s5, immRegRel)), "=", AsmR(t5), "")
 
-  [operation ST ]
   instruction StoreHHalfGPRel : StoreFormat =   {
     MEM< 2 >((GP + scaledImmU(immGPRel, 1))) := (R(t5) >> (2 * 8) as UInt<6>) as Half
   }
@@ -4139,7 +3956,6 @@ match reg with
 
   assembly StoreHHalfGPRel = (("memh", AsmAddrGPRel(immGPRel)), "=", AsmR(t5), ".H")
 
-  [operation ST ]
   instruction StoreHHalfRegRel : StoreFormat =   {
     MEM< 2 >((R(s5) + scaledImmS(immRegRel, 1))) := (R(t5) >> (2 * 8) as UInt<6>) as Half
   }
@@ -4155,7 +3971,6 @@ match reg with
 
   assembly StoreHHalfRegRel = (("memh", AsmAddrRegRel(s5, immRegRel)), "=", AsmR(t5), ".H")
 
-  [operation ST ]
   instruction StoreWordGPRel : StoreFormat =   {
     MEM< 4 >((GP + scaledImmU(immGPRel, 2))) := (R(t5) >> 0 as UInt<6>) as Word
   }
@@ -4171,7 +3986,6 @@ match reg with
 
   assembly StoreWordGPRel = (("memw", AsmAddrGPRel(immGPRel)), "=", AsmR(t5), "")
 
-  [operation ST ]
   instruction StoreWordRegRel : StoreFormat =   {
     MEM< 4 >((R(s5) + scaledImmS(immRegRel, 2))) := (R(t5) >> 0 as UInt<6>) as Word
   }
@@ -4187,7 +4001,6 @@ match reg with
 
   assembly StoreWordRegRel = (("memw", AsmAddrRegRel(s5, immRegRel)), "=", AsmR(t5), "")
 
-  [operation ST ]
   instruction StoreDoubleGPRel : StoreFormat =   {
     MEM< 8 >((GP + scaledImmU(immGPRel, 3))) := (R((t5 + 1)), R(t5)) as Double
   }
@@ -4203,7 +4016,6 @@ match reg with
 
   assembly StoreDoubleGPRel = (("memd", AsmAddrGPRel(immGPRel)), "=", AsmR(t5), "")
 
-  [operation ST ]
   instruction StoreDoubleRegRel : StoreFormat =   {
     MEM< 8 >((R(s5) + scaledImmS(immRegRel, 3))) := (R((t5 + 1)), R(t5)) as Double
   }
@@ -4245,7 +4057,6 @@ match reg with
   , immS = extendSExtender(imm, immX)
   }
 
-  [operation ST ]
   instruction StoreImmByte : StoreImmFormat =   {
     if true then
       MEM< 1 >((R(s5) + scaledImmU(immOffsetU, 0))) := immS as SByte
@@ -4261,7 +4072,6 @@ match reg with
 
   assembly StoreImmByte = ("memb", "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 0)), ")", "=#", decimal(immS as SByte))
 
-  [operation ST ]
   instruction StoreImmHalf : StoreImmFormat =   {
     if true then
       MEM< 2 >((R(s5) + scaledImmU(immOffsetU, 1))) := immS as SHalf
@@ -4277,7 +4087,6 @@ match reg with
 
   assembly StoreImmHalf = ("memh", "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 1)), ")", "=#", decimal(immS as SHalf))
 
-  [operation ST ]
   instruction StoreImmWord : StoreImmFormat =   {
     if true then
       MEM< 4 >((R(s5) + scaledImmU(immOffsetU, 2))) := immS as SWord
@@ -4293,7 +4102,6 @@ match reg with
 
   assembly StoreImmWord = ("memw", "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 2)), ")", "=#", decimal(immS as SWord))
 
-  [operation ST ]
   instruction StoreImmByteX : StoreImmXFormat =   {
     if true then
       MEM< 1 >((R(s5) + scaledImmU(immOffsetU, 0))) := immS as SByte
@@ -4310,7 +4118,6 @@ match reg with
 
   assembly StoreImmByteX = ((AsmImmextU(immX), "memb"), "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 0)), ")", "=#", decimal(immS as SByte))
 
-  [operation ST ]
   instruction StoreImmHalfX : StoreImmXFormat =   {
     if true then
       MEM< 2 >((R(s5) + scaledImmU(immOffsetU, 1))) := immS as SHalf
@@ -4327,7 +4134,6 @@ match reg with
 
   assembly StoreImmHalfX = ((AsmImmextU(immX), "memh"), "(", AsmR(s5), "+#", decimal(scaledImmU(immOffsetU, 1)), ")", "=#", decimal(immS as SHalf))
 
-  [operation ST ]
   instruction StoreImmWordX : StoreImmXFormat =   {
     if true then
       MEM< 4 >((R(s5) + scaledImmU(immOffsetU, 2))) := immS as SWord
@@ -4355,7 +4161,6 @@ match reg with
   , immU = (imm as UInt<11> * 8 as UInt<4>)
   }
 
-  [operation ST ]
   instruction AllocFrame : AllocFrameFormat =   {
     let SPnew = (SP - 8) in
       {
@@ -4382,7 +4187,6 @@ match reg with
   , parse	 [15..14]
   }
 
-  [operation SYSTEMSolo ]
   instruction Brkpt : BrkptFormat =   {
     PC := 0xeeeeeeee
   }
@@ -4407,7 +4211,6 @@ match reg with
   , shiftU = shift as UInt
   }
 
-  [operation XTYPE ]
   instruction AddImmAsl : AddImmShiftedFormat =   {
     R(x5) := VADL::add(immU, VADL::lsl(R(x5), shiftU) as UInt)
   }
@@ -4421,7 +4224,6 @@ match reg with
 
   assembly AddImmAsl = (AsmR(x5), " = ", "add", "(#", decimal(immU), "lsl", "(", AsmR(x5), "#", decimal(shiftU), "))")
 
-  [operation XTYPE ]
   instruction SubImmAsl : AddImmShiftedFormat =   {
     R(x5) := VADL::sub(immU, VADL::lsl(R(x5), shiftU) as UInt)
   }
@@ -4435,7 +4237,6 @@ match reg with
 
   assembly SubImmAsl = (AsmR(x5), " = ", "sub", "(#", decimal(immU), "lsl", "(", AsmR(x5), "#", decimal(shiftU), "))")
 
-  [operation XTYPE ]
   instruction AddImmLsr : AddImmShiftedFormat =   {
     R(x5) := VADL::add(immU, VADL::lsr(R(x5), shiftU) as UInt)
   }
@@ -4449,7 +4250,6 @@ match reg with
 
   assembly AddImmLsr = (AsmR(x5), " = ", "add", "(#", decimal(immU), "lsr", "(", AsmR(x5), "#", decimal(shiftU), "))")
 
-  [operation XTYPE ]
   instruction SubImmLsr : AddImmShiftedFormat =   {
     R(x5) := VADL::sub(immU, VADL::lsr(R(x5), shiftU) as UInt)
   }
@@ -4486,7 +4286,6 @@ match reg with
   , d5	 [4..0]
   }
 
-  [operation XTYPE ]
   instruction BitSetImm : BitOpImmFormat =   {
     R(d5) := (R(s5) | (1 as Word << imm))
   }
@@ -4502,7 +4301,6 @@ match reg with
 
   assembly BitSetImm = (AsmR(d5), " = ", "setbit", "(", AsmR(s5), ",", ("#", decimal(imm)), ")")
 
-  [operation XTYPE ]
   instruction BitClrImm : BitOpImmFormat =   {
     R(d5) := (R(s5) & VADL::not((1 as Word << imm)))
   }
@@ -4518,7 +4316,6 @@ match reg with
 
   assembly BitClrImm = (AsmR(d5), " = ", "clrbit", "(", AsmR(s5), ",", ("#", decimal(imm)), ")")
 
-  [operation XTYPE ]
   instruction BitToggleImm : BitOpImmFormat =   {
     R(d5) := (R(s5) ^ (1 as Word << imm))
   }
@@ -4551,7 +4348,6 @@ match reg with
   , d5	 [4..0]
   }
 
-  [operation XTYPE ]
   instruction TransferPR : TransferPRFormat =   {
     Pset(d2, R(s5) as Byte)  }
 
@@ -4564,7 +4360,6 @@ match reg with
 
   assembly TransferPR = (AsmP(d2), " = ", AsmR(s5))
 
-  [operation XTYPE ]
   instruction TransferRP : TransferRPFormat =   {
     R(d5) := Pget(s2)
   }
@@ -4592,7 +4387,6 @@ match reg with
   , u2 = x2
   }
 
-  [operation XTYPE_PRED_WRITING ]
   instruction AddDoubleCarry : ALUDoubleCarryFormat =   {
     let a = (R((s5 + 1)), R(s5)) in
       let b = (R((t5 + 1)), R(t5)) in
@@ -4621,7 +4415,6 @@ else
 else
   "add", "(", AsmRR(s5), ",", AsmRR(t5), ",", AsmP(x2), "):carry")
 
-  [operation XTYPE_PRED_WRITING ]
   instruction SubDoubleCarry : ALUDoubleCarryFormat =   {
     let a = (R((s5 + 1)), R(s5)) in
       let b = (R((t5 + 1)), R(t5)) in
@@ -4728,31 +4521,15 @@ else
 
   function implies(a : Bool, b : Bool) -> Bool = (!a | b)
 
-  [  let parse = VLIW((VLIW.length - 1)).parse in
-    ((parse = 0b00) | (parse = 0b11)) stop ]
-  [!((VLIW.length >= 2) & ((VLIW(0) ∈ JUMP_IMM) & (VLIW(1) ∈ J))) assert ]
-  [!((VLIW.length >= 2) & (((VLIW(0) ∈ JUMP_CMP_NEW) & (VLIW(1) ∈ J)) | ((VLIW(0) ∈ J) & (VLIW(1) ∈ JUMP_CMP_NEW)))) assert ]
-  [!((VLIW.length >= 2) & ((VLIW(0) ∈ J) & (VLIW(1) ∈ JR))) assert ]
-  [!((VLIW.length >= 2) & (((VLIW(0) ∈ J) & (VLIW(1) ∈ J)) & exists in {DEALLOC_RETURN})) assert ]
-  [implies((VLIW((VLIW.length - 1)) ∈ MEMLOCKED_L2FETCH_TRACE), forall j in {ALL} then ((((j = VLIW((VLIW.length - 1)))) | ((j ∈ ALU32_XTYPE_NON_FP))))
-) assert ]
-  [implies((VLIW((VLIW.length - 1)) ∈ CACHE_MAINTENANCE_SPECIAL), ((VLIW.length = 1) | !(VLIW((VLIW.length - 2)) ∈ LD_ST))) assert ]
-  [!(exists i in {TRANSFER_C_R, TRANSFER_CC_RR} then (i.d5 = 8)
- & exists in {FLOATING_POINT, SATURATING}) assert ]
-  [!((exists i in {TRANSFER_C_R, TRANSFER_CC_RR} then (i.d5 = 4)
- | exists in {TRANSFER_P_R}) & exists in {PRED_WRITING}) assert ]
-  [forall i in {ARITH_CARRY} then !(((((exists j in {PRED_WRITING} then (((i != j)) & ((j.d2 = i.u2)))
-) | (exists j in {TRANSFER_C_R, TRANSFER_CC_RR} then (j.d5 = 4)
-))) | (exists j in {TRANSFER_P_R} then (j.d2 = i.u2)
-)))
- assert ]
-  [(VLIW.length <= 4) assert ]
   group VLIW = (((XTYPE<0..1> | ALU32<0..1> | J<0..1> | CR<0..1>).(XTYPE<0..1> | ALU32<0..1> | J<0..1> | JR<0..1> | CR23<0..1>).(LD<0..1> | ST<0..1> | ALU32<0..1>).(LD<0..1> | ST<0..1> | ALU32<0..1>)) | SYSTEMSolo)
 }
+
 application binary interface ABI for QDSP6 = {
 }
+
 processor CPU implements QDSP6 with ABI = {
   stop with @Brkpt = (PC = 0xeeee'eeee)
+
   reset =
     {
       FRAMEKEY := 0
@@ -4761,6 +4538,7 @@ processor CPU implements QDSP6 with ABI = {
       if executable then
         halt
     }
+
   memory region [RAM] DRAM in MEM =   {
     MEM< 4 >(0x80000000) := 0b10100000100111011100000000000001
     MEM< 4 >(0x80000004) := 0b01111000000000001100000101000000

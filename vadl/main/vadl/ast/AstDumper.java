@@ -123,6 +123,15 @@ public class AstDumper extends RecursiveAstVisitor {
   }
 
   @Override
+  public Void visit(AnnotationDefinition definition) {
+    // Also dump the keywords that aren't children
+    dumpNode(definition);
+    dumpChildren(definition.keywords.stream().map(k -> (Node) k).toList());
+    dumpChildren(definition.values);
+    return null;
+  }
+
+  @Override
   public Void visit(CallIndexExpr expr) {
     dumpNode(expr);
     dumpChildren((Expr) expr.target);
