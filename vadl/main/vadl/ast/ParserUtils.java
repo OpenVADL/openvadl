@@ -596,8 +596,8 @@ class ParserUtils {
             .build();
       }
     }
-    return new ConstantDefinition(new Identifier("invalid", parser.loc()), null,
-        new Identifier("invalid", parser.loc()), parser.loc());
+    return new ConstantDefinition(new Identifier("invalid", parser.lastTokenLoc()), null,
+        new Identifier("invalid", parser.lastTokenLoc()), parser.lastTokenLoc());
   }
 
   static @Nullable Path resolveUri(Parser parser, IsId importPath) {
