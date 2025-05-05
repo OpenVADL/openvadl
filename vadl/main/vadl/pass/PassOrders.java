@@ -30,6 +30,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
+import vadl.gcb.passes.DetermineSymbolRelocationTypePass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
@@ -190,6 +191,7 @@ public class PassOrders {
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new IsaMachineInstructionMatchingPass(gcbConfiguration));
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(gcbConfiguration));
+    order.add(new DetermineSymbolRelocationTypePass(gcbConfiguration));
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
