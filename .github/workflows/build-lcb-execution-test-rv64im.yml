@@ -1,4 +1,4 @@
-name: Build QEMU riscv64 base image
+name: Build lcb execution test rv64im
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -18,8 +18,8 @@ jobs:
           - platform: linux/amd64
             runner: self-hosted-x64
     with:
-      image: ghcr.io/openvadl/qemu-riscv64-base
-      context: docker/iss/qemu-riscv64
+      image: ghcr.io/openvadl/lcb-execution-test-rv64im-base-image
+      context: vadl/test/resources/images/lcb_execution_test_rv64im/base_image
       platform: ${{ matrix.target.platform }}
       runner: ${{ matrix.target.runner }}
 
@@ -27,4 +27,4 @@ jobs:
     needs: build
     uses: ./.github/workflows/reusable-image-merge.yml
     with:
-      image: ghcr.io/openvadl/qemu-riscv64-base
+      image: ghcr.io/openvadl/lcb-execution-test-rv64im-base-image
