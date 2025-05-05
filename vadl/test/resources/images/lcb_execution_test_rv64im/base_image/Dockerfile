@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/qemu-riscv64-base@sha256:259f08ecb93dc1f575b37568c803f193fbfabe8a9490bfa4dffbcea397ca5eae
+FROM ghcr.io/openvadl/qemu-riscv64-base@sha256:259f08ecb93dc1f575b37568c803f193fbfabe8a9490bfa4dffbcea397ca5eae AS riscv-toolchain
 
 # Spike
 
