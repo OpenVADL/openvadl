@@ -69,7 +69,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
 
   private @Nonnull List<DynamicTest> run(int optLevel)
       throws IOException, DuplicatedPassKeyException {
-    var doDebug = false;
+    var doDebug = true;
     var target = getTarget();
     var upstreamBuildTarget = getUpstreamBuildTarget();
     var upstreamClangTarget = getUpstreamClangTarget();
