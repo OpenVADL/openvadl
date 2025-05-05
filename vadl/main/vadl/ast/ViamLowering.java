@@ -778,8 +778,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // FIXME: Further research for the parameters (probably don't apply to counter)
     var reg = new RegisterTensor(identifier,
-        List.of(dimFromType(0, resultType)),
-        new RegisterTensor.Constraint[] {}
+        List.of(dimFromType(0, resultType))
     );
 
     var counter = new Counter(identifier,
@@ -1400,8 +1399,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     var reg = new RegisterTensor(
         generateIdentifier(definition.viamId, definition.identifier()),
-        dimensions,
-        constraints.toArray(new RegisterTensor.Constraint[0])
+        dimensions
     );
     return Optional.of(reg);
   }

@@ -40,7 +40,9 @@ import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.AssemblyDescription;
+import vadl.viam.Constant;
 import vadl.viam.MemoryRegion;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
@@ -73,9 +75,13 @@ class AnnotationTable {
         // FIXME: Apply to AST
         .build();
 
-    annotationOn(RegisterDefinition.class, "zero", ExprAnnotation::new)
-        // FIXME: Typecheck
-        // FIXME: Apply to VIAM
+    annotationOn(RegisterDefinition.class, "zero", ZeroConstraintAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          var viamDef = (RegisterTensor) def;
+          var indices = annotation.indices.stream().map(ConstantValue::toViamConstant).toList();
+          var zero = Constant.Value.of(0, viamDef.resultType(indices.size()));
+          viamDef.addConstraint(new RegisterTensor.Constraint(indices, zero));
+        })
         .build();
 
     groupOn(RelocationDefinition.class)
@@ -1045,4 +1051,63 @@ class ExprAnnotation extends Annotation {
   public String usageString() {
     return "[ " + name + " : <expr> ]";
   }
+
 }
+
+/**
+ * The {@code [ zero : <register>(<expr>) ]} annotation.
+ * This is its own class, as the typechecking is rather complex and determines
+ * new properties.
+ */
+class ZeroConstraintAnnotation extends ExprAnnotation {
+  @LazyInit
+  List<ConstantValue> indices;
+
+  @Override
+  void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
+    super.typeCheck(definition, typeChecker);
+    var def = definition.target;
+    if (!(node instanceof CallIndexExpr callExpr)) {
+      throw error("Invalid zero annotation", this)
+          .locationDescription(this, "Zero annotation must be of form %s.", usageString())
+          .build();
+    }
+    if (!(callExpr.computedTarget == def)) {
+      throw error("Invalid zero annotation", callExpr.target)
+          .locationDescription(callExpr.target,
+              "Zero annotation target must be the annotated register.")
+          .locationNote(def, "This is the register to target.")
+          .build();
+    }
+
+
+    var args = callExpr.argIndicesFlatten();
+    // FIXME: Ones we have multi dimensional registers,
+    //   we must loose this restriction, so that there can be multiple indices set.
+    if (args.size() != 1) {
+      throw error("Invalid zero annotation", callExpr)
+          .locationDescription(callExpr, "Exactly one register index was expected, but found %s.",
+              args.size())
+          .note("In the future it will be possible to have constraints on multiple dimensions.")
+          .build();
+    }
+
+    this.indices = args.stream().map(expr -> {
+      try {
+        return typeChecker.constantEvaluator.eval(expr);
+      } catch (EvaluationError e) {
+        throw error("Invalid zero annotation", expr)
+            .locationDescription(expr, "Index must be a constant expression.")
+            .locationNote(def, "%s", requireNonNull(e.getMessage()))
+            .build();
+      }
+    }).toList();
+
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : " + "<register>( <expr> ) ]";
+  }
+}
+

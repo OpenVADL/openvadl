@@ -16,13 +16,14 @@
 
 package vadl.ast;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
+import vadl.error.Diagnostic;
 
 public class AnnotationTest {
   @Test
@@ -39,8 +40,8 @@ public class AnnotationTest {
     var regFile = isa.definitions.get(0);
 
     verifyPrettifiedAst(ast);
-    assertThat(regFile.annotations.size(), is(1));
-    assertThat(regFile.annotations.get(0).values.get(0), is(instanceOf(CallIndexExpr.class)));
+    assertThat(regFile.annotations).size().isEqualTo(1);
+    assertThat(regFile.annotations.getFirst().values.getFirst()).isInstanceOf(CallIndexExpr.class);
   }
 
   @Test
@@ -68,5 +69,68 @@ public class AnnotationTest {
     Assertions.assertEquals(1, nextNext.annotations.size());
     Assertions.assertEquals(2, nextNext.annotations.get(0).keywords.size());
     Assertions.assertEquals(0, nextNext.annotations.get(0).values.size());
+  }
+
+
+  private String zeroExtendTest(String annotation, @Nullable String otherDefs) {
+    return """
+        instruction set architecture TEST =
+        {
+          %s
+        
+          %s
+          register file X : Bits<5> -> Bits<32>
+        }
+        """.formatted(otherDefs == null ? "" : otherDefs, annotation);
+  }
+
+  @Test
+  void zeroAnnoInvalidStructure() {
+    var prog = zeroExtendTest("[ zero : 2 + 3 - 1]", null);
+    var ast = VadlParser.parse(prog);
+    var typechecker = new TypeChecker();
+    var diag = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    assertThat(diag)
+        .hasMessageContaining("Zero annotation must be of form [ zero : <register>( <expr> ) ]");
+  }
+
+  @Test
+  void zeroAnnoInvalidTarget() {
+    var prog = zeroExtendTest("[ zero : M(1)]", "memory M: Bits<5> -> Bits<64>");
+    var ast = VadlParser.parse(prog);
+    var typechecker = new TypeChecker();
+    var diag = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    assertThat(diag)
+        .hasMessageContaining("Zero annotation target must be the annotated register.");
+  }
+
+  @Test
+  void zeroAnnoInvalidTarget2() {
+    var prog = zeroExtendTest("[ zero : Y(1)]", "register file Y: Bits<5> -> Bits<64>");
+    var ast = VadlParser.parse(prog);
+    var typechecker = new TypeChecker();
+    var diag = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    assertThat(diag)
+        .hasMessageContaining("Zero annotation target must be the annotated register.");
+  }
+
+  @Test
+  void zeroAnnoInvalidArgumentNumber() {
+    var prog = zeroExtendTest("[ zero : X(1)(2) ]", null);
+    var ast = VadlParser.parse(prog);
+    var typechecker = new TypeChecker();
+    var diag = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    assertThat(diag)
+        .hasMessageContaining("Exactly one register index was expected, but found 2.");
+  }
+
+  @Test
+  void zeroAnnoInvalidArgument() {
+    var prog = zeroExtendTest("[ zero : X(Y) ]", "register Y: Bits<5>");
+    var ast = VadlParser.parse(prog);
+    var typechecker = new TypeChecker();
+    var diag = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
+    assertThat(diag)
+        .hasMessageContaining("Index must be a constant expression.");
   }
 }
