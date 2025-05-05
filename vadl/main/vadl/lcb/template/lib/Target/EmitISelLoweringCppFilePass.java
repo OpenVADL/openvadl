@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.configuration.LcbConfiguration;
@@ -78,8 +77,10 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
      **/
     public LlvmRegisterFile(RegisterTensor registerFile) {
       super(registerFile.identifier,
-          registerFile.dimensions(),
-          registerFile.constraints());
+          registerFile.dimensions());
+      for (var c : registerFile.constraints()) {
+        addConstraint(c);
+      }
     }
 
     public String llvmResultType() {
