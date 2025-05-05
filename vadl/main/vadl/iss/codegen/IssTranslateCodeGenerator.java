@@ -16,8 +16,6 @@
 
 package vadl.iss.codegen;
 
-import static vadl.error.Diagnostic.ensure;
-import static vadl.error.Diagnostic.error;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import vadl.configuration.IssConfiguration;
@@ -33,8 +31,6 @@ import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
 import vadl.viam.Instruction;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.DirectionalNode;
-import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.AsmBuiltInCall;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
@@ -97,21 +93,12 @@ public class IssTranslateCodeGenerator implements
     ctx.wr(name);
     ctx.ln(" *a) {");
 
-    ctx.ln("trace_" + this.targetName.toLowerCase() + "_instr_trans(__func__);");
+    ctx.spacedIn().ln("trace_" + this.targetName.toLowerCase() + "_instr_trans(__func__);");
 
     var start = getSingleNode(insn.behavior(), StartNode.class);
     var current = start.next();
 
-    while (current instanceof DirectionalNode dirNode) {
-      ctx.gen(dirNode);
-      current = dirNode.next();
-    }
-
-    ensure(current instanceof InstrEndNode, () ->
-        error("Instruction contains unsupported features (e.g. if-else on constants).",
-            insn.identifier.location())
-    );
-
+    ctx.gen(current);
     ctx.wr("\n\treturn true; \n}\n");
 
     return builder.toString();
@@ -123,8 +110,8 @@ public class IssTranslateCodeGenerator implements
     if (!c.endsWith(";")) {
       c += ";";
     }
-    ctx.wr("\t")
-        .ln(c);
+    ctx.ln(c)
+        .gen(node.next());
   }
 
   @Handler
