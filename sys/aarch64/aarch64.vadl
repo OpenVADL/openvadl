@@ -187,7 +187,7 @@ instruction set architecture AAarch64Base = {
 // syntax records and model types **********************************************
 
   // instruction id, mnemonic, opcode as literal or enum, function or type name
-  record InstrWithFunct (id: Id, mnemo: Str, opcode: SymEx, funct: Id)
+  record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
 
   // higher order model for flag setting models
   model-type SetResultFlags = (CallEx, Ex) -> Stats
@@ -195,7 +195,7 @@ instruction set architecture AAarch64Base = {
   // result model, OffFlags or SetFlags, mnemonic extension ("" or "s")
   record Flags  (resModel: SetResultFlags, ff: Id, mext: Str)
 
-  // higher order model enriched with size: [WX]Reg, result expression, flags
+  // higher order model enriched with size: [WX]Size, flags
   model-type InstrWithFunctSizeFlags = (InstrWithFunct, Id, Flags) -> IsaDefs
 
 
@@ -229,6 +229,55 @@ instruction set architecture AAarch64Base = {
     }
 
 
+// add / sub extend models *****************************************************
+
+  model AddSubExtInstrBase (i: InstrWithFunct, size: Id, f: Flags, extEx: Ex, enc: Encs, asm: Ex): IsaDefs = {
+    instruction $i.id: AddSubExtFormat =
+      let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, $extEx as Bits<Size::$size>) in {
+        $f.resModel (match: Id ($f.ff = OffFlags => S ; _ => X)(rd) ; result )
+        }
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, $enc }
+    assembly $i.id = ( $i.mnemo, $f.mext, ' ', ExtendId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd), 
+                       ', ', ExtendId($size, "SP")(rn), ', ', $asm )
+    }
+
+  model AddSubExtInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
+    $AddSubExtInstrBase ((ExtendId ($i.id, "UXTB"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)( 7..0) as UIntX; option = ExtendType::UXTB, imm3 = 0; ($size(rm), ", uxtb"))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "UXTH"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(15..0) as UIntX; option = ExtendType::UXTH, imm3 = 0; ($size(rm), ", uxth"))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "UXTW"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(31..0) as UIntX; option = ExtendType::UXTW, imm3 = 0; ($size(rm), ", uxtw"))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "UXTX"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(63..0) as UIntX; option = ExtendType::UXTX, imm3 = 0; ($size(rm), ", uxtx"))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "SXTB"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)( 7..0) as SIntX; option = ExtendType::SXTB, imm3 = 0; ($size(rm), ", sxtb"))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "SXTH"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(15..0) as SIntX; option = ExtendType::SXTH, imm3 = 0; ($size(rm), ", sxth"))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "SXTW"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(31..0) as SIntX; option = ExtendType::SXTW, imm3 = 0; ($size(rm), ", sxtw"))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "SXTX"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(63..0) as SIntX; option = ExtendType::SXTX, imm3 = 0; ($size(rm), ", sxtx"))
+
+    $AddSubExtInstrBase ((ExtendId ($i.id, "UXSB"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)( 7..0) as UIntX << imm3; option = ExtendType::UXTB; ($size(rm), ", uxtb #", decimal(imm3)))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "UXSH"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(15..0) as UIntX << imm3; option = ExtendType::UXTH; ($size(rm), ", uxth #", decimal(imm3)))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "UXSW"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(31..0) as UIntX << imm3; option = ExtendType::UXTW; ($size(rm), ", uxtw #", decimal(imm3)))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "UXSX"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(63..0) as UIntX << imm3; option = ExtendType::UXTX; ($size(rm), ", uxtx #", decimal(imm3)))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "SXSB"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)( 7..0) as SIntX << imm3; option = ExtendType::SXTB; ($size(rm), ", sxtb #", decimal(imm3)))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "SXSH"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(15..0) as SIntX << imm3; option = ExtendType::SXTH; ($size(rm), ", sxth #", decimal(imm3)))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "SXSW"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(31..0) as SIntX << imm3; option = ExtendType::SXTW; ($size(rm), ", sxtw #", decimal(imm3)))
+    $AddSubExtInstrBase ((ExtendId ($i.id, "SXSX"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+           X(rm)(63..0) as SIntX << imm3; option = ExtendType::SXTX; ($size(rm), ", sxtx #", decimal(imm3)))
+    }
+
+
 // add / sub immediate models **************************************************
 
   model AddSubImmInstrShft (i: InstrWithFunct, size: Id, f: Flags, immEx: Ex, sh: Int, asm: Str): IsaDefs = {
@@ -242,8 +291,31 @@ instruction set architecture AAarch64Base = {
     }
 
   model AddSubImmInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
-    $AddSubImmInstrShft ((ExtendId ( $i.id, "I"  ); $i.mnemo; $i.opcode; $i.funct ); $size; $f; imm12X; 0 ; "")
-    $AddSubImmInstrShft ((ExtendId ( $i.id, "I12"); $i.mnemo; $i.opcode; $i.funct ); $size; $f; imm12S; 1 ; ", lsl 12")
+    $AddSubImmInstrShft ((ExtendId ($i.id, "I"  ); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12X; 0 ; "")
+    $AddSubImmInstrShft ((ExtendId ($i.id, "I12"); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12S; 1 ; ", lsl 12")
+    }
+
+
+// add / sub shift models ******************************************************
+
+  model AddSubSftInstrBase (i: InstrWithFunct, size: Id, f: Flags, sftex: Ex, enc: Encs, asm: Ex): IsaDefs = {
+    instruction $i.id: AddSubSftFormat =
+      let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, ($sftex) as Bits<Size::$size>) in {
+        $f.resModel (X(rd) ; result )
+      }
+    //[raise Undefined : sf = 0 && imm6(5) = 1]
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, $enc }
+    assembly $i.id = ( $i.mnemo, $f.mext, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), $asm )
+    }
+
+  model AddSubSftInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
+    $AddSubSftInstrBase ($i; $size; $f; X(rm); imm6 = 0, shift = ShiftType::LSL; "")
+    $AddSubSftInstrBase ((ExtendId ($i.id, "LSL"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+                                  X(rm) << imm6;         shift = ShiftType::LSL; (", lsl #", decimal(imm6)))
+    $AddSubSftInstrBase ((ExtendId ($i.id, "LSR"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+                                  X(rm) as UInt >> imm6; shift = ShiftType::LSR; (", lsr #", decimal(imm6)))
+    $AddSubSftInstrBase ((ExtendId ($i.id, "ASR"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+                                  X(rm) as SInt >> imm6; shift = ShiftType::ASR; (", asr #", decimal(imm6)))
     }
 
 
@@ -259,6 +331,11 @@ instruction set architecture AAarch64Base = {
 
 // base instructions ***********************************************************
 
+  $InstrWXFlags     (AddSubExtInstr           ; (ADD    ; "add"   ; 0b0'0101'1001    ; adds  ))
   $InstrWXFlags     (AddSubImmInstr           ; (ADD    ; "add"   ; 0b0'1000'10      ; adds  ))
+  $InstrWXFlags     (AddSubSftInstr           ; (ADD    ; "add"   ; 0b0'0101'10      ; adds  ))
+  $InstrWXFlags     (AddSubExtInstr           ; (SUB    ; "sub"   ; 0b1'0101'1001    ; subsc ))
+  $InstrWXFlags     (AddSubImmInstr           ; (SUB    ; "sub"   ; 0b1'1000'10      ; subsc ))
+  $InstrWXFlags     (AddSubSftInstr           ; (SUB    ; "sub"   ; 0b1'0101'10      ; subsc ))
 
 }
