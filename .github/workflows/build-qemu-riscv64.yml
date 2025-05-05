@@ -27,4 +27,4 @@ jobs:
     needs: build
     uses: ./.github/workflows/reusable-image-merge.yml
     with:
-      image: ghcr.io/openvadl/qemu-base
+      image: ghcr.io/openvadl/qemu-riscv64-base
