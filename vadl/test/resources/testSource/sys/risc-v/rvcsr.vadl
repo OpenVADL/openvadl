@@ -163,3 +163,33 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
 }
 
 instruction set architecture RV32IMZicsr extending RV32IZicsr, RV3264M = { }
+
+processor Spike implements RV32IMZicsr = {
+    constant reset_vec_addr = 0x1000
+
+    reset = {
+      PC := reset_vec_addr
+    }
+
+    [ firmware ]
+    [ base: 0x80000000 ]
+    memory region [RAM] DRAM in MEM
+
+    memory region [ROM] MROM in MEM = {
+        MEM<4>(0x1000) := 0x00000297  // auipc t0, 0x0
+        MEM<4>(0x1004) := 0x02828613  // addi a2, t0, 40
+        // TODO: Replace this NOP by the correct instruction
+        // this processor has no zicsr extension
+        MEM<4>(0x1008) := 0x00000013  // addi x0, x0, 0
+        MEM<4>(0x100c) := 0x0202b583  // ld   a1, 32(t0)
+        MEM<4>(0x1010) := 0x0182b283  // ld   t0, 24(t0)
+        MEM<4>(0x1014) := 0x00028067  // jr   t0
+        // store start_addr in memory (0x80000000)
+        MEM<4>(0x1018) := 0x80000000  // lo32(start_addr)
+        MEM<4>(0x101c) := 0x00000000  // hi32(start_addr)
+        // we do not yet support a fdt, but we set the address,
+        // to keep the registers consistent with upstream
+        MEM<4>(0x1020) := 0x87e00000  // lo32(fdt_addr)
+        MEM<4>(0x1024) := 0x00000000  // hi32(fdt_addr)
+    }
+}

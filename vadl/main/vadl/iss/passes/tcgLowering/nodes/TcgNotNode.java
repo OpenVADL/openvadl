@@ -22,25 +22,24 @@ import vadl.viam.graph.Node;
 /**
  * Represents the {@code tcg_gen_not} TCG instruction in the TCG VIAM lowering.
  */
-public class TcgNotNode extends TcgBinaryOpNode {
+public class TcgNotNode extends TcgUnaryOpNode {
 
-  public TcgNotNode(TcgVRefNode resVar, TcgVRefNode arg1, TcgVRefNode arg2) {
-    super(resVar, arg1, arg2, resVar.width());
+  public TcgNotNode(TcgVRefNode resVar, TcgVRefNode arg1) {
+    super(resVar, arg1);
   }
 
   @Override
   public String tcgFunctionName() {
-    return "tcg_gen_not";
+    return "tcg_gen_not_" + firstDest().width();
   }
 
   @Override
   public Node copy() {
-    return new TcgNotNode(firstDest().copy(TcgVRefNode.class), arg1.copy(TcgVRefNode.class),
-        arg2.copy(TcgVRefNode.class));
+    return new TcgNotNode(firstDest().copy(TcgVRefNode.class), arg.copy(TcgVRefNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new TcgNotNode(firstDest(), arg1, arg2);
+    return new TcgNotNode(firstDest(), arg);
   }
 }

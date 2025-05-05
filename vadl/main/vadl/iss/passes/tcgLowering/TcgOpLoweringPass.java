@@ -869,7 +869,7 @@ class BuiltInTcgLoweringExecutor {
         //// Logical ////
 
         .set(BuiltInTable.NOT, (ctx) -> out(
-            new TcgNotNode(ctx.dest(), ctx.src(0), ctx.src(1))
+            new TcgNotNode(ctx.dest(), ctx.src(0))
         ))
 
         .set(BuiltInTable.AND, (ctx) -> out(
