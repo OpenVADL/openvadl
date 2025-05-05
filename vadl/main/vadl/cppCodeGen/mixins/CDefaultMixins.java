@@ -338,7 +338,9 @@ public interface CDefaultMixins {
 
   @SuppressWarnings("MissingJavadocType")
   interface Select {
+
     @Handler
+    @SuppressWarnings("MissingJavadocMethodCheck")
     default void handle(CGenContext<Node> ctx, SelectNode toHandle) {
       ctx.wr("(")
           .gen(toHandle.condition())
