@@ -7,3 +7,4 @@ RUN make install
 
 FROM ubuntu:22.04 as final
 COPY --from=build /usr/local/bin/ /usr/local/bin
+COPY --from=build /opt/riscv /opt/riscv

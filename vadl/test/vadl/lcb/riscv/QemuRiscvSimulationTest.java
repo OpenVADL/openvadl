@@ -30,13 +30,12 @@ import javax.annotation.Nonnull;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.ProcessorName;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.AbstractLcbTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
-public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
+public abstract class QemuRiscvSimulationTest extends AbstractLcbTest {
   protected abstract String getTarget();
 
   protected abstract String getUpstreamBuildTarget();
@@ -69,7 +68,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
 
   private @Nonnull List<DynamicTest> run(int optLevel)
       throws IOException, DuplicatedPassKeyException {
-    var doDebug = true;
+    var doDebug = false;
     var target = getTarget();
     var upstreamBuildTarget = getUpstreamBuildTarget();
     var upstreamClangTarget = getUpstreamClangTarget();
@@ -81,7 +80,7 @@ public abstract class SpikeRiscvSimulationTest extends AbstractLcbTest {
     // Move Dockerfile into Docker Context
     {
       var inputStream = new FileInputStream(
-          "test/resources/images/spike_" + getTarget() + "/Dockerfile");
+          "test/resources/images/lcb_execution_test_" + getTarget() + "/Dockerfile");
       var outputStream = new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
       inputStream.transferTo(outputStream);
       outputStream.close();

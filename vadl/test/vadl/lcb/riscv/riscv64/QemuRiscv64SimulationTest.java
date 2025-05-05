@@ -16,10 +16,9 @@
 
 package vadl.lcb.riscv.riscv64;
 
-import org.junit.jupiter.api.Disabled;
-import vadl.lcb.riscv.SpikeRiscvSimulationTest;
+import vadl.lcb.riscv.QemuRiscvSimulationTest;
 
-public class SpikeRiscv64SimulationTest extends SpikeRiscvSimulationTest {
+public class QemuRiscv64SimulationTest extends QemuRiscvSimulationTest {
   @Override
   protected String getTarget() {
     return "rv64im";
