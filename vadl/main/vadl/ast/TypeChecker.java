@@ -165,6 +165,9 @@ public class TypeChecker
             .build();
       }
 
+      // check annotation definition itself
+      check(annotation);
+
       annotationNames.put(annotation.name(), annotation);
     });
 

@@ -24,7 +24,6 @@ import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -173,7 +172,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       AnnotationTable.groupings(definition)
           .forEach((group, annotations) -> {
             try {
-              group.applyViam(value, annotations, this);
+              group.applyViam(definition, value, annotations, this);
             } catch (Diagnostic e) {
               errors.add(e);
             }
@@ -823,12 +822,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         memory,
         behavior
     );
-
-    // TODO: remove this once we can implement it using annotations
-    if (kind == MemoryRegion.Kind.RAM && region.simpleName().equals("DRAM")) {
-      region.setBase(BigInteger.valueOf(0x80000000L));
-      region.setHoldsFirmware(true);
-    }
 
     return Optional.of(region);
   }

@@ -742,7 +742,8 @@ class SymbolTable {
 
       if (definition.annotation == null) {
         // FIXME: Add a more descriptive error message and a body.
-        requireNonNull(definition.symbolTable).errors.add(
+        // FIXME: Add a list of available annotations (usage strings) as help to the error.
+        definition.symbolTable().errors.add(
             error("Unknown Annotation", definition)
                 .locationDescription(definition.location(),
                     "No annotation with the name \"%s\" exists on %s", definition.name(),
