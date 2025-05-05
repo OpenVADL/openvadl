@@ -5,6 +5,7 @@ FROM ghcr.io/openvadl/llvm17-base@sha256:26659363db3bd278f54fb6d81581038d270aaae
 RUN apt update -y
 RUN apt-get install -y device-tree-compiler python3 python3-pip python3-pandas vim
 COPY --from=riscv-toolchain /opt/riscv /opt/riscv-cross
+COPY --from=riscv-toolchain /usr/local/bin/ /usr/local/bin
 WORKDIR /work
 COPY helper /helper
 COPY lcb_wrapper.sh .
