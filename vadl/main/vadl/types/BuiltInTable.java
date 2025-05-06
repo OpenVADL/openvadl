@@ -593,7 +593,8 @@ public class BuiltInTable {
   public static final BuiltIn EQU =
       func("VADL::equ", "=", Type.relation(BitsType.class, BitsType.class, BoolType.class))
           .takesAllWithSameBitWidths()
-          .compute((a, b) -> Constant.Value.fromBoolean(a.equals(b)))
+          .compute(
+              (a, b) -> Constant.Value.fromBoolean(a.asVal().equalValue(b)))
           .returns(Type.bool())
           .build();
 
