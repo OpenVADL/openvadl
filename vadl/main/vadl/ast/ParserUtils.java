@@ -45,6 +45,9 @@ class ParserUtils {
   static boolean[] BIN_OPS_EXCEPT_GT;
   static boolean[] BIN_OPS_EXCEPT_IN;
   static boolean[] UN_OPS;
+  // an array of literal and symbol representations that are used for a
+  // good parse error message such as "`(` expected".
+  static String[] EXPECTED_STRS;
 
   // Must be kept in sync with allowedIdentifierKeywords
   static boolean[] ID_TOKENS;
@@ -164,6 +167,62 @@ class ParserUtils {
     AUX_FIELD_TOKENS = NO_OPS.clone();
     AUX_FIELD_TOKENS[Parser._PREDICATE] = true;
     AUX_FIELD_TOKENS[Parser._ENCODE] = true;
+
+
+    EXPECTED_STRS = new String[NO_OPS.length];
+    EXPECTED_STRS[Parser._SYM_ARROW] = "->";
+    EXPECTED_STRS[Parser._SYM_ASSIGN] = ":=";
+    EXPECTED_STRS[Parser._SYM_AT] = "@";
+    EXPECTED_STRS[Parser._SYM_BIGARROW] = "=>";
+    EXPECTED_STRS[Parser._SYM_BINAND] = "&";
+    EXPECTED_STRS[Parser._SYM_BINOR] = "|";
+    EXPECTED_STRS[Parser._SYM_BRACE_CLOSE] = "}";
+    EXPECTED_STRS[Parser._SYM_BRACE_OPEN] = "{";
+    EXPECTED_STRS[Parser._SYM_BRACK_CLOSE] = "]";
+    EXPECTED_STRS[Parser._SYM_BRACK_OPEN] = "[";
+    EXPECTED_STRS[Parser._SYM_CARET] = "^";
+    EXPECTED_STRS[Parser._SYM_COLON] = ":";
+    EXPECTED_STRS[Parser._SYM_COMMA] = ",";
+    EXPECTED_STRS[Parser._SYM_DIV] = "/";
+    EXPECTED_STRS[Parser._SYM_DOLLAR] = "$";
+    EXPECTED_STRS[Parser._SYM_DOT] = ".";
+    EXPECTED_STRS[Parser._SYM_ELEM_OF] = "∈";
+    EXPECTED_STRS[Parser._SYM_EQ] = "=";
+    EXPECTED_STRS[Parser._SYM_EXCL] = "!";
+    EXPECTED_STRS[Parser._SYM_GT] = ">";
+    EXPECTED_STRS[Parser._SYM_GTE] = ">=";
+    EXPECTED_STRS[Parser._SYM_IN] = "in";
+    EXPECTED_STRS[Parser._SYM_LOGAND] = "&&";
+    EXPECTED_STRS[Parser._SYM_LOGOR] = "||";
+    EXPECTED_STRS[Parser._SYM_LONG_MUL] = "*#";
+    EXPECTED_STRS[Parser._SYM_LT] = "<";
+    EXPECTED_STRS[Parser._SYM_LTE] = "<=";
+    EXPECTED_STRS[Parser._SYM_MINUS] = "-";
+    EXPECTED_STRS[Parser._SYM_MOD] = "%";
+    EXPECTED_STRS[Parser._SYM_MUL] = "*";
+    EXPECTED_STRS[Parser._SYM_NAMESPACE] = "::";
+    EXPECTED_STRS[Parser._SYM_NEQ] = "!=";
+    EXPECTED_STRS[Parser._SYM_NIN] = "!in";
+    EXPECTED_STRS[Parser._SYM_NOT_ELEM_OF] = "∉";
+    EXPECTED_STRS[Parser._SYM_PAREN_CLOSE] = ")";
+    EXPECTED_STRS[Parser._SYM_PAREN_OPEN] = "(";
+    EXPECTED_STRS[Parser._SYM_PLUS] = "+";
+    EXPECTED_STRS[Parser._SYM_PLUS_EQ] = "+=";
+    EXPECTED_STRS[Parser._SYM_QUESTION] = "?";
+    EXPECTED_STRS[Parser._SYM_RANGE] = "..";
+    EXPECTED_STRS[Parser._SYM_ROTL] = "<<>";
+    EXPECTED_STRS[Parser._SYM_ROTR] = "<>>";
+    EXPECTED_STRS[Parser._SYM_SAT_ADD] = "+|";
+    EXPECTED_STRS[Parser._SYM_SAT_SUB] = "-|";
+    EXPECTED_STRS[Parser._SYM_SEMICOLON] = ";";
+    EXPECTED_STRS[Parser._SYM_SHL] = "<<";
+    EXPECTED_STRS[Parser._SYM_SHR] = ">>";
+    EXPECTED_STRS[Parser._SYM_TILDE] = "~";
+    EXPECTED_STRS[Parser._SYM_UNDERSCORE] = "_";
+    // set literals produced by scanner
+    for (var l : Scanner.literals.entrySet()) {
+      EXPECTED_STRS[l.getValue()] = l.getKey();
+    }
   }
 
   /**

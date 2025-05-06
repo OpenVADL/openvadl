@@ -75,7 +75,7 @@ tasks.withType<Checkstyle> {
 tasks.register<CocoR_gradle.GenerateCocoParserTask>("generateCocoParser") {
     group = "build"
     inputFiles.from("main/vadl/ast/vadl.ATG")
-    parserFrame.set(project.file("main/vadl/ast/parser.frame"))
+    parserFrame.set(project.file("main/vadl/ast/Parser.frame"))
     outputDir.set(outputDir.get().dir("vadl/ast"))
     cocoJar.set(project.file("libs/Coco.jar"))
 }
