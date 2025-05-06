@@ -96,6 +96,7 @@ namespace llvm
             SDValue lowerGlobalAddress( SDValue Op, SelectionDAG &DAG ) const;
             SDValue lowerBlockAddress( SDValue Op, SelectionDAG &DAG ) const;
             SDValue lowerConstantPool( SDValue Op, SelectionDAG &DAG ) const;
+            SDValue lowerConstant( SDValue Op, SelectionDAG &DAG ) const;
             SDValue lowerVASTART(SDValue Op, SelectionDAG &DAG) const;
             SDValue lowerVAARG(SDValue Op, SelectionDAG &DAG) const;
             SDValue lowerSelect(SDValue Op, SelectionDAG &DAG) const;
