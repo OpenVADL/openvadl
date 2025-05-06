@@ -58,7 +58,7 @@ static void vcpu_mem(unsigned int cpu_index, qemu_plugin_meminfo_t meminfo,
                      uint64_t vaddr, void *udata) {
 
     qemu_plugin_mem_value last = qemu_plugin_mem_get_value(meminfo);
-    if (last.type != QEMU_PLUGIN_MEM_VALUE_U64) {
+    if (last.type != QEMU_PLUGIN_MEM_VALUE_U64 && last.type != QEMU_PLUGIN_MEM_VALUE_U32) {
         return;
     }
 
@@ -68,7 +68,7 @@ static void vcpu_mem(unsigned int cpu_index, qemu_plugin_meminfo_t meminfo,
         return;
     }
 
-    uint64_t val_written = last.data.u64;
+    uint64_t val_written = last.data.u32;
     uint8_t device = val_written >> HTIF_DEV_SHIFT;
     uint8_t cmd = val_written >> HTIF_CMD_SHIFT;
     uint64_t payload = val_written & 0xFFFFFFFFFFFFULL;
