@@ -30,7 +30,12 @@ instruction set architecture AAarch64Base = {
   using Bits4    = Bits< 4>           //  4 bit type
   using Bits5    = Bits< 5>           //  5 bit type
   using Bits6    = Bits< 6>           //  6 bit type
+  using Bits7    = Bits< 7>           //  7 bit type
+  using Bits9    = Bits< 9>           //  9 bit type
   using Bits12   = Bits<12>           // 12 bit type
+  using Bits14   = Bits<14>           // 14 bit type
+  using Bits19   = Bits<19>           // 19 bit type
+  using Bits26   = Bits<26>           // 26 bit type
   using Instr    = Word               // instruction are 32 bit wide
   using BitsW    = Bits<SizeW>        // Bits W register type
   using BitsX    = Bits<SizeX>        // Bits X register type
@@ -47,6 +52,8 @@ instruction set architecture AAarch64Base = {
   register file S : Index -> BitsX    // general purpose register file with stack pointer
 //[zero : X(31)]                      // X(31) is the zero register
   alias register file X = S           // general purpose register file with zero register
+  alias register  SP: Address = S(31) // stack pointer
+  alias register  LR: Address = S(30) // link register (return address)
 
   format ConditionFlags: Bits<4> = {  // condition flags register format
 //    res1  : Bits<32>,               // reserved, zero
@@ -130,6 +137,13 @@ instruction set architecture AAarch64Base = {
     , SXTX                            // Signed   eXTend Xword
     }
 
+  enumeration AccSize: Bits2 =        // memory operations access size, do not change order
+    { Byte                            // 1 byte  access
+    , Half                            // 2 bytes access
+    , Word                            // 4 bytes access
+    , XWord                           // 8 bytes access
+    }
+
   format AddSubExtFormat: Instr =     // add/sub extended register format
     { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
     , ff       [29]                   // flag field, if (ff = 1) set status register flags
@@ -164,6 +178,50 @@ instruction set architecture AAarch64Base = {
     , rd       [4..0]   : Index       // destination register
     }
 
+  format BranchFormat: Instr =        // unconditional branch immediate format
+    { op       : Bits6                // opcode
+    , imm26    : Bits26               // branch offset, needs to be sign extended and shifted
+    , offset   = imm26 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  format BranchRegFormat: Instr =     // branch register format
+    { op       [31..10,4..0]          // opcode
+    , rn       [9..5]   : Index       // branch target register
+    }
+
+  format CondBranchFormat: Instr =    // conditional branch conditional immediate format
+    { op       [31..24,4]             // opcode
+    , imm19    [23..5]  : Bits19      // branch offset, needs to be sign extended and shifted
+    , cc       [3..0]                 // condition code
+    , offset   = imm19 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  format CompareBranchFormat: Instr = // compare and branch immediate format
+    { sf       : Bits1                // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       : Bits7                // opcode
+    , imm19    : Bits19               // branch offset, needs to be sign extended and shifted
+    , rt       : Index                // source register
+    , offset   = imm19 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  format TestBitBranchFormat: Instr = // test bit and branch immediate format
+    { op       [30..24]    : Bits7    // opcode
+    , imm6     [31,23..19] : Bits6    // bit identifier
+    , imm14    [18..5]     : Bits14   // branch offset, needs to be sign extended and shifted
+    , rt       [4..0]      : Index    // source register
+    , offset   = imm14 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  format MemoryImmFormat: Instr =     // unscaled load / store format
+    { size     [31..30]               // size of memory operation (AccSize)
+    , op       [29..24,21,11..10]     // opcode
+    , opc      [23..22]    : Bits2    // function code 
+    , imm9     [20..12]    : Bits9    // signed offset
+    , rn       [9..5]      : Index    // base register (SP)
+    , rt       [4..0]      : Index    // source or destination register
+    , offset   = imm9 as SIntX        // sign extended offset
+    }
+
 
 // assembly string functions ***************************************************
 
@@ -183,11 +241,23 @@ instruction set architecture AAarch64Base = {
   function XSizeSP (idx: Index) -> String = // do not rename
     if idx = 31 then "sp"  else "x" + decimal( idx )
 
+  function Imm9decimal (imm9: Bits9) -> String =
+    if imm9 = 0 then "" else (", #", decimal( imm9 ))
 
 // syntax records and model types **********************************************
 
+  // instruction id, mnemonic, opcode as literal or enum
+  record InstrNoFunct (id: Id, mnemo: Str, opcode: Ex)
+
   // instruction id, mnemonic, opcode as literal or enum, function or type name
   record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
+
+  // condition code id, mnemonic extension, condition expression
+  record Cond (cc: Id, mext: Str, ex: Ex)
+
+  // register size (WReg, XReg), access size (Byte, Half, Word, XWord), 
+  // mnemonic extension ("b", "sb", "h", "sh", "sw"), opc, memory statement
+  record Memory  (regsize: Id, accsize: Id, mext: Str, opc: Lit, stmt: Stat)
 
   // higher order model for flag setting models
   model-type SetResultFlags = (CallEx, Ex) -> Stats
@@ -197,6 +267,15 @@ instruction set architecture AAarch64Base = {
 
   // higher order model enriched with size: [WX]Size, flags
   model-type InstrWithFunctSizeFlags = (InstrWithFunct, Id, Flags) -> IsaDefs
+
+  // higher order model enriched with operation size
+  model-type InstrWithFunctSize = (InstrWithFunct, Id) -> IsaDefs
+
+  // higher order model enriched with condition
+  model-type InstrWithCond = (InstrNoFunct, Cond) -> IsaDefs
+
+  // higher order model enriched with memory
+  model-type MemoryModel = (InstrNoFunct, Memory) -> IsaDefs
 
 
 // models for setting flags ****************************************************
@@ -243,36 +322,36 @@ instruction set architecture AAarch64Base = {
 
   model AddSubExtInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
     $AddSubExtInstrBase ((ExtendId ($i.id, "UXTB"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)( 7..0) as UIntX; option = ExtendType::UXTB, imm3 = 0; ($size(rm), ", uxtb"))
+           X(rm)( 7..0) as UIntX; option = ExtendType::UXTB, imm3 = 0; (WSize(rm), ", uxtb"))
     $AddSubExtInstrBase ((ExtendId ($i.id, "UXTH"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)(15..0) as UIntX; option = ExtendType::UXTH, imm3 = 0; ($size(rm), ", uxth"))
+           X(rm)(15..0) as UIntX; option = ExtendType::UXTH, imm3 = 0; (WSize(rm), ", uxth"))
     $AddSubExtInstrBase ((ExtendId ($i.id, "UXTW"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)(31..0) as UIntX; option = ExtendType::UXTW, imm3 = 0; ($size(rm), ", uxtw"))
+           X(rm)(31..0) as UIntX; option = ExtendType::UXTW, imm3 = 0; (WSize(rm), ", uxtw"))
     $AddSubExtInstrBase ((ExtendId ($i.id, "UXTX"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
            X(rm)(63..0) as UIntX; option = ExtendType::UXTX, imm3 = 0; ($size(rm), ", uxtx"))
     $AddSubExtInstrBase ((ExtendId ($i.id, "SXTB"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)( 7..0) as SIntX; option = ExtendType::SXTB, imm3 = 0; ($size(rm), ", sxtb"))
+           X(rm)( 7..0) as SIntX; option = ExtendType::SXTB, imm3 = 0; (WSize(rm), ", sxtb"))
     $AddSubExtInstrBase ((ExtendId ($i.id, "SXTH"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)(15..0) as SIntX; option = ExtendType::SXTH, imm3 = 0; ($size(rm), ", sxth"))
+           X(rm)(15..0) as SIntX; option = ExtendType::SXTH, imm3 = 0; (WSize(rm), ", sxth"))
     $AddSubExtInstrBase ((ExtendId ($i.id, "SXTW"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)(31..0) as SIntX; option = ExtendType::SXTW, imm3 = 0; ($size(rm), ", sxtw"))
+           X(rm)(31..0) as SIntX; option = ExtendType::SXTW, imm3 = 0; (WSize(rm), ", sxtw"))
     $AddSubExtInstrBase ((ExtendId ($i.id, "SXTX"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
            X(rm)(63..0) as SIntX; option = ExtendType::SXTX, imm3 = 0; ($size(rm), ", sxtx"))
 
     $AddSubExtInstrBase ((ExtendId ($i.id, "UXSB"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)( 7..0) as UIntX << imm3; option = ExtendType::UXTB; ($size(rm), ", uxtb #", decimal(imm3)))
+           X(rm)( 7..0) as UIntX << imm3; option = ExtendType::UXTB; (WSize(rm), ", uxtb #", decimal(imm3)))
     $AddSubExtInstrBase ((ExtendId ($i.id, "UXSH"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)(15..0) as UIntX << imm3; option = ExtendType::UXTH; ($size(rm), ", uxth #", decimal(imm3)))
+           X(rm)(15..0) as UIntX << imm3; option = ExtendType::UXTH; (WSize(rm), ", uxth #", decimal(imm3)))
     $AddSubExtInstrBase ((ExtendId ($i.id, "UXSW"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)(31..0) as UIntX << imm3; option = ExtendType::UXTW; ($size(rm), ", uxtw #", decimal(imm3)))
+           X(rm)(31..0) as UIntX << imm3; option = ExtendType::UXTW; (WSize(rm), ", uxtw #", decimal(imm3)))
     $AddSubExtInstrBase ((ExtendId ($i.id, "UXSX"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
            X(rm)(63..0) as UIntX << imm3; option = ExtendType::UXTX; ($size(rm), ", uxtx #", decimal(imm3)))
     $AddSubExtInstrBase ((ExtendId ($i.id, "SXSB"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)( 7..0) as SIntX << imm3; option = ExtendType::SXTB; ($size(rm), ", sxtb #", decimal(imm3)))
+           X(rm)( 7..0) as SIntX << imm3; option = ExtendType::SXTB; (WSize(rm), ", sxtb #", decimal(imm3)))
     $AddSubExtInstrBase ((ExtendId ($i.id, "SXSH"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)(15..0) as SIntX << imm3; option = ExtendType::SXTH; ($size(rm), ", sxth #", decimal(imm3)))
+           X(rm)(15..0) as SIntX << imm3; option = ExtendType::SXTH; (WSize(rm), ", sxth #", decimal(imm3)))
     $AddSubExtInstrBase ((ExtendId ($i.id, "SXSW"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-           X(rm)(31..0) as SIntX << imm3; option = ExtendType::SXTW; ($size(rm), ", sxtw #", decimal(imm3)))
+           X(rm)(31..0) as SIntX << imm3; option = ExtendType::SXTW; (WSize(rm), ", sxtw #", decimal(imm3)))
     $AddSubExtInstrBase ((ExtendId ($i.id, "SXSX"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
            X(rm)(63..0) as SIntX << imm3; option = ExtendType::SXTX; ($size(rm), ", sxtx #", decimal(imm3)))
     }
@@ -292,7 +371,7 @@ instruction set architecture AAarch64Base = {
 
   model AddSubImmInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
     $AddSubImmInstrShft ((ExtendId ($i.id, "I"  ); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12X; 0 ; "")
-    $AddSubImmInstrShft ((ExtendId ($i.id, "I12"); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12S; 1 ; ", lsl 12")
+    $AddSubImmInstrShft ((ExtendId ($i.id, "I12"); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12S; 1 ; ", lsl #12")
     }
 
 
@@ -319,7 +398,132 @@ instruction set architecture AAarch64Base = {
     }
 
 
+// branch models ***************************************************************
+
+  model BranchEncAsm (i: InstrNoFunct): IsaDefs = {
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ( $i.mnemo, ' ', decimal(imm26))
+    }
+
+  model BranchInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchFormat =
+      PC := PC + offset
+    $BranchEncAsm ($i)
+    }
+
+  model BranchLinkInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchFormat = {
+      LR := PC.next
+      PC := PC + offset
+      }
+    $BranchEncAsm ($i)
+    }
+
+  model BranchRegEncAsm (i: InstrNoFunct): IsaDefs = {
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ( $i.mnemo, ' ', XSize(rn))
+    }
+
+  model BranchRegInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchRegFormat =
+      PC := X(rn)
+    $BranchRegEncAsm ($i)
+    }
+
+  model BranchRegLinkInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchRegFormat =
+      let target = X(rn) in {
+        LR := PC.next
+        PC := target
+        }
+    $BranchRegEncAsm ($i)
+    }
+
+  model CondBranchInstr (i: InstrNoFunct, c: Cond): IsaDefs = {
+    instruction $i.id: CondBranchFormat =
+      if $c.ex then
+        PC := PC + offset
+    encoding $i.id = { op = $i.opcode, cc = CondCode::$c.cc }
+    assembly $i.id = ($i.mnemo, $c.mext, ' ', decimal(imm19))
+    }
+
+  model CondInstr (modelid: InstrWithCond, i: InstrWithFunct): IsaDefs = {
+    $modelid ((ExtendId($i.id, EQ); $i.mnemo; $i.opcode) ; (EQ ; "eq" ; NZCV.Z  = 1                    ))
+    $modelid ((ExtendId($i.id, NE); $i.mnemo; $i.opcode) ; (NE ; "ne" ; NZCV.Z  = 0                    ))
+    $modelid ((ExtendId($i.id, CS); $i.mnemo; $i.opcode) ; (CS ; "cs" ; NZCV.C  = 1                    ))
+    $modelid ((ExtendId($i.id, CC); $i.mnemo; $i.opcode) ; (CC ; "cc" ; NZCV.C  = 0                    ))
+    $modelid ((ExtendId($i.id, MI); $i.mnemo; $i.opcode) ; (MI ; "mi" ; NZCV.N  = 1                    ))
+    $modelid ((ExtendId($i.id, PL); $i.mnemo; $i.opcode) ; (PL ; "pl" ; NZCV.N  = 0                    ))
+    $modelid ((ExtendId($i.id, VS); $i.mnemo; $i.opcode) ; (VS ; "vs" ; NZCV.V  = 1                    ))
+    $modelid ((ExtendId($i.id, VC); $i.mnemo; $i.opcode) ; (VC ; "vc" ; NZCV.V  = 0                    ))
+    $modelid ((ExtendId($i.id, HI); $i.mnemo; $i.opcode) ; (HI ; "hi" ; NZCV.C  = 1 && NZCV.Z = 0      ))
+    $modelid ((ExtendId($i.id, LS); $i.mnemo; $i.opcode) ; (LS ; "ls" ; NZCV.C  = 0 || NZCV.Z = 1      ))
+    $modelid ((ExtendId($i.id, GE); $i.mnemo; $i.opcode) ; (GE ; "ge" ; NZCV.N  = NZCV.V               ))
+    $modelid ((ExtendId($i.id, LT); $i.mnemo; $i.opcode) ; (LT ; "lt" ; NZCV.N != NZCV.V               ))
+    $modelid ((ExtendId($i.id, GT); $i.mnemo; $i.opcode) ; (GT ; "gt" ; NZCV.N  = NZCV.V && NZCV.Z = 0 ))
+    $modelid ((ExtendId($i.id, LE); $i.mnemo; $i.opcode) ; (LE ; "le" ; NZCV.N != NZCV.V || NZCV.Z = 1 ))
+    $modelid ((ExtendId($i.id, AL); $i.mnemo; $i.opcode) ; (AL ; "al" ; true                           ))
+    $modelid ((ExtendId($i.id, NV); $i.mnemo; $i.opcode) ; (NV ; "nv" ; true                           ))
+    }
+
+  model CompareBranchInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: CompareBranchFormat =
+      if VADL::$i.funct (X(rt) as Bits<Size::$size>, 0) then
+        PC := PC + offset
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rt), ', ', decimal(imm19))
+    }
+
+  model TestBitBranchInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: TestBitBranchFormat =
+      if VADL::$i.funct ((X(rt) >> imm6) as Bits1, 0) then
+        PC := PC + offset
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ( $i.mnemo, ' ', XSize(rt), ', #', decimal(imm6), ', ', decimal(imm14))
+    }
+
+// load / store register (unscaled) model **************************************
+
+  model MemoryUnscaledInstr(i: InstrNoFunct, m: Memory): IsaDefs = {
+    // CheckSPAlignment()
+    instruction $i.id: MemoryImmFormat =
+      let addr = S(rn) + offset in $m.stmt
+    encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize }
+    assembly $i.id = ($i.mnemo, $m.mext, ' ', $m.regsize(rt), ', [', XSizeSP(rn), Imm9decimal(imm9), ']')
+    }
+
+// memory dispatching models ***************************************************
+
+  model MemoryInstr (memmodel: MemoryModel, i: InstrNoFunct, xtdId: Str, m: Memory): IsaDefs = {
+  	$memmodel ((ExtendId ($i.id, $xtdId); $i.mnemo; $i.opcode); $m)
+    }
+
+  model StoreInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
+    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b00; MEM<1> (addr) := X(rt) as Byte))
+    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b00; MEM<2> (addr) := X(rt) as Half))
+    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ;   ""; 0b00; MEM<4> (addr) := X(rt) as Word))
+    $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord;   ""; 0b00; MEM<8> (addr) := X(rt)        ))
+    }
+
+  model LoadInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
+    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b01; X(rt) := MEM<1> (addr) as UIntX))
+    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b01; X(rt) := MEM<2> (addr) as UIntX))
+    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ;   ""; 0b01; X(rt) := MEM<4> (addr) as UIntX))
+    $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord;   ""; 0b01; X(rt) := MEM<8> (addr)         ))
+    $MemoryInstr ($memmodel; $i; "SBX"; (XSize; Byte ; "sb"; 0b10; X(rt) := MEM<1> (addr) as SIntX))
+    $MemoryInstr ($memmodel; $i; "SHX"; (XSize; Half ; "sh"; 0b10; X(rt) := MEM<2> (addr) as SIntX))
+    $MemoryInstr ($memmodel; $i; "SWX"; (XSize; Word ; "sw"; 0b10; X(rt) := MEM<4> (addr) as SIntX))
+    $MemoryInstr ($memmodel; $i; "SBW"; (WSize; Byte ; "sb"; 0b11; X(rt) := MEM<1> (addr) as SIntW as UIntW as UIntX))
+    $MemoryInstr ($memmodel; $i; "SHW"; (WSize; Half ; "sh"; 0b11; X(rt) := MEM<2> (addr) as SIntW as UIntW as UIntX))
+    }
+
+
 // instruction dispatch models *************************************************
+
+  model InstrWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
+    $modelid ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize)
+    $modelid ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize)
+    }
 
   model InstrWXFlags (modelid: InstrWithFunctSizeFlags, i: InstrWithFunct): IsaDefs = {
     $modelid ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize; (WResult  ; OffFlags;  ""))
@@ -331,11 +535,25 @@ instruction set architecture AAarch64Base = {
 
 // base instructions ***********************************************************
 
-  $InstrWXFlags     (AddSubExtInstr           ; (ADD    ; "add"   ; 0b0'0101'1001    ; adds  ))
-  $InstrWXFlags     (AddSubImmInstr           ; (ADD    ; "add"   ; 0b0'1000'10      ; adds  ))
-  $InstrWXFlags     (AddSubSftInstr           ; (ADD    ; "add"   ; 0b0'0101'10      ; adds  ))
-  $InstrWXFlags     (AddSubExtInstr           ; (SUB    ; "sub"   ; 0b1'0101'1001    ; subsc ))
-  $InstrWXFlags     (AddSubImmInstr           ; (SUB    ; "sub"   ; 0b1'1000'10      ; subsc ))
-  $InstrWXFlags     (AddSubSftInstr           ; (SUB    ; "sub"   ; 0b1'0101'10      ; subsc ))
+  $InstrWXFlags       (AddSubExtInstr        ; (ADD    ; "add"   ; 0b0'0101'1001    ; adds             ))
+  $InstrWXFlags       (AddSubImmInstr        ; (ADD    ; "add"   ; 0b0'1000'10      ; adds             ))
+  $InstrWXFlags       (AddSubSftInstr        ; (ADD    ; "add"   ; 0b0'0101'10      ; adds             ))
+  $InstrWXFlags       (AddSubExtInstr        ; (SUB    ; "sub"   ; 0b1'0101'1001    ; subsc            ))
+  $InstrWXFlags       (AddSubImmInstr        ; (SUB    ; "sub"   ; 0b1'1000'10      ; subsc            ))
+  $InstrWXFlags       (AddSubSftInstr        ; (SUB    ; "sub"   ; 0b1'0101'10      ; subsc            ))
+
+  $BranchInstr        (                        (B      ; "b"     ; 0b0001'01                           ))
+  $BranchLinkInstr    (                        (BL     ; "bl"    ; 0b1001'01                           ))
+  $BranchRegInstr     (                        (BR     ; "br"    ; 0b1101'0110'0001'1111'0000'0000'000 ))
+  $BranchRegInstr     (                        (RET    ; "ret"   ; 0b1101'0110'0101'1111'0000'0000'000 ))
+  $BranchRegLinkInstr (                        (BLR    ; "blr"   ; 0b1101'0110'0011'1111'0000'0000'000 ))
+  $CondInstr          (CondBranchInstr       ; (B_     ; "b."    ; 0b0101'0100'0                       ))
+  $InstrWX            (CompareBranchInstr    ; (CBZ    ; "cbz"   ; 0b0110'100       ; equ              ))
+  $InstrWX            (CompareBranchInstr    ; (CBNZ   ; "cbnz"  ; 0b0110'101       ; neq              ))
+  $TestBitBranchInstr (                        (TBZ    ; "tbz"   ; 0b0110'110       ; equ              ))
+  $TestBitBranchInstr (                        (TBNZ   ; "tbnz"  ; 0b0110'111       ; neq              ))
+
+  $LoadInstr          (MemoryUnscaledInstr   ; (LDUR   ; "ldur"  ; 0b111'000'000                       ))
+  $StoreInstr         (MemoryUnscaledInstr   ; (STUR   ; "stur"  ; 0b111'000'000                       ))
 
 }
