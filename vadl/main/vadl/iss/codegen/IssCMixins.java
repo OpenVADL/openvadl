@@ -22,6 +22,7 @@ import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.nodes.IssConstExtractNode;
 import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * The ISS C mixins for all ISS intermediate nodes added to behaviors.
@@ -75,6 +76,24 @@ public interface IssCMixins {
           .wr(")");
     }
 
+  }
+
+  /**
+   * Implements the register write in the {@code cpu.c}.
+   */
+  interface CpuSourceWriteRegTensor {
+
+    @Handler
+    @SuppressWarnings("MissingJavadocMethod")
+    default void handle(CGenContext<Node> ctx,
+                        WriteRegTensorNode node) {
+      var reg = node.regTensor();
+      ctx.wr("set_" + reg.simpleName().toLowerCase() + "(");
+      for (var i : node.indices()) {
+        ctx.gen(i).wr(",");
+      }
+      ctx.gen(node.value()).wr(")");
+    }
   }
 
 }
