@@ -58,9 +58,9 @@ public class DataLayoutProvider {
    */
   public static int pointerAlignment(Abi abi) {
     return abi.clangTypes().stream()
-        .filter(x -> x instanceof Abi.AbstractClangType.NumericClangType numericClangType
-            && numericClangType.typeName() ==
-            Abi.AbstractClangType.NumericClangType.TypeName.POINTER_ALIGN)
+        .filter(x ->
+            x instanceof Abi.AbstractClangType.NumericClangType ty
+                && ty.typeName() == Abi.AbstractClangType.NumericClangType.TypeName.POINTER_ALIGN)
         .findFirst()
         .map(x -> Integer.parseInt(x.value()))
         .orElseThrow(
