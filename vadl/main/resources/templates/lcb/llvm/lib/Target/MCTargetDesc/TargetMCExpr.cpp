@@ -20,15 +20,6 @@ const [(${namespace})]MCExpr *[(${namespace})]MCExpr::create(const MCExpr *Expr,
     return new (Ctx) [(${namespace})]MCExpr(Expr, Kind);
 }
 
-/*
- * This method is used to print an expression.
- * Special cases can be made here, e.g. adding '@plt' etc
- */
-void [(${namespace})]MCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const
-{
-    OS << format(10, MAI);
-}
-
 std::string [(${namespace})]MCExpr::format(uint8_t Radix, const MCAsmInfo *MAI) const
 {
     bool HasVariant = (Kind != VK_None);

@@ -31,7 +31,6 @@ namespace llvm
         VariantKind getKind() const { return Kind; }
         const MCExpr *getSubExpr() const { return Expr; }
 
-        void printImpl(raw_ostream & OS, const MCAsmInfo *MAI) const override;
         std::string format(uint8_t Radix, const MCAsmInfo *MAI) const;
         bool evaluateAsRelocatableImpl(MCValue & Res, const MCAsmLayout *Layout, const MCFixup *Fixup) const override;
         void visitUsedExpr(MCStreamer & Streamer) const override;
