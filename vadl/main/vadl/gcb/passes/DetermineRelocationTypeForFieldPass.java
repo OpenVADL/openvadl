@@ -47,14 +47,14 @@ import vadl.viam.matching.impl.IsReadRegMatcher;
  * If the instruction's behavior adds the immediate to the Program Counter (PC),
  * then the relocation kind for this operand is RELATIVE.
  */
-public class DetermineSymbolRelocationTypePass extends Pass {
-  public DetermineSymbolRelocationTypePass(GeneralConfiguration configuration) {
+public class DetermineRelocationTypeForFieldPass extends Pass {
+  public DetermineRelocationTypeForFieldPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
   @Override
   public PassName getName() {
-    return new PassName("DetermineSymbolRelocationTypePass");
+    return new PassName("DetermineRelocationTypeForFieldPass");
   }
 
   @Nullable
@@ -69,7 +69,9 @@ public class DetermineSymbolRelocationTypePass extends Pass {
           var immediateKindMap = new HashMap<Format.Field, CompilerRelocation.Kind>();
           fieldUsages.getImmediates(instruction).forEach(
               immField -> {
-                var relocationKind = fittingRelocationKindByBehavior(instruction, immField);
+                // Determine for every instruction's immediate in the specification the
+                // relocation kind.
+                var relocationKind = determineRelocationKindByBehavior(instruction, immField);
                 immediateKindMap.put(immField, relocationKind);
               }
           );
@@ -80,20 +82,24 @@ public class DetermineSymbolRelocationTypePass extends Pass {
     return null;
   }
 
-
-  private CompilerRelocation.Kind fittingRelocationKindByBehavior(
+  private CompilerRelocation.Kind determineRelocationKindByBehavior(
       Instruction instruction, Format.Field field) {
+    // First check whether even the PC is read.
 
     var behavior = instruction.behavior();
     var readsPC = behavior.getNodes(ReadRegTensorNode.class)
         .filter(ReadRegTensorNode::isPcAccess).toList();
 
     if (readsPC.isEmpty()) {
+      // If PC is not read then we can use an absolute relocation.
       return CompilerRelocation.Kind.ABSOLUTE;
     }
 
+    // But, the PC is being read, and we need to check how it is referenced.
     var pcRegister = readsPC.getFirst().regTensor();
 
+    // We say it is RELATIVE when a register is added to the given field in a field access
+    // function.
     var matcher = new BuiltInMatcher(List.of(ADD, ADDS), List.of(
         new AnyChildMatcher(new IsReadRegMatcher(pcRegister)),
         new AnyChildMatcher(node ->
@@ -101,6 +107,7 @@ public class DetermineSymbolRelocationTypePass extends Pass {
                 && refNode.fieldAccess().fieldRef().equals(field)
         )
     ));
+
     Set<Matcher> matchers = Set.of(
         matcher,
         matcher.swapOperands()
