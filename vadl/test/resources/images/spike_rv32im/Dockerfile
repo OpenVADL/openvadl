@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/spike-rv32im-base-image@sha256:348d62a1bd15b05ca4c36d2d3b0d968815bfc15a6ac38cf5584de255fff537ce
+FROM ghcr.io/openvadl/spike-rv32im-base-image@sha256:9b68921bd1e42da69f708810f4fb610018b23dde7ae2c12fd30c3bdd9d6ac18a
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
 ARG UPSTREAM_BUILD_TARGET

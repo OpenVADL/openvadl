@@ -6,6 +6,10 @@ ENTRY(_start)
 SECTIONS
 {
   . = 0x80000000;
+
+  /* Define a symbol to mark the base address, useful for relocation */
+  PROVIDE(__base = .);
+
   .text.init : { *(.text.init) }
 
   . = ALIGN(0x1000);
@@ -17,6 +21,24 @@ SECTIONS
   . = ALIGN(0x1000);
   .data : { *(.data) }
   .data.string : { *(.data.string)}
+
+   .got : ALIGN(4K) {
+      PROVIDE(__global_pointer$ = . + 0x800);
+      *(.got)
+    }
+
+    .sdata : ALIGN(4K) {
+      *(.sdata)
+    }
+
+    .sbss : ALIGN(4K) {
+      *(.sbss)
+    }
+
+    .bss : ALIGN(4K) {
+      *(.bss)
+      *(COMMON)
+    }
 
   . = ALIGN(0x1000);
   .tohost : { *(.tohost) }

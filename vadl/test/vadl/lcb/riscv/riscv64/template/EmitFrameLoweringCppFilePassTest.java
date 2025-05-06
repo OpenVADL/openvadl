@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.template;
+package vadl.lcb.riscv.riscv64.template;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -146,15 +146,15 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
         
         bool processornamevalueFrameLowering::hasFP(const MachineFunction &MF) const
         {
-           \s
+        
             const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
             const MachineFrameInfo &MFI = MF.getFrameInfo();
                 return MF.getTarget().Options.DisableFramePointerElim(MF) ||
                        RegInfo->hasStackRealignment(MF) ||
                        MFI.hasVarSizedObjects() ||
                        MFI.isFrameAddressTaken();
-           \s
-           \s
+        
+        
         }
         
         void processornamevalueFrameLowering::emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const
@@ -164,9 +164,9 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
             const processornamevalueInstrInfo *TII = STI.getInstrInfo();
             MachineBasicBlock::iterator MBBI = MBB.begin();
         
-           \s
+        
                 Register FPReg = processornamevalue::X8;
-           \s
+        
             Register SPReg = processornamevalue::X2;
         
             // Debug location must be unknown since the first debug location is used
@@ -174,6 +174,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
             DebugLoc DL;
         
             uint64_t StackSize = getStackSize(MF);
+            MF.getFrameInfo().setStackSize(StackSize);
         
             // Early exit if there is no need to allocate on the stack
             if (StackSize == 0 && !MFI.adjustsStack())
@@ -190,7 +191,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
             // Advance to after the callee/caller saved register spills to adjust the frame pointer
             const std::vector<CalleeSavedInfo> &CSI = MFI.getCalleeSavedInfo();
             std::advance(MBBI, CSI.size());
-           \s
+        
             // Generate new FP.
             if (hasFP(MF))
             {
@@ -199,7 +200,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
                     llvm_unreachable("unable to adjust and generate frame pointer in 'emitPrologue'!");
                 }
             }
-           \s
+        
         }
         
         void processornamevalueFrameLowering::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
@@ -208,9 +209,9 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
             MachineFrameInfo &MFI = MF.getFrameInfo();
             auto *FI = MF.getInfo<processornamevalueMachineFunctionInfo>();
         
-           \s
+        
                 Register FPReg = processornamevalue::X8;
-           \s
+        
             Register SPReg = processornamevalue::X2;
         
             // Get the insert location for the epilogue. If there were no terminators in
@@ -250,7 +251,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
                 LastFrameDestroy = std::prev(MBBI, CSI.size());
             }
         
-           \s
+        
             // Restore the stack pointer using the value of the frame pointer.
             if (hasFP(MF) && MFI.hasVarSizedObjects())
             {
@@ -261,7 +262,7 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
                     llvm_unreachable("unable to adjust stack pointer with value in 'emitEpilogue'!");
                 }
             }
-           \s
+        
         
             // Deallocate stack
             if (TII->adjustReg(MBB, MBBI, DL, SPReg, SPReg, StackSize, MachineInstr::FrameDestroy))
@@ -274,14 +275,14 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
         {
             // Determine actual callee saved registers that need to be saved
             TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
-           \s
+        
             // If frame pointer is present save both return address and frame pointer
             if (hasFP(MF))
             {
                 SavedRegs.set( processornamevalue::X1 ); // return address
                 SavedRegs.set(  processornamevalue::X8 );  // frame pointer
             }
-           \s
+        
         }
         
         bool processornamevalueFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI, ArrayRef<CalleeSavedInfo> CSI, const TargetRegisterInfo *TRI) const
@@ -386,6 +387,6 @@ public class EmitFrameLoweringCppFilePassTest extends AbstractLcbTest {
         
             return Offset;
         }
-        """.trim().lines(), output);
+        """.trim().lines().map(String::trim), output.map(String::trim));
   }
 }

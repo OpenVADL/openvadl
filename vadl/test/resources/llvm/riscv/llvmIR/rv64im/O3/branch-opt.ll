@@ -1,4 +1,4 @@
-; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O3 -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
+; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O3 --relocation-model=pic -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
 define void @u_case1_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL: u_case1_a:
@@ -35,12 +35,10 @@ end_block:                                        ; preds = %block2, %block1
 define void @case1_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL: case1_a:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    LUI a2,0x0
-; CHECK-NEXT:    ADDI a2,a2,0
-; CHECK-NEXT:    SLLI a2,a2,16
-; CHECK-NEXT:    ORI a2,a2,0
-; CHECK-NEXT:    SLLI a2,a2,16
-; CHECK-NEXT:    ORI a2,a2,-1
+; CHECK-LABEL: .Ltmp0:
+; CHECK-NEXT:    AUIPC a2,%pcrel_hi(.LCPI1_0)
+; CHECK-NEXT:    ADDI a2,a2,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT:    LD a2,0(a2)
 ; CHECK-NEXT:    SW a2,0(a0)
 ; CHECK-NEXT:    ADDI a0,zero,-2
 ; CHECK-NEXT:    BLT a0,a1,.LBB1_2
@@ -104,12 +102,10 @@ end_block:                                        ; preds = %block2, %block1
 define void @case2_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL: case2_a:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT: LUI a2,0x0
-; CHECK-NEXT: ADDI a2,a2,0
-; CHECK-NEXT: SLLI a2,a2,16
-; CHECK-NEXT: ORI a2,a2,0
-; CHECK-NEXT: SLLI a2,a2,16
-; CHECK-NEXT: ORI a2,a2,-4
+; CHECK-LABEL: .Ltmp1:
+; CHECK-NEXT: AUIPC a2,%pcrel_hi(.LCPI3_0)
+; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Ltmp1)
+; CHECK-NEXT: LD a2,0(a2)
 ; CHECK-NEXT: SW a2,0(a0)
 ; CHECK-NEXT: ADDI a0,zero,-3
 ; CHECK-NEXT: BLT a1,a0,.LBB3_2

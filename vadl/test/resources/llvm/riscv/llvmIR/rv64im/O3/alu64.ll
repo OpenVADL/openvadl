@@ -1,4 +1,4 @@
-; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O3 -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
+; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O3 --relocation-model=pic -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
 ; Register-immediate instructions
 
@@ -184,13 +184,11 @@ define i64 @and(i64 %a, i64 %b) nounwind {
 define signext i32 @addiw(i32 signext %a) nounwind {
 ; CHECK-LABEL: addiw: # @addiw
 ; CHECK-LABEL: # %bb.0:
+; CHECK-LABEL: .Ltmp0:
+; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI19_0)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: SLLI a0,a0,32
-; CHECK-NEXT: LUI a1,0x0
-; CHECK-NEXT: ADDI a1,a1,123
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,0
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,0
 ; CHECK-NEXT: ADD a0,a0,a1
 ; CHECK-NEXT: SRAI a0,a0,32
 ; CHECK-NEXT: RET
@@ -211,12 +209,10 @@ define signext i32 @slliw(i32 signext %a) nounwind {
 define signext i32 @srliw(i32 %a) nounwind {
 ; CHECK-LABEL: srliw: # @srliw
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: LUI a1,0x0
-; CHECK-NEXT: ADDI a1,a1,0
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,0
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,-256
+; CHECK-LABEL: .Ltmp1:
+; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI21_0)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp1)
+; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: AND a0,a0,a1
 ; CHECK-NEXT: SRLI a0,a0,8
 ; CHECK-NEXT: RET
@@ -290,12 +286,10 @@ define signext i32 @sllw(i32 signext %a, i32 zeroext %b) nounwind {
 define signext i32 @srlw(i32 signext %a, i32 zeroext %b) nounwind {
 ; CHECK-LABEL: srlw: # @srlw
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: LUI a2,0x0
-; CHECK-NEXT: ADDI a2,a2,0
-; CHECK-NEXT: SLLI a2,a2,16
-; CHECK-NEXT: ORI a2,a2,0
-; CHECK-NEXT: SLLI a2,a2,16
-; CHECK-NEXT: ORI a2,a2,-1
+; CHECK-LABEL: .Ltmp2:
+; CHECK-NEXT: AUIPC a2,%pcrel_hi(.LCPI28_0)
+; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Ltmp2)
+; CHECK-NEXT: LD a2,0(a2)
 ; CHECK-NEXT: AND a0,a0,a2
 ; CHECK-NEXT: SRL a0,a0,a1
 ; CHECK-NEXT: SLLI a0,a0,32
@@ -329,12 +323,10 @@ define i64 @add_hi_and_lo_negone(i64 %0) {
 define i64 @add_hi_zero_lo_negone(i64 %0) {
 ; CHECK-LABEL: add_hi_zero_lo_negone: # @add_hi_zero_lo_negone
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: LUI a1,0x0
-; CHECK-NEXT: ADDI a1,a1,0
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,0
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,-1
+; CHECK-LABEL: .Ltmp3:
+; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI31_0)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp3)
+; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: ADD a0,a0,a1
 ; CHECK-NEXT: RET
   %2 = add i64 %0, 4294967295
@@ -344,12 +336,10 @@ define i64 @add_hi_zero_lo_negone(i64 %0) {
 define i64 @add_lo_negone(i64 %0) {
 ; CHECK-LABEL: add_lo_negone: # @add_lo_negone
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: LUI a1,0xfffff
-; CHECK-NEXT: ADDI a1,a1,-2
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,-1
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,-1
+; CHECK-LABEL: .Ltmp4:
+; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI32_0)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp4)
+; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: ADD a0,a0,a1
 ; CHECK-NEXT: RET
   %2 = add nsw i64 %0, -4294967297
@@ -359,12 +349,10 @@ define i64 @add_lo_negone(i64 %0) {
 define i64 @add_hi_one_lo_negone(i64 %0) {
 ; CHECK-LABEL: add_hi_one_lo_negone: # @add_hi_one_lo_negone
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: LUI a1,0x0
-; CHECK-NEXT: ADDI a1,a1,1
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,0
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,-1
+; CHECK-LABEL: .Ltmp5:
+; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI33_0)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp5)
+; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: ADD a0,a0,a1
 ; CHECK-NEXT: RET
   %2 = add nsw i64 %0, 8589934591

@@ -52,12 +52,13 @@ public class EmitTargetMachineCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
+    var abi = specification.abi().orElseThrow();
     var gpr = ensurePresent(
         specification.registerTensors().filter(RegisterTensor::isRegisterFile).findFirst(),
         "Specification requires at least one register file");
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "dataLayout",
-        createDataLayoutString(createDataLayout(gpr)));
+        createDataLayoutString(createDataLayout(abi, gpr)));
   }
 }

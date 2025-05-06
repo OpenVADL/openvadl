@@ -8,6 +8,9 @@ import rv3264im::RV3264I
 instruction set architecture RV32I extending RV3264I = {}
 
 application binary interface ABI for RV32I = {
+   size_t type = unsigned int
+   pointer align = 32
+
    //
    // Register alias definitions
    //
