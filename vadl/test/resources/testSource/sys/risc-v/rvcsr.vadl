@@ -8,15 +8,7 @@ import rv3264im::{RV3264Base, RV3264M}
 instruction set architecture RV32IZicsr extending RV3264Base = {
 
   enumeration CsrDef : Bits<12> = // defined control and status register indices
-    { ustatus  = 0x000  //   0 User mode restricted view of mstatus
-    , uie      = 0x004  //   4 User mode Interrupt Enable
-    , utvec    = 0x005  //   5 User mode Trap VECtor base address
-    , uscratch = 0x040  //  64 User mode SCRATCH
-    , uepc     = 0x041  //  65 User mode Exception Program Counter
-    , ucause   = 0x042  //  66 User mode exception CAUSE
-    , utval    = 0x043  //  67 User mode Trap VALue
-    , uip      = 0x044  //  68 User mode Interrupt Pending
-    , mstatus  = 0x300  // 768 Machine STATUS
+    { mstatus  = 0x300  // 768 Machine STATUS
     , misa     = 0x301  // 769 Machine ISA
     , mie      = 0x304  // 772 Machine Interrupt Enable register
     , mtvec    = 0x305  // 773 Machine Trap VECtor base address
@@ -32,15 +24,7 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
   using    CsrImplIndex = Bits<CsrIndexSize>   // index type for implemented CSR registers
 
   enumeration CsrImpl : CsrImplIndex =  // implemented control and status register indices
-    { ustatus        // 0x000  User mode restricted view of mstatus
-    , uie            // 0x004  User mode Interrupt Enable
-    , utvec          // 0x005  User mode Trap VECtor base address
-    , uscratch       // 0x040  User mode SCRATCH
-    , uepc           // 0x041  User mode Exception Program Counter
-    , ucause         // 0x042  User mode exception CAUSE
-    , utval          // 0x043  User mode Trap VALue
-    , uip            // 0x044  User mode Interrupt Pending
-    , mstatus        // 0x300  Machine STATUS
+    { mstatus        // 0x300  Machine STATUS
     , misa           // 0x301  Machine ISA
     , mie            // 0x304  Machine Interrupt Enable
     , mtvec          // 0x305  Machine Trap VECtor base address
@@ -55,15 +39,7 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
 
   function CsrDefToImpl (csr : Bits<12>) -> CsrImplIndex = // map defined CSR index to implemented CSR index
     match csr with
-      { CsrDef::ustatus  => CsrImpl::ustatus        // 0x000  User mode restricted view of mstatus
-      , CsrDef::uie      => CsrImpl::uie            // 0x004  User mode Interrupt Enable
-      , CsrDef::utvec    => CsrImpl::utvec          // 0x005  User mode Trap VECtor base address
-      , CsrDef::uscratch => CsrImpl::uscratch       // 0x040  User mode SCRATCH
-      , CsrDef::uepc     => CsrImpl::uepc           // 0x041  User mode Exception Program Counter
-      , CsrDef::ucause   => CsrImpl::ucause         // 0x042  User mode exception CAUSE
-      , CsrDef::utval    => CsrImpl::utval          // 0x043  User mode Trap VALue
-      , CsrDef::uip      => CsrImpl::uip            // 0x044  User mode Interrupt Pending
-      , CsrDef::mstatus  => CsrImpl::mstatus        // 0x300  Machine STATUS
+      { CsrDef::mstatus  => CsrImpl::mstatus        // 0x300  Machine STATUS
       , CsrDef::misa     => CsrImpl::misa           // 0x301  Machine ISA
       , CsrDef::mie      => CsrImpl::mie            // 0x304  Machine Interrupt Enable
       , CsrDef::mtvec    => CsrImpl::mtvec          // 0x305  Machine Trap VECtor base address
@@ -78,15 +54,7 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
 
   function CsrName(index : Bits<12>) -> String = 
     match index with
-      { CsrDef::ustatus  => "ustatus"        // User mode restricted view of mstatus
-      , CsrDef::uie      => "uie"            // User mode Interrupt Enable
-      , CsrDef::utvec    => "utvec"          // User mode Trap VECtor base address
-      , CsrDef::uscratch => "uscratch"       // User mode SCRATCH
-      , CsrDef::uepc     => "uepc"           // User mode Exception Program Counter
-      , CsrDef::ucause   => "ucause"         // User mode exception CAUSE
-      , CsrDef::utval    => "utval"          // User mode Trap VALue
-      , CsrDef::uip      => "uip"            // User mode Interrupt Pending
-      , CsrDef::mstatus  => "mstatus"        // Machine STATUS
+      { CsrDef::mstatus  => "mstatus"        // Machine STATUS
       , CsrDef::misa     => "misa"           // Machine ISA
       , CsrDef::mie      => "mie"            // Machine Interrupt Enable
       , CsrDef::mtvec    => "mtvec"          // Machine Trap VECtor base address
@@ -99,13 +67,97 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
       , _                => hex( index )   
       }
 
-//  register CSR : Regs<CsrImpl::ImplLength> change when implemented
+  //// REGISTERS AND ALIASES ////
+
+  // register CSR : Regs<CsrImpl::ImplLength> change when implemented
   register CSR : CsrImplIndex -> Regs
+  // register Priv : PRV when enum as type supported
 
+  alias register mstatus: MachineStatus = CSR(CsrDefToImpl(CsrDef::mstatus))
+  alias register mtvec                  = CSR(CsrDefToImpl(CsrDef::mtvec))
+  alias register mepc                   = CSR(CsrDefToImpl(CsrDef::mepc))
+  alias register mcause                 = CSR(CsrDefToImpl(CsrDef::mcause))
+  alias register mtval                  = CSR(CsrDefToImpl(CsrDef::mtval))
 
-  exception IllegalInstruction = {
-
+  // privilege modes (internal)
+  enumeration PRV =
+  { U = 0
+  , S = 1
+  , RESERVED = 2
+  , M = 3
   }
+
+  format MachineStatus : Regs =
+  { sd    [31]
+  , wpri  [30..23]      // RV64 , wpri -> [31..23]
+  , tsr   [22]          // Trap SRET (supports intercepting SRET instruction)
+  , tw    [21]          // Timeout Wait (supports interception WFI instruction)
+  , tvm   [20]          // Trap Virtual Memory
+  , mxr   [19]          // Make eXecutable Readable
+  , sum   [18]          // Supervisor User Memory access permit
+  , mprv  [17]          // Modify PRiVilege
+  , xs    [16..15]      // additional eXtension user-mode Status (RO)
+  , fs    [14..13]      // Floating-point unit Status (WARL)
+  , mpp   [12..11]      // Previous Privilege Machine (WARL)
+  , wpri2 [10..9]
+  , spp   [8]           // Previous Privilege Supervisor (WARL)
+  , mpie  [7]           // Prior To Trap Interrupt-Enable Machine
+  , wpri1 [6]
+  , spie  [5]           // Prior To Trap Interrupt-Enable Supervisor
+  , upie  [4]           // Prior To Trap Interrupt-Enable User
+  , mie   [3]           // Interrupt-Enable Machine
+  , wpri0 [2]
+  , sie   [1]           // Interrupt-Enable Supervisor
+  , uie   [0]           // Interrupt-Enable User
+  }
+
+  //// EXCEPTION DEFINITION ////
+
+  // highest is semi-hosting (0x3f)
+  using ExcCodeSize = Bits<6>
+  enumeration ExcCode: ExcCodeSize =
+  { ILLEGAL_INSTR = 0x02
+  , BREAKPOINT    = 0x03
+  , M_ECALL       = 0x0B
+  }
+
+  model wCSR(csr: Val, val: Ex) : Stat = {
+    CSR(CsrDefToImpl($csr)) := $val
+  }
+
+  exception Exc(cause: ExcCodeSize) = {
+    mepc := PC
+    mcause := cause as Regs
+    mtval := 0
+    // add when alias definition implemented
+    // mstatus.mpie := mstatus.mie
+    // mstatus.mpp  := PRV::M // we only support machine mode at the moment
+    // mstatus.mie  := 0
+    // clear two lsb
+    PC := mtvec & ~0x3
+  }
+
+  //// INSTRUCTIONS ////
+
+  // Environment Breakpoint
+  instruction EBREAK : Itype =
+    raise Exc(ExcCode::BREAKPOINT)
+
+  encoding EBREAK = { opcode = 0b111'0011, funct3 = 0b000, imm = 0b0000'0000'0001, rs1 = 0b00000, rd = 0b00000 }
+  assembly EBREAK = mnemonic
+
+  // return from trap
+  instruction MRET: Itype = {
+    // mstatus.mpp := 0
+    // mstatus.mie := mstatus.mpie
+    // mstatus.mpie := 1
+    // Priv := mstatus.mpp
+    PC := mepc
+  }
+  encoding MRET  = { opcode = 0b111'0011, funct3 = 0b000, imm = 0b0011'0000'0010, rs1 = 0b00000, rd = 0b00000 }
+  assembly MRET = mnemonic
+
+  //// CSR INSTRUCTIONS ////
 
   model ECallInstr (name : Id, imm : Lit, excCode: Id) : IsaDefs = {
     instruction $name : Itype = { /* TODO: raise instr */ }  // ecall / ebreak instructions
@@ -121,7 +173,7 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
     instruction $name : Itype =
       let csridx = CsrDefToImpl(imm) in
         if csridx = CsrImpl::ImplLength then
-          raise IllegalInstruction
+          raise Exc(ExcCode::ILLEGAL_INSTR)
         else
           $csrStat
     encoding $name = { opcode = 0b111'0011, funct3 = $funct3 + $offset}
