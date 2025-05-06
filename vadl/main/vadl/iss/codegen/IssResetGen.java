@@ -31,7 +31,7 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * It runs in the {@code cpu.c#reset_hold} callback, which takes care of setting up the
  * CPU state after a reset.
  */
-public class IssResetGen extends IssProcGen {
+public class IssResetGen extends IssProcGen implements IssCMixins.CpuSourceWriteRegTensor {
 
   private final Procedure reset;
 
@@ -47,12 +47,7 @@ public class IssResetGen extends IssProcGen {
 
   @Override
   public void handle(CGenContext<Node> ctx, WriteRegTensorNode toHandle) {
-    var reg = toHandle.regTensor();
-    ctx().wr("set_" + reg.simpleName().toLowerCase() + "(");
-    for (var i : toHandle.indices()) {
-      ctx().gen(i).wr(",");
-    }
-    ctx().gen(toHandle.value()).wr(")");
+    IssCMixins.CpuSourceWriteRegTensor.super.handle(ctx, toHandle);
   }
 
   @Override
