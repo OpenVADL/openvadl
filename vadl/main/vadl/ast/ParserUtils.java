@@ -636,6 +636,12 @@ class ParserUtils {
       var macroOverrides = new HashMap<String, String>();
       for (StringLiteral arg : args) {
         var keyValue = arg.value.split("=", 2);
+        if (keyValue.length != 2) {
+          throw error("Invalid import", arg)
+              .locationDescription(arg,
+                  "Macro overrides must have the form `<macro-name>=<substitute>`.")
+              .build();
+        }
         macroOverrides.put(keyValue[0], keyValue[1]);
       }
       try {
