@@ -1015,8 +1015,8 @@ PRODUCTIONS
     | ROM                                     (. kind = CpuMemoryRegionDefinition.MemKind.ROM; .)
     )
     SYM_BRACK_CLOSE
-    identifier<out Identifier id>
-    SYM_IN identifier<out Identifier mem>
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    SYM_IN identifierPath<out IsId mem>
     [ SYM_EQ statement<out stmt> ]         (. def = new CpuMemoryRegionDefinition(id, kind, mem, stmt, start.join(lastTokenLoc())); .)
   .
 

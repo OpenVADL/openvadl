@@ -4170,16 +4170,16 @@ class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
     }
   }
 
-  Identifier id;
+  IdentifierOrPlaceholder id;
   MemKind kind;
   @Child
-  Identifier memoryRef;
+  IsId memoryRef;
   @Child
   @Nullable
   Statement stmt;
   SourceLocation loc;
 
-  CpuMemoryRegionDefinition(Identifier id, MemKind kind, Identifier memoryRef,
+  CpuMemoryRegionDefinition(IdentifierOrPlaceholder id, MemKind kind, IsId memoryRef,
                             @Nullable Statement stmt,
                             SourceLocation loc) {
     this.id = id;
@@ -4195,7 +4195,7 @@ class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
   }
 
   MemoryDefinition memoryNode() {
-    return (MemoryDefinition) Objects.requireNonNull(memoryRef.target);
+    return (MemoryDefinition) Objects.requireNonNull(memoryRef.target());
   }
 
   @Override
@@ -4246,7 +4246,7 @@ class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
 
   @Override
   public Identifier identifier() {
-    return id;
+    return (Identifier) id;
   }
 }
 
