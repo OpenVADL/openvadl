@@ -966,6 +966,8 @@ public class BuiltInTable {
           Type.relation(StringType.class, StringType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
+          .compute(
+              (a, b) -> new Constant.Str(((Constant.Str) a).value() + ((Constant.Str) b).value()))
           .build();
 
   /**
