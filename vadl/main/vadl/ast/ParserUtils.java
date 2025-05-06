@@ -422,118 +422,69 @@ class ParserUtils {
     return true;
   }
 
-  /**
-   * Casts the node to the type Expr, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static Expr castExpr(Parser parser, Node node) {
-    if (node instanceof Expr expr) {
-      return expr;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Ex, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_EXPR;
-    }
+  private static boolean isPlaceholder(Node n) {
+    return n instanceof PlaceholderNode
+        || n instanceof PlaceholderDefinition
+        || n instanceof PlaceholderExpr
+        || n instanceof PlaceholderStatement;
   }
 
-  /**
-   * Casts the node to the type Encs, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static IsEncs castEncs(Parser parser, Node node) {
-    if (node instanceof IsEncs encs) {
-      return encs;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Encs, received " + node.syntaxType().print() + " - " + node);
-      return new EncodingDefinition.EncodingField(DUMMY_ID, DUMMY_ID);
+  private static <T> T castOrDummy(Parser p, Node n,
+                                   Class<T> type,
+                                   T dummy,
+                                   String expected) {
+    if (type.isInstance(n)) {
+      return type.cast(n);
     }
+
+    String message;
+    if (isPlaceholder(n)) {
+      var sb = new StringBuilder("Macro ");
+      n.prettyPrint(0, sb);
+      sb.append(" used but not yet defined");
+      message = sb.toString();
+    } else {
+      message = "Expected node of type " + expected + ", received "
+          + n.syntaxType().print() + " - " + n;
+    }
+
+    p.errors.SemErr(n.location().begin().line(), n.location().begin().column(), message);
+    return dummy;
   }
 
-  /**
-   * Casts the node to the type Id, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static IdentifierOrPlaceholder castId(Parser parser, Node node) {
-    if (node instanceof IdentifierOrPlaceholder identifierOrPlaceholder) {
-      return identifierOrPlaceholder;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Id, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_ID;
-    }
+  static Expr castExpr(Parser p, Node n) {
+    return castOrDummy(p, n, Expr.class, DUMMY_EXPR, "Expr");
   }
 
-  /**
-   * Casts the node to the type BinOp, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static IsBinOp castBinOp(Parser parser, Node node) {
-    if (node instanceof IsBinOp isBinOp) {
-      return isBinOp;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type BinOp, received " + node.syntaxType().print() + " - " + node);
-      return new BinOp(Operator.Xor, node.location());
-    }
+  static IsEncs castEncs(Parser p, Node n) {
+    return castOrDummy(p, n, IsEncs.class,
+        new EncodingDefinition.EncodingField(DUMMY_ID, DUMMY_ID), "Encs");
   }
 
-  /**
-   * Casts the node to the type IsaDefs, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static Definition castCommonDef(Parser parser, Node node) {
-    if (node instanceof Definition definition
-        && definition.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS)) {
-      return definition;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type CommonDefs, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_DEF;
-    }
+  static IdentifierOrPlaceholder castId(Parser p, Node n) {
+    return castOrDummy(p, n, IdentifierOrPlaceholder.class, DUMMY_ID, "Id");
   }
 
-  /**
-   * Casts the node to the type IsaDefs, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static Definition castIsaDef(Parser parser, Node node) {
-    if (node instanceof Definition definition
-        && definition.syntaxType().isSubTypeOf(BasicSyntaxType.ISA_DEFS)) {
-      return definition;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type IsaDefs, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_DEF;
-    }
+  static IsBinOp castBinOp(Parser p, Node n) {
+    return castOrDummy(p, n, IsBinOp.class, new BinOp(Operator.Xor, n.location()), "BinOp");
   }
 
-  /**
-   * Casts the node to the type Stat, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static Statement castStat(Parser parser, Node node) {
-    if (node instanceof Statement statement) {
-      return statement;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Stat, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_STAT;
-    }
+  static Definition castCommonDef(Parser p, Node n) {
+    return (n instanceof Definition d && d.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS))
+        ? d : castOrDummy(p, n, Definition.class, DUMMY_DEF, "CommonDefs");
   }
 
-  /**
-   * Casts the node to the type Stats, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static Statement castStats(Parser parser, Node node) {
-    if (node instanceof Statement statement) {
-      return statement;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Stats, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_STAT;
-    }
+  static Definition castIsaDef(Parser p, Node n) {
+    return (n instanceof Definition d && d.syntaxType().isSubTypeOf(BasicSyntaxType.ISA_DEFS))
+        ? d : castOrDummy(p, n, Definition.class, DUMMY_DEF, "IsaDefs");
+  }
+
+  static Statement castStat(Parser p, Node n) {
+    return castOrDummy(p, n, Statement.class, DUMMY_STAT, "Stat");
+  }
+
+  static Statement castStats(Parser p, Node n) {
+    return castOrDummy(p, n, Statement.class, DUMMY_STAT, "Stats");
   }
 
   static Node expandNode(Parser parser, Node node) {
