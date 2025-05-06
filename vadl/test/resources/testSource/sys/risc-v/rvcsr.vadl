@@ -102,7 +102,10 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
 //  register CSR : Regs<CsrImpl::ImplLength> change when implemented
   register CSR : CsrImplIndex -> Regs
 
-  exception IllegalInstruction = {}
+
+  exception IllegalInstruction = {
+
+  }
 
   model ECallInstr (name : Id, imm : Lit, excCode: Id) : IsaDefs = {
     instruction $name : Itype = { /* TODO: raise instr */ }  // ecall / ebreak instructions
@@ -179,10 +182,17 @@ processor Spike implements RV32IMZicsr = {
         MEM<4>(0x1000) := 0x00000297  // auipc t0, 0x0
         MEM<4>(0x1004) := 0x02828613  // addi a2, t0, 40
         // TODO: Replace this NOP by the correct instruction
-        // this processor has no zicsr extension
+        // this processor has no zicsr extension:   0xf1402573  csrr   a0, mhartid
         MEM<4>(0x1008) := 0x00000013  // addi x0, x0, 0
-        MEM<4>(0x100c) := 0x0202b583  // ld   a1, 32(t0)
-        MEM<4>(0x1010) := 0x0182b283  // ld   t0, 24(t0)
+
+        if MLen = 32 then {
+            MEM<4>(0x100c) := 0x0202a583  // lw   a1, 32(t0)
+            MEM<4>(0x1010) := 0x0182a283  // lw   t0, 24(t0)
+        } else {
+            MEM<4>(0x100c) := 0x0202b583  // ld   a1, 32(t0)
+            MEM<4>(0x1010) := 0x0182b283  // ld   t0, 24(t0)
+        }
+
         MEM<4>(0x1014) := 0x00028067  // jr   t0
         // store start_addr in memory (0x80000000)
         MEM<4>(0x1018) := 0x80000000  // lo32(start_addr)
