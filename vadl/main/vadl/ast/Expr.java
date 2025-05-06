@@ -140,6 +140,12 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
     return name;
   }
 
+  @Nullable
+  @Override
+  public Node target() {
+    return target;
+  }
+
   @Override
   public String toString() {
     return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
@@ -815,6 +821,12 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, IsI
     prettyPrint(0, sb);
     return sb.toString();
   }
+
+  @Nullable
+  @Override
+  public Node target() {
+    return null;
+  }
 }
 
 /**
@@ -897,6 +909,12 @@ final class MacroInstanceExpr extends Expr
     return sb.toString();
   }
 
+  @Nullable
+  @Override
+  public Node target() {
+    return null;
+  }
+
   @Override
   public MacroOrPlaceholder macroOrPlaceholder() {
     return macro;
@@ -955,6 +973,12 @@ final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPla
   @Override
   public String pathToString() {
     return "/* Match - can't be rendered! */";
+  }
+
+  @Nullable
+  @Override
+  public Node target() {
+    return null;
   }
 }
 
@@ -1015,6 +1039,12 @@ final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
     var sb = new StringBuilder();
     prettyPrint(0, sb);
     return sb.toString();
+  }
+
+  @Nullable
+  @Override
+  public Node target() {
+    return null;
   }
 }
 
@@ -1358,6 +1388,14 @@ sealed interface IsId extends IsSymExpr
   }
 
   String pathToString();
+
+  /**
+   * The target this id refers to. It is resolved during symbol resolving and
+   * is only valid for {@link Identifier} and {@link IdentifierPath}, which
+   * are the only two {@link IsId} subtypes that survive the {@link MacroExpander}.
+   */
+  @Nullable
+  Node target();
 }
 
 final class IdentifierPath extends Expr implements IsId {
@@ -1397,6 +1435,12 @@ final class IdentifierPath extends Expr implements IsId {
     StringBuilder sb = new StringBuilder();
     prettyPrint(0, sb);
     return sb.toString();
+  }
+
+  @Nullable
+  @Override
+  public Node target() {
+    return target;
   }
 
   //  @Override
