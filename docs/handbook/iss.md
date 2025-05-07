@@ -335,6 +335,6 @@ However, it’s enough to demonstrate how to run simple C programs.
 
 | Previous                  |                            Next |
 |:--------------------------|--------------------------------:|
-| [Tutorial](tutorial.html) | [LLVM Combiler Backend](lcb.md) |
+| [Tutorial](tutorial.html) | [LLVM Compiler Backend](lcb.md) |
 
 </div>
