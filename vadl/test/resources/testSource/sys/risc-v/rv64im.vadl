@@ -95,26 +95,6 @@ application binary interface ABI for RV64IM = {
       ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
    }
 
-   constant sequence( rd : Bits<5>, val : UInt<64> ) =
-   {
-      LUI { rd = rd, imm = to32AndHi( val ) }
-      ADDI { rd = rd, rs1 = rd, imm = to32AndLo ( val ) }
-      SLLI { rd = rd, rs1 = rd, sft = 16 }
-      ORI { rd = rd, rs1 = rd, imm = lowerHalfHi(val) }
-      SLLI { rd = rd, rs1 = rd, sft = 16 }
-      ORI { rd = rd, rs1 = rd, imm = lowerHalfLo(val) }
-   }
-
-  constant sequence( rd : Bits<5>, val : SInt<64> ) =
-   {
-      LUI { rd = rd, imm = to32AndHi( val ) }
-      ADDI { rd = rd, rs1 = rd, imm = to32AndLo ( val ) }
-      SLLI { rd = rd, rs1 = rd, sft = 16 }
-      ORI { rd = rd, rs1 = rd, imm = lowerHalfHi(val) }
-      SLLI { rd = rd, rs1 = rd, sft = 16 }
-      ORI { rd = rd, rs1 = rd, imm = lowerHalfLo(val) }
-   }
-
    constant sequence( rd : Bits<5>, imm : SInt<12> ) =
    {
       ADDI{ rd = rd, rs1 = 0, imm = imm }

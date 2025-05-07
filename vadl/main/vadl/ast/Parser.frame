@@ -144,10 +144,15 @@ class Errors {
 	}
 	
 	public void SynErr (int line, int col, int n) {
-		String s;
-		switch (n) {-->errors
-			default: s = "error " + n; break;
-		}
+		String s = ParserUtils.EXPECTED_STRS.length > n
+		  ? ParserUtils.EXPECTED_STRS[n] : null;
+		if (s != null) {
+		  s = "`" + s + "` expected";
+		} else {
+      switch (n) {-->errors
+        default: s = "error " + n; break;
+      }
+    }
 		printMsg(line, col, s);
 		count++;
 	}
