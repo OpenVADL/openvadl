@@ -34,6 +34,7 @@ instruction set architecture AAarch64Base = {
   using Bits9    = Bits< 9>           //  9 bit type
   using Bits12   = Bits<12>           // 12 bit type
   using Bits14   = Bits<14>           // 14 bit type
+  using Bits16   = Bits<16>           // 16 bit type
   using Bits19   = Bits<19>           // 19 bit type
   using Bits26   = Bits<26>           // 26 bit type
   using Instr    = Word               // instruction are 32 bit wide
@@ -175,6 +176,23 @@ instruction set architecture AAarch64Base = {
     , rm       [20..16] : Index       // 2nd source register (eventually shifted)
     , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
     , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  format ShiftRegFormat: Instr =      // variable shift register format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15..12]        // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , shift    [11..10]               // shift type (ROR is allowed)
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  format MovFormat: Instr =           // movk, movn, movz format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..23]               // opcode
+    , pos      [22,21]                // position of imm16 in destination (Pos00, Pos16, Pos32, Pos48)
+    , imm16    [20..5]  : Bits16      // immediate value shifted by (pos << 4)
     , rd       [4..0]   : Index       // destination register
     }
 
@@ -398,6 +416,44 @@ instruction set architecture AAarch64Base = {
     }
 
 
+// register shift models *******************************************************
+
+  model ShiftRegInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ShiftRegFormat =
+      X(rd) :=  VADL::$i.funct (X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>) as Bits as BitsX
+    encoding $i.id = { op = 0b0011'0101'1000'10, sf = SF::$size, shift = ShiftType::$i.opcode }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm))
+    }
+
+// movk, movn, movz models *****************************************************
+
+  enumeration Position: Bits2 = // position in destination register, do not reorder
+    { Pos00                     // 15..0
+    , Pos16                     // 31..16
+    , Pos32                     // 47..32
+    , Pos48                     // 63..48
+    }
+
+  model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
+    instruction ExtendId ($i.id, $pos): MovFormat = 
+      let xrd = X(rd) in
+        X(rd) := ($posex) as Bits<Size::$size> as BitsX
+    encoding ExtendId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
+    assembly ExtendId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', decimal(imm16),
+      match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
+    }
+
+  model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+            $MovInstr ($i; $size; Pos00; (xrd(63..16), imm16            ))
+    match: IsaDefs ( $size = WSize
+         => $MovInstr ($i; $size; Pos16; (xrd(63..32), imm16, xrd(15..0)))
+      ; _=> $MovInstr ($i; $size; Pos16; (xrd(63..32), imm16, xrd(15..0)))
+            $MovInstr ($i; $size; Pos32; (xrd(63..48), imm16, xrd(31..0)))
+            $MovInstr ($i; $size; Pos48; (             imm16, xrd(47..0)))
+      )
+    }
+
+
 // branch models ***************************************************************
 
   model BranchEncAsm (i: InstrNoFunct): IsaDefs = {
@@ -541,6 +597,13 @@ instruction set architecture AAarch64Base = {
   $InstrWXFlags       (AddSubExtInstr        ; (SUB    ; "sub"   ; 0b1'0101'1001    ; subsc            ))
   $InstrWXFlags       (AddSubImmInstr        ; (SUB    ; "sub"   ; 0b1'1000'10      ; subsc            ))
   $InstrWXFlags       (AddSubSftInstr        ; (SUB    ; "sub"   ; 0b1'0101'10      ; subsc            ))
+
+  $InstrWX            (ShiftRegInstr         ; (ASR    ; "asrv"  ; ASR              ; asr              ))
+  $InstrWX            (ShiftRegInstr         ; (LSL    ; "lslv"  ; LSL              ; lsl              ))
+  $InstrWX            (ShiftRegInstr         ; (LSR    ; "lsrv"  ; LSR              ; lsr              ))
+  $InstrWX            (ShiftRegInstr         ; (ROR    ; "rorv"  ; ROR              ; ror              ))
+
+  $InstrWX            (MovKInstr             ; (MOVK   ; "movk"  ; 0b1110'0101      ; unused           ))
 
   $BranchInstr        (                        (B      ; "b"     ; 0b0001'01                           ))
   $BranchLinkInstr    (                        (BL     ; "bl"    ; 0b1001'01                           ))
