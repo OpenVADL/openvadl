@@ -17,6 +17,7 @@
 package vadl.iss.passes;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.error.Diagnostic.warning;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
@@ -94,6 +96,13 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
     AtomicInteger i = new AtomicInteger();
     var res = new ArrayList<Result.Reg>();
     for (var reg : isa.registerTensors()) {
+      if (!isStandard(reg.resultType().bitWidth())) {
+        DeferredDiagnosticStore.add(warning("Failed GDB register support", reg)
+            .description("No GDB access could be generated for this register.")
+            .note("Currently only 8, 16, 32, 64 bit registers are supported.")
+        );
+        continue;
+      }
       getRegTensor(reg, i.get(), pc).forEach(r -> {
         res.add(r);
         i.getAndIncrement();
@@ -139,6 +148,10 @@ public class IssGdbInfoExtractionPass extends AbstractIssPass {
       res = next;                             // move on to next dimension
     }
     return res;
+  }
+
+  private static boolean isStandard(int width) {
+    return width == 8 || width == 16 || width == 32 || width == 64;
   }
 }
 

@@ -25,7 +25,6 @@ import vadl.cppCodeGen.mixins.CDefaultMixins;
 import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.javaannotations.DispatchFor;
 import vadl.javaannotations.Handler;
@@ -50,7 +49,7 @@ public class IssTranslateCodeGenerator implements
     // default implementations
     CDefaultMixins.All, IssCMixins.Default,
     // invalid nodes
-    IssCMixins.Invalid, CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads,
+    CInvalidMixins.SideEffect, CInvalidMixins.ResourceReads,
     CInvalidMixins.InstrCall, CInvalidMixins.HardwareRelated {
 
   private Instruction insn;
@@ -129,11 +128,6 @@ public class IssTranslateCodeGenerator implements
   void impl(CGenContext<Node> ctx, FieldAccessRefNode node) {
     ctx.wr("a->");
     ctx.wr(node.fieldAccess().simpleName());
-  }
-
-  @Handler
-  void handle(CGenContext<Node> ctx, ExprSaveNode toHandle) {
-    throw new UnsupportedOperationException("Type ExprSaveNode not yet implemented");
   }
 
   @Handler
