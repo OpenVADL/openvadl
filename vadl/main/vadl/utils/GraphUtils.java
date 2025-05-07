@@ -34,6 +34,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -115,6 +116,20 @@ public class GraphUtils {
             return Stream.concat(Stream.of(i), getInputNodes(i, filter));
           }
           return getInputNodes(i, filter);
+        });
+  }
+
+  /**
+   * Retrieve all usages of the given node by unrolling all let nodes.
+   * If a usage node is a let node, all usages of the let node are recursively added as well.
+   */
+  public static Stream<Node> getUsagesByUnrollingLets(ExpressionNode node) {
+    return node.usages()
+        .flatMap(u -> {
+          if (u instanceof LetNode letNode) {
+            return getUsagesByUnrollingLets(letNode);
+          }
+          return Stream.of(u);
         });
   }
 
