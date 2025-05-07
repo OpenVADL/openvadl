@@ -33,8 +33,7 @@ import vadl.lcb.AbstractLcbTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
-@Disabled
-public class EmbenchSpikeRiscv64SimulationTest extends AbstractLcbTest {
+public class EmbenchQemuRiscv64SimulationTest extends AbstractLcbTest {
 
   @Test
   void runO0() throws DuplicatedPassKeyException, IOException {

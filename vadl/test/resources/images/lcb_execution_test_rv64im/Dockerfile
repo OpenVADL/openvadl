@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/lcb-execution-test-rv64im-base-image@sha256:868deebbe24690cd4e32e318229295cef094e03dfd39e3fa462a0bda922ccbc7
+FROM ghcr.io/openvadl/lcb-execution-test-rv64im-base-image@sha256:4d4cc2e6fdff191b1ec7fe0a3ed283a0cd338759bb4219f0ef11a325838f7748
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
 ARG UPSTREAM_BUILD_TARGET
