@@ -433,7 +433,7 @@ public class PassOrders {
         .add(new IssGdbInfoExtractionPass(config))
     ;
 
-    addDecodePasses(order, config);
+//    addDecodePasses(order, config);
 
     addHtmlDump(order, config, "ISS Lowering Dump",
         "This dump is executed after the iss transformation passes were executed.",
