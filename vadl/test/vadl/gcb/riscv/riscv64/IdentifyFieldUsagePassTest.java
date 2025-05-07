@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.gcb.passes;
+package vadl.gcb.riscv.riscv64;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 import vadl.gcb.AbstractGcbTest;
+import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Format;
@@ -273,19 +274,5 @@ public class IdentifyFieldUsagePassTest extends AbstractGcbTest {
         .filter(
             registerUsageAggregate -> registerUsageAggregate.identifier.simpleName().equals(reg))
         .findFirst();
-  }
-
-  private static @Nonnull Optional<Format.Field> getImmediate(String imm,
-                                                              List<Format.Field> immediates) {
-    return immediates.stream().filter(x -> x.identifier.simpleName().equals(imm)).findFirst();
-  }
-
-  @Nullable
-  private Instruction getInstrByName(String instruction,
-                                     Specification specification) {
-    return specification.isa().map(x -> x.ownInstructions().stream()).orElse(Stream.empty())
-        .filter(x -> x.simpleName().equals(instruction))
-        .findFirst()
-        .get();
   }
 }
