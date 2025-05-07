@@ -275,18 +275,4 @@ public class IdentifyFieldUsagePassTest extends AbstractGcbTest {
             registerUsageAggregate -> registerUsageAggregate.identifier.simpleName().equals(reg))
         .findFirst();
   }
-
-  private static @Nonnull Optional<Format.Field> getImmediate(String imm,
-                                                              List<Format.Field> immediates) {
-    return immediates.stream().filter(x -> x.identifier.simpleName().equals(imm)).findFirst();
-  }
-
-  @Nullable
-  private Instruction getInstrByName(String instruction,
-                                     Specification specification) {
-    return specification.isa().map(x -> x.ownInstructions().stream()).orElse(Stream.empty())
-        .filter(x -> x.simpleName().equals(instruction))
-        .findFirst()
-        .get();
-  }
 }
