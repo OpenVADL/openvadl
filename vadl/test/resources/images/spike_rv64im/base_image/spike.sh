@@ -1,1 +1,0 @@
-/src/llvm-final/build/bin/clang --target=${TARGET} -S -O${OPT_LEVEL} -fPIC -c /src/inputs/$INPUT -o /tmp/main.s && chmod 777 /tmp/main.s && cat /tmp/main.s && sh /work/lcb_wrapper.sh
