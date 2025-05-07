@@ -1072,7 +1072,7 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
           .locationDescription(this, "Zero annotation must be of form %s.", usageString())
           .build();
     }
-    if (!(callExpr.computedTarget == def)) {
+    if (!(callExpr.computedTarget() == def)) {
       throw error("Invalid zero annotation", callExpr.target)
           .locationDescription(callExpr.target,
               "Zero annotation target must be the annotated register.")
