@@ -19,7 +19,7 @@ jobs:
             runner: self-hosted-x64
     with:
       image: ghcr.io/openvadl/llvm17-base
-      context: vadl/test/resources/images/llvm_riscv/llvm17_base_image
+      context: docker/lcb/llvm17_base_image
       platform: ${{ matrix.target.platform }}
       runner: ${{ matrix.target.runner }}
 
