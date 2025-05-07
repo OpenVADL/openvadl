@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.gcb.passes;
+package vadl.gcb.riscv.riscv64;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 import vadl.gcb.AbstractGcbTest;
+import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Format;
