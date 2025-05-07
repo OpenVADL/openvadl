@@ -134,17 +134,19 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
     // mstatus.mpp  := PRV::M // we only support machine mode at the moment
     // mstatus.mie  := 0
     // clear two lsb
-    PC := mtvec & ~0x3
+    PC := mtvec
   }
 
   //// INSTRUCTIONS ////
 
-  // Environment Breakpoint
-  instruction EBREAK : Itype =
-    raise Exc(ExcCode::BREAKPOINT)
+  model ECallInstr (name : Id, imm : Lit, excCode: Id) : IsaDefs = {
+    instruction $name : Itype = raise Exc(ExcCode::$excCode)                    // ecall / ebreak instructions
+    encoding $name = {opcode = 0b111'0011, funct3 = 0b000, rd = 0b0'0000, rs1 = 0b0'0000, imm = $imm}
+    assembly $name = (mnemonic)
+    }
 
-  encoding EBREAK = { opcode = 0b111'0011, funct3 = 0b000, imm = 0b0000'0000'0001, rs1 = 0b00000, rd = 0b00000 }
-  assembly EBREAK = mnemonic
+  $ECallInstr (ECALL ; 0; M_ECALL)        // environment (sys) call
+  $ECallInstr (EBREAK; 1; BREAKPOINT)     // environment (sys) break
 
   // return from trap
   instruction MRET: Itype = {
@@ -158,15 +160,6 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
   assembly MRET = mnemonic
 
   //// CSR INSTRUCTIONS ////
-
-  model ECallInstr (name : Id, imm : Lit, excCode: Id) : IsaDefs = {
-    instruction $name : Itype = { /* TODO: raise instr */ }  // ecall / ebreak instructions
-    encoding $name = {opcode = 0b111'0011, funct3 = 0b000, rd = 0b0'0000, rs1 = 0b0'0000, imm = $imm}
-    assembly $name = (mnemonic)
-    }
-
-  $ECallInstr (ECALL ; 0; M_ECALL)        // environment (sys) call
-  $ECallInstr (EBREAK; 1; BREAKPOINT)     // environment (sys) break
 
   // name = instruction id, funct3 opcode, offset = 4 for immediate else 0, csrStat = behavior
   model CsrBaseInstr (name : Id, funct3 : Bin, offset : Int, csrStat : Stat) : IsaDefs = {
