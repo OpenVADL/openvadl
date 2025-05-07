@@ -1,0 +1,37 @@
+[qemu]
+plugin="./qemu-setup/build/contrib/plugins/libcosimulation.so"
+endian="big"
+
+[[qemu.clients]]
+exec="qemu-system-rv64im"
+additional_args = [
+	"-nographic",
+	"-M virt"
+	# "-s",
+	# "-S",
+]
+
+[[qemu.clients]]
+exec="qemu-system-riscv64"
+additional_args = [
+	"-nographic",
+]
+
+[testing]
+test_exec="./qemu-setup/build/addw.elf"
+
+[testing.protocol]
+mode = "lockstep" 
+layer = "exec"
+skip_n_instructions = 0
+take_all_instructions = false
+take_n_instructions = 0
+
+[testing.protocol.out]
+dir = "./out"
+format = "json"
+
+[logging]
+enable = true 
+level = "DEBUG"
+dir = "./log"

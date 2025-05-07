@@ -1,8 +1,11 @@
-#include "sys/shm.h"
+// References:
+// other plugins:
+// https://gitlab.com/qemu-project/qemu/-/blob/master/contrib/plugins
+
+#include <assert.h>
 #include <fcntl.h>
 #include <gio/gio.h>
 #include <glib.h>
-#include <json-glib/json-glib.h>
 #include <qemu-plugin.h>
 #include <semaphore.h>
 #include <stdio.h>
@@ -14,18 +17,44 @@
 
 QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 
+// adjust as needed
 #define SHMSTRING_MAX_LEN 256
 #define TBINFO_ENTRIES 1024
 #define TBINSNINFO_ENTRIES 32
 
+#define MAX_REGISTER_NAME_SIZE 64
+#define MAX_REGISTER_DATA_SIZE 64
+#define MAX_CPU_REGISTERS 256
+#define MAX_CPU_COUNT 8
+
 static qemu_plugin_id_t plugin_id;
-static unsigned long bb_count;
-static unsigned long insn_count;
 
 typedef struct {
   size_t len;
   char value[SHMSTRING_MAX_LEN];
 } SHMString;
+
+typedef struct {
+  struct qemu_plugin_register *handle;
+  const char *name;
+  const char *feature;
+} Register;
+
+typedef struct {
+  GPtrArray *registers;
+} CPU;
+
+typedef struct {
+  int size;
+  uint8_t data[MAX_REGISTER_DATA_SIZE];
+  SHMString name;
+} SHMRegister;
+
+typedef struct {
+  unsigned int idx;
+  size_t registers_size;
+  SHMRegister registers[MAX_CPU_REGISTERS];
+} SHMCPU;
 
 typedef struct {
   uint64_t pc;
@@ -42,18 +71,105 @@ typedef struct {
   TBInsnInfo insns_info[TBINSNINFO_ENTRIES];
 } TBInfo;
 
+typedef enum {
+  INVALID_MODE = 0,
+  TB_MODE = 1,
+  EXEC_MODE = 2,
+} ExecMode;
+
 typedef struct {
   const gchar *client_id;
+  ExecMode mode;
 } Arguments;
 
 typedef struct {
   size_t size;
   TBInfo infos[TBINFO_ENTRIES];
+} BrokerSHM_TB;
+
+typedef struct {
+  // if bit at cpu_idx = 1 then data is set
+  int init_mask;
+  SHMCPU cpus[MAX_CPU_COUNT];
+} BrokerSHM_Exec;
+
+typedef union {
+  BrokerSHM_TB shm_tb;
+  BrokerSHM_Exec shm_exec;
 } BrokerSHM;
+
+static GArray *cpus;
+static GRWLock cpus_lock;
 
 static Arguments args;
 static BrokerSHM *shm;
 static sem_t *sem_client, *sem_server;
+
+static CPU *get_cpu(int vcpu_index) {
+  CPU *c;
+  g_rw_lock_reader_lock(&cpus_lock);
+  c = &g_array_index(cpus, CPU, vcpu_index);
+  g_rw_lock_reader_unlock(&cpus_lock);
+
+  return c;
+}
+
+static GPtrArray *registers_init(int vcpu_index) {
+  GPtrArray *registers = g_ptr_array_new();
+  g_autoptr(GArray) reg_list = qemu_plugin_get_registers();
+
+  for (int r = 0; r < reg_list->len; r++) {
+    qemu_plugin_reg_descriptor *rd =
+        &g_array_index(reg_list, qemu_plugin_reg_descriptor, r);
+    Register *reg = g_new0(Register, 1);
+    reg->handle = rd->handle;
+    reg->feature = rd->feature;
+    reg->name = rd->name;
+    g_ptr_array_add(registers, (gpointer)reg);
+  }
+
+  if (registers->len == 0) {
+    g_ptr_array_free(registers, TRUE);
+    return NULL;
+  }
+
+  return registers;
+}
+
+static SHMCPU get_cpu_state(unsigned int cpu_index) {
+  g_rw_lock_reader_lock(&cpus_lock);
+  CPU *c = get_cpu(cpu_index);
+  g_rw_lock_reader_unlock(&cpus_lock);
+
+  SHMCPU shm_cpu = {};
+  shm_cpu.idx = cpu_index;
+  shm_cpu.registers_size = c->registers->len;
+
+  // NOTE: The register-count for each cpu is checked once at init. See:
+  // vcpu_init
+  for (int reg_idx = 0; reg_idx < c->registers->len; reg_idx++) {
+    Register *reg = c->registers->pdata[reg_idx];
+    SHMRegister shm_reg = {};
+    GByteArray *buf = g_byte_array_new();
+
+    shm_reg.size = qemu_plugin_read_register(reg->handle, buf);
+
+    if (reg->name != NULL) {
+      strncpy(shm_reg.name.value, reg->name, SHMSTRING_MAX_LEN);
+      shm_reg.name.len = strlen(shm_reg.name.value);
+    }
+
+    if (buf->data != NULL) {
+      memcpy(shm_reg.data, buf->data, shm_reg.size);
+    }
+
+    g_free(buf);
+
+    shm_cpu.registers[reg_idx] = shm_reg;
+  }
+
+  return shm_cpu;
+};
 
 static void open_sems(void) {
   gchar *sem_client_name =
@@ -102,34 +218,7 @@ static BrokerSHM *connect_to_broker(void) {
   return shm;
 }
 
-static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
-  // printf("vcpu exec\n");
-  // GArray *regs = qemu_plugin_get_registers();
-  // printf("in vcpu_tb_exec with: %d registers\n", regs->len);
-  // for (size_t i = 0; i < regs->len; i++) {
-  //   printf("starting to print reg: %lu\n", i);
-  //   const qemu_plugin_reg_descriptor *desc = 
-  //       g_array_index(regs, qemu_plugin_reg_descriptor *, i);
-  //
-  //   if()
-  //   
-  //   printf("starting to print reg\n");
-  //   printf("ptr: %p\n", desc);
-  //   printf("Register %s: ", desc->name);
-  //
-  //   // Read register value
-  //   GByteArray *buf = g_byte_array_new();
-  //   qemu_plugin_read_register(desc->handle, buf);
-  //   printf("%lu\n", *(uint64_t *)buf->data);
-  //   printf("done to print reg: %lu\n", i);
-  // }
-  //
-  // g_array_free(regs, TRUE);
-}
-
-static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
-  sem_wait(sem_client);
-
+static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
   uint64_t pc = qemu_plugin_tb_vaddr(tb);
   size_t insns = qemu_plugin_tb_n_insns(tb);
 
@@ -137,70 +226,84 @@ static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
   tbinfo.pc = pc;
   tbinfo.insns = insns;
 
+  // TODO: check size of tbinfo.insns > insns
   for (int i = 0; i < insns; i++) {
-    // qemu_plugin_insn_data();
     struct qemu_plugin_insn *insn = qemu_plugin_tb_get_insn(tb, i);
-    uint64_t insn_pc = qemu_plugin_insn_vaddr(insn);
-    size_t insn_size = qemu_plugin_insn_size(insn);
+
+    TBInsnInfo insn_info = {};
+    insn_info.pc = qemu_plugin_insn_vaddr(insn);
+    insn_info.size = qemu_plugin_insn_size(insn);
+
     const char *insn_symbol = qemu_plugin_insn_symbol(insn);
-    void *insn_hwaddr = qemu_plugin_insn_haddr(insn);
-    char *insn_disas = qemu_plugin_insn_disas(insn);
-
-    TBInsnInfo insn_info;
-    insn_info.pc = insn_pc;
-    insn_info.size = insn_size;
-
-    SHMString symbol = {};
-    SHMString hwaddr = {};
-    SHMString disas = {};
-
     if (insn_symbol != NULL) {
-      strncpy(symbol.value, insn_symbol, SHMSTRING_MAX_LEN);
-      symbol.len = strlen(symbol.value);
+      strncpy(insn_info.symbol.value, insn_symbol, SHMSTRING_MAX_LEN);
+      insn_info.symbol.len = strlen(insn_info.symbol.value);
     }
 
+    void *insn_hwaddr = qemu_plugin_insn_haddr(insn);
     if (insn_hwaddr != NULL) {
       char *hwaddrfmt = g_strdup_printf("%p", insn_hwaddr);
-      strncpy(hwaddr.value, hwaddrfmt, SHMSTRING_MAX_LEN);
-      hwaddr.len = strlen(hwaddr.value);
+      strncpy(insn_info.hwaddr.value, hwaddrfmt, SHMSTRING_MAX_LEN);
+      insn_info.hwaddr.len = strlen(insn_info.hwaddr.value);
     }
 
+    char *insn_disas = qemu_plugin_insn_disas(insn);
     if (insn_disas != NULL) {
-      strncpy(disas.value, insn_disas, SHMSTRING_MAX_LEN);
-      disas.len = strlen(disas.value);
+      strncpy(insn_info.disas.value, insn_disas, SHMSTRING_MAX_LEN);
+      insn_info.disas.len = strlen(insn_info.disas.value);
     }
-
-    insn_info.symbol = symbol;
-    insn_info.hwaddr = hwaddr;
-    insn_info.disas = disas;
 
     tbinfo.insns_info[i] = insn_info;
   }
 
   tbinfo.insns_info_size = insns;
+  return tbinfo;
+}
 
-  shm->infos[shm->size] = tbinfo;
-  shm->size = shm->size + 1;
+static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
+  if (args.mode == EXEC_MODE) {
+    sem_wait(sem_client);
 
-  qemu_plugin_register_vcpu_tb_exec_cb(tb, vcpu_tb_exec, QEMU_PLUGIN_CB_R_REGS,
-                                       NULL);
+    // struct qemu_plugin_tb *tb = udata;
+    // TBInfo tbinfo = get_tb_info(tb);
+    SHMCPU cpu = get_cpu_state(cpu_index);
 
-  sem_post(sem_server);
+    shm->shm_exec.cpus[cpu_index] = cpu;
+    shm->shm_exec.init_mask |= (1 << cpu_index);
+
+    sem_post(sem_server);
+  }
+}
+
+static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
+  if (args.mode == TB_MODE) {
+    sem_wait(sem_client);
+
+    shm->shm_tb.infos[shm->shm_tb.size] = get_tb_info(tb);
+    shm->shm_tb.size = shm->shm_tb.size + 1;
+
+    sem_post(sem_server);
+  } else if (args.mode == EXEC_MODE) {
+    qemu_plugin_register_vcpu_tb_exec_cb(tb, vcpu_tb_exec,
+                                         QEMU_PLUGIN_CB_R_REGS, NULL);
+  }
 }
 
 static void vcpu_init(qemu_plugin_id_t id, unsigned int vcpu_index) {
-    // CPU *c;
-    //
-    // g_rw_lock_writer_lock(&expand_array_lock);
-    // if (vcpu_index >= cpus->len) {
-    //     g_array_set_size(cpus, vcpu_index + 1);
-    // }
-    // g_rw_lock_writer_unlock(&expand_array_lock);
-    //
-    // c = get_cpu(vcpu_index);
-    // c->last_exec = g_string_new(NULL);
-    // c->registers = registers_init(vcpu_index);
+  g_rw_lock_writer_lock(&cpus_lock);
+  if (vcpu_index >= cpus->len) {
+    g_array_set_size(cpus, vcpu_index + 1);
+  }
+  g_rw_lock_writer_unlock(&cpus_lock);
 
+  CPU *c = get_cpu(vcpu_index);
+  c->registers = registers_init(vcpu_index);
+  if (c->registers->len >= MAX_CPU_REGISTERS) {
+    printf("Invalid plugin state: Running on a CPU with more than %d "
+           "registers: register-count: %d",
+           MAX_CPU_REGISTERS, c->registers->len);
+    exit(EXIT_FAILURE);
+  } 
 }
 
 static void vcpu_exit(qemu_plugin_id_t id, unsigned int vcpu_index) {
@@ -208,10 +311,23 @@ static void vcpu_exit(qemu_plugin_id_t id, unsigned int vcpu_index) {
   fflush(stdout);
 }
 
+static ExecMode parse_mode(const char *mode_str) {
+  if (g_strcmp0(mode_str, "tb")) {
+    return EXEC_MODE;
+  } else if (g_strcmp0(mode_str, "execb")) {
+    return TB_MODE;
+  } else {
+    return INVALID_MODE;
+  }
+}
+
 QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
                                            const qemu_info_t *info, int argc,
                                            char **argv) {
   printf("::qemu_plugin_install\n");
+
+  cpus = g_array_sized_new(true, true, sizeof(CPU),
+                           info->system_emulation ? info->system.max_vcpus : 1);
 
   // parse options
   for (int i = 0; i < argc; i++) {
@@ -221,6 +337,9 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
     const char *argvalue = tokens[1];
     if (g_strcmp0(argname, "client-id") == 0) {
       args.client_id = strdup(argvalue);
+    } else if (g_strcmp0(argname, "mode") == 0) {
+      args.mode = parse_mode(argvalue);
+      printf("running in mode: %d\n", args.mode);
     } else {
       fprintf(stderr, "option parsing failed: %s\n", p);
       return EXIT_FAILURE;
@@ -234,6 +353,12 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
     return EXIT_FAILURE;
   }
 
+  if (args.mode == INVALID_MODE) {
+    fprintf(stderr, "invalid or missing execution mode, option mode=<ExecMode> "
+                    "is required");
+    return EXIT_FAILURE;
+  }
+
   shm = connect_to_broker();
   if (shm == NULL) {
     return EXIT_FAILURE;
@@ -242,6 +367,10 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
   open_sems();
   if (sem_client == NULL || sem_server == NULL) {
     return EXIT_FAILURE;
+  }
+
+  if (args.mode == EXEC_MODE) {
+    shm->shm_exec.init_mask = 0;
   }
 
   plugin_id = id;
