@@ -1757,10 +1757,6 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     args.values.addAll(newArgs);
   }
 
-  List<Expr> argIndicesFlatten() {
-    return argsIndices.stream().flatMap(a -> a.values.stream()).toList();
-  }
-
 
   @Override
   public IsId path() {

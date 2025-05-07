@@ -61,8 +61,9 @@ public abstract class AsmTestBuilder {
     );
   }
 
-  public void addLabel(String label) {
+  public AsmTestBuilder addLabel(String label) {
     add("%s:", label);
+    return this;
   }
 
   @FormatMethod

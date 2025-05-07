@@ -367,6 +367,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var result = expr.accept(this);
     result.setSourceLocationIfNotSet(expr.location());
     expressionCache.put(expr, result);
+    result.ensure(!(result.type() instanceof ConstantType),
+        "Constant types must not exist in the VIAM");
     return result;
   }
 

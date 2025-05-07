@@ -18,12 +18,13 @@ package vadl.iss;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 import vadl.DockerExecutionTest;
 import vadl.configuration.IssConfiguration;
 import vadl.pass.PassOrders;
@@ -90,7 +91,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         }
 
         // generate iss image from the output path
-        return getIssImage(issOutputPath, configuration, "riscv64-softmmu");
+        return getIssImage(issOutputPath, configuration, "riscv64-softmmu", "riscv32-softmmu");
       } catch (IOException | DuplicatedPassKeyException e) {
         throw new RuntimeException(e);
       }
@@ -102,13 +103,13 @@ public abstract class QemuIssTest extends DockerExecutionTest {
    * This will produce a new image for the given generated iss sources.
    *
    * @param generatedIssSources the path to the generated ISS/QEMU sources.
-   * @param referenceTarget     The reference target that should also be compiled
+   * @param referenceTargets    The reference targets that should also be build
    *                            (e.g. riscv64-softmmu)
    * @return a new image that builds the ISS at build time.
    */
   private ImageFromDockerfile getIssImage(Path generatedIssSources,
                                           IssConfiguration configuration,
-                                          @Nullable String referenceTarget
+                                          String... referenceTargets
   ) {
 
     // get redis cache for faster compilation using sccache
@@ -117,7 +118,8 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     var targetName = configuration.targetName().toLowerCase();
     var softmmuTarget = targetName + "-softmmu";
     var qemuBin = "qemu-system-" + targetName;
-    var refTarget = referenceTarget == null ? "" : "," + referenceTarget;
+    var refTargetString = Arrays.stream(referenceTargets).collect(Collectors.joining(","));
+    var refTarget = refTargetString.isEmpty() ? "" : "," + refTargetString;
 
     var dockerImage = new ImageFromDockerfile()
         .withDockerfileFromBuilder(d -> {
