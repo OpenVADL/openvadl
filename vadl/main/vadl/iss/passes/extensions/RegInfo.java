@@ -67,7 +67,7 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
   }
 
   public String valueCType() {
-    return CppTypeMap.getCppTypeNameByVadlType(reg().resultType(reg().maxNumberOfAccessIndices()));
+    return CppTypeMap.nextFittingUInt(reg().resultType(reg().maxNumberOfAccessIndices()));
   }
 
   @Override
