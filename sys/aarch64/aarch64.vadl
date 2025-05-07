@@ -635,3 +635,7 @@ instruction set architecture AAarch64Base = {
   $StoreInstr         (MemoryUnscaledInstr   ; (STUR   ; "stur"  ; 0b111'000'000                       ))
 
 }
+
+processor Virt implements AAarch64Base = {
+
+}
