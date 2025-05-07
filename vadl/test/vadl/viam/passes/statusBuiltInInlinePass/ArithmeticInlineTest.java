@@ -26,7 +26,6 @@ import vadl.viam.Constant;
 
 public class ArithmeticInlineTest extends StatusBuiltinInlineTest {
 
-
   // 32-bit tests Created with: https://godbolt.org/z/E4MYY5W15
   @TestFactory
   public Stream<DynamicTest> addsTests() {
