@@ -19,8 +19,10 @@ package vadl.iss.passes.tcgLowering.nodes;
 import java.util.List;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.javaannotations.viam.DataValue;
+import vadl.javaannotations.viam.Input;
+import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * Deposit t2 as a bitfield into t1, placing the result in dest().
@@ -40,27 +42,27 @@ import vadl.viam.graph.Node;
  */
 public class TcgDepositNode extends TcgBinaryOpNode {
 
-  @DataValue
-  private int pos;
+  @Input
+  private ExpressionNode pos;
 
-  @DataValue
-  private int len;
+  @Input
+  private ExpressionNode len;
 
   /**
    * Constructs a TCG deposit node.
    */
   public TcgDepositNode(TcgVRefNode dest,
-                        TcgVRefNode t1, TcgVRefNode t2, int pos, int len) {
+                        TcgVRefNode t1, TcgVRefNode t2, ExpressionNode pos, ExpressionNode len) {
     super(dest, t1, t2);
     this.pos = pos;
     this.len = len;
   }
 
-  public int pos() {
+  public ExpressionNode pos() {
     return pos;
   }
 
-  public int len() {
+  public ExpressionNode len() {
     return len;
   }
 
@@ -72,7 +74,7 @@ public class TcgDepositNode extends TcgBinaryOpNode {
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
     return tcgFunctionName() + "(" + firstDest().varName() + ", " + arg1.varName() + ", "
-        + arg2.varName() + ", " + pos + ", " + len + ");";
+        + arg2.varName() + ", " + nodeToCCode.apply(pos) + ", " + nodeToCCode.apply(len) + ");";
   }
 
   @Override
@@ -86,9 +88,16 @@ public class TcgDepositNode extends TcgBinaryOpNode {
   }
 
   @Override
-  protected void collectData(List<Object> collection) {
-    super.collectData(collection);
+  protected void collectInputs(List<Node> collection) {
+    super.collectInputs(collection);
     collection.add(pos);
     collection.add(len);
+  }
+
+  @Override
+  protected void applyOnInputsUnsafe(GraphVisitor.Applier<Node> visitor) {
+    super.applyOnInputsUnsafe(visitor);
+    pos = visitor.apply(this, pos, ExpressionNode.class);
+    len = visitor.apply(this, len, ExpressionNode.class);
   }
 }

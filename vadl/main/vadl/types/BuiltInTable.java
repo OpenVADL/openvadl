@@ -1468,7 +1468,7 @@ public class BuiltInTable {
 
     @Override
     public String toString() {
-      return "VADL::" + name + signature;
+      return name + signature;
     }
 
     public List<Class<? extends Type>> argTypeClasses() {
