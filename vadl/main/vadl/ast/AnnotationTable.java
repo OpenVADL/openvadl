@@ -1058,6 +1058,10 @@ class ExprAnnotation extends Annotation {
  * The {@code [ zero : <register>(<expr>) ]} annotation.
  * This is its own class, as the typechecking is rather complex and determines
  * new properties.
+ * <pre>{@code
+ * [ zero : X(0) ]
+ * register X: Bits<5> -> Bits<64>
+ * }</pre>
  */
 class ZeroConstraintAnnotation extends ExprAnnotation {
   @LazyInit
@@ -1072,7 +1076,7 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
           .locationDescription(this, "Zero annotation must be of form %s.", usageString())
           .build();
     }
-    if (!(callExpr.computedTarget == def)) {
+    if (!(callExpr.computedTarget() == def)) {
       throw error("Invalid zero annotation", callExpr.target)
           .locationDescription(callExpr.target,
               "Zero annotation target must be the annotated register.")
@@ -1081,7 +1085,7 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
     }
 
 
-    var args = callExpr.argIndicesFlatten();
+    var args = callExpr.argsIndices.stream().flatMap(a -> a.values.stream()).toList();
     // FIXME: Ones we have multi dimensional registers,
     //   we must loose this restriction, so that there can be multiple indices set.
     if (args.size() != 1) {

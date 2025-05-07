@@ -79,7 +79,7 @@ public class AnnotationTest {
           %s
         
           %s
-          register file X : Bits<5> -> Bits<32>
+          register X : Bits<5> -> Bits<32>
         }
         """.formatted(otherDefs == null ? "" : otherDefs, annotation);
   }
@@ -106,7 +106,7 @@ public class AnnotationTest {
 
   @Test
   void zeroAnnoInvalidTarget2() {
-    var prog = zeroExtendTest("[ zero : Y(1)]", "register file Y: Bits<5> -> Bits<64>");
+    var prog = zeroExtendTest("[ zero : Y(1)]", "register Y: Bits<5> -> Bits<64>");
     var ast = VadlParser.parse(prog);
     var typechecker = new TypeChecker();
     var diag = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));

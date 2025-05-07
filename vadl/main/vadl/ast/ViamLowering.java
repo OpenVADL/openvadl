@@ -1387,16 +1387,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // now we add the dimensions of the form T<d0><d1>..
     dimensions.add(dimFromType(dimensions.size(), resultType));
 
-    // FIXME: Remove this and add it using the [zero: ..] annotation
-    var constraints = new ArrayList<RegisterTensor.Constraint>();
-    if (type instanceof ConcreteRelationType relType) {
-      var zeroConstraint = new RegisterTensor.Constraint(
-          List.of(Constant.Value.of(0, relType.argTypes().getFirst().asDataType())),
-          Constant.Value.of(0, resultType));
-      constraints.add(zeroConstraint);
-    }
-
-
     var reg = new RegisterTensor(
         generateIdentifier(definition.viamId, definition.identifier()),
         dimensions
