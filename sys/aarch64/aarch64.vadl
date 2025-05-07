@@ -184,7 +184,7 @@ instruction set architecture AArch64Base = {
   // register shift expression, encoding elements, assembly string expression
   record RegShift (ex: Ex, enc: Encs, asm: Ex)
 
-  // register size (WSize, XSize), access size (Byte, Half, Word, XWord), 
+  // register size (WSize, XSize), access size (Byte, Half, Word, XWord),
   // mnemonic extension ("b", "sb", "h", "sh", "sw"), opc, memory statement
   record Memory  (regsize: Id, accsize: Id, mext: Str, opc: Lit, stmt: Stat)
 
@@ -271,7 +271,7 @@ instruction set architecture AArch64Base = {
         }
     //[raise Undefined : imm3(2) = 1 && imm3(1..0) != 0]
     encoding ExtendId ($i.id, $extId) = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, option = ExtendType::$optId, $enc }
-    assembly ExtendId ($i.id, $extId) = ( $i.mnemo, $f.mext, ' ', ExtendId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd), 
+    assembly ExtendId ($i.id, $extId) = ( $i.mnemo, $f.mext, ' ', ExtendId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
                        ', ', ExtendId($size, "SP")(rn), ', ', $asm )
     }
 
@@ -777,7 +777,7 @@ instruction set architecture AArch64Base = {
 
 // reverse bits / bytes model **************************************************
 
-  function revBitsWSize (bits: BitsW) -> BitsW = bits 
+  function revBitsWSize (bits: BitsW) -> BitsW = bits
     ( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
      16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31)
 
