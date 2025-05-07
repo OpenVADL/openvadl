@@ -16,6 +16,8 @@
 
 package vadl.iss.passes;
 
+import static vadl.error.DiagUtils.throwNotAllowed;
+
 import com.google.errorprone.annotations.FormatMethod;
 import java.io.IOException;
 import java.util.Collections;
@@ -240,7 +242,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(TupleGetFieldNode toHandle) {
-    throw new UnsupportedOperationException("Type TupleGetFieldNode not yet implemented");
+    throwNotAllowed(toHandle, "Tuple GetFieldNode");
   }
 
   @Handler
@@ -263,7 +265,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(ReadArtificialResNode toHandle) {
-    throw new UnsupportedOperationException("Type ReadArtificialResNode not yet implemented");
+    // do nothing
   }
 
   @Handler
@@ -323,7 +325,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(SliceNode toHandle) {
-    throw new UnsupportedOperationException("Type SliceNode not yet implemented");
+    // do nothing
   }
 
 
@@ -560,6 +562,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   @Override
   public void handleCLS(BuiltInCall input) {
     throw graphError(input, "Normalization not yet implemented for this built-in");
+  }
+
+  @Override
+  public void handleConcat(BuiltInCall input) {
+    // do nothing (result is already fine)
   }
 
 
