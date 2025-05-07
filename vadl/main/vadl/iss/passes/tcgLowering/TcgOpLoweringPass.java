@@ -531,7 +531,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(ReadArtificialResNode toHandle) {
-    throw new UnsupportedOperationException("Type ReadArtificialResNode not yet implemented");
+    throw new IllegalStateException("Should not reach here, should be inlined.");
   }
 
   @Handler
