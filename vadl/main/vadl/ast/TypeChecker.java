@@ -579,8 +579,8 @@ public class TypeChecker
 
   @Override
   public Void visit(InstructionSetDefinition definition) {
-    if (definition.extendingNode != null) {
-      check(definition.extendingNode);
+    for (var extension : definition.extendingNodes()) {
+      check(definition);
     }
 
     for (var def : definition.definitions) {

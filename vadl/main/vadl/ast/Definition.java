@@ -911,9 +911,6 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
   List<Definition> definitions;
   SourceLocation loc;
 
-  @Nullable
-  InstructionSetDefinition extendingNode;
-
   InstructionSetDefinition(IdentifierOrPlaceholder identifier,
                            List<IsId> extending,
                            List<Definition> statements, SourceLocation location) {
@@ -926,6 +923,12 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
   @Override
   public Identifier identifier() {
     return (Identifier) identifier;
+  }
+
+  List<InstructionSetDefinition> extendingNodes() {
+    return extending.stream()
+        .map(id -> (InstructionSetDefinition) Objects.requireNonNull(id.target()))
+        .toList();
   }
 
   @Override
@@ -971,7 +974,6 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
     return Objects.equals(annotations, that.annotations)
         && Objects.equals(identifier, that.identifier)
         && Objects.equals(extending, that.extending)
-        && Objects.equals(extendingNode, that.extendingNode)
         && Objects.equals(definitions, that.definitions);
   }
 
@@ -980,7 +982,6 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
     int result = Objects.hashCode(annotations);
     result = 31 * result + Objects.hashCode(identifier);
     result = 31 * result + Objects.hashCode(extending);
-    result = 31 * result + Objects.hashCode(extendingNode);
     result = 31 * result + Objects.hashCode(definitions);
     return result;
   }

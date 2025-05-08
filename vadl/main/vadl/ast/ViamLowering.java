@@ -1263,8 +1263,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       return;
     }
 
-    var extending = definition.extendingNode;
-    if (extending != null) {
+    for (var extending : definition.extendingNodes()) {
       mergeInto(extending, nodeCollection, processedIsas);
     }
 

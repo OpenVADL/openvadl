@@ -822,7 +822,6 @@ class SymbolTable {
       for (var isa : definition.extending) {
         var extending = definition.symbolTable().requireAs(isa, InstructionSetDefinition.class);
         if (extending != null) {
-          definition.extendingNode = extending;
           definition.symbolTable().extendBy(extending.symbolTable());
         }
       }
