@@ -904,10 +904,10 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 }
 
 class InstructionSetDefinition extends Definition implements IdentifiableNode {
-  Identifier identifier;
+  IdentifierOrPlaceholder identifier;
   @Nullable
   @Child
-  Identifier extending;
+  IsId extending;
   @Child
   List<Definition> definitions;
   SourceLocation loc;
@@ -915,7 +915,8 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
   @Nullable
   InstructionSetDefinition extendingNode;
 
-  InstructionSetDefinition(Identifier identifier, @Nullable Identifier extending,
+  InstructionSetDefinition(IdentifierOrPlaceholder identifier,
+                           @Nullable IsId extending,
                            List<Definition> statements, SourceLocation location) {
     this.identifier = identifier;
     this.extending = extending;
@@ -925,7 +926,7 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
 
   @Override
   public Identifier identifier() {
-    return identifier;
+    return (Identifier) identifier;
   }
 
   @Override
@@ -942,9 +943,9 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
   void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append("instruction set architecture ").append(identifier.name);
+    builder.append("instruction set architecture ").append(identifier().name);
     if (extending != null) {
-      builder.append(" extending ").append(extending.name);
+      builder.append(" extending ").append(extending.pathToString());
     }
     builder.append(" = {\n");
     prettyPrintDefinitions(indent + 1, builder, definitions);

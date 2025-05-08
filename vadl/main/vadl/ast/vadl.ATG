@@ -319,10 +319,10 @@ PRODUCTIONS
 
   instructionsetDefinition<out InstructionSetDefinition isaDef> (. macroTable = macroTable.createChild(); var startLocation = nextTokenLoc();.)
   = INSTRUCTION SET ARCHITECTURE
-    identifier<out Identifier identifier>                       (. Identifier extending = null; .)
+    identifierOrPlaceholder<out var identifier>                       (. IdentifierOrPlaceholder extending = null; .)
     [
       EXTENDING
-      identifier<out extending>                                 (. var extendingIsa = macroTable.requireAs(extending, InstructionSetDefinition.class);
+      identifierOrPlaceholder<out extending>                    (. var extendingIsa = macroTable.requireAs(extending, InstructionSetDefinition.class);
                                                                    if (extendingIsa != null)
                                                                      readMacroSymbols(macroTable, extendingIsa.definitions);
                                                                 .)

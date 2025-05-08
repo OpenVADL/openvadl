@@ -757,6 +757,18 @@ class StringLiteral extends Expr {
   }
 }
 
+/**
+ * Represents an {@link Identifier} or one of the placeholder sub types.
+ * A placeholder is some macro expr that cannot be directly expanded to an {@link Identifier}, as
+ * itself is part of a macro definition.
+ *
+ * <p>For instance in the following {@code $constId} is such a placeholder:
+ * <pre>{@code
+ * model Test (constId: Id) : Defs = {
+ *   constant $constId = 4
+ * }
+ * }</pre></p>
+ */
 sealed interface IdentifierOrPlaceholder extends IsId
     permits Identifier, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, ExtendIdExpr {
 }

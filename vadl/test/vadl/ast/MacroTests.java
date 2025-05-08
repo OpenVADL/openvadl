@@ -287,4 +287,30 @@ public class MacroTests {
     Assertions.assertEquals(9, location.expandedFrom().expandedFrom().begin().line());
     Assertions.assertNull(location.expandedFrom().expandedFrom().expandedFrom());
   }
+
+  @Test
+  void macroIsaWithInheritance() {
+    var prog1 = """
+        model BName(): Id = { Base }
+        
+        instruction set architecture $BName() = {
+          model Test(): Id = { Test }
+        }
+        
+        instruction set architecture Sub extending $BName() = {
+          constant $Test() = 3
+        }
+        """;
+    var prog2 = """
+        instruction set architecture Base = { }
+        
+        instruction set architecture Sub extending Base = {
+          constant Test = 3
+        }
+        """;
+
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
 }
+
+

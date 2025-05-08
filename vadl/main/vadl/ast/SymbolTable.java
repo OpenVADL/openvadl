@@ -247,6 +247,15 @@ class SymbolTable {
     return null;
   }
 
+  /**
+   * This will add an error to {@link #errors} if the identifier couldn't be resolved
+   * to a node of the given type.
+   * In this case it will return null, so the user must check the result before continuing.
+   *
+   * @param usage the identifier that should be resolved
+   * @param type  the type that the resolved node must have
+   * @return the resolved node, or null if it could not be resolved with the given type
+   */
   // FIXME: I don't like how it's called require but still returns null
   <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
     var origin = resolve(usage);
@@ -261,6 +270,18 @@ class SymbolTable {
       errors.add(error("Unknown name " + usage.pathToString(), usage).build());
     }
     return null;
+  }
+
+  <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
+    switch (usage) {
+      case Identifier identifier -> {
+        return requireAs(identifier, type);
+      }
+      case IdentifierPath identifierPath -> {
+        throw new IllegalStateException("Usage not supported:  " + usage);
+      }
+      default -> throw new IllegalStateException("Usage not supported:  " + usage);
+    }
   }
 
   /**
@@ -780,8 +801,10 @@ class SymbolTable {
         var extending =
             definition.symbolTable()
                 .requireAs(definition.extending, InstructionSetDefinition.class);
-        definition.extendingNode = extending;
-        definition.symbolTable().extendBy(requireNonNull(extending).symbolTable());
+        if (extending != null) {
+          definition.extendingNode = extending;
+          definition.symbolTable().extendBy(extending.symbolTable());
+        }
       }
 
       definition.children().forEach(this::travel);
