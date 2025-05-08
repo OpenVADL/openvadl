@@ -138,6 +138,13 @@ instruction set architecture AAarch64Base = {
     , SXTX                            // Signed   eXTend Xword
     }
 
+  enumeration Position: Bits2 = // position in destination register, do not reorder
+    { Pos00                     // 15..0
+    , Pos16                     // 31..16
+    , Pos32                     // 47..32
+    , Pos48                     // 63..48
+    }
+
   enumeration AccSize: Bits2 =        // memory operations access size, do not change order
     { Byte                            // 1 byte  access
     , Half                            // 2 bytes access
@@ -427,29 +434,39 @@ instruction set architecture AAarch64Base = {
 
 // movk, movn, movz models *****************************************************
 
-  enumeration Position: Bits2 = // position in destination register, do not reorder
-    { Pos00                     // 15..0
-    , Pos16                     // 31..16
-    , Pos32                     // 47..32
-    , Pos48                     // 63..48
-    }
+  constant Zero16 = 0 as Bits<16>
+  constant Zero32 = 0 as Bits<32>
+  constant Zero48 = 0 as Bits<48>
 
+  model notid (not: Id, ex: Ex) : Ex = {match: Ex ($not = not => ~($ex);_=>$ex)}
+  
   model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
     instruction ExtendId ($i.id, $pos): MovFormat = 
       let xrd = X(rd) in
-        X(rd) := ($posex) as Bits<Size::$size> as BitsX
+        X(rd) := ($posex)
     encoding ExtendId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
     assembly ExtendId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', decimal(imm16),
       match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
     }
 
   model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
-            $MovInstr ($i; $size; Pos00; (xrd(63..16), imm16            ))
     match: IsaDefs ( $size = WSize
-         => $MovInstr ($i; $size; Pos16; (xrd(63..32), imm16, xrd(15..0)))
-      ; _=> $MovInstr ($i; $size; Pos16; (xrd(63..32), imm16, xrd(15..0)))
+         => $MovInstr ($i; $size; Pos00; (xrd(31..16), imm16) as BitsX)
+            $MovInstr ($i; $size; Pos16; (imm16, xrd(15..0 )) as BitsX)
+      ; _=> $MovInstr ($i; $size; Pos00; (xrd(63..16), imm16            ))
+            $MovInstr ($i; $size; Pos16; (xrd(63..32), imm16, xrd(15..0)))
             $MovInstr ($i; $size; Pos32; (xrd(63..48), imm16, xrd(31..0)))
             $MovInstr ($i; $size; Pos48; (             imm16, xrd(47..0)))
+      )
+    }
+
+  model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    $MovInstr         ($i; $size; Pos00; $notid($i.funct; (Zero48, imm16        )))
+    match: IsaDefs ( $size = WSize
+         => $MovInstr ($i; $size; Pos16; $notid($i.funct; (Zero32, imm16, Zero16)))
+      ; _=> $MovInstr ($i; $size; Pos16; $notid($i.funct; (Zero32, imm16, Zero16)))
+            $MovInstr ($i; $size; Pos32; $notid($i.funct; (Zero16, imm16, Zero32)))
+            $MovInstr ($i; $size; Pos48; $notid($i.funct; (        imm16, Zero48)))
       )
     }
 
@@ -604,6 +621,8 @@ instruction set architecture AAarch64Base = {
   $InstrWX            (ShiftRegInstr         ; (ROR    ; "rorv"  ; ROR              ; ror              ))
 
   $InstrWX            (MovKInstr             ; (MOVK   ; "movk"  ; 0b1110'0101      ; unused           ))
+  $InstrWX            (MovNZInstr            ; (MOVN   ; "movn"  ; 0b0010'0101      ; not              ))
+  $InstrWX            (MovNZInstr            ; (MOVZ   ; "movz"  ; 0b1010'0101      ; ident            ))
 
   $BranchInstr        (                        (B      ; "b"     ; 0b0001'01                           ))
   $BranchLinkInstr    (                        (BL     ; "bl"    ; 0b1001'01                           ))
