@@ -439,7 +439,7 @@ instruction set architecture AAarch64Base = {
   constant Zero48 = 0 as Bits<48>
 
   model notid (not: Id, ex: Ex) : Ex = {
-    match: Ex ($not = not => ~(($ex)) ;_=> $ex)
+    match: Ex ($not = not => ~($ex) ;_=> $ex)
     }
   
   model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
