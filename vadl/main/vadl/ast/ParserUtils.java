@@ -580,8 +580,7 @@ class ParserUtils {
     for (IsId extending : isa.extending) {
       // TODO: Replace by extending.target() as soon as we merged
       //    https://github.com/OpenVADL/openvadl/pull/212
-      var extendingIsa =
-          (InstructionSetDefinition) Objects.requireNonNull(((Identifier) extending).target);
+      var extendingIsa = (InstructionSetDefinition) Objects.requireNonNull(extending.target());
       readMacroSymbols(macroTable, extendingIsa);
     }
   }

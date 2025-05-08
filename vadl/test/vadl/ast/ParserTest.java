@@ -16,10 +16,12 @@
 
 package vadl.ast;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.error.DiagnosticList;
 
 /**
  * A class to test the parser. Since the parser does  also name resolution and macro expansion this
@@ -202,5 +204,42 @@ public class ParserTest {
 
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
     verifyPrettifiedAst(ast);
+  }
+
+  @Test
+  void symbolConflictIsaInheritance() {
+    var prog = """
+        instruction set architecture Base0 = {
+            program counter PC: Bits<32>
+        }
+        instruction set architecture Base1 extending Base0 = { }
+        instruction set architecture Sub extending Base1 = {
+            constant PC = 4
+        }
+        """;
+
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    assertThat(diags.items).anySatisfy(diag -> {
+      assertThat(diag).hasMessageContaining("Symbol name already used: PC");
+    });
+  }
+
+  @Test
+  void symbolConflictIsaMultiInheritance() {
+    var prog = """
+        instruction set architecture Base0 = {
+            program counter PC: Bits<32>
+        }
+        instruction set architecture Base1 extending Base0 = { }
+        instruction set architecture Base2 = {
+            constant PC = 4
+        }
+        instruction set architecture Sub extending Base1, Base2 = { }
+        """;
+
+    var diags = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    assertThat(diags.items).anySatisfy(diag -> {
+      assertThat(diag).hasMessageContaining("Symbol name already used: PC");
+    });
   }
 }

@@ -39,7 +39,7 @@ class SymbolTable {
   final Map<String, AstSymbol> macroSymbols = new HashMap<>();
   List<Diagnostic> errors = new ArrayList<>();
 
-  interface Symbol {
+  sealed interface Symbol {
   }
 
   record AstSymbol(Node origin) implements Symbol {
@@ -275,7 +275,6 @@ class SymbolTable {
   <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
     var origin = resolve(usage);
     if (type.isInstance(origin)) {
-      usage.target = origin;
       return type.cast(origin);
     }
 
@@ -286,18 +285,6 @@ class SymbolTable {
       errors.add(error("Unknown name " + usage.pathToString(), usage).build());
     }
     return null;
-  }
-
-  <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
-    switch (usage) {
-      case Identifier identifier -> {
-        return requireAs(identifier, type);
-      }
-      case IdentifierPath identifierPath -> {
-        throw new IllegalStateException("Usage not supported:  " + usage);
-      }
-      default -> throw new IllegalStateException("Usage not supported:  " + usage);
-    }
   }
 
   /**
@@ -338,9 +325,28 @@ class SymbolTable {
   }
 
 
+  /**
+   * Copies all symbols of the given symbol table into this symbol table.
+   * It internally calls {@link #defineSymbol(String, Node)}, so it
+   * will register an error in {@link #errors} if there are symbol name conflicts.
+   */
   void extendBy(SymbolTable other) {
-    symbols.putAll(other.symbols);
-    macroSymbols.putAll(other.macroSymbols);
+    // we have to check for each symbol that is is not already in this symbol table
+    for (var entry : other.symbols.entrySet()) {
+      var name = entry.getKey();
+      var symbol = entry.getValue();
+      switch (symbol) {
+        case AstSymbol astSymbol -> defineSymbol(name, astSymbol.origin);
+        case BuiltInSymbol ignored -> { /* do nothing, already defined */ }
+      }
+    }
+    // add macro symbols to this symbol table.
+    // #defineSymbol will correctly assign symbol to macroSymbols
+    for (var entry : other.macroSymbols.entrySet()) {
+      var name = entry.getKey();
+      AstSymbol symbol = entry.getValue();
+      defineSymbol(name, symbol.origin);
+    }
   }
 
   private SourceLocation getIdentifierLocation(Node node) {
