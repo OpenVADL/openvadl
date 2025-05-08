@@ -1,6 +1,7 @@
 #include "AsmParsedOperand.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 
 #define DEBUG_TYPE "[(${namespace})]-parsed-operand"
 
@@ -21,9 +22,9 @@ namespace llvm {
       return StringRef(Tok.Data, Tok.Length);
     }
 
-    unsigned [(${namespace})]ParsedOperand::getReg() const {
+    MCRegister [(${namespace})]ParsedOperand::getReg() const {
       assert((Kind == k_Register) && "Invalid access!");
-      return Reg.RegNum;
+      return MCRegister(Reg.RegNum);
     }
 
     const MCExpr *[(${namespace})]ParsedOperand::getImm() const {

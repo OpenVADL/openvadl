@@ -33,7 +33,7 @@ namespace llvm
 
         void printImpl(raw_ostream & OS, const MCAsmInfo *MAI) const override;
         std::string format(uint8_t Radix, const MCAsmInfo *MAI) const;
-        bool evaluateAsRelocatableImpl(MCValue & Res, const MCAsmLayout *Layout, const MCFixup *Fixup) const override;
+        bool evaluateAsRelocatableImpl(MCValue & Res, const MCAssembler *Layout, const MCFixup *Fixup) const override;
         void visitUsedExpr(MCStreamer & Streamer) const override;
 
         void fixELFSymbolsInTLSFixups(MCAssembler &) const override

@@ -11,7 +11,7 @@ using namespace llvm;
 
 void [(${namespace})]Subtarget::anchor() {}
 
-[(${namespace})]Subtarget::[(${namespace})]Subtarget(const Triple &TargetTriple, StringRef Cpu, StringRef TuneCPU, StringRef FeatureString, const TargetMachine &TM, const TargetOptions &Options, CodeModel::Model CodeModel, CodeGenOpt::Level OptLevel)
+[(${namespace})]Subtarget::[(${namespace})]Subtarget(const Triple &TargetTriple, StringRef Cpu, StringRef TuneCPU, StringRef FeatureString, const TargetMachine &TM, const TargetOptions &Options, CodeModel::Model CodeModel, CodeGenOptLevel OptLevel)
     : [(${namespace})]GenSubtargetInfo(TargetTriple, Cpu, TuneCPU, FeatureString), InstrInfo(*this) // [(${namespace})]InstrInfo
       ,
       FrameLowering(*this) // [(${namespace})]FrameLowering

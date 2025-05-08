@@ -42,9 +42,9 @@ namespace llvm
 
         ~[(${namespace})]MCCodeEmitter() override = default;
 
-        void encodeInstruction(const MCInst &MI, raw_ostream &OS, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const override;
+        void encodeInstruction(const MCInst &MI, SmallVectorImpl<char> &CB, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const override;
 
-        void encodeNonPseudoInstruction(const MCInst &MI, raw_ostream &OS, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const;
+        void encodeNonPseudoInstruction(const MCInst &MI, SmallVectorImpl<char> &CB, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const;
 
         // getBinaryCodeForInstr - TableGen'erated function for getting the
         // binary encoding for an instruction.
@@ -55,7 +55,7 @@ namespace llvm
         unsigned getMachineOpValue(const MCInst &MI, const MCOperand &MO, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const;
 
     protected:
-        support::endianness EndianEncoding;
+        llvm::endianness EndianEncoding;
 
     private:
         [(${namespace})]MCInstExpander MCInstExpander;
