@@ -14,22 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.impl.theiling;
+package vadl.vdt.impl.irregular.tree;
 
-import javax.annotation.Nullable;
-import vadl.vdt.model.LeafNode;
-import vadl.vdt.model.Visitor;
-import vadl.vdt.utils.Instruction;
+import vadl.vdt.model.InnerNode;
 
-/**
- * Simple implementation of a leaf node, holding an instruction.
- *
- * @param instruction the instruction to match
- */
-public record LeafNodeImpl(Instruction instruction) implements LeafNode {
+public abstract class AbstractTruncatingDecisionNode implements InnerNode {
 
-  @Override
-  public <T> @Nullable T accept(Visitor<T> visitor) {
-    return visitor.visit(this);
+  private final int offset;
+  private final int length;
+
+  /**
+   * Creates a new truncating decision node.
+   *
+   * @param offset The offset of bits to skip prior to matching
+   * @param length The number of bits to match
+   */
+  public AbstractTruncatingDecisionNode(int offset, int length) {
+    this.offset = offset;
+    this.length = length;
+  }
+
+  public int getOffset() {
+    return offset;
+  }
+
+  public int getLength() {
+    return length;
   }
 }
