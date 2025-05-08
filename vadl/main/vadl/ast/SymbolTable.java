@@ -955,19 +955,17 @@ class SymbolTable {
     public Void visit(ProcessorDefinition definition) {
       beforeTravel(definition);
 
-      for (IsId implementedIsa : definition.implementedIsas) {
-        InstructionSetDefinition isa = definition.symbolTable()
-            .requireAs((Identifier) implementedIsa, InstructionSetDefinition.class);
-        if (isa != null) {
-          definition.implementedIsaNodes.add(isa);
-          definition.symbolTable().extendBy(isa.symbolTable());
-        }
+
+      InstructionSetDefinition isa = definition.symbolTable()
+          .requireAs(definition.implementedIsa, InstructionSetDefinition.class);
+      if (isa != null) {
+        definition.symbolTable().extendBy(isa.symbolTable());
       }
+
       if (definition.abi != null) {
         var abi = definition.symbolTable()
-            .requireAs((Identifier) definition.abi, ApplicationBinaryInterfaceDefinition.class);
+            .requireAs(definition.abi, ApplicationBinaryInterfaceDefinition.class);
         if (abi != null) {
-          definition.abiNode = abi;
           definition.symbolTable().extendBy(abi.symbolTable());
         }
       }

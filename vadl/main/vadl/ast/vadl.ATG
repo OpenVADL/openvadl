@@ -976,12 +976,8 @@ PRODUCTIONS
   processorDefinition<out Definition def> (. var start = nextTokenLoc(); .)
   = PROCESSOR
     identifier<out Identifier id>
-    IMPLEMENTS                             (. var implementedIsas = new ArrayList<IsId>(); .)
-    identifierPath<out IsId isa>           (. implementedIsas.add(isa); .)
-    {
-      SYM_COMMA
-      identifierPath<out isa>              (. implementedIsas.add(isa); .)
-    }                                      (. IsId abi = null; .)
+    IMPLEMENTS
+    identifierPath<out IsId isa>           (. IsId abi = null; .)
     [
       WITH
       identifierPath<out IsId abiId>       (. abi = abiId; .)
@@ -991,7 +987,7 @@ PRODUCTIONS
     {
       cpuDefinition<out Definition cpuDef> (. addDef(definitions, cpuDef); .)
     }
-    SYM_BRACE_CLOSE                        (. def = new ProcessorDefinition(id, implementedIsas, abi, definitions, start.join(lastTokenLoc())); .)
+    SYM_BRACE_CLOSE                        (. def = new ProcessorDefinition(id, isa, abi, definitions, start.join(lastTokenLoc())); .)
   .
 
   cpuDefinition<out Definition def> (. def = DUMMY_DEF; .)

@@ -1219,7 +1219,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // for each isa in mip add definitions to definition list
     // create new isa ast node with list of definitions
     // visitIsa on created isa ast node
-    var isa = visitIsa(mergeIsa(definition.implementedIsaNodes));
+    var isa = visitIsa(mergeIsa(definition.implementedIsaNode()));
 
     var reset = (Procedure) definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.RESET)
         .findFirst()
@@ -1230,7 +1230,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var memRegions = definition.findMemoryRegionDefs().map(this::fetch)
         .map(d -> (MemoryRegion) d.get()).toList();
 
-    var abi = definition.abiNode != null ? (Abi) fetch(definition.abiNode).orElse(null) : null;
+    var abiNode = definition.abiNode();
+    var abi = abiNode != null ? (Abi) fetch(abiNode).orElse(null) : null;
     var mip = new Processor(identifier, isa, abi, null, reset, memRegions, null);
 
     // FIXME: Remove this, once annotation framework is supported
@@ -1239,21 +1240,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return Optional.of(mip);
   }
 
-  private InstructionSetDefinition mergeIsa(List<InstructionSetDefinition> definitions) {
+  private InstructionSetDefinition mergeIsa(InstructionSetDefinition isaDef) {
 
     Set<InstructionSetDefinition> processedIsas =
         Collections.newSetFromMap(new IdentityHashMap<>());
     var nodeList = new ArrayList<Definition>();
 
-    for (var definition : definitions) {
-      mergeInto(definition, nodeList, processedIsas);
-    }
-
-    var identifier = findIsaIdentifier(definitions);
-    var location = findIsaLocation(definitions);
+    mergeInto(isaDef, nodeList, processedIsas);
 
     // create new isa ast node
-    return new InstructionSetDefinition(identifier, List.of(), nodeList, location);
+    return new InstructionSetDefinition(isaDef.identifier, List.of(), nodeList,
+        isaDef.location());
   }
 
   private void mergeInto(InstructionSetDefinition definition, List<Definition> nodeCollection,
@@ -1270,16 +1267,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // add all definition nodes to node collection
     nodeCollection.addAll(definition.definitions);
     processedIsas.add(definition);
-  }
-
-  private Identifier findIsaIdentifier(List<InstructionSetDefinition> definitions) {
-    // FIXME: If more than 1 isas, use some other identifier (from target annotation)
-    return definitions.get(0).identifier();
-  }
-
-  private SourceLocation findIsaLocation(List<InstructionSetDefinition> definitions) {
-    // FIXME: If more than 1 isas, use some other location (or invalid location)
-    return definitions.get(0).location();
   }
 
   @Override

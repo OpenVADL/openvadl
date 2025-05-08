@@ -3895,7 +3895,7 @@ class AbiClangTypeDefinition extends Definition {
 class ProcessorDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   @Child
-  List<IsId> implementedIsas;
+  IsId implementedIsa;
   @Nullable
   @Child
   IsId abi;
@@ -3903,17 +3903,10 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
   List<Definition> definitions;
   SourceLocation loc;
 
-  /**
-   * Linked by the typechecker.
-   */
-  List<InstructionSetDefinition> implementedIsaNodes = new ArrayList<>();
-  @Nullable
-  ApplicationBinaryInterfaceDefinition abiNode;
-
-  ProcessorDefinition(Identifier id, List<IsId> implementedIsas, @Nullable IsId abi,
+  ProcessorDefinition(Identifier id, IsId implementedIsa, @Nullable IsId abi,
                       List<Definition> definitions, SourceLocation loc) {
     this.id = id;
-    this.implementedIsas = implementedIsas;
+    this.implementedIsa = implementedIsa;
     this.abi = abi;
     this.definitions = definitions;
     this.loc = loc;
@@ -3927,6 +3920,18 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
   @Override
   public Identifier identifier() {
     return id;
+  }
+
+  InstructionSetDefinition implementedIsaNode() {
+    return (InstructionSetDefinition) Objects.requireNonNull(implementedIsa.target());
+  }
+
+  @Nullable
+  ApplicationBinaryInterfaceDefinition abiNode() {
+    if (abi == null) {
+      return null;
+    }
+    return (ApplicationBinaryInterfaceDefinition) Objects.requireNonNull(abi.target());
   }
 
   @Override
@@ -3975,14 +3980,7 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
     builder.append(prettyIndentString(indent)).append("processor ");
     id.prettyPrint(0, builder);
     builder.append(" implements ");
-    var isFirst = true;
-    for (IsId implementedIsa : implementedIsas) {
-      if (!isFirst) {
-        builder.append(", ");
-      }
-      isFirst = false;
-      implementedIsa.prettyPrint(0, builder);
-    }
+    implementedIsa.prettyPrint(0, builder);
     builder.append(" with ");
     if (abi != null) {
       abi.prettyPrint(0, builder);
@@ -4002,14 +4000,14 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
     }
     ProcessorDefinition that = (ProcessorDefinition) o;
     return Objects.equals(id, that.id)
-        && Objects.equals(implementedIsas, that.implementedIsas)
+        && Objects.equals(implementedIsa, that.implementedIsa)
         && Objects.equals(abi, that.abi)
         && Objects.equals(definitions, that.definitions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, implementedIsas, abi, definitions);
+    return Objects.hash(id, implementedIsa, abi, definitions);
   }
 
 
