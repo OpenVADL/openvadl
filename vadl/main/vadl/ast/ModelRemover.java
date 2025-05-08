@@ -257,6 +257,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(CpuMemoryRegionDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(CpuProcessDefinition definition) {
     return definition;
   }

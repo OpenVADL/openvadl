@@ -23,17 +23,24 @@ import static vadl.error.Diagnostic.error;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 import vadl.utils.Pair;
+import vadl.utils.SourceLocation;
+import vadl.utils.WithLocation;
 import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.AssemblyDescription;
+import vadl.viam.MemoryRegion;
 import vadl.viam.Relocation;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
@@ -83,9 +90,35 @@ class AnnotationTable {
               "absolute", Relocation.Kind.ABSOLUTE
           );
 
-          var annotation = context.annotations.getFirst();
+          var annotation = context.getOnly(Annotation.class).get();
           var relocation = (Relocation) context.targetDefinition;
           relocation.setKind(requireNonNull(mappings.get(annotation.name)));
+        })
+        .build();
+
+    groupOn(CpuMemoryRegionDefinition.class)
+        .add("firmware", EnableAnnotation::new)
+        .add("base", ConstantAnnotation::new)
+        .add("size", ConstantAnnotation::new)
+        .check(ctx -> {
+          ctx.verifyIfThenAlso("size", "base");
+          ctx.verifyIfThenAlso("firmware", "base");
+          ctx.get("base", ConstantAnnotation.class)
+              .ifPresent(a -> a.verifyGreaterEqual(BigInteger.ZERO));
+          ctx.get("size", ConstantAnnotation.class)
+              .ifPresent(a -> a.verifyGreaterThan(BigInteger.ZERO));
+        })
+        .applyViam(ctx -> {
+          var memReg = ctx.viamDef(MemoryRegion.class);
+          ctx.get("firmware", EnableAnnotation.class).ifPresent(a -> {
+            memReg.setHoldsFirmware(a.isEnabled);
+          });
+          ctx.get("base", ConstantAnnotation.class).ifPresent(a -> {
+            memReg.setBase(a.constant.value());
+          });
+          ctx.get("size", ConstantAnnotation.class).ifPresent(a -> {
+            memReg.setSize(a.constant.value().intValue());
+          });
         })
         .build();
   }
@@ -293,7 +326,8 @@ class AnnotationTable {
         }
 
         @Override
-        public void applyViam(vadl.viam.Definition definition, List<Annotation> annotations,
+        public void applyViam(Definition astDefinition, vadl.viam.Definition definition,
+                              List<Annotation> annotations,
                               ViamLowering lowering) {
           requireNonNull(groupApplyViamCallback).accept(definition, annotations, lowering);
         }
@@ -333,7 +367,7 @@ class AnnotationTable {
     private Consumer<GroupAstApplyContext<D>> applyAstCallback;
 
     @Nullable
-    private Consumer<GroupViamApplyContext> applyViamCallback;
+    private Consumer<GroupViamApplyContext<D>> applyViamCallback;
 
 
     GroupedAnnotationBuilder(Class<D> targetClass) {
@@ -399,7 +433,7 @@ class AnnotationTable {
      * @return itself.
      */
     GroupedAnnotationBuilder<D> applyViam(
-        Consumer<GroupViamApplyContext> applyCallback) {
+        Consumer<GroupViamApplyContext<D>> applyCallback) {
       if (this.applyViamCallback != null) {
         throw new IllegalStateException("Apply callback already set");
       }
@@ -461,10 +495,11 @@ class AnnotationTable {
         }
 
         @Override
-        public void applyViam(vadl.viam.Definition definition, List<Annotation> annotations,
+        public void applyViam(Definition astDefinition, vadl.viam.Definition definition,
+                              List<Annotation> annotations,
                               ViamLowering lowering) {
           realApplyViamCallback.accept(
-              new GroupViamApplyContext(definition, annotations, lowering));
+              new GroupViamApplyContext<>(astDefinition, definition, annotations, lowering));
         }
       };
 
@@ -486,15 +521,105 @@ class AnnotationTable {
       }
     }
 
-    private static class GroupCheckContext<D> {
-      final D targetDefinition;
-      final List<Annotation> annotations;
+    private static class GroupContext<D> {
+      final D astTargetDef;
+      // annotations set by the user
+      final LinkedHashMap<String, Annotation> annotations;
+      // holds the annotation factories of this group.
+      // might be used to get declared annotations.
+      private final Map<String, Supplier<Annotation>> factories;
+
+      GroupContext(D astTargetDef, List<Annotation> annotations) {
+        this.astTargetDef = astTargetDef;
+        this.annotations = annotations.stream()
+            .collect(Collectors.toMap(
+                a -> a.name,
+                Function.identity(),
+                (a1, a2) -> a1,
+                LinkedHashMap::new
+            ));
+        this.factories = requireNonNull(annotationFactories.get(astTargetDef.getClass()));
+      }
+
+      /**
+       * Get the {@link Annotation} with the given name wrapped in an {@link Optional}.
+       */
+      Optional<Annotation> get(String anno) {
+        return Optional.ofNullable(annotations.get(anno));
+      }
+
+      /**
+       * Get the {@link Annotation} with the given name wrapped in an {@link Optional}.
+       * It is automatically cast to the given annotation type.
+       * If the found annotation is not of the given type, it will throw an
+       * {@link IllegalStateException}, as the user always know the concrete type of the
+       * annotation.
+       *
+       * @param anno      name of annotation to get
+       * @param annoClass type to which a found annotation is cast to
+       * @return an optional which is present if there was a annotation with the given name,
+       *     otherwise it is empty
+       */
+      <A extends Annotation> Optional<A> get(String anno, Class<A> annoClass) {
+        return get(anno).map(a -> {
+          if (!annoClass.isInstance(a)) {
+            throw new IllegalStateException(
+                "Expected %s to be of annotation type %s but was %s".formatted(anno,
+                    annoClass.getSimpleName(), a.getClass().getSimpleName()));
+          }
+          return annoClass.cast(a);
+        });
+      }
+
+      /**
+       * Returns an annotation of the given class.
+       * This can be used if the user knows that there is only one annotation of the given class, it
+       * may use this to retrieve it.
+       *
+       * @throws IllegalStateException if there were multiple annotations with the same type
+       */
+      <A extends Annotation> Optional<A> getOnly(Class<A> annoClass) {
+        var all = annotations.values().stream()
+            .filter(annoClass::isInstance)
+            .map(annoClass::cast)
+            .toList();
+        if (all.size() > 1) {
+          throw new IllegalStateException(
+              "Expected to have at most one annotation of type %s".formatted(
+                  annoClass.getSimpleName()));
+        }
+        return all.stream().findFirst();
+      }
+
+      // caches declarations accessed by #declaration(String).
+      private final Map<String, AnnotationDeclaration> declarationCache = new HashMap<>();
+
+      /**
+       * Get the {@link AnnotationDeclaration} for a given name.
+       * This is mostly used to get the {@link AnnotationDeclaration#usageString()}.
+       */
+      AnnotationDeclaration declaration(String name) {
+        return declarationCache.computeIfAbsent(name, n -> {
+          if (!factories.containsKey(name)) {
+            throw new IllegalStateException("No annotation found with name " + name);
+          }
+          var result = annotations.get(name);
+          if (result == null) {
+            // produce new annotation object that represents the declared annotation
+            return factories.get(name).get();
+          }
+          return result;
+        });
+      }
+
+    }
+
+    private static class GroupCheckContext<D> extends GroupContext<D> {
       final TypeChecker typeChecker;
 
       public GroupCheckContext(D targetDefinition, List<Annotation> annotations,
                                TypeChecker typeChecker) {
-        this.targetDefinition = targetDefinition;
-        this.annotations = annotations;
+        super(targetDefinition, annotations);
         this.typeChecker = typeChecker;
       }
 
@@ -506,39 +631,61 @@ class AnnotationTable {
        */
       void verifyOnlyOneOfGroup() {
         if (annotations.size() > 1) {
-          var diagnostic = error("Annotation clash", annotations.getFirst().definition)
-              .locationDescription(annotations.getFirst().definition, "First defined here");
-          for (int i = 1; i < annotations.size(); i++) {
-            diagnostic.locationDescription(annotations.get(i).definition,
+          var diagnostic = error("Annotation clash", annotations.firstEntry().getValue())
+              .locationDescription(annotations.firstEntry().getValue(),
+                  "First defined here");
+          for (Annotation annotation : annotations.values()) {
+            diagnostic.locationDescription(annotation,
                 "Conflicting defined here");
           }
           diagnostic.description("Only one of these annotations can be defined.");
           throw diagnostic.build();
         }
       }
+
+
+      /**
+       * Verifies that if an annotation is set, the user also sets other annotations.
+       *
+       * @param ifAnno        the annotation that is checked if it was set
+       * @param thenAlsoAnnos the annotations that must also be set if {@code ifAnno} was set
+       */
+      void verifyIfThenAlso(String ifAnno, String... thenAlsoAnnos) {
+        get(ifAnno).ifPresent(anno -> {
+          for (var alsoAnno : thenAlsoAnnos) {
+            var unused = get(alsoAnno).orElseThrow(() -> error("Missing annotation", anno)
+                .locationDescription(anno, "Requires the %s annotation",
+                    declaration(alsoAnno).usageString())
+                .description("If %s was specified, the definition also requires %s.",
+                    anno.usageString(),
+                    declaration(alsoAnno).usageString())
+                .build());
+          }
+        });
+      }
+
     }
 
-    private static class GroupAstApplyContext<D> {
-      final D targetDefinition;
-      final List<Annotation> annotations;
-
+    private static class GroupAstApplyContext<D> extends GroupContext<D> {
       public GroupAstApplyContext(D targetDefinition, List<Annotation> annotations) {
-        this.targetDefinition = targetDefinition;
-        this.annotations = annotations;
+        super(targetDefinition, annotations);
       }
     }
 
-    private static class GroupViamApplyContext {
+    private static class GroupViamApplyContext<D> extends GroupContext<D> {
       final vadl.viam.Definition targetDefinition;
-      final List<Annotation> annotations;
       final ViamLowering lowering;
 
-      public GroupViamApplyContext(vadl.viam.Definition targetDefinition,
+      public GroupViamApplyContext(D astTargetDef, vadl.viam.Definition viamTargetDef,
                                    List<Annotation> annotations,
                                    ViamLowering lowering) {
-        this.targetDefinition = targetDefinition;
-        this.annotations = annotations;
+        super(astTargetDef, annotations);
+        this.targetDefinition = viamTargetDef;
         this.lowering = lowering;
+      }
+
+      public <V extends vadl.viam.Definition> V viamDef(Class<V> defClass) {
+        return defClass.cast(targetDefinition);
       }
     }
   }
@@ -549,8 +696,32 @@ interface AnnotationGroupProvider {
 
   void applyAst(Definition definition, List<Annotation> annotations);
 
-  void applyViam(vadl.viam.Definition definition, List<Annotation> annotations,
+  void applyViam(Definition astDef, vadl.viam.Definition definition, List<Annotation> annotations,
                  ViamLowering lowering);
+}
+
+/**
+ * An interface representing the annotation declaration given by the
+ * {@link AnnotationGroupProvider}.
+ * Even though it is always a {@link Annotation} object, it does not always hold a state,
+ * but serves as representation of what kind of annotation the provider specified.
+ */
+interface AnnotationDeclaration {
+
+  /**
+   * The name of the specified annotation.
+   */
+  String name();
+
+  /**
+   * The usage string of a given annotation.
+   * E.g. a {@link EnumAnnotation} with the possible values {@code A, B, C}
+   * and name {@code my option}, will return {@code [ my option: A, B, C ]}.
+   * This is especially useful when writing an error message, when the concrete annotation
+   * type/object is not known.
+   */
+  String usageString();
+
 }
 
 /**
@@ -561,7 +732,7 @@ interface AnnotationGroupProvider {
  * <p>Every Annotation also has a group it belongs to, though it might be the only annotation in
  * the group.
  */
-abstract class Annotation {
+abstract class Annotation implements AnnotationDeclaration, WithLocation {
   @LazyInit
   String name;
 
@@ -589,6 +760,16 @@ abstract class Annotation {
    * @param typeChecker who type checks the annotation.
    */
   abstract void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker);
+
+  @Override
+  public String name() {
+    return name;
+  }
+
+  @Override
+  public SourceLocation location() {
+    return definition.location();
+  }
 
   protected void verifyValuesCntBetween(AnnotationDefinition definition, int min, int max) {
     if (definition.values.size() < min || definition.values.size() > max) {
@@ -659,6 +840,11 @@ class EnableAnnotation extends Annotation {
       isEnabled = typeChecker.constantEvaluator.eval(valueExpr).value().equals(BigInteger.ONE);
     }
   }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " ]";
+  }
 }
 
 /**
@@ -689,6 +875,39 @@ class ConstantAnnotation extends Annotation {
     typeChecker.check(valueExpr);
 
     constant = typeChecker.constantEvaluator.eval(valueExpr);
+  }
+
+  /**
+   * Verify that the constant value is greater than the given value.
+   */
+  void verifyGreaterThan(BigInteger value) {
+    if (constant.value().compareTo(value) <= 0) {
+      var expr = definition.values.getFirst();
+      throw error("Invalid annotation expression", expr)
+          .locationDescription(expr,
+              "Constant expression must be greater than %s, but was %s",
+              value.toString(), constant.value().toString())
+          .build();
+    }
+  }
+
+  /**
+   * Verify that the constant value is greater or equal to the given value.
+   */
+  void verifyGreaterEqual(BigInteger value) {
+    if (constant.value().compareTo(value) < 0) {
+      var expr = definition.values.getFirst();
+      throw error("Invalid annotation expression", expr)
+          .locationDescription(expr,
+              "Constant expression must greater or equal to %s, but was %s",
+              value.toString(), constant.value().toString())
+          .build();
+    }
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <expr> ]";
   }
 }
 
@@ -725,6 +944,11 @@ class StringAnnotation extends Annotation {
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     var valueExpr = definition.values.getFirst();
     typeChecker.check(valueExpr);
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : \"<str>\" ]";
   }
 }
 
@@ -779,6 +1003,12 @@ class EnumAnnotation extends Annotation {
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     // Do nothing on purpose as the identifiers don't need to be checked.
   }
+
+  @Override
+  public String usageString() {
+    var options = String.join(", ", possibleValues);
+    return "[ " + name + " : " + options + " ]";
+  }
 }
 
 /**
@@ -809,5 +1039,10 @@ class ExprAnnotation extends Annotation {
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     node.accept(typeChecker);
+  }
+
+  @Override
+  public String usageString() {
+    return "[ " + name + " : <expr> ]";
   }
 }

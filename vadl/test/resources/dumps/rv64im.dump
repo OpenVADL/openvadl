@@ -5263,6 +5263,11 @@ ProcessorDefinition name: "Spike"
 . Identifier name: "RV64IM" type: null
 . Identifier name: "ABI" type: null
 . CpuProcessDefinition
+. : AssignmentStatement
+. : ' Identifier name: "PC" type: null
+. : ' BinaryLiteral literal: 0x1000 (4096) type: null
+. CpuMemoryRegionDefinition name: "DRAM"
+. : Identifier name: "MEM" type: null
 . : BlockStatement
 . : ' AssignmentStatement
 . : ' | CallIndexExpr type: null
