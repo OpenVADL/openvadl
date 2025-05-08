@@ -116,6 +116,8 @@ interface DefinitionVisitor<R> {
 
   R visit(CpuFunctionDefinition definition);
 
+  R visit(CpuMemoryRegionDefinition definition);
+
   R visit(CpuProcessDefinition definition);
 
   R visit(DefinitionList definition);
@@ -3959,6 +3961,12 @@ class ProcessorDefinition extends Definition implements IdentifiableNode {
         .map(e -> (CpuFunctionDefinition) e);
   }
 
+  Stream<CpuMemoryRegionDefinition> findMemoryRegionDefs() {
+    return definitions.stream()
+        .filter(e -> e instanceof CpuMemoryRegionDefinition region)
+        .map(e -> (CpuMemoryRegionDefinition) e);
+  }
+
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
@@ -4139,6 +4147,109 @@ class SourceDefinition extends Definition implements IdentifiableNode {
 
 }
 
+/**
+ * Represents a memory region in the {@link ProcessorDefinition}.
+ * <pre>{@code
+ * [ firmware ]
+ * [ base: 0x8000000 ]
+ * memory region [RAM] DRAM in MEM
+ *
+ * memory region [ROM] MROM in MEM = {
+ *   MEM<4>(0x1000 as Bits<64>) := 0x00000297  // auipc t0, 0x0
+ *   MEM<4>(0x1004 as Bits<64>) := 0x02828613  // addi a2, t0, 40
+ * }
+ * }</pre>
+ */
+class CpuMemoryRegionDefinition extends Definition implements IdentifiableNode {
+
+  enum MemKind {
+    RAM, ROM;
+
+    String keyword() {
+      return name();
+    }
+  }
+
+  IdentifierOrPlaceholder id;
+  MemKind kind;
+  @Child
+  IsId memoryRef;
+  @Child
+  @Nullable
+  Statement stmt;
+  SourceLocation loc;
+
+  CpuMemoryRegionDefinition(IdentifierOrPlaceholder id, MemKind kind, IsId memoryRef,
+                            @Nullable Statement stmt,
+                            SourceLocation loc) {
+    this.id = id;
+    this.kind = kind;
+    this.memoryRef = memoryRef;
+    this.stmt = stmt;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(DefinitionVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  MemoryDefinition memoryNode() {
+    return (MemoryDefinition) Objects.requireNonNull(memoryRef.target());
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.INVALID;
+  }
+
+  @Override
+  void prettyPrint(int indent, StringBuilder builder) {
+    prettyPrintAnnotations(indent, builder);
+    builder.append(prettyIndentString(indent));
+    builder.append("memory region [").append(kind.keyword()).append("] ");
+    id.prettyPrint(indent, builder);
+    builder.append(" in ");
+    memoryRef.prettyPrint(indent, builder);
+    if (stmt != null) {
+      builder.append(" = ");
+      stmt.prettyPrint(indent, builder);
+    }
+    builder.append("\n");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    CpuMemoryRegionDefinition that = (CpuMemoryRegionDefinition) o;
+    return Objects.equals(id, that.id) && kind == that.kind
+        && Objects.equals(memoryRef, that.memoryRef)
+        && Objects.equals(stmt, that.stmt);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hashCode(id);
+    result = 31 * result + Objects.hashCode(kind);
+    result = 31 * result + Objects.hashCode(memoryRef);
+    result = 31 * result + Objects.hashCode(stmt);
+    return result;
+  }
+
+  @Override
+  public Identifier identifier() {
+    return (Identifier) id;
+  }
+}
+
 class CpuFunctionDefinition extends Definition implements IdentifiableNode {
   Identifier id;
   BehaviorKind kind;
@@ -4290,7 +4401,6 @@ class CpuProcessDefinition extends Definition {
   }
 
   enum ProcessKind {
-    FIRMWARE("firmware"),
     RESET("reset");
 
     final String keyword;

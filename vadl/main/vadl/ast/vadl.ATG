@@ -122,7 +122,6 @@ TOKENS
   FALSE        = "false".
   FETCH        = "fetch".
   FILE         = "file".
-  FIRMWARE     = "firmware".
   FOLD         = "fold".
   FOR          = "for".
   FORALL       = "forall".
@@ -169,11 +168,15 @@ TOKENS
   PROGRAM      = "program".
   PSEUDO       = "pseudo".
   RAISE        = "raise".
+  RAM          = "RAM".
   READ         = "read".
   RECORD       = "record".
   REGISTER     = "register".
+  REGION       = "region".
   RELOCATION   = "relocation".
+  RESET        = "reset".
   RETURN       = "return".
+  ROM          = "ROM".
   SAVED        = "saved".
   SEQUENCE     = "sequence".
   SET          = "set".
@@ -184,7 +187,6 @@ TOKENS
   STACK        = "stack".
   STAGE        = "stage".
   STARTUP      = "startup".
-  RESET        = "reset".
   STOP         = "stop".
   TENSOR       = "tensor".
   THEN         = "then".
@@ -990,6 +992,7 @@ PRODUCTIONS
   cpuDefinition<out Definition def> (. def = DUMMY_DEF; .)
   = annotations<.out List<AnnotationDefinition> annotations.>
     ( commonDefinition<out def>
+    | memoryRegionDefinition<out def>
     | patchDefinition<out def>
     | sourceDefinition<out def>
     | exceptionDefinition<out def>
@@ -1001,6 +1004,20 @@ PRODUCTIONS
                                        if (def instanceof DefinitionList list) {
                                          readMacroSymbols(macroTable, list.items);
                                        } .)
+  .
+
+  // memory region [ROM] MROM in MEM = {...}
+  memoryRegionDefinition<out Definition def>  (. var start = nextTokenLoc(); CpuMemoryRegionDefinition.MemKind kind = null; .)
+  =                                           (. Statement stmt = null; .)
+    MEMORY REGION
+    SYM_BRACK_OPEN
+    ( RAM                                     (. kind = CpuMemoryRegionDefinition.MemKind.RAM; .)
+    | ROM                                     (. kind = CpuMemoryRegionDefinition.MemKind.ROM; .)
+    )
+    SYM_BRACK_CLOSE
+    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
+    SYM_IN identifierPath<out IsId mem>
+    [ SYM_EQ statement<out stmt> ]         (. def = new CpuMemoryRegionDefinition(id, kind, mem, stmt, start.join(lastTokenLoc())); .)
   .
 
   patchDefinition<out Definition def>     (. var start = nextTokenLoc(); .)
@@ -1040,8 +1057,7 @@ PRODUCTIONS
 
   cpuProcessDefinition<out Definition def> (. var start = nextTokenLoc(); .)
   =                                        (. CpuProcessDefinition.ProcessKind kind = null; List<Parameter> outputs = List.of(); .)
-  ( FIRMWARE                               (. kind = CpuProcessDefinition.ProcessKind.FIRMWARE; .)
-  | RESET                                (. kind = CpuProcessDefinition.ProcessKind.RESET; .)
+  ( RESET                                (. kind = CpuProcessDefinition.ProcessKind.RESET; .)
     [ SYM_ARROW
     parameters<out outputs> ]
   )
@@ -1834,7 +1850,6 @@ PRODUCTIONS
   | ENCODE
   | EXCEPTION
   | FETCH
-  | FIRMWARE
   | GLOBAL
   | GROUP
   | INSTRUCTION

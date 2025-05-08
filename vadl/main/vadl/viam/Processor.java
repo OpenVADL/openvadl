@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -23,7 +24,7 @@ import javax.annotation.Nullable;
  * Represents VADLs Micro Processor definition.
  * It is used by the ISS and LCB and defines a combination of ISA and ABI together with
  * additional information like the emulation start address, emulation stop condition,
- * default firmware, and startup functionality.
+ * memory regions, and startup functionality.
  */
 public class Processor extends Definition {
 
@@ -39,22 +40,21 @@ public class Processor extends Definition {
 
   private final Procedure reset;
 
-  @Nullable
-  private final Procedure firmware;
+  private final List<MemoryRegion> memoryRegions;
 
   /**
    * Constructs the microprocessor.
    */
   public Processor(Identifier identifier, InstructionSetArchitecture isa, @Nullable Abi abi,
                    @Nullable Function stop,
-                   Procedure reset, @Nullable Procedure firmware,
+                   Procedure reset, List<MemoryRegion> memoryRegions,
                    @Nullable String targetName) {
     super(identifier);
     this.isa = isa;
     this.abi = abi;
     this.stop = stop;
     this.reset = reset;
-    this.firmware = firmware;
+    this.memoryRegions = memoryRegions;
     if (targetName != null) {
       this.targetName = targetName;
     } else {
@@ -88,13 +88,12 @@ public class Processor extends Definition {
   }
 
   @Nullable
-  public Procedure firmware() {
-    return firmware;
-  }
-
-  @Nullable
   public Function stop() {
     return stop;
+  }
+
+  public List<MemoryRegion> memoryRegions() {
+    return memoryRegions;
   }
 
   public Stream<Instruction> instructions() {

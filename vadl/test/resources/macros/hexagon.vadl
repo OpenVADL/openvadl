@@ -1422,11 +1422,8 @@ processor CPU implements QDSP6 with ABI =
 
     PC := start
     if executable then halt
-
-    firmware
   }
-
-  firmware =
+  memory region [RAM] DRAM in MEM =
   {
     // SP   := 0x40000000
 

@@ -26,4 +26,7 @@ instruction set architecture ValidBranch = {
 }
 
 processor Test implements ValidBranch = {
-  }
+  [ firmware ]
+  [ base: 0x0 ]
+  memory region [RAM] DRAM in MEM
+}

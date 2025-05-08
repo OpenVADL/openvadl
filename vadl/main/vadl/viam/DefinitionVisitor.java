@@ -68,7 +68,7 @@ public interface DefinitionVisitor {
 
   void visit(Abi abi);
 
-  void visit(Processor microProcessor);
+  void visit(Processor processor);
 
   void visit(MicroArchitecture microArchitecture);
 
@@ -297,10 +297,7 @@ public interface DefinitionVisitor {
       if (stop != null) {
         stop.accept(this);
       }
-      var firmware = processor.firmware();
-      if (firmware != null) {
-        firmware.accept(this);
-      }
+      processor.memoryRegions().forEach(memoryRegion -> memoryRegion.accept(this));
       processor.reset().accept(this);
       processor.isa().accept(this);
       afterTraversal(processor);
@@ -521,7 +518,7 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(Processor microProcessor) {
+    public void visit(Processor processor) {
 
     }
 

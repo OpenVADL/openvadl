@@ -26,10 +26,8 @@ struct [(${gen_arch_upper})][(${gen_machine})]MachineState {
   [(${gen_arch_upper})]CPU cpu;
 };
 
-enum {
-  [# th:if="${mem_info.rom_size} != 0"][(${gen_machine_upper})]_MROM,[/]
-  // location where bios is load to
-  [(${gen_machine_upper})]_DRAM
+enum { [# th:each="mem : ${mem_regions}"]
+  [(${mem.enum_name})], [/]
 };
 
 #endif
