@@ -1,28 +1,11 @@
-FROM ghcr.io/openvadl/qemu-riscv64-base@sha256:259f08ecb93dc1f575b37568c803f193fbfabe8a9490bfa4dffbcea397ca5eae
-
-# Spike
-
-FROM debian:12 AS builder-spike-toolchain
-ARG num_jobs=16
-RUN apt update -y
-RUN apt install -y build-essential autoconf automake autotools-dev python3 python3-pip libmpc-dev libmpfr-dev libgmp-dev gawk bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev ninja-build git cmake libglib2.0-dev curl device-tree-compiler
-WORKDIR /root
-RUN git clone https://github.com/riscv-software-src/riscv-isa-sim
-WORKDIR riscv-isa-sim
-RUN ./configure --prefix=/opt/spike && make -j$num_jobs && make install && make clean
-
-# Rust
-
-FROM rust:latest AS builder-fail-if
-RUN cargo install --git https://github.com/kper/fail_if fail_if
+FROM ghcr.io/openvadl/qemu-riscv64-base@sha256:7e805a50713edf381e8decd3d91f4b58b76943dc36cd8aad6772272e869f5c80 AS riscv-toolchain
 
 # LLVM
 FROM ghcr.io/openvadl/llvm17-base@sha256:26659363db3bd278f54fb6d81581038d270aaaee859d839188063545d50d81ae
 RUN apt update -y
-RUN apt-get install -y device-tree-compiler python3 python3-pip python3-pandas vim
+RUN apt-get install -y device-tree-compiler python3 python3-pip python3-pandas vim libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev libslirp0 time
 COPY --from=riscv-toolchain /opt/riscv /opt/riscv-cross
-COPY --from=builder-spike-toolchain /opt/spike /opt/spike
-COPY --from=builder-fail-if /usr/local/cargo/bin/fail_if /usr/bin/fail_if
+COPY --from=riscv-toolchain /usr/local/bin/ /usr/local/bin
 WORKDIR /work
 COPY helper /helper
 COPY lcb_wrapper.sh .

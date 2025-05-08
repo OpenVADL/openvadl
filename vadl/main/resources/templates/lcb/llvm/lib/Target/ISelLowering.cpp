@@ -34,6 +34,7 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::BlockAddress, MVT::[(${stackPointerType})], Custom);
     setOperationAction(ISD::ConstantPool, MVT::[(${stackPointerType})], Custom);
     setOperationAction(ISD::JumpTable, MVT::[(${stackPointerType})], Custom);
+    setOperationAction(ISD::Constant, MVT::[(${stackPointerType})], Custom);
 
     setOperationAction(ISD::VASTART, MVT::Other, Custom);
     setOperationAction(ISD::VAARG, MVT::Other, Custom);
@@ -99,6 +100,8 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
         return lowerConstantPool(Op, DAG);
     case ISD::JumpTable:
         return lowerJumpTable(Op, DAG);
+    case ISD::Constant:
+         return lowerConstant(Op, DAG);
     case ISD::VASTART:
         return lowerVASTART(Op, DAG);
     case ISD::VAARG:
@@ -109,6 +112,17 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
     [/th:block]
     default : llvm_unreachable("unimplemented operand");
     }
+}
+
+SDValue [(${namespace})]TargetLowering::lowerConstant(SDValue Op, SelectionDAG &DAG) const
+{
+  int64_t Imm = cast<ConstantSDNode>(Op)->getSExtValue();
+
+  if (isInt<32>(Imm))
+    return Op;
+
+  // Expand to a constant pool using the default expansion code.
+  return SDValue();
 }
 
 static SDValue unpackFromRegLoc(SelectionDAG &DAG, SDValue Chain, const CCValAssign &VA, const SDLoc &DL)

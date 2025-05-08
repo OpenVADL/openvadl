@@ -26,6 +26,10 @@ open class GenerateCocoParserTask @Inject constructor(
     @InputFile
     val cocoJar = project.objects.fileProperty()
 
+    @InputFile
+    @Optional
+    val parserFrame = project.objects.fileProperty()
+
     @OutputDirectory
     val outputDir =
         project.objects.directoryProperty().convention(
@@ -40,10 +44,21 @@ open class GenerateCocoParserTask @Inject constructor(
             outputDirFile.mkdirs()
         }
 
+        val opts = mutableListOf<String>()
+        if (parserFrame.isPresent) {
+            opts.add("-P")
+            opts.add(parserFrame.get().asFile.absolutePath)
+        }
+
         inputFiles.files.forEach {
             println("Generating from $it...")
             execOps.exec {
-                commandLine("java", "-jar", cocoJar.get().asFile.absolutePath, "-o", outputDirFile.path, it)
+                commandLine(
+                    "java", "-jar", cocoJar.get().asFile.absolutePath,
+                    "-o", outputDirFile.path,
+                    *opts.toTypedArray(),
+                    it
+                )
             }
             println("------")
         }

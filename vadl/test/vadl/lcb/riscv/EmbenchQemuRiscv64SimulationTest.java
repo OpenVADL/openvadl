@@ -33,8 +33,7 @@ import vadl.lcb.AbstractLcbTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
-@Disabled
-public class EmbenchSpikeRiscv64SimulationTest extends AbstractLcbTest {
+public class EmbenchQemuRiscv64SimulationTest extends AbstractLcbTest {
 
   @Test
   void runO0() throws DuplicatedPassKeyException, IOException {
@@ -59,7 +58,7 @@ public class EmbenchSpikeRiscv64SimulationTest extends AbstractLcbTest {
     Files.createDirectories(Path.of(configuration.outputPath() + "/lcb/embench"));
     {
       var inputStream = new FileInputStream(
-          "test/resources/images/spike_rv64im/Dockerfile");
+          "test/resources/images/lcb_execution_test_rv64im/Dockerfile");
       var outputStream =
           new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
       inputStream.transferTo(outputStream);

@@ -1,4 +1,4 @@
-; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O3 -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
+; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O3 --relocation-model=pic -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
 define signext i32 @zero() nounwind {
   ; CHECK-LABEL: zero: # @zero
@@ -55,12 +55,10 @@ define signext i32 @neg_i32_hi20_only() nounwind {
 
 define i64 @imm_end_xori_1() nounwind {
   ; CHECK-LABEL: imm_end_xori_1: # @imm_end_xori_1
-  ; CHECK: LUI a0,0xe0000
-  ; CHECK-NEXT: ADDI a0,a0,0
-  ; CHECK-NEXT: SLLI a0,a0,16
-  ; CHECK-NEXT: ORI a0,a0,-512
-  ; CHECK-NEXT: SLLI a0,a0,16
-  ; CHECK-NEXT: ORI a0,a0,-1
+  ; CHECK-LABEL: .Ltmp0:
+  ; CHECK-NEXT: AUIPC a0,%pcrel_hi(.LCPI7_0)
+  ; CHECK-NEXT: ADDI a0,a0,%pcrel_lo(.Ltmp0)
+  ; CHECK-NEXT: LD a0,0(a0)
   ; CHECK-NEXT: RET
   ret i64 -2305843009180139521 ; 0xE000_0000_01FF_FFFF
 }
@@ -86,12 +84,10 @@ define void @imm_store_i16_neg1(ptr %p) nounwind {
 
 define void @imm_store_i32_neg1(ptr %p) nounwind {
   ; CHECK-LABEL: imm_store_i32_neg1: # @imm_store_i32_neg1
-  ; CHECK: LUI a1,0x0
-  ; CHECK-NEXT: a1,a1,0
-  ; CHECK-NEXT: SLLI a1,a1,16
-  ; CHECK-NEXT: ORI a1,a1,0
-  ; CHECK-NEXT: SLLI a1,a1,16
-  ; CHECK-NEXT: ORI a1,a1,-1
+  ; CHECK-LABEL: .Ltmp1:
+  ; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI10_0)
+  ; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp1)
+  ; CHECK-NEXT: LD a1,0(a1)
   ; CHECK-NEXT: SW a1,0(a0)
   ; CHECK-NEXT: RET
   store i32 -1, ptr %p

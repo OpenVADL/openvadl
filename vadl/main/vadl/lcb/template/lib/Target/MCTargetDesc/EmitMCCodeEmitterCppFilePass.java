@@ -17,12 +17,14 @@
 package vadl.lcb.template.lib.Target.MCTargetDesc;
 
 import static vadl.lcb.template.utils.ImmediateEncodingFunctionProvider.generateEncodeFunctions;
+import static vadl.viam.ViamError.ensureNonNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.RelocationKindCtx;
 import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
 import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
@@ -187,14 +189,18 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
                         ((ReferencesImmediateOperand) tableGenOperand).immediateOperand();
                     var opIndex = tableGenMachineInstruction.indexInOperands(tableGenOperand);
 
-                    // FIXME: find the correct fixup
-                    //        currently always the ABS one is found for the field
+                    var relocationKindExtension = ensureNonNull(
+                        instruction.extension(RelocationKindCtx.class), "must not be null");
+                    var relocationKind = relocationKindExtension.getFieldToKind()
+                        .get(immediateOperand.fieldAccessRef().fieldRef());
+
                     var operanderFixup = linkerComponents.fixups().stream()
                         .filter(fixup ->
                             fixup.implementedRelocation()
                                 instanceof AutomaticallyGeneratedRelocation relocation
                                 && relocation.field()
                                 .equals(immediateOperand.fieldAccessRef().fieldRef())
+                                && relocation.kind() == relocationKind
                         ).findFirst().orElseThrow();
 
                     return Map.of(

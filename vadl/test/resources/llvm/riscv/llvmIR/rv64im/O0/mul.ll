@@ -1,4 +1,4 @@
-; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O0 -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
+; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O0 --relocation-model=pic -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
 define signext i32 @square(i32 %a) nounwind {
 ; CHECK-LABEL: square: # @square
@@ -25,12 +25,10 @@ define signext i32 @mul(i32 %a, i32 %b) nounwind {
 define signext i32 @mul_constant(i32 %a) nounwind {
 ; CHECK-LABEL: mul_constant: # @mul_constant
 ; CHECK-LABEL: # %bb.0:
-; CHECK: LUI a1,0x0
-; CHECK-NEXT: ADDI a1,a1,5
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,0
-; CHECK-NEXT: SLLI a1,a1,16
-; CHECK-NEXT: ORI a1,a1,0
+; CHECK-LABEL: .Ltmp0:
+; CHECK-NEXT: AUIPC a1,%pcrel_hi(.LCPI2_0)
+; CHECK-NEXT: ADDI a1,a1,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT: LD a1,0(a1)
 ; CHECK-NEXT: MUL a0,a0,a1
 ; CHECK-NEXT: SRAI a0,a0,32
 ; CHECK-NEXT: RET

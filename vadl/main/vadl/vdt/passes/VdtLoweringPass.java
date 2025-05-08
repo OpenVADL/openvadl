@@ -17,8 +17,6 @@
 package vadl.vdt.passes;
 
 import java.io.IOException;
-import java.math.BigInteger;
-import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
@@ -28,9 +26,7 @@ import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
 import vadl.vdt.model.Node;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
-import vadl.vdt.utils.PBit;
-import vadl.viam.Constant;
-import vadl.viam.Encoding;
+import vadl.vdt.utils.PatternUtils;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 
@@ -77,38 +73,7 @@ public class VdtLoweringPass extends AbstractIssPass {
    * @return The prepared instruction
    */
   private Instruction prepareInstruction(vadl.viam.Instruction insn) {
-    BitPattern pattern = getInsnPattern(insn);
+    BitPattern pattern = PatternUtils.toFixedBitPattern(insn);
     return new Instruction(insn, pattern.width(), pattern);
-  }
-
-  /**
-   * Returns a bit pattern, where fixed bits in the instruction encoding are set to their respective
-   * encoding value. All other bits are set to <i>don't care</i>.
-   *
-   * @param insn The instruction
-   * @return The bit pattern
-   */
-  private BitPattern getInsnPattern(vadl.viam.Instruction insn) {
-
-    final PBit[] bits = new PBit[insn.format().type().bitWidth()];
-
-    // Initialize all bits to "don't care"
-    for (int i = 0; i < bits.length; i++) {
-      bits[i] = new PBit(PBit.Value.DONT_CARE);
-    }
-
-    // Set fixed bits to their respective encoding value
-    for (Encoding.Field encField : insn.encoding().fieldEncodings()) {
-      BigInteger fixedValue = encField.constant().integer();
-      List<Constant.BitSlice.Part> parts = encField.formatField().bitSlice().parts().toList();
-      for (Constant.BitSlice.Part p : parts) {
-        for (int i = p.lsb(); i <= p.msb(); i++) {
-          var val = fixedValue.testBit(i - p.lsb()) ? PBit.Value.ONE : PBit.Value.ZERO;
-          bits[bits.length - (i + 1)] = new PBit(val);
-        }
-      }
-    }
-
-    return new BitPattern(bits);
   }
 }

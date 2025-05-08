@@ -9,7 +9,7 @@ instruction set architecture RV64IM extending RV3264IM = {}
 
 application binary interface ABI for RV64IM = {
    long width = 64
-   long align = 8
+   long align = 64
    size_t type = unsigned long
    int max type = signed long
    pointer width = 64
@@ -93,26 +93,6 @@ application binary interface ABI for RV64IM = {
    {
       LUI { rd = rd, imm = hi( val ) }
       ADDI { rd = rd, rs1 = rd, imm = lo( val ) }
-   }
-
-   constant sequence( rd : Bits<5>, val : UInt<64> ) =
-   {
-      LUI { rd = rd, imm = to32AndHi( val ) }
-      ADDI { rd = rd, rs1 = rd, imm = to32AndLo ( val ) }
-      SLLI { rd = rd, rs1 = rd, sft = 16 }
-      ORI { rd = rd, rs1 = rd, imm = lowerHalfHi(val) }
-      SLLI { rd = rd, rs1 = rd, sft = 16 }
-      ORI { rd = rd, rs1 = rd, imm = lowerHalfLo(val) }
-   }
-
-  constant sequence( rd : Bits<5>, val : SInt<64> ) =
-   {
-      LUI { rd = rd, imm = to32AndHi( val ) }
-      ADDI { rd = rd, rs1 = rd, imm = to32AndLo ( val ) }
-      SLLI { rd = rd, rs1 = rd, sft = 16 }
-      ORI { rd = rd, rs1 = rd, imm = lowerHalfHi(val) }
-      SLLI { rd = rd, rs1 = rd, sft = 16 }
-      ORI { rd = rd, rs1 = rd, imm = lowerHalfLo(val) }
    }
 
    constant sequence( rd : Bits<5>, imm : SInt<12> ) =

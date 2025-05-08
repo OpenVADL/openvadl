@@ -1,14 +1,12 @@
-; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O3 -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
+; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im --relocation-model=pic -O3 -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
 define signext i32 @foo(i32 signext %a, ptr %b) nounwind {
 ; CHECK-LABEL: foo:
 ; CHECK-NEXT: # %bb.0:
-; CHECK-NEXT: LUI a2,0x0
-; CHECK-NEXT: ADDI a2,a2,0
-; CHECK-NEXT: SLLI a2,a2,16
-; CHECK-NEXT: ORI a2,a2,0
-; CHECK-NEXT: SLLI a2,a2,16
-; CHECK-NEXT: ORI a2,a2,-1
+; CHECK-LABEL: .Ltmp0:
+; CHECK-NEXT: AUIPC a2,%pcrel_hi(.LCPI0_0)
+; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT: LD a2,0(a2)
 ; CHECK-NEXT: AND a4,a0,a2
 ; CHECK-NEXT: LWU a3,0(a1)
 ; CHECK-NEXT: BEQ a4,a3,.LBB0_1
@@ -238,12 +236,10 @@ define i32 @select_sge_int16min(i32 signext %x, i32 signext %y, i32 signext %z) 
 define i64 @select_sge_int32min(i64 %x, i64 %y, i64 %z) {
 ; CHECK-LABEL: select_sge_int32min:
 ; CHECK-NEXT: # %bb.0:
-; CHECK-NEXT: LUI a2,0xfffff
-; CHECK-NEXT: ADDI a2,a2,-1
-; CHECK-NEXT: SLLI a2,a2,16
-; CHECK-NEXT: ORI a2,a2,-1
-; CHECK-NEXT: SLLI a2,a2,16
-; CHECK-NEXT: ORI a2,a2,-1
+; CHECK-LABEL: .Ltmp1:
+; CHECK-NEXT: AUIPC a2,%pcrel_hi(.LCPI2_0)
+; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Ltmp1)
+; CHECK-NEXT: LD a2,0(a2)
 ; CHECK-NEXT: BLT a2,a0,.LBB2_2
 ; CHECK-LABEL: # %bb.1:
 ; CHECK-NEXT: LD a1,0(sp)

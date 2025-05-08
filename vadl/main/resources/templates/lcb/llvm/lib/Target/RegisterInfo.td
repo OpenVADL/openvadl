@@ -21,12 +21,18 @@ def [(${register.name})] : Register<"[(${register.name})]">
 }
 [/]
 
+defvar [(${namespace})] = DefaultMode;
 [# th:each="wrapped : ${registerFiles}" ]
+def [(${wrapped.registerFile.name})]LenRI : RegInfoByHwMode<
+      [ [(${namespace})] ],
+      [RegInfo<[(${wrapped.registerFile.regSize})],[(${wrapped.registerFile.regSize})],[(${pointerAlignment})]>]>;
 def [(${wrapped.registerFile.name})] : RegisterClass
 < /* namespace = */ "[(${wrapped.registerFile.namespace})]"
 , /* regTypes  = */  [  [(${wrapped.registerFile.regTypesString})] ]
 , /* alignment = */ [(${wrapped.registerFile.alignment})]
 , /* regList   = */
   ( add [(${wrapped.allocationSequence})] )
->;
+> {
+  let RegInfos = [(${wrapped.registerFile.name})]LenRI;
+}
 [/]

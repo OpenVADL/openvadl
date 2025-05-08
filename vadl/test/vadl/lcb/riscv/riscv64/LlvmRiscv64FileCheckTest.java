@@ -16,9 +16,9 @@
 
 package vadl.lcb.riscv.riscv64;
 
-import vadl.lcb.riscv.LlvmRiscvFileCheckTest;
+import vadl.lcb.riscv.LlvmQemuRiscvFileCheckTest;
 
-public class LlvmRiscv64FileCheckTest extends LlvmRiscvFileCheckTest {
+public class LlvmRiscv64FileCheckTest extends LlvmQemuRiscvFileCheckTest {
   @Override
   protected String getTarget() {
     return "rv64im";
