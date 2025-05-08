@@ -434,18 +434,11 @@ instruction set architecture AAarch64Base = {
 
 // movk, movn, movz models *****************************************************
 
-  constant Zero16 = 0 as Bits<16>
-  constant Zero32 = 0 as Bits<32>
-  constant Zero48 = 0 as Bits<48>
-
-  model notid (not: Id, ex: Ex) : Ex = {
-    match: Ex ($not = not => ~($ex) ;_=> $ex)
-    }
+  model notid (not: Id, ex: Ex) : Ex = { match: Ex ($not = not => ~($ex) ;_=> $ex) }
   
   model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
     instruction ExtendId ($i.id, $pos): MovFormat = 
-      let xrd = X(rd) in
-        X(rd) := ($posex)
+      X(rd) := $posex
     encoding ExtendId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
     assembly ExtendId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', decimal(imm16),
       match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
@@ -453,23 +446,23 @@ instruction set architecture AAarch64Base = {
 
   model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     match: IsaDefs ( $size = WSize
-         => $MovInstr ($i; $size; Pos00; (xrd(31..16), imm16) as BitsX)
-            $MovInstr ($i; $size; Pos16; (imm16, xrd(15..0 )) as BitsX)
-      ; _=> $MovInstr ($i; $size; Pos00; (xrd(63..16), imm16            ))
-            $MovInstr ($i; $size; Pos16; (xrd(63..32), imm16, xrd(15..0)))
-            $MovInstr ($i; $size; Pos32; (xrd(63..48), imm16, xrd(31..0)))
-            $MovInstr ($i; $size; Pos48; (             imm16, xrd(47..0)))
+         => $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(31..16), imm16) as BitsX)
+            $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (imm16, xrd(15..0 )) as BitsX)
+      ; _=> $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(63..16), imm16            ))
+            $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (xrd(63..32), imm16, xrd(15..0)))
+            $MovInstr ($i; $size; Pos32; let xrd = X(rd) in (xrd(63..48), imm16, xrd(31..0)))
+            $MovInstr ($i; $size; Pos48; let xrd = X(rd) in (             imm16, xrd(47..0)))
       )
     }
 
   model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     match: IsaDefs ( $size = WSize
-         => $MovInstr ($i; $size; Pos00; $notid($i.funct; (imm16 as BitsW)) as BitsX)
-            $MovInstr ($i; $size; Pos16; $notid($i.funct; (imm16 << 16   )) as BitsX)
-      ; _=> $MovInstr ($i; $size; Pos00; $notid($i.funct; (imm16      ) as BitsX))
-            $MovInstr ($i; $size; Pos16; $notid($i.funct; (imm16 << 16) as BitsX))
-            $MovInstr ($i; $size; Pos32; $notid($i.funct; (imm16 << 32) as BitsX))
-            $MovInstr ($i; $size; Pos48; $notid($i.funct; (imm16 << 48) as BitsX))
+         => $MovInstr ($i; $size; Pos00; $notid($i.funct; (imm16 as BitsW      )) as BitsX)
+            $MovInstr ($i; $size; Pos16; $notid($i.funct; (imm16 as BitsW << 16)) as BitsX)
+      ; _=> $MovInstr ($i; $size; Pos00; $notid($i.funct;  imm16 as BitsX      ))
+            $MovInstr ($i; $size; Pos16; $notid($i.funct;  imm16 as BitsX << 16))
+            $MovInstr ($i; $size; Pos32; $notid($i.funct;  imm16 as BitsX << 32))
+            $MovInstr ($i; $size; Pos48; $notid($i.funct;  imm16 as BitsX << 48))
       )
     }
 
