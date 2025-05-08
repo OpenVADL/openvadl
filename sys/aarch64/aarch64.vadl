@@ -438,7 +438,9 @@ instruction set architecture AAarch64Base = {
   constant Zero32 = 0 as Bits<32>
   constant Zero48 = 0 as Bits<48>
 
-  model notid (not: Id, ex: Ex) : Ex = {match: Ex ($not = not => ~($ex);_=>$ex)}
+  model notid (not: Id, ex: Ex) : Ex = {
+    match: Ex ($not = not => ~(($ex)) ;_=> $ex)
+    }
   
   model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
     instruction ExtendId ($i.id, $pos): MovFormat = 
@@ -461,12 +463,13 @@ instruction set architecture AAarch64Base = {
     }
 
   model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
-    $MovInstr         ($i; $size; Pos00; $notid($i.funct; (Zero48, imm16        )))
     match: IsaDefs ( $size = WSize
-         => $MovInstr ($i; $size; Pos16; $notid($i.funct; (Zero32, imm16, Zero16)))
-      ; _=> $MovInstr ($i; $size; Pos16; $notid($i.funct; (Zero32, imm16, Zero16)))
-            $MovInstr ($i; $size; Pos32; $notid($i.funct; (Zero16, imm16, Zero32)))
-            $MovInstr ($i; $size; Pos48; $notid($i.funct; (        imm16, Zero48)))
+         => $MovInstr ($i; $size; Pos00; $notid($i.funct; (imm16 as BitsW)) as BitsX)
+            $MovInstr ($i; $size; Pos16; $notid($i.funct; (imm16 << 16   )) as BitsX)
+      ; _=> $MovInstr ($i; $size; Pos00; $notid($i.funct; (imm16      ) as BitsX))
+            $MovInstr ($i; $size; Pos16; $notid($i.funct; (imm16 << 16) as BitsX))
+            $MovInstr ($i; $size; Pos32; $notid($i.funct; (imm16 << 32) as BitsX))
+            $MovInstr ($i; $size; Pos48; $notid($i.funct; (imm16 << 48) as BitsX))
       )
     }
 
