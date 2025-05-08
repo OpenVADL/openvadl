@@ -125,4 +125,9 @@ public class ImplementedUserSpecifiedRelocation extends UserSpecifiedRelocation
             + "_" + field.identifier.simpleName()
     );
   }
+
+  @Override
+  public String llvmKind() {
+    return kind.llvmKind();
+  }
 }
