@@ -39,10 +39,10 @@ public class Rv3264imTest extends AbstractTest {
 
   void testRv32i(Specification spec) {
     var rv32i = TestUtils.findDefinitionByNameIn("RV32I", spec, InstructionSetArchitecture.class);
-    TestUtils.findDefinitionByNameIn("RV3264I::ADD", spec, Instruction.class);
+    TestUtils.findDefinitionByNameIn("RV3264Base::ADD", spec, Instruction.class);
 
     assertThrows(AssertionFailedError.class,
-        () -> TestUtils.findDefinitionByNameIn("RV3264IM::DIVU", spec, Instruction.class));
+        () -> TestUtils.findDefinitionByNameIn("RV3264M::DIVU", spec, Instruction.class));
     Assertions.assertEquals(Type.bits(32),
         Objects.requireNonNull(rv32i.pc()).registerTensor().type());
   }
@@ -50,8 +50,8 @@ public class Rv3264imTest extends AbstractTest {
   void testRv32im(Specification spec) {
     var rv32im = TestUtils.findDefinitionByNameIn("RV32IM", spec, InstructionSetArchitecture.class);
 
-    TestUtils.findDefinitionByNameIn("RV3264I::ADD", spec, Instruction.class);
-    TestUtils.findDefinitionByNameIn("RV3264IM::DIVU", spec, Instruction.class);
+    TestUtils.findDefinitionByNameIn("RV3264Base::ADD", spec, Instruction.class);
+    TestUtils.findDefinitionByNameIn("RV3264M::DIVU", spec, Instruction.class);
     Assertions.assertEquals(Type.bits(32),
         Objects.requireNonNull(rv32im.pc()).registerTensor().type());
   }
@@ -59,9 +59,9 @@ public class Rv3264imTest extends AbstractTest {
   void testRv64i(Specification spec) {
     var rv64i = TestUtils.findDefinitionByNameIn("RV64I", spec, InstructionSetArchitecture.class);
 
-    TestUtils.findDefinitionByNameIn("RV3264I::ADD", spec, Instruction.class);
+    TestUtils.findDefinitionByNameIn("RV3264Base::ADD", spec, Instruction.class);
     assertThrows(AssertionFailedError.class,
-        () -> TestUtils.findDefinitionByNameIn("RV3264IM::DIVU", spec, Instruction.class));
+        () -> TestUtils.findDefinitionByNameIn("RV3264M::DIVU", spec, Instruction.class));
     Assertions.assertEquals(Type.bits(64),
         Objects.requireNonNull(rv64i.pc()).registerTensor().type());
   }
@@ -69,8 +69,8 @@ public class Rv3264imTest extends AbstractTest {
   void testRv64im(Specification spec) {
     var rv64im = TestUtils.findDefinitionByNameIn("RV64IM", spec, InstructionSetArchitecture.class);
 
-    TestUtils.findDefinitionByNameIn("RV3264I::ADD", spec, Instruction.class);
-    TestUtils.findDefinitionByNameIn("RV3264IM::DIVU", spec, Instruction.class);
+    TestUtils.findDefinitionByNameIn("RV3264Base::ADD", spec, Instruction.class);
+    TestUtils.findDefinitionByNameIn("RV3264M::DIVU", spec, Instruction.class);
     Assertions.assertEquals(Type.bits(64),
         Objects.requireNonNull(rv64im.pc()).registerTensor().type());
   }
