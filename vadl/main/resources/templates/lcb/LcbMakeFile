@@ -58,3 +58,7 @@ build-llc:
 build-clang:
 		make LLVM_ENABLE_PROJECTS="clang" build
 		./$(LLVM_SOURCE_PATH)/build/bin/clang --version
+
+build-lld:
+		make LLVM_ENABLE_PROJECTS="lld" build
+		./$(LLVM_SOURCE_PATH)/build/bin/lld --version
