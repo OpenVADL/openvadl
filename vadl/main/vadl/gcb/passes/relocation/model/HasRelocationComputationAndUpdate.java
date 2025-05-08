@@ -74,4 +74,9 @@ public interface HasRelocationComputationAndUpdate {
    * Generates and returns the name of the ELF relocation.
    */
   ElfRelocationName elfRelocationName();
+
+  /**
+   * Get the LLVM kind of the relocation.
+   */
+  String llvmKind();
 }

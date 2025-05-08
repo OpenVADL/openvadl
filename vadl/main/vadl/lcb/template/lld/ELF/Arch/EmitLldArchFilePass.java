@@ -23,6 +23,7 @@ import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Specification;
 
 /**
@@ -49,6 +50,32 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
 
   }
 
+  record ElfRelocationInfo(String elfName, String baseRelocationName, String kind) implements
+      Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "elfName", elfName,
+          "baseRelocationName", baseRelocationName,
+          "kind", kind
+      );
+    }
+  }
+
+  record RelocationInfo(String name, String relocationFunction, String encodingFunction) implements
+      Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "relocationFunction", relocationFunction,
+          "encodingFunction", encodingFunction
+      );
+    }
+  }
+
   private ElfInfo createElfInfo() {
     return new ElfInfo(false, 32);
   }
@@ -59,12 +86,31 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
     var output =
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
-    var relocations = output.elfRelocations();
+
+    var elfRelocations = output.elfRelocations().stream().map(
+        r -> new ElfRelocationInfo(r.elfRelocationName().value(),
+            r.relocation().identifier.lower(),
+            r.llvmKind()
+        )
+    ).toList();
+
     var elfInfo = createElfInfo();
+
+    var relocations = output.relocationsBeforeElfExpansion().stream().map(
+        r -> new RelocationInfo(
+            r.relocation().identifier.lower(),
+            r.valueRelocation().functionName().lower(),
+            output.elfRelocations().stream()
+                .filter(elfR -> elfR.relocation().equals(r.relocation())).findFirst().get()
+                .fieldUpdateFunction().functionName().lower()
+        )
+    ).toList();
+
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.MAX_INSTRUCTION_WORDSIZE, elfInfo.maxInstructionWordSize(),
         CommonVarNames.IS_BIG_ENDIAN, elfInfo.isBigEndian(),
-        CommonVarNames.RELOCATIONS, relocations);
+        CommonVarNames.RELOCATIONS, relocations,
+        "elfRelocations", elfRelocations);
   }
 }
