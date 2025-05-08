@@ -184,89 +184,89 @@ def SelectCC_X: Instruction {
 
 
 
-class RV3264I_Rtype_rs2<ValueType ty> : Operand<ty>
+class RV3264Base_Rtype_rs2<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264I_Rtype_shamt_encoding_wrapper";
-  let DecoderMethod = "RV3264I_Rtype_shamt_decode_wrapper";
+  let EncoderMethod = "RV3264Base_Rtype_shamt_encoding_wrapper";
+  let DecoderMethod = "RV3264Base_Rtype_shamt_decode_wrapper";
 }
 
-def RV3264I_Rtype_rs2AsInt64
-    : RV3264I_Rtype_rs2<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264I_Rtype_shamt_predicate(Imm); }]>;
+def RV3264Base_Rtype_rs2AsInt64
+    : RV3264Base_Rtype_rs2<i64>
+    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 31 && RV3264Base_Rtype_shamt_predicate(Imm); }]>;
 
-def RV3264I_Rtype_rs2AsLabel : RV3264I_Rtype_rs2<OtherVT>;
+def RV3264Base_Rtype_rs2AsLabel : RV3264Base_Rtype_rs2<OtherVT>;
 
-class RV3264I_Itype_imm<ValueType ty> : Operand<ty>
+class RV3264Base_Itype_imm<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264I_Itype_immS_encoding_wrapper";
-  let DecoderMethod = "RV3264I_Itype_immS_decode_wrapper";
+  let EncoderMethod = "RV3264Base_Itype_immS_encoding_wrapper";
+  let DecoderMethod = "RV3264Base_Itype_immS_decode_wrapper";
 }
 
-def RV3264I_Itype_immAsInt64
-    : RV3264I_Itype_imm<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264I_Itype_immS_predicate(Imm); }]>;
+def RV3264Base_Itype_immAsInt64
+    : RV3264Base_Itype_imm<i64>
+    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_Itype_immS_predicate(Imm); }]>;
 
-def RV3264I_Itype_immAsLabel : RV3264I_Itype_imm<OtherVT>;
+def RV3264Base_Itype_immAsLabel : RV3264Base_Itype_imm<OtherVT>;
 
-class RV3264I_Utype_imm<ValueType ty> : Operand<ty>
+class RV3264Base_Utype_imm<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264I_Utype_immUp_encoding_wrapper";
-  let DecoderMethod = "RV3264I_Utype_immUp_decode_wrapper";
+  let EncoderMethod = "RV3264Base_Utype_immUp_encoding_wrapper";
+  let DecoderMethod = "RV3264Base_Utype_immUp_decode_wrapper";
 }
 
-def RV3264I_Utype_immAsInt64
-    : RV3264I_Utype_imm<i64>
-    , ImmLeaf<i64, [{ return Imm >= -524288 && Imm <= 524287 && RV3264I_Utype_immUp_predicate(Imm); }]>;
+def RV3264Base_Utype_immAsInt64
+    : RV3264Base_Utype_imm<i64>
+    , ImmLeaf<i64, [{ return Imm >= -524288 && Imm <= 524287 && RV3264Base_Utype_immUp_predicate(Imm); }]>;
 
-def RV3264I_Utype_immAsLabel : RV3264I_Utype_imm<OtherVT>;
+def RV3264Base_Utype_immAsLabel : RV3264Base_Utype_imm<OtherVT>;
 
-class RV3264I_Stype_imm<ValueType ty> : Operand<ty>
+class RV3264Base_Stype_imm<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264I_Stype_immS_encoding_wrapper";
-  let DecoderMethod = "RV3264I_Stype_immS_decode_wrapper";
+  let EncoderMethod = "RV3264Base_Stype_immS_encoding_wrapper";
+  let DecoderMethod = "RV3264Base_Stype_immS_decode_wrapper";
 }
 
-def RV3264I_Stype_immAsInt64
-    : RV3264I_Stype_imm<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264I_Stype_immS_predicate(Imm); }]>;
+def RV3264Base_Stype_immAsInt64
+    : RV3264Base_Stype_imm<i64>
+    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_Stype_immS_predicate(Imm); }]>;
 
-def RV3264I_Stype_immAsLabel : RV3264I_Stype_imm<OtherVT>;
+def RV3264Base_Stype_immAsLabel : RV3264Base_Stype_imm<OtherVT>;
 
-class RV3264I_Btype_imm<ValueType ty> : Operand<ty>
+class RV3264Base_Btype_imm<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264I_Btype_immS_encoding_wrapper";
-  let DecoderMethod = "RV3264I_Btype_immS_decode_wrapper";
+  let EncoderMethod = "RV3264Base_Btype_immS_encoding_wrapper";
+  let DecoderMethod = "RV3264Base_Btype_immS_decode_wrapper";
 }
 
-def RV3264I_Btype_immAsInt64
-    : RV3264I_Btype_imm<i64>
-    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264I_Btype_immS_predicate(Imm); }]>;
+def RV3264Base_Btype_immAsInt64
+    : RV3264Base_Btype_imm<i64>
+    , ImmLeaf<i64, [{ return Imm >= -2048 && Imm <= 2047 && RV3264Base_Btype_immS_predicate(Imm); }]>;
 
-def RV3264I_Btype_immAsLabel : RV3264I_Btype_imm<OtherVT>;
+def RV3264Base_Btype_immAsLabel : RV3264Base_Btype_imm<OtherVT>;
 
-class RV3264I_Jtype_imm<ValueType ty> : Operand<ty>
+class RV3264Base_Jtype_imm<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264I_Jtype_immS_encoding_wrapper";
-  let DecoderMethod = "RV3264I_Jtype_immS_decode_wrapper";
+  let EncoderMethod = "RV3264Base_Jtype_immS_encoding_wrapper";
+  let DecoderMethod = "RV3264Base_Jtype_immS_decode_wrapper";
 }
 
-def RV3264I_Jtype_immAsInt64
-    : RV3264I_Jtype_imm<i64>
-    , ImmLeaf<i64, [{ return Imm >= -524288 && Imm <= 524287 && RV3264I_Jtype_immS_predicate(Imm); }]>;
+def RV3264Base_Jtype_immAsInt64
+    : RV3264Base_Jtype_imm<i64>
+    , ImmLeaf<i64, [{ return Imm >= -524288 && Imm <= 524287 && RV3264Base_Jtype_immS_predicate(Imm); }]>;
 
-def RV3264I_Jtype_immAsLabel : RV3264I_Jtype_imm<OtherVT>;
+def RV3264Base_Jtype_immAsLabel : RV3264Base_Jtype_imm<OtherVT>;
 
-class RV3264I_Ftype_sft<ValueType ty> : Operand<ty>
+class RV3264Base_Ftype_sft<ValueType ty> : Operand<ty>
 {
-  let EncoderMethod = "RV3264I_Ftype_shamt_encoding_wrapper";
-  let DecoderMethod = "RV3264I_Ftype_shamt_decode_wrapper";
+  let EncoderMethod = "RV3264Base_Ftype_shamt_encoding_wrapper";
+  let DecoderMethod = "RV3264Base_Ftype_shamt_decode_wrapper";
 }
 
-def RV3264I_Ftype_sftAsInt64
-    : RV3264I_Ftype_sft<i64>
-    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63 && RV3264I_Ftype_shamt_predicate(Imm); }]>;
+def RV3264Base_Ftype_sftAsInt64
+    : RV3264Base_Ftype_sft<i64>
+    , ImmLeaf<i64, [{ return Imm >= 0 && Imm <= 63 && RV3264Base_Ftype_shamt_predicate(Imm); }]>;
 
-def RV3264I_Ftype_sftAsLabel : RV3264I_Ftype_sft<OtherVT>;
+def RV3264Base_Ftype_sftAsLabel : RV3264Base_Ftype_sft<OtherVT>;
 
 
 
@@ -332,7 +332,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -383,7 +383,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -540,7 +540,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -591,7 +591,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV3264I_Utype_immAsInt64:$imm );
+let InOperandList = ( ins RV3264Base_Utype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -638,7 +638,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm );
 
 field bits<32> Inst;
 
@@ -692,7 +692,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm );
 
 field bits<32> Inst;
 
@@ -746,7 +746,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm );
 
 field bits<32> Inst;
 
@@ -800,7 +800,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm );
 
 field bits<32> Inst;
 
@@ -854,7 +854,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm );
 
 field bits<32> Inst;
 
@@ -908,7 +908,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm );
 
 field bits<32> Inst;
 
@@ -1276,7 +1276,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV3264I_Jtype_immAsInt64:$imm );
+let InOperandList = ( ins RV3264Base_Jtype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -1326,7 +1326,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -1377,7 +1377,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -1428,7 +1428,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -1479,7 +1479,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -1530,7 +1530,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -1581,7 +1581,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -1632,7 +1632,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins RV3264I_Utype_immAsInt64:$imm );
+let InOperandList = ( ins RV3264Base_Utype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -1679,7 +1679,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -1730,7 +1730,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -2099,7 +2099,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -2362,7 +2362,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -2414,7 +2414,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -2466,7 +2466,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -2571,7 +2571,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Ftype_sftAsInt64:$sft );
+let InOperandList = ( ins X:$rs1, RV3264Base_Ftype_sftAsInt64:$sft );
 
 field bits<32> Inst;
 
@@ -2626,7 +2626,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Rtype_rs2AsInt64:$rs2 );
+let InOperandList = ( ins X:$rs1, RV3264Base_Rtype_rs2AsInt64:$rs2 );
 
 field bits<32> Inst;
 
@@ -2785,7 +2785,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -2836,7 +2836,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -2993,7 +2993,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Ftype_sftAsInt64:$sft );
+let InOperandList = ( ins X:$rs1, RV3264Base_Ftype_sftAsInt64:$sft );
 
 field bits<32> Inst;
 
@@ -3048,7 +3048,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Rtype_rs2AsInt64:$rs2 );
+let InOperandList = ( ins X:$rs1, RV3264Base_Rtype_rs2AsInt64:$rs2 );
 
 field bits<32> Inst;
 
@@ -3207,7 +3207,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Ftype_sftAsInt64:$sft );
+let InOperandList = ( ins X:$rs1, RV3264Base_Ftype_sftAsInt64:$sft );
 
 field bits<32> Inst;
 
@@ -3262,7 +3262,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Rtype_rs2AsInt64:$rs2 );
+let InOperandList = ( ins X:$rs1, RV3264Base_Rtype_rs2AsInt64:$rs2 );
 
 field bits<32> Inst;
 
@@ -3474,7 +3474,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins X:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -3579,7 +3579,7 @@ let Size = 4;
 let CodeSize = 4;
 
 let OutOperandList = ( outs X:$rd );
-let InOperandList = ( ins X:$rs1, RV3264I_Itype_immAsInt64:$imm );
+let InOperandList = ( ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm );
 
 field bits<32> Inst;
 
@@ -3801,7 +3801,7 @@ def J : Instruction
 let Namespace = "processorNameValue";
 
 let OutOperandList = ( outs  );
-let InOperandList = ( ins RV3264I_Jtype_immAsLabel:$imm );
+let InOperandList = ( ins RV3264Base_Jtype_immAsLabel:$imm );
 
 let isTerminator  = 1;
 let isBranch      = 1;
@@ -3823,7 +3823,7 @@ let Defs = [  ];
 }
 
 def : Pat<(br bb:$imm),
-        (J RV3264I_Jtype_immAsLabel:$imm)>;
+        (J RV3264Base_Jtype_immAsLabel:$imm)>;
 
 
 def LA : Instruction
@@ -4315,19 +4315,19 @@ let Defs = [  ];
 
 
 
-def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs, X0, RV3264I_Btype_immAsLabel:$imm)>;
+def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs, X0, RV3264Base_Btype_immAsLabel:$imm)>;
 
-def : InstAlias<"BGEZ $rs,$offset", (BGE X:$rs, X0, RV3264I_Btype_immAsLabel:$imm)>;
+def : InstAlias<"BGEZ $rs,$offset", (BGE X:$rs, X0, RV3264Base_Btype_immAsLabel:$imm)>;
 
-def : InstAlias<"BGTZ $rs,$offset", (BLT X0, X:$rs, RV3264I_Btype_immAsLabel:$imm)>;
+def : InstAlias<"BGTZ $rs,$offset", (BLT X0, X:$rs, RV3264Base_Btype_immAsLabel:$imm)>;
 
-def : InstAlias<"BLEZ $rs,$offset", (BGE X0, X:$rs, RV3264I_Btype_immAsLabel:$imm)>;
+def : InstAlias<"BLEZ $rs,$offset", (BGE X0, X:$rs, RV3264Base_Btype_immAsLabel:$imm)>;
 
-def : InstAlias<"BLTZ $rs,$offset", (BLT X:$rs, X0, RV3264I_Btype_immAsLabel:$imm)>;
+def : InstAlias<"BLTZ $rs,$offset", (BLT X:$rs, X0, RV3264Base_Btype_immAsLabel:$imm)>;
 
-def : InstAlias<"BNEZ $rs,$offset", (BNE X:$rs, X0, RV3264I_Btype_immAsLabel:$imm)>;
+def : InstAlias<"BNEZ $rs,$offset", (BNE X:$rs, X0, RV3264Base_Btype_immAsLabel:$imm)>;
 
-def : InstAlias<"J $offset", (JAL X0, RV3264I_Jtype_immAsInt64:$imm)>;
+def : InstAlias<"J $offset", (JAL X0, RV3264Base_Jtype_immAsInt64:$imm)>;
 
 def : InstAlias<"MV $rd,$rs1", (ADDI X:$rd, X:$rs1, 0)>;
 
@@ -4358,19 +4358,19 @@ in
 let isCall = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1,
 isBarrier = 1
 in
-    def PseudoBRIND : Pseudo<(outs ), (ins X:$rs1, RV3264I_Itype_immAsInt64:$imm),
+    def PseudoBRIND : Pseudo<(outs ), (ins X:$rs1, RV3264Base_Itype_immAsInt64:$imm),
                         []>,
-                 PseudoInstExpansion<(JALR X0, X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+                 PseudoInstExpansion<(JALR X0, X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 def : Pat<(add X:$rs1, X:$rs2),
         (ADD X:$rs1, X:$rs2)>;
 
 
-def : Pat<(add X:$rs1, RV3264I_Itype_immAsInt64:$imm),
-        (ADDI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(add X:$rs1, RV3264Base_Itype_immAsInt64:$imm),
+        (ADDI X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
-def : Pat<(add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm),
-        (ADDI AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(add AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm),
+        (ADDI AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 
 
@@ -4381,76 +4381,76 @@ def : Pat<(and X:$rs1, X:$rs2),
         (AND X:$rs1, X:$rs2)>;
 
 
-def : Pat<(and X:$rs1, RV3264I_Itype_immAsInt64:$imm),
-        (ANDI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(and X:$rs1, RV3264Base_Itype_immAsInt64:$imm),
+        (ANDI X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 
 
 
 def : Pat<(brcc SETEQ, X:$rs1, X:$rs2, bb:$imm),
-        (BEQ X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BEQ X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond (i64 (seteq X:$rs1, X:$rs2)), bb:$imm),
-        (BEQ X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BEQ X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 
 def : Pat<(brcc SETGE, X:$rs1, X:$rs2, bb:$imm),
-        (BGE X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BGE X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcc SETLE, X:$rs2, X:$rs1, bb:$imm),
-        (BGE X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BGE X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond (i64 (setge X:$rs1, X:$rs2)), bb:$imm),
-        (BGE X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BGE X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond (i64 (setle X:$rs2, X:$rs1)), bb:$imm),
-        (BGE X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BGE X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 
 def : Pat<(brcc SETUGE, X:$rs1, X:$rs2, bb:$imm),
-        (BGEU X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BGEU X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcc SETULE, X:$rs2, X:$rs1, bb:$imm),
-        (BGEU X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BGEU X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond (i64 (setuge X:$rs1, X:$rs2)), bb:$imm),
-        (BGEU X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BGEU X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond (i64 (setule X:$rs2, X:$rs1)), bb:$imm),
-        (BGEU X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BGEU X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 
 def : Pat<(brcc SETLT, X:$rs1, X:$rs2, bb:$imm),
-        (BLT X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BLT X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcc SETGT, X:$rs2, X:$rs1, bb:$imm),
-        (BLT X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BLT X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond (i64 (setlt X:$rs1, X:$rs2)), bb:$imm),
-        (BLT X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BLT X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond (i64 (setgt X:$rs2, X:$rs1)), bb:$imm),
-        (BLT X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BLT X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 
 def : Pat<(brcc SETULT, X:$rs1, X:$rs2, bb:$imm),
-        (BLTU X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BLTU X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcc SETUGT, X:$rs2, X:$rs1, bb:$imm),
-        (BLTU X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BLTU X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond (i64 (setult X:$rs1, X:$rs2)), bb:$imm),
-        (BLTU X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BLTU X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond (i64 (setugt X:$rs2, X:$rs1)), bb:$imm),
-        (BLTU X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BLTU X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 
 def : Pat<(brcc SETNE, X:$rs1, X:$rs2, bb:$imm),
-        (BNE X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BNE X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond (i64 (setne X:$rs1, X:$rs2)), bb:$imm),
-        (BNE X:$rs1, X:$rs2, RV3264I_Btype_immAsLabel:$imm)>;
+        (BNE X:$rs1, X:$rs2, RV3264Base_Btype_immAsLabel:$imm)>;
 
 def : Pat<(brcond X:$rs1, bb:$imm),
         (BNE X:$rs1, X0, bb:$imm)>;
@@ -4477,15 +4477,15 @@ def : Pat<(udiv X:$rs1, X:$rs2),
 def : Pat<(brind X:$rs1),
         (PseudoBRIND X:$rs1, 0)>;
 
-def : Pat<(brind (add X:$rs1, RV3264I_Itype_immAsInt64:$imm)),
-        (PseudoBRIND X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(brind (add X:$rs1, RV3264Base_Itype_immAsInt64:$imm)),
+        (PseudoBRIND X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 
-def : Pat<(i64 (sextloadi8 (add X:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LB X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi8 (add X:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LB X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
-def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LB AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi8 (add AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LB AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 def : Pat<(i64 (sextloadi8 X:$rs1)),
         (LB X:$rs1, (i64 0))>;
@@ -4500,11 +4500,11 @@ def : Pat<(i64 (extloadi8 AddrFI:$rs1)),
         (LB AddrFI:$rs1, (i64 0))>;
 
 
-def : Pat<(i64 (zextloadi8 (add X:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LBU X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi8 (add X:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LBU X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
-def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LBU AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi8 (add AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LBU AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 def : Pat<(i64 (zextloadi8 X:$rs1)),
         (LBU X:$rs1, (i64 0))>;
@@ -4513,11 +4513,11 @@ def : Pat<(i64 (zextloadi8 AddrFI:$rs1)),
         (LBU AddrFI:$rs1, (i64 0))>;
 
 
-def : Pat<(i64 (load (add X:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LD X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (load (add X:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LD X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
-def : Pat<(i64 (load (add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LD AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (load (add AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LD AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 def : Pat<(i64 (load X:$rs1)),
         (LD X:$rs1, (i64 0))>;
@@ -4526,11 +4526,11 @@ def : Pat<(i64 (load AddrFI:$rs1)),
         (LD AddrFI:$rs1, (i64 0))>;
 
 
-def : Pat<(i64 (sextloadi16 (add X:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LH X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi16 (add X:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LH X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
-def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LH AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi16 (add AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LH AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 def : Pat<(i64 (sextloadi16 X:$rs1)),
         (LH X:$rs1, (i64 0))>;
@@ -4545,11 +4545,11 @@ def : Pat<(i64 (extloadi16 AddrFI:$rs1)),
         (LH AddrFI:$rs1, (i64 0))>;
 
 
-def : Pat<(i64 (zextloadi16 (add X:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LHU X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi16 (add X:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LHU X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
-def : Pat<(i64 (zextloadi16 (add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LHU AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi16 (add AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LHU AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 def : Pat<(i64 (zextloadi16 X:$rs1)),
         (LHU X:$rs1, (i64 0))>;
@@ -4560,11 +4560,11 @@ def : Pat<(i64 (zextloadi16 AddrFI:$rs1)),
 
 
 
-def : Pat<(i64 (sextloadi32 (add X:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LW X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi32 (add X:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LW X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
-def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LW AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (sextloadi32 (add AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LW AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 def : Pat<(i64 (sextloadi32 X:$rs1)),
         (LW X:$rs1, (i64 0))>;
@@ -4579,11 +4579,11 @@ def : Pat<(i64 (extloadi32 AddrFI:$rs1)),
         (LW AddrFI:$rs1, (i64 0))>;
 
 
-def : Pat<(i64 (zextloadi32 (add X:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LWU X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi32 (add X:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LWU X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
-def : Pat<(i64 (zextloadi32 (add AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm))),
-        (LWU AddrFI:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(i64 (zextloadi32 (add AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm))),
+        (LWU AddrFI:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 def : Pat<(i64 (zextloadi32 X:$rs1)),
         (LWU X:$rs1, (i64 0))>;
@@ -4612,8 +4612,8 @@ def : Pat<(or X:$rs1, X:$rs2),
         (OR X:$rs1, X:$rs2)>;
 
 
-def : Pat<(or X:$rs1, RV3264I_Itype_immAsInt64:$imm),
-        (ORI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(or X:$rs1, RV3264Base_Itype_immAsInt64:$imm),
+        (ORI X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 
 def : Pat<(srem X:$rs1, X:$rs2),
@@ -4628,11 +4628,11 @@ def : Pat<(urem X:$rs1, X:$rs2),
 
 
 
-def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV3264I_Stype_immAsInt64:$imm)),
-        (SB X:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm)>;
+def : Pat<(truncstorei8 X:$rs2, (add X:$rs1, RV3264Base_Stype_immAsInt64:$imm)),
+        (SB X:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm)>;
 
-def : Pat<(truncstorei8 X:$rs2, (add AddrFI:$rs1, RV3264I_Stype_immAsInt64:$imm)),
-        (SB AddrFI:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm)>;
+def : Pat<(truncstorei8 X:$rs2, (add AddrFI:$rs1, RV3264Base_Stype_immAsInt64:$imm)),
+        (SB AddrFI:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm)>;
 
 def : Pat<(truncstorei8 X:$rs2, X:$rs1),
         (SB X:$rs1, X:$rs2, (i64 0))>;
@@ -4641,11 +4641,11 @@ def : Pat<(truncstorei8 X:$rs2, AddrFI:$rs1),
         (SB AddrFI:$rs1, X:$rs2, (i64 0))>;
 
 
-def : Pat<(store X:$rs2, (add X:$rs1, RV3264I_Stype_immAsInt64:$imm)),
-        (SD X:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm)>;
+def : Pat<(store X:$rs2, (add X:$rs1, RV3264Base_Stype_immAsInt64:$imm)),
+        (SD X:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm)>;
 
-def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV3264I_Stype_immAsInt64:$imm)),
-        (SD AddrFI:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm)>;
+def : Pat<(store X:$rs2, (add AddrFI:$rs1, RV3264Base_Stype_immAsInt64:$imm)),
+        (SD AddrFI:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm)>;
 
 def : Pat<(store X:$rs2, X:$rs1),
         (SD X:$rs1, X:$rs2, (i64 0))>;
@@ -4654,11 +4654,11 @@ def : Pat<(store X:$rs2, AddrFI:$rs1),
         (SD AddrFI:$rs1, X:$rs2, (i64 0))>;
 
 
-def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV3264I_Stype_immAsInt64:$imm)),
-        (SH X:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm)>;
+def : Pat<(truncstorei16 X:$rs2, (add X:$rs1, RV3264Base_Stype_immAsInt64:$imm)),
+        (SH X:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm)>;
 
-def : Pat<(truncstorei16 X:$rs2, (add AddrFI:$rs1, RV3264I_Stype_immAsInt64:$imm)),
-        (SH AddrFI:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm)>;
+def : Pat<(truncstorei16 X:$rs2, (add AddrFI:$rs1, RV3264Base_Stype_immAsInt64:$imm)),
+        (SH AddrFI:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm)>;
 
 def : Pat<(truncstorei16 X:$rs2, X:$rs1),
         (SH X:$rs1, X:$rs2, (i64 0))>;
@@ -4671,8 +4671,8 @@ def : Pat<(shl X:$rs1, X:$rs2),
         (SLL X:$rs1, X:$rs2)>;
 
 
-def : Pat<(shl X:$rs1, RV3264I_Ftype_sftAsInt64:$sft),
-        (SLLI X:$rs1, RV3264I_Ftype_sftAsInt64:$sft)>;
+def : Pat<(shl X:$rs1, RV3264Base_Ftype_sftAsInt64:$sft),
+        (SLLI X:$rs1, RV3264Base_Ftype_sftAsInt64:$sft)>;
 
 
 
@@ -4695,15 +4695,15 @@ def : Pat<(setcc X:$rs1, X:$rs2, SETGE),
         (XORI (SLT X:$rs1, X:$rs2), 1)>;
 
 
-def : Pat<(setcc X:$rs1, RV3264I_Itype_immAsInt64:$imm, SETLT),
-        (SLTI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(setcc X:$rs1, RV3264Base_Itype_immAsInt64:$imm, SETLT),
+        (SLTI X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 
-def : Pat<(setcc X:$rs1, RV3264I_Itype_immAsInt64:$imm, SETULT),
-        (SLTIU X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(setcc X:$rs1, RV3264Base_Itype_immAsInt64:$imm, SETULT),
+        (SLTIU X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
-def : Pat<(setcc X:$rs1, RV3264I_Itype_immAsInt64:$imm, SETNE),
-        (SLTU X0, (XORI X:$rs1, RV3264I_Itype_immAsInt64:$imm))>;
+def : Pat<(setcc X:$rs1, RV3264Base_Itype_immAsInt64:$imm, SETNE),
+        (SLTU X0, (XORI X:$rs1, RV3264Base_Itype_immAsInt64:$imm))>;
 
 
 def : Pat<(setcc X:$rs1, X:$rs2, SETULT),
@@ -4726,8 +4726,8 @@ def : Pat<(sra X:$rs1, X:$rs2),
         (SRA X:$rs1, X:$rs2)>;
 
 
-def : Pat<(sra X:$rs1, RV3264I_Ftype_sftAsInt64:$sft),
-        (SRAI X:$rs1, RV3264I_Ftype_sftAsInt64:$sft)>;
+def : Pat<(sra X:$rs1, RV3264Base_Ftype_sftAsInt64:$sft),
+        (SRAI X:$rs1, RV3264Base_Ftype_sftAsInt64:$sft)>;
 
 
 
@@ -4738,8 +4738,8 @@ def : Pat<(srl X:$rs1, X:$rs2),
         (SRL X:$rs1, X:$rs2)>;
 
 
-def : Pat<(srl X:$rs1, RV3264I_Ftype_sftAsInt64:$sft),
-        (SRLI X:$rs1, RV3264I_Ftype_sftAsInt64:$sft)>;
+def : Pat<(srl X:$rs1, RV3264Base_Ftype_sftAsInt64:$sft),
+        (SRLI X:$rs1, RV3264Base_Ftype_sftAsInt64:$sft)>;
 
 
 
@@ -4752,11 +4752,11 @@ def : Pat<(sub X:$rs1, X:$rs2),
 
 
 
-def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV3264I_Stype_immAsInt64:$imm)),
-        (SW X:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm)>;
+def : Pat<(truncstorei32 X:$rs2, (add X:$rs1, RV3264Base_Stype_immAsInt64:$imm)),
+        (SW X:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm)>;
 
-def : Pat<(truncstorei32 X:$rs2, (add AddrFI:$rs1, RV3264I_Stype_immAsInt64:$imm)),
-        (SW AddrFI:$rs1, X:$rs2, RV3264I_Stype_immAsInt64:$imm)>;
+def : Pat<(truncstorei32 X:$rs2, (add AddrFI:$rs1, RV3264Base_Stype_immAsInt64:$imm)),
+        (SW AddrFI:$rs1, X:$rs2, RV3264Base_Stype_immAsInt64:$imm)>;
 
 def : Pat<(truncstorei32 X:$rs2, X:$rs1),
         (SW X:$rs1, X:$rs2, (i64 0))>;
@@ -4769,8 +4769,8 @@ def : Pat<(xor X:$rs1, X:$rs2),
         (XOR X:$rs1, X:$rs2)>;
 
 
-def : Pat<(xor X:$rs1, RV3264I_Itype_immAsInt64:$imm),
-        (XORI X:$rs1, RV3264I_Itype_immAsInt64:$imm)>;
+def : Pat<(xor X:$rs1, RV3264Base_Itype_immAsInt64:$imm),
+        (XORI X:$rs1, RV3264Base_Itype_immAsInt64:$imm)>;
 
 
 
@@ -4788,7 +4788,7 @@ def : Pat<(xor X:$rs1, RV3264I_Itype_immAsInt64:$imm),
 
 
 def : Pat<(br bb:$imm),
-        (J RV3264I_Jtype_immAsLabel:$imm)>;
+        (J RV3264Base_Jtype_immAsLabel:$imm)>;
 
 
 
