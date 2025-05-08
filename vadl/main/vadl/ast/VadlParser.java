@@ -157,6 +157,11 @@ public class VadlParser {
       throw new DiagnosticList(errors.stream().distinct().toList());
     }
 
+    // during parsing there might be errors in the macro table (e.g. conflicting macro definitions)
+    if (!parser.macroTable.errors.isEmpty()) {
+      throw new DiagnosticList(parser.macroTable.errors.stream().distinct().toList());
+    }
+
     var ast = parser.ast;
 
     errors.addAll(new SymbolTable.SymbolResolver().resolveSymbols(ast));

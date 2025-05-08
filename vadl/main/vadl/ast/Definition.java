@@ -905,9 +905,8 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 
 class InstructionSetDefinition extends Definition implements IdentifiableNode {
   IdentifierOrPlaceholder identifier;
-  @Nullable
   @Child
-  IsId extending;
+  List<IsId> extending;
   @Child
   List<Definition> definitions;
   SourceLocation loc;
@@ -916,7 +915,7 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
   InstructionSetDefinition extendingNode;
 
   InstructionSetDefinition(IdentifierOrPlaceholder identifier,
-                           @Nullable IsId extending,
+                           List<IsId> extending,
                            List<Definition> statements, SourceLocation location) {
     this.identifier = identifier;
     this.extending = extending;
@@ -944,8 +943,9 @@ class InstructionSetDefinition extends Definition implements IdentifiableNode {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append("instruction set architecture ").append(identifier().name);
-    if (extending != null) {
-      builder.append(" extending ").append(extending.pathToString());
+    if (!extending.isEmpty()) {
+      var extStr = extending.stream().map(IsId::pathToString).collect(Collectors.joining(", "));
+      builder.append(" extending ").append(extStr);
     }
     builder.append(" = {\n");
     prettyPrintDefinitions(indent + 1, builder, definitions);

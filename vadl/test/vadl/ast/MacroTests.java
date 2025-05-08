@@ -16,11 +16,13 @@
 
 package vadl.ast;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static vadl.ast.AstTestUtils.assertAstEquality;
 
 import java.net.URI;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 
 public class MacroTests {
@@ -311,6 +313,67 @@ public class MacroTests {
 
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
+
+  @Test
+  void macroIsaWithInheritanceRecursive() {
+    var prog1 = """
+        instruction set architecture Base0 = {
+          model Test(): Id = { Test }
+        }
+        instruction set architecture Base1 extending Base0 = { }
+        instruction set architecture Sub extending Base1 = {
+          constant $Test() = 3
+        }
+        """;
+    var prog2 = """
+        instruction set architecture Base0 = { }
+        instruction set architecture Base1 extending Base0 = { }
+        instruction set architecture Sub extending Base1 = {
+          constant Test = 3
+        }
+        """;
+
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @Test
+  void macroIsaWithInheritanceConflictingDefs() {
+    var prog1 = """
+        instruction set architecture Base0 = {
+          model Test(): Id = { XY }
+        }
+        instruction set architecture Base1 extending Base0 = {
+          model Test(): Id = { XZ } 
+        }
+        instruction set architecture Sub extending Base1 = {
+          constant $Test() = 3
+        }
+        """;
+    var diag = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog1));
+    assertThat(diag.items.toArray(Diagnostic[]::new))
+        .anySatisfy(d ->
+            assertThat(d).hasMessageContaining("Macro name already used: Test"));
+  }
+
+  @Test
+  void macroIsaWithMultiInheritanceConflictingDefs() {
+    var prog1 = """
+        instruction set architecture Base0 = {
+          model Test(): Id = { XY }
+        }
+        instruction set architecture Base1 = {
+          model Test(): Id = { XZ } 
+        }
+        instruction set architecture Sub extending Base0, Base1 = {
+          constant $Test() = 3
+        }
+        """;
+    var diag = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog1));
+    assertThat(diag.items.toArray(Diagnostic[]::new))
+        .anySatisfy(d ->
+            assertThat(d).hasMessageContaining("Macro name already used: Test"));
+  }
+
 }
 
 

@@ -109,6 +109,21 @@ class SymbolTable {
     return child;
   }
 
+  /**
+   * This returns the parent symbol table and transfers all errors from this to the
+   * parent symbol table.
+   *
+   * @return the parent symbol table
+   * @throws IllegalStateException if parent is null
+   */
+  SymbolTable pop() {
+    if (parent == null) {
+      throw new IllegalStateException("Tried to pop symbol table, but parent is null");
+    }
+    parent.errors.addAll(this.errors);
+    return parent;
+  }
+
 
   void defineSymbol(String name, Node origin) {
     if (origin instanceof ModelDefinition || origin instanceof ModelTypeDefinition
@@ -260,6 +275,7 @@ class SymbolTable {
   <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
     var origin = resolve(usage);
     if (type.isInstance(origin)) {
+      usage.target = origin;
       return type.cast(origin);
     }
 
@@ -797,10 +813,8 @@ class SymbolTable {
       // Import all symbols from the extending ISA.
       beforeTravel(definition);
 
-      if (definition.extending != null) {
-        var extending =
-            definition.symbolTable()
-                .requireAs(definition.extending, InstructionSetDefinition.class);
+      for (var isa : definition.extending) {
+        var extending = definition.symbolTable().requireAs(isa, InstructionSetDefinition.class);
         if (extending != null) {
           definition.extendingNode = extending;
           definition.symbolTable().extendBy(extending.symbolTable());

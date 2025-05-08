@@ -1253,7 +1253,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var location = findIsaLocation(definitions);
 
     // create new isa ast node
-    return new InstructionSetDefinition(identifier, null, nodeList, location);
+    return new InstructionSetDefinition(identifier, List.of(), nodeList, location);
   }
 
   private void mergeInto(InstructionSetDefinition definition, List<Definition> nodeCollection,

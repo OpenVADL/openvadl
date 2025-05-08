@@ -319,16 +319,21 @@ PRODUCTIONS
 
   instructionsetDefinition<out InstructionSetDefinition isaDef> (. macroTable = macroTable.createChild(); var startLocation = nextTokenLoc();.)
   = INSTRUCTION SET ARCHITECTURE
-    identifierOrPlaceholder<out var identifier>                       (. IdentifierOrPlaceholder extending = null; .)
+    identifierOrPlaceholder<out var identifier>                 (. var extending = new ArrayList<IsId>(); .)
     [
       EXTENDING
-      identifierOrPlaceholder<out extending>                    (. var extendingIsa = macroTable.requireAs(extending, InstructionSetDefinition.class);
-                                                                   if (extendingIsa != null)
-                                                                     readMacroSymbols(macroTable, extendingIsa.definitions);
-                                                                .)
-    ]
+      identifierOrPlaceholder<out var isa>                      (. extending.add(isa); .)
+      {
+        SYM_COMMA
+        identifierOrPlaceholder<out isa>                        (. extending.add(isa); .)
+      }
+    ]                                                           (. extending.forEach(e -> {
+                                                                      var extendingIsa = macroTable.requireAs(e, InstructionSetDefinition.class);
+                                                                      if (extendingIsa != null)
+                                                                          readMacroSymbols(macroTable, extendingIsa);
+                                                                    }); .)
     SYM_EQ SYM_BRACE_OPEN
-    isaDefinitionList<.out List<Definition> definitions.>       (. macroTable = Objects.requireNonNull(macroTable.parent); .)
+    isaDefinitionList<.out List<Definition> definitions.>       (. macroTable = macroTable.pop(); .)
     SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, startLocation.join(lastTokenLoc()));
                                                                    macroTable.defineSymbol(isaDef); .)
   .
@@ -2062,9 +2067,9 @@ PRODUCTIONS
   | IF (type == BasicSyntaxType.ENCS)
     encodingDefinitionList<out body>
   | IF (type == BasicSyntaxType.ISA_DEFS)                   (. macroTable = macroTable.createChild(); .)
-    isaDefinitionList<.out List<Definition> defs.>          (. body = new DefinitionList(defs, type, start.join(lastTokenLoc())); macroTable = macroTable.parent; .)
+    isaDefinitionList<.out List<Definition> defs.>          (. body = new DefinitionList(defs, type, start.join(lastTokenLoc())); macroTable = macroTable.pop(); .)
   | IF (type == BasicSyntaxType.COMMON_DEFS)                (. macroTable = macroTable.createChild(); .)
-    commonDefinitionList<.out List<Definition> defs.>       (. body = new DefinitionList(defs, type, start.join(lastTokenLoc())); macroTable = macroTable.parent; .)
+    commonDefinitionList<.out List<Definition> defs.>       (. body = new DefinitionList(defs, type, start.join(lastTokenLoc())); macroTable = macroTable.pop(); .)
   | IF (type == BasicSyntaxType.EX)
     expression<out body, BIN_OPS>
   | IF (type == BasicSyntaxType.LIT)
