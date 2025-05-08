@@ -242,4 +242,20 @@ public class ParserTest {
       assertThat(diag).hasMessageContaining("Symbol name already used: PC");
     });
   }
+
+  @Test
+  void symbolNoConflictOnDiamondPattern() {
+    // NOTE: This is not ISA multi-inheritance exclusive, but can also happen in
+    // other cases, such as a ISA - ABI - ISA diamond pattern.
+    var prog = """
+        instruction set architecture Base = {
+          constant X = 3
+        }
+        instruction set architecture Base0 extending Base = { }
+        instruction set architecture Base1 extending Base = { }
+        instruction set architecture Sub extending Base0, Base1 = { }
+        """;
+
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog));
+  }
 }

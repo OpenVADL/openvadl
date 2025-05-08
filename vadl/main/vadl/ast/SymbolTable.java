@@ -362,6 +362,15 @@ class SymbolTable {
       return;
     }
 
+    var otherSymbol = symbols.get(name);
+    if (otherSymbol instanceof AstSymbol astSymbol
+        && astSymbol.origin == origin) {
+      // if the other origin is the same node, the "redefinition" is ok.
+      // this can happen when we have a diamond pattern like isa0 -> abi -> superisa
+      // and isa0 -> superisa.
+      return;
+    }
+
     var originLoc = getIdentifierLocation(origin);
 
     var error = error("Symbol name already used: " + name, originLoc)
@@ -369,7 +378,6 @@ class SymbolTable {
         .note("All symbols must have a unique name.");
 
 
-    var otherSymbol = symbols.get(name);
     if (otherSymbol instanceof BuiltInSymbol) {
       error.description("`%s` is a builtin and cannot be used as a name", name);
     } else if (otherSymbol instanceof AstSymbol astSymbol) {
@@ -386,12 +394,19 @@ class SymbolTable {
       return;
     }
 
+    var other = macroSymbols.get(name).origin();
+    if (other == origin) {
+      // if the other origin is the same node, the "redefinition" is ok.
+      // this can happen when we have a diamond pattern like isa0 -> abi -> superisa
+      // and isa0 -> superisa.
+      return;
+    }
+
     var originLocation = getIdentifierLocation(origin);
     var error = error("Macro name already used: " + name, originLocation)
         .locationDescription(originLocation, "Second definition here.")
         .note("All macros must have a unique name.");
 
-    var other = macroSymbols.get(name).origin();
     var otherLoc = getIdentifierLocation(other);
     error.locationDescription(otherLoc, "First defined here.");
 
