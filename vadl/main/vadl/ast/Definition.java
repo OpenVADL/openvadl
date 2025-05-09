@@ -24,6 +24,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -3512,9 +3513,9 @@ class AbiPseudoInstructionDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append(kind.keyword);
-    builder.append(" = ");
-    builder.append(target).append("}\n");
+    builder.append("pseudo ").append(kind.keyword).append(" instruction = ");
+    target.prettyPrint(indent + 1, builder);
+    builder.append("\n");
   }
 
   @Override
@@ -3629,7 +3630,7 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
 
   enum SeqKind {
     CONSTANT("constant"),
-    REGISTER("register");
+    REGISTER("register adjustment");
 
     private final String keyword;
 
@@ -3674,10 +3675,15 @@ class SpecialPurposeRegisterDefinition extends Definition {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(purpose.keyword);
-    builder.append(" = ");
-    exprs.forEach(e -> {
-      e.prettyPrint(indent + 1, builder);
-    });
+    builder.append(" = [");
+    var joiner = new StringJoiner(", ");
+    for (var expr : exprs) {
+      StringBuilder tempBuilder = new StringBuilder();
+      expr.prettyPrint(indent + 1, tempBuilder);
+      joiner.add(tempBuilder.toString());
+    }
+    builder.append(joiner.toString());
+    builder.append("]\n");
   }
 
   @Override
@@ -3783,10 +3789,16 @@ class AbiClangNumericTypeDefinition extends Definition {
   }
 
   enum TypeName {
-    POINTER_WIDTH,
-    POINTER_ALIGN,
-    LONG_WIDTH,
-    LONG_ALIGN
+    POINTER_WIDTH("pointer width"),
+    POINTER_ALIGN("pointer align"),
+    LONG_WIDTH("long width"),
+    LONG_ALIGN("long align");
+
+    final String keyword;
+
+    TypeName(String keyword) {
+      this.keyword = keyword;
+    }
   }
 
   public AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName typeName,
@@ -3814,8 +3826,8 @@ class AbiClangNumericTypeDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent)).append("clang numeric type: ").append(typeName)
-        .append(" with");
+    builder.append(prettyIndentString(indent))
+        .append(typeName.keyword).append(" = ");
     size.prettyPrint(indent + 1, builder);
   }
 }
@@ -3851,15 +3863,27 @@ class AbiClangTypeDefinition extends Definition {
 
   enum TypeName {
     // Type of the size_t in C.
-    SIZE_TYPE,
-    INT_MAX_TYPE
+    SIZE_TYPE("size_t type"),
+    INT_MAX_TYPE("int max type");
+
+    final String keyword;
+
+    TypeName(String keyword) {
+      this.keyword = keyword;
+    }
   }
 
   enum TypeSize {
-    UNSIGNED_INT,
-    SIGNED_INT,
-    UNSIGNED_LONG,
-    SIGNED_LONG
+    UNSIGNED_INT("unsigned int"),
+    SIGNED_INT("signed int"),
+    UNSIGNED_LONG("unsigned long"),
+    SIGNED_LONG("signed  long");
+
+    final String keyword;
+
+    TypeSize(String keyword) {
+      this.keyword = keyword;
+    }
   }
 
   public AbiClangTypeDefinition(AbiClangTypeDefinition.TypeName typeName,
@@ -3887,8 +3911,8 @@ class AbiClangTypeDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent)).append("clang type: ")
-        .append(typeName).append(" with ").append(typeSize);
+    builder.append(prettyIndentString(indent)).append(typeName.keyword)
+        .append(" = ").append(typeSize.keyword);
   }
 }
 

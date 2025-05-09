@@ -459,13 +459,9 @@ class UnaryExpr extends Expr {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     operator.prettyPrint(indent, builder);
-    if (operator instanceof UnOp) {
-      operand.prettyPrint(indent, builder);
-    } else {
-      builder.append(" (");
-      operand.prettyPrint(indent, builder);
-      builder.append(")");
-    }
+    builder.append(" (");
+    operand.prettyPrint(indent, builder);
+    builder.append(")");
   }
 
   @Override
@@ -1937,7 +1933,7 @@ class LetExpr extends Expr {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     builder.append(prettyIndentString(indent));
-    builder.append("let ");
+    builder.append("(let ");
     var isFirst = true;
     for (var identifier : identifiers) {
       if (!isFirst) {
@@ -1953,6 +1949,7 @@ class LetExpr extends Expr {
       builder.append(prettyIndentString(indent + 1));
     }
     body.prettyPrint(indent + 1, builder);
+    builder.append(")");
   }
 
   @Override
