@@ -57,6 +57,8 @@ import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgRemNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgRotlNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgRotrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSarNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetCond;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetIsJmp;
@@ -463,6 +465,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(IssValExtractNode toHandle) {
+    toHandle.ensure(!isTcg(toHandle.ofs()) && !isTcg(toHandle.len()),
+        "Offset or length of node is TCG scheduled, but offset and length must be translation time constant. Node should never been constructed!");
     var dest = singleDestOf(toHandle);
     var src = singleDestOf(toHandle.value());
     replaceCurrent(
@@ -950,6 +954,16 @@ class BuiltInTcgLoweringExecutor {
         .set(BuiltInTable.ASR, (ctx) -> out(
             new TcgSarNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
+
+        .set(BuiltInTable.ROR, (ctx) -> out(
+            new TcgRotrNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.ROL, (ctx) -> out(
+            new TcgRotlNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        //// MISC ////
 
         .set(BuiltInTable.CONCATENATE_BITS, (ctx) -> {
           // we use a deposit of the lhs operand into the rhs operand,
