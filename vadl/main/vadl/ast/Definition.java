@@ -19,6 +19,7 @@ package vadl.ast;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -4979,6 +4980,7 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
     if (!commonDefinitions.isEmpty()) {
       for (var def : commonDefinitions) {
         def.prettyPrint(indent, builder);
+        builder.append("\n");
       }
     }
 
@@ -4992,11 +4994,11 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
         }
         builder.append("\n");
       }
-      builder.append(prettyIndentString(--indent)).append("}\n");
+      builder.append(prettyIndentString(--indent)).append("}\n\n");
     }
 
     if (!directives.isEmpty()) {
-      builder.append(prettyIndentString(indent)).append("directives = {\n");
+      builder.append(prettyIndentString(indent)).append("directives = {\n\n");
       indent++;
       for (var dir : directives) {
         dir.prettyPrint(indent, builder);
@@ -5010,12 +5012,10 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
 
     builder.append(prettyIndentString(indent)).append("grammar = {\n");
     indent++;
-    for (var rule : rules) {
+    var printableRules = rules.stream().filter(r -> !r.isBuiltinRule && !r.isTerminalRule).toList();
+    for (var rule : printableRules) {
       builder.append(prettyIndentString(indent));
       rule.prettyPrint(indent, builder);
-      if (!Objects.equals(rules.get(rules.size() - 1), rule)) {
-        builder.append("\n");
-      }
     }
     builder.append(prettyIndentString(--indent)).append("}\n");
 
@@ -5030,9 +5030,11 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     AsmDescriptionDefinition that = (AsmDescriptionDefinition) o;
     return Objects.equals(id, that.id) && Objects.equals(abi, that.abi)
-        && Objects.equals(rules, that.rules);
+        && new HashSet<>(that.rules).containsAll(rules)
+        && new HashSet<>(rules).containsAll(that.rules);
   }
 
   @Override
@@ -5247,7 +5249,7 @@ class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
     alternatives.prettyPrint(indent, builder);
     indent--;
 
-    builder.append("\n").append(prettyIndentString(indent)).append(";\n");
+    builder.append("\n").append(prettyIndentString(indent)).append(";\n\n");
   }
 
   @Override
