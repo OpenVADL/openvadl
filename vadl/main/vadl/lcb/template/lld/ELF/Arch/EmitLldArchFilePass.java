@@ -16,12 +16,16 @@
 
 package vadl.lcb.template.lld.ELF.Arch;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.relocation.model.ImplementedUserSpecifiedRelocation;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediateEncodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Specification;
@@ -50,27 +54,18 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
 
   }
 
-  record ElfRelocationInfo(String elfName, String baseRelocationName, String kind) implements
+  record ElfRelocationInfo(String elfName, String kind,
+                           String relocationFunction, String patchInstructionFunction,
+                           String encodingFunction) implements
       Renderable {
 
     @Override
     public Map<String, Object> renderObj() {
       return Map.of(
           "elfName", elfName,
-          "baseRelocationName", baseRelocationName,
-          "kind", kind
-      );
-    }
-  }
-
-  record RelocationInfo(String name, String relocationFunction, String encodingFunction) implements
-      Renderable {
-
-    @Override
-    public Map<String, Object> renderObj() {
-      return Map.of(
-          "name", name,
+          "kind", kind,
           "relocationFunction", relocationFunction,
+          "patchInstructionFunction", patchInstructionFunction,
           "encodingFunction", encodingFunction
       );
     }
@@ -87,30 +82,25 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
 
+    var encodingFunctions = ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults);
+
     var elfRelocations = output.elfRelocations().stream().map(
         r -> new ElfRelocationInfo(r.elfRelocationName().value(),
-            r.relocation().identifier.lower(),
-            r.llvmKind()
+            r.llvmKind(),
+            r.valueRelocation().functionName().lower(),
+            r.fieldUpdateFunction().functionName().lower(),
+            r instanceof ImplementedUserSpecifiedRelocation
+                ? requireNonNull(encodingFunctions.get(r.field())).functionName().lower()
+                : ""
         )
     ).toList();
 
     var elfInfo = createElfInfo();
 
-    var relocations = output.relocationsBeforeElfExpansion().stream().map(
-        r -> new RelocationInfo(
-            r.relocation().identifier.lower(),
-            r.valueRelocation().functionName().lower(),
-            output.elfRelocations().stream()
-                .filter(elfR -> elfR.relocation().equals(r.relocation())).findFirst().get()
-                .fieldUpdateFunction().functionName().lower()
-        )
-    ).toList();
-
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.MAX_INSTRUCTION_WORDSIZE, elfInfo.maxInstructionWordSize(),
         CommonVarNames.IS_BIG_ENDIAN, elfInfo.isBigEndian(),
-        CommonVarNames.RELOCATIONS, relocations,
         "elfRelocations", elfRelocations);
   }
 }

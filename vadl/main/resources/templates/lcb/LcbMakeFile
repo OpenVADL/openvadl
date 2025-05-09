@@ -13,7 +13,7 @@ ifndef LLVM_PARALLEL_LINK_JOBS
 		LLVM_PARALLEL_LINK_JOBS=8
 endif
 ifndef LLVM_ENABLE_PROJECTS
-		LLVM_ENABLE_PROJECTS="clang"
+		LLVM_ENABLE_PROJECTS=clang;lld
 endif
 ifndef LLVM_SOURCE_PATH
 		$(error LLVM_SOURCE_PATH is not set)
@@ -61,4 +61,4 @@ build-clang:
 
 build-lld:
 		make LLVM_ENABLE_PROJECTS="lld" build
-		./$(LLVM_SOURCE_PATH)/build/bin/lld --version
+		./$(LLVM_SOURCE_PATH)/build/bin/ld.lld --version

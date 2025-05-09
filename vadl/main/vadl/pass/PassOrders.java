@@ -278,6 +278,7 @@ public class PassOrders {
         new vadl.lcb.template.lld.ELF.Arch.EmitLldManualEncodingHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lld.ELF.Arch.EmitImmediateUtilsHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lld.ELF.Arch.EmitLldArchFilePass(configuration));
+    order.add(new vadl.lcb.template.lld.ELF.Arch.EmitVadlBuiltinsHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lld.ELF.EmitLldTargetCppFilePass(configuration));
     order.add(new vadl.lcb.template.EmitLcbMakeFilePass(configuration));
     order.add(new vadl.lcb.include.llvm.BinaryFormat.ELFRelocs.EmitTargetElfRelocsDefFilePass(

@@ -12,6 +12,7 @@
 #include "Target.h"
 #include "[(${namespace})]ManualEncoding.cpp"
 #include "[(${namespace})]Relocations.hpp"
+#include "ImmediateUtils.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -76,15 +77,14 @@ namespace lld
             write64[#th:block th:text="${isBigEndian}? 'be' : 'le'" \][/th:block](loc, val);
         }
 
-        [#th:block th:each="relocation: ${relocations}" ]
-        static uint[(${maxInstructionWordSize})]_t relocate_[(${relocation.name})](uint[(${maxInstructionWordSize})]_t word, uint64_t val)
+        [#th:block th:each="elfRelocation: ${elfRelocations}" ]
+        static uint[(${maxInstructionWordSize})]_t relocate_[(${elfRelocation.elfName})](uint[(${maxInstructionWordSize})]_t word, uint64_t val)
         {
-            uint64_t relocated =  [(${relocation.relocationFunction})](val);
-            // TODO: call encoding in some cases?
-            // «IF !elfRelocation.relocation.isModifier && getImmediate( inst ) !== null»
-            // relocated = «getImmediate( inst ).loweredImmediate.identifier»::«getImmediate( inst ).loweredImmediate.encoding.identifier»(relocated);
-            // «ENDIF»
-            return [(${relocation.encodingFunction})](word, relocated);
+            uint64_t relocated =  [(${elfRelocation.relocationFunction})](val);
+            [#th:block th:if="${not #strings.isEmpty(elfRelocation.encodingFunction)}" ]
+            relocated = [(${elfRelocation.encodingFunction})](relocated);
+            [/th:block]
+            return [(${elfRelocation.patchInstructionFunction})](word, relocated);
         }
         [/th:block]
 
@@ -110,7 +110,7 @@ namespace lld
             case [(${elfRelocation.elfName})]:
             {
                 uint[(${maxInstructionWordSize})]_t word = read[(${maxInstructionWordSize})](loc);
-                word = relocate_[(${elfRelocation.baseRelocationName})](word, val);
+                word = relocate_[(${elfRelocation.elfName})](word, val);
                 write[(${maxInstructionWordSize})](loc, word);
                 return;
             }
