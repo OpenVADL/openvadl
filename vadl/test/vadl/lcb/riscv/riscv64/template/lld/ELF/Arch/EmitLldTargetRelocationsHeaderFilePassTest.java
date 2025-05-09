@@ -48,6 +48,9 @@ public class EmitLldTargetRelocationsHeaderFilePassTest extends AbstractLcbTest 
     var output = trimmed.lines();
 
     Assertions.assertLinesMatch("""
+        #include "vadl-builtins.h"
+        
+
         int64_t RV3264Base_hi(uint32_t symbol) {
            return VADL_uextract(VADL_lsr(VADL_add(symbol, 32, ((uint32_t) 0x800 ), 32), 32, ((uint8_t) 0xc ), 4), 20);
         }
