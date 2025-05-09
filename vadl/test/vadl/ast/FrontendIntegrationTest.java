@@ -62,7 +62,9 @@ public class FrontendIntegrationTest {
     var absRoot = rootDir.toAbsolutePath();
     var sysName = rootDir.getFileName();
     var prettyPath = Path.of("build/test/pretty-print/" + sysName);
-    FileUtils.forceDelete(prettyPath.toFile());
+    if (prettyPath.toFile().exists()) {
+      FileUtils.forceDelete(prettyPath.toFile());
+    }
 
     var specFiles = Arrays.stream(vadlSpecs).map(s -> absRoot.resolve(s).toFile())
         .toList();
