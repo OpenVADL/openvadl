@@ -795,8 +795,7 @@ public class TypeChecker
             .build();
       }
 
-      var regFile =
-          requireNonNull(definition.symbolTable).findAs(valIdent, RegisterFileDefinition.class);
+      var regFile = (RegisterFileDefinition) valIdent.target();
 
       if (regFile == null) {
         throw error("Invalid alias", valIdent)
@@ -1409,7 +1408,7 @@ public class TypeChecker
   private void validateLocalVarAssignment(AsmGrammarElementDefinition definition) {
     if (definition.attribute != null && definition.isAttributeLocalVar) {
       var localVarDefinition = (AsmGrammarLocalVarDefinition) definition.symbolTable()
-          .resolve(definition.attribute);
+          .findAs(definition.attribute, Node.class);
       if (localVarDefinition == null) {
         throw buildIllegalStateException(definition,
             "Assigning to unknown local variable %s.".formatted(definition.attribute.name));
@@ -1487,7 +1486,7 @@ public class TypeChecker
               + "and does not reference a grammar rule / function / local variable.");
     }
 
-    var invocationSymbolOrigin = definition.symbolTable().resolve(definition.id);
+    var invocationSymbolOrigin = definition.id.target();
     if (invocationSymbolOrigin == null) {
       throw buildIllegalStateException(definition, "Symbol %s used in grammar rule does not exist."
           .formatted(definition.id.name));
@@ -1817,16 +1816,14 @@ public class TypeChecker
     String fullName;
 
     if (expr instanceof Identifier identifier) {
-      origin = requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
+      origin = identifier.target();
       innerName = identifier.name;
       fullName = identifier.name;
-      identifier.target = origin;
     } else if (expr instanceof IdentifierPath path) {
-      origin = requireNonNull(expr.symbolTable).findAs(path, Node.class);
+      origin = path.target();
       var segments = path.pathToSegments();
       innerName = segments.get(segments.size() - 1);
       fullName = path.pathToString();
-      path.target = origin;
     } else {
       throw new IllegalStateException();
     }
@@ -2359,7 +2356,15 @@ public class TypeChecker
     }
 
     // Find the type from the symbol table
-    var typeTarget = expr.symbolTable().findAs(((Identifier) expr.baseType), Node.class);
+    var typeTarget = expr.symbolTable().require(expr.baseType, () -> {
+      var sb = new StringBuilder();
+      expr.prettyPrint(0, sb);
+      var typeName = sb.toString();
+      throw error("Unknown Type `%s`".formatted(typeName), expr)
+          .description("No type with that name exists.")
+          .build();
+    });
+
     if (typeTarget instanceof UsingDefinition usingDef) {
       return check(usingDef.typeLiteral);
     }
@@ -2369,13 +2374,7 @@ public class TypeChecker
       return new FormatType(formatDef);
     }
 
-    var sb = new StringBuilder();
-    expr.prettyPrint(0, sb);
-    var typeName = sb.toString();
-    throw error("Unknown Type `%s`".formatted(typeName), expr)
-        .description("No type with that name exists.")
-        .build()
-        ;
+    throw new IllegalStateException("Unimplemented " + typeTarget);
   }
 
   @Override
@@ -2607,8 +2606,7 @@ public class TypeChecker
     // manually.
     // If no target matches, we can assume a slice and index call (depending on the type).
 
-    var callTarget = requireNonNull(expr.symbolTable)
-        .findAs(expr.target.path(), Definition.class);
+    var callTarget = expr.symbolTable().findAs(expr.target.path(), Definition.class);
 
     // Handle register File
     if (callTarget instanceof RegisterFileDefinition
@@ -2624,7 +2622,7 @@ public class TypeChecker
       var arg = argList.values.get(0);
       check(arg);
 
-      check(callTarget);
+      check((Definition) callTarget);
       var callTargetType = (ConcreteRelationType) ((TypedNode) callTarget).type();
       var requiredArgType =
           requireNonNull(requireNonNull(callTargetType).argTypes().get(0));
@@ -2636,7 +2634,6 @@ public class TypeChecker
         throw typeMissmatchError(expr, requiredArgType, actualArgType);
       }
 
-      expr.computedTarget = callTarget;
       var typeBeforeIndex = callTargetType.resultType();
       argList.type = typeBeforeIndex;
       visitSliceIndexCall(expr, typeBeforeIndex,
@@ -2680,7 +2677,6 @@ public class TypeChecker
         callType = callBitsType.scaleBy(multiplier);
       }
 
-      expr.computedTarget = memDef;
       argList.type = callType;
       expr.type = callType;
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -2692,7 +2688,6 @@ public class TypeChecker
     if (callTarget instanceof CounterDefinition counterDef) {
       check(counterDef);
       var counterType = counterDef.typeLiteral.type;
-      expr.computedTarget = counterDef;
       expr.type = counterType;
 
       if (!expr.argsIndices.isEmpty()) {
@@ -2751,7 +2746,6 @@ public class TypeChecker
         }
       }
 
-      expr.computedTarget = functionDef;
       expr.type = funcType.resultType();
       expr.argsIndices.get(0).type = funcType.resultType();
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -2782,7 +2776,6 @@ public class TypeChecker
         }
       }
 
-      expr.computedTarget = relocationDef;
       expr.type = relocationType.resultType();
       expr.argsIndices.get(0).type = relocationType.resultType();
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -2812,7 +2805,6 @@ public class TypeChecker
         }
       }
 
-      expr.computedTarget = exceptionDef;
       expr.type = Type.void_();
       return null;
     }
@@ -2882,7 +2874,6 @@ public class TypeChecker
     } else {
       throw new IllegalStateException();
     }
-    expr.computedTarget = callTarget;
     visitSliceIndexCall(expr, expr.type(), expr.argsIndices);
     visitSubCall(expr, expr.type());
     return null;

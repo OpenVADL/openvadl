@@ -705,7 +705,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
 
     requireNonNull(definition.id);
-    var invocationSymbolOrigin = definition.symbolTable().resolve(definition.id);
+    var invocationSymbolOrigin = definition.id.target();
 
     if (invocationSymbolOrigin instanceof AsmGrammarLocalVarDefinition localVarDefinition) {
       requireNonNull(localVarDefinition.asmType);
@@ -740,8 +740,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(AsmModifierDefinition definition) {
-    var relocationDefinition =
-        definition.symbolTable().findAs(definition.relocation, RelocationDefinition.class);
+    var relocationDefinition = (RelocationDefinition) definition.relocation.target();
 
     requireNonNull(relocationDefinition);
     var relocation = (Relocation) fetch(relocationDefinition).orElseThrow();
@@ -1481,9 +1480,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(
       AbiPseudoInstructionDefinition definition) {
-    var pseudoInstructionDefinition =
-        definition.symbolTable().requireAs((Identifier) definition.target,
-            PseudoInstructionDefinition.class);
+    var pseudoInstructionDefinition = (PseudoInstructionDefinition) definition.target.target();
 
     return Optional.ofNullable(pseudoInstructionDefinition).flatMap(this::fetch);
   }
@@ -1537,8 +1534,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         && callExpr.target instanceof Identifier identifier) {
       var registerFile =
           ensurePresent(
-              Optional.ofNullable(
-                      callExpr.symbolTable.requireAs(identifier, RegisterFileDefinition.class))
+              Optional.ofNullable((RegisterFileDefinition) identifier.target())
                   .flatMap(this::fetch)
                   .map(x -> (RegisterTensor) x),
               () -> error("Cannot find register file with the name "

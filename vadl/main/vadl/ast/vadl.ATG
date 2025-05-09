@@ -328,7 +328,7 @@ PRODUCTIONS
         identifierOrPlaceholder<out isa>                        (. extending.add(isa); .)
       }
     ]                                                           (. extending.forEach(e -> {
-                                                                      var extendingIsa = macroTable.requireAs(e, InstructionSetDefinition.class);
+                                                                      var extendingIsa = macroTable.requireIsaDef(e);
                                                                       if (extendingIsa != null)
                                                                           readMacroSymbols(macroTable, extendingIsa);
                                                                     }); .)
