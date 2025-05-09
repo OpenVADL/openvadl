@@ -567,6 +567,25 @@ class ParserUtils {
   }
 
   /**
+   * Recursively reads all macros in each of the extending instruction definitions.
+   *
+   * @param macroTable the macro table that should be fed with found macro symbols
+   * @param isa        the isa that should be (recursively) traversed to find all macro definitions.
+   */
+  static void readMacroSymbols(SymbolTable macroTable, InstructionSetDefinition isa) {
+    readMacroSymbols(macroTable, isa.definitions);
+    // FIXME: This is not optimal as we traverse an ISA potentially multiple times.
+    // as we don't have access to the macroTable of the referenced ISA, we must
+    // do the traversal again.
+    for (IsId extending : isa.extending) {
+      // TODO: Replace by extending.target() as soon as we merged
+      //    https://github.com/OpenVADL/openvadl/pull/212
+      var extendingIsa = (InstructionSetDefinition) Objects.requireNonNull(extending.target());
+      readMacroSymbols(macroTable, extendingIsa);
+    }
+  }
+
+  /**
    * Loads the referenced module and makes any given symbols available in the current module.
    * Either a {@code fileId} or a {@code filePath} MUST be specified.
    * If a {@code fileId} is used, the id will be resolved as a sibling {@code {id}.vadl} file.

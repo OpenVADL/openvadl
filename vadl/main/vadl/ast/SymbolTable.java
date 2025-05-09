@@ -25,8 +25,10 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticBuilder;
 import vadl.types.BuiltInTable;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
@@ -37,9 +39,10 @@ class SymbolTable {
   final List<SymbolTable> children = new ArrayList<>();
   final Map<String, Symbol> symbols = new HashMap<>();
   final Map<String, AstSymbol> macroSymbols = new HashMap<>();
+  // the errors list is the same obj as the parent's error list
   List<Diagnostic> errors = new ArrayList<>();
 
-  interface Symbol {
+  sealed interface Symbol {
   }
 
   record AstSymbol(Node origin) implements Symbol {
@@ -64,7 +67,6 @@ class SymbolTable {
     symbols.put("start", new BuiltInSymbol());
     symbols.put("executable", new BuiltInSymbol());
     symbols.put("halt", new BuiltInSymbol());
-    symbols.put("firmware", new BuiltInSymbol());
   }
 
   /**
@@ -109,6 +111,20 @@ class SymbolTable {
     return child;
   }
 
+  /**
+   * This returns the parent symbol table and transfers all errors from this to the
+   * parent symbol table.
+   *
+   * @return the parent symbol table
+   * @throws IllegalStateException if parent is null
+   */
+  SymbolTable pop() {
+    if (parent == null) {
+      throw new IllegalStateException("Tried to pop symbol table, but parent is null");
+    }
+    return parent;
+  }
+
 
   void defineSymbol(String name, Node origin) {
     if (origin instanceof ModelDefinition || origin instanceof ModelTypeDefinition
@@ -133,7 +149,7 @@ class SymbolTable {
   }
 
   @Nullable
-  Symbol resolveSymbol(String name) {
+  private Symbol resolveSymbol(String name) {
     var symbol = symbols.get(name);
 
     if (symbol != null) {
@@ -148,7 +164,7 @@ class SymbolTable {
   }
 
   @Nullable
-  Symbol resolveBuiltinSymbol(String name) {
+  private Symbol resolveBuiltinSymbol(String name) {
     var root = this;
     while (root.parent != null) {
       root = root.parent;
@@ -167,7 +183,7 @@ class SymbolTable {
   }
 
   @Nullable
-  Symbol resolveSymbolPath(List<String> path) {
+  private Symbol resolveSymbolPath(List<String> path) {
     // The vadl namespace is a pseudo namespace and points to the root and its buitlin functions
     if (path.size() == 2 && path.get(0).equalsIgnoreCase("vadl")) {
       return resolveBuiltinSymbol(path.get(1));
@@ -186,7 +202,7 @@ class SymbolTable {
   }
 
   @Nullable
-  Node resolve(Identifier ident) {
+  private Node resolve(Identifier ident) {
     var symbol = resolveSymbol(ident.name);
     if (!(symbol instanceof AstSymbol astSymbol)) {
       return null;
@@ -196,7 +212,7 @@ class SymbolTable {
   }
 
   @Nullable
-  Node resolve(IdentifierPath path) {
+  private Node resolve(IdentifierPath path) {
     var symbol = resolveSymbolPath(path.pathToSegments());
     if (!(symbol instanceof AstSymbol astSymbol)) {
       return null;
@@ -206,7 +222,7 @@ class SymbolTable {
   }
 
   @Nullable
-  Node resolve(IsId id) {
+  private Node resolve(IsId id) {
     return switch (id) {
       case Identifier ident -> resolve(ident);
       case IdentifierPath path -> resolve(path);
@@ -215,7 +231,7 @@ class SymbolTable {
   }
 
   @Nullable
-  Node resolveMacroSymbol(String name) {
+  private Node resolveMacroSymbol(String name) {
     var symbol = macroSymbols.get(name);
     if (symbol == null && parent != null) {
       return parent.resolveMacroSymbol(name);
@@ -247,8 +263,17 @@ class SymbolTable {
     return null;
   }
 
+  /**
+   * This will add an error to {@link #errors} if the identifier couldn't be resolved
+   * to a node of the given type.
+   * In this case it will return null, so the user must check the result before continuing.
+   *
+   * @param usage the identifier that should be resolved
+   * @param type  the type that the resolved node must have
+   * @return the resolved node, or null if it could not be resolved with the given type
+   */
   // FIXME: I don't like how it's called require but still returns null
-  <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
+  private <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
     var origin = resolve(usage);
     if (type.isInstance(origin)) {
       return type.cast(origin);
@@ -261,6 +286,27 @@ class SymbolTable {
       errors.add(error("Unknown name " + usage.pathToString(), usage).build());
     }
     return null;
+  }
+
+  /**
+   * Finds the node for the given Id and throws the error provided by the error builder
+   * if the node could not be found.
+   */
+  Node require(IsId name, Supplier<DiagnosticBuilder> errorBuilder) {
+    var node = requireAs(name, Node.class);
+    if (node == null) {
+      throw errorBuilder.get().build();
+    }
+    return node;
+  }
+
+  /**
+   * This allows the {@link Parser} to find an ISA during parsing.
+   * This is only possible for ISA definitions and only used by the parser.
+   */
+  @Nullable
+  InstructionSetDefinition requireIsaDef(IsId usage) {
+    return requireAs(usage, InstructionSetDefinition.class);
   }
 
   /**
@@ -301,9 +347,28 @@ class SymbolTable {
   }
 
 
+  /**
+   * Copies all symbols of the given symbol table into this symbol table.
+   * It internally calls {@link #defineSymbol(String, Node)}, so it
+   * will register an error in {@link #errors} if there are symbol name conflicts.
+   */
   void extendBy(SymbolTable other) {
-    symbols.putAll(other.symbols);
-    macroSymbols.putAll(other.macroSymbols);
+    // we have to check for each symbol that is is not already in this symbol table
+    for (var entry : other.symbols.entrySet()) {
+      var name = entry.getKey();
+      var symbol = entry.getValue();
+      switch (symbol) {
+        case AstSymbol astSymbol -> defineSymbol(name, astSymbol.origin);
+        case BuiltInSymbol ignored -> { /* do nothing, already defined */ }
+      }
+    }
+    // add macro symbols to this symbol table.
+    // #defineSymbol will correctly assign symbol to macroSymbols
+    for (var entry : other.macroSymbols.entrySet()) {
+      var name = entry.getKey();
+      AstSymbol symbol = entry.getValue();
+      defineSymbol(name, symbol.origin);
+    }
   }
 
   private SourceLocation getIdentifierLocation(Node node) {
@@ -319,6 +384,15 @@ class SymbolTable {
       return;
     }
 
+    var otherSymbol = symbols.get(name);
+    if (otherSymbol instanceof AstSymbol astSymbol
+        && astSymbol.origin == origin) {
+      // if the other origin is the same node, the "redefinition" is ok.
+      // this can happen when we have a diamond pattern like isa0 -> abi -> superisa
+      // and isa0 -> superisa.
+      return;
+    }
+
     var originLoc = getIdentifierLocation(origin);
 
     var error = error("Symbol name already used: " + name, originLoc)
@@ -326,7 +400,6 @@ class SymbolTable {
         .note("All symbols must have a unique name.");
 
 
-    var otherSymbol = symbols.get(name);
     if (otherSymbol instanceof BuiltInSymbol) {
       error.description("`%s` is a builtin and cannot be used as a name", name);
     } else if (otherSymbol instanceof AstSymbol astSymbol) {
@@ -343,12 +416,19 @@ class SymbolTable {
       return;
     }
 
+    var other = macroSymbols.get(name).origin();
+    if (other == origin) {
+      // if the other origin is the same node, the "redefinition" is ok.
+      // this can happen when we have a diamond pattern like isa0 -> abi -> superisa
+      // and isa0 -> superisa.
+      return;
+    }
+
     var originLocation = getIdentifierLocation(origin);
     var error = error("Macro name already used: " + name, originLocation)
         .locationDescription(originLocation, "Second definition here.")
         .note("All macros must have a unique name.");
 
-    var other = macroSymbols.get(name).origin();
     var otherLoc = getIdentifierLocation(other);
     error.locationDescription(otherLoc, "First defined here.");
 
@@ -553,6 +633,12 @@ class SymbolTable {
     }
 
     @Override
+    public Void visit(UsingDefinition definition) {
+      //
+      return super.visit(definition);
+    }
+
+    @Override
     public Void visit(AsmGrammarElementDefinition definition) {
       // Avoid creating a new scope since the elements should share the same scope
       beforeTravelWithoutScope(definition);
@@ -711,6 +797,9 @@ class SymbolTable {
     @Override
     public Void visit(Identifier expr) {
       var symbol = expr.symbolTable().resolveSymbol(expr.pathToString());
+      if (symbol instanceof AstSymbol(Node origin)) {
+        expr.target = origin;
+      }
       if (symbol == null) {
         expr.symbolTable()
             .reportError("Symbol not found: " + expr.pathToString(), expr.location());
@@ -721,6 +810,9 @@ class SymbolTable {
     @Override
     public Void visit(IdentifierPath expr) {
       var symbol = expr.symbolTable().resolveSymbolPath(expr.pathToSegments());
+      if (symbol instanceof AstSymbol(Node origin)) {
+        expr.target = origin;
+      }
       if (symbol == null) {
         expr.symbolTable()
             .reportError("Symbol not found: " + expr.pathToString(), expr.location());
@@ -776,12 +868,11 @@ class SymbolTable {
       // Import all symbols from the extending ISA.
       beforeTravel(definition);
 
-      if (definition.extending != null) {
-        var extending =
-            definition.symbolTable()
-                .requireAs(definition.extending, InstructionSetDefinition.class);
-        definition.extendingNode = extending;
-        definition.symbolTable().extendBy(requireNonNull(extending).symbolTable());
+      for (var isa : definition.extending) {
+        var extending = definition.symbolTable().requireAs(isa, InstructionSetDefinition.class);
+        if (extending != null) {
+          definition.symbolTable().extendBy(extending.symbolTable());
+        }
       }
 
       definition.children().forEach(this::travel);
@@ -913,19 +1004,17 @@ class SymbolTable {
     public Void visit(ProcessorDefinition definition) {
       beforeTravel(definition);
 
-      for (IsId implementedIsa : definition.implementedIsas) {
-        InstructionSetDefinition isa = definition.symbolTable()
-            .requireAs((Identifier) implementedIsa, InstructionSetDefinition.class);
-        if (isa != null) {
-          definition.implementedIsaNodes.add(isa);
-          definition.symbolTable().extendBy(isa.symbolTable());
-        }
+
+      InstructionSetDefinition isa = definition.symbolTable()
+          .requireAs(definition.implementedIsa, InstructionSetDefinition.class);
+      if (isa != null) {
+        definition.symbolTable().extendBy(isa.symbolTable());
       }
+
       if (definition.abi != null) {
         var abi = definition.symbolTable()
-            .requireAs((Identifier) definition.abi, ApplicationBinaryInterfaceDefinition.class);
+            .requireAs(definition.abi, ApplicationBinaryInterfaceDefinition.class);
         if (abi != null) {
-          definition.abiNode = abi;
           definition.symbolTable().extendBy(abi.symbolTable());
         }
       }
@@ -1027,7 +1116,7 @@ class SymbolTable {
       beforeTravel(definition);
 
       var relocation = definition.relocation;
-      var symbol = definition.symbolTable().resolveSymbol(relocation.pathToString());
+      var symbol = definition.symbolTable().resolve(relocation);
       if (symbol == null) {
         definition.symbolTable()
             .reportError("Unknown relocation symbol: " + relocation.pathToString(),
@@ -1096,7 +1185,7 @@ class SymbolTable {
 
       // Id needs special treatment
       if (definition.id != null) {
-        var idSymbol = definition.symbolTable().resolveSymbol(definition.id.name);
+        var idSymbol = definition.symbolTable().resolve(definition.id);
         if (idSymbol == null) {
           definition.symbolTable()
               .reportError("Unknown symbol in asm grammar rule: " + definition.id.name,

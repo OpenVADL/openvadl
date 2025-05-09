@@ -15,7 +15,7 @@
 
 // RISC-V 32 / 64 I common instruction set
 
-	instruction set architecture RV3264I = {
+instruction set architecture RV3264Base = {
 
   model ArchSize() : Id = {Arch32}        // invoke vadl -m "ArchSize=Arch64" for 64 bit arch
 
@@ -203,12 +203,6 @@
     assembly $name = (mnemonic, " ", register(rd), ",", decimal($asmImm), $asm)
     }
 
-  model ECallInstr (name : Id, imm : Lit) : IsaDefs = {
-    instruction $name : Itype =  {}                    // ecall / ebreak instructions
-    encoding $name = {opcode = 0b111'0011, funct3 = 0b000, rd = 0b0'0000, rs1 = 0b0'0000, imm = $imm}
-    assembly $name = (mnemonic)
-    }
-
   $RtypeInstr (ADD  ; +  ; 0b000 ; 0b000'0000 ; Bits ; Bits ) // add
   $RtypeInstr (SUB  ; -  ; 0b000 ; 0b010'0000 ; Bits ; Bits ) // subtract
   $RtypeInstr (AND  ; &  ; 0b111 ; 0b000'0000 ; Bits ; Bits ) // and
@@ -249,9 +243,6 @@
   $JLinkInstr (JAL  ; Jtype ; PC     ; opcode = 0b110'1111 ; immS ; "")   // jump and link
   $JLinkInstr (JALR ; Itype ; X(rs1) ; opcode = 0b110'0111,               // jump and link register
                                        funct3 = 0b000 ; imm as SInt<12> ; ("(", register(rs1), ")"))
-
-  $ECallInstr (ECALL ; 0)                              // environment (sys) call
-  $ECallInstr (EBREAK; 1)                              // environment (sys) break
 
 $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
@@ -453,9 +444,19 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
 
 }
 
+instruction set architecture RV3264I extending RV3264Base = {
+    model ECallInstr (name : Id, imm : Lit) : IsaDefs = {
+      instruction $name : Itype =  {}                    // ecall / ebreak instructions
+      encoding $name = {opcode = 0b111'0011, funct3 = 0b000, rd = 0b0'0000, rs1 = 0b0'0000, imm = $imm}
+      assembly $name = (mnemonic)
+    }
+
+    $ECallInstr (ECALL ; 0)                              // environment (sys) call
+    $ECallInstr (EBREAK; 1)                              // environment (sys) break
+}
 
 
-	instruction set architecture RV3264IM extending RV3264I = {
+instruction set architecture RV3264M extending RV3264Base = {
 
   constant MLen2   = MLen  * 2
   constant MLen2_1 = MLen2 - 1

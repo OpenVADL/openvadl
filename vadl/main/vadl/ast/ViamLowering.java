@@ -705,7 +705,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
 
     requireNonNull(definition.id);
-    var invocationSymbolOrigin = definition.symbolTable().resolve(definition.id);
+    var invocationSymbolOrigin = definition.id.target();
 
     if (invocationSymbolOrigin instanceof AsmGrammarLocalVarDefinition localVarDefinition) {
       requireNonNull(localVarDefinition.asmType);
@@ -740,8 +740,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(AsmModifierDefinition definition) {
-    var relocationDefinition =
-        definition.symbolTable().findAs(definition.relocation, RelocationDefinition.class);
+    var relocationDefinition = (RelocationDefinition) definition.relocation.target();
 
     requireNonNull(relocationDefinition);
     var relocation = (Relocation) fetch(relocationDefinition).orElseThrow();
@@ -1219,7 +1218,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // for each isa in mip add definitions to definition list
     // create new isa ast node with list of definitions
     // visitIsa on created isa ast node
-    var isa = visitIsa(mergeIsa(definition.implementedIsaNodes));
+    var isa = visitIsa(mergeIsa(definition.implementedIsaNode()));
 
     var reset = (Procedure) definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.RESET)
         .findFirst()
@@ -1230,7 +1229,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var memRegions = definition.findMemoryRegionDefs().map(this::fetch)
         .map(d -> (MemoryRegion) d.get()).toList();
 
-    var abi = definition.abiNode != null ? (Abi) fetch(definition.abiNode).orElse(null) : null;
+    var abiNode = definition.abiNode();
+    var abi = abiNode != null ? (Abi) fetch(abiNode).orElse(null) : null;
     var mip = new Processor(identifier, isa, abi, null, reset, memRegions, null);
 
     // FIXME: Remove this, once annotation framework is supported
@@ -1239,21 +1239,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return Optional.of(mip);
   }
 
-  private InstructionSetDefinition mergeIsa(List<InstructionSetDefinition> definitions) {
+  private InstructionSetDefinition mergeIsa(InstructionSetDefinition isaDef) {
 
     Set<InstructionSetDefinition> processedIsas =
         Collections.newSetFromMap(new IdentityHashMap<>());
     var nodeList = new ArrayList<Definition>();
 
-    for (var definition : definitions) {
-      mergeInto(definition, nodeList, processedIsas);
-    }
-
-    var identifier = findIsaIdentifier(definitions);
-    var location = findIsaLocation(definitions);
+    mergeInto(isaDef, nodeList, processedIsas);
 
     // create new isa ast node
-    return new InstructionSetDefinition(identifier, null, nodeList, location);
+    return new InstructionSetDefinition(isaDef.identifier, List.of(), nodeList,
+        isaDef.location());
   }
 
   private void mergeInto(InstructionSetDefinition definition, List<Definition> nodeCollection,
@@ -1263,24 +1259,13 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       return;
     }
 
-    var extending = definition.extendingNode;
-    if (extending != null) {
+    for (var extending : definition.extendingNodes()) {
       mergeInto(extending, nodeCollection, processedIsas);
     }
 
     // add all definition nodes to node collection
     nodeCollection.addAll(definition.definitions);
     processedIsas.add(definition);
-  }
-
-  private Identifier findIsaIdentifier(List<InstructionSetDefinition> definitions) {
-    // FIXME: If more than 1 isas, use some other identifier (from target annotation)
-    return definitions.get(0).identifier();
-  }
-
-  private SourceLocation findIsaLocation(List<InstructionSetDefinition> definitions) {
-    // FIXME: If more than 1 isas, use some other location (or invalid location)
-    return definitions.get(0).location();
   }
 
   @Override
@@ -1495,9 +1480,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   @Override
   public Optional<vadl.viam.Definition> visit(
       AbiPseudoInstructionDefinition definition) {
-    var pseudoInstructionDefinition =
-        definition.symbolTable().requireAs((Identifier) definition.target,
-            PseudoInstructionDefinition.class);
+    var pseudoInstructionDefinition = (PseudoInstructionDefinition) definition.target.target();
 
     return Optional.ofNullable(pseudoInstructionDefinition).flatMap(this::fetch);
   }
@@ -1551,8 +1534,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         && callExpr.target instanceof Identifier identifier) {
       var registerFile =
           ensurePresent(
-              Optional.ofNullable(
-                      callExpr.symbolTable.requireAs(identifier, RegisterFileDefinition.class))
+              Optional.ofNullable((RegisterFileDefinition) identifier.target())
                   .flatMap(this::fetch)
                   .map(x -> (RegisterTensor) x),
               () -> error("Cannot find register file with the name "

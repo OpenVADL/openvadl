@@ -3,11 +3,9 @@
 
 // RISC-V 32 IM Zicsr instruction set (CSR - Control and Status Registers)
 
-import rv3264im::RV3264IM
+import rv3264im::{RV3264Base, RV3264M}
 
-instruction set architecture RV32IM extending RV3264IM = {}
-
-instruction set architecture RV32Zicsr extending RV32IM = {
+instruction set architecture RV32IZicsr extending RV3264Base = {
 
   enumeration CsrDef : Bits<12> = // defined control and status register indices
     { ustatus  = 0x000  //   0 User mode restricted view of mstatus
@@ -106,6 +104,15 @@ instruction set architecture RV32Zicsr extending RV32IM = {
 
   exception IllegalInstruction = {}
 
+  model ECallInstr (name : Id, imm : Lit, excCode: Id) : IsaDefs = {
+    instruction $name : Itype = { /* TODO: raise instr */ }  // ecall / ebreak instructions
+    encoding $name = {opcode = 0b111'0011, funct3 = 0b000, rd = 0b0'0000, rs1 = 0b0'0000, imm = $imm}
+    assembly $name = (mnemonic)
+    }
+
+  $ECallInstr (ECALL ; 0; M_ECALL)        // environment (sys) call
+  $ECallInstr (EBREAK; 1; BREAKPOINT)     // environment (sys) break
+
   // name = instruction id, funct3 opcode, offset = 4 for immediate else 0, csrStat = behavior
   model CsrBaseInstr (name : Id, funct3 : Bin, offset : Int, csrStat : Stat) : IsaDefs = {
     instruction $name : Itype =
@@ -154,3 +161,5 @@ instruction set architecture RV32Zicsr extending RV32IM = {
   $CsrInstr (  "" ; 0 ; X(rs1)      )    // CSR register instructions
   $CsrInstr ( "I" ; 4 ; rs1 as Regs )    // CSR immediate instructions
 }
+
+instruction set architecture RV32IMZicsr extending RV32IZicsr, RV3264M = { }
