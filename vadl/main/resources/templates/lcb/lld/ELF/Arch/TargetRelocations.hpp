@@ -1,4 +1,4 @@
-#include "../../../llvm/lib/Target/[(${namespace})]/vadl-builtins.h"
+#include "vadl-builtins.h"
 
 [# th:each="relocation : ${relocations}" ]
 [(${relocation})]
