@@ -38,7 +38,10 @@ import vadl.javaannotations.Handler;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
+import vadl.types.BuiltInTable;
+import vadl.types.Type;
 import vadl.utils.VadlBuiltInNoStatusDispatcher;
+import vadl.viam.Constant;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -526,12 +529,70 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleROL(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
+    var opWidth = input.type().asDataType().bitWidth();
+    if (opWidth == targetSize) {
+      // if the operation is on target size, there is nothing to do
+      return;
+    }
+
+    // rotation operation where
+    // a = value
+    // b = shift amount
+    // N = size of value
+    // r = (b % N)
+    // (a << r) | (a >> (N - r))
+
+    var a = input.arguments().getFirst();
+    var b = input.arguments().get(1);
+    var N = Constant.Value.of(opWidth, Type.bits(32)).toNode();
+    // b % N
+    var r = BuiltInTable.UMOD.call(b, N);
+    // a << r
+    var aLsrR = BuiltInTable.LSL.call(a, r);
+    // N - r
+    var Nr = BuiltInTable.SUB.call(N, r);
+    // a >> Nr
+    var aNr = BuiltInTable.LSR.call(a, Nr);
+    // aLsrR | aNr
+    var result = BuiltInTable.OR.call(aLsrR, aNr);
+    // replace call
+    result = input.replaceAndDelete(result);
+    // truncate result to operation width, as a << r might cause an overflow
+    truncate(result, opWidth);
   }
 
   @Override
   public void handleROR(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
+    var opWidth = input.type().asDataType().bitWidth();
+    if (opWidth == targetSize) {
+      // if the operation is on target size, there is nothing to do
+      return;
+    }
+
+    // rotation operation where
+    // a = value
+    // b = shift amount
+    // N = size of value
+    // r = (b % N)
+    // (a >> r) | (a << (N - r))
+
+    var a = input.arguments().getFirst();
+    var b = input.arguments().get(1);
+    var N = Constant.Value.of(opWidth, Type.bits(32)).toNode();
+    // b % N
+    var r = BuiltInTable.UMOD.call(b, N);
+    // a >> r
+    var aLsrR = BuiltInTable.LSR.call(a, r);
+    // N - r
+    var Nr = BuiltInTable.SUB.call(N, r);
+    // a << Nr
+    var aNr = BuiltInTable.LSL.call(a, Nr);
+    // aLsrR | aNr
+    var result = BuiltInTable.OR.call(aLsrR, aNr);
+    // replace call
+    result = input.replaceAndDelete(result);
+    // truncate result to operation width, as a << (N - r) might cause an overflow
+    truncate(result, opWidth);
   }
 
   @Override
