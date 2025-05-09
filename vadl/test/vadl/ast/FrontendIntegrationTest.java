@@ -16,10 +16,20 @@
 
 package vadl.ast;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 
 public class FrontendIntegrationTest {
 
@@ -43,4 +53,52 @@ public class FrontendIntegrationTest {
     Assertions.assertDoesNotThrow(() -> lowering.generate(ast), "Cannot generate VIAM");
   }
 
+  @Test
+  void testRv32im() throws IOException {
+    testPrettyPrintSpec(Path.of("../sys/risc-v"), "rv3264im.vadl", "rv32im.vadl");
+  }
+
+  private void testPrettyPrintSpec(Path rootDir, String... vadlSpecs) throws IOException {
+    var absRoot = rootDir.toAbsolutePath();
+    var sysName = rootDir.getFileName();
+    var prettyPath = Path.of("build/test/pretty-print/" + sysName);
+    FileUtils.forceDelete(prettyPath.toFile());
+
+    var specFiles = Arrays.stream(vadlSpecs).map(s -> absRoot.resolve(s).toFile())
+        .toList();
+    var prettyFiles =
+        Arrays.stream(vadlSpecs).map(s -> prettyPath.resolve(s).toFile())
+            .toList();
+
+    // first check all handwirtten specs
+    checkAll(specFiles, prettyPath);
+    // then check all pretty printed specs
+    checkAll(prettyFiles, null);
+  }
+
+  private void checkAll(List<File> specs, @Nullable Path prettyPrintPath) throws IOException {
+    for (var file : specs) {
+      check(file, prettyPrintPath);
+    }
+  }
+
+  private void check(File vadlFile, @Nullable Path prettyPrintPath) throws IOException {
+    System.out.println("Checking " + vadlFile);
+    assertThat(vadlFile).exists();
+
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(vadlFile.toPath()),
+        "Cannot parse input");
+    new Ungrouper().ungroup(ast);
+    new ModelRemover().removeModels(ast);
+    if (prettyPrintPath != null) {
+      var progPretty = ast.prettyPrintToString();
+      var resFile = prettyPrintPath.resolve(vadlFile.getName()).toFile();
+      FileUtils.createParentDirectories(resFile);
+      FileUtils.writeStringToFile(resFile, progPretty, Charset.defaultCharset());
+    }
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+    var lowering = new ViamLowering();
+    Assertions.assertDoesNotThrow(() -> lowering.generate(ast), "Cannot generate VIAM");
+  }
 }
