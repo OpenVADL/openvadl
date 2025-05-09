@@ -200,6 +200,10 @@ public class ParserTest {
         constant a = -9
         constant b = !(a = 3)
         constant c = ~a
+        constant d = -4 as Bits<32>
+        constant e = -(4 as Bits<32>)
+        constant f = ~(3 as Bits<32>)
+        constant g = !(3 as Bool)
         """;
 
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
