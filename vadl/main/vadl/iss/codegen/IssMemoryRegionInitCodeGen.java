@@ -61,7 +61,7 @@ public class IssMemoryRegionInitCodeGen extends IssProcGen {
 
   /**
    * Produces the {@code init_<memory_region_name>()} function setup the ROM, which correspond
-   * to the {@link Processor#firmware()} definition in the specification.
+   * to on of the {@link Processor#memoryRegions()} definitions in the specification.
    *
    * @return the full function code, including signature.
    */

@@ -14,32 +14,32 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.iss.passes.tcgLowering.nodes;
+package vadl.iss.riscv;
 
-import vadl.iss.passes.nodes.TcgVRefNode;
-import vadl.viam.graph.Node;
+import java.util.Map;
+import vadl.iss.IssInstrTest;
 
-/**
- * Represents the {@code tcg_gen_not} TCG instruction in the TCG VIAM lowering.
- */
-public class TcgNotNode extends TcgUnaryOpNode {
+public abstract class AbstractIssRiscv32InstrTest extends IssInstrTest {
 
-  public TcgNotNode(TcgVRefNode resVar, TcgVRefNode arg1) {
-    super(resVar, arg1);
+
+  @Override
+  public Map<String, String> gdbRegMap() {
+    return AbstractIssRiscv64InstrTest.GDB_REF_MAP;
   }
 
   @Override
-  public String tcgFunctionName() {
-    return "tcg_gen_not_" + firstDest().width();
+  public Tool simulator() {
+    return new Tool("/qemu/build/qemu-system-rv32imzicsr", "-bios");
   }
 
   @Override
-  public Node copy() {
-    return new TcgNotNode(firstDest().copy(TcgVRefNode.class), arg.copy(TcgVRefNode.class));
+  public Tool reference() {
+    return new Tool("/qemu/build/qemu-system-riscv32", "-M spike -bios");
   }
 
   @Override
-  public Node shallowCopy() {
-    return new TcgNotNode(firstDest(), arg);
+  public Tool compiler() {
+    return new Tool("/scripts/compilers/riscv_compiler.py", "-march=rv32imzicsr -mabi=ilp32");
   }
+
 }

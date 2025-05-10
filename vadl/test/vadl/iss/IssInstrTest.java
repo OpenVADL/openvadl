@@ -21,6 +21,7 @@ import static vadl.iss.IssTestUtils.yamlToTestResult;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -60,6 +61,12 @@ public abstract class IssInstrTest extends QemuIssTest {
   public abstract Tool reference();
 
   public abstract Tool compiler();
+
+
+  protected final Stream<DynamicTest> runTest(
+      IssTestUtils.TestCase test) throws IOException {
+    return runTestsWith(1, (i) -> test);
+  }
 
   @SafeVarargs
   protected final Stream<DynamicTest> runTestsWith(
@@ -148,7 +155,13 @@ public abstract class IssInstrTest extends QemuIssTest {
               System.out.println("Test " + e.id());
               System.out.println("ASM: \n" + testSpec.asmCore());
               System.out.println("\nRan stages: " + e.completedStages());
-              System.out.println("Register tests: \n" + e.regTests());
+              System.out.println("Register tests: ");
+              e.regTests().stream()
+                  .sorted(Comparator.comparing(IssTestUtils.TestResult.RegTestResult::reg))
+                  .forEachOrdered(r -> {
+                    System.out.println(
+                        "- " + r.reg() + " exp: " + r.expected() + " act: " + r.actual());
+                  });
               System.out.println("Duration: " + e.duration());
 
               if (!success) {

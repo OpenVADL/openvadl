@@ -335,6 +335,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     var result = expr.accept(this);
     result.setSourceLocationIfNotSet(expr.location());
     expressionCache.put(expr, result);
+    result.ensure(!(result.type() instanceof ConstantType),
+        "Constant types must not exist in the VIAM");
     return result;
   }
 
@@ -535,8 +537,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(IntegerLiteral expr) {
-    throw new RuntimeException(
-        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+    return new ConstantNode(Constant.Value.fromInteger(expr.number,
+        ((ConstantType) expr.type()).closestBits()));
   }
 
   @Override

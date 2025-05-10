@@ -50,10 +50,11 @@ public class TcgGenException extends TcgNode {
   @Override
   public String cCode(Function<Node, String> nodeToCCode) {
     // update PC before leaving TB and generate
+    var argStr = args.stream().map(nodeToCCode).collect(Collectors.joining(", "));
+    argStr = argStr.isEmpty() ? "" : ", " + argStr;
     return "gen_update_pc_diff(ctx, 0);\n\t"
-        + "gen_helper_raise_" + exception.simpleName().toLowerCase() + "(tcg_env, "
-        + args.stream().map(nodeToCCode).collect(Collectors.joining(", "))
-        + ")";
+        + "gen_helper_raise_" + exception.simpleName().toLowerCase()
+        + "(tcg_env" + argStr + ")";
   }
 
   @Override

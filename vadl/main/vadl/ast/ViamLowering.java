@@ -781,8 +781,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // FIXME: Further research for the parameters (probably don't apply to counter)
     var reg = new RegisterTensor(identifier,
-        List.of(dimFromType(0, resultType)),
-        new RegisterTensor.Constraint[] {}
+        List.of(dimFromType(0, resultType))
     );
 
     var counter = new Counter(identifier,
@@ -1373,8 +1372,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var resultType = (DataType) getViamType(definition.type());
     var reg = new RegisterTensor(
         generateIdentifier(definition.viamId, definition.identifier()),
-        List.of(dimFromType(0, resultType)),
-        new RegisterTensor.Constraint[] {}
+        List.of(dimFromType(0, resultType))
     );
     return Optional.of(reg);
   }
@@ -1384,18 +1382,12 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var addrType = (DataType) getViamType(requireNonNull(definition.type).argTypes().get(0));
     var resultType = (DataType) getViamType(requireNonNull(definition.type).resultType());
 
-    // FIXME: Add proper constraints. This is currently only temporarily hardcoded to
-    //    fix the riscv iss simulation.
-    var zeroConstraint = new RegisterTensor.Constraint(List.of(Constant.Value.of(0, addrType)),
-        Constant.Value.of(0, resultType));
-
     var regFile = new RegisterTensor(
         generateIdentifier(definition.viamId, definition.identifier()),
         List.of(
             dimFromMappingType(0, addrType),
             dimFromType(1, resultType)
-        ),
-        new RegisterTensor.Constraint[] {zeroConstraint}
+        )
     );
     return Optional.of(regFile);
   }
