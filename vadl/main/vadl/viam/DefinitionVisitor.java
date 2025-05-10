@@ -68,7 +68,7 @@ public interface DefinitionVisitor {
 
   void visit(Abi abi);
 
-  void visit(MicroProcessor microProcessor);
+  void visit(Processor processor);
 
   void visit(MicroArchitecture microArchitecture);
 
@@ -94,6 +94,9 @@ public interface DefinitionVisitor {
 
   void visit(CompilerInstruction compilerInstruction);
 
+  void visit(Abi.AbstractClangType.NumericClangType numericClangType);
+
+  void visit(Abi.AbstractClangType.ClangType clangType);
 
   /**
    * DefinitionVisitor.Recursive is an interface that extends the DefinitionVisitor
@@ -288,22 +291,16 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(MicroProcessor microProcessor) {
-      beforeTraversal(microProcessor);
-      var start = microProcessor.startNullable();
-      if (start != null) {
-        start.accept(this);
-      }
-      var stop = microProcessor.stop();
+    public void visit(Processor processor) {
+      beforeTraversal(processor);
+      var stop = processor.stop();
       if (stop != null) {
         stop.accept(this);
       }
-      var firmware = microProcessor.firmware();
-      if (firmware != null) {
-        firmware.accept(this);
-      }
-      microProcessor.isa().accept(this);
-      afterTraversal(microProcessor);
+      processor.memoryRegions().forEach(memoryRegion -> memoryRegion.accept(this));
+      processor.reset().accept(this);
+      processor.isa().accept(this);
+      afterTraversal(processor);
     }
 
     @Override
@@ -395,6 +392,18 @@ public interface DefinitionVisitor {
     public void visit(CompilerInstruction compilerInstruction) {
       beforeTraversal(compilerInstruction);
       afterTraversal(compilerInstruction);
+    }
+
+    @Override
+    public void visit(Abi.AbstractClangType.NumericClangType numericClangType) {
+      beforeTraversal(numericClangType);
+      afterTraversal(numericClangType);
+    }
+
+    @Override
+    public void visit(Abi.AbstractClangType.ClangType clangType) {
+      beforeTraversal(clangType);
+      afterTraversal(clangType);
     }
   }
 
@@ -509,7 +518,7 @@ public interface DefinitionVisitor {
     }
 
     @Override
-    public void visit(MicroProcessor microProcessor) {
+    public void visit(Processor processor) {
 
     }
 
@@ -570,6 +579,16 @@ public interface DefinitionVisitor {
 
     @Override
     public void visit(CompilerInstruction compilerInstruction) {
+
+    }
+
+    @Override
+    public void visit(Abi.AbstractClangType.NumericClangType numericClangType) {
+
+    }
+
+    @Override
+    public void visit(Abi.AbstractClangType.ClangType clangType) {
 
     }
   }

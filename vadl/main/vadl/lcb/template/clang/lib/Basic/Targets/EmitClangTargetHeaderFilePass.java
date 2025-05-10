@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.clang.lib.Basic.Targets;
+package vadl.lcb.template.clang.lib.Basic.Targets;
 
 import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayout;
 import static vadl.lcb.template.utils.DataLayoutProvider.createDataLayoutString;
@@ -26,6 +26,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -48,6 +49,17 @@ public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
     return "clang/lib/Basic/Targets/" + lcbConfiguration().targetName().value() + ".h";
   }
 
+  record ClangType(String name, String value) implements Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "name", name,
+          "value", value
+      );
+    }
+  }
+
 
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
@@ -55,8 +67,14 @@ public class EmitClangTargetHeaderFilePass extends LcbTemplateRenderingPass {
     var gpr = ensurePresent(
         specification.registerTensors().filter(RegisterTensor::isRegisterFile).findFirst(),
         "Specification requires at least one register file");
+
+    var abi = specification.abi().orElseThrow();
+    var types = abi.clangTypes().stream().map(x -> new ClangType(x.typeNameAsString(), x.value()))
+        .toList();
+
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
-        CommonVarNames.DATALAYOUT, createDataLayoutString(createDataLayout(gpr)));
+        CommonVarNames.DATALAYOUT, createDataLayoutString(createDataLayout(abi, gpr)),
+        "clangTypes", types);
   }
 }

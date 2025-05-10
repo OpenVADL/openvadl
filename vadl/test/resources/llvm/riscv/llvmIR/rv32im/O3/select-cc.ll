@@ -5,65 +5,65 @@ define signext i32 @foo(i32 signext %a, ptr %b) nounwind {
 ; CHECK-NEXT: # %bb.0:
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BEQ a0,a2,.LBB0_1
-; CHECK-NEXT: JAL zero,.LBB0_15
+; CHECK-NEXT: J .LBB0_15
 ; CHECK-NEXT: .LBB0_1:
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BNE a0,a2,.LBB0_2
-; CHECK-NEXT: JAL zero,.LBB0_16
+; CHECK-NEXT: J .LBB0_16
 ; CHECK-NEXT: .LBB0_2:
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BLTU a2,a0,.LBB0_3
-; CHECK-NEXT: JAL zero,.LBB0_17
+; CHECK-NEXT: J .LBB0_17
 ; CHECK-NEXT: .LBB0_3:
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BGEU a0,a2,.LBB0_4
-; CHECK-NEXT: JAL zero,.LBB0_18
+; CHECK-NEXT: J .LBB0_18
 ; CHECK-NEXT: .LBB0_4:
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BLTU a0,a2,.LBB0_5
-; CHECK-NEXT: JAL zero,.LBB0_19
+; CHECK-NEXT: J .LBB0_19
 ; CHECK-NEXT: .LBB0_5:
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BGEU a2,a0,.LBB0_6
-; CHECK-NEXT: JAL zero,.LBB0_20
+; CHECK-NEXT: J .LBB0_20
 ; CHECK-NEXT: .LBB0_6:
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BLT a2,a0,.LBB0_7
-; CHECK-NEXT: JAL zero,.LBB0_21
+; CHECK-NEXT: J .LBB0_21
 ; CHECK-NEXT: .LBB0_7:
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BGE a0,a2,.LBB0_8
-; CHECK-NEXT: JAL zero,.LBB0_22
+; CHECK-NEXT: J .LBB0_22
 ; CHECK-NEXT: .LBB0_8:
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BLT a0,a2,.LBB0_9
-; CHECK-NEXT: JAL zero,.LBB0_23
+; CHECK-NEXT: J .LBB0_23
 ; CHECK-NEXT: .LBB0_9:
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BGE a2,a0,.LBB0_10
-; CHECK-NEXT: JAL zero,.LBB0_24
+; CHECK-NEXT: J .LBB0_24
 ; CHECK-NEXT: .LBB0_10:
 ; CHECK-NEXT: ADDI a3,zero,1
 ; CHECK-NEXT: LW a2,0(a1)
 ; CHECK-NEXT: BLT a2,a3,.LBB0_11
-; CHECK-NEXT: JAL zero,.LBB0_25
+; CHECK-NEXT: J .LBB0_25
 ; CHECK-NEXT: .LBB0_11:
 ; CHECK-NEXT: ADDI a4,zero,-1
 ; CHECK-NEXT: LW a3,0(a1)
 ; CHECK-NEXT: BLT a4,a2,.LBB0_12
-; CHECK-NEXT: JAL zero,.LBB0_26
+; CHECK-NEXT: J .LBB0_26
 ; CHECK-NEXT: .LBB0_12:
 ; CHECK-NEXT: ADDI a4,zero,1024
 ; CHECK-NEXT: LW a3,0(a1)
 ; CHECK-NEXT: BLT a4,a3,.LBB0_13
-; CHECK-NEXT: JAL zero,.LBB0_27
+; CHECK-NEXT: J .LBB0_27
 ; CHECK-NEXT: .LBB0_13:
 ; CHECK-NEXT: LW a1,0(a1)
 ; CHECK-NEXT: ADDI a3,zero,2046
 ; CHECK-NEXT: BLTU a3,a2,.LBB0_14
-; CHECK-NEXT: JAL zero,.LBB0_28
+; CHECK-NEXT: J .LBB0_28
 ; CHECK-NEXT: .LBB0_14:
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 ; CHECK-NEXT: .LBB0_15:
 ; CHECK-NEXT: ADDI a0,a2,0
 ; CHECK-NEXT: LW a2,0(a1)
@@ -122,7 +122,7 @@ define signext i32 @foo(i32 signext %a, ptr %b) nounwind {
 ; CHECK-NEXT: BLTU a3,a2,.LBB0_14
 ; CHECK-NEXT: .LBB0_28:
 ; CHECK-NEXT: ADDI a0,a1,0
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %val1 = load volatile i32, ptr %b
   %tst1 = icmp eq i32 %a, %val1
   %val2 = select i1 %tst1, i32 %a, i32 %val1
@@ -193,7 +193,7 @@ define i32 @select_sge_int16min(i32 signext %x, i32 signext %y, i32 signext %z) 
 ; CHECK-NEXT: ADDI a1,a2,0
 ; CHECK-NEXT: .LBB1_2:
 ; CHECK-NEXT: ADDI a0,a1,0
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %a = icmp sge i32 %x, -65536
   %b = select i1 %a, i32 %y, i32 %z
   ret i32 %b
@@ -207,7 +207,7 @@ define i64 @select_sge_int32min(i64 %x, i64 %y, i64 %z) {
 ; CHECK-NEXT: # %bb.1:
 ; CHECK-NEXT: SLT a0,a6,a1
 ; CHECK-NEXT: BNE a0,zero,.LBB2_4
-; CHECK-NEXT: JAL zero,.LBB2_3
+; CHECK-NEXT: J .LBB2_3
 ; CHECK-NEXT: .LBB2_2:
 ; CHECK-NEXT: SLTI a0,a0,0
 ; CHECK-NEXT: BNE a0,zero,.LBB2_4
@@ -215,16 +215,16 @@ define i64 @select_sge_int32min(i64 %x, i64 %y, i64 %z) {
 ; CHECK-NEXT: ADDI a2,a4,0
 ; CHECK-NEXT: .LBB2_4:
 ; CHECK-NEXT: BNE a0,zero,.LBB2_5
-; CHECK-NEXT: JAL zero,.LBB2_6
+; CHECK-NEXT: J .LBB2_6
 ; CHECK-NEXT: .LBB2_5:
 ; CHECK-NEXT: ADDI a0,a2,0
 ; CHECK-NEXT: ADDI a1,a3,0
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 ; CHECK-NEXT: .LBB2_6:
 ; CHECK-NEXT: ADDI a3,a5,0
 ; CHECK-NEXT: ADDI a0,a2,0
 ; CHECK-NEXT: ADDI a1,a3,0
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %a = icmp sge i64 %x, -2147483648
   %b = select i1 %a, i64 %y, i64 %z
   ret i64 %b

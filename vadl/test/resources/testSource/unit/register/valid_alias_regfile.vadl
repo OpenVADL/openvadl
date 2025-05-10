@@ -5,7 +5,7 @@ instruction set architecture Test = {
 
   register X: Index -> Regs
 
-  [A(12) = 0]
+  [ zero: A(12) ]
   alias register A = X
 
   alias register B = X
@@ -55,4 +55,4 @@ instruction set architecture Test = {
 }
 
 
-micro processor TEST implements Test = { start = 0x1000}
+processor TEST implements Test = { }

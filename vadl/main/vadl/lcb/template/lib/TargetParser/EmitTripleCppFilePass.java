@@ -54,7 +54,8 @@ public class EmitTripleCppFilePass extends LcbTemplateRenderingPass {
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "pointerBitWidth",
-        Objects.requireNonNull(abi.stackPointer().registerFile().addressType()).bitWidth(),
+        (int) Math.pow(2,
+            Objects.requireNonNull(abi.stackPointer().registerFile().addressType()).bitWidth()),
         "isLittleEndian", true); // TODO kper make adjustable
   }
 }

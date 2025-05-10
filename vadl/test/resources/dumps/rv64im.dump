@@ -98,6 +98,12 @@ ImportDefinition
 . : ' | . Identifier name: "UInt" type: null
 . : ' | . Identifier name: "SftLen" type: null
 . : ' RegisterDefinition name: "X"
+. : ' | AnnotationDefinition
+. : ' | . Identifier name: "zero" type: null
+. : ' | . CallIndexExpr type: null
+. : ' | . : Identifier name: "X" type: null
+. : ' | . : ArgsIndices
+. : ' | . : ' IntegerLiteral literal: 0 (0) type: null
 . : ' | TypeLiteral type: null
 . : ' | . Identifier name: "Index" type: null
 . : ' | TypeLiteral type: null
@@ -2920,6 +2926,8 @@ ImportDefinition
 . : ' | . : Identifier name: "SInt" type: null
 . : ' | . : IntegerLiteral literal: 12 (12) type: null
 . : ' RelocationDefinition name: "pcrel_hi"
+. : ' | AnnotationDefinition
+. : ' | . Identifier name: "relative" type: null
 . : ' | Parameter name: "symbol"
 . : ' | . TypeLiteral type: null
 . : ' | . : Identifier name: "Bits" type: null
@@ -2943,6 +2951,8 @@ ImportDefinition
 . : ' | . : Identifier name: "UInt" type: null
 . : ' | . : IntegerLiteral literal: 20 (20) type: null
 . : ' RelocationDefinition name: "pcrel_lo"
+. : ' | AnnotationDefinition
+. : ' | . Identifier name: "relative" type: null
 . : ' | Parameter name: "symbol"
 . : ' | . TypeLiteral type: null
 . : ' | . : Identifier name: "Bits" type: null
@@ -2956,6 +2966,9 @@ ImportDefinition
 . : ' | . : Identifier name: "SInt" type: null
 . : ' | . : IntegerLiteral literal: 12 (12) type: null
 . : ' RelocationDefinition name: "got_hi"
+. : ' | AnnotationDefinition
+. : ' | . Identifier name: "global" type: null
+. : ' | . Identifier name: "offset" type: null
 . : ' | Parameter name: "symbol"
 . : ' | . TypeLiteral type: null
 . : ' | . : Identifier name: "Bits" type: null
@@ -5246,12 +5259,15 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . : ' Identifier name: "rs1" type: null
 . : ' Identifier name: "imm" type: null
 . : ' Identifier name: "imm" type: null
-MicroProcessorDefinition name: "Spike"
+ProcessorDefinition name: "Spike"
 . Identifier name: "RV64IM" type: null
 . Identifier name: "ABI" type: null
-. CpuFunctionDefinition name: "start"
-. : BinaryLiteral literal: 0x80000000 (2147483648) type: null
 . CpuProcessDefinition
+. : AssignmentStatement
+. : ' Identifier name: "PC" type: null
+. : ' BinaryLiteral literal: 0x1000 (4096) type: null
+. CpuMemoryRegionDefinition name: "DRAM"
+. : Identifier name: "MEM" type: null
 . : BlockStatement
 . : ' AssignmentStatement
 . : ' | CallIndexExpr type: null

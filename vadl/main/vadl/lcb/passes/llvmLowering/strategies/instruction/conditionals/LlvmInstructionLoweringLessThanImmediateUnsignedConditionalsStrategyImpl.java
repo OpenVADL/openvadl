@@ -40,6 +40,7 @@ import vadl.types.BuiltInTable;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -152,8 +153,8 @@ public class LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrateg
               var registerFile =
                   ensurePresent(
                       xori.behavior().getNodes(ReadRegTensorNode.class)
-                          .filter(x -> x.regTensor().isRegisterFile())
                           .map(ReadRegTensorNode::regTensor)
+                          .filter(RegisterTensor::isRegisterFile)
                           .findFirst(),
                       () -> Diagnostic.error("Cannot find a register", xori.location()));
 

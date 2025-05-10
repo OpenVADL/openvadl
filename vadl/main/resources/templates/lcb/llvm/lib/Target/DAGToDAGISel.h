@@ -13,6 +13,13 @@
 
 namespace llvm
 {
+    class [(${namespace})]DAGToDAGISelLegacy : public SelectionDAGISelLegacy
+    {
+    public:
+            static char ID;
+            explicit [(${namespace})]DAGToDAGISelLegacy( [(${namespace})]TargetMachine & TargetMachine, CodeGenOptLevel OptLevel);
+    };
+
     class [(${namespace})]DAGToDAGISel : public SelectionDAGISel
     {
         // virtual anchor method to decrease link time as the vtable
@@ -20,8 +27,7 @@ namespace llvm
         const [(${namespace})]Subtarget *Subtarget = nullptr;
 
     public:
-        static char ID;
-        explicit [(${namespace})]DAGToDAGISel( [(${namespace})]TargetMachine & TargetMachine, CodeGenOpt::Level OptLevel) : SelectionDAGISel(ID, TargetMachine, OptLevel) {}
+        explicit [(${namespace})]DAGToDAGISel( [(${namespace})]TargetMachine & TargetMachine, CodeGenOptLevel OptLevel) : SelectionDAGISel(TargetMachine, OptLevel) {}
 
         bool runOnMachineFunction(MachineFunction & MF) override
         {
@@ -29,13 +35,7 @@ namespace llvm
             return SelectionDAGISel::runOnMachineFunction(MF);
         }
 
-        StringRef getPassName() const override
-        {
-            return "[(${namespace})] DAG->DAG Pattern Instruction Selection";
-        }
-
-        bool SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintCode, std::vector<SDValue> &OutOps) override;
-
+        bool SelectInlineAsmMemoryOperand(const SDValue &Op, InlineAsm::ConstraintCode ConstraintCode, std::vector<SDValue> &OutOps) override;
         void Select(SDNode * N) override;
         bool SelectAddrFI(SDValue Addr, SDValue & Base);
 

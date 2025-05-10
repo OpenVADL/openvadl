@@ -167,7 +167,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       Abi abi,
       TableGenInstructionRegisterFileOperand inputRegister) {
     var selector = new Graph("selector");
-    var ref = (ReadRegTensorNode) inputRegister.reference().copy();
+    var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
     selector.addWithInputs(new LlvmTargetCallSD(new NodeList<>(new LlvmReadRegFileNode(
         inputRegister.registerFile(), address, inputRegister.formatField().type(),
@@ -215,7 +215,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
      */
 
     var selector = new Graph("selector");
-    var ref = (ReadRegTensorNode) inputRegister.reference().copy();
+    var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
 
     var database = new Database(supportedInstructions);
@@ -265,7 +265,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         () -> Diagnostic.error("Cannot find immediate.", jalr.location()));
 
     var selector = new Graph("selector");
-    var ref = (ReadRegTensorNode) inputRegister.reference().copy();
+    var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
     var llvmRegister = new LlvmReadRegFileNode(
         inputRegister.registerFile(), address, inputRegister.formatField().type(),
@@ -293,7 +293,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   private TableGenPattern generateBranchIndirectWithZero(
       TableGenInstructionRegisterFileOperand inputRegister) {
     var selector = new Graph("selector");
-    var ref = (ReadRegTensorNode) inputRegister.reference().copy();
+    var ref = (ReadRegTensorNode) inputRegister.origin().copy();
     var address = (FieldRefNode) ref.address().copy();
     var llvmRegister = new LlvmReadRegFileNode(
         inputRegister.registerFile(), address, inputRegister.formatField().type(),

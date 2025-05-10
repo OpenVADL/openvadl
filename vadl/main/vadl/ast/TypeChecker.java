@@ -18,6 +18,7 @@ package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
+import static vadl.error.Diagnostic.warning;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -37,6 +38,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.types.BitsType;
@@ -70,9 +72,10 @@ public class TypeChecker
 
   private BranchStrategy branchStrategy = BranchStrategy.ALL;
 
+
   /**
    * Describes whether all branches are checked and the result of all branches must be equal, or
-   * if we must evaluate the condition and propergate the type from the chosen branch.
+   * if we must evaluate the condition and propagate the type from the chosen branch.
    */
   enum BranchStrategy {
     ALL,
@@ -80,7 +83,7 @@ public class TypeChecker
   }
 
   private final List<Diagnostic> errors = new ArrayList<>();
-  private final ConstantEvaluator constantEvaluator;
+  final ConstantEvaluator constantEvaluator;
 
   /**
    * We are keeping a list of all the nodes (well, the identities of them) we are currently
@@ -102,13 +105,14 @@ public class TypeChecker
     constantEvaluator = new ConstantEvaluator();
   }
 
+
   /**
    * Typecheck the expression if not yet checked.
    *
    * @param expr to check.
    * @return the type of the expression.
    */
-  private Type check(Expr expr) {
+  Type check(Expr expr) {
     // Expressions store their type so we can look at them to see if they were already evaluated.
     if (expr.type != null) {
       return requireNonNull(expr.type);
@@ -132,7 +136,7 @@ public class TypeChecker
    *
    * @param stmt to check.
    */
-  private void check(Statement stmt) {
+  void check(Statement stmt) {
     if (checkedStatements.contains(stmt)) {
       return;
     }
@@ -148,6 +152,30 @@ public class TypeChecker
     stmt.accept(this);
     currentlyVisiting.pop();
     checkedStatements.add(stmt);
+  }
+
+  private void verifyAnnotations(Definition def) {
+    // NOTE: This could have been done in the symbol resolver
+    // Disallow the same annotation multiple times
+    Map<String, AnnotationDefinition> annotationNames = new HashMap<>();
+    def.annotations.forEach(annotation -> {
+      if (annotationNames.containsKey(annotation.name())) {
+        throw error("Duplicate Annotation", def)
+            .locationNote(annotationNames.get(annotation.name()), "First used here")
+            .build();
+      }
+
+      // check annotation definition itself
+      check(annotation);
+
+      annotationNames.put(annotation.name(), annotation);
+    });
+
+    // Find annotations in groups and execute the check of the groups.
+    AnnotationTable.groupings(def).forEach((group, annotations) -> {
+      group.check(def, annotations, this);
+      group.applyAst(def, annotations);
+    });
   }
 
   /**
@@ -173,10 +201,13 @@ public class TypeChecker
           .build();
     }
 
+    // Visit the definitions
     currentlyVisiting.add(nodeId);
     def.accept(this);
     currentlyVisiting.pop();
     checkedDefinitions.add(def);
+
+    verifyAnnotations(def);
   }
 
   /**
@@ -570,8 +601,8 @@ public class TypeChecker
 
   @Override
   public Void visit(InstructionSetDefinition definition) {
-    if (definition.extendingNode != null) {
-      check(definition.extendingNode);
+    for (var extension : definition.extendingNodes()) {
+      check(extension);
     }
 
     for (var def : definition.definitions) {
@@ -729,6 +760,25 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(AbiClangTypeDefinition abiClangTypeDefinition) {
+    // Check nothing on purpose
+    return null;
+  }
+
+  @Override
+  public Void visit(AbiClangNumericTypeDefinition abiClangNumericTypeDefinition) {
+    check(abiClangNumericTypeDefinition.size);
+    var ty = abiClangNumericTypeDefinition.size.type();
+    if (!(ty instanceof ConstantType)) {
+      throw error("Type Mismatch", abiClangNumericTypeDefinition.size)
+          .description("Expected a number as data type")
+          .build();
+    }
+
+    return null;
+  }
+
+  @Override
   public Void visit(AbiPseudoInstructionDefinition definition) {
     // Isn't type checked on purpose because there is nothing to type check.
     return null;
@@ -769,11 +819,11 @@ public class TypeChecker
     };
 
     if (definition.kind == AliasDefinition.AliasKind.REGISTER) {
-      var reg = definition.symbolTable().findIdAs(targetIdent, RegisterDefinition.class);
+      var reg = definition.symbolTable().findAs(targetIdent, RegisterDefinition.class);
       if (reg == null) {
         // if this does not directly reference a register,
         // it might reference an other alias definition
-        var alias = definition.symbolTable().findIdAs(targetIdent, AliasDefinition.class);
+        var alias = definition.symbolTable().findAs(targetIdent, AliasDefinition.class);
         if (alias == null || alias.kind != AliasDefinition.AliasKind.REGISTER) {
           throw error("Unknown alias source register", targetIdent.location())
               .locationDescription(targetIdent.location(), "Unknown register `%s`.", targetIdent)
@@ -808,6 +858,14 @@ public class TypeChecker
     throw new IllegalStateException(
         "Kind %s not yet implemented, found at: %s".formatted(definition.kind,
             definition.loc.toIDEString()));
+  }
+
+  @Override
+  public Void visit(AnnotationDefinition definition) {
+    // NOTE: I have the suspicion that we might have to delay the typechecking until the definition
+    // on which the annotation is placed is completely typed checked.
+    requireNonNull(definition.annotation).typeCheck(definition, this);
+    return null;
   }
 
   @Override
@@ -1369,7 +1427,7 @@ public class TypeChecker
   private void validateLocalVarAssignment(AsmGrammarElementDefinition definition) {
     if (definition.attribute != null && definition.isAttributeLocalVar) {
       var localVarDefinition = (AsmGrammarLocalVarDefinition) definition.symbolTable()
-          .resolveNode(definition.attribute.name);
+          .findAs(definition.attribute, Node.class);
       if (localVarDefinition == null) {
         throw buildIllegalStateException(definition,
             "Assigning to unknown local variable %s.".formatted(definition.attribute.name));
@@ -1447,7 +1505,7 @@ public class TypeChecker
               + "and does not reference a grammar rule / function / local variable.");
     }
 
-    var invocationSymbolOrigin = definition.symbolTable().resolveNode(definition.id.name);
+    var invocationSymbolOrigin = definition.id.target();
     if (invocationSymbolOrigin == null) {
       throw buildIllegalStateException(definition, "Symbol %s used in grammar rule does not exist."
           .formatted(definition.id.name));
@@ -1638,7 +1696,7 @@ public class TypeChecker
   }
 
   @Override
-  public Void visit(MicroProcessorDefinition definition) {
+  public Void visit(ProcessorDefinition definition) {
     definition.definitions.forEach(this::check);
 
     // FIXME: Do we need to limit certain operations here?
@@ -1668,11 +1726,15 @@ public class TypeChecker
       }
     }
 
-    var start = definition.findCpuFuncDef(CpuFunctionDefinition.BehaviorKind.START)
+    var start = definition.findCpuProcDef(CpuProcessDefinition.ProcessKind.RESET)
         .findFirst().orElse(null);
     if (start == null) {
-      errors.add(
-          error("Missing `start` address function.", definition.identifier()).build()
+      DeferredDiagnosticStore.add(
+          warning("Missing `reset` definition.", definition.identifier())
+              .description(
+                  "Without `reset`, the program counter and every other "
+                      + "register is initialized with 0x0 by default. ")
+              .build()
       );
     }
 
@@ -1693,29 +1755,22 @@ public class TypeChecker
 
   @Override
   public Void visit(CpuFunctionDefinition definition) {
-    if (definition.kind == CpuFunctionDefinition.BehaviorKind.START) {
-      check(definition.expr);
-      if (definition.expr.type() instanceof ConstantType constantType) {
-        definition.expr = wrapImplicitCast(definition.expr, constantType.closestBits());
-      }
-      var exprType = requireNonNull(definition.expr.type);
-      // FIXME: the type must fit into the memory index (address).
-      if (!(exprType instanceof DataType)) {
-        throw typeMissmatchError(definition.expr, "DataType", exprType);
-      }
-    } else {
-      throw new IllegalStateException("Not implemented behavior kind: " + definition.kind);
-    }
+    throw new IllegalStateException("Not implemented behavior kind: " + definition.kind);
+  }
 
+  @Override
+  public Void visit(CpuMemoryRegionDefinition definition) {
+    if (definition.stmt != null) {
+      check(definition.stmt);
+    }
     return null;
   }
 
   @Override
   public Void visit(CpuProcessDefinition definition) {
-    if (definition.kind == CpuProcessDefinition.ProcessKind.FIRMWARE) {
-      check(definition.statement);
-    } else {
-      throwUnimplemented(definition);
+    switch (definition.kind) {
+      case RESET -> check(definition.statement);
+      default -> throwUnimplemented(definition);
     }
     return null;
   }
@@ -1780,16 +1835,14 @@ public class TypeChecker
     String fullName;
 
     if (expr instanceof Identifier identifier) {
-      origin = requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
+      origin = identifier.target();
       innerName = identifier.name;
       fullName = identifier.name;
-      identifier.target = origin;
     } else if (expr instanceof IdentifierPath path) {
-      origin = requireNonNull(expr.symbolTable).findAs(path, Node.class);
+      origin = path.target();
       var segments = path.pathToSegments();
       innerName = segments.get(segments.size() - 1);
       fullName = path.pathToString();
-      path.target = origin;
     } else {
       throw new IllegalStateException();
     }
@@ -1881,6 +1934,7 @@ public class TypeChecker
     }
 
     if (origin instanceof EnumerationDefinition.Entry enumEntry) {
+      check(enumEntry.enumDef);
       expr.type = check(requireNonNull(enumEntry.value));
       return;
     }
@@ -2321,7 +2375,15 @@ public class TypeChecker
     }
 
     // Find the type from the symbol table
-    var typeTarget = expr.symbolTable().findAs(((Identifier) expr.baseType), Node.class);
+    var typeTarget = expr.symbolTable().require(expr.baseType, () -> {
+      var sb = new StringBuilder();
+      expr.prettyPrint(0, sb);
+      var typeName = sb.toString();
+      throw error("Unknown Type `%s`".formatted(typeName), expr)
+          .description("No type with that name exists.")
+          .build();
+    });
+
     if (typeTarget instanceof UsingDefinition usingDef) {
       return check(usingDef.typeLiteral);
     }
@@ -2331,13 +2393,7 @@ public class TypeChecker
       return new FormatType(formatDef);
     }
 
-    var sb = new StringBuilder();
-    expr.prettyPrint(0, sb);
-    var typeName = sb.toString();
-    throw error("Unknown Type `%s`".formatted(typeName), expr)
-        .description("No type with that name exists.")
-        .build()
-        ;
+    throw new IllegalStateException("Unimplemented " + typeTarget);
   }
 
   @Override
@@ -2569,8 +2625,7 @@ public class TypeChecker
     // manually.
     // If no target matches, we can assume a slice and index call (depending on the type).
 
-    var callTarget = requireNonNull(expr.symbolTable)
-        .findAs(expr.target.path().pathToString(), Definition.class);
+    var callTarget = expr.symbolTable().findAs(expr.target.path(), Definition.class);
 
     // Handle register File
     if (callTarget instanceof RegisterDefinition
@@ -2646,7 +2701,6 @@ public class TypeChecker
         callType = callBitsType.scaleBy(multiplier);
       }
 
-      expr.computedTarget = memDef;
       argList.type = callType;
       expr.type = callType;
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -2658,7 +2712,6 @@ public class TypeChecker
     if (callTarget instanceof CounterDefinition counterDef) {
       check(counterDef);
       var counterType = counterDef.typeLiteral.type;
-      expr.computedTarget = counterDef;
       expr.type = counterType;
 
       if (!expr.argsIndices.isEmpty()) {
@@ -2717,7 +2770,6 @@ public class TypeChecker
         }
       }
 
-      expr.computedTarget = functionDef;
       expr.type = funcType.resultType();
       expr.argsIndices.get(0).type = funcType.resultType();
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -2748,7 +2800,6 @@ public class TypeChecker
         }
       }
 
-      expr.computedTarget = relocationDef;
       expr.type = relocationType.resultType();
       expr.argsIndices.get(0).type = relocationType.resultType();
       visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -2778,7 +2829,6 @@ public class TypeChecker
         }
       }
 
-      expr.computedTarget = exceptionDef;
       expr.type = Type.void_();
       return null;
     }
@@ -2848,7 +2898,6 @@ public class TypeChecker
     } else {
       throw new IllegalStateException();
     }
-    expr.computedTarget = callTarget;
     visitSliceIndexCall(expr, expr.type(), expr.argsIndices);
     visitSubCall(expr, expr.type());
     return null;

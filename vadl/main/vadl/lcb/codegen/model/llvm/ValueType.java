@@ -18,6 +18,7 @@ package vadl.lcb.codegen.model.llvm;
 
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import vadl.template.Renderable;
 import vadl.types.BitsType;
 import vadl.types.SIntType;
@@ -28,27 +29,29 @@ import vadl.types.UIntType;
  * LLVM types which can be used.
  */
 public enum ValueType implements Renderable {
-  I8("i8", "Int8", "Int8"),
-  I16("i16", "Int16", "Int16"),
-  I32("i32", "Int32", "Int32"),
+  I8("i8", "Int8", "Int8", 8),
+  I16("i16", "Int16", "Int16", 16),
+  I32("i32", "Int32", "Int32", 32),
 
-  I64("i64", "Int64", "Int64"),
+  I64("i64", "Int64", "Int64", 64),
 
   // LLVM has no concept of unsigned integers because it's all interpretation.
   // That's why sometimes have to use signed names.
-  U8("u8", "Uint8", "Int8"),
-  U16("u16", "Uint16", "Int16"),
-  U32("u32", "Uint32", "Int32"),
-  U64("u64", "Uint64", "Int64");
+  U8("u8", "Uint8", "Int8", 8),
+  U16("u16", "Uint16", "Int16", 16),
+  U32("u32", "Uint32", "Int32", 32),
+  U64("u64", "Uint64", "Int64", 64);
 
   private final String llvmType;
   private final String fancyName;
   private final String tableGen;
+  private final int size;
 
-  ValueType(String llvmType, String fancyName, String tableGen) {
+  ValueType(String llvmType, String fancyName, String tableGen, int size) {
     this.llvmType = llvmType;
     this.fancyName = fancyName;
     this.tableGen = tableGen;
+    this.size = size;
   }
 
   /**
@@ -70,8 +73,10 @@ public enum ValueType implements Renderable {
   /**
    * Map {@link Type} into a {@link ValueType}.
    */
-  public static Optional<ValueType> from(Type type) {
-    if (type instanceof SIntType sint) {
+  public static Optional<ValueType> from(@Nullable Type type) {
+    if (type == null) {
+      return Optional.empty();
+    } else if (type instanceof SIntType sint) {
       if (sint.bitWidth() == 8) {
         return Optional.of(ValueType.I8);
       } else if (sint.bitWidth() == 16) {
@@ -114,26 +119,18 @@ public enum ValueType implements Renderable {
     return tableGen;
   }
 
+  public int size() {
+    return size;
+  }
+
   /**
    * Check whether the type is signed.
    */
   public boolean isSigned() {
     return switch (this) {
-      case I8 -> true;
-      case I16 -> true;
-      case I32 -> true;
-      case I64 -> true;
+      case I8, I16, I32, I64 -> true;
       default -> false;
     };
-  }
-
-  /**
-   * Make the type signed.
-   */
-  public ValueType makeSigned() {
-    int bitwith = getBitwidth();
-    Type type = Type.signedInt(bitwith);
-    return ValueType.from(type).get();
   }
 
   @Override
@@ -142,6 +139,7 @@ public enum ValueType implements Renderable {
         "llvmType", llvmType,
         "fancyName", fancyName,
         "tableGen", tableGen,
+        "size", size,
         "getLlvmType", getLlvmType()
     );
   }

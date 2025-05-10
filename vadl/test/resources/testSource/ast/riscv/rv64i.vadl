@@ -99,6 +99,5 @@ application binary interface ABI for RV64I = {
    }
 }
 
-micro processor Spike implements RV64I with ABI = {
-  start = 0x80000000
-}
+processor Spike implements RV64I with ABI = {
+  }

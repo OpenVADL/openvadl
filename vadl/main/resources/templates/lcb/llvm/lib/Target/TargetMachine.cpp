@@ -51,7 +51,7 @@ static CodeModel::Model get[(${namespace})]EffectiveCodeModel(std::optional<Code
 
 void [(${namespace})]TargetMachine::anchor() {}
 
-[(${namespace})]TargetMachine::[(${namespace})]TargetMachine(const Target &T, const Triple &TT, StringRef CPU, StringRef FS, const TargetOptions &Options, std::optional<Reloc::Model> RM, std::optional<CodeModel::Model> CM, CodeGenOpt::Level OL, bool JIT)
+[(${namespace})]TargetMachine::[(${namespace})]TargetMachine(const Target &T, const Triple &TT, StringRef CPU, StringRef FS, const TargetOptions &Options, std::optional<Reloc::Model> RM, std::optional<CodeModel::Model> CM, CodeGenOptLevel OL, bool JIT)
     : LLVMTargetMachine(T, getDataLayout(), TT, CPU, FS, Options, get[(${namespace})]EffectiveRelocModel(RM) // has to do with addresses loading
                         ,
                         get[(${namespace})]EffectiveCodeModel(CM) // has to do with addresses loading

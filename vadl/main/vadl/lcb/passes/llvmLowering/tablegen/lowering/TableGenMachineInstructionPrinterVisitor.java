@@ -26,6 +26,7 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
 import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenConstantOperand;
 import vadl.viam.Constant;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -95,7 +96,13 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
 
   @Override
   public void visit(LcbMachineInstructionParameterNode machineInstructionParameterNode) {
-    writer.write(machineInstructionParameterNode.instructionOperand().render());
+    if (machineInstructionParameterNode.instructionOperand()
+        instanceof TableGenConstantOperand operand) {
+      // If the operand is a constant then just emit it. We don't want `(i32 0)`.
+      writer.write(operand.constant().asVal().intValue() + "");
+    } else {
+      writer.write(machineInstructionParameterNode.instructionOperand().render());
+    }
   }
 
   @Override
@@ -106,7 +113,7 @@ public class TableGenMachineInstructionPrinterVisitor implements TableGenMachine
 
   @Override
   public void visit(LlvmBasicBlockSD basicBlockSD) {
-    writer.write(basicBlockSD.parameter().render());
+    writer.write(basicBlockSD.lower());
   }
 
   @Override

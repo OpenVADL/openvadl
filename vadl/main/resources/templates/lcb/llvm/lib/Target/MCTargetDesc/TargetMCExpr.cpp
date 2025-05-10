@@ -4,7 +4,6 @@
 #include "[(${namespace})].h"
 #include "[(${namespace})]FixupKinds.h"
 #include "AsmUtils.h"
-#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
@@ -55,6 +54,12 @@ std::string [(${namespace})]MCExpr::format(uint8_t Radix, const MCAsmInfo *MAI) 
         return subexpr;
     }
 
+    if (Kind == [(${namespace})]MCExpr::VariantKind::[(${pltVariantKindName})])
+    {
+        std::string suffix = "@plt";
+        return subexpr + suffix;
+    }
+
     std::string result = "";
     result += "%";
     result += AsmUtils::FormatModifier(getKind());
@@ -64,7 +69,7 @@ std::string [(${namespace})]MCExpr::format(uint8_t Radix, const MCAsmInfo *MAI) 
     return result;
 }
 
-bool [(${namespace})]MCExpr::evaluateAsRelocatableImpl(MCValue &Res, const MCAsmLayout *Layout, const MCFixup *Fixup) const
+bool [(${namespace})]MCExpr::evaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Layout, const MCFixup *Fixup) const
 {
     if (!getSubExpr()->evaluateAsRelocatable(Res, Layout, Fixup))
     {

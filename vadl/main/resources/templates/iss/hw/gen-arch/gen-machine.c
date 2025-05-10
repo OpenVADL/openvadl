@@ -9,11 +9,8 @@
 #include "hw/char/riscv_htif.h"
 #include <stdlib.h>
 
-static const MemMapEntry [(${gen_machine_lower})]_memmap[] = {
-  [# th:if="${mem_info.rom_size} != 0"]
-  [ [(${gen_machine_upper})]_MROM] = {[(${mem_info.rom_start})], [(${mem_info.rom_size})]},
-  [/]
-  [ [(${gen_machine_upper})]_DRAM] = {[(${dram_base})], 0x0},
+static const MemMapEntry [(${gen_machine_lower})]_memmap[] = { [# th:each="mem : ${mem_regions}"]
+  [ [(${mem.enum_name})]] = {[(${mem.region_base})], [(${mem.region_size})]}, [/]
 };
 
 
@@ -33,9 +30,9 @@ static void [(${gen_machine_lower})]_sym_cb(const char *st_name, int st_info, ui
     [/]
 }
 
-[# th:if="${mem_info.rom_size} != 0"]
-[(${setup_rom_reset_vec})]
-[/]
+
+[# th:each="init : ${mem_region_inits}"]
+[(${init.function})][/]
 
 static void [(${gen_machine_lower})]_machine_ready(Notifier *notifier, void *data)
 {
@@ -44,7 +41,7 @@ static void [(${gen_machine_lower})]_machine_ready(Notifier *notifier, void *dat
     [(${gen_arch_upper})][(${gen_machine})]MachineState *s = container_of(notifier, [(${gen_arch_upper})][(${gen_machine})]MachineState, machine_ready);
     const MemMapEntry *memmap = [(${gen_machine_lower})]_memmap;
     MachineState *machine = MACHINE(s);
-    target_ulong start_addr = [(${start_addr})];
+    target_ulong firmware_no_elf_base_addr = [(${firmware_base_addr})];
     target_ulong firmware_end_addr;
     MemoryRegion *system_memory = get_system_memory();
 
@@ -55,15 +52,14 @@ static void [(${gen_machine_lower})]_machine_ready(Notifier *notifier, void *dat
         exit(1);
     }
 
-    firmware_end_addr = [(${gen_arch_lower})]_find_and_load_firmware(machine, start_addr, [(${gen_machine_lower})]_sym_cb);
-
-    if (firmware_end_addr == start_addr) {
+    firmware_end_addr = [(${gen_arch_lower})]_find_and_load_firmware(machine, firmware_no_elf_base_addr, [(${gen_machine_lower})]_sym_cb);
+    if (firmware_end_addr == firmware_no_elf_base_addr) {
         error_report("Failed to load firmware.");
         exit(1);
     }
 
-    [# th:if="${mem_info.rom_size} != 0"]
-    setup_rom_reset_vec();
+    [# th:each="init : ${mem_region_inits}"]
+    init_[(${init.mem.name_lower})]();
     [/]
 
     [# th:if="${htif_enabled}"]
@@ -84,16 +80,13 @@ static void [(${gen_machine_lower})]_machine_init(MachineState *machine)
     object_initialize_child(OBJECT(machine), "cpu", &s->cpu, TYPE_[(${gen_arch_upper})]_CPU);
     qdev_realize(DEVICE(&s->cpu), NULL, &error_fatal);
 
-
-    // add the ram region
-    memory_region_add_subregion(system_memory, memmap[ [(${gen_machine_upper})]_DRAM].base, machine->ram);
-
-    [# th:if="${mem_info.rom_size} != 0"]
-    MemoryRegion *mask_rom = g_new(MemoryRegion, 1);
-    memory_region_init_rom(mask_rom, NULL, "[(${gen_arch_lower})].[(${gen_machine_lower})].mrom",
-                           memmap[ [(${gen_machine_upper})]_MROM].size, &error_fatal);
-    memory_region_add_subregion(system_memory, memmap[ [(${gen_machine_upper})]_MROM].base,
-                                mask_rom);
+    [# th:each="mem : ${mem_regions}"]
+    [# th:if="${!mem.is_main_ram}"] // Setup [(${mem.name})]
+    MemoryRegion *[(${mem.name_lower})] = g_new(MemoryRegion, 1);
+    [(${mem.init_func_name})]([(${mem.name_lower})], NULL, "[(${mem.tree_name})]",
+                          memmap[ [(${mem.enum_name})]].size, &error_fatal); [/]
+    memory_region_add_subregion(system_memory, memmap[ [(${mem.enum_name})]].base,
+                               [(${mem.region_reference})]);
     [/]
 
     s->machine_ready.notify = [(${gen_machine_lower})]_machine_ready;

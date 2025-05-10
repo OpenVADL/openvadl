@@ -51,6 +51,8 @@ public abstract class LlvmRiscvFileCheckTest extends AbstractLcbTest {
 
   protected abstract String getSpikeTarget();
 
+  protected abstract String getAbi();
+
   private static Stream<String> inputFilesFromCFile(String target, int optLevel) {
     return Arrays.stream(
             Objects.requireNonNull(
@@ -93,7 +95,7 @@ public abstract class LlvmRiscvFileCheckTest extends AbstractLcbTest {
 
     var cachedImage =
         SpikeRiscvImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
-            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), false);
+            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), getAbi(), false);
 
     return inputFilesFromCFile(target, optLevel).map(
         input -> DynamicTest.dynamicTest(input + " O" + optLevel, () -> {

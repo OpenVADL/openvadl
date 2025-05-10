@@ -76,74 +76,74 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
         }
         
         
-        static int64_t RV3264I_Btype_immS_decode(uint16_t param) {
+        static int64_t RV3264Base_Btype_immS_decode(uint16_t param) {
            return VADL_lsl(VADL_sextract(param, 12), 64, ((uint8_t) 0x1 ), 1);
         }
-        static int64_t RV3264I_Itype_immS_decode(uint16_t param) {
+        static int64_t RV3264Base_Itype_immS_decode(uint16_t param) {
            return VADL_sextract(param, 12);
         }
-        static int64_t RV3264I_Jtype_immS_decode(uint32_t param) {
+        static int64_t RV3264Base_Jtype_immS_decode(uint32_t param) {
            return VADL_lsl(VADL_sextract(param, 20), 64, ((uint8_t) 0x1 ), 1);
         }
-        static int64_t RV3264I_Stype_immS_decode(uint16_t param) {
+        static int64_t RV3264Base_Stype_immS_decode(uint16_t param) {
            return VADL_sextract(param, 12);
         }
-        static int64_t RV3264I_Utype_immUp_decode(uint32_t param) {
+        static int64_t RV3264Base_Utype_immUp_decode(uint32_t param) {
            return VADL_lsl(VADL_sextract(param, 20), 64, ((uint8_t) 0xc ), 4);
         }
-        static uint8_t RV3264I_Ftype_shamt_decode(uint8_t param) {
+        static uint8_t RV3264Base_Ftype_shamt_decode(uint8_t param) {
            return param;
         }
-        static uint8_t RV3264I_Rtype_shamt_decode(uint8_t param) {
+        static uint8_t RV3264Base_Rtype_shamt_decode(uint8_t param) {
            return param;
         }
         
         
         
-        static uint16_t RV3264I_Btype_immS_encoding(int64_t immS) {
+        static uint16_t RV3264Base_Btype_immS_encoding(int64_t immS) {
            return (project_range<1, 12>(std::bitset<64>(immS)) << 0).to_ulong();
         }
-        static uint16_t RV3264I_Itype_immS_encoding(int64_t immS) {
+        static uint16_t RV3264Base_Itype_immS_encoding(int64_t immS) {
            return (project_range<0, 11>(std::bitset<64>(immS)) << 0).to_ulong();
         }
-        static uint16_t RV3264I_Stype_immS_encoding(int64_t immS) {
+        static uint16_t RV3264Base_Stype_immS_encoding(int64_t immS) {
            return (project_range<0, 11>(std::bitset<64>(immS)) << 0).to_ulong();
         }
-        static uint32_t RV3264I_Jtype_immS_encoding(int64_t immS) {
+        static uint32_t RV3264Base_Jtype_immS_encoding(int64_t immS) {
            return (project_range<1, 20>(std::bitset<64>(immS)) << 0).to_ulong();
         }
-        static uint32_t RV3264I_Utype_immUp_encoding(int64_t immUp) {
+        static uint32_t RV3264Base_Utype_immUp_encoding(int64_t immUp) {
            return (project_range<12, 31>(std::bitset<64>(immUp)) << 0).to_ulong();
         }
-        static uint8_t RV3264I_Ftype_shamt_encoding(uint8_t shamt) {
+        static uint8_t RV3264Base_Ftype_shamt_encoding(uint8_t shamt) {
            return (project_range<0, 5>(std::bitset<6>(shamt)) << 0).to_ulong();
         }
-        static uint8_t RV3264I_Rtype_shamt_encoding(uint8_t shamt) {
+        static uint8_t RV3264Base_Rtype_shamt_encoding(uint8_t shamt) {
            return (project_range<0, 4>(std::bitset<5>(shamt)) << 0).to_ulong();
         }
         
         
         
         
-        static bool RV3264I_Btype_immS_predicate(int64_t immS) {
+        static bool RV3264Base_Btype_immS_predicate(int64_t immS) {
            return ((bool) 0x1 );
         }
-        static bool RV3264I_Ftype_shamt_predicate(uint8_t shamt) {
+        static bool RV3264Base_Ftype_shamt_predicate(uint8_t shamt) {
            return ((bool) 0x1 );
         }
-        static bool RV3264I_Itype_immS_predicate(int64_t immS) {
+        static bool RV3264Base_Itype_immS_predicate(int64_t immS) {
            return ((bool) 0x1 );
         }
-        static bool RV3264I_Jtype_immS_predicate(int64_t immS) {
+        static bool RV3264Base_Jtype_immS_predicate(int64_t immS) {
            return ((bool) 0x1 );
         }
-        static bool RV3264I_Rtype_shamt_predicate(uint8_t shamt) {
+        static bool RV3264Base_Rtype_shamt_predicate(uint8_t shamt) {
            return ((bool) 0x1 );
         }
-        static bool RV3264I_Stype_immS_predicate(int64_t immS) {
+        static bool RV3264Base_Stype_immS_predicate(int64_t immS) {
            return ((bool) 0x1 );
         }
-        static bool RV3264I_Utype_immUp_predicate(int64_t immUp) {
+        static bool RV3264Base_Utype_immUp_predicate(int64_t immUp) {
            return ((bool) 0x1 );
         }
         
@@ -157,13 +157,13 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                 // Currently this is only used in the pseudo expansion pass.
                 enum processornamevalueImmediateKind{IK_UNKNOWN_IMMEDIATE // used for side effect registers which are interpreted as immediate
                              \s
-                              , IK_RV3264I_Btype_immS_decode
-                              , IK_RV3264I_Ftype_shamt_decode
-                              , IK_RV3264I_Itype_immS_decode
-                              , IK_RV3264I_Jtype_immS_decode
-                              , IK_RV3264I_Rtype_shamt_decode
-                              , IK_RV3264I_Stype_immS_decode
-                              , IK_RV3264I_Utype_immUp_decode
+                              , IK_RV3264Base_Btype_immS_decode
+                              , IK_RV3264Base_Ftype_shamt_decode
+                              , IK_RV3264Base_Itype_immS_decode
+                              , IK_RV3264Base_Jtype_immS_decode
+                              , IK_RV3264Base_Rtype_shamt_decode
+                              , IK_RV3264Base_Stype_immS_decode
+                              , IK_RV3264Base_Utype_immUp_decode
                              \s
                             };
         
@@ -176,20 +176,20 @@ public class EmitImmediateFilePassTest extends AbstractLcbTest {
                     case IK_UNKNOWN_IMMEDIATE:
                         return value;
                    \s
-                      case IK_RV3264I_Btype_immS_decode:
-                        return RV3264I_Btype_immS_decode(value);
-                      case IK_RV3264I_Ftype_shamt_decode:
-                        return RV3264I_Ftype_shamt_decode(value);
-                      case IK_RV3264I_Itype_immS_decode:
-                        return RV3264I_Itype_immS_decode(value);
-                      case IK_RV3264I_Jtype_immS_decode:
-                        return RV3264I_Jtype_immS_decode(value);
-                      case IK_RV3264I_Rtype_shamt_decode:
-                        return RV3264I_Rtype_shamt_decode(value);
-                      case IK_RV3264I_Stype_immS_decode:
-                        return RV3264I_Stype_immS_decode(value);
-                      case IK_RV3264I_Utype_immUp_decode:
-                        return RV3264I_Utype_immUp_decode(value);
+                      case IK_RV3264Base_Btype_immS_decode:
+                        return RV3264Base_Btype_immS_decode(value);
+                      case IK_RV3264Base_Ftype_shamt_decode:
+                        return RV3264Base_Ftype_shamt_decode(value);
+                      case IK_RV3264Base_Itype_immS_decode:
+                        return RV3264Base_Itype_immS_decode(value);
+                      case IK_RV3264Base_Jtype_immS_decode:
+                        return RV3264Base_Jtype_immS_decode(value);
+                      case IK_RV3264Base_Rtype_shamt_decode:
+                        return RV3264Base_Rtype_shamt_decode(value);
+                      case IK_RV3264Base_Stype_immS_decode:
+                        return RV3264Base_Stype_immS_decode(value);
+                      case IK_RV3264Base_Utype_immUp_decode:
+                        return RV3264Base_Utype_immUp_decode(value);
                    \s
                     }
                 }

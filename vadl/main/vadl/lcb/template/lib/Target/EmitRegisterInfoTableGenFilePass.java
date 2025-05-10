@@ -31,6 +31,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenRegistersPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.register.TableGenRegisterClass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.DataLayoutProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
@@ -67,6 +68,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
           "registerFile", Map.of(
               "name", registerFile.name(),
               "namespace", registerFile.namespace().value(),
+              "regSize", registerFile.regTypes().stream().findFirst().orElseThrow().size(),
               "regTypesString", registerFile.regTypesString(),
               "alignment", registerFile.alignment()
           ),
@@ -122,6 +124,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
+        "pointerAlignment", DataLayoutProvider.pointerAlignment(abi),
         "registers", output.registers(),
         "registerFiles", List.of(
             new WrappedRegisterFile(registerClass, allocationSeq)

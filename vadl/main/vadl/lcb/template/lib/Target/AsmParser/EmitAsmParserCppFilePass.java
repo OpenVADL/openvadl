@@ -34,7 +34,7 @@ import vadl.lcb.passes.llvmLowering.GenerateTableGenMachineInstructionRecordPass
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenMachineInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenDefaultInstructionOperand;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -84,7 +84,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
         (insn, llvmRecord) -> {
 
           var operands = llvmRecord.info().outputInputOperands().stream()
-              .map(o -> '"' + ((TableGenParameterTypeAndName) o.parameter()).name() + '"')
+              .map(o -> '"' + ((TableGenDefaultInstructionOperand) o).name() + '"')
               .toList();
 
           var fieldAccesses = new HashMap<String, String>();
@@ -173,6 +173,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
           return tableGenMachineInstruction.llvmLoweringRecord().info().inputs().stream()
               .filter(i -> i instanceof ReferencesImmediateOperand)
               .map(tableGenOperand -> {
+                var castedTableGenOperand = (TableGenDefaultInstructionOperand) tableGenOperand;
                 var immediateOperand =
                     ((ReferencesImmediateOperand) tableGenOperand).immediateOperand();
                 var fieldAccess = immediateOperand.fieldAccessRef();
@@ -181,7 +182,7 @@ public class EmitAsmParserCppFilePass extends LcbTemplateRenderingPass {
                 return new ImmediateConversion(
                     instruction.simpleName(),
                     fieldAccess != null ? fieldAccess.simpleName() : "",
-                    ((TableGenParameterTypeAndName) tableGenOperand.parameter()).name(),
+                    castedTableGenOperand.name(),
                     immediateOperand.rawEncoderMethod(),
                     immediateOperand.rawDecoderMethod(),
                     immediateOperand.predicateMethod(),

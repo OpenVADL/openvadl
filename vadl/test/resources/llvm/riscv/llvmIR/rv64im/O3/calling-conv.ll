@@ -105,8 +105,7 @@ define void @callee() nounwind {
 ; CHECK-NEXT: LW s2,0(a0)
 ; CHECK-NEXT: LW a0,0(s1)
 ; CHECK-NEXT: SD a0,0(sp)                             # 8-byte Folded Spill
-; CHECK-NEXT: LUI ra,%hi(callee)
-; CHECK-NEXT: JALR ra,%lo(callee)(ra)
+; CHECK-NEXT: CALL callee
 ; CHECK-NEXT: SW s2,124(s1)
 ; CHECK-NEXT: SW s11,120(s1)
 ; CHECK-NEXT: SW s10,116(s1)
@@ -174,7 +173,7 @@ define void @callee() nounwind {
 ; CHECK-NEXT: LD s1,256(sp)                           # 8-byte Folded Reload
 ; CHECK-NEXT: LD ra,264(sp)                           # 8-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,272
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   %val = load [32 x i32], ptr @var
   call void @callee()
   store volatile [32 x i32] %val, ptr @var

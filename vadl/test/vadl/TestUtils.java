@@ -42,8 +42,8 @@ import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.MicroProcessor;
 import vadl.viam.Parameter;
+import vadl.viam.Processor;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
@@ -104,9 +104,9 @@ public class TestUtils {
     var definitions = new ArrayList<>(spec.definitions().toList());
 
     // The ISA is no longer in the spec definitions but the tests expect it so let's add it here
-    spec.definitions().filter(MicroProcessor.class::isInstance)
+    spec.definitions().filter(Processor.class::isInstance)
         .findFirst()
-        .ifPresent(mp -> definitions.add(((MicroProcessor) mp).isa()));
+        .ifPresent(mp -> definitions.add(((Processor) mp).isa()));
 
     var r = definitions.stream()
         .filter(InstructionSetArchitecture.class::isInstance)

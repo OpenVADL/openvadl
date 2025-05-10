@@ -36,8 +36,8 @@ public class AstDiffPrinter {
             && expectedDef instanceof InstructionSetDefinition expectedIsa) {
           return "Top-level definition %d:\n%s".formatted(i, printDiff(actualIsa, expectedIsa));
         }
-        if (actualDef instanceof MicroProcessorDefinition actualMiP
-            && expectedDef instanceof MicroProcessorDefinition expectedMiP) {
+        if (actualDef instanceof ProcessorDefinition actualMiP
+            && expectedDef instanceof ProcessorDefinition expectedMiP) {
           return "Top-level definition %d:\n%s".formatted(i, printDiff(actualMiP, expectedMiP));
         }
         StringBuilder actualPretty = new StringBuilder();
@@ -61,8 +61,8 @@ public class AstDiffPrinter {
     if (!actual.annotations.equals(expected.annotations)) {
       StringBuilder actualPretty = new StringBuilder();
       StringBuilder expectedPretty = new StringBuilder();
-      actual.annotations.prettyPrint(2, actualPretty);
-      expected.annotations.prettyPrint(2, expectedPretty);
+      actual.annotations.forEach(a -> a.prettyPrint(2, actualPretty));
+      expected.annotations.forEach(a -> a.prettyPrint(2, expectedPretty));
       return "ISA definition annotations:\nExpected:\n%s\nActual:\n%s\n"
           .formatted(expectedPretty, actualPretty);
     }
@@ -85,8 +85,8 @@ public class AstDiffPrinter {
     return "Expected:\n%s\nActual:\n%s\n".formatted(expectedPretty, actualPretty);
   }
 
-  private static String printDiff(MicroProcessorDefinition actual,
-                                  MicroProcessorDefinition expected) {
+  private static String printDiff(ProcessorDefinition actual,
+                                  ProcessorDefinition expected) {
     if (actual.definitions.size() != expected.definitions.size()) {
       return "Mismatched definitions: Expected %d, Actual %d".formatted(
           expected.definitions.size(), actual.definitions.size());
@@ -94,8 +94,8 @@ public class AstDiffPrinter {
     if (!actual.annotations.equals(expected.annotations)) {
       StringBuilder actualPretty = new StringBuilder();
       StringBuilder expectedPretty = new StringBuilder();
-      actual.annotations.prettyPrint(2, actualPretty);
-      expected.annotations.prettyPrint(2, expectedPretty);
+      actual.annotations.forEach(a -> a.prettyPrint(2, actualPretty));
+      expected.annotations.forEach(a -> a.prettyPrint(2, expectedPretty));
       return "MiP definition annotations:\nExpected:\n%s\nActual:\n%s\n"
           .formatted(expectedPretty, actualPretty);
     }

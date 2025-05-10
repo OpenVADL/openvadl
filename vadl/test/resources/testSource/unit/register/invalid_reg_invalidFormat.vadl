@@ -10,4 +10,4 @@ format REG_FORMAT : Bits<10> =
   , LO  [3..0]
   }
 
-micro processor TEST implements Test = { start = 0x1000}
+processor TEST implements Test = { }

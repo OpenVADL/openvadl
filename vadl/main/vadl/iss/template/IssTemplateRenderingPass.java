@@ -19,6 +19,7 @@ package vadl.iss.template;
 import static vadl.iss.template.IssRenderUtils.mapRegTensors;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -27,7 +28,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.formatting.CodeFormatter;
 import vadl.iss.codegen.QemuClangFormatter;
 import vadl.iss.passes.extensions.ExceptionInfo;
-import vadl.iss.passes.extensions.MemoryInfo;
+import vadl.iss.passes.extensions.MemoryRegionInfo;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -123,21 +124,22 @@ public abstract class IssTemplateRenderingPass extends AbstractTemplateRendering
     vars.put("register_tensors", mapRegTensors(specification));
     vars.put("pc_reg", getPcReg(specification));
     vars.put("target_size", configuration().targetSize().width);
-    vars.put("mem_info", getMemoryInfo(specification));
+    vars.put("mem_regions", memRegions(specification));
     vars.put("exc_info", getExceptionInfo(specification));
     return vars;
   }
 
-  private MemoryInfo getMemoryInfo(Specification viam) {
-    return viam.mip().get().expectExtension(MemoryInfo.class);
+  private List<MemoryRegionInfo> memRegions(Specification viam) {
+    return viam.processor().get().memoryRegions()
+        .stream().map(m -> m.expectExtension(MemoryRegionInfo.class)).toList();
   }
 
   private ExceptionInfo getExceptionInfo(Specification viam) {
-    return viam.mip().get().isa().expectExtension(ExceptionInfo.class);
+    return viam.processor().get().isa().expectExtension(ExceptionInfo.class);
   }
 
   private RegInfo getPcReg(Specification viam) {
-    var pc = viam.mip().get().isa().pc();
+    var pc = viam.processor().get().isa().pc();
     if (pc == null) {
       throw new IllegalStateException("PC is null");
     }

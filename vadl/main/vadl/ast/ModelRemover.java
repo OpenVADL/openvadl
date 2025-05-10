@@ -114,6 +114,16 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
+  public Definition visit(AbiClangTypeDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AbiClangNumericTypeDefinition definition) {
+    return definition;
+  }
+
+  @Override
   public Definition visit(AbiPseudoInstructionDefinition definition) {
     return definition;
   }
@@ -125,6 +135,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
 
   @Override
   public Definition visit(AliasDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(AnnotationDefinition definition) {
     return definition;
   }
 
@@ -215,7 +230,7 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
-  public Definition visit(MicroProcessorDefinition definition) {
+  public Definition visit(ProcessorDefinition definition) {
     definition.definitions.removeIf(this::shouldRemove);
     definition.definitions.replaceAll(def -> def.accept(this));
     return definition;
@@ -233,6 +248,11 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
 
   @Override
   public Definition visit(CpuFunctionDefinition definition) {
+    return definition;
+  }
+
+  @Override
+  public Definition visit(CpuMemoryRegionDefinition definition) {
     return definition;
   }
 

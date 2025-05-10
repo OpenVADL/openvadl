@@ -4,13 +4,33 @@ set -e
 cd $(realpath $(dirname "$0"))
 
 # Spike
+rm -r ../src/cubic
+#rm -r ../src/minver
+#rm -r ../src/nbody
+#rm -r ../src/st
+#rm -r ../src/ud
+#rm -r ../src/wikisort
+
+rm -r ../src/minver
+rm -r ../src/slre
+rm -r ../src/edn
+rm -r ../src/wikisort
+rm -r ../src/statemate
+
 ../build_spike-clang-O0_rv64.sh
-./run-benchmark.sh "rv64-spike" ./benchmark_spike.sh
+./run-benchmark.sh "rv64-spike" ./benchmark_spike_rv64gc.sh
 
 # miscompile
-rm -r ../src/cubic
+#rm -r ../src/picojpeg
+#rm -r ../src/sglib-combined
+#rm -r ../src/minver
+#rm -r ../src/slre
+#rm -r ../src/qrduino
+#rm -r ../src/nettle-sha256
+#rm -r ../src/edn
+#rm -r ../src/wikisort
 # long jump problem
-rm -r ../src/statemate
+#rm -r ../src/statemate
 
 # aha-mont64
 # edn
@@ -38,6 +58,6 @@ rm -r ../src/statemate
 #rm -r ../src/ud
 #rm -r ../src/wikisort
 
-../build_spike-lcb-O0_rv64_rv64.sh
-./run-benchmark.sh "rv64-spike" ./benchmark_spike.sh
+../build_spike-lcb-O0_rv64.sh
+./run-benchmark.sh "rv64-spike" ./benchmark_spike_rv64gc.sh
 #cat /src/embench/benchmark-extras/results/rv32-spike/1.json

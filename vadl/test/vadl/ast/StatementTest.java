@@ -162,7 +162,7 @@ public class StatementTest {
     );
     expectedAst.definitions.add(new InstructionSetDefinition(
         new Identifier("ISA", loc),
-        null,
+        List.of(),
         definitions,
         loc
     ));

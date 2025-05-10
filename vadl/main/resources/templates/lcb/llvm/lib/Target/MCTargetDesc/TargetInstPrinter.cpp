@@ -17,9 +17,8 @@
 
 using namespace llvm;
 
-#define GET_INSTRUCTION_NAME
+#define PRINT_ALIAS_INSTR
 #include "[(${namespace})]GenAsmWriter.inc"
-#undef GET_INSTRUCTION_NAME
 
 void [(${namespace})]InstPrinter::anchor() {}
 
@@ -31,6 +30,26 @@ void [(${namespace})]InstPrinter::printRegName
     O << AsmUtils::getRegisterName( RegNo );
 }
 
+void [(${namespace})]InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
+    raw_ostream &O,
+    const char *Modifier) {
+  assert((Modifier == nullptr || Modifier[0] == 0) && "No modifiers supported");
+  const MCOperand &MO = MI->getOperand(OpNo);
+
+  if (MO.isReg()) {
+  printRegName(O, MO.getReg());
+  return;
+  }
+
+  if (MO.isImm()) {
+  O << MO.getImm();
+  return;
+}
+
+assert(MO.isExpr() && "Unknown operand kind in printOperand");
+MO.getExpr()->print(O, &MAI);
+}
+
 void [(${namespace})]InstPrinter::printInst
     ( const MCInst *MI
     , uint64_t Address
@@ -39,7 +58,9 @@ void [(${namespace})]InstPrinter::printInst
     , raw_ostream &O
     )
 {
-    O << "\t" << instToString(MI, Address);
+    if(!printAliasInstr(MI, Address, O)) {
+      O << "\t" << instToString(MI, Address);
+    }
     printAnnotation(O, Annot);
 }
 

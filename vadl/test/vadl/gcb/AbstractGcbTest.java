@@ -17,6 +17,10 @@
 package vadl.gcb;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.cppCodeGen.AbstractCppCodeGenTest;
 import vadl.gcb.valuetypes.TargetName;
@@ -24,12 +28,16 @@ import vadl.pass.PassKey;
 import vadl.pass.PassOrder;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.viam.Format;
+import vadl.viam.Instruction;
+import vadl.viam.Specification;
 
 public abstract class AbstractGcbTest extends AbstractCppCodeGenTest {
 
   @Override
   public GcbConfiguration getConfiguration(boolean doDump) {
-    return new GcbConfiguration(super.getConfiguration(doDump), new TargetName("processorNameValue"));
+    return new GcbConfiguration(super.getConfiguration(doDump),
+        new TargetName("processorNameValue"));
   }
 
   /**
@@ -45,5 +53,25 @@ public abstract class AbstractGcbTest extends AbstractCppCodeGenTest {
       throws IOException, DuplicatedPassKeyException {
     return setupPassManagerAndRunSpecUntil(specPath,
         PassOrders.gcbAndCppCodeGen(configuration), until);
+  }
+
+  /**
+   * Helper method to get an {@link Instruction} from a {@link Specification}.
+   */
+  @Nullable
+  protected Instruction getInstrByName(String instruction,
+                                       Specification specification) {
+    return specification.isa().stream().flatMap(x -> x.ownInstructions().stream())
+        .filter(x -> x.simpleName().equals(instruction))
+        .findFirst()
+        .get();
+  }
+
+  /**
+   * Helper method to extract an immediate.
+   */
+  protected @Nonnull Optional<Format.Field> getImmediate(String imm,
+                                                         List<Format.Field> immediates) {
+    return immediates.stream().filter(x -> x.identifier.simpleName().equals(imm)).findFirst();
   }
 }

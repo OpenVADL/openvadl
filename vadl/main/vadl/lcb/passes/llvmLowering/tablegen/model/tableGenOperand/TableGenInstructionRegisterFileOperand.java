@@ -17,46 +17,62 @@
 package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
 import vadl.viam.Format;
 import vadl.viam.RegisterTensor;
-import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Indicates that the operand is a register file when the address is a {@link Format.Field}.
  */
-public class TableGenInstructionRegisterFileOperand extends TableGenInstructionOperand
+public class TableGenInstructionRegisterFileOperand
+    extends TableGenDefaultInstructionOperand
     implements ReferencesFormatField {
   private final RegisterTensor registerFile;
   private final Format.Field formatField;
-  private final Node reference;
 
   /**
    * Constructor.
    */
-  public TableGenInstructionRegisterFileOperand(ReadRegTensorNode node, FieldRefNode address) {
-    super(node, new TableGenParameterTypeAndName(node.regTensor().simpleName(),
-        address.formatField().identifier.simpleName()));
+  public TableGenInstructionRegisterFileOperand(ReadRegTensorNode node, Format.Field address) {
+    super(node, node.regTensor().simpleName(), address.identifier.simpleName());
     this.registerFile = node.regTensor();
     this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
-    this.formatField = address.formatField();
-    this.reference = node;
+    this.formatField = address;
     node.regTensor().ensure(registerFile.isRegisterFile(), "must be registerfile");
   }
 
   /**
    * Constructor.
    */
+  public TableGenInstructionRegisterFileOperand(ReadRegTensorNode node, FieldRefNode address) {
+    this(node, address.formatField());
+  }
+
+  /**
+   * Constructor.
+   */
   public TableGenInstructionRegisterFileOperand(WriteRegTensorNode node, FieldRefNode address) {
-    super(node, new TableGenParameterTypeAndName(node.regTensor().simpleName(),
-        address.formatField().identifier.simpleName()));
+    super(node, node.regTensor().simpleName(), address.formatField().identifier.simpleName());
     this.registerFile = node.regTensor();
     this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
     this.formatField = address.formatField();
-    this.reference = node;
+  }
+
+  /**
+   * Constructor for pseudo instructions. Pseudo instructions will have a {@link ReadRegTensorNode}
+   * or {@link WriteRegTensorNode} because they are constructed over {@link FuncParamNode}.
+   */
+  public TableGenInstructionRegisterFileOperand(RegisterTensor registerFile,
+                                                Format.Field field,
+                                                FuncParamNode funcParamNode) {
+    super(funcParamNode, registerFile.simpleName(),
+        funcParamNode.parameter().identifier.simpleName());
+    this.registerFile = registerFile;
+    this.formatField = field;
+    this.registerFile.ensure(registerFile.isRegisterFile(), "must be registerfile");
   }
 
   public RegisterTensor registerFile() {
@@ -66,9 +82,5 @@ public class TableGenInstructionRegisterFileOperand extends TableGenInstructionO
   @Override
   public Format.Field formatField() {
     return formatField;
-  }
-
-  public Node reference() {
-    return reference;
   }
 }

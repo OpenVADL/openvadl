@@ -66,9 +66,9 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     Node origin;
 
     if (expr instanceof Identifier identifier) {
-      origin = requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
+      origin = requireNonNull(identifier.target());
     } else if (expr instanceof IdentifierPath path) {
-      origin = requireNonNull(expr.symbolTable).findAs(path, Node.class);
+      origin = requireNonNull(path.target());
     } else {
       throw new IllegalStateException();
     }

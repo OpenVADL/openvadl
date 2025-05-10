@@ -6,9 +6,9 @@ instruction set architecture Test = {
 
   register X: Index -> Regs
 
-  [ Y(2) = 0 ]
+  [ zero: Y(2) ]
   register Y: Index -> Regs
 
 }
 
-micro processor TEST implements Test = { start = 0x1000 }
+processor TEST implements Test = { }

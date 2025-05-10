@@ -17,7 +17,7 @@ instruction set architecture RV3264I = {
   using Bits7    = Bits< 7>               // 7 bit type
   using Index    = Bits< 5>               // 5 bit register index type for 32 registers
 
-  [X(0) = 0]                              // register with index 0 always is 0
+  [ zero: X(0) ]                              // register with index 0 always is 0
   register    X : Index   -> Regs    // integer register with 32 registers of 32 bits
 
   format Rtype : Inst =                   // Rtype register 3 operand instruction format

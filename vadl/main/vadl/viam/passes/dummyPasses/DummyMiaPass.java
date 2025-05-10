@@ -67,7 +67,7 @@ public class DummyMiaPass extends Pass {
       return null;
     }
 
-    var mip = viam.mip().orElse(null);
+    var mip = viam.processor().orElse(null);
 
     if (mip == null) {
       // if there is no mip, we just do nothing

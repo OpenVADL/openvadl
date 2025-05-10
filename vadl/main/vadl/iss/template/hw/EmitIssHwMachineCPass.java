@@ -16,14 +16,14 @@
 
 package vadl.iss.template.hw;
 
+import java.util.List;
 import java.util.Map;
 import vadl.configuration.IssConfiguration;
-import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
-import vadl.iss.codegen.IssFirmwareCodeGenerator;
-import vadl.iss.passes.extensions.MemoryInfo;
+import vadl.iss.codegen.IssMemoryRegionInitCodeGen;
+import vadl.iss.passes.extensions.MemoryRegionInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.Procedure;
+import vadl.viam.MemoryRegion;
 import vadl.viam.Specification;
 import vadl.viam.annotations.EnableHtifAnno;
 
@@ -32,8 +32,8 @@ import vadl.viam.annotations.EnableHtifAnno;
  * virtual hardware board.
  * It defines things like memory, start address, HTIF, firmware loading, etc...
  *
- * @see IssFirmwareCodeGenerator
- * @see MemoryInfo
+ * @see IssMemoryRegionInitCodeGen
+ * @see MemoryRegionInfo
  */
 public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
 
@@ -51,16 +51,10 @@ public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
     vars.put("dram_base", getDramBaseExpr());
-    vars.put("start_addr", getStartAddrExpr(specification));
+    // the start address of the firmware, when we don't load an elf
+    vars.put("firmware_base_addr", getFirmwareBaseAddress(specification));
     vars.put("htif_enabled", htifEnabled(specification));
-
-    // firmware
-    var processor = specification.mip().get();
-    var firmware = processor.firmware();
-    if (firmware != null) {
-      vars.put("setup_rom_reset_vec",
-          firmwareWriteFunction(firmware, processor.expectExtension(MemoryInfo.class)));
-    }
+    vars.put("mem_region_inits", getMemoryRegionInits(specification));
     return vars;
   }
 
@@ -70,21 +64,28 @@ public class EmitIssHwMachineCPass extends IssTemplateRenderingPass {
     return "0x80000000";
   }
 
-  private String getStartAddrExpr(Specification specification) {
-    var mip = specification.mip().orElse(null);
-    specification.ensure(mip != null, "No MicroProcessor definition found");
-    return new PureFunctionCodeGenerator(mip.start()).genReturnExpression();
+  private String getFirmwareBaseAddress(Specification specification) {
+    return "0x" + specification.processor().get().memoryRegions().stream()
+        .filter(MemoryRegion::holdsFirmware)
+        .findFirst().get().expectBase().toString(16);
   }
 
   private boolean htifEnabled(Specification specification) {
-    var mip = specification.mip().orElse(null);
+    var mip = specification.processor().orElse(null);
     specification.ensure(mip != null, "No MicroProcessor definition found");
     return mip.hasAnnotation(EnableHtifAnno.class);
   }
 
-  private String firmwareWriteFunction(Procedure firmware, MemoryInfo memoryInfo) {
-    return new IssFirmwareCodeGenerator(firmware, memoryInfo)
-        .fetch(configuration().machineName());
+  private List<Map<String, Object>> getMemoryRegionInits(Specification specification) {
+    return specification.processor().get().memoryRegions().stream()
+        .filter(MemoryRegion::hasInitialization)
+        .map(r -> Map.of(
+            "mem", r.expectExtension(MemoryRegionInfo.class),
+            "function",
+            new IssMemoryRegionInitCodeGen(r.expectExtension(MemoryRegionInfo.class),
+                configuration())
+                .fetch()))
+        .toList();
   }
 
 }

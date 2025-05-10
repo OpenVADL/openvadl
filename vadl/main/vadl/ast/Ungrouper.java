@@ -323,6 +323,19 @@ public class Ungrouper
   }
 
   @Override
+  public Void visit(AbiClangTypeDefinition definition) {
+    ungroupAnnotations(definition);
+    return null;
+  }
+
+  @Override
+  public Void visit(AbiClangNumericTypeDefinition definition) {
+    ungroupAnnotations(definition);
+    definition.size = definition.size.accept(this);
+    return null;
+  }
+
+  @Override
   public Void visit(AbiPseudoInstructionDefinition definition) {
     ungroupAnnotations(definition);
     return null;
@@ -339,6 +352,12 @@ public class Ungrouper
   public Void visit(AliasDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(AnnotationDefinition definition) {
+    definition.values.replaceAll(e -> e.accept(this));
     return null;
   }
 
@@ -456,7 +475,7 @@ public class Ungrouper
   }
 
   @Override
-  public Void visit(MicroProcessorDefinition definition) {
+  public Void visit(ProcessorDefinition definition) {
     ungroupAnnotations(definition);
     definition.definitions.forEach(def -> def.accept(this));
     return null;
@@ -478,6 +497,15 @@ public class Ungrouper
   public Void visit(CpuFunctionDefinition definition) {
     ungroupAnnotations(definition);
     definition.expr = definition.expr.accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(CpuMemoryRegionDefinition definition) {
+    ungroupAnnotations(definition);
+    if (definition.stmt != null) {
+      definition.stmt.accept(this);
+    }
     return null;
   }
 
@@ -687,7 +715,6 @@ public class Ungrouper
   }
 
   private void ungroupAnnotations(Definition definition) {
-    definition.annotations.annotations().forEach(
-        annotation -> annotation.expr = annotation.expr.accept(this));
+    definition.annotations.forEach(this::visit);
   }
 }

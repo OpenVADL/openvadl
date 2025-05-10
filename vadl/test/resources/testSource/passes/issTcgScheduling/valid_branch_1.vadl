@@ -25,6 +25,8 @@ instruction set architecture ValidBranch = {
   }
 }
 
-micro processor Test implements ValidBranch = {
-  start = 0x1000
+processor Test implements ValidBranch = {
+  [ firmware ]
+  [ base: 0x0 ]
+  memory region [RAM] DRAM in MEM
 }

@@ -19,6 +19,7 @@ package vadl.iss.template.target;
 import java.util.Map;
 import java.util.stream.Collectors;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.codegen.IssResetGen;
 import vadl.iss.template.IssRenderUtils;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -47,12 +48,18 @@ public class EmitIssCpuSourcePass extends IssTemplateRenderingPass {
                                                 Specification specification) {
     var vars = super.createVariables(passResults, specification);
     vars.put("reg_dump_code", dumpRegsCode(specification));
+    vars.put("reset", getResetCode(specification));
     return vars;
+  }
+
+  private String getResetCode(Specification specification) {
+    var proc = specification.processor().get();
+    return new IssResetGen(proc.reset()).fetch();
   }
 
   private String dumpRegsCode(Specification specification) {
     var sb = new StringBuilderAppendable();
-    var isa = specification.mip().get().isa();
+    var isa = specification.processor().get().isa();
     sb.indent();
     isa.registerTensors().forEach(tensor -> {
       dumpRegsCode(sb, tensor);

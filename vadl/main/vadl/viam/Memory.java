@@ -17,7 +17,6 @@
 package vadl.viam;
 
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nonnull;
 import vadl.types.ConcreteRelationType;
 import vadl.types.DataType;
@@ -93,19 +92,5 @@ public class Memory extends Resource {
   @Override
   public String toString() {
     return identifier.simpleName() + ": " + addressType + " -> " + resultType;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof Memory mem) {
-      return mem.identifier.equals(this.identifier);
-    }
-
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(identifier);
   }
 }

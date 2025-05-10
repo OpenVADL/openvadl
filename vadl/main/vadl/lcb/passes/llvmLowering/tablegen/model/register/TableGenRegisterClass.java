@@ -35,4 +35,8 @@ public record TableGenRegisterClass(TargetName namespace,
   public String regTypesString() {
     return regTypes.stream().map(ValueType::getLlvmType).collect(Collectors.joining(", "));
   }
+
+  public List<ValueType> regTypes() {
+    return regTypes;
+  }
 }

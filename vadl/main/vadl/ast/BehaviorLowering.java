@@ -378,16 +378,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     String fullName;
 
     if (expr instanceof Identifier identifier) {
-      computedTarget = Objects.requireNonNull(expr.symbolTable).requireAs(identifier, Node.class);
+      computedTarget = identifier.target();
       innerName = identifier.name;
       fullName = identifier.name;
-      identifier.target = computedTarget;
     } else if (expr instanceof IdentifierPath path) {
-      computedTarget = Objects.requireNonNull(expr.symbolTable).findAs(path, Node.class);
+      computedTarget = path.target();
       var segments = path.pathToSegments();
       innerName = segments.get(segments.size() - 1);
       fullName = path.pathToString();
-      path.target = computedTarget;
     } else {
       throw new IllegalStateException();
     }    // Constant
@@ -704,7 +702,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Function Call
-    if (expr.computedTarget instanceof FunctionDefinition functionDefinition) {
+    if (expr.computedTarget() instanceof FunctionDefinition functionDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
       var type = expr.argsIndices.get(0).type();
@@ -716,7 +714,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Relocation Call (similar to function call)
-    if (expr.computedTarget instanceof RelocationDefinition relocationDefinition) {
+    if (expr.computedTarget() instanceof RelocationDefinition relocationDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var relocation = (Relocation) viamLowering.fetch(relocationDefinition).orElseThrow();
       var type = expr.argsIndices.get(0).type();
@@ -728,9 +726,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Register(file) read
-    if (expr.computedTarget instanceof RegisterDefinition) {
+    if (expr.computedTarget() instanceof RegisterDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
-      var regFile = (RegisterTensor) viamLowering.fetch(expr.computedTarget).orElseThrow();
+      var regFile = (RegisterTensor) viamLowering.fetch(registerFileDefinition).orElseThrow();
       var type = (DataType) expr.argsIndices.get(0).type();
       var readRegFile = new ReadRegTensorNode(regFile, new NodeList<>(args.get(0)), type, null);
       var slicedNode = visitSliceIndexCall(expr, readRegFile,
@@ -739,11 +737,11 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Alias to registerfile read
-    if (expr.computedTarget instanceof AliasDefinition aliasDefinition
+    if (expr.computedTarget() instanceof AliasDefinition aliasDefinition
         && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
 
       var artificialResource =
-          (ArtificialResource) viamLowering.fetch(expr.computedTarget).orElseThrow();
+          (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
       var address = firstArgs.stream().map(this::fetch).findFirst().orElseThrow();
       var type = (DataType) expr.argsIndices.get(0).type();
       var read = new ReadArtificialResNode(artificialResource, address, type);
@@ -753,7 +751,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Memory read
-    if (expr.computedTarget instanceof MemoryDefinition memoryDefinition) {
+    if (expr.computedTarget() instanceof MemoryDefinition memoryDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var words = 1;
       if (expr.target instanceof SymbolExpr targetSymbol) {
@@ -768,7 +766,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Program counter read
-    if (expr.computedTarget instanceof CounterDefinition counterDefinition) {
+    if (expr.computedTarget() instanceof CounterDefinition counterDefinition) {
       // Calls like PC.next are translated to PC + 8 (if address is 8)
       var counter = (Counter) viamLowering.fetch(counterDefinition).orElseThrow();
       var counterType = (DataType) Objects.requireNonNull(counterDefinition.typeLiteral.type);
@@ -974,7 +972,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // FIXME: Ensure that no slicing is happending and handle format field masking access
 
       // Register File Write
-      if (callTarget.computedTarget instanceof RegisterDefinition regFileTarget) {
+      if (callTarget.computedTarget() instanceof RegisterDefinition regFileTarget) {
         var reg = (RegisterTensor) viamLowering.fetch(regFileTarget).orElseThrow();
         var indices = callTarget.argsIndices.getFirst().values.stream().map(this::fetch)
             .collect(Collectors.toCollection(NodeList::new));
@@ -990,7 +988,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       }
 
       // Alias Register File Write
-      if (callTarget.computedTarget instanceof AliasDefinition aliasDefinition
+      if (callTarget.computedTarget() instanceof AliasDefinition aliasDefinition
           && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
         var resource = (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
         // FIXME: Support alias register writes
@@ -1000,7 +998,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       }
 
       // Memory Write
-      if (callTarget.computedTarget instanceof MemoryDefinition memoryTarget) {
+      if (callTarget.computedTarget() instanceof MemoryDefinition memoryTarget) {
         var memory = (Memory) viamLowering.fetch(memoryTarget).orElseThrow();
         var words = 1;
         if (callTarget.target instanceof SymbolExpr targetSymbol) {
@@ -1014,11 +1012,10 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       throw new IllegalStateException(
           "Call target \"%s\" not yet implemented, found in: %s".formatted(
-              callTarget.computedTarget,
+              callTarget.computedTarget(),
               callTarget.location.toIDEString()));
     } else if (statement.target instanceof Identifier identifierExpr) {
-      var computedTarget = Objects.requireNonNull(Objects.requireNonNull(identifierExpr.symbolTable)
-          .requireAs(identifierExpr, vadl.ast.Node.class));
+      var computedTarget = Objects.requireNonNull(identifierExpr.target());
 
       // Register Write
       if (computedTarget instanceof RegisterDefinition registerDefinition) {
@@ -1247,7 +1244,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
           && ident.target instanceof ExceptionDefinition exceptionDef) {
         exception = (ExceptionDef) viamLowering.fetch(exceptionDef).get();
       } else if (expr instanceof CallIndexExpr call
-          && call.computedTarget instanceof ExceptionDefinition exceptionDef) {
+          && call.computedTarget() instanceof ExceptionDefinition exceptionDef) {
         exception = (ExceptionDef) viamLowering.fetch(exceptionDef).get();
         args = call.argsIndices.get(0).values.stream()
             .map(this::fetch)

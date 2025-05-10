@@ -40,7 +40,9 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
@@ -62,6 +64,7 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
 
   private Filer filer;
   private Messager messager;
+  private Types typeUtils;
   private static final String packageName = "vadl.ast";
 
   @Nullable
@@ -74,6 +77,7 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
     super.init(processingEnv);
     filer = processingEnv.getFiler();
     messager = processingEnv.getMessager();
+    typeUtils = processingEnv.getTypeUtils();
   }
 
   @Override
@@ -93,6 +97,7 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
 
     // Only when the processing is over generate one single file.
     if (roundEnv.processingOver()) {
+      addAllInheritedFields();
       try {
         if (!annotatedFieldsByClass.isEmpty()) {
           generateNodeChildrenRegistry();
@@ -128,6 +133,21 @@ public class ChildAnnotationProcessor extends AbstractProcessor {
     }
 
     return false;
+  }
+
+  private void addAllInheritedFields() {
+    for (Map.Entry<TypeElement, List<VariableElement>> entry :
+        annotatedFieldsByClass.entrySet()) {
+      TypeMirror type = entry.getKey().getSuperclass();
+      while (!(type instanceof NoType)) {
+        TypeElement superElement = (TypeElement) typeUtils.asElement(type);
+        List<VariableElement> superFields = annotatedFieldsByClass.get(superElement);
+        if (superFields != null) {
+          entry.getValue().addAll(0, superFields);
+        }
+        type = superElement.getSuperclass();
+      }
+    }
   }
 
   private void generateNodeChildrenRegistry() throws IOException {

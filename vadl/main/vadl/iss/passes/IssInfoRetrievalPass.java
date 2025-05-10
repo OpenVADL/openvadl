@@ -45,7 +45,7 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
 
-    var isa = viam.mip().get().isa();
+    var isa = viam.processor().get().isa();
 
     var info = new ExceptionInfo(configuration());
     isa.attachExtension(info);

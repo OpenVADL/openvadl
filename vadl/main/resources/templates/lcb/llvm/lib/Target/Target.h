@@ -9,10 +9,11 @@ namespace llvm
     class [(${namespace})]TargetMachine;
     class PassRegistry;
 
-    FunctionPass *create[(${namespace})]ISelDag( [(${namespace})]TargetMachine &TM, CodeGenOpt::Level OptLevel );
+    FunctionPass *create[(${namespace})]ISelDag( [(${namespace})]TargetMachine &TM, CodeGenOptLevel OptLevel );
 
     FunctionPass *create[(${namespace})]ExpandPseudoPass();
     void initialize[(${namespace})]ExpandPseudoPass(PassRegistry &);
+    void initialize[(${namespace})]DAGToDAGISelLegacyPass(PassRegistry &);
 }
 
 #endif // LLVM_LIB_TARGET_[(${namespace})]_[(${namespace})]_H

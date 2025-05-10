@@ -892,7 +892,7 @@ Listing \r{register_declaration} demonstrates two ways to declare a register fil
 In line 6 a register file named `S` is declared by a relation which maps a five bit sized `Index` to a bit vector of type `Word` using the relation symbol `"->"`.
 In line 13 the register `Y` with the same layout as `S` is declared as a 32 element vector of type `Word`.
 The first way of declaration allows only register files where the number of registers is a power of two, the second way allows an arbitrary number of registers.
-Both ways allow the declaration of multidimensional registers. 
+Both ways allow the declaration of multidimensional registers.
 
 \listing{register_declaration, Register Declaration and Register Alias}
 ~~~{.vadl}
@@ -998,7 +998,7 @@ Exceptions like alignment errors could be specified in every memory accessing in
 But this violates the principle of separation of concerns.
 With the `raise` annotation the throwing of an exception is declared together with the memory.
 The `translate` annotation connects the specified address translation process with a memory.
-There exist different memory consistency models which are specified with the `ordering` annotation. 
+There exist different memory consistency models which are specified with the `ordering` annotation.
 
 
 ### Instruction Definition
@@ -1064,7 +1064,7 @@ A set of instructions is named `operation` and can be defined by an annotation a
 #### Let Statement and Status Flags
 
 A `let` statement is used to define the instruction `LDUP` in Listing \r{instruction_definition}.
-An identifier follows the keyword `let` at the start of the statement. 
+An identifier follows the keyword `let` at the start of the statement.
 The `let` statement binds the expression after the equality symbol `"="` with the identifier which enables the use of the result of the expression in the statement after the keyword `in`.
 This identifier is only visible in the scope defined by the statement after `in`.
 It is common that the statement after `in` is a block statement which is also the case in the current example.
@@ -1312,7 +1312,7 @@ For now the assembler parser has to be specified in the assembly description def
 
 An assembly definition starts with the keyword `assembly` followed by a single name of an instruction or multiple names of instructions separated by a comma symbol `","`, the equality symbol `"="` and a string expression enclosed in parentheses specifying the appearance of the instruction (see Listing \r{encoding_assembly} lines 30 and 35).
 Both the comma `","` and the plus `"+"` operator are interpreted as concatenation.
-Whitespaces have to be defined explicitly, strings are concatenated directly without space. 
+Whitespaces have to be defined explicitly, strings are concatenated directly without space.
 Pure user defined or builtin string functions can be used to format the elements in the assembly definition.
 The builtin `mnemonic` converts the instruction name into a string.
 The argument of the builtin `register` is searched for a use in register indexing and the name of the indexed register is concatenated with the argument converted to a decimal number.
@@ -1357,7 +1357,7 @@ assembly LA = ( mnemonic, " ", register(rd), hex(symbol) )
 Symbol resolution of machine code and data sometimes cannot be performed at compile or assembly time.
 Linkers and loaders have to adjust code and data to reflect the assigned load addresses for position-dependent code and data.
 This process is called relocation.
- 
+
 Relocations in object files identify parts of instructions or data that have to be resolved at link or load time.
 \ac{VADL} has the `relocation` keyword to define such relocations which initially are designed to support the \ac{ELF} object file format.
 Listing \r{relocation_definition} shows some relocation definitions and common annotations.
@@ -1374,7 +1374,7 @@ Listing \r{relocation_definition} shows some relocation definitions and common a
   [relative]
   relocation pcrel_lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
-  [globalOffset]
+  [ global offset ]
   relocation got_hi( symbol : Bits<32> ) -> UInt<20> =
     ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
 ~~~
@@ -1383,10 +1383,10 @@ Listing \r{relocation_definition} shows some relocation definitions and common a
 The relocation definition is similar to a function definition, only the keyword `function` is replaced by `relocation`.
 Currently for relocations only a single argument is supported.
 With annotations different kinds of relocations are selected.
-For now the annotations `[absolute]`, `[relative]` and `[globalOffset]` are suported. 
+For now the annotations `[absolute]`, `[relative]` and `[ global offset ]` are suported.
 An `[absolute]` relocation is used for a symbol which represents an absolute address and is the default if no annotation is given.
-For position independent code the `[relative]` relocation represents a program counter relative symbol and a `[globalOffset]` relocation relies on a global offset table (\ac{GOT}) which adds an indirection to achieve position independent code.
-Both `[relative]` and `[globalOffset]` do not require to reference `PC` or `GOT` since the annotation indicates how the value has to change.
+For position independent code the `[relative]` relocation represents a program counter relative symbol and a `[ global offset ]` relocation relies on a global offset table (\ac{GOT}) which adds an indirection to achieve position independent code.
+Both `[relative]` and `[ global offset ]` do not require to reference `PC` or `GOT` since the annotation indicates how the value has to change.
 For relative relocations, the compiler generator will subtract the program counter for the returned value.
 For global offset relocations, the offset of the global offset table and the offset of the symbol are added and the program counter is subtracted.
 
@@ -1420,9 +1420,9 @@ This lock is held till the end of the `let` instruction in line 8.
 Load Reserved (\ac{LR}) and Store Conditional (\ac{STC}) cannot be implemented with a lock statement alone.
 \ac{LR}/\ac{STC} are separate operations by definition but work only in conjunction with each other.
 However, the lock statement is restricted within the definition of a single instruction.
-This means it is necessary to cross instruction boundaries via some global state. 
+This means it is necessary to cross instruction boundaries via some global state.
 
-\ac{VADL} defines two builtins, `loadExclusive` and `isExclusive` with the following semantics: 
+\ac{VADL} defines two builtins, `loadExclusive` and `isExclusive` with the following semantics:
 
 The expression `MEM(addr).loadExclusive` requests exclusive memory access to location `addr` in addition to loading the value stored at `addr`.
 In addition, the address `addr` will be marked as reserved.
@@ -1526,11 +1526,11 @@ An \ac{ABI} ensures consistent and well-defined interoperation between different
 A \ac{VADL} \ac{ABI} definition provides the necessary information to the compiler generator to generate an \ac{ABI} compliant compiler.
 Additionally information is supplied to support the compiler generator to generate an efficient compiler.
 The \ac{ABI} specification section in \ac{VADL} supports the definition of
-  - register aliases,
-  - special purpose registers with alignment information,
-  - calling conventions,
-  - pseudo instruction references and
-  - special instruction sequences.
+- register aliases,
+- special purpose registers with alignment information,
+- calling conventions,
+- pseudo instruction references and
+- special instruction sequences.
 
 Listing \r{application_binary_interface} shows all elements of the \ac{ABI} section.
 
@@ -1542,6 +1542,9 @@ application binary interface ABI for RV32I = {
 //alias register ...
   [ preferred alias ]
   alias register fp = X(8)
+  
+  // Configuration for clang
+  size_t type = unsigned int
 
   return address    = ra
   [ alignment : 16 ]
@@ -1590,15 +1593,15 @@ The keywords `alias register` is followed by the new identifier and after the eq
 If multiple names are available for a specific register, the annotation `[preferred alias]` emits the preferred name in generated code (lines 2 to 5).
 
 In an \ac{ABI} some registers fulfill a certain purpose like being used to keep the `return address` or are used as a `stack pointer`.
-With the annotation `[alignment : ByteCount]` the stack pointer is aligned to `ByteCount` memory elements. 
+With the annotation `[alignment : ByteCount]` the stack pointer is aligned to `ByteCount` memory elements.
 These special purposes are declared with the self explaining keywords.
 The `global pointer` is the register used to access data in a global memory area, the `frame pointer` register gives the access to the stack frame (activation record) of a function or method and the `thread pointer` register is used to acces thread local storage.
 
 Calling conventions describe rules which have to be obeyed during a function call.
-The specification contains information on which registers are used to pass arguments (`function argument`) or return values (`return value`), or which registers are managed by the caller or callee (`caller saved`, `callee saved`). 
+The specification contains information on which registers are used to pass arguments (`function argument`) or return values (`return value`), or which registers are managed by the caller or callee (`caller saved`, `callee saved`).
 Each definition has the same structure, i.e., a descriptive keyword that declares which register or register group will be specified, followed by the equality symbol `"="` and one or more references to the actual registers.
 To be more concise, \ac{VADL} provides a special syntax to address multiple registers with similar names.
-In the example, the compact expression `a{0..7}` evaluates to `[a0, a1, a2, a3, a4, a5, a6, a7]`. Note that the callee saved sequence contains the return address `ra` on purpose in the example even though the official RISC-V ABI documentation states it as caller saved. This is [required](https://discourse.llvm.org/t/why-is-return-address-x1-defined-as-callee-saved-register/84736) because a function call changes the register whereas the return won't restore the old value. 
+In the example, the compact expression `a{0..7}` evaluates to `[a0, a1, a2, a3, a4, a5, a6, a7]`. Note that the callee saved sequence contains the return address `ra` on purpose in the example even though the official RISC-V ABI documentation states it as caller saved. This is [required](https://discourse.llvm.org/t/why-is-return-address-x1-defined-as-callee-saved-register/84736) because a function call changes the register whereas the return won't restore the old value.
 
 The compiler generator cannot automatically deduce all necessary code sequences for its functionality.
 There exist two mechanisms to select such code sequences, referencing pseudo instructions and defining special sequences.
@@ -1620,6 +1623,7 @@ They define efficient code sequences to add immediate values of different types 
 If an immediate does not fit into the immediate of a register adjustment sequence, then a constant sequence will be used.
 This requires an additional register which can be more costly.
 
+The compiler generator does not only generate a compiler backend but also a C frontend. To lower C code correctly, the generator requires additional information about the memory layout of types. In the example above, this indicated with `size type = unsigned int` which makes the `size_t` datatype 4 bytes long without a sign bit.
 
 ## Assembly Description Definition
 
@@ -1663,7 +1667,7 @@ Table \r{assembly_nonterminals} in the reference manual lists all available rule
 
 \listing{assembly_description, Assembly Description Definition (subset of RV32IM)}
 ~~~{.vadl}
-[commentString = "#"]
+[commentString : "#"]
 assembly description ASM for ABI = {
 
   directives = {                           // rename assembly directives
@@ -1726,7 +1730,7 @@ Lastly, a single assembly instruction may map to multiple valid text representat
 -->
 
 One advanced feature of the assembly grammar specification allows the definition alternatives as seen for `RRIds` or `BranchPseudoIds` in listing \r{assembly_description}.
-Other advanced features include the definition of optional blocks by `[]` as seen in the `JalrInstruction` in listing \r{assembly_grammar_advanced} and calling arbitrary \ac{VADL} functions with grammar rules passed as arguments as seen with `encode<Integer>` in `AndInstruction`. 
+Other advanced features include the definition of optional blocks by `[]` as seen in the `JalrInstruction` in listing \r{assembly_grammar_advanced} and calling arbitrary \ac{VADL} functions with grammar rules passed as arguments as seen with `encode<Integer>` in `AndInstruction`.
 
 \listing{assembly_grammar_advanced, Advanced Assembly Grammar Features}
 ~~~{.vadl}
@@ -1819,7 +1823,7 @@ In this example, reading from and writing to memory is done in 32-bit blocks.
 
 \listing{mia_definition, Micro Architecture Definition}
 ~~~{.vadlmia}
-[ dataBusWidth = 32 ]
+[ dataBusWidth : 32 ]
 micro architecture FiveStage implements RV32IM = {
   stage FETCH -> ( fr : FetchResult ) = {
     fr := fetchNext                             // fetch next packet from memory (or cache)
@@ -1933,9 +1937,9 @@ Listing \r{cache_definition} defines a cache named `L1` with 1024 entries (cache
 ~~~{.vadl}
 [ write through ]
 [ evict roundrobin ]
-[ entries = 1024 ]
-[ blocks = 4 ]
-[ n_set = 2 ]
+[ entries : 1024 ]
+[ blocks : 4 ]
+[ n_set : 2 ]
 [ attached_to MEM ]
 cache L1 : VirtualAddress -> Bits<8>
 ~~~

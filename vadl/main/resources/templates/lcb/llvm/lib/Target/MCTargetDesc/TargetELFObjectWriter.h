@@ -9,6 +9,7 @@
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/MC/MCValue.h"
 
 namespace llvm
 {
@@ -21,7 +22,7 @@ namespace llvm
 
         // Return true if the given relocation must be with a symbol rather than
         // section plus offset.
-        bool needsRelocateWithSymbol(const MCSymbol &Sym, unsigned Type) const override;
+        bool needsRelocateWithSymbol(const MCValue &Val, const MCSymbol &Sym, unsigned Type) const override;
 
     protected:
         unsigned getRelocType(MCContext & Ctx, const MCValue &Target, const MCFixup &Fixup, bool IsPCRel) const override;

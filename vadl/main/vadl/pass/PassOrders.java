@@ -30,6 +30,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
+import vadl.gcb.passes.DetermineRelocationTypeForFieldPass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
@@ -86,6 +87,7 @@ import vadl.lcb.passes.llvmLowering.immediates.GenerateTableGenImmediateRecordPa
 import vadl.lcb.passes.pseudo.AbiSequencesCompilerInstructionExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.pseudo.PseudoExpansionFunctionGeneratorPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
+import vadl.lcb.template.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerCppFilePass;
 import vadl.lcb.template.lib.Target.EmitMCInstLowerHeaderFilePass;
 import vadl.lcb.template.lib.Target.EmitVadlBuiltinHeaderFilePass;
@@ -105,7 +107,6 @@ import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyPasses.DummyMiaPass;
-import vadl.viam.passes.dummyPasses.DummyMipPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
@@ -190,6 +191,7 @@ public class PassOrders {
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new IsaMachineInstructionMatchingPass(gcbConfiguration));
     order.add(new NormalizeFieldsToFieldAccessFunctionsPass(gcbConfiguration));
+    order.add(new DetermineRelocationTypeForFieldPass(gcbConfiguration));
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
@@ -238,7 +240,7 @@ public class PassOrders {
 
     order.add(new EmitVadlBuiltinHeaderFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
-    order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetHeaderFilePass(configuration));
+    order.add(new EmitClangTargetHeaderFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetCppFilePass(configuration));
     order.add(new vadl.lcb.template.clang.lib.Basic.EmitClangBasicCMakeFilePass(configuration));
@@ -392,9 +394,6 @@ public class PassOrders {
 
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
-
-    // TODO: Remove once frontend creates it
-    order.add(new DummyMipPass(config));
 
     // iss function passes
     order

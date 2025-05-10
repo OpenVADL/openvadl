@@ -5,7 +5,6 @@
 #include "[(${namespace})]SubTarget.h"
 #include "[(${namespace})]MachineFunctionInfo.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
-#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -34,6 +33,7 @@ void [(${namespace})]TargetLowering::anchor() {}
     setOperationAction(ISD::BlockAddress, MVT::[(${stackPointerType})], Custom);
     setOperationAction(ISD::ConstantPool, MVT::[(${stackPointerType})], Custom);
     setOperationAction(ISD::JumpTable, MVT::[(${stackPointerType})], Custom);
+    setOperationAction(ISD::Constant, MVT::[(${stackPointerType})], Custom);
 
     setOperationAction(ISD::VASTART, MVT::Other, Custom);
     setOperationAction(ISD::VAARG, MVT::Other, Custom);
@@ -99,6 +99,8 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
         return lowerConstantPool(Op, DAG);
     case ISD::JumpTable:
         return lowerJumpTable(Op, DAG);
+    case ISD::Constant:
+         return lowerConstant(Op, DAG);
     case ISD::VASTART:
         return lowerVASTART(Op, DAG);
     case ISD::VAARG:
@@ -109,6 +111,17 @@ SDValue [(${namespace})]TargetLowering::LowerOperation(SDValue Op, SelectionDAG 
     [/th:block]
     default : llvm_unreachable("unimplemented operand");
     }
+}
+
+SDValue [(${namespace})]TargetLowering::lowerConstant(SDValue Op, SelectionDAG &DAG) const
+{
+  int64_t Imm = cast<ConstantSDNode>(Op)->getSExtValue();
+
+  if (isInt<32>(Imm))
+    return Op;
+
+  // Expand to a constant pool using the default expansion code.
+  return SDValue();
 }
 
 static SDValue unpackFromRegLoc(SelectionDAG &DAG, SDValue Chain, const CCValAssign &VA, const SDLoc &DL)
@@ -281,7 +294,7 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         [#th:block th:each="cl : ${argumentRegisterClasses}" ]
           unsigned [(${cl.name})]LenInBytes = [(${cl.resultWidth / 8})];
           MVT [(${cl.name})]LenVT = MVT::[(${cl.llvmResultType})];
-          ArrayRef<MCPhysReg> [(${cl.name})]ArgRegs = makeArrayRef(Arg[(${cl.name})]s);
+          ArrayRef<MCPhysReg> [(${cl.name})]ArgRegs = ArrayRef(Arg[(${cl.name})]s);
           unsigned [(${cl.name})]Idx = CCInfo.getFirstUnallocated( [(${cl.name})]ArgRegs);
           const TargetRegisterClass *[(${cl.name})]RC = &[(${namespace})]::[(${cl.name})]RegClass;
         [/th:block]
@@ -356,6 +369,7 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
     SDValue Chain = CLI.Chain;
     SDValue Callee = CLI.Callee;
     CallingConv::ID CallConv = CLI.CallConv;
+    MachineFunction &MF = DAG.getMachineFunction();
     const bool isVarArg = CLI.IsVarArg;
 
     // No support for tail calls for now
@@ -422,10 +436,13 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
     unsigned OpFlag = [(${namespace})]BaseInfo::MO_None;
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     {
+        const GlobalValue *GV = G->getGlobal();
+        OpFlag = [(${namespace})]BaseInfo::MO_PLT;
         Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, getPointerTy(DAG.getDataLayout()), /* Offset */ 0, OpFlag);
     }
     else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     {
+        OpFlag = [(${namespace})]BaseInfo::MO_PLT;
         Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(DAG.getDataLayout()), OpFlag);
     }
 
@@ -441,7 +458,6 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
 
     // Add a register mask operand representing the call-preserved registers.
     const uint32_t *Mask;
-    MachineFunction &MF = DAG.getMachineFunction();
     const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
     Mask = TRI->getCallPreservedMask(MF, CallConv);
 
@@ -557,7 +573,7 @@ static SDValue getTargetNode(JumpTableSDNode *N, const SDLoc &DL, EVT Ty, Select
 }
 
 template <class NodeTy>
-SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bool IsLocal) const
+SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bool IsLocal, bool IsExternWeak) const
 {
     SDLoc DL(N);
     EVT Ty = getPointerTy(DAG.getDataLayout());
@@ -621,8 +637,7 @@ SDValue [(${namespace})]TargetLowering::lowerGlobalAddress(SDValue Op, Selection
     int64_t Offset = N->getOffset();
 
     const GlobalValue *GV = N->getGlobal();
-    bool IsLocal = getTargetMachine().shouldAssumeDSOLocal(*GV->getParent(), GV);
-    SDValue Addr = getAddr(N, DAG, IsLocal);
+    SDValue Addr = getAddr(N, DAG, GV->isDSOLocal(), GV->hasExternalWeakLinkage());
 
     // In order to maximize the opportunity for common subexpression elimination,
     // emit a separate ADD node for the global address offset instead of folding

@@ -51,7 +51,7 @@
   using UInt5    = UInt< 5>               // 5 bit unsigned shift ammount
   using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift ammount
 
-  [X(0) = 0]                              // register with index 0 always is 0
+  [ zero: X(0) ]                              // register with index 0 always is 0
   register    X : Index   -> Regs    // integer register with 32 registers of 32 bits
   program counter PC : Address            // PC points to the start of the current instruction
   memory         MEM : Address -> Byte    // byte addressed memory
@@ -305,7 +305,7 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   [relative]
   relocation pcrel_lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
 
-  [globalOffset]
+  [ global offset ]
   relocation got_hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
 
   pseudo instruction CALL( symbol : Bits<32> ) =

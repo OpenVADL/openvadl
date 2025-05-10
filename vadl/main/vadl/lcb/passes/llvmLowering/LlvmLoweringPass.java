@@ -63,9 +63,12 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesFormatField;
 import vadl.lcb.passes.llvmLowering.tablegen.model.ReferencesImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstruction;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenConstantOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionConcreteRegisterOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -77,7 +80,7 @@ import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -487,8 +490,8 @@ public class LlvmLoweringPass extends Pass {
               ensurePresent(
                   instruction.target().behavior().getNodes(FieldRefNode.class)
                       .flatMap(x -> x.usages()
-                          .filter(y -> y instanceof HasRegisterFile z && z.hasRegisterFile())
-                          .map(y -> ((HasRegisterFile) y).registerFile()))
+                          .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile())
+                          .map(y -> ((HasRegisterTensor) y).registerTensor()))
                       .findFirst(), () -> Diagnostic.error("Expected to find register file",
                       field.location()));
           // We use the funcParamNode's name because we need to make sure that the register
@@ -501,22 +504,23 @@ public class LlvmLoweringPass extends Pass {
           // So the pattern will look like:
           // `def : InstAlias<"BEQZ $rs,$offset", (BEQ X:$rs, X0, RV3264I_Btype_immAsLabel:$imm)>;`
           args.add(new LcbMachineInstructionParameterNode(
-              new TableGenInstructionOperand(null, registerFile.identifier.simpleName(),
-                  funcParamNode.parameter().simpleName())));
+              new TableGenInstructionRegisterFileOperand(registerFile,
+                  field,
+                  funcParamNode)));
         } else if (argument instanceof ConstantNode constantNode) {
           // it is indexed in a register file
           var registerFile =
               ensurePresent(
                   instruction.target().behavior().getNodes(FieldRefNode.class)
                       .flatMap(x -> x.usages()
-                          .filter(y -> y instanceof HasRegisterFile z && z.hasRegisterFile())
-                          .map(y -> ((HasRegisterFile) y).registerFile()))
+                          .filter(y -> y instanceof HasRegisterTensor z && z.hasRegisterFile())
+                          .map(y -> ((HasRegisterTensor) y).registerTensor()))
                       .findFirst(), () -> Diagnostic.error("Expected to find register file",
                       field.location()));
           args.add(new LcbMachineInstructionParameterNode(
-              new TableGenInstructionOperand(null,
-                  registerFile.generateRegisterFileName(
-                      constantNode.constant().asVal().intValue()))));
+              new TableGenInstructionConcreteRegisterOperand(registerFile,
+                  constantNode.constant().asVal().intValue(),
+                  constantNode)));
         }
       } else {
         // There are two cases:
@@ -537,10 +541,10 @@ public class LlvmLoweringPass extends Pass {
               ensurePresent(
                   Stream.concat(machineRecord.info().inputs().stream(),
                           machineRecord.info().outputs().stream())
-                      .filter(x -> (x instanceof TableGenInstructionImmediateOperand y
+                      .filter(x -> (x instanceof TableGenInstructionLabelOperand y
                           &&
                           y.immediateOperand().fieldAccessRef().equals(fieldAccess.fieldAccess()))
-                          || (x instanceof TableGenInstructionImmediateLabelOperand z
+                          || (x instanceof TableGenInstructionImmediateOperand z
                           &&
                           z.immediateOperand().fieldAccessRef().equals(fieldAccess.fieldAccess()))
                       )
@@ -550,8 +554,7 @@ public class LlvmLoweringPass extends Pass {
           args.add(new LcbMachineInstructionParameterNode(operand));
         } else if (argument instanceof ConstantNode constantNode) {
           args.add(new LcbMachineInstructionParameterNode(
-              new TableGenInstructionOperand(null, constantNode.constant().asVal().intValue() + "")
-          ));
+              new TableGenConstantOperand(constantNode, constantNode.constant())));
         }
       }
     }

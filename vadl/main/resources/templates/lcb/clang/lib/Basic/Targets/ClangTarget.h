@@ -21,7 +21,11 @@ namespace clang
                     WIntType = UnsignedInt;
                     IntPtrType = SignedInt;
                     PtrDiffType = SignedInt;
-                    SizeType = UnsignedInt;
+
+                    [# th:each="ty : ${clangTypes}" ]
+                    [(${ty.name})] = [(${ty.value})];
+                    [/]
+
                     LongDoubleWidth = 128;
                     LongDoubleAlign = 128;
                     LongDoubleFormat = &llvm::APFloat::IEEEquad();
@@ -29,8 +33,6 @@ namespace clang
                     HasStrictFP = true;
                     resetDataLayout("[(${datalayout})]");
                 }
-
-                void getTargetDefines(const LangOptions &Opts, MacroBuilder &Builder) const override { };
 
                 ArrayRef<Builtin::Info> getTargetBuiltins() const override { return ArrayRef<Builtin::Info>(); }
 
@@ -46,6 +48,8 @@ namespace clang
                 ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override;
 
                 bool validateAsmConstraint(const char *&Name, TargetInfo::ConstraintInfo &Info) const override { return false; }
+
+                void getTargetDefines(const LangOptions &Opts,MacroBuilder &Builder) const;
         };
     }
 }

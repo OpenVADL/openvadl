@@ -52,8 +52,7 @@ public class ExceptionTest {
           f1: Bits<5>
         }
       }
-      micro processor MiP implements ISA = {
-        start = 0x1000
+      processor MiP implements ISA = {
       }
       """;
 

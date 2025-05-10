@@ -34,7 +34,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.HasRegisterFile;
+import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -109,8 +109,9 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
         isBranch |= flags.isBranch();
         defs.addAll(baseInstructionInfo.defs());
         uses.addAll(baseInstructionInfo.uses());
-        inputOperands.addAll(baseInstructionInfo.inputs());
-        outputOperands.addAll(baseInstructionInfo.outputs());
+
+        addWithoutDuplicates(inputOperands, baseInstructionInfo.inputs());
+        addWithoutDuplicates(outputOperands, baseInstructionInfo.outputs());
 
         break;
       }
@@ -139,6 +140,24 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
     return Optional.of(new LlvmLoweringRecord.Compiler(
         info
     ));
+  }
+
+  private void addWithoutDuplicates(List<TableGenInstructionOperand> dest,
+                                    List<TableGenInstructionOperand> src) {
+    for (var element : src) {
+      boolean exists = false;
+      for (var needle : dest) {
+        if (needle.equals(element)) {
+          exists = true;
+          break;
+        }
+      }
+
+      if (!exists) {
+        dest.add(element);
+      }
+    }
+
   }
 
   /**
@@ -205,12 +224,12 @@ public abstract class LlvmCompilerInstructionLowerStrategy {
                   // We need the usage because we need to find out what the register file
                   // to check for constraints.
                   occurrence.usages()
-                      .filter(node -> (node instanceof HasRegisterFile x && x.hasRegisterFile()))
+                      .filter(node -> (node instanceof HasRegisterTensor x && x.hasRegisterFile()))
                       .forEach(node -> {
-                        var cast = (HasRegisterFile) node;
+                        var cast = (HasRegisterTensor) node;
 
                         var constraintValue =
-                            Arrays.stream(cast.registerFile().constraints()).filter(
+                            Arrays.stream(cast.registerTensor().constraints()).filter(
                                 c -> c.indices().getFirst().intValue()
                                     == constantNode.constant().asVal().intValue()).findFirst();
 

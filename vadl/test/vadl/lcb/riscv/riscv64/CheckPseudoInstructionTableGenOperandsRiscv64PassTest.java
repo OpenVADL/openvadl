@@ -60,7 +60,7 @@ public class CheckPseudoInstructionTableGenOperandsRiscv64PassTest extends Abstr
     inputOperands.add(new Entry("BLTZ", List.of("X:$rs", "bare_symbol:$offset")));
     inputOperands.add(new Entry("BNEZ", List.of("X:$rs", "bare_symbol:$offset")));
     inputOperands.add(new Entry("CALL", List.of("bare_symbol:$symbol")));
-    inputOperands.add(new Entry("J", List.of("RV3264I_Jtype_immAsLabel:$imm")));
+    inputOperands.add(new Entry("J", List.of("RV3264Base_Jtype_immAsLabel:$imm")));
     inputOperands.add(new Entry("LI", List.of("bare_symbol:$symbol")));
     inputOperands.add(new Entry("LLA", List.of("bare_symbol:$symbol")));
     inputOperands.add(new Entry("MV", List.of("X:$rs1")));

@@ -58,10 +58,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 0 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
-           \s
+        
+        
             let HWEncoding = 0;
-           \s
+        
             let isArtificial = 0;
         }
         def X0 : Register<"X0">
@@ -76,10 +76,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 1 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 0;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X1 : Register<"X1">
@@ -94,10 +94,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 2 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 1;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X2 : Register<"X2">
@@ -112,10 +112,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 3 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 2;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X3 : Register<"X3">
@@ -130,10 +130,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 4 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 3;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X4 : Register<"X4">
@@ -148,10 +148,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 5 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 4;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X5 : Register<"X5">
@@ -166,10 +166,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 6 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 5;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X6 : Register<"X6">
@@ -184,10 +184,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 7 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 6;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X7 : Register<"X7">
@@ -202,10 +202,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 8 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 7;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X8 : Register<"X8">
@@ -220,10 +220,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 9 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 8;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X9 : Register<"X9">
@@ -238,10 +238,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 10 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 9;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X10 : Register<"X10">
@@ -256,10 +256,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 11 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 10;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X11 : Register<"X11">
@@ -274,10 +274,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 12 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 11;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X12 : Register<"X12">
@@ -292,10 +292,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 13 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 12;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X13 : Register<"X13">
@@ -310,10 +310,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 14 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 13;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X14 : Register<"X14">
@@ -328,10 +328,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 15 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 14;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X15 : Register<"X15">
@@ -346,10 +346,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 16 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 15;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X16 : Register<"X16">
@@ -364,10 +364,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 17 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 16;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X17 : Register<"X17">
@@ -382,10 +382,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 18 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 17;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X18 : Register<"X18">
@@ -400,10 +400,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 19 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 18;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X19 : Register<"X19">
@@ -418,10 +418,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 20 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 19;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X20 : Register<"X20">
@@ -436,10 +436,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 21 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 20;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X21 : Register<"X21">
@@ -454,10 +454,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 22 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 21;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X22 : Register<"X22">
@@ -472,10 +472,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 23 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 22;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X23 : Register<"X23">
@@ -490,10 +490,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 24 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 23;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X24 : Register<"X24">
@@ -508,10 +508,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 25 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 24;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X25 : Register<"X25">
@@ -526,10 +526,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 26 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 25;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X26 : Register<"X26">
@@ -544,10 +544,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 27 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 26;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X27 : Register<"X27">
@@ -562,10 +562,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 28 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 27;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X28 : Register<"X28">
@@ -580,10 +580,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 29 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 28;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X29 : Register<"X29">
@@ -598,10 +598,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 30 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 29;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X30 : Register<"X30">
@@ -616,10 +616,10 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 31 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 30;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         def X31 : Register<"X31">
@@ -634,22 +634,28 @@ public class EmitRegisterInfoTableGenFilePassTest extends AbstractLcbTest {
             let DwarfNumbers = [ 32 ];
             list<int> CostPerUse = [0];
             let CoveredBySubRegs = 0;
-           \s
+        
             let HWEncoding{4-0} = 31;
-           \s
-           \s
+        
+        
             let isArtificial = 0;
         }
         
         
+        defvar processornamevalue = DefaultMode;
         
+        def XLenRI : RegInfoByHwMode<
+              [ processornamevalue ],
+              [RegInfo<64,64,64>]>;
         def X : RegisterClass
         < /* namespace = */ "processorNameValue"
         , /* regTypes  = */  [  i64 ]
         , /* alignment = */ 32
         , /* regList   = */
           ( add X10, X11, X12, X13, X14, X15, X16, X17, X5, X6, X7, X28, X29, X30, X31, X9, X18, X19, X20, X21, X22, X23, X24, X25, X26, X27, X0, X1, X2, X3, X4, X8 )
-        >;
-        """.trim().lines(), output);
+        > {
+          let RegInfos = XLenRI;
+        } 
+        """.trim().lines().map(String::trim), output.map(String::trim));
   }
 }

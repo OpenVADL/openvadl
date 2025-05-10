@@ -24,7 +24,7 @@ instruction set architecture RV3264IM = {
   using UInt5    = UInt< 5>               // 5 bit unsigned shift amount
   using UShft    = UInt<SftLen>           // 5 or 6 bit unsigned shift amount
 
-  [X(0) = 0]                              // register with index 0 always is 0
+  [ zero: X(0) ]                              // register with index 0 always is 0
   register    X : Index   -> Regs    // integer register with 32 registers of 32 bits
   program counter PC : Address            // PC points to the start of the current instruction
   memory         MEM : Address -> Byte    // byte addressed memory
@@ -282,6 +282,5 @@ application binary interface ABI for RV32IM = {
    callee saved = [ sp, fp, s{0..11}, ra ]
 }
 
-micro processor CPU implements RV32IM with ABI = {
-  start = 0x80000000
-}
+processor CPU implements RV32IM with ABI = {
+  }

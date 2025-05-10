@@ -12,7 +12,7 @@ using namespace llvm;
 
 [(${namespace})]ELFObjectWriter::~[(${namespace})]ELFObjectWriter() {}
 
-bool [(${namespace})]ELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym, unsigned Type) const
+bool [(${namespace})]ELFObjectWriter::needsRelocateWithSymbol(const MCValue &Val, const MCSymbol &Sym, unsigned Type) const
 {
     // TODO: @chochrainer FIXME
     // TODO: this is very conservative, update once RISC-V psABI requirements

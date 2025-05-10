@@ -45,6 +45,9 @@ class ParserUtils {
   static boolean[] BIN_OPS_EXCEPT_GT;
   static boolean[] BIN_OPS_EXCEPT_IN;
   static boolean[] UN_OPS;
+  // an array of literal and symbol representations that are used for a
+  // good parse error message such as "`(` expected".
+  static String[] EXPECTED_STRS;
 
   // Must be kept in sync with allowedIdentifierKeywords
   static boolean[] ID_TOKENS;
@@ -107,6 +110,7 @@ class ParserUtils {
     ID_TOKENS[Parser._identifierToken] = true;
     ID_TOKENS[Parser._ADDRESS] = true;
     ID_TOKENS[Parser._ALIAS] = true;
+    ID_TOKENS[Parser._ALIGN] = true;
     ID_TOKENS[Parser._APPEND] = true;
     ID_TOKENS[Parser._BINARY] = true;
     ID_TOKENS[Parser._CALL] = true;
@@ -114,10 +118,13 @@ class ParserUtils {
     ID_TOKENS[Parser._ENCODE] = true;
     ID_TOKENS[Parser._EXCEPTION] = true;
     ID_TOKENS[Parser._FETCH] = true;
-    ID_TOKENS[Parser._FIRMWARE] = true;
+    ID_TOKENS[Parser._GLOBAL] = true;
     ID_TOKENS[Parser._GROUP] = true;
     ID_TOKENS[Parser._INSTRUCTION] = true;
+    ID_TOKENS[Parser._INT] = true;
+    ID_TOKENS[Parser._LONG] = true;
     ID_TOKENS[Parser._MEMORY] = true;
+    ID_TOKENS[Parser._MAX] = true;
     ID_TOKENS[Parser._NONE] = true;
     ID_TOKENS[Parser._NOP] = true;
     ID_TOKENS[Parser._OPERATION] = true;
@@ -127,11 +134,14 @@ class ParserUtils {
     ID_TOKENS[Parser._REGISTER] = true;
     ID_TOKENS[Parser._RETURN] = true;
     ID_TOKENS[Parser._SEQUENCE] = true;
+    ID_TOKENS[Parser._SIGNED] = true;
+    ID_TOKENS[Parser._SIZE_T] = true;
     ID_TOKENS[Parser._STAGE] = true;
-    ID_TOKENS[Parser._START] = true;
     ID_TOKENS[Parser._STARTUP] = true;
+    ID_TOKENS[Parser._RESET] = true;
     ID_TOKENS[Parser._STOP] = true;
     ID_TOKENS[Parser._SYM_IN] = true;
+    ID_TOKENS[Parser._TYPE] = true;
     ID_TOKENS[Parser._T_BIN] = true;
     ID_TOKENS[Parser._T_BIN_OP] = true;
     ID_TOKENS[Parser._T_BOOL] = true;
@@ -149,11 +159,69 @@ class ParserUtils {
     ID_TOKENS[Parser._T_UN_OP] = true;
     ID_TOKENS[Parser._T_VAL] = true;
     ID_TOKENS[Parser._TRANSLATION] = true;
+    ID_TOKENS[Parser._UNSIGNED] = true;
+    ID_TOKENS[Parser._WIDTH] = true;
     ID_TOKENS[Parser._WRITE] = true;
 
     AUX_FIELD_TOKENS = NO_OPS.clone();
     AUX_FIELD_TOKENS[Parser._PREDICATE] = true;
     AUX_FIELD_TOKENS[Parser._ENCODE] = true;
+
+
+    EXPECTED_STRS = new String[NO_OPS.length];
+    EXPECTED_STRS[Parser._SYM_ARROW] = "->";
+    EXPECTED_STRS[Parser._SYM_ASSIGN] = ":=";
+    EXPECTED_STRS[Parser._SYM_AT] = "@";
+    EXPECTED_STRS[Parser._SYM_BIGARROW] = "=>";
+    EXPECTED_STRS[Parser._SYM_BINAND] = "&";
+    EXPECTED_STRS[Parser._SYM_BINOR] = "|";
+    EXPECTED_STRS[Parser._SYM_BRACE_CLOSE] = "}";
+    EXPECTED_STRS[Parser._SYM_BRACE_OPEN] = "{";
+    EXPECTED_STRS[Parser._SYM_BRACK_CLOSE] = "]";
+    EXPECTED_STRS[Parser._SYM_BRACK_OPEN] = "[";
+    EXPECTED_STRS[Parser._SYM_CARET] = "^";
+    EXPECTED_STRS[Parser._SYM_COLON] = ":";
+    EXPECTED_STRS[Parser._SYM_COMMA] = ",";
+    EXPECTED_STRS[Parser._SYM_DIV] = "/";
+    EXPECTED_STRS[Parser._SYM_DOLLAR] = "$";
+    EXPECTED_STRS[Parser._SYM_DOT] = ".";
+    EXPECTED_STRS[Parser._SYM_ELEM_OF] = "∈";
+    EXPECTED_STRS[Parser._SYM_EQ] = "=";
+    EXPECTED_STRS[Parser._SYM_EXCL] = "!";
+    EXPECTED_STRS[Parser._SYM_GT] = ">";
+    EXPECTED_STRS[Parser._SYM_GTE] = ">=";
+    EXPECTED_STRS[Parser._SYM_IN] = "in";
+    EXPECTED_STRS[Parser._SYM_LOGAND] = "&&";
+    EXPECTED_STRS[Parser._SYM_LOGOR] = "||";
+    EXPECTED_STRS[Parser._SYM_LONG_MUL] = "*#";
+    EXPECTED_STRS[Parser._SYM_LT] = "<";
+    EXPECTED_STRS[Parser._SYM_LTE] = "<=";
+    EXPECTED_STRS[Parser._SYM_MINUS] = "-";
+    EXPECTED_STRS[Parser._SYM_MOD] = "%";
+    EXPECTED_STRS[Parser._SYM_MUL] = "*";
+    EXPECTED_STRS[Parser._SYM_NAMESPACE] = "::";
+    EXPECTED_STRS[Parser._SYM_NEQ] = "!=";
+    EXPECTED_STRS[Parser._SYM_NIN] = "!in";
+    EXPECTED_STRS[Parser._SYM_NOT_ELEM_OF] = "∉";
+    EXPECTED_STRS[Parser._SYM_PAREN_CLOSE] = ")";
+    EXPECTED_STRS[Parser._SYM_PAREN_OPEN] = "(";
+    EXPECTED_STRS[Parser._SYM_PLUS] = "+";
+    EXPECTED_STRS[Parser._SYM_PLUS_EQ] = "+=";
+    EXPECTED_STRS[Parser._SYM_QUESTION] = "?";
+    EXPECTED_STRS[Parser._SYM_RANGE] = "..";
+    EXPECTED_STRS[Parser._SYM_ROTL] = "<<>";
+    EXPECTED_STRS[Parser._SYM_ROTR] = "<>>";
+    EXPECTED_STRS[Parser._SYM_SAT_ADD] = "+|";
+    EXPECTED_STRS[Parser._SYM_SAT_SUB] = "-|";
+    EXPECTED_STRS[Parser._SYM_SEMICOLON] = ";";
+    EXPECTED_STRS[Parser._SYM_SHL] = "<<";
+    EXPECTED_STRS[Parser._SYM_SHR] = ">>";
+    EXPECTED_STRS[Parser._SYM_TILDE] = "~";
+    EXPECTED_STRS[Parser._SYM_UNDERSCORE] = "_";
+    // set literals produced by scanner
+    for (var l : Scanner.literals.entrySet()) {
+      EXPECTED_STRS[l.getValue()] = l.getKey();
+    }
   }
 
   /**
@@ -412,118 +480,69 @@ class ParserUtils {
     return true;
   }
 
-  /**
-   * Casts the node to the type Expr, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static Expr castExpr(Parser parser, Node node) {
-    if (node instanceof Expr expr) {
-      return expr;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Ex, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_EXPR;
-    }
+  private static boolean isPlaceholder(Node n) {
+    return n instanceof PlaceholderNode
+        || n instanceof PlaceholderDefinition
+        || n instanceof PlaceholderExpr
+        || n instanceof PlaceholderStatement;
   }
 
-  /**
-   * Casts the node to the type Encs, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static IsEncs castEncs(Parser parser, Node node) {
-    if (node instanceof IsEncs encs) {
-      return encs;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Encs, received " + node.syntaxType().print() + " - " + node);
-      return new EncodingDefinition.EncodingField(DUMMY_ID, DUMMY_ID);
+  private static <T> T castOrDummy(Parser p, Node n,
+                                   Class<T> type,
+                                   T dummy,
+                                   String expected) {
+    if (type.isInstance(n)) {
+      return type.cast(n);
     }
+
+    String message;
+    if (isPlaceholder(n)) {
+      var sb = new StringBuilder("Macro ");
+      n.prettyPrint(0, sb);
+      sb.append(" used but not yet defined");
+      message = sb.toString();
+    } else {
+      message = "Expected node of type " + expected + ", received "
+          + n.syntaxType().print() + " - " + n;
+    }
+
+    p.errors.SemErr(n.location().begin().line(), n.location().begin().column(), message);
+    return dummy;
   }
 
-  /**
-   * Casts the node to the type Id, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static IdentifierOrPlaceholder castId(Parser parser, Node node) {
-    if (node instanceof IdentifierOrPlaceholder identifierOrPlaceholder) {
-      return identifierOrPlaceholder;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Id, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_ID;
-    }
+  static Expr castExpr(Parser p, Node n) {
+    return castOrDummy(p, n, Expr.class, DUMMY_EXPR, "Expr");
   }
 
-  /**
-   * Casts the node to the type BinOp, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static IsBinOp castBinOp(Parser parser, Node node) {
-    if (node instanceof IsBinOp isBinOp) {
-      return isBinOp;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type BinOp, received " + node.syntaxType().print() + " - " + node);
-      return new BinOp(Operator.Xor, node.location());
-    }
+  static IsEncs castEncs(Parser p, Node n) {
+    return castOrDummy(p, n, IsEncs.class,
+        new EncodingDefinition.EncodingField(DUMMY_ID, DUMMY_ID), "Encs");
   }
 
-  /**
-   * Casts the node to the type IsaDefs, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static Definition castCommonDef(Parser parser, Node node) {
-    if (node instanceof Definition definition
-        && definition.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS)) {
-      return definition;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type CommonDefs, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_DEF;
-    }
+  static IdentifierOrPlaceholder castId(Parser p, Node n) {
+    return castOrDummy(p, n, IdentifierOrPlaceholder.class, DUMMY_ID, "Id");
   }
 
-  /**
-   * Casts the node to the type IsaDefs, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static Definition castIsaDef(Parser parser, Node node) {
-    if (node instanceof Definition definition
-        && definition.syntaxType().isSubTypeOf(BasicSyntaxType.ISA_DEFS)) {
-      return definition;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type IsaDefs, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_DEF;
-    }
+  static IsBinOp castBinOp(Parser p, Node n) {
+    return castOrDummy(p, n, IsBinOp.class, new BinOp(Operator.Xor, n.location()), "BinOp");
   }
 
-  /**
-   * Casts the node to the type Stat, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static Statement castStat(Parser parser, Node node) {
-    if (node instanceof Statement statement) {
-      return statement;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Stat, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_STAT;
-    }
+  static Definition castCommonDef(Parser p, Node n) {
+    return (n instanceof Definition d && d.syntaxType().isSubTypeOf(BasicSyntaxType.COMMON_DEFS))
+        ? d : castOrDummy(p, n, Definition.class, DUMMY_DEF, "CommonDefs");
   }
 
-  /**
-   * Casts the node to the type Stats, or reports an error and returns a dummy node of that type.
-   * Useful in the parser, where throwing cast exceptions is not the best way of error reporting.
-   */
-  static Statement castStats(Parser parser, Node node) {
-    if (node instanceof Statement statement) {
-      return statement;
-    } else {
-      parser.errors.SemErr(node.location().begin().line(), node.location().begin().column(),
-          "Expected node of type Stats, received " + node.syntaxType().print() + " - " + node);
-      return DUMMY_STAT;
-    }
+  static Definition castIsaDef(Parser p, Node n) {
+    return (n instanceof Definition d && d.syntaxType().isSubTypeOf(BasicSyntaxType.ISA_DEFS))
+        ? d : castOrDummy(p, n, Definition.class, DUMMY_DEF, "IsaDefs");
+  }
+
+  static Statement castStat(Parser p, Node n) {
+    return castOrDummy(p, n, Statement.class, DUMMY_STAT, "Stat");
+  }
+
+  static Statement castStats(Parser p, Node n) {
+    return castOrDummy(p, n, Statement.class, DUMMY_STAT, "Stats");
   }
 
   static Node expandNode(Parser parser, Node node) {
@@ -544,6 +563,25 @@ class ParserUtils {
       } else if (definition instanceof ModelDefinition modelDefinition) {
         macroTable.defineSymbol(modelDefinition);
       }
+    }
+  }
+
+  /**
+   * Recursively reads all macros in each of the extending instruction definitions.
+   *
+   * @param macroTable the macro table that should be fed with found macro symbols
+   * @param isa        the isa that should be (recursively) traversed to find all macro definitions.
+   */
+  static void readMacroSymbols(SymbolTable macroTable, InstructionSetDefinition isa) {
+    readMacroSymbols(macroTable, isa.definitions);
+    // FIXME: This is not optimal as we traverse an ISA potentially multiple times.
+    // as we don't have access to the macroTable of the referenced ISA, we must
+    // do the traversal again.
+    for (IsId extending : isa.extending) {
+      // TODO: Replace by extending.target() as soon as we merged
+      //    https://github.com/OpenVADL/openvadl/pull/212
+      var extendingIsa = (InstructionSetDefinition) Objects.requireNonNull(extending.target());
+      readMacroSymbols(macroTable, extendingIsa);
     }
   }
 
@@ -586,8 +624,8 @@ class ParserUtils {
             .build();
       }
     }
-    return new ConstantDefinition(new Identifier("invalid", parser.loc()), null,
-        new Identifier("invalid", parser.loc()), parser.loc());
+    return new ConstantDefinition(new Identifier("invalid", parser.lastTokenLoc()), null,
+        new Identifier("invalid", parser.lastTokenLoc()), parser.lastTokenLoc());
   }
 
   static @Nullable Path resolveUri(Parser parser, IsId importPath) {

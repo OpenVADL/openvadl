@@ -82,7 +82,7 @@ public class AstDumpTests {
     }
 
     Assertions.assertEquals(expectedDump, actualDump,
-        "Expected dump:\n" + expectedDump + "\nActual dump:\n" + actualDump);
+        "Expected dump does not match actual dump.");
   }
 
   private void writeDump(Path dumpPath, String dump) throws IOException {

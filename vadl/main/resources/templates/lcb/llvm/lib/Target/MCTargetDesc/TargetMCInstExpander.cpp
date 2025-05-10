@@ -20,11 +20,25 @@ bool [(${namespace})]MCInstExpander::needsExpansion(const MCInst &MCI) const
 {
     auto opcode = MCI.getOpcode();
     switch (opcode)
+    {[# th:each="instruction : ${compilerInstructions}" ]
+    case [(${namespace})]::[(${instruction.compilerInstruction.name})]:[/]
     {
-    // instructions
-    [# th:each="instruction : ${compilerInstructions}" ]
-    case [(${namespace})]::[(${instruction.compilerInstruction.name})]:
-    [/]
+        return true;
+    }
+    default:
+    {
+        return false;
+    }
+    }
+    return false; // unreachable
+}
+
+bool [(${namespace})]MCInstExpander::isExpandableForAssembly(const MCInst &MCI) const
+{
+    auto opcode = MCI.getOpcode();
+    switch (opcode)
+    {[# th:each="instruction : ${assemblyCompilerInstructions}" ]
+    case [(${namespace})]::[(${instruction})]:[/]
     {
         return true;
     }
@@ -40,11 +54,8 @@ bool [(${namespace})]MCInstExpander::isExpandable(const MCInst &MCI) const
 {
     auto opcode = MCI.getOpcode();
     switch (opcode)
-    {
-    // instructions
-    [# th:each="instruction : ${compilerInstructions}" ]
-        case [(${namespace})]::[(${instruction.compilerInstruction.name})]:
-    [/]
+    {[# th:each="instruction : ${compilerInstructions}" ]
+    case [(${namespace})]::[(${instruction.compilerInstruction.name})]:[/]
     {
         return true;
     }
@@ -62,18 +73,12 @@ bool [(${namespace})]MCInstExpander::expand(const MCInst &MCI,
 {
     auto opcode = MCI.getOpcode();
     switch (opcode)
-    {
-        //
-        // instructions
-        //
-
-    [# th:each="instruction : ${compilerInstructions}" ]
+    {[# th:each="instruction : ${compilerInstructions}" ]
       case [(${namespace})]::[(${instruction.compilerInstruction.name})]:
       {
         [(${instruction.header})](MCI, callback, callbackSymbol );
         return true;
-      }
-    [/]
+      }[/]
       default:
         {
             return false;

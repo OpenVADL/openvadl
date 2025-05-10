@@ -16,7 +16,6 @@
 
 package vadl.lcb.passes.llvmLowering.strategies;
 
-import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
@@ -26,8 +25,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -52,7 +49,6 @@ import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCondSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmNodeReplaceable;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbBranchEndNodeReplacement;
 import vadl.lcb.passes.llvmLowering.strategies.nodeLowering.LcbBuiltInCallNodeReplacement;
@@ -86,12 +82,12 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPa
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenConstantOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionFrameRegisterOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionIndexedRegisterFileOperand;
+import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionLabelOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.TableGenParameterTypeAndName;
+import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -306,28 +302,46 @@ public abstract class LlvmInstructionLoweringStrategy {
     }
 
     var isLowerable = !hasRedFlags(instruction, copy);
-
     var info = lowerBaseInfo(copy);
-
     copy.deinitializeNodes();
 
+
     if (isLowerable) {
-      var patterns = generatePatterns(instruction,
-          info.inputs(),
-          copy.getNodes(WriteResourceNode.class).toList());
-      var alternativePatterns =
-          generatePatternVariations(
-              instruction,
-              labelledMachineInstructions,
-              copy,
-              info.inputs(),
-              info.outputs(),
-              patterns,
-              abi);
+      var additionalBehaviors = new ArrayList<Pair<Graph, List<TableGenInstructionOperand>>>();
+      var patterns = new ArrayList<TableGenPattern>();
+      var alternatives = new ArrayList<TableGenPattern>();
+
+      // The first behavior is always the modified main behavior.
+      additionalBehaviors.add(Pair.of(copy, info.inputs()));
+      var derivedBehaviors = deriveDifferentBehaviors(instruction, copy, info.inputs());
+      additionalBehaviors.addAll(derivedBehaviors);
+
+      // Iterate over all the constructed behaviors.
+      for (var pair : additionalBehaviors) {
+        var behavior = pair.left();
+        var inputOperands = pair.right();
+
+        var localPatterns = generatePatterns(instruction,
+            inputOperands,
+            behavior.getNodes(WriteResourceNode.class).toList());
+        var localAlternatives =
+            generatePatternVariations(
+                instruction,
+                labelledMachineInstructions,
+                behavior,
+                inputOperands,
+                info.outputs(),
+                localPatterns,
+                abi);
+
+        patterns.addAll(localPatterns);
+        alternatives.addAll(localAlternatives);
+      }
+
       return Optional.of(new LlvmLoweringRecord.Machine(
           instruction,
           info,
-          Stream.concat(patterns.stream(), alternativePatterns.stream()).toList()
+          Stream.concat(patterns.stream(), alternatives.stream()).toList()
       ));
     } else {
       return Optional.of(new LlvmLoweringRecord.Machine(
@@ -336,6 +350,25 @@ public abstract class LlvmInstructionLoweringStrategy {
           Collections.emptyList()
       ));
     }
+  }
+
+  /**
+   * There are cases where an {@link Instruction} requires multiple patterns. The easiest
+   * approach is to copy an existing behavior and generate the patterns from it.
+   *
+   * @param instruction              which "owns" the behavior.
+   * @param copyBaseBehavior         is the graph which can be copied as a template for the derived
+   *                                 patterns.
+   * @param instructionInputOperands is the list of input operands of the tableGen record.
+   * @return a list of graphs additionally to {@code copyBaseBehavior} which will be lowered. We
+   *     also return a list of instruction input operands for each graph since machine patterns are
+   *     built with those.
+   */
+  protected List<Pair<Graph, List<TableGenInstructionOperand>>> deriveDifferentBehaviors(
+      Instruction instruction,
+      Graph copyBaseBehavior,
+      List<TableGenInstructionOperand> instructionInputOperands) {
+    return Collections.emptyList();
   }
 
   /**
@@ -573,34 +606,26 @@ public abstract class LlvmInstructionLoweringStrategy {
   protected static Stream<TableGenInstructionOperand> filterOutputs(
       List<TableGenInstructionOperand> outputOperands,
       Stream<TableGenInstructionOperand> stream) {
-    var setParameters =
+    /*
+    pseudo instruction LA( rd: Index, symbol: Bits<32> ) =
+    {
+      LUI { rd = rd, imm = hi( symbol ) }
+      ADDI { rd = rd, rs1 = rd, imm = lo( symbol ) }
+    }
+
+    Here ADDI has a destination `rd` and an input `rs1` which is the same register as the
+    destination. For these cases, we do not want the operand in the inputs.
+     */
+
+    var visited =
         outputOperands.stream()
-            .filter(x -> x instanceof TableGenInstructionIndexedRegisterFileOperand)
-            .map(x -> {
-              var mapped = (TableGenInstructionIndexedRegisterFileOperand) x;
-              return mapped.parameter();
-            })
-            .collect(Collectors.toSet());
-    var outputFields =
-        outputOperands.stream()
-            .filter(x -> x instanceof TableGenInstructionRegisterFileOperand)
-            .map(x -> {
-              var mapped = (TableGenInstructionRegisterFileOperand) x;
-              return mapped.formatField();
-            })
+            .filter(x -> x instanceof TableGenInstructionRegisterFileOperand
+                || x instanceof TableGenInstructionIndexedRegisterFileOperand)
             .collect(Collectors.toSet());
 
     return stream
         .filter(
-            // If the node is a fieldRefNode then it must not be in the outputs.
-            // Otherwise, ok.
-            node -> !(node instanceof TableGenInstructionIndexedRegisterFileOperand operand)
-                || !setParameters.contains(operand.parameter()))
-        .filter(
-            // If the node is a fieldRefNode then it must not be in the outputs.
-            // Otherwise, ok.
-            node -> !(node instanceof TableGenInstructionRegisterFileOperand operand)
-                || !outputFields.contains(operand.formatField()));
+            node -> !visited.contains(node));
   }
 
   /**
@@ -612,8 +637,6 @@ public abstract class LlvmInstructionLoweringStrategy {
     } else if (operand instanceof ReadRegTensorNode node && node.regTensor().isRegisterFile()) {
       return generateInstructionOperandRegisterFile(node);
     } else if (operand instanceof LlvmFieldAccessRefNode node) {
-      return generateInstructionOperand(node);
-    } else if (operand instanceof FieldRefNode node) {
       return generateInstructionOperand(node);
     } else if (operand instanceof LlvmBasicBlockSD node) {
       return generateInstructionOperand(node);
@@ -633,7 +656,6 @@ public abstract class LlvmInstructionLoweringStrategy {
    */
   private static TableGenInstructionOperand generateInstructionOperand(FuncParamNode node) {
     return new TableGenInstructionBareSymbolOperand(node,
-        "bare_symbol",
         node.parameter().simpleName());
   }
 
@@ -641,14 +663,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
    */
   private static TableGenInstructionOperand generateInstructionOperand(LlvmBasicBlockSD node) {
-    return new TableGenInstructionImmediateLabelOperand(node);
-  }
-
-  /**
-   * Returns a {@link TableGenInstructionOperand} given a {@link Node}.
-   */
-  private static TableGenInstructionOperand generateInstructionOperand(FieldRefNode node) {
-    return new TableGenInstructionOperand(node, new TableGenParameterTypeAndName("test", "test"));
+    return new TableGenInstructionLabelOperand(node);
   }
 
   /**
@@ -673,7 +688,7 @@ public abstract class LlvmInstructionLoweringStrategy {
     if (node.usage() == LlvmFieldAccessRefNode.Usage.Immediate) {
       return new TableGenInstructionImmediateOperand(node);
     } else if (node.usage() == LlvmFieldAccessRefNode.Usage.BasicBlock) {
-      return new TableGenInstructionImmediateLabelOperand(node);
+      return new TableGenInstructionLabelOperand(node);
     } else {
       throw Diagnostic.error("Not supported usage", node.location()).build();
     }
@@ -770,8 +785,8 @@ public abstract class LlvmInstructionLoweringStrategy {
     ArrayList<TableGenPattern> patterns = new ArrayList<>();
 
     sideEffectNodes.forEach(sideEffectNode -> {
-      var patternSelector = getPatternSelector(sideEffectNode);
-      var machineInstruction = getOutputPattern(instruction, inputOperands);
+      var patternSelector = generateSelectionPattern(sideEffectNode);
+      var machineInstruction = generateMachinePattern(instruction, inputOperands);
       patterns.add(
           new TableGenSelectionWithOutputPattern(patternSelector, machineInstruction));
     });
@@ -780,13 +795,14 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   /**
-   * Constructs from the given dataflow node a new graph which is the pattern selector.
+   * Constructs from the given dataflow node a new graph which is the selection pattern.
    */
   @Nonnull
-  protected Graph getPatternSelector(WriteResourceNode sideEffectNode) {
+  protected Graph generateSelectionPattern(WriteResourceNode sideEffectNode) {
     var graph = new Graph(sideEffectNode.id().toString() + ".selector.lowering");
     graph.setParentDefinition(Objects.requireNonNull(sideEffectNode.graph()).parentDefinition());
 
+    // Some patterns what that the side effect is included in the pattern.
     Node root = sideEffectNode instanceof LlvmSideEffectPatternIncluded ? sideEffectNode.copy() :
         sideEffectNode.value().copy();
     root.clearUsages();
@@ -794,9 +810,14 @@ public abstract class LlvmInstructionLoweringStrategy {
     return graph;
   }
 
+  /**
+   * Constructs the pattern which is emitted during instruction selection. This method
+   * constructs a graph with the given {@code instruction} and the {@code inputOperands} as
+   * operands.
+   */
   @Nonnull
-  protected Graph getOutputPattern(Instruction instruction,
-                                   List<TableGenInstructionOperand> inputOperands) {
+  protected Graph generateMachinePattern(Instruction instruction,
+                                         List<TableGenInstructionOperand> inputOperands) {
     var graph = new Graph(instruction.simpleName() + ".machine.lowering");
     graph.setParentDefinition(Objects.requireNonNull(instruction));
 
@@ -809,35 +830,35 @@ public abstract class LlvmInstructionLoweringStrategy {
     return graph;
   }
 
+  /*
   protected <T extends Node & LlvmNodeReplaceable> void replaceNodeByParameterIdentity(
       List<T> selectorNodes,
       Graph machine,
       Function<T, Node> selectorNodeTransformation,
       BiFunction<LcbMachineInstructionParameterNode,
-          TableGenParameterTypeAndName,
+          TableGenInstructionOperand,
           TableGenInstructionOperand>
           machineNodeTransformation) {
-    for (var node : selectorNodes) {
-      // Something like `X:$rs1`
-      var selectorParameter = node.operand();
+    for (var selectorNode : selectorNodes) {
+      // selectorNode is something like `X:$rs1`
 
       // Updates the selector
-      var newNode = selectorNodeTransformation.apply(node);
-      node.replaceAndDelete(newNode);
+      var newNode = selectorNodeTransformation.apply(selectorNode);
+      selectorNode.replaceAndDelete(newNode);
 
       // Find the corresponding nodes in the machine graph because we know
       // the parameter identity `selectorParameter` in the selector graph.
       machine.getNodes(LcbMachineInstructionParameterNode.class)
           .filter(candidate ->
               candidate.instructionOperand().origin() instanceof LlvmNodeReplaceable cast
-                  && cast.operand().equals(selectorParameter))
+                  && cast.equals(selectorNode))
           .forEach(occurrence -> {
             var operand = machineNodeTransformation.apply(occurrence,
-                (TableGenParameterTypeAndName) selectorParameter.parameter());
+                selectorNode.operand());
             ensure(!operand.equals(occurrence.instructionOperand()),
                 "The returned operand must be a new instance because it was modified");
             occurrence.setInstructionOperand(operand);
           });
     }
-  }
+  } */
 }

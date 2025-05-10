@@ -3,11 +3,14 @@
 
 // RISC-V 32 I instruction set
 
-import rv3264im::RV3264IM
+import rv3264im::{RV3264I, RV3264M}
 
-instruction set architecture RV32IM extending RV3264IM = {}
+instruction set architecture RV32IM extending RV3264I, RV3264M = {}
 
 application binary interface ABI for RV32IM = {
+   size_t type = unsigned int
+   pointer align = 32
+
    //
    // Register alias definitions
    //
@@ -99,7 +102,7 @@ application binary interface ABI for RV32IM = {
   }
 }
 
-[commentString = "#"]
+[ comment string: "#" ]
 assembly description ASM for ABI = {
 
   modifiers = {
@@ -268,6 +271,11 @@ assembly description ASM for ABI = {
   }
 }
 
-micro processor Spike implements RV32IM with ABI = {
-  start = 0x80000000
+processor Spike implements RV32IM with ABI = {
+  reset = PC := 0x80000000
+
+  [ firmware ]
+  [ base: 0x80000000 ]
+  memory region [RAM] DRAM in MEM
+
 }

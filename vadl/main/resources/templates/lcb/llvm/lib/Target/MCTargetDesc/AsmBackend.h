@@ -30,6 +30,7 @@
                     ( const MCAssembler &Asm
                     , const MCFixup &Fixup
                     , const MCValue &Target
+                    , const MCSubtargetInfo *STI
                     ) override;
 
                 bool mayNeedRelaxation
@@ -39,11 +40,13 @@
 
                 /// fixupNeedsRelaxation - Target specific predicate for whether a given
                 /// fixup requires the associated instruction to be relaxed.
-                bool fixupNeedsRelaxation
-                    ( const MCFixup &Fixup
+                bool fixupNeedsRelaxationAdvanced
+                    ( const MCAssembler &Asm
+                    , const MCFixup &Fixup
+                    , bool Resolved
                     , uint64_t Value
                     , const MCRelaxableFragment *DF
-                    , const MCAsmLayout &Layout) const override;
+                    , const bool wasForced) const override;
 
                 void relaxInstruction
                     ( MCInst &Inst

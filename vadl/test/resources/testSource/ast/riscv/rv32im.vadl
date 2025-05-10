@@ -99,7 +99,7 @@ application binary interface ABI for RV32IM = {
   }
 }
 
-[commentString = "#"]
+[ comment string: "#" ]
 assembly description ASM for ABI = {
 
   modifiers = {
@@ -263,6 +263,5 @@ assembly description ASM for ABI = {
   }
 }
 
-micro processor Spike implements RV32IM with ABI = {
-  start = 0x80000000
-}
+processor Spike implements RV32IM with ABI = {
+  }

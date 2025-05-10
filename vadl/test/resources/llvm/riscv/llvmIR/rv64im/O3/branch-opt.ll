@@ -1,4 +1,4 @@
-; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O3 -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
+; RUN: /src/llvm-final/build/bin/llc -mtriple=rv64im -O3 --relocation-model=pic -verify-machineinstrs < $INPUT | /src/llvm-final/build/bin/FileCheck $INPUT
 
 define void @u_case1_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL: u_case1_a:
@@ -10,12 +10,12 @@ define void @u_case1_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-NEXT:  # %bb.1: # %block1
 ; CHECK-NEXT:    LD a0,0(sp)
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
 ; CHECK-NEXT:  .LBB0_2: # %block2
 ; CHECK-NEXT:    LD a0,8(sp)
 ; CHECK-NEXT:    ADDI a1,zero,87
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
   store i32 32, ptr %a
   %p = icmp ule i32 %b, 31
   br i1 %p, label %block1, label %block2
@@ -35,24 +35,22 @@ end_block:                                        ; preds = %block2, %block1
 define void @case1_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL: case1_a:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    LUI a2,0x0
-; CHECK-NEXT:    ADDI a2,a2,0
-; CHECK-NEXT:    SLLI a2,a2,16
-; CHECK-NEXT:    ORI a2,a2,0
-; CHECK-NEXT:    SLLI a2,a2,16
-; CHECK-NEXT:    ORI a2,a2,-1
+; CHECK-LABEL: .Ltmp0:
+; CHECK-NEXT:    AUIPC a2,%pcrel_hi(.LCPI1_0)
+; CHECK-NEXT:    ADDI a2,a2,%pcrel_lo(.Ltmp0)
+; CHECK-NEXT:    LD a2,0(a2)
 ; CHECK-NEXT:    SW a2,0(a0)
 ; CHECK-NEXT:    ADDI a0,zero,-2
 ; CHECK-NEXT:    BLT a0,a1,.LBB1_2
 ; CHECK-LABEL:   # %bb.1: # %block1
 ; CHECK-NEXT:    LD a0,0(sp)
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
 ; CHECK-NEXT:  .LBB1_2: # %block2
 ; CHECK-NEXT:    LD a0,8(sp)
 ; CHECK-NEXT:    ADDI a1,zero,87
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
   store i32 -1, ptr %a
   %p = icmp sle i32 %b, -2
   br i1 %p, label %block1, label %block2
@@ -79,12 +77,12 @@ define void @u_case2_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-NEXT:  # %bb.1: # %block1
 ; CHECK-NEXT:    LD a0,0(sp)
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
 ; CHECK-NEXT:  .LBB2_2: # %block2
 ; CHECK-NEXT:    LD a0,8(sp)
 ; CHECK-NEXT:    ADDI a1,zero,87
 ; CHECK-NEXT:    SW a1,0(a0)
-; CHECK-NEXT:    JALR zero,0(ra)
+; CHECK-NEXT:    RET
   store i32 32, ptr %a
   %p = icmp uge i32 %b, 33
   br i1 %p, label %block1, label %block2
@@ -104,24 +102,22 @@ end_block:                                        ; preds = %block2, %block1
 define void @case2_a(ptr %a, i32 signext %b, ptr %c, ptr %d) {
 ; CHECK-LABEL: case2_a:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT: LUI a2,0x0
-; CHECK-NEXT: ADDI a2,a2,0
-; CHECK-NEXT: SLLI a2,a2,16
-; CHECK-NEXT: ORI a2,a2,0
-; CHECK-NEXT: SLLI a2,a2,16
-; CHECK-NEXT: ORI a2,a2,-4
+; CHECK-LABEL: .Ltmp1:
+; CHECK-NEXT: AUIPC a2,%pcrel_hi(.LCPI3_0)
+; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Ltmp1)
+; CHECK-NEXT: LD a2,0(a2)
 ; CHECK-NEXT: SW a2,0(a0)
 ; CHECK-NEXT: ADDI a0,zero,-3
 ; CHECK-NEXT: BLT a1,a0,.LBB3_2
 ; CHECK-LABEL: # %bb.1: # %block1
 ; CHECK-NEXT: LD a0,0(sp)
 ; CHECK-NEXT: SW a1,0(a0)
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
 ; CHECK-LABEL: .LBB3_2: # %block2
 ; CHECK-NEXT: LD a0,8(sp)
 ; CHECK-NEXT: ADDI a1,zero,87
 ; CHECK-NEXT: SW a1,0(a0)
-; CHECK-NEXT: JALR zero,0(ra)
+; CHECK-NEXT: RET
   store i32 -4, ptr %a
   %p = icmp sge i32 %b, -3
   br i1 %p, label %block1, label %block2

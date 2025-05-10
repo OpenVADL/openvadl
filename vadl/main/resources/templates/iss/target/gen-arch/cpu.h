@@ -26,9 +26,6 @@ typedef struct CPUArchState {
   [(${reg.value_c_type})] [(${reg.name_lower})][(${reg.c_array_def})];
   [/]
 
-  // pc reset vector
-  uint64_t reset_vec;
-
   // Exception arguments (intermediate store during exception handling)
   [# th:each="exc : ${exc_info.exceptions}"] [# th:each="p : ${exc.params}"]
   [(${p.c_type})] [(${p.name_in_cpu})];

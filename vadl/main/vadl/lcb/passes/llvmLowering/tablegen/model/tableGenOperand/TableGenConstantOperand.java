@@ -19,9 +19,9 @@ package vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
+import java.util.Objects;
 import vadl.error.Diagnostic;
 import vadl.lcb.codegen.model.llvm.ValueType;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.tableGenParameter.NoTableGenParameter;
 import vadl.utils.SourceLocation;
 import vadl.viam.Constant;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -37,7 +37,7 @@ public class TableGenConstantOperand extends TableGenInstructionOperand {
    * Constructor.
    */
   public TableGenConstantOperand(ConstantNode constantNode, Constant value) {
-    super(constantNode, new NoTableGenParameter());
+    super(constantNode);
     ensure(constantNode.constant().equals(value),
         "This is definitely wrong because index and constraint value are mismatched");
     this.constant = value;
@@ -49,7 +49,7 @@ public class TableGenConstantOperand extends TableGenInstructionOperand {
 
   @Override
   public String render() {
-    var llvmType = ValueType.from(constant.type());
+    var llvmType = ValueType.from(constant.type().asDataType().fittingCppType());
     var unpackedLlvmType = ensurePresent(llvmType, () -> Diagnostic.error(
         "Constant value at given index has an invalid type which is not supported by llvm: "
             + constant.type(),

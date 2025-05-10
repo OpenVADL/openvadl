@@ -140,6 +140,12 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
     return name;
   }
 
+  @Nullable
+  @Override
+  public Node target() {
+    return target;
+  }
+
   @Override
   public String toString() {
     return "%s name: \"%s\"".formatted(this.getClass().getSimpleName(), this.name);
@@ -751,6 +757,18 @@ class StringLiteral extends Expr {
   }
 }
 
+/**
+ * Represents an {@link Identifier} or one of the placeholder sub types.
+ * A placeholder is some macro expr that cannot be directly expanded to an {@link Identifier}, as
+ * itself is part of a macro definition.
+ *
+ * <p>For instance in the following {@code $constId} is such a placeholder:
+ * <pre>{@code
+ * model Test (constId: Id) : Defs = {
+ *   constant $constId = 4
+ * }
+ * }</pre></p>
+ */
 sealed interface IdentifierOrPlaceholder extends IsId
     permits Identifier, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, ExtendIdExpr {
 }
@@ -814,6 +832,12 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, IsI
     var sb = new StringBuilder();
     prettyPrint(0, sb);
     return sb.toString();
+  }
+
+  @Nullable
+  @Override
+  public Node target() {
+    return null;
   }
 }
 
@@ -897,6 +921,12 @@ final class MacroInstanceExpr extends Expr
     return sb.toString();
   }
 
+  @Nullable
+  @Override
+  public Node target() {
+    return null;
+  }
+
   @Override
   public MacroOrPlaceholder macroOrPlaceholder() {
     return macro;
@@ -955,6 +985,12 @@ final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPla
   @Override
   public String pathToString() {
     return "/* Match - can't be rendered! */";
+  }
+
+  @Nullable
+  @Override
+  public Node target() {
+    return null;
   }
 }
 
@@ -1015,6 +1051,12 @@ final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
     var sb = new StringBuilder();
     prettyPrint(0, sb);
     return sb.toString();
+  }
+
+  @Nullable
+  @Override
+  public Node target() {
+    return null;
   }
 }
 
@@ -1358,6 +1400,14 @@ sealed interface IsId extends IsSymExpr
   }
 
   String pathToString();
+
+  /**
+   * The target this id refers to. It is resolved during symbol resolving and
+   * is only valid for {@link Identifier} and {@link IdentifierPath}, which
+   * are the only two {@link IsId} subtypes that survive the {@link MacroExpander}.
+   */
+  @Nullable
+  Node target();
 }
 
 final class IdentifierPath extends Expr implements IsId {
@@ -1397,6 +1447,12 @@ final class IdentifierPath extends Expr implements IsId {
     StringBuilder sb = new StringBuilder();
     prettyPrint(0, sb);
     return sb.toString();
+  }
+
+  @Nullable
+  @Override
+  public Node target() {
+    return target;
   }
 
   //  @Override
@@ -1544,13 +1600,6 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   SourceLocation location;
 
   /**
-   * The resolved target definition being called.
-   * This can only be set in the typechecker and DOES NOT WORK FOR BUILTIN DEFINITIONS.
-   */
-  @Nullable
-  Definition computedTarget;
-
-  /**
    * If the call points to a builtin this field is set instead of computedTarget.
    */
   @Nullable
@@ -1562,6 +1611,10 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     this.argsIndices = argsIndices;
     this.subCalls = subCalls;
     this.location = location;
+  }
+
+  public Node computedTarget() {
+    return Objects.requireNonNull(target.path().target());
   }
 
   @Override
