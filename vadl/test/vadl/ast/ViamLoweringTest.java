@@ -25,7 +25,7 @@ public class ViamLoweringTest {
 
   private final String base = """
        instruction set architecture ISA = {
-        register file X : Bits<5> -> Bits<32>
+        register X : Bits<5> -> Bits<32>
       
         pseudo instruction NOP( symbol: Bits<5>) = {
         }

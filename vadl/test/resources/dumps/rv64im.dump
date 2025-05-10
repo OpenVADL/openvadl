@@ -97,7 +97,7 @@ ImportDefinition
 . : ' | TypeLiteral type: null
 . : ' | . Identifier name: "UInt" type: null
 . : ' | . Identifier name: "SftLen" type: null
-. : ' RegisterFileDefinition name: "X"
+. : ' RegisterDefinition name: "X"
 . : ' | AnnotationDefinition
 . : ' | . Identifier name: "zero" type: null
 . : ' | . CallIndexExpr type: null

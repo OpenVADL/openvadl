@@ -6,7 +6,7 @@ instruction set architecture Test = {
   [ read full ]
   register C: HELPER
 
-  register file D: Regs -> Regs
+  register D: Regs -> Regs
 
   // full read
   instruction FIRST: HELPER = A := B
@@ -17,7 +17,7 @@ instruction set architecture Test = {
   // partial read on full access
   instruction THIRD: HELPER = A := C.ONE
 
-  // register file read
+  // register read
   instruction FOURTH: HELPER = A := D(B.ONE)
 
 

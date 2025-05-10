@@ -6,7 +6,7 @@ instruction set architecture Test = {
   [ write full ]
   register C: HELPER
 
-  register file D: Regs -> Regs
+  register D: Regs -> Regs
 
   // full write
   instruction FIRST: HELPER = B := A
@@ -18,7 +18,7 @@ instruction set architecture Test = {
   // not yet supported
   //   instruction THIRD: HELPER = C.ONE := A
 
-  // register file write
+  // register write
   instruction FOURTH: HELPER = D(B.ONE) := A
 
 

@@ -100,7 +100,7 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
       }
 
 //  register CSR : Regs<CsrImpl::ImplLength> change when implemented
-  register file CSR : CsrImplIndex -> Regs
+  register CSR : CsrImplIndex -> Regs
 
   exception IllegalInstruction = {}
 

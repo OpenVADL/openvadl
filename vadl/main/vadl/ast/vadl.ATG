@@ -386,8 +386,6 @@ PRODUCTIONS
   | encodingDefinition<out def>
   | assemblyDefinition<out def>
   | memoryDefinition<out def>
-  | IF (la.kind == _REGISTER && scanner.Peek().kind == _FILE)
-    registerFileDefinition<out def>
   | registerDefinition<out def>
   | aliasDefinition<out def>
   | exceptionDefinition<out def>
@@ -570,24 +568,19 @@ PRODUCTIONS
   registerDefinition<out RegisterDefinition def>            (. var startLocation = nextTokenLoc(); .)
   = REGISTER
     identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    SYM_COLON typeLiteral<out TypeLiteral t1>               (. def = new RegisterDefinition(id, t1, startLocation.join(t1.location())); .)
-  .
-
-  registerFileDefinition<out Definition def>                          (. var startLocation = nextTokenLoc(); .)
-  = REGISTER FILE
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
     SYM_COLON
-    relationType<out RegisterFileDefinition.RelationTypeLiteral type> (. def = new RegisterFileDefinition(id, type, startLocation.join(lastTokenLoc())); .)
+    relationType<out RegisterDefinition.RelationTypeLiteral type> (. def = new RegisterDefinition(id, type, startLocation.join(lastTokenLoc())); .)
   .
 
-  relationType<out RegisterFileDefinition.RelationTypeLiteral type> (. var argTypes = new ArrayList<TypeLiteral>(); .)
-  = typeLiteral<out TypeLiteral argType>                     (. argTypes.add(argType); .)
-    {
+  relationType<out RegisterDefinition.RelationTypeLiteral type> (. var argTypes = new ArrayList<TypeLiteral>(); .)
+  = typeLiteral<out TypeLiteral t0>                             (. var resultType = t0; .)
+    [{
       SYM_MUL
-      typeLiteral<out argType>                               (. argTypes.add(argType); .)
+      typeLiteral<out TypeLiteral argType>                      (. argTypes.add(argType); .)
     }
     SYM_ARROW
-    typeLiteral<out TypeLiteral resultType>                  (. type = new RegisterFileDefinition.RelationTypeLiteral(argTypes, resultType); .)
+    typeLiteral<out TypeLiteral t1>                             (. argTypes.add(0, resultType); resultType = t1; .) // switch result types
+    ]                                                           (. type = new RegisterDefinition.RelationTypeLiteral(argTypes, resultType); .)
   .
 
   aliasDefinition<out Definition def>                 (. var startLocation = nextTokenLoc(); AliasDefinition.AliasKind kind = null;
@@ -597,9 +590,8 @@ PRODUCTIONS
   = ALIAS
     (
       REGISTER                                        (. kind = AliasDefinition.AliasKind.REGISTER; .)
-      [ FILE                                          (. kind = AliasDefinition.AliasKind.REGISTER_FILE; .)
-      ]
       identifierOrPlaceholder<out id>
+      // FIXME: This should probably use the same relationType as the register definition
       [
         SYM_COLON
         typeLiteral<out aliasType>
@@ -1091,8 +1083,6 @@ PRODUCTIONS
     | logicDefinition<out def>
     | signalDefinition<out def>
     | memoryDefinition<out def>
-    | IF (la.kind == _REGISTER && scanner.Peek().kind == _FILE)
-      registerFileDefinition<out def> // TODO Pass type MIA_DEFS - currently only ISA_DEFS
     | registerDefinition<out def>     // TODO Pass type MIA_DEFS - currently only ISA_DEFS
     | processDefinition<out def>
     | operationDefinition<out def>

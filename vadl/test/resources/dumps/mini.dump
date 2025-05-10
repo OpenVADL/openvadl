@@ -23,7 +23,7 @@ InstructionSetDefinition name: "RV3264I"
 . : TypeLiteral type: null
 . : ' Identifier name: "Bits" type: null
 . : ' IntegerLiteral literal: 5 (5) type: null
-. RegisterFileDefinition name: "X"
+. RegisterDefinition name: "X"
 . : AnnotationDefinition
 . : ' Identifier name: "zero" type: null
 . : ' CallIndexExpr type: null

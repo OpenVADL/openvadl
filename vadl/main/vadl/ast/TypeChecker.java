@@ -233,12 +233,12 @@ public class TypeChecker
             node.getClass().getSimpleName(), node.location().toIDEString()));
   }
 
-  private Diagnostic typeMissmatchError(WithLocation locatable, Type expected, Type actual) {
+  private static Diagnostic typeMissmatchError(WithLocation locatable, Type expected, Type actual) {
     return typeMissmatchError(locatable, "`%s`".formatted(expected), actual);
   }
 
-  private Diagnostic typeMissmatchError(WithLocation locatable, String expectation,
-                                        Type actual) {
+  private static Diagnostic typeMissmatchError(WithLocation locatable, String expectation,
+                                               Type actual) {
     return error("Type Mismatch", locatable)
         .locationDescription(locatable, "Expected %s but got `%s`.",
             expectation, actual)
@@ -414,6 +414,28 @@ public class TypeChecker
     }
 
     return new CastExpr(inner, to);
+  }
+
+  /**
+   * Wraps the expr provided with an implicit cast if it is possible, and not useless.
+   * However, in comparison to {@link #wrapImplicitCast(Expr, Type)}, this will throw a
+   * type mismatch exception,
+   * if the inner expression could not implicitly cast to the given type.
+   *
+   * @param inner expression to wrap.
+   * @param to    which the expression should be cast.
+   * @return the original expression.
+   * @throws Diagnostic if the inner expression cannot be implicitly cast to type.
+   */
+  private static Expr tryWrapImplicitCast(Expr inner, Type to) {
+    if (inner.type == null) {
+      throw new IllegalStateException("The type of the inner expression must be known.");
+    }
+    var wrapped = wrapImplicitCast(inner, to);
+    if (!wrapped.type().equals(to)) {
+      throw typeMissmatchError(inner, to, inner.type());
+    }
+    return wrapped;
   }
 
   @Nullable
@@ -609,25 +631,25 @@ public class TypeChecker
 
   @Override
   public Void visit(RegisterDefinition definition) {
-    check(definition.typeLiteral);
-    if (!(definition.typeLiteral.type instanceof DataType regType)) {
-      var type = definition.typeLiteral.type;
-      throw error("Invalid Type", definition)
-          .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
-          .note("Type was %s.", type == null ? "unknown" : type)
-          .build();
-    }
-    definition.type = regType;
-    return null;
-  }
-
-  @Override
-  public Void visit(RegisterFileDefinition definition) {
     definition.typeLiteral.argTypes().forEach(this::check);
     check(definition.typeLiteral.resultType());
-    definition.type = Type.concreteRelation(
-        definition.typeLiteral.argTypes().stream().map(arg -> arg.type).toList(),
-        requireNonNull(definition.typeLiteral.resultType().type));
+    if (definition.typeLiteral.argTypes().isEmpty()) {
+      // relation without args is not a register file (normal single type)
+      var typeLit = definition.typeLiteral.resultType;
+      if (!(typeLit.type instanceof DataType regType)) {
+        var type = definition.type;
+        throw error("Invalid Type", definition)
+            .description("Expected register type to be one of Bits, SInt, UInt or Bool.")
+            .note("Type was %s.", type == null ? "unknown" : type)
+            .build();
+      }
+      definition.type = regType;
+    } else {
+      // is a register file
+      definition.type = Type.concreteRelation(
+          definition.typeLiteral.argTypes().stream().map(arg -> arg.type).toList(),
+          requireNonNull(definition.typeLiteral.resultType().type));
+    }
 
     return null;
   }
@@ -787,58 +809,55 @@ public class TypeChecker
 
   @Override
   public Void visit(AliasDefinition definition) {
-    if (definition.kind == AliasDefinition.AliasKind.REGISTER_FILE) {
-      if (!(definition.value instanceof Identifier valIdent)) {
-        throw error("Invalid alias", definition.value)
-            .locationDescription(definition.value, "The target must be an identifier but was `%s`",
-                definition.value.getClass().getSimpleName())
-            .build();
-      }
 
-      var regFile = (RegisterFileDefinition) valIdent.target();
-
-      if (regFile == null) {
-        throw error("Invalid alias", valIdent)
-            .locationDescription(valIdent, "Doesn't point to a register file.")
-            .build();
-      }
-
-      check(regFile);
-      definition.computedTarget = regFile;
-
-
-      if (definition.aliasType == null && definition.targetType == null) {
-        definition.type = regFile.type();
-        return null;
-      } else if (definition.aliasType != null && definition.targetType != null) {
-        definition.type =
-            Type.concreteRelation(check(definition.aliasType), check(definition.targetType));
-        return null;
-      }
-
-      // FIXME: Either make this illegal in the grammar or implement the correct semantic once
-      // that is clarified: https://github.com/OpenVADL/open-vadl/issues/80#issue-2940372881
-      throw new IllegalStateException();
-    }
+    var targetIdent = switch (definition.value) {
+      case Identifier ident -> ident;
+      case CallIndexExpr expr -> expr.target.path();
+      default -> throw error("Invalid alias", definition.value)
+          .locationDescription(definition.value, "The target must be a direct register access.")
+          .build();
+    };
 
     if (definition.kind == AliasDefinition.AliasKind.REGISTER) {
+      var reg = definition.symbolTable().findAs(targetIdent, RegisterDefinition.class);
+      if (reg == null) {
+        // if this does not directly reference a register,
+        // it might reference an other alias definition
+        var alias = definition.symbolTable().findAs(targetIdent, AliasDefinition.class);
+        if (alias == null || alias.kind != AliasDefinition.AliasKind.REGISTER) {
+          throw error("Unknown alias source register", targetIdent.location())
+              .locationDescription(targetIdent.location(), "Unknown register `%s`.", targetIdent)
+              .build();
+        }
+        check(alias);
+        reg = (RegisterDefinition) requireNonNull(alias.computedTarget);
+      }
+
+      check(reg);
+      definition.computedTarget = reg;
+
       if (definition.targetType != null) {
-        throw error("Invalid Register Alias", definition.targetType)
-            .build();
+        // FIXME: Support relational alias types on registers
+        throw new IllegalStateException(
+            "Relational alias types are not yet supported, found at: %s".formatted(
+                definition.loc.toIDEString()));
       }
+
       var valType = check(definition.value);
-      if (definition.aliasType == null) {
-        definition.type = valType;
-      } else {
+
+      if (definition.aliasType != null) {
         definition.type = check(definition.aliasType);
+        definition.value = tryWrapImplicitCast(definition.value, definition.type);
+      } else {
+        definition.type = valType;
       }
+
       return null;
     }
 
     throw new IllegalStateException(
-        "Kind %s not yet implemented, found at: %s".formatted(definition.kind.toString(),
+        "Kind %s not yet implemented, found at: %s".formatted(definition.kind,
             definition.loc.toIDEString()));
-
   }
 
   @Override
@@ -2601,7 +2620,7 @@ public class TypeChecker
   @Override
   public Void visit(CallIndexExpr expr) {
 
-    // The first call of the multicalls depends on the thing that is beeing called.
+    // The first call of the multicalls depends on the thing that is being called.
     // However since the definitions aren't part of the typesystem we need to resolve them
     // manually.
     // If no target matches, we can assume a slice and index call (depending on the type).
@@ -2609,35 +2628,34 @@ public class TypeChecker
     var callTarget = expr.symbolTable().findAs(expr.target.path(), Definition.class);
 
     // Handle register File
-    if (callTarget instanceof RegisterFileDefinition
+    if (callTarget instanceof RegisterDefinition
         || (callTarget instanceof AliasDefinition aliasDef
-        && aliasDef.kind.equals(AliasDefinition.AliasKind.REGISTER_FILE))) {
-      if (expr.argsIndices.isEmpty() || expr.argsIndices.get(0).values.size() != 1) {
-        throw error("Invalid Register Usage", expr)
-            .description("A register call must have exactly one argument.")
-            .build();
+        && aliasDef.kind.equals(AliasDefinition.AliasKind.REGISTER))) {
+      
+      check(callTarget);
+
+      // the start of the index calls (might be 1 if the destination is a reg file)
+      var indexSubListStart = 0;
+      var callTargetType = ((TypedNode) callTarget).type();
+      var typeBeforeIndex = callTargetType;
+      if (callTargetType instanceof ConcreteRelationType relType) {
+        // If the call type is a relation type, it is a register file, so the first
+        // argument list must be treated as a list of arguments to the register file.
+        // FIXME: This must be more generic if the relation has multiple arguments
+        var argList = expr.argsIndices.get(0);
+        var arg = argList.values.get(0);
+        check(arg);
+        var requiredArgType = relType.argTypes().get(0);
+        argList.values.set(0, tryWrapImplicitCast(arg, requiredArgType));
+        typeBeforeIndex = relType.resultType();
+        argList.type = typeBeforeIndex;
+        indexSubListStart = 1;
       }
 
-      var argList = expr.argsIndices.get(0);
-      var arg = argList.values.get(0);
-      check(arg);
-
-      check((Definition) callTarget);
-      var callTargetType = (ConcreteRelationType) ((TypedNode) callTarget).type();
-      var requiredArgType =
-          requireNonNull(requireNonNull(callTargetType).argTypes().get(0));
-      argList.values.set(0, wrapImplicitCast(arg, requiredArgType));
-      arg = argList.values.get(0);
-      var actualArgType = arg.type();
-
-      if (!actualArgType.equals(requiredArgType)) {
-        throw typeMissmatchError(expr, requiredArgType, actualArgType);
-      }
-
-      var typeBeforeIndex = callTargetType.resultType();
-      argList.type = typeBeforeIndex;
+      // all further argument indices are slice calls
       visitSliceIndexCall(expr, typeBeforeIndex,
-          expr.argsIndices.subList(1, expr.argsIndices.size()));
+          expr.argsIndices.subList(indexSubListStart, expr.argsIndices.size()));
+      // the after the index slice we might have a type that can be called like .next
       visitSubCall(expr, expr.type());
       return null;
     }

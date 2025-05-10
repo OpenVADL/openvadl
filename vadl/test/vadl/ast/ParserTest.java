@@ -158,7 +158,7 @@ public class ParserTest {
   void registerFileDefinition() {
     var prog = """
         instruction set architecture FLO = {
-          register file X : Bits<5> -> Bits<32>
+          register X : Bits<5> -> Bits<32>
         }
         """;
 

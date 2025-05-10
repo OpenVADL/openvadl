@@ -483,14 +483,6 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(RegisterFileDefinition definition) {
-    beforeTravel(definition);
-    definition.children().forEach(this::travel);
-    afterTravel(definition);
-    return null;
-  }
-
-  @Override
   public Void visit(RelocationDefinition definition) {
     beforeTravel(definition);
     definition.children().forEach(this::travel);

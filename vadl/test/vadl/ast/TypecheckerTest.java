@@ -949,7 +949,7 @@ public class TypecheckerTest {
           using Inst     = Bits<32>               // instruction word is 32 bit
           using Regs     = Bits<32>               // untyped register word type
         
-          register file    X : Bits<5>   -> Regs  // integer register file with 32 registers of 32 bits
+          register    X : Bits<5>   -> Regs  // integer register with 32 registers of 32 bits
         
           format Rtype : Inst =                   // Rtype register 3 operand instruction format
             { funct7 : Bits<7>                    // [31..25] 7 bit function code
@@ -978,7 +978,7 @@ public class TypecheckerTest {
               using Inst     = Bits<32>               // instruction word is 32 bit
               using Regs     = Bits<32>               // untyped register word type
         
-              register file    X : Bits<5>   -> Regs  // integer register file with 32 registers of 32 bits
+              register    X : Bits<5>   -> Regs  // integer register with 32 registers of 32 bits
         
               format Rtype : Inst =                   // Rtype register 3 operand instruction format
                 { funct7 : Bits<7>                    // [31..25] 7 bit function code
@@ -1009,7 +1009,7 @@ public class TypecheckerTest {
           using Inst     = Bits<32>               // instruction word is 32 bit
           using Regs     = Bits<32>               // untyped register word type
         
-          register file    X : Bits<5>   -> Regs  // integer register file with 32 registers of 32 bits
+          register    X : Bits<5>   -> Regs  // integer register with 32 registers of 32 bits
         
           format Rtype : Inst =                   // Rtype register 3 operand instruction format
             { funct7 : Bits<7>                    // [31..25] 7 bit function code

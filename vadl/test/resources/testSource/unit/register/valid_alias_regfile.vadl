@@ -3,12 +3,12 @@ instruction set architecture Test = {
   using Regs = Bits<32>
   using Index = Bits<5>
 
-  register file X: Index -> Regs
+  register X: Index -> Regs
 
   [ zero: A(12) ]
-  alias register file A = X
+  alias register A = X
 
-  alias register file B = X
+  alias register B = X
 
 
   instruction ReadA_Hit: F = {

@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.javaannotations.ast.Child;
 import vadl.types.ConcreteRelationType;
-import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
@@ -183,8 +182,6 @@ interface DefinitionVisitor<R> {
   R visit(RecordTypeDefinition definition);
 
   R visit(RegisterDefinition definition);
-
-  R visit(RegisterFileDefinition definition);
 
   R visit(RelocationDefinition definition);
 
@@ -1161,13 +1158,13 @@ class MemoryDefinition extends Definition implements IdentifiableNode, TypedNode
 class RegisterDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder identifier;
   @Child
-  TypeLiteral typeLiteral;
+  RelationTypeLiteral typeLiteral;
   SourceLocation loc;
 
   @Nullable
-  DataType type;
+  Type type;
 
-  public RegisterDefinition(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral,
+  public RegisterDefinition(IdentifierOrPlaceholder identifier, RelationTypeLiteral typeLiteral,
                             SourceLocation location) {
     this.identifier = identifier;
     this.typeLiteral = typeLiteral;
@@ -1230,83 +1227,6 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
 
   @Override
   public Type type() {
-    return typeLiteral.type();
-  }
-}
-
-class RegisterFileDefinition extends Definition implements IdentifiableNode, TypedNode {
-  IdentifierOrPlaceholder identifier;
-  @Child
-  RelationTypeLiteral typeLiteral;
-  SourceLocation loc;
-
-  @Nullable
-  ConcreteRelationType type = null;
-
-  public RegisterFileDefinition(IdentifierOrPlaceholder identifier, RelationTypeLiteral typeLiteral,
-                                SourceLocation location) {
-    this.identifier = identifier;
-    this.typeLiteral = typeLiteral;
-    this.loc = location;
-  }
-
-  @Override
-  public Identifier identifier() {
-    return (Identifier) identifier;
-  }
-
-  @Override
-  public SourceLocation location() {
-    return loc;
-  }
-
-  @Override
-  SyntaxType syntaxType() {
-    return BasicSyntaxType.ISA_DEFS;
-  }
-
-  @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    prettyPrintAnnotations(indent, builder);
-    builder.append(prettyIndentString(indent));
-    builder.append("register file ");
-    identifier.prettyPrint(indent, builder);
-    builder.append(": ");
-    typeLiteral.prettyPrint(indent, builder);
-    builder.append("\n");
-  }
-
-  @Override
-  <R> R accept(DefinitionVisitor<R> visitor) {
-    return visitor.visit(this);
-  }
-
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    RegisterFileDefinition that = (RegisterFileDefinition) o;
-    return annotations.equals(that.annotations)
-        && identifier.equals(that.identifier)
-        && typeLiteral.equals(that.typeLiteral);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = annotations.hashCode();
-    result = 31 * result + identifier.hashCode();
-    result = 31 * result + typeLiteral.hashCode();
-    return result;
-  }
-
-  @Override
-  public ConcreteRelationType type() {
     return Objects.requireNonNull(type);
   }
 
@@ -1314,7 +1234,8 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
     @Child
     final List<TypeLiteral> argTypes;
     @Child
-    final TypeLiteral resultType;
+    TypeLiteral resultType;
+
 
     RelationTypeLiteral(List<TypeLiteral> argTypes, TypeLiteral resultType) {
       this.argTypes = argTypes;
@@ -1337,7 +1258,7 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
       if (obj == null || obj.getClass() != this.getClass()) {
         return false;
       }
-      var that = (RelationTypeLiteral) obj;
+      var that = (RegisterDefinition.RelationTypeLiteral) obj;
       return Objects.equals(this.argTypes, that.argTypes)
           && Objects.equals(this.resultType, that.resultType);
     }
@@ -1368,7 +1289,9 @@ class RegisterFileDefinition extends Definition implements IdentifiableNode, Typ
         isFirst = false;
         argType.prettyPrint(0, builder);
       }
-      builder.append(" -> ");
+      if (!argTypes.isEmpty()) {
+        builder.append(" -> ");
+      }
       resultType.prettyPrint(indent, builder);
     }
   }
@@ -2163,7 +2086,6 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
     builder.append(prettyIndentString(indent)).append("alias ");
     switch (kind) {
       case REGISTER -> builder.append("register ");
-      case REGISTER_FILE -> builder.append("register file ");
       case PROGRAM_COUNTER -> builder.append("program counter ");
       default -> {
       }
@@ -2218,7 +2140,7 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
   }
 
   enum AliasKind {
-    REGISTER, REGISTER_FILE, PROGRAM_COUNTER
+    REGISTER, PROGRAM_COUNTER
   }
 }
 

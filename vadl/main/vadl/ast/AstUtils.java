@@ -30,6 +30,7 @@ import vadl.types.Type;
 import vadl.types.UIntType;
 
 class AstUtils {
+
   @Nullable
   static BuiltInTable.BuiltIn getBuiltIn(String name, List<Type> argTypes) {
 
