@@ -200,9 +200,6 @@ define i8 @mulsub_demand_2(i8 %x, i8 %y) nounwind {
 define i64 @muland_demand(i64 %x) nounwind {
 ; CHECK-LABEL: muland_demand: # @muland_demand
 ; CHECK-LABEL: # %bb.0:
-; CHECK-NEXT: LUI a2,0x40000
-; CHECK-NEXT: ADDI a2,a2,-1
-; CHECK-NEXT: AND a1,a1,a2
 ; CHECK-NEXT: ADDI a2,zero,12
 ; CHECK-NEXT: MUL a1,a1,a2
 ; CHECK-NEXT: ANDI a0,a0,-8

@@ -33,7 +33,7 @@
 
 using namespace llvm;
 
-[(${namespace})]MCCodeEmitter::[(${namespace})]MCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx, bool IsBigEndian) : MCII(mcii), Ctx(ctx), EndianEncoding(IsBigEndian ? support::big : support::little), MCInstExpander(ctx)
+[(${namespace})]MCCodeEmitter::[(${namespace})]MCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx, bool isBigEndian) : MCII(mcii), Ctx(ctx), EndianEncoding(isBigEndian ? llvm::endianness::big : llvm::endianness::little), MCInstExpander(ctx)
 {
 }
 
@@ -125,7 +125,7 @@ unsigned [(${namespace})]MCCodeEmitter::[(${imm.encodeWrapper})](const MCInst &M
 }
 [/]
 
-void [(${namespace})]MCCodeEmitter::encodeInstruction(const MCInst &MCI, raw_ostream &OS, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
+void [(${namespace})]MCCodeEmitter::encodeInstruction(const MCInst &MCI, SmallVectorImpl<char> &CB, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {
     Offset = 0;
     std::vector<MCInst> resultVec;
@@ -133,7 +133,7 @@ void [(${namespace})]MCCodeEmitter::encodeInstruction(const MCInst &MCI, raw_ost
     if (MCInstExpander.isExpandable(MCI))
     {
         MCInstExpander.expand(MCI, [&](const MCInst &MI) {
-          encodeNonPseudoInstruction(MI, OS, Fixups, STI);
+          encodeNonPseudoInstruction(MI, CB, Fixups, STI);
           const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
           unsigned Size = Desc.getSize();
           Offset += Size;
@@ -143,14 +143,14 @@ void [(${namespace})]MCCodeEmitter::encodeInstruction(const MCInst &MCI, raw_ost
     }
     else
     {
-        encodeNonPseudoInstruction(MCI, OS, Fixups, STI);
+        encodeNonPseudoInstruction(MCI, CB, Fixups, STI);
         const MCInstrDesc &Desc = MCII.get(MCI.getOpcode());
         unsigned Size = Desc.getSize();
         Offset += Size;
     }
 }
 
-void [(${namespace})]MCCodeEmitter::encodeNonPseudoInstruction(const MCInst &MI, raw_ostream &OS, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
+void [(${namespace})]MCCodeEmitter::encodeNonPseudoInstruction(const MCInst &MI, SmallVectorImpl<char> &CB, SmallVectorImpl<MCFixup> &Fixups, const MCSubtargetInfo &STI) const
 {
     // Get byte count of instruction.
     const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
@@ -161,25 +161,25 @@ void [(${namespace})]MCCodeEmitter::encodeNonPseudoInstruction(const MCInst &MI,
     case 1:
     {
         uint8_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
-        support::endian::write<uint8_t>(OS, Bits, EndianEncoding);
+        support::endian::write<uint8_t>(CB, Bits, EndianEncoding);
         break;
     }
     case 2:
     {
         uint16_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
-        support::endian::write<uint16_t>(OS, Bits, EndianEncoding);
+        support::endian::write<uint16_t>(CB, Bits, EndianEncoding);
         break;
     }
     case 4:
     {
         uint32_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
-        support::endian::write<uint32_t>(OS, Bits, EndianEncoding);
+        support::endian::write<uint32_t>(CB, Bits, EndianEncoding);
         break;
     }
     case 8:
     {
         uint64_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
-        support::endian::write<uint64_t>(OS, Bits, EndianEncoding);
+        support::endian::write<uint64_t>(CB, Bits, EndianEncoding);
         break;
     }
     default:

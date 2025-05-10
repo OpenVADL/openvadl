@@ -5,7 +5,6 @@
 #include "[(${namespace})]SubTarget.h"
 #include "[(${namespace})]MachineFunctionInfo.h"
 #include "MCTargetDesc/[(${namespace})]MCTargetDesc.h"
-#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -295,7 +294,7 @@ void [(${namespace})]TargetLowering::WriteToVarArgs(std::vector<SDValue> &OutCha
         [#th:block th:each="cl : ${argumentRegisterClasses}" ]
           unsigned [(${cl.name})]LenInBytes = [(${cl.resultWidth / 8})];
           MVT [(${cl.name})]LenVT = MVT::[(${cl.llvmResultType})];
-          ArrayRef<MCPhysReg> [(${cl.name})]ArgRegs = makeArrayRef(Arg[(${cl.name})]s);
+          ArrayRef<MCPhysReg> [(${cl.name})]ArgRegs = ArrayRef(Arg[(${cl.name})]s);
           unsigned [(${cl.name})]Idx = CCInfo.getFirstUnallocated( [(${cl.name})]ArgRegs);
           const TargetRegisterClass *[(${cl.name})]RC = &[(${namespace})]::[(${cl.name})]RegClass;
         [/th:block]
@@ -438,18 +437,12 @@ SDValue [(${namespace})]TargetLowering::LowerCall(TargetLowering::CallLoweringIn
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     {
         const GlobalValue *GV = G->getGlobal();
-        if (!getTargetMachine().shouldAssumeDSOLocal(*GV->getParent(), GV)) {
-            OpFlag = [(${namespace})]BaseInfo::MO_PLT;
-        }
-
+        OpFlag = [(${namespace})]BaseInfo::MO_PLT;
         Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, getPointerTy(DAG.getDataLayout()), /* Offset */ 0, OpFlag);
     }
     else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     {
-        if (!getTargetMachine().shouldAssumeDSOLocal(*MF.getFunction().getParent(), nullptr)) {
-            OpFlag = [(${namespace})]BaseInfo::MO_PLT;
-        }
-
+        OpFlag = [(${namespace})]BaseInfo::MO_PLT;
         Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(DAG.getDataLayout()), OpFlag);
     }
 
@@ -580,7 +573,7 @@ static SDValue getTargetNode(JumpTableSDNode *N, const SDLoc &DL, EVT Ty, Select
 }
 
 template <class NodeTy>
-SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bool IsLocal) const
+SDValue [(${namespace})]TargetLowering::getAddr(NodeTy *N, SelectionDAG &DAG, bool IsLocal, bool IsExternWeak) const
 {
     SDLoc DL(N);
     EVT Ty = getPointerTy(DAG.getDataLayout());
@@ -644,8 +637,7 @@ SDValue [(${namespace})]TargetLowering::lowerGlobalAddress(SDValue Op, Selection
     int64_t Offset = N->getOffset();
 
     const GlobalValue *GV = N->getGlobal();
-    bool IsLocal = getTargetMachine().shouldAssumeDSOLocal(*GV->getParent(), GV);
-    SDValue Addr = getAddr(N, DAG, IsLocal);
+    SDValue Addr = getAddr(N, DAG, GV->isDSOLocal(), GV->hasExternalWeakLinkage());
 
     // In order to maximize the opportunity for common subexpression elimination,
     // emit a separate ADD node for the global address offset instead of folding

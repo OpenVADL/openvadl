@@ -92,7 +92,7 @@ namespace llvm
 
         private:
             const [(${namespace})]Subtarget &Subtarget;
-            template <class NodeTy> SDValue getAddr(NodeTy *N, SelectionDAG &DAG, bool IsLocal = true) const;
+            template <class NodeTy> SDValue getAddr(NodeTy *N, SelectionDAG &DAG, bool IsLocal = true, bool isExternWeak = false) const;
             SDValue lowerGlobalAddress( SDValue Op, SelectionDAG &DAG ) const;
             SDValue lowerBlockAddress( SDValue Op, SelectionDAG &DAG ) const;
             SDValue lowerConstantPool( SDValue Op, SelectionDAG &DAG ) const;

@@ -32,7 +32,7 @@ default: build
 .PHONY: build
 
 build:
-		git clone https://github.com/llvm/llvm-project --depth=1 -b llvmorg-17.0.6 $(LLVM_SOURCE_PATH) || true
+		git clone https://github.com/llvm/llvm-project --depth=1 -b llvmorg-19.1.7 $(LLVM_SOURCE_PATH) || true
 		cp -r ./llvm/* $(LLVM_SOURCE_PATH)/llvm
 		cp -r ./clang/* $(LLVM_SOURCE_PATH)/clang
 		cp -r ./lld/* $(LLVM_SOURCE_PATH)/lld

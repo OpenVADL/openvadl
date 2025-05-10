@@ -20,12 +20,13 @@
 #include "llvm/Target/TargetMachine.h"
 
 #define DEBUG_TYPE "[(${namespace})]DAGToDAGISel"
+#define PASS_NAME "[(${namespace})] DAG->DAG Pattern Instruction Selection"
 
 using namespace llvm;
 
 void [(${namespace})]DAGToDAGISel::anchor() {}
 
-bool [(${namespace})]DAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintCode, std::vector<SDValue> &OutOps)
+bool [(${namespace})]DAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op, InlineAsm::ConstraintCode ConstraintCode, std::vector<SDValue> &OutOps)
 {
     return false;
 }
@@ -119,9 +120,16 @@ bool [(${namespace})]DAGToDAGISel::trySelect(SDNode *Node)
 }
 
 // global function is declared in '[(${namespace})].h'
-FunctionPass *llvm::create[(${namespace})]ISelDag([(${namespace})]TargetMachine &TM, CodeGenOpt::Level OptLevel)
+FunctionPass *llvm::create[(${namespace})]ISelDag([(${namespace})]TargetMachine &TM, CodeGenOptLevel OptLevel)
 {
-    return new [(${namespace})]DAGToDAGISel(TM, OptLevel);
+    return new [(${namespace})]DAGToDAGISelLegacy(TM, OptLevel);
 }
 
-char [(${namespace})]DAGToDAGISel::ID = 0;
+[(${namespace})]DAGToDAGISelLegacy::[(${namespace})]DAGToDAGISelLegacy([(${namespace})]TargetMachine &TM,
+                                                 CodeGenOptLevel OptLevel)
+    : SelectionDAGISelLegacy(
+          ID, std::make_unique<[(${namespace})]DAGToDAGISel>(TM, OptLevel)) {}
+
+char [(${namespace})]DAGToDAGISelLegacy::ID = 0;
+
+INITIALIZE_PASS([(${namespace})]DAGToDAGISelLegacy, DEBUG_TYPE, PASS_NAME, false, false)

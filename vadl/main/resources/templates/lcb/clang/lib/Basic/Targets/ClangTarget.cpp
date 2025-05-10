@@ -13,7 +13,7 @@ ArrayRef<const char *> [(${namespace})]TargetInfo::getGCCRegNames() const
             "[(${register.name})]"[#th:block th:if="${!iterStat.last}"],[/th:block]
         [/th:block]
     };
-    return llvm::makeArrayRef( GCCRegNames );
+    return llvm::ArrayRef( GCCRegNames );
 }
 
 ArrayRef<TargetInfo::GCCRegAlias> [(${namespace})]TargetInfo::getGCCRegAliases() const
@@ -27,7 +27,7 @@ ArrayRef<TargetInfo::GCCRegAlias> [(${namespace})]TargetInfo::getGCCRegAliases()
         }[# th:if="${!iterStat.last}" ],[/]
     [/]
     };
-    return llvm::makeArrayRef( GCCRegAliases );
+    return llvm::ArrayRef( GCCRegAliases );
 }
 
 void [(${namespace})]TargetInfo::getTargetDefines(const LangOptions &Opts,

@@ -22,7 +22,7 @@ using namespace llvm;
 [(${namespace})]AsmBackend::[(${namespace})]AsmBackend
     ( const Target &T
     , bool IsBigEndian
-    ) : MCAsmBackend( IsBigEndian ? support::big : support::little )
+    ) : MCAsmBackend( IsBigEndian ? llvm::endianness::big : llvm::endianness::little )
       , TheTarget(T)
 {}
 
@@ -62,6 +62,7 @@ bool [(${namespace})]AsmBackend::shouldForceRelocation
     ( const MCAssembler &Asm
     , const MCFixup &Fixup
     , const MCValue &Target
+    , const MCSubtargetInfo *STI
     )
 {
     switch ( ([(${namespace})]::Fixups) Fixup.getKind() )
@@ -86,11 +87,13 @@ bool [(${namespace})]AsmBackend::mayNeedRelaxation
 
 /// fixupNeedsRelaxation - Target specific predicate for whether a given
 /// fixup requires the associated instruction to be relaxed.
-bool [(${namespace})]AsmBackend::fixupNeedsRelaxation
-    ( const MCFixup &Fixup
+bool [(${namespace})]AsmBackend::fixupNeedsRelaxationAdvanced
+    ( const MCAssembler &Asm
+    , const MCFixup &Fixup
+    , bool Resolved
     , uint64_t Value
     , const MCRelaxableFragment *DF
-    , const MCAsmLayout &Layout) const
+    , const bool WasForced) const
 {
     // TODO: @chochrainer FIXME: can be ignored for now
     llvm_unreachable("fixupNeedsRelaxation() unimplemented");

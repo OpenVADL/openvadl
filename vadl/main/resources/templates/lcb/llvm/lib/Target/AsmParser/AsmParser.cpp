@@ -37,9 +37,7 @@ StringRef mapGrammarAttributeToTarget(unsigned Opcode, const StringRef grammarAt
 
 bool parseRegister(MCRegister &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
-OperandMatchResultTy tryParseRegister(MCRegister &RegNo,
-                                                      SMLoc &StartLoc,
-                                                      SMLoc &EndLoc) override;
+ParseStatus tryParseRegister(MCRegister &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
 bool ParseInstruction(ParseInstructionInfo &Info,
                         StringRef Name, SMLoc NameLoc,
@@ -139,14 +137,14 @@ StringRef [(${namespace})]AsmParser::mapGrammarAttributeToTarget(unsigned Opcode
 }
 
 bool [(${namespace})]AsmParser::parseRegister(MCRegister &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) {
-    if (tryParseRegister(RegNo, StartLoc, EndLoc) != MatchOperand_Success) {
+    if (!tryParseRegister(RegNo, StartLoc, EndLoc).isSuccess()) {
         return Error(StartLoc, "invalid register name");
     }
 
     return false;
 }
 
-OperandMatchResultTy [(${namespace})]AsmParser::tryParseRegister(MCRegister &RegNo,
+ParseStatus [(${namespace})]AsmParser::tryParseRegister(MCRegister &RegNo,
                                                               SMLoc &StartLoc,
                                                               SMLoc &EndLoc) {
     SmallVector<std::unique_ptr<MCParsedAsmOperand>, 0> dummy;
@@ -157,12 +155,12 @@ OperandMatchResultTy [(${namespace})]AsmParser::tryParseRegister(MCRegister &Reg
     {
         SMLoc loc = std::get<0>(result.getError());
         std::string msg = std::get<1>(result.getError());
-        return MatchOperand_NoMatch;
+        return ParseStatus::NoMatch;
     }
     RegNo = MCRegister::from(result.getParsed().Value);
     StartLoc = result.getParsed().S;
     EndLoc = result.getParsed().E;
-    return MatchOperand_Success;
+    return ParseStatus::Success;
 }
 
 bool [(${namespace})]AsmParser::ParseDirective(AsmToken DirectiveID) {

@@ -88,7 +88,7 @@ static MCCodeEmitter *create[(${namespace})]MCCodeEmitter(const MCInstrInfo &MCI
     return new [(${namespace})]MCCodeEmitter(MCII, Ctx, [(${namespace})]BaseInfo::IsBigEndian());
 }
 
-static MCTargetStreamer *create[(${namespace})]AsmTargetStreamer(MCStreamer &S, formatted_raw_ostream &OS, MCInstPrinter *InstPrint, bool isVerboseAsm)
+static MCTargetStreamer *create[(${namespace})]AsmTargetStreamer(MCStreamer &S, formatted_raw_ostream &OS, MCInstPrinter *InstPrint)
 {
     return new [(${namespace})]AsmStreamer(S, OS);
 }

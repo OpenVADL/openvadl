@@ -5,6 +5,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/MC/MCRegister.h"
 
 using namespace llvm;
 
@@ -63,7 +64,7 @@ public:
   bool isMem() const override;
   bool isIntReg() const;
   StringRef getToken() const;
-  unsigned getReg() const override;
+  MCRegister getReg() const override;
   const MCExpr *getImm() const;
   SMLoc getStartLoc() const override;
   SMLoc getEndLoc() const override;
