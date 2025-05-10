@@ -15,7 +15,7 @@
 
 // ARM AArch64 base instruction set
 
-instruction set architecture AAarch64Base = {
+instruction set architecture AArch64Base = {
 
   constant SizeW = 32                 // size of W registers is 32
   constant SizeX = 64                 // size of X registers is 64
