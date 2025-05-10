@@ -49,12 +49,12 @@ instruction set architecture AAarch64Base = {
 
   program counter PC: Address         // program counter
 
-  memory      MEM : Address -> Byte   // byte addressed memory
-  register S : Index -> BitsX    // general purpose register file with stack pointer
+  memory        MEM : Address -> Byte // byte addressed memory
+  register        S : Index -> BitsX  // general purpose register file with stack pointer
 //[zero : X(31)]                      // X(31) is the zero register
-  alias register  X = S           // general purpose register file with zero register
-  alias register  SP: Address = S(31) // stack pointer
-  alias register  LR: Address = S(30) // link register (return address)
+  alias register  X = S               // general purpose register file with zero register
+  alias register SP : Address = S(31) // stack pointer
+  alias register LR : Address = S(30) // link register (return address)
 
   format ConditionFlags: Bits<4> = {  // condition flags register format
 //    res1  : Bits<32>,               // reserved, zero
@@ -138,11 +138,11 @@ instruction set architecture AAarch64Base = {
     , SXTX                            // Signed   eXTend Xword
     }
 
-  enumeration Position: Bits2 = // position in destination register, do not reorder
-    { Pos00                     // 15..0
-    , Pos16                     // 31..16
-    , Pos32                     // 47..32
-    , Pos48                     // 63..48
+  enumeration Position: Bits2 =       // position in destination register, do not reorder
+    { Pos00                           // 15..0
+    , Pos16                           // 31..16
+    , Pos32                           // 47..32
+    , Pos48                           // 63..48
     }
 
   enumeration AccSize: Bits2 =        // memory operations access size, do not change order
@@ -183,6 +183,23 @@ instruction set architecture AAarch64Base = {
     , rm       [20..16] : Index       // 2nd source register (eventually shifted)
     , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
     , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  format ThreeRegOpFormat: Instr =    // three register operand format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15..10]        // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  format MulAddSubFormat: Instr =     // multiply add / sub format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15]            // opcode
+    , rm       [20..16] : Index       // 2nd source  register
+    , ra       [14..10] : Index       // accumulator register
+    , rn       [9..5]   : Index       // 1st source  register
     , rd       [4..0]   : Index       // destination register
     }
 
@@ -280,7 +297,7 @@ instruction set architecture AAarch64Base = {
   // condition code id, mnemonic extension, condition expression
   record Cond (cc: Id, mext: Str, ex: Ex)
 
-  // register size (WReg, XReg), access size (Byte, Half, Word, XWord), 
+  // register size (WSize, XSize), access size (Byte, Half, Word, XWord), 
   // mnemonic extension ("b", "sb", "h", "sh", "sw"), opc, memory statement
   record Memory  (regsize: Id, accsize: Id, mext: Str, opc: Lit, stmt: Stat)
 
@@ -423,6 +440,59 @@ instruction set architecture AAarch64Base = {
     }
 
 
+// base model for 3 register operand instructions ******************************
+
+  model ThreeRegOpEncAsmInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm))
+    }
+
+
+// multiply add / sub  model ***************************************************
+
+  model MulAddSubInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: MulAddSubFormat =
+      let result = VADL::$i.funct (X(ra) as Bits<Size::$size>, (X(rn) as Bits<Size::$size> * X(rm) as Bits<Size::$size>)) in
+        X(rd) := result as Bits<Size::$size> as BitsX
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', ', $size(ra))
+    }
+
+// multiply high model *********************************************************
+
+  model MulHighInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result = X(rn) as $i.funct *# X(rm) as $i.funct in
+        X(rd) := result(127..SizeX)
+    $ThreeRegOpEncAsmInstr ($i; XSize)
+    }
+
+// multiply add / sub long model ***********************************************
+
+  model MulAddSubLongInstr (i: InstrWithFunct, type: Id): IsaDefs = {
+    instruction $i.id: MulAddSubFormat =
+      X(rd) := VADL::$i.funct (X(ra), (X(rn) as $type<Size::WSize> *# X(rm) as $type<Size::WSize>))
+    encoding $i.id = { op = $i.opcode, sf = SF::XSize }
+    assembly $i.id = ($i.mnemo, ' ', XSize(rd), ', ', WSize(rn), ', ', WSize(rm), ', ', XSize(ra))
+    }
+
+  model SMulAddSubLongInstr (i: InstrWithFunct): IsaDefs = { $MulAddSubLongInstr ($i; SInt) }
+  model UMulAddSubLongInstr (i: InstrWithFunct): IsaDefs = { $MulAddSubLongInstr ($i; UInt) }
+
+
+// divide model ****************************************************************
+
+  model DivInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result =
+        if X(rm) = 0
+          then 0
+          else X(rn) as $i.funct<Size::$size> / X(rm) as $i.funct<Size::$size> in
+        X(rd) := result as Bits<Size::$size> as BitsX
+    $ThreeRegOpEncAsmInstr ($i; $size)
+    }
+
+
 // register shift models *******************************************************
 
   model ShiftRegInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -434,7 +504,7 @@ instruction set architecture AAarch64Base = {
 
 // movk, movn, movz models *****************************************************
 
-  model notid (not: Id, ex: Ex) : Ex = { match: Ex ($not = not => ~($ex) ;_=> $ex) }
+  model notOrIdent (not: Id, ex: Ex) : Ex = { match: Ex ($not = not => ~($ex) ;_=> $ex) }
   
   model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
     instruction ExtendId ($i.id, $pos): MovFormat = 
@@ -457,12 +527,12 @@ instruction set architecture AAarch64Base = {
 
   model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     match: IsaDefs ( $size = WSize
-         => $MovInstr ($i; $size; Pos00; $notid($i.funct; (imm16 as BitsW      )) as BitsX)
-            $MovInstr ($i; $size; Pos16; $notid($i.funct; (imm16 as BitsW << 16)) as BitsX)
-      ; _=> $MovInstr ($i; $size; Pos00; $notid($i.funct;  imm16 as BitsX      ))
-            $MovInstr ($i; $size; Pos16; $notid($i.funct;  imm16 as BitsX << 16))
-            $MovInstr ($i; $size; Pos32; $notid($i.funct;  imm16 as BitsX << 32))
-            $MovInstr ($i; $size; Pos48; $notid($i.funct;  imm16 as BitsX << 48))
+         => $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; (imm16 as BitsW      )) as BitsX)
+            $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; (imm16 as BitsW << 16)) as BitsX)
+      ; _=> $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct;  imm16 as BitsX      ))
+            $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct;  imm16 as BitsX << 16))
+            $MovInstr ($i; $size; Pos32; $notOrIdent($i.funct;  imm16 as BitsX << 32))
+            $MovInstr ($i; $size; Pos48; $notOrIdent($i.funct;  imm16 as BitsX << 48))
       )
     }
 
@@ -604,34 +674,46 @@ instruction set architecture AAarch64Base = {
 
 // base instructions ***********************************************************
 
-  $InstrWXFlags       (AddSubExtInstr        ; (ADD    ; "add"   ; 0b0'0101'1001    ; adds             ))
-  $InstrWXFlags       (AddSubImmInstr        ; (ADD    ; "add"   ; 0b0'1000'10      ; adds             ))
-  $InstrWXFlags       (AddSubSftInstr        ; (ADD    ; "add"   ; 0b0'0101'10      ; adds             ))
-  $InstrWXFlags       (AddSubExtInstr        ; (SUB    ; "sub"   ; 0b1'0101'1001    ; subsc            ))
-  $InstrWXFlags       (AddSubImmInstr        ; (SUB    ; "sub"   ; 0b1'1000'10      ; subsc            ))
-  $InstrWXFlags       (AddSubSftInstr        ; (SUB    ; "sub"   ; 0b1'0101'10      ; subsc            ))
+  $InstrWXFlags        (AddSubExtInstr        ; (ADD    ; "add"   ; 0b0'0101'1001         ; adds       ))
+  $InstrWXFlags        (AddSubImmInstr        ; (ADD    ; "add"   ; 0b0'1000'10           ; adds       ))
+  $InstrWXFlags        (AddSubSftInstr        ; (ADD    ; "add"   ; 0b0'0101'10           ; adds       ))
+  $InstrWXFlags        (AddSubExtInstr        ; (SUB    ; "sub"   ; 0b1'0101'1001         ; subsc      ))
+  $InstrWXFlags        (AddSubImmInstr        ; (SUB    ; "sub"   ; 0b1'1000'10           ; subsc      ))
+  $InstrWXFlags        (AddSubSftInstr        ; (SUB    ; "sub"   ; 0b1'0101'10           ; subsc      ))
 
-  $InstrWX            (ShiftRegInstr         ; (ASR    ; "asrv"  ; ASR              ; asr              ))
-  $InstrWX            (ShiftRegInstr         ; (LSL    ; "lslv"  ; LSL              ; lsl              ))
-  $InstrWX            (ShiftRegInstr         ; (LSR    ; "lsrv"  ; LSR              ; lsr              ))
-  $InstrWX            (ShiftRegInstr         ; (ROR    ; "rorv"  ; ROR              ; ror              ))
+  $InstrWX             (MulAddSubInstr        ; (MADD   ; "madd"  ; 0b0011'0110'000       ; add        ))
+  $InstrWX             (MulAddSubInstr        ; (MSUB   ; "msub"  ; 0b0011'0110'001       ; sub        ))
+  $SMulAddSubLongInstr (                        (SMADDL ; "smaddl"; 0b0011'0110'010       ; add        ))
+  $SMulAddSubLongInstr (                        (SMSUBL ; "smsubl"; 0b0011'0110'011       ; sub        ))
+  $UMulAddSubLongInstr (                        (UMADDL ; "umaddl"; 0b0011'0111'010       ; add        ))
+  $UMulAddSubLongInstr (                        (UMSUBL ; "umsubl"; 0b0011'0111'011       ; sub        ))
+  $MulHighInstr        (                        (SMULH  ; "smulh" ; 0b0011'0110'1001'1111 ; SInt       ))
+  $MulHighInstr        (                        (UMULH  ; "umulh" ; 0b0011'0111'1001'1111 ; UInt       ))
 
-  $InstrWX            (MovKInstr             ; (MOVK   ; "movk"  ; 0b1110'0101      ; unused           ))
-  $InstrWX            (MovNZInstr            ; (MOVN   ; "movn"  ; 0b0010'0101      ; not              ))
-  $InstrWX            (MovNZInstr            ; (MOVZ   ; "movz"  ; 0b1010'0101      ; ident            ))
+  $InstrWX             (DivInstr              ; (SDIV   ; "sdiv"  ; 0b0011'0101'1000'0011 ; SInt       ))
+  $InstrWX             (DivInstr              ; (UDIV   ; "udiv"  ; 0b0011'0101'1000'0010 ; UInt       ))
 
-  $BranchInstr        (                        (B      ; "b"     ; 0b0001'01                           ))
-  $BranchLinkInstr    (                        (BL     ; "bl"    ; 0b1001'01                           ))
-  $BranchRegInstr     (                        (BR     ; "br"    ; 0b1101'0110'0001'1111'0000'0000'000 ))
-  $BranchRegInstr     (                        (RET    ; "ret"   ; 0b1101'0110'0101'1111'0000'0000'000 ))
-  $BranchRegLinkInstr (                        (BLR    ; "blr"   ; 0b1101'0110'0011'1111'0000'0000'000 ))
-  $CondInstr          (CondBranchInstr       ; (B_     ; "b."    ; 0b0101'0100'0                       ))
-  $InstrWX            (CompareBranchInstr    ; (CBZ    ; "cbz"   ; 0b0110'100       ; equ              ))
-  $InstrWX            (CompareBranchInstr    ; (CBNZ   ; "cbnz"  ; 0b0110'101       ; neq              ))
-  $TestBitBranchInstr (                        (TBZ    ; "tbz"   ; 0b0110'110       ; equ              ))
-  $TestBitBranchInstr (                        (TBNZ   ; "tbnz"  ; 0b0110'111       ; neq              ))
+  $InstrWX             (ShiftRegInstr         ; (ASR    ; "asrv"  ; ASR                   ; asr        ))
+  $InstrWX             (ShiftRegInstr         ; (LSL    ; "lslv"  ; LSL                   ; lsl        ))
+  $InstrWX             (ShiftRegInstr         ; (LSR    ; "lsrv"  ; LSR                   ; lsr        ))
+  $InstrWX             (ShiftRegInstr         ; (ROR    ; "rorv"  ; ROR                   ; ror        ))
 
-  $LoadInstr          (MemoryUnscaledInstr   ; (LDUR   ; "ldur"  ; 0b111'000'000                       ))
-  $StoreInstr         (MemoryUnscaledInstr   ; (STUR   ; "stur"  ; 0b111'000'000                       ))
+  $InstrWX             (MovKInstr             ; (MOVK   ; "movk"  ; 0b1110'0101           ; unused     ))
+  $InstrWX             (MovNZInstr            ; (MOVN   ; "movn"  ; 0b0010'0101           ; not        ))
+  $InstrWX             (MovNZInstr            ; (MOVZ   ; "movz"  ; 0b1010'0101           ; ident      ))
+
+  $BranchInstr         (                        (B      ; "b"     ; 0b0001'01                          ))
+  $BranchLinkInstr     (                        (BL     ; "bl"    ; 0b1001'01                          ))
+  $BranchRegInstr      (                        (BR     ; "br"    ; 0b1101'0110'0001'1111'0000'0000'000))
+  $BranchRegInstr      (                        (RET    ; "ret"   ; 0b1101'0110'0101'1111'0000'0000'000))
+  $BranchRegLinkInstr  (                        (BLR    ; "blr"   ; 0b1101'0110'0011'1111'0000'0000'000))
+  $CondInstr           (CondBranchInstr       ; (B_     ; "b."    ; 0b0101'0100'0                      ))
+  $InstrWX             (CompareBranchInstr    ; (CBZ    ; "cbz"   ; 0b0110'100            ; equ        ))
+  $InstrWX             (CompareBranchInstr    ; (CBNZ   ; "cbnz"  ; 0b0110'101            ; neq        ))
+  $TestBitBranchInstr  (                        (TBZ    ; "tbz"   ; 0b0110'110            ; equ        ))
+  $TestBitBranchInstr  (                        (TBNZ   ; "tbnz"  ; 0b0110'111            ; neq        ))
+
+  $LoadInstr           (MemoryUnscaledInstr   ; (LDUR   ; "ldur"  ; 0b111'000'000                      ))
+  $StoreInstr          (MemoryUnscaledInstr   ; (STUR   ; "stur"  ; 0b111'000'000                      ))
 
 }
