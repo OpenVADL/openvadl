@@ -459,7 +459,7 @@ class UnaryExpr extends Expr {
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
     operator.prettyPrint(indent, builder);
-    builder.append(" (");
+    builder.append("(");
     operand.prettyPrint(indent, builder);
     builder.append(")");
   }

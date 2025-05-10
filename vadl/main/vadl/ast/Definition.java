@@ -4978,10 +4978,7 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
     indent++;
 
     if (!commonDefinitions.isEmpty()) {
-      for (var def : commonDefinitions) {
-        def.prettyPrint(indent, builder);
-        builder.append("\n");
-      }
+      prettyPrintDefinitions(indent, builder, commonDefinitions);
     }
 
     if (!modifiers.isEmpty()) {

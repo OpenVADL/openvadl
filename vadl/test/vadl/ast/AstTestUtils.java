@@ -36,6 +36,7 @@ public class AstTestUtils {
     var progPretty = ast.prettyPrintToString();
     var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty, ast.fileUri),
         "Cannot parse prettified input \n" + progPretty);
+    UNGROUPER.ungroup(astPretty);
     assertAstEquality(astPretty, ast);
   }
 
@@ -45,7 +46,7 @@ public class AstTestUtils {
     UNGROUPER.ungroup(actual);
     UNGROUPER.ungroup(expected);
     if (!actual.equals(expected)) {
-      Assertions.assertEquals(expected, actual, "Asts do not match");
+      Assertions.assertEquals(actual, expected, AstDiffPrinter.printDiff(actual, expected));
     }
   }
 
