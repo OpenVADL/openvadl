@@ -1227,7 +1227,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
 
   @Override
   public Type type() {
-    return typeLiteral.type();
+    return Objects.requireNonNull(type);
   }
 
   static final class RelationTypeLiteral extends Node {

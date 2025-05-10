@@ -2631,13 +2631,7 @@ public class TypeChecker
     if (callTarget instanceof RegisterDefinition
         || (callTarget instanceof AliasDefinition aliasDef
         && aliasDef.kind.equals(AliasDefinition.AliasKind.REGISTER))) {
-      if (expr.argsIndices.isEmpty() || expr.argsIndices.get(0).values.size() != 1) {
-        throw error("Invalid Register Usage", expr)
-            .description("A register call must have exactly one argument.")
-            .build();
-      }
-
-      expr.computedTarget = callTarget;
+      
       check(callTarget);
 
       // the start of the index calls (might be 1 if the destination is a reg file)

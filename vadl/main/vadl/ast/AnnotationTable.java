@@ -73,7 +73,7 @@ class AnnotationTable {
         // FIXME: Apply to AST
         .build();
 
-    annotationOn(RegisterFileDefinition.class, "zero", ExprAnnotation::new)
+    annotationOn(RegisterDefinition.class, "zero", ExprAnnotation::new)
         // FIXME: Typecheck
         // FIXME: Apply to VIAM
         .build();

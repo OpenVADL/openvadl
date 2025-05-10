@@ -726,9 +726,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     }
 
     // Register(file) read
-    if (expr.computedTarget() instanceof RegisterDefinition) {
+    if (expr.computedTarget() instanceof RegisterDefinition registerDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
-      var regFile = (RegisterTensor) viamLowering.fetch(registerFileDefinition).orElseThrow();
+      var regFile = (RegisterTensor) viamLowering.fetch(registerDefinition).orElseThrow();
       var type = (DataType) expr.argsIndices.get(0).type();
       var readRegFile = new ReadRegTensorNode(regFile, new NodeList<>(args.get(0)), type, null);
       var slicedNode = visitSliceIndexCall(expr, readRegFile,
