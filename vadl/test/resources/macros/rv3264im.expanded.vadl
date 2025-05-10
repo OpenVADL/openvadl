@@ -428,7 +428,7 @@ instruction set architecture RV3264I = {
 
   instruction JAL : Jtype =   let retaddr = PC.next in
     {
-      PC := ((PC + immS) & -2 as SIntR)
+      PC := ((PC + immS) & -(2 as SIntR))
       X(rd) := retaddr
     }
 
@@ -441,7 +441,7 @@ instruction set architecture RV3264I = {
 
   instruction JALR : Itype =   let retaddr = PC.next in
     {
-      PC := ((X(rs1) + immS) & -2 as SIntR)
+      PC := ((X(rs1) + immS) & -(2 as SIntR))
       X(rd) := retaddr
     }
 
@@ -532,7 +532,7 @@ instruction set architecture RV3264IM extending RV3264I = {
   constant MLen2 = (MLen * 2)
   constant MLen2_1 = (MLen2 - 1)
   constant TopBitSet = (1 as Regs << (MLen - 1)) as Regs
-  constant AllOnes = -1 as SIntR as Regs
+  constant AllOnes = -(1 as SIntR) as Regs
 
   function isOverflow(dividend : Regs, divisor : Regs) -> Bool = ((dividend = TopBitSet) & (divisor = AllOnes))
 
