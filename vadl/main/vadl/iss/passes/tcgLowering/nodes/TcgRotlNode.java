@@ -14,35 +14,36 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.viam.graph.control;
+package vadl.iss.passes.tcgLowering.nodes;
 
-import vadl.viam.graph.GraphNodeVisitor;
+import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.dependency.SideEffectNode;
 
 /**
- * Represents the end of a control subflow (e.g. if branch).
+ * Represents an arithmetic right shift operation in the Tiny Code Generator (TCG).
+ * This class extends TcgBinaryImmOpNode to perform an arithmetic right shift operation
+ * on a source variable by a specified immediate value.
  */
-public class BranchEndNode extends AbstractEndNode {
-  public BranchEndNode(
-      NodeList<SideEffectNode> sideEffects) {
-    super(sideEffects);
+public class TcgRotlNode extends TcgBinaryOpNode {
+
+  public TcgRotlNode(TcgVRefNode res, TcgVRefNode arg, TcgVRefNode shiftAmount) {
+    super(res, arg, shiftAmount, res.width());
+  }
+
+  @Override
+  public String tcgFunctionName() {
+    return "tcg_gen_rotl";
   }
 
   @Override
   public Node copy() {
-    return new BranchEndNode(
-        new NodeList<>(sideEffects().stream().map(x -> (SideEffectNode) x.copy()).toList()));
+    return new TcgRotlNode(firstDest().copy(TcgVRefNode.class),
+        arg1.copy(TcgVRefNode.class),
+        arg2.copy(TcgVRefNode.class));
   }
 
   @Override
   public Node shallowCopy() {
-    return new BranchEndNode(sideEffects());
-  }
-
-  @Override
-  public void accept(GraphNodeVisitor visitor) {
-    visitor.visit(this);
+    return new TcgRotlNode(firstDest(), arg1, arg2);
   }
 }

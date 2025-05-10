@@ -149,9 +149,6 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
 
   private static String shortMachineWord(RegisterTensor res) {
     int width = res.resultType().bitWidth();
-    res.ensure(isStandard(width),
-        "The resource with is none of 8, 16, 32, 64. "
-            + "Currently the GDB register write requires those types.");
     return switch (width) {
       case 8 -> "b";
       case 16 -> "w";
@@ -159,9 +156,5 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
       case 64 -> "q";
       default -> throw new IllegalStateException("Unexpected width: " + width);
     };
-  }
-
-  private static boolean isStandard(int width) {
-    return width == 8 || width == 16 || width == 32 || width == 64;
   }
 }

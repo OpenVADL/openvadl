@@ -23,18 +23,20 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
+import vadl.viam.Function;
 import vadl.viam.Instruction;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
@@ -82,34 +84,40 @@ public class FunctionInlinerPass extends Pass {
 
   private UninlinedGraph handleMainBehavior(Instruction instruction) {
     var copy = instruction.behavior().copy();
-    return inline(instruction, copy);
+    inline(instruction.behavior());
+    return new UninlinedGraph(copy, instruction);
   }
 
-  private @Nonnull UninlinedGraph inline(Instruction instruction, Graph copy) {
-    var functionCalls = instruction.behavior().getNodes(FuncCallNode.class)
+  private void inline(Graph behavior) {
+    var functionCalls = behavior.getNodes(FuncCallNode.class)
         .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction())
         .filter(funcCallNode -> !(funcCallNode.function() instanceof Relocation))
         .toList();
 
     functionCalls.forEach(functionCall -> {
-      // copy function behaviors
-      var behaviorCopy = functionCall.function().behavior().copy();
-      // get return node of function behaviors
-      var returnNode = getSingleNode(behaviorCopy, ReturnNode.class);
-
-      // Replace every occurrence of `FuncParamNode` by a copy of the
-      // given argument from the `FunctionCallNode`.
-      Streams.zip(functionCall.arguments().stream(),
-              Arrays.stream(functionCall.function().parameters()), Pair::new)
-          .forEach(
-              pair -> behaviorCopy.getNodes(FuncParamNode.class)
-                  .filter(n -> n.parameter().equals(pair.right()))
-                  .forEach(usedParam -> usedParam.replaceAndDelete(pair.left().copy())));
-
       // replace the function call by a copy of the return value of the function
-      functionCall.replaceAndDelete(returnNode.value().copy());
+      functionCall.replaceAndDelete(inline(functionCall.function(), functionCall.arguments()));
     });
-
-    return new UninlinedGraph(copy, instruction);
   }
+
+
+  public static ExpressionNode inline(Function function, NodeList<ExpressionNode> arguments) {
+    // copy function behavior
+    var behaviorCopy = function.behavior().copy();
+    // get return node of function behaviors
+    var returnNode = getSingleNode(behaviorCopy, ReturnNode.class);
+
+    // Replace every occurrence of `FuncParamNode` by a copy of the
+    // given argument from the `FunctionCallNode`.
+    Streams.zip(arguments.stream(),
+            Arrays.stream(function.parameters()), Pair::new)
+        .forEach(
+            pair -> behaviorCopy.getNodes(FuncParamNode.class)
+                .filter(n -> n.parameter().equals(pair.right()))
+                .forEach(usedParam -> usedParam.replaceAndDelete(pair.left().copy())));
+
+    // replace the function call by a copy of the return value of the function
+    return returnNode.value().copy();
+  }
+
 }

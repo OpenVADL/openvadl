@@ -16,6 +16,7 @@
 
 package vadl.cli;
 
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -85,6 +86,12 @@ public abstract class BaseCommand implements Callable<Integer> {
       scope = INHERIT,
       description = "Expand all macros and write them to disk.")
   boolean expandMacros;
+
+  @Option(names = "--with-stacktrace",
+      scope = INHERIT,
+      description = "Debug option to show the OpenVADL stacktrace of an emitted error."
+  )
+  boolean showStacktrace;
 
   /**
    * A list of timings. Will only be filled when the timings should be recorded.
@@ -308,9 +315,15 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     } catch (Diagnostic d) {
       System.out.println(new DiagnosticPrinter().toString(d));
+      if (showStacktrace) {
+        System.out.println(getStackTrace(d));
+      }
       returnVal = 1;
     } catch (DiagnosticList d) {
       System.out.println(new DiagnosticPrinter().toString(d));
+      if (showStacktrace) {
+        System.out.println(getStackTrace(d));
+      }
       returnVal = 1;
     } catch (RuntimeException | IOException | DuplicatedPassKeyException e) {
       System.out.println("""

@@ -21,6 +21,7 @@ import static vadl.types.Type.constructDataType;
 
 import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -37,6 +38,8 @@ import org.slf4j.Logger;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The BuiltInTable class represents a collection of built-in functions and operations in VADL.
@@ -965,6 +968,8 @@ public class BuiltInTable {
           Type.relation(StringType.class, StringType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
+          .compute(
+              (a, b) -> new Constant.Str(((Constant.Str) a).value() + ((Constant.Str) b).value()))
           .build();
 
   /**
@@ -1465,7 +1470,7 @@ public class BuiltInTable {
 
     @Override
     public String toString() {
-      return "VADL::" + name + signature;
+      return name + signature;
     }
 
     public List<Class<? extends Type>> argTypeClasses() {
@@ -1485,6 +1490,18 @@ public class BuiltInTable {
     }
 
     private static final Logger logger = getLogger(BuiltIn.class);
+
+    /**
+     * Creates a {@link BuiltInCall} node from this built-in and the given arguments.
+     */
+    public BuiltInCall call(ExpressionNode... args) {
+      if (!takes(Arrays.stream(args).map(ExpressionNode::type).toList())) {
+        throw new ViamError("Arguments do not match built-in params")
+            .addContext("built-in", this)
+            .addContext("args", (Object[]) args);
+      }
+      return BuiltInCall.of(this, args);
+    }
 
   }
 
@@ -1686,6 +1703,7 @@ public class BuiltInTable {
         }
       };
     }
+
 
     @Contract("false, _, _ -> fail")
     @FormatMethod

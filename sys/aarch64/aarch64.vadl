@@ -15,7 +15,7 @@
 
 // ARM AArch64 base instruction set
 
-instruction set architecture AAarch64Base = {
+instruction set architecture AArch64Base = {
 
   constant SizeW = 32                 // size of W registers is 32
   constant SizeX = 64                 // size of X registers is 64
@@ -715,5 +715,13 @@ instruction set architecture AAarch64Base = {
 
   $LoadInstr           (MemoryUnscaledInstr   ; (LDUR   ; "ldur"  ; 0b111'000'000                      ))
   $StoreInstr          (MemoryUnscaledInstr   ; (STUR   ; "stur"  ; 0b111'000'000                      ))
+
+}
+
+processor Virt implements AArch64Base = {
+
+  [ firmware ]
+  [ base : 0x0 ]
+  memory region [RAM] DRAM in MEM
 
 }

@@ -109,6 +109,8 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
       handleCLO(input);
     } else if (builtIn == BuiltInTable.CLS) {
       handleCLS(input);
+    } else if (builtIn == BuiltInTable.CONCATENATE_BITS) {
+      handleConcat(input);
     } else {
       return false;
     }
@@ -195,5 +197,7 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
   void handleCLO(T input);
 
   void handleCLS(T input);
+
+  void handleConcat(T input);
 
 }

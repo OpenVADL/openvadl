@@ -137,6 +137,7 @@ public class IssVerificationPass extends AbstractIssPass {
           );
         }
       }
+      foundTargetWidth = pc.registerTensor().resultType().bitWidth();
     }
   }
 
@@ -150,17 +151,12 @@ public class IssVerificationPass extends AbstractIssPass {
           }
 
           var resWidth = f.resultType().bitWidth();
-          if (resWidth != 64 && resWidth != 32) {
-            return error("Invalid register file result width", f)
-                .description("The ISS only supports register files of size 32 or 64 bits.")
-                ;
-          }
-          if (targetWidth(resWidth) != resWidth) {
-            return error("Different register file result sizes", f)
-                .locationDescription(f, "Also found result size of %s in ISA.", foundTargetWidth)
+          if (foundTargetWidth < resWidth) {
+            return error("Invalid register size", f)
+                .locationDescription(f, "Program counter has a size of %s bits.", foundTargetWidth)
                 .description(
-                    "The ISS requires all registers and register files "
-                        + "to have the same result size.");
+                    "The ISS requires all registers "
+                        + "to be smaller or equal to the program counter.");
           }
           return null;
         })
@@ -277,13 +273,6 @@ public class IssVerificationPass extends AbstractIssPass {
             );
           }
         });
-  }
-
-  private int targetWidth(int thisWidth) {
-    if (this.foundTargetWidth == 0) {
-      this.foundTargetWidth = thisWidth;
-    }
-    return foundTargetWidth;
   }
 
   private void withIsa(Specification viam, Consumer<InstructionSetArchitecture> func) {
