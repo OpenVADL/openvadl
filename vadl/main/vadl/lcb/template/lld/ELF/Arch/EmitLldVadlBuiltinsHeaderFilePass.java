@@ -28,8 +28,8 @@ import vadl.viam.Specification;
  * This file emits a file which handles the sign extends and truncations in VADL's CPP emitted
  * code.
  */
-public class EmitVadlBuiltinsHeaderFilePass extends LcbTemplateRenderingPass {
-  public EmitVadlBuiltinsHeaderFilePass(GeneralConfiguration configuration)
+public class EmitLldVadlBuiltinsHeaderFilePass extends LcbTemplateRenderingPass {
+  public EmitLldVadlBuiltinsHeaderFilePass(GeneralConfiguration configuration)
       throws IOException {
     super(configuration);
   }
