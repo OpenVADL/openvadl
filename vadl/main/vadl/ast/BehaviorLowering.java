@@ -974,8 +974,12 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // Register File Write
       if (callTarget.computedTarget() instanceof RegisterDefinition regFileTarget) {
         var reg = (RegisterTensor) viamLowering.fetch(regFileTarget).orElseThrow();
-        var indices = callTarget.argsIndices.getFirst().values.stream().map(this::fetch)
-            .collect(Collectors.toCollection(NodeList::new));
+        var indices = new NodeList<ExpressionNode>();
+        if (!callTarget.argsIndices.isEmpty()) {
+          indices = callTarget.argsIndices.getFirst().values.stream().map(this::fetch)
+              .collect(Collectors.toCollection(NodeList::new));
+        }
+
         var write = new WriteRegTensorNode(
             reg,
             indices,
