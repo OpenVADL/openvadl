@@ -203,6 +203,16 @@ instruction set architecture AArch64Base = {
     , rd       [4..0]   : Index       // destination register
     }
 
+  format LogicRegShiftFormat: Instr = // logic shifted register format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..24,21]            // opcode
+    , shift    [23,22]                // shift type (ROR is allowed)
+    , rm       [20..16] : Index       // 2nd source register eventually shifted
+    , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
   format ShiftRegFormat: Instr =      // variable shift register format
     { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
     , op       [30..21,15..12]        // opcode
@@ -297,9 +307,15 @@ instruction set architecture AArch64Base = {
   // condition code id, mnemonic extension, condition expression
   record Cond (cc: Id, mext: Str, ex: Ex)
 
+  // register shift expression, encoding elements, assembly string expression
+  record RegShift (ex: Ex, enc: Encs, asm: Ex)
+
   // register size (WSize, XSize), access size (Byte, Half, Word, XWord), 
   // mnemonic extension ("b", "sb", "h", "sh", "sw"), opc, memory statement
   record Memory  (regsize: Id, accsize: Id, mext: Str, opc: Lit, stmt: Stat)
+
+  // higher order model for simple flag setting models
+  model-type NoSetFlags = () -> Stats
 
   // higher order model for flag setting models
   model-type SetResultFlags = (CallEx, Ex) -> Stats
@@ -309,6 +325,9 @@ instruction set architecture AArch64Base = {
 
   // higher order model enriched with size: [WX]Size, flags
   model-type InstrWithFunctSizeFlags = (InstrWithFunct, Id, Flags) -> IsaDefs
+
+  // higher order model enriched with size: [WX]Size, shifted register
+  model-type InstrWithFunctSizeRegShift = (InstrWithFunct, Id, RegShift) -> IsaDefs
 
   // higher order model enriched with operation size
   model-type InstrWithFunctSize = (InstrWithFunct, Id) -> IsaDefs
@@ -321,6 +340,9 @@ instruction set architecture AArch64Base = {
 
 
 // models for setting flags ****************************************************
+
+  // set no flags
+  model NoFlags (): Stats = {}
 
   // set all flags
   model SetFlags (): Stats = {
@@ -490,6 +512,48 @@ instruction set architecture AArch64Base = {
           else X(rn) as $i.funct<Size::$size> / X(rm) as $i.funct<Size::$size> in
         X(rd) := result as Bits<Size::$size> as BitsX
     $ThreeRegOpEncAsmInstr ($i; $size)
+    }
+
+
+// logic shifted register models ***********************************************
+
+  model LogicRegGeneralInstr (i: InstrWithFunct, size: Id, s: RegShift, f: NoSetFlags): IsaDefs = {
+    instruction $i.id: LogicRegShiftFormat =
+      let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, $s.ex) in {
+        X(rd) := result as Bits<Size::$size> as BitsX
+        $f ()
+        }
+    //[raise Undefined : sf = 0 && imm6(5) = 1]
+    encoding $i.id = { op = $i.opcode,  sf = SF::$size, $s.enc }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $s.asm)
+    }
+
+  model LogicRegInstrBasic (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; $s; NoFlags)
+    }
+
+  model LogicRegInstrFlag (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; $s; SetFlags)
+    }
+
+  model LogicRegInstrNeg (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; (~($s.ex); $s.enc; $s.asm); NoFlags)
+    }
+
+  model LogicRegInstrNegFlag (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; (~($s.ex); $s.enc; $s.asm); SetFlags)
+    }
+
+  model LogicRegShiftExtInstr (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct, ext: Str, size: Id, s: RegShift): IsaDefs = {
+    $modelid ((ExtendId ($i.id, $ext); $i.mnemo; $i.opcode; $i.funct); $size; $s)
+    }
+
+  model LogicRegShiftInstr (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct, size: Id): IsaDefs = {
+    $LogicRegShiftExtInstr ($modelid; $i; ""   ; $size; (X(rm) as Bits<Size::$size>; imm6 = 0, shift = ShiftType::LSL;  $size(rm)))
+    $LogicRegShiftExtInstr ($modelid; $i; "LSL"; $size; (X(rm) as Bits<Size::$size>  << imm6;  shift = ShiftType::LSL; ($size(rm), ", lsl #", decimal(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "LSR"; $size; (X(rm) as UInt<Size::$size>  >> imm6;  shift = ShiftType::LSR; ($size(rm), ", lsr #", decimal(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "ASR"; $size; (X(rm) as SInt<Size::$size>  >> imm6;  shift = ShiftType::ASR; ($size(rm), ", asr #", decimal(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "ROR"; $size; (X(rm) as Bits<Size::$size> <>> imm6;  shift = ShiftType::ROR; ($size(rm), ", ror #", decimal(imm6))))
     }
 
 
@@ -664,6 +728,11 @@ instruction set architecture AArch64Base = {
     $modelid ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize)
     }
 
+  model InstrWXRegShift (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct): IsaDefs = {
+    $LogicRegShiftInstr ($modelid; (ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize)
+    $LogicRegShiftInstr ($modelid; (ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize)
+    }
+
   model InstrWXFlags (modelid: InstrWithFunctSizeFlags, i: InstrWithFunct): IsaDefs = {
     $modelid ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize; (WResult  ; OffFlags;  ""))
     $modelid ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize; (XResult  ; OffFlags;  ""))
@@ -692,6 +761,15 @@ instruction set architecture AArch64Base = {
 
   $InstrWX             (DivInstr              ; (SDIV   ; "sdiv"  ; 0b0011'0101'1000'0011 ; SInt       ))
   $InstrWX             (DivInstr              ; (UDIV   ; "udiv"  ; 0b0011'0101'1000'0010 ; UInt       ))
+
+  $InstrWXRegShift     (LogicRegInstrBasic    ; (AND    ; "and"   ; 0b0001'0100           ; ands       ))
+  $InstrWXRegShift     (LogicRegInstrFlag     ; (ANDS   ; "ands"  ; 0b1101'0100           ; ands       ))
+  $InstrWXRegShift     (LogicRegInstrBasic    ; (EOR    ; "eor"   ; 0b1001'0100           ; xors       ))
+  $InstrWXRegShift     (LogicRegInstrBasic    ; (ORR    ; "orr"   ; 0b0101'0100           ; ors        ))
+  $InstrWXRegShift     (LogicRegInstrNeg      ; (BIC    ; "bic"   ; 0b0001'0101           ; ands       ))
+  $InstrWXRegShift     (LogicRegInstrNegFlag  ; (BICS   ; "bics"  ; 0b1101'0101           ; ands       ))
+  $InstrWXRegShift     (LogicRegInstrNeg      ; (EON    ; "eon"   ; 0b1001'0101           ; xors       ))
+  $InstrWXRegShift     (LogicRegInstrNeg      ; (ORN    ; "orn"   ; 0b0101'0101           ; ors        ))
 
   $InstrWX             (ShiftRegInstr         ; (ASR    ; "asrv"  ; ASR                   ; asr        ))
   $InstrWX             (ShiftRegInstr         ; (LSL    ; "lslv"  ; LSL                   ; lsl        ))
