@@ -57,8 +57,8 @@ public class ReadMemNode extends ReadResourceNode {
   public void verifyState() {
     super.verifyState();
     ensure(memory.wordSize() * words == type().bitWidth(),
-        "Type missmatch of expected node type and read bit width. %s vs %s",
-        type().bitWidth(), memory.wordSize() * words);
+        "Type mismatch of expected node type and read bit width. %s vs %s",
+        memory.wordSize() * words, type().bitWidth());
   }
 
   public int words() {

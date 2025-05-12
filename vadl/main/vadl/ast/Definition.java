@@ -2321,7 +2321,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
   }
 }
 
-final class ExceptionDefinition extends Definition implements IdentifiableNode {
+final class ExceptionDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder id;
   @Child
   Statement statement;
@@ -2329,6 +2329,8 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
   List<Parameter> params;
   SourceLocation loc;
 
+  @Nullable
+  ConcreteRelationType type;
 
   ExceptionDefinition(IdentifierOrPlaceholder id, List<Parameter> params,
                       Statement statement,
@@ -2392,6 +2394,11 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + Objects.hashCode(statement);
     result = 31 * result + Objects.hashCode(params);
     return result;
+  }
+
+  @Override
+  public ConcreteRelationType type() {
+    return Objects.requireNonNull(type);
   }
 }
 

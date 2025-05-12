@@ -914,9 +914,6 @@ public abstract class Constant {
           "slice cannot be empty: %s", this);
       this.parts = normalized(parts);
       this.statistics = stream().summaryStatistics();
-      ViamError.ensure(
-          !hasOverlappingParts(),
-          "parts of slice must not overlap: %s", this);
     }
 
     @Override
@@ -1006,7 +1003,7 @@ public abstract class Constant {
           .iterator();
     }
 
-    private boolean hasOverlappingParts() {
+    public boolean hasOverlappingParts() {
       return parts.stream()
           .anyMatch(part -> parts.stream()
               .anyMatch(
