@@ -2537,6 +2537,11 @@ public class TypeChecker
 
       var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
       if (bitSlice.hasOverlappingParts()) {
+        // Currently, we don't allow overlapping slices for both slices on read values
+        // and write targets.
+        // In the future we might want to allow overlapping slices on read values.
+        // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value position
+        // is written twice.
         throw error("Overlapping slice parts", slice.location)
             .locationDescription(slice.location, "Some parts of the slice are overlapping.")
             .note("Slices must have distinct, non-overlapping parts.")
@@ -2631,7 +2636,10 @@ public class TypeChecker
 
   @Override
   public Void visit(CallIndexExpr expr) {
-    // try to find target symbol in symbol table
+    // try to find target symbol in symbol table.
+    // as identifiers only store AstSymbol origins, and the call expr might refer to a
+    // BuiltInSymbol, we must do a separate request to the symbol table an can't rely on the
+    // expression's identifier target.
     var targetSymbol = expr.symbolTable().requireSymbol(expr.target.path(), () ->
         error("Unknown call target", expr.target)
             .locationNote(expr.target, "Nothing found that can be called with this name."));
@@ -2644,7 +2652,7 @@ public class TypeChecker
     var slices = expr.slices();
     // all further argument indices are slice calls
     visitSliceIndexCall(expr, expr.typeBeforeSlice(), slices);
-    // the after the index slice we might have a type that can be called like .next
+    // after the index slices we might have a type that can be called like .next
     visitSubCall(expr, expr.type());
 
     return null;
@@ -2736,7 +2744,10 @@ public class TypeChecker
     }
 
     var type = typedNode.type();
-    if (type instanceof ConcreteRelationType relType) {
+    if (type instanceof ConcreteRelationType relType && relType.argTypes().isEmpty()) {
+      // if a relation type expects no arguments, no argument group is considered
+      expr.typeBeforeSlice = relType.resultType();
+    } else if (type instanceof ConcreteRelationType relType) {
       ensure(relType.argTypes().size() == argExprs.size(),
           () -> error("Invalid number of arguments", expr)
               .locationNote(expr, "Expected %s arguments but got %s.", relType.argTypes().size(),

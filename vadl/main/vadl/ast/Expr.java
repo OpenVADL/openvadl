@@ -1696,8 +1696,8 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   public List<Arguments> args() {
     if (computedBuiltIn != null) {
       // if we reference a built-in, we must check if the built-in takes arguments
-      if (computedBuiltIn.argTypeClasses().isEmpty() ||
-          argsIndices.isEmpty()) {
+      if (computedBuiltIn.argTypeClasses().isEmpty()
+          || argsIndices.isEmpty()) {
         return List.of();
       }
       return List.of(argsIndices.getFirst());
@@ -1713,7 +1713,11 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
 
     if (computedTarget() instanceof TypedNode typedNode) {
       var type = typedNode.type();
-      if (type instanceof ConcreteRelationType) {
+      if (type instanceof ConcreteRelationType relType) {
+        if (relType.argTypes().isEmpty()) {
+          // relation types that don't expect an argument don't have any argument groups
+          return List.of();
+        }
         return argsIndices.isEmpty() ? List.of() : List.of(argsIndices.getFirst());
       }
       // in the case of a register:
@@ -1723,6 +1727,10 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     return List.of();
   }
 
+  /**
+   * Returns a list of all argument groups that represent slices on the result
+   * of the call.
+   */
   public List<Arguments> slices() {
     return argsIndices.subList(args().size(), argsIndices.size());
   }

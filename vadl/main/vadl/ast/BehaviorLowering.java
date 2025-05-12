@@ -972,7 +972,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         var words = callSize != null ? callSize : 1;
         // slice the written value before writing it
         var slicedValue = sliceWriteValue(value,
-            new ReadMemNode(memDef, words, argExprs.getFirst(), memDef.resultType()), slices);
+            new ReadMemNode(memDef, words, argExprs.getFirst(),
+                ((BitsType) memDef.resultType()).scaleBy(words)), slices);
         yield new WriteMemNode(
             memDef, callSize != null ? callSize : 1,
             argExprs.getFirst(), slicedValue
@@ -994,9 +995,9 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   /**
-   * Method that prepares the <value> so it can be written to a subset region of a resource.
-   * The entire resource before writing the value is given by the <entireRead> node.
-   * The subset region of the resource is given by the <slices> list, that
+   * Method that prepares the value so it can be written to a subset region of a resource.
+   * The entire resource before writing the value is given by the entireRead node.
+   * The subset region of the resource is given by the slices list, that
    * holds a list of {@link vadl.viam.Constant.BitSlice}.
    * E.g. {@code A(3, 15..11) := 0b101111} writes the value's msb `1` at position 3 in the
    * resource,
@@ -1044,7 +1045,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       consumed += part.size();
     }
 
-    var mask = slice.mask().castTo(entireRead.type()).toNode();
+    var mask = slice.mask().castTo(Type.bits(entireRead.type().bitWidth())).toNode();
     var clearedResource = BuiltInCall.of(BuiltInTable.AND, entireRead, mask);
     return BuiltInCall.of(BuiltInTable.OR, clearedResource, Objects.requireNonNull(injected));
   }

@@ -1011,6 +1011,10 @@ public abstract class Constant {
           .iterator();
     }
 
+    /**
+     * Determines if there are any overlapping parts in the slice.
+     * This returns true if two or more parts are indexing the same position.
+     */
     public boolean hasOverlappingParts() {
       return parts.stream()
           .anyMatch(part -> parts.stream()
