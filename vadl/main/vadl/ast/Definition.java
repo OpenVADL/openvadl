@@ -393,6 +393,8 @@ class RangeFormatField extends FormatField {
 
   // While the ranges are expressions in diffrent forms, once computed they are stored here to
   // make them easier to process.
+  // FIXME: @flofriday we should use a Constant.BitSlice instead of this list of BitRange.
+  //   BitSlice is much more complete and also easier to handle
   @Nullable
   List<FormatDefinition.BitRange> computedRanges;
 

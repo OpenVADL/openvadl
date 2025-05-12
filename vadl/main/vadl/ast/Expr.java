@@ -1882,7 +1882,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
      * This does ignore further manipulation by the argsIndicies.
      */
     @Nullable
-    FormatDefinition.BitRange computedFormatFieldBitRange;
+    Constant.BitSlice computedBitSlice;
 
     /**
      * If the subcall is status access, this field tells which index in the status type the

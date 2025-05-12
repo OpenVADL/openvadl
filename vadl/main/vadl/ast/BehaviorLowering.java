@@ -18,7 +18,9 @@ package vadl.ast;
 
 
 import static vadl.error.Diagnostic.error;
+import static vadl.utils.GraphUtils.intU;
 
+import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +37,6 @@ import vadl.types.SIntType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.Either;
-import vadl.utils.GraphUtils;
 import vadl.utils.Pair;
 import vadl.utils.WithLocation;
 import vadl.viam.ArtificialResource;
@@ -639,17 +640,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var resultExpr = exprBeforeSubcall;
     for (var subCall : expr.subCalls) {
-      if (subCall.computedFormatFieldBitRange != null) {
-        var bitRange = Objects.requireNonNull(subCall.computedFormatFieldBitRange);
-        var bitSlice =
-            new Constant.BitSlice(new Constant.BitSlice.Part(bitRange.from(), bitRange.to()));
+      if (subCall.computedBitSlice != null) {
+        var bitSlice = subCall.computedBitSlice;
         var slice =
             new SliceNode(resultExpr, bitSlice,
                 (DataType) Objects.requireNonNull(subCall.formatFieldType));
-        resultExpr = visitSliceIndexCall(expr, slice, subCall.argsIndices);
+        resultExpr = visitSliceIndexCall(slice, subCall.argsIndices);
       } else if (subCall.computedStatusIndex != null) {
         var indexing = new TupleGetFieldNode(subCall.computedStatusIndex, resultExpr, Type.bool());
-        resultExpr = visitSliceIndexCall(expr, indexing, subCall.argsIndices);
+        resultExpr = visitSliceIndexCall(indexing, subCall.argsIndices);
       } else if (exprBeforeSubcall instanceof ReadResourceNode resRead) {
         var computedTarget = expr.target.path().target();
         if (computedTarget instanceof CounterDefinition) {
@@ -675,7 +674,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
           resultExpr = BuiltInCall.of(BuiltInTable.ADD,
               resRead,
-              GraphUtils.intU(offset, resRead.type().bitWidth()).toNode()
+              intU(offset, resRead.type().bitWidth()).toNode()
           );
         }
       } else {
@@ -686,7 +685,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return resultExpr;
   }
 
-  private ExpressionNode visitSliceIndexCall(CallIndexExpr expr, ExpressionNode exprBeforeSlice,
+  private ExpressionNode visitSliceIndexCall(ExpressionNode exprBeforeSlice,
                                              List<CallIndexExpr.Arguments> slices) {
     if (slices.isEmpty()) {
       return exprBeforeSlice;
@@ -755,7 +754,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       };
     }
 
-    var result = visitSliceIndexCall(expr, exprBeforeSlice, expr.slices());
+    var result = visitSliceIndexCall(exprBeforeSlice, expr.slices());
     result = visitSubCall(expr, result);
     return result;
   }
@@ -923,7 +922,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     vadl.ast.Definition targetDef;
     List<CallIndexExpr.Arguments> argGroups = List.of();
-    List<Constant.BitSlice> slices = List.of();
+    List<Constant.BitSlice> slices = new ArrayList<>();
 
     // the MEM<xyz>(...) value
     @Nullable Integer callSize = null;
@@ -931,9 +930,15 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (statement.target instanceof CallIndexExpr callTarget) {
       targetDef = (vadl.ast.Definition) callTarget.computedTarget();
       argGroups = callTarget.args();
-      slices = callTarget.slices().stream()
-          .map(s -> Objects.requireNonNull(s.computedBitSlice))
-          .toList();
+      callTarget.slices().forEach(s -> {
+        slices.add(Objects.requireNonNull(s.computedBitSlice));
+      });
+      // add all slices that come from format field accesses
+      callTarget.subCalls.forEach(s -> {
+        if (s.computedBitSlice != null) {
+          slices.add(s.computedBitSlice);
+        }
+      });
 
       var sizeExpr = callTarget.target.size();
       callSize = sizeExpr != null
@@ -953,20 +958,20 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
       case RegisterTensor regDef -> new WriteRegTensorNode(regDef, argExprs,
           // slice the written value before writing it
-          slicecWriteValue(value,
+          sliceWriteValue(value,
               new ReadRegTensorNode(regDef, argExprs, regDef.resultType(), null), slices),
           null, null);
 
       case ArtificialResource aliasDef -> new WriteArtificialResNode(aliasDef, argExprs,
           // slice the written value before writing it
-          slicecWriteValue(value,
+          sliceWriteValue(value,
               new ReadArtificialResNode(aliasDef, argExprs, aliasDef.resultType()), slices)
       );
 
       case Memory memDef -> {
         var words = callSize != null ? callSize : 1;
         // slice the written value before writing it
-        var slicedValue = slicecWriteValue(value,
+        var slicedValue = sliceWriteValue(value,
             new ReadMemNode(memDef, words, argExprs.getFirst(), memDef.resultType()), slices);
         yield new WriteMemNode(
             memDef, callSize != null ? callSize : 1,
@@ -977,7 +982,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // FIXME: Adjust value based on counter position
       case Counter counterDef -> new WriteRegTensorNode(counterDef.registerTensor(), argExprs,
           // slice the written value before writing it
-          slicecWriteValue(value,
+          sliceWriteValue(value,
               new ReadRegTensorNode(counterDef.registerTensor(), argExprs,
                   counterDef.registerTensor().resultType(), null), slices),
           null, null);
@@ -988,13 +993,60 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return SubgraphContext.of(statement, writeNode);
   }
 
-  private ExpressionNode slicecWriteValue(ExpressionNode expression, ReadResourceNode entireRead,
-                                          List<Constant.BitSlice> slices) {
+  /**
+   * Method that prepares the <value> so it can be written to a subset region of a resource.
+   * The entire resource before writing the value is given by the <entireRead> node.
+   * The subset region of the resource is given by the <slices> list, that
+   * holds a list of {@link vadl.viam.Constant.BitSlice}.
+   * E.g. {@code A(3, 15..11) := 0b101111} writes the value's msb `1` at position 3 in the
+   * resource,
+   * and the rest (0b01111) is written to position 15 to 11 (inclusive) in the resource.
+   *
+   * @param value      value that is being written (right side of assignment)
+   * @param entireRead resource value before value is written
+   * @param slices     the slices where each entry represents a group.
+   *                   The example above has one bit-slice with two parts
+   * @return expression that incorporates the written value into the resource.
+   */
+  private ExpressionNode sliceWriteValue(ExpressionNode value,
+                                         ReadResourceNode entireRead,
+                                         List<Constant.BitSlice> slices) {
     if (slices.isEmpty()) {
-      return expression;
+      return value;
+    }
+    if (slices.size() != 1) {
+      // this requires to merge all slices into a single one before applying adjustment
+      throw new IllegalStateException("Nested slices are not yet supported");
     }
 
-    throw new IllegalStateException("Bit slices on writes are not yet supported");
+    var slice = slices.getFirst();
+
+    // the value bits all shifted in place of the position in final results
+    ExpressionNode injected = null;
+    // how many bits taken from <value>
+    int consumed = 0;
+
+    // parts from lsb to msb
+    var parts = Lists.reverse(slice.parts().toList());
+    for (var part : parts) {
+      // shift the next lsb part of the write value
+      value = consumed == 0 ? value :
+          BuiltInCall.of(BuiltInTable.LSR, value, intU(consumed, 32).toNode());
+      // extracted value of this part
+      ExpressionNode partValue = new TruncateNode(value, Type.bits(part.size()));
+      // zero extend part value to correct size
+      partValue = new ZeroExtendNode(partValue, entireRead.type());
+
+      var placed = part.lsb() == 0 ? partValue :
+          BuiltInCall.of(BuiltInTable.LSL, partValue, intU(part.lsb(), 32).toNode());
+
+      injected = injected == null ? placed : BuiltInCall.of(BuiltInTable.OR, injected, placed);
+      consumed += part.size();
+    }
+
+    var mask = slice.mask().castTo(entireRead.type()).toNode();
+    var clearedResource = BuiltInCall.of(BuiltInTable.AND, entireRead, mask);
+    return BuiltInCall.of(BuiltInTable.OR, clearedResource, Objects.requireNonNull(injected));
   }
 
 

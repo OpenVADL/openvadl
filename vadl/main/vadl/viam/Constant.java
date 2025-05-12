@@ -916,6 +916,10 @@ public abstract class Constant {
       this.statistics = stream().summaryStatistics();
     }
 
+    public static BitSlice of(int msb, int lsb) {
+      return new BitSlice(new Part(msb, lsb));
+    }
+
     @Override
     public Type type() {
       return Type.bitSlice();
@@ -967,11 +971,15 @@ public abstract class Constant {
       return statistics.getMin();
     }
 
+    public Constant.Value mask() {
+      var mask = stream().boxed().reduce(BigInteger.ZERO, BigInteger::setBit, BigInteger::or);
+      return Value.fromTwosComplement(mask, Type.bits(msb() + 1));
+    }
+
     @Override
     public java.lang.String toString() {
       return "[" + parts.stream().map(Part::toString).collect(Collectors.joining(", ")) + "]";
     }
-
 
     @Override
     public boolean equals(Object o) {
