@@ -22,6 +22,7 @@ import vadl.javaannotations.viam.DataValue;
 import vadl.viam.ArtificialResource;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 
 /**
  * A write to an {@link ArtificialResource}.
@@ -35,21 +36,20 @@ public class WriteArtificialResNode extends WriteResourceNode {
    * Writes a value to a {@link ArtificialResource}.
    */
   public WriteArtificialResNode(ArtificialResource resource,
-                                @Nullable ExpressionNode address,
+                                NodeList<ExpressionNode> indices,
                                 ExpressionNode value) {
-    super(address, value);
+    super(indices, value, null);
     this.resource = resource;
   }
 
   /**
    * Writes a value to a {@link ArtificialResource}.
    */
-  public WriteArtificialResNode(ArtificialResource resource, ExpressionNode address,
+  public WriteArtificialResNode(ArtificialResource resource, NodeList<ExpressionNode> indices,
                                 ExpressionNode value,
                                 @Nullable ExpressionNode condition) {
-    super(address, value);
+    super(indices, value, condition);
     this.resource = resource;
-    this.condition = condition;
   }
 
   @Override
@@ -66,7 +66,7 @@ public class WriteArtificialResNode extends WriteResourceNode {
   @Override
   public Node copy() {
     return new WriteArtificialResNode(resource,
-        address().copy(),
+        indices().copy(),
         value.copy(),
         (condition != null ? condition.copy() : null));
   }
@@ -74,7 +74,7 @@ public class WriteArtificialResNode extends WriteResourceNode {
   @Override
   public Node shallowCopy() {
     return new WriteArtificialResNode(resource,
-        address(),
+        indices().copy(),
         value,
         condition);
   }

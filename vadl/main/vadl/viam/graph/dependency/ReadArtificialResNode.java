@@ -17,12 +17,12 @@
 package vadl.viam.graph.dependency;
 
 import java.util.List;
-import javax.annotation.Nullable;
 import vadl.javaannotations.viam.DataValue;
 import vadl.types.DataType;
 import vadl.viam.ArtificialResource;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 
 /**
  * A read of an {@link ArtificialResource}.
@@ -33,9 +33,9 @@ public class ReadArtificialResNode extends ReadResourceNode {
   private final ArtificialResource resource;
 
   public ReadArtificialResNode(ArtificialResource artificialResource,
-                               @Nullable ExpressionNode address,
+                               NodeList<ExpressionNode> indices,
                                DataType type) {
-    super(address, type);
+    super(indices, type);
     this.resource = artificialResource;
   }
 
@@ -46,12 +46,12 @@ public class ReadArtificialResNode extends ReadResourceNode {
 
   @Override
   public ExpressionNode copy() {
-    return new ReadArtificialResNode(resource, hasAddress() ? address().copy() : null, type());
+    return new ReadArtificialResNode(resource, indices, type());
   }
 
   @Override
   public Node shallowCopy() {
-    return new ReadArtificialResNode(resource, hasAddress() ? address() : null, type());
+    return new ReadArtificialResNode(resource, indices, type());
   }
 
   @Override
