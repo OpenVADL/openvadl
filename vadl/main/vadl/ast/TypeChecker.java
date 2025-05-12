@@ -2602,7 +2602,10 @@ public class TypeChecker
               .build();
         }
 
-        subCall.computedFormatFieldBitRange = formatType.format.getFieldRange(fieldName);
+        // FIXME: @flofriday replace once computed field ranges are Constant.BitSlice
+        var fieldRange = requireNonNull(formatType.format.getFieldRange(fieldName));
+        var slicePart = new Constant.BitSlice.Part(fieldRange.from(), fieldRange.to());
+        subCall.computedBitSlice = new Constant.BitSlice(slicePart);
         subCall.formatFieldType = fieldType;
         visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
         type = expr.type;
