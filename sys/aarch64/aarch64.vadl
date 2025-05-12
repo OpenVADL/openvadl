@@ -186,6 +186,13 @@ instruction set architecture AArch64Base = {
     , rd       [4..0]   : Index       // destination register
     }
 
+  format RelAddressFormat: Instr =    // PC relative address format
+    { op       [31,28..24]            // opcode
+    , imm21    [23..5,30,29]          // PC relative offset
+    , rd       [4..0]   : Index       // destination register
+    , offset   = imm21 as SIntX       // sign extended offset
+    }
+
   format ThreeRegOpFormat: Instr =    // three register operand format
     { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
     , op       [30..21,15..10]        // opcode
@@ -470,6 +477,45 @@ instruction set architecture AArch64Base = {
     }
 
 
+// add / sub carry models ******************************************************
+
+  model AddSubCarryInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in {
+        X(rd) := result as Bits<Size::$size> as BitsX
+        NZCV.C := flags.carry
+      }
+    $ThreeRegOpEncAsmInstr ($i; $size)
+    }
+
+  model AddSubCarryFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in {
+        X(rd) := result as Bits<Size::$size> as BitsX
+        $SetFlags()
+        }
+    $ThreeRegOpEncAsmInstr ($i; $size)
+    }
+
+
+// PC relative address models **************************************************
+
+  model AddressBaseInstr (i: InstrNoFunct, ex: Ex): IsaDefs = {
+    instruction $i.id: RelAddressFormat =
+      X(rd) := $ex
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ($i.mnemo, ' ', decimal(imm21))
+    }
+
+  model AddressRelInstr (i: InstrNoFunct): IsaDefs = {
+    $AddressBaseInstr ($i; PC + offset)
+    }
+
+  model AddressPageInstr (i: InstrNoFunct): IsaDefs = {
+    $AddressBaseInstr ($i; (PC >> 12) + offset << 12)
+    }
+
+
 // multiply add / sub  model ***************************************************
 
   model MulAddSubInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -749,6 +795,13 @@ instruction set architecture AArch64Base = {
   $InstrWXFlags        (AddSubExtInstr        ; (SUB    ; "sub"   ; 0b1'0101'1001         ; subsc      ))
   $InstrWXFlags        (AddSubImmInstr        ; (SUB    ; "sub"   ; 0b1'1000'10           ; subsc      ))
   $InstrWXFlags        (AddSubSftInstr        ; (SUB    ; "sub"   ; 0b1'0101'10           ; subsc      ))
+  $InstrWX             (AddSubCarryInstr      ; (ADC    ; "adc"   ; 0b0011'0100'0000'0000 ; addc       ))
+  $InstrWX             (AddSubCarryFlagInstr  ; (ADCS   ; "adcs"  ; 0b0111'0100'0000'0000 ; addc       ))
+  $InstrWX             (AddSubCarryInstr      ; (SBC    ; "sbc"   ; 0b1011'0100'0000'0000 ; subc       ))
+  $InstrWX             (AddSubCarryFlagInstr  ; (SBCS   ; "sbcs"  ; 0b1111'0100'0000'0000 ; subc       ))
+
+  $AddressRelInstr     (                        (ADR    ; "adr"   ; 0b01'0000                          ))
+  $AddressPageInstr    (                        (ADRP   ; "adrp"  ; 0b11'0000                          ))
 
   $InstrWX             (MulAddSubInstr        ; (MADD   ; "madd"  ; 0b0011'0110'000       ; add        ))
   $InstrWX             (MulAddSubInstr        ; (MSUB   ; "msub"  ; 0b0011'0110'001       ; sub        ))
