@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
@@ -148,4 +149,10 @@ class AstUtils {
             new BinOp(operator, expr.location),
             expr.argsIndices.get(0).values.get(1));
   }
+
+
+  static List<Expr> flatArguments(List<CallIndexExpr.Arguments> args) {
+    return args.stream().flatMap(a -> a.values.stream()).collect(Collectors.toList());
+  }
+
 }

@@ -57,7 +57,7 @@ class SymbolTable {
    * passes (the type-checker) needs to know on it's own how to deal with them.
    */
   void loadBuiltins() {
-    // Load all "real" buildins
+    // Load all "real" builtins
     BuiltInTable.builtIns().map(BuiltInTable.BuiltIn::name)
         .forEach(name -> symbols.put(name, new BuiltInSymbol()));
 
@@ -202,27 +202,25 @@ class SymbolTable {
   }
 
   @Nullable
-  private Node resolve(Identifier ident) {
+  private Symbol resolve(Identifier ident) {
     var symbol = resolveSymbol(ident.name);
-    if (!(symbol instanceof AstSymbol astSymbol)) {
-      return null;
+    if (symbol instanceof AstSymbol(Node origin)) {
+      ident.target = origin;
     }
-    ident.target = astSymbol.origin;
-    return astSymbol.origin;
+    return symbol;
   }
 
   @Nullable
-  private Node resolve(IdentifierPath path) {
+  private Symbol resolve(IdentifierPath path) {
     var symbol = resolveSymbolPath(path.pathToSegments());
-    if (!(symbol instanceof AstSymbol astSymbol)) {
-      return null;
+    if (symbol instanceof AstSymbol(Node origin)) {
+      path.target = origin;
     }
-    path.target = astSymbol.origin;
-    return astSymbol.origin;
+    return symbol;
   }
 
   @Nullable
-  private Node resolve(IsId id) {
+  private Symbol resolve(IsId id) {
     return switch (id) {
       case Identifier ident -> resolve(ident);
       case IdentifierPath path -> resolve(path);
@@ -256,11 +254,13 @@ class SymbolTable {
 
 
   <T extends Node> @Nullable T findAs(IsId usage, Class<T> type) {
-    var origin = resolve(usage);
-    if (type.isInstance(origin)) {
-      return type.cast(origin);
-    }
-    return null;
+    var symbol = resolve(usage);
+    return switch (symbol) {
+      case null -> null;
+      case AstSymbol astSymbol ->
+          type.isInstance(astSymbol.origin) ? type.cast(astSymbol.origin) : null;
+      case BuiltInSymbol ignored -> null;
+    };
   }
 
   /**
@@ -274,17 +274,11 @@ class SymbolTable {
    */
   // FIXME: I don't like how it's called require but still returns null
   private <T extends Node> @Nullable T requireAs(IsId usage, Class<T> type) {
-    var origin = resolve(usage);
-    if (type.isInstance(origin)) {
-      return type.cast(origin);
+    var origin = findAs(usage, type);
+    if (origin != null) {
+      return origin;
     }
-
-    if (origin == null) {
-      errors.add(error("Unknown name " + usage.pathToString(), usage).build());
-    } else {
-      // FIXME: write about how this is the wrong type.
-      errors.add(error("Unknown name " + usage.pathToString(), usage).build());
-    }
+    errors.add(error("Unknown name " + usage.pathToString(), usage).build());
     return null;
   }
 
@@ -298,6 +292,18 @@ class SymbolTable {
       throw errorBuilder.get().build();
     }
     return node;
+  }
+
+  /**
+   * Finds the symbol for a given {@link IsId} and throws the error provided by the error
+   * builder if the symbol was not found.
+   */
+  Symbol requireSymbol(IsId name, Supplier<DiagnosticBuilder> errorBuilder) {
+    var symbol = resolve(name);
+    if (symbol == null) {
+      throw errorBuilder.get().build();
+    }
+    return symbol;
   }
 
   /**
@@ -796,10 +802,7 @@ class SymbolTable {
 
     @Override
     public Void visit(Identifier expr) {
-      var symbol = expr.symbolTable().resolveSymbol(expr.pathToString());
-      if (symbol instanceof AstSymbol(Node origin)) {
-        expr.target = origin;
-      }
+      var symbol = expr.symbolTable().resolve(expr);
       if (symbol == null) {
         expr.symbolTable()
             .reportError("Symbol not found: " + expr.pathToString(), expr.location());
@@ -809,10 +812,7 @@ class SymbolTable {
 
     @Override
     public Void visit(IdentifierPath expr) {
-      var symbol = expr.symbolTable().resolveSymbolPath(expr.pathToSegments());
-      if (symbol instanceof AstSymbol(Node origin)) {
-        expr.target = origin;
-      }
+      var symbol = expr.symbolTable().resolve(expr);
       if (symbol == null) {
         expr.symbolTable()
             .reportError("Symbol not found: " + expr.pathToString(), expr.location());
@@ -1152,7 +1152,7 @@ class SymbolTable {
       if (definition.attribute != null) {
         // If attrSymbol is not null, attribute refers to local variable
         // Else attribute is handled by matching in the AsmParser
-        var attrSymbol = definition.symbolTable().resolve(definition.attribute);
+        var attrSymbol = definition.symbolTable().findAs(definition.attribute, Definition.class);
         definition.isAttributeLocalVar = attrSymbol instanceof AsmGrammarLocalVarDefinition;
       }
 

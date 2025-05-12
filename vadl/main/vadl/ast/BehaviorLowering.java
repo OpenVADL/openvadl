@@ -729,7 +729,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     if (expr.computedTarget() instanceof RegisterDefinition registerDefinition) {
       var args = firstArgs.stream().map(this::fetch).toList();
       var regFile = (RegisterTensor) viamLowering.fetch(registerDefinition).orElseThrow();
-      var type = (DataType) expr.argsIndices.get(0).type();
+      var type = expr.argsIndices.isEmpty() ? regFile.resultType(0) :
+          (DataType) expr.argsIndices.getFirst().type();
       var readRegFile = new ReadRegTensorNode(regFile, new NodeList<>(args.get(0)), type, null);
       var slicedNode = visitSliceIndexCall(expr, readRegFile,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
@@ -758,7 +759,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
       }
       var memory = (Memory) viamLowering.fetch(memoryDefinition).orElseThrow();
-      var type = (DataType) expr.argsIndices.get(0).type();
+      var type = (DataType) expr.typeBeforeSlice();
       var readMem = new ReadMemNode(memory, words, args.get(0), type);
       var slicedNode = visitSliceIndexCall(expr, readMem,
           expr.argsIndices.subList(1, expr.argsIndices.size()));
