@@ -96,7 +96,7 @@ public class ExceptionTest {
     var typechecker = new TypeChecker();
     var throwable = assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     org.assertj.core.api.Assertions.assertThat(throwable.getMessage())
-        .contains("Expected 0 arguments but got 2");
+        .contains("Only bit types can be sliced but the target was a `void`");
   }
 
   @Test
