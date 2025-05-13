@@ -31,8 +31,10 @@ instruction set architecture AArch64Base = {
   using Bits5    = Bits< 5>           //  5 bit type
   using Bits6    = Bits< 6>           //  6 bit type
   using Bits7    = Bits< 7>           //  7 bit type
+  using Bits8    = Bits< 8>           //  8 bit type
   using Bits9    = Bits< 9>           //  9 bit type
   using Bits12   = Bits<12>           // 12 bit type
+  using Bits13   = Bits<13>           // 13 bit type
   using Bits14   = Bits<14>           // 14 bit type
   using Bits16   = Bits<16>           // 16 bit type
   using Bits19   = Bits<19>           // 19 bit type
@@ -208,6 +210,40 @@ instruction set architecture AArch64Base = {
     , ra       [14..10] : Index       // accumulator register
     , rn       [9..5]   : Index       // 1st source  register
     , rd       [4..0]   : Index       // destination register
+    }
+
+  // pattern replication functions
+
+  function rep2  (pattern: Bits< 2>) -> Bits< 4> = (pattern, pattern)
+  function rep4  (pattern: Bits< 4>) -> Bits< 8> = (pattern, pattern)
+  function rep8  (pattern: Bits< 8>) -> Bits<16> = (pattern, pattern)
+  function rep16 (pattern: Bits<16>) -> Bits<32> = (pattern, pattern)
+  function rep32 (pattern: Bits<32>) -> Bits<64> = (pattern, pattern)
+
+  // imm13Decode takes the N, imms and immr fields as a combined 13 bit value
+  // and returns the replicated and rotated 64 bit immediate value for defined
+  // N, imms and immr values. 0 is returned for undefined values of imms, either
+  // explicitely or implicitely by shifting 1 zero times and subtracting 1 which
+  // also results in 0. The unused high bits of immr are ignored.
+
+  function imm13Decode (imm13: Bits13) -> BitsX =
+    if      imm13(12.. 7) = 0b0'11110 then let pattern = (1 as Bits< 2> << (imm13(    6) + 1) - 1) <>> imm13(   0) in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
+    else if imm13(12.. 8) = 0b0'1110  then let pattern = (1 as Bits< 4> << (imm13( 7..6) + 1) - 1) <>> imm13(1..0) in rep32 (rep16 (rep8 (rep4 (pattern))))
+    else if imm13(12.. 9) = 0b0'110   then let pattern = (1 as Bits< 8> << (imm13( 8..6) + 1) - 1) <>> imm13(2..0) in rep32 (rep16 (rep8 (pattern)))
+    else if imm13(12..10) = 0b0'10    then let pattern = (1 as Bits<16> << (imm13( 9..6) + 1) - 1) <>> imm13(3..0) in rep32 (rep16 (pattern))
+    else if imm13(12..11) = 0b0'0     then let pattern = (1 as Bits<32> << (imm13(10..6) + 1) - 1) <>> imm13(4..0) in rep32 (pattern)
+    else if imm13(12    ) = 0b1       then               (1 as Bits<64> << (imm13(11..6) + 1) - 1) <>> imm13(5..0)
+    else 0
+
+  format LogicImmFormat: Instr =      // logic immediate format
+    { sf       : Bits1                // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       : Bits8                // opcode
+    , imm13    : Bits13               // N, imms and immr fields
+    , rn       : Index                // source register
+    , rd       : Index                // destination register
+    , immX     = imm13Decode (imm13)  // decoded immediate value
+    // TODO encode
+    // TODO predicate
     }
 
   format LogicRegShiftFormat: Instr = // logic shifted register format
@@ -471,7 +507,7 @@ instruction set architecture AArch64Base = {
 
 // base model for 3 register operand instructions ******************************
 
-  model ThreeRegOpEncAsmInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+  model ThreeRegOpEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
     assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm))
     }
@@ -485,7 +521,7 @@ instruction set architecture AArch64Base = {
         X(rd) := result as Bits<Size::$size> as BitsX
         NZCV.C := flags.carry
       }
-    $ThreeRegOpEncAsmInstr ($i; $size)
+    $ThreeRegOpEncAsm ($i; $size)
     }
 
   model AddSubCarryFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -494,7 +530,7 @@ instruction set architecture AArch64Base = {
         X(rd) := result as Bits<Size::$size> as BitsX
         $SetFlags()
         }
-    $ThreeRegOpEncAsmInstr ($i; $size)
+    $ThreeRegOpEncAsm ($i; $size)
     }
 
 
@@ -512,7 +548,7 @@ instruction set architecture AArch64Base = {
     }
 
   model AddressPageInstr (i: InstrNoFunct): IsaDefs = {
-    $AddressBaseInstr ($i; (PC >> 12) + offset << 12)
+    $AddressBaseInstr ($i; (PC >> 12 + offset) << 12)
     }
 
 
@@ -532,7 +568,7 @@ instruction set architecture AArch64Base = {
     instruction $i.id: ThreeRegOpFormat =
       let result = X(rn) as $i.funct *# X(rm) as $i.funct in
         X(rd) := result(127..SizeX)
-    $ThreeRegOpEncAsmInstr ($i; XSize)
+    $ThreeRegOpEncAsm ($i; XSize)
     }
 
 // multiply add / sub long model ***********************************************
@@ -557,7 +593,32 @@ instruction set architecture AArch64Base = {
           then 0
           else X(rn) as $i.funct<Size::$size> / X(rm) as $i.funct<Size::$size> in
         X(rd) := result as Bits<Size::$size> as BitsX
-    $ThreeRegOpEncAsmInstr ($i; $size)
+    $ThreeRegOpEncAsm ($i; $size)
+    }
+
+
+// logic immediate models ******************************************************
+
+  model LogicImmEncAsm (i: InstrWithFunct, size: Id, ext: Str): IsaDefs = {
+    //[raise Undefined : sf = 0 && imm13(12) = 1]
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', ExtendId($size, $ext)(rd), ', ', $size(rn), ', #', decimal(immX))
+    }
+
+  model LogicImmFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: LogicImmFormat =
+      let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, immX as Bits<Size::$size>) in {
+        X(rd) := result as Bits<Size::$size> as BitsX
+        $SetFlags ()
+        }
+    $LogicImmEncAsm ($i; $size; "")
+    }
+
+  model LogicImmInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: LogicImmFormat =
+      let result = VADL::$i.funct (X(rn) as Bits<Size::$size>, immX as Bits<Size::$size>) in
+        S(rd) := result as Bits<Size::$size> as BitsX
+    $LogicImmEncAsm ($i; $size; "SP")
     }
 
 
@@ -574,19 +635,19 @@ instruction set architecture AArch64Base = {
     assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $s.asm)
     }
 
-  model LogicRegInstrBasic (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+  model LogicRegBasicInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
     $LogicRegGeneralInstr ($i; $size; $s; NoFlags)
     }
 
-  model LogicRegInstrFlag (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+  model LogicRegFlagInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
     $LogicRegGeneralInstr ($i; $size; $s; SetFlags)
     }
 
-  model LogicRegInstrNeg (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+  model LogicRegNegInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
     $LogicRegGeneralInstr ($i; $size; (~($s.ex); $s.enc; $s.asm); NoFlags)
     }
 
-  model LogicRegInstrNegFlag (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+  model LogicRegNegFlagInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
     $LogicRegGeneralInstr ($i; $size; (~($s.ex); $s.enc; $s.asm); SetFlags)
     }
 
@@ -815,14 +876,19 @@ instruction set architecture AArch64Base = {
   $InstrWX             (DivInstr              ; (SDIV   ; "sdiv"  ; 0b0011'0101'1000'0011 ; SInt       ))
   $InstrWX             (DivInstr              ; (UDIV   ; "udiv"  ; 0b0011'0101'1000'0010 ; UInt       ))
 
-  $InstrWXRegShift     (LogicRegInstrBasic    ; (AND    ; "and"   ; 0b0001'0100           ; ands       ))
-  $InstrWXRegShift     (LogicRegInstrFlag     ; (ANDS   ; "ands"  ; 0b1101'0100           ; ands       ))
-  $InstrWXRegShift     (LogicRegInstrBasic    ; (EOR    ; "eor"   ; 0b1001'0100           ; xors       ))
-  $InstrWXRegShift     (LogicRegInstrBasic    ; (ORR    ; "orr"   ; 0b0101'0100           ; ors        ))
-  $InstrWXRegShift     (LogicRegInstrNeg      ; (BIC    ; "bic"   ; 0b0001'0101           ; ands       ))
-  $InstrWXRegShift     (LogicRegInstrNegFlag  ; (BICS   ; "bics"  ; 0b1101'0101           ; ands       ))
-  $InstrWXRegShift     (LogicRegInstrNeg      ; (EON    ; "eon"   ; 0b1001'0101           ; xors       ))
-  $InstrWXRegShift     (LogicRegInstrNeg      ; (ORN    ; "orn"   ; 0b0101'0101           ; ors        ))
+  $InstrWX             (LogicImmInstr         ; (ANDI   ; "and"   ; 0b0010'0100           ; and        ))
+  $InstrWX             (LogicImmFlagInstr     ; (ANDSI  ; "ands"  ; 0b1110'0100           ; ands       ))
+  $InstrWX             (LogicImmInstr         ; (EORI   ; "eor"   ; 0b1010'0100           ; xor        ))
+  $InstrWX             (LogicImmInstr         ; (ORRI   ; "orr"   ; 0b0110'0100           ; or         ))
+
+  $InstrWXRegShift     (LogicRegBasicInstr    ; (AND    ; "and"   ; 0b0001'0100           ; ands       ))
+  $InstrWXRegShift     (LogicRegFlagInstr     ; (ANDS   ; "ands"  ; 0b1101'0100           ; ands       ))
+  $InstrWXRegShift     (LogicRegBasicInstr    ; (EOR    ; "eor"   ; 0b1001'0100           ; xors       ))
+  $InstrWXRegShift     (LogicRegBasicInstr    ; (ORR    ; "orr"   ; 0b0101'0100           ; ors        ))
+  $InstrWXRegShift     (LogicRegNegInstr      ; (BIC    ; "bic"   ; 0b0001'0101           ; ands       ))
+  $InstrWXRegShift     (LogicRegNegFlagInstr  ; (BICS   ; "bics"  ; 0b1101'0101           ; ands       ))
+  $InstrWXRegShift     (LogicRegNegInstr      ; (EON    ; "eon"   ; 0b1001'0101           ; xors       ))
+  $InstrWXRegShift     (LogicRegNegInstr      ; (ORN    ; "orn"   ; 0b0101'0101           ; ors        ))
 
   $InstrWX             (ShiftRegInstr         ; (ASR    ; "asrv"  ; ASR                   ; asr        ))
   $InstrWX             (ShiftRegInstr         ; (LSL    ; "lslv"  ; LSL                   ; lsl        ))
