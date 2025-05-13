@@ -273,6 +273,25 @@ instruction set architecture AArch64Base = {
     , rd       [4..0]   : Index       // destination register
     }
 
+  format CondCompareFormat: Instr =   // conditional compare format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,11,10,4]       // opcode
+    , rm       [20..16] : Index       // 2nd source register or unsigned 5 bit immediate value
+    , cc       [15..12] : Bits4       // condition code
+    , rn       [9..5]   : Index       // source register
+    , nzcv     [3..0]   : Bits4       // new condition flags
+    , immX     = rm as BitsX          // rm zero extended to 64 bits
+    }
+
+  format CondSelectFormat: Instr =    // conditional select format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,11,10]         // opcode
+    , rm       [20..16]               // 2nd source register
+    , cc       [15..12]               // condition code
+    , rn       [9..5]                 // source register
+    , rd       [4..0]                 // destination register
+    }
+
   format BranchFormat: Instr =        // unconditional branch immediate format
     { op       : Bits6                // opcode
     , imm26    : Bits26               // branch offset, needs to be sign extended and shifted
@@ -376,7 +395,7 @@ instruction set architecture AArch64Base = {
   model-type InstrWithFunctSize = (InstrWithFunct, Id) -> IsaDefs
 
   // higher order model enriched with condition
-  model-type InstrWithCond = (InstrNoFunct, Cond) -> IsaDefs
+  model-type InstrWithCond = (InstrWithFunct, Cond) -> IsaDefs
 
   // higher order model enriched with memory
   model-type MemoryModel = (InstrNoFunct, Memory) -> IsaDefs
@@ -708,6 +727,55 @@ instruction set architecture AArch64Base = {
     }
 
 
+// conditional compare models **************************************************
+
+  model CondCompareBaseInstr (i: InstrWithFunct, c: Cond, size: Id, ex: Ex, asm: Ex): IsaDefs = {
+    instruction $i.id: CondCompareFormat =
+      if $c.ex
+        then let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, $ex) in {
+          $SetFlags()
+          }
+        else
+          NZCV := nzcv
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, cc = CondCode::$c.cc }
+    assembly $i.id = ( $i.mnemo, ' ', $size(rn), $asm, ', #', decimal(nzcv), ', ', $c.mext )
+    }
+
+  model CondCompareImmInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    $CondCompareBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; immX as BitsW; (', #', decimal(rm)))
+    $CondCompareBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; immX         ; (', #', decimal(rm)))
+    }
+
+  model CondCompareRegInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    $CondCompareBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; X(rm) as BitsW; (', ', WSize(rm)))
+    $CondCompareBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; X(rm)         ; (', ', XSize(rm)))
+    }
+
+
+// conditional select models ***************************************************
+
+  model CondSelectBaseInstr (i: InstrWithFunct, c: Cond, size: Id, ex: Ex): IsaDefs = {
+    instruction $i.id: CondSelectFormat =
+      let result = if $c.ex then X(rn) else $ex in
+        X(rd) := result as Bits<Size::$size> as BitsX
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, cc = CondCode::$c.cc }
+    assembly $i.id = ( $i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', ', $c.mext)
+    }
+
+  model CondSelectWX (i: InstrWithFunct, c: Cond, ex: Ex): IsaDefs = {
+    $CondSelectBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; $ex)
+    $CondSelectBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; $ex)
+    }
+
+  model CondSelectInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    match: IsaDefs (
+      $i.funct = inc => $CondSelectWX ($i; $c;  X(rm) + 1);
+      $i.funct = neg => $CondSelectWX ($i; $c; -X(rm)    );
+      $i.funct = not => $CondSelectWX ($i; $c; ~X(rm)    );
+      _              => $CondSelectWX ($i; $c;  X(rm)    ))
+    }
+
+
 // branch models ***************************************************************
 
   model BranchEncAsm (i: InstrNoFunct): IsaDefs = {
@@ -749,7 +817,7 @@ instruction set architecture AArch64Base = {
     $BranchRegEncAsm ($i)
     }
 
-  model CondBranchInstr (i: InstrNoFunct, c: Cond): IsaDefs = {
+  model CondBranchInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
     instruction $i.id: CondBranchFormat =
       if $c.ex then
         PC := PC + offset
@@ -758,22 +826,22 @@ instruction set architecture AArch64Base = {
     }
 
   model CondInstr (modelid: InstrWithCond, i: InstrWithFunct): IsaDefs = {
-    $modelid ((ExtendId($i.id, EQ); $i.mnemo; $i.opcode) ; (EQ ; "eq" ; NZCV.Z  = 1                    ))
-    $modelid ((ExtendId($i.id, NE); $i.mnemo; $i.opcode) ; (NE ; "ne" ; NZCV.Z  = 0                    ))
-    $modelid ((ExtendId($i.id, CS); $i.mnemo; $i.opcode) ; (CS ; "cs" ; NZCV.C  = 1                    ))
-    $modelid ((ExtendId($i.id, CC); $i.mnemo; $i.opcode) ; (CC ; "cc" ; NZCV.C  = 0                    ))
-    $modelid ((ExtendId($i.id, MI); $i.mnemo; $i.opcode) ; (MI ; "mi" ; NZCV.N  = 1                    ))
-    $modelid ((ExtendId($i.id, PL); $i.mnemo; $i.opcode) ; (PL ; "pl" ; NZCV.N  = 0                    ))
-    $modelid ((ExtendId($i.id, VS); $i.mnemo; $i.opcode) ; (VS ; "vs" ; NZCV.V  = 1                    ))
-    $modelid ((ExtendId($i.id, VC); $i.mnemo; $i.opcode) ; (VC ; "vc" ; NZCV.V  = 0                    ))
-    $modelid ((ExtendId($i.id, HI); $i.mnemo; $i.opcode) ; (HI ; "hi" ; NZCV.C  = 1 && NZCV.Z = 0      ))
-    $modelid ((ExtendId($i.id, LS); $i.mnemo; $i.opcode) ; (LS ; "ls" ; NZCV.C  = 0 || NZCV.Z = 1      ))
-    $modelid ((ExtendId($i.id, GE); $i.mnemo; $i.opcode) ; (GE ; "ge" ; NZCV.N  = NZCV.V               ))
-    $modelid ((ExtendId($i.id, LT); $i.mnemo; $i.opcode) ; (LT ; "lt" ; NZCV.N != NZCV.V               ))
-    $modelid ((ExtendId($i.id, GT); $i.mnemo; $i.opcode) ; (GT ; "gt" ; NZCV.N  = NZCV.V && NZCV.Z = 0 ))
-    $modelid ((ExtendId($i.id, LE); $i.mnemo; $i.opcode) ; (LE ; "le" ; NZCV.N != NZCV.V || NZCV.Z = 1 ))
-    $modelid ((ExtendId($i.id, AL); $i.mnemo; $i.opcode) ; (AL ; "al" ; true                           ))
-    $modelid ((ExtendId($i.id, NV); $i.mnemo; $i.opcode) ; (NV ; "nv" ; true                           ))
+    $modelid ((ExtendId($i.id, EQ); $i.mnemo; $i.opcode; $i.funct) ; (EQ ; "eq" ; NZCV.Z  = 1                    ))
+    $modelid ((ExtendId($i.id, NE); $i.mnemo; $i.opcode; $i.funct) ; (NE ; "ne" ; NZCV.Z  = 0                    ))
+    $modelid ((ExtendId($i.id, CS); $i.mnemo; $i.opcode; $i.funct) ; (CS ; "cs" ; NZCV.C  = 1                    ))
+    $modelid ((ExtendId($i.id, CC); $i.mnemo; $i.opcode; $i.funct) ; (CC ; "cc" ; NZCV.C  = 0                    ))
+    $modelid ((ExtendId($i.id, MI); $i.mnemo; $i.opcode; $i.funct) ; (MI ; "mi" ; NZCV.N  = 1                    ))
+    $modelid ((ExtendId($i.id, PL); $i.mnemo; $i.opcode; $i.funct) ; (PL ; "pl" ; NZCV.N  = 0                    ))
+    $modelid ((ExtendId($i.id, VS); $i.mnemo; $i.opcode; $i.funct) ; (VS ; "vs" ; NZCV.V  = 1                    ))
+    $modelid ((ExtendId($i.id, VC); $i.mnemo; $i.opcode; $i.funct) ; (VC ; "vc" ; NZCV.V  = 0                    ))
+    $modelid ((ExtendId($i.id, HI); $i.mnemo; $i.opcode; $i.funct) ; (HI ; "hi" ; NZCV.C  = 1 && NZCV.Z = 0      ))
+    $modelid ((ExtendId($i.id, LS); $i.mnemo; $i.opcode; $i.funct) ; (LS ; "ls" ; NZCV.C  = 0 || NZCV.Z = 1      ))
+    $modelid ((ExtendId($i.id, GE); $i.mnemo; $i.opcode; $i.funct) ; (GE ; "ge" ; NZCV.N  = NZCV.V               ))
+    $modelid ((ExtendId($i.id, LT); $i.mnemo; $i.opcode; $i.funct) ; (LT ; "lt" ; NZCV.N != NZCV.V               ))
+    $modelid ((ExtendId($i.id, GT); $i.mnemo; $i.opcode; $i.funct) ; (GT ; "gt" ; NZCV.N  = NZCV.V && NZCV.Z = 0 ))
+    $modelid ((ExtendId($i.id, LE); $i.mnemo; $i.opcode; $i.funct) ; (LE ; "le" ; NZCV.N != NZCV.V || NZCV.Z = 1 ))
+    $modelid ((ExtendId($i.id, AL); $i.mnemo; $i.opcode; $i.funct) ; (AL ; "al" ; true                           ))
+    $modelid ((ExtendId($i.id, NV); $i.mnemo; $i.opcode; $i.funct) ; (NV ; "nv" ; true                           ))
     }
 
   model CompareBranchInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -899,12 +967,22 @@ instruction set architecture AArch64Base = {
   $InstrWX             (MovNZInstr            ; (MOVN   ; "movn"  ; 0b0010'0101           ; not        ))
   $InstrWX             (MovNZInstr            ; (MOVZ   ; "movz"  ; 0b1010'0101           ; ident      ))
 
+  $CondInstr           (CondCompareImmInstr   ; (CCMNI  ; "ccmn"  ; 0b0111'0100'1010'0    ; adds       ))
+  $CondInstr           (CondCompareImmInstr   ; (CCMPI  ; "ccmp"  ; 0b1111'0100'1010'0    ; subsc      ))
+  $CondInstr           (CondCompareRegInstr   ; (CCMN   ; "ccmn"  ; 0b0111'0100'1000'0    ; adds       ))
+  $CondInstr           (CondCompareRegInstr   ; (CCMP   ; "ccmp"  ; 0b1111'0100'1000'0    ; subsc      ))
+
+  $CondInstr           (CondSelectInstr       ; (CSEL   ; "csel"  ; 0b0011'0101'0000      ; equ        ))
+  $CondInstr           (CondSelectInstr       ; (CSINC  ; "csinc" ; 0b0011'0101'0001      ; inc        ))
+  $CondInstr           (CondSelectInstr       ; (CSINV  ; "csinv" ; 0b1011'0101'0000      ; not        ))
+  $CondInstr           (CondSelectInstr       ; (CSNEG  ; "csneg" ; 0b1011'0101'0001      ; neg        ))
+
   $BranchInstr         (                        (B      ; "b"     ; 0b0001'01                          ))
   $BranchLinkInstr     (                        (BL     ; "bl"    ; 0b1001'01                          ))
   $BranchRegInstr      (                        (BR     ; "br"    ; 0b1101'0110'0001'1111'0000'0000'000))
   $BranchRegInstr      (                        (RET    ; "ret"   ; 0b1101'0110'0101'1111'0000'0000'000))
   $BranchRegLinkInstr  (                        (BLR    ; "blr"   ; 0b1101'0110'0011'1111'0000'0000'000))
-  $CondInstr           (CondBranchInstr       ; (B_     ; "b."    ; 0b0101'0100'0                      ))
+  $CondInstr           (CondBranchInstr       ; (B_     ; "b."    ; 0b0101'0100'0         ; unused     ))
   $InstrWX             (CompareBranchInstr    ; (CBZ    ; "cbz"   ; 0b0110'100            ; equ        ))
   $InstrWX             (CompareBranchInstr    ; (CBNZ   ; "cbnz"  ; 0b0110'101            ; neq        ))
   $TestBitBranchInstr  (                        (TBZ    ; "tbz"   ; 0b0110'110            ; equ        ))
