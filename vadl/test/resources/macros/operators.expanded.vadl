@@ -1,2 +1,2 @@
-constant fiveTimesNine = (5 * 9)
-constant minusTwelve = -(12)
+constant fiveTimesNine = 5 * 9
+constant minusTwelve = -12

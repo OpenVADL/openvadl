@@ -37,6 +37,7 @@ import vadl.utils.WithLocation;
 /**
  * The Expression node of the AST.
  */
+@SuppressWarnings("EnumOrdinal")
 public abstract class Expr extends Node implements TypedNode {
   @Nullable
   Type type = null;
@@ -44,6 +45,43 @@ public abstract class Expr extends Node implements TypedNode {
   @Override
   public Type type() {
     return Objects.requireNonNull(type);
+  }
+
+  Precedence precedence() {
+    return Precedence.NoPrecedence;
+  }
+
+  abstract void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec);
+
+  /**
+   * Wraps the expression in parentheses depending on this precedence and the
+   * parent's one.
+   *
+   * <p>If weak is true, we don't care about grouping expressions with the same precedence,
+   * which is fine for `as` and unary operations.
+   * However, when weak is false (i.e. binaryOps),
+   * we must group expressions with the same precedences
+   * for safety reasons: {@code e.g. a >> b << c != a >> (b << c)}
+   *
+   * @param parentPrec precedence of parent
+   * @param sb         string builder to add parentheses
+   * @param weak       if true parentheses are not added when parent has same precedence
+   * @param builder    lambda that builds the inner expression printing
+   */
+  void wrapInGroup(Precedence parentPrec, StringBuilder sb, boolean weak, Runnable builder) {
+    if (parentPrec.ordinal() > precedence().ordinal()
+        || (!weak && parentPrec.ordinal() == precedence().ordinal())) {
+      sb.append("(");
+      builder.run();
+      sb.append(")");
+    } else {
+      builder.run();
+    }
+  }
+
+  @Override
+  public final void prettyPrint(int indent, StringBuilder builder) {
+    prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
   }
 
   abstract <R> R accept(ExprVisitor<R> visitor);
@@ -131,7 +169,7 @@ final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(name);
   }
 
@@ -183,15 +221,32 @@ sealed interface IsUnOp permits UnOp, PlaceholderNode, MacroInstanceNode, MacroM
   void prettyPrint(int indent, StringBuilder builder);
 }
 
+enum Precedence {
+  NoPrecedence,
+  LogicalOr,
+  LogicalAnd,
+  In,
+  Or,
+  Xor,
+  And,
+  Equality,
+  Comparison,
+  Shift,
+  Term,
+  Factor,
+  CastOp,
+  UnaryOp,
+}
+
 /**
  * The operator class provides singleton constructors for immutable instances for each operator.
  */
 @SuppressWarnings("checkstyle:methodname")
 class Operator {
   final String symbol;
-  final int precedence;
+  final Precedence precedence;
 
-  private Operator(String symbol, int precedence) {
+  private Operator(String symbol, Precedence precedence) {
     this.symbol = symbol;
     this.precedence = precedence;
   }
@@ -201,45 +256,33 @@ class Operator {
     return symbol;
   }
 
-  private static final int precLogicalOr = 0;
-  private static final int precLogicalAnd = precLogicalOr + 1;
-  private static final int precIn = precLogicalAnd + 1;
-  private static final int precOr = precIn + 1;
-  private static final int precXor = precOr + 1;
-  private static final int precAnd = precXor + 1;
-  private static final int precEquality = precAnd + 1;
-  private static final int precComparison = precEquality + 1;
-  private static final int precShift = precComparison + 1;
-  private static final int precTerm = precShift + 1;
-  private static final int precFactor = precTerm + 1;
-
-  public static final Operator LogicalOr = new Operator("||", precLogicalOr);
-  public static final Operator LogicalAnd = new Operator("&&", precLogicalAnd);
-  public static final Operator Or = new Operator("|", precOr);
-  public static final Operator Xor = new Operator("^", precXor);
-  public static final Operator And = new Operator("&", precAnd);
-  public static final Operator Equal = new Operator("=", precEquality);
-  public static final Operator NotEqual = new Operator("!=", precEquality);
-  public static final Operator GreaterEqual = new Operator(">=", precComparison);
-  public static final Operator Greater = new Operator(">", precComparison);
-  public static final Operator LessEqual = new Operator("<=", precComparison);
-  public static final Operator Less = new Operator("<", precComparison);
-  public static final Operator RotateRight = new Operator("<>>", precShift);
-  public static final Operator RotateLeft = new Operator("<<>", precShift);
-  public static final Operator ShiftRight = new Operator(">>", precShift);
-  public static final Operator ShiftLeft = new Operator("<<", precShift);
-  public static final Operator Add = new Operator("+", precTerm);
-  public static final Operator Subtract = new Operator("-", precTerm);
-  public static final Operator SaturatedAdd = new Operator("+|", precTerm);
-  public static final Operator SaturatedSubtract = new Operator("-|", precTerm);
-  public static final Operator Multiply = new Operator("*", precFactor);
-  public static final Operator Divide = new Operator("/", precFactor);
-  public static final Operator Modulo = new Operator("%", precFactor);
-  public static final Operator LongMultiply = new Operator("*#", precFactor);
-  public static final Operator In = new Operator("in", precIn);
-  public static final Operator NotIn = new Operator("!in", precIn);
-  public static final Operator ElementOf = new Operator("∈", precIn);
-  public static final Operator NotElementOf = new Operator("∉", precIn);
+  public static final Operator LogicalOr = new Operator("||", Precedence.LogicalOr);
+  public static final Operator LogicalAnd = new Operator("&&", Precedence.LogicalAnd);
+  public static final Operator Or = new Operator("|", Precedence.Or);
+  public static final Operator Xor = new Operator("^", Precedence.Xor);
+  public static final Operator And = new Operator("&", Precedence.And);
+  public static final Operator Equal = new Operator("=", Precedence.Equality);
+  public static final Operator NotEqual = new Operator("!=", Precedence.Equality);
+  public static final Operator GreaterEqual = new Operator(">=", Precedence.Comparison);
+  public static final Operator Greater = new Operator(">", Precedence.Comparison);
+  public static final Operator LessEqual = new Operator("<=", Precedence.Comparison);
+  public static final Operator Less = new Operator("<", Precedence.Comparison);
+  public static final Operator RotateRight = new Operator("<>>", Precedence.Shift);
+  public static final Operator RotateLeft = new Operator("<<>", Precedence.Shift);
+  public static final Operator ShiftRight = new Operator(">>", Precedence.Shift);
+  public static final Operator ShiftLeft = new Operator("<<", Precedence.Shift);
+  public static final Operator Add = new Operator("+", Precedence.Term);
+  public static final Operator Subtract = new Operator("-", Precedence.Term);
+  public static final Operator SaturatedAdd = new Operator("+|", Precedence.Term);
+  public static final Operator SaturatedSubtract = new Operator("-|", Precedence.Term);
+  public static final Operator Multiply = new Operator("*", Precedence.Factor);
+  public static final Operator Divide = new Operator("/", Precedence.Factor);
+  public static final Operator Modulo = new Operator("%", Precedence.Factor);
+  public static final Operator LongMultiply = new Operator("*#", Precedence.Factor);
+  public static final Operator In = new Operator("in", Precedence.In);
+  public static final Operator NotIn = new Operator("!in", Precedence.In);
+  public static final Operator ElementOf = new Operator("∈", Precedence.In);
+  public static final Operator NotElementOf = new Operator("∉", Precedence.In);
 
   public static final List<Operator> allOperators = List.of(
       LogicalOr,
@@ -350,10 +393,11 @@ class BinaryExpr extends Expr {
     return root;
   }
 
+  @SuppressWarnings("EnumOrdinal")
   static BinaryExpr transformRecRightToLeft(@Nullable BinaryExpr parpar, BinaryExpr par) {
     par.hasBeenReordered = true;
     while (par.left instanceof BinaryExpr curr) {
-      if (par.operator().precedence > curr.operator().precedence) {
+      if (par.operator().precedence.ordinal() > curr.operator().precedence.ordinal()) {
         par.left = curr.right;
         curr.right = par;
         if ((par = parpar) != null) {
@@ -372,6 +416,11 @@ class BinaryExpr extends Expr {
   }
 
   @Override
+  Precedence precedence() {
+    return operator().precedence;
+  }
+
+  @Override
   public SourceLocation location() {
     return left.location().join(right.location());
   }
@@ -381,15 +430,16 @@ class BinaryExpr extends Expr {
     return BasicSyntaxType.EX;
   }
 
+
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    builder.append("(");
-    left.prettyPrint(indent, builder);
-    builder.append(" ");
-    operator.prettyPrint(0, builder);
-    builder.append(" ");
-    right.prettyPrint(indent, builder);
-    builder.append(")");
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    wrapInGroup(parentPrec, builder, false, () -> {
+      left.prettyPrintExpr(indent, builder, precedence());
+      builder.append(" ");
+      operator.prettyPrint(0, builder);
+      builder.append(" ");
+      right.prettyPrintExpr(indent, builder, precedence());
+    });
   }
 
   @Override
@@ -447,6 +497,11 @@ class UnaryExpr extends Expr {
   }
 
   @Override
+  Precedence precedence() {
+    return Precedence.UnaryOp;
+  }
+
+  @Override
   public SourceLocation location() {
     return operand.location().join(operand.location());
   }
@@ -457,11 +512,11 @@ class UnaryExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     operator.prettyPrint(indent, builder);
-    builder.append("(");
-    operand.prettyPrint(indent, builder);
-    builder.append(")");
+    wrapInGroup(parentPrec, builder, true, () -> {
+      operand.prettyPrintExpr(indent, builder, precedence());
+    });
   }
 
   @Override
@@ -521,7 +576,7 @@ class IntegerLiteral extends Expr {
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(token);
   }
 
@@ -593,7 +648,7 @@ class BinaryLiteral extends Expr {
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(token);
   }
 
@@ -648,7 +703,7 @@ class BoolLiteral extends Expr {
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(value);
   }
 
@@ -720,7 +775,7 @@ class StringLiteral extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(token);
   }
 
@@ -800,7 +855,7 @@ final class PlaceholderExpr extends Expr implements IdentifierOrPlaceholder, IsI
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("$");
     builder.append(String.join(".", segments));
   }
@@ -869,7 +924,7 @@ final class MacroInstanceExpr extends Expr
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(prettyIndentString(indent));
     builder.append("$");
     if (macro instanceof Macro m) {
@@ -956,7 +1011,7 @@ final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPla
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     macroMatch.prettyPrint(indent, builder);
   }
 
@@ -1019,7 +1074,7 @@ final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("ExtendId ");
     expr.prettyPrint(0, builder);
   }
@@ -1085,7 +1140,7 @@ final class IdToStrExpr extends Expr {
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("IdToStr (");
     id.prettyPrint(0, builder);
     builder.append(")");
@@ -1147,7 +1202,7 @@ class GroupedExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("(");
     var isFirst = true;
     for (var expr : expressions) {
@@ -1155,7 +1210,7 @@ class GroupedExpr extends Expr {
         builder.append(", ");
       }
       isFirst = false;
-      expr.prettyPrint(0, builder);
+      expr.prettyPrintExpr(0, builder, Precedence.NoPrecedence);
     }
     builder.append(")");
   }
@@ -1201,8 +1256,8 @@ class RangeExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    from.prettyPrint(indent, builder);
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    from.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
     builder.append("..");
     to.prettyPrint(indent, builder);
   }
@@ -1320,7 +1375,7 @@ final class TypeLiteral extends Expr {
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(baseType.pathToString());
     for (var sizes : sizeIndices) {
       builder.append("<");
@@ -1330,7 +1385,7 @@ final class TypeLiteral extends Expr {
           builder.append(", ");
         }
         isFirst = false;
-        size.prettyPrint(0, builder);
+        size.prettyPrintExpr(0, builder, Precedence.NoPrecedence);
       }
       builder.append(">");
     }
@@ -1458,7 +1513,7 @@ final class IdentifierPath extends Expr implements IsId {
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     var isFirst = true;
     for (var segment : segments) {
       if (!isFirst) {
@@ -1531,10 +1586,10 @@ final class SymbolExpr extends Expr implements IsSymExpr {
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     path.prettyPrint(indent, builder);
     builder.append("< ");
-    size.prettyPrint(indent, builder);
+    size.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
     builder.append(" >");
   }
 
@@ -1657,7 +1712,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   }
 
   @Override
-  public void prettyPrint(int indent, StringBuilder builder) {
+  public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     target.prettyPrint(indent, builder);
     printArgsIndices(argsIndices, builder);
     for (var subCall : subCalls) {
@@ -1675,7 +1730,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
         if (!first) {
           builder.append(", ");
         }
-        arg.prettyPrint(0, builder);
+        arg.prettyPrintExpr(0, builder, Precedence.NoPrecedence);
         first = false;
       }
       builder.append(")");
@@ -1832,20 +1887,20 @@ class IfExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(prettyIndentString(indent));
     builder.append("if ");
-    condition.prettyPrint(indent, builder);
+    condition.prettyPrintExpr(indent, builder, Precedence.NoPrecedence);
     builder.append(" then\n");
     if (!isBlockLayout(thenExpr)) {
       builder.append(prettyIndentString(indent + 1));
     }
-    thenExpr.prettyPrint(indent + 1, builder);
+    thenExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
     builder.append("\n").append(prettyIndentString(indent)).append("else\n");
     if (!isBlockLayout(elseExpr)) {
       builder.append(prettyIndentString(indent + 1));
     }
-    elseExpr.prettyPrint(indent + 1, builder);
+    elseExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
   }
 
   @Override
@@ -1931,7 +1986,7 @@ class LetExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(prettyIndentString(indent));
     builder.append("(let ");
     var isFirst = true;
@@ -1943,12 +1998,12 @@ class LetExpr extends Expr {
       identifier.prettyPrint(indent, builder);
     }
     builder.append(" = ");
-    valueExpr.prettyPrint(indent + 1, builder);
+    valueExpr.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
     builder.append(" in\n");
     if (!isBlockLayout(body)) {
       builder.append(prettyIndentString(indent + 1));
     }
-    body.prettyPrint(indent + 1, builder);
+    body.prettyPrintExpr(indent + 1, builder, Precedence.NoPrecedence);
     builder.append(")");
   }
 
@@ -2003,6 +2058,11 @@ class CastExpr extends Expr {
   }
 
   @Override
+  Precedence precedence() {
+    return Precedence.CastOp;
+  }
+
+  @Override
   public SourceLocation location() {
     return location;
   }
@@ -2013,10 +2073,12 @@ class CastExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
-    value.prettyPrint(indent, builder);
-    builder.append(" as ");
-    ((Expr) typeLiteral).prettyPrint(indent, builder);
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    wrapInGroup(parentPrec, builder, true, () -> {
+      value.prettyPrintExpr(indent, builder, Precedence.CastOp);
+      builder.append(" as ");
+      typeLiteral.prettyPrint(indent, builder);
+    });
   }
 
   @Override
@@ -2083,7 +2145,7 @@ class MatchExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append(prettyIndentString(indent)).append("match ");
     candidate.prettyPrint(0, builder);
     builder.append(" with\n");
@@ -2194,7 +2256,7 @@ class ExistsInExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("exists in {");
     var isFirst = true;
     for (IsId operation : operations) {
@@ -2253,7 +2315,7 @@ class ExistsInThenExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("exists ");
     var isFirst = true;
     for (Condition condition : conditions) {
@@ -2334,7 +2396,7 @@ class ForallThenExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("forall ");
     var isFirst = true;
     for (ForallThenExpr.Index index : indices) {
@@ -2469,7 +2531,7 @@ class ForallExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     builder.append("forall ");
     var isFirst = true;
     for (ForallExpr.Index index : indices) {
@@ -2613,7 +2675,7 @@ class SequenceCallExpr extends Expr {
   }
 
   @Override
-  void prettyPrint(int indent, StringBuilder builder) {
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
     target.prettyPrint(0, builder);
     if (range != null) {
       builder.append("{");

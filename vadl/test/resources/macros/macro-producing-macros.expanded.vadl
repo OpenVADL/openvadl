@@ -1,9 +1,9 @@
 instruction set architecture MacroProducingMacros = {
   constant a =
-    match (5 + 2) with
+    match 5 + 2 with
       { 7 => 1
       , 8 => 0
-      , _ => ((9 * 4) * 4)
+      , _ => (9 * 4) * 4
       }
 
 }

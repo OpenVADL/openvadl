@@ -19,6 +19,7 @@ package vadl.ast;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static vadl.ast.AstTestUtils.assertAstEquality;
+import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -217,16 +218,20 @@ public class BinaryPrecedenceTest {
   @Test
   void repeatedInvocationDoesNotChangeResult() {
     var prog = "constant n = 1 + 2 << 3 * 4 + 5 + 6 < 7";
+    var progAst = VadlParser.parse(prog);
     var binExpr =
-        (BinaryExpr) ((ConstantDefinition) VadlParser.parse(prog).definitions.get(0)).value;
+        (BinaryExpr) ((ConstantDefinition) progAst.definitions.get(0)).value;
     var reorderedOnce = prettyPrint(BinaryExpr.reorder(binExpr));
     var reorderedTwice = prettyPrint(BinaryExpr.reorder(binExpr));
     var reorderedThrice = prettyPrint(BinaryExpr.reorder(binExpr));
-    var expected = "(((1 + 2) << (((3 * 4) + 5) + 6)) < 7)";
 
-    assertThat(reorderedOnce, equalTo(expected));
-    assertThat(reorderedTwice, equalTo(expected));
-    assertThat(reorderedThrice, equalTo(expected));
+    var expected = "constant n = (((1 + 2) << (((3 * 4) + 5) + 6)) < 7)";
+    var expAst = VadlParser.parse(expected);
+
+    assertAstEquality(expAst, progAst);
+    verifyPrettifiedAst(expAst);
+    assertThat(reorderedOnce, equalTo(reorderedTwice));
+    assertThat(reorderedTwice, equalTo(reorderedThrice));
   }
 
   private void assertHasBeenReordered(Ast... asts) {

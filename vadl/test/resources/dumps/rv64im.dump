@@ -15,10 +15,9 @@ ImportDefinition
 . : ' | Identifier name: "Arch64" type: null
 . : ' ConstantDefinition name: "SftLen"
 . : ' | BinaryExpr operator: + type: null
-. : ' | . GroupedExpr type: null
-. : ' | . : BinaryExpr operator: / type: null
-. : ' | . : ' Identifier name: "MLen" type: null
-. : ' | . : ' IntegerLiteral literal: 32 (32) type: null
+. : ' | . BinaryExpr operator: / type: null
+. : ' | . : Identifier name: "MLen" type: null
+. : ' | . : IntegerLiteral literal: 32 (32) type: null
 . : ' | . IntegerLiteral literal: 4 (4) type: null
 . : ' ConstantDefinition name: "WLen"
 . : ' | IntegerLiteral literal: 32 (32) type: null
@@ -181,11 +180,10 @@ ImportDefinition
 . : ' | . : Identifier name: "Bits7" type: null
 . : ' | DerivedFormatField name: "immUp"
 . : ' | . BinaryExpr operator: << type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | Identifier name: "imm" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' Identifier name: "imm" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SIntR" type: null
 . : ' | . : IntegerLiteral literal: 12 (12) type: null
 . : ' FormatDefinition name: "Stype"
 . : ' | TypeLiteral type: null
@@ -248,11 +246,10 @@ ImportDefinition
 . : ' | . : IntegerLiteral literal: 0 (0) type: null
 . : ' | DerivedFormatField name: "immS"
 . : ' | . BinaryExpr operator: << type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | Identifier name: "imm" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' Identifier name: "imm" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SIntR" type: null
 . : ' | . : IntegerLiteral literal: 1 (1) type: null
 . : ' FormatDefinition name: "Jtype"
 . : ' | TypeLiteral type: null
@@ -276,11 +273,10 @@ ImportDefinition
 . : ' | . : IntegerLiteral literal: 0 (0) type: null
 . : ' | DerivedFormatField name: "immS"
 . : ' | . BinaryExpr operator: << type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | Identifier name: "imm" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' Identifier name: "imm" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SIntR" type: null
 . : ' | . : IntegerLiteral literal: 1 (1) type: null
 . : ' InstructionDefinition name: "ADD"
 . : ' | Identifier name: "Rtype" type: null
@@ -290,24 +286,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: + type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
+. : ' | . : BinaryExpr operator: + type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -344,24 +337,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: - type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
+. : ' | . : BinaryExpr operator: - type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -398,24 +388,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: & type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
+. : ' | . : BinaryExpr operator: & type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -452,24 +439,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: | type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
+. : ' | . : BinaryExpr operator: | type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -506,24 +490,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: ^ type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
+. : ' | . : BinaryExpr operator: ^ type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -560,24 +541,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: < type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
+. : ' | . : BinaryExpr operator: < type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -614,24 +592,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: < type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UInt" type: null
+. : ' | . : BinaryExpr operator: < type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -668,24 +643,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: << type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UShft" type: null
+. : ' | . : BinaryExpr operator: << type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UShft" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -722,24 +694,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: >> type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UShft" type: null
+. : ' | . : BinaryExpr operator: >> type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UShft" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -776,24 +745,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: >> type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UShft" type: null
+. : ' | . : BinaryExpr operator: >> type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UShft" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -830,21 +796,18 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: + type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : Identifier name: "immS" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
+. : ' | . : BinaryExpr operator: + type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | Identifier name: "immS" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -879,21 +842,18 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: & type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : Identifier name: "immS" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
+. : ' | . : BinaryExpr operator: & type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | Identifier name: "immS" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -928,21 +888,18 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: | type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : Identifier name: "immS" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
+. : ' | . : BinaryExpr operator: | type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | Identifier name: "immS" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -977,21 +934,18 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: ^ type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : Identifier name: "immS" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
+. : ' | . : BinaryExpr operator: ^ type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | Identifier name: "immS" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -1026,21 +980,18 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: < type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : Identifier name: "immS" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
+. : ' | . : BinaryExpr operator: < type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | Identifier name: "immS" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -1075,21 +1026,18 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: < type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UInt" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : Identifier name: "immS" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UInt" type: null
+. : ' | . : BinaryExpr operator: < type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UInt" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | Identifier name: "immS" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -1558,14 +1506,13 @@ ImportDefinition
 . : ' | Identifier name: "Btype" type: null
 . : ' | IfStatement
 . : ' | . BinaryExpr operator: = type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs1" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits" type: null
 . : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X" type: null
 . : ' | . : ' ArgsIndices
@@ -1603,14 +1550,13 @@ ImportDefinition
 . : ' | Identifier name: "Btype" type: null
 . : ' | IfStatement
 . : ' | . BinaryExpr operator: != type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs1" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "Bits" type: null
 . : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X" type: null
 . : ' | . : ' ArgsIndices
@@ -1648,14 +1594,13 @@ ImportDefinition
 . : ' | Identifier name: "Btype" type: null
 . : ' | IfStatement
 . : ' | . BinaryExpr operator: >= type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs1" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X" type: null
 . : ' | . : ' ArgsIndices
@@ -1693,14 +1638,13 @@ ImportDefinition
 . : ' | Identifier name: "Btype" type: null
 . : ' | IfStatement
 . : ' | . BinaryExpr operator: >= type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "UInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs1" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "UInt" type: null
 . : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X" type: null
 . : ' | . : ' ArgsIndices
@@ -1738,14 +1682,13 @@ ImportDefinition
 . : ' | Identifier name: "Btype" type: null
 . : ' | IfStatement
 . : ' | . BinaryExpr operator: < type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs1" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X" type: null
 . : ' | . : ' ArgsIndices
@@ -1783,14 +1726,13 @@ ImportDefinition
 . : ' | Identifier name: "Btype" type: null
 . : ' | IfStatement
 . : ' | . BinaryExpr operator: < type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "UInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs1" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "UInt" type: null
 . : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X" type: null
 . : ' | . : ' ArgsIndices
@@ -1836,17 +1778,14 @@ ImportDefinition
 . : ' | . : AssignmentStatement
 . : ' | . : ' Identifier name: "PC" type: null
 . : ' | . : ' BinaryExpr operator: & type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: + type: null
-. : ' | . : ' | . : Identifier name: "PC" type: null
-. : ' | . : ' | . : Identifier name: "immS" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . UnaryExpr operator: UnOp - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 2 (2) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | BinaryExpr operator: + type: null
+. : ' | . : ' | . Identifier name: "PC" type: null
+. : ' | . : ' | . Identifier name: "immS" type: null
+. : ' | . : ' | UnaryExpr operator: UnOp - type: null
+. : ' | . : ' | . CastExpr type: null
+. : ' | . : ' | . : IntegerLiteral literal: 2 (2) type: null
+. : ' | . : ' | . : TypeLiteral type: null
+. : ' | . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' | . : AssignmentStatement
 . : ' | . : ' CallIndexExpr type: null
 . : ' | . : ' | Identifier name: "X" type: null
@@ -1883,20 +1822,17 @@ ImportDefinition
 . : ' | . : AssignmentStatement
 . : ' | . : ' Identifier name: "PC" type: null
 . : ' | . : ' BinaryExpr operator: & type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: + type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : Identifier name: "immS" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . UnaryExpr operator: UnOp - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 2 (2) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | BinaryExpr operator: + type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . Identifier name: "immS" type: null
+. : ' | . : ' | UnaryExpr operator: UnOp - type: null
+. : ' | . : ' | . CastExpr type: null
+. : ' | . : ' | . : IntegerLiteral literal: 2 (2) type: null
+. : ' | . : ' | . : TypeLiteral type: null
+. : ' | . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' | . : AssignmentStatement
 . : ' | . : ' CallIndexExpr type: null
 . : ' | . : ' | Identifier name: "X" type: null
@@ -2150,25 +2086,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: + type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntW" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | Identifier name: "immS" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntW" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' BinaryExpr operator: + type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "SIntW" type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . Identifier name: "immS" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "SIntW" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
@@ -2203,21 +2135,18 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: << type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UIntW" type: null
-. : ' | . : ' | . : Identifier name: "shamt" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' BinaryExpr operator: << type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "UIntW" type: null
+. : ' | . : ' | Identifier name: "shamt" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
@@ -2254,21 +2183,18 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: >> type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UIntW" type: null
-. : ' | . : ' | . : Identifier name: "shamt" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' BinaryExpr operator: >> type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "UIntW" type: null
+. : ' | . : ' | Identifier name: "shamt" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
@@ -2305,21 +2231,18 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: >> type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntW" type: null
-. : ' | . : ' | . : Identifier name: "shamt" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' BinaryExpr operator: >> type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "SIntW" type: null
+. : ' | . : ' | Identifier name: "shamt" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
@@ -2356,28 +2279,24 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: + type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "Word" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs2" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "Word" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' BinaryExpr operator: + type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "Word" type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs2" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "Word" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
@@ -2414,28 +2333,24 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "Word" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs2" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "Word" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' BinaryExpr operator: - type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "Word" type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs2" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "Word" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
@@ -2472,28 +2387,24 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: << type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UIntW" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs2" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UInt5" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' BinaryExpr operator: << type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "UIntW" type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs2" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "UInt5" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
@@ -2530,28 +2441,24 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: >> type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UIntW" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs2" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UInt5" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' BinaryExpr operator: >> type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "UIntW" type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs2" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "UInt5" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
@@ -2588,28 +2495,24 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: >> type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntW" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs2" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UInt5" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' BinaryExpr operator: >> type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "SIntW" type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs2" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "UInt5" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
@@ -2686,17 +2589,15 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: << type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UInt" type: null
-. : ' | . : ' | Identifier name: "shamt" type: null
+. : ' | . : BinaryExpr operator: << type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UInt" type: null
+. : ' | . : ' Identifier name: "shamt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -2735,17 +2636,15 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: >> type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "UInt" type: null
-. : ' | . : ' | Identifier name: "shamt" type: null
+. : ' | . : BinaryExpr operator: >> type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "UInt" type: null
+. : ' | . : ' Identifier name: "shamt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -2784,17 +2683,15 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: >> type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "SInt" type: null
-. : ' | . : ' | Identifier name: "shamt" type: null
+. : ' | . : BinaryExpr operator: >> type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' Identifier name: "shamt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -2834,17 +2731,15 @@ ImportDefinition
 . : ' | . Identifier name: "UInt" type: null
 . : ' | . IntegerLiteral literal: 20 (20) type: null
 . : ' | CastExpr type: null
-. : ' | . GroupedExpr type: null
-. : ' | . : BinaryExpr operator: >> type: null
-. : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | BinaryExpr operator: + type: null
-. : ' | . : ' | . Identifier name: "symbol" type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : BinaryLiteral literal: 0x800 (2048) type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' | . : ' IntegerLiteral literal: 32 (32) type: null
-. : ' | . : ' IntegerLiteral literal: 12 (12) type: null
+. : ' | . BinaryExpr operator: >> type: null
+. : ' | . : BinaryExpr operator: + type: null
+. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | BinaryLiteral literal: 0x800 (2048) type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : ' | . IntegerLiteral literal: 32 (32) type: null
+. : ' | . : IntegerLiteral literal: 12 (12) type: null
 . : ' | . TypeLiteral type: null
 . : ' | . : Identifier name: "UInt" type: null
 . : ' | . : IntegerLiteral literal: 20 (20) type: null
@@ -2870,13 +2765,11 @@ ImportDefinition
 . : ' | . Identifier name: "UInt" type: null
 . : ' | . IntegerLiteral literal: 20 (20) type: null
 . : ' | CastExpr type: null
-. : ' | . GroupedExpr type: null
+. : ' | . BinaryExpr operator: >> type: null
 . : ' | . : BinaryExpr operator: >> type: null
-. : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | BinaryExpr operator: >> type: null
-. : ' | . : ' | . Identifier name: "symbol" type: null
-. : ' | . : ' | . IntegerLiteral literal: 32 (32) type: null
-. : ' | . : ' IntegerLiteral literal: 12 (12) type: null
+. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . : ' IntegerLiteral literal: 32 (32) type: null
+. : ' | . : IntegerLiteral literal: 12 (12) type: null
 . : ' | . TypeLiteral type: null
 . : ' | . : Identifier name: "UInt" type: null
 . : ' | . : IntegerLiteral literal: 20 (20) type: null
@@ -2889,10 +2782,9 @@ ImportDefinition
 . : ' | . Identifier name: "SInt" type: null
 . : ' | . IntegerLiteral literal: 12 (12) type: null
 . : ' | CastExpr type: null
-. : ' | . GroupedExpr type: null
-. : ' | . : BinaryExpr operator: >> type: null
-. : ' | . : ' Identifier name: "symbol" type: null
-. : ' | . : ' IntegerLiteral literal: 32 (32) type: null
+. : ' | . BinaryExpr operator: >> type: null
+. : ' | . : Identifier name: "symbol" type: null
+. : ' | . : IntegerLiteral literal: 32 (32) type: null
 . : ' | . TypeLiteral type: null
 . : ' | . : Identifier name: "SInt" type: null
 . : ' | . : IntegerLiteral literal: 12 (12) type: null
@@ -2905,10 +2797,9 @@ ImportDefinition
 . : ' | . Identifier name: "SInt" type: null
 . : ' | . IntegerLiteral literal: 12 (12) type: null
 . : ' | CastExpr type: null
-. : ' | . GroupedExpr type: null
-. : ' | . : BinaryExpr operator: >> type: null
-. : ' | . : ' Identifier name: "symbol" type: null
-. : ' | . : ' IntegerLiteral literal: 52 (52) type: null
+. : ' | . BinaryExpr operator: >> type: null
+. : ' | . : Identifier name: "symbol" type: null
+. : ' | . : IntegerLiteral literal: 52 (52) type: null
 . : ' | . TypeLiteral type: null
 . : ' | . : Identifier name: "SInt" type: null
 . : ' | . : IntegerLiteral literal: 12 (12) type: null
@@ -2936,17 +2827,15 @@ ImportDefinition
 . : ' | . Identifier name: "UInt" type: null
 . : ' | . IntegerLiteral literal: 20 (20) type: null
 . : ' | CastExpr type: null
-. : ' | . GroupedExpr type: null
-. : ' | . : BinaryExpr operator: >> type: null
-. : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | BinaryExpr operator: + type: null
-. : ' | . : ' | . Identifier name: "symbol" type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : BinaryLiteral literal: 0x800 (2048) type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' | . : ' IntegerLiteral literal: 32 (32) type: null
-. : ' | . : ' IntegerLiteral literal: 12 (12) type: null
+. : ' | . BinaryExpr operator: >> type: null
+. : ' | . : BinaryExpr operator: + type: null
+. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | BinaryLiteral literal: 0x800 (2048) type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : ' | . IntegerLiteral literal: 32 (32) type: null
+. : ' | . : IntegerLiteral literal: 12 (12) type: null
 . : ' | . TypeLiteral type: null
 . : ' | . : Identifier name: "UInt" type: null
 . : ' | . : IntegerLiteral literal: 20 (20) type: null
@@ -2977,17 +2866,15 @@ ImportDefinition
 . : ' | . Identifier name: "UInt" type: null
 . : ' | . IntegerLiteral literal: 20 (20) type: null
 . : ' | CastExpr type: null
-. : ' | . GroupedExpr type: null
-. : ' | . : BinaryExpr operator: >> type: null
-. : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | BinaryExpr operator: + type: null
-. : ' | . : ' | . Identifier name: "symbol" type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : BinaryLiteral literal: 0x800 (2048) type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' | . : ' IntegerLiteral literal: 32 (32) type: null
-. : ' | . : ' IntegerLiteral literal: 12 (12) type: null
+. : ' | . BinaryExpr operator: >> type: null
+. : ' | . : BinaryExpr operator: + type: null
+. : ' | . : ' Identifier name: "symbol" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | BinaryLiteral literal: 0x800 (2048) type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : ' | . IntegerLiteral literal: 32 (32) type: null
+. : ' | . : IntegerLiteral literal: 12 (12) type: null
 . : ' | . TypeLiteral type: null
 . : ' | . : Identifier name: "UInt" type: null
 . : ' | . : IntegerLiteral literal: 20 (20) type: null
@@ -3691,24 +3578,21 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' BinaryExpr operator: * type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs1" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : CallIndexExpr type: null
-. : ' | . : ' | . : ' Identifier name: "X" type: null
-. : ' | . : ' | . : ' ArgsIndices
-. : ' | . : ' | . : ' | Identifier name: "rs2" type: null
-. : ' | . : ' | . : TypeLiteral type: null
-. : ' | . : ' | . : ' Identifier name: "Bits" type: null
+. : ' | . : BinaryExpr operator: * type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs1" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
+. : ' | . : ' CastExpr type: null
+. : ' | . : ' | CallIndexExpr type: null
+. : ' | . : ' | . Identifier name: "X" type: null
+. : ' | . : ' | . ArgsIndices
+. : ' | . : ' | . : Identifier name: "rs2" type: null
+. : ' | . : ' | TypeLiteral type: null
+. : ' | . : ' | . Identifier name: "Bits" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -3742,22 +3626,20 @@ ImportDefinition
 . : ' | LetStatement
 . : ' | . Identifier name: "result" type: null
 . : ' | . BinaryExpr operator: *# type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs2" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs1" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs2" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . AssignmentStatement
 . : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X" type: null
@@ -3800,22 +3682,20 @@ ImportDefinition
 . : ' | LetStatement
 . : ' | . Identifier name: "result" type: null
 . : ' | . BinaryExpr operator: *# type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs2" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "UInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs1" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs2" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "UInt" type: null
 . : ' | . AssignmentStatement
 . : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X" type: null
@@ -3858,22 +3738,20 @@ ImportDefinition
 . : ' | LetStatement
 . : ' | . Identifier name: "result" type: null
 . : ' | . BinaryExpr operator: *# type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "UInt" type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : Identifier name: "rs2" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "UInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs1" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "UInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' CallIndexExpr type: null
+. : ' | . : ' | Identifier name: "X" type: null
+. : ' | . : ' | ArgsIndices
+. : ' | . : ' | . Identifier name: "rs2" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "UInt" type: null
 . : ' | . AssignmentStatement
 . : ' | . : CallIndexExpr type: null
 . : ' | . : ' Identifier name: "X" type: null
@@ -3934,13 +3812,11 @@ ImportDefinition
 . : ' | . : LetStatement
 . : ' | . : ' Identifier name: "AllOnes" type: null
 . : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . UnaryExpr operator: UnOp - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | UnaryExpr operator: UnOp - type: null
+. : ' | . : ' | . CastExpr type: null
+. : ' | . : ' | . : IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : TypeLiteral type: null
+. : ' | . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' | . : ' | TypeLiteral type: null
 . : ' | . : ' | . Identifier name: "SIntR" type: null
 . : ' | . : ' LetStatement
@@ -3948,39 +3824,32 @@ ImportDefinition
 . : ' | . : ' | IfExpr type: null
 . : ' | . : ' | . BinaryExpr operator: = type: null
 . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SIntR" type: null
 . : ' | . : ' | . Identifier name: "AllOnes" type: null
 . : ' | . : ' | . LetExpr type: null
 . : ' | . : ' | . : Identifier name: "MinInt" type: null
 . : ' | . : ' | . : CastExpr type: null
-. : ' | . : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | . : ' | BinaryExpr operator: << type: null
-. : ' | . : ' | . : ' | . GroupedExpr type: null
-. : ' | . : ' | . : ' | . : CastExpr type: null
-. : ' | . : ' | . : ' | . : ' IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | . : ' TypeLiteral type: null
-. : ' | . : ' | . : ' | . : ' | Identifier name: "Regs" type: null
-. : ' | . : ' | . : ' | . GroupedExpr type: null
-. : ' | . : ' | . : ' | . : BinaryExpr operator: - type: null
-. : ' | . : ' | . : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | . : ' | . : ' | Identifier name: "MLen" type: null
-. : ' | . : ' | . : ' | . : ' IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : ' BinaryExpr operator: << type: null
+. : ' | . : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . : ' | . IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : ' | . : Identifier name: "Regs" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: - type: null
+. : ' | . : ' | . : ' | . Identifier name: "MLen" type: null
+. : ' | . : ' | . : ' | . IntegerLiteral literal: 1 (1) type: null
 . : ' | . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | . : ' | Identifier name: "SIntR" type: null
 . : ' | . : ' | . : IfExpr type: null
 . : ' | . : ' | . : ' BinaryExpr operator: & type: null
-. : ' | . : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . : ' | . BinaryExpr operator: = type: null
-. : ' | . : ' | . : ' | . : Identifier name: "dividend" type: null
-. : ' | . : ' | . : ' | . : Identifier name: "MinInt" type: null
-. : ' | . : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . : ' | . BinaryExpr operator: = type: null
-. : ' | . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : ' | . : Identifier name: "AllOnes" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: = type: null
+. : ' | . : ' | . : ' | . Identifier name: "dividend" type: null
+. : ' | . : ' | . : ' | . Identifier name: "MinInt" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: = type: null
+. : ' | . : ' | . : ' | . Identifier name: "divisor" type: null
+. : ' | . : ' | . : ' | . Identifier name: "AllOnes" type: null
 . : ' | . : ' | . : ' Identifier name: "MinInt" type: null
 . : ' | . : ' | . : ' BinaryExpr operator: / type: null
 . : ' | . : ' | . : ' | Identifier name: "dividend" type: null
@@ -3991,11 +3860,10 @@ ImportDefinition
 . : ' | . : ' | . : ArgsIndices
 . : ' | . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | Identifier name: "result" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' Identifier name: "result" type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -4047,13 +3915,11 @@ ImportDefinition
 . : ' | . : LetStatement
 . : ' | . : ' Identifier name: "AllOnes" type: null
 . : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . UnaryExpr operator: UnOp - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | UnaryExpr operator: UnOp - type: null
+. : ' | . : ' | . CastExpr type: null
+. : ' | . : ' | . : IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : TypeLiteral type: null
+. : ' | . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' | . : ' | TypeLiteral type: null
 . : ' | . : ' | . Identifier name: "UIntR" type: null
 . : ' | . : ' LetStatement
@@ -4061,11 +3927,10 @@ ImportDefinition
 . : ' | . : ' | IfExpr type: null
 . : ' | . : ' | . BinaryExpr operator: = type: null
 . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UIntR" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "UIntR" type: null
 . : ' | . : ' | . Identifier name: "AllOnes" type: null
 . : ' | . : ' | . BinaryExpr operator: / type: null
 . : ' | . : ' | . : Identifier name: "dividend" type: null
@@ -4076,11 +3941,10 @@ ImportDefinition
 . : ' | . : ' | . : ArgsIndices
 . : ' | . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | Identifier name: "result" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' Identifier name: "result" type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -4132,13 +3996,11 @@ ImportDefinition
 . : ' | . : LetStatement
 . : ' | . : ' Identifier name: "AllOnes" type: null
 . : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . UnaryExpr operator: UnOp - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | UnaryExpr operator: UnOp - type: null
+. : ' | . : ' | . CastExpr type: null
+. : ' | . : ' | . : IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : TypeLiteral type: null
+. : ' | . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' | . : ' | TypeLiteral type: null
 . : ' | . : ' | . Identifier name: "SIntR" type: null
 . : ' | . : ' LetStatement
@@ -4146,39 +4008,32 @@ ImportDefinition
 . : ' | . : ' | IfExpr type: null
 . : ' | . : ' | . BinaryExpr operator: = type: null
 . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SIntR" type: null
 . : ' | . : ' | . Identifier name: "dividend" type: null
 . : ' | . : ' | . LetExpr type: null
 . : ' | . : ' | . : Identifier name: "MinInt" type: null
 . : ' | . : ' | . : CastExpr type: null
-. : ' | . : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | . : ' | BinaryExpr operator: << type: null
-. : ' | . : ' | . : ' | . GroupedExpr type: null
-. : ' | . : ' | . : ' | . : CastExpr type: null
-. : ' | . : ' | . : ' | . : ' IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | . : ' TypeLiteral type: null
-. : ' | . : ' | . : ' | . : ' | Identifier name: "Regs" type: null
-. : ' | . : ' | . : ' | . GroupedExpr type: null
-. : ' | . : ' | . : ' | . : BinaryExpr operator: - type: null
-. : ' | . : ' | . : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | . : ' | . : ' | Identifier name: "MLen" type: null
-. : ' | . : ' | . : ' | . : ' IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : ' BinaryExpr operator: << type: null
+. : ' | . : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . : ' | . IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : ' | . : Identifier name: "Regs" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: - type: null
+. : ' | . : ' | . : ' | . Identifier name: "MLen" type: null
+. : ' | . : ' | . : ' | . IntegerLiteral literal: 1 (1) type: null
 . : ' | . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | . : ' | Identifier name: "SIntR" type: null
 . : ' | . : ' | . : IfExpr type: null
 . : ' | . : ' | . : ' BinaryExpr operator: & type: null
-. : ' | . : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . : ' | . BinaryExpr operator: = type: null
-. : ' | . : ' | . : ' | . : Identifier name: "dividend" type: null
-. : ' | . : ' | . : ' | . : Identifier name: "MinInt" type: null
-. : ' | . : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . : ' | . BinaryExpr operator: = type: null
-. : ' | . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : ' | . : Identifier name: "AllOnes" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: = type: null
+. : ' | . : ' | . : ' | . Identifier name: "dividend" type: null
+. : ' | . : ' | . : ' | . Identifier name: "MinInt" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: = type: null
+. : ' | . : ' | . : ' | . Identifier name: "divisor" type: null
+. : ' | . : ' | . : ' | . Identifier name: "AllOnes" type: null
 . : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
 . : ' | . : ' | . : ' BinaryExpr operator: % type: null
 . : ' | . : ' | . : ' | Identifier name: "dividend" type: null
@@ -4189,11 +4044,10 @@ ImportDefinition
 . : ' | . : ' | . : ArgsIndices
 . : ' | . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | Identifier name: "result" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' Identifier name: "result" type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -4245,13 +4099,11 @@ ImportDefinition
 . : ' | . : LetStatement
 . : ' | . : ' Identifier name: "AllOnes" type: null
 . : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . UnaryExpr operator: UnOp - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | UnaryExpr operator: UnOp - type: null
+. : ' | . : ' | . CastExpr type: null
+. : ' | . : ' | . : IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : TypeLiteral type: null
+. : ' | . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' | . : ' | TypeLiteral type: null
 . : ' | . : ' | . Identifier name: "UIntR" type: null
 . : ' | . : ' LetStatement
@@ -4259,11 +4111,10 @@ ImportDefinition
 . : ' | . : ' | IfExpr type: null
 . : ' | . : ' | . BinaryExpr operator: = type: null
 . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UIntR" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "UIntR" type: null
 . : ' | . : ' | . Identifier name: "dividend" type: null
 . : ' | . : ' | . BinaryExpr operator: % type: null
 . : ' | . : ' | . : Identifier name: "dividend" type: null
@@ -4274,11 +4125,10 @@ ImportDefinition
 . : ' | . : ' | . : ArgsIndices
 . : ' | . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | Identifier name: "result" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' Identifier name: "result" type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -4315,28 +4165,24 @@ ImportDefinition
 . : ' | . : ArgsIndices
 . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . CastExpr type: null
-. : ' | . : GroupedExpr type: null
-. : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . BinaryExpr operator: * type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs1" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntW" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | CallIndexExpr type: null
-. : ' | . : ' | . : ' | . Identifier name: "X" type: null
-. : ' | . : ' | . : ' | . ArgsIndices
-. : ' | . : ' | . : ' | . : Identifier name: "rs2" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntW" type: null
-. : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : CastExpr type: null
+. : ' | . : ' BinaryExpr operator: * type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs1" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "SIntW" type: null
+. : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . CallIndexExpr type: null
+. : ' | . : ' | . : Identifier name: "X" type: null
+. : ' | . : ' | . : ArgsIndices
+. : ' | . : ' | . : ' Identifier name: "rs2" type: null
+. : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : Identifier name: "SIntW" type: null
+. : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : TypeLiteral type: null
 . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' EncodingDefinition
@@ -4388,13 +4234,11 @@ ImportDefinition
 . : ' | . : LetStatement
 . : ' | . : ' Identifier name: "AllOnes" type: null
 . : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . UnaryExpr operator: UnOp - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | UnaryExpr operator: UnOp - type: null
+. : ' | . : ' | . CastExpr type: null
+. : ' | . : ' | . : IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : TypeLiteral type: null
+. : ' | . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' | . : ' | TypeLiteral type: null
 . : ' | . : ' | . Identifier name: "SIntW" type: null
 . : ' | . : ' LetStatement
@@ -4402,39 +4246,32 @@ ImportDefinition
 . : ' | . : ' | IfExpr type: null
 . : ' | . : ' | . BinaryExpr operator: = type: null
 . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntW" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SIntW" type: null
 . : ' | . : ' | . Identifier name: "AllOnes" type: null
 . : ' | . : ' | . LetExpr type: null
 . : ' | . : ' | . : Identifier name: "MinInt" type: null
 . : ' | . : ' | . : CastExpr type: null
-. : ' | . : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | . : ' | BinaryExpr operator: << type: null
-. : ' | . : ' | . : ' | . GroupedExpr type: null
-. : ' | . : ' | . : ' | . : CastExpr type: null
-. : ' | . : ' | . : ' | . : ' IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | . : ' TypeLiteral type: null
-. : ' | . : ' | . : ' | . : ' | Identifier name: "Regs" type: null
-. : ' | . : ' | . : ' | . GroupedExpr type: null
-. : ' | . : ' | . : ' | . : BinaryExpr operator: - type: null
-. : ' | . : ' | . : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | . : ' | . : ' | Identifier name: "WLen" type: null
-. : ' | . : ' | . : ' | . : ' IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : ' BinaryExpr operator: << type: null
+. : ' | . : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . : ' | . IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : ' | . : Identifier name: "Regs" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: - type: null
+. : ' | . : ' | . : ' | . Identifier name: "WLen" type: null
+. : ' | . : ' | . : ' | . IntegerLiteral literal: 1 (1) type: null
 . : ' | . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | . : ' | Identifier name: "SIntW" type: null
 . : ' | . : ' | . : IfExpr type: null
 . : ' | . : ' | . : ' BinaryExpr operator: & type: null
-. : ' | . : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . : ' | . BinaryExpr operator: = type: null
-. : ' | . : ' | . : ' | . : Identifier name: "dividend" type: null
-. : ' | . : ' | . : ' | . : Identifier name: "MinInt" type: null
-. : ' | . : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . : ' | . BinaryExpr operator: = type: null
-. : ' | . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : ' | . : Identifier name: "AllOnes" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: = type: null
+. : ' | . : ' | . : ' | . Identifier name: "dividend" type: null
+. : ' | . : ' | . : ' | . Identifier name: "MinInt" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: = type: null
+. : ' | . : ' | . : ' | . Identifier name: "divisor" type: null
+. : ' | . : ' | . : ' | . Identifier name: "AllOnes" type: null
 . : ' | . : ' | . : ' Identifier name: "MinInt" type: null
 . : ' | . : ' | . : ' BinaryExpr operator: / type: null
 . : ' | . : ' | . : ' | Identifier name: "dividend" type: null
@@ -4445,11 +4282,10 @@ ImportDefinition
 . : ' | . : ' | . : ArgsIndices
 . : ' | . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | Identifier name: "result" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' Identifier name: "result" type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -4501,13 +4337,11 @@ ImportDefinition
 . : ' | . : LetStatement
 . : ' | . : ' Identifier name: "AllOnes" type: null
 . : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . UnaryExpr operator: UnOp - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | UnaryExpr operator: UnOp - type: null
+. : ' | . : ' | . CastExpr type: null
+. : ' | . : ' | . : IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : TypeLiteral type: null
+. : ' | . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' | . : ' | TypeLiteral type: null
 . : ' | . : ' | . Identifier name: "UIntW" type: null
 . : ' | . : ' LetStatement
@@ -4515,11 +4349,10 @@ ImportDefinition
 . : ' | . : ' | IfExpr type: null
 . : ' | . : ' | . BinaryExpr operator: = type: null
 . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UIntW" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "UIntW" type: null
 . : ' | . : ' | . Identifier name: "AllOnes" type: null
 . : ' | . : ' | . BinaryExpr operator: / type: null
 . : ' | . : ' | . : Identifier name: "dividend" type: null
@@ -4530,11 +4363,10 @@ ImportDefinition
 . : ' | . : ' | . : ArgsIndices
 . : ' | . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | Identifier name: "result" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' Identifier name: "result" type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -4586,13 +4418,11 @@ ImportDefinition
 . : ' | . : LetStatement
 . : ' | . : ' Identifier name: "AllOnes" type: null
 . : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . UnaryExpr operator: UnOp - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | UnaryExpr operator: UnOp - type: null
+. : ' | . : ' | . CastExpr type: null
+. : ' | . : ' | . : IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : TypeLiteral type: null
+. : ' | . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' | . : ' | TypeLiteral type: null
 . : ' | . : ' | . Identifier name: "SIntW" type: null
 . : ' | . : ' LetStatement
@@ -4600,39 +4430,32 @@ ImportDefinition
 . : ' | . : ' | IfExpr type: null
 . : ' | . : ' | . BinaryExpr operator: = type: null
 . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntW" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SIntW" type: null
 . : ' | . : ' | . Identifier name: "dividend" type: null
 . : ' | . : ' | . LetExpr type: null
 . : ' | . : ' | . : Identifier name: "MinInt" type: null
 . : ' | . : ' | . : CastExpr type: null
-. : ' | . : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | . : ' | BinaryExpr operator: << type: null
-. : ' | . : ' | . : ' | . GroupedExpr type: null
-. : ' | . : ' | . : ' | . : CastExpr type: null
-. : ' | . : ' | . : ' | . : ' IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | . : ' TypeLiteral type: null
-. : ' | . : ' | . : ' | . : ' | Identifier name: "Regs" type: null
-. : ' | . : ' | . : ' | . GroupedExpr type: null
-. : ' | . : ' | . : ' | . : BinaryExpr operator: - type: null
-. : ' | . : ' | . : ' | . : ' GroupedExpr type: null
-. : ' | . : ' | . : ' | . : ' | Identifier name: "WLen" type: null
-. : ' | . : ' | . : ' | . : ' IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : ' BinaryExpr operator: << type: null
+. : ' | . : ' | . : ' | CastExpr type: null
+. : ' | . : ' | . : ' | . IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : ' | . TypeLiteral type: null
+. : ' | . : ' | . : ' | . : Identifier name: "Regs" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: - type: null
+. : ' | . : ' | . : ' | . Identifier name: "WLen" type: null
+. : ' | . : ' | . : ' | . IntegerLiteral literal: 1 (1) type: null
 . : ' | . : ' | . : ' TypeLiteral type: null
 . : ' | . : ' | . : ' | Identifier name: "SIntW" type: null
 . : ' | . : ' | . : IfExpr type: null
 . : ' | . : ' | . : ' BinaryExpr operator: & type: null
-. : ' | . : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . : ' | . BinaryExpr operator: = type: null
-. : ' | . : ' | . : ' | . : Identifier name: "dividend" type: null
-. : ' | . : ' | . : ' | . : Identifier name: "MinInt" type: null
-. : ' | . : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . : ' | . BinaryExpr operator: = type: null
-. : ' | . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : ' | . : Identifier name: "AllOnes" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: = type: null
+. : ' | . : ' | . : ' | . Identifier name: "dividend" type: null
+. : ' | . : ' | . : ' | . Identifier name: "MinInt" type: null
+. : ' | . : ' | . : ' | BinaryExpr operator: = type: null
+. : ' | . : ' | . : ' | . Identifier name: "divisor" type: null
+. : ' | . : ' | . : ' | . Identifier name: "AllOnes" type: null
 . : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
 . : ' | . : ' | . : ' BinaryExpr operator: % type: null
 . : ' | . : ' | . : ' | Identifier name: "dividend" type: null
@@ -4643,11 +4466,10 @@ ImportDefinition
 . : ' | . : ' | . : ArgsIndices
 . : ' | . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | Identifier name: "result" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' Identifier name: "result" type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
@@ -4699,13 +4521,11 @@ ImportDefinition
 . : ' | . : LetStatement
 . : ' | . : ' Identifier name: "AllOnes" type: null
 . : ' | . : ' CastExpr type: null
-. : ' | . : ' | GroupedExpr type: null
-. : ' | . : ' | . UnaryExpr operator: UnOp - type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 1 (1) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SIntR" type: null
+. : ' | . : ' | UnaryExpr operator: UnOp - type: null
+. : ' | . : ' | . CastExpr type: null
+. : ' | . : ' | . : IntegerLiteral literal: 1 (1) type: null
+. : ' | . : ' | . : TypeLiteral type: null
+. : ' | . : ' | . : ' Identifier name: "SIntR" type: null
 . : ' | . : ' | TypeLiteral type: null
 . : ' | . : ' | . Identifier name: "UIntW" type: null
 . : ' | . : ' LetStatement
@@ -4713,11 +4533,10 @@ ImportDefinition
 . : ' | . : ' | IfExpr type: null
 . : ' | . : ' | . BinaryExpr operator: = type: null
 . : ' | . : ' | . : Identifier name: "divisor" type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | IntegerLiteral literal: 0 (0) type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "UIntW" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' IntegerLiteral literal: 0 (0) type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "UIntW" type: null
 . : ' | . : ' | . Identifier name: "dividend" type: null
 . : ' | . : ' | . BinaryExpr operator: % type: null
 . : ' | . : ' | . : Identifier name: "dividend" type: null
@@ -4728,11 +4547,10 @@ ImportDefinition
 . : ' | . : ' | . : ArgsIndices
 . : ' | . : ' | . : ' Identifier name: "rd" type: null
 . : ' | . : ' | . CastExpr type: null
-. : ' | . : ' | . : GroupedExpr type: null
-. : ' | . : ' | . : ' CastExpr type: null
-. : ' | . : ' | . : ' | Identifier name: "result" type: null
-. : ' | . : ' | . : ' | TypeLiteral type: null
-. : ' | . : ' | . : ' | . Identifier name: "SInt" type: null
+. : ' | . : ' | . : CastExpr type: null
+. : ' | . : ' | . : ' Identifier name: "result" type: null
+. : ' | . : ' | . : ' TypeLiteral type: null
+. : ' | . : ' | . : ' | Identifier name: "SInt" type: null
 . : ' | . : ' | . : TypeLiteral type: null
 . : ' | . : ' | . : ' Identifier name: "Regs" type: null
 . : ' EncodingDefinition
