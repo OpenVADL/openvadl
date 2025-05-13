@@ -38,12 +38,20 @@ class Qemu:
     plugin: str
     endian: Literal["big", "little"] 
     clients: list[Client]
+    gdb_reg_map: dict[str, str]
+    ignore_registers: list[str]
+    ignore_unset_registers: bool = True
+
+@dataclass
+class Dev:
+    dry_run: bool
 
 @dataclass
 class Config:
     qemu: Qemu
     testing: Testing
     logging: Logging
+    dev: Dev
 
 def load_config(path: str) -> Config | None:
     with open(path, mode="rb") as config_file:
