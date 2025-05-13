@@ -13,7 +13,7 @@ import subprocess
 from config import Config, load_config 
 
 import logging
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any, Literal, Optional
 
 reference_ricsv64_exe = "/qemu-system-riscv64"
 our_riscv64_exe = "/qemu-system-rv64im"
@@ -36,8 +36,8 @@ class SHMString(Structure):
         self.len: Annotated[int, c_size_t]
         self.value: Annotated[bytes, c_char * self.MAX_LEN]
 
-    def fstr(self) -> str:
-        return f"{self.value[:self.len]}"
+    def fstr(self) -> bytes:
+        return self.value[:self.len]
 
 class TBInsnInfo(Structure):
     _fields_ = [("pc", c_uint64), ("size", c_size_t), ("symbol", SHMString), ("hwaddr", SHMString), ("disas", SHMString)]
@@ -105,12 +105,21 @@ class SHMRegister(Structure):
         self.data: Annotated[list[int], c_uint8 * self.MAX_REGISTER_DATA_SIZE]
         self.name: Annotated[SHMString, SHMString]
 
-    def fname(self) -> str:
-        return f"{self.name.fstr()}"
+    def fname(self, gdb_map: dict[str, str]) -> str:
+        n = self.name.fstr().decode() # assume that the name is "printable"
+        if n in gdb_map:
+            return gdb_map[n]
+        else:
+            return n
 
-    def fdata(self) -> str:
-        val = ''.join('{:02x}'.format(self.data[idx]) for idx in range(self.size))
-        return f'0x{val}'
+    def fdata(self, endian: Literal['big', 'little']) -> str:
+        # val = ''.join('{:02x}'.format(self.data[idx]) for idx in range(self.size))
+        # if endian == 'big':
+        #     val = val[::-1]
+        # return f'0x{val}'
+        order = reversed if endian == 'little' else lambda x: x
+        res = b''.join(order([num.to_bytes() for num in self.data[:self.size]]))
+        return res.hex(' ')
 
 
 class SHMCPU(Structure):
@@ -125,12 +134,13 @@ class SHMCPU(Structure):
 
 class BrokerSHM_Exec(Structure):
     MAX_CPU_COUNT = 8
-    _fields_ = [("init_mask", c_int), ("cpus", SHMCPU * MAX_CPU_COUNT)]
+    _fields_ = [("init_mask", c_int), ("cpus", SHMCPU * MAX_CPU_COUNT), ("current_tb", TBInfo)]
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.init_mask: Annotated[int, c_int]
         self.cpus: Annotated[list[SHMCPU], SHMCPU * self.MAX_CPU_COUNT]
+        self.current_tb: Annotated[TBInfo, TBInfo]
 
 class BrokerSHM(Union):
     _fields_ = [("shm_tb", BrokerSHM_TB), ("shm_exec", BrokerSHM_Exec)]
@@ -206,15 +216,20 @@ def collect_disas(client: Client, config: Config) -> str:
         disas = []
         shm = client.shm_struct.shm_tb
         for info in shm.infos:
-            for insn in info.insns_info:
-                if insn.pc > 0:
-                    disas.append(insn.disas.value.decode())
+            disas.append(format_tbinfo(info))
         return "\n".join(disas)
     else:
         return "done!"
 
+def format_tbinfo(info: TBInfo) -> str:
+    disas = []
+    for insn in info.insns_info:
+        if insn.pc > 0:
+            disas.append(insn.disas.value.decode())
+    return "\n".join(disas)
 
 def run_lockstep(config: Config):
+    gdb_reg_map_values = config.qemu.gdb_reg_map.values()
     def compare_client_state() -> Optional[str]:
         c1 = clients[0]
         c2 = clients[1]
@@ -222,6 +237,8 @@ def run_lockstep(config: Config):
         if config.testing.protocol.layer == 'exec':
             c1shm = c1.shm_struct.shm_exec
             c2shm = c2.shm_struct.shm_exec
+
+            print(f"1: {format_tbinfo(c1shm.current_tb)}\n2:{format_tbinfo(c2shm.current_tb)}")
 
             if c1shm.init_mask != c2shm.init_mask:
                 return "init masks differ"
@@ -233,30 +250,37 @@ def run_lockstep(config: Config):
                 if c1cpu.idx != c2cpu.idx:
                     return "cpu idxs differ"
 
-                if c1cpu.registers_size != c2cpu.registers_size:
-                    return "cpu registers sizes differ"
-
-                for reg in c1cpu.registers[:c1cpu.registers_size]:
-                    print(reg.fname())
+                if config.qemu.ignore_unset_registers and c1cpu.registers_size != c2cpu.registers_size:
+                    return f"cpu registers sizes differ: {c1cpu.registers_size} != {c2cpu.registers_size}"
 
                 for reg_index in range(c1cpu.registers_size):
                     c1reg = c1cpu.registers[reg_index]
+                    r1name = c1reg.fname(config.qemu.gdb_reg_map)
+
                     c2reg = c2cpu.registers[reg_index]
+                    r2name = c2reg.fname(config.qemu.gdb_reg_map)
+
+                    if r1name in config.qemu.ignore_registers or \
+                        (config.qemu.ignore_unset_registers and not r1name in gdb_reg_map_values):
+                        continue
 
                     if c1reg.size != c2reg.size:
                         return "reg sizes differ"
 
-                    if c1reg.fname() != c2reg.fname():
-                        return "reg names differ"
+                    if r1name != r2name:
+                        return f"reg names differ: {r1name} != {r2name}"
 
-                    reg1data = c1reg.fdata()
-                    reg2data = c2reg.fdata()
-                    if reg1data != reg2data:
-                        return f"reg data differ: ({c1reg.fname()}:{reg1data}) != ({c2reg.fname()}:{reg2data})"
+                    r1data = c1reg.fdata(config.qemu.endian)
+                    r2data = c2reg.fdata(config.qemu.endian)
+                    if r1data != r2data:
+                        return f"reg data differ: ({r1name}:{r1data}) != ({r2name}:{r2data})"
 
             return None
         else:
-            return "invalid protocol layer"
+            c1shm = c1.shm_struct.shm_tb
+            c2shm = c2.shm_struct.shm_tb
+
+            print(f"1: {format_tbinfo(c1shm.infos[c1shm.size-1])}\n2:{format_tbinfo(c2shm.infos[c2shm.size-1])}")
 
 
     while any(map(lambda c: c.is_open, clients)):
@@ -266,13 +290,15 @@ def run_lockstep(config: Config):
                 try:
                     client.sem_client.release()
 
-                    # wait at most 1 second, if an error occurs: assume that the client finished
-                    client.sem_server.acquire(1)
+                    # wait at most 0.1 second, if an error occurs: assume that the client finished
+                    client.sem_server.acquire(0.1)
                 except ipc.BusyError:
                     logger.debug(f"run_lockstep: BusyError: noticed that client #{client.id} shutdown. marking as closed")
                     client.is_open = False
         
+        print("comparing;;;")
         compare_res = compare_client_state()
+        print("done;;;")
         if compare_res is not None:
             print("FAIL: ", compare_res)
             for client in clients:
@@ -381,6 +407,9 @@ if __name__ == '__main__':
     else:
         logging.disable()
 
-    atexit.register(cleanup, config)
-    main(config)
+    if not config.dev.dry_run:
+        atexit.register(cleanup, config)
+        main(config)
+    else:
+        logger.info(f"Dry-Run. Config: {config}")
 
