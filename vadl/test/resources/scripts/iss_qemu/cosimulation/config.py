@@ -2,6 +2,9 @@ from dataclasses import dataclass, field
 import tomllib
 from typing import Literal 
 import dacite
+from typing import TypeAlias
+
+Endian: TypeAlias = Literal['little', 'big']
 
 @dataclass
 class Logging:
@@ -17,7 +20,7 @@ class Out:
 @dataclass
 class Protocol:
     mode: Literal["lockstep"]
-    layer: Literal["tb", "exec"]
+    layer: Literal["tb", "insn"]
     take_all_instructions: bool
     take_n_instructions: int
     skip_n_instructions: int = 0
@@ -27,6 +30,7 @@ class Protocol:
 class Testing:
     test_exec: str
     protocol: Protocol
+    max_trace_length: int
 
 @dataclass
 class Client:
@@ -36,7 +40,7 @@ class Client:
 @dataclass
 class Qemu:
     plugin: str
-    endian: Literal["big", "little"] 
+    endian: Endian 
     clients: list[Client]
     gdb_reg_map: dict[str, str]
     ignore_registers: list[str]
