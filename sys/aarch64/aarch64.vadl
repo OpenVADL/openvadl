@@ -273,6 +273,38 @@ instruction set architecture AArch64Base = {
     , rd       [4..0]   : Index       // destination register
     }
 
+  function BitfieldLeftWSize (imms: Bits6) -> Bits6 =
+    (Size::WSize - 1) as Bits6 - imms
+
+  function BitfieldLeftXSize (imms: Bits6) -> Bits6 =
+    (Size::XSize - 1) as Bits6 - imms
+
+  function BitfieldRightWSize (imms: Bits6, immr: Bits6) -> Bits6 =
+    if imms as UInt >= immr
+      then (Size::WSize - 1) as Bits6 - imms + immr
+      else immr - imms - 1
+
+  function BitfieldRightXSize (imms: Bits6, immr: Bits6) -> Bits6 =
+    if imms as UInt >= immr
+      then (Size::XSize - 1) as Bits6 - imms + immr
+      else immr - imms - 1
+
+  format BitFieldMoveFormat: Instr =  // bit field move format
+    { sf         : Bits1              // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op         : Bits8              // opcode
+    , N          : Bits1              // must be equal to sf, otherwise undefined
+    , immr       : Bits6              // bit field starting position
+    , imms       : Bits6              // bit field length position
+    , rn         : Index              // source register
+    , rd         : Index              // destination register
+    , leftWSize  = BitfieldLeftWSize  (imms)
+    , leftXSize  = BitfieldLeftXSize  (imms)
+    , rightWSize = BitfieldRightWSize (imms, immr)
+    , rightXSize = BitfieldRightXSize (imms, immr)
+    // TODO encode
+    // TODO predicate
+    }
+
   format CondCompareFormat: Instr =   // conditional compare format
     { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
     , op       [30..21,11,10,4]       // opcode
@@ -727,6 +759,59 @@ instruction set architecture AArch64Base = {
     }
 
 
+// bitfield move (insert, extract) models **************************************
+
+// There exist different versions of a BFM, SBFM, UBFM (BitField Move) and EXTR
+// (EXTRact register from register pair) instruction. Bitfield move commons are:
+//
+// If <imms> is greater than or equal to <immr>, this copies a bitfield of
+// (<imms>-<immr>+1) bits starting from bit position <immr> in the source
+// register to the least significant bits of the destination register.
+//
+// If <imms> is less than <immr>, *BFM copies a bitfield of (<imms>+1) bits from
+// the least significant bits of the source register to bit position
+// (regsize-<immr>) of the destination register, where regsize is the
+// destination register size of 32 or 64 bits.
+//
+// BFM:  In both cases, the other bits of the destination register remain
+// unchanged.
+// SBFM: In both cases, the destination bits below the bitfield are set to zero,
+// and the bits above the bitfield are set to a copy of the most significant bit
+// of the bitfield.
+// UBFM: In both cases, the destination bits below and above the bitfield are
+// set to zero.
+//
+// For SBFM and UBFM there exist pseudo instruction for shifts and sign/zero
+// extension. Therefore, *BFM will be specified using shift builtins.
+
+  model BitfieldMoveEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
+    //[raise Undefined : sf = 0 != N]
+    //[raise Undefined : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', #', decimal(immr), ', #', decimal(imms))
+    }
+
+  model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: BitFieldMoveFormat =
+      let left = ExtendId (left, $size) in
+        let right = ExtendId (right, $size) in
+          let result = X(rn) as $i.funct<Size::$size> << left >> right in
+            X(rd) := result as Bits<Size::$size> as BitsX
+    $BitfieldMoveEncAsm ($i; $size)
+    }
+
+  model BitfieldInsertInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: BitFieldMoveFormat =
+      let left = ExtendId (left, $size) in
+        let right = ExtendId (right, $size) in
+          let xrn = X(rn) as Bits<Size::$size> << left >> right in
+            let mask = -1 as Bits<Size::$size> << left >> right in
+              let result = X(rd) as Bits<Size::$size> & ~mask | xrn in
+                X(rd) := result as Bits<Size::$size> as BitsX
+    $BitfieldMoveEncAsm ($i; $size)
+    }
+
+
 // conditional compare models **************************************************
 
   model CondCompareBaseInstr (i: InstrWithFunct, c: Cond, size: Id, ex: Ex, asm: Ex): IsaDefs = {
@@ -966,6 +1051,10 @@ instruction set architecture AArch64Base = {
   $InstrWX             (MovKInstr             ; (MOVK   ; "movk"  ; 0b1110'0101           ; unused     ))
   $InstrWX             (MovNZInstr            ; (MOVN   ; "movn"  ; 0b0010'0101           ; not        ))
   $InstrWX             (MovNZInstr            ; (MOVZ   ; "movz"  ; 0b1010'0101           ; ident      ))
+
+  $InstrWX             (BitfieldInsertInstr   ; (BFM    ; "bfm"   ; 0b0110'0110           ; UInt       ))
+  $InstrWX             (BitfieldMoveInstr     ; (SBFM   ; "sbfm"  ; 0b0010'0110           ; SInt       ))
+  $InstrWX             (BitfieldMoveInstr     ; (UBFM   ; "ubfm"  ; 0b1010'0110           ; UInt       ))
 
   $CondInstr           (CondCompareImmInstr   ; (CCMNI  ; "ccmn"  ; 0b0111'0100'1010'0    ; adds       ))
   $CondInstr           (CondCompareImmInstr   ; (CCMPI  ; "ccmp"  ; 0b1111'0100'1010'0    ; subsc      ))
