@@ -14,9 +14,10 @@ ignore_registers = [
 ]
 
 [[qemu.clients]]
-exec="qemu-system-rv64im"
+exec="qemu-system-riscv64"
 additional_args = [
 	"-nographic",
+	"-d", "plugin"
 	# "-s",
 	# "-S",
 ]
@@ -64,13 +65,14 @@ pc = "pc"
 
 [testing]
 test_exec="./qemu-setup/build/addw.elf"
+max_trace_length = -1
 
 [testing.protocol]
 mode = "lockstep" 
-layer = "tb"
-skip_n_instructions = 0
+layer = "insn"
+skip_n_instructions = 6
 take_all_instructions = false
-take_n_instructions = 0
+take_n_instructions = 5
 
 [testing.protocol.out]
 dir = "./out"
