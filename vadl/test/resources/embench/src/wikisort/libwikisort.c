@@ -27,7 +27,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
-#include <limits.h>
 
 /* various #defines for the C code */
 #ifndef true

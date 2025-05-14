@@ -9,7 +9,6 @@ rm -r ../src/minver
 rm -r ../src/nbody
 rm -r ../src/st
 rm -r ../src/ud
-rm -r ../src/wikisort
 
 ../build_spike-clang-O3_rv64.sh
 ./run-benchmark.sh "rv64-spike" ./benchmark_spike_rv64gc.sh
