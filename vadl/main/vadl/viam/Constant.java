@@ -914,9 +914,10 @@ public abstract class Constant {
           "slice cannot be empty: %s", this);
       this.parts = normalized(parts);
       this.statistics = stream().summaryStatistics();
-      ViamError.ensure(
-          !hasOverlappingParts(),
-          "parts of slice must not overlap: %s", this);
+    }
+
+    public static BitSlice of(int msb, int lsb) {
+      return new BitSlice(new Part(msb, lsb));
     }
 
     @Override
@@ -970,11 +971,15 @@ public abstract class Constant {
       return statistics.getMin();
     }
 
+    public Constant.Value mask() {
+      var mask = stream().boxed().reduce(BigInteger.ZERO, BigInteger::setBit, BigInteger::or);
+      return Value.fromTwosComplement(mask, Type.bits(msb() + 1));
+    }
+
     @Override
     public java.lang.String toString() {
       return "[" + parts.stream().map(Part::toString).collect(Collectors.joining(", ")) + "]";
     }
-
 
     @Override
     public boolean equals(Object o) {
@@ -1006,7 +1011,11 @@ public abstract class Constant {
           .iterator();
     }
 
-    private boolean hasOverlappingParts() {
+    /**
+     * Determines if there are any overlapping parts in the slice.
+     * This returns true if two or more parts are indexing the same position.
+     */
+    public boolean hasOverlappingParts() {
       return parts.stream()
           .anyMatch(part -> parts.stream()
               .anyMatch(

@@ -17,6 +17,7 @@
 package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
+import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
 
@@ -33,7 +34,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -59,6 +59,7 @@ import vadl.types.asmTypes.StringAsmType;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
+import vadl.viam.Constant;
 
 /**
  * A experimental, temporary type-checker to verify expressions and attach types to the AST.
@@ -479,7 +480,7 @@ public class TypeChecker
       constantEvaluator.eval(definition.value);
     } catch (EvaluationError e) {
       throw error("Invalid constant value", definition.value)
-          .locationDescription(e.location, "%s", Objects.requireNonNull(e.getMessage()))
+          .locationDescription(e.location, "%s", requireNonNull(e.getMessage()))
           .description("All constants must be able to be evaluated")
           .build();
     }
@@ -918,8 +919,9 @@ public class TypeChecker
 
   @Override
   public Void visit(ExceptionDefinition definition) {
-    definition.params.forEach(param -> check(param.typeLiteral));
+    var types = definition.params.stream().map(param -> check(param.typeLiteral)).toList();
     check(definition.statement);
+    definition.type = Type.concreteRelation(types, Type.void_());
     return null;
   }
 
@@ -2450,6 +2452,48 @@ public class TypeChecker
     return null;
   }
 
+  private Constant.BitSlice.Part checkSliceRange(RangeExpr range, BitsType valueType) {
+    int from = constantEvaluator.eval(range.from).value().intValueExact();
+    int to = constantEvaluator.eval(range.to).value().intValueExact();
+
+    // NOTE: From is always larger than to
+    var rangeSize = (from - to) + 1;
+    if (rangeSize < 1) {
+      throw error("Invalid Range", range)
+          .description("Range must be >= 1 but was %s", rangeSize)
+          .build();
+    }
+
+    if (from >= valueType.bitWidth()) {
+      throw error("Invalid Range", range)
+          .description("Range start %d out of bounds for `%s`", from, valueType)
+          .build();
+    }
+    if (to < 0) {
+      throw error("Invalid Range", range)
+          .description("Range end must be at least zero but was %s", to)
+          .build();
+    }
+
+    return new Constant.BitSlice.Part(from, to);
+  }
+
+  private Constant.BitSlice.Part checkIndexSlice(Expr indexExpr, BitsType valueType) {
+    check(indexExpr);
+    int sliceIndex = constantEvaluator.eval(indexExpr).value().intValueExact();
+    if (sliceIndex >= valueType.bitWidth()) {
+      throw error("Invalid Index", indexExpr)
+          .description("Index %d out of bounds for `%s`", sliceIndex, valueType)
+          .build();
+    }
+    if (sliceIndex < 0) {
+      throw error("Invalid Index", indexExpr)
+          .description("Index must be at least zero but was %s", sliceIndex)
+          .build();
+    }
+    return new Constant.BitSlice.Part(sliceIndex, sliceIndex);
+  }
+
   /**
    * Visits one or multiple index and slice calls.
    *
@@ -2460,107 +2504,56 @@ public class TypeChecker
    *
    * @param expr            to visit
    * @param typeBeforeSlice is the type just before.
-   * @param argumentsList   the list or arguments which hold slices or indexes
+   * @param sliceGroups     the list or arguments which hold slices or indexes
    */
   private void visitSliceIndexCall(CallIndexExpr expr, Type typeBeforeSlice,
-                                   List<CallIndexExpr.Arguments> argumentsList) {
-    if (argumentsList.isEmpty()) {
+                                   List<CallIndexExpr.Arguments> sliceGroups) {
+    if (sliceGroups.isEmpty()) {
       expr.type = typeBeforeSlice;
       return;
     }
-    var args = argumentsList.get(0);
+
+    var lastSlice = sliceGroups.getLast();
 
     // FIXME: Adjust for vectors in the future
     if (!(typeBeforeSlice instanceof BitsType targetBitsType)) {
-      var loc = expr.target.location().join(args.location);
+      var loc = expr.target.location().join(lastSlice.location);
       throw error("Type Mismatch", loc)
           .description("Only bit types can be sliced but the target was a `%s`", typeBeforeSlice)
           .build();
     }
 
-    // A range slice
-    if (!args.values.isEmpty() && args.values.get(0) instanceof RangeExpr rangeExpr) {
-      int from = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
-      int to = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
+    BitsType currType = targetBitsType;
+    for (var slice : sliceGroups) {
+      // construct BitSlice for each slice group
+      var parts = new ArrayList<Constant.BitSlice.Part>();
+      for (var partExpr : slice.values) {
+        // for each part construct a BitSlice.Part
+        var part = partExpr instanceof RangeExpr rangeSlice
+            ? checkSliceRange(rangeSlice, currType)
+            : checkIndexSlice(partExpr, currType);
+        parts.add(part);
+      }
 
-
-      // NOTE: From is always larger than to
-      var rangeSize = (from - to) + 1;
-      if (rangeSize < 1) {
-        throw error("Invalid Range", rangeExpr)
-            .description("Range must be >= 1 but was %s", rangeSize)
+      var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
+      if (bitSlice.hasOverlappingParts()) {
+        // Currently, we don't allow overlapping slices for both slices on read values
+        // and write targets.
+        // In the future we might want to allow overlapping slices on read values.
+        // For written values (`X(1, 1) := 2`) this must not be allowed, as the same value position
+        // is written twice.
+        throw error("Overlapping slice parts", slice.location)
+            .locationDescription(slice.location, "Some parts of the slice are overlapping.")
+            .note("Slices must have distinct, non-overlapping parts.")
             .build();
       }
 
-      if (from >= targetBitsType.bitWidth()) {
-        throw error("Invalid Range", rangeExpr)
-            .description("Range start %d out of bounds for `%s`", from, targetBitsType)
-            .build();
-      }
-      if (to < 0) {
-        throw error("Invalid Range", rangeExpr)
-            .description("Range end must be at least zero but was %s", to)
-            .build();
-      }
-      var type = targetBitsType.withBitWidth(rangeSize);
-      args.type = type;
-      args.computedBitRange = new FormatDefinition.BitRange(from, to);
-      visitSliceIndexCall(expr, type, argumentsList.subList(1, argumentsList.size()));
-      return;
+      currType = Type.bits(bitSlice.bitSize());
+      slice.computedBitSlice = bitSlice;
+      slice.type = currType;
     }
 
-    // A index (slice)
-    if (args.values.size() != 1) {
-      var loc = expr.target.location().join(args.location);
-      // FIXME: This is wrong, you can also do it with multiple and they get concatinated
-      throw error("Invalid call", loc)
-          .description("You can only call `%s` with one argument", typeBeforeSlice)
-          .build();
-    }
-
-    check(args.values.get(0));
-    int sliceIndex = constantEvaluator.eval(args.values.get(0)).value().intValueExact();
-    if (sliceIndex >= targetBitsType.bitWidth()) {
-      throw error("Invalid Index", args.values.get(0))
-          .description("Index %d out of bounds for `%s`", sliceIndex, targetBitsType)
-          .build();
-    }
-    if (sliceIndex < 0) {
-      throw error("Invalid Index", args.values.get(0))
-          .description("Index must be at least zero but was %s", sliceIndex)
-          .build();
-    }
-
-    var type = targetBitsType.withBitWidth(1);
-    args.type = type;
-    args.computedBitRange = new FormatDefinition.BitRange(sliceIndex, sliceIndex);
-    visitSliceIndexCall(expr, type, argumentsList.subList(1, argumentsList.size()));
-  }
-
-  /**
-   * Throws if a subcall exists.
-   *
-   * @param expr       with possibly subcalls.
-   * @param callTarget to which is called.
-   */
-  private void verifyNoSubcall(CallIndexExpr expr, Definition callTarget) {
-    verifyNoSubcall(expr, callTarget.getClass().getSimpleName());
-  }
-
-  /**
-   * Throws if a subcall exists.
-   *
-   * @param expr       with possibly subcalls.
-   * @param targetName to which is called.
-   */
-  private void verifyNoSubcall(CallIndexExpr expr, String targetName) {
-    if (expr.subCalls.isEmpty()) {
-      return;
-    }
-
-    throw error("Invalid subcall", expr)
-        .description("Calls to %s cannot have subcalls", targetName)
-        .build();
+    expr.type = currType;
   }
 
   /**
@@ -2571,10 +2564,31 @@ public class TypeChecker
    *
    * @param expr of the call.
    */
+  @SuppressWarnings("NullAway") // required as there is a false positive in the switch
   private void visitSubCall(CallIndexExpr expr, Type typeBeforeSubCall) {
     if (expr.subCalls.isEmpty()) {
       expr.type = typeBeforeSubCall;
       return;
+    }
+
+
+    // FIXME: Make this more generic
+    switch (expr.target.path().target()) {
+      case CounterDefinition counter -> {
+        ensure(expr.slices().isEmpty(), () -> error("Invalid counter sub-call", expr)
+            .locationDescription(expr, "Cannot do sub call and slice on counter."));
+        var validSubCalls = List.of("next");
+        ensure(expr.subCalls.size() == 1, () -> error("Invalid counter sub-call", expr)
+            .locationDescription(expr, "Only a single sub-call expected."));
+        var subCall = expr.subCalls.getFirst();
+        ensure(validSubCalls.contains(subCall.id.name),
+            () -> error("Invalid counter sub-call", subCall.id)
+                .locationDescription(subCall.id, "Counter has no sub-call named `%s`",
+                    subCall.id.name));
+        return;
+      }
+      case null, default -> {
+      }
     }
 
 
@@ -2593,7 +2607,10 @@ public class TypeChecker
               .build();
         }
 
-        subCall.computedFormatFieldBitRange = formatType.format.getFieldRange(fieldName);
+        // FIXME: @flofriday replace once computed field ranges are Constant.BitSlice
+        var fieldRange = requireNonNull(formatType.format.getFieldRange(fieldName));
+        var slicePart = new Constant.BitSlice.Part(fieldRange.from(), fieldRange.to());
+        subCall.computedBitSlice = new Constant.BitSlice(slicePart);
         subCall.formatFieldType = fieldType;
         visitSliceIndexCall(expr, subCall.formatFieldType, subCall.argsIndices);
         type = expr.type;
@@ -2619,283 +2636,176 @@ public class TypeChecker
 
   @Override
   public Void visit(CallIndexExpr expr) {
+    // try to find target symbol in symbol table.
+    // as identifiers only store AstSymbol origins, and the call expr might refer to a
+    // BuiltInSymbol, we must do a separate request to the symbol table an can't rely on the
+    // expression's identifier target.
+    var targetSymbol = expr.symbolTable().requireSymbol(expr.target.path(), () ->
+        error("Unknown call target", expr.target)
+            .locationNote(expr.target, "Nothing found that can be called with this name."));
 
-    // The first call of the multicalls depends on the thing that is being called.
-    // However since the definitions aren't part of the typesystem we need to resolve them
-    // manually.
-    // If no target matches, we can assume a slice and index call (depending on the type).
-
-    var callTarget = expr.symbolTable().findAs(expr.target.path(), Definition.class);
-
-    // Handle register File
-    if (callTarget instanceof RegisterDefinition
-        || (callTarget instanceof AliasDefinition aliasDef
-        && aliasDef.kind.equals(AliasDefinition.AliasKind.REGISTER))) {
-      
-      check(callTarget);
-
-      // the start of the index calls (might be 1 if the destination is a reg file)
-      var indexSubListStart = 0;
-      var callTargetType = ((TypedNode) callTarget).type();
-      var typeBeforeIndex = callTargetType;
-      if (callTargetType instanceof ConcreteRelationType relType) {
-        // If the call type is a relation type, it is a register file, so the first
-        // argument list must be treated as a list of arguments to the register file.
-        // FIXME: This must be more generic if the relation has multiple arguments
-        var argList = expr.argsIndices.get(0);
-        var arg = argList.values.get(0);
-        check(arg);
-        var requiredArgType = relType.argTypes().get(0);
-        argList.values.set(0, tryWrapImplicitCast(arg, requiredArgType));
-        typeBeforeIndex = relType.resultType();
-        argList.type = typeBeforeIndex;
-        indexSubListStart = 1;
-      }
-
-      // all further argument indices are slice calls
-      visitSliceIndexCall(expr, typeBeforeIndex,
-          expr.argsIndices.subList(indexSubListStart, expr.argsIndices.size()));
-      // the after the index slice we might have a type that can be called like .next
-      visitSubCall(expr, expr.type());
-      return null;
+    switch (targetSymbol) {
+      case SymbolTable.AstSymbol astSymbol -> processCallOfTarget(expr, astSymbol.origin());
+      case SymbolTable.BuiltInSymbol ignored -> processCallOfBuiltIn(expr);
     }
 
-    // Handle memory
-    if (callTarget instanceof MemoryDefinition memDef) {
-      if (expr.argsIndices.size() != 1 || expr.argsIndices.get(0).values.size() != 1) {
-        throw error("Invalid Memory Usage", expr)
-            .description("Memory access must have exactly one argument.")
-            .build();
-      }
-      verifyNoSubcall(expr, memDef);
-
-      var argList = expr.argsIndices.get(0);
-      var arg = argList.values.get(0);
-      check(arg);
-
-      check(memDef);
-      var requiredArgType =
-          requireNonNull(requireNonNull(memDef.type).argTypes().get(0));
-
-      argList.values.set(0, wrapImplicitCast(arg, requiredArgType));
-      arg = argList.values.get(0);
-      var actualArgType = arg.type();
-
-      if (!actualArgType.equals(requiredArgType)) {
-        throw typeMissmatchError(expr, requiredArgType, actualArgType);
-      }
-
-      var callType = memDef.type().resultType();
-      if (expr.target instanceof SymbolExpr targetSymbol) {
-        int multiplier = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
-        if (!(callType instanceof BitsType callBitsType)) {
-          throw new IllegalStateException();
-        }
-
-        callType = callBitsType.scaleBy(multiplier);
-      }
-
-      argList.type = callType;
-      expr.type = callType;
-      visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
-      visitSubCall(expr, expr.type());
-      return null;
-    }
-
-    // Handle Counter
-    if (callTarget instanceof CounterDefinition counterDef) {
-      check(counterDef);
-      var counterType = counterDef.typeLiteral.type;
-      expr.type = counterType;
-
-      if (!expr.argsIndices.isEmpty()) {
-        throw error("Invalid Counter Usage", expr)
-            .description("A counter isn't a callable thing.")
-            .build();
-      }
-
-      // FIXME: Handle slicing and format subcall propperly
-      if (counterDef.kind == CounterDefinition.CounterKind.PROGRAM) {
-        var allowedSubcalls = List.of("next");
-        // FIXME: better error message
-        if (expr.subCalls.stream().anyMatch(s -> !allowedSubcalls.contains(s.id.name))) {
-          throw error("Unknown counter access", expr)
-              .description("Unknown counter access, only the following are allowed %s",
-                  allowedSubcalls)
-              .build();
-        }
-        if (expr.subCalls.stream().anyMatch(s -> !s.argsIndices.isEmpty())) {
-          throw error("Invalid next of counter", expr)
-              .description("`.next` doesn't take any arguments")
-              .build();
-        }
-      } else {
-        throw new RuntimeException("Don't know how to handle group counters yet");
-      }
-
-      //visitSliceIndexCall(expr, expr.type(), expr.argsIndices);
-      //visitSubCall(expr, expr.type());
-      return null;
-    }
-
-    // FIXME: @flofriday, implementation of function definition and relocation definition
-    //    are identical. Exception definition is also very similar.
-    //    This should be refactored.
-    // User defined functions
-    if (callTarget instanceof FunctionDefinition functionDef) {
-      check(functionDef);
-      var funcType = functionDef.type();
-      var expectedArgCount = funcType.argTypes().size();
-      var actualArgCount = expr.argsIndices.get(0).values.size();
-      if (expectedArgCount != actualArgCount) {
-        throw error("Invalid Function Call", expr)
-            .description("Expected `%s` arguments but got `%s`", expectedArgCount, actualArgCount)
-            .build();
-      }
-
-      var args = expr.argsIndices.get(0);
-      args.values.forEach(this::check);
-      for (int i = 0; i < expectedArgCount; i++) {
-        var arg = args.values.get(i);
-        args.values.set(i, wrapImplicitCast(arg, funcType.argTypes().get(i)));
-        arg = args.values.get(i);
-        if (!arg.type().equals(funcType.argTypes().get(i))) {
-          throw typeMissmatchError(expr, funcType.argTypes().get(i), arg.type());
-        }
-      }
-
-      expr.type = funcType.resultType();
-      expr.argsIndices.get(0).type = funcType.resultType();
-      visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
-      visitSubCall(expr, expr.type());
-      return null;
-    }
-
-    // Relocation call (similar to function)
-    if (callTarget instanceof RelocationDefinition relocationDef) {
-      check(relocationDef);
-      var relocationType = relocationDef.type();
-      var expectedArgCount = relocationType.argTypes().size();
-      var actualArgCount = expr.argsIndices.get(0).values.size();
-      if (expectedArgCount != actualArgCount) {
-        throw error("Invalid Function Call", expr)
-            .description("Expected %s arguments but got `%s`", expectedArgCount, actualArgCount)
-            .build();
-      }
-
-      var args = expr.argsIndices.get(0);
-      args.values.forEach(this::check);
-      for (int i = 0; i < expectedArgCount; i++) {
-        var arg = args.values.get(i);
-        args.values.set(i, wrapImplicitCast(arg, relocationType.argTypes().get(i)));
-        arg = args.values.get(i);
-        if (!arg.type().equals(relocationType.argTypes().get(i))) {
-          throw typeMissmatchError(expr, relocationType.argTypes().get(i), arg.type());
-        }
-      }
-
-      expr.type = relocationType.resultType();
-      expr.argsIndices.get(0).type = relocationType.resultType();
-      visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
-      visitSubCall(expr, expr.type());
-      return null;
-    }
-
-    if (callTarget instanceof ExceptionDefinition exceptionDef) {
-      // TODO: Check if exception was called with a raise
-      check(exceptionDef);
-      var expectedArgCount = exceptionDef.params.size();
-      var paramTypes = exceptionDef.params.stream().map(Parameter::type).toList();
-      var actualArgCount = expr.argsIndices.get(0).values.size();
-      if (expectedArgCount != actualArgCount) {
-        throw error("Invalid Exception Raise", expr)
-            .description("Expected %s arguments but got `%s`", expectedArgCount, actualArgCount)
-            .build();
-      }
-      var args = expr.argsIndices.get(0);
-      args.values.forEach(this::check);
-      for (int i = 0; i < expectedArgCount; i++) {
-        var arg = args.values.get(i);
-        args.values.set(i, wrapImplicitCast(arg, paramTypes.get(i)));
-        arg = args.values.get(i);
-        if (!arg.type().equals(paramTypes.get(i))) {
-          throw typeMissmatchError(expr, paramTypes.get(i), arg.type());
-        }
-      }
-
-      expr.type = Type.void_();
-      return null;
-    }
-
-
-    // Builtin function
-    List<Expr> args =
-        !expr.argsIndices.isEmpty() ? expr.argsIndices.get(0).values : new ArrayList<>();
-    var argTypes = args.stream().map(this::check).toList();
-    var builtin = AstUtils.getBuiltIn(expr.target.path().pathToString(), argTypes);
-    if (builtin != null) {
-      // FIXME: Find a better solution that is universal enough for binary operations and builtin
-      // functions.
-
-      // If the function is also a unary operation, we instead type check it as if it were a unary
-      // operation which has some special type rules.
-      if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 1) {
-
-        var fakeUnExpr = AstUtils.getBuiltinUnOp(expr, builtin);
-        check(fakeUnExpr);
-
-        // Set type and arguments since they might have been wrapped in type casts
-        expr.argsIndices.get(0).values.set(0, fakeUnExpr.operand);
-        expr.type = fakeUnExpr.type;
-        expr.argsIndices.get(0).type = fakeUnExpr.type;
-      }
-
-      // If the function is also a binary operation, we instead type check it as if it were a binary
-      // operation which has some special type rules.
-      if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
-        var fakeBinExpr = AstUtils.getBuiltinBinOp(expr, builtin);
-        check(fakeBinExpr);
-
-        // Set type and arguments since they might have been wraped in type casts
-        expr.replaceArgsFor(0, List.of(fakeBinExpr.left, fakeBinExpr.right));
-        expr.type = fakeBinExpr.type;
-        expr.argsIndices.get(0).type = fakeBinExpr.type;
-      }
-
-      // FIXME: Better casting for const types.
-      // Should we also constanteval here if all arguments are constant?
-      argTypes = requireNonNull(expr.argsIndices.get(0).values.stream().map(v -> v.type)).toList();
-      if (expr.type == null && !builtin.takes(argTypes)) {
-        // FIXME: Better format that error
-        throw error("Type Mismatch", expr)
-            .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
-            .build();
-      }
-
-      // Note: cannot set the computed type because builtins aren't a definition.
-      expr.computedBuiltIn = builtin;
-      if (expr.type == null) {
-        expr.type = builtin.returns(argTypes);
-        expr.argsIndices.get(0).type = builtin.returns(argTypes);
-      }
-      visitSliceIndexCall(expr, expr.type(), expr.argsIndices.subList(1, expr.argsIndices.size()));
-      visitSubCall(expr, expr.type());
-      return null;
-    }
-
-
-    // If nothing else, assume slicing and subcall
-    if (expr.target instanceof Identifier targetIdentifier) {
-      expr.type = check(targetIdentifier);
-    } else if (expr.target instanceof IdentifierPath targetIdentifierPath) {
-      expr.type = check(targetIdentifierPath);
-    } else {
-      throw new IllegalStateException();
-    }
-    visitSliceIndexCall(expr, expr.type(), expr.argsIndices);
+    var slices = expr.slices();
+    // all further argument indices are slice calls
+    visitSliceIndexCall(expr, expr.typeBeforeSlice(), slices);
+    // after the index slices we might have a type that can be called like .next
     visitSubCall(expr, expr.type());
+
     return null;
   }
+
+  private void processCallOfBuiltIn(CallIndexExpr expr) {
+    // Builtin function
+    List<Expr> args =
+        !expr.argsIndices.isEmpty() ? expr.argsIndices.getFirst().values : new ArrayList<>();
+    var argTypes = args.stream().map(this::check).toList();
+    var builtin = AstUtils.getBuiltIn(expr.target.path().pathToString(), argTypes);
+
+    if (builtin == null) {
+      throw error("Invalid call target", expr.target)
+          .locationNote(expr.target, "Couldn't find builtin function `%s`",
+              expr.target.path())
+          .build();
+    }
+
+    expr.computedBuiltIn = builtin;
+
+    // FIXME: Find a better solution that is universal enough for binary operations and builtin
+    // functions.
+
+    // If the function is also a unary operation, we instead type check it as if it were a unary
+    // operation which has some special type rules.
+    if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 1) {
+
+      var fakeUnExpr = AstUtils.getBuiltinUnOp(expr, builtin);
+      check(fakeUnExpr);
+
+      // Set type and arguments since they might have been wrapped in type casts
+      expr.argsIndices.get(0).values.set(0, fakeUnExpr.operand);
+      expr.typeBeforeSlice = fakeUnExpr.type;
+      expr.argsIndices.get(0).type = fakeUnExpr.type;
+    }
+
+    // If the function is also a binary operation, we instead type check it as if it were a binary
+    // operation which has some special type rules.
+    if (builtin.operator() != null && builtin.signature().argTypeClasses().size() == 2) {
+      var fakeBinExpr = AstUtils.getBuiltinBinOp(expr, builtin);
+      check(fakeBinExpr);
+
+      // Set type and arguments since they might have been wraped in type casts
+      expr.replaceArgsFor(0, List.of(fakeBinExpr.left, fakeBinExpr.right));
+      expr.typeBeforeSlice = fakeBinExpr.type;
+      expr.argsIndices.get(0).type = fakeBinExpr.type;
+    }
+
+    // FIXME: Better casting for const types.
+    // Should we also constanteval here if all arguments are constant?
+    argTypes = requireNonNull(expr.argsIndices.get(0).values.stream().map(v -> v.type)).toList();
+    if (expr.typeBeforeSlice == null && !builtin.takes(argTypes)) {
+      // FIXME: Better format that error
+      throw error("Type Mismatch", expr)
+          .description("Expected %s but got `%s`", builtin.signature().argTypeClasses(), argTypes)
+          .build();
+    }
+
+    // Note: cannot set the computed type because builtins aren't a definition.
+    expr.computedBuiltIn = builtin;
+    if (expr.typeBeforeSlice == null) {
+      expr.typeBeforeSlice = builtin.returns(argTypes);
+      expr.argsIndices.getFirst().type = builtin.returns(argTypes);
+    }
+  }
+
+  private void processCallOfTarget(CallIndexExpr expr, Node callTarget) {
+    if (!(callTarget instanceof TypedNode typedNode) || callTarget instanceof LetExpr) {
+      // if the target is not a typed node, we just assume that it is some expression
+      // that can be sliced.
+      // if it is a let expr, we must also only check the target
+      expr.typeBeforeSlice = check((Expr) expr.target);
+      return;
+    }
+
+    switch (typedNode) {
+      case Expr e -> check(e);
+      case Definition e -> check(e);
+      default -> throw new IllegalStateException("Unexpected value: " + typedNode);
+    }
+
+    var argGroups = expr.args();
+    var argExprs = AstUtils.flatArguments(argGroups);
+
+    for (var argExpr : argExprs) {
+      ensure(!(argExpr instanceof RangeExpr), () -> error("Invalid argument", argExpr)
+          .locationNote(argExpr, "Expected argument value but got a range expression."));
+    }
+
+    var type = typedNode.type();
+    if (type instanceof ConcreteRelationType relType && relType.argTypes().isEmpty()) {
+      // if a relation type expects no arguments, no argument group is considered
+      expr.typeBeforeSlice = relType.resultType();
+    } else if (type instanceof ConcreteRelationType relType) {
+      ensure(relType.argTypes().size() == argExprs.size(),
+          () -> error("Invalid number of arguments", expr)
+              .locationNote(expr, "Expected %s arguments but got %s.", relType.argTypes().size(),
+                  argExprs.size()));
+
+      if (argGroups.size() != 1) {
+        // concrete relations have exactly one group
+        throw new IllegalStateException(
+            "At this point, we should know that there is exactly one argument group.");
+      }
+
+      // concrete relation types have only a single arg group (e.g. functions)
+      var argGroup = argGroups.getFirst();
+      for (int i = 0; i < argGroup.values.size(); i++) {
+        var arg = argGroup.values.get(i);
+        check(arg);
+        argGroup.values.set(i, tryWrapImplicitCast(arg, relType.argTypes().get(i)));
+      }
+
+      // set the type, this is overridden if there are slice or subcalls that get processed next
+      expr.typeBeforeSlice = relType.resultType();
+      // set the arg group type (representing the call result)
+      argGroups.getFirst().type = relType.resultType();
+
+    } else {
+      if (!argGroups.isEmpty()) {
+        // if there are argument groups, there was some logic failure.
+        // NOTE: This will change onces we have tensor registers.
+        throw new IllegalStateException(
+            "Non concrete relation types must not have any arguments.");
+      }
+      expr.typeBeforeSlice = typedNode.type();
+    }
+
+    var targetSizeExpr = expr.target.size();
+    if (targetSizeExpr != null) {
+      if (!(expr.typeBeforeSlice() instanceof BitsType exprType)) {
+        throw error("Invalid scaling type", targetSizeExpr)
+            .locationDescription(targetSizeExpr, "Result type `%s` cannot be scaled.",
+                expr.typeBeforeSlice())
+            .build();
+      }
+      // handle the targetSize expression if defined
+      int multiplier = constantEvaluator.eval(targetSizeExpr).value().intValueExact();
+
+      if (callTarget instanceof MemoryDefinition) {
+        // in case of a memory definition, scale the result type
+        expr.typeBeforeSlice = exprType.scaleBy(multiplier);
+      } else {
+        throw error("Invalid call size", expr)
+            .locationDescription(expr.target, "The call target doesn't support a size expression.")
+            .build();
+      }
+    }
+
+
+  }
+
 
   @SuppressWarnings("UnusedVariable")
   @Override

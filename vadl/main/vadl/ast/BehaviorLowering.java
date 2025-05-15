@@ -18,7 +18,9 @@ package vadl.ast;
 
 
 import static vadl.error.Diagnostic.error;
+import static vadl.utils.GraphUtils.intU;
 
+import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +50,6 @@ import vadl.viam.Instruction;
 import vadl.viam.Memory;
 import vadl.viam.Procedure;
 import vadl.viam.RegisterTensor;
-import vadl.viam.Relocation;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.BeginNode;
@@ -75,6 +76,7 @@ import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
@@ -84,6 +86,7 @@ import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
 
@@ -637,17 +640,43 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var resultExpr = exprBeforeSubcall;
     for (var subCall : expr.subCalls) {
-      if (subCall.computedFormatFieldBitRange != null) {
-        var bitRange = Objects.requireNonNull(subCall.computedFormatFieldBitRange);
-        var bitSlice =
-            new Constant.BitSlice(new Constant.BitSlice.Part(bitRange.from(), bitRange.to()));
+      if (subCall.computedBitSlice != null) {
+        var bitSlice = subCall.computedBitSlice;
         var slice =
             new SliceNode(resultExpr, bitSlice,
                 (DataType) Objects.requireNonNull(subCall.formatFieldType));
-        resultExpr = visitSliceIndexCall(expr, slice, subCall.argsIndices);
+        resultExpr = visitSliceIndexCall(slice, subCall.argsIndices);
       } else if (subCall.computedStatusIndex != null) {
         var indexing = new TupleGetFieldNode(subCall.computedStatusIndex, resultExpr, Type.bool());
-        resultExpr = visitSliceIndexCall(expr, indexing, subCall.argsIndices);
+        resultExpr = visitSliceIndexCall(indexing, subCall.argsIndices);
+      } else if (exprBeforeSubcall instanceof ReadResourceNode resRead) {
+        var computedTarget = expr.target.path().target();
+        if (computedTarget instanceof CounterDefinition) {
+          // FIXME: @ffreitag this is currently hardcoded as was wrong before.
+          //  It must add the instruction width in bytes.
+          // This width is obtained by the format type of the current instruction
+          var instrWidth = 32;
+          // The byte is defined by the "word" that is returned by the main memory definition.
+          // So essentially the return type in the relation type of the memory definition.
+          var byteWidth = 8;
+          var instrWidthInByte = instrWidth / byteWidth;
+
+          // FIXME: Handle slicing and format subcall propperly
+          int offset = 0;
+          for (var subcall : expr.subCalls) {
+            var subcallName = subcall.id.name;
+            if (subcallName.equals("next")) {
+              offset += instrWidthInByte;
+            } else {
+              throw new IllegalStateException("unknown subcall: " + subcallName);
+            }
+          }
+
+          resultExpr = BuiltInCall.of(BuiltInTable.ADD,
+              resRead,
+              intU(offset, resRead.type().bitWidth()).toNode()
+          );
+        }
       } else {
         throw new IllegalStateException();
       }
@@ -656,154 +685,77 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return resultExpr;
   }
 
-  private ExpressionNode visitSliceIndexCall(CallIndexExpr expr, ExpressionNode exprBeforeSlice,
-                                             List<CallIndexExpr.Arguments> argumentsList) {
-    if (argumentsList.isEmpty()) {
+  private ExpressionNode visitSliceIndexCall(ExpressionNode exprBeforeSlice,
+                                             List<CallIndexExpr.Arguments> slices) {
+    if (slices.isEmpty()) {
       return exprBeforeSlice;
     }
 
-    var args = argumentsList.get(0);
-
-    // A range slice
-    if (!args.values.isEmpty() && args.values.get(0) instanceof RangeExpr rangeExpr) {
-      var from = constantEvaluator.eval(rangeExpr.from).value().intValueExact();
-      var to = constantEvaluator.eval(rangeExpr.to).value().intValueExact();
-      var bitSlice = new Constant.BitSlice(new Constant.BitSlice.Part(from, to));
-      var slice =
-          new SliceNode(exprBeforeSlice, bitSlice, Type.bits(from - to + 1));
-      slice.setSourceLocation(args.location);
-      return visitSliceIndexCall(expr, slice, argumentsList.subList(1, argumentsList.size()));
+    var result = exprBeforeSlice;
+    for (var slice : slices) {
+      var bitSlice = Objects.requireNonNull(slice.computedBitSlice);
+      var type = Type.bits(bitSlice.bitSize());
+      result = new SliceNode(exprBeforeSlice, slice.computedBitSlice, type);
     }
 
-    // A index (slice)
-    var fromTo = constantEvaluator.eval(args.values.get(0)).value().intValueExact();
-    var bitSlice = new Constant.BitSlice(new Constant.BitSlice.Part(fromTo, fromTo));
-    var slice =
-        new SliceNode(exprBeforeSlice, bitSlice, (DataType) expr.type());
-    slice.setSourceLocation(args.location);
-    return visitSliceIndexCall(expr, slice, argumentsList.subList(1, argumentsList.size()));
+    return result;
   }
 
   @Override
   public ExpressionNode visit(CallIndexExpr expr) {
 
-    List<Expr> firstArgs =
-        !expr.argsIndices.isEmpty() ? expr.argsIndices.get(0).values : new ArrayList<>();
+    List<Expr> argExprs = AstUtils.flatArguments(expr.args());
+    var args = argExprs.stream().map(this::fetch).toList();
+    var typeBeforeSlice = expr.typeBeforeSlice();
+
+    ExpressionNode exprBeforeSlice;
 
     // Builtin Call
     if (expr.computedBuiltIn != null) {
-      var args = firstArgs.stream().map(this::fetch).toList();
       if (BuiltInTable.ASM_PARSER_BUILT_INS.contains(expr.computedBuiltIn)) {
-        return new AsmBuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
-            Objects.requireNonNull(expr.type));
+        exprBeforeSlice = new AsmBuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
+            expr.typeBeforeSlice());
+      } else {
+        exprBeforeSlice = new BuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
+            expr.typeBeforeSlice());
       }
-      return new BuiltInCall(expr.computedBuiltIn, new NodeList<>(args),
-          Objects.requireNonNull(expr.type));
-    }
+    } else {
+      exprBeforeSlice = switch (expr.computedTarget()) {
+        case FunctionDefinition funcDef -> new FuncCallNode(
+            (Function) viamLowering.fetch(funcDef).orElseThrow(),
+            new NodeList<>(args), typeBeforeSlice);
 
-    // Function Call
-    if (expr.computedTarget() instanceof FunctionDefinition functionDefinition) {
-      var args = firstArgs.stream().map(this::fetch).toList();
-      var function = (Function) viamLowering.fetch(functionDefinition).orElseThrow();
-      var type = expr.argsIndices.get(0).type();
-      var funcCall =
-          new FuncCallNode(function, new NodeList<>(args), type);
-      var slicedNode = visitSliceIndexCall(expr, funcCall,
-          expr.argsIndices.subList(1, expr.argsIndices.size()));
-      return visitSubCall(expr, slicedNode);
-    }
+        case RelocationDefinition funcDef -> new FuncCallNode(
+            (Function) viamLowering.fetch(funcDef).orElseThrow(),
+            new NodeList<>(args), typeBeforeSlice);
 
-    // Relocation Call (similar to function call)
-    if (expr.computedTarget() instanceof RelocationDefinition relocationDefinition) {
-      var args = firstArgs.stream().map(this::fetch).toList();
-      var relocation = (Relocation) viamLowering.fetch(relocationDefinition).orElseThrow();
-      var type = expr.argsIndices.get(0).type();
-      var funcCall =
-          new FuncCallNode(relocation, new NodeList<>(args), type);
-      var slicedNode = visitSliceIndexCall(expr, funcCall,
-          expr.argsIndices.subList(1, expr.argsIndices.size()));
-      return visitSubCall(expr, slicedNode);
-    }
+        case RegisterDefinition regDef -> new ReadRegTensorNode(
+            (RegisterTensor) viamLowering.fetch(regDef).orElseThrow(),
+            new NodeList<>(args), typeBeforeSlice.asDataType(), null);
 
-    // Register(file) read
-    if (expr.computedTarget() instanceof RegisterDefinition registerDefinition) {
-      var args = firstArgs.stream().map(this::fetch).toList();
-      var regFile = (RegisterTensor) viamLowering.fetch(registerDefinition).orElseThrow();
-      var type = (DataType) expr.argsIndices.get(0).type();
-      var readRegFile = new ReadRegTensorNode(regFile, new NodeList<>(args.get(0)), type, null);
-      var slicedNode = visitSliceIndexCall(expr, readRegFile,
-          expr.argsIndices.subList(1, expr.argsIndices.size()));
-      return visitSubCall(expr, slicedNode);
-    }
+        case AliasDefinition aliasDef -> new ReadArtificialResNode(
+            (ArtificialResource) viamLowering.fetch(aliasDef).orElseThrow(),
+            new NodeList<>(args), typeBeforeSlice.asDataType());
 
-    // Alias to registerfile read
-    if (expr.computedTarget() instanceof AliasDefinition aliasDefinition
-        && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
-
-      var artificialResource =
-          (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
-      var address = firstArgs.stream().map(this::fetch).findFirst().orElseThrow();
-      var type = (DataType) expr.argsIndices.get(0).type();
-      var read = new ReadArtificialResNode(artificialResource, address, type);
-      var slicedNode = visitSliceIndexCall(expr, read,
-          expr.argsIndices.subList(1, expr.argsIndices.size()));
-      return visitSubCall(expr, slicedNode);
-    }
-
-    // Memory read
-    if (expr.computedTarget() instanceof MemoryDefinition memoryDefinition) {
-      var args = firstArgs.stream().map(this::fetch).toList();
-      var words = 1;
-      if (expr.target instanceof SymbolExpr targetSymbol) {
-        words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
-      }
-      var memory = (Memory) viamLowering.fetch(memoryDefinition).orElseThrow();
-      var type = (DataType) expr.argsIndices.get(0).type();
-      var readMem = new ReadMemNode(memory, words, args.get(0), type);
-      var slicedNode = visitSliceIndexCall(expr, readMem,
-          expr.argsIndices.subList(1, expr.argsIndices.size()));
-      return visitSubCall(expr, slicedNode);
-    }
-
-    // Program counter read
-    if (expr.computedTarget() instanceof CounterDefinition counterDefinition) {
-      // Calls like PC.next are translated to PC + 8 (if address is 8)
-      var counter = (Counter) viamLowering.fetch(counterDefinition).orElseThrow();
-      var counterType = (DataType) Objects.requireNonNull(counterDefinition.typeLiteral.type);
-
-      var regRead = new ReadRegTensorNode(counter.registerTensor(),
-          new NodeList<>(),
-          (DataType) Objects.requireNonNull(expr.type), null);
-
-      // FIXME: @ffreitag this is currently hardcoded as was wrong before.
-      //  It must add the instruction width in bytes.
-      // This width is obtained by the format type of the current instruction
-      var instrWidth = 32;
-      // The byte is defined by the "word" that is returned by the main memory definition.
-      // So essentially the return type in the relation type of the memory definition.
-      var byteWidth = 8;
-      var instrWidthInByte = instrWidth / byteWidth;
-
-      // FIXME: Handle slicing and format subcall propperly
-      int offset = 0;
-      for (var subcall : expr.subCalls) {
-        var subcallName = subcall.id.name;
-        if (subcallName.equals("next")) {
-          offset += instrWidthInByte;
-        } else {
-          throw new IllegalStateException("unknown subcall: " + subcallName);
+        case MemoryDefinition memDef -> {
+          var sizeExpr = expr.target.size();
+          var words = sizeExpr != null
+              ? constantEvaluator.eval(sizeExpr).value().intValueExact()
+              : 1;
+          yield new ReadMemNode((Memory) viamLowering.fetch(memDef).orElseThrow(),
+              words, args.getFirst(), typeBeforeSlice.asDataType());
         }
-      }
 
-      var constant = new ConstantNode(Constant.Value.of(offset, counterType));
-      return
-          new BuiltInCall(BuiltInTable.ADD, new NodeList<>(constant, regRead), counterType);
+        case CounterDefinition counterDef -> new ReadRegTensorNode(
+            ((Counter) viamLowering.fetch(counterDef).orElseThrow()).registerTensor(),
+            new NodeList<>(), expr.typeBeforeSlice().asDataType(), null);
+
+        default -> fetch((Expr) expr.target);
+      };
     }
 
-    // If nothing else, assume slicing and subcall
-    var exprBeforeSubCall = fetch((Expr) expr.target);
-    var result = visitSubCall(expr, exprBeforeSubCall);
-    result = visitSliceIndexCall(expr, result, expr.argsIndices);
+    var result = visitSliceIndexCall(exprBeforeSlice, expr.slices());
+    result = visitSubCall(expr, result);
     return result;
   }
 
@@ -968,103 +920,136 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   public SubgraphContext visit(AssignmentStatement statement) {
     var value = fetch(statement.valueExpression);
 
+    vadl.ast.Definition targetDef;
+    List<CallIndexExpr.Arguments> argGroups = List.of();
+    List<Constant.BitSlice> slices = new ArrayList<>();
+
+    // the MEM<xyz>(...) value
+    @Nullable Integer callSize = null;
+
     if (statement.target instanceof CallIndexExpr callTarget) {
-      // FIXME: Ensure that no slicing is happending and handle format field masking access
-
-      // Register File Write
-      if (callTarget.computedTarget() instanceof RegisterDefinition regFileTarget) {
-        var reg = (RegisterTensor) viamLowering.fetch(regFileTarget).orElseThrow();
-        var indices = callTarget.argsIndices.getFirst().values.stream().map(this::fetch)
-            .collect(Collectors.toCollection(NodeList::new));
-        var write = new WriteRegTensorNode(
-            reg,
-            indices,
-            value,
-            null,
-            null);
-        write.setSourceLocation(statement.location());
-        write = Objects.requireNonNull(currentGraph).addWithInputs(write);
-        return SubgraphContext.of(statement, write);
-      }
-
-      // Alias Register File Write
-      if (callTarget.computedTarget() instanceof AliasDefinition aliasDefinition
-          && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
-        var resource = (ArtificialResource) viamLowering.fetch(aliasDefinition).orElseThrow();
-        // FIXME: Support alias register writes
-        var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
-        var write = new WriteArtificialResNode(resource, address, value);
-        return SubgraphContext.of(statement, write);
-      }
-
-      // Memory Write
-      if (callTarget.computedTarget() instanceof MemoryDefinition memoryTarget) {
-        var memory = (Memory) viamLowering.fetch(memoryTarget).orElseThrow();
-        var words = 1;
-        if (callTarget.target instanceof SymbolExpr targetSymbol) {
-          words = constantEvaluator.eval(targetSymbol.size).value().intValueExact();
+      targetDef = (vadl.ast.Definition) callTarget.computedTarget();
+      argGroups = callTarget.args();
+      callTarget.slices().forEach(s -> {
+        slices.add(Objects.requireNonNull(s.computedBitSlice));
+      });
+      // add all slices that come from format field accesses
+      callTarget.subCalls.forEach(s -> {
+        if (s.computedBitSlice != null) {
+          slices.add(s.computedBitSlice);
         }
-        var address = callTarget.argsIndices.get(0).values.get(0).accept(this);
-        var write = new WriteMemNode(memory, words, address, value);
-        write = Objects.requireNonNull(currentGraph).addWithInputs(write);
-        return SubgraphContext.of(statement, write);
-      }
+      });
 
-      throw new IllegalStateException(
-          "Call target \"%s\" not yet implemented, found in: %s".formatted(
-              callTarget.computedTarget(),
-              callTarget.location.toIDEString()));
-    } else if (statement.target instanceof Identifier identifierExpr) {
-      var computedTarget = Objects.requireNonNull(identifierExpr.target());
-
-      // Register Write
-      if (computedTarget instanceof RegisterDefinition registerDefinition) {
-        var register = (RegisterTensor) viamLowering.fetch(registerDefinition).orElseThrow();
-        var write = new WriteRegTensorNode(register, new NodeList<>(), value, null, null);
-        return SubgraphContext.of(statement, write);
-      }
-
-      // Alias Register Write
-      if (computedTarget instanceof AliasDefinition aliasDefinition
-          && aliasDefinition.kind.equals(AliasDefinition.AliasKind.REGISTER)) {
-        // FIXME: Register aliases cannot be artificial resources so we cannot create a
-        // write to an artificial resource here and just directly resolve it.
-        // https://github.com/OpenVADL/open-vadl/issues/104
-
-        // To make them work for now, they are at the moment always register file accesses so only
-        // implement them.
-
-        if (aliasDefinition.computedTarget instanceof RegisterDefinition) {
-          var register =
-              (RegisterTensor) viamLowering.fetch(
-                      Objects.requireNonNull(aliasDefinition.computedTarget))
-                  .orElseThrow();
-          var write = new WriteRegTensorNode(register, new NodeList<>(), value, null, null);
-          return SubgraphContext.of(statement, write);
-        }
-
-        // Here is the big hack where we create a pseudo AST node that just inlines the alias
-        // and generate the instance for that.
-        var fakeAssignment =
-            new AssignmentStatement(aliasDefinition.value, statement.valueExpression);
-        return visit(fakeAssignment);
-      }
-
-      // Counter (also register) Write
-      if (computedTarget instanceof CounterDefinition counterDefinition) {
-        var counter = (Counter) viamLowering.fetch(counterDefinition).orElseThrow();
-        var write =
-            new WriteRegTensorNode(counter.registerTensor(), new NodeList<>(),
-                value, null, null);
-        return SubgraphContext.of(statement, write);
-      }
-
-      throw new IllegalStateException("Identifier targeting %s not yet implemented".formatted(
-          computedTarget.getClass().getSimpleName()));
+      var sizeExpr = callTarget.target.size();
+      callSize = sizeExpr != null
+          ? constantEvaluator.eval(sizeExpr).value().intValueExact()
+          : null;
+    } else if (statement.target instanceof Identifier identTarget) {
+      targetDef = (vadl.ast.Definition) Objects.requireNonNull(identTarget.target());
+    } else {
+      throw new IllegalStateException("Unexpected target: " + statement);
     }
 
-    throw new IllegalStateException("unknown target expression: " + statement.target);
+    var argExprs = AstUtils.flatArguments(argGroups).stream().map(this::fetch)
+        .collect(Collectors.toCollection(NodeList::new));
+    var viamDef = viamLowering.fetch(targetDef).orElseThrow();
+
+    WriteResourceNode writeNode = switch (viamDef) {
+
+      case RegisterTensor regDef -> new WriteRegTensorNode(regDef, argExprs,
+          // slice the written value before writing it
+          sliceWriteValue(value,
+              new ReadRegTensorNode(regDef, argExprs, regDef.resultType(), null), slices),
+          null, null);
+
+      case ArtificialResource aliasDef -> new WriteArtificialResNode(aliasDef, argExprs,
+          // slice the written value before writing it
+          sliceWriteValue(value,
+              new ReadArtificialResNode(aliasDef, argExprs, aliasDef.resultType()), slices)
+      );
+
+      case Memory memDef -> {
+        var words = callSize != null ? callSize : 1;
+        // slice the written value before writing it
+        var slicedValue = sliceWriteValue(value,
+            new ReadMemNode(memDef, words, argExprs.getFirst(),
+                ((BitsType) memDef.resultType()).scaleBy(words)), slices);
+        yield new WriteMemNode(
+            memDef, callSize != null ? callSize : 1,
+            argExprs.getFirst(), slicedValue
+        );
+      }
+
+      // FIXME: Adjust value based on counter position
+      case Counter counterDef -> new WriteRegTensorNode(counterDef.registerTensor(), argExprs,
+          // slice the written value before writing it
+          sliceWriteValue(value,
+              new ReadRegTensorNode(counterDef.registerTensor(), argExprs,
+                  counterDef.registerTensor().resultType(), null), slices),
+          null, null);
+
+      default -> throw new IllegalStateException("Unexpected target: " + viamDef);
+    };
+
+    return SubgraphContext.of(statement, writeNode);
   }
+
+  /**
+   * Method that prepares the value so it can be written to a subset region of a resource.
+   * The entire resource before writing the value is given by the entireRead node.
+   * The subset region of the resource is given by the slices list, that
+   * holds a list of {@link vadl.viam.Constant.BitSlice}.
+   * E.g. {@code A(3, 15..11) := 0b101111} writes the value's msb `1` at position 3 in the
+   * resource,
+   * and the rest (0b01111) is written to position 15 to 11 (inclusive) in the resource.
+   *
+   * @param value      value that is being written (right side of assignment)
+   * @param entireRead resource value before value is written
+   * @param slices     the slices where each entry represents a group.
+   *                   The example above has one bit-slice with two parts
+   * @return expression that incorporates the written value into the resource.
+   */
+  private ExpressionNode sliceWriteValue(ExpressionNode value,
+                                         ReadResourceNode entireRead,
+                                         List<Constant.BitSlice> slices) {
+    if (slices.isEmpty()) {
+      return value;
+    }
+    if (slices.size() != 1) {
+      // this requires to merge all slices into a single one before applying adjustment
+      throw new IllegalStateException("Nested slices are not yet supported");
+    }
+
+    var slice = slices.getFirst();
+
+    // the value bits all shifted in place of the position in final results
+    ExpressionNode injected = null;
+    // how many bits taken from <value>
+    int consumed = 0;
+
+    // parts from lsb to msb
+    var parts = Lists.reverse(slice.parts().toList());
+    for (var part : parts) {
+      // shift the next lsb part of the write value
+      value = consumed == 0 ? value :
+          BuiltInCall.of(BuiltInTable.LSR, value, intU(consumed, 32).toNode());
+      // extracted value of this part
+      ExpressionNode partValue = new TruncateNode(value, Type.bits(part.size()));
+      // zero extend part value to correct size
+      partValue = new ZeroExtendNode(partValue, entireRead.type());
+
+      var placed = part.lsb() == 0 ? partValue :
+          BuiltInCall.of(BuiltInTable.LSL, partValue, intU(part.lsb(), 32).toNode());
+
+      injected = injected == null ? placed : BuiltInCall.of(BuiltInTable.OR, injected, placed);
+      consumed += part.size();
+    }
+
+    var mask = slice.mask().castTo(Type.bits(entireRead.type().bitWidth())).toNode();
+    var clearedResource = BuiltInCall.of(BuiltInTable.AND, entireRead, mask);
+    return BuiltInCall.of(BuiltInTable.OR, clearedResource, Objects.requireNonNull(injected));
+  }
+
 
   @Override
   public SubgraphContext visit(BlockStatement statement) {

@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import vadl.viam.passes.verification.ViamVerifier;
 
 public class FrontendIntegrationTest {
 
@@ -40,7 +41,8 @@ public class FrontendIntegrationTest {
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
     var lowering = new ViamLowering();
-    Assertions.assertDoesNotThrow(() -> lowering.generate(ast), "Cannot generate VIAM");
+    var spec = Assertions.assertDoesNotThrow(() -> lowering.generate(ast), "Cannot generate VIAM");
+    ViamVerifier.verifyAllIn(spec);
   }
 
 }

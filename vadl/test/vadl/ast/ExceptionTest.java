@@ -96,7 +96,7 @@ public class ExceptionTest {
     var typechecker = new TypeChecker();
     var throwable = assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     org.assertj.core.api.Assertions.assertThat(throwable.getMessage())
-        .contains("Expected 0 arguments but got `2`");
+        .contains("Only bit types can be sliced but the target was a `void`");
   }
 
   @Test
@@ -109,7 +109,7 @@ public class ExceptionTest {
     var typechecker = new TypeChecker();
     var throwable = assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
     org.assertj.core.api.Assertions.assertThat(throwable.getMessage())
-        .contains("Expected `Bits<5>` but got `Bits<8>`.");
+        .contains("Expected `Bits<5>` but got `Const<200>`.");
   }
 
   // TODO: Currently this check is implicit given the return type.

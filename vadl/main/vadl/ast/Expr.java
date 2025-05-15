@@ -27,12 +27,14 @@ import vadl.javaannotations.ast.Child;
 import vadl.types.BitsType;
 import vadl.types.BoolType;
 import vadl.types.BuiltInTable;
+import vadl.types.ConcreteRelationType;
 import vadl.types.SIntType;
 import vadl.types.TupleType;
 import vadl.types.Type;
 import vadl.types.UIntType;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
+import vadl.viam.Constant;
 
 /**
  * The Expression node of the AST.
@@ -1656,6 +1658,9 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
   @Nullable
   BuiltInTable.BuiltIn computedBuiltIn;
 
+  @Nullable
+  Type typeBeforeSlice;
+
   public CallIndexExpr(IsSymExpr target, List<Arguments> argsIndices, List<SubCall> subCalls,
                        SourceLocation location) {
     this.target = target;
@@ -1666,6 +1671,68 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
 
   public Node computedTarget() {
     return Objects.requireNonNull(target.path().target());
+  }
+
+  public Type typeBeforeSlice() {
+    return Objects.requireNonNull(typeBeforeSlice);
+  }
+
+  /**
+   * Returns the {@link Arguments} for a call to some definition.
+   * As arguments must (e.g. function call arguments or register indices) must not be mixed
+   * with slices in the same group, the returned list provides ONLY arguments (no slices).
+   *
+   * <p>If the target has a {@link ConcreteRelationType}, there will only be a single argument
+   * returned.
+   * If the target is a register and has a tensor type, multiple arguments might be returned,
+   * as access to multidimensional registers may be written in separate groups.</p>
+   *
+   * <p><b>NOTE:</b>This method may only be called if the type checker has already
+   * resolved either the {@link #computedBuiltIn} or {@link #computedTarget()}, otherwise
+   * calling this function will result in a crash.
+   * (so it is generally safe after the type check)</p>
+   */
+  // FIXME: Implement access to multidimensional registers
+  public List<Arguments> args() {
+    if (computedBuiltIn != null) {
+      // if we reference a built-in, we must check if the built-in takes arguments
+      if (computedBuiltIn.argTypeClasses().isEmpty()
+          || argsIndices.isEmpty()) {
+        return List.of();
+      }
+      return List.of(argsIndices.getFirst());
+    }
+
+    if (computedTarget() instanceof LetExpr) {
+      // let expressions don't have any arguments.
+      // they are typed nodes, but arguments referring to let exprs are not
+      // using the let expr's type, but just the value defined in it.
+      // so the type would be null when calling .type()
+      return List.of();
+    }
+
+    if (computedTarget() instanceof TypedNode typedNode) {
+      var type = typedNode.type();
+      if (type instanceof ConcreteRelationType relType) {
+        if (relType.argTypes().isEmpty()) {
+          // relation types that don't expect an argument don't have any argument groups
+          return List.of();
+        }
+        return argsIndices.isEmpty() ? List.of() : List.of(argsIndices.getFirst());
+      }
+      // in the case of a register:
+      // arguments are all argument groups that don't start with a range expression and
+      // don't exceed the number of tensor indices.
+    }
+    return List.of();
+  }
+
+  /**
+   * Returns a list of all argument groups that represent slices on the result
+   * of the call.
+   */
+  public List<Arguments> slices() {
+    return argsIndices.subList(args().size(), argsIndices.size());
   }
 
   @Override
@@ -1770,14 +1837,12 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
     List<Expr> values;
     SourceLocation location;
 
+    // FIXME: I think this type does not make sense here.
     @Nullable
     Type type;
 
-    /**
-     * If the argument is a slice or a field access the typechecker will cache the result here.
-     */
     @Nullable
-    FormatDefinition.BitRange computedBitRange;
+    Constant.BitSlice computedBitSlice;
 
     Arguments(List<Expr> values, SourceLocation location) {
       this.values = values;
@@ -1825,7 +1890,7 @@ final class CallIndexExpr extends Expr implements IsCallExpr {
      * This does ignore further manipulation by the argsIndicies.
      */
     @Nullable
-    FormatDefinition.BitRange computedFormatFieldBitRange;
+    Constant.BitSlice computedBitSlice;
 
     /**
      * If the subcall is status access, this field tells which index in the status type the

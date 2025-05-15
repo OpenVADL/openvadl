@@ -393,6 +393,8 @@ class RangeFormatField extends FormatField {
 
   // While the ranges are expressions in diffrent forms, once computed they are stored here to
   // make them easier to process.
+  // FIXME: @flofriday we should use a Constant.BitSlice instead of this list of BitRange.
+  //   BitSlice is much more complete and also easier to handle
   @Nullable
   List<FormatDefinition.BitRange> computedRanges;
 
@@ -2321,7 +2323,7 @@ final class EnumerationDefinition extends Definition implements IdentifiableNode
   }
 }
 
-final class ExceptionDefinition extends Definition implements IdentifiableNode {
+final class ExceptionDefinition extends Definition implements IdentifiableNode, TypedNode {
   IdentifierOrPlaceholder id;
   @Child
   Statement statement;
@@ -2329,6 +2331,8 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
   List<Parameter> params;
   SourceLocation loc;
 
+  @Nullable
+  ConcreteRelationType type;
 
   ExceptionDefinition(IdentifierOrPlaceholder id, List<Parameter> params,
                       Statement statement,
@@ -2392,6 +2396,11 @@ final class ExceptionDefinition extends Definition implements IdentifiableNode {
     result = 31 * result + Objects.hashCode(statement);
     result = 31 * result + Objects.hashCode(params);
     return result;
+  }
+
+  @Override
+  public ConcreteRelationType type() {
+    return Objects.requireNonNull(type);
   }
 }
 
