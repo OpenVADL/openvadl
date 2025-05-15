@@ -39,7 +39,7 @@ public class ArtificialResource extends Resource {
    * A hint what the artificial resources were created from.
    */
   public enum Kind {
-    REG_ALIAS
+    REGISTER
   }
 
   private final Kind kind;
@@ -89,26 +89,24 @@ public class ArtificialResource extends Resource {
     var readParams = readFunction.parameters();
     var writeParams = writeProcedure.parameters();
     ensure(readFunction.returnType().isData(), "Read return type must be a data type");
-    ensure(readParams.length <= 1, "Read cannot have more than 1 parameter (address)");
     ensure(writeParams.length == readParams.length + 1,
         "Write must have one more param than read (because the last value is write)");
-    var readParam = readFunction.parameters()[0];
-    var writeAddrParam = writeProcedure.parameters()[0];
-    var writeValParam = writeProcedure.parameters()[1];
-    ensure(readParam.type().isData(), "Read type must be a data type");
-    ensure(writeAddrParam.type().isData(), "Write address type must be a data type");
+    for (int i = 0; i < readParams.length; i++) {
+      var readParam = readFunction.parameters()[i];
+      var writeAddrParam = writeProcedure.parameters()[i];
+      ensure(readParam.type().isData(), "Read type must be a data type");
+      ensure(writeAddrParam.type().isData(), "Write address type must be a data type");
+      ensure(readParam.type().isTrivialCastTo(writeAddrParam.type()),
+          "Write address type must be a data type");
+    }
+
+    var writeValParam = writeParams[writeParams.length - 1];
     ensure(writeValParam.type().isData(), "Write value type must be a data type");
 
     ensure(readFunction.returnType().isTrivialCastTo(resultType()),
         "Read return type must match result type");
     ensure(writeValParam.type().isTrivialCastTo(resultType()),
         "Write value type must match result type");
-    if (hasAddress()) {
-      ensure(readParam.type().isTrivialCastTo(addressType()),
-          "Read address type must match address type");
-      ensure(writeAddrParam.type().isTrivialCastTo(addressType()),
-          "Write address type must match address type");
-    }
   }
 
   @Override
@@ -146,5 +144,10 @@ public class ArtificialResource extends Resource {
   @Override
   public void accept(DefinitionVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return "alias " + kind().name().toLowerCase() + " " + identifier.simpleName() + ": " + type();
   }
 }

@@ -45,6 +45,7 @@ public class Procedure extends Definition implements DefProp.WithBehavior {
     this.parameters = parameters;
     this.behavior = behavior;
     this.behavior.setParentDefinition(this);
+    Arrays.stream(parameters).forEach(p -> p.setParent(this));
   }
 
   public Parameter[] parameters() {
