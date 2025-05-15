@@ -230,13 +230,9 @@ processor Spike implements RV32IMZicsr = {
         // this processor has no zicsr extension:   0xf1402573  csrr   a0, mhartid
         MEM<4>(0x1008) := 0x00000013  // addi x0, x0, 0
 
-        if MLen = 32 then {
-            MEM<4>(0x100c) := 0x0202a583  // lw   a1, 32(t0)
-            MEM<4>(0x1010) := 0x0182a283  // lw   t0, 24(t0)
-        } else {
-            MEM<4>(0x100c) := 0x0202b583  // ld   a1, 32(t0)
-            MEM<4>(0x1010) := 0x0182b283  // ld   t0, 24(t0)
-        }
+        // 32-bit reset version
+        MEM<4>(0x100c) := 0x0202a583  // lw   a1, 32(t0)
+        MEM<4>(0x1010) := 0x0182a283  // lw   t0, 24(t0)
 
         MEM<4>(0x1014) := 0x00028067  // jr   t0
         // store start_addr in memory (0x80000000)

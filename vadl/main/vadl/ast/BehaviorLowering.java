@@ -574,8 +574,8 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(IntegerLiteral expr) {
-    return new ConstantNode(Constant.Value.fromInteger(expr.number,
-        ((ConstantType) expr.type()).closestBits()));
+    // IntegerLiteral should never be reached as it should always be substituted by the typechecker.
+    throw new IllegalStateException("IntegerLiteral should never be reached in the VIAM lowering.");
   }
 
   @Override
