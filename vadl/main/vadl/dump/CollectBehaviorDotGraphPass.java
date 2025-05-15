@@ -90,6 +90,9 @@ public class CollectBehaviorDotGraphPass extends Pass {
     return new Result(result, lastPass);
   }
 
+  /**
+   * Return the dot representation for {@link Graph}.
+   */
   public static String createDotGraphFor(Graph graph) {
     return new DotGraphVisualizer()
         .load(graph)

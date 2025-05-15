@@ -22,6 +22,13 @@ import vadl.viam.graph.Graph;
  * Allows the display of the {@link Graph} in a timeline.
  */
 public interface BehaviorTimelineDisplay {
+  /**
+   * Get the pass key id.
+   */
   String passId();
+
+  /**
+   * Get the human-readable string from the timeline.
+   */
   String passName();
 }

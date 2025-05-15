@@ -381,7 +381,7 @@ public abstract class LlvmInstructionLoweringStrategy {
    * @param behavior is the graph which should be optimised.
    */
   private DerivedGraphOptimisationResult optimise(Graph behavior) {
-    var before = behavior.copy();
+    final var before = behavior.copy();
     Canonicalizer.canonicalize(behavior);
     var canonicalized = behavior.copy();
     new AlgebraicSimplifier(AlgebraicSimplificationPass.rules).run(behavior);
