@@ -321,7 +321,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
       return Optional.of(new ArtificialResource(
           identifier,
-          ArtificialResource.Kind.REG_ALIAS,
+          ArtificialResource.Kind.REGISTER,
           innerResource,
           new BehaviorLowering(this).getRegisterAliasReadFunc(definition),
           new BehaviorLowering(this).getRegisterAliasWriteProc(definition)
@@ -1137,7 +1137,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .findFirst().orElse(null);
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
     // TODO: @flofriday compute artifical resources
-    var artificialResources = new ArrayList<ArtificialResource>();
+    var artificialResources = filterAndCastToInstance(allDefinitions, ArtificialResource.class);
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.

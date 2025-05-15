@@ -205,21 +205,24 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
-    var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
+    var identifier = viamLowering.generateIdentifier(definition.viamId + "::read", definition.loc);
     var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
 
     DataType resultType;
-    var indices = new NodeList<ExpressionNode>();
+    // Initially the indices are all fixed arguments specified in the alias definition.
+    // E.g. in `register alias Z = X(1)` is `1` a fixed argument.
+    var indices = Objects.requireNonNull(definition.computedFixedArgs).stream()
+        .map(this::fetch).collect(Collectors.toCollection(NodeList::new));
     var params = new ArrayList<>();
+
     // FIXME: Support pre-indexed registers, for example:
-    //  register X = Bits<3><4><32>
-    //  register alias Z = X(1, 2)
+    //  register X: Bits<3><4><32>
+    //  register alias Z = X(1)(2)
     if (definition.type() instanceof ConcreteRelationType relType) {
       // FIXME: Wrap input and output in casts
-      // FIXME: Add conditions based on annotations
       var param = new vadl.viam.Parameter(
           viamLowering.generateIdentifier(
-              identifier.name() + "::readFunc::index",
+              identifier.name() + "::index",
               identifier.location()),
           relType.argTypes().getFirst());
       params.add(param);
@@ -229,6 +232,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       resultType = definition.type().asDataType();
     }
 
+    // FIXME: Add conditions based on annotations
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regReadType = regFileDef.type() instanceof ConcreteRelationType relType
         ? relType.resultType().asDataType() : resultType.asDataType();
@@ -244,8 +248,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // FIXME: Modify based on annotations
     return new Function(
-        viamLowering.generateIdentifier(identifier.name() + "::readFunc",
-            identifier.location()),
+        identifier,
         params.toArray(vadl.viam.Parameter[]::new),
         resultType,
         graph
@@ -257,11 +260,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
-    var identifier = viamLowering.generateIdentifier(definition.viamId, definition.loc);
+    var identifier = viamLowering.generateIdentifier(definition.viamId + "::write", definition.loc);
     var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
 
     DataType resultType;
-    var indices = new NodeList<ExpressionNode>();
+    // Initially the indices are all fixed arguments specified in the alias definition.
+    // E.g. in `register alias Z = X(1)` is `1` a fixed argument.
+    var indices = Objects.requireNonNull(definition.computedFixedArgs).stream()
+        .map(this::fetch).collect(Collectors.toCollection(NodeList::new));
     var params = new ArrayList<>();
     // FIXME: Support pre-indexed registers, for example:
     //  register X = Bits<3><4><32>
@@ -271,7 +277,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       // FIXME: Add conditions based on annotations
       var param = new vadl.viam.Parameter(
           viamLowering.generateIdentifier(
-              identifier.name() + "::writeProc::index",
+              identifier.name() + "::index",
               identifier.location()),
           relType.argTypes().getFirst());
       params.add(param);
@@ -283,7 +289,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     var valueParam = new vadl.viam.Parameter(
         viamLowering.generateIdentifier(
-            identifier.name() + "::writeProc::value",
+            identifier.name() + "::value",
             identifier.location()),
         resultType);
     params.add(valueParam);
@@ -307,8 +313,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
     // FIXME: Modify based on annotations
     return new Procedure(
-        viamLowering.generateIdentifier(identifier.name() + "::readFunc",
-            identifier.location()),
+        identifier,
         params.toArray(vadl.viam.Parameter[]::new),
         graph
     );
