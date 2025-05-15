@@ -421,6 +421,7 @@ public class Ungrouper
 
   @Override
   public Void visit(ImportDefinition importDefinition) {
+    ungroup(importDefinition.moduleAst);
     return null;
   }
 

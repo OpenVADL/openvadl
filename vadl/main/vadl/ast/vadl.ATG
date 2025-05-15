@@ -885,18 +885,19 @@ PRODUCTIONS
   )
   .
 
-  clangNumericTypeDefinition<out Definition def>                     (. def = DUMMY_DEF; var startLoc = nextTokenLoc(); .)
+  clangNumericTypeDefinition<out Definition def>    (. def = DUMMY_DEF; var startLoc = nextTokenLoc(); AbiClangNumericTypeDefinition.TypeName typeName = null; .)
   =
   (
     POINTER (
-      WIDTH SYM_EQ expression<out Expr expr1, BIN_OPS>               (. def = new AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName.POINTER_WIDTH, expr1, startLoc.join(lastTokenLoc())); .)
-      |  ALIGN SYM_EQ expression<out Expr expr2, BIN_OPS>            (. def = new AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName.POINTER_ALIGN, expr2, startLoc.join(lastTokenLoc())); .)
+         WIDTH                                      (. typeName = AbiClangNumericTypeDefinition.TypeName.POINTER_WIDTH; .)
+      |  ALIGN                                      (. typeName = AbiClangNumericTypeDefinition.TypeName.POINTER_ALIGN; .)
     )
     | LONG (
-      WIDTH SYM_EQ expression<out Expr expr3, BIN_OPS>               (. def = new AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName.LONG_WIDTH, expr3, startLoc.join(lastTokenLoc())); .)
-      |  ALIGN SYM_EQ expression<out Expr expr4, BIN_OPS>            (. def = new AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName.LONG_ALIGN, expr4, startLoc.join(lastTokenLoc())); .)
+         WIDTH                                      (. typeName = AbiClangNumericTypeDefinition.TypeName.LONG_WIDTH; .)
+      |  ALIGN                                      (. typeName = AbiClangNumericTypeDefinition.TypeName.LONG_ALIGN; .)
     )
   )
+  SYM_EQ expression<out Expr expr, BIN_OPS>         (. def = new AbiClangNumericTypeDefinition(typeName, expr, startLoc.join(lastTokenLoc())); .)
   .
 
   // See https://clang.llvm.org/doxygen/structclang_1_1TransferrableTargetInfo.html#a30e275c7308708d1b55cd9d009265e33

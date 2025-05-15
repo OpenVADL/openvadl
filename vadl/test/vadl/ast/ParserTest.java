@@ -19,8 +19,18 @@ package vadl.ast;
 import static org.assertj.core.api.Assertions.assertThat;
 import static vadl.ast.AstTestUtils.verifyPrettifiedAst;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import org.apache.commons.io.FileUtils;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.com.google.common.collect.Streams;
+import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 import vadl.error.DiagnosticList;
 
 /**
@@ -200,6 +210,10 @@ public class ParserTest {
         constant a = -9
         constant b = !(a = 3)
         constant c = ~a
+        constant d = -4 as Bits<32>
+        constant e = -(4 as Bits<32>)
+        constant f = ~(3 as Bits<32>)
+        constant g = !(3 as Bool)
         """;
 
     var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
@@ -257,5 +271,58 @@ public class ParserTest {
         """;
 
     Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog));
+  }
+
+
+  @Test
+  void testRv32im() throws IOException {
+    testPrettyPrintSpec(Path.of("../sys/risc-v"), "rv3264im.vadl", "rv32im.vadl");
+  }
+
+  private void testPrettyPrintSpec(Path rootDir, String... vadlSpecs) throws IOException {
+    var absRoot = rootDir.toAbsolutePath();
+    var sysName = rootDir.getFileName();
+    var prettyPath = Path.of("build/test/pretty-print/" + sysName);
+    if (prettyPath.toFile().exists()) {
+      FileUtils.forceDelete(prettyPath.toFile());
+    }
+
+    var specFiles = Arrays.stream(vadlSpecs).map(s -> absRoot.resolve(s).toFile())
+        .toList();
+    var prettyFiles = Arrays.stream(vadlSpecs)
+        .map(s -> prettyPath.resolve(s).toFile())
+        .toList();
+
+    // first check all handwirtten specs
+    var originalAsts = checkAll(specFiles, prettyPath);
+    var prettyPrintAsts = checkAll(prettyFiles, null);
+
+    Streams.forEachPair(prettyPrintAsts.stream(), originalAsts.stream(), (actual, expected) ->
+        assertThat(actual.prettyPrintToString()).isEqualTo(expected.prettyPrintToString()));
+  }
+
+  private List<Ast> checkAll(List<File> specs, @Nullable Path prettyPrintPath) {
+    return specs.stream().map(s -> check(s, prettyPrintPath)).toList();
+  }
+
+  private Ast check(File vadlFile, @Nullable Path prettyPrintPath) {
+    System.out.println("Checking " + vadlFile);
+    AssertionsForClassTypes.assertThat(vadlFile).exists();
+
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(vadlFile.toPath()),
+        "Cannot parse input");
+    new Ungrouper().ungroup(ast);
+    new ModelRemover().removeModels(ast);
+    if (prettyPrintPath != null) {
+      var progPretty = ast.prettyPrintToString();
+      var resFile = prettyPrintPath.resolve(vadlFile.getName()).toFile();
+      try {
+        FileUtils.createParentDirectories(resFile);
+        FileUtils.writeStringToFile(resFile, progPretty, Charset.defaultCharset());
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return ast;
   }
 }

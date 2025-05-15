@@ -2,7 +2,7 @@ instruction set architecture RV3264I = {
   constant Arch32 = 32
   constant Arch64 = 64
   constant MLen = Arch32
-  constant SftLen = ((MLen / 32) + 4)
+  constant SftLen = MLen / 32 + 4
   constant WLen = 32
 
   using Byte = Bits<8>
@@ -53,7 +53,7 @@ instruction set architecture RV3264I = {
   { imm : Bits<20>
   , rd : Index
   , opcode : Bits7
-  , immUp = (imm as SIntR << 12)
+  , immUp = imm as SIntR << 12
   }
   format Stype: Inst =
   { imm	 [31..25, 11..7]
@@ -69,13 +69,13 @@ instruction set architecture RV3264I = {
   , rs1	 [19..15]
   , funct3	 [14..12]
   , opcode	 [6..0]
-  , immS = (imm as SIntR << 1)
+  , immS = imm as SIntR << 1
   }
   format Jtype: Inst =
   { imm	 [31, 19..12, 20, 30..21]
   , rd	 [11..7]
   , opcode	 [6..0]
-  , immS = (imm as SIntR << 1)
+  , immS = imm as SIntR << 1
   }
 
   instruction ADD : Rtype =   X(rd) := (X(rs1) as Bits + X(rs2) as Bits) as Regs
@@ -248,7 +248,7 @@ instruction set architecture RV3264I = {
 
   assembly SLTIU = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(imm))
 
-  instruction AUIPC : Utype =   X(rd) := (PC + immUp)
+  instruction AUIPC : Utype =   X(rd) := PC + immUp
 
 
   encoding AUIPC =
@@ -266,7 +266,7 @@ instruction set architecture RV3264I = {
 
   assembly LUI = (mnemonic, " ", register(rd), ",", hex(imm))
 
-  instruction LB : Itype =   let addr = (X(rs1) + immS) in
+  instruction LB : Itype =   let addr = X(rs1) + immS in
     X(rd) := MEM(addr) as SIntR
 
 
@@ -277,7 +277,7 @@ instruction set architecture RV3264I = {
 
   assembly LB = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
 
-  instruction LBU : Itype =   let addr = (X(rs1) + immS) in
+  instruction LBU : Itype =   let addr = X(rs1) + immS in
     X(rd) := MEM(addr) as UIntR
 
 
@@ -288,7 +288,7 @@ instruction set architecture RV3264I = {
 
   assembly LBU = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
 
-  instruction LH : Itype =   let addr = (X(rs1) + immS) in
+  instruction LH : Itype =   let addr = X(rs1) + immS in
     X(rd) := MEM< 2 >(addr) as SIntR
 
 
@@ -299,7 +299,7 @@ instruction set architecture RV3264I = {
 
   assembly LH = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
 
-  instruction LHU : Itype =   let addr = (X(rs1) + immS) in
+  instruction LHU : Itype =   let addr = X(rs1) + immS in
     X(rd) := MEM< 2 >(addr) as UIntR
 
 
@@ -310,7 +310,7 @@ instruction set architecture RV3264I = {
 
   assembly LHU = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
 
-  instruction LW : Itype =   let addr = (X(rs1) + immS) in
+  instruction LW : Itype =   let addr = X(rs1) + immS in
     X(rd) := MEM< 4 >(addr) as SIntR
 
 
@@ -321,7 +321,7 @@ instruction set architecture RV3264I = {
 
   assembly LW = (mnemonic, " ", register(rd), ",", decimal(imm), "(", register(rs1), ")")
 
-  instruction SB : Stype =   let addr = (X(rs1) + immS) in
+  instruction SB : Stype =   let addr = X(rs1) + immS in
     MEM(addr) := X(rs2) as Byte
 
 
@@ -332,7 +332,7 @@ instruction set architecture RV3264I = {
 
   assembly SB = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
 
-  instruction SH : Stype =   let addr = (X(rs1) + immS) in
+  instruction SH : Stype =   let addr = X(rs1) + immS in
     MEM< 2 >(addr) := X(rs2) as Half
 
 
@@ -343,7 +343,7 @@ instruction set architecture RV3264I = {
 
   assembly SH = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
 
-  instruction SW : Stype =   let addr = (X(rs1) + immS) in
+  instruction SW : Stype =   let addr = X(rs1) + immS in
     MEM< 4 >(addr) := X(rs2) as Word
 
 
@@ -354,8 +354,8 @@ instruction set architecture RV3264I = {
 
   assembly SW = (mnemonic, " ", register(rs2), ",", decimal(imm), "(", register(rs1), ")")
 
-  instruction BEQ : Btype =   if (X(rs1) as Bits = X(rs2)) then
-    PC := (PC + immS)
+  instruction BEQ : Btype =   if X(rs1) as Bits = X(rs2) then
+    PC := PC + immS
 
 
 
@@ -366,8 +366,8 @@ instruction set architecture RV3264I = {
 
   assembly BEQ = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
 
-  instruction BNE : Btype =   if (X(rs1) as Bits != X(rs2)) then
-    PC := (PC + immS)
+  instruction BNE : Btype =   if X(rs1) as Bits != X(rs2) then
+    PC := PC + immS
 
 
 
@@ -378,8 +378,8 @@ instruction set architecture RV3264I = {
 
   assembly BNE = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
 
-  instruction BGE : Btype =   if (X(rs1) as SInt >= X(rs2)) then
-    PC := (PC + immS)
+  instruction BGE : Btype =   if X(rs1) as SInt >= X(rs2) then
+    PC := PC + immS
 
 
 
@@ -390,8 +390,8 @@ instruction set architecture RV3264I = {
 
   assembly BGE = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
 
-  instruction BGEU : Btype =   if (X(rs1) as UInt >= X(rs2)) then
-    PC := (PC + immS)
+  instruction BGEU : Btype =   if X(rs1) as UInt >= X(rs2) then
+    PC := PC + immS
 
 
 
@@ -402,8 +402,8 @@ instruction set architecture RV3264I = {
 
   assembly BGEU = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
 
-  instruction BLT : Btype =   if (X(rs1) as SInt < X(rs2)) then
-    PC := (PC + immS)
+  instruction BLT : Btype =   if X(rs1) as SInt < X(rs2) then
+    PC := PC + immS
 
 
 
@@ -414,8 +414,8 @@ instruction set architecture RV3264I = {
 
   assembly BLT = (mnemonic, " ", register(rs1), ",", register(rs2), ",", decimal(imm))
 
-  instruction BLTU : Btype =   if (X(rs1) as UInt < X(rs2)) then
-    PC := (PC + immS)
+  instruction BLTU : Btype =   if X(rs1) as UInt < X(rs2) then
+    PC := PC + immS
 
 
 
@@ -428,7 +428,7 @@ instruction set architecture RV3264I = {
 
   instruction JAL : Jtype =   let retaddr = PC.next in
     {
-      PC := ((PC + immS) & -2 as SIntR)
+      PC := PC + immS & -(2 as SIntR)
       X(rd) := retaddr
     }
 
@@ -441,7 +441,7 @@ instruction set architecture RV3264I = {
 
   instruction JALR : Itype =   let retaddr = PC.next in
     {
-      PC := ((X(rs1) + immS) & -2 as SIntR)
+      PC := X(rs1) + immS & -(2 as SIntR)
       X(rd) := retaddr
     }
 
@@ -529,14 +529,14 @@ instruction set architecture RV3264I = {
   assembly SRAI = (mnemonic, " ", register(rd), ",", register(rs1), ",", decimal(sft))
 }
 instruction set architecture RV3264IM extending RV3264I = {
-  constant MLen2 = (MLen * 2)
-  constant MLen2_1 = (MLen2 - 1)
-  constant TopBitSet = (1 as Regs << (MLen - 1)) as Regs
-  constant AllOnes = -1 as SIntR as Regs
+  constant MLen2 = MLen * 2
+  constant MLen2_1 = MLen2 - 1
+  constant TopBitSet = (1 as Regs << MLen - 1) as Regs
+  constant AllOnes = -(1 as SIntR) as Regs
 
-  function isOverflow(dividend : Regs, divisor : Regs) -> Bool = ((dividend = TopBitSet) & (divisor = AllOnes))
+  function isOverflow(dividend : Regs, divisor : Regs) -> Bool = dividend = TopBitSet & divisor = AllOnes
 
-  instruction MUL : Rtype =   let result = (X(rs1) as SInt *# X(rs2) as SInt) in
+  instruction MUL : Rtype =   let result = X(rs1) as SInt *# X(rs2) as SInt in
     X(rd) := result as Regs
 
 
@@ -548,7 +548,7 @@ instruction set architecture RV3264IM extending RV3264I = {
 
   assembly MUL = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
 
-  instruction MULH : Rtype =   let result = (X(rs1) as SInt *# X(rs2) as SInt) in
+  instruction MULH : Rtype =   let result = X(rs1) as SInt *# X(rs2) as SInt in
     X(rd) := result(MLen2_1..MLen)
 
 
@@ -560,7 +560,7 @@ instruction set architecture RV3264IM extending RV3264I = {
 
   assembly MULH = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
 
-  instruction MULHSU : Rtype =   let result = (X(rs1) as SInt *# X(rs2) as UInt) in
+  instruction MULHSU : Rtype =   let result = X(rs1) as SInt *# X(rs2) as UInt in
     X(rd) := result(MLen2_1..MLen)
 
 
@@ -572,7 +572,7 @@ instruction set architecture RV3264IM extending RV3264I = {
 
   assembly MULHSU = (mnemonic, " ", register(rd), ",", register(rs1), ",", register(rs2))
 
-  instruction MULHU : Rtype =   let result = (X(rs1) as UInt *# X(rs2) as UInt) in
+  instruction MULHU : Rtype =   let result = X(rs1) as UInt *# X(rs2) as UInt in
     X(rd) := result(MLen2_1..MLen)
 
 
@@ -587,7 +587,7 @@ instruction set architecture RV3264IM extending RV3264I = {
   instruction DIV : Rtype =   let dividend = X(rs1) as SIntR in
     let divisor = X(rs2) as SIntR in
       X(rd) :=
-        if (divisor = 0 as SIntR) then
+        if divisor = 0 as SIntR then
           AllOnes
         else
           if isOverflow(dividend, divisor) then
@@ -607,7 +607,7 @@ instruction set architecture RV3264IM extending RV3264I = {
   instruction DIVU : Rtype =   let dividend = X(rs1) as UIntR in
     let divisor = X(rs2) as UIntR in
       X(rd) :=
-        if (divisor = 0 as UIntR) then
+        if divisor = 0 as UIntR then
           AllOnes
         else
           VADL::div(dividend, divisor) as SInt as SIntR as UIntR
@@ -624,7 +624,7 @@ instruction set architecture RV3264IM extending RV3264I = {
   instruction REM : Rtype =   let dividend = X(rs1) as SIntR in
     let divisor = X(rs2) as SIntR in
       X(rd) :=
-        if (divisor = 0 as SIntR) then
+        if divisor = 0 as SIntR then
           dividend
         else
           if isOverflow(dividend, divisor) then
@@ -644,7 +644,7 @@ instruction set architecture RV3264IM extending RV3264I = {
   instruction REMU : Rtype =   let dividend = X(rs1) as UIntR in
     let divisor = X(rs2) as UIntR in
       X(rd) :=
-        if (divisor = 0 as UIntR) then
+        if divisor = 0 as UIntR then
           dividend
         else
           VADL::mod(dividend, divisor) as SInt as SIntR as UIntR

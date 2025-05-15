@@ -19,11 +19,13 @@ package vadl.ast;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -3434,9 +3436,9 @@ class AbiPseudoInstructionDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append(kind.keyword);
-    builder.append(" = ");
-    builder.append(target).append("}\n");
+    builder.append("pseudo ").append(kind.keyword).append(" instruction = ");
+    target.prettyPrint(indent + 1, builder);
+    builder.append("\n");
   }
 
   @Override
@@ -3551,7 +3553,7 @@ class AbiSequenceDefinition extends InstructionSequenceDefinition {
 
   enum SeqKind {
     CONSTANT("constant"),
-    REGISTER("register");
+    REGISTER("register adjustment");
 
     private final String keyword;
 
@@ -3596,10 +3598,15 @@ class SpecialPurposeRegisterDefinition extends Definition {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
     builder.append(purpose.keyword);
-    builder.append(" = ");
-    exprs.forEach(e -> {
-      e.prettyPrint(indent + 1, builder);
-    });
+    builder.append(" = [");
+    var joiner = new StringJoiner(", ");
+    for (var expr : exprs) {
+      StringBuilder tempBuilder = new StringBuilder();
+      expr.prettyPrint(indent + 1, tempBuilder);
+      joiner.add(tempBuilder.toString());
+    }
+    builder.append(joiner.toString());
+    builder.append("]\n");
   }
 
   @Override
@@ -3705,10 +3712,16 @@ class AbiClangNumericTypeDefinition extends Definition {
   }
 
   enum TypeName {
-    POINTER_WIDTH,
-    POINTER_ALIGN,
-    LONG_WIDTH,
-    LONG_ALIGN
+    POINTER_WIDTH("pointer width"),
+    POINTER_ALIGN("pointer align"),
+    LONG_WIDTH("long width"),
+    LONG_ALIGN("long align");
+
+    final String keyword;
+
+    TypeName(String keyword) {
+      this.keyword = keyword;
+    }
   }
 
   public AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName typeName,
@@ -3736,8 +3749,8 @@ class AbiClangNumericTypeDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent)).append("clang numeric type: ").append(typeName)
-        .append(" with");
+    builder.append(prettyIndentString(indent))
+        .append(typeName.keyword).append(" = ");
     size.prettyPrint(indent + 1, builder);
   }
 }
@@ -3773,15 +3786,27 @@ class AbiClangTypeDefinition extends Definition {
 
   enum TypeName {
     // Type of the size_t in C.
-    SIZE_TYPE,
-    INT_MAX_TYPE
+    SIZE_TYPE("size_t type"),
+    INT_MAX_TYPE("int max type");
+
+    final String keyword;
+
+    TypeName(String keyword) {
+      this.keyword = keyword;
+    }
   }
 
   enum TypeSize {
-    UNSIGNED_INT,
-    SIGNED_INT,
-    UNSIGNED_LONG,
-    SIGNED_LONG
+    UNSIGNED_INT("unsigned int"),
+    SIGNED_INT("signed int"),
+    UNSIGNED_LONG("unsigned long"),
+    SIGNED_LONG("signed  long");
+
+    final String keyword;
+
+    TypeSize(String keyword) {
+      this.keyword = keyword;
+    }
   }
 
   public AbiClangTypeDefinition(AbiClangTypeDefinition.TypeName typeName,
@@ -3809,8 +3834,8 @@ class AbiClangTypeDefinition extends Definition {
 
   @Override
   void prettyPrint(int indent, StringBuilder builder) {
-    builder.append(prettyIndentString(indent)).append("clang type: ")
-        .append(typeName).append(" with ").append(typeSize);
+    builder.append(prettyIndentString(indent)).append(typeName.keyword)
+        .append(" = ").append(typeSize.keyword);
   }
 }
 
@@ -4953,9 +4978,7 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
     indent++;
 
     if (!commonDefinitions.isEmpty()) {
-      for (var def : commonDefinitions) {
-        def.prettyPrint(indent, builder);
-      }
+      prettyPrintDefinitions(indent, builder, commonDefinitions);
     }
 
     if (!modifiers.isEmpty()) {
@@ -4968,11 +4991,11 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
         }
         builder.append("\n");
       }
-      builder.append(prettyIndentString(--indent)).append("}\n");
+      builder.append(prettyIndentString(--indent)).append("}\n\n");
     }
 
     if (!directives.isEmpty()) {
-      builder.append(prettyIndentString(indent)).append("directives = {\n");
+      builder.append(prettyIndentString(indent)).append("directives = {\n\n");
       indent++;
       for (var dir : directives) {
         dir.prettyPrint(indent, builder);
@@ -4986,12 +5009,10 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
 
     builder.append(prettyIndentString(indent)).append("grammar = {\n");
     indent++;
-    for (var rule : rules) {
+    var printableRules = rules.stream().filter(r -> !r.isBuiltinRule && !r.isTerminalRule).toList();
+    for (var rule : printableRules) {
       builder.append(prettyIndentString(indent));
       rule.prettyPrint(indent, builder);
-      if (!Objects.equals(rules.get(rules.size() - 1), rule)) {
-        builder.append("\n");
-      }
     }
     builder.append(prettyIndentString(--indent)).append("}\n");
 
@@ -5006,9 +5027,11 @@ class AsmDescriptionDefinition extends Definition implements IdentifiableNode {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     AsmDescriptionDefinition that = (AsmDescriptionDefinition) o;
     return Objects.equals(id, that.id) && Objects.equals(abi, that.abi)
-        && Objects.equals(rules, that.rules);
+        && new HashSet<>(that.rules).containsAll(rules)
+        && new HashSet<>(rules).containsAll(that.rules);
   }
 
   @Override
@@ -5223,7 +5246,7 @@ class AsmGrammarRuleDefinition extends Definition implements IdentifiableNode {
     alternatives.prettyPrint(indent, builder);
     indent--;
 
-    builder.append("\n").append(prettyIndentString(indent)).append(";\n");
+    builder.append("\n").append(prettyIndentString(indent)).append(";\n\n");
   }
 
   @Override

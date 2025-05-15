@@ -32,9 +32,11 @@ public class AstTestUtils {
 
   static void verifyPrettifiedAst(Ast ast) {
     MODEL_REMOVER.removeModels(ast);
+    UNGROUPER.ungroup(ast);
     var progPretty = ast.prettyPrintToString();
     var astPretty = Assertions.assertDoesNotThrow(() -> VadlParser.parse(progPretty, ast.fileUri),
         "Cannot parse prettified input \n" + progPretty);
+    UNGROUPER.ungroup(astPretty);
     assertAstEquality(astPretty, ast);
   }
 
