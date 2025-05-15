@@ -96,8 +96,8 @@ public class LlvmInstructionLoweringUnconditionalJumpsStrategyImpl
     return new LlvmLoweringRecord.Machine(
         instruction,
         info.withFlags(flags),
-        Collections.emptyList()
-    );
+        Collections.emptyList(),
+        Collections.emptyList());
   }
 
 

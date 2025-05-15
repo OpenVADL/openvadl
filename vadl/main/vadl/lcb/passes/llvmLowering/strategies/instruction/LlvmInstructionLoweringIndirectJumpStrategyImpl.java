@@ -126,8 +126,8 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     return Optional.of(new LlvmLoweringRecord.Machine(
         instruction,
         info,
-        patterns
-    ));
+        patterns,
+        Collections.emptyList()));
   }
 
   @Override

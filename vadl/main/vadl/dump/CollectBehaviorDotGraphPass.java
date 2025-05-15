@@ -90,7 +90,7 @@ public class CollectBehaviorDotGraphPass extends Pass {
     return new Result(result, lastPass);
   }
 
-  private static String createDotGraphFor(Graph graph) {
+  public static String createDotGraphFor(Graph graph) {
     return new DotGraphVisualizer()
         .load(graph)
         .visualize();

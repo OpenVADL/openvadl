@@ -20,6 +20,7 @@ package vadl.lcb.passes.llvmLowering.domain;
 import java.util.Collections;
 import java.util.List;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
+import vadl.lcb.passes.llvmLowering.strategies.LlvmInstructionLoweringStrategy;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.viam.CompilerInstruction;
@@ -62,15 +63,20 @@ public abstract class LlvmLoweringRecord {
    */
   public static class Machine extends LlvmLoweringRecord {
     private final Instruction instructionRef;
+    private final List<LlvmInstructionLoweringStrategy.DerivedGraphOptimisationResult>
+        optimisationResult;
 
     /**
      * Constructor.
      */
     public Machine(Instruction instructionRef,
                    LlvmLoweringPass.BaseInstructionInfo info,
-                   List<TableGenPattern> patterns) {
+                   List<TableGenPattern> patterns,
+                   List<LlvmInstructionLoweringStrategy.DerivedGraphOptimisationResult>
+                       optimisationResults) {
       super(info, patterns);
       this.instructionRef = instructionRef;
+      this.optimisationResult = optimisationResults;
     }
 
 
@@ -80,7 +86,11 @@ public abstract class LlvmLoweringRecord {
 
     @Override
     public LlvmLoweringRecord withInfo(LlvmLoweringPass.BaseInstructionInfo baseInstructionInfo) {
-      return new Machine(instructionRef, baseInstructionInfo, patterns());
+      return new Machine(instructionRef, baseInstructionInfo, patterns(), optimisationResult);
+    }
+
+    public List<LlvmInstructionLoweringStrategy.DerivedGraphOptimisationResult> optResults() {
+      return optimisationResult;
     }
   }
 

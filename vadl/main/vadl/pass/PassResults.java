@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.dump.BehaviorTimelineDisplay;
 import vadl.pass.exception.PassError;
 
 /**
@@ -198,7 +199,16 @@ public final class PassResults {
       long durationMs,
       @Nullable Object result,
       boolean skipped
-  ) {
+  ) implements BehaviorTimelineDisplay {
+    @Override
+    public String passId() {
+      return passKey.value();
+    }
+
+    @Override
+    public String passName() {
+      return pass.getClass().getSimpleName();
+    }
   }
 
 }
