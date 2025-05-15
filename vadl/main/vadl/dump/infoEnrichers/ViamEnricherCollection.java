@@ -24,12 +24,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import vadl.dump.BehaviorTimelineDisplay;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
-import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.viam.DefProp;
@@ -163,12 +163,12 @@ public class ViamEnricherCollection {
 
       // filter only passes that altered graph
       var filteredBehaviorGraphs =
-          new ArrayList<Pair<PassResults.SingleResult, String>>();
+          new ArrayList<Pair<BehaviorTimelineDisplay, String>>();
       behaviorGraphs.forEach(entry -> {
         if (filteredBehaviorGraphs.isEmpty()
             || !filteredBehaviorGraphs.get(filteredBehaviorGraphs.size() - 1).right()
             .equals(entry.right())) {
-          filteredBehaviorGraphs.add(entry);
+          filteredBehaviorGraphs.add(Pair.of(entry.left(), entry.right()));
         }
       });
 

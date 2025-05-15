@@ -30,6 +30,7 @@ import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -126,8 +127,8 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
     return new LlvmLoweringRecord.Machine(
         instruction,
         info,
-        allPatterns
-    );
+        allPatterns,
+        Collections.emptyList());
   }
 
   @Override
