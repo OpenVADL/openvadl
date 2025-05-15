@@ -343,10 +343,10 @@ class SymbolTable {
 
   /**
    * Resolves an identifier to a user defined Syntax Type.
+   * Throws {@link Diagnostic} if the type doesn't exist.
    *
    * @param identifier of the syntax type.
    * @return the syntax type it refers to
-   * @throws {@link Diagnostic} if the type doesn't exist.
    */
   SyntaxType requireSyntaxType(Identifier identifier) {
     var symbol = resolveMacroSymbol(identifier.name);

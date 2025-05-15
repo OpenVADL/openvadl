@@ -2012,11 +2012,21 @@ PRODUCTIONS
                                                      var params = instanceParamTypes(macroOrPlaceholder);
                                                      var args = new ArrayList<Node>(); .)
       (
-        IF (!params.hasNext())
         SYM_PAREN_CLOSE
-      | macroBody<out Node arg1, params.next()>   (. args.add(arg1); .)
+      |                                           (.
+                                                      // If too many arguments exist we cannot parse them because we
+                                                      // need the information from the model signature to know how to
+                                                      // parse them so instead we must abort parsing and throw an error.
+                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, nextTokenLoc());
+                                                  .)
+        macroBody<out Node arg1, params.next()>   (. args.add(arg1); .)
         {
-          SYM_SEMICOLON
+          SYM_SEMICOLON                           (.
+                                                      // If too many arguments exist we cannot parse them because we
+                                                      // need the information from the model signature to know how to
+                                                      // parse them so instead we must abort parsing and throw an error.
+                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, nextTokenLoc());
+                                                  .)
           macroBody<out Node arg2, params.next()> (. args.add(arg2); .)
         }
         SYM_PAREN_CLOSE

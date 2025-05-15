@@ -495,6 +495,18 @@ class ParserUtils {
         .build();
   }
 
+  static Diagnostic tooManyMacroArgumentsError(Macro macro, SourceLocation location) {
+    // Unfortunately we need the types of the macro parameters to parse the invocation to completion.
+    // But if more arguments are provided than parameter are defined we cannot parse them and
+    // therefore only know that too many exist but not how many were provided.
+    return error("Invalid Model Invocation", location)
+        .locationDescription(location,
+            "Model `%s` only expected %d arguments but, you provided at least %d.",
+            macro.name().name,
+            macro.params().size(), macro.params().size() + 1)
+        .build();
+  }
+
   private static boolean isPlaceholder(Node n) {
     return n instanceof PlaceholderNode
         || n instanceof PlaceholderDefinition
