@@ -2031,7 +2031,14 @@ PRODUCTIONS
         }
         SYM_PAREN_CLOSE
       )                                           (. node = createMacroInstance(macroOrPlaceholder, args, startLoc.join(lastTokenLoc())); .)
-    ]                                             (. node = Objects.requireNonNullElse(node, createPlaceholder(paramType, segments, startLoc.join(lastTokenLoc()))); .)
+    ]                                             (.
+                                                     node = Objects.requireNonNullElse(
+                                                       node,
+                                                       macro == null
+                                                       ? createPlaceholder(paramType, segments, startLoc.join(lastTokenLoc()))
+                                                       : createMacroInstance(macro, List.of(), startLoc.join(lastTokenLoc()))
+                                                     );
+                                                  .)
   .
 
   macroDef<out ModelDefinition def>         (. var startLoc = nextTokenLoc(); .)

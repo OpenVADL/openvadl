@@ -42,6 +42,20 @@ public class MacroTests {
   }
 
   @Test
+  void singleExpressionWithoutParenthesisTest() {
+    var prog1 = """
+        model example() : Ex =  {
+          1 + 2
+        }
+        
+        constant n = $example
+        """;
+    var prog2 = "constant n = 1 + 2";
+
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @Test
   void binaryOrderInMacroTest() {
     var prog1 = """
         model concreteOps(): Ex = {
