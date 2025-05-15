@@ -341,15 +341,25 @@ class SymbolTable {
     return inst.formatNode;
   }
 
-  SyntaxType requireSyntaxType(Identifier recordName) {
-    var symbol = resolveMacroSymbol(recordName.name);
+  /**
+   * Resolves an identifier to a user defined Syntax Type.
+   *
+   * @param identifier of the syntax type.
+   * @return the syntax type it refers to
+   * @throws {@link Diagnostic} if the type doesn't exist.
+   */
+  SyntaxType requireSyntaxType(Identifier identifier) {
+    var symbol = resolveMacroSymbol(identifier.name);
     if (symbol instanceof RecordTypeDefinition recordType) {
       return recordType.recordType;
     } else if (symbol instanceof ModelTypeDefinition modelType) {
       return modelType.projectionType;
     }
-    reportError("Unresolved record " + recordName.name, recordName.location());
-    return BasicSyntaxType.INVALID;
+
+    // Unfortunately, we need this type to be correctly parsed because,
+    // depending on it, we parse the body of the macro differently. So if we
+    // don't know what it is, we must exit early.
+    throw ParserUtils.unknownSyntaxTypeError(identifier.name, identifier.location());
   }
 
 

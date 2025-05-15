@@ -105,7 +105,31 @@ public class MacroTests {
   }
 
   @Test
-  void invalidArgumentNumber() {
+  void invalidSyntaxTypeReturn() {
+    var prog = """
+        model example(arg: Ex) : DoesntExist =  {
+           1 + 2
+        }
+        
+        constant n = 3 * $example(3)
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
+  void invalidSyntaxTypeParameter() {
+    var prog = """
+        model example(arg: DoesntExist) : Ex =  {
+           1 + 2
+        }
+        
+        constant n = 3 * $example(3)
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
+  void invalidNotEnoughArguments() {
     var prog = """
         model example(arg: Ex) : Ex =  {
            1 + 2
