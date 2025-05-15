@@ -273,15 +273,15 @@ instruction set architecture AArch64Base = {
     , rd       [4..0]   : Index       // destination register
     }
 
-  function BitfieldLeftWSize (imms: Bits6) -> Bits6 =
-    (Size::WSize - 1) as Bits6 - imms
+  function BitfieldLeftWSize (imms: Bits5) -> Bits5 =
+    (Size::WSize - 1) as Bits5 - imms
 
   function BitfieldLeftXSize (imms: Bits6) -> Bits6 =
     (Size::XSize - 1) as Bits6 - imms
 
-  function BitfieldRightWSize (imms: Bits6, immr: Bits6) -> Bits6 =
+  function BitfieldRightWSize (imms: Bits5, immr: Bits5) -> Bits5 =
     if imms as UInt >= immr
-      then (Size::WSize - 1) as Bits6 - imms + immr
+      then (Size::WSize - 1) as Bits5 - imms + immr
       else immr - imms - 1
 
   function BitfieldRightXSize (imms: Bits6, immr: Bits6) -> Bits6 =
@@ -297,9 +297,9 @@ instruction set architecture AArch64Base = {
     , imms       : Bits6              // bit field length position
     , rn         : Index              // source register
     , rd         : Index              // destination register
-    , leftWSize  = BitfieldLeftWSize  (imms)
+    , leftWSize  = BitfieldLeftWSize  (imms(4..0))
     , leftXSize  = BitfieldLeftXSize  (imms)
-    , rightWSize = BitfieldRightWSize (imms, immr)
+    , rightWSize = BitfieldRightWSize (imms(4..0), immr(4..0))
     , rightXSize = BitfieldRightXSize (imms, immr)
     // TODO encode
     // TODO predicate
@@ -781,12 +781,13 @@ instruction set architecture AArch64Base = {
 // UBFM: In both cases, the destination bits below and above the bitfield are
 // set to zero.
 //
-// For SBFM and UBFM there exist pseudo instruction for shifts and sign/zero
-// extension. Therefore, *BFM will be specified using shift builtins.
+// For SBFM and UBFM there exist pseudo instructions for shifts and sign/zero
+// extension. Therefore, *BFM are specified using shift builtins.
 
   model BitfieldMoveEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
-    //[raise Undefined : sf = 0 != N]
-    //[raise Undefined : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
+    // if sf == 0 specification ignores N and imms(5) and immr(5)
+    // [raise Undefined : sf = 0 != N]
+    // [raise Undefined : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
     encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
     assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', #', decimal(immr), ', #', decimal(imms))
     }
@@ -804,10 +805,10 @@ instruction set architecture AArch64Base = {
     instruction $i.id: BitFieldMoveFormat =
       let left = ExtendId (left, $size) in
         let right = ExtendId (right, $size) in
-          let xrn = X(rn) as Bits<Size::$size> << left >> right in
-            let mask = -1 as Bits<Size::$size> << left >> right in
-              let result = X(rd) as Bits<Size::$size> & ~mask | xrn in
-                X(rd) := result as Bits<Size::$size> as BitsX
+          let mask = ~(~(0 as Bits<Size::$size>) << left >> right) in
+            let xrn = X(rn) as Bits<Size::$size> << left >> right  in
+              let result = X(rd) as Bits<Size::$size> & mask | xrn in
+                X(rd) :=  result as Bits<Size::$size> as BitsX
     $BitfieldMoveEncAsm ($i; $size)
     }
 
