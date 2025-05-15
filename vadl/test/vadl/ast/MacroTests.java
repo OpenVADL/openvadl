@@ -141,6 +141,18 @@ public class MacroTests {
   }
 
   @Test
+  void invalidTooManyArguments() {
+    var prog = """
+        model example(arg: Ex) : Ex =  {
+           1 + 2
+        }
+        
+        constant n = 3 * $example(1;2)
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
   void invalidProvidedArgumentType() {
     var prog = """
         model example(arg: Bool) : Ex =  {
