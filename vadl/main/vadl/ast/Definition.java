@@ -2045,12 +2045,16 @@ class AliasDefinition extends Definition implements IdentifiableNode, TypedNode 
   @Nullable
   Type type;
 
-
   /**
    * Set by the typechecker, the register file or register the alias points to.
    */
   @Nullable
   Definition computedTarget;
+  /**
+   * Set by the typechecker, the arguments used to pre-access the computedTarget.
+   */
+  @Nullable
+  List<Expr> computedFixedArgs;
 
   AliasDefinition(IdentifierOrPlaceholder id, AliasKind kind,
                   @Nullable TypeLiteral aliasType, @Nullable TypeLiteral targetType, Expr value,

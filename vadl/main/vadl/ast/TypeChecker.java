@@ -845,6 +845,12 @@ public class TypeChecker
       }
 
       var valType = check(definition.value);
+      definition.computedFixedArgs = List.of();
+      if (definition.value instanceof CallIndexExpr callIndexExpr) {
+        // If the target is a call index expression, we get all fixed arguments of the
+        // alias register call.
+        definition.computedFixedArgs = AstUtils.flatArguments(callIndexExpr.args());
+      }
 
       if (definition.aliasType != null) {
         definition.type = check(definition.aliasType);
