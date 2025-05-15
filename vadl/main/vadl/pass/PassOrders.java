@@ -107,6 +107,7 @@ import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
 import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
 import vadl.viam.passes.canonicalization.CanonicalizationPass;
 import vadl.viam.passes.dummyPasses.DummyMiaPass;
+import vadl.viam.passes.functionInliner.ArtificialResInlinerPass;
 import vadl.viam.passes.functionInliner.FieldAccessInlinerPass;
 import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
@@ -156,6 +157,7 @@ public class PassOrders {
     order.add(new StaticCounterAccessResolvingPass(configuration));
     order.add(new FunctionInlinerPass(configuration));
     order.add(new FieldAccessInlinerPass(configuration));
+    order.add(new ArtificialResInlinerPass(configuration));
     order.add(new SideEffectConditionResolvingPass(configuration));
     // requires SideEffectConditionResolvingPass to work
     order.add(new DuplicateWriteDetectionPass(configuration));

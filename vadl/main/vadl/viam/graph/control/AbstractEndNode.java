@@ -18,6 +18,7 @@ package vadl.viam.graph.control;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import vadl.javaannotations.viam.Input;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -41,6 +42,23 @@ public abstract class AbstractEndNode extends ControlNode {
 
   public NodeList<SideEffectNode> sideEffects() {
     return sideEffects;
+  }
+
+  /**
+   * Remove a side effect from this node.
+   * If the side effect is present multiple times, it will only remove the first occurrence.
+   */
+  public void removeSideEffect(SideEffectNode sideEffect) {
+    sideEffects.remove(sideEffect);
+    sideEffect.removeUsage(this);
+  }
+
+  @Nonnull
+  @Override
+  public DirectionalNode predecessor() {
+    var superNode = super.predecessor();
+    ensure(superNode instanceof DirectionalNode, "Invalid predecessor %s", superNode);
+    return (DirectionalNode) superNode;
   }
 
   @Override

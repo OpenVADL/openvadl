@@ -63,6 +63,20 @@ public abstract class DirectionalNode extends ControlNode {
   }
 
   /**
+   * Same as {@code setNext(null)}, unlinks this node from the next node.
+   *
+   * <p><b>Note:</b> This operation leaves the graph in an inconsistent state.
+   *
+   * @return unlinked node (previous next node)
+   */
+  public ControlNode unlinkNext() {
+    ensure(next != null, "Next node is already null (unlinked)");
+    var n = this.next;
+    setNext(null);
+    return n;
+  }
+
+  /**
    * Inserts a direction node between this and the next node.
    * If the new node is not yet active, it will be added to the graph.
    *
