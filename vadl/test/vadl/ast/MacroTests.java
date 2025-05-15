@@ -42,6 +42,20 @@ public class MacroTests {
   }
 
   @Test
+  void singleExpressionWithoutParenthesisTest() {
+    var prog1 = """
+        model example() : Ex =  {
+          1 + 2
+        }
+        
+        constant n = $example
+        """;
+    var prog2 = "constant n = 1 + 2";
+
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @Test
   void binaryOrderInMacroTest() {
     var prog1 = """
         model concreteOps(): Ex = {
@@ -105,13 +119,49 @@ public class MacroTests {
   }
 
   @Test
-  void invalidArgumentNumber() {
+  void invalidSyntaxTypeReturn() {
+    var prog = """
+        model example(arg: Ex) : DoesntExist =  {
+           1 + 2
+        }
+        
+        constant n = 3 * $example(3)
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
+  void invalidSyntaxTypeParameter() {
+    var prog = """
+        model example(arg: DoesntExist) : Ex =  {
+           1 + 2
+        }
+        
+        constant n = 3 * $example(3)
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
+  void invalidNotEnoughArguments() {
     var prog = """
         model example(arg: Ex) : Ex =  {
            1 + 2
         }
         
         constant n = 3 * $example()
+        """;
+    Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+  }
+
+  @Test
+  void invalidTooManyArguments() {
+    var prog = """
+        model example(arg: Ex) : Ex =  {
+           1 + 2
+        }
+        
+        constant n = 3 * $example(1;2)
         """;
     Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
   }

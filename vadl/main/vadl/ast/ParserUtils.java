@@ -26,11 +26,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -478,6 +480,31 @@ class ParserUtils {
       return false;
     }
     return true;
+  }
+
+  static Diagnostic unknownSyntaxTypeError(String name, SourceLocation location) {
+    // FIXME: In the future we can prioritize them with levenshtein distance.
+    var available = Arrays.stream(BasicSyntaxType.values())
+        .map(BasicSyntaxType::getName)
+        .filter(n -> !n.contains("Invalid"))
+        .collect(Collectors.joining(", "));
+
+    return error("Unknown syntax type: `%s`".formatted(name), location)
+        .locationDescription(location, "No syntax type with this name exists.")
+        .help("Maybe you meant to use one of the following:\n%s", available)
+        .build();
+  }
+
+  static Diagnostic tooManyMacroArgumentsError(Macro macro, SourceLocation location) {
+    // Unfortunately, we need the types of the macro parameters to parse the invocation to
+    // completion. But if more arguments are provided than parameter are defined we cannot parse
+    // them and therefore only know that too many exist but not how many were provided.
+    return error("Invalid Model Invocation", location)
+        .locationDescription(location,
+            "Model `%s` only expected %d arguments but, you provided at least %d.",
+            macro.name().name,
+            macro.params().size(), macro.params().size() + 1)
+        .build();
   }
 
   private static boolean isPlaceholder(Node n) {

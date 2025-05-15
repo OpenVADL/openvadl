@@ -1083,19 +1083,19 @@ class MacroExpander
     }
   }
 
-  Map<String, Node> collectMacroParameters(Macro macro, List<Node> actualParams,
+  Map<String, Node> collectMacroParameters(Macro macro, List<Node> actualArguments,
                                            SourceLocation instanceLoc)
       throws MacroExpansionException {
     var formalParams = macro.params();
-    if (formalParams.size() != actualParams.size()) {
+    if (formalParams.size() != actualArguments.size()) {
       throw new MacroExpansionException(
           "The macro `%s` expects %d arguments but %d were provided.".formatted(macro.name().name,
-              formalParams.size(), actualParams.size()), instanceLoc);
+              formalParams.size(), actualArguments.size()), instanceLoc);
     }
     var arguments = new HashMap<>(macro.boundArguments());
     for (int i = 0; i < formalParams.size(); i++) {
       var formalParam = formalParams.get(i);
-      var actualParam = expandNode(actualParams.get(i));
+      var actualParam = expandNode(actualArguments.get(i));
       if (actualParam.syntaxType().isSubTypeOf(formalParam.type())) {
         arguments.put(formalParam.name().name, actualParam);
       } else {

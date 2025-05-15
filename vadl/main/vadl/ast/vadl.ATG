@@ -51,6 +51,12 @@ COMPILER vadl
     return locationFromToken(this, la);
   }
 
+  // This function is needed in the parser to avoid an unreachable statement error,
+  // since the java compiler doesn't check the body of called functions.
+  void throwException(RuntimeException throwable) {
+    throw throwable;
+  }
+
 CHARACTERS
   digit = '0' .. '9'.
   binDigit = '0' .. '1'.
@@ -262,6 +268,7 @@ IGNORE '\t' + '\r' + '\n'
 PRODUCTIONS
   vadl =
   {
+    SYNC
     topLevelDefinitions<out Definition def> (.
                                                 addDef(ast.definitions, def);
                                                 // Only call the symbol resolver if there were no errors, because other
@@ -278,7 +285,7 @@ PRODUCTIONS
                                                 new SymbolTable.SymbolCollector().collectSymbols(ast.rootSymbolTable(), def); macroTable.addModelDefinition(def);
                                                 }
                                             .)
-  }.
+  }SYNC.
 
   // -- DEFINITIONS --------------------------------------------------------------------------------------------------
   topLevelDefinitions<out Definition def> (. def = DUMMY_DEF; .)
@@ -2005,16 +2012,33 @@ PRODUCTIONS
                                                      var params = instanceParamTypes(macroOrPlaceholder);
                                                      var args = new ArrayList<Node>(); .)
       (
-        IF (!params.hasNext())
         SYM_PAREN_CLOSE
-      | macroBody<out Node arg1, params.next()>   (. args.add(arg1); .)
+      |                                           (.
+                                                      // If too many arguments exist we cannot parse them because we
+                                                      // need the information from the model signature to know how to
+                                                      // parse them so instead we must abort parsing and throw an error.
+                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, nextTokenLoc());
+                                                  .)
+        macroBody<out Node arg1, params.next()>   (. args.add(arg1); .)
         {
-          SYM_SEMICOLON
+          SYM_SEMICOLON                           (.
+                                                      // If too many arguments exist we cannot parse them because we
+                                                      // need the information from the model signature to know how to
+                                                      // parse them so instead we must abort parsing and throw an error.
+                                                      if (!params.hasNext()) throw ParserUtils.tooManyMacroArgumentsError(macro, nextTokenLoc());
+                                                  .)
           macroBody<out Node arg2, params.next()> (. args.add(arg2); .)
         }
         SYM_PAREN_CLOSE
       )                                           (. node = createMacroInstance(macroOrPlaceholder, args, startLoc.join(lastTokenLoc())); .)
-    ]                                             (. node = Objects.requireNonNullElse(node, createPlaceholder(paramType, segments, startLoc.join(lastTokenLoc()))); .)
+    ]                                             (.
+                                                     node = Objects.requireNonNullElse(
+                                                       node,
+                                                       macro == null
+                                                       ? createPlaceholder(paramType, segments, startLoc.join(lastTokenLoc()))
+                                                       : createMacroInstance(macro, List.of(), startLoc.join(lastTokenLoc()))
+                                                     );
+                                                  .)
   .
 
   macroDef<out ModelDefinition def>         (. var startLoc = nextTokenLoc(); .)
@@ -2036,6 +2060,7 @@ PRODUCTIONS
     SYM_COLON
     basicSyntaxType<out SyntaxType returnType>
     SYM_EQ
+
     SYM_BRACE_OPEN
     macroBody<out Node body, returnType>
     SYM_BRACE_CLOSE                         (. macroContext.removeFirst();
@@ -2109,8 +2134,12 @@ PRODUCTIONS
     ( identifier<out Identifier id>                         (. body = createMacroReference(this, id); .)
     | macroReplacement<out body>
     )
-  | internalError<"Unhandled syntax type " + type>
+  | unreachableRule
   )                                                         (. assertSyntaxType(this, body, type, "Mismatched node type"); .)
+  .
+
+  unreachableRule
+  = ANY                                     (. throw new IllegalStateException("Unreachable rule"); .)
   .
 
   syntaxType<out SyntaxType type> (. type = BasicSyntaxType.INVALID; .)
@@ -2149,10 +2178,14 @@ PRODUCTIONS
   | T_SYM_EX                                (. type = BasicSyntaxType.SYM_EX; .)
   | T_UN_OP                                 (. type = BasicSyntaxType.UN_OP; .)
   | T_VAL                                   (. type = BasicSyntaxType.VAL; .)
+  | identifierToken                         (.
+                                                // Unfortunately, we need this type to be correctly parsed because,
+                                                // depending on it, we parse the body of the macro differently. So if we
+                                                // don't know what it is, we must exit early.
+                                                throwException(ParserUtils.unknownSyntaxTypeError(t.val, lastTokenLoc()));
+                                            .)
   .
 
-  internalError<String message>             (. var position = t.line + ":" + t.col; .)
-  = ANY                                     (. throw new IllegalStateException("Internal error in grammar at token (" + position + "): " + message); .)
-  .
+
 
 END vadl.
