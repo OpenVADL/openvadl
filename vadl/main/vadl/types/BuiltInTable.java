@@ -21,7 +21,6 @@ import static vadl.types.Type.constructDataType;
 
 import com.google.common.collect.Streams;
 import com.google.errorprone.annotations.FormatMethod;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -1496,11 +1495,6 @@ public class BuiltInTable {
      * Creates a {@link BuiltInCall} node from this built-in and the given arguments.
      */
     public BuiltInCall call(ExpressionNode... args) {
-      if (!takes(Arrays.stream(args).map(ExpressionNode::type).toList())) {
-        throw new ViamError("Arguments do not match built-in params")
-            .addContext("built-in", this)
-            .addContext("args", (Object[]) args);
-      }
       return BuiltInCall.of(this, args);
     }
 
