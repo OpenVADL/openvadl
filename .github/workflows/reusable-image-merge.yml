@@ -27,13 +27,6 @@ jobs:
           pattern: digests-*
           merge-multiple: true
 
-      - name: Unlock Keychain
-        if: ${{ runner.os == 'macOS' }}
-        env:
-          KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
-        run: |
-          security -v unlock-keychain -p "$KEYCHAIN_PASSWORD" ~/Library/Keychains/login.keychain-db
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
