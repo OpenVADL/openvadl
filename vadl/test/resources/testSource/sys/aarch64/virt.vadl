@@ -1,0 +1,10 @@
+
+import aarch64::AArch64Base
+
+processor Virt implements AArch64Base = {
+
+  [ firmware ]
+  [ base : 0x0 ]
+  memory region [RAM] DRAM in MEM
+
+}
