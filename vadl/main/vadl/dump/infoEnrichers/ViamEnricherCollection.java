@@ -162,8 +162,17 @@ public class ViamEnricherCollection {
           .map(x -> (BehaviorTimelineDisplay) x)
           .toList();
 
+      // filter only passes that altered graph
+      List<BehaviorTimelineDisplay> filteredDotResults = new ArrayList<>();
+      for (var result : dotResults) {
+        if (filteredDotResults.isEmpty()
+            || !filteredDotResults.getLast().dotGraph().equals(result.dotGraph())) {
+          filteredDotResults.add(result);
+        }
+      }
+
       // Reverse, so the list is starts at latest.
-      dotResults.reversed();
+      filteredDotResults = filteredDotResults.reversed();
 
       if (dotResults.isEmpty()) {
         return;
@@ -173,7 +182,7 @@ public class ViamEnricherCollection {
       var info = InfoUtils.createGraphModalWithTimeline(
           "Behavior",
           def.simpleName() + " Behavior",
-          dotResults
+          filteredDotResults
       );
       defEntity.addInfo(info);
     }
