@@ -55,13 +55,14 @@ async def build_assembly(id: str, core: str) -> Path:
   # shutdown simulation with exit(0)
   addi x1, x0, 1
   la x2, tohost
-  sd x1, 0(x2)
-  
+  sw x1, 0(x2)
+  sw x0, 4(x2)
+
   .section .tohost, "aw", @progbits
-  .align 6; 
+  .align 6;
   .global tohost; 
   tohost: .dword 0; 
-  .size tohost, 8;    
+  .size tohost, 8;
   .align 6; 
   .global fromhost; 
   fromhost: .dword 0; 

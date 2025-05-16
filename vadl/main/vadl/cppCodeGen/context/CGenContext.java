@@ -33,6 +33,7 @@ import vadl.types.Type;
 public abstract class CGenContext<T> {
 
   protected String prefix = "";
+  protected int tabSize = 3;
   private boolean newLine = true;
   protected final Consumer<String> writer;
 
@@ -64,7 +65,7 @@ public abstract class CGenContext<T> {
    * Enters tab mode and every following write is tabbed until {@code tabOut} is called.
    */
   public CGenContext<T> spacedIn() {
-    prefix = "   ";
+    prefix += " ".repeat(tabSize);
     return this;
   }
 
@@ -72,7 +73,10 @@ public abstract class CGenContext<T> {
    * Exits tab mode and every following write is not tabbed anymore.
    */
   public CGenContext<T> spaceOut() {
-    prefix = "";
+    if (!prefix.isEmpty()) {
+      prefix = prefix.substring(0, prefix.length() - tabSize);
+    }
+
     return this;
   }
 

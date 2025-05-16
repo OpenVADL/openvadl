@@ -17,9 +17,11 @@
 package vadl.viam;
 
 import com.google.common.collect.Streams;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.types.BitsType;
 import vadl.types.ConcreteRelationType;
@@ -75,16 +77,16 @@ public class RegisterTensor extends Resource {
   }
 
   private final List<Dimension> dimensions;
-  private final Constraint[] constraints;
+  private final List<Constraint> constraints;
 
   /**
    * Constructs the register tensor.
    */
-  public RegisterTensor(Identifier identifier, List<Dimension> dimensions,
-                        Constraint[] constraints) {
+  public RegisterTensor(Identifier identifier,
+                        List<Dimension> dimensions) {
     super(identifier);
     this.dimensions = dimensions;
-    this.constraints = constraints;
+    this.constraints = new ArrayList<>();
   }
 
   public int dimCount() {
@@ -102,6 +104,7 @@ public class RegisterTensor extends Resource {
   public List<Dimension> indexDimensions() {
     return dimensions.subList(0, maxNumberOfAccessIndices());
   }
+
 
   public int maxNumberOfAccessIndices() {
     return dimCount() - 1;
@@ -131,8 +134,13 @@ public class RegisterTensor extends Resource {
     return dimensions.getLast();
   }
 
+  // TODO: Refactor this to return a list instead of an array
   public Constraint[] constraints() {
-    return constraints;
+    return constraints.toArray(new Constraint[0]);
+  }
+
+  public void addConstraint(Constraint constraint) {
+    constraints.add(constraint);
   }
 
   @Override
@@ -244,6 +252,12 @@ public class RegisterTensor extends Resource {
           "Provided index type does not match respective tensor image type: %s != %s",
           provided, actual);
     });
+  }
+
+  @Override
+  public String toString() {
+    var indices = dimensions.stream().map(d -> "<" + d.size() + ">").collect(Collectors.joining());
+    return "register " + simpleName() + ": Bits" + indices;
   }
 
   /**

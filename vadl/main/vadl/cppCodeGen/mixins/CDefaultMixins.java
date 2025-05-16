@@ -177,10 +177,10 @@ public interface CDefaultMixins {
     default void handle(CGenContext<Node> ctx, IfNode node) {
       ctx.wr("if (")
           .gen(node.condition())
-          .ln(") { ")
-          .gen(node.trueBranch())
-          .ln("} else {")
-          .gen(node.falseBranch())
+          .ln(") { ").spacedIn()
+          .gen(node.trueBranch()).spaceOut()
+          .ln("} else {").spacedIn()
+          .gen(node.falseBranch()).spaceOut()
           .ln("}");
     }
   }
@@ -338,9 +338,17 @@ public interface CDefaultMixins {
 
   @SuppressWarnings("MissingJavadocType")
   interface Select {
+
     @Handler
+    @SuppressWarnings("MissingJavadocMethodCheck")
     default void handle(CGenContext<Node> ctx, SelectNode toHandle) {
-      throw new UnsupportedOperationException("Type SelectNode not yet implemented");
+      ctx.wr("(")
+          .gen(toHandle.condition())
+          .wr(" ? ")
+          .gen(toHandle.trueCase())
+          .wr(": ")
+          .gen(toHandle.falseCase())
+          .wr(")");
     }
   }
 

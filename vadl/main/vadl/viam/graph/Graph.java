@@ -23,6 +23,8 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.google.errorprone.annotations.FormatString;
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -453,9 +455,24 @@ public class Graph {
   /**
    * Copies the graph and returns it.
    *
-   * @param name the name of the copied graph
+   * @param name of the new graph
+   * @return the collection of nodes that were added
    */
   public Graph copy(String name) {
+    // create new empty graph instance
+    var graph = createEmptyInstance(name, this.parentDefinition());
+    copyInto(graph);
+    return graph;
+  }
+
+  /**
+   * Copy all nodes in this graph into the given graph and return all nodes
+   * that were added to the new graph.
+   *
+   * @param graph the graph all nodes should be copied to
+   * @return the collection of nodes that were added
+   */
+  public Collection<Node> copyInto(Graph graph) {
     // The process of coping a graph:
     // 1. Make a shallow copy of each node in the graph.
     //    This will return an uninitialized new node that is linked (input/successor) to
@@ -505,19 +522,17 @@ public class Graph {
       });
     });
 
-    // create new empty graph instance
-    var graph = createEmptyInstance(name, this.parentDefinition());
-
+    var added = new HashSet<Node>();
     // add all nodes to the graph
     cache.values().forEach(newNode -> {
       if (newNode.isUninitialized()) {
         // only if not yet initialized
         // might be initialized because of recursive input addition
-        graph.addWithInputs(newNode);
+        added.add(graph.addWithInputs(newNode));
       }
     });
 
-    return graph;
+    return added;
   }
 
   /**

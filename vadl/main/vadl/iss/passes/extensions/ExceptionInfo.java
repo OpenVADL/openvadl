@@ -143,7 +143,8 @@ public class ExceptionInfo extends DefinitionExtension<InstructionSetArchitectur
           // .map(p -> Tcg_32_64.nextFitting(p.type().asDataType().bitWidth()))
           .map(Enum::toString)
           .collect(Collectors.joining(", "));
-      return "DEF_HELPER_" + nrArgs + "(raise_" + name.toLowerCase() + ", noreturn, env, "
+      argTypes = argTypes.isEmpty() ? "" : ", " + argTypes;
+      return "DEF_HELPER_" + nrArgs + "(raise_" + name.toLowerCase() + ", noreturn, env"
           + argTypes + ")";
     }
 
@@ -165,11 +166,12 @@ public class ExceptionInfo extends DefinitionExtension<InstructionSetArchitectur
       var params = this.params.values().stream()
           .map(p -> "uint" + configuration.targetSize().width + "_t " + p.param.simpleName())
           .collect(Collectors.joining(", "));
+      params = params.isEmpty() ? "" : ", " + params;
       var targetUpper = configuration.targetName().toUpperCase();
       var targetLower = configuration.targetName().toLowerCase();
       var sb = new StringBuilder();
       sb.append("void helper_raise_" + name.toLowerCase())
-          .append("(CPU" + targetUpper + "State *env, " + params)
+          .append("(CPU" + targetUpper + "State *env" + params)
           .append(") {\n");
       for (Param p : this.params.values()) {
         sb.append("\tenv->" + p.nameInCpuState + " = (" + p.cType() + ") " + p.param.simpleName()

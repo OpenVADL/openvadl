@@ -16,28 +16,15 @@
 
 package vadl.iss.codegen;
 
-import static vadl.error.DiagUtils.throwNotAllowed;
 import static vadl.utils.GraphUtils.getSingleNode;
 
 import vadl.configuration.IssConfiguration;
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.cppCodeGen.context.CNodeContext;
-import vadl.cppCodeGen.mixins.CDefaultMixins;
-import vadl.cppCodeGen.mixins.CInvalidMixins;
 import vadl.iss.passes.extensions.ExceptionInfo;
-import vadl.javaannotations.DispatchFor;
-import vadl.javaannotations.Handler;
-import vadl.viam.Processor;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.control.InstrCallNode;
 import vadl.viam.graph.control.StartNode;
-import vadl.viam.graph.dependency.FieldAccessRefNode;
-import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
-import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.WriteArtificialResNode;
-import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
 
@@ -53,20 +40,11 @@ import vadl.viam.passes.sideEffectScheduling.nodes.InstrExitNode;
  * {@code env->arg_xy}.
  * </p>
  */
-@DispatchFor(
-    value = Node.class,
-    context = CNodeContext.class,
-    include = "vadl.viam"
-)
-public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
-    CInvalidMixins.ResourceReads, CInvalidMixins.HardwareRelated, CInvalidMixins.AsmRelated {
+public class IssExceptionHandlingCodeGenerator extends IssProcGen
+    implements IssCMixins.CpuSourceWriteRegTensor {
 
   private final ExceptionInfo.Entry excInfo;
   private final IssConfiguration config;
-
-  private final CNodeContext ctx;
-  private final StringBuilder builder = new StringBuilder();
-
 
   /**
    * Constructs the exception handling code generator.
@@ -74,30 +52,24 @@ public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
   public IssExceptionHandlingCodeGenerator(ExceptionInfo.Entry excInfo, IssConfiguration config) {
     this.excInfo = excInfo;
     this.config = config;
-    this.ctx = new CNodeContext(
-        builder::append,
-        (ctx, node)
-            -> IssExceptionHandlingCodeGeneratorDispatcher.dispatch(this, ctx, node)
-    );
   }
 
   /**
-   * Produces the {@code setup_rom_reset_vec()} function setup the ROM, which correspond
-   * to the {@link Processor#firmware()} definition in the specification.
-   *
-   * @return the full function code, including signature.
+   * Generates the {@code do_exception} function for the given exception.
    */
   public String fetch() {
     var targetUpper = config.targetName().toUpperCase();
-    ctx.ln("static void %s(CPU%sState *env) {", excInfo.handlingFuncName(), targetUpper)
+    ctx().ln("static void %s(CPU%sState *env) {", excInfo.handlingFuncName(), targetUpper)
         .spacedIn();
+    // init reads at start of function
+    initReadRegs(excInfo.def.behavior());
 
     var start = getSingleNode(excInfo.def.behavior(), StartNode.class);
     var current = start.next();
-    ctx.gen(current);
+    ctx().gen(current);
 
-    ctx.spaceOut().ln("}");
-    return builder.toString();
+    ctx().spaceOut().ln("}");
+    return builder().toString();
   }
 
   @Override
@@ -107,68 +79,26 @@ public class IssExceptionHandlingCodeGenerator implements CDefaultMixins.All,
     ctx.wr("env->" + param.nameInCpuState());
   }
 
-  @Handler
-  void handle(CGenContext<Node> ctx, WriteRegTensorNode toHandle) {
-    toHandle.ensure(toHandle.regTensor().isSingleRegister(),
-        "Only registers supported at the moment.");
-    ctx.wr("env->" + toHandle.regTensor().simpleName().toLowerCase() + " = ")
-        .gen(toHandle.value());
+  @Override
+  public void handle(CGenContext<Node> ctx, WriteRegTensorNode toHandle) {
+    IssCMixins.CpuSourceWriteRegTensor.super.handle(ctx, toHandle);
   }
 
   @Override
   public void handle(CGenContext<Node> ctx, ReadRegTensorNode node) {
-    node.ensure(node.regTensor().isSingleRegister(),
-        "Only registers supported at the moment.");
-    ctx.wr("env->" + node.regTensor().simpleName().toLowerCase());
+    // use register variables defined at start
+    ctx().wr(readRegVariable(node));
   }
 
   /**
    * Directly call the cause and wrap it in a statement line.
    * Then call the next control node.
    */
-  @Handler
+  @Override
   public void handle(CGenContext<Node> ctx, InstrExitNode.PcChange node) {
     ctx.gen(node.cause())
         .ln(";")
         .gen(node.next());
   }
-
-  ///  INVALID NODES  ///
-
-  @Handler
-  public void handle(CGenContext<Node> ctx, InstrExitNode.Raise node) {
-    throwNotAllowed(node, "Raising exceptions");
-  }
-
-  @Handler
-  public void handle(CGenContext<Node> ctx, WriteMemNode node) {
-    throw new UnsupportedOperationException("Type WriteMemNode not yet implemented");
-  }
-
-  @Handler
-  void handle(CGenContext<Node> ctx, WriteArtificialResNode toHandle) {
-    throw new UnsupportedOperationException("Type WriteArtificialResNode not yet implemented");
-  }
-
-  @Handler
-  void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
-    throwNotAllowed(toHandle, "Field references");
-  }
-
-  @Handler
-  void handle(CGenContext<Node> ctx, FieldAccessRefNode toHandle) {
-    throwNotAllowed(toHandle, "Field accesses");
-  }
-
-  @Handler
-  void handle(CGenContext<Node> ctx, InstrCallNode toHandle) {
-    throwNotAllowed(toHandle, "Instruction calls");
-  }
-
-  @Handler
-  public void handle(CGenContext<Node> ctx, ProcCallNode node) {
-    throwNotAllowed(node, "Procedure calls");
-  }
-
 
 }

@@ -748,6 +748,17 @@ public abstract class Constant {
       return fromInteger(BigInteger.ONE, type);
     }
 
+    /**
+     * Returns true if the memory value representation of this constant is equal to the
+     * other constant.
+     * This does not compare the types of the constants.
+     */
+    public boolean equalValue(Constant other) {
+      if (!(other instanceof Constant.Value otherValue)) {
+        return false;
+      }
+      return value.equals(otherValue.value);
+    }
 
     @Override
     public boolean equals(Object o) {

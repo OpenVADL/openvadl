@@ -321,7 +321,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
       return Optional.of(new ArtificialResource(
           identifier,
-          ArtificialResource.Kind.REG_ALIAS,
+          ArtificialResource.Kind.REGISTER,
           innerResource,
           new BehaviorLowering(this).getRegisterAliasReadFunc(definition),
           new BehaviorLowering(this).getRegisterAliasWriteProc(definition)
@@ -778,8 +778,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     // FIXME: Further research for the parameters (probably don't apply to counter)
     var reg = new RegisterTensor(identifier,
-        List.of(dimFromType(0, resultType)),
-        new RegisterTensor.Constraint[] {}
+        List.of(dimFromType(0, resultType))
     );
 
     var counter = new Counter(identifier,
@@ -1138,7 +1137,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .findFirst().orElse(null);
     var memories = filterAndCastToInstance(allDefinitions, Memory.class);
     // TODO: @flofriday compute artifical resources
-    var artificialResources = new ArrayList<ArtificialResource>();
+    var artificialResources = filterAndCastToInstance(allDefinitions, ArtificialResource.class);
 
     // Add programCounter to registers if it is a register.
     // The register list is the owner of the PC register itself.
@@ -1388,20 +1387,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // now we add the dimensions of the form T<d0><d1>..
     dimensions.add(dimFromType(dimensions.size(), resultType));
 
-    // FIXME: Remove this and add it using the [zero: ..] annotation
-    var constraints = new ArrayList<RegisterTensor.Constraint>();
-    if (type instanceof ConcreteRelationType relType) {
-      var zeroConstraint = new RegisterTensor.Constraint(
-          List.of(Constant.Value.of(0, relType.argTypes().getFirst().asDataType())),
-          Constant.Value.of(0, resultType));
-      constraints.add(zeroConstraint);
-    }
-
-
     var reg = new RegisterTensor(
         generateIdentifier(definition.viamId, definition.identifier()),
-        dimensions,
-        constraints.toArray(new RegisterTensor.Constraint[0])
+        dimensions
     );
     return Optional.of(reg);
   }
