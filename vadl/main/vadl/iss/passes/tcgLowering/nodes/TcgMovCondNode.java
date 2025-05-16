@@ -65,7 +65,7 @@ public class TcgMovCondNode extends TcgOpNode {
   @Override
   public Set<TcgVRefNode> usedVars() {
     var sup = super.usedVars();
-    sup.addAll(Set.of(c1, c2, v1, v2));
+    sup.addAll(List.of(c1, c2, v1, v2));
     return sup;
   }
 
