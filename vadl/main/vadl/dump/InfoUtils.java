@@ -89,7 +89,7 @@ public class InfoUtils {
   @SuppressWarnings("LineLength")
   public static Info.Modal createGraphModalWithTimeline(String title,
                                                         String modalTitle,
-                                                        List<Pair<BehaviorTimelineDisplay, String>> passGraphs) {
+                                                        List<BehaviorTimelineDisplay> passGraphs) {
     // create new empty modal info and get its id
     var info = new Info.Modal(title, "");
     var id = info.id();
@@ -121,7 +121,7 @@ public class InfoUtils {
         .mapToObj(i -> {
           var graphUnSelectedClass =
               i == 0 ? "graph-" + id + "-selected" : "graph-" + id + "-unselected";
-          var pass = passGraphs.get(i).left();
+          var pass = passGraphs.get(i);
           var passId = pass.passId();
           return """
               <button
@@ -138,7 +138,7 @@ public class InfoUtils {
             <script id="dot-graph-%s-%s" type="application/dot">
               %s
             </script>
-            """.formatted(id, p.left().passId(), p.right()))
+            """.formatted(id, p.passId(), p.dotGraph()))
         .collect(Collectors.joining("\n"));
 
     var style = """
@@ -201,7 +201,7 @@ public class InfoUtils {
         %s
         """.formatted(id, passBtns, dotGraphScripts, style, setGraphFunc);
 
-    var firstPass = passGraphs.get(0).left();
+    var firstPass = passGraphs.get(0);
     // add JavaScript to render the dot graph when the modal is first opened
     info.jsOnFirstOpen = """
         var initBtn = document.querySelector(

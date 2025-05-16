@@ -31,4 +31,9 @@ public interface BehaviorTimelineDisplay {
    * Get the human-readable string from the timeline.
    */
   String passName();
+
+  /**
+   * Get the dot graph of the {@link Graph}.
+   */
+  String dotGraph();
 }
