@@ -14,22 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.impl.theiling;
+package vadl.vdt.impl.irregular.model;
 
-import javax.annotation.Nullable;
-import vadl.vdt.model.LeafNode;
-import vadl.vdt.model.Visitor;
+import java.util.Set;
+import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
+import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
 
 /**
- * Simple implementation of a leaf node, holding an instruction.
- *
- * @param instruction the instruction to match
+ * An decode entry as required by the {@link IrregularDecodeTreeGenerator}.
  */
-public record LeafNodeImpl(Instruction instruction) implements LeafNode {
+public class DecodeEntry extends Instruction {
 
-  @Override
-  public <T> @Nullable T accept(Visitor<T> visitor) {
-    return visitor.visit(this);
+  private final Set<ExclusionCondition> exclusionConditions;
+
+  public DecodeEntry(vadl.viam.Instruction source, int width, BitPattern pattern,
+                     Set<ExclusionCondition> exclusionConditions) {
+    super(source, width, pattern);
+    this.exclusionConditions = exclusionConditions;
+  }
+
+  public Set<ExclusionCondition> exclusionConditions() {
+    return exclusionConditions;
   }
 }
