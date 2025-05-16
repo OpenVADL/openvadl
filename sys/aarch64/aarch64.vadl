@@ -23,7 +23,7 @@ instruction set architecture AArch64Base = {
   using Byte     = Bits< 8>           // 8 bit Byte
   using Half     = Bits<16>           // 16 bit half word type
   using Word     = Bits<32>           // 32 bit word type
-  using XWord    = Bits<64>           // 64 bit double word type
+  using XWord    = Bits<64>           // 64 bit eXtendend (double) word type
   using Bits1    = Bits< 1>           //  1 bit type
   using Bits2    = Bits< 2>           //  2 bit type
   using Bits3    = Bits< 3>           //  3 bit type
@@ -53,6 +53,7 @@ instruction set architecture AArch64Base = {
   program counter PC: Address         // program counter
 
   memory        MEM : Address -> Byte // byte addressed memory
+ 
   register        S : Index -> BitsX  // general purpose register file with stack pointer
 //[zero : X(31)]                      // X(31) is the zero register
   alias register  X = S               // general purpose register file with zero register
@@ -141,251 +142,6 @@ instruction set architecture AArch64Base = {
     , SXTX                            // Signed   eXTend Xword
     }
 
-  enumeration Position: Bits2 =       // position in destination register, do not reorder
-    { Pos00                           // 15..0
-    , Pos16                           // 31..16
-    , Pos32                           // 47..32
-    , Pos48                           // 63..48
-    }
-
-  enumeration AccSize: Bits2 =        // memory operations access size, do not change order
-    { Byte                            // 1 byte  access
-    , Half                            // 2 bytes access
-    , Word                            // 4 bytes access
-    , XWord                           // 8 bytes access
-    }
-
-  format AddSubExtFormat: Instr =     // add/sub extended register format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , ff       [29]                   // flag field, if (ff = 1) set status register flags
-    , op       [30,28..21]            // opcode
-    , rm       [20..16] : Index       // 2nd source register
-    , option   [15..13]               // ExtendType depending on option value
-    , imm3     [12..10] : Bits3       // immediate shift amount, if (imm3 > 4) raise Undefined
-    , rn       [9..5]   : Index       // 1st source register (SP)
-    , rd       [4..0]   : Index       // destination register (SP if ff = 0)
-    }
-
-  format AddSubImmFormat: Instr =     // add/sub immediate format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , ff       [29]                   // flag field, if (ff = 1) set status register flags
-    , op       [30,28..23]            // opcode
-    , sh       [22]                   // if (sh = 1) imm12 << 12
-    , imm12    [21..10] : Bits12      // immediate operand eventually shifted
-    , rn       [9..5]   : Index       // source register (SP)
-    , rd       [4..0]   : Index       // destination register (SP if ff = 0)
-    , imm12X   = imm12 as BitsX       // zero extended immediate operand
-    , imm12S   = imm12 as BitsX << 12 // zero extended shifted immediate operand
-    }
-
-  format AddSubSftFormat: Instr =     // add/sub shifted register format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , ff       [29]                   // flag field, if (ff = 1) set status register flags
-    , op       [30,28..24,21]         // opcode
-    , shift    [23,22]                // ShiftType, if (shift = ROR) raise Undefined
-    , rm       [20..16] : Index       // 2nd source register (eventually shifted)
-    , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
-    , rn       [9..5]   : Index       // 1st source register
-    , rd       [4..0]   : Index       // destination register
-    }
-
-  format RelAddressFormat: Instr =    // PC relative address format
-    { op       [31,28..24]            // opcode
-    , imm21    [23..5,30,29]          // PC relative offset
-    , rd       [4..0]   : Index       // destination register
-    , offset   = imm21 as SIntX       // sign extended offset
-    }
-
-  format ThreeRegOpFormat: Instr =    // three register operand format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       [30..21,15..10]        // opcode
-    , rm       [20..16] : Index       // 2nd source register
-    , rn       [9..5]   : Index       // 1st source register
-    , rd       [4..0]   : Index       // destination register
-    }
-
-  format TwoRegOpFormat: Instr =      // two register operand format
-    { sf       : Bits1                // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       : Bits21               // opcode
-    , rn       : Index                // source register
-    , rd       : Index                // destination register
-    }
-
-  format MulAddSubFormat: Instr =     // multiply add / sub format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       [30..21,15]            // opcode
-    , rm       [20..16] : Index       // 2nd source  register
-    , ra       [14..10] : Index       // accumulator register
-    , rn       [9..5]   : Index       // 1st source  register
-    , rd       [4..0]   : Index       // destination register
-    }
-
-  // pattern replication functions
-
-  function rep2  (pattern: Bits< 2>) -> Bits< 4> = (pattern, pattern)
-  function rep4  (pattern: Bits< 4>) -> Bits< 8> = (pattern, pattern)
-  function rep8  (pattern: Bits< 8>) -> Bits<16> = (pattern, pattern)
-  function rep16 (pattern: Bits<16>) -> Bits<32> = (pattern, pattern)
-  function rep32 (pattern: Bits<32>) -> Bits<64> = (pattern, pattern)
-
-  // imm13Decode takes the N, imms and immr fields as a combined 13 bit value
-  // and returns the replicated and rotated 64 bit immediate value for defined
-  // N, imms and immr values. 0 is returned for undefined values of imms, either
-  // explicitely or implicitely by shifting 1 zero times and subtracting 1 which
-  // also results in 0. The unused high bits of immr are ignored.
-
-  function imm13Decode (imm13: Bits13) -> BitsX =
-    if      imm13(12.. 7) = 0b0'11110 then let pattern = (1 as Bits< 2> << (imm13(    6) + 1) - 1) <>> imm13(   0) in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
-    else if imm13(12.. 8) = 0b0'1110  then let pattern = (1 as Bits< 4> << (imm13( 7..6) + 1) - 1) <>> imm13(1..0) in rep32 (rep16 (rep8 (rep4 (pattern))))
-    else if imm13(12.. 9) = 0b0'110   then let pattern = (1 as Bits< 8> << (imm13( 8..6) + 1) - 1) <>> imm13(2..0) in rep32 (rep16 (rep8 (pattern)))
-    else if imm13(12..10) = 0b0'10    then let pattern = (1 as Bits<16> << (imm13( 9..6) + 1) - 1) <>> imm13(3..0) in rep32 (rep16 (pattern))
-    else if imm13(12..11) = 0b0'0     then let pattern = (1 as Bits<32> << (imm13(10..6) + 1) - 1) <>> imm13(4..0) in rep32 (pattern)
-    else if imm13(12    ) = 0b1       then               (1 as Bits<64> << (imm13(11..6) + 1) - 1) <>> imm13(5..0)
-    else 0
-
-  format LogicImmFormat: Instr =      // logic immediate format
-    { sf       : Bits1                // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       : Bits8                // opcode
-    , imm13    : Bits13               // N, imms and immr fields
-    , rn       : Index                // source register
-    , rd       : Index                // destination register
-    , immX     = imm13Decode (imm13)  // decoded immediate value
-    // TODO encode
-    // TODO predicate
-    }
-
-  format LogicRegShiftFormat: Instr = // logic shifted register format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       [30..24,21]            // opcode
-    , shift    [23,22]                // shift type (ROR is allowed)
-    , rm       [20..16] : Index       // 2nd source register eventually shifted
-    , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
-    , rn       [9..5]   : Index       // 1st source register
-    , rd       [4..0]   : Index       // destination register
-    }
-
-  format ShiftRegFormat: Instr =      // variable shift register format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       [30..21,15..12]        // opcode
-    , rm       [20..16] : Index       // 2nd source register
-    , shift    [11..10]               // shift type (ROR is allowed)
-    , rn       [9..5]   : Index       // 1st source register
-    , rd       [4..0]   : Index       // destination register
-    }
-
-  format MovFormat: Instr =           // movk, movn, movz format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       [30..23]               // opcode
-    , pos      [22,21]                // position of imm16 in destination (Pos00, Pos16, Pos32, Pos48)
-    , imm16    [20..5]  : Bits16      // immediate value shifted by (pos << 4)
-    , rd       [4..0]   : Index       // destination register
-    }
-
-  format ExtractRegFormat: Instr =    // bit field move format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       [30..23,21]            // opcode
-    , N        [22]                   // must be equal to sf, otherwise undefined
-    , rm       [20..16]               // 2nd source register
-    , imms     [15..10]               // right shift amount (bit field position)
-    , rn       [9..5]                 // 1st source register
-    , rd       [4..0]                 // destination register
-    }
-
-  function BitfieldLeftWSize (imms: Bits5) -> Bits5 =
-    (Size::WSize - 1) as Bits5 - imms
-
-  function BitfieldLeftXSize (imms: Bits6) -> Bits6 =
-    (Size::XSize - 1) as Bits6 - imms
-
-  function BitfieldRightWSize (imms: Bits5, immr: Bits5) -> Bits5 =
-    if imms as UInt >= immr
-      then (Size::WSize - 1) as Bits5 - imms + immr
-      else immr - imms - 1
-
-  function BitfieldRightXSize (imms: Bits6, immr: Bits6) -> Bits6 =
-    if imms as UInt >= immr
-      then (Size::XSize - 1) as Bits6 - imms + immr
-      else immr - imms - 1
-
-  format BitFieldMoveFormat: Instr =  // bit field move format
-    { sf         : Bits1              // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op         : Bits8              // opcode
-    , N          : Bits1              // must be equal to sf, otherwise undefined
-    , immr       : Bits6              // rotate right count (bit field low position)
-    , imms       : Bits6              // bit field length -1 or high position
-    , rn         : Index              // source register
-    , rd         : Index              // destination register
-    , leftWSize  = BitfieldLeftWSize  (imms(4..0))
-    , leftXSize  = BitfieldLeftXSize  (imms)
-    , rightWSize = BitfieldRightWSize (imms(4..0), immr(4..0))
-    , rightXSize = BitfieldRightXSize (imms, immr)
-    // TODO encode
-    // TODO predicate
-    }
-
-  format CondCompareFormat: Instr =   // conditional compare format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       [30..21,11,10,4]       // opcode
-    , rm       [20..16] : Index       // 2nd source register or unsigned 5 bit immediate value
-    , cc       [15..12] : Bits4       // condition code
-    , rn       [9..5]   : Index       // source register
-    , nzcv     [3..0]   : Bits4       // new condition flags
-    , immX     = rm as BitsX          // rm zero extended to 64 bits
-    }
-
-  format CondSelectFormat: Instr =    // conditional select format
-    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       [30..21,11,10]         // opcode
-    , rm       [20..16]               // 2nd source register
-    , cc       [15..12]               // condition code
-    , rn       [9..5]                 // source register
-    , rd       [4..0]                 // destination register
-    }
-
-  format BranchFormat: Instr =        // unconditional branch immediate format
-    { op       : Bits6                // opcode
-    , imm26    : Bits26               // branch offset, needs to be sign extended and shifted
-    , offset   = imm26 as SIntX << 2  // sign extended and shifted offset
-    }
-
-  format BranchRegFormat: Instr =     // branch register format
-    { op       [31..10,4..0]          // opcode
-    , rn       [9..5]   : Index       // branch target register
-    }
-
-  format CondBranchFormat: Instr =    // conditional branch conditional immediate format
-    { op       [31..24,4]             // opcode
-    , imm19    [23..5]  : Bits19      // branch offset, needs to be sign extended and shifted
-    , cc       [3..0]                 // condition code
-    , offset   = imm19 as SIntX << 2  // sign extended and shifted offset
-    }
-
-  format CompareBranchFormat: Instr = // compare and branch immediate format
-    { sf       : Bits1                // size field, if (sf = 0) 32 bit operation else 64 bit
-    , op       : Bits7                // opcode
-    , imm19    : Bits19               // branch offset, needs to be sign extended and shifted
-    , rt       : Index                // source register
-    , offset   = imm19 as SIntX << 2  // sign extended and shifted offset
-    }
-
-  format TestBitBranchFormat: Instr = // test bit and branch immediate format
-    { op       [30..24]    : Bits7    // opcode
-    , imm6     [31,23..19] : Bits6    // bit identifier
-    , imm14    [18..5]     : Bits14   // branch offset, needs to be sign extended and shifted
-    , rt       [4..0]      : Index    // source register
-    , offset   = imm14 as SIntX << 2  // sign extended and shifted offset
-    }
-
-  format MemoryImmFormat: Instr =     // unscaled load / store format
-    { size     [31..30]               // size of memory operation (AccSize)
-    , op       [29..24,21,11..10]     // opcode
-    , opc      [23..22]    : Bits2    // function code 
-    , imm9     [20..12]    : Bits9    // signed offset
-    , rn       [9..5]      : Index    // base register (SP)
-    , rt       [4..0]      : Index    // source or destination register
-    , offset   = imm9 as SIntX        // sign extended offset
-    }
-
 
 // assembly string functions ***************************************************
 
@@ -405,8 +161,14 @@ instruction set architecture AArch64Base = {
   function XSizeSP (idx: Index) -> String = // do not rename
     if idx = 31 then "sp"  else "x" + decimal( idx )
 
-  function Imm9decimal (imm9: Bits9) -> String =
-    if imm9 = 0 then "" else (", #", decimal( imm9 ))
+  function Imm7decimal  (imm: Bits7)  -> String =
+    if imm = 0 then "" else (", #", decimal( imm ))
+
+  function Imm9decimal  (imm: Bits9)  -> String =
+    if imm = 0 then "" else (", #", decimal( imm ))
+
+  function Imm12decimal (imm: Bits12) -> String =
+    if imm = 0 then "" else (", #", decimal( imm ))
 
 // syntax records and model types **********************************************
 
@@ -486,6 +248,17 @@ instruction set architecture AArch64Base = {
 
 // add / sub extend models *****************************************************
 
+  format AddSubExtFormat: Instr =     // add/sub extended register format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , ff       [29]                   // flag field, if (ff = 1) set status register flags
+    , op       [30,28..21]            // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , option   [15..13]               // ExtendType depending on option value
+    , imm3     [12..10] : Bits3       // immediate shift amount, if (imm3 > 4) raise Undefined
+    , rn       [9..5]   : Index       // 1st source register (SP)
+    , rd       [4..0]   : Index       // destination register (SP if ff = 0)
+    }
+
   model AddSubExtInstrBase (i: InstrWithFunct, extId: Id, size: Id, f: Flags, extEx: Ex, optId: Id, enc: Encs, asm: Ex): IsaDefs = {
     instruction ExtendId ($i.id, $extId): AddSubExtFormat =
       let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, $extEx as Bits<Size::$size>) in {
@@ -520,6 +293,18 @@ instruction set architecture AArch64Base = {
 
 // add / sub immediate models **************************************************
 
+  format AddSubImmFormat: Instr =     // add/sub immediate format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , ff       [29]                   // flag field, if (ff = 1) set status register flags
+    , op       [30,28..23]            // opcode
+    , sh       [22]                   // if (sh = 1) imm12 << 12
+    , imm12    [21..10] : Bits12      // immediate operand eventually shifted
+    , rn       [9..5]   : Index       // source register (SP)
+    , rd       [4..0]   : Index       // destination register (SP if ff = 0)
+    , imm12X   = imm12 as BitsX       // zero extended immediate operand
+    , imm12S   = imm12 as BitsX << 12 // zero extended shifted immediate operand
+    }
+
   model AddSubImmInstrShft (i: InstrWithFunct, size: Id, f: Flags, immEx: Ex, sh: Int, asm: Str): IsaDefs = {
     instruction $i.id: AddSubImmFormat =
       let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, $immEx as Bits<Size::$size>) in {
@@ -537,6 +322,17 @@ instruction set architecture AArch64Base = {
 
 
 // add / sub shift models ******************************************************
+
+  format AddSubSftFormat: Instr =     // add/sub shifted register format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , ff       [29]                   // flag field, if (ff = 1) set status register flags
+    , op       [30,28..24,21]         // opcode
+    , shift    [23,22]                // ShiftType, if (shift = ROR) raise Undefined
+    , rm       [20..16] : Index       // 2nd source register (eventually shifted)
+    , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
 
   model AddSubSftInstrBase (i: InstrWithFunct, size: Id, f: Flags, sftex: Ex, enc: Encs, asm: Ex): IsaDefs = {
     instruction $i.id: AddSubSftFormat =
@@ -560,6 +356,14 @@ instruction set architecture AArch64Base = {
 
 
 // encoding / assembly model for 3 register operand instructions ***************
+
+  format ThreeRegOpFormat: Instr =    // three register operand format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15..10]        // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
 
   model ThreeRegOpEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
@@ -590,6 +394,13 @@ instruction set architecture AArch64Base = {
 
 // PC relative address models **************************************************
 
+  format RelAddressFormat: Instr =    // PC relative address format
+    { op       [31,28..24]            // opcode
+    , imm21    [23..5,30,29]          // PC relative offset
+    , rd       [4..0]   : Index       // destination register
+    , offset   = imm21 as SIntX       // sign extended offset
+    }
+
   model AddressBaseInstr (i: InstrNoFunct, ex: Ex): IsaDefs = {
     instruction $i.id: RelAddressFormat =
       X(rd) := $ex
@@ -606,7 +417,16 @@ instruction set architecture AArch64Base = {
     }
 
 
-// multiply add / sub  model ***************************************************
+// multiply add / sub (long)  models *******************************************
+
+  format MulAddSubFormat: Instr =     // multiply add / sub format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15]            // opcode
+    , rm       [20..16] : Index       // 2nd source  register
+    , ra       [14..10] : Index       // accumulator register
+    , rn       [9..5]   : Index       // 1st source  register
+    , rd       [4..0]   : Index       // destination register
+    }
 
   model MulAddSubInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: MulAddSubFormat =
@@ -615,17 +435,6 @@ instruction set architecture AArch64Base = {
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
     assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', ', $size(ra))
     }
-
-// multiply high model *********************************************************
-
-  model MulHighInstr (i: InstrWithFunct): IsaDefs = {
-    instruction $i.id: ThreeRegOpFormat =
-      let result = X(rn) as $i.funct *# X(rm) as $i.funct in
-        X(rd) := result(127..SizeX)
-    $ThreeRegOpEncAsm ($i; XSize)
-    }
-
-// multiply add / sub long model ***********************************************
 
   model MulAddSubLongInstr (i: InstrWithFunct, type: Id): IsaDefs = {
     instruction $i.id: MulAddSubFormat =
@@ -636,6 +445,15 @@ instruction set architecture AArch64Base = {
 
   model SMulAddSubLongInstr (i: InstrWithFunct): IsaDefs = { $MulAddSubLongInstr ($i; SInt) }
   model UMulAddSubLongInstr (i: InstrWithFunct): IsaDefs = { $MulAddSubLongInstr ($i; UInt) }
+
+// multiply high model *********************************************************
+
+  model MulHighInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result = X(rn) as $i.funct *# X(rm) as $i.funct in
+        X(rd) := result(127..SizeX)
+    $ThreeRegOpEncAsm ($i; XSize)
+    }
 
 
 // divide model ****************************************************************
@@ -652,6 +470,40 @@ instruction set architecture AArch64Base = {
 
 
 // logic immediate models ******************************************************
+
+  // pattern replication functions
+
+  function rep2  (pattern: Bits< 2>) -> Bits< 4> = (pattern, pattern)
+  function rep4  (pattern: Bits< 4>) -> Bits< 8> = (pattern, pattern)
+  function rep8  (pattern: Bits< 8>) -> Bits<16> = (pattern, pattern)
+  function rep16 (pattern: Bits<16>) -> Bits<32> = (pattern, pattern)
+  function rep32 (pattern: Bits<32>) -> Bits<64> = (pattern, pattern)
+
+  // imm13Decode takes the N, imms and immr fields as a combined 13 bit value
+  // and returns the replicated and rotated 64 bit immediate value for defined
+  // N, imms and immr values. 0 is returned for undefined values of imms, either
+  // explicitely or implicitely by shifting 1 zero times and subtracting 1 which
+  // also results in 0. The unused high bits of immr are ignored.
+
+  function imm13Decode (imm13: Bits13) -> BitsX =
+    if      imm13(12.. 7) = 0b0'11110 then let pattern = (1 as Bits< 2> << (imm13(    6) + 1) - 1) <>> imm13(   0) in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
+    else if imm13(12.. 8) = 0b0'1110  then let pattern = (1 as Bits< 4> << (imm13( 7..6) + 1) - 1) <>> imm13(1..0) in rep32 (rep16 (rep8 (rep4 (pattern))))
+    else if imm13(12.. 9) = 0b0'110   then let pattern = (1 as Bits< 8> << (imm13( 8..6) + 1) - 1) <>> imm13(2..0) in rep32 (rep16 (rep8 (pattern)))
+    else if imm13(12..10) = 0b0'10    then let pattern = (1 as Bits<16> << (imm13( 9..6) + 1) - 1) <>> imm13(3..0) in rep32 (rep16 (pattern))
+    else if imm13(12..11) = 0b0'0     then let pattern = (1 as Bits<32> << (imm13(10..6) + 1) - 1) <>> imm13(4..0) in rep32 (pattern)
+    else if imm13(12    ) = 0b1       then               (1 as Bits<64> << (imm13(11..6) + 1) - 1) <>> imm13(5..0)
+    else 0
+
+  format LogicImmFormat: Instr =      // logic immediate format
+    { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       : Bits8                // opcode
+    , imm13    : Bits13               // N, imms and immr fields
+    , rn       : Index                // source register
+    , rd       : Index                // destination register
+    , immX     = imm13Decode (imm13)  // decoded immediate value
+    // TODO encode
+    // TODO predicate
+    }
 
   model LogicImmEncAsm (i: InstrWithFunct, size: Id, ext: Str): IsaDefs = {
     //[raise Undefined : sf = 0 && imm13(12) = 1]
@@ -677,6 +529,16 @@ instruction set architecture AArch64Base = {
 
 
 // logic shifted register models ***********************************************
+
+  format LogicRegShiftFormat: Instr = // logic shifted register format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..24,21]            // opcode
+    , shift    [23,22]                // shift type (enum ShiftType, ROR is allowed)
+    , rm       [20..16] : Index       // 2nd source register eventually shifted
+    , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
 
   model LogicRegGeneralInstr (i: InstrWithFunct, size: Id, s: RegShift, f: NoSetFlags): IsaDefs = {
     instruction $i.id: LogicRegShiftFormat =
@@ -720,6 +582,15 @@ instruction set architecture AArch64Base = {
 
 // register shift models *******************************************************
 
+  format ShiftRegFormat: Instr =      // variable shift register format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15..12]        // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , shift    [11..10]               // shift type (enum ShiftType, ROR is allowed)
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
   model ShiftRegInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ShiftRegFormat =
       X(rd) :=  VADL::$i.funct (X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>) as Bits as BitsX
@@ -727,7 +598,23 @@ instruction set architecture AArch64Base = {
     assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm))
     }
 
+
 // movk, movn, movz models *****************************************************
+
+  enumeration Position: Bits2 =       // position in destination register, do not reorder
+    { Pos00                           // 15..0
+    , Pos16                           // 31..16
+    , Pos32                           // 47..32
+    , Pos48                           // 63..48
+    }
+
+  format MovFormat: Instr =           // movk, movn, movz format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..23]               // opcode
+    , pos      [22,21]                // position of imm16 in destination (enum Position)
+    , imm16    [20..5]  : Bits16      // immediate value shifted by (pos << 4)
+    , rd       [4..0]   : Index       // destination register
+    }
 
   model notOrIdent (not: Id, ex: Ex) : Ex = { match: Ex ($not = not => ~($ex) ;_=> $ex) }
   
@@ -763,6 +650,16 @@ instruction set architecture AArch64Base = {
 
 
 // bitfield extract model ******************************************************
+
+  format ExtractRegFormat: Instr =    // bit field move format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..23,21]            // opcode
+    , N        [22]                   // must be equal to sf, otherwise undefined
+    , rm       [20..16]               // 2nd source register
+    , imms     [15..10]               // right shift amount (bit field position)
+    , rn       [9..5]                 // 1st source register
+    , rd       [4..0]                 // destination register
+    }
 
   model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ExtractRegFormat =
@@ -800,6 +697,38 @@ instruction set architecture AArch64Base = {
 // For SBFM and UBFM there exist pseudo instructions for shifts and sign/zero
 // extension. Therefore, *BFM are specified using shift builtins.
 
+  function BitfieldLeftWSize (imms: Bits5) -> Bits5 =
+    (Size::WSize - 1) as Bits5 - imms
+
+  function BitfieldLeftXSize (imms: Bits6) -> Bits6 =
+    (Size::XSize - 1) as Bits6 - imms
+
+  function BitfieldRightWSize (imms: Bits5, immr: Bits5) -> Bits5 =
+    if imms as UInt >= immr
+      then (Size::WSize - 1) as Bits5 - imms + immr
+      else immr - imms - 1
+
+  function BitfieldRightXSize (imms: Bits6, immr: Bits6) -> Bits6 =
+    if imms as UInt >= immr
+      then (Size::XSize - 1) as Bits6 - imms + immr
+      else immr - imms - 1
+
+  format BitFieldMoveFormat: Instr =  // bit field move format
+    { sf         : Bits1              // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op         : Bits8              // opcode
+    , N          : Bits1              // must be equal to sf, otherwise undefined
+    , immr       : Bits6              // rotate right count (bit field low position)
+    , imms       : Bits6              // bit field length -1 or high position
+    , rn         : Index              // source register
+    , rd         : Index              // destination register
+    , leftWSize  = BitfieldLeftWSize  (imms(4..0))
+    , leftXSize  = BitfieldLeftXSize  (imms)
+    , rightWSize = BitfieldRightWSize (imms(4..0), immr(4..0))
+    , rightXSize = BitfieldRightXSize (imms, immr)
+    // TODO encode
+    // TODO predicate
+    }
+
   model BitfieldMoveEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
     // if sf == 0 specification ignores N and imms(5) and immr(5)
     // [raise Undefined : sf = 0 != N]
@@ -830,6 +759,13 @@ instruction set architecture AArch64Base = {
 
 
 // bit count models ************************************************************
+
+  format TwoRegOpFormat: Instr =      // two register operand format
+    { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       : Bits21               // opcode
+    , rn       : Index                // source register
+    , rd       : Index                // destination register
+    }
 
   model TwoRegOpEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
@@ -866,6 +802,16 @@ instruction set architecture AArch64Base = {
 
 // conditional compare models **************************************************
 
+  format CondCompareFormat: Instr =   // conditional compare format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,11,10,4]       // opcode
+    , rm       [20..16] : Index       // 2nd source register or unsigned 5 bit immediate value
+    , cc       [15..12] : Bits4       // condition code (enum CondCode)
+    , rn       [9..5]   : Index       // source register
+    , nzcv     [3..0]   : Bits4       // new condition flags
+    , immX     = rm as BitsX          // rm zero extended to 64 bits
+    }
+
   model CondCompareBaseInstr (i: InstrWithFunct, c: Cond, size: Id, ex: Ex, asm: Ex): IsaDefs = {
     instruction $i.id: CondCompareFormat =
       if $c.ex
@@ -891,6 +837,15 @@ instruction set architecture AArch64Base = {
 
 // conditional select models ***************************************************
 
+  format CondSelectFormat: Instr =    // conditional select format
+    { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,11,10]         // opcode
+    , rm       [20..16]               // 2nd source register
+    , cc       [15..12]               // condition code (enum CondCode)
+    , rn       [9..5]                 // source register
+    , rd       [4..0]                 // destination register
+    }
+
   model CondSelectBaseInstr (i: InstrWithFunct, c: Cond, size: Id, ex: Ex): IsaDefs = {
     instruction $i.id: CondSelectFormat =
       let result = if $c.ex then X(rn) else $ex in
@@ -914,6 +869,12 @@ instruction set architecture AArch64Base = {
 
 
 // branch models ***************************************************************
+
+  format BranchFormat: Instr =        // unconditional branch immediate format
+    { op       : Bits6                // opcode
+    , imm26    : Bits26               // branch offset, needs to be sign extended and shifted
+    , offset   = imm26 as SIntX << 2  // sign extended and shifted offset
+    }
 
   model BranchEncAsm (i: InstrNoFunct): IsaDefs = {
     encoding $i.id = { op = $i.opcode }
@@ -939,6 +900,11 @@ instruction set architecture AArch64Base = {
     assembly $i.id = ( $i.mnemo, ' ', XSize(rn))
     }
 
+  format BranchRegFormat: Instr =     // branch register format
+    { op       [31..10,4..0]          // opcode
+    , rn       [9..5]   : Index       // branch target register
+    }
+
   model BranchRegInstr (i: InstrNoFunct): IsaDefs = {
     instruction $i.id: BranchRegFormat =
       PC := X(rn)
@@ -952,6 +918,13 @@ instruction set architecture AArch64Base = {
         PC := target
         }
     $BranchRegEncAsm ($i)
+    }
+
+  format CondBranchFormat: Instr =    // conditional branch conditional immediate format
+    { op       [31..24,4]             // opcode
+    , imm19    [23..5]  : Bits19      // branch offset, needs to be sign extended and shifted
+    , cc       [3..0]                 // condition code (enum CondCode)
+    , offset   = imm19 as SIntX << 2  // sign extended and shifted offset
     }
 
   model CondBranchInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
@@ -985,12 +958,28 @@ instruction set architecture AArch64Base = {
     $ExtendCondInstr ($modelid; $i; (NV ; "nv" ; true                           ))
     }
 
+  format CompareBranchFormat: Instr = // compare and branch immediate format
+    { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
+    , op       : Bits7                // opcode
+    , imm19    : Bits19               // branch offset, needs to be sign extended and shifted
+    , rt       : Index                // source register
+    , offset   = imm19 as SIntX << 2  // sign extended and shifted offset
+    }
+
   model CompareBranchInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: CompareBranchFormat =
       if VADL::$i.funct (X(rt) as Bits<Size::$size>, 0) then
         PC := PC + offset
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
     assembly $i.id = ($i.mnemo, ' ', $size(rt), ', ', decimal(imm19))
+    }
+
+  format TestBitBranchFormat: Instr = // test bit and branch immediate format
+    { op       [30..24]    : Bits7    // opcode
+    , imm6     [31,23..19] : Bits6    // bit identifier
+    , imm14    [18..5]     : Bits14   // branch offset, needs to be sign extended and shifted
+    , rt       [4..0]      : Index    // source register
+    , offset   = imm14 as SIntX << 2  // sign extended and shifted offset
     }
 
   model TestBitBranchInstr (i: InstrWithFunct): IsaDefs = {
@@ -1001,17 +990,131 @@ instruction set architecture AArch64Base = {
     assembly $i.id = ( $i.mnemo, ' ', XSize(rt), ', #', decimal(imm6), ', ', decimal(imm14))
     }
 
-// load / store register (unscaled) model **************************************
+// load / store register models ************************************************
 
-  model MemoryUnscaledInstr(i: InstrNoFunct, m: Memory): IsaDefs = {
-    // CheckSPAlignment()
-    instruction $i.id: MemoryImmFormat =
-      let addr = S(rn) + offset in $m.stmt
-    encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize }
-    assembly $i.id = ($i.mnemo, $m.mext, ' ', $m.regsize(rt), ', [', XSizeSP(rn), Imm9decimal(imm9), ']')
+  enumeration AccSize: Bits2 =        // memory operations access size, do not change order
+    { Byte                            // 1 byte  access
+    , Half                            // 2 bytes access
+    , Word                            // 4 bytes access
+    , XWord                           // 8 bytes access
     }
 
-// memory dispatching models ***************************************************
+  format MemoryImmFormat: Instr =     // unscaled immediate load / store format
+    { size     [31..30]    : Bits2    // size of memory operation (enum AccSize)
+    , op       [29..24,21,11..10]     // opcode
+    , opc      [23..22]    : Bits2    // function code for access kind 
+    , imm9     [20..12]    : Bits9    // signed offset
+    , rn       [9..5]      : Index    // base register (SP)
+    , rt       [4..0]      : Index    // source or target register
+    , offset   = imm9 as SIntX        // sign extended offset
+    }
+
+  format MemoryOffFormat: Instr =     // unsigned offset load / store format
+    { size     : Bits2                // size of memory operation (enum AccSize)
+    , op       : Bits6                // opcode
+    , opc      : Bits2                // function code for access kind
+    , imm12    : Bits12               // unsigned scaled offset
+    , rn       : Index                // base register (SP)
+    , rt       : Index                // source or target register
+    , offset   = imm12 as UIntX       // zero extended shifted offset
+    }
+
+  model MemoryEncAsm (i: InstrNoFunct, m: Memory, asm: Ex): IsaDefs = {
+    encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize }
+    assembly $i.id = ( $i.mnemo, $m.mext, ' ', $m.regsize(rt), ', [', XSizeSP(rn), $asm )
+  }
+
+  model MemoryPreIndexInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    instruction $i.id: MemoryImmFormat =
+      let addr = S(rn) + offset in {
+        $m.stmt
+        S(rn) := addr
+        }
+    $MemoryEncAsm ($i; $m; (Imm9decimal(imm9), ']!') )
+    }
+
+  model MemoryPostIndexInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    instruction $i.id: MemoryImmFormat =
+      let addr = S(rn) in {
+        $m.stmt
+        S(rn) := addr + offset
+        }
+    $MemoryEncAsm ($i; $m; (']', Imm9decimal(imm9)) )
+    }
+
+  model MemoryOffsetInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    // TODO check SP alignment
+    instruction $i.id: MemoryOffFormat =
+      let addr = S(rn) + offset << AccSize::$m.accsize in $m.stmt
+    $MemoryEncAsm ($i; $m; (Imm12decimal(imm12), ']') )
+    }
+
+  model MemoryUnscaledInstr(i: InstrNoFunct, m: Memory): IsaDefs = {
+    // TODO check SP alignment
+    instruction $i.id: MemoryImmFormat =
+      let addr = S(rn) + offset in $m.stmt
+    $MemoryEncAsm ($i; $m; (Imm9decimal(imm9), ']') )
+    }
+
+// load / store scaled register models *****************************************
+
+  enumeration Scaled: Bits1 =         // scaled index register
+    { Un                              // index register unscaled
+    , Is                              // index register is scaled
+    }
+
+  format MemoryRegFormat: Instr =     // load store (scaled) register format
+    { size     [31..30]    : Bits2    // size of memory operation (enum AccSize)
+    , op       [29..24,21,11,10]      // opcode
+    , opc      [23,22]     : Bits2    // function code for access kind
+    , rm       [20..16]    : Index    // (scaled) index register
+    , option   [15..13]    : Bits3    // option type (enum ExtendType)
+    , scaled   [12]        : Bits1    // set if index register is scaled (enum Scaled)
+    , rn       [9..5]      : Index    // base register (SP)
+    , rt       [4..0]      : Index    // source or target register
+    }
+
+  model MemoryRegisterBase (i: InstrNoFunct, m: Memory, option: Id, scaled: Id, asm: Ex, addr: Ex): IsaDefs = {
+    // TODO check SP alignment
+    instruction $i.id: MemoryRegFormat =
+      let addr = S(rn) + $addr in $m.stmt
+    encoding $i.id = { op = $i.opcode, opc = $m.opc, option = ExtendType::$option, scaled = Scaled::$scaled }
+    assembly $i.id = ( $i.mnemo, $m.mext, ' ', $m.regsize(rt), ', [', XSizeSP(rn), ', ', $asm, ']' )
+    }
+
+  model MemoryRegisterXtd (i: InstrNoFunct, m: Memory, option: Id, scaled: Id, asm: Ex, addr: Ex): IsaDefs = {
+  	$MemoryRegisterBase ((ExtendId ($i.id, $option, $scaled); $i.mnemo; $i.opcode); $m; $option; $scaled; $asm; $addr)
+    }
+
+  model MemoryRegisterInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    $MemoryRegisterXtd ($i; $m; UXTW; Un; (WSize(rm), ", uxtw"   ); X(rm) as UIntW as BitsX)
+    $MemoryRegisterXtd ($i; $m; UXTW; Is; (WSize(rm), ", uxtw #2"); X(rm) as UIntW as BitsX << 2)
+    $MemoryRegisterXtd ($i; $m; UXTX; Un; (XSize(rm)             ); X(rm))
+    $MemoryRegisterXtd ($i; $m; UXTX; Is; (XSize(rm), ", lsl #3" ); X(rm) << 3)
+    $MemoryRegisterXtd ($i; $m; SXTW; Un; (WSize(rm), ", sxtw"   ); X(rm) as SIntW as BitsX)
+    $MemoryRegisterXtd ($i; $m; SXTW; Is; (WSize(rm), ", sxtw #2"); X(rm) as SIntW as BitsX << 2)
+    $MemoryRegisterXtd ($i; $m; SXTX; Un; (XSize(rm), ", sxtx"   ); X(rm))
+    $MemoryRegisterXtd ($i; $m; SXTX; Is; (XSize(rm), ", sxtx #3"); X(rm) << 3)
+    }
+
+// memory literal model ********************************************************
+
+  format MemoryLitFormat: Instr =     // literal load format
+    { opc      : Bits2                // opcode / size of memory operation
+    , op       : Bits6                // opcode
+    , imm19    : Bits19               // PC relative offset
+    , rt       : Index                // target register
+    , offset   = imm19 as SIntX << 2
+    }
+
+  model MemoryLiteralInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
+    instruction $i.id: MemoryLitFormat =
+      let addr = PC + offset in $m.stmt
+    encoding $i.id = { op = $i.opcode, opc = $m.opc }
+    assembly $i.id = ( $i.mnemo, $m.mext, ' ', $m.regsize(rt), ', ', decimal(imm19))
+    }
+
+// memory enriching models *****************************************************
 
   model MemoryInstr (memmodel: MemoryModel, i: InstrNoFunct, xtdId: Str, m: Memory): IsaDefs = {
   	$memmodel ((ExtendId ($i.id, $xtdId); $i.mnemo; $i.opcode); $m)
@@ -1032,12 +1135,72 @@ instruction set architecture AArch64Base = {
     $MemoryInstr ($memmodel; $i; "SBX"; (XSize; Byte ; "sb"; 0b10; X(rt) := MEM<1> (addr) as SIntX))
     $MemoryInstr ($memmodel; $i; "SHX"; (XSize; Half ; "sh"; 0b10; X(rt) := MEM<2> (addr) as SIntX))
     $MemoryInstr ($memmodel; $i; "SWX"; (XSize; Word ; "sw"; 0b10; X(rt) := MEM<4> (addr) as SIntX))
-    $MemoryInstr ($memmodel; $i; "SBW"; (WSize; Byte ; "sb"; 0b11; X(rt) := MEM<1> (addr) as SIntW as UIntW as UIntX))
-    $MemoryInstr ($memmodel; $i; "SHW"; (WSize; Half ; "sh"; 0b11; X(rt) := MEM<2> (addr) as SIntW as UIntW as UIntX))
+    $MemoryInstr ($memmodel; $i; "SBW"; (WSize; Byte ; "sb"; 0b11; X(rt) := MEM<1> (addr) as SIntW as BitsW as BitsX))
+    $MemoryInstr ($memmodel; $i; "SHW"; (WSize; Half ; "sh"; 0b11; X(rt) := MEM<2> (addr) as SIntW as BitsW as BitsX))
+    }
+
+  model LoadLitInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
+    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ; ""  ; 0b00; X(rt) := MEM<4> (addr) as UIntX))
+    $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord; ""  ; 0b01; X(rt) := MEM<8> (addr)         ))
+    $MemoryInstr ($memmodel; $i; "SWX"; (XSize; Word ; "sw"; 0b10; X(rt) := MEM<4> (addr) as SIntX))
     }
 
 
-// instruction dispatch models *************************************************
+// memory register pair models *************************************************
+
+  format MemoryPairFormat: Instr =    // load / store register pairs format
+    { opc      [31..30,26,22]         // opcode kind memory operation
+    , op       [29..27,25..23]        // opcode and addressing mode
+    , imm7     [21..15]    : Bits7    // signed offset
+    , rt2      [14..10]    : Index    // 2nd source or target register
+    , rn       [9..5]      : Index    // base register (SP)
+    , rt       [4..0]      : Index    // source or target register
+    , offWSize = imm7 as SIntX << 2   // sign extended and shifted offset W
+    , offXSize = imm7 as SIntX << 3   // sign extended and shifted offset X
+    }
+
+  model MemoryRegPairEncAsm (i: InstrWithFunct, extId: Str, size: Id, isLoad: Bool, op: Bin, asm: Ex): IsaDefs = {
+    //[raise Undefined() : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
+    encoding ExtendId ($i.id, $extId) = { opc = $i.opcode, op = $op }
+    assembly ExtendId ($i.id, $extId) = ($i.mnemo, ' ', $size(rt), ', ', $size(rt2), $asm)
+    }
+
+  model MemoryRegPairInstr (i: InstrWithFunct, size: Id, isLoad: Bool, memstmts: Stats): IsaDefs = {
+    // TODO check SP alignment
+    instruction $i.id: MemoryPairFormat = 
+      let addr = S(rn) + ExtendId (off, $size) in { $memstmts }
+    $MemoryRegPairEncAsm ($i; ""; $size; $isLoad; 0b101'010; ("[", XSizeSP(rn), Imm7decimal(imm7), "]"))
+    instruction ExtendId ($i.id, "Pre"): MemoryPairFormat =
+      let addr = S(rn) + ExtendId (off, $size) in {
+          $memstmts
+          S(rn) := addr
+        }
+    $MemoryRegPairEncAsm ($i; "Pre"; $size; $isLoad; 0b101'011; ("[", XSizeSP(rn), Imm7decimal(imm7), "]!"))
+    instruction ExtendId ( $i.id, "Pst"): MemoryPairFormat =
+      let addr = S(rn) in {
+          $memstmts
+          S(rn) := addr + ExtendId (off, $size)
+        }
+    $MemoryRegPairEncAsm ($i; "Pst"; $size; $isLoad; 0b101'001; ("[", XSizeSP(rn), "]", Imm7decimal(imm7)))
+    }
+
+  model LoadPairInstrW (i: InstrWithFunct): IsaDefs = {
+    $MemoryRegPairInstr ($i; WSize; true; X(rt) := MEM<4> (addr) as $i.funct   X(rt2) := MEM<4> (addr + 4) as $i.funct)
+    }
+
+  model LoadPairInstrX (i: InstrWithFunct): IsaDefs = {
+    $MemoryRegPairInstr ($i; XSize; true; X(rt) := MEM<8> (addr)               X(rt2) := MEM<8> (addr + 8))
+    }
+
+  model StorePairInstrW (i: InstrWithFunct): IsaDefs = {
+    $MemoryRegPairInstr ($i; WSize; false; MEM<4> (addr) := X(rt) as BitsW     MEM<4> (addr + 4) := X(rt2) as BitsW)
+    }
+
+  model StorePairInstrX (i: InstrWithFunct): IsaDefs = {
+    $MemoryRegPairInstr ($i; XSize; false; MEM<8> (addr) := X(rt)              MEM<8> (addr + 8) := X(rt2))
+    }
+
+// instruction enriching models ************************************************
 
   model InstrWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
     $modelid ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize)
@@ -1138,7 +1301,22 @@ instruction set architecture AArch64Base = {
   $TestBitBranchInstr  (                        (TBZ    ; "tbz"   ; 0b0110'110            ; equ        ))
   $TestBitBranchInstr  (                        (TBNZ   ; "tbnz"  ; 0b0110'111            ; neq        ))
 
+  $LoadInstr           (MemoryPreIndexInstr   ; (LDRPre ; "ldr"   ; 0b111'000'011                      ))
+  $StoreInstr          (MemoryPreIndexInstr   ; (STRPre ; "str"   ; 0b111'000'011                      ))
+  $LoadInstr           (MemoryPostIndexInstr  ; (LDRPst ; "ldr"   ; 0b111'000'001                      ))
+  $StoreInstr          (MemoryPostIndexInstr  ; (STRPst ; "str"   ; 0b111'000'001                      ))
+  $LoadInstr           (MemoryOffsetInstr     ; (LDR    ; "ldr"   ; 0b111'001                          ))
+  $StoreInstr          (MemoryOffsetInstr     ; (STR    ; "str"   ; 0b111'001                          ))
+  $LoadInstr           (MemoryRegisterInstr   ; (LDRReg ; "ldr"   ; 0b111'000'110                      ))
+  $StoreInstr          (MemoryRegisterInstr   ; (STRReg ; "str"   ; 0b111'000'110                      ))
   $LoadInstr           (MemoryUnscaledInstr   ; (LDUR   ; "ldur"  ; 0b111'000'000                      ))
   $StoreInstr          (MemoryUnscaledInstr   ; (STUR   ; "stur"  ; 0b111'000'000                      ))
+  $LoadLitInstr        (MemoryLiteralInstr    ; (LDRLit ; "ldr"   ; 0b011'000                          ))
+
+  $LoadPairInstrW      (                        (LDPW   ; "ldp"   ; 0b0001                ; UIntX      ))
+  $LoadPairInstrW      (                        (LDPS   ; "ldpsw" ; 0b0101                ; SIntX      ))
+  $LoadPairInstrX      (                        (LDPX   ; "ldp"   ; 0b1001                ; BitsX      ))
+  $StorePairInstrW     (                        (STPW   ; "stp"   ; 0b0000                ; BitsX      ))
+  $StorePairInstrX     (                        (STPX   ; "stp"   ; 0b1000                ; BitsX      ))
 
 }
