@@ -17,6 +17,8 @@ jobs:
             runner: self-hosted-arm64
           - platform: linux/amd64
             runner: self-hosted-x64
+    secrets:
+      X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
       image: ghcr.io/openvadl/spike-rv32im-base-image
       context: vadl/test/resources/images/spike_rv32im/base_image
@@ -26,5 +28,7 @@ jobs:
   merge:
     needs: build
     uses: ./.github/workflows/reusable-image-merge.yml
+    secrets:
+      X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
       image: ghcr.io/openvadl/spike-rv32im-base-image

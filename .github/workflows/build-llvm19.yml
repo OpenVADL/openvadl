@@ -17,6 +17,8 @@ jobs:
             runner: self-hosted-arm64
           - platform: linux/amd64
             runner: self-hosted-x64
+    secrets:
+      X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
       image: ghcr.io/openvadl/llvm19-base
       context: docker/lcb/llvm19_base_image
@@ -26,5 +28,7 @@ jobs:
   merge:
     needs: build
     uses: ./.github/workflows/reusable-image-merge.yml
+    secrets:
+      X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
       image: ghcr.io/openvadl/llvm19-base
