@@ -34,6 +34,7 @@ import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -117,6 +118,33 @@ public class GraphUtils {
           return getInputNodes(i, filter);
         });
   }
+
+  /**
+   * Retrieve all usages of the given node by unrolling all let nodes.
+   * If a usage node is a let node, all usages of the let node are recursively added as well.
+   */
+  public static Stream<Node> getUsagesByUnrollingLets(ExpressionNode node) {
+    return node.usages()
+        .flatMap(u -> {
+          if (u instanceof LetNode letNode) {
+            return getUsagesByUnrollingLets(letNode);
+          }
+          return Stream.of(u);
+        });
+  }
+
+  /**
+   * Determines if a specified filter applies to the given node or at least one of its dependencies.
+   *
+   * @param node   The starting node to check.
+   * @param filter A function that applies a condition to each node,
+   *               returning true if the node has a dependency and should be considered.
+   * @return true if itself or any dependency satisfies the filter condition; false otherwise.
+   */
+  public static boolean isOrhasDependencies(Node node, Function<Node, Boolean> filter) {
+    return filter.apply((Node) node) || hasDependencies(node, filter);
+  }
+
 
   /**
    * Determines if a given node has dependencies based on a provided filter function.

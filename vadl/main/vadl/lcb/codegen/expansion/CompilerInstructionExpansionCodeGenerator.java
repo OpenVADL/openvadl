@@ -68,7 +68,6 @@ import vadl.viam.graph.dependency.LabelNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.CfgTraverser;
 
@@ -130,11 +129,6 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   @Override
   protected void handle(CGenContext<Node> ctx, ReadArtificialResNode toHandle) {
     throwNotAllowed(toHandle, "Artificial resource reads");
-  }
-
-  @Override
-  public void handle(CGenContext<Node> ctx, SliceNode toHandle) {
-    throwNotAllowed(toHandle, "Slice node");
   }
 
   @Override

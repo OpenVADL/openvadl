@@ -42,6 +42,7 @@ import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgDepositNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenException;
@@ -52,10 +53,13 @@ import vadl.iss.passes.tcgLowering.nodes.TcgMovCondNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgMul2Node;
 import vadl.iss.passes.tcgLowering.nodes.TcgMulNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgNegNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgRemNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgRotlNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgRotrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSarNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetCond;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetIsJmp;
@@ -437,15 +441,24 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var src = singleDestOf(toHandle.value());
     var ofs = intU(0, 32).toNode();
     var len = intU(toHandle.fromWidth(), 32).toNode();
-    // TODO: Support toWidth of other than target size.
-    //    If the mode is signed, it must be sign extended until the target width, but not more than
-    //    that.
-    toHandle.ensure(
-        toHandle.extendMode() == TcgExtend.ZERO || toHandle.toWidth() == targetSize.width,
-        "Signed extract to other width than targetSize is not yet supported. "
-            + "Special case for signed extract.");
-    replaceCurrent(
-        new TcgExtractNode(dest, src, ofs, len, toHandle.extendMode()));
+
+    if (toHandle.extendMode() == TcgExtend.ZERO || toHandle.toWidth() == targetSize.width) {
+      // if extend mode is zero or toWidth is target size, we can use a single extract node
+      replaceCurrent(
+          new TcgExtractNode(dest, src, ofs, len, toHandle.extendMode()));
+    } else {
+      // we have to sign extend and then truncate
+      // sextract t0,   src, 0, len
+      // extract  dest, t0,  0, toWidth
+
+      var t0 = tmp(0);
+      var toWidth = intU(toHandle.fromWidth(), 32).toNode();
+      replaceCurrent(
+          new TcgExtractNode(t0, src, ofs, len, TcgExtend.SIGN),
+          new TcgExtractNode(dest, t0, ofs, toWidth, TcgExtend.ZERO)
+      );
+    }
+
   }
 
   /**
@@ -453,6 +466,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(IssValExtractNode toHandle) {
+    toHandle.ensure(!isTcg(toHandle.ofs()) && !isTcg(toHandle.len()),
+        "Offset or length of node is TCG scheduled, but offset and length must be translation time constant. Node should never been constructed!");
     var dest = singleDestOf(toHandle);
     var src = singleDestOf(toHandle.value());
     replaceCurrent(
@@ -531,7 +546,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(ReadArtificialResNode toHandle) {
-    throw new UnsupportedOperationException("Type ReadArtificialResNode not yet implemented");
+    throw new IllegalStateException("Should not reach here, should be inlined.");
   }
 
   @Handler
@@ -814,6 +829,10 @@ class BuiltInTcgLoweringExecutor {
     impls = new MapBuilder<BuiltInTable.BuiltIn, Function<Context, BuiltInResult>>(new HashMap<>())
 
         //// Arithmetic ////
+        .set(BuiltInTable.NEG, (ctx) -> out(
+            new TcgNegNode(ctx.dest(), ctx.src(0))
+        ))
+
         .set(BuiltInTable.ADD, (ctx) -> out(
             new TcgAddNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
@@ -940,6 +959,30 @@ class BuiltInTcgLoweringExecutor {
         .set(BuiltInTable.ASR, (ctx) -> out(
             new TcgSarNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
+
+        .set(BuiltInTable.ROR, (ctx) -> out(
+            new TcgRotrNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.ROL, (ctx) -> out(
+            new TcgRotlNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        //// MISC ////
+
+        .set(BuiltInTable.CONCATENATE_BITS, (ctx) -> {
+          // we use a deposit of the lhs operand into the rhs operand,
+          // so the pos is the width of the rhs,
+          // and the len is targetWidth - pos,
+          // which makes the operation potentially faster (and is still correct)
+          var rhs = ctx.call.arguments().get(1);
+          var pos = rhs.type().asDataType().bitWidth();
+          var len = ctx.targetSize.width - pos;
+          return out(
+              new TcgDepositNode(ctx.dest(), ctx.src(1), ctx.src(0),
+                  intU(pos, 32).toNode(), intU(len, 32).toNode())
+          );
+        })
 
         .build();
   }
