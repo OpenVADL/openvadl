@@ -16,7 +16,6 @@
 
 package vadl.dump.infoEnrichers;
 
-import static java.util.Collections.reverse;
 import static vadl.dump.InfoEnricher.forType;
 
 import java.util.ArrayList;
@@ -24,13 +23,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import vadl.dump.BehaviorTimelineDisplay;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
 import vadl.dump.entities.DefinitionEntity;
-import vadl.pass.PassResults;
-import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.viam.DefProp;
 import vadl.viam.Encoding;
@@ -153,29 +151,21 @@ public class ViamEnricherCollection {
         && defEntity.origin() instanceof DefProp.WithBehavior withBehavior) {
       var def = defEntity.origin();
 
-      var behaviorGraphs = passResult.allResultsOf(
+      var dotResults = passResult.allResultsOf(
               CollectBehaviorDotGraphPass.class,
               CollectBehaviorDotGraphPass.Result.class
-          ).map(r -> Pair.of(r.prevPass(), r.behaviors().getOrDefault(def, List.of())))
-          .filter(r -> !r.right().isEmpty())
-          .map(r -> Pair.of(r.left(), r.right().get(0)))
+          )
+          .flatMap(r -> r.map().stream())
+          // only filter for affected definitions
+          .filter(dotGraphResult -> dotGraphResult.definition() == def)
+          // Downcast because Java doesn't support Higher Order Subtyping
+          .map(x -> (BehaviorTimelineDisplay) x)
           .toList();
 
-      // filter only passes that altered graph
-      var filteredBehaviorGraphs =
-          new ArrayList<Pair<PassResults.SingleResult, String>>();
-      behaviorGraphs.forEach(entry -> {
-        if (filteredBehaviorGraphs.isEmpty()
-            || !filteredBehaviorGraphs.get(filteredBehaviorGraphs.size() - 1).right()
-            .equals(entry.right())) {
-          filteredBehaviorGraphs.add(entry);
-        }
-      });
+      // Reverse, so the list is starts at latest.
+      dotResults.reversed();
 
-      // reverse the result so the first one is the latest one
-      reverse(filteredBehaviorGraphs);
-
-      if (filteredBehaviorGraphs.isEmpty()) {
+      if (dotResults.isEmpty()) {
         return;
       }
 
@@ -183,7 +173,7 @@ public class ViamEnricherCollection {
       var info = InfoUtils.createGraphModalWithTimeline(
           "Behavior",
           def.simpleName() + " Behavior",
-          filteredBehaviorGraphs
+          dotResults
       );
       defEntity.addInfo(info);
     }

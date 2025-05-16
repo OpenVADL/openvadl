@@ -114,6 +114,11 @@ import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
+import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
+import vadl.viam.passes.algebraic_simplication.AlgebraicSimplifier;
+import vadl.viam.passes.behaviorRewrite.BehaviorRewritePass;
+import vadl.viam.passes.behaviorRewrite.BehaviorRewriteSimplifier;
+import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
  * Defines how a {@link Instruction} will be lowered to {@link TableGenInstruction}.
@@ -308,6 +313,9 @@ public abstract class LlvmInstructionLoweringStrategy {
 
     if (isLowerable) {
       var additionalBehaviors = new ArrayList<Pair<Graph, List<TableGenInstructionOperand>>>();
+      // This list stores the optimisations result which can be then displayed in the dump.
+      var additionalBehaviorsBookkeeping = new ArrayList<DerivedGraphOptimisationResult>();
+
       var patterns = new ArrayList<TableGenPattern>();
       var alternatives = new ArrayList<TableGenPattern>();
 
@@ -318,7 +326,8 @@ public abstract class LlvmInstructionLoweringStrategy {
 
       // Iterate over all the constructed behaviors.
       for (var pair : additionalBehaviors) {
-        var behavior = pair.left();
+        var optimisationResult = optimise(pair.left());
+        var behavior = optimisationResult.optimised;
         var inputOperands = pair.right();
 
         var localPatterns = generatePatterns(instruction,
@@ -336,20 +345,52 @@ public abstract class LlvmInstructionLoweringStrategy {
 
         patterns.addAll(localPatterns);
         alternatives.addAll(localAlternatives);
+        additionalBehaviorsBookkeeping.add(optimisationResult);
       }
 
       return Optional.of(new LlvmLoweringRecord.Machine(
           instruction,
           info,
-          Stream.concat(patterns.stream(), alternatives.stream()).toList()
+          Stream.concat(patterns.stream(), alternatives.stream()).toList(),
+          additionalBehaviorsBookkeeping
       ));
     } else {
       return Optional.of(new LlvmLoweringRecord.Machine(
           instruction,
           info,
-          Collections.emptyList()
-      ));
+          Collections.emptyList(),
+          Collections.emptyList()));
     }
+  }
+
+  /**
+   * Helper class to capture the intermediate results between the optimisations.
+   */
+  public record DerivedGraphOptimisationResult(
+      Graph optimised,
+      Graph before,
+      Graph canonicalized,
+      Graph algebraicSimplified
+  ) {
+  }
+
+  /**
+   * Optimises the given graph by running {@link Canonicalizer}, {@link AlgebraicSimplifier} and
+   * {@link BehaviorRewriteSimplifier}. This method modifies the given parameter and returns it.
+   *
+   * @param behavior is the graph which should be optimised.
+   */
+  private DerivedGraphOptimisationResult optimise(Graph behavior) {
+    final var before = behavior.copy();
+    Canonicalizer.canonicalize(behavior);
+    var canonicalized = behavior.copy();
+    new AlgebraicSimplifier(AlgebraicSimplificationPass.rules).run(behavior);
+    var algebraicSimplified = behavior.copy();
+    new BehaviorRewriteSimplifier(BehaviorRewritePass.rules).run(behavior);
+
+    return new DerivedGraphOptimisationResult(
+        behavior, before, canonicalized, algebraicSimplified
+    );
   }
 
   /**

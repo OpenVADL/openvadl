@@ -18,9 +18,12 @@ package vadl.pass;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.dump.BehaviorTimelineDisplay;
 import vadl.pass.exception.PassError;
+import vadl.viam.Definition;
 
 /**
  * Holds and maintains the pass results of all executed passes.
@@ -192,13 +195,87 @@ public final class PassResults {
    * Holds all components of a finished pass execution, namely the unique {@link PassKey},
    * the actual {@link Pass} instance and the result object from the pass execution.
    */
-  public record SingleResult(
-      PassKey passKey,
-      Pass pass,
-      long durationMs,
-      @Nullable Object result,
-      boolean skipped
-  ) {
+  public static class SingleResult {
+    protected final PassKey passKey;
+    protected final Pass pass;
+    private final long durationMs;
+    @Nullable
+    protected final Object result;
+    private final boolean skipped;
+
+    /**
+     * Constructor.
+     */
+    public SingleResult(PassKey passKey, Pass pass, long durationMs, @Nullable Object result,
+                        boolean skipped) {
+      this.passKey = passKey;
+      this.pass = pass;
+      this.durationMs = durationMs;
+      this.result = result;
+      this.skipped = skipped;
+    }
+
+    public long durationMs() {
+      return durationMs;
+    }
+
+    public Pass pass() {
+      return pass;
+    }
+
+    public PassKey passKey() {
+      return passKey;
+    }
+
+    @Nullable
+    public Object result() {
+      return result;
+    }
+
+    public boolean skipped() {
+      return skipped;
+    }
   }
 
+  /**
+   * This class is a {@link SingleResult} but indicates that the {@code result} is a dot graph
+   * which renderable for the behavior timeline in the dump.
+   */
+  public static class DotGraphResult extends SingleResult implements BehaviorTimelineDisplay {
+    // VIAM definition of the graph.
+    private final Definition definition;
+
+    /**
+     * Constructor.
+     */
+    public DotGraphResult(PassKey passKey,
+                          Pass pass,
+                          long durationMs,
+                          String result,
+                          boolean skipped,
+                          Definition definition) {
+      super(passKey, pass, durationMs, result, skipped);
+      this.definition = definition;
+    }
+
+    @Override
+    public String passId() {
+      return passKey.value();
+    }
+
+    @Override
+    public String passName() {
+      return pass.getClass().getSimpleName();
+    }
+
+    @Override
+    public String dotGraph() {
+      // We know that the cast is ok because the constructor also expects a string.
+      return (String) Objects.requireNonNull(result);
+    }
+
+    public Definition definition() {
+      return definition;
+    }
+  }
 }

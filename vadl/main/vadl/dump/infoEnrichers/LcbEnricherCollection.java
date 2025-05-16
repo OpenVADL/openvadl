@@ -21,6 +21,8 @@ import static vadl.dump.InfoEnricher.forType;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import vadl.dump.BehaviorTimelineDisplay;
+import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.Info;
 import vadl.dump.InfoEnricher;
 import vadl.dump.InfoUtils;
@@ -28,7 +30,6 @@ import vadl.dump.entities.DefinitionEntity;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionCtx;
 import vadl.lcb.passes.llvmLowering.LlvmLoweringPass;
-import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Instruction;
 
@@ -81,7 +82,7 @@ public class LcbEnricherCollection {
                 passResults.lastResultOf(LlvmLoweringPass.class);
 
         if (results != null && definitionEntity.origin() instanceof Instruction instruction) {
-          var result = (LlvmLoweringRecord) results.machineInstructionRecords().get(instruction);
+          var result = results.machineInstructionRecords().get(instruction);
 
           if (result != null) {
             var renderedInputOperands =
@@ -98,6 +99,98 @@ public class LcbEnricherCollection {
                 "TableGen Output Operands",
                 renderedOutputOperands
             ));
+
+            for (var derivedGraph : result.optResults()) {
+              record Unoptimised(String dot) implements BehaviorTimelineDisplay {
+                @Override
+                public String passId() {
+                  return "UnoptimisedPassId";
+                }
+
+                @Override
+                public String passName() {
+                  return "Unoptimised";
+                }
+
+                @Override
+                public String dotGraph() {
+                  return dot;
+                }
+              }
+
+              record Canonicalizer(String dot) implements BehaviorTimelineDisplay {
+                @Override
+                public String passId() {
+                  return "CanonicalizerPassId";
+                }
+
+                @Override
+                public String passName() {
+                  return "Canonicalizer";
+                }
+
+                @Override
+                public String dotGraph() {
+                  return dot;
+                }
+              }
+
+              record AlgebraicOptimisation(String dot) implements BehaviorTimelineDisplay {
+                @Override
+                public String passId() {
+                  return "AlgebraicOptimisationPassId";
+                }
+
+                @Override
+                public String passName() {
+                  return "AlgebraicOptimisation";
+                }
+
+                @Override
+                public String dotGraph() {
+                  return dot;
+                }
+              }
+
+              record BehaviorRewritten(String dot) implements BehaviorTimelineDisplay {
+                @Override
+                public String passId() {
+                  return "BehaviorRewrittenPassId";
+                }
+
+                @Override
+                public String passName() {
+                  return "BehaviorRewritten";
+                }
+
+                @Override
+                public String dotGraph() {
+                  return dot;
+                }
+              }
+
+              List<BehaviorTimelineDisplay> timeline =
+                  List.of(
+                      new Unoptimised(
+                          CollectBehaviorDotGraphPass.createDotGraphFor(derivedGraph.before())),
+                      new Canonicalizer(CollectBehaviorDotGraphPass.createDotGraphFor(
+                          derivedGraph.canonicalized())),
+                      new AlgebraicOptimisation(CollectBehaviorDotGraphPass.createDotGraphFor(
+                          derivedGraph.algebraicSimplified())),
+                      new BehaviorRewritten(CollectBehaviorDotGraphPass.createDotGraphFor(
+                          derivedGraph.optimised()))
+                  );
+
+              // Reverse, so the list is starts at latest.
+              timeline.reversed();
+
+              var info = InfoUtils.createGraphModalWithTimeline(
+                  "Lowered derived llvm graph",
+                  definitionEntity.origin().simpleName() + "Behavior",
+                  timeline
+              );
+              definitionEntity.addInfo(info);
+            }
           }
         }
       });

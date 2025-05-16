@@ -19,7 +19,6 @@ package vadl.dump;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import vadl.pass.PassResults;
 import vadl.utils.Pair;
 
 /**
@@ -90,7 +89,7 @@ public class InfoUtils {
   @SuppressWarnings("LineLength")
   public static Info.Modal createGraphModalWithTimeline(String title,
                                                         String modalTitle,
-                                                        List<Pair<PassResults.SingleResult, String>> passGraphs) {
+                                                        List<BehaviorTimelineDisplay> passGraphs) {
     // create new empty modal info and get its id
     var info = new Info.Modal(title, "");
     var id = info.id();
@@ -122,8 +121,8 @@ public class InfoUtils {
         .mapToObj(i -> {
           var graphUnSelectedClass =
               i == 0 ? "graph-" + id + "-selected" : "graph-" + id + "-unselected";
-          var pass = passGraphs.get(i).left();
-          var passId = pass.passKey();
+          var pass = passGraphs.get(i);
+          var passId = pass.passId();
           return """
               <button
                   id="btn-pass-%s"
@@ -132,14 +131,14 @@ public class InfoUtils {
                   %s
               </button>
               """.formatted(passId, graphUnSelectedClass, id, id, passId,
-              pass.pass().getClass().getSimpleName());
+              pass.passName());
         }).collect(Collectors.joining("\n"));
 
     var dotGraphScripts = passGraphs.stream().map(p -> """
             <script id="dot-graph-%s-%s" type="application/dot">
               %s
             </script>
-            """.formatted(id, p.left().passKey(), p.right()))
+            """.formatted(id, p.passId(), p.dotGraph()))
         .collect(Collectors.joining("\n"));
 
     var style = """
@@ -202,14 +201,14 @@ public class InfoUtils {
         %s
         """.formatted(id, passBtns, dotGraphScripts, style, setGraphFunc);
 
-    var firstPass = passGraphs.get(0).left();
+    var firstPass = passGraphs.get(0);
     // add JavaScript to render the dot graph when the modal is first opened
     info.jsOnFirstOpen = """
         var initBtn = document.querySelector(
             ".graph-%s-selected"
         );
         setGraph%s("dot-graph-%s-%s", initBtn);
-        """.formatted(id, id, id, firstPass.passKey());
+        """.formatted(id, id, id, firstPass.passId());
 
     return info;
   }

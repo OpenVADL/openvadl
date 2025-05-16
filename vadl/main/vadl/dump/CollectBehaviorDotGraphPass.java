@@ -59,6 +59,25 @@ public class CollectBehaviorDotGraphPass extends Pass {
       Map<Definition, List<String>> behaviors,
       PassResults.SingleResult prevPass
   ) {
+    /**
+     * The {@link CollectBehaviorDotGraphPass} creates a {@link Result} based on the previously
+     * executed pass. However, rendering the {@link Result} might be weird and requires mapping
+     * logic. This method is a helper method which duplicates pass information which simplifies
+     * the rendering. It returns a list where each entry is separate pass result which contains
+     * the dot graph.
+     */
+    public List<PassResults.DotGraphResult> map() {
+      return behaviors.entrySet().stream()
+          .flatMap(x -> x.getValue().stream()
+              .map(behaviorDotGraph -> new PassResults.DotGraphResult(
+                  prevPass.passKey(),
+                  prevPass().pass(),
+                  prevPass().durationMs(),
+                  behaviorDotGraph,
+                  prevPass().skipped(),
+                  x.getKey())))
+          .toList();
+    }
   }
 
   public CollectBehaviorDotGraphPass(GeneralConfiguration configuration) {
@@ -90,7 +109,10 @@ public class CollectBehaviorDotGraphPass extends Pass {
     return new Result(result, lastPass);
   }
 
-  private static String createDotGraphFor(Graph graph) {
+  /**
+   * Return the dot representation for {@link Graph}.
+   */
+  public static String createDotGraphFor(Graph graph) {
     return new DotGraphVisualizer()
         .load(graph)
         .visualize();
