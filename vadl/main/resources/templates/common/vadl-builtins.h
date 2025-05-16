@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 typedef uint64_t Bits; // Generic 64-bit container of bit patterns
 typedef Bits UInt; // Interpreted as an unsigned 64-bit integer
@@ -63,6 +64,53 @@ static inline SInt VADL_sextract(Bits val, Width width) {
 
 static inline Bits VADL_mask(Width width) {
     return (width >= 64) ? (Bits) (-1) : (((Bits) 1ULL << width) - 1ULL);
+}
+
+/**
+ * Extracts and concatenates specified bit ranges from a 64-bit value.
+ *
+ * @param v      The 64-bit input value.
+ * @param nparts The number of (hi, lo) index pairs provided.
+ * @param ...    A variable list of integer pairs: hi1, lo1, hi2, lo2, ..., hin, lon.
+ *               Each pair defines a bit range from bit lo to bit hi (inclusive).
+ *               Bits are extracted and concatenated in the order provided,
+ *               starting from the least significant bit of the result.
+ *
+ * @return A 64-bit value containing the concatenated bits from the specified ranges.
+ *
+ * Example:
+ *   VADL_slice(0xF0F0, 2, 11, 8, 3, 0)
+ *   Extracts bits 11..8 and 3..0 from 0xF0F0 and concatenates them into the result.
+ */
+static inline Bits VADL_slice(uint64_t v, uint32_t nparts, ...) {
+    va_list ap;
+    va_start(ap, nparts);
+
+    va_list ap2;
+    va_copy(ap2, ap);
+    uint32_t total_width = 0;
+    for (uint32_t i = 0; i < nparts; ++i) {
+        int hi = va_arg(ap2, int);
+        int lo = va_arg(ap2, int);
+        total_width += (hi - lo + 1);
+    }
+    va_end(ap2);
+
+    uint64_t result = 0;
+    uint32_t out_bit = total_width;
+
+    for (uint32_t i = 0; i < nparts; ++i) {
+        int hi = va_arg(ap, int);
+        int lo = va_arg(ap, int);
+        int width = hi - lo + 1;
+        out_bit -= width;
+        uint64_t mask = VADL_mask(width);
+        uint64_t part = (v >> lo) & mask;
+        result |= (part << out_bit);
+    }
+
+    va_end(ap);
+    return result;
 }
 
 /*************************
