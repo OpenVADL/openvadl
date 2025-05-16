@@ -36,7 +36,6 @@ import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * Produce a pure function that allows to access format field references.
@@ -117,11 +116,6 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
   @Override
   protected void handle(CGenContext<Node> ctx, ReadArtificialResNode toHandle) {
     throwNotAllowed(toHandle, "Artificial resource reads");
-  }
-
-  @Override
-  public void handle(CGenContext<Node> ctx, SliceNode toHandle) {
-    throwNotAllowed(toHandle, "Slice node reads");
   }
 
   @Override

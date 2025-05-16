@@ -331,8 +331,14 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Slice {
     @Handler
-    default void handle(CGenContext<Node> ctx, SliceNode toHandle) {
-      throw new UnsupportedOperationException("Type SliceNode not yet implemented");
+    default void handle(CGenContext<Node> ctx, SliceNode node) {
+      ctx.wr("VADL_slice(")
+          .gen(node.value())
+          .wr(", %s", node.bitSlice().partSize());
+      node.bitSlice().parts().forEach(p -> {
+        ctx.wr(", " + p.msb() + ", " + p.lsb());
+      });
+      ctx.wr(")");
     }
   }
 
