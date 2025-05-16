@@ -53,6 +53,7 @@ import vadl.iss.passes.tcgLowering.nodes.TcgMovCondNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgMul2Node;
 import vadl.iss.passes.tcgLowering.nodes.TcgMulNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgNegNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOrNode;
@@ -828,6 +829,10 @@ class BuiltInTcgLoweringExecutor {
     impls = new MapBuilder<BuiltInTable.BuiltIn, Function<Context, BuiltInResult>>(new HashMap<>())
 
         //// Arithmetic ////
+        .set(BuiltInTable.NEG, (ctx) -> out(
+            new TcgNegNode(ctx.dest(), ctx.src(0))
+        ))
+
         .set(BuiltInTable.ADD, (ctx) -> out(
             new TcgAddNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
