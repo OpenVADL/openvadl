@@ -492,7 +492,7 @@ public class Graph {
     Map<Node, Node> cache = new LinkedHashMap<>();
 
     // make shallow copy of all nodes. we will replace the links in the next step
-    this.nodes.stream().filter(Objects::nonNull).forEach(oldNode -> {
+    this.getNodes().forEach(oldNode -> {
       var newNode = oldNode.shallowCopy();
       cache.put(oldNode, newNode);
     });
