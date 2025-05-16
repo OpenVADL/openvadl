@@ -57,6 +57,8 @@ async def build_assembly(id: str, core: str) -> Path:
   la x2, tohost
   sd x1, 0(x2)
   
+  1: j 1b # Loop to avoid running off into invalid memory
+  
   .section .tohost, "aw", @progbits
   .align 6; 
   .global tohost; 
