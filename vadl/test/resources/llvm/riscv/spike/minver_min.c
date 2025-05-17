@@ -197,5 +197,5 @@ int main() {
   memcpy (a, a_ref, 3 * 3 * sizeof (a[0][0]));
   mmul (3, 3, 3, 3);
 
-  return verify_benchmark();
+  return !verify_benchmark();
 }
