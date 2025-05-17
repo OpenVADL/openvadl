@@ -1,5 +1,5 @@
 #include <math.h>
-// #include <string.h>
+#include <string.h>
 
 #define VERIFY_FLOAT_EPS 1.0e-5
 #define float_eq_beebs(exp, actual) (fabsf(exp - actual) < VERIFY_FLOAT_EPS)
@@ -12,16 +12,6 @@ static float a_ref[3][3] = {
 };
 
 static float a[3][3];
-
-void *memcpy(float *dest, float *src, int n) {
-  int i;
-
-  for(i = 0; i < n / sizeof(dest[0][0]); i++) {
-    *dest = *src;
-    dest++;
-    src++;
-  }
-}
 
 int main() {
   memcpy (a, a_ref, 3 * 3 * sizeof (a[0][0]));
