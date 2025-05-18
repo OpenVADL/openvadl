@@ -17,6 +17,8 @@
 package vadl.iss.passes;
 
 import static vadl.error.DiagUtils.throwNotAllowed;
+import static vadl.utils.GraphUtils.intU;
+import static vadl.utils.GraphUtils.sub;
 
 import com.google.errorprone.annotations.FormatMethod;
 import java.io.IOException;
@@ -40,6 +42,7 @@ import vadl.pass.PassResults;
 import vadl.types.BitsType;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
+import vadl.utils.GraphUtils;
 import vadl.utils.VadlBuiltInNoStatusDispatcher;
 import vadl.viam.Constant;
 import vadl.viam.Specification;
@@ -622,7 +625,37 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleCLS(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
+    // we replace CLS as there is no such TCG operation.
+    // it is replaced by transformations that allow us to use CLZ (count leading zeros)
+    // instead.
+    var arg = input.arguments().getFirst();
+    var argT = arg.type().asDataType();
+    var resT = input.type().asDataType();
+    if (argT.bitWidth() <= 1) {
+      // if <= 1 replace by 0
+      input.replaceAndDelete(intU(0, resT.bitWidth()).toNode());
+      return;
+    }
+
+    var N = argT.bitWidth();
+    var sign = new SliceNode(
+        arg,
+        Constant.BitSlice.of(N - 1, N - 1),
+        Type.bits(1)
+    );
+    // v = sign ? ~a : a;
+    var v = new SelectNode(sign, GraphUtils.not(arg), arg);
+    ExpressionNode result = BuiltInTable.CLZ.call(v);
+
+    // leading zeros that are known to be zero on a target size operation.
+    // this is only non-zero for cls operating on < targetSize.
+    var guaranteedZeros = targetSize - (N - 1);
+    if (guaranteedZeros > 0) {
+      result = sub(result, intU(guaranteedZeros, N).toNode());
+    }
+
+    // replace CLS
+    input.replaceAndDelete(result);
   }
 
   @Override
