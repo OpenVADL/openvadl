@@ -651,7 +651,7 @@ instruction set architecture AArch64Base = {
 
 // bitfield extract model ******************************************************
 
-  format ExtractRegFormat: Instr =    // bit field move format
+  format ExtractRegFormat: Instr =    // bit field extract register format
     { sf       [31]                   // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
     , op       [30..23,21]            // opcode
     , N        [22]                   // must be equal to sf, otherwise undefined
@@ -659,23 +659,23 @@ instruction set architecture AArch64Base = {
     , imms     [15..10]               // right shift amount (bit field position)
     , rn       [9..5]                 // 1st source register
     , rd       [4..0]                 // destination register
+    , shiftWSize  = imms(4..0)
+    , shiftXSize  = imms
     }
 
   model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ExtractRegFormat =
       let pair = (X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>) in
-        X(rd) :=  (pair >> imms) as Bits<Size::$size> as BitsX
-    // [raise Undefined : sf = 0 != N]
-    // [raise Undefined : sf = 0 && imms(5) = 1]
+        X(rd) :=  (pair >> ExtendId (shift, $size)) as Bits<Size::$size> as BitsX
     encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
     assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', #', decimal(imms))
     }
 
 
-// bitfield move (insert models ************************************************
+// bitfield move model *********************************************************
 
-// There exist different versions of a BFM, SBFM, UBFM (BitField Move) and EXTR
-// (EXTRact register from register pair) instruction. Bitfield move commons are:
+// There exist different versions of a BFM, SBFM, UBFM (BitField Move)
+// instruction. Bitfield move commons are:
 //
 // If <imms> is greater than or equal to <immr>, this copies a bitfield of
 // (<imms>-<immr>+1) bits starting from bit position <immr> in the source
@@ -729,32 +729,22 @@ instruction set architecture AArch64Base = {
     // TODO predicate
     }
 
-  model BitfieldMoveEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
-    // if sf == 0 specification ignores N and imms(5) and immr(5)
-    // [raise Undefined : sf = 0 != N]
+  model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    // if (sf = 0) specification ignores imms(5) and immr(5)
+    // (sf != N) cannot happen as N is set in encoding
     // [raise Undefined : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
+    instruction $i.id: BitFieldMoveFormat =
+      let left = ExtendId (left, $size) in
+        let right = ExtendId (right, $size) in
+          let xrn = X(rn) as $i.funct<Size::$size> << left >> right in
+            let result = match: Ex ($i.mnemo = "bfm" =>
+              let mask = ~(~(0 as Bits<Size::$size>) << left >> right) in
+                X(rd) as Bits<Size::$size> & mask | xrn
+              ; _ =>
+              xrn) in
+            X(rd) := result as Bits<Size::$size> as BitsX
     encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
     assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', #', decimal(immr), ', #', decimal(imms))
-    }
-
-  model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
-    instruction $i.id: BitFieldMoveFormat =
-      let left = ExtendId (left, $size) in
-        let right = ExtendId (right, $size) in
-          let result = X(rn) as $i.funct<Size::$size> << left >> right in
-            X(rd) := result as Bits<Size::$size> as BitsX
-    $BitfieldMoveEncAsm ($i; $size)
-    }
-
-  model BitfieldInsertInstr (i: InstrWithFunct, size: Id): IsaDefs = {
-    instruction $i.id: BitFieldMoveFormat =
-      let left = ExtendId (left, $size) in
-        let right = ExtendId (right, $size) in
-          let mask = ~(~(0 as Bits<Size::$size>) << left >> right) in
-            let xrn = X(rn) as Bits<Size::$size> << left >> right  in
-              let result = X(rd) as Bits<Size::$size> & mask | xrn in
-                X(rd) :=  result as Bits<Size::$size> as BitsX
-    $BitfieldMoveEncAsm ($i; $size)
     }
 
 
@@ -1272,7 +1262,7 @@ instruction set architecture AArch64Base = {
   $InstrWX             (MovNZInstr            ; (MOVZ   ; "movz"  ; 0b1010'0101           ; ident      ))
 
   $InstrWX             (ExtractRegPairInstr   ; (EXTR   ; "extr"  ; 0b0'0100'1110         ; Bits       ))
-  $InstrWX             (BitfieldInsertInstr   ; (BFM    ; "bfm"   ; 0b0110'0110           ; Bits       ))
+  $InstrWX             (BitfieldMoveInstr     ; (BFM    ; "bfm"   ; 0b0110'0110           ; Bits       ))
   $InstrWX             (BitfieldMoveInstr     ; (SBFM   ; "sbfm"  ; 0b0010'0110           ; SInt       ))
   $InstrWX             (BitfieldMoveInstr     ; (UBFM   ; "ubfm"  ; 0b1010'0110           ; UInt       ))
 
