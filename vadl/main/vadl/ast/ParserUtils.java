@@ -32,10 +32,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
+import vadl.utils.Leivenshtein;
 import vadl.utils.SourceLocation;
 
 class ParserUtils {
@@ -483,15 +483,16 @@ class ParserUtils {
   }
 
   static Diagnostic unknownSyntaxTypeError(String name, SourceLocation location) {
-    // FIXME: In the future we can prioritize them with levenshtein distance.
     var available = Arrays.stream(BasicSyntaxType.values())
         .map(BasicSyntaxType::getName)
         .filter(n -> !n.contains("Invalid"))
-        .collect(Collectors.joining(", "));
+        .toList();
+
+    var suggested = String.join(", ", Leivenshtein.sortAll(name, available));
 
     return error("Unknown syntax type: `%s`".formatted(name), location)
         .locationDescription(location, "No syntax type with this name exists.")
-        .help("Maybe you meant to use one of the following:\n%s", available)
+        .help("Maybe you meant to use one of the following:\n%s", suggested)
         .build();
   }
 
