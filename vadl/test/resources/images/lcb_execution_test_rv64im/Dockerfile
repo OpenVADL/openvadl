@@ -14,7 +14,7 @@ ENV SPIKE_TARGET=${SPIKE_TARGET}
 ENV ABI=${ABI}
 COPY . /src
 WORKDIR /src
-RUN mv /opt/sccache/sccache /usr/bin/sccache
+RUN mv /opt/sccache/sccache /usr/bin
 RUN make && sccache -s
 RUN mkdir /output
 CMD sh /work/compile.sh
