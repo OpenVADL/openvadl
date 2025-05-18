@@ -1078,7 +1078,7 @@ instruction set architecture AArch64Base = {
     // TODO check SP alignment
     instruction $i.id: MemoryRegFormat =
       let addr = S(rn) + $addr in $m.stmt
-    encoding $i.id = { op = $i.opcode, opc = $m.opc, option = ExtendType::$option, scaled = Scaled::$scaled }
+    encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize, option = ExtendType::$option, scaled = Scaled::$scaled }
     assembly $i.id = ( $i.mnemo, $m.mext, ' ', $m.regsize(rt), ', [', XSizeSP(rn), ', ', $asm, ']' )
     }
 
