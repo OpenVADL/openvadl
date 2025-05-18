@@ -220,11 +220,11 @@ declare void @bar(i16 signext)
 define i32 @select_sge_int16min(i32 signext %x, i32 signext %y, i32 signext %z) {
 ; CHECK-LABEL: select_sge_int16min:
 ; CHECK-NEXT: # %bb.0:
-; CHECK-NEXT: LUI a2,0xffff0
-; CHECK-NEXT: ADDI a2,a2,-1
-; CHECK-NEXT: BLT a2,a0,.LBB1_2
+; CHECK-NEXT: LUI a3,0xffff0
+; CHECK-NEXT: ADDI a3,a3,-1
+; CHECK-NEXT: BLT a3,a0,.LBB1_2
 ; CHECK-NEXT: # %bb.1:
-; CHECK-NEXT: LD a1,0(sp)
+; CHECK-NEXT: ADDI a1,a2,0
 ; CHECK-NEXT: .LBB1_2:
 ; CHECK-NEXT: ADDI a0,a1,0
 ; CHECK-NEXT: RET
@@ -237,12 +237,12 @@ define i64 @select_sge_int32min(i64 %x, i64 %y, i64 %z) {
 ; CHECK-LABEL: select_sge_int32min:
 ; CHECK-NEXT: # %bb.0:
 ; CHECK-LABEL: .Ltmp1:
-; CHECK-NEXT: AUIPC a2,%pcrel_hi(.LCPI2_0)
-; CHECK-NEXT: ADDI a2,a2,%pcrel_lo(.Ltmp1)
-; CHECK-NEXT: LD a2,0(a2)
-; CHECK-NEXT: BLT a2,a0,.LBB2_2
+; CHECK-NEXT: AUIPC a3,%pcrel_hi(.LCPI2_0)
+; CHECK-NEXT: ADDI a3,a3,%pcrel_lo(.Ltmp1)
+; CHECK-NEXT: LD a3,0(a3)
+; CHECK-NEXT: BLT a3,a0,.LBB2_2
 ; CHECK-LABEL: # %bb.1:
-; CHECK-NEXT: LD a1,0(sp)
+; CHECK-NEXT: ADDI a1,a2,0
 ; CHECK-LABEL: .LBB2_2:
 ; CHECK-NEXT: ADDI a0,a1,0
 ; CHECK-NEXT: RET
