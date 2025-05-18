@@ -87,7 +87,7 @@ public class EmbenchBenchmarkNumberOfExecutedInstructionsSpikeRiscv32SimulationT
             "LLVM_PARALLEL_COMPILE_JOBS", "4",
             "LLVM_PARALLEL_LINK_JOBS", "2"),
         volumeMapping,
-        "sh /src/embench/benchmark-extras/get-number-executed-instructions-spike-clang-lcb.sh");
+        "sh /src/embench/benchmark-extras/rv32-get-number-executed-instructions-spike-clang-lcb.sh");
   }
 
   private List<Pair<String, String>> volumeMappings() {
