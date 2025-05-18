@@ -42,6 +42,7 @@ import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgClzNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgDepositNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtractNode;
@@ -73,6 +74,7 @@ import vadl.javaannotations.Handler;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
+import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.ExceptionDef;
 import vadl.viam.Specification;
@@ -903,6 +905,15 @@ class BuiltInTcgLoweringExecutor {
             new TcgXorNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
 
+        .set(BuiltInTable.CLZ, (ctx) -> {
+          // the second argument is the fallback value in case of value being 0
+          var valSize = ctx.call.arguments().getFirst().type().asDataType().bitWidth();
+          var valSizeConst = Constant.Value.of(valSize, Type.bits(ctx.targetSize.width));
+          return out(
+              new TcgClzNode(ctx.dest(), ctx.src(0), ctx.constant(valSizeConst))
+          );
+        })
+
         //// Comparison ////
 
         .set(BuiltInTable.EQU, (ctx) -> out(
@@ -1059,6 +1070,10 @@ class BuiltInTcgLoweringExecutor {
         var name = "tmp_" + call.id + "_" + k;
         return graph().addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize), new NodeList<>()));
       });
+    }
+
+    private TcgVRefNode constant(Constant.Value value) {
+      return assignments.singleDestOf(graph().add(new ConstantNode(value)));
     }
 
 
