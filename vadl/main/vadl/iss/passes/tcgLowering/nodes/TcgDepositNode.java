@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.javaannotations.viam.Input;
+import vadl.utils.GraphUtils;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -56,6 +57,14 @@ public class TcgDepositNode extends TcgBinaryOpNode {
     super(dest, t1, t2);
     this.pos = pos;
     this.len = len;
+  }
+
+  /**
+   * Constructs a TCG deposit node.
+   */
+  public TcgDepositNode(TcgVRefNode dest,
+                        TcgVRefNode t1, TcgVRefNode t2, int pos, int len) {
+    this(dest, t1, t2, GraphUtils.intU(pos, 32).toNode(), GraphUtils.intU(len, 32).toNode());
   }
 
   public ExpressionNode pos() {

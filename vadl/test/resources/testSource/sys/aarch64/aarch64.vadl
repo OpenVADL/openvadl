@@ -1,0 +1,1145 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// ARM AArch64 base instruction set
+
+instruction set architecture AArch64Base = {
+
+  constant SizeW = 32                 // size of W registers is 32
+  constant SizeX = 64                 // size of X registers is 64
+
+  using Byte     = Bits< 8>           // 8 bit Byte
+  using Half     = Bits<16>           // 16 bit half word type
+  using Word     = Bits<32>           // 32 bit word type
+  using XWord    = Bits<64>           // 64 bit double word type
+  using Bits1    = Bits< 1>           //  1 bit type
+  using Bits2    = Bits< 2>           //  2 bit type
+  using Bits3    = Bits< 3>           //  3 bit type
+  using Bits4    = Bits< 4>           //  4 bit type
+  using Bits5    = Bits< 5>           //  5 bit type
+  using Bits6    = Bits< 6>           //  6 bit type
+  using Bits7    = Bits< 7>           //  7 bit type
+  using Bits8    = Bits< 8>           //  8 bit type
+  using Bits9    = Bits< 9>           //  9 bit type
+  using Bits12   = Bits<12>           // 12 bit type
+  using Bits13   = Bits<13>           // 13 bit type
+  using Bits14   = Bits<14>           // 14 bit type
+  using Bits16   = Bits<16>           // 16 bit type
+  using Bits19   = Bits<19>           // 19 bit type
+  using Bits21   = Bits<21>           // 21 bit type
+  using Bits26   = Bits<26>           // 26 bit type
+  using Instr    = Word               // instruction are 32 bit wide
+  using BitsW    = Bits<SizeW>        // Bits W register type
+  using BitsX    = Bits<SizeX>        // Bits X register type
+  using SIntW    = SInt<SizeW>        //   signed integer W sized
+  using SIntX    = SInt<SizeX>        //   signed integer X sized
+  using UIntW    = UInt<SizeW>        // unsigned integer W sized
+  using UIntX    = UInt<SizeX>        // unsigned integer X sized
+  using Index    = Bits5              // 5 bit register index type for 32 registers
+  using Address  = BitsX              // address has X register type
+
+  program counter PC: Address         // program counter
+
+  memory        MEM : Address -> Byte // byte addressed memory
+  register        S : Index -> BitsX  // general purpose register file with stack pointer
+//[zero : X(31)]                      // X(31) is the zero register
+  alias register  X = S               // general purpose register file with zero register
+  alias register SP : Address = S(31) // stack pointer
+  alias register LR : Address = S(30) // link register (return address)
+
+  format ConditionFlags: Bits<4> = {  // condition flags register format
+//    res1  : Bits<32>,               // reserved, zero
+      N     : Bits1                   // Negative
+    , Z     : Bits1                   // Zero
+    , C     : Bits1                   // Carry
+    , V     : Bits1                   // oVerflow
+//  , res0  : Bits<28>                // reserved, zero
+    }
+
+  register NZCV : ConditionFlags      // condition flags register
+
+  enumeration CondCode : Bits<4> =    // condition code encodings, do not change order
+    { EQ                              // EQual                    Z == 1
+    , NE                              // Not Equal                Z == 0
+    , CS                              // Carry Set                C == 1    HS unsigned Higher or Same
+    , CC                              // Carry Clear              C == 0    LO unsigned LOwer
+    , MI                              // MInus                    N == 1
+    , PL                              // PLus                     N == 0
+    , VS                              // oVerflow Set             V == 1
+    , VC                              // oVerflow Clear           V == 0
+    , HI                              // unsigned HIgher          C == 1 and Z == 0
+    , LS                              // unsigned Lower or Same   C == 0  or Z == 1
+    , GE                              // signed Greater or Equal  N == V
+    , LT                              // signed Less Than         N != V
+    , GT                              // signed Greater Than      N == V and Z == 0
+    , LE                              // signed Less or Equal     N != V  or Z == 1
+    , AL                              // ALways true
+    , NV                              // NeVer, Not aVailable, reserved, gives true
+    }
+
+  function conditionHolds (cond: Bits<4>) -> Bool = // evaluate condition code
+    match cond with
+      { CondCode::EQ => NZCV.Z  = 1
+      , CondCode::NE => NZCV.Z  = 0
+      , CondCode::CS => NZCV.C  = 1
+      , CondCode::CC => NZCV.C  = 0
+      , CondCode::MI => NZCV.N  = 1
+      , CondCode::PL => NZCV.N  = 0
+      , CondCode::VS => NZCV.V  = 1
+      , CondCode::VC => NZCV.V  = 0
+      , CondCode::HI => NZCV.C  = 1 && NZCV.Z = 0
+      , CondCode::LS => NZCV.C  = 0 || NZCV.Z = 1
+      , CondCode::GE => NZCV.N  = NZCV.V
+      , CondCode::LT => NZCV.N != NZCV.V
+      , CondCode::GT => NZCV.N  = NZCV.V && NZCV.Z = 0
+      , CondCode::LE => NZCV.N != NZCV.V || NZCV.Z = 1
+      , _            => true
+      }
+
+  enumeration SF: Bits1 =             // size field values and assembly function name, do not rename elements or change order
+    { WSize                           // 32 bit operation or W register names
+    , XSize                           // 64 bit operation or X register names
+    }
+
+  enumeration Size =                  // bit size values for operation size, do not rename elements
+    { WSize = SizeW                   // 32 is size for WSize operations
+    , XSize = SizeX                   // 64 is size for XSize operations
+    }
+
+  enumeration FF: Bits1 =             // flag field values, do not change order
+    { OffFlags                        // flag setting is off
+    , SetFlags                        // operation sets flags
+    }
+
+  enumeration ShiftType : Bits2 =     // register operand shift type, do not change order
+    { LSL                             // Logical Shift Left
+    , LSR                             // Logical Shift Right
+    , ASR                             // Arithmetic Shift Right
+    , ROR                             // ROtate Right
+    }
+
+  enumeration ExtendType : Bits3 =    // register operand extend type, do not change order
+    { UXTB                            // Unsigned eXTend Byte
+    , UXTH                            // Unsigned eXTend Half
+    , UXTW                            // Unsigned eXTend Word
+    , UXTX                            // Unsigned eXTend Xword
+    , SXTB                            // Signed   eXTend Byte
+    , SXTH                            // Signed   eXTend Half
+    , SXTW                            // Signed   eXTend Word
+    , SXTX                            // Signed   eXTend Xword
+    }
+
+  enumeration Position: Bits2 =       // position in destination register, do not reorder
+    { Pos00                           // 15..0
+    , Pos16                           // 31..16
+    , Pos32                           // 47..32
+    , Pos48                           // 63..48
+    }
+
+  enumeration AccSize: Bits2 =        // memory operations access size, do not change order
+    { Byte                            // 1 byte  access
+    , Half                            // 2 bytes access
+    , Word                            // 4 bytes access
+    , XWord                           // 8 bytes access
+    }
+
+  format AddSubExtFormat: Instr =     // add/sub extended register format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , ff       [29]                   // flag field, if (ff = 1) set status register flags
+    , op       [30,28..21]            // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , option   [15..13]               // ExtendType depending on option value
+    , imm3     [12..10] : Bits3       // immediate shift amount, if (imm3 > 4) raise Undefined
+    , rn       [9..5]   : Index       // 1st source register (SP)
+    , rd       [4..0]   : Index       // destination register (SP if ff = 0)
+    }
+
+  format AddSubImmFormat: Instr =     // add/sub immediate format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , ff       [29]                   // flag field, if (ff = 1) set status register flags
+    , op       [30,28..23]            // opcode
+    , sh       [22]                   // if (sh = 1) imm12 << 12
+    , imm12    [21..10] : Bits12      // immediate operand eventually shifted
+    , rn       [9..5]   : Index       // source register (SP)
+    , rd       [4..0]   : Index       // destination register (SP if ff = 0)
+    , imm12X   = imm12 as BitsX       // zero extended immediate operand
+    , imm12S   = imm12 as BitsX << 12 // zero extended shifted immediate operand
+    }
+
+  format AddSubSftFormat: Instr =     // add/sub shifted register format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , ff       [29]                   // flag field, if (ff = 1) set status register flags
+    , op       [30,28..24,21]         // opcode
+    , shift    [23,22]                // ShiftType, if (shift = ROR) raise Undefined
+    , rm       [20..16] : Index       // 2nd source register (eventually shifted)
+    , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  format RelAddressFormat: Instr =    // PC relative address format
+    { op       [31,28..24]            // opcode
+    , imm21    [23..5,30,29]          // PC relative offset
+    , rd       [4..0]   : Index       // destination register
+    , offset   = imm21 as SIntX       // sign extended offset
+    }
+
+  format ThreeRegOpFormat: Instr =    // three register operand format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15..10]        // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  format TwoRegOpFormat: Instr =      // two register operand format
+    { sf       : Bits1                // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       : Bits21               // opcode
+    , rn       : Index                // source register
+    , rd       : Index                // destination register
+    }
+
+  format MulAddSubFormat: Instr =     // multiply add / sub format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15]            // opcode
+    , rm       [20..16] : Index       // 2nd source  register
+    , ra       [14..10] : Index       // accumulator register
+    , rn       [9..5]   : Index       // 1st source  register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  // pattern replication functions
+
+  function rep2  (pattern: Bits< 2>) -> Bits< 4> = (pattern, pattern)
+  function rep4  (pattern: Bits< 4>) -> Bits< 8> = (pattern, pattern)
+  function rep8  (pattern: Bits< 8>) -> Bits<16> = (pattern, pattern)
+  function rep16 (pattern: Bits<16>) -> Bits<32> = (pattern, pattern)
+  function rep32 (pattern: Bits<32>) -> Bits<64> = (pattern, pattern)
+
+  // imm13Decode takes the N, imms and immr fields as a combined 13 bit value
+  // and returns the replicated and rotated 64 bit immediate value for defined
+  // N, imms and immr values. 0 is returned for undefined values of imms, either
+  // explicitely or implicitely by shifting 1 zero times and subtracting 1 which
+  // also results in 0. The unused high bits of immr are ignored.
+
+  function imm13Decode (imm13: Bits13) -> BitsX =
+    if      imm13(12.. 7) = 0b0'11110 then let pattern = (1 as Bits< 2> << (imm13(    6) + 1) - 1) <>> imm13(   0) in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
+    else if imm13(12.. 8) = 0b0'1110  then let pattern = (1 as Bits< 4> << (imm13( 7..6) + 1) - 1) <>> imm13(1..0) in rep32 (rep16 (rep8 (rep4 (pattern))))
+    else if imm13(12.. 9) = 0b0'110   then let pattern = (1 as Bits< 8> << (imm13( 8..6) + 1) - 1) <>> imm13(2..0) in rep32 (rep16 (rep8 (pattern)))
+    else if imm13(12..10) = 0b0'10    then let pattern = (1 as Bits<16> << (imm13( 9..6) + 1) - 1) <>> imm13(3..0) in rep32 (rep16 (pattern))
+    else if imm13(12..11) = 0b0'0     then let pattern = (1 as Bits<32> << (imm13(10..6) + 1) - 1) <>> imm13(4..0) in rep32 (pattern)
+    else if imm13(12    ) = 0b1       then               (1 as Bits<64> << (imm13(11..6) + 1) - 1) <>> imm13(5..0)
+    else 0
+
+  format LogicImmFormat: Instr =      // logic immediate format
+    { sf       : Bits1                // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       : Bits8                // opcode
+    , imm13    : Bits13               // N, imms and immr fields
+    , rn       : Index                // source register
+    , rd       : Index                // destination register
+    , immX     = imm13Decode (imm13)  // decoded immediate value
+    // TODO encode
+    // TODO predicate
+    }
+
+  format LogicRegShiftFormat: Instr = // logic shifted register format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..24,21]            // opcode
+    , shift    [23,22]                // shift type (ROR is allowed)
+    , rm       [20..16] : Index       // 2nd source register eventually shifted
+    , imm6     [15..10] : Bits6       // immediate shift amount, if (sf = 0 && imm6(5) = 1) raise Undefined
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  format ShiftRegFormat: Instr =      // variable shift register format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,15..12]        // opcode
+    , rm       [20..16] : Index       // 2nd source register
+    , shift    [11..10]               // shift type (ROR is allowed)
+    , rn       [9..5]   : Index       // 1st source register
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  format MovFormat: Instr =           // movk, movn, movz format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..23]               // opcode
+    , pos      [22,21]                // position of imm16 in destination (Pos00, Pos16, Pos32, Pos48)
+    , imm16    [20..5]  : Bits16      // immediate value shifted by (pos << 4)
+    , rd       [4..0]   : Index       // destination register
+    }
+
+  format ExtractRegFormat: Instr =    // bit field move format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..23,21]            // opcode
+    , N        [22]                   // must be equal to sf, otherwise undefined
+    , rm       [20..16]               // 2nd source register
+    , imms     [15..10]               // right shift amount (bit field position)
+    , rn       [9..5]                 // 1st source register
+    , rd       [4..0]                 // destination register
+    }
+
+  function BitfieldLeftWSize (imms: Bits5) -> Bits5 =
+    (Size::WSize - 1) as Bits5 - imms
+
+  function BitfieldLeftXSize (imms: Bits6) -> Bits6 =
+    (Size::XSize - 1) as Bits6 - imms
+
+  function BitfieldRightWSize (imms: Bits5, immr: Bits5) -> Bits5 =
+    if imms as UInt >= immr
+      then (Size::WSize - 1) as Bits5 - imms + immr
+      else immr - imms - 1
+
+  function BitfieldRightXSize (imms: Bits6, immr: Bits6) -> Bits6 =
+    if imms as UInt >= immr
+      then (Size::XSize - 1) as Bits6 - imms + immr
+      else immr - imms - 1
+
+  format BitFieldMoveFormat: Instr =  // bit field move format
+    { sf         : Bits1              // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op         : Bits8              // opcode
+    , N          : Bits1              // must be equal to sf, otherwise undefined
+    , immr       : Bits6              // rotate right count (bit field low position)
+    , imms       : Bits6              // bit field length -1 or high position
+    , rn         : Index              // source register
+    , rd         : Index              // destination register
+    , leftWSize  = BitfieldLeftWSize  (imms(4..0))
+    , leftXSize  = BitfieldLeftXSize  (imms)
+    , rightWSize = BitfieldRightWSize (imms(4..0), immr(4..0))
+    , rightXSize = BitfieldRightXSize (imms, immr)
+    // TODO encode
+    // TODO predicate
+    }
+
+  format CondCompareFormat: Instr =   // conditional compare format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,11,10,4]       // opcode
+    , rm       [20..16] : Index       // 2nd source register or unsigned 5 bit immediate value
+    , cc       [15..12] : Bits4       // condition code
+    , rn       [9..5]   : Index       // source register
+    , nzcv     [3..0]   : Bits4       // new condition flags
+    , immX     = rm as BitsX          // rm zero extended to 64 bits
+    }
+
+  format CondSelectFormat: Instr =    // conditional select format
+    { sf       [31]                   // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       [30..21,11,10]         // opcode
+    , rm       [20..16]               // 2nd source register
+    , cc       [15..12]               // condition code
+    , rn       [9..5]                 // source register
+    , rd       [4..0]                 // destination register
+    }
+
+  format BranchFormat: Instr =        // unconditional branch immediate format
+    { op       : Bits6                // opcode
+    , imm26    : Bits26               // branch offset, needs to be sign extended and shifted
+    , offset   = imm26 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  format BranchRegFormat: Instr =     // branch register format
+    { op       [31..10,4..0]          // opcode
+    , rn       [9..5]   : Index       // branch target register
+    }
+
+  format CondBranchFormat: Instr =    // conditional branch conditional immediate format
+    { op       [31..24,4]             // opcode
+    , imm19    [23..5]  : Bits19      // branch offset, needs to be sign extended and shifted
+    , cc       [3..0]                 // condition code
+    , offset   = imm19 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  format CompareBranchFormat: Instr = // compare and branch immediate format
+    { sf       : Bits1                // size field, if (sf = 0) 32 bit operation else 64 bit
+    , op       : Bits7                // opcode
+    , imm19    : Bits19               // branch offset, needs to be sign extended and shifted
+    , rt       : Index                // source register
+    , offset   = imm19 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  format TestBitBranchFormat: Instr = // test bit and branch immediate format
+    { op       [30..24]    : Bits7    // opcode
+    , imm6     [31,23..19] : Bits6    // bit identifier
+    , imm14    [18..5]     : Bits14   // branch offset, needs to be sign extended and shifted
+    , rt       [4..0]      : Index    // source register
+    , offset   = imm14 as SIntX << 2  // sign extended and shifted offset
+    }
+
+  format MemoryImmFormat: Instr =     // unscaled load / store format
+    { size     [31..30]               // size of memory operation (AccSize)
+    , op       [29..24,21,11..10]     // opcode
+    , opc      [23..22]    : Bits2    // function code
+    , imm9     [20..12]    : Bits9    // signed offset
+    , rn       [9..5]      : Index    // base register (SP)
+    , rt       [4..0]      : Index    // source or destination register
+    , offset   = imm9 as SIntX        // sign extended offset
+    }
+
+
+// assembly string functions ***************************************************
+
+  // assembly W register names or zero
+  function WSize (idx: Index) -> String =   // do not rename
+    if idx = 31 then "wzr" else "w" + decimal( idx )
+
+  // assembly X register names or zero
+  function XSize (idx: Index) -> String =   // do not rename
+    if idx = 31 then "zr"  else "x" + decimal( idx )
+
+  // assembly W register names or sp
+  function WSizeSP (idx: Index) -> String = // do not rename
+    if idx = 31 then "wsp" else "w" + decimal( idx )
+
+  // assembly X register names or sp
+  function XSizeSP (idx: Index) -> String = // do not rename
+    if idx = 31 then "sp"  else "x" + decimal( idx )
+
+  function Imm9decimal (imm9: Bits9) -> String =
+    if imm9 = 0 then "" else (", #", decimal( imm9 ))
+
+// syntax records and model types **********************************************
+
+  // instruction id, mnemonic, opcode as literal or enum
+  record InstrNoFunct (id: Id, mnemo: Str, opcode: Ex)
+
+  // instruction id, mnemonic, opcode as literal or enum, function or type name
+  record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
+
+  // condition code id, mnemonic extension, condition expression
+  record Cond (cc: Id, mext: Str, ex: Ex)
+
+  // register shift expression, encoding elements, assembly string expression
+  record RegShift (ex: Ex, enc: Encs, asm: Ex)
+
+  // register size (WSize, XSize), access size (Byte, Half, Word, XWord),
+  // mnemonic extension ("b", "sb", "h", "sh", "sw"), opc, memory statement
+  record Memory  (regsize: Id, accsize: Id, mext: Str, opc: Lit, stmt: Stat)
+
+  // higher order model for simple flag setting models
+  model-type NoSetFlags = () -> Stats
+
+  // higher order model for flag setting models
+  model-type SetResultFlags = (CallEx, Ex) -> Stats
+
+  // result model, OffFlags or SetFlags, mnemonic extension ("" or "s")
+  record Flags  (resModel: SetResultFlags, ff: Id, mext: Str)
+
+  // higher order model enriched with size: [WX]Size, flags
+  model-type InstrWithFunctSizeFlags = (InstrWithFunct, Id, Flags) -> IsaDefs
+
+  // higher order model enriched with size: [WX]Size, shifted register
+  model-type InstrWithFunctSizeRegShift = (InstrWithFunct, Id, RegShift) -> IsaDefs
+
+  // higher order model enriched with operation size
+  model-type InstrWithFunctSize = (InstrWithFunct, Id) -> IsaDefs
+
+  // higher order model enriched with condition
+  model-type InstrWithCond = (InstrWithFunct, Cond) -> IsaDefs
+
+  // higher order model enriched with memory
+  model-type MemoryModel = (InstrNoFunct, Memory) -> IsaDefs
+
+
+// models for setting flags ****************************************************
+
+  // set no flags
+  model NoFlags (): Stats = {}
+
+  // set all flags
+  model SetFlags (): Stats = {
+    NZCV := (flags.negative, flags.zero, flags.carry, flags.overflow)
+    }
+
+  // assigns zero extended word result to destination expression
+  model WResult (dest: CallEx, result: Ex): Stats = {
+    $dest := ($result) as BitsW as BitsX
+    }
+
+  // assigns result to destination expression
+  model XResult (dest: CallEx, result: Ex): Stats = {
+    $dest := ($result) as BitsX
+    }
+
+  // assigns zero extended word result to destination expression and set flags
+  model WResFlags (dest: CallEx, result: Ex): Stats = {
+    $dest := ($result) as BitsW as BitsX
+    $SetFlags ()
+    }
+
+  // assigns result to destination expression and set flags
+  model XResFlags (dest: CallEx, result: Ex): Stats = {
+    $dest := ($result) as BitsX
+    $SetFlags ()
+    }
+
+
+// add / sub extend models *****************************************************
+
+  model AddSubExtInstrBase (i: InstrWithFunct, extId: Id, size: Id, f: Flags, extEx: Ex, optId: Id, enc: Encs, asm: Ex): IsaDefs = {
+    instruction ExtendId ($i.id, $extId): AddSubExtFormat =
+      let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, $extEx as Bits<Size::$size>) in {
+        $f.resModel (match: Id ($f.ff = OffFlags => S ; _ => X)(rd) ; result )
+        }
+    //[raise Undefined : imm3(2) = 1 && imm3(1..0) != 0]
+    encoding ExtendId ($i.id, $extId) = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, option = ExtendType::$optId, $enc }
+    assembly ExtendId ($i.id, $extId) = ( $i.mnemo, $f.mext, ' ', ExtendId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
+                       ', ', ExtendId($size, "SP")(rn), ', ', $asm )
+    }
+
+  model AddSubExtInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
+    $AddSubExtInstrBase ($i; UXTB; $size; $f; X(rm)( 7..0) as UIntX; UXTB; imm3 = 0; (WSize(rm), ", uxtb"))
+    $AddSubExtInstrBase ($i; UXTH; $size; $f; X(rm)(15..0) as UIntX; UXTH; imm3 = 0; (WSize(rm), ", uxth"))
+    $AddSubExtInstrBase ($i; UXTW; $size; $f; X(rm)(31..0) as UIntX; UXTW; imm3 = 0; (WSize(rm), ", uxtw"))
+    $AddSubExtInstrBase ($i; UXTX; $size; $f; X(rm)(63..0) as UIntX; UXTX; imm3 = 0; ($size(rm), ", uxtx"))
+    $AddSubExtInstrBase ($i; SXTB; $size; $f; X(rm)( 7..0) as SIntX; SXTB; imm3 = 0; (WSize(rm), ", sxtb"))
+    $AddSubExtInstrBase ($i; SXTH; $size; $f; X(rm)(15..0) as SIntX; SXTH; imm3 = 0; (WSize(rm), ", sxth"))
+    $AddSubExtInstrBase ($i; SXTW; $size; $f; X(rm)(31..0) as SIntX; SXTW; imm3 = 0; (WSize(rm), ", sxtw"))
+    $AddSubExtInstrBase ($i; SXTX; $size; $f; X(rm)(63..0) as SIntX; SXTX; imm3 = 0; ($size(rm), ", sxtx"))
+
+    $AddSubExtInstrBase ($i; UXSB; $size; $f; X(rm)( 7..0) as UIntX << imm3; UXTB; none; (WSize(rm), ", uxtb #", decimal(imm3)))
+    $AddSubExtInstrBase ($i; UXSH; $size; $f; X(rm)(15..0) as UIntX << imm3; UXTH; none; (WSize(rm), ", uxth #", decimal(imm3)))
+    $AddSubExtInstrBase ($i; UXSW; $size; $f; X(rm)(31..0) as UIntX << imm3; UXTW; none; (WSize(rm), ", uxtw #", decimal(imm3)))
+    $AddSubExtInstrBase ($i; UXSX; $size; $f; X(rm)(63..0) as UIntX << imm3; UXTX; none; ($size(rm), ", uxtx #", decimal(imm3)))
+    $AddSubExtInstrBase ($i; SXSB; $size; $f; X(rm)( 7..0) as SIntX << imm3; SXTB; none; (WSize(rm), ", sxtb #", decimal(imm3)))
+    $AddSubExtInstrBase ($i; SXSH; $size; $f; X(rm)(15..0) as SIntX << imm3; SXTH; none; (WSize(rm), ", sxth #", decimal(imm3)))
+    $AddSubExtInstrBase ($i; SXSW; $size; $f; X(rm)(31..0) as SIntX << imm3; SXTW; none; (WSize(rm), ", sxtw #", decimal(imm3)))
+    $AddSubExtInstrBase ($i; SXSX; $size; $f; X(rm)(63..0) as SIntX << imm3; SXTX; none; ($size(rm), ", sxtx #", decimal(imm3)))
+    }
+
+
+// add / sub immediate models **************************************************
+
+  model AddSubImmInstrShft (i: InstrWithFunct, size: Id, f: Flags, immEx: Ex, sh: Int, asm: Str): IsaDefs = {
+    instruction $i.id: AddSubImmFormat =
+      let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, $immEx as Bits<Size::$size>) in {
+        $f.resModel (match: Id ($f.ff = OffFlags => S ; _ => X)(rd) ; result )
+        }
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, sh = $sh }
+    assembly $i.id = ( $i.mnemo, $f.mext, ' ', ExtendId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
+                       ', ', ExtendId($size, "SP")(rn), ', ', "#", decimal(imm12), $asm )
+    }
+
+  model AddSubImmInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
+    $AddSubImmInstrShft ((ExtendId ($i.id, "I"  ); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12X; 0 ; "")
+    $AddSubImmInstrShft ((ExtendId ($i.id, "I12"); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12S; 1 ; ", lsl #12")
+    }
+
+
+// add / sub shift models ******************************************************
+
+  model AddSubSftInstrBase (i: InstrWithFunct, size: Id, f: Flags, sftex: Ex, enc: Encs, asm: Ex): IsaDefs = {
+    instruction $i.id: AddSubSftFormat =
+      let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, ($sftex) as Bits<Size::$size>) in {
+        $f.resModel (X(rd) ; result )
+      }
+    //[raise Undefined : sf = 0 && imm6(5) = 1]
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, $enc }
+    assembly $i.id = ( $i.mnemo, $f.mext, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), $asm )
+    }
+
+  model AddSubSftInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
+    $AddSubSftInstrBase ($i; $size; $f; X(rm); imm6 = 0, shift = ShiftType::LSL; "") // TODO pseudo instruction
+    $AddSubSftInstrBase ((ExtendId ($i.id, "LSL"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+                                  X(rm) << imm6;         shift = ShiftType::LSL; (", lsl #", decimal(imm6)))
+    $AddSubSftInstrBase ((ExtendId ($i.id, "LSR"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+                                  X(rm) as UInt >> imm6; shift = ShiftType::LSR; (", lsr #", decimal(imm6)))
+    $AddSubSftInstrBase ((ExtendId ($i.id, "ASR"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
+                                  X(rm) as SInt >> imm6; shift = ShiftType::ASR; (", asr #", decimal(imm6)))
+    }
+
+
+// encoding / assembly model for 3 register operand instructions ***************
+
+  model ThreeRegOpEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm))
+    }
+
+
+// add / sub carry models ******************************************************
+
+  model AddSubCarryInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in {
+        X(rd) := result as Bits<Size::$size> as BitsX
+        NZCV.C := flags.carry
+      }
+    $ThreeRegOpEncAsm ($i; $size)
+    }
+
+  model AddSubCarryFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in {
+        X(rd) := result as Bits<Size::$size> as BitsX
+        $SetFlags()
+        }
+    $ThreeRegOpEncAsm ($i; $size)
+    }
+
+
+// PC relative address models **************************************************
+
+  model AddressBaseInstr (i: InstrNoFunct, ex: Ex): IsaDefs = {
+    instruction $i.id: RelAddressFormat =
+      X(rd) := $ex
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ($i.mnemo, ' ', decimal(imm21))
+    }
+
+  model AddressRelInstr (i: InstrNoFunct): IsaDefs = {
+    $AddressBaseInstr ($i; PC + offset)
+    }
+
+  model AddressPageInstr (i: InstrNoFunct): IsaDefs = {
+    $AddressBaseInstr ($i; (PC >> 12 + offset) << 12)
+    }
+
+
+// multiply add / sub  model ***************************************************
+
+  model MulAddSubInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: MulAddSubFormat =
+      let result = VADL::$i.funct (X(ra) as Bits<Size::$size>, (X(rn) as Bits<Size::$size> * X(rm) as Bits<Size::$size>)) in
+        X(rd) := result as Bits<Size::$size> as BitsX
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', ', $size(ra))
+    }
+
+// multiply high model *********************************************************
+
+  model MulHighInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result = X(rn) as $i.funct *# X(rm) as $i.funct in
+        X(rd) := result(127..SizeX)
+    $ThreeRegOpEncAsm ($i; XSize)
+    }
+
+// multiply add / sub long model ***********************************************
+
+  model MulAddSubLongInstr (i: InstrWithFunct, type: Id): IsaDefs = {
+    instruction $i.id: MulAddSubFormat =
+      X(rd) := VADL::$i.funct (X(ra), (X(rn) as $type<Size::WSize> *# X(rm) as $type<Size::WSize>))
+    encoding $i.id = { op = $i.opcode, sf = SF::XSize }
+    assembly $i.id = ($i.mnemo, ' ', XSize(rd), ', ', WSize(rn), ', ', WSize(rm), ', ', XSize(ra))
+    }
+
+  model SMulAddSubLongInstr (i: InstrWithFunct): IsaDefs = { $MulAddSubLongInstr ($i; SInt) }
+  model UMulAddSubLongInstr (i: InstrWithFunct): IsaDefs = { $MulAddSubLongInstr ($i; UInt) }
+
+
+// divide model ****************************************************************
+
+  model DivInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ThreeRegOpFormat =
+      let result =
+        if X(rm) = 0
+          then 0
+          else X(rn) as $i.funct<Size::$size> / X(rm) as $i.funct<Size::$size> in
+        X(rd) := result as Bits<Size::$size> as BitsX
+    $ThreeRegOpEncAsm ($i; $size)
+    }
+
+
+// logic immediate models ******************************************************
+
+  model LogicImmEncAsm (i: InstrWithFunct, size: Id, ext: Str): IsaDefs = {
+    //[raise Undefined : sf = 0 && imm13(12) = 1]
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', ExtendId($size, $ext)(rd), ', ', $size(rn), ', #', decimal(immX))
+    }
+
+  model LogicImmFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: LogicImmFormat =
+      let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, immX as Bits<Size::$size>) in {
+        X(rd) := result as Bits<Size::$size> as BitsX
+        $SetFlags ()
+        }
+    $LogicImmEncAsm ($i; $size; "")
+    }
+
+  model LogicImmInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: LogicImmFormat =
+      let result = VADL::$i.funct (X(rn) as Bits<Size::$size>, immX as Bits<Size::$size>) in
+        S(rd) := result as Bits<Size::$size> as BitsX
+    $LogicImmEncAsm ($i; $size; "SP")
+    }
+
+
+// logic shifted register models ***********************************************
+
+  model LogicRegGeneralInstr (i: InstrWithFunct, size: Id, s: RegShift, f: NoSetFlags): IsaDefs = {
+    instruction $i.id: LogicRegShiftFormat =
+      let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, $s.ex) in {
+        X(rd) := result as Bits<Size::$size> as BitsX
+        $f ()
+        }
+    //[raise Undefined : sf = 0 && imm6(5) = 1]
+    encoding $i.id = { op = $i.opcode,  sf = SF::$size, $s.enc }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $s.asm)
+    }
+
+  model LogicRegBasicInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; $s; NoFlags)
+    }
+
+  model LogicRegFlagInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; $s; SetFlags)
+    }
+
+  model LogicRegNegInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; (~($s.ex); $s.enc; $s.asm); NoFlags)
+    }
+
+  model LogicRegNegFlagInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
+    $LogicRegGeneralInstr ($i; $size; (~($s.ex); $s.enc; $s.asm); SetFlags)
+    }
+
+  model LogicRegShiftExtInstr (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct, ext: Str, size: Id, s: RegShift): IsaDefs = {
+    $modelid ((ExtendId ($i.id, $ext); $i.mnemo; $i.opcode; $i.funct); $size; $s)
+    }
+
+  model LogicRegShiftInstr (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct, size: Id): IsaDefs = {
+    $LogicRegShiftExtInstr ($modelid; $i; ""   ; $size; (X(rm) as Bits<Size::$size>; imm6 = 0, shift = ShiftType::LSL;  $size(rm))) // TODO pseudo instruction
+    $LogicRegShiftExtInstr ($modelid; $i; "LSL"; $size; (X(rm) as Bits<Size::$size>  << imm6;  shift = ShiftType::LSL; ($size(rm), ", lsl #", decimal(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "LSR"; $size; (X(rm) as UInt<Size::$size>  >> imm6;  shift = ShiftType::LSR; ($size(rm), ", lsr #", decimal(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "ASR"; $size; (X(rm) as SInt<Size::$size>  >> imm6;  shift = ShiftType::ASR; ($size(rm), ", asr #", decimal(imm6))))
+    $LogicRegShiftExtInstr ($modelid; $i; "ROR"; $size; (X(rm) as Bits<Size::$size> <>> imm6;  shift = ShiftType::ROR; ($size(rm), ", ror #", decimal(imm6))))
+    }
+
+
+// register shift models *******************************************************
+
+  model ShiftRegInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ShiftRegFormat =
+      X(rd) :=  VADL::$i.funct (X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>) as Bits as BitsX
+    encoding $i.id = { op = 0b0011'0101'1000'10, sf = SF::$size, shift = ShiftType::$i.opcode }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm))
+    }
+
+// movk, movn, movz models *****************************************************
+
+  model notOrIdent (not: Id, ex: Ex) : Ex = { match: Ex ($not = not => ~($ex) ;_=> $ex) }
+
+  model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
+    instruction ExtendId ($i.id, $pos): MovFormat =
+      X(rd) := $posex
+    encoding ExtendId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
+    assembly ExtendId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', decimal(imm16),
+      match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
+    }
+
+  model MovKInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    match: IsaDefs ( $size = WSize
+         => $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(31..16), imm16) as BitsX)
+            $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (imm16, xrd(15..0 )) as BitsX)
+      ; _=> $MovInstr ($i; $size; Pos00; let xrd = X(rd) in (xrd(63..16), imm16            ))
+            $MovInstr ($i; $size; Pos16; let xrd = X(rd) in (xrd(63..32), imm16, xrd(15..0)))
+            $MovInstr ($i; $size; Pos32; let xrd = X(rd) in (xrd(63..48), imm16, xrd(31..0)))
+            $MovInstr ($i; $size; Pos48; let xrd = X(rd) in (             imm16, xrd(47..0)))
+      )
+    }
+
+  model MovNZInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    match: IsaDefs ( $size = WSize
+         => $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct; (imm16 as BitsW      )) as BitsX)
+            $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct; (imm16 as BitsW << 16)) as BitsX)
+      ; _=> $MovInstr ($i; $size; Pos00; $notOrIdent($i.funct;  imm16 as BitsX      ))
+            $MovInstr ($i; $size; Pos16; $notOrIdent($i.funct;  imm16 as BitsX << 16))
+            $MovInstr ($i; $size; Pos32; $notOrIdent($i.funct;  imm16 as BitsX << 32))
+            $MovInstr ($i; $size; Pos48; $notOrIdent($i.funct;  imm16 as BitsX << 48))
+      )
+    }
+
+
+// bitfield extract model ******************************************************
+
+  model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: ExtractRegFormat =
+      let pair = (X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>) in
+        X(rd) :=  (pair >> imms) as Bits<Size::$size> as BitsX
+    // [raise Undefined : sf = 0 != N]
+    // [raise Undefined : sf = 0 && imms(5) = 1]
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', #', decimal(imms))
+    }
+
+
+// bitfield move (insert models ************************************************
+
+// There exist different versions of a BFM, SBFM, UBFM (BitField Move) and EXTR
+// (EXTRact register from register pair) instruction. Bitfield move commons are:
+//
+// If <imms> is greater than or equal to <immr>, this copies a bitfield of
+// (<imms>-<immr>+1) bits starting from bit position <immr> in the source
+// register to the least significant bits of the destination register.
+//
+// If <imms> is less than <immr>, *BFM copies a bitfield of (<imms>+1) bits from
+// the least significant bits of the source register to bit position
+// (regsize-<immr>) of the destination register, where regsize is the
+// destination register size of 32 or 64 bits.
+//
+// BFM:  In both cases, the other bits of the destination register remain
+// unchanged.
+// SBFM: In both cases, the destination bits below the bitfield are set to zero,
+// and the bits above the bitfield are set to a copy of the most significant bit
+// of the bitfield.
+// UBFM: In both cases, the destination bits below and above the bitfield are
+// set to zero.
+//
+// For SBFM and UBFM there exist pseudo instructions for shifts and sign/zero
+// extension. Therefore, *BFM are specified using shift builtins.
+
+  model BitfieldMoveEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
+    // if sf == 0 specification ignores N and imms(5) and immr(5)
+    // [raise Undefined : sf = 0 != N]
+    // [raise Undefined : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', #', decimal(immr), ', #', decimal(imms))
+    }
+
+  model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: BitFieldMoveFormat =
+      let left = ExtendId (left, $size) in
+        let right = ExtendId (right, $size) in
+          let result = X(rn) as $i.funct<Size::$size> << left >> right in
+            X(rd) := result as Bits<Size::$size> as BitsX
+    $BitfieldMoveEncAsm ($i; $size)
+    }
+
+  model BitfieldInsertInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: BitFieldMoveFormat =
+      let left = ExtendId (left, $size) in
+        let right = ExtendId (right, $size) in
+          let mask = ~(~(0 as Bits<Size::$size>) << left >> right) in
+            let xrn = X(rn) as Bits<Size::$size> << left >> right  in
+              let result = X(rd) as Bits<Size::$size> & mask | xrn in
+                X(rd) :=  result as Bits<Size::$size> as BitsX
+    $BitfieldMoveEncAsm ($i; $size)
+    }
+
+
+// bit count models ************************************************************
+
+  model TwoRegOpEncAsm (i: InstrWithFunct, size: Id): IsaDefs = {
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn))
+    }
+
+  model CountBitsInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: TwoRegOpFormat =
+      let result = VADL::$i.funct (X(rn) as Bits<Size::$size>) in
+        X(rd) := result as Bits<Size::$size> as BitsX
+    $TwoRegOpEncAsm ($i; $size)
+    }
+
+
+// reverse bits / bytes model **************************************************
+
+  function revBitsWSize (bits: BitsW) -> BitsW = bits
+    ( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
+     16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31)
+
+  function revBitsXSize (bits: BitsX) -> BitsX = bits
+    ( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
+     16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,
+     32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,
+     48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63)
+
+  model ReverseBitsInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: TwoRegOpFormat =
+      let result = ExtendId (revBits, $size) (X(rn) as Bits<Size::$size>) in
+        X(rd) := result as Bits<Size::$size> as BitsX
+    $TwoRegOpEncAsm ($i; $size)
+    }
+
+
+// conditional compare models **************************************************
+
+  model CondCompareBaseInstr (i: InstrWithFunct, c: Cond, size: Id, ex: Ex, asm: Ex): IsaDefs = {
+    instruction $i.id: CondCompareFormat =
+      if $c.ex
+        then let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, $ex) in {
+          $SetFlags()
+          }
+        else
+          NZCV := nzcv
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, cc = CondCode::$c.cc }
+    assembly $i.id = ( $i.mnemo, ' ', $size(rn), $asm, ', #', decimal(nzcv), ', ', $c.mext )
+    }
+
+  model CondCompareImmInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    $CondCompareBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; immX as BitsW; (', #', decimal(rm)))
+    $CondCompareBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; immX         ; (', #', decimal(rm)))
+    }
+
+  model CondCompareRegInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    $CondCompareBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; X(rm) as BitsW; (', ', WSize(rm)))
+    $CondCompareBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; X(rm)         ; (', ', XSize(rm)))
+    }
+
+
+// conditional select models ***************************************************
+
+  model CondSelectBaseInstr (i: InstrWithFunct, c: Cond, size: Id, ex: Ex): IsaDefs = {
+    instruction $i.id: CondSelectFormat =
+      let result = if $c.ex then X(rn) else $ex in
+        X(rd) := result as Bits<Size::$size> as BitsX
+    encoding $i.id = { op = $i.opcode, sf = SF::$size, cc = CondCode::$c.cc }
+    assembly $i.id = ( $i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', ', $c.mext)
+    }
+
+  model CondSelectWX (i: InstrWithFunct, c: Cond, ex: Ex): IsaDefs = {
+    $CondSelectBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; $ex)
+    $CondSelectBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; $ex)
+    }
+
+  model CondSelectInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    match: IsaDefs (
+      $i.funct = inc => $CondSelectWX ($i; $c;  X(rm) + 1);
+      $i.funct = neg => $CondSelectWX ($i; $c; -X(rm)    );
+      $i.funct = not => $CondSelectWX ($i; $c; ~X(rm)    );
+      _              => $CondSelectWX ($i; $c;  X(rm)    ))
+    }
+
+
+// branch models ***************************************************************
+
+  model BranchEncAsm (i: InstrNoFunct): IsaDefs = {
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ( $i.mnemo, ' ', decimal(imm26))
+    }
+
+  model BranchInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchFormat =
+      PC := PC + offset
+    $BranchEncAsm ($i)
+    }
+
+  model BranchLinkInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchFormat = {
+      LR := PC.next
+      PC := PC + offset
+      }
+    $BranchEncAsm ($i)
+    }
+
+  model BranchRegEncAsm (i: InstrNoFunct): IsaDefs = {
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ( $i.mnemo, ' ', XSize(rn))
+    }
+
+  model BranchRegInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchRegFormat =
+      PC := X(rn)
+    $BranchRegEncAsm ($i)
+    }
+
+  model BranchRegLinkInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BranchRegFormat =
+      let target = X(rn) in {
+        LR := PC.next
+        PC := target
+        }
+    $BranchRegEncAsm ($i)
+    }
+
+  model CondBranchInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
+    instruction $i.id: CondBranchFormat =
+      if $c.ex then
+        PC := PC + offset
+    encoding $i.id = { op = $i.opcode, cc = CondCode::$c.cc }
+    assembly $i.id = ($i.mnemo, $c.mext, ' ', decimal(imm19))
+    }
+
+  model ExtendCondInstr (modelid: InstrWithCond, i: InstrWithFunct, c: Cond): IsaDefs = {
+    $modelid ((ExtendId($i.id, $c.cc); $i.mnemo; $i.opcode; $i.funct); $c)
+    }
+
+  model CondInstr (modelid: InstrWithCond, i: InstrWithFunct): IsaDefs = {
+    $ExtendCondInstr ($modelid; $i; (EQ ; "eq" ; NZCV.Z  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (NE ; "ne" ; NZCV.Z  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (CS ; "cs" ; NZCV.C  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (CC ; "cc" ; NZCV.C  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (MI ; "mi" ; NZCV.N  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (PL ; "pl" ; NZCV.N  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (VS ; "vs" ; NZCV.V  = 1                    ))
+    $ExtendCondInstr ($modelid; $i; (VC ; "vc" ; NZCV.V  = 0                    ))
+    $ExtendCondInstr ($modelid; $i; (HI ; "hi" ; NZCV.C  = 1 && NZCV.Z = 0      ))
+    $ExtendCondInstr ($modelid; $i; (LS ; "ls" ; NZCV.C  = 0 || NZCV.Z = 1      ))
+    $ExtendCondInstr ($modelid; $i; (GE ; "ge" ; NZCV.N  = NZCV.V               ))
+    $ExtendCondInstr ($modelid; $i; (LT ; "lt" ; NZCV.N != NZCV.V               ))
+    $ExtendCondInstr ($modelid; $i; (GT ; "gt" ; NZCV.N  = NZCV.V && NZCV.Z = 0 ))
+    $ExtendCondInstr ($modelid; $i; (LE ; "le" ; NZCV.N != NZCV.V || NZCV.Z = 1 ))
+    $ExtendCondInstr ($modelid; $i; (AL ; "al" ; true                           ))
+    $ExtendCondInstr ($modelid; $i; (NV ; "nv" ; true                           ))
+    }
+
+  model CompareBranchInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: CompareBranchFormat =
+      if VADL::$i.funct (X(rt) as Bits<Size::$size>, 0) then
+        PC := PC + offset
+    encoding $i.id = { op = $i.opcode, sf = SF::$size }
+    assembly $i.id = ($i.mnemo, ' ', $size(rt), ', ', decimal(imm19))
+    }
+
+  model TestBitBranchInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: TestBitBranchFormat =
+      if VADL::$i.funct ((X(rt) >> imm6) as Bits1, 0) then
+        PC := PC + offset
+    encoding $i.id = { op = $i.opcode }
+    assembly $i.id = ( $i.mnemo, ' ', XSize(rt), ', #', decimal(imm6), ', ', decimal(imm14))
+    }
+
+// load / store register (unscaled) model **************************************
+
+  model MemoryUnscaledInstr(i: InstrNoFunct, m: Memory): IsaDefs = {
+    // CheckSPAlignment()
+    instruction $i.id: MemoryImmFormat =
+      let addr = S(rn) + offset in $m.stmt
+    encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize }
+    assembly $i.id = ($i.mnemo, $m.mext, ' ', $m.regsize(rt), ', [', XSizeSP(rn), Imm9decimal(imm9), ']')
+    }
+
+// memory dispatching models ***************************************************
+
+  model MemoryInstr (memmodel: MemoryModel, i: InstrNoFunct, xtdId: Str, m: Memory): IsaDefs = {
+  	$memmodel ((ExtendId ($i.id, $xtdId); $i.mnemo; $i.opcode); $m)
+    }
+
+  model StoreInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
+    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b00; MEM<1> (addr) := X(rt) as Byte))
+    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b00; MEM<2> (addr) := X(rt) as Half))
+    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ;   ""; 0b00; MEM<4> (addr) := X(rt) as Word))
+    $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord;   ""; 0b00; MEM<8> (addr) := X(rt)        ))
+    }
+
+  model LoadInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
+    $MemoryInstr ($memmodel; $i; "B"  ; (WSize; Byte ;  "b"; 0b01; X(rt) := MEM<1> (addr) as UIntX))
+    $MemoryInstr ($memmodel; $i; "H"  ; (WSize; Half ;  "h"; 0b01; X(rt) := MEM<2> (addr) as UIntX))
+    $MemoryInstr ($memmodel; $i; "W"  ; (WSize; Word ;   ""; 0b01; X(rt) := MEM<4> (addr) as UIntX))
+    $MemoryInstr ($memmodel; $i; "X"  ; (XSize; XWord;   ""; 0b01; X(rt) := MEM<8> (addr)         ))
+    $MemoryInstr ($memmodel; $i; "SBX"; (XSize; Byte ; "sb"; 0b10; X(rt) := MEM<1> (addr) as SIntX))
+    $MemoryInstr ($memmodel; $i; "SHX"; (XSize; Half ; "sh"; 0b10; X(rt) := MEM<2> (addr) as SIntX))
+    $MemoryInstr ($memmodel; $i; "SWX"; (XSize; Word ; "sw"; 0b10; X(rt) := MEM<4> (addr) as SIntX))
+    $MemoryInstr ($memmodel; $i; "SBW"; (WSize; Byte ; "sb"; 0b11; X(rt) := MEM<1> (addr) as SIntW as UIntW as UIntX))
+    $MemoryInstr ($memmodel; $i; "SHW"; (WSize; Half ; "sh"; 0b11; X(rt) := MEM<2> (addr) as SIntW as UIntW as UIntX))
+    }
+
+
+// instruction dispatch models *************************************************
+
+  model InstrWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
+    $modelid ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize)
+    $modelid ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize)
+    }
+
+  model InstrWXRegShift (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct): IsaDefs = {
+    $LogicRegShiftInstr ($modelid; (ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize)
+    $LogicRegShiftInstr ($modelid; (ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize)
+    }
+
+  model InstrWXFlags (modelid: InstrWithFunctSizeFlags, i: InstrWithFunct): IsaDefs = {
+    $modelid ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize; (WResult  ; OffFlags;  ""))
+    $modelid ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize; (XResult  ; OffFlags;  ""))
+    $modelid ((ExtendId ($i.id, "WS"); $i.mnemo; $i.opcode; $i.funct); WSize; (WResFlags; SetFlags; "s"))
+    $modelid ((ExtendId ($i.id, "XS"); $i.mnemo; $i.opcode; $i.funct); XSize; (XResFlags; SetFlags; "s"))
+    }
+
+
+// base instructions ***********************************************************
+
+  $InstrWXFlags        (AddSubExtInstr        ; (ADD    ; "add"   ; 0b0'0101'1001         ; adds       ))
+  $InstrWXFlags        (AddSubImmInstr        ; (ADD    ; "add"   ; 0b0'1000'10           ; adds       ))
+  $InstrWXFlags        (AddSubSftInstr        ; (ADD    ; "add"   ; 0b0'0101'10           ; adds       ))
+  $InstrWXFlags        (AddSubExtInstr        ; (SUB    ; "sub"   ; 0b1'0101'1001         ; subsc      ))
+  $InstrWXFlags        (AddSubImmInstr        ; (SUB    ; "sub"   ; 0b1'1000'10           ; subsc      ))
+  $InstrWXFlags        (AddSubSftInstr        ; (SUB    ; "sub"   ; 0b1'0101'10           ; subsc      ))
+  $InstrWX             (AddSubCarryInstr      ; (ADC    ; "adc"   ; 0b0011'0100'0000'0000 ; addc       ))
+  $InstrWX             (AddSubCarryFlagInstr  ; (ADCS   ; "adcs"  ; 0b0111'0100'0000'0000 ; addc       ))
+  $InstrWX             (AddSubCarryInstr      ; (SBC    ; "sbc"   ; 0b1011'0100'0000'0000 ; subc       ))
+  $InstrWX             (AddSubCarryFlagInstr  ; (SBCS   ; "sbcs"  ; 0b1111'0100'0000'0000 ; subc       ))
+
+  $AddressRelInstr     (                        (ADR    ; "adr"   ; 0b01'0000                          ))
+  $AddressPageInstr    (                        (ADRP   ; "adrp"  ; 0b11'0000                          ))
+
+  $InstrWX             (MulAddSubInstr        ; (MADD   ; "madd"  ; 0b0011'0110'000       ; add        ))
+  $InstrWX             (MulAddSubInstr        ; (MSUB   ; "msub"  ; 0b0011'0110'001       ; sub        ))
+  $SMulAddSubLongInstr (                        (SMADDL ; "smaddl"; 0b0011'0110'010       ; add        ))
+  $SMulAddSubLongInstr (                        (SMSUBL ; "smsubl"; 0b0011'0110'011       ; sub        ))
+  $UMulAddSubLongInstr (                        (UMADDL ; "umaddl"; 0b0011'0111'010       ; add        ))
+  $UMulAddSubLongInstr (                        (UMSUBL ; "umsubl"; 0b0011'0111'011       ; sub        ))
+  $MulHighInstr        (                        (SMULH  ; "smulh" ; 0b0011'0110'1001'1111 ; SInt       ))
+  $MulHighInstr        (                        (UMULH  ; "umulh" ; 0b0011'0111'1001'1111 ; UInt       ))
+
+  $InstrWX             (DivInstr              ; (SDIV   ; "sdiv"  ; 0b0011'0101'1000'0011 ; SInt       ))
+  $InstrWX             (DivInstr              ; (UDIV   ; "udiv"  ; 0b0011'0101'1000'0010 ; UInt       ))
+
+  $InstrWX             (LogicImmInstr         ; (ANDI   ; "and"   ; 0b0010'0100           ; and        ))
+  $InstrWX             (LogicImmFlagInstr     ; (ANDSI  ; "ands"  ; 0b1110'0100           ; ands       ))
+  $InstrWX             (LogicImmInstr         ; (EORI   ; "eor"   ; 0b1010'0100           ; xor        ))
+  $InstrWX             (LogicImmInstr         ; (ORRI   ; "orr"   ; 0b0110'0100           ; or         ))
+
+  $InstrWXRegShift     (LogicRegBasicInstr    ; (AND    ; "and"   ; 0b0001'0100           ; ands       ))
+  $InstrWXRegShift     (LogicRegFlagInstr     ; (ANDS   ; "ands"  ; 0b1101'0100           ; ands       ))
+  $InstrWXRegShift     (LogicRegBasicInstr    ; (EOR    ; "eor"   ; 0b1001'0100           ; xors       ))
+  $InstrWXRegShift     (LogicRegBasicInstr    ; (ORR    ; "orr"   ; 0b0101'0100           ; ors        ))
+  $InstrWXRegShift     (LogicRegNegInstr      ; (BIC    ; "bic"   ; 0b0001'0101           ; ands       ))
+  $InstrWXRegShift     (LogicRegNegFlagInstr  ; (BICS   ; "bics"  ; 0b1101'0101           ; ands       ))
+  $InstrWXRegShift     (LogicRegNegInstr      ; (EON    ; "eon"   ; 0b1001'0101           ; xors       ))
+  $InstrWXRegShift     (LogicRegNegInstr      ; (ORN    ; "orn"   ; 0b0101'0101           ; ors        ))
+
+  $InstrWX             (ShiftRegInstr         ; (ASR    ; "asrv"  ; ASR                   ; asr        ))
+  $InstrWX             (ShiftRegInstr         ; (LSL    ; "lslv"  ; LSL                   ; lsl        ))
+  $InstrWX             (ShiftRegInstr         ; (LSR    ; "lsrv"  ; LSR                   ; lsr        ))
+  $InstrWX             (ShiftRegInstr         ; (ROR    ; "rorv"  ; ROR                   ; ror        ))
+
+  $InstrWX             (MovKInstr             ; (MOVK   ; "movk"  ; 0b1110'0101           ; unused     ))
+  $InstrWX             (MovNZInstr            ; (MOVN   ; "movn"  ; 0b0010'0101           ; not        ))
+  $InstrWX             (MovNZInstr            ; (MOVZ   ; "movz"  ; 0b1010'0101           ; ident      ))
+
+  $InstrWX             (ExtractRegPairInstr   ; (EXTR   ; "extr"  ; 0b0'0100'1110         ; Bits       ))
+// TODO: Fix multiple fieldAccess references
+//   $InstrWX             (BitfieldInsertInstr   ; (BFM    ; "bfm"   ; 0b0110'0110           ; Bits       ))
+//   $InstrWX             (BitfieldMoveInstr     ; (SBFM   ; "sbfm"  ; 0b0010'0110           ; SInt       ))
+//   $InstrWX             (BitfieldMoveInstr     ; (UBFM   ; "ubfm"  ; 0b1010'0110           ; UInt       ))
+
+  $InstrWX             (CountBitsInstr        ; (CLS    ; "cls"   ; 0b1'0110'1011'0000'0000'0101; cls  ))
+  $InstrWX             (CountBitsInstr        ; (CLZ    ; "clz"   ; 0b1'0110'1011'0000'0000'0100; clz  ))
+  $InstrWX             (ReverseBitsInstr      ; (RBIT   ; "rbit"  ; 0b1'0110'1011'0000'0000'0000; rvb  ))
+
+  $CondInstr           (CondCompareImmInstr   ; (CCMNI  ; "ccmn"  ; 0b0111'0100'1010'0    ; adds       ))
+  $CondInstr           (CondCompareImmInstr   ; (CCMPI  ; "ccmp"  ; 0b1111'0100'1010'0    ; subsc      ))
+  $CondInstr           (CondCompareRegInstr   ; (CCMN   ; "ccmn"  ; 0b0111'0100'1000'0    ; adds       ))
+  $CondInstr           (CondCompareRegInstr   ; (CCMP   ; "ccmp"  ; 0b1111'0100'1000'0    ; subsc      ))
+
+  $CondInstr           (CondSelectInstr       ; (CSEL   ; "csel"  ; 0b0011'0101'0000      ; equ        ))
+  $CondInstr           (CondSelectInstr       ; (CSINC  ; "csinc" ; 0b0011'0101'0001      ; inc        ))
+  $CondInstr           (CondSelectInstr       ; (CSINV  ; "csinv" ; 0b1011'0101'0000      ; not        ))
+  $CondInstr           (CondSelectInstr       ; (CSNEG  ; "csneg" ; 0b1011'0101'0001      ; neg        ))
+
+  $BranchInstr         (                        (B      ; "b"     ; 0b0001'01                          ))
+  $BranchLinkInstr     (                        (BL     ; "bl"    ; 0b1001'01                          ))
+  $BranchRegInstr      (                        (BR     ; "br"    ; 0b1101'0110'0001'1111'0000'0000'000))
+  $BranchRegInstr      (                        (RET    ; "ret"   ; 0b1101'0110'0101'1111'0000'0000'000))
+  $BranchRegLinkInstr  (                        (BLR    ; "blr"   ; 0b1101'0110'0011'1111'0000'0000'000))
+  $CondInstr           (CondBranchInstr       ; (B_     ; "b."    ; 0b0101'0100'0         ; unused     ))
+  $InstrWX             (CompareBranchInstr    ; (CBZ    ; "cbz"   ; 0b0110'100            ; equ        ))
+  $InstrWX             (CompareBranchInstr    ; (CBNZ   ; "cbnz"  ; 0b0110'101            ; neq        ))
+  $TestBitBranchInstr  (                        (TBZ    ; "tbz"   ; 0b0110'110            ; equ        ))
+  $TestBitBranchInstr  (                        (TBNZ   ; "tbnz"  ; 0b0110'111            ; neq        ))
+
+  $LoadInstr           (MemoryUnscaledInstr   ; (LDUR   ; "ldur"  ; 0b111'000'000                      ))
+  $StoreInstr          (MemoryUnscaledInstr   ; (STUR   ; "stur"  ; 0b111'000'000                      ))
+
+}

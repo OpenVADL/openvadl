@@ -22,6 +22,7 @@ import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
+import vadl.utils.GraphUtils;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -63,6 +64,13 @@ public class TcgExtractNode extends TcgUnaryOpNode {
     this.offset = offset;
     this.len = len;
     this.extendMode = extendMode;
+  }
+
+  public TcgExtractNode(TcgVRefNode dest,
+                        TcgVRefNode t1, int offset, int len,
+                        TcgExtend extendMode) {
+    this(dest, t1, GraphUtils.intU(offset, 32).toNode(), GraphUtils.intU(len, 32).toNode(),
+        extendMode);
   }
 
   public ExpressionNode pos() {

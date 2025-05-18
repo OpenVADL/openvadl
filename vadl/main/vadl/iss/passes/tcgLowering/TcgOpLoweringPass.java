@@ -22,6 +22,7 @@ import static vadl.utils.GraphUtils.intU;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -669,7 +670,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Handles the {@link SliceNode}. Currently not implemented.
+   * Handles the {@link SliceNode}.
+   * This is done by depositing each part of the slice in the destination variable.
    *
    * @param toHandle The node to handle.
    * @throws UnsupportedOperationException Always thrown.
@@ -679,16 +681,35 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var destVar = singleDestOf(toHandle);
     var srcVar = singleDestOf(toHandle.value());
     var bitSlice = toHandle.bitSlice();
-    if (!bitSlice.isContinuous()) {
-      // the current implementation can only extract a bitfield but not a
-      // combination of multiple bit fields
-      throw new UnsupportedOperationException("Non continuous slices are not yet implemented");
+    if (bitSlice.isContinuous()) {
+      // if the slice is continues we only perform a single extract operation
+      var pos = intU(bitSlice.lsb(), 32);
+      var len = intU(bitSlice.bitSize(), 32);
+      var node = new TcgExtractNode(destVar, srcVar, pos.toNode(), len.toNode(), TcgExtend.ZERO);
+      replaceCurrent(node);
+      return;
     }
 
-    var pos = intU(bitSlice.lsb(), 32);
-    var len = intU(bitSlice.bitSize(), 32);
-    var node = new TcgExtractNode(destVar, srcVar, pos.toNode(), len.toNode(), TcgExtend.ZERO);
-    replaceCurrent(node);
+    // TODO: Test if it is more efficient to shift + or instead of deposit.
+    // TODO: Calling a helper function for performing complex slice
+    //  operations might be more efficient.
+    // constructed result
+    var res = tmp(0);
+    // holds value that is deposit next
+    var bit = tmp(1);
+    var destOffset = 0;
+    var ops = new ArrayList<TcgNode>();
+    for (var part : bitSlice.parts().toList().reversed()) {
+      var len = part.size();
+      var offset = part.lsb();
+      // extract value to set
+      ops.add(new TcgExtractNode(bit, srcVar, offset, len, TcgExtend.ZERO));
+      ops.add(new TcgDepositNode(res, res, bit, destOffset, len));
+      destOffset += len;
+    }
+    ops.add(new TcgMoveNode(destVar, res));
+
+    replaceCurrent(ops.toArray(new TcgNode[0]));
   }
 
   /**
