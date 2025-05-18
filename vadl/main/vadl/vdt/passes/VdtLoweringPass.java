@@ -28,7 +28,6 @@ import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
 import vadl.vdt.utils.PatternUtils;
 import vadl.viam.Specification;
-import vadl.viam.ViamError;
 
 /**
  * Lowering pass that creates the VDT (VADL Decode Tree) from the VIAM definition.
@@ -55,13 +54,19 @@ public class VdtLoweringPass extends Pass {
 
     var isa = viam.isa().orElse(null);
     if (isa == null) {
-      throw new ViamError("No ISA found in the specification");
+      return null;
     }
 
     var insns = isa.ownInstructions()
         .stream()
         .map(this::prepareInstruction)
         .toList();
+
+    if (insns.isEmpty()) {
+      // just skip if there are no instructions.
+      // this will only happen if we use the check command
+      return null;
+    }
 
     return new TheilingDecodeTreeGenerator().generate(insns);
   }
