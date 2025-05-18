@@ -17,6 +17,7 @@
 package vadl.iss.passes;
 
 import static vadl.error.DiagUtils.throwNotAllowed;
+import static vadl.utils.GraphUtils.bits;
 import static vadl.utils.GraphUtils.intU;
 import static vadl.utils.GraphUtils.sub;
 
@@ -615,7 +616,21 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleCLZ(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
+    var val = input.arguments().get(0);
+    var valT = val.type().asDataType();
+    if (valT.bitWidth() == targetSize) {
+      return;
+    }
+    // if val is smaller than target size, we know that the target size leading
+    // bits until the msb of val will be null.
+    // e.g. 0010 -> 4 - 2 = 2
+    var constLeadingZ = targetSize - valT.bitWidth();
+    // replace original by subtraction that subtracts constant leading zeros from the target size
+    // clz result.
+    input.replace(BuiltInTable.SUB.call(
+        input,
+        bits(constLeadingZ, input.type().asDataType().bitWidth()).toNode()
+    ));
   }
 
   @Override
@@ -649,6 +664,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
     // leading zeros that are known to be zero on a target size operation.
     // this is only non-zero for cls operating on < targetSize.
+    // N - 1 because we don't count the sign bit itself
     var guaranteedZeros = targetSize - (N - 1);
     if (guaranteedZeros > 0) {
       result = sub(result, intU(guaranteedZeros, N).toNode());
