@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/lcb-execution-test-rv64im-base-image@sha256:1f06f1aca889afd0603a8c8a4a1c835b3a17ae88d0136c94232efbef0bab4d5e
+FROM ghcr.io/openvadl/lcb-execution-test-rv64im-base-image@sha256:b00eb9e7ca0a97155aeb1087ebc0789f71bc584cfaa70b5fd4ac5d4a89033f05
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
 ARG UPSTREAM_BUILD_TARGET
@@ -14,7 +14,6 @@ ENV SPIKE_TARGET=${SPIKE_TARGET}
 ENV ABI=${ABI}
 COPY . /src
 WORKDIR /src
-RUN mv /opt/sccache/sccache /usr/bin/sccache
 RUN make && sccache -s
 RUN mkdir /output
 CMD sh /work/compile.sh

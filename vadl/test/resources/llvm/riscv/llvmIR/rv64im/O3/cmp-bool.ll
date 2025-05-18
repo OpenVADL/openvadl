@@ -6,8 +6,7 @@ define void @bool_eq(i1 zeroext %a, i1 zeroext %b, ptr nocapture %c) nounwind {
 ; CHECK-NEXT: SD ra,8(sp) # 8-byte Folded Spill
 ; CHECK: BNE a0,a1,.LBB0_2
 ; CHECK-NEXT: # %bb.1: # %if.then
-; CHECK-NEXT: LD a0,16(sp)
-; CHECK-NEXT: JALR ra,0(a0)
+; CHECK-NEXT: JALR ra,0(a2)
 ; CHECK-NEXT: .LBB0_2: # %if.end
 ; CHECK-NEXT: LD ra,8(sp) # 8-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,16
@@ -31,8 +30,7 @@ define void @bool_ne(i1 zeroext %a, i1 zeroext %b, ptr nocapture %c) nounwind {
 ; CHECK-NEXT: SD ra,8(sp) # 8-byte Folded Spill
 ; CHECK: BEQ a0,a1,.LBB1_2
 ; CHECK-NEXT: # %bb.1: # %if.then
-; CHECK-NEXT: LD a0,16(sp)
-; CHECK-NEXT: JALR ra,0(a0)
+; CHECK-NEXT: JALR ra,0(a2)
 ; CHECK-NEXT: .LBB1_2: # %if.end
 ; CHECK-NEXT: LD ra,8(sp) # 8-byte Folded Reload
 ; CHECK-NEXT: ADDI sp,sp,16

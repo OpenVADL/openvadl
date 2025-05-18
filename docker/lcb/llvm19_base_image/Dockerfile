@@ -15,6 +15,6 @@ RUN set -ex; \
     curl -L https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-$SUFFIX.tar.gz \
     | tar -xz -C /opt/sccache --strip-components=1
 
-ENV PATH=/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH=$PATH:/usr/lib/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 RUN  /usr/sbin/update-ccache-symlinks
 RUN git clone --depth 1 --branch llvmorg-19.1.7 https://github.com/llvm/llvm-project.git /src/llvm-final
