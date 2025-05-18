@@ -961,10 +961,10 @@ public class BuiltInTable {
   /**
    * Concatenates two strings to a new string.
    *
-   * <p>{@code function concatenate(String<N>, String<M>) -> String<X>}
+   * <p>{@code function concat(String<N>, String<M>) -> String<X>}
    */
   public static final BuiltIn CONCATENATE_STRINGS =
-      func("VADL::concatenate",
+      func("VADL::concat",
           Type.relation(StringType.class, StringType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
@@ -975,10 +975,10 @@ public class BuiltInTable {
   /**
    * Concatenates two bit values to a new bit value with a length of the sum of the input values.
    *
-   * <p>{@code function concatenate(Bits<N>, Bits<M>) -> Bits<N + M>}
+   * <p>{@code function concat(Bits<N>, Bits<M>) -> Bits<N + M>}
    */
   public static final BuiltIn CONCATENATE_BITS =
-      func("VADL::concatenate",
+      func("VADL::concat",
           Type.relation(BitsType.class, BitsType.class, BitsType.class))
           .takesDefault()
           .returnsFromDataTypes(args -> Type.bits(args.stream().mapToInt(DataType::bitWidth).sum()))

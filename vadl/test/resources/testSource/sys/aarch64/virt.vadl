@@ -1,7 +1,10 @@
 
 import aarch64::AArch64Base
 
-processor Virt implements AArch64Base = {
+instruction set architecture A64 extending AArch64Base = {}
+
+[ htif ]
+processor Virt implements A64 = {
 
   [ firmware ]
   [ base : 0x0 ]
