@@ -18,8 +18,8 @@ package vadl.vdt.passes;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
-import vadl.configuration.IssConfiguration;
-import vadl.iss.passes.AbstractIssPass;
+import vadl.configuration.GeneralConfiguration;
+import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
@@ -33,14 +33,14 @@ import vadl.viam.ViamError;
 /**
  * Lowering pass that creates the VDT (VADL Decode Tree) from the VIAM definition.
  */
-public class VdtLoweringPass extends AbstractIssPass {
+public class VdtLoweringPass extends Pass {
 
   /**
    * Constructor for the VDT Lowering Pass.
    *
    * @param configuration the configuration
    */
-  public VdtLoweringPass(IssConfiguration configuration) {
+  public VdtLoweringPass(GeneralConfiguration configuration) {
     super(configuration);
   }
 
