@@ -331,8 +331,8 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   }
 
   @Handler
-  void handle(SliceNode toHandle) {
-    // do nothing
+  void handle(SliceNode node) {
+    // is handled in the operation lowering
   }
 
 
