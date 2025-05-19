@@ -16,12 +16,16 @@
 
 package vadl.cppCodeGen.common;
 
+import static java.util.function.Function.identity;
 import static vadl.error.DiagUtils.throwNotAllowed;
 
+import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.FunctionCodeGenerator;
 import vadl.cppCodeGen.context.CGenContext;
+import vadl.viam.Definition;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.graph.Node;
@@ -41,7 +45,7 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
 
   protected final Format.FieldAccess fieldAccess;
   protected final String functionName;
-  protected final String fieldName;
+  protected final Map<Format.Field, String> fieldNames;
 
   /**
    * Creates a new pure function code generator for the specified function. The function will be
@@ -55,29 +59,33 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
     super(fieldAccess.accessFunction());
     this.fieldAccess = fieldAccess;
     this.functionName = functionName == null ? function.simpleName() : functionName;
-    this.fieldName = fieldAccess.fieldRef().simpleName();
+    this.fieldNames = fieldAccess.fieldRefs().stream()
+        .collect(Collectors.toMap(identity(), Definition::simpleName));
   }
 
   /**
    * Creates a new pure function code generator for the specified function. The function will be
-   * named with the specified name. The field to access will be the specified field.
+   * named with the specified name. The references to the fields to access will be generated based
+   * on the supplied fieldNames.
    *
    * @param fieldAccess  The field fieldAccess for which the function should be generated
    * @param functionName The name of the access function to generate
-   * @param fieldName    The name of the field to access
+   * @param fieldNames   The names of the fields to access. If left empty, the default names will be
+   *                     used.
    */
   public AccessFunctionCodeGenerator(Format.FieldAccess fieldAccess,
                                      @Nullable String functionName,
-                                     @Nullable String fieldName) {
+                                     @Nullable Map<Format.Field, String> fieldNames) {
     super(fieldAccess.accessFunction());
     this.fieldAccess = fieldAccess;
     this.functionName = functionName == null ? function.simpleName() : functionName;
-    this.fieldName = fieldName == null ? fieldAccess.fieldRef().simpleName() : fieldName;
+    this.fieldNames = fieldNames == null || fieldNames.isEmpty() ? fieldAccess.fieldRefs().stream()
+        .collect(Collectors.toMap(identity(), Definition::simpleName)) : fieldNames;
   }
 
   /**
    * Creates a new pure function code generator for the specified function. The function will be
-   * named with the specified name. The field to access will be the specified field.
+   * named with the specified name.
    *
    * @param accessOrExtractionFunction The access function to access a field which is not equivalent
    *                                   to {@code FieldAccess#accessFunction} or an extraction
@@ -85,16 +93,15 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
    * @param fieldAccess                The field fieldAccess for which the function should be
    *                                   generated.
    * @param functionName               The name of the access function to generate
-   * @param fieldName                  The name of the field to access
    */
   public AccessFunctionCodeGenerator(Function accessOrExtractionFunction,
                                      Format.FieldAccess fieldAccess,
-                                     @Nullable String functionName,
-                                     @Nullable String fieldName) {
+                                     @Nullable String functionName) {
     super(accessOrExtractionFunction);
     this.fieldAccess = fieldAccess;
     this.functionName = functionName == null ? function.simpleName() : functionName;
-    this.fieldName = fieldName == null ? fieldAccess.fieldRef().simpleName() : fieldName;
+    this.fieldNames = fieldAccess.fieldRefs().stream()
+        .collect(Collectors.toMap(identity(), Definition::simpleName));
   }
 
   @Override
@@ -141,11 +148,11 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
    */
   @Override
   protected void handle(CGenContext<Node> ctx, FieldRefNode toHandle) {
-    toHandle.ensure(toHandle.formatField().equals(fieldAccess.fieldRef()),
-        "Field reference does not match the field access.");
+    toHandle.ensure(fieldNames.containsKey(toHandle.formatField()),
+        "Expected a translation for the field reference to exist.");
 
-    // Reference the function parameter
-    ctx.wr(fieldName);
+    // Render with the configured translation
+    ctx.wr(fieldNames.get(toHandle.formatField()));
   }
 
   @Override
@@ -155,10 +162,10 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
     function.ensure(returnType != null, "No fitting Cpp type found for return type %s", returnType);
     function.ensure(function.behavior().isPureFunction(), "Function is not pure.");
 
-    var insnType = fieldAccess.fieldRef().format().type();
+    var insnType = fieldAccess.fieldRefs().getFirst().format().type();
     var insnCppType = CppTypeMap.getCppTypeNameByVadlType(insnType);
 
-    var cppArgsString = "void* ctx, %s %s".formatted(insnCppType, fieldName);
+    var cppArgsString = "void* ctx, %s %s".formatted(insnCppType, fieldAccess.simpleName());
 
     return CppTypeMap.getCppTypeNameByVadlType(returnType)
         + " %s(%s)".formatted(functionName, cppArgsString);

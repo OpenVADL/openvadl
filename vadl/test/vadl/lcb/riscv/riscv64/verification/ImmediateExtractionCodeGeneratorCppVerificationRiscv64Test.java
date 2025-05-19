@@ -137,7 +137,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationRiscv64Test extends 
         new GcbImmediateExtractionCppFunction(fieldAccess.fieldRef().extractFunction());
     var extractionFunctionCodeGenerator =
         new GcbAccessOrExtractionFunctionCodeGenerator(extractFunction,
-            fieldAccess, extractFunction.identifier.lower(), fieldAccess.fieldRef().simpleName());
+            fieldAccess, extractFunction.identifier.lower());
     var extractionFunctionCode = extractionFunctionCodeGenerator.genFunctionDefinition();
     var extractionFunctionName = extractionFunctionCodeGenerator.genFunctionName();
 

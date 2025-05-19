@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.AccessFunctionCodeGenerator;
 import vadl.types.BitsType;
@@ -343,10 +345,9 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
    * @return The C++ expression for the field access
    */
   private String accessField(Format.FieldAccess access) {
-    var fieldRef = access.fieldRef();
-    var refName = "a->" + fieldRef.simpleName();
-
-    var generator = new AccessFunctionCodeGenerator(access, null, refName);
+    var fieldRefs = access.fieldRefs().stream()
+        .collect(Collectors.toMap(Function.identity(), f -> "a->" + f.simpleName()));
+    var generator = new AccessFunctionCodeGenerator(access, null, fieldRefs);
     return generator.genReturnExpression();
   }
 
