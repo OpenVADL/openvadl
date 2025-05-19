@@ -17,11 +17,18 @@
 package vadl.utils;
 
 import static vadl.utils.BigIntUtils.reverseByteOrder;
+import static vadl.utils.GraphUtils.getSingleNode;
 
 import java.math.BigInteger;
 import java.nio.ByteOrder;
 import vadl.viam.Constant.Value;
 import vadl.viam.Format;
+import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.passes.canonicalization.Canonicalizer;
+import vadl.viam.passes.functionInliner.Inliner;
 
 /**
  * Utility class to extract format fields from an instruction encoding.
@@ -70,8 +77,23 @@ public class FieldExtractionUtils {
    */
   public static Value extract(BigInteger encoding, ByteOrder byteOrder,
                               Format.FieldAccess fieldAccess) {
+    var behavior = fieldAccess.accessFunction().behavior().copy();
+    Inliner.inlineFuncs(behavior);
 
-    // TODO: Implement field access evaluation
-    return Value.of(false);
+    // replace all field references with extracted values
+    var fieldRefs = behavior.getNodes(FieldRefNode.class).toList();
+    for (var fieldRef : fieldRefs) {
+      fieldRef.replaceAndDelete(
+          extract(encoding, byteOrder, fieldRef.formatField()).toNode()
+      );
+    }
+
+    var returnNode = getSingleNode(behavior, ReturnNode.class);
+    var assemblyStr = Canonicalizer.canonicalizeSubGraph(returnNode.value());
+    if (!(assemblyStr instanceof ConstantNode constNode)) {
+      throw new ViamGraphError("Can't evaluate sub-graph")
+          .addContext(behavior);
+    }
+    return constNode.constant().asVal();
   }
 }
