@@ -261,7 +261,7 @@ instruction set architecture AArch64Base = {
 
   model AddSubExtInstrBase (i: InstrWithFunct, extId: Id, size: Id, f: Flags, extEx: Ex, optId: Id, enc: Encs, asm: Ex): IsaDefs = {
     instruction ExtendId ($i.id, $extId): AddSubExtFormat =
-      let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, $extEx as Bits<Size::$size>) in {
+      let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, ($extEx) as Bits<Size::$size>) in {
         $f.resModel (match: Id ($f.ff = OffFlags => S ; _ => X)(rd) ; result )
         }
     //[raise Undefined : imm3(2) = 1 && imm3(1..0) != 0]
@@ -307,7 +307,7 @@ instruction set architecture AArch64Base = {
 
   model AddSubImmInstrShft (i: InstrWithFunct, size: Id, f: Flags, immEx: Ex, sh: Int, asm: Str): IsaDefs = {
     instruction $i.id: AddSubImmFormat =
-      let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, $immEx as Bits<Size::$size>) in {
+      let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, ($immEx) as Bits<Size::$size>) in {
         $f.resModel (match: Id ($f.ff = OffFlags => S ; _ => X)(rd) ; result )
         }
     encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, sh = $sh }
@@ -413,7 +413,7 @@ instruction set architecture AArch64Base = {
     }
 
   model AddressPageInstr (i: InstrNoFunct): IsaDefs = {
-    $AddressBaseInstr ($i; (PC >> 12 + offset) << 12)
+    $AddressBaseInstr ($i; ((PC >> 12) + offset) << 12)
     }
 
 
@@ -486,12 +486,12 @@ instruction set architecture AArch64Base = {
   // also results in 0. The unused high bits of immr are ignored.
 
   function imm13Decode (imm13: Bits13) -> BitsX =
-    if      imm13(12.. 7) = 0b0'11110 then let pattern = (1 as Bits< 2> << (imm13(    6) + 1) - 1) <>> imm13(   0) in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
-    else if imm13(12.. 8) = 0b0'1110  then let pattern = (1 as Bits< 4> << (imm13( 7..6) + 1) - 1) <>> imm13(1..0) in rep32 (rep16 (rep8 (rep4 (pattern))))
-    else if imm13(12.. 9) = 0b0'110   then let pattern = (1 as Bits< 8> << (imm13( 8..6) + 1) - 1) <>> imm13(2..0) in rep32 (rep16 (rep8 (pattern)))
-    else if imm13(12..10) = 0b0'10    then let pattern = (1 as Bits<16> << (imm13( 9..6) + 1) - 1) <>> imm13(3..0) in rep32 (rep16 (pattern))
-    else if imm13(12..11) = 0b0'0     then let pattern = (1 as Bits<32> << (imm13(10..6) + 1) - 1) <>> imm13(4..0) in rep32 (pattern)
-    else if imm13(12    ) = 0b1       then               (1 as Bits<64> << (imm13(11..6) + 1) - 1) <>> imm13(5..0)
+    if      imm13(12.. 7) = 0b0'11110 then let pattern = ((1 as Bits< 2> << (imm13(    6) + 1)) - 1) <>> imm13(   0) in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
+    else if imm13(12.. 8) = 0b0'1110  then let pattern = ((1 as Bits< 4> << (imm13( 7..6) + 1)) - 1) <>> imm13(1..0) in rep32 (rep16 (rep8 (rep4 (pattern))))
+    else if imm13(12.. 9) = 0b0'110   then let pattern = ((1 as Bits< 8> << (imm13( 8..6) + 1)) - 1) <>> imm13(2..0) in rep32 (rep16 (rep8 (pattern)))
+    else if imm13(12..10) = 0b0'10    then let pattern = ((1 as Bits<16> << (imm13( 9..6) + 1)) - 1) <>> imm13(3..0) in rep32 (rep16 (pattern))
+    else if imm13(12..11) = 0b0'0     then let pattern = ((1 as Bits<32> << (imm13(10..6) + 1)) - 1) <>> imm13(4..0) in rep32 (pattern)
+    else if imm13(12    ) = 0b1       then               ((1 as Bits<64> << (imm13(11..6) + 1)) - 1) <>> imm13(5..0)
     else 0
 
   format LogicImmFormat: Instr =      // logic immediate format
@@ -1035,7 +1035,7 @@ instruction set architecture AArch64Base = {
   model MemoryOffsetInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
     // TODO check SP alignment
     instruction $i.id: MemoryOffFormat =
-      let addr = S(rn) + offset << AccSize::$m.accsize in $m.stmt
+      let addr = S(rn) + (offset << AccSize::$m.accsize) in $m.stmt
     $MemoryEncAsm ($i; $m; (Imm12decimal(imm12), ']') )
     }
 
@@ -1067,7 +1067,7 @@ instruction set architecture AArch64Base = {
   model MemoryRegisterBase (i: InstrNoFunct, m: Memory, option: Id, scaled: Id, asm: Ex, addr: Ex): IsaDefs = {
     // TODO check SP alignment
     instruction $i.id: MemoryRegFormat =
-      let addr = S(rn) + $addr in $m.stmt
+      let addr = S(rn) + ($addr) in $m.stmt
     encoding $i.id = { op = $i.opcode, opc = $m.opc, size = AccSize::$m.accsize, option = ExtendType::$option, scaled = Scaled::$scaled }
     assembly $i.id = ( $i.mnemo, $m.mext, ' ', $m.regsize(rt), ', [', XSizeSP(rn), ', ', $asm, ']' )
     }
