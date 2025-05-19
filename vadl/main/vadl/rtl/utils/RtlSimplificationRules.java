@@ -16,14 +16,16 @@
 
 package vadl.rtl.utils;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import vadl.rtl.ipg.nodes.OneHotDecodeNode;
 import vadl.rtl.ipg.nodes.SelectByInstructionNode;
 import vadl.types.BuiltInTable;
+import vadl.utils.BigIntUtils;
 import vadl.viam.Constant;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
@@ -32,7 +34,7 @@ import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.matching.TreeMatcher;
 import vadl.viam.matching.impl.AnyNodeMatcher;
 import vadl.viam.matching.impl.BuiltInMatcher;
-import vadl.viam.matching.impl.ConstantValueMatcher;
+import vadl.viam.matching.impl.ConstantIntegerValueMatcher;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.AdditionWithZeroSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.AndWithFalseSimplificationRule;
@@ -43,7 +45,6 @@ import vadl.viam.passes.algebraic_simplication.rules.impl.MultiplicationWithZero
 import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithFalseSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.OrWithTrueSimplificationRule;
 import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithOneSimplificationRule;
-import vadl.viam.passes.algebraic_simplication.rules.impl.RemainderWithZeroSimplificationRule;
 
 /**
  * Simplification rules for optimizations during the RTL generation.
@@ -57,7 +58,6 @@ public class RtlSimplificationRules {
     rules.add(new MultiplicationWithZeroSimplificationRule());
     rules.add(new MultiplicationWithOneSimplificationRule());
     rules.add(new DivisionWithOneSimplificationRule());
-    rules.add(new RemainderWithZeroSimplificationRule());
     rules.add(new RemainderWithOneSimplificationRule());
     rules.add(new AndWithFalseSimplificationRule());
     rules.add(new AndWithTrueSimplificationRule());
@@ -70,6 +70,8 @@ public class RtlSimplificationRules {
     rules.add(new SelectWithEqCasesSimplificationRule());
     rules.add(new SelectWithConstCondSimplificationRule());
     rules.add(new SelByInstrEqCasesSimplificationRule());
+    rules.add(new SelByInstrConstSelSimplificationRule());
+    rules.add(new OneHotConstInSimplificationRule());
   }
 
   /**
@@ -81,12 +83,11 @@ public class RtlSimplificationRules {
       if (node instanceof ExpressionNode n) {
         var matcher =
             new BuiltInMatcher(List.of(BuiltInTable.AND, BuiltInTable.ANDS),
-                List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                    Constant.Value.of(0, n.type().asDataType()))));
+                List.of(new AnyNodeMatcher(), new ConstantIntegerValueMatcher(BigInteger.ZERO)));
 
         var matchings = TreeMatcher.matches(Stream.of(node), matcher);
         if (!matchings.isEmpty()) {
-          return Optional.of(new ConstantNode(Constant.Value.of(0, n.type().asDataType())));
+          return Optional.of(Constant.Value.of(0, n.type().asDataType()).toNode());
         }
       }
       return Optional.empty();
@@ -100,11 +101,10 @@ public class RtlSimplificationRules {
     @Override
     public Optional<Node> simplify(Node node) {
       if (node instanceof ExpressionNode n) {
-        var ones = (1 << n.type().asDataType().bitWidth()) - 1;
+        var ones = BigIntUtils.mask(n.type().asDataType().bitWidth(), 0);
         var matcher =
             new BuiltInMatcher(List.of(BuiltInTable.AND, BuiltInTable.ANDS),
-                List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                    Constant.Value.of(ones, n.type().asDataType()))));
+                List.of(new AnyNodeMatcher(), new ConstantIntegerValueMatcher(ones)));
 
         var matchings = TreeMatcher.matches(Stream.of(node), matcher);
         if (!matchings.isEmpty()) {
@@ -122,15 +122,14 @@ public class RtlSimplificationRules {
     @Override
     public Optional<Node> simplify(Node node) {
       if (node instanceof ExpressionNode n) {
-        var ones = (1 << n.type().asDataType().bitWidth()) - 1;
+        var ones = BigIntUtils.mask(n.type().asDataType().bitWidth(), 0);
         var matcher =
             new BuiltInMatcher(List.of(BuiltInTable.OR, BuiltInTable.ORS),
-                List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                    Constant.Value.of(ones, n.type().asDataType()))));
+                List.of(new AnyNodeMatcher(), new ConstantIntegerValueMatcher(ones)));
 
         var matchings = TreeMatcher.matches(Stream.of(node), matcher);
         if (!matchings.isEmpty()) {
-          return Optional.of(new ConstantNode(Constant.Value.of(ones, n.type().asDataType())));
+          return Optional.of(Constant.Value.fromInteger(ones, n.type().asDataType()).toNode());
         }
       }
       return Optional.empty();
@@ -146,8 +145,7 @@ public class RtlSimplificationRules {
       if (node instanceof ExpressionNode n) {
         var matcher =
             new BuiltInMatcher(List.of(BuiltInTable.OR, BuiltInTable.ORS),
-                List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                    Constant.Value.of(0, n.type().asDataType()))));
+                List.of(new AnyNodeMatcher(), new ConstantIntegerValueMatcher(BigInteger.ZERO)));
 
         var matchings = TreeMatcher.matches(Stream.of(node), matcher);
         if (!matchings.isEmpty()) {
@@ -210,6 +208,53 @@ public class RtlSimplificationRules {
               ins.forEach(i -> n.add(i, value));
             }
           }
+        }
+      }
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Simplify select-by-instruction nodes with constant selection input.
+   */
+  public static class SelByInstrConstSelSimplificationRule implements AlgebraicSimplificationRule {
+    @Override
+    public Optional<Node> simplify(Node node) {
+      if (node instanceof SelectByInstructionNode n) {
+        var selInput = n.selection();
+        if (selInput instanceof ConstantNode c) {
+          var i = c.constant().asVal().intValue();
+          if (i >= 0 && i < n.values().size()) {
+            return Optional.of(n.values().get(i));
+          }
+        }
+      }
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Simplify one-hot-decode nodes with constant inputs.
+   */
+  public static class OneHotConstInSimplificationRule implements AlgebraicSimplificationRule {
+    @Override
+    public Optional<Node> simplify(Node node) {
+      if (node instanceof OneHotDecodeNode n) {
+        Integer sel = null;
+        for (ExpressionNode value : n.values()) {
+          if (value instanceof ConstantNode c) {
+            if (c.constant().asVal().bool()) {
+              if (sel != null) {
+                return Optional.empty(); // ignore encoding error
+              }
+              sel = n.values().indexOf(value);
+            }
+          } else {
+            return Optional.empty();
+          }
+        }
+        if (sel != null) {
+          return Optional.of(Constant.Value.of(sel, n.type().asDataType()).toNode());
         }
       }
       return Optional.empty();

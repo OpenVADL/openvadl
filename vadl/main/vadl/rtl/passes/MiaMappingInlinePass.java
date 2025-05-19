@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -35,8 +34,6 @@ import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.SubgraphUtils;
 import vadl.utils.GraphUtils;
 import vadl.utils.Pair;
-import vadl.viam.Constant;
-import vadl.viam.Identifier;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.StageOutput;
@@ -102,8 +99,8 @@ public class MiaMappingInlinePass extends Pass {
             if (originalFrom instanceof ConstantNode) {
               return null;
             }
-            if (originalFrom instanceof ExpressionNode originalExpr &&
-                copyFrom instanceof ExpressionNode copyExpr) {
+            if (originalFrom instanceof ExpressionNode originalExpr
+                && copyFrom instanceof ExpressionNode copyExpr) {
               var output = outputFor(originalExpr, stage, map);
               return new WriteStageOutputNode(output, copyExpr);
             }
@@ -209,7 +206,7 @@ public class MiaMappingInlinePass extends Pass {
     if (c2.get() instanceof ConstantNode c && c.constant().asVal().bool()) {
       return Optional.empty();
     }
-    return Optional.of(GraphUtils.or(c1.get(), c2.get()));
+    return Optional.of(GraphUtils.or(c1.get().copy(), c2.get().copy()));
   }
 
 }

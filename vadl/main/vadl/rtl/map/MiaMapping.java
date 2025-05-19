@@ -43,12 +43,19 @@ import vadl.viam.graph.dependency.SideEffectNode;
  */
 public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
 
+  private final MicroArchitecture mia;
+
   private final InstructionProgressGraph ipg;
 
   private final IdentityHashMap<Node, NodeContext> contexts = new IdentityHashMap<>();
 
-  public MiaMapping(InstructionProgressGraph ipg) {
+  public MiaMapping(MicroArchitecture mia, InstructionProgressGraph ipg) {
+    this.mia = mia;
     this.ipg = ipg;
+  }
+
+  public MicroArchitecture mia() {
+    return mia;
   }
 
   public InstructionProgressGraph ipg() {

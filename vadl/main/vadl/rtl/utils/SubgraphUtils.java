@@ -30,12 +30,35 @@ import vadl.viam.graph.Node;
  */
 public class SubgraphUtils {
 
+  /**
+   * Supplier for missing nodes (inputs or usages) during subgraph copy.
+   */
   public interface MissingSupplier {
-    @Nullable Node supply(Node originalFrom, Node originalTo, Node copyFrom);
+    /**
+     * Supplier for a missing input or usage during subgraph copy.
+     * If null is supplied for an input, a copy of the original target is kept in the destination
+     * graph. If null is supplied for a usage, the destination graph will not include this usage.
+     *
+     * @param originalFrom source node in the original graph
+     * @param originalTo target of input or usage in the original graph
+     * @param copyFrom source node in the destination graph
+     * @return node that should serve as input to/usage of copyFrom in the destination graph
+     */
+    @Nullable
+    Node supply(Node originalFrom, Node originalTo, Node copyFrom);
   }
 
+  /**
+   * Copy a subset of nodes into a destination graph.
+   *
+   * @param dest destination graph
+   * @param set subset of nodes (all from the same graph)
+   * @param missingInput supplier for input nodes missing from the set
+   * @param missingUsage supplier for usage nodes missing from the set
+   * @return map from nodes in the set to the corresponding nodes in the destination graph
+   */
   public static Map<Node, Node> copy(Graph dest, Set<Node> set, MissingSupplier missingInput,
-                          MissingSupplier missingUsage) {
+                                     MissingSupplier missingUsage) {
     var cache = new HashMap<Node, Node>();
 
     set.stream().filter(n -> n.usages().noneMatch(set::contains))
@@ -45,17 +68,17 @@ public class SubgraphUtils {
         });
 
     set.forEach(node -> {
-          node.usages().filter(u -> !set.contains(u))
-              .forEach(usage -> {
-                if (usage != null) {
-                  var newUsage = missingUsage.supply(
-                      node, usage, Objects.requireNonNull(cache.get(node)));
-                  if (newUsage != null) {
-                    dest.addWithInputs(newUsage);
-                  }
-                }
-              });
-        });
+      node.usages().filter(u -> !set.contains(u))
+          .forEach(usage -> {
+            if (usage != null) {
+              var newUsage = missingUsage.supply(
+                  node, usage, Objects.requireNonNull(cache.get(node)));
+              if (newUsage != null) {
+                dest.addWithInputs(newUsage);
+              }
+            }
+          });
+    });
 
     return cache;
   }

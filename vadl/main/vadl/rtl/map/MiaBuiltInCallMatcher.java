@@ -31,7 +31,7 @@ import vadl.viam.graph.dependency.MiaBuiltInCall;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.UnaryNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
@@ -95,7 +95,7 @@ public class MiaBuiltInCallMatcher {
     });
     MATCHERS.put(BuiltInTable.INSTRUCTION_VERIFY, (matchNode, mapNode, doneNodes) -> {
       return matchNode.usages().anyMatch(use ->
-          (use instanceof WriteRegNode writeRegNode && writeRegNode.isPcAccess()));
+          (use instanceof WriteRegTensorNode writeRegNode && writeRegNode.isPcAccess()));
     });
   }
 

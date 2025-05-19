@@ -35,11 +35,9 @@ import vadl.rtl.map.MiaMapping;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
-import vadl.viam.graph.dependency.WriteRegNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Try to merge nodes in the instruction progress graph in order to simplify it.
@@ -87,12 +85,10 @@ public class InstructionProgressGraphMergePass extends Pass {
             var ipgNodes = contextList.stream()
                 .map(MiaMapping.NodeContext::ipgNodes).flatMap(Collection::stream)
                 .collect(Collectors.toSet());
-            merge(ipg, mapping, ReadRegNode.class, ipgNodes, deleted);
-            merge(ipg, mapping, ReadRegFileNode.class, ipgNodes, deleted);
+            merge(ipg, mapping, ReadRegTensorNode.class, ipgNodes, deleted);
             merge(ipg, mapping, ReadMemNode.class, ipgNodes, deleted);
             merge(ipg, mapping, RtlReadMemNode.class, ipgNodes, deleted);
-            merge(ipg, mapping, WriteRegNode.class, ipgNodes, deleted);
-            merge(ipg, mapping, WriteRegFileNode.class, ipgNodes, deleted);
+            merge(ipg, mapping, WriteRegTensorNode.class, ipgNodes, deleted);
             merge(ipg, mapping, WriteMemNode.class, ipgNodes, deleted);
             merge(ipg, mapping, RtlWriteMemNode.class, ipgNodes, deleted);
           });

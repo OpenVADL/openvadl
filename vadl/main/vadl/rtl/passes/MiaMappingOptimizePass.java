@@ -18,7 +18,6 @@ package vadl.rtl.passes;
 
 import com.google.common.collect.Sets;
 import java.io.IOException;
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,13 +38,10 @@ import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.GraphMergeUtils;
 import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.rtl.utils.RtlSimplifier;
-import vadl.types.Type;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
-import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 
 /**
@@ -251,7 +247,7 @@ public class MiaMappingOptimizePass extends Pass {
   }
 
   private void dedupNodes(List<Stage> stages, MiaMapping mapping,
-                              InstructionProgressGraph ipg, Set<Node> removed) {
+                          InstructionProgressGraph ipg, Set<Node> removed) {
     boolean change = true;
     while (change) {
       change = false;
@@ -262,6 +258,8 @@ public class MiaMappingOptimizePass extends Pass {
           }
           var dup = ipg.findDuplicate(node);
           if (dup != null) {
+            var ins = ipg.getContext(dup).instructions();
+            ipg.getContext(node).instructions().addAll(ins);
             dup.replaceAndDelete(node);
             change = true;
             removed.add(dup);

@@ -91,7 +91,7 @@ public class MiaMappingCreationPass extends Pass {
     final var done = new IdentityHashMap<Node, Set<Node>>();
     final var writeContext = new IdentityHashMap<StageOutput, MiaMapping.NodeContext>();
     final var ipgNodes = ipg.getNodes().collect(Collectors.toUnmodifiableSet());
-    final var mapping = new MiaMapping(ipg);
+    final var mapping = new MiaMapping(optMia.get(), ipg);
 
     for (Stage stage : stages) {
       // sources, maps, sinks based on input/output types of the nodes

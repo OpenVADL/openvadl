@@ -45,8 +45,10 @@ import vadl.viam.Instruction;
 import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -87,8 +89,7 @@ public class InstructionProgressGraphNamePass extends Pass {
     }
 
     // set name hints on nodes for variable name generation
-    optIsa.get().ownRegisters().forEach(reg -> nameReadWrite(ipg, reg));
-    optIsa.get().ownRegisterFiles().forEach(rf -> nameReadWrite(ipg, rf));
+    optIsa.get().registerTensors().forEach(reg -> nameReadWrite(ipg, reg));
     optIsa.get().ownMemories().forEach(mem -> nameReadWrite(ipg, mem));
     name(ipg, ConstantNode.class, this::constName);
     names(ipg, InstructionWordSliceNode.class, this::nameInsWordSlice);
@@ -158,6 +159,19 @@ public class InstructionProgressGraphNamePass extends Pass {
     }
   }
 
+  private void name(InstructionProgressGraph ipg, NodeList<? extends Node> list,
+                    String nameHintOne, String nameHintMore) {
+    if (list.size() == 1) {
+      name(ipg, list.getFirst(), nameHintOne);
+    }
+    if (list.size() > 1) {
+      int j = 0;
+      for (Node index : list) {
+        name(ipg, index, nameHintMore + j++);
+      }
+    }
+  }
+
   private <T extends Node> void name(InstructionProgressGraph ipg, Class<T> nodeType,
                                      Function<T, String> name) {
     ipg.getNodes(nodeType).forEach(node -> {
@@ -196,9 +210,7 @@ public class InstructionProgressGraphNamePass extends Pass {
       var prefix = "read" + read.asReadNode().resourceDefinition().simpleName() + i;
       name(ipg, read.asReadNode(), prefix + "_result");
       name(ipg, read.condition(), prefix + "_enable");
-      if (read.asReadNode().hasAddress()) {
-        name(ipg, read.asReadNode().address(), prefix + "_addr");
-      }
+      name(ipg, read.asReadNode().indices(), prefix + "_addr", prefix + "_idx");
       if (read instanceof RtlReadMemNode readMem) {
         name(ipg, readMem.words(), prefix + "_words");
       }
@@ -212,9 +224,7 @@ public class InstructionProgressGraphNamePass extends Pass {
       var prefix = "write" + write.resourceDefinition().simpleName() + i;
       name(ipg, write.value(), prefix + "_value");
       name(ipg, write.condition(), prefix + "_enable");
-      if (write.hasAddress()) {
-        name(ipg, write.address(), prefix + "_addr");
-      }
+      name(ipg, write.indices(), prefix + "_addr", prefix + "_idx");
       if (write instanceof RtlWriteMemNode writeMem) {
         name(ipg, writeMem.words(), prefix + "_words");
       }

@@ -16,12 +16,14 @@
 
 package vadl.rtl.passes;
 
+import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,8 +36,7 @@ import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.ipg.nodes.InstructionWordSliceNode;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
-import vadl.rtl.ipg.nodes.RtlReadRegFileNode;
-import vadl.rtl.ipg.nodes.RtlReadRegNode;
+import vadl.rtl.ipg.nodes.RtlReadRegTensorNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
 import vadl.rtl.utils.GraphMergeUtils;
 import vadl.rtl.utils.RtlSimplificationRules;
@@ -45,9 +46,10 @@ import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
-import vadl.viam.RegisterFile;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
 import vadl.viam.graph.control.AbstractEndNode;
 import vadl.viam.graph.control.ControlNode;
@@ -59,12 +61,11 @@ import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadMemNode;
-import vadl.viam.graph.dependency.ReadRegFileNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.WriteMemNode;
-import vadl.viam.graph.dependency.WriteRegFileNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplifier;
@@ -206,24 +207,14 @@ public class InstructionProgressGraphCreationPass extends Pass {
   }
 
   private void adaptReadWriteNodes(InstructionSetArchitecture isa, InstructionProgressGraph ipg) {
-    // replace register reads
-    isa.ownRegisters().forEach(reg -> {
-      ipg.getNodes(ReadRegNode.class)
+    // replace register tensor reads
+    isa.registerTensors().forEach(reg -> {
+      ipg.getNodes(ReadRegTensorNode.class)
           .filter(read -> read.resourceDefinition().equals(reg))
           .toList().forEach(read -> {
-            ipg.replaceAndDelete(read, new RtlReadRegNode(reg, read.type(),
-                GraphUtils.bool(true).toNode()));
-          });
-    });
-
-    // replace register file reads
-    isa.ownRegisterFiles().forEach(regFile -> {
-      ipg.getNodes(ReadRegFileNode.class)
-          .filter(read -> read.resourceDefinition().equals(regFile))
-          .toList().forEach(read -> {
-            ipg.replaceAndDelete(read,
-                new RtlReadRegFileNode(regFile, read.address(), read.type(),
-                    GraphUtils.bool(true).toNode()));
+            ipg.replaceAndDelete(read, new RtlReadRegTensorNode(reg, read.indices(),
+                read.type().asDataType().toBitsType(), GraphUtils.bool(true).toNode(),
+                read.staticCounterAccess()));
           });
     });
 
@@ -320,20 +311,26 @@ public class InstructionProgressGraphCreationPass extends Pass {
   }
 
   private void inlineRegisterFileConstraints(InstructionProgressGraph ipg) {
-    ipg.getNodes(RtlReadRegFileNode.class).toList().forEach(read -> {
+    ipg.getNodes(RtlReadRegTensorNode.class).toList().forEach(read -> {
       ExpressionNode result = read;
       ExpressionNode cond = read.condition();
-      for (RegisterFile.Constraint constraint : read.registerFile().constraints()) {
-        var constant = new ConstantNode(constraint.address());
-        var neq = GraphUtils.neq(read.address(), constant);
-        result = GraphUtils.select(neq, result, new ConstantNode(constraint.value()));
+      for (RegisterTensor.Constraint constraint : read.registerTensor().constraints()) {
+        if (constraint.indices().isEmpty()) {
+          continue;
+        }
+
+        // node for: one of the indices does not match the constraint
+        var neq = newIndicesNeq(read.indices(), constraint.indices());
+
+        // patch result and condition
+        result = GraphUtils.select(neq, result, constraint.value().toNode());
         if (cond == null) {
           cond = neq;
         } else {
           cond = GraphUtils.and(cond, neq);
         }
       }
-      if (cond != null) {
+      if (cond != null && !cond.isActive()) {
         cond = ipg.addWithInputs(cond, ipg.getContext(read).instructions());
       }
       if (result != read) {
@@ -343,13 +340,17 @@ public class InstructionProgressGraphCreationPass extends Pass {
         read.setCondition(cond);
       }
     });
-    ipg.getNodes(WriteRegFileNode.class).toList().forEach(write -> {
+    ipg.getNodes(WriteRegTensorNode.class).toList().forEach(write -> {
       var instructions = ipg.getContext(write).instructions();
       var cond = write.condition();
-      for (RegisterFile.Constraint constraint : write.registerFile().constraints()) {
+      for (RegisterTensor.Constraint constraint : write.registerTensor().constraints()) {
+        if (constraint.indices().isEmpty()) {
+          continue;
+        }
+
         cond = GraphUtils.and(
             cond,
-            GraphUtils.neq(write.address(), new ConstantNode(constraint.address()))
+            newIndicesNeq(write.indices(), constraint.indices())
         );
       }
       if (cond != write.condition()) {
@@ -357,5 +358,14 @@ public class InstructionProgressGraphCreationPass extends Pass {
         write.setCondition(cond);
       }
     });
+  }
+
+  private ExpressionNode newIndicesNeq(NodeList<ExpressionNode> indices,
+                               List<Constant.Value> constrValues) {
+    return Streams.zip(
+            indices.stream(), constrValues.stream(),
+            (index, constr) -> GraphUtils.neq(index, constr.toNode())
+        )
+        .reduce(GraphUtils::or).orElseThrow();
   }
 }

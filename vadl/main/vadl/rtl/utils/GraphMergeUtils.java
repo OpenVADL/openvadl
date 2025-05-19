@@ -93,7 +93,7 @@ public class GraphMergeUtils {
     if (t1 instanceof DataType d1 && t2 instanceof DataType d2) {
       var b1 = d1.toBitsType();
       var b2 = d2.toBitsType();
-      if (b1 == b2) {
+      if (b1.equals(b2)) {
         if (b1.bitWidth() == 1) {
           return Type.bool();
         }

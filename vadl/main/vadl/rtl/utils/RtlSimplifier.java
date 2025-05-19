@@ -19,15 +19,38 @@ package vadl.rtl.utils;
 import java.util.List;
 import vadl.rtl.ipg.InstructionProgressGraph;
 import vadl.rtl.map.MiaMapping;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplifier;
 import vadl.viam.passes.algebraic_simplication.rules.AlgebraicSimplificationRule;
+import vadl.viam.passes.canonicalization.Canonicalizer;
 
+/**
+ * Simplifier for RTL generation, extending the {@link AlgebraicSimplifier}.
+ *
+ * <p>The simplifier applies the simplification rules in a loop with the following steps:
+ * <li>Canonicalization
+ * <li>Apply simplification rules
+ * <li>Deduplicate nodes (some RTL simplification rules can introduce duplicates)
+ */
 public class RtlSimplifier extends AlgebraicSimplifier {
 
   public RtlSimplifier(List<AlgebraicSimplificationRule> rules) {
     super(rules);
+  }
+
+  @Override
+  public int run(Graph graph) {
+    var changes = 1;
+    var total = 0;
+    while (changes > 0) {
+      Canonicalizer.canonicalize(graph);
+      changes = super.run(graph);
+      changes += dedupNodes(graph);
+      total += changes;
+    }
+    return total;
   }
 
   /**
@@ -38,7 +61,7 @@ public class RtlSimplifier extends AlgebraicSimplifier {
    * @param mapping MiA mapping
    */
   public void run(InstructionProgressGraph ipg, MiaMapping mapping) {
-    super.run(ipg);
+    run(ipg);
 
     // clean up mapping (deleted nodes, mapping of constant nodes)
     for (MiaMapping.NodeContext context : mapping.contexts().values()) {
@@ -57,5 +80,25 @@ public class RtlSimplifier extends AlgebraicSimplifier {
         }
       });
     }
+  }
+
+  private int dedupNodes(Graph graph) {
+    var changes = 1;
+    var total = 0;
+    while (changes > 0) {
+      changes = 0;
+      for (Node node : graph.getNodes().toList()) {
+        if (node.isDeleted() || node.inputs().findAny().isEmpty()) {
+          continue;
+        }
+        var dup = graph.findDuplicate(node);
+        if (dup != null) {
+          dup.replaceAndDelete(node);
+          changes++;
+        }
+      }
+      total += changes;
+    }
+    return total;
   }
 }

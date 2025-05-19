@@ -21,32 +21,37 @@ import javax.annotation.Nullable;
 import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.viam.Register;
+import vadl.viam.Counter;
+import vadl.viam.RegisterTensor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.ReadRegNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 
 /**
- * Represents a read from a register on RTL. Compared to
- * {@link vadl.viam.graph.dependency.ReadRegFileNode} this node has an additional condition input.
+ * Represents a read from a register tensor on RTL. Compared to
+ * {@link vadl.viam.graph.dependency.ReadRegTensorNode} this node has an additional condition input.
  */
-public class RtlReadRegNode extends ReadRegNode implements RtlConditionalReadNode {
+public class RtlReadRegTensorNode extends ReadRegTensorNode implements RtlConditionalReadNode {
 
   @Input
   @Nullable
   protected ExpressionNode condition;
 
   /**
-   * Reads a value from a register.
+   * Constructs the node, which represents a read from a register tensor at some specific indices.
    *
-   * @param register            the register to read from
-   * @param type                the data type of the value to be read
+   * @param regTensor           register to be read
+   * @param indices             indices to accessed certain dimension
+   * @param type                the type this node should be result in
    * @param condition           the read condition
    */
-  public RtlReadRegNode(Register register, DataType type, @Nullable ExpressionNode condition) {
-    super(register, type, null);
+  public RtlReadRegTensorNode(RegisterTensor regTensor, NodeList<ExpressionNode> indices,
+                              DataType type, @Nullable ExpressionNode condition,
+                              @Nullable Counter staticCounterAccess) {
+    super(regTensor, indices, type, staticCounterAccess);
     this.condition = condition;
   }
 
@@ -82,13 +87,15 @@ public class RtlReadRegNode extends ReadRegNode implements RtlConditionalReadNod
   }
 
   @Override
-  public ExpressionNode copy() {
-    return new RtlReadRegNode(register, type(), (condition == null) ? null : condition.copy());
+  public ReadRegTensorNode copy() {
+    return new RtlReadRegTensorNode(regTensor(), indices().copy(), type(),
+        (condition == null) ? null : condition.copy(), staticCounterAccess());
   }
 
   @Override
-  public Node shallowCopy() {
-    return new RtlReadRegNode(register, type(), condition);
+  public ReadRegTensorNode shallowCopy() {
+    return new RtlReadRegTensorNode(regTensor(), indices(), type(), condition,
+        staticCounterAccess());
   }
 
   @Override

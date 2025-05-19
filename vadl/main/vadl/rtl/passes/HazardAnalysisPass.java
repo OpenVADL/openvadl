@@ -31,7 +31,9 @@ import vadl.viam.Resource;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
+import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
 
@@ -62,8 +64,7 @@ public class HazardAnalysisPass extends Pass {
     }
 
     var resources = new ArrayList<Resource>();
-    resources.addAll(optIsa.get().ownRegisters());
-    resources.addAll(optIsa.get().ownRegisterFiles());
+    resources.addAll(optIsa.get().registerTensors());
     resources.addAll(optIsa.get().ownMemories());
 
     var ipg = optIsa.get().expectExtension(InstructionProgressGraphExtension.class).ipg();
@@ -76,7 +77,7 @@ public class HazardAnalysisPass extends Pass {
           .map(read -> new HazardAnalysis.ReadAnalysis(
               read, stage(mapping, read),
               condition(mapping, read),
-              read.hasAddress() ? stage(mapping, read.address()) : null
+              stage(mapping, read.indices())
           ))
           .collect(Collectors.toSet());
       var writes = ipg.getNodes(WriteResourceNode.class)
@@ -84,7 +85,7 @@ public class HazardAnalysisPass extends Pass {
           .map(write -> new HazardAnalysis.WriteAnalysis(
               write, stage(mapping, write),
               condition(mapping, write),
-              write.hasAddress() ? stage(mapping, write.address()) : null,
+              stage(mapping, write.indices()),
               stage(mapping, write.value())
           ))
           .collect(Collectors.toSet());
@@ -112,6 +113,17 @@ public class HazardAnalysisPass extends Pass {
       throw new ViamGraphError("Unmapped node during resource hazard analysis");
     }
     return mapping.ensureContext(node).stage();
+  }
+
+  @Nullable
+  private Stage stage(MiaMapping mapping, NodeList<ExpressionNode> list) {
+    if (list.isEmpty()) {
+      return null;
+    }
+    var stages = list.stream().map(node -> mapping.ensureContext(node).stage())
+        .collect(Collectors.toSet());
+    return mapping.mia().stages().reversed().stream().filter(stages::contains).findFirst()
+        .orElse(null); // get last stage for nodes in list
   }
 
 }
