@@ -1,7 +1,7 @@
 # RISC-V Toolchain Image
 
-This dockerfile provides the instructions to build an ubuntu docker image with the [RISC-V
-GNU toolchain]() installed.
+This dockerfile provides the instructions to build an ubuntu docker image with the [Aarch64
+gnu toolchain]() installed.
 
 The RISC-V GNU toolchain is pretty large and takes some time to build.
 Thus is it very time-consuming to build a multi-platform image on one machine
@@ -40,15 +40,15 @@ Copy both hashes and place paste them as argument to this command
 
 ```bash
 docker buildx imagetools create \
-    -t <username>/riscv-toolchain:<version-tag> \
-    <username>/riscv-toolchain@<sha256-hash-machine-1> \
-    <username>/riscv-toolchain@<sha256-hash-machine-2>
+    -t <username>/aarch64-toolchain:<version-tag> \
+    <username>/aarch64-toolchain@<sha256-hash-machine-1> \
+    <username>/aarch64-toolchain@<sha256-hash-machine-2>
 ```
 
 Now you can inspect the image build using
 
 ```bash
-docker buildx imagetools inspect <username>/riscv-toolchain:<version-tag>
+docker buildx imagetools inspect <username>/aarch64-toolchain:<version-tag>
 ```
 
 It is also available on the container repository now.
