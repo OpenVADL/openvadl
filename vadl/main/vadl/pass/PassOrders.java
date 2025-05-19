@@ -123,6 +123,25 @@ import vadl.viam.passes.verification.ViamVerificationPass;
 public class PassOrders {
 
   /**
+   * Used by the {@code check} command.
+   * It doesn't apply transformation to the VIAM, however, it checks if the VDT can be constructed.
+   */
+  public static PassOrder check(GeneralConfiguration configuration) {
+    var order = new PassOrder();
+    order.add(new ViamCreationPass(configuration));
+
+    addHtmlDump(order, configuration, "VIAM Creation",
+        "Dump directly after frontend generated VIAM.");
+
+    order.add(new ViamVerificationPass(configuration));
+
+    // check if VDT can be constructed
+    addDecodePasses(order, configuration);
+
+    return order;
+  }
+
+  /**
    * Return the viam passes.
    */
   public static PassOrder viam(GeneralConfiguration configuration) throws IOException {
@@ -131,15 +150,6 @@ public class PassOrders {
     // this is just a pseudo pass to add the behavior to the HTML dump
     // at the stage directly after the VIAM creation.
     order.add(new ViamCreationPass(configuration));
-
-    if (configuration.getClass() == GeneralConfiguration.class) {
-      // only emit this dump if it is no specialized configuration (e.g. check)
-      // this avoids unnecessary (long) dumps when generating the ISS or LCB
-      // which have their own dumps at a later point.
-      addHtmlDump(order, configuration, "VIAM Creation",
-          "Dump directly after frontend generated VIAM.");
-    }
-
     order.add(new ViamVerificationPass(configuration));
 
     order.add(new StatusBuiltInInlinePass(configuration));
@@ -511,7 +521,7 @@ public class PassOrders {
    * @param order  into which the passes will be inserted.
    * @param config from which to decide if a dump is wanted.
    */
-  private static void addDecodePasses(PassOrder order, IssConfiguration config) {
+  private static void addDecodePasses(PassOrder order, GeneralConfiguration config) {
 
     // VDT Decode Passes
     order.add(new VdtLoweringPass(config));
