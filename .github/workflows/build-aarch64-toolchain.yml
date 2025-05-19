@@ -1,0 +1,38 @@
+name: Build Aarch64 GNU Toolchain Image
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-image-build.yml
+    strategy:
+      matrix:
+        target:
+          - platform: linux/arm64
+            runner: self-hosted-arm64
+          - platform: linux/amd64
+            runner: self-hosted-x64
+    secrets:
+      X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
+    with:
+      image: ghcr.io/openvadl/aarch64-toolchain
+      context: docker/iss/aarch64-toolchain
+      platform: ${{ matrix.target.platform }}
+      runner: ${{ matrix.target.runner }}
+      tags: |
+        latest
+
+  merge:
+    needs: build
+    uses: ./.github/workflows/reusable-image-merge.yml
+    secrets:
+      X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
+    with:
+      image: ghcr.io/openvadl/aarch64-toolchain
+      tags: |
+        latest
