@@ -809,7 +809,7 @@ public class BuiltInTable {
    * {@code function rol ( a : Bits<N>, b : UInt<M> ) ->Bits<N> }
    */
   public static final BuiltIn ROL =
-      func("VADL::rol", Type.relation(BitsType.class, UIntType.class, BitsType.class))
+      func("VADL::rol", "<<>", Type.relation(BitsType.class, UIntType.class, BitsType.class))
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
           .build();
@@ -841,7 +841,7 @@ public class BuiltInTable {
    * {@code function ror ( a : Bits<N>, b : UInt<M> ) -> Bits<N> }
    */
   public static final BuiltIn ROR =
-      func("VADL::ror", Type.relation(BitsType.class, UIntType.class, BitsType.class))
+      func("VADL::ror", "<>>", Type.relation(BitsType.class, UIntType.class, BitsType.class))
           .takesDefault()
           .returnsFirstBitWidth(BitsType.class)
           .build();

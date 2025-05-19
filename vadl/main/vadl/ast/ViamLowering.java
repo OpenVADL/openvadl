@@ -19,6 +19,7 @@ package vadl.ast;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
+import static vadl.error.Diagnostic.warning;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
@@ -27,6 +28,7 @@ import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.error.DeferredDiagnosticStore;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 import vadl.types.BitsType;
@@ -128,6 +131,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * @return the viam specification.
    * @throws Diagnostic if something goes wrong.
    */
+  @SuppressWarnings("VariableDeclarationUsageDistance")
   public Specification generate(Ast ast) {
     var startTime = System.nanoTime();
     var spec = new Specification(
@@ -140,6 +144,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .flatMap(Optional::stream)
         .collect(Collectors.toList()));
 
+    if (spec.isa().isEmpty()) {
+      // no ISA was fetched by some generator entry definition (such as processor)
+      // so we try to find some concrete ISA we can lower
+      var isa = findLeafIsa(ast);
+      if (isa != null) {
+        spec.add(isa);
+      }
+    }
+
     ast.passTimings.add(
         new Ast.PassTimings("Lowering to VIAM", (System.nanoTime() - startTime) / 1_000_000));
 
@@ -148,6 +161,51 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     }
 
     return spec;
+  }
+
+  /**
+   * Finds the ISA not extended by some other ISA.
+   * This is used to determine an ISA to lower when using the check command and no
+   * generator entry definition (such as {@code processor} for the ISS) is defined in the
+   * specification.
+   * If there are multiple leaf ISAs, it will return null.
+   */
+  private @Nullable InstructionSetArchitecture findLeafIsa(Ast ast) {
+    // Extract all InstructionSetDefinitions from the AST
+    var isas = ast.definitions.stream()
+        .filter(d -> d instanceof InstructionSetDefinition)
+        .map(d -> (InstructionSetDefinition) d)
+        .toList();
+
+    // Collect all ISAs that others extend
+    Set<InstructionSetDefinition> extended = new HashSet<>();
+    for (var isa : isas) {
+      extended.addAll(isa.extendingNodes());
+    }
+
+    // Identify ISAs that are not extended by any other ISA
+    List<InstructionSetDefinition> mostSpecialized = isas.stream()
+        .filter(isa -> !extended.contains(isa))
+        .toList();
+
+    // If there's only one most specialized ISA, return it
+    if (mostSpecialized.size() == 1) {
+      return visitIsa(mergeIsa(mostSpecialized.getFirst()));
+    }
+
+    if (mostSpecialized.size() > 1) {
+      var first = mostSpecialized.getFirst();
+      var warning = warning("Multiple potential root ISAs found", first.identifier)
+          .description(
+              "If there are multiple root ISA definitions, no ISA can be lowered to VIAM.");
+      for (var isa : mostSpecialized) {
+        warning.locationNote(isa.identifier, "This is one of the found root ISAs");
+      }
+      DeferredDiagnosticStore.add(warning);
+    }
+
+    // If multiple or none are found, return null
+    return null;
   }
 
   /**

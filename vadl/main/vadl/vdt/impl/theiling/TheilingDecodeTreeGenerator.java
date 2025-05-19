@@ -193,9 +193,6 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
    * @param instructions the instructions to validate
    */
   private void validate(Collection<Instruction> instructions) {
-    if (instructions == null) {
-      throw new IllegalArgumentException("Instructions cannot be null");
-    }
     if (instructions.isEmpty()) {
       throw new IllegalArgumentException("Instructions cannot be empty");
     }
@@ -203,11 +200,6 @@ public class TheilingDecodeTreeGenerator implements DecodeTreeGenerator<Instruct
     final int expectedWidth = instructions.iterator().next().width();
 
     for (Instruction instruction : instructions) {
-
-      if (instruction.pattern() == null) {
-        throw new IllegalArgumentException("Instruction fixed bit pattern cannot be null");
-      }
-
       if (instruction.width() <= 0) {
         throw new IllegalArgumentException("Instruction width must be greater than 0");
       }
