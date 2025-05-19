@@ -22,14 +22,12 @@ import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
-import vadl.viam.Function;
 import vadl.utils.ViamUtils;
 import vadl.viam.DefProp;
 import vadl.viam.Function;
@@ -104,10 +102,17 @@ public class FunctionInlinerPass extends Pass {
         .filter(funcCallNode -> !(funcCallNode.function() instanceof Relocation))
         .toList();
 
+    if (functionCalls.isEmpty()) {
+      return;
+    }
+
     functionCalls.forEach(functionCall -> {
       // replace the function call by a copy of the return value of the function
       functionCall.replaceAndDelete(inline(functionCall.function(), functionCall.arguments()));
     });
+
+    // do it again until there are no more function calls
+    inline(behavior);
   }
 
 
