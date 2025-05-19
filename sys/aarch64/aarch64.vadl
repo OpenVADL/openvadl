@@ -1077,14 +1077,14 @@ instruction set architecture AArch64Base = {
     }
 
   model MemoryRegisterInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
-    $MemoryRegisterXtd ($i; $m; UXTW; Un; (WSize(rm), ", uxtw"   ); X(rm) as UIntW as BitsX)
-    $MemoryRegisterXtd ($i; $m; UXTW; Is; (WSize(rm), ", uxtw #2"); X(rm) as UIntW as BitsX << 2)
-    $MemoryRegisterXtd ($i; $m; UXTX; Un; (XSize(rm)             ); X(rm))
-    $MemoryRegisterXtd ($i; $m; UXTX; Is; (XSize(rm), ", lsl #3" ); X(rm) << 3)
-    $MemoryRegisterXtd ($i; $m; SXTW; Un; (WSize(rm), ", sxtw"   ); X(rm) as SIntW as BitsX)
-    $MemoryRegisterXtd ($i; $m; SXTW; Is; (WSize(rm), ", sxtw #2"); X(rm) as SIntW as BitsX << 2)
-    $MemoryRegisterXtd ($i; $m; SXTX; Un; (XSize(rm), ", sxtx"   ); X(rm))
-    $MemoryRegisterXtd ($i; $m; SXTX; Is; (XSize(rm), ", sxtx #3"); X(rm) << 3)
+    $MemoryRegisterXtd ($i; $m; UXTW; Un; (WSize(rm), ", uxtw"   );               X(rm) as UIntW as BitsX)
+    $MemoryRegisterXtd ($i; $m; UXTW; Is; (WSize(rm), ", uxtw #", decimal(size)); X(rm) as UIntW as BitsX << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; UXTX; Un; (XSize(rm)             );               X(rm))
+    $MemoryRegisterXtd ($i; $m; UXTX; Is; (XSize(rm), ", lsl #", decimal(size) ); X(rm) << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; SXTW; Un; (WSize(rm), ", sxtw"   );               X(rm) as SIntW as BitsX)
+    $MemoryRegisterXtd ($i; $m; SXTW; Is; (WSize(rm), ", sxtw #", decimal(size)); X(rm) as SIntW as BitsX << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; SXTX; Un; (XSize(rm), ", sxtx"   );               X(rm))
+    $MemoryRegisterXtd ($i; $m; SXTX; Is; (XSize(rm), ", sxtx #", decimal(size)); X(rm) << AccSize::$m.accsize)
     }
 
 // memory literal model ********************************************************
