@@ -866,7 +866,16 @@ public abstract class Node implements WithLocation {
   @Contract("_, _ -> fail")
   public final void fail(@FormatString String format,
                          @Nullable Object... args) {
-    throw new ViamGraphError(format, args)
+    throw error(format, args);
+  }
+
+  /**
+   * Returns an {@link vadl.viam.ViamError} with the context of this node.
+   */
+  @FormatMethod
+  public final ViamGraphError error(@FormatString String format,
+                                    @Nullable Object... args) {
+    return (ViamGraphError) new ViamGraphError(format, args)
         .addContext(this)
         .addContext(this.graph)
         .shrinkStacktrace(1);

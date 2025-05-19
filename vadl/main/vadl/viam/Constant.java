@@ -229,7 +229,7 @@ public abstract class Constant {
     }
 
     public boolean bool() {
-      ensure(type() instanceof BoolType, "constant must be of bool type");
+      ensure(type().isTrivialCastTo(Type.bool()), "constant must be of bool type");
       return this.value.bitLength() != 0;
     }
 
@@ -644,6 +644,28 @@ public abstract class Constant {
     }
 
     /**
+     * Performs a rotation right of this constant value by the specified amount
+     * of the other value (which must be an unsigned integer).
+     * The resulting type is the same as this type, the result is truncated on overflow.
+     */
+    public Constant.Value ror(Constant.Value other) {
+      int width = type().bitWidth();
+      int amt = other.intValue() % width;
+      if (amt == 0) {
+        return this;                  // nothing to do
+      }
+
+      BigInteger mask = BigInteger.ONE.shiftLeft(width).subtract(BigInteger.ONE); // width-bit mask
+
+      BigInteger rotated =
+          value.shiftRight(amt)                     // lower part
+              .or(value.shiftLeft(width - amt))    // wrapped-around part
+              .and(mask);                          // truncate to <width> bits
+
+      return fromTwosComplement(rotated, type());
+    }
+
+    /**
      * Truncates this value to the width of the newType argument.
      * The newType must have the same type class as this type and its with must be
      * less or equal to this constant's width.
@@ -675,6 +697,40 @@ public abstract class Constant {
           result.lsl(Constant.Value.fromInteger(BigInteger.valueOf(other.type().bitWidth()), type));
       result = result.or(Constant.Value.fromInteger(other.integer(), type));
       return result;
+    }
+
+
+    /**
+     * Extract a sub-value by copying the bits addressed by {@code slice}
+     * into a new {@link Constant.Value}.
+     *
+     * <p>Bits are taken from this value in the order delivered by
+     * {@code slice.stream()} and packed densely, so the first index in the
+     * slice becomes bit msb of the result, the second index becomes bit msb-1, and
+     * so on. The resulting value is therefore {@code slice.bitSize()} bits wide
+     * and is always interpreted as an <em>unsigned</em> (two’s-complement) integer.
+     *
+     * @param slice Bit positions to copy. All indices must satisfy
+     *              {@code 0 <= index < type().bitWidth()}.
+     * @return A new constant whose width equals {@code slice.bitSize()} and
+     *     whose bit <i>i</i> equals this value’s bit at the
+     *     <i>i</i>-th position of {@code slice}.
+     */
+    public Constant.Value slice(BitSlice slice) {
+      ensure(slice.msb() < type().bitWidth(), "Slice accesses out of value width (msb >= width)");
+      var result = BigInteger.ZERO;
+      // reversed index positions, e.g. (4, 1..3) -> 3,2,1,4
+      var idxPos = slice.stream().boxed().toList().reversed();
+      var i = 0;
+      for (var pos : idxPos) {
+        // build the result from 0 to slice.size - 1
+        if (value.testBit(pos)) {
+          // if the value has 1 at pos, then we set the bit in the result
+          result = result.setBit(i);
+        }
+      }
+
+      return fromTwosComplement(result, Type.bits(slice.bitSize()));
     }
 
 
@@ -740,11 +796,11 @@ public abstract class Constant {
       return fromTwosComplement(result, type);
     }
 
-    public Constant.Value zero(DataType type) {
+    public static Constant.Value zero(DataType type) {
       return fromInteger(BigInteger.ZERO, type);
     }
 
-    public Constant.Value one(DataType type) {
+    public static Constant.Value one(DataType type) {
       return fromInteger(BigInteger.ONE, type);
     }
 

@@ -845,6 +845,7 @@ public class BuiltInTable {
   public static final BuiltIn ROR =
       func("VADL::ror", "<>>", Type.relation(BitsType.class, UIntType.class, BitsType.class))
           .takesDefault()
+          .compute(Constant.Value::ror)
           .returnsFirstBitWidth(BitsType.class)
           .build();
 
@@ -1041,6 +1042,7 @@ public class BuiltInTable {
           Type.relation(BitsType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
+          .computeUnary(a -> new Constant.Str(a.asVal().decimal()))
           .build();
 
   /**
@@ -1309,7 +1311,7 @@ public class BuiltInTable {
       INSTRUCTION_COMPUTE
   );
 
-  public static final HashSet<BuiltIn> commutative = new HashSet<>(List.of(
+  public static final HashSet<BuiltIn> COMMUTATIVE = new HashSet<>(List.of(
       // ARITHMETIC
       ADD,
       ADDS,
@@ -1339,6 +1341,13 @@ public class BuiltInTable {
       EQU,
       NEQ
   ));
+
+  // built-ins that are not pure, so they depend on an outer context, which makes them magical.
+  public static final HashSet<BuiltIn> MAGIC_BUILT_IN = new HashSet<>(List.of(
+      REGISTER,
+      MNEMONIC
+  ));
+
 
   public static Set<BuiltIn> ASM_PARSER_BUILT_INS =
       Collections.newSetFromMap(new IdentityHashMap<>());
