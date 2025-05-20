@@ -1,7 +1,6 @@
-FROM ghcr.io/openvadl/aarch64-toolchain@sha256:1989ceedbf2c4ffb0b274ace03e3211f88bf1c24f9da462e22a990ed1617ed5e as aarch64
-FROM ghcr.io/openvadl/riscv-toolchain:medany-rv32i-rv32im-rv32impriv-rv64i-rv64im-rv64impriv as riscv
+FROM ghcr.io/openvadl/merged-toolchain@sha256:346078ff2c7aea66a52cf563f6b09f0f02ec9e1f96ed52fec20d17077f1a3792 AS toolchains
 
-FROM ubuntu:22.04 AS build
+FROM ubuntu:22.04 AS base
 
 ARG QEMU_VERSION="9.2.2"
 ENV QEMU_RELEASE="https://github.com/qemu/qemu/archive/refs/tags/v$QEMU_VERSION.tar.gz"
@@ -48,12 +47,26 @@ RUN set -ex; \
     curl -L https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-$SUFFIX.tar.gz \
     | tar -xz -C /opt/sccache --strip-components=1
 
+FROM base AS build
 WORKDIR /qemu/build
 RUN ../configure --target-list=riscv64-softmmu,aarch64-softmmu
 RUN make -j $(nproc)
 RUN make install
 
-FROM ubuntu:22.04 AS final
+# The LCB Test Base image, which contains the QEMU binaries, toolchains and sccache
+FROM ubuntu:22.04 AS lcb-test-base
 COPY --from=build /usr/local/bin/ /usr/local/bin
-COPY --from=riscv /opt/riscv /opt/riscv
-COPY --from=aarch64 /opt/aarch64 /opt/aarch64
+COPY --from=build /opt/sccache /opt/sccache
+COPY --from=toolchains /opt/riscv /opt/riscv
+COPY --from=toolchains /opt/aarch64 /opt/aarch64
+
+# Add toolchains to PATH
+ENV PATH=/opt/riscv/bin:/opt/aarch64/bin:/opt/sccache:$PATH
+
+# The QEMU ISS Test Base image, which contains the QEMU source code, toolchains and sccache
+FROM base AS iss-test-base
+COPY --from=toolchains /opt/riscv /opt/riscv
+COPY --from=toolchains /opt/aarch64 /opt/aarch64
+
+# Add toolchains to PATH
+ENV PATH=/opt/riscv/bin:/opt/aarch64/bin:$PATH
