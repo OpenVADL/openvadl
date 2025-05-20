@@ -37,9 +37,8 @@ public class GcbAccessOrExtractionFunctionCodeGenerator extends AccessFunctionCo
    */
   public GcbAccessOrExtractionFunctionCodeGenerator(GcbCppFunctionForFieldAccess accessFunction,
                                                     Format.FieldAccess fieldAccess,
-                                                    String functionName,
-                                                    String fieldName) {
-    super(accessFunction, fieldAccess, functionName, fieldName);
+                                                    String functionName) {
+    super(accessFunction, fieldAccess, functionName);
   }
 
   /**
@@ -48,9 +47,8 @@ public class GcbAccessOrExtractionFunctionCodeGenerator extends AccessFunctionCo
   public GcbAccessOrExtractionFunctionCodeGenerator(
       GcbImmediateExtractionCppFunction extractionFunction,
       Format.FieldAccess fieldAccess,
-      String functionName,
-      String fieldName) {
-    super(extractionFunction, fieldAccess, functionName, fieldName);
+      String functionName) {
+    super(extractionFunction, fieldAccess, functionName);
   }
 
   @Override
