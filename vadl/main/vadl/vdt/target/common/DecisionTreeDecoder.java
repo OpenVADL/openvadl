@@ -16,14 +16,17 @@
 
 package vadl.vdt.target.common;
 
+import java.nio.ByteOrder;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
+import vadl.vdt.target.common.dto.DecodedInstruction;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
+import vadl.viam.Constant.Value;
 
 /**
  * A decoder that uses the in-memory decision tree to decode instructions. Useful for testing and
@@ -41,6 +44,19 @@ public class DecisionTreeDecoder implements Visitor<Instruction> {
   public Instruction decide(BitVector insn) {
     this.encoding = insn;
     return Objects.requireNonNull(decisionTree.accept(this));
+  }
+
+  /**
+   * Decode an instruction in *big endian* byte order. The decision tree currently also assumes
+   * big endian encoding, thus it's not configurable (yet).
+   *
+   * @param encoding The encoded instruction
+   * @return The decoded instruction.
+   */
+  public DecodedInstruction decode(Value encoding) {
+    this.encoding = BitVector.fromValue(encoding.integer(), encoding.type().bitWidth());
+    var insn = Objects.requireNonNull(decisionTree.accept(this));
+    return new DecodedInstruction(insn, encoding.integer(), ByteOrder.BIG_ENDIAN);
   }
 
   @Override
