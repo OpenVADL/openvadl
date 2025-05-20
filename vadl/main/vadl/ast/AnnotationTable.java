@@ -162,6 +162,9 @@ class AnnotationTable {
     return annotation;
   }
 
+  static List<String> availableAnnotationNames(Class<? extends Definition> klass) {
+    return annotationFactories.getOrDefault(klass, Map.of()).keySet().stream().toList();
+  }
 
   /**
    * Groups annotations from the provided definition into a map where the key is
