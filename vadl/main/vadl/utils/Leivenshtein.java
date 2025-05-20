@@ -17,6 +17,7 @@
 package vadl.utils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -43,7 +44,7 @@ public class Leivenshtein {
    * @return a sorted list of ranked pairs consisting of each string from the dictionary and its
    *     corresponding edit distance to the target
    */
-  public static List<Pair<String, Integer>> rank(String target, List<String> dictionary,
+  public static List<Pair<String, Integer>> rank(String target, Collection<String> dictionary,
                                                  @Nullable Integer maxSolutions,
                                                  @Nullable Double maxChange) {
 
@@ -128,7 +129,7 @@ public class Leivenshtein {
    * @param dictionary the list of strings to be sorted
    * @return a sorted list of strings
    */
-  public static List<String> sortAll(String target, List<String> dictionary) {
+  public static List<String> sortAll(String target, Collection<String> dictionary) {
     return rank(target, dictionary, null, null).stream().map(Pair::left).toList();
   }
 
@@ -146,7 +147,7 @@ public class Leivenshtein {
    * @param dictionary of all available options.
    * @return a sorted list to be provided as suggestions.
    */
-  public static List<String> suggestions(String target, List<String> dictionary) {
+  public static List<String> suggestions(String target, Collection<String> dictionary) {
     return rank(target, dictionary, 6, 0.5).stream().map(Pair::left).toList();
   }
 }

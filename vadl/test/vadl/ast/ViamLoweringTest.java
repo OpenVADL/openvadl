@@ -64,7 +64,7 @@ public class ViamLoweringTest {
         """;
     var throwable = Assertions.assertThrows(DiagnosticList.class,
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)));
-    TestUtils.assertErrors(throwable, "Symbol not found: DOESNOTEXIST");
+    TestUtils.assertErrors(throwable, "Unknown Symbol: \"DOESNOTEXIST\"");
   }
 
   @Test
@@ -87,6 +87,6 @@ public class ViamLoweringTest {
         """;
     var throwable = Assertions.assertThrows(DiagnosticList.class,
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)));
-    TestUtils.assertErrors(throwable, "Symbol not found: DOESNOTEXIST");
+    TestUtils.assertErrors(throwable, "Unknown Symbol: \"DOESNOTEXIST\"");
   }
 }
