@@ -156,4 +156,36 @@ public class BigIntUtils {
     return new BigInteger(1, value.toByteArray());
   }
 
+  /**
+   * Reverse the byte order of the given value.
+   *
+   * @param value    The value to reverse.
+   * @param bitWidth The number of bits to consider (Must be a multiple of 8);
+   * @return The reversed value.
+   */
+  public static BigInteger reverseByteOrder(BigInteger value, int bitWidth) {
+
+    BigInteger result = BigInteger.ZERO;
+
+    if (bitWidth % 8 != 0) {
+      throw new IllegalArgumentException(
+          "Value of %d bit is not byte aligned".formatted(bitWidth));
+    }
+
+    for (int i = 0; i < bitWidth / 16; i++) {
+      for (int j = 0; j < 8; j++) {
+        int l = i * 8 + j;
+        int r = bitWidth - (i + 1) * 8 + j;
+
+        if (value.testBit(l)) {
+          result = result.setBit(r);
+        }
+        if (value.testBit(r)) {
+          result = result.setBit(l);
+        }
+      }
+    }
+
+    return result;
+  }
 }
