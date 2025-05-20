@@ -102,6 +102,7 @@ application binary interface ABI for RV32I = {
   }
 }
 
+[ htif ]
 processor Spike implements RV32I with ABI = {
   reset = PC := 0x1000
 }

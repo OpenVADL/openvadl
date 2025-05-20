@@ -46,6 +46,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.annotations.EnableHtifAnno;
 
 @SuppressWarnings({"UnusedMethod", "UnusedVariable"})
 class AnnotationTable {
@@ -101,6 +102,15 @@ class AnnotationTable {
           relocation.setKind(requireNonNull(mappings.get(annotation.name)));
         })
         .build();
+
+    /// PROCESSOR RELATED ///
+
+    annotationOn(ProcessorDefinition.class, "htif", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          if (annotation.isEnabled) {
+            def.addAnnotation(new EnableHtifAnno());
+          }
+        }).build();
 
     groupOn(CpuMemoryRegionDefinition.class)
         .add("firmware", EnableAnnotation::new)

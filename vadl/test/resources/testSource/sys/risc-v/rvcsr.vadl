@@ -212,6 +212,7 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
 
 instruction set architecture RV32IMZicsr extending RV32IZicsr, RV3264M = { }
 
+[ htif ]
 processor Spike implements RV32IMZicsr = {
     constant reset_vec_addr = 0x1000
 

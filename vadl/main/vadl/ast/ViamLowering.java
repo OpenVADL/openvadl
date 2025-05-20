@@ -72,7 +72,6 @@ import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
-import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
 import vadl.viam.asm.AsmToken;
@@ -1286,9 +1285,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var abiNode = definition.abiNode();
     var abi = abiNode != null ? (Abi) fetch(abiNode).orElse(null) : null;
     var mip = new Processor(identifier, isa, abi, null, reset, memRegions, null);
-
-    // FIXME: Remove this, once annotation framework is supported
-    mip.addAnnotation(new EnableHtifAnno());
 
     return Optional.of(mip);
   }
