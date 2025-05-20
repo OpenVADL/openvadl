@@ -40,8 +40,6 @@ import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,15 +98,7 @@ public abstract class AbstractTest {
       var testSourceDir = AbstractTest.class.getResource("/" + TEST_SOURCE_DIR);
       testSourceRootPath = VadlFileUtils.copyDirToTempDir(
           Objects.requireNonNull(testSourceDir).toURI(),
-          "OpenVADL-testSource-",
-          (pair) -> {
-            var reader = pair.left();
-            var writer = pair.right();
-            // call velocity to evaluate the potential template and write the result
-            // into the outFileWriter.
-            // we use an empty context
-            Velocity.evaluate(new VelocityContext(), writer, "OpenVADL", reader);
-          }
+          "OpenVADL-testSource-"
       );
     }
   }
@@ -142,10 +132,6 @@ public abstract class AbstractTest {
           assertEquals(2, e.get().length, "Wrong number of arguments for " + e);
           return arguments(sourcePrefix + e.get()[0] + ".vadl", e.get()[1]);
         })
-        .toList();
-
-    List<String> expectedSubstrings = preparedArgs.stream()
-        .map(e -> (String) e.get()[0])
         .toList();
 
     assertThat("Some test source not found", testSources,
@@ -362,13 +348,13 @@ public abstract class AbstractTest {
    * @deprecated Use {@link #setupPassManagerAndRunSpec(String, PassOrder)} instead and use the
    *     {@link PassOrder#untilFirst(Class)} method instead.
    *     <pre>{@code
-   *                                                                                                                                                              var config = getConfiguration(false);
-   *                                                                                                                                                              var setup = setupPassManagerAndRunSpec(
-   *                                                                                                                                                                  "sys/risc-v/rv64i.vadl",
-   *                                                                                                                                                                  PassOrders.viam(config)
-   *                                                                                                                                                                     .untilFirst(SideEffectConditionResolvingPass.class)
-   *                                                                                                                                                              );
-   *                                                                                                                                                                 }</pre>
+   *          var config = getConfiguration(false);
+   *          var setup = setupPassManagerAndRunSpec(
+   *              "sys/risc-v/rv64i.vadl",
+   *              PassOrders.viam(config)
+   *                 .untilFirst(SideEffectConditionResolvingPass.class)
+   *          );
+   *     }</pre>
    */
   @Deprecated
   public TestSetup setupPassManagerAndRunSpecUntil(String specPath,
