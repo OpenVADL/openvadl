@@ -40,8 +40,6 @@ import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -101,14 +99,7 @@ public abstract class AbstractTest {
       testSourceRootPath = VadlFileUtils.copyDirToTempDir(
           Objects.requireNonNull(testSourceDir).toURI(),
           "OpenVADL-testSource-",
-          (pair) -> {
-            var reader = pair.left();
-            var writer = pair.right();
-            // call velocity to evaluate the potential template and write the result
-            // into the outFileWriter.
-            // we use an empty context
-            Velocity.evaluate(new VelocityContext(), writer, "OpenVADL", reader);
-          }
+          null
       );
     }
   }
@@ -236,10 +227,6 @@ public abstract class AbstractTest {
     testFrontend = frontendProvider.createFrontend();
   }
 
-  public TestFrontend testFrontend() {
-    return testFrontend;
-  }
-
   /**
    * Runs the given test source file and assumes that it will fail. If the test source file does
    * not fail or if the provided failure message is not found in the error logs, the method
@@ -268,28 +255,37 @@ public abstract class AbstractTest {
   /**
    * Runs the specification and returns the VIAM representation.
    *
-   * @param testSourcePath the path of the test source file
+   * @param testSourcePath the resource {@code testSource} relative path of the test source file
    * @return the VIAM specification
    */
   public Specification runAndGetViamSpecification(String testSourcePath) {
-    tryToRunSpecificationWithFrontend(testSourcePath, testFrontend);
-    return testFrontend.getViam();
-  }
-
-  public static TestFrontend runViamSpecificationWithNewFrontend(String testSourcePath) {
-    var newFrontend = frontendProvider.createFrontend();
-    tryToRunSpecificationWithFrontend(testSourcePath, newFrontend);
-    return newFrontend;
+    var sourcePath = getTestSourcePath(testSourcePath);
+    return runAndGetViamSpecification(sourcePath);
   }
 
   /**
-   * Tries to run the given test source path (not the resolved one) with the given frontend.
-   * It will fail if the run was not successful.
+   * Runs the specification and returns the VIAM representation.
+   *
+   * @param sourcePath the absolute path to the test source file
+   * @return the VIAM specification
    */
-  private static void tryToRunSpecificationWithFrontend(String testSourcePath,
+  public Specification runAndGetViamSpecification(Path sourcePath) {
+    if (!sourcePath.isAbsolute()) {
+      throw new IllegalArgumentException("Source path must be absolute");
+    }
+    tryToRunSpecificationWithFrontend(sourcePath, testFrontend);
+    return testFrontend.getViam();
+  }
+
+  /**
+   * Tries to run the given test source (the resolved one) with the given frontend.
+   * It will fail if the run was not successful.
+   *
+   * @param sourcePath The concrete resolved source path of the specification
+   */
+  private static void tryToRunSpecificationWithFrontend(Path sourcePath,
                                                         TestFrontend frontend) {
-    var testSource = getTestSourcePath(testSourcePath);
-    var success = frontend.runSpecification(testSource.toUri());
+    var success = frontend.runSpecification(sourcePath.toUri());
     if (!success) {
       var logs = frontend.getLogAsString();
       var errorIndex = logs.indexOf(" error: ");
@@ -299,7 +295,7 @@ public abstract class AbstractTest {
       }
 
       System.out.println(
-          "Test source: ---------------\n" + testSourceToString(testSource.toUri())
+          "Test source: ---------------\n" + testSourceToString(sourcePath.toUri())
               + "\n---------------");
       fail(errorLogs);
     }
@@ -361,14 +357,6 @@ public abstract class AbstractTest {
    *
    * @deprecated Use {@link #setupPassManagerAndRunSpec(String, PassOrder)} instead and use the
    *     {@link PassOrder#untilFirst(Class)} method instead.
-   *     <pre>{@code
-   *                                                                                                                                                              var config = getConfiguration(false);
-   *                                                                                                                                                              var setup = setupPassManagerAndRunSpec(
-   *                                                                                                                                                                  "sys/risc-v/rv64i.vadl",
-   *                                                                                                                                                                  PassOrders.viam(config)
-   *                                                                                                                                                                     .untilFirst(SideEffectConditionResolvingPass.class)
-   *                                                                                                                                                              );
-   *                                                                                                                                                                 }</pre>
    */
   @Deprecated
   public TestSetup setupPassManagerAndRunSpecUntil(String specPath,

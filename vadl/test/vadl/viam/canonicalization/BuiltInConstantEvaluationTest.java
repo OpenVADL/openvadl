@@ -21,12 +21,17 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static vadl.TestUtils.findDefinitionByNameIn;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.stream.Stream;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.Velocity;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import vadl.AbstractTest;
+import vadl.pass.PassManager;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
+import vadl.utils.VadlFileUtils;
 import vadl.viam.Constant;
 import vadl.viam.Function;
 import vadl.viam.graph.control.ReturnNode;
@@ -50,14 +55,28 @@ public class BuiltInConstantEvaluationTest extends AbstractTest {
   @TestFactory
   Stream<DynamicTest> constantEvalTest() throws IOException, DuplicatedPassKeyException {
     var config = getConfiguration(false);
-    var setup = setupPassManagerAndRunSpec(
-        "passes/canonicalization/valid_builtin_constant_evaluation.vadl",
-        PassOrders.viam(config)
-            .untilFirst(CanonicalizationPass.class)
-            .add(new ViamVerificationPass(config))
-    );
 
-    var spec = setup.specification();
+    var testSource =
+        getTestSourcePath("passes/canonicalization/valid_builtin_constant_evaluation.vadl");
+    var tmpDir = VadlFileUtils.createTempDirectory("builtin_constant_evaluation");
+    var processedSource = tmpDir.resolve("spec.vadl");
+    Files.createFile(processedSource);
+    var writer = Files.newBufferedWriter(processedSource);
+
+    // preprocess source file with velocity
+    Velocity.evaluate(new VelocityContext(), writer,
+        "OpenVADL",
+        Files.newBufferedReader(testSource));
+    writer.flush();
+
+    // get and run spec
+    var spec = runAndGetViamSpecification(processedSource);
+    var passManager = new PassManager();
+    passManager.add(PassOrders.viam(config)
+        .untilFirst(CanonicalizationPass.class)
+        .add(new ViamVerificationPass(config)));
+    passManager.run(spec);
+
     return spec.definitions()
         .filter(Function.class::isInstance)
         .map(Function.class::cast)

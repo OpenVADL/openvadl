@@ -17,7 +17,6 @@
 package vadl;
 
 import java.net.URI;
-import javax.annotation.Nullable;
 import vadl.viam.Specification;
 
 /**
@@ -60,7 +59,6 @@ public interface TestFrontend {
      * <p>In order to run the tests defined here, the {@code globalProvider} must be set
      * before running the tests. This is currently done in the old vadl project.</p>
      */
-    @Nullable
     public static Provider globalProvider = new OpenVadlTestFrontend.Provider();
 
     /**
