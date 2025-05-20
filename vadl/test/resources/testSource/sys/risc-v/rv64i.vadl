@@ -106,6 +106,7 @@ application binary interface ABI for RV64I = {
    }
 }
 
+[ htif ]
 processor Spike implements RV64I with ABI = {
   reset = PC := 0x1000
 }
