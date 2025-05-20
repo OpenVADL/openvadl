@@ -1,6 +1,6 @@
 # The QEMU (ISS) test base image comes with the required architecture toolchains, QEMU source code and
 # sccache
-name: Build QEMU test base image
+name: Build LCB test base image
 
 on:
   workflow_dispatch: # Allows manual triggering
