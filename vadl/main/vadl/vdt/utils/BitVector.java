@@ -45,7 +45,7 @@ public class BitVector implements Vector<Bit>, BitWise<BitVector> {
   public static BitVector fromValue(BigInteger value, int width) {
     final Bit[] bits = new Bit[width];
     for (int i = 0; i < width; i++) {
-      bits[i] = new Bit(value.testBit(i));
+      bits[i] = new Bit(value.testBit(width - 1 - i));
     }
     return new BitVector(bits);
   }
