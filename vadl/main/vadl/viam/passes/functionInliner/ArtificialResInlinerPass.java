@@ -102,6 +102,7 @@ public class ArtificialResInlinerPass extends Pass {
     final var copyStart = addedNodes.stream().filter(StartNode.class::isInstance)
         .map(StartNode.class::cast).findFirst().orElseThrow();
 
+
     // map all params to passed argument expressions
     var params = proc.parameters();
     var paramToArg = new HashMap<Parameter, ExpressionNode>();
@@ -141,3 +142,4 @@ public class ArtificialResInlinerPass extends Pass {
     endNode.removeSideEffect(write);
   }
 }
+

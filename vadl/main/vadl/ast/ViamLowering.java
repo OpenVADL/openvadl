@@ -893,7 +893,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       parameterCache.put(parameter, viamParameter);
       parameters.add(viamParameter);
     }
-    var behavior = new BehaviorLowering(this).getFunctionGraph(expr, "behaviour");
+    var behavior =
+        new BehaviorLowering(this).getFunctionGraph(expr, identifier.simpleName() + " behavior");
 
     return new Function(identifier,
         parameters.toArray(new vadl.viam.Parameter[0]),

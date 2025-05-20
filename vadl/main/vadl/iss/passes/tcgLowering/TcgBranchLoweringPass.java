@@ -81,7 +81,7 @@ public class TcgBranchLoweringPass extends AbstractIssPass {
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
-    
+
     var optimizeCtrlFlow = !configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_CTRL_FLOW);
 
     viam.isa().ifPresent(isa -> isa.ownInstructions()
@@ -319,10 +319,8 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    *
    * @param node the expression node
    * @return the associated TCG variable
-   * @throws IllegalStateException if the node is not associated with a TCG variable
    */
   private TcgVRefNode varOf(ExpressionNode node) {
-    node.ensure(isTcg(node), "Expected to be a tcg node");
     return assignments.singleDestOf(node);
   }
 

@@ -47,8 +47,8 @@ public class IssValExtractNode extends IssExprNode {
    *
    * @param extendMode sign or zero extending
    * @param value      the value to extract
-   * @param ofs        the initial offset of extraction
-   * @param len        how many bits should be extracted
+   * @param ofs        the initial offset of extraction, must be an immediate
+   * @param len        how many bits should be extracted, must be an immediate
    * @param type       the result type
    */
   public IssValExtractNode(TcgExtend extendMode, ExpressionNode value, ExpressionNode ofs,
