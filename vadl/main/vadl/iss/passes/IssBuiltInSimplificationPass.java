@@ -16,8 +16,8 @@
 
 package vadl.iss.passes;
 
-import static vadl.utils.GraphUtils.getInputNodes;
 import static vadl.utils.GraphUtils.intU;
+import static vadl.utils.GraphUtils.isOrhasDependencies;
 import static vadl.utils.GraphUtils.sub;
 
 import java.io.IOException;
@@ -100,8 +100,7 @@ class IssBuiltInSimplifier implements VadlBuiltInEmptyNoStatusDispatcher<BuiltIn
   private void transformRightShiftToExtract(BuiltInCall call, TcgExtend extend) {
     // Get the shift argument and ensure it is immediate.
     var shiftArg = call.arguments().get(1);
-    boolean isImmediate = getInputNodes(shiftArg, e -> e instanceof ReadResourceNode)
-        .findAny().isEmpty();
+    boolean isImmediate = !isOrhasDependencies(shiftArg, e -> e instanceof ReadResourceNode);
     if (!isImmediate) {
       return;
     }

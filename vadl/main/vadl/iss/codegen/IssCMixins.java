@@ -16,10 +16,13 @@
 
 package vadl.iss.codegen;
 
-import static vadl.error.DiagUtils.throwNotAllowed;
-
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.nodes.IssConstExtractNode;
+import vadl.iss.passes.nodes.IssValExtractNode;
+import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
+import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
+import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
+import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.javaannotations.Handler;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
@@ -32,29 +35,49 @@ import vadl.viam.graph.dependency.WriteRegTensorNode;
 public interface IssCMixins {
 
   /**
-   * Bundles all Invalid ISS node mixins.
-   */
-  interface Invalid extends IssExpr {
-
-  }
-
-  /**
    * Bundles all valid ISS node mixins.
    */
-  interface Default extends IssExtract {
+  interface Default extends IssExtract, IssExpr {
   }
 
   /**
-   * The invalid ISS Expr Node mixin.
+   * ISS specific expressions (subtypes of
+   * {@link vadl.iss.passes.opDecomposition.nodes.IssExprNode}).
    */
   interface IssExpr {
-
     @Handler
-    default void handle(CGenContext<Node> ctx,
-                        vadl.iss.passes.opDecomposition.nodes.IssExprNode node) {
-      throwNotAllowed(node, "IssExprNode");
+    @SuppressWarnings("MissingJavadocMethod")
+    default void handle(CGenContext<Node> ctx, IssValExtractNode node) {
+      var valW = node.value().type().asDataType().bitWidth();
+      var ofsW = node.ofs().type().asDataType().bitWidth();
+      var lenW = node.len().type().asDataType().bitWidth();
+      // we perform a shift >> to clear the offset.
+      // then we extract the result using (s/u)extract.
+
+      var extract = node.extendMode() == TcgExtend.ZERO ? "VADL_uextract" : "VADL_sextract";
+
+      ctx.wr(extract + "( ");
+      // inner shift of value
+      ctx.wr("VADL_lsr(").gen(node.value())
+          .wr(", %s, ", valW).gen(node.value()).wr(", %s)", ofsW);
+
+      ctx.wr(", %s )", lenW);
     }
 
+    @Handler
+    default void handle(CGenContext<Node> ctx, ExprSaveNode toHandle) {
+      throw new UnsupportedOperationException("Type ExprSaveNode not yet implemented");
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, IssMulhNode toHandle) {
+      throw new UnsupportedOperationException("Type IssMulhNode not yet implemented");
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, IssMul2Node toHandle) {
+      throw new UnsupportedOperationException("Type IssMul2Node not yet implemented");
+    }
   }
 
   /**
