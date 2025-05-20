@@ -1262,9 +1262,9 @@ instruction set architecture AArch64Base = {
   $InstrWX             (MovNZInstr            ; (MOVZ   ; "movz"  ; 0b1010'0101           ; ident      ))
 
   $InstrWX             (ExtractRegPairInstr   ; (EXTR   ; "extr"  ; 0b0'0100'1110         ; Bits       ))
-//   $InstrWX             (BitfieldMoveInstr     ; (BFM    ; "bfm"   ; 0b0110'0110           ; Bits       ))
-//   $InstrWX             (BitfieldMoveInstr     ; (SBFM   ; "sbfm"  ; 0b0010'0110           ; SInt       ))
-//   $InstrWX             (BitfieldMoveInstr     ; (UBFM   ; "ubfm"  ; 0b1010'0110           ; UInt       ))
+  $InstrWX             (BitfieldMoveInstr     ; (BFM    ; "bfm"   ; 0b0110'0110           ; Bits       ))
+  $InstrWX             (BitfieldMoveInstr     ; (SBFM   ; "sbfm"  ; 0b0010'0110           ; SInt       ))
+  $InstrWX             (BitfieldMoveInstr     ; (UBFM   ; "ubfm"  ; 0b1010'0110           ; UInt       ))
 
   $InstrWX             (CountBitsInstr        ; (CLS    ; "cls"   ; 0b1'0110'1011'0000'0000'0101; cls  ))
   $InstrWX             (CountBitsInstr        ; (CLZ    ; "clz"   ; 0b1'0110'1011'0000'0000'0100; clz  ))

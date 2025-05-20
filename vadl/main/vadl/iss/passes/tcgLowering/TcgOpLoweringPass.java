@@ -470,7 +470,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   @Handler
   void handle(IssValExtractNode toHandle) {
     toHandle.ensure(!isTcg(toHandle.ofs()) && !isTcg(toHandle.len()),
-        "Offset or length of node is TCG scheduled, but offset and length must be translation time constant. Node should never been constructed!");
+        "Offset or length of node is TCG scheduled, but offset and length must be "
+            + "translation time constant. Node should never been constructed!");
     var dest = singleDestOf(toHandle);
     var src = singleDestOf(toHandle.value());
     replaceCurrent(

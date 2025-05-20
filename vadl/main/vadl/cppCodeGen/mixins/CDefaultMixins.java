@@ -331,6 +331,7 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Slice {
     @Handler
+    @SuppressWarnings("MissingJavadocMethodCheck")
     default void handle(CGenContext<Node> ctx, SliceNode node) {
       ctx.wr("VADL_slice(")
           .gen(node.value())

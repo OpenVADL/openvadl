@@ -17,10 +17,7 @@
 package vadl.viam.passes.behaviorRewrite;
 
 import java.util.List;
-import java.util.Optional;
-import vadl.utils.Pair;
 import vadl.viam.graph.Graph;
-import vadl.viam.graph.Node;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplifier;
 import vadl.viam.passes.behaviorRewrite.rules.BehaviorRewriteSimplificationRule;
 
@@ -54,20 +51,15 @@ public class BehaviorRewriteSimplifier {
       do {
         hasChanged = false;
 
-        var result = graph.getNodes()
-            .filter(Node::isActive)
-            // When `normalize` returns an Optional
-            // then create a `Pair`
-            .map(node -> rule.simplify(node).map(y -> new Pair<>(node, y)))
-            .flatMap(Optional::stream)
-            .toList();
-
-        for (var pair : result) {
-          var oldNode = pair.left();
-          var newNode = pair.right();
-
-          oldNode.replaceAndDelete(newNode);
-          hasChanged = true;
+        for (var node : graph.getNodes().toList()) {
+          if (!node.isActive()) {
+            return;
+          }
+          var replacement = rule.simplify(node);
+          if (replacement.isPresent()) {
+            hasChanged = true;
+            node.replaceAndDelete(replacement.get());
+          }
         }
       } while (hasChanged);
     });

@@ -40,8 +40,13 @@ public interface IssCMixins {
   interface Default extends IssExtract, IssExpr {
   }
 
+  /**
+   * ISS specific expressions (subtypes of
+   * {@link vadl.iss.passes.opDecomposition.nodes.IssExprNode}).
+   */
   interface IssExpr {
     @Handler
+    @SuppressWarnings("MissingJavadocMethod")
     default void handle(CGenContext<Node> ctx, IssValExtractNode node) {
       var valW = node.value().type().asDataType().bitWidth();
       var ofsW = node.ofs().type().asDataType().bitWidth();

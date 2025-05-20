@@ -151,10 +151,18 @@ public class CppTypeMap {
     throw new RuntimeException("Types with more than 128 bits are not supported");
   }
 
+  /**
+   * Returns the next fitting unsigned integer as C stdint string.
+   * This will only look at the bit-width of the type.
+   * It assumes that the given type is a {@link vadl.types.DataType}.
+   */
   public static String nextFittingUInt(Type type) {
     return nextFittingUInt(type.asDataType().bitWidth());
   }
 
+  /**
+   * Returns the next fitting unsigned integer as C stdint string.
+   */
   public static String nextFittingUInt(int size) {
     if (size <= 8) {
       return "uint8_t";

@@ -532,6 +532,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   }
 
   @Override
+  @SuppressWarnings("LocalVariableName")
   public void handleROL(BuiltInCall input) {
     var opWidth = input.type().asDataType().bitWidth();
     if (opWidth == targetSize) {
@@ -566,6 +567,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   }
 
   @Override
+  @SuppressWarnings("LocalVariableName")
   public void handleROR(BuiltInCall input) {
     var opWidth = input.type().asDataType().bitWidth();
     if (opWidth == targetSize) {
@@ -652,10 +654,10 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
       return;
     }
 
-    var N = argT.bitWidth();
+    var bitWidth = argT.bitWidth();
     var sign = new SliceNode(
         arg,
-        Constant.BitSlice.of(N - 1, N - 1),
+        Constant.BitSlice.of(bitWidth - 1, bitWidth - 1),
         Type.bits(1)
     );
     // v = sign ? ~a : a;
@@ -665,9 +667,9 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
     // leading zeros that are known to be zero on a target size operation.
     // this is only non-zero for cls operating on < targetSize.
     // N - 1 because we don't count the sign bit itself
-    var guaranteedZeros = targetSize - (N - 1);
+    var guaranteedZeros = targetSize - (bitWidth - 1);
     if (guaranteedZeros > 0) {
-      result = sub(result, intU(guaranteedZeros, N).toNode());
+      result = sub(result, intU(guaranteedZeros, bitWidth).toNode());
     }
 
     // replace CLS
