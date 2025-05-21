@@ -626,8 +626,6 @@ static inline Bits VADL_clz(Bits a, Width w) {
      * We'll shift the value down until the top bit is set or the value is 0.
      */
     Bits topBitPos = w;
-    Bits maskW     = VADL_mask(w); /* e.g., (1ULL << w) - 1. */
-    x &= maskW;
 
     Bits leading = 0ULL;
     while (leading < w) {
@@ -651,8 +649,6 @@ static inline Bits VADL_clo(Bits a, Width w) {
         return 0ULL;
     }
     Bits x     = VADL_uextract(a, w);
-    Bits maskW = VADL_mask(w);
-    x &= maskW;
 
     Bits leading = 0ULL;
     while (leading < w) {
@@ -697,6 +693,50 @@ static inline Bits VADL_cls(Bits a, Width w) {
         leading++;
     }
     return leading;
+}
+
+/*-----------------------------------------------------------------------
+ *    ctz(a : Bits<N>) => count trailing zeros in a
+ *---------------------------------------------------------------------*/
+static inline Bits VADL_ctz(Bits a, Width w) {
+    /* We look at only w bits. If w == 0, there's nothing to count. */
+    if (w == 0) {
+        return 0ULL;
+    }
+    Bits x = VADL_uextract(a, w);
+
+    Bits trailing = 0ULL;
+    while (trailing < w) {
+        /* Check least‑significant bit among w bits */
+        if ((x & 1ULL) != 0ULL) {
+            break; /* found a 1 => stop */
+        }
+        trailing++;
+        x >>= 1ULL; /* shift right so next bit becomes LSB */
+    }
+    return trailing;
+}
+
+/*-----------------------------------------------------------------------
+ *    cto(a : Bits<N>) => count trailing ones in a
+ *---------------------------------------------------------------------*/
+static inline Bits VADL_cto(Bits a, Width w) {
+    /* We look at only w bits. If w == 0, there's nothing to count. */
+    if (w == 0) {
+        return 0ULL;
+    }
+    Bits x = VADL_uextract(a, w);
+
+    Bits trailing = 0ULL;
+    while (trailing < w) {
+        /* Check least‑significant bit among w bits */
+        if ((x & 1ULL) == 0ULL) {
+            break; /* found a 0 => stop */
+        }
+        trailing++;
+        x >>= 1ULL;
+    }
+    return trailing;
 }
 
 
