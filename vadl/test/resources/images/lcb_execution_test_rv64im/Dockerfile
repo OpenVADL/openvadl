@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/lcb-execution-test-rv64im-base-image@sha256:1e85c46918d290bd52c40f02f22ba1cf38d4b7a40e05ccec273f7f7613ef67d9
+FROM ghcr.io/openvadl/lcb-execution-test-rv64im-base-image@sha256:f1f2a3560465321a19db8ad0dcc19c48723651e349c8b33aa06c157b40560b88
 ARG TARGET
 ARG SCCACHE_REDIS_ENDPOINT
 ARG UPSTREAM_BUILD_TARGET
@@ -12,6 +12,7 @@ ENV LLVM_UPSTREAM_TARGETS=${UPSTREAM_BUILD_TARGET}
 ENV SCCACHE_REDIS_ENDPOINT=${SCCACHE_REDIS_ENDPOINT}
 ENV SPIKE_TARGET=${SPIKE_TARGET}
 ENV ABI=${ABI}
+ENV PATH=/opt/riscv/bin:/opt/qemu/bin:$PATH
 COPY . /src
 WORKDIR /src
 RUN make && sccache -s
