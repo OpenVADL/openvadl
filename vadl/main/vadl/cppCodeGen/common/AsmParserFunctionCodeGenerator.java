@@ -32,7 +32,6 @@ import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * Produce a function that can access special functions of the asm parser.
@@ -72,10 +71,6 @@ public class AsmParserFunctionCodeGenerator extends FunctionCodeGenerator {
     throwNotAllowed(toHandle, "Format field accesses");
   }
 
-  @Override
-  public void handle(CGenContext<Node> ctx, SliceNode toHandle) {
-    throwNotAllowed(toHandle, "Slice node reads");
-  }
 
   @Override
   public void handle(CGenContext<Node> ctx, ConstantNode toHandle) {

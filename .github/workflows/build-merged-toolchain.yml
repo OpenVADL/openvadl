@@ -1,4 +1,4 @@
-name: Build QEMU base image
+name: Build merged toolchain base image
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -20,8 +20,8 @@ jobs:
     secrets:
       X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
-      image: ghcr.io/openvadl/qemu-base
-      context: docker/iss/qemu
+      image: ghcr.io/openvadl/merged-toolchain
+      context: docker/iss/merged-toolchain
       platform: ${{ matrix.target.platform }}
       runner: ${{ matrix.target.runner }}
 
@@ -31,4 +31,4 @@ jobs:
     secrets:
       X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
-      image: ghcr.io/openvadl/qemu-base
+      image: ghcr.io/openvadl/merged-toolchain

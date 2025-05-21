@@ -1706,6 +1706,7 @@ public class TypeChecker
   @Override
   public Void visit(ProcessorDefinition definition) {
     definition.definitions.forEach(this::check);
+    check(definition.implementedIsaNode());
 
     // FIXME: Do we need to limit certain operations here?
     //  (like Resource access -- except memory write of course)

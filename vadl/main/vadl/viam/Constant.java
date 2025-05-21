@@ -152,7 +152,7 @@ public abstract class Constant {
           // for bitsType, it must just fit into the bit width, but it has no
           // integer value boundaries
           if (integer.bitLength() > bitsType.bitWidth()) {
-            throw new ViamError("Value %s does not fit in type %s".formatted(integer.toString(16),
+            throw new ViamError("Value 0x%s does not fit in type %s".formatted(integer.toString(16),
                 bitsType));
           }
         } else if (minValueOf(bitsType).integer().compareTo(integer) > 0

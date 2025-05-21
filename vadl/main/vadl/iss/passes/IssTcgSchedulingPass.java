@@ -329,6 +329,9 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
    * This will unschedule the condition of the if/select node, if it can be
    * directly checked in the TCG brcond/movcond op.
    * This optimizes unnecessary setconds and moves in the resulting TCG ops.
+   *
+   * <p>it is possible if the condition is not used as input by others than the scheduled node
+   * and write nodes that use it as condition only.</p>
    */
   private static void unscheduleCondition(BuiltInCall cond) {
     if (TcgPassUtils.conditionOf(cond.builtIn()) == null) {

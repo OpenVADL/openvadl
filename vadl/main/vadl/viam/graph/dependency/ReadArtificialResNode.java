@@ -46,7 +46,7 @@ public class ReadArtificialResNode extends ReadResourceNode {
 
   @Override
   public ExpressionNode copy() {
-    return new ReadArtificialResNode(resource, indices, type());
+    return new ReadArtificialResNode(resource, indices.copy(), type());
   }
 
   @Override

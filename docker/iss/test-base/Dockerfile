@@ -1,5 +1,8 @@
-# RISCV64 toolchain
-FROM ghcr.io/openvadl/riscv-toolchain:medany-rv32i-rv32im-rv32impriv-rv64i-rv64im-rv64impriv
+# The QEMU (ISS) test base image comes with the required architecture toolchains, QEMU source code and sccache
+
+FROM ghcr.io/openvadl/merged-toolchain@sha256:346078ff2c7aea66a52cf563f6b09f0f02ec9e1f96ed52fec20d17077f1a3792 AS toolchains
+
+FROM ubuntu:22.04 AS base
 
 ARG QEMU_VERSION="9.2.2"
 ENV QEMU_RELEASE="https://github.com/qemu/qemu/archive/refs/tags/v$QEMU_VERSION.tar.gz"
@@ -23,6 +26,7 @@ RUN apt update &&  \
     python3-pip \
     netcat
 
+# required by the test framework
 RUN pip install pyyaml qemu.qmp tomli
 
 # download qemu into the current directory
@@ -45,3 +49,11 @@ RUN set -ex; \
     esac; \
     curl -L https://github.com/mozilla/sccache/releases/download/v0.8.2/sccache-v0.8.2-$SUFFIX.tar.gz \
     | tar -xz -C /opt/sccache --strip-components=1
+
+# The QEMU ISS Test Base image, which contains the QEMU source code, toolchains and sccache
+FROM base AS iss-test-base
+COPY --from=toolchains /opt/riscv /opt/riscv
+COPY --from=toolchains /opt/aarch64 /opt/aarch64
+
+# Add toolchains to PATH
+ENV PATH=/opt/riscv/bin:/opt/aarch64/bin:$PATH

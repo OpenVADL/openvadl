@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The BuiltInTable class represents a collection of built-in functions and operations in VADL.
@@ -959,22 +961,24 @@ public class BuiltInTable {
   /**
    * Concatenates two strings to a new string.
    *
-   * <p>{@code function concatenate(String<N>, String<M>) -> String<X>}
+   * <p>{@code function concat(String<N>, String<M>) -> String<X>}
    */
   public static final BuiltIn CONCATENATE_STRINGS =
-      func("VADL::concatenate",
+      func("VADL::concat",
           Type.relation(StringType.class, StringType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
+          .compute(
+              (a, b) -> new Constant.Str(((Constant.Str) a).value() + ((Constant.Str) b).value()))
           .build();
 
   /**
    * Concatenates two bit values to a new bit value with a length of the sum of the input values.
    *
-   * <p>{@code function concatenate(Bits<N>, Bits<M>) -> Bits<N + M>}
+   * <p>{@code function concat(Bits<N>, Bits<M>) -> Bits<N + M>}
    */
   public static final BuiltIn CONCATENATE_BITS =
-      func("VADL::concatenate",
+      func("VADL::concat",
           Type.relation(BitsType.class, BitsType.class, BitsType.class))
           .takesDefault()
           .returnsFromDataTypes(args -> Type.bits(args.stream().mapToInt(DataType::bitWidth).sum()))
@@ -1466,7 +1470,7 @@ public class BuiltInTable {
 
     @Override
     public String toString() {
-      return "VADL::" + name + signature;
+      return name + signature;
     }
 
     public List<Class<? extends Type>> argTypeClasses() {
@@ -1486,6 +1490,13 @@ public class BuiltInTable {
     }
 
     private static final Logger logger = getLogger(BuiltIn.class);
+
+    /**
+     * Creates a {@link BuiltInCall} node from this built-in and the given arguments.
+     */
+    public BuiltInCall call(ExpressionNode... args) {
+      return BuiltInCall.of(this, args);
+    }
 
   }
 
@@ -1687,6 +1698,7 @@ public class BuiltInTable {
         }
       };
     }
+
 
     @Contract("false, _, _ -> fail")
     @FormatMethod

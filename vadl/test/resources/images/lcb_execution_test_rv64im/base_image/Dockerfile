@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/qemu-riscv64-base@sha256:7e805a50713edf381e8decd3d91f4b58b76943dc36cd8aad6772272e869f5c80 AS riscv-toolchain
+FROM ghcr.io/openvadl/qemu-base@sha256:a5a09dbc89913461f38eb206ceb7dbb1d3b0969355c7cd916cf50159dcbe6900 AS riscv-toolchain
 
 # LLVM
 FROM ghcr.io/openvadl/llvm19-base@sha256:da90881797b77a7d4b626d89a7c26d8a3baab9ae0bd5660fbf2544a255ce1e03

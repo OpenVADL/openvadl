@@ -1,4 +1,4 @@
-name: Build QEMU riscv64 base image
+name: Build lcb execution test aarch64
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -20,8 +20,8 @@ jobs:
     secrets:
       X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
-      image: ghcr.io/openvadl/qemu-riscv64-base
-      context: docker/iss/qemu-riscv64
+      image: ghcr.io/openvadl/lcb-execution-test-aarch64-base-image
+      context: vadl/test/resources/images/lcb_execution_test_aarch64/base_image
       platform: ${{ matrix.target.platform }}
       runner: ${{ matrix.target.runner }}
 
@@ -31,4 +31,4 @@ jobs:
     secrets:
       X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
-      image: ghcr.io/openvadl/qemu-riscv64-base
+      image: ghcr.io/openvadl/lcb-execution-test-aarch64-base-image

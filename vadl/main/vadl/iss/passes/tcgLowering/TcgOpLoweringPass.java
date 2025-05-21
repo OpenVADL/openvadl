@@ -22,6 +22,7 @@ import static vadl.utils.GraphUtils.intU;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,8 @@ import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.safeResourceRead.nodes.ExprSaveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAddNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgAndNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgClzNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgDepositNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgDivNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgExtractNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgGenException;
@@ -52,10 +55,13 @@ import vadl.iss.passes.tcgLowering.nodes.TcgMovCondNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgMoveNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgMul2Node;
 import vadl.iss.passes.tcgLowering.nodes.TcgMulNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgNegNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgNotNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgOrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgRemNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgRotlNode;
+import vadl.iss.passes.tcgLowering.nodes.TcgRotrNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSarNode;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetCond;
 import vadl.iss.passes.tcgLowering.nodes.TcgSetIsJmp;
@@ -69,6 +75,7 @@ import vadl.javaannotations.Handler;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
+import vadl.types.Type;
 import vadl.viam.Constant;
 import vadl.viam.ExceptionDef;
 import vadl.viam.Specification;
@@ -437,15 +444,24 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var src = singleDestOf(toHandle.value());
     var ofs = intU(0, 32).toNode();
     var len = intU(toHandle.fromWidth(), 32).toNode();
-    // TODO: Support toWidth of other than target size.
-    //    If the mode is signed, it must be sign extended until the target width, but not more than
-    //    that.
-    toHandle.ensure(
-        toHandle.extendMode() == TcgExtend.ZERO || toHandle.toWidth() == targetSize.width,
-        "Signed extract to other width than targetSize is not yet supported. "
-            + "Special case for signed extract.");
-    replaceCurrent(
-        new TcgExtractNode(dest, src, ofs, len, toHandle.extendMode()));
+
+    if (toHandle.extendMode() == TcgExtend.ZERO || toHandle.toWidth() == targetSize.width) {
+      // if extend mode is zero or toWidth is target size, we can use a single extract node
+      replaceCurrent(
+          new TcgExtractNode(dest, src, ofs, len, toHandle.extendMode()));
+    } else {
+      // we have to sign extend and then truncate
+      // sextract t0,   src, 0, len
+      // extract  dest, t0,  0, toWidth
+
+      var t0 = tmp(0);
+      var toWidth = intU(toHandle.fromWidth(), 32).toNode();
+      replaceCurrent(
+          new TcgExtractNode(t0, src, ofs, len, TcgExtend.SIGN),
+          new TcgExtractNode(dest, t0, ofs, toWidth, TcgExtend.ZERO)
+      );
+    }
+
   }
 
   /**
@@ -453,6 +469,9 @@ class TcgOpLoweringExecutor implements CfgTraverser {
    */
   @Handler
   void handle(IssValExtractNode toHandle) {
+    toHandle.ensure(!isTcg(toHandle.ofs()) && !isTcg(toHandle.len()),
+        "Offset or length of node is TCG scheduled, but offset and length must be "
+            + "translation time constant. Node should never been constructed!");
     var dest = singleDestOf(toHandle);
     var src = singleDestOf(toHandle.value());
     replaceCurrent(
@@ -531,7 +550,7 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(ReadArtificialResNode toHandle) {
-    throw new UnsupportedOperationException("Type ReadArtificialResNode not yet implemented");
+    throw new IllegalStateException("Should not reach here, should be inlined.");
   }
 
   @Handler
@@ -652,7 +671,8 @@ class TcgOpLoweringExecutor implements CfgTraverser {
   }
 
   /**
-   * Handles the {@link SliceNode}. Currently not implemented.
+   * Handles the {@link SliceNode}.
+   * This is done by depositing each part of the slice in the destination variable.
    *
    * @param toHandle The node to handle.
    * @throws UnsupportedOperationException Always thrown.
@@ -662,16 +682,35 @@ class TcgOpLoweringExecutor implements CfgTraverser {
     var destVar = singleDestOf(toHandle);
     var srcVar = singleDestOf(toHandle.value());
     var bitSlice = toHandle.bitSlice();
-    if (!bitSlice.isContinuous()) {
-      // the current implementation can only extract a bitfield but not a
-      // combination of multiple bit fields
-      throw new UnsupportedOperationException("Non continuous slices are not yet implemented");
+    if (bitSlice.isContinuous()) {
+      // if the slice is continues we only perform a single extract operation
+      var pos = intU(bitSlice.lsb(), 32);
+      var len = intU(bitSlice.bitSize(), 32);
+      var node = new TcgExtractNode(destVar, srcVar, pos.toNode(), len.toNode(), TcgExtend.ZERO);
+      replaceCurrent(node);
+      return;
     }
 
-    var pos = intU(bitSlice.lsb(), 32);
-    var len = intU(bitSlice.bitSize(), 32);
-    var node = new TcgExtractNode(destVar, srcVar, pos.toNode(), len.toNode(), TcgExtend.ZERO);
-    replaceCurrent(node);
+    // TODO: Test if it is more efficient to shift + or instead of deposit.
+    // TODO: Calling a helper function for performing complex slice
+    //  operations might be more efficient.
+    // constructed result
+    var res = tmp(0);
+    // holds value that is deposit next
+    var bit = tmp(1);
+    var destOffset = 0;
+    var ops = new ArrayList<TcgNode>();
+    for (var part : bitSlice.parts().toList().reversed()) {
+      var len = part.size();
+      var offset = part.lsb();
+      // extract value to set
+      ops.add(new TcgExtractNode(bit, srcVar, offset, len, TcgExtend.ZERO));
+      ops.add(new TcgDepositNode(res, res, bit, destOffset, len));
+      destOffset += len;
+    }
+    ops.add(new TcgMoveNode(destVar, res));
+
+    replaceCurrent(ops.toArray(new TcgNode[0]));
   }
 
   /**
@@ -814,6 +853,10 @@ class BuiltInTcgLoweringExecutor {
     impls = new MapBuilder<BuiltInTable.BuiltIn, Function<Context, BuiltInResult>>(new HashMap<>())
 
         //// Arithmetic ////
+        .set(BuiltInTable.NEG, (ctx) -> out(
+            new TcgNegNode(ctx.dest(), ctx.src(0))
+        ))
+
         .set(BuiltInTable.ADD, (ctx) -> out(
             new TcgAddNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
@@ -884,6 +927,15 @@ class BuiltInTcgLoweringExecutor {
             new TcgXorNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
 
+        .set(BuiltInTable.CLZ, (ctx) -> {
+          // the second argument is the fallback value in case of value being 0
+          var valSize = ctx.call.arguments().getFirst().type().asDataType().bitWidth();
+          var valSizeConst = Constant.Value.of(valSize, Type.bits(ctx.targetSize.width));
+          return out(
+              new TcgClzNode(ctx.dest(), ctx.src(0), ctx.constant(valSizeConst))
+          );
+        })
+
         //// Comparison ////
 
         .set(BuiltInTable.EQU, (ctx) -> out(
@@ -940,6 +992,30 @@ class BuiltInTcgLoweringExecutor {
         .set(BuiltInTable.ASR, (ctx) -> out(
             new TcgSarNode(ctx.dest(), ctx.src(0), ctx.src(1))
         ))
+
+        .set(BuiltInTable.ROR, (ctx) -> out(
+            new TcgRotrNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        .set(BuiltInTable.ROL, (ctx) -> out(
+            new TcgRotlNode(ctx.dest(), ctx.src(0), ctx.src(1))
+        ))
+
+        //// MISC ////
+
+        .set(BuiltInTable.CONCATENATE_BITS, (ctx) -> {
+          // we use a deposit of the lhs operand into the rhs operand,
+          // so the pos is the width of the rhs,
+          // and the len is targetWidth - pos,
+          // which makes the operation potentially faster (and is still correct)
+          var rhs = ctx.call.arguments().get(1);
+          var pos = rhs.type().asDataType().bitWidth();
+          var len = ctx.targetSize.width - pos;
+          return out(
+              new TcgDepositNode(ctx.dest(), ctx.src(1), ctx.src(0),
+                  intU(pos, 32).toNode(), intU(len, 32).toNode())
+          );
+        })
 
         .build();
   }
@@ -1016,6 +1092,10 @@ class BuiltInTcgLoweringExecutor {
         var name = "tmp_" + call.id + "_" + k;
         return graph().addWithInputs(new TcgVRefNode(TcgV.tmp(name, targetSize), new NodeList<>()));
       });
+    }
+
+    private TcgVRefNode constant(Constant.Value value) {
+      return assignments.singleDestOf(graph().add(new ConstantNode(value)));
     }
 
 

@@ -1,4 +1,6 @@
-name: Build QEMU aarch64 base image
+# The QEMU (ISS) test base image comes with the required architecture toolchains, QEMU source code and
+# sccache
+name: Build ISS test base image
 
 on:
   workflow_dispatch: # Allows manual triggering
@@ -20,8 +22,8 @@ jobs:
     secrets:
       X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
-      image: ghcr.io/openvadl/qemu-aarch64-base
-      context: docker/iss/qemu-aarch64
+      image: ghcr.io/openvadl/iss-test-base
+      context: docker/iss/test-base
       platform: ${{ matrix.target.platform }}
       runner: ${{ matrix.target.runner }}
 
@@ -31,4 +33,4 @@ jobs:
     secrets:
       X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
     with:
-      image: ghcr.io/openvadl/qemu-aarch64-base
+      image: ghcr.io/openvadl/iss-test-base
