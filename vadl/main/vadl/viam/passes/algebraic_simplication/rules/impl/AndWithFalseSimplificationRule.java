@@ -38,7 +38,7 @@ public class AndWithFalseSimplificationRule implements AlgebraicSimplificationRu
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
       var matcher =
-          new BuiltInMatcher(List.of(BuiltInTable.AND, BuiltInTable.ANDS),
+          new BuiltInMatcher(List.of(BuiltInTable.AND),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
                   Constant.Value.of(false))));
 

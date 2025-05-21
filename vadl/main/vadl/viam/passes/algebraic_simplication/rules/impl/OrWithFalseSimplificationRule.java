@@ -37,7 +37,7 @@ public class OrWithFalseSimplificationRule implements AlgebraicSimplificationRul
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
       var matcher =
-          new BuiltInMatcher(List.of(BuiltInTable.OR, BuiltInTable.ORS),
+          new BuiltInMatcher(List.of(BuiltInTable.OR),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
                   Constant.Value.of(false))));
 
