@@ -19,7 +19,6 @@ package vadl.viam.passes.statusBuiltInInlinePass;
 import static vadl.utils.GraphUtils.getUsagesByUnrollingLets;
 
 import java.io.IOException;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.error.Diagnostic;
@@ -84,10 +83,11 @@ public class RemoveUnusedStatusFlagsFromBuiltinsPass extends Pass {
             }
           }
 
-          Objects.requireNonNull(resultUser).replaceByNothingAndDelete();
-
-          var inliner = new ResultInliner();
-          inliner.dispatch(builtInCall, builtInCall.builtIn());
+          if (resultUser != null) {
+            resultUser.replaceByNothingAndDelete();
+            var inliner = new ResultInliner();
+            inliner.dispatch(builtInCall, builtInCall.builtIn());
+          }
         });
 
     return null;

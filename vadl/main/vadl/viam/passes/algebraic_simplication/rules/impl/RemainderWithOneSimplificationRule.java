@@ -42,7 +42,7 @@ public class RemainderWithOneSimplificationRule implements AlgebraicSimplificati
           new BuiltInMatcher(
               List.of(BuiltInTable.SMOD, BuiltInTable.UMOD),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                  Constant.Value.of(1, (DataType) n.type()))));
+                  Constant.Value.of(1, getType(n)))));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {

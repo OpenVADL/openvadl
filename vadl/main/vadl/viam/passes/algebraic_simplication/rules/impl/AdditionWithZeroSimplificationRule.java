@@ -36,7 +36,7 @@ public class AdditionWithZeroSimplificationRule implements AlgebraicSimplificati
   public Optional<Node> simplify(Node node) {
     if (node instanceof ExpressionNode n) {
       var matcher =
-          new BuiltInMatcher(List.of(BuiltInTable.ADD, BuiltInTable.ADDS, BuiltInTable.ADDC),
+          new BuiltInMatcher(List.of(BuiltInTable.ADD),
               List.of(new AnyNodeMatcher(), new IsZeroConstantValueMatcher()));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);

@@ -41,13 +41,13 @@ public class MultiplicationWithZeroSimplificationRule implements AlgebraicSimpli
     if (node instanceof ExpressionNode n) {
       var matcher =
           new BuiltInMatcher(
-              List.of(BuiltInTable.MUL, BuiltInTable.MULS, BuiltInTable.SMULL, BuiltInTable.SMULLS,
-                  BuiltInTable.UMULL, BuiltInTable.SUMULL, BuiltInTable.SUMULLS),
+              List.of(BuiltInTable.MUL, BuiltInTable.SMULL,
+                  BuiltInTable.UMULL, BuiltInTable.SUMULL),
               List.of(new AnyNodeMatcher(), new IsZeroConstantValueMatcher()));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {
-        return Optional.of(new ConstantNode(Constant.Value.of(0, (DataType) n.type())));
+        return Optional.of(new ConstantNode(Constant.Value.of(0, getType(n))));
       }
     }
     return Optional.empty();
