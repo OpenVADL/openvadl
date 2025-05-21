@@ -56,6 +56,7 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
+import vadl.utils.Levenshtein;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
@@ -2384,14 +2385,7 @@ public class TypeChecker
     }
 
     // Find the type from the symbol table
-    var typeTarget = expr.symbolTable().require(expr.baseType, () -> {
-      var sb = new StringBuilder();
-      expr.prettyPrint(0, sb);
-      var typeName = sb.toString();
-      throw error("Unknown Type `%s`".formatted(typeName), expr)
-          .description("No type with that name exists.")
-          .build();
-    });
+    var typeTarget = expr.symbolTable().findAs(expr.baseType, Node.class);
 
     if (typeTarget instanceof UsingDefinition usingDef) {
       return check(usingDef.typeLiteral);
@@ -2402,7 +2396,26 @@ public class TypeChecker
       return new FormatType(formatDef);
     }
 
-    throw new IllegalStateException("Unimplemented " + typeTarget);
+    // Throw unknown type error
+    var sb = new StringBuilder();
+    expr.prettyPrint(0, sb);
+    var typeName = sb.toString();
+
+    var baseTypes = Arrays.asList("SInt", "UInt", "Bits", "String", "Bool");
+    var candidateTypes = new ArrayList<>(baseTypes);
+    candidateTypes.addAll(
+        expr.symbolTable().allSymbolNamesOf(FormatDefinition.class, UsingDefinition.class));
+    var suggestions =
+        Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
+
+    var diagnostic = error("Unknown Type `%s`".formatted(typeName), expr)
+        .locationDescription(expr, "No type with that name exists.");
+
+    if (!suggestions.isEmpty()) {
+      diagnostic.help("Maybe you meant one of these: %s", String.join(", ", suggestions));
+    }
+
+    throw diagnostic.build();
   }
 
   @Override
@@ -2609,9 +2622,17 @@ public class TypeChecker
         var fieldType = formatType.format.getFieldType(fieldName);
         if (fieldType == null) {
           var formatName = formatType.format.identifier().name;
-          throw error("Unknown format field `%s`".formatted(fieldName), expr)
-              .description("Format `%s` doesn't have any field named `%s`", formatName, fieldName)
-              .build();
+          var suggestions = Levenshtein.suggestions(
+              fieldName,
+              formatType.format.fields.stream()
+                  .map(f -> f.identifier().name).toList());
+
+          var diagnostic = error("Unknown format field `%s`".formatted(fieldName), expr)
+              .description("Format `%s` doesn't have any field with this name", formatName);
+          if (!suggestions.isEmpty()) {
+            diagnostic.help("Maybe you meant one of these: %s", String.join(", ", suggestions));
+          }
+          throw diagnostic.build();
         }
 
         // FIXME: @flofriday replace once computed field ranges are Constant.BitSlice
@@ -2624,8 +2645,10 @@ public class TypeChecker
       } else if (type instanceof StatusType) {
         var allowedStatusfields = List.of("negative", "zero", "carry", "overflow");
         if (!allowedStatusfields.contains(fieldName)) {
+          var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
           throw error("Unknown status field `%s`".formatted(fieldName), expr)
               .note("Allowed fields are: %s", String.join(", ", allowedStatusfields))
+              .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
               .build();
         }
         var fieldType = Type.bool();
@@ -2647,9 +2670,16 @@ public class TypeChecker
     // as identifiers only store AstSymbol origins, and the call expr might refer to a
     // BuiltInSymbol, we must do a separate request to the symbol table an can't rely on the
     // expression's identifier target.
-    var targetSymbol = expr.symbolTable().requireSymbol(expr.target.path(), () ->
-        error("Unknown call target", expr.target)
-            .locationNote(expr.target, "Nothing found that can be called with this name."));
+    var targetSymbol = expr.symbolTable().requireSymbol(expr.target.path(), () -> {
+      var suggestions = Levenshtein.suggestions(expr.target.path().pathToString(),
+          expr.symbolTable().allSymbolNames());
+      var diagnostic = error("Unknown call target", expr.target)
+          .locationNote(expr.target, "Nothing found that can be called with this name.");
+      if (!suggestions.isEmpty()) {
+        diagnostic.help("Maybe you meant one of these: %s", String.join(", ", suggestions));
+      }
+      return diagnostic;
+    });
 
     switch (targetSymbol) {
       case SymbolTable.AstSymbol astSymbol -> processCallOfTarget(expr, astSymbol.origin());

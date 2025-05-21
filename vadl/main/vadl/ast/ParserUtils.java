@@ -35,7 +35,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
-import vadl.utils.Leivenshtein;
+import vadl.utils.Levenshtein;
 import vadl.utils.SourceLocation;
 
 class ParserUtils {
@@ -488,7 +488,7 @@ class ParserUtils {
         .filter(n -> !n.contains("Invalid"))
         .toList();
 
-    var suggested = String.join(", ", Leivenshtein.sortAll(name, available));
+    var suggested = String.join(", ", Levenshtein.sortAll(name, available));
 
     return error("Unknown syntax type: `%s`".formatted(name), location)
         .locationDescription(location, "No syntax type with this name exists.")
