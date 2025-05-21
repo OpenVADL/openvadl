@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
 
@@ -1416,6 +1417,12 @@ public class BuiltInTable {
       return Optional.empty();
     }
 
+    /**
+     * Return {@code true} when the {@link BuiltIn} is a {@link TupleType}.
+     */
+    public boolean isStatusBuiltin() {
+      return signature.resultTypeClass() == TupleType.class;
+    }
 
     /**
      * Checks whether the given concrete types are valid argument types for this BuiltIn.
@@ -1532,6 +1539,12 @@ public class BuiltInTable {
       return BuiltInCall.of(this, args);
     }
 
+    /**
+     * Creates a {@link BuiltInCall} node from this built-in and the given arguments.
+     */
+    public BuiltInCall  call(NodeList<ExpressionNode> arguments) {
+      return BuiltInCall.of(this, arguments);
+    }
   }
 
   private static BuiltInBuilder func(String name, @Nullable String operator,

@@ -31,6 +31,14 @@ instruction set architecture Tests = {
   format TMP: Bits<5> =
   { ONE: Bits<5>
   }
+
+  instruction ADDS_0_WITH_STATUS_REG: TMP = {
+      let result, flags = VADL::adds(X(ONE), 0 as Bits<32>) in {
+        X(ONE) := result as Bits<32>
+      }
+    }
+    encoding ADDS_0_WITH_STATUS_REG = { ONE = 2 }
+    assembly ADDS_0_WITH_STATUS_REG = "just a dummy"
 }
 
 processor TEST implements Tests = { }

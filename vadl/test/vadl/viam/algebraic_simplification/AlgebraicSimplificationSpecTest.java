@@ -25,9 +25,10 @@ import org.junit.jupiter.api.TestFactory;
 import vadl.AbstractTest;
 import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.viam.Instruction;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass;
+import vadl.viam.passes.statusBuiltInInlinePass.StatusBuiltInInlinePass;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
 /**
@@ -43,6 +44,7 @@ public class AlgebraicSimplificationSpecTest extends AbstractTest {
         "passes/algebraicSimplification/algebraic_simplification.vadl",
         PassOrders.viam(config)
             .untilFirst(AlgebraicSimplificationPass.class)
+            .skip(StatusBuiltInInlinePass.class)
             .add(new ViamVerificationPass(config))
     );
 
@@ -52,6 +54,7 @@ public class AlgebraicSimplificationSpecTest extends AbstractTest {
         .flatMap(x -> x.ownInstructions().stream())
         .map(f -> DynamicTest.dynamicTest("Check " + f.simpleName(), () -> {
           assertTrue(f.behavior().getNodes(BuiltInCall.class).findAny().isEmpty());
+          assertTrue(f.behavior().getNodes(TupleGetFieldNode.class).findAny().isEmpty());
         }));
   }
 }
