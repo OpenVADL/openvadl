@@ -943,6 +943,29 @@ public class BuiltInTable {
           .returnsFirstBitWidth(UIntType.class)
           .build();
 
+  /**
+   * Counting trailing zeros.
+   *
+   * <p>{@code function ctz( a : Bits<N> ) -> UInt<N>  }
+   */
+  public static final BuiltIn CTZ =
+      func("VADL::ctz", Type.relation(BitsType.class, UIntType.class))
+          .takesDefault()
+          .returnsFirstBitWidth(UIntType.class)
+          .build();
+
+
+  /**
+   * Counting trailing ones.
+   *
+   * <p>{@code function cto( a : Bits<N> ) -> UInt<N> }
+   */
+  public static final BuiltIn CTO =
+      func("VADL::cto", Type.relation(BitsType.class, UIntType.class))
+          .takesDefault()
+          .returnsFirstBitWidth(UIntType.class)
+          .build();
+
 
   ///// FUNCTIONS //////
 
@@ -1259,6 +1282,8 @@ public class BuiltInTable {
       CLZ,
       CLO,
       CLS,
+      CTZ,
+      CTO,
 
       // FUNCTIONS
 
