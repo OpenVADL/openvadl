@@ -20,7 +20,7 @@ RUN cargo install --git https://github.com/kper/fail_if fail_if
 FROM ghcr.io/openvadl/llvm19-base@sha256:ca1cd04e8c00e5e6c992696e6a0cb23ec0f104b76dc63e3b7b31d0d5699e58ad
 RUN apt update -y && apt-get update --fix-missing
 RUN apt-get install -y device-tree-compiler python3 python3-pip python3-pandas vim
-COPY --from=riscv-toolchain /opt/riscv /opt/riscv
+COPY --from=riscv-toolchain /opt/riscv /opt/riscv-cross
 COPY --from=builder-spike-toolchain /opt/spike /opt/spike
 COPY --from=builder-fail-if /usr/local/cargo/bin/fail_if /usr/bin/fail_if
 WORKDIR /work
