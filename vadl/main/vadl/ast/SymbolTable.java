@@ -35,7 +35,7 @@ import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
 import vadl.types.BuiltInTable;
 import vadl.types.asmTypes.AsmType;
-import vadl.utils.Leivenshtein;
+import vadl.utils.Levenshtein;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
@@ -377,6 +377,27 @@ class SymbolTable {
     var names = new HashSet<>(symbols.keySet());
     if (parent != null) {
       names.addAll(parent.allSymbolNames());
+    }
+    return names;
+  }
+
+  /**
+   * Returns all symbol names in scope that point to the defined node classes.
+   *
+   * @param classes that are allowed.
+   * @return the set of all available names.
+   */
+  @SafeVarargs
+  final Set<String> allSymbolNamesOf(Class<? extends Node>... classes) {
+    var matchingNames = symbols.entrySet().stream()
+        .filter(entry -> entry.getValue() instanceof AstSymbol astSymbol
+            && Arrays.stream(classes).anyMatch(klass -> klass.isInstance(astSymbol.origin)))
+        .map(Map.Entry::getKey)
+        .toList();
+
+    var names = new HashSet<>(matchingNames);
+    if (parent != null) {
+      names.addAll(parent.allSymbolNamesOf(classes));
     }
     return names;
   }
@@ -849,7 +870,7 @@ class SymbolTable {
       var symbol = expr.symbolTable().resolve(expr);
       if (symbol == null) {
         var suggestions =
-            Leivenshtein.suggestions(expr.pathToString(), expr.symbolTable().allSymbolNames());
+            Levenshtein.suggestions(expr.pathToString(), expr.symbolTable().allSymbolNames());
 
         expr.symbolTable()
             .reportUnkownError("Symbol", expr.pathToString(), expr.location(), suggestions);
@@ -862,7 +883,7 @@ class SymbolTable {
       var symbol = expr.symbolTable().resolve(expr);
       if (symbol == null) {
         var suggestions =
-            Leivenshtein.suggestions(expr.pathToString(), expr.symbolTable().allSymbolNames());
+            Levenshtein.suggestions(expr.pathToString(), expr.symbolTable().allSymbolNames());
 
         expr.symbolTable()
             .reportUnkownError("Symbol", expr.pathToString(), expr.location(), suggestions);
@@ -891,7 +912,7 @@ class SymbolTable {
                     definition.target);
 
         var suggestions =
-            Leivenshtein.suggestions(
+            Levenshtein.suggestions(
                 definition.name(),
                 AnnotationTable.availableAnnotationNames(definition.target.getClass()));
         if (!suggestions.isEmpty()) {
@@ -1029,7 +1050,7 @@ class SymbolTable {
           // Verify that the field specified really is a field in the encoding
           var field = fieldEncoding.field;
           if (format.getField(field.name) == null) {
-            var suggestions = Leivenshtein.suggestions(
+            var suggestions = Levenshtein.suggestions(
                 field.name,
                 format.fields.stream().map(f -> f.identifier().name).toList());
 
@@ -1116,7 +1137,7 @@ class SymbolTable {
             }
           }
           if (foundField == null) {
-            var suggestions = Leivenshtein.suggestions(namedArgument.name.name,
+            var suggestions = Levenshtein.suggestions(namedArgument.name.name,
                 format.fields.stream().map(f -> f.identifier().name).toList());
 
             statement.symbolTable()
@@ -1141,7 +1162,7 @@ class SymbolTable {
             }
             if (foundParam == null) {
               var suggestions =
-                  Leivenshtein.suggestions(namedArgument.name.name,
+                  Levenshtein.suggestions(namedArgument.name.name,
                       pseudoInstr.params.stream().map(p -> p.identifier().name).toList());
               statement.symbolTable()
                   .reportUnkownError("Instruction Parameter", namedArgument.name.name,
@@ -1151,8 +1172,9 @@ class SymbolTable {
           }
         } else {
           // FIXME: Limit suggestions to instructions
-          var suggestions = Leivenshtein.suggestions(statement.id().name,
-              statement.symbolTable().allSymbolNames());
+          var suggestions = Levenshtein.suggestions(statement.id().name,
+              statement.symbolTable().allSymbolNamesOf(InstructionDefinition.class,
+                  PseudoInstructionDefinition.class));
 
           statement.symbolTable()
               .reportUnkownError("Instruction", statement.id().name, statement.location(),
@@ -1189,7 +1211,7 @@ class SymbolTable {
       var relocation = definition.relocation;
       var symbol = definition.symbolTable().resolve(relocation);
       if (symbol == null) {
-        var suggestions = Leivenshtein.suggestions(
+        var suggestions = Levenshtein.suggestions(
             relocation.name,
             definition.symbolTable().allSymbolNames());
 
@@ -1209,7 +1231,7 @@ class SymbolTable {
 
       // Only do rudimentary checks here, the rest is done in the typechecker.
       if (!AsmDirective.isAsmDirective(definition.builtinDirective.name)) {
-        var suggestions = Leivenshtein.suggestions(definition.builtinDirective.name,
+        var suggestions = Levenshtein.suggestions(definition.builtinDirective.name,
             Arrays.stream(AsmDirective.values()).map(Enum::toString).toList()
         );
 
@@ -1265,7 +1287,7 @@ class SymbolTable {
       if (definition.id != null) {
         var idSymbol = definition.symbolTable().resolve(definition.id);
         if (idSymbol == null) {
-          var suggestions = Leivenshtein.suggestions(
+          var suggestions = Levenshtein.suggestions(
               definition.id.name,
               definition.symbolTable().allSymbolNames());
 
@@ -1293,7 +1315,7 @@ class SymbolTable {
       beforeTravel(definition);
 
       if (!AsmType.isInputAsmType(definition.id.name)) {
-        var suggestions = Leivenshtein.suggestions(definition.id.name,
+        var suggestions = Levenshtein.suggestions(definition.id.name,
             AsmType.ASM_TYPES.values().stream().map(AsmType::name).toList());
 
         definition.symbolTable()
