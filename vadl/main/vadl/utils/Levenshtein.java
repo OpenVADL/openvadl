@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 /**
  * A utility class providing methods for computing the Levenshtein distance (edit distance).
  */
-public class Leivenshtein {
+public class Levenshtein {
 
 
   /**
