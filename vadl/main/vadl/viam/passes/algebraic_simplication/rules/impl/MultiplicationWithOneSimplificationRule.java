@@ -43,7 +43,7 @@ public class MultiplicationWithOneSimplificationRule implements AlgebraicSimplif
               List.of(BuiltInTable.MUL, BuiltInTable.MULS, BuiltInTable.SMULL, BuiltInTable.SMULLS,
                   BuiltInTable.UMULL, BuiltInTable.SUMULL, BuiltInTable.SUMULLS),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                  Constant.Value.of(1, (DataType) n.type()))));
+                  Constant.Value.of(1, getType(n)))));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {

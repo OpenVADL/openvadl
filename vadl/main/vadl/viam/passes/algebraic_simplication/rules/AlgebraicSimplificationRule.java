@@ -17,7 +17,10 @@
 package vadl.viam.passes.algebraic_simplication.rules;
 
 import java.util.Optional;
+import vadl.types.DataType;
+import vadl.types.TupleType;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * Represents that a class implements an algebraic simplification.
@@ -30,4 +33,17 @@ public interface AlgebraicSimplificationRule {
    * @return {@link Optional} when it can be replaced and {@code empty} when not.
    */
   Optional<Node> simplify(Node node);
+
+  /**
+   * Get the type of the given {@code node} when it has a {@link DataType}.
+   * When the {@code node} has a {@link TupleType} then return the type of the first
+   * child.
+   */
+  default DataType getType(ExpressionNode node) {
+    if (node.type() instanceof TupleType tupleType) {
+      return tupleType.first().asDataType();
+    }
+
+    return node.type().asDataType();
+  }
 }

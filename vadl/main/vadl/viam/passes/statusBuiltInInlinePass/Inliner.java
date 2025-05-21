@@ -81,7 +81,7 @@ abstract class Inliner {
     initUsers(builtInCall);
   }
 
-  final void inline() {
+  public void inline() {
     inline(resultUser, this::getResult);
     inline(zeroUser, this::getZero);
     inline(carryUser, this::getCarry);

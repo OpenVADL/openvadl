@@ -105,6 +105,18 @@ public class TupleGetFieldNode extends ExpressionNode {
     visitor.visit(this);
   }
 
+  /**
+   * Replaces this node with its input, and then safely deletes this node.
+   *
+   * <p>The method ensures that the node to be deleted has usages, then it updates
+   * the usages' input to bypass this node. Finally, it safely deletes this node
+   * from the graph to maintain consistency.
+   */
+  public void replaceByNothingAndDelete() {
+    var input = this.expression;
+    usages().toList().forEach(usage -> usage.replaceInput(this, input));
+    safeDelete();
+  }
 
   /**
    * The name of a let expression with source location.
