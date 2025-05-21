@@ -21,17 +21,23 @@ import static vadl.error.Diagnostic.error;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
 import vadl.types.BuiltInTable;
 import vadl.types.asmTypes.AsmType;
+import vadl.utils.Leivenshtein;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithLocation;
 
 class SymbolTable {
   @Nullable
@@ -362,6 +368,18 @@ class SymbolTable {
     throw ParserUtils.unknownSyntaxTypeError(identifier.name, identifier.location());
   }
 
+  /**
+   * Returns all symbol names in scope.
+   *
+   * @return the set of all available names.
+   */
+  Set<String> allSymbolNames() {
+    var names = new HashSet<>(symbols.keySet());
+    if (parent != null) {
+      names.addAll(parent.allSymbolNames());
+    }
+    return names;
+  }
 
   /**
    * Copies all symbols of the given symbol table into this symbol table.
@@ -449,6 +467,22 @@ class SymbolTable {
     error.locationDescription(otherLoc, "First defined here.");
 
     errors.add(error.build());
+  }
+
+  private void reportUnkownError(String type, String actual, WithLocation locatable,
+                                 @Nullable List<String> suggestions) {
+
+    var diagnostic = error("Unknown %s: \"%s\"".formatted(type, actual), locatable)
+        .locationDescription(locatable,
+            "No %s with this name exists.", type.toLowerCase(Locale.US)
+        );
+
+    if (suggestions != null && !suggestions.isEmpty()) {
+      diagnostic =
+          diagnostic.help("Maybe you meant one of these: %s", String.join(", ", suggestions));
+    }
+
+    errors.add(diagnostic.build());
   }
 
   private void reportError(String error, SourceLocation location) {
@@ -814,8 +848,11 @@ class SymbolTable {
     public Void visit(Identifier expr) {
       var symbol = expr.symbolTable().resolve(expr);
       if (symbol == null) {
+        var suggestions =
+            Leivenshtein.suggestions(expr.pathToString(), expr.symbolTable().allSymbolNames());
+
         expr.symbolTable()
-            .reportError("Symbol not found: " + expr.pathToString(), expr.location());
+            .reportUnkownError("Symbol", expr.pathToString(), expr.location(), suggestions);
       }
       return null;
     }
@@ -824,8 +861,11 @@ class SymbolTable {
     public Void visit(IdentifierPath expr) {
       var symbol = expr.symbolTable().resolve(expr);
       if (symbol == null) {
+        var suggestions =
+            Leivenshtein.suggestions(expr.pathToString(), expr.symbolTable().allSymbolNames());
+
         expr.symbolTable()
-            .reportError("Symbol not found: " + expr.pathToString(), expr.location());
+            .reportUnkownError("Symbol", expr.pathToString(), expr.location(), suggestions);
       }
       return null;
     }
@@ -843,14 +883,23 @@ class SymbolTable {
 
 
       if (definition.annotation == null) {
-        // FIXME: Add a more descriptive error message and a body.
-        // FIXME: Add a list of available annotations (usage strings) as help to the error.
-        definition.symbolTable().errors.add(
-            error("Unknown Annotation", definition)
+        // FIXME: Show the usage strings and not just the names.
+        var diagnostic =
+            error("Unknown Annotation: \"%s\"".formatted(definition.name()), definition)
                 .locationDescription(definition.location(),
-                    "No annotation with the name \"%s\" exists on %s", definition.name(),
-                    definition.target)
-                .build());
+                    "No annotation with this name exists on %s",
+                    definition.target);
+
+        var suggestions =
+            Leivenshtein.suggestions(
+                definition.name(),
+                AnnotationTable.availableAnnotationNames(definition.target.getClass()));
+        if (!suggestions.isEmpty()) {
+          diagnostic =
+              diagnostic.help("Maybe you meant one of these: %s", String.join(", ", suggestions));
+        }
+
+        definition.symbolTable().errors.add(diagnostic.build());
         return null;
       }
 
@@ -980,8 +1029,12 @@ class SymbolTable {
           // Verify that the field specified really is a field in the encoding
           var field = fieldEncoding.field;
           if (format.getField(field.name) == null) {
+            var suggestions = Leivenshtein.suggestions(
+                field.name,
+                format.fields.stream().map(f -> f.identifier().name).toList());
+
             definition.symbolTable()
-                .reportError("Format field %s not found".formatted(field.name), field.location());
+                .reportUnkownError("Field", field.name, field.location(), suggestions);
           }
 
           // Verify that the value is visited.
@@ -1063,9 +1116,12 @@ class SymbolTable {
             }
           }
           if (foundField == null) {
+            var suggestions = Leivenshtein.suggestions(namedArgument.name.name,
+                format.fields.stream().map(f -> f.identifier().name).toList());
+
             statement.symbolTable()
-                .reportError("Unknown format field " + namedArgument.name.name,
-                    namedArgument.name.location());
+                .reportUnkownError("Field", namedArgument.name.name, namedArgument.location(),
+                    suggestions);
           }
           namedArgument.value.accept(this);
         }
@@ -1084,18 +1140,23 @@ class SymbolTable {
               }
             }
             if (foundParam == null) {
+              var suggestions =
+                  Leivenshtein.suggestions(namedArgument.name.name,
+                      pseudoInstr.params.stream().map(p -> p.identifier().name).toList());
               statement.symbolTable()
-                  .reportError(
-                      "Unknown instruction param %s (%s)".formatted(namedArgument.name.name,
-                          pseudoInstr.identifier().name),
-                      namedArgument.name.location());
+                  .reportUnkownError("Instruction Parameter", namedArgument.name.name,
+                      namedArgument.name, suggestions);
             }
             namedArgument.value.accept(this);
           }
         } else {
+          // FIXME: Limit suggestions to instructions
+          var suggestions = Leivenshtein.suggestions(statement.id().name,
+              statement.symbolTable().allSymbolNames());
+
           statement.symbolTable()
-              .reportError("Unknown instruction " + statement.id().name,
-                  statement.loc);
+              .reportUnkownError("Instruction", statement.id().name, statement.location(),
+                  suggestions);
         }
       }
       for (Expr unnamedArgument : statement.unnamedArguments) {
@@ -1128,9 +1189,12 @@ class SymbolTable {
       var relocation = definition.relocation;
       var symbol = definition.symbolTable().resolve(relocation);
       if (symbol == null) {
+        var suggestions = Leivenshtein.suggestions(
+            relocation.name,
+            definition.symbolTable().allSymbolNames());
+
         definition.symbolTable()
-            .reportError("Unknown relocation symbol: " + relocation.pathToString(),
-                relocation.location());
+            .reportUnkownError("Relocation", relocation.pathToString(), relocation, suggestions);
       }
 
       definition.children().forEach(this::travel);
@@ -1145,9 +1209,13 @@ class SymbolTable {
 
       // Only do rudimentary checks here, the rest is done in the typechecker.
       if (!AsmDirective.isAsmDirective(definition.builtinDirective.name)) {
+        var suggestions = Leivenshtein.suggestions(definition.builtinDirective.name,
+            Arrays.stream(AsmDirective.values()).map(Enum::toString).toList()
+        );
+
         definition.symbolTable()
-            .reportError("Unknown asm directive: " + definition.builtinDirective.name,
-                definition.builtinDirective.location());
+            .reportUnkownError("Asm Directive", definition.builtinDirective.name,
+                definition.builtinDirective, suggestions);
       }
 
       afterTravel(definition);
@@ -1197,9 +1265,13 @@ class SymbolTable {
       if (definition.id != null) {
         var idSymbol = definition.symbolTable().resolve(definition.id);
         if (idSymbol == null) {
+          var suggestions = Leivenshtein.suggestions(
+              definition.id.name,
+              definition.symbolTable().allSymbolNames());
+
           definition.symbolTable()
-              .reportError("Unknown symbol in asm grammar rule: " + definition.id.name,
-                  definition.id.location());
+              .reportUnkownError("Asm Grammar Rule", definition.id.name, definition.id,
+                  suggestions);
         }
       }
 
@@ -1221,9 +1293,11 @@ class SymbolTable {
       beforeTravel(definition);
 
       if (!AsmType.isInputAsmType(definition.id.name)) {
+        var suggestions = Leivenshtein.suggestions(definition.id.name,
+            AsmType.ASM_TYPES.values().stream().map(AsmType::name).toList());
+
         definition.symbolTable()
-            .reportError("Unknown asm type: " + definition.id.name,
-                definition.id.location());
+            .reportUnkownError("Asm Type", definition.id.name, definition.id, suggestions);
       }
 
       afterTravel(definition);
