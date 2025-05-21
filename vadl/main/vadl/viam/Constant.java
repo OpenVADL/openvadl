@@ -804,7 +804,7 @@ public abstract class Constant {
     }
 
     private String asString(String prefix, int radix) {
-      return asString(prefix, radix, true);
+      return asString(prefix, radix, false);
     }
 
     /**

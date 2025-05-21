@@ -109,6 +109,10 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
       handleCLO(input);
     } else if (builtIn == BuiltInTable.CLS) {
       handleCLS(input);
+    } else if (builtIn == BuiltInTable.CTZ) {
+      handleCLZ(input);
+    } else if (builtIn == BuiltInTable.CTO) {
+      handleCLO(input);
     } else if (builtIn == BuiltInTable.CONCATENATE_BITS) {
       handleConcat(input);
     } else {
@@ -181,7 +185,6 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
 
   void handleLSR(T input);
 
-
   void handleROL(T input);
 
   void handleROR(T input);
@@ -197,6 +200,10 @@ public interface VadlBuiltInNoStatusDispatcher<T> {
   void handleCLO(T input);
 
   void handleCLS(T input);
+
+  void handleCTZ(T input);
+
+  void handleCTO(T input);
 
   void handleConcat(T input);
 

@@ -183,6 +183,14 @@ public interface VadlBuiltInEmptyNoStatusDispatcher<T> extends VadlBuiltInNoStat
   }
 
   @Override
+  default void handleCTZ(T input) {
+  }
+
+  @Override
+  default void handleCTO(T input) {
+  }
+
+  @Override
   default void handleConcat(T input) {
   }
 }

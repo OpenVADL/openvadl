@@ -1677,6 +1677,75 @@ public class BuiltinCTest extends DockerExecutionTest {
     return unaryTest(BuiltInTable.CLS, a, size, expected);
   }
 
+  /* ───── Count Trailing Zeros ────────────────────────────── */
+  @TestFactory
+  Stream<DynamicTest> ctzTests() {
+    return runTests(
+        // 1-bit
+        ctz(0x0, 1, 0x1),           // 0 → 1 trailing zero
+        ctz(0x1, 1, 0x0),           // 1 → 0
+        // 2-bit
+        ctz(0x0, 2, 0x2),
+        ctz(0x1, 2, 0x0),
+        ctz(0x2, 2, 0x1),           // 10b → 1
+        // 8-bit
+        ctz(0xFF, 8, 0x0),
+        ctz(0x80, 8, 0x7),
+        ctz(0x01, 8, 0x0),
+        ctz(0x00, 8, 0x8),
+        // 16-bit
+        ctz(0x8000, 16, 0xF),
+        ctz(0x0001, 16, 0x0),
+        ctz(0x0000, 16, 0x10),
+        // 32-bit
+        ctz(0x80000000L, 32, 0x1F),
+        ctz(0x00000001, 32, 0x0),
+        ctz(0x00000000, 32, 0x20),
+        // 64-bit
+        ctz(0x8000000000000000L, 64, 0x3F),
+        ctz(0x0000000000000001L, 64, 0x0),
+        ctz(0x0000000000000000L, 64, 0x40)
+    );
+  }
+
+  private Function ctz(long a, int size, long expected) {
+    return unaryTest(BuiltInTable.CTZ, a, size, expected);
+  }
+
+  /* ───── Count Trailing Ones ─────────────────────────────── */
+  @TestFactory
+  Stream<DynamicTest> ctoTests() {
+    return runTests(
+        // 1-bit
+        cto(0x0, 1, 0x0),
+        cto(0x1, 1, 0x1),
+        // 2-bit
+        cto(0x0, 2, 0x0),
+        cto(0x1, 2, 0x1),
+        cto(0x3, 2, 0x2),           // 11b → 2
+        // 8-bit
+        cto(0xFF, 8, 0x8),
+        cto(0x01, 8, 0x1),
+        cto(0xFE, 8, 0x0),
+        // 16-bit
+        cto(0xFFFF, 16, 0x10),
+        cto(0x0001, 16, 0x1),
+        cto(0xFFFE, 16, 0x0),
+        // 32-bit
+        cto(0xFFFFFFFFL, 32, 0x20),
+        cto(0x00000001, 32, 0x1),
+        cto(0xFFFFFFFE, 32, 0x0),
+        // 64-bit
+        cto(0xFFFFFFFFFFFFFFFFL, 64, 0x40),
+        cto(0x0000000000000001L, 64, 0x1),
+        cto(0xFFFFFFFFFFFFFFFEL, 64, 0x0)
+    );
+  }
+
+  private Function cto(long a, int size, long expected) {
+    return unaryTest(BuiltInTable.CTO, a, size, expected);
+  }
+
   /// TEST HELPER FUNCTIONS ///
 
   private Function unaryTest(BuiltInTable.BuiltIn builtIn, long val, int size, long expected) {

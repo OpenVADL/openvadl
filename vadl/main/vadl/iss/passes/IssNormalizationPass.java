@@ -677,6 +677,17 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   }
 
   @Override
+  public void handleCTZ(BuiltInCall input) {
+    throw graphError(input, "Normalization not yet implemented for this built-in");
+
+  }
+
+  @Override
+  public void handleCTO(BuiltInCall input) {
+    throw graphError(input, "Normalization not yet implemented for this built-in");
+  }
+
+  @Override
   public void handleConcat(BuiltInCall input) {
     // do nothing (result is already fine)
   }
