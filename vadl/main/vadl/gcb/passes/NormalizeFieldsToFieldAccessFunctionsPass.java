@@ -17,6 +17,9 @@
 package vadl.gcb.passes;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
@@ -60,28 +63,24 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var fieldUsages =
-        (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
-            IdentifyFieldUsagePass.class);
+    var registerIndices =
+        (HashSet<FieldRefNode>) passResults.lastResultOf(
+            DetectRegisterIndicesPass.class);
 
-    var machineInstructions = viam.isa()
-        .map(isa -> isa.ownInstructions().stream())
-        .orElse(Stream.empty());
-
+    var machineInstructions = viam.isa().stream().flatMap(isa -> isa.ownInstructions().stream());
     var pseudoInstructions = viam
-        .isa()
-        .map(isa -> isa.ownPseudoInstructions().stream())
-        .orElse(Stream.empty())
+        .isa().stream().flatMap(isa -> isa.ownPseudoInstructions().stream())
         .flatMap(pseudoInstruction -> pseudoInstruction.behavior().getNodes(InstrCallNode.class))
         .map(InstrCallNode::target);
 
     Stream.concat(machineInstructions, pseudoInstructions)
         .forEach(instruction -> {
-          var immediates = fieldUsages.getImmediates(instruction);
+          // We assume that every FieldRefNode has to be lifted to a field access function
+          // when it is not register indices.
+          var immediates =
+              getImmediatesWithoutFieldAccessFunction(instruction.behavior(), registerIndices);
 
-          instruction.behavior().getNodes(FieldRefNode.class)
-              // Only process immediates
-              .filter(fieldRefNode -> immediates.contains(fieldRefNode.formatField()))
+          immediates
               .forEach(fieldRefNode -> {
                 var id = fieldRefNode.formatField().identifier.append("generated");
                 var fieldAccess = new Format.FieldAccess(
@@ -99,6 +98,25 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
         });
 
     return null;
+  }
+
+  /**
+   * Get the immediates of {@code behavior} which are not in {@code registerIndices} and not
+   * referenced by at least one {@link FieldRefNode}.
+   */
+  private List<FieldRefNode> getImmediatesWithoutFieldAccessFunction(Graph behavior,
+                                                                     HashSet<FieldRefNode> registerIndices) {
+    var fieldRefNodesInFieldAccessFunctions = behavior.getNodes(FieldAccessRefNode.class)
+        .flatMap(fieldAccessRefNode -> fieldAccessRefNode.fieldAccess().fieldRefs().stream())
+        .collect(Collectors.toSet());
+
+    return behavior.getNodes(FieldRefNode.class)
+        // First, it has not to be register index.
+        .filter(fieldRefNode -> !registerIndices.contains(fieldRefNode))
+        // Second, it has not to be part of a field access function.
+        .filter(fieldRefNode -> !fieldRefNodesInFieldAccessFunctions.contains(
+            fieldRefNode.formatField()))
+        .toList();
   }
 
   private Function createAccessFunction(Identifier fieldRefId, FieldRefNode fieldRefNode) {

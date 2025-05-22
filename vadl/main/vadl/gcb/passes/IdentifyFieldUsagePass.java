@@ -265,10 +265,12 @@ public class IdentifyFieldUsagePass extends Pass {
                                                  ImmediateDetectionContainer container) {
     instruction.behavior().getNodes(FieldAccessRefNode.class)
         .forEach(fieldAccessRefNode -> {
-          var fieldRef = fieldAccessRefNode.fieldAccess().fieldRef();
+          var fieldRefs = fieldAccessRefNode.fieldAccess().fieldRefs();
           container.addInstruction(instruction);
-          container.addFieldUsage(instruction, fieldRef,
-              FieldUsage.IMMEDIATE);
+          for (var fieldRef : fieldRefs) {
+            container.addFieldUsage(instruction, fieldRef,
+                FieldUsage.IMMEDIATE);
+          }
         });
   }
 
@@ -279,39 +281,18 @@ public class IdentifyFieldUsagePass extends Pass {
           var fieldRef = fieldRefNode.formatField();
           var registerRead = fieldRefNode.usages()
               .filter(
-                  usage -> usage instanceof ReadRegTensorNode node
-                      && node.regTensor().isSingleRegister())
-              .map(usage -> ((ReadRegTensorNode) usage).regTensor())
-              .findFirst();
-          var registerFileRead = fieldRefNode.usages()
-              .filter(
-                  usage -> usage instanceof ReadRegTensorNode node
-                      && node.regTensor().isRegisterFile())
+                  usage -> usage instanceof ReadRegTensorNode)
               .map(usage -> ((ReadRegTensorNode) usage).regTensor())
               .findFirst();
 
-          // can be single register or register file
-          var registerTensorWrite = fieldRefNode.usages()
-              .filter(usage -> usage instanceof WriteRegTensorNode node
-                  && node.regTensor().isRegisterFile())
-              .filter(usage -> {
-                var cast = (WriteRegTensorNode) usage;
-                var nodes = new ArrayList<Node>();
-                // The field should be marked as REGISTER when the field is used as a register
-                // index. Therefore, we need to check whether the node is in the address tree.
-                // We avoid a direct check because it is theoretically possible to do
-                // arithmetic with the register file's index. However, this is very unlikely.
-                Objects.requireNonNull(cast.address()).collectInputsWithChildren(nodes);
-                return cast.hasAddress()
-                    && (cast.address() == fieldRefNode || nodes.contains(fieldRefNode));
-              })
+          var registerWrite = fieldRefNode.usages()
+              .filter(usage -> usage instanceof WriteRegTensorNode)
               .map(usage -> ((WriteRegTensorNode) usage).regTensor())
               .findFirst();
 
           container.addInstruction(instruction);
           if (registerRead.isPresent()
-              || registerFileRead.isPresent()
-              || registerTensorWrite.isPresent()) {
+              || registerWrite.isPresent()) {
             container.addFieldUsage(instruction, fieldRef,
                 FieldUsage.REGISTER);
           } else {
@@ -322,15 +303,9 @@ public class IdentifyFieldUsagePass extends Pass {
           if (registerRead.isPresent()) {
             container.addRegisterUsage(instruction, fieldRef,
                 RegisterUsage.SOURCE, registerRead.get());
-          } else if (registerFileRead.isPresent()) {
-            container.addRegisterUsage(instruction, fieldRef,
-                RegisterUsage.SOURCE, registerFileRead.get());
-          } else if (registerTensorWrite.isPresent()) {
-            container.addRegisterUsage(instruction, fieldRef,
-                RegisterUsage.DESTINATION, registerTensorWrite.get());
           } else {
-            throw Diagnostic.error("Unknown usage of a field",
-                fieldRefNode.location()).build();
+            container.addRegisterUsage(instruction, fieldRef,
+                RegisterUsage.DESTINATION, registerWrite.get());
           }
         });
   }
