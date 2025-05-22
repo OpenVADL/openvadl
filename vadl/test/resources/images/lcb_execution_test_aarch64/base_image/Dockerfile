@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/lcb-test-base@sha256:1c2abece09d8491a2ab12b471d25b69663c7cde0654a05ed5681c0dd397fed7d AS base
+FROM ghcr.io/openvadl/lcb-execution-test-rv64im-base-image@sha256:f1f2a3560465321a19db8ad0dcc19c48723651e349c8b33aa06c157b40560b88
 
 # LLVM
 FROM ghcr.io/openvadl/llvm19-base@sha256:da90881797b77a7d4b626d89a7c26d8a3baab9ae0bd5660fbf2544a255ce1e03
