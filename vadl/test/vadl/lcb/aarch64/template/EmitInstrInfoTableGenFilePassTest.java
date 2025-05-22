@@ -34,7 +34,7 @@ public class EmitInstrInfoTableGenFilePassTest extends AbstractLcbTest {
   void testLowering() throws IOException, DuplicatedPassKeyException {
     // Given
     var configuration = getConfiguration(false);
-    var testSetup = runLcb(configuration, "sys/aarch64/aarch64.vadl",
+    var testSetup = runLcb(configuration, "sys/aarch64/aarch64-abi.vadl",
         new PassKey(EmitInstrInfoTableGenFilePass.class.getName()));
 
     // When
