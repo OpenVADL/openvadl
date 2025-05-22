@@ -18,6 +18,7 @@ package vadl.iss.codegen;
 
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.iss.passes.nodes.IssConstExtractNode;
+import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
@@ -62,6 +63,12 @@ public interface IssCMixins {
           .wr(", %s, ", valW).gen(node.value()).wr(", %s)", ofsW);
 
       ctx.wr(", %s )", lenW);
+    }
+
+    @Handler
+    default void handle(CGenContext<Node> ctx, IssGhostCastNode toHandle) {
+      // just emit the inner value
+      ctx.gen(toHandle.value());
     }
 
     @Handler

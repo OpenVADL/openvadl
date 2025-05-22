@@ -120,7 +120,7 @@ class IssBuiltInArgTruncOptimizer {
       if (arg instanceof IssConstExtractNode extractNode
           // we cannot remove the extract operation if it manipulates the original input value
           && extractNode.preservedWidth() >= typeWidth) {
-        extractNode.replaceByNothingAndDelete();
+        extractNode.replaceByGhostCastForUser(call);
       }
     }
   }
@@ -133,7 +133,7 @@ class IssBuiltInArgTruncOptimizer {
         // if the truncate also truncates operand bits, we must keep it
         return;
       }
-      extractNode.replaceByNothingAndDelete();
+      extractNode.replaceByGhostCastForUser(call);
     }
   }
 

@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Counter;
@@ -256,6 +257,14 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
       // In general, a node is scheduled if one of its inputs is scheduled
       var mustBeScheduled = toProcess.inputs()
           .anyMatch(n -> getResultOf(n).isPresent());
+
+      if (mustBeScheduled && node instanceof IssGhostCastNode ghostCast) {
+        // ghost cast nodes are removed if they are not used as C expressions
+        var inputScheduleNode = getResultOf(ghostCast.value()).orElseThrow();
+        ghostCast.usages().toList().forEach(u -> u.replaceInput(ghostCast, ghostCast.value()));
+        // remove the schedule node of the ghostCast's value node.
+        return Optional.of(inputScheduleNode);
+      }
 
       return mustBeScheduled
           ? Optional.of(scheduleNode(node))

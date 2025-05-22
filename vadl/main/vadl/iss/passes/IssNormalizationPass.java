@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssConstExtractNode;
+import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
@@ -702,6 +703,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(IssValExtractNode toHandle) {
+    throw graphError(toHandle, "Node should not occur here");
+  }
+
+  @Handler
+  void handle(IssGhostCastNode toHandle) {
     throw graphError(toHandle, "Node should not occur here");
   }
 
