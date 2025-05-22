@@ -476,6 +476,10 @@ instruction set architecture AArch64Base = {
 
 // logic immediate models ******************************************************
 
+  // Additional information on immediate operand de/encoding is available at
+  // https://dinfuehr.github.io/blog/encoding-of-immediate-values-on-aarch64/
+  // https://kddnewton.com/2022/08/11/aarch64-bitmask-immediates.html
+
   // pattern replication functions
 
   function rep2  (pattern: Bits< 2>) -> Bits< 4> = (pattern, pattern)
@@ -493,13 +497,60 @@ instruction set architecture AArch64Base = {
   // pattern more positions than required gives the same result.
 
   function imm13Decode (imm13: Bits13) -> BitsX =
-    (  if   imm13(12.. 7) = 0b0'11110 then let pattern = (1 as Bits< 2> << (imm13(    6) + 1)) - 1 in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
-    else if imm13(12.. 8) = 0b0'1110  then let pattern = (1 as Bits< 4> << (imm13( 7..6) + 1)) - 1 in rep32 (rep16 (rep8 (rep4 (pattern))))
-    else if imm13(12.. 9) = 0b0'110   then let pattern = (1 as Bits< 8> << (imm13( 8..6) + 1)) - 1 in rep32 (rep16 (rep8 (pattern)))
-    else if imm13(12..10) = 0b0'10    then let pattern = (1 as Bits<16> << (imm13( 9..6) + 1)) - 1 in rep32 (rep16 (pattern))
-    else if imm13(12..11) = 0b0'0     then let pattern = (1 as Bits<32> << (imm13(10..6) + 1)) - 1 in rep32 (pattern)
-    else if imm13(12    ) = 0b1       then               (1 as Bits<64> << (imm13(11..6) + 1)) - 1
-    else 0  ) <>> imm13(5..0)
+    (    if imm13(12  ) = 0b1     then               (1 as Bits<64> << (imm13(5..0) + 1)) - 1
+    else if imm13(5   ) = 0b0     then let pattern = (1 as Bits<32> << (imm13(4..0) + 1)) - 1 in rep32 (pattern)
+    else if imm13(5..4) = 0b10    then let pattern = (1 as Bits<16> << (imm13(3..0) + 1)) - 1 in rep32 (rep16 (pattern))
+    else if imm13(5..3) = 0b110   then let pattern = (1 as Bits< 8> << (imm13(2..0) + 1)) - 1 in rep32 (rep16 (rep8 (pattern)))
+    else if imm13(5..2) = 0b1110  then let pattern = (1 as Bits< 4> << (imm13(1..0) + 1)) - 1 in rep32 (rep16 (rep8 (rep4 (pattern))))
+    else if imm13(5..1) = 0b11110 then let pattern = (1 as Bits< 2> << (imm13(   0) + 1)) - 1 in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
+    else 0  ) <>> imm13(11..6)
+
+  // patternSize determines the size of a repeating pattern.
+  // Zero and all ones are invalid patterns for the immediate operands of
+  // logical instructions. The function returns the valid pattern sizes
+  // (2,4,8,16,32,64) or 0 for an invalid pattern size.
+
+  function patternSize (val: BitsX) -> SIntW =
+         if val =  0    || val = -1   then  0
+    else if val(63..32) != val(31..0) then 64
+    else if val(31..16) != val(15..0) then 32
+    else if val(15.. 8) != val( 7..0) then 16
+    else if val( 7.. 4) != val( 3..0) then  8
+    else if val( 3.. 2) != val( 1..0) then  4
+    else 2 as SIntW
+
+  // nImmsImmr returns the concatenated values for N, imms and immr
+
+  function nImmrImms (patSize: SIntW, leftRotations: SIntW, trailingOnes: SIntW) -> Bits13 =
+    // immr is the number of right rotations of the pattern
+    // imms is a bitwise or of the pattern size and the number of ones - 1
+    let immr = (patSize - leftRotations &  patSize - 1) as Bits6 in
+    let imms = (~(patSize - 1) << 1 | trailingOnes - 1) as Bits6 in
+      (patSize = 64,immr,imms)
+
+// The function isOnesZeros returns true if the argument onesZeros is a
+// sequence of one or more ones followed by one or more zeroes.
+
+  function isOnesZeros(onesZeros: BitsX) -> Bool =
+    let mask = ((onesZeros - 1) | onesZeros) in
+      (mask + 1 & mask) = 0
+
+// imm13Encode encodes an unsigned 64 bit integer into the 13 bit N|immr|imms
+// representation for a valid pattern, otherwise it returns 0 as Bits13
+
+  function imm13Encode (val: BitsX) -> Bits13 =
+    let size = patternSize (val) in
+    if size = 0 then 0 else
+    let mask = ~(0 as BitsX) >> (64 - size) in
+    let imm = val & mask in
+    if isOnesZeros(imm) then
+      let leftRotations = VADL::ctz(imm) as SIntW in
+        nImmrImms(size, leftRotations, VADL::cto(imm >> leftRotations) as SIntW)
+    else let immNmask = imm | ~mask in
+      if isOnesZeros(~immNmask) then
+        let leadingOnes = VADL::clo(immNmask) as SIntW in
+          nImmrImms(size, 64 - leadingOnes, (leadingOnes + VADL::cto(immNmask) as SIntW) - (64 - size))
+      else 0 as Bits13
 
   format LogicImmFormat: Instr =      // logic immediate format
     { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
