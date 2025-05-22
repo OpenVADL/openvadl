@@ -101,7 +101,7 @@ public class EmitRegisterInfoTableGenFilePass extends LcbTemplateRenderingPass {
     var exceptions = new HashSet<>(Stream.of(
         Optional.of(abi.returnAddress().render()),
         Optional.of(abi.stackPointer().render()),
-        Optional.of(abi.globalPointer().render()),
+        abi.globalPointer().map(Abi.RegisterRef::render),
         Optional.of(abi.framePointer().render()),
         abi.threadPointer().map(Abi.RegisterRef::render)
     ).filter(Optional::isPresent).map(Optional::get).toList());

@@ -227,7 +227,7 @@ public class Abi extends Definition {
 
   private final RegisterRef returnAddress;
   private final RegisterRef stackPointer;
-  private final RegisterRef globalPointer;
+  private final Optional<RegisterRef> globalPointer;
   private final RegisterRef framePointer;
   private final Optional<RegisterRef> threadPointer;
 
@@ -263,7 +263,7 @@ public class Abi extends Definition {
              RegisterRef returnAddress,
              RegisterRef stackPointer,
              RegisterRef framePointer,
-             RegisterRef globalPointer,
+             Optional<RegisterRef> globalPointer,
              Optional<RegisterRef> threadPointer,
              Map<Pair<RegisterTensor, Integer>, List<RegisterAlias>> aliases,
              List<RegisterRef> callerSaved,
@@ -324,7 +324,7 @@ public class Abi extends Definition {
     return framePointer;
   }
 
-  public RegisterRef globalPointer() {
+  public Optional<RegisterRef> globalPointer() {
     return globalPointer;
   }
 

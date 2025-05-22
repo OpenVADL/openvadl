@@ -407,8 +407,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var returnAddressDef =
         getSpecialPurposeRegisterDefinition(definition.definitions,
             SpecialPurposeRegisterDefinition.Purpose.RETURN_ADDRESS);
-    var globalPtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
-        SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER);
+    var globalPtr = getOptionalSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER)
+        .map(def -> mapSingleSpecialPurposeRegisterDef(aliasLookup, def));
     var framePtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER);
     var threadPtr = getOptionalSpecialPurposeRegisterDefinition(definition.definitions,
@@ -417,7 +418,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     var stackPointer = mapSingleSpecialPurposeRegisterDef(aliasLookup, stackPointerDef);
     var returnAddress = mapSingleSpecialPurposeRegisterDef(aliasLookup, returnAddressDef);
-    var globalPtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, globalPtrDef);
     var framePtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, framePtrDef);
 
     // Calling Convention

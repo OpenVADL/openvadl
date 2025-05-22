@@ -123,7 +123,7 @@ public class EmitRegisterInfoCppFilePass extends LcbTemplateRenderingPass {
         "stackPointer", abi.stackPointer().render(),
         "hasThreadPointer", abi.threadPointer().isPresent(),
         "threadPointer", abi.threadPointer().map(Abi.RegisterRef::render).orElse(""),
-        "globalPointer", abi.globalPointer().render(),
+        "globalPointer", abi.globalPointer().map(Abi.RegisterRef::render).orElse(""),
         "frameIndexEliminations",
         getEliminateFrameIndexEntries(instructionLabels, uninlined,
             tableGenMachineInstructions).stream()
