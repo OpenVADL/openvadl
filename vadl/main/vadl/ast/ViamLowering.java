@@ -72,6 +72,7 @@ import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
+import vadl.viam.ViamError;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
 import vadl.viam.asm.AsmToken;
@@ -1581,14 +1582,29 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     if (expr instanceof CallIndexExpr callExpr
         && callExpr.symbolTable != null
         && callExpr.target instanceof Identifier identifier) {
-      var registerFile =
-          ensurePresent(
-              Optional.ofNullable((RegisterDefinition) identifier.target())
-                  .flatMap(this::fetch)
-                  .map(x -> (RegisterTensor) x),
-              () -> error("Cannot find register file with the name "
-                      + identifier.name,
-                  callExpr.location));
+      RegisterTensor registerFile = null;
+
+      // A user can specify the register, but maybe the used register file is actually an
+      // alias. We have to take care of that.
+      if (identifier.target() instanceof RegisterDefinition registerDefinition) {
+        registerFile = ensurePresent(
+            Optional.of(registerDefinition)
+                .flatMap(this::fetch)
+                .map(x -> (RegisterTensor) x),
+            () -> error("Cannot find register file with the name "
+                    + identifier.name,
+                callExpr.location));
+      } else if (identifier.target() instanceof AliasDefinition aliasDefinition) {
+        registerFile = ensurePresent(
+            Optional.ofNullable(aliasDefinition.computedTarget)
+                .flatMap(this::fetch)
+                .map(x -> (RegisterTensor) x),
+            () -> error("Cannot find register file with the name "
+                    + identifier.name,
+                callExpr.location));
+      } else {
+        throw new ViamError("not supported");
+      }
 
       ensure(callExpr.argsIndices.size() == 1 && callExpr.argsIndices.get(0).values.size() == 1,
           () -> error("Expected an index for the register file", callExpr.location));
