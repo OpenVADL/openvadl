@@ -184,7 +184,7 @@ instruction set architecture AArch64Base = {
   // register shift expression, encoding elements, assembly string expression
   record RegShift (ex: Ex, enc: Encs, asm: Ex)
 
-  // register size (WSize, XSize), access size (Byte, Half, Word, XWord),
+  // register size (WSize, XSize), access size (Byte, Half, Word, XWord), 
   // mnemonic extension ("b", "sb", "h", "sh", "sw"), opc, memory statement
   record Memory  (regsize: Id, accsize: Id, mext: Str, opc: Lit, stmt: Stat)
 
@@ -271,7 +271,7 @@ instruction set architecture AArch64Base = {
         }
     //[raise Undefined : imm3(2) = 1 && imm3(1..0) != 0]
     encoding ExtendId ($i.id, $extId) = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, option = ExtendType::$optId, $enc }
-    assembly ExtendId ($i.id, $extId) = ( $i.mnemo, $f.mext, ' ', ExtendId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
+    assembly ExtendId ($i.id, $extId) = ( $i.mnemo, $f.mext, ' ', ExtendId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd), 
                        ', ', ExtendId($size, "SP")(rn), ', ', $asm )
     }
 
@@ -487,17 +487,19 @@ instruction set architecture AArch64Base = {
   // imm13Decode takes the N, imms and immr fields as a combined 13 bit value
   // and returns the replicated and rotated 64 bit immediate value for defined
   // N, imms and immr values. 0 is returned for undefined values of imms, either
-  // explicitely or implicitely by shifting 1 zero times and subtracting 1 which
-  // also results in 0. The unused high bits of immr are ignored.
+  // explicitely for an invalid level or implicitely for an invalid length of
+  // all ones by shifting 1 zero times and subtracting 1 which also results in
+  // 0. The unused high bits of immr have no effect as rotating the identical
+  // pattern more positions than required gives the same result.
 
   function imm13Decode (imm13: Bits13) -> BitsX =
-    if      imm13(12.. 7) = 0b0'11110 then let pattern = ((1 as Bits< 2> << (imm13(    6) + 1)) - 1) <>> imm13(   0) in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
-    else if imm13(12.. 8) = 0b0'1110  then let pattern = ((1 as Bits< 4> << (imm13( 7..6) + 1)) - 1) <>> imm13(1..0) in rep32 (rep16 (rep8 (rep4 (pattern))))
-    else if imm13(12.. 9) = 0b0'110   then let pattern = ((1 as Bits< 8> << (imm13( 8..6) + 1)) - 1) <>> imm13(2..0) in rep32 (rep16 (rep8 (pattern)))
-    else if imm13(12..10) = 0b0'10    then let pattern = ((1 as Bits<16> << (imm13( 9..6) + 1)) - 1) <>> imm13(3..0) in rep32 (rep16 (pattern))
-    else if imm13(12..11) = 0b0'0     then let pattern = ((1 as Bits<32> << (imm13(10..6) + 1)) - 1) <>> imm13(4..0) in rep32 (pattern)
-    else if imm13(12    ) = 0b1       then               ((1 as Bits<64> << (imm13(11..6) + 1)) - 1) <>> imm13(5..0)
-    else 0
+    (  if   imm13(12.. 7) = 0b0'11110 then let pattern = (1 as Bits< 2> << (imm13(    6) + 1)) - 1 in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
+    else if imm13(12.. 8) = 0b0'1110  then let pattern = (1 as Bits< 4> << (imm13( 7..6) + 1)) - 1 in rep32 (rep16 (rep8 (rep4 (pattern))))
+    else if imm13(12.. 9) = 0b0'110   then let pattern = (1 as Bits< 8> << (imm13( 8..6) + 1)) - 1 in rep32 (rep16 (rep8 (pattern)))
+    else if imm13(12..10) = 0b0'10    then let pattern = (1 as Bits<16> << (imm13( 9..6) + 1)) - 1 in rep32 (rep16 (pattern))
+    else if imm13(12..11) = 0b0'0     then let pattern = (1 as Bits<32> << (imm13(10..6) + 1)) - 1 in rep32 (pattern)
+    else if imm13(12    ) = 0b1       then               (1 as Bits<64> << (imm13(11..6) + 1)) - 1
+    else 0  ) <>> imm13(5..0)
 
   format LogicImmFormat: Instr =      // logic immediate format
     { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
@@ -777,7 +779,7 @@ instruction set architecture AArch64Base = {
 
 // reverse bits / bytes model **************************************************
 
-  function revBitsWSize (bits: BitsW) -> BitsW = bits
+  function revBitsWSize (bits: BitsW) -> BitsW = bits 
     ( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
      16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31)
 
