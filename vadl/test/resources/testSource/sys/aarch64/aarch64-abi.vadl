@@ -1,0 +1,95 @@
+// SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+import aarch64::{AArch64Base}
+
+instruction set architecture AArch64Temp extending AArch64Base = {
+
+  pseudo instruction TEMP_CALL( symbol : Bits<32> ) =
+  {
+  }
+  assembly TEMP_CALL = (mnemonic, " ", hex( symbol ))
+
+  pseudo instruction TEMP_RET =
+  {
+  }
+  assembly TEMP_RET = mnemonic
+
+  pseudo instruction TEMP_LA( rd: Index, symbol : Bits<32> ) =
+  {
+  }
+  assembly TEMP_LA = (mnemonic, " ", hex( symbol ))
+}
+
+application binary interface ABI for AArch64Temp = {
+   long width = 64
+   long align = 64
+   size_t type = unsigned long
+   int max type = signed long
+   pointer width = 64
+   pointer align = 64
+
+
+   alias register A_SP = X(31)
+   alias register A_LR = X(30)
+   alias register A_FP = X(29)
+
+   alias register X0 = X(0)
+   alias register X1 = X(1)
+   alias register X2 = X(2)
+   alias register X3 = X(3)
+   alias register X4 = X(4)
+   alias register X5 = X(5)
+   alias register X6 = X(6)
+   alias register X7 = X(7)
+   alias register X8 = X(8)
+   alias register X9 = X(9)
+   alias register X10 = X(10)
+   alias register X11 = X(11)
+   alias register X12 = X(12)
+   alias register X13 = X(13)
+   alias register X14 = X(14)
+   alias register X15 = X(15)
+   alias register X16 = X(16)
+   alias register X17 = X(17)
+   alias register X18 = X(18)
+   alias register X19 = X(19)
+   alias register X20 = X(20)
+   alias register X21 = X(21)
+   alias register X22 = X(22)
+   alias register X23 = X(23)
+   alias register X24 = X(24)
+   alias register X25 = X(25)
+   alias register X26 = X(26)
+   alias register X27 = X(27)
+   alias register X28 = X(28)
+   // alias register X29 = X(29)
+   // alias register X30 = X(30)
+   // alias register X31 = X(31)
+
+   // [ alignment : HalfWord ]
+   stack pointer = A_SP
+   return address = A_LR
+   frame pointer = A_FP
+
+   pseudo return instruction = TEMP_RET
+   pseudo call instruction = TEMP_CALL
+   pseudo local address load instruction = TEMP_LA
+   pseudo absolute address load instruction = TEMP_LA
+
+   function argument = X{0..7}
+   return value = X{0..1}
+
+   caller saved = [ X{9..15} ]
+   callee saved = [ LR, X{19..28} ]
+
+   constant sequence(rd: Bits<5>, val: SInt<32>) =
+   {
+
+   }
+
+   register adjustment sequence( rd : Bits<5>, rs1: Bits<5>, imm : SInt<12> ) =
+   {
+
+   }
+}
