@@ -497,12 +497,12 @@ instruction set architecture AArch64Base = {
   // pattern more positions than required gives the same result.
 
   function imm13Decode (imm13: Bits13) -> BitsX =
-    (    if imm13(12  ) = 0b1     then               (1 as Bits<64> << (imm13(5..0) + 1)) - 1
-    else if imm13(5   ) = 0b0     then let pattern = (1 as Bits<32> << (imm13(4..0) + 1)) - 1 in rep32 (pattern)
-    else if imm13(5..4) = 0b10    then let pattern = (1 as Bits<16> << (imm13(3..0) + 1)) - 1 in rep32 (rep16 (pattern))
-    else if imm13(5..3) = 0b110   then let pattern = (1 as Bits< 8> << (imm13(2..0) + 1)) - 1 in rep32 (rep16 (rep8 (pattern)))
-    else if imm13(5..2) = 0b1110  then let pattern = (1 as Bits< 4> << (imm13(1..0) + 1)) - 1 in rep32 (rep16 (rep8 (rep4 (pattern))))
-    else if imm13(5..1) = 0b11110 then let pattern = (1 as Bits< 2> << (imm13(   0) + 1)) - 1 in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
+    (    if imm13(12  ) = 0b1     then               (1 as Bits<64> << imm13(5..0) + 1) - 1
+    else if imm13(5   ) = 0b0     then let pattern = (1 as Bits<32> << imm13(4..0) + 1) - 1 in rep32 (pattern)
+    else if imm13(5..4) = 0b10    then let pattern = (1 as Bits<16> << imm13(3..0) + 1) - 1 in rep32 (rep16 (pattern))
+    else if imm13(5..3) = 0b110   then let pattern = (1 as Bits< 8> << imm13(2..0) + 1) - 1 in rep32 (rep16 (rep8 (pattern)))
+    else if imm13(5..2) = 0b1110  then let pattern = (1 as Bits< 4> << imm13(1..0) + 1) - 1 in rep32 (rep16 (rep8 (rep4 (pattern))))
+    else if imm13(5..1) = 0b11110 then let pattern = (1 as Bits< 2> << imm13(   0) + 1) - 1 in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
     else 0  ) <>> imm13(11..6)
 
   // patternSize determines the size of a repeating pattern.
@@ -551,6 +551,11 @@ instruction set architecture AArch64Base = {
         let leadingOnes = VADL::clo(immNmask) as SIntW in
           nImmrImms(size, 64 - leadingOnes, (leadingOnes + VADL::cto(immNmask) as SIntW) - (64 - size))
       else 0 as Bits13
+
+  function imm13EncodeWSize (val: BitsX) -> Bits13 =
+    let trunc = val as BitsW as BitsX in
+      if trunc != val then 0
+      else imm13Encode (val << Size::WSize | val)
 
   format LogicImmFormat: Instr =      // logic immediate format
     { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
@@ -753,23 +758,32 @@ instruction set architecture AArch64Base = {
 // set to zero.
 //
 // For SBFM and UBFM there exist pseudo instructions for shifts and sign/zero
-// extension. Therefore, *BFM are specified using shift builtins.
+// extension. Therefore, *BFM instructions are specified using a shift left
+// followed by a shift right.
 
-  function BitfieldLeftWSize (imms: Bits5) -> Bits5 =
-    (Size::WSize - 1) as Bits5 - imms
+  function BfmLeftWSize (imms: Bits5) -> Bits5 =
+    -1 as Bits5 - imms
 
-  function BitfieldLeftXSize (imms: Bits6) -> Bits6 =
-    (Size::XSize - 1) as Bits6 - imms
+  function BfmLeftXSize (imms: Bits6) -> Bits6 =
+    -1 as Bits6 - imms
 
-  function BitfieldRightWSize (imms: Bits5, immr: Bits5) -> Bits5 =
-    if imms as UInt >= immr
-      then (Size::WSize - 1) as Bits5 - imms + immr
-      else immr - imms - 1
+  function BfmLeftToImmsWSize (left: Bits5) -> Bits6 =
+    (-1 as Bits5 - left) as Bits6
 
-  function BitfieldRightXSize (imms: Bits6, immr: Bits6) -> Bits6 =
-    if imms as UInt >= immr
-      then (Size::XSize - 1) as Bits6 - imms + immr
-      else immr - imms - 1
+  function BfmLeftToImmsXSize (left: Bits6) -> Bits6 =
+    -1 as Bits6 - left
+
+  function BfmRightWSize (imms: Bits5, immr: Bits5) -> Bits5 =
+    immr - imms - 1
+
+  function BfmRightXSize (imms: Bits6, immr: Bits6) -> Bits6 =
+    immr - imms - 1
+
+  function BfmToImmrWSize (left: Bits5, right: Bits5) -> Bits6 =
+    (right - left) as Bits6
+
+  function BfmToImmrXSize (left: Bits6, right: Bits6) -> Bits6 =
+    right - left
 
   format BitFieldMoveFormat: Instr =  // bit field move format
     { sf         : Bits1              // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
@@ -779,10 +793,10 @@ instruction set architecture AArch64Base = {
     , imms       : Bits6              // bit field length -1 or high position
     , rn         : Index              // source register
     , rd         : Index              // destination register
-    , leftWSize  = BitfieldLeftWSize  (imms(4..0))
-    , leftXSize  = BitfieldLeftXSize  (imms)
-    , rightWSize = BitfieldRightWSize (imms(4..0), immr(4..0))
-    , rightXSize = BitfieldRightXSize (imms, immr)
+    , leftWSize  = BfmLeftWSize  (imms(4..0))
+    , leftXSize  = BfmLeftXSize  (imms)
+    , rightWSize = BfmRightWSize (imms(4..0), immr(4..0))
+    , rightXSize = BfmRightXSize (imms, immr)
     // TODO encode
     // TODO predicate
     }
