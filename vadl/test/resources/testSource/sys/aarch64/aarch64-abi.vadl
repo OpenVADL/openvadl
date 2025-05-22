@@ -81,7 +81,7 @@ application binary interface ABI for AArch64Temp = {
    return value = X{0..1}
 
    caller saved = [ X{9..15} ]
-   callee saved = [ LR, X{19..28} ]
+   callee saved = [ A_LR, X{19..28} ]
 
    constant sequence(rd: Bits<5>, val: SInt<32>) =
    {
