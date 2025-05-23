@@ -488,6 +488,17 @@ instruction set architecture AArch64Base = {
   function rep16 (pattern: Bits<16>) -> Bits<32> = (pattern, pattern)
   function rep32 (pattern: Bits<32>) -> Bits<64> = (pattern, pattern)
 
+  // replicate replicates the size0 sized pattern in pat0 until 64 bit are
+  // filled, size0 must be a power of 2 > 1, the bits above the pattern in
+  // pat0 must be zero
+ 
+  function replicate (pat0: BitsX, size0: Bits6) -> BitsX =
+    if size0 = 0 then pat0 else let pat1 = pat0 << size0 | pat0 in let size1 = size0 << 1 in
+    if size1 = 0 then pat1 else let pat2 = pat1 << size1 | pat1 in let size2 = size1 << 1 in
+    if size2 = 0 then pat2 else let pat3 = pat2 << size2 | pat2 in let size3 = size2 << 1 in
+    if size3 = 0 then pat3 else let pat4 = pat3 << size3 | pat3 in let size4 = size3 << 1 in
+    if size4 = 0 then pat4 else            pat4 << size4 | pat4
+
   // imm13Decode takes the N, imms and immr fields as a combined 13 bit value
   // and returns the replicated and rotated 64 bit immediate value for defined
   // N, imms and immr values. 0 is returned for undefined values of imms, either
@@ -496,13 +507,22 @@ instruction set architecture AArch64Base = {
   // 0. The unused high bits of immr have no effect as rotating the identical
   // pattern more positions than required gives the same result.
 
-  function imm13Decode (imm13: Bits13) -> BitsX =
+  function imm13DecAlt (imm13: Bits13) -> BitsX =
     (    if imm13(12  ) = 0b1     then               (1 as Bits<64> << imm13(5..0) + 1) - 1
     else if imm13(5   ) = 0b0     then let pattern = (1 as Bits<32> << imm13(4..0) + 1) - 1 in rep32 (pattern)
     else if imm13(5..4) = 0b10    then let pattern = (1 as Bits<16> << imm13(3..0) + 1) - 1 in rep32 (rep16 (pattern))
     else if imm13(5..3) = 0b110   then let pattern = (1 as Bits< 8> << imm13(2..0) + 1) - 1 in rep32 (rep16 (rep8 (pattern)))
     else if imm13(5..2) = 0b1110  then let pattern = (1 as Bits< 4> << imm13(1..0) + 1) - 1 in rep32 (rep16 (rep8 (rep4 (pattern))))
     else if imm13(5..1) = 0b11110 then let pattern = (1 as Bits< 2> << imm13(   0) + 1) - 1 in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
+    else 0  ) <>> imm13(11..6)
+
+  function imm13Decode (imm13: Bits13) -> BitsX =
+    (    if imm13(12  ) = 0b1     then            (1 as BitsX << imm13(5..0) + 1) - 1
+    else if imm13(5   ) = 0b0     then replicate ((1 as BitsX << imm13(4..0) + 1) - 1, 32)
+    else if imm13(5..4) = 0b10    then replicate ((1 as BitsX << imm13(3..0) + 1) - 1, 16)
+    else if imm13(5..3) = 0b110   then replicate ((1 as BitsX << imm13(2..0) + 1) - 1,  8)
+    else if imm13(5..2) = 0b1110  then replicate ((1 as BitsX << imm13(1..0) + 1) - 1,  4)
+    else if imm13(5..1) = 0b11110 then replicate ((1 as BitsX << imm13(   0) + 1) - 1,  2)
     else 0  ) <>> imm13(11..6)
 
   // patternSize determines the size of a repeating pattern.
