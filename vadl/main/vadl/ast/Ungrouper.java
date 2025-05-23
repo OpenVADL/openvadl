@@ -215,6 +215,11 @@ public class Ungrouper
   }
 
   @Override
+  public Expr visit(ExpandedSequenceCallExpr expr) {
+    return expr;
+  }
+
+  @Override
   public Void visit(ConstantDefinition definition) {
     ungroupAnnotations(definition);
     definition.value = definition.value.accept(this);

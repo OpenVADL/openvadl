@@ -737,11 +737,23 @@ class ParserUtils {
     }
   }
 
-  static List<SequenceCallExpr> expandSequenceCalls(Parser parser, List<SequenceCallExpr> calls) {
-    var expandedCalls = new ArrayList<SequenceCallExpr>(calls.size());
+  static List<ExpandedSequenceCallExpr> expandSequenceCalls(Parser parser,
+                                                            List<SequenceCallExpr> calls) {
+    var expandedCalls = new ArrayList<ExpandedSequenceCallExpr>(calls.size());
     for (SequenceCallExpr callExpr : calls) {
-      if (callExpr.range == null) {
-        expandedCalls.add(callExpr);
+      var targetId = mapToIdentifier(callExpr.target);
+      if (callExpr.range == null && callExpr.target instanceof CallIndexExpr callIndexExpr) {
+        var registerFile = new Identifier(callIndexExpr.target.path().pathToString(),
+            callIndexExpr.location);
+        expandedCalls.add(new ExpandedRegisterSequenceCallExpr(
+            registerFile,
+            targetId,
+            (CallIndexExpr) callExpr.target,
+            callExpr.loc));
+      } else if (callExpr.range == null) {
+        expandedCalls.add(new ExpandedSequenceCallExpr(
+            targetId,
+            callExpr.loc));
       } else {
         BigInteger start = BigInteger.ZERO;
         BigInteger end = BigInteger.ZERO;
@@ -765,12 +777,31 @@ class ParserUtils {
         }
         for (BigInteger i = start; i.compareTo(end) <= 0; i = i.add(BigInteger.ONE)) {
           expandedCalls.add(
-              new SequenceCallExpr(new Identifier(callExpr.target.name + i, callExpr.loc), null,
+              new ExpandedSequenceCallExpr(
+                  new Identifier(targetId.name + i, callExpr.loc),
                   callExpr.loc));
         }
       }
     }
     return expandedCalls;
+  }
+
+  /**
+   * Map an expression to an {@link Identifier}. It can be already an {@link Identifier}.
+   * Or {@code X(1)} then we map the {@code expr} to {@code X1}.
+   */
+  private static Identifier mapToIdentifier(Expr expr) {
+    if (expr instanceof Identifier ident) {
+      return ident;
+    } else if (expr instanceof CallIndexExpr callIndexExpr) {
+      var indexLit = callIndexExpr.argsIndices.get(0).values.get(0);
+      var index = new ConstantEvaluator().eval(indexLit);
+      return new Identifier(callIndexExpr.target.path().pathToString()
+          + index.value().intValue(),
+          callIndexExpr.location);
+    }
+
+    throw Diagnostic.error("Not recognized identifier", expr.location()).build();
   }
 
   static void addDef(List<Definition> definitions, Definition def) {
