@@ -3450,7 +3450,7 @@ class AbiSpecialPurposeInstructionDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append("pseudo ").append(kind.keyword).append(" instruction = ");
+    builder.append("special ").append(kind.keyword).append(" instruction = ");
     target.prettyPrint(indent + 1, builder);
     builder.append("\n");
   }
