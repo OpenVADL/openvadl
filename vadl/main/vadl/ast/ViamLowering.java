@@ -438,15 +438,15 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     // Pseudo Instructions
 
     var pseudoRetInstrDef = getAbiPseudoInstruction(definition.definitions,
-        AbiSpecialPurposeInstructionDefinition.Kind.RETURN);
+        AbiPseudoInstructionDefinition.Kind.RETURN);
     var pseudoCallInstrDef = getAbiPseudoInstruction(definition.definitions,
-        AbiSpecialPurposeInstructionDefinition.Kind.CALL);
+        AbiPseudoInstructionDefinition.Kind.CALL);
     var pseudoLocalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiSpecialPurposeInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD);
+        AbiPseudoInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD);
     var pseudoAbsoluteAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiSpecialPurposeInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD);
+        AbiPseudoInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD);
     var pseudoGlobalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiSpecialPurposeInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD);
+        AbiPseudoInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD);
 
     var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow(() ->
         error("Cannot find the pseudo return instruction", definition.location())
@@ -1528,7 +1528,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(
-      AbiSpecialPurposeInstructionDefinition definition) {
+      AbiPseudoInstructionDefinition definition) {
     var pseudoInstructionDefinition = (PseudoInstructionDefinition) definition.target.target();
 
     return Optional.ofNullable(pseudoInstructionDefinition).flatMap(this::fetch);
@@ -1637,17 +1637,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
 
   /**
-   * Extracts {@link AbiSpecialPurposeInstructionDefinition} from an
+   * Extracts {@link AbiPseudoInstructionDefinition} from an
    * {@link ApplicationBinaryInterfaceDefinition}.
    */
-  private Optional<AbiSpecialPurposeInstructionDefinition> getAbiPseudoInstruction(
-      List<Definition> definitions, AbiSpecialPurposeInstructionDefinition.Kind kind) {
+  private Optional<AbiPseudoInstructionDefinition> getAbiPseudoInstruction(
+      List<Definition> definitions, AbiPseudoInstructionDefinition.Kind kind) {
     var pseudoInstructions = definitions
         .stream()
-        .filter(x -> x instanceof AbiSpecialPurposeInstructionDefinition y && y.kind == kind)
+        .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
         .toList();
 
-    return pseudoInstructions.stream().findFirst().map(x -> (AbiSpecialPurposeInstructionDefinition) x);
+    return pseudoInstructions.stream().findFirst().map(x -> (AbiPseudoInstructionDefinition) x);
   }
 
   /**

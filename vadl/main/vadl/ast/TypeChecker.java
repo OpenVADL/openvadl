@@ -781,7 +781,7 @@ public class TypeChecker
   }
 
   @Override
-  public Void visit(AbiSpecialPurposeInstructionDefinition definition) {
+  public Void visit(AbiPseudoInstructionDefinition definition) {
     // Isn't type checked on purpose because there is nothing to type check.
     return null;
   }
@@ -1049,11 +1049,11 @@ public class TypeChecker
     }
 
     // Check whether there exists just one pseudo instruction.
-    for (var entry : AbiSpecialPurposeInstructionDefinition.Kind.numberOfOccurrencesAbi.entrySet()) {
+    for (var entry : AbiPseudoInstructionDefinition.Kind.numberOfOccurrencesAbi.entrySet()) {
       var kind = entry.getKey();
       var pseudoInstructions = definition.definitions
           .stream()
-          .filter(x -> x instanceof AbiSpecialPurposeInstructionDefinition y && y.kind == kind)
+          .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
           .toList();
 
       var noValues = error(

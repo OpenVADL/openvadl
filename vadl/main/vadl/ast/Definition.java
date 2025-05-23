@@ -79,7 +79,7 @@ abstract class Definition extends Node {
 }
 
 interface DefinitionVisitor<R> {
-  R visit(AbiSpecialPurposeInstructionDefinition definition);
+  R visit(AbiPseudoInstructionDefinition definition);
 
   R visit(AbiSequenceDefinition definition);
 
@@ -3413,18 +3413,18 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
 }
 
 /**
- * The compiler generator requires a few instructions. Those need to be defined
- * in the ABI. They are distinguished with the {@link AbiSpecialPurposeInstructionDefinition#kind}
+ * The compiler generator requires a few {@link PseudoInstruction}. Those need to be defined
+ * in the ABI. They are distinguised with the {@link AbiPseudoInstructionDefinition#kind}
  * property.
  */
-class AbiSpecialPurposeInstructionDefinition extends Definition {
+class AbiPseudoInstructionDefinition extends Definition {
 
   Kind kind;
   @Child
   IdentifierOrPlaceholder target;
   SourceLocation loc;
 
-  AbiSpecialPurposeInstructionDefinition(Kind kind, IdentifierOrPlaceholder target, SourceLocation loc) {
+  AbiPseudoInstructionDefinition(Kind kind, IdentifierOrPlaceholder target, SourceLocation loc) {
     this.kind = kind;
     this.target = target;
     this.loc = loc;
@@ -3449,7 +3449,7 @@ class AbiSpecialPurposeInstructionDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append(kind.keyword).append(" instruction = ");
+    builder.append("pseudo ").append(kind.keyword).append(" instruction = ");
     target.prettyPrint(indent + 1, builder);
     builder.append("\n");
   }
@@ -3462,7 +3462,7 @@ class AbiSpecialPurposeInstructionDefinition extends Definition {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AbiSpecialPurposeInstructionDefinition that = (AbiSpecialPurposeInstructionDefinition) o;
+    AbiPseudoInstructionDefinition that = (AbiPseudoInstructionDefinition) o;
     return kind == that.kind && target.equals(that.target);
   }
 
