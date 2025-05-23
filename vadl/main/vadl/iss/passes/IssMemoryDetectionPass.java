@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.error.DiagnosticBuilder;
@@ -58,6 +60,8 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
   // there can be at most one RAM region without a size annotation
   private @Nullable MemoryRegion infinteRamRegion;
   private final List<DiagnosticBuilder> errors = new ArrayList<>();
+
+  private final Map<MemoryRegion, Integer> initVecSizes = new HashMap<>();
 
   public IssMemoryDetectionPass(IssConfiguration configuration) {
     super(configuration);
@@ -101,7 +105,8 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
     }
 
     for (var region : processor.memoryRegions()) {
-      region.attachExtension(new MemoryRegionInfo(mainRam == region, configuration()));
+      var initVecSize = initVecSizes.getOrDefault(region, 0);
+      region.attachExtension(new MemoryRegionInfo(mainRam == region, configuration(), initVecSize));
     }
 
     return null;
@@ -128,7 +133,7 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
             .locationDescription(region.identifier,
                 "This memory region requires a [ base = <addr> ] annotation."));
       }
-      if (region.kind() == MemoryRegion.Kind.ROM) {
+      if (!region.holdsFirmware() && region.kind() == MemoryRegion.Kind.ROM) {
         errors.add(error("Missing memory region body", region.identifier)
             .locationDescription(region.identifier,
                 "ROM memory region definition must have a body."));
@@ -166,10 +171,13 @@ public class IssMemoryDetectionPass extends AbstractIssPass {
     // additionally, if those annotations aren't set, we set them based on the analysis results.
     if (region.hasInitialization()) {
       var base = region.base();
-      var size = region.base();
+      var size = region.size();
       var lowerBound = base == null ? BigInteger.ZERO : base;
-      var upperBound = size == null ? null : lowerBound.add(size);
+      var upperBound = size == null ? null : lowerBound.add(BigInteger.valueOf(size));
       var result = analyzeRegionBody(region, lowerBound, upperBound);
+
+      // set vector size used for vector in region initialization
+      initVecSizes.put(region, result.right());
 
       if (base == null) {
         region.setBase(result.left());

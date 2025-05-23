@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.viam.Specification;
 
@@ -168,6 +170,11 @@ public class PassManager {
       return pass.execute(passResults, viam);
     } catch (Exception e) {
       var config = pipeline.get(0).pass().configuration();
+      if (!config.doDump() && (e instanceof Diagnostic || e instanceof DiagnosticList)) {
+        // if we are not dumping and the error is a diagnostic, we don't generate an
+        // exception dump.
+        throw e;
+      }
       var passClassName = pass.getClass().getSimpleName();
       // collect latest graphs
       var graphCollectPass = new CollectBehaviorDotGraphPass(pass.configuration());

@@ -52,15 +52,15 @@ static void [(${gen_machine_lower})]_machine_ready(Notifier *notifier, void *dat
         exit(1);
     }
 
+    [# th:each="init : ${mem_region_inits}"]
+    init_[(${init.mem.name_lower})]();
+    [/]
+
     firmware_end_addr = [(${gen_arch_lower})]_find_and_load_firmware(machine, firmware_no_elf_base_addr, [(${gen_machine_lower})]_sym_cb);
     if (firmware_end_addr == firmware_no_elf_base_addr) {
         error_report("Failed to load firmware.");
         exit(1);
     }
-
-    [# th:each="init : ${mem_region_inits}"]
-    init_[(${init.mem.name_lower})]();
-    [/]
 
     [# th:if="${htif_enabled}"]
     if (tofromhost_defined) {

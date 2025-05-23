@@ -43,15 +43,20 @@ public class MemoryRegionInfo extends DefinitionExtension<MemoryRegion>
   Map<String, Object> renderObj;
   final boolean isMainRam;
   final IssConfiguration config;
+  // the size of the vector used in the region initialization (gen-machine.c:init_region())
+  final int initVecSize;
 
   /**
    * Constructs the memory region info.
    *
-   * @param isMainRam specifies if this memory region is the main RAM.
+   * @param isMainRam   specifies if this memory region is the main RAM.
+   * @param initVecSize the size of the vector used in the region initialization
+   *                    ({@code gen-machine.c:init_region()})
    */
-  public MemoryRegionInfo(boolean isMainRam, IssConfiguration config) {
+  public MemoryRegionInfo(boolean isMainRam, IssConfiguration config, int initVecSize) {
     this.isMainRam = isMainRam;
     this.config = config;
+    this.initVecSize = initVecSize;
   }
 
   public MemoryRegion memReg() {
@@ -60,6 +65,10 @@ public class MemoryRegionInfo extends DefinitionExtension<MemoryRegion>
 
   public String name() {
     return memReg().simpleName();
+  }
+
+  public int initVecSize() {
+    return initVecSize;
   }
 
   public String treeName() {
