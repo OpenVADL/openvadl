@@ -600,8 +600,8 @@ class MacroExpander
   }
 
   @Override
-  public Definition visit(AbiPseudoInstructionDefinition definition) {
-    return new AbiPseudoInstructionDefinition(definition.kind,
+  public Definition visit(AbiSpecialPurposeInstructionDefinition definition) {
+    return new AbiSpecialPurposeInstructionDefinition(definition.kind,
         expandId(definition.target),
         copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));

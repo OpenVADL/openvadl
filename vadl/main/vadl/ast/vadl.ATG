@@ -870,9 +870,11 @@ PRODUCTIONS
 
   abiElementDefinition<out Definition def>   (. def = DUMMY_DEF; .)
   = annotations<.out List<AnnotationDefinition> annotations.> (. var peek = scanner.Peek(); .)
-    ( specialPurposeRegisterSingleDef<out def>
+  (
+    IF (la.kind != _RETURN || peek.kind != _INSTRUCTION)
+      specialPurposeRegisterSingleDef<out def>
     | aliasDefinition<out def>
-    | abiPseudoInstructionDefinition<out def>
+    | abiSpecialPurposeInstructionDefinition<out def>
     | abiSequenceDef<out def>
     | clangTypeDefinition<out def>
     | clangNumericTypeDefinition<out def>
@@ -941,18 +943,17 @@ PRODUCTIONS
   sequenceCallExprList<.out List<SequenceCallExpr> calls.> (. def = new SpecialPurposeRegisterDefinition(purpose, calls, start.join(lastTokenLoc())); .)
   .
 
-  abiPseudoInstructionDefinition<out Definition def>         (. var start = nextTokenLoc(); .)
-  =                                                          (. AbiPseudoInstructionDefinition.Kind kind = null; .)
-  PSEUDO
+  abiSpecialPurposeInstructionDefinition<out Definition def>         (. var start = nextTokenLoc(); .)
+  =                                                          (. AbiSpecialPurposeInstructionDefinition.Kind kind = null; .)
   (
-    RETURN INSTRUCTION                                       (. kind = AbiPseudoInstructionDefinition.Kind.RETURN; .)
-    | CALL INSTRUCTION                                       (. kind = AbiPseudoInstructionDefinition.Kind.CALL; .)
-    | LOCAL ADDRESS LOAD INSTRUCTION                         (. kind = AbiPseudoInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD; .)
-    | GLOBAL ADDRESS LOAD INSTRUCTION                        (. kind = AbiPseudoInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD; .)
-    | ABSOLUTE ADDRESS LOAD INSTRUCTION                      (. kind = AbiPseudoInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD; .)
+    RETURN INSTRUCTION                                       (. kind = AbiSpecialPurposeInstructionDefinition.Kind.RETURN; .)
+    | CALL INSTRUCTION                                       (. kind = AbiSpecialPurposeInstructionDefinition.Kind.CALL; .)
+    | LOCAL ADDRESS LOAD INSTRUCTION                         (. kind = AbiSpecialPurposeInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD; .)
+    | GLOBAL ADDRESS LOAD INSTRUCTION                        (. kind = AbiSpecialPurposeInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD; .)
+    | ABSOLUTE ADDRESS LOAD INSTRUCTION                      (. kind = AbiSpecialPurposeInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD; .)
   )
   SYM_EQ
-  identifier<out Identifier id>  (. def = new AbiPseudoInstructionDefinition(kind, id, start.join(lastTokenLoc())); .)
+  identifier<out Identifier id>  (. def = new AbiSpecialPurposeInstructionDefinition(kind, id, start.join(lastTokenLoc())); .)
   .
 
   abiSequenceDef<out Definition def>                         (. var start = nextTokenLoc(); .)

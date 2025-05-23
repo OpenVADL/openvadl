@@ -1,0 +1,2093 @@
+<!-- SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- -->
+<!-- This program is free software: you can redistribute it and/or modify -->
+<!-- it under the terms of the GNU General Public License as published by -->
+<!-- the Free Software Foundation, either version 3 of the License, or -->
+<!-- (at your option) any later version. -->
+<!-- -->
+<!-- This program is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU General Public License for more details. -->
+<!-- -->
+<!-- You should have received a copy of the GNU General Public License -->
+<!-- along with this program.  If not, see <https://www.gnu.org/licenses/>. -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Specification (valid_regfile_writes) - at Single Resource Write Validation Pass</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.0/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet"/>
+    <style>
+        .badge {
+            /*text-xs font-medium me-2 px-2.5 py-0.5 rounded*/
+            background-color: rgb(219 234 254);
+            font-weight: 500;
+            margin-right: 0.5rem;
+            padding: 0.125rem 0.625rem;
+            border-radius: 0.25rem;
+        }
+        .badge-orange {
+            background-color: rgb(255 207 181);
+        }
+        .graph-container > svg {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="flex flex-nowrap font-sans">
+
+<!-- Left side - Table of Contents -->
+<div class="overflow-y-auto h-screen p-6 flex-none">
+    <nav class="pt-16 px-1 pl-3 lg:pl-0 lg:pt-2 font-normal text-base lg:text-sm pb-10 lg:pb-20 sticky?lg:h-(screen-18)"
+    >
+        
+            <h4 class="my-1 text-sm font-semibold tracking-wide text-gray-900 lg:text-xs dark:text-white">InstructionSetArchitectures</h4>
+            <ul class="py-1 list-unstyled fw-normal small">
+                <li>
+                    <a href="#ValidRegFileWrites-InstructionSetArchitecture"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites
+                    </a>
+                </li>
+            </ul>
+        
+            <h4 class="my-1 text-sm font-semibold tracking-wide text-gray-900 lg:text-xs dark:text-white">RegisterTensors</h4>
+            <ul class="py-1 list-unstyled fw-normal small">
+                <li>
+                    <a href="#ValidRegFileWrites__X-RegisterTensor"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::X
+                    </a>
+                </li>
+            </ul>
+        
+            <h4 class="my-1 text-sm font-semibold tracking-wide text-gray-900 lg:text-xs dark:text-white">Formats</h4>
+            <ul class="py-1 list-unstyled fw-normal small">
+                <li>
+                    <a href="#ValidRegFileWrites__TMP-Format"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::TMP
+                    </a>
+                </li>
+            </ul>
+        
+            <h4 class="my-1 text-sm font-semibold tracking-wide text-gray-900 lg:text-xs dark:text-white">Instructions</h4>
+            <ul class="py-1 list-unstyled fw-normal small">
+                <li>
+                    <a href="#ValidRegFileWrites__TEST1-Instruction"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::TEST1
+                    </a>
+                </li>
+                <li>
+                    <a href="#ValidRegFileWrites__TEST2-Instruction"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::TEST2
+                    </a>
+                </li>
+                <li>
+                    <a href="#ValidRegFileWrites__TEST3-Instruction"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::TEST3
+                    </a>
+                </li>
+            </ul>
+        
+            <h4 class="my-1 text-sm font-semibold tracking-wide text-gray-900 lg:text-xs dark:text-white">Encodings</h4>
+            <ul class="py-1 list-unstyled fw-normal small">
+                <li>
+                    <a href="#ValidRegFileWrites__TEST1__encoding-Encoding"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::TEST1::encoding
+                    </a>
+                </li>
+                <li>
+                    <a href="#ValidRegFileWrites__TEST2__encoding-Encoding"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::TEST2::encoding
+                    </a>
+                </li>
+                <li>
+                    <a href="#ValidRegFileWrites__TEST3__encoding-Encoding"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::TEST3::encoding
+                    </a>
+                </li>
+            </ul>
+        
+            <h4 class="my-1 text-sm font-semibold tracking-wide text-gray-900 lg:text-xs dark:text-white">Processors</h4>
+            <ul class="py-1 list-unstyled fw-normal small">
+                <li>
+                    <a href="#TEST-Processor"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        TEST
+                    </a>
+                </li>
+            </ul>
+        
+            <h4 class="my-1 text-sm font-semibold tracking-wide text-gray-900 lg:text-xs dark:text-white">Assemblys</h4>
+            <ul class="py-1 list-unstyled fw-normal small">
+                <li>
+                    <a href="#ValidRegFileWrites__TEST1__assembly-Assembly"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::TEST1::assembly
+                    </a>
+                </li>
+                <li>
+                    <a href="#ValidRegFileWrites__TEST2__assembly-Assembly"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::TEST2::assembly
+                    </a>
+                </li>
+                <li>
+                    <a href="#ValidRegFileWrites__TEST3__assembly-Assembly"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        ValidRegFileWrites::TEST3::assembly
+                    </a>
+                </li>
+            </ul>
+        
+            <h4 class="my-1 text-sm font-semibold tracking-wide text-gray-900 lg:text-xs dark:text-white">Procedures</h4>
+            <ul class="py-1 list-unstyled fw-normal small">
+                <li>
+                    <a href="#reset-Procedure"
+                       class="py-2 transition-colors duration-200 relative flex items-center flex-wrap font-medium hover:text-gray-900 text-gray-500 dark:text-gray-400 dark:hover:text-white">
+                        reset
+                    </a>
+                </li>
+            </ul>
+        
+    </nav>
+</div>
+
+<!-- Right side - List of definitions -->
+<div class="w-full max-w-screen-xl p-4 overflow-auto h-screen">
+    <div class="flex items-center justify-between" >
+        <h1 id="specification" class="text-xl font-bold mb-4 tracking-wide">Specification (valid_regfile_writes) - at Single Resource Write Validation Pass</h1>
+        <h3 class="text-sm mb-4 tracking-wide">(2025-05-20 06:46:09)</h3>
+    </div>
+    <div class="mb-6 p-6 border border-gray-300 shadow rounded-md"
+         style="max-width: 700px"
+    >
+        <p class="">This is a dump right after the pass vadl.viam.passes.DuplicateWriteDetectionPass-380.</p>
+    </div>
+
+    <!--  Accordion with executed passes  -->
+    <div id="passes" data-accordion="collapse" class="mb-6">
+        <h2 id="passes-heading">
+            <button type="button" class="flex gap-5 items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 bg-white border border-gray-200 rounded-lg shadow"
+                    data-accordion-target="#passes-body"
+                    aria-expanded="false" aria-controls="passes-body">
+                <span>Executed Passes</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="passes-body" aria-labelledby="passes-heading"
+             class="hidden">
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">1</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">VIAM Creation (pseudo pass) ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.pass.PassOrders$ViamCreationPass-380</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.pass.PassOrders$ViamCreationPass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">2</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">ViamVerificationPass ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.verification.ViamVerificationPass-761</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.verification.ViamVerificationPass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">3</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">Status BuiltIn Inline Pass ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.statusBuiltInInlinePass.StatusBuiltInInlinePass-380</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.statusBuiltInInlinePass.StatusBuiltInInlinePass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">4</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">canonicalization ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.canonicalization.CanonicalizationPass-759</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.canonicalization.CanonicalizationPass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">5</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">algebraicSimplificationPass ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass-759</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.algebraic_simplication.AlgebraicSimplificationPass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">6</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">behaviorRewritePass ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.behaviorRewrite.BehaviorRewritePass-759</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.behaviorRewrite.BehaviorRewritePass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">7</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">Resolve Counter Accesses ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass-380</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">8</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">FunctionInlinerPass ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.functionInliner.FunctionInlinerPass-380</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.functionInliner.FunctionInlinerPass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">9</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">Field Access Inliner Pass ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.functionInliner.FieldAccessInlinerPass-380</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.functionInliner.FieldAccessInlinerPass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">10</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">Artificial Resource Inliner ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.functionInliner.ArtificialResInlinerPass-380</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.functionInliner.ArtificialResInlinerPass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">11</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">Side-Effect Condition Resolving Pass ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass-380</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+                <div class="flex items-center my-4 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow gap-4">
+
+        <h4 class="text-md font-semibold tracking-wide text-gray-900">12</h4>
+        <div>
+            <h4 class="text-md font-semibold tracking-wide text-gray-900">Single Resource Write Validation Pass ( ms)</h4>
+            <div class="inline-grid items-center gap-2" style="grid-template-columns: auto auto;">
+                <span class="text-gray-500 font-medium text-sm">Key</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.DuplicateWriteDetectionPass-380</span>
+                <span class="text-gray-500 font-medium text-sm">Class</span>
+                <span class="badge text-blue-800 text-sm">vadl.viam.passes.DuplicateWriteDetectionPass</span>
+            </div>
+        </div>
+        
+        
+    </div>
+            
+        </div>
+    </div>
+
+    
+
+    <!-- Separator between passes and start of specifications   -->
+    <div class="w-full my-10 border border-gray-200"></div>
+
+    <!-- entry/entity fragement to render a single entity -->
+    
+
+    
+    <div>
+        <div id="TEST-Processor"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#TEST-Processor">
+                    TEST
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Processor</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#valid_regfile_writes-Specification"
+       class="badge text-blue-800">valid_regfile_writes</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-TEST-Processor"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2451">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2451" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2451">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2451" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2451">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: valid_regfile_writes.vadl:42:1 .. 42:50 
+
+processor TEST implements ValidRegFileWrites with  = {
+}
+
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="reset-Procedure"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#reset-Procedure">
+                    reset
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Procedure</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#TEST-Processor"
+       class="badge text-blue-800">TEST</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-reset-Procedure"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2454">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2454" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2454">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2454" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2454">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: unknown:0 .. 0 
+
+null
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+    <div>
+        <h2 id="accordion-collapse-heading-2455">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2455" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2455">
+                <span class="text-center grow"><span class="text-red-500 font-bold">Nodes without Source Location</span></span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2455" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2455">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <table class="w-full text-sm text-left rtl:text-right text-gray-500 "><thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"><tr class="bg-white border-b"><td class="px-6 py-4">(0) ProcEnd</td></tr></thead><tr class="bg-white border-b"><td class="px-6 py-4">(1) Start</td></tr></table>
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites-InstructionSetArchitecture"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites-InstructionSetArchitecture">
+                    ValidRegFileWrites
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">InstructionSetArchitecture</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#TEST-Processor"
+       class="badge text-blue-800">TEST</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites-InstructionSetArchitecture"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2458">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2458" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2458">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2458" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2458">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: unknown:0 .. 0 
+
+null
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__TMP-Format"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TMP-Format">
+                    ValidRegFileWrites::TMP
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Format</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">Bits&lt;32&gt;</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites-InstructionSetArchitecture"
+       class="badge text-blue-800">ValidRegFileWrites</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__TMP-Format"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2474">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2474" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2474">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2474" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2474">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: valid_regfile_writes.vadl:34:3 .. 39:3 
+
+format TMP: Bits<32> =
+{ F1 : Bits<8>
+, F2 : Bits<8>
+, F3 : Bits<8>
+, ENC : Bits<8>
+}
+
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+            
+            <div id="ValidRegFileWrites__TMP__F1-Field"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TMP__F1-Field">
+                    ValidRegFileWrites::TMP::F1
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Field</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">Bits&lt;8&gt;</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TMP-Format"
+       class="badge text-blue-800">ValidRegFileWrites::TMP</a>
+    
+</div>
+    </div>
+</div>
+        
+        
+        
+    </div>
+        
+            
+            <div id="ValidRegFileWrites__TMP__F2-Field"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TMP__F2-Field">
+                    ValidRegFileWrites::TMP::F2
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Field</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">Bits&lt;8&gt;</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TMP-Format"
+       class="badge text-blue-800">ValidRegFileWrites::TMP</a>
+    
+</div>
+    </div>
+</div>
+        
+        
+        
+    </div>
+        
+            
+            <div id="ValidRegFileWrites__TMP__F3-Field"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TMP__F3-Field">
+                    ValidRegFileWrites::TMP::F3
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Field</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">Bits&lt;8&gt;</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TMP-Format"
+       class="badge text-blue-800">ValidRegFileWrites::TMP</a>
+    
+</div>
+    </div>
+</div>
+        
+        
+        
+    </div>
+        
+            
+            <div id="ValidRegFileWrites__TMP__ENC-Field"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TMP__ENC-Field">
+                    ValidRegFileWrites::TMP::ENC
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Field</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">Bits&lt;8&gt;</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TMP-Format"
+       class="badge text-blue-800">ValidRegFileWrites::TMP</a>
+    
+</div>
+    </div>
+</div>
+        
+        
+        
+    </div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__X-RegisterTensor"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__X-RegisterTensor">
+                    ValidRegFileWrites::X
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">RegisterTensor</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">Bits&lt;32&gt;</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites-InstructionSetArchitecture"
+       class="badge text-blue-800">ValidRegFileWrites</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__X-RegisterTensor"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2478">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2478" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2478">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2478" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2478">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: valid_regfile_writes.vadl:4:3 .. 4:33 
+
+register X: Bits<8> -> Bits<32>
+
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__TEST1-Instruction"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST1-Instruction">
+                    ValidRegFileWrites::TEST1
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Instruction</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites-InstructionSetArchitecture"
+       class="badge text-blue-800">ValidRegFileWrites</a>
+    
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Format</span>
+    <a href="#ValidRegFileWrites__TMP-Format"
+       class="badge text-blue-800">ValidRegFileWrites::TMP</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__TEST1-Instruction"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2482">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2482" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2482">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2482" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2482">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: valid_regfile_writes.vadl:6:3 .. 15:3 
+
+instruction TEST1 : TMP = {
+  if F1 = 1 as Bits<8> then
+    {
+      X(1 as Bits<8>) := 1 as Bits<32>
+      if F1 = 1 as Bits<8> then
+        {
+        }
+
+      else
+        {
+          X(1 as Bits<8>) := 2 as Bits<32>
+        }
+
+    }
+
+}
+
+
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+    <div>
+        <h2 id="accordion-collapse-heading-2483">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2483" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2483">
+                <span class="text-center grow"><span class="text-red-500 font-bold">Nodes without Source Location</span></span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2483" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2483">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <table class="w-full text-sm text-left rtl:text-right text-gray-500 "><thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"><tr class="bg-white border-b"><td class="px-6 py-4">(4) WriteRegTensor<register X: Bits<256><32>, null></td></tr></thead><tr class="bg-white border-b"><td class="px-6 py-4">(7) Merge(0, 5)</td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(10) If(t: 1, f: 6)</td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(12) WriteRegTensor<register X: Bits<256><32>, null></td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(15) BranchEnd</td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(16) Begin</td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(17) Merge(13, 15)</td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(18) If(t: 14, f: 16)</td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(21) Constant<Bool, 0x1: Bool></td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(22) BuiltInCall<Bits<1>, VADL::VADL::and(BitsType, BitsType) -> BitsType></td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(23) BuiltInCall<Bits<1>, VADL::VADL::not(BitsType) -> BitsType></td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(24) BuiltInCall<Bits<1>, VADL::VADL::and(BitsType, BitsType) -> BitsType></td></tr></table>
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__TEST1__assembly-Assembly"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST1__assembly-Assembly">
+                    ValidRegFileWrites::TEST1::assembly
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Assembly</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST1-Instruction"
+       class="badge text-blue-800">ValidRegFileWrites::TEST1</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__TEST1__assembly-Assembly"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2489">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2489" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2489">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2489" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2489">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: unknown:0 .. 0 
+
+null
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+            
+            <div id="ValidRegFileWrites__TEST1__assembly__func-Function"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST1__assembly__func-Function">
+                    ValidRegFileWrites::TEST1::assembly::func
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Function</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">() -&gt; String</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST1__assembly-Assembly"
+       class="badge text-blue-800">ValidRegFileWrites::TEST1::assembly</a>
+    
+</div>
+    </div>
+</div>
+        
+        
+        
+    </div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__TEST1__encoding-Encoding"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST1__encoding-Encoding">
+                    ValidRegFileWrites::TEST1::encoding
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Encoding</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">Bits&lt;32&gt;</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST1-Instruction"
+       class="badge text-blue-800">ValidRegFileWrites::TEST1</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__TEST1__encoding-Encoding"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2496">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2496" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2496">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2496" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2496">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: unknown:0 .. 0 
+
+null
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+            
+            <div id="ValidRegFileWrites__unknown__encoding__ENC-Field"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__unknown__encoding__ENC-Field">
+                    ValidRegFileWrites::unknown::encoding::ENC
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Field</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST1__encoding-Encoding"
+       class="badge text-blue-800">ValidRegFileWrites::TEST1::encoding</a>
+    
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Encoding</span>
+    
+    <span class="badge text-blue-800">00000001</span>
+</div>
+    </div>
+</div>
+        
+        
+        
+    </div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__TEST2-Instruction"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST2-Instruction">
+                    ValidRegFileWrites::TEST2
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Instruction</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites-InstructionSetArchitecture"
+       class="badge text-blue-800">ValidRegFileWrites</a>
+    
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Format</span>
+    <a href="#ValidRegFileWrites__TMP-Format"
+       class="badge text-blue-800">ValidRegFileWrites::TMP</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__TEST2-Instruction"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2500">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2500" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2500">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2500" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2500">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: valid_regfile_writes.vadl:18:3 .. 21:3 
+
+instruction TEST2 : TMP = {
+  X(1 as Bits<8>) := 2 as Bits<32>
+  X(2 as Bits<8>) := 3 as Bits<32>
+}
+
+
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+    <div>
+        <h2 id="accordion-collapse-heading-2501">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2501" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2501">
+                <span class="text-center grow"><span class="text-red-500 font-bold">Nodes without Source Location</span></span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2501" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2501">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <table class="w-full text-sm text-left rtl:text-right text-gray-500 "><thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"><tr class="bg-white border-b"><td class="px-6 py-4">(2) WriteRegTensor<register X: Bits<256><32>, null></td></tr></thead><tr class="bg-white border-b"><td class="px-6 py-4">(5) WriteRegTensor<register X: Bits<256><32>, null></td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(8) Constant<Bool, 0x1: Bool></td></tr></table>
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__TEST2__assembly-Assembly"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST2__assembly-Assembly">
+                    ValidRegFileWrites::TEST2::assembly
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Assembly</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST2-Instruction"
+       class="badge text-blue-800">ValidRegFileWrites::TEST2</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__TEST2__assembly-Assembly"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2507">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2507" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2507">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2507" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2507">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: unknown:0 .. 0 
+
+null
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+            
+            <div id="ValidRegFileWrites__TEST2__assembly__func-Function"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST2__assembly__func-Function">
+                    ValidRegFileWrites::TEST2::assembly::func
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Function</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">() -&gt; String</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST2__assembly-Assembly"
+       class="badge text-blue-800">ValidRegFileWrites::TEST2::assembly</a>
+    
+</div>
+    </div>
+</div>
+        
+        
+        
+    </div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__TEST2__encoding-Encoding"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST2__encoding-Encoding">
+                    ValidRegFileWrites::TEST2::encoding
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Encoding</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">Bits&lt;32&gt;</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST2-Instruction"
+       class="badge text-blue-800">ValidRegFileWrites::TEST2</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__TEST2__encoding-Encoding"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2514">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2514" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2514">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2514" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2514">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: unknown:0 .. 0 
+
+null
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+            
+            <div id="ValidRegFileWrites__unknown__encoding__ENC-Field"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__unknown__encoding__ENC-Field">
+                    ValidRegFileWrites::unknown::encoding::ENC
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Field</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST2__encoding-Encoding"
+       class="badge text-blue-800">ValidRegFileWrites::TEST2::encoding</a>
+    
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Encoding</span>
+    
+    <span class="badge text-blue-800">00000001</span>
+</div>
+    </div>
+</div>
+        
+        
+        
+    </div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__TEST3-Instruction"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST3-Instruction">
+                    ValidRegFileWrites::TEST3
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Instruction</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites-InstructionSetArchitecture"
+       class="badge text-blue-800">ValidRegFileWrites</a>
+    
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Format</span>
+    <a href="#ValidRegFileWrites__TMP-Format"
+       class="badge text-blue-800">ValidRegFileWrites::TMP</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__TEST3-Instruction"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2518">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2518" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2518">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2518" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2518">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: valid_regfile_writes.vadl:24:3 .. 27:3 
+
+instruction TEST3 : TMP = {
+  X(F1 + F2) := 2 as Bits<32>
+  X(F1 + F2) := 2 as Bits<32>
+}
+
+
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+    <div>
+        <h2 id="accordion-collapse-heading-2519">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2519" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2519">
+                <span class="text-center grow"><span class="text-red-500 font-bold">Nodes without Source Location</span></span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2519" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2519">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <table class="w-full text-sm text-left rtl:text-right text-gray-500 "><thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"><tr class="bg-white border-b"><td class="px-6 py-4">(4) WriteRegTensor<register X: Bits<256><32>, null></td></tr></thead><tr class="bg-white border-b"><td class="px-6 py-4">(7) Constant<Bool, 0x1: Bool></td></tr><tr class="bg-white border-b"><td class="px-6 py-4">(8) BuiltInCall<Bits<1>, VADL::VADL::or(BitsType, BitsType) -> SIntType></td></tr></table>
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__TEST3__assembly-Assembly"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST3__assembly-Assembly">
+                    ValidRegFileWrites::TEST3::assembly
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Assembly</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST3-Instruction"
+       class="badge text-blue-800">ValidRegFileWrites::TEST3</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__TEST3__assembly-Assembly"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2525">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2525" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2525">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2525" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2525">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: unknown:0 .. 0 
+
+null
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+            
+            <div id="ValidRegFileWrites__TEST3__assembly__func-Function"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST3__assembly__func-Function">
+                    ValidRegFileWrites::TEST3::assembly::func
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Function</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">() -&gt; String</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST3__assembly-Assembly"
+       class="badge text-blue-800">ValidRegFileWrites::TEST3::assembly</a>
+    
+</div>
+    </div>
+</div>
+        
+        
+        
+    </div>
+        
+    </div>
+    </div>
+
+    
+    <div>
+        <div id="ValidRegFileWrites__TEST3__encoding-Encoding"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__TEST3__encoding-Encoding">
+                    ValidRegFileWrites::TEST3::encoding
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Encoding</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Type</span>
+    
+    <span class="badge text-blue-800">Bits&lt;32&gt;</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST3-Instruction"
+       class="badge text-blue-800">ValidRegFileWrites::TEST3</a>
+    
+</div>
+    </div>
+</div>
+        
+        <div id="accordion-collapse-ValidRegFileWrites__TEST3__encoding-Encoding"
+     data-accordion="collapse">
+    <div>
+        <h2 id="accordion-collapse-heading-2532">
+            <button type="button"
+                    class="flex items-center justify-between w-full p-2 font-medium rtl:text-right text-gray-500 border-2 border-gray-200 hover:bg-gray-100 gap-3"
+                    data-accordion-target="#accordion-collapse-body-2532" aria-expanded="false"
+                    aria-controls="accordion-collapse-body-2532">
+                <span class="text-center grow">Source Code</span>
+                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5 5 1 1 5"/>
+                </svg>
+            </button>
+        </h2>
+        <div id="accordion-collapse-body-2532" class="hidden"
+             aria-labelledby="accordion-collapse-heading-2532">
+            <div class="p-5 border-2  border-gray-200 dark:border-gray-700">
+                <pre><code class="text-sm text-gray-500 whitespace-pre">// The code below has all macros expanded.
+// SourceLocation: unknown:0 .. 0 
+
+null
+</code></pre>
+
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+        
+            
+            <div id="ValidRegFileWrites__unknown__encoding__ENC-Field"
+       class="block my-4 px-6 pt-4 pb-2 bg-white border border-gray-200 rounded-lg shadow"
+    >
+        
+        <div class="flex gap-4 items-center">
+            <h3 class="text-md font-semibold text-gray-900 tracking-wide">
+                <a class="group relative border-none lg:-ml-2 lg:pl-2 flex" href="#ValidRegFileWrites__unknown__encoding__ENC-Field">
+                    ValidRegFileWrites::unknown::encoding::ENC
+                    <span class="hidden items-center ml-4 border-0 opacity-0 group-hover:opacity-80 group-focus:opacity-80 lg:flex">​
+                        <span class="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 shadow-sm ring-1 ring-slate-900/5 hover:text-slate-700 hover:shadow hover:ring-slate-900/10">
+                            <svg width="12" height="12" fill="none" aria-hidden="true"><path d="M3.75 1v10M8.25 1v10M1 3.75h10M1 8.25h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+            </h3>
+        </div>
+        <div class="flex items-center flex-wrap gap-x-4 gap-y-2 py-1">
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">DefType</span>
+    
+    <span class="badge text-blue-800">Field</span>
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Parent</span>
+    <a href="#ValidRegFileWrites__TEST3__encoding-Encoding"
+       class="badge text-blue-800">ValidRegFileWrites::TEST3::encoding</a>
+    
+</div>
+    </div>
+    <div>
+        <div class="flex items-center text-sm">
+    <span class="mr-2">Encoding</span>
+    
+    <span class="badge text-blue-800">00000001</span>
+</div>
+    </div>
+</div>
+        
+        
+        
+    </div>
+        
+    </div>
+    </div>
+
+
+</div>
+
+<!--    FRAGMENTS     -->
+
+
+
+<!-- Render tag infos -->
+
+
+
+
+<!-- Render expandable infos -->
+
+
+<!-- Render modal infos -->
+
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-graphviz/5.6.0/d3-graphviz.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/bumbu/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script>
+    window.onload = function() {
+        if (window.location.hash) {
+            // scroll to selected hash header on load
+            const element = document.querySelector(window.location.hash);
+            if (element) element.scrollIntoView();
+        }
+    };
+</script>
+</html>
