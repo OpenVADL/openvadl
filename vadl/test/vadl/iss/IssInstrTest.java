@@ -71,15 +71,27 @@ public abstract class IssInstrTest extends QemuIssTest {
   @SafeVarargs
   protected final Stream<DynamicTest> runTestsWith(
       Function<Integer, IssTestUtils.TestCase>... generators) throws IOException {
-    return runTestsWith(getTestPerInstruction(), generators);
+    return runTestsWith(getTestPerInstruction(), List.of(generators));
   }
 
   @SafeVarargs
+  protected final Stream<DynamicTest> runTestsWith(int runs,
+                                                   Function<Integer, IssTestUtils.TestCase>... generators)
+      throws IOException {
+    return runTestsWith(runs, List.of(generators));
+  }
+
+  protected final Stream<DynamicTest> runTestsWith(
+      List<Function<Integer, IssTestUtils.TestCase>> generators)
+      throws IOException {
+    return runTestsWith(getTestPerInstruction(), generators);
+  }
+
   protected final Stream<DynamicTest> runTestsWith(
       int runs,
-      Function<Integer, IssTestUtils.TestCase>... generators) throws IOException {
+      List<Function<Integer, IssTestUtils.TestCase>> generators) throws IOException {
     var image = generateIssSimulator(getVadlSpec());
-    var testCases = Stream.of(generators)
+    var testCases = generators.stream()
         .flatMap(genFunc -> IntStream.range(0, runs)
             .mapToObj(genFunc::apply)
         )
