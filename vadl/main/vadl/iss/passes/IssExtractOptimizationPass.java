@@ -25,6 +25,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssConstExtractNode;
+import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -72,27 +73,36 @@ class IssExtractOptimizer {
   }
 
   void run() {
+    // bundle multiple chained extracts into a single one
     behavior.getNodes(DependencyNode.class)
         .filter(e -> !(e instanceof IssConstExtractNode))
-        .forEach(this::optimizeSubNode);
+        .forEach(this::bundleExtractChainInput);
 
     // clean up not necessary zero extends
-    removeUnusedZeroExtends();
+    replaceUnusedZeroExtendsByGhostCasts();
 
     behavior.deleteUnusedDependencies();
   }
 
-  private void removeUnusedZeroExtends() {
+  private void replaceUnusedZeroExtendsByGhostCasts() {
+    // we want to remove unnecessary zero extends.
+    // however, we have to preserve the zero extends result type for C
+    // (translation time) built-in operations.
+    // this is done by replacing them with ghost nodes.
     behavior.getNodes(IssConstExtractNode.class)
         // only consider real zero extends
         .filter(IssExtractOptimizer::extractIsRealZeroExtend)
         .forEach(n -> {
+          var ghostCast = new IssGhostCastNode(n.value(), n.type());
           for (var u : n.usages().toList()) {
-            // for all non-extract users, we replace the zero extend by its value.
+            // for all non-extract users, we replace the zero extend by a ghost cast.
             if (u instanceof IssConstExtractNode) {
               continue;
             }
-            u.replaceInput(n, n.value());
+            if (ghostCast.isUninitialized()) {
+              ghostCast = behavior.add(ghostCast);
+            }
+            u.replaceInput(n, ghostCast);
           }
         });
   }
@@ -105,7 +115,7 @@ class IssExtractOptimizer {
   }
 
 
-  private void optimizeSubNode(DependencyNode node) {
+  private void bundleExtractChainInput(DependencyNode node) {
     if (node instanceof IssConstExtractNode) {
       // extract nodes are only implicitly optimized
       return;

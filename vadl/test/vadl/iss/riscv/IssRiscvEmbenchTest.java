@@ -17,6 +17,7 @@
 package vadl.iss.riscv;
 
 import java.io.IOException;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,11 @@ import vadl.utils.VadlFileUtils;
 public class IssRiscvEmbenchTest extends QemuIssTest {
 
   private static final Logger log = LoggerFactory.getLogger(IssRiscvEmbenchTest.class);
+
+  @Override
+  protected List<String> withUpstreamTargets() {
+    return List.of("riscv64-softmmu", "riscv32-softmmu");
+  }
 
   @Test
   void rv64imEmbenchTest() throws IOException {

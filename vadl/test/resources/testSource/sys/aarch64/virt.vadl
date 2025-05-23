@@ -3,10 +3,23 @@ import aarch64::AArch64Base
 
 instruction set architecture A64 extending AArch64Base = {}
 
+[ htif ]
 processor Virt implements A64 = {
+
+  reset = {
+    PC := 0x0
+  }
 
   [ firmware ]
   [ base : 0x0 ]
-  memory region [RAM] DRAM in MEM
+  [ size : 0x08000000 ]
+  memory region [ROM] FLASH in MEM = {
+    // if firmware is not loaded at 0x0, it will jump to start of RAM
+    MEM<4>(0x0) := 0xd2a80000  // mov  x0, #0x40000000
+    MEM<4>(0x4) := 0xd61f0000  // br   x0
+  }
+
+  [ base : 0x40000000 ]
+  memory region [RAM] MAIN_RAM in MEM
 
 }

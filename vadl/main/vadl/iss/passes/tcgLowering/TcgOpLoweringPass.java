@@ -33,6 +33,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.TcgPassUtils;
 import vadl.iss.passes.nodes.IssConstExtractNode;
+import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssLoadNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssStoreNode;
@@ -811,6 +812,16 @@ class TcgOpLoweringExecutor implements CfgTraverser {
 
   @Handler
   void handle(LabelNode toHandle) {
+    throw failShouldNotHappen(toHandle);
+  }
+
+  /**
+   * The {@link IssGhostCastNode} is removed in the {@link vadl.iss.passes.IssTcgSchedulingPass}
+   * if it had been scheduled.
+   * So it cannot occur during op lowering.
+   */
+  @Handler
+  void handle(IssGhostCastNode toHandle) {
     throw failShouldNotHappen(toHandle);
   }
 
