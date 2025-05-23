@@ -547,7 +547,7 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(AbiPseudoInstructionDefinition definition) {
+  public Void visit(AbiSpecialPurposeInstructionDefinition definition) {
     beforeTravel(definition);
     definition.children().forEach(this::travel);
     afterTravel(definition);

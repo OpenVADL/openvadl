@@ -100,8 +100,8 @@ def [(${returnInstruction})] : Instruction
     let isBranch      = 0;
     let isCall        = 0;
     let isReturn      = 1;
-    let isPseudo      = 1;
-    let isCodeGenOnly = 1;
+    let isPseudo      = [(${isReturnInstructionPseudo})];
+    let isCodeGenOnly = [(${isReturnInstructionPseudo})];
     let mayLoad       = 0;
     let mayStore      = 0;
     let Defs = [];
@@ -123,8 +123,8 @@ def [(${callInstruction})] : Instruction
     let isBranch      = 0;
     let isCall        = 1;
     let isReturn      = 0;
-    let isPseudo      = 1;
-    let isCodeGenOnly = 1;
+    let isPseudo      = [(${isCallInstructionPseudo})];
+    let isCodeGenOnly = [(${isCallInstructionPseudo})];
     let mayLoad       = 0;
     let mayStore      = 0;
     let Defs = [ [(${returnAddress})] ];

@@ -40,10 +40,10 @@ public class AsmLL1CheckerTest {
         assembly NOP = (mnemonic)
       }
       application binary interface ABI for ISA = {
-        pseudo return instruction = NOP
-        pseudo call instruction = NOP
-        pseudo local address load instruction = NOP
-        pseudo absolute address load instruction = NOP
+        special return instruction = NOP
+        special call instruction = NOP
+        special local address load instruction = NOP
+        special absolute address load instruction = NOP
         alias register zero = X(0)
         stack pointer = zero
         return address = zero

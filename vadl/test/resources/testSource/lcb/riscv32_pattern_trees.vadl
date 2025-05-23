@@ -269,10 +269,10 @@ application binary interface ABI for RV32IM = {
    frame pointer = fp
    thread pointer = tp
 
-   pseudo return instruction = RET
-   pseudo call instruction = CALL
-   pseudo local address load instruction = LLA
-   pseudo absolute address load instruction = LLA
+   special return instruction = RET
+   special call instruction = CALL
+   special local address load instruction = LLA
+   special absolute address load instruction = LLA
 
    return value = a{0..1}
    function argument = a{0..7}

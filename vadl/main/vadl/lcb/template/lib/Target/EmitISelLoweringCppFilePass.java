@@ -45,7 +45,6 @@ import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Abi;
-import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
@@ -126,11 +125,12 @@ public class EmitISelLoweringCppFilePass extends LcbTemplateRenderingPass {
     map.put("stackPointerBitWidth", abi.stackPointer().registerFile().resultType().bitWidth());
     map.put("stackPointerType",
         ValueType.from(abi.stackPointer().registerFile().resultType()).get().getLlvmType());
-    map.put("absoluteAddressLoadInstruction", absoluteAddressLoadInstruction.simpleName());
+    map.put("absoluteAddressLoadInstruction",
+        absoluteAddressLoadInstruction.identifier().simpleName());
     map.put("hasLocalAddressLoad", abi.localAddressLoad().isPresent());
     map.put("hasGlobalAddressLoad", abi.globalAddressLoad().isPresent());
     map.put("localAddressLoadInstruction",
-        abi.localAddressLoad().map(Definition::simpleName).orElse(""));
+        abi.localAddressLoad().map(x -> x.identifier().simpleName()).orElse(""));
     map.put("hasCMove32", hasCMove32);
     map.put("hasCMove64", hasCMove64);
     map.put("conditionalMove", conditionalMove);
