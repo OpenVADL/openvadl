@@ -1529,7 +1529,7 @@ The \ac{ABI} specification section in \ac{VADL} supports the definition of
 - register aliases,
 - special purpose registers with alignment information,
 - calling conventions,
-- pseudo instruction references and
+- special instruction references and
 - special instruction sequences.
 
 Listing \r{application_binary_interface} shows all elements of the \ac{ABI} section.
@@ -1604,15 +1604,15 @@ To be more concise, \ac{VADL} provides a special syntax to address multiple regi
 In the example, the compact expression `a{0..7}` evaluates to `[a0, a1, a2, a3, a4, a5, a6, a7]`. Note that the callee saved sequence contains the return address `ra` on purpose in the example even though the official RISC-V ABI documentation states it as caller saved. This is [required](https://discourse.llvm.org/t/why-is-return-address-x1-defined-as-callee-saved-register/84736) because a function call changes the register whereas the return won't restore the old value.
 
 The compiler generator cannot automatically deduce all necessary code sequences for its functionality.
-There exist two mechanisms to select such code sequences, referencing pseudo instructions and defining special sequences.
+There exist two mechanisms to select such code sequences, referencing special instructions and defining special sequences.
 
-The reference to a pseudo instruction starts with the keyword `pseudo` followed by some keywords describing the functionality, the keyword `instruction`, the equality symbol `"="` and the name of the referenced pseudo instruction.
-Five pseudo instruction references are available.
-`call` is a pseudo instruction implementing a function call.
-`return` is a pseudo instruction implementing a function return.
-`absolute address load` is a pseudo instruction implementing the loading of an absolute address.
-`local address load` is a pseudo instruction implementing the loading of a local program counter relative address.
-`global address load` is a pseudo instruction implementing the loading of an address using a global offset table.
+The reference to a special instruction starts with the keyword `special` followed by some keywords describing the functionality, the keyword `instruction`, the equality symbol `"="` and the name of the referenced special instruction.
+Five special instruction references are available.
+`call` is a special instruction implementing a function call.
+`return` is a special instruction implementing a function return.
+`absolute address load` is a special instruction implementing the loading of an absolute address.
+`local address load` is a special instruction implementing the loading of a local program counter relative address.
+`global address load` is a special instruction implementing the loading of an address using a global offset table.
 
 The definition of compiler sequences uses a syntax similarly to the definition of pseudo instructions.
 Instead of the keyword `pseudo instruction` they use `constant sequence` and `register adjustment sequence`.
@@ -1623,7 +1623,7 @@ They define efficient code sequences to add immediate values of different types 
 If an immediate does not fit into the immediate of a register adjustment sequence, then a constant sequence will be used.
 This requires an additional register which can be more costly.
 
-The compiler generator does not only generate a compiler backend but also a C frontend. To lower C code correctly, the generator requires additional information about the memory layout of types. In the example above, this indicated with `size type = unsigned int` which makes the `size_t` datatype 4 bytes long without a sign bit.
+The compiler generator does not only generate a compiler backend but also a C frontend. To lower C code correctly, the generator requires additional information about the memory layout of types. In the example above, this indicated with `size_t type = unsigned int` which makes the `size_t` datatype 4 bytes long without a sign bit.
 
 ## Assembly Description Definition
 
