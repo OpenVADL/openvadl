@@ -17,10 +17,12 @@
 package vadl.iss.riscv;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import vadl.iss.IssInstrTest;
 
 public abstract class AbstractIssRiscv64InstrTest extends IssInstrTest {
+
 
   // set at the bottom of this file
   static final Map<String, String> GDB_REF_MAP = new HashMap<>();
@@ -28,6 +30,11 @@ public abstract class AbstractIssRiscv64InstrTest extends IssInstrTest {
   @Override
   public Map<String, String> gdbRegMap() {
     return GDB_REF_MAP;
+  }
+
+  @Override
+  protected List<String> withUpstreamTargets() {
+    return List.of("riscv64-softmmu");
   }
 
   @Override
