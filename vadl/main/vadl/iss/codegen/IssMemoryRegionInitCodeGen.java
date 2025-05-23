@@ -69,7 +69,7 @@ public class IssMemoryRegionInitCodeGen extends IssProcGen {
     var machineName = config.machineName();
     ctx().wr("static void init_%s() {\n", memInfo.name().toLowerCase())
         .spacedIn()
-        .ln("uint8_t init_vec[%d] = {0};", memInfo.sizeInTable());
+        .ln("uint8_t init_vec[%d] = {0};", memInfo.initVecSize());
 
     var start = getSingleNode(memInfo.memReg().behavior(), StartNode.class);
     var current = start.next();
