@@ -1559,11 +1559,11 @@ application binary interface ABI for RV32I = {
   caller saved = [ a{0..7}, t{0..6} ]
   callee saved = [ ra, gp, tp, fp, s{0..11} ]
 
-  pseudo call instruction   = CALL
-  pseudo return instruction = RET
-  pseudo absolute address load instruction = LA
-  pseudo local address load instruction    = LLA
-  pseudo global address load instruction   = LGA_32
+  special call instruction   = CALL
+  special return instruction = RET
+  special absolute address load instruction = LA
+  special local address load instruction    = LLA
+  special global address load instruction   = LGA_32
 
   constant sequence( rd : Bits<5>, val : SInt<32> ) = {
     LUI  { rd = rd, imm = hi( val ) }

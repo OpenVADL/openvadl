@@ -66,6 +66,7 @@ import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Memory;
 import vadl.viam.MemoryRegion;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.Procedure;
 import vadl.viam.Processor;
 import vadl.viam.PseudoInstruction;
@@ -435,31 +436,33 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var callerSaved = mapSpecialPurposeRegistersDef(aliasLookup, callerSavedDef);
     var calleeSaved = mapSpecialPurposeRegistersDef(aliasLookup, calleeSavedDef);
 
-    // Pseudo Instructions
+    // Special Instructions
 
-    var pseudoRetInstrDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.RETURN);
-    var pseudoCallInstrDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.CALL);
-    var pseudoLocalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD);
-    var pseudoAbsoluteAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD);
-    var pseudoGlobalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD);
+    var specialRetInstrDef = getAbiSpecialInstruction(definition.definitions,
+        AbiSpecialPurposeInstructionDefinition.Kind.RETURN);
+    var specialCallInstrDef = getAbiSpecialInstruction(definition.definitions,
+        AbiSpecialPurposeInstructionDefinition.Kind.CALL);
+    var specialLocalAddressLoadDef = getAbiSpecialInstruction(definition.definitions,
+        AbiSpecialPurposeInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD);
+    var specialAbsoluteAddressLoadDef = getAbiSpecialInstruction(definition.definitions,
+        AbiSpecialPurposeInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD);
+    var specialGlobalAddressLoadDef = getAbiSpecialInstruction(definition.definitions,
+        AbiSpecialPurposeInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD);
 
-    var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow(() ->
-        error("Cannot find the pseudo return instruction", definition.location())
+    var specialRet = (PrintableInstruction) fetch(specialRetInstrDef).orElseThrow(() ->
+        error("Cannot find the return instruction", definition.location())
             .help("Maybe check if this instruction really exists or was spelled incorrectly?")
             .build());
-    var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow(() ->
-        error("Cannot find the pseudo call instruction", definition.location())
+    var specialCall = (PrintableInstruction) fetch(specialCallInstrDef).orElseThrow(() ->
+        error("Cannot find the call instruction", definition.location())
             .help("Maybe check if this instruction really exists or was spelled incorrectly?")
             .build());
-    var pseudoLocalAddressLoad = fetch(pseudoLocalAddressLoadDef).map(x -> (PseudoInstruction) x);
-    var pseudoGlobalAddressLoad = fetch(pseudoGlobalAddressLoadDef).map(x -> (PseudoInstruction) x);
-    var pseudoAbsoluteAddressLoad =
-        (PseudoInstruction) fetch(pseudoAbsoluteAddressLoadDef).orElseThrow();
+    var specialLocalAddressLoad =
+        fetch(specialLocalAddressLoadDef).map(x -> (PrintableInstruction) x);
+    var specialGlobalAddressLoad =
+        fetch(specialGlobalAddressLoadDef).map(x -> (PrintableInstruction) x);
+    var specialAbsoluteAddressLoad =
+        (PrintableInstruction) fetch(specialAbsoluteAddressLoadDef).orElseThrow();
 
     // Aliases
     Map<Pair<RegisterTensor, Integer>, List<Abi.RegisterAlias>> aliases =
@@ -520,11 +523,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         calleeSaved,
         functionArguments,
         returnValues,
-        pseudoRet,
-        pseudoCall,
-        pseudoLocalAddressLoad,
-        pseudoAbsoluteAddressLoad,
-        pseudoGlobalAddressLoad,
+        specialRet,
+        specialCall,
+        specialLocalAddressLoad,
+        specialAbsoluteAddressLoad,
+        specialGlobalAddressLoad,
         Abi.Alignment.DOUBLE_WORD,
         Abi.Alignment.DOUBLE_WORD,
         registerFileAlignment,
@@ -1528,10 +1531,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(
-      AbiPseudoInstructionDefinition definition) {
-    var pseudoInstructionDefinition = (PseudoInstructionDefinition) definition.target.target();
+      AbiSpecialPurposeInstructionDefinition definition) {
+    var instructionDef = (Definition) definition.target.target();
 
-    return Optional.ofNullable(pseudoInstructionDefinition).flatMap(this::fetch);
+    return Optional.ofNullable(instructionDef).flatMap(this::fetch);
   }
 
   /**
@@ -1637,17 +1640,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
 
   /**
-   * Extracts {@link AbiPseudoInstructionDefinition} from an
+   * Extracts {@link AbiSpecialPurposeInstructionDefinition} from an
    * {@link ApplicationBinaryInterfaceDefinition}.
    */
-  private Optional<AbiPseudoInstructionDefinition> getAbiPseudoInstruction(
-      List<Definition> definitions, AbiPseudoInstructionDefinition.Kind kind) {
-    var pseudoInstructions = definitions
+  private Optional<AbiSpecialPurposeInstructionDefinition> getAbiSpecialInstruction(
+      List<Definition> definitions, AbiSpecialPurposeInstructionDefinition.Kind kind) {
+    var instructions = definitions
         .stream()
-        .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
+        .filter(x -> x instanceof AbiSpecialPurposeInstructionDefinition y && y.kind == kind)
         .toList();
 
-    return pseudoInstructions.stream().findFirst().map(x -> (AbiPseudoInstructionDefinition) x);
+    return instructions.stream().findFirst().map(x -> (AbiSpecialPurposeInstructionDefinition) x);
   }
 
   /**

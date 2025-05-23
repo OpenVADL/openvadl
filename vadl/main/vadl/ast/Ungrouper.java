@@ -336,7 +336,7 @@ public class Ungrouper
   }
 
   @Override
-  public Void visit(AbiPseudoInstructionDefinition definition) {
+  public Void visit(AbiSpecialPurposeInstructionDefinition definition) {
     ungroupAnnotations(definition);
     return null;
   }

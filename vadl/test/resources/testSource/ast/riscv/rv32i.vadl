@@ -63,11 +63,11 @@ application binary interface ABI for RV32I = {
    frame pointer = fp
    thread pointer = tp
 
-   pseudo return instruction = RET
-   pseudo call instruction = CALL
-   pseudo local address load instruction = LLA
-   pseudo global address load instruction = LGA_32
-   pseudo absolute address load instruction = LA
+   special return instruction = RET
+   special call instruction = CALL
+   special local address load instruction = LLA
+   special global address load instruction = LGA_32
+   special absolute address load instruction = LA
 
    return value = a{0..1}
    function argument = a{0..1}

@@ -237,11 +237,11 @@ public class Abi extends Definition {
   private final List<RegisterRef> calleeSaved;
   private final List<RegisterRef> argumentRegisters;
   private final List<RegisterRef> returnRegisters;
-  private final PseudoInstruction returnSequence;
-  private final PseudoInstruction callSequence;
-  private final Optional<PseudoInstruction> localAddressLoad;
-  private final PseudoInstruction absoluteAddressLoad;
-  private final Optional<PseudoInstruction> globalAddressLoad;
+  private final PrintableInstruction returnSequence;
+  private final PrintableInstruction callSequence;
+  private final Optional<PrintableInstruction> localAddressLoad;
+  private final PrintableInstruction absoluteAddressLoad;
+  private final Optional<PrintableInstruction> globalAddressLoad;
   private final Alignment stackAlignment;
   private final List<CompilerInstruction> constantSequences;
   private final List<CompilerInstruction> registerAdjustmentSequences;
@@ -270,11 +270,11 @@ public class Abi extends Definition {
              List<RegisterRef> calleeSaved,
              List<RegisterRef> argumentRegisters,
              List<RegisterRef> returnRegisters,
-             PseudoInstruction returnSequence,
-             PseudoInstruction callSequence,
-             Optional<PseudoInstruction> localAddressLoad,
-             PseudoInstruction absoluteAddressLoad,
-             Optional<PseudoInstruction> globalAddressLoad,
+             PrintableInstruction returnSequence,
+             PrintableInstruction callSequence,
+             Optional<PrintableInstruction> localAddressLoad,
+             PrintableInstruction absoluteAddressLoad,
+             Optional<PrintableInstruction> globalAddressLoad,
              Alignment stackAlignment,
              Alignment transientStackAlignment,
              Map<RegisterTensor, Abi.Alignment> registerFileAlignment,
@@ -356,23 +356,23 @@ public class Abi extends Definition {
     return true;
   }
 
-  public PseudoInstruction returnSequence() {
+  public PrintableInstruction returnSequence() {
     return returnSequence;
   }
 
-  public PseudoInstruction callSequence() {
+  public PrintableInstruction callSequence() {
     return callSequence;
   }
 
-  public Optional<PseudoInstruction> localAddressLoad() {
+  public Optional<PrintableInstruction> localAddressLoad() {
     return localAddressLoad;
   }
 
-  public PseudoInstruction absoluteAddressLoad() {
+  public PrintableInstruction absoluteAddressLoad() {
     return absoluteAddressLoad;
   }
 
-  public Optional<PseudoInstruction> globalAddressLoad() {
+  public Optional<PrintableInstruction> globalAddressLoad() {
     return globalAddressLoad;
   }
 

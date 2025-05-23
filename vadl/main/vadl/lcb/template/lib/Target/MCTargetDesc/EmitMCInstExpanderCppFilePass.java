@@ -219,7 +219,7 @@ public class EmitMCInstExpanderCppFilePass extends LcbTemplateRenderingPass {
             abi.localAddressLoad(),
             abi.globalAddressLoad()
         ).filter(Optional::isPresent).map(Optional::orElseThrow)
-        .map(x -> x.identifier.simpleName());
+        .map(x -> x.identifier().simpleName());
 
     // Why are there two different `assemblyCompilerInstructions` and `compilerInstructions`?
     // Pseudo instructions are printed just like regular machine instructions.

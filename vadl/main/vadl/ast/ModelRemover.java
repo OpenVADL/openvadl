@@ -124,7 +124,7 @@ public class ModelRemover implements DefinitionVisitor<Definition> {
   }
 
   @Override
-  public Definition visit(AbiPseudoInstructionDefinition definition) {
+  public Definition visit(AbiSpecialPurposeInstructionDefinition definition) {
     return definition;
   }
 

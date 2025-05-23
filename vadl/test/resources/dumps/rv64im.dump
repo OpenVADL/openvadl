@@ -4763,15 +4763,15 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . SpecialPurposeRegisterDefinition
 . : SequenceCallExpr type: null
 . : ' Identifier name: "tp" type: null
-. AbiPseudoInstructionDefinition
+. AbiSpecialPurposeInstructionDefinition
 . : Identifier name: "RET" type: null
-. AbiPseudoInstructionDefinition
+. AbiSpecialPurposeInstructionDefinition
 . : Identifier name: "CALL" type: null
-. AbiPseudoInstructionDefinition
+. AbiSpecialPurposeInstructionDefinition
 . : Identifier name: "LLA" type: null
-. AbiPseudoInstructionDefinition
+. AbiSpecialPurposeInstructionDefinition
 . : Identifier name: "LGA_64" type: null
-. AbiPseudoInstructionDefinition
+. AbiSpecialPurposeInstructionDefinition
 . : Identifier name: "LA" type: null
 . SpecialPurposeRegisterDefinition
 . : SequenceCallExpr type: null
