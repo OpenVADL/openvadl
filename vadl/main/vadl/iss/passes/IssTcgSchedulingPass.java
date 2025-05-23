@@ -156,6 +156,8 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
 
     // unschedule unnecessary conditions again
     unscheduleConditions(graph);
+
+    graph.deleteUnusedDependencies();
   }
 
   /**

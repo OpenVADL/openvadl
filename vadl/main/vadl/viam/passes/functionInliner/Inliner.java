@@ -31,8 +31,14 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FuncCallNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 
+/**
+ * A common liner collection that holds the logic for all inliner passes.
+ */
 public class Inliner {
 
+  /**
+   * Inline all field accesses in the given behavior.
+   */
   public static void inlineFieldAccess(Graph behavior) {
     var fieldAccesses = behavior.getNodes(FieldAccessRefNode.class)
         .toList();
@@ -45,6 +51,9 @@ public class Inliner {
   }
 
 
+  /**
+   * Inline all functions in the given behavior.
+   */
   public static void inlineFuncs(Graph behavior) {
     var functionCalls = behavior.getNodes(FuncCallNode.class)
         .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction())
