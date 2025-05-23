@@ -1049,7 +1049,8 @@ public class TypeChecker
     }
 
     // Check whether there exists just one pseudo instruction.
-    for (var entry : AbiSpecialPurposeInstructionDefinition.Kind.numberOfOccurrencesAbi.entrySet()) {
+    for (var entry :
+        AbiSpecialPurposeInstructionDefinition.Kind.numberOfOccurrencesAbi.entrySet()) {
       var kind = entry.getKey();
       var pseudoInstructions = definition.definitions
           .stream()

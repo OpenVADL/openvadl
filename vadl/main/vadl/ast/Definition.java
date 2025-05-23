@@ -34,7 +34,6 @@ import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
-import vadl.viam.PseudoInstruction;
 import vadl.viam.asm.AsmToken;
 
 /**
@@ -3424,7 +3423,9 @@ class AbiSpecialPurposeInstructionDefinition extends Definition {
   IdentifierOrPlaceholder target;
   SourceLocation loc;
 
-  AbiSpecialPurposeInstructionDefinition(Kind kind, IdentifierOrPlaceholder target, SourceLocation loc) {
+  AbiSpecialPurposeInstructionDefinition(Kind kind,
+                                         IdentifierOrPlaceholder target,
+                                         SourceLocation loc) {
     this.kind = kind;
     this.target = target;
     this.loc = loc;

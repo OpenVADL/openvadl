@@ -189,7 +189,7 @@ public class EmitInstrInfoTableGenFilePass extends LcbTemplateRenderingPass {
     map.put("returnInstruction", abi.returnSequence().identifier().simpleName());
     map.put("callInstruction", abi.callSequence().identifier().simpleName());
     map.put("isCallInstructionPseudo", abi.callSequence() instanceof PseudoInstruction ? 1 : 0);
-    map.put("isReturnInstructionPseudo", abi.callSequence() instanceof PseudoInstruction? 1 : 0);
+    map.put("isReturnInstructionPseudo", abi.callSequence() instanceof PseudoInstruction ? 1 : 0);
     map.put("lga", abi.globalAddressLoad().map(x -> x.identifier().simpleName()).orElse(""));
     return map;
   }
