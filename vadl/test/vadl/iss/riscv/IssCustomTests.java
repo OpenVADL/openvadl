@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
@@ -33,6 +34,10 @@ import vadl.iss.QemuIssTest;
 
 public class IssCustomTests extends QemuIssTest {
 
+  @Override
+  protected List<String> withUpstreamTargets() {
+    return List.of("riscv64-softmmu");
+  }
 
   @TestFactory
   Stream<DynamicTest> customTests() {

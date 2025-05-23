@@ -14,37 +14,36 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.iss.riscv;
+package vadl.iss.aarch64;
 
-import java.util.List;
-import java.util.Map;
-import vadl.iss.IssInstrTest;
+import java.math.BigInteger;
+import java.util.stream.IntStream;
+import net.jqwik.api.Arbitraries;
+import net.jqwik.api.Arbitrary;
+import vadl.iss.AsmTestBuilder;
 
-public abstract class AbstractIssRiscv32InstrTest extends IssInstrTest {
+public class A64TestBuilder extends AsmTestBuilder {
 
-  @Override
-  protected List<String> withUpstreamTargets() {
-    return List.of("riscv32-softmmu");
+  public A64TestBuilder(String testId) {
+    super(testId);
   }
 
   @Override
-  public Map<String, String> gdbRegMap() {
-    return AbstractIssRiscv64InstrTest.GDB_REF_MAP;
+  public BigInteger fillReg(String reg, BigInteger value) {
+    add("ldr %s, =%s", reg, value);
+    return value;
   }
 
   @Override
-  public Tool simulator() {
-    return new Tool("/qemu/build/qemu-system-rv32imzicsr", "-bios");
+  public Arbitrary<String> anyTempReg() {
+    // X0 and X1 are used to terminate the test and x31 is zero
+    var tmpRegs = IntStream.range(2, 31).mapToObj(i -> "x" + i).toList();
+    return Arbitraries.of(tmpRegs);
   }
 
   @Override
-  public Tool reference() {
-    return new Tool("/qemu/build/qemu-system-riscv32", "-M spike -bios");
-  }
-
-  @Override
-  public Tool compiler() {
-    return new Tool("/scripts/compilers/riscv_compiler.py", "-march=rv32imzicsr -mabi=ilp32");
+  public Arbitrary<String> anyReg() {
+    return Arbitraries.of(IntStream.range(0, 32).mapToObj(i -> "x" + i).toList());
   }
 
 }
