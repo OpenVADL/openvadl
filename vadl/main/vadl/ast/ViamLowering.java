@@ -1545,8 +1545,13 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private Abi.RegisterRef mapSingleSpecialPurposeRegisterDef(
       Map<Identifier, Expr> aliasLookup,
       SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
-    var identifier = specialPurposeRegisterDef.exprs.stream().findFirst().orElseThrow().target;
-    return mapToRegisterRef(aliasLookup, identifier);
+    return specialPurposeRegisterDef.exprs.stream().map(aliasOrRegister -> {
+      if (aliasOrRegister instanceof ExpandedRegisterSequenceCallExpr registerCallExpr) {
+        return mapToRegisteRef(registerCallExpr.callIndexExpr);
+      } else {
+        return mapAliasToRegisterRef(aliasLookup, aliasOrRegister.target);
+      }
+    }).findFirst().orElseThrow();
   }
 
   /**
@@ -1555,21 +1560,29 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private List<Abi.RegisterRef> mapSpecialPurposeRegistersDef(
       Map<Identifier, Expr> aliasLookup,
       SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
-    return specialPurposeRegisterDef.exprs.stream()
-        .map(x -> mapToRegisterRef(aliasLookup, x.target))
-        .toList();
+    return specialPurposeRegisterDef.exprs.stream().map(aliasOrRegister -> {
+      if (aliasOrRegister instanceof ExpandedRegisterSequenceCallExpr registerCallExpr) {
+        return mapToRegisteRef(registerCallExpr.callIndexExpr);
+      } else {
+        return mapAliasToRegisterRef(aliasLookup, aliasOrRegister.target);
+      }
+    }).toList();
   }
 
   /**
    * Maps the aliases {@code alias register zero = X(0)} to {@link Abi.RegisterRef} to be
    * used in {@link Abi}.
    */
-  private Abi.RegisterRef mapToRegisterRef(
+  private Abi.RegisterRef mapAliasToRegisterRef(
       Map<Identifier, Expr> aliasLookup,
       Identifier identifier) {
     var expr = ensureNonNull(aliasLookup.get(identifier),
         () -> error("Cannot alias for register definition",
             identifier.location()));
+    return mapToRegisteRef(expr);
+  }
+
+  private Abi.RegisterRef mapToRegisteRef(Expr expr) {
     var pair = getRegisterFile(expr);
     var registerFile = pair.left();
     var index = pair.right();

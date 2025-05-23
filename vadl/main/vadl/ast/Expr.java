@@ -143,6 +143,9 @@ interface ExprVisitor<R> {
   R visit(ForallExpr expr);
 
   R visit(SequenceCallExpr expr);
+
+  R visit(ExpandedSequenceCallExpr expandedAliasSequenceCallExpr);
+
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -2712,13 +2715,13 @@ class ForallExpr extends Expr {
 class SequenceCallExpr extends Expr {
 
   @Child
-  Identifier target;
+  Expr target;
   @Nullable
   @Child
   Expr range;
   SourceLocation loc;
 
-  SequenceCallExpr(Identifier target, @Nullable Expr range, SourceLocation loc) {
+  SequenceCallExpr(Expr target, @Nullable Expr range, SourceLocation loc) {
     this.target = target;
     this.range = range;
     this.loc = loc;
@@ -2747,5 +2750,60 @@ class SequenceCallExpr extends Expr {
       range.prettyPrint(0, builder);
       builder.append("}");
     }
+  }
+}
+
+class ExpandedSequenceCallExpr extends Expr {
+  @Child
+  Identifier target;
+  SourceLocation loc;
+
+  ExpandedSequenceCallExpr(Identifier target, SourceLocation loc) {
+    this.target = target;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    target.prettyPrint(0, builder);
+  }
+}
+
+class ExpandedRegisterSequenceCallExpr extends ExpandedSequenceCallExpr {
+  // a register is not a child because `X1` does not exist as a symbol.
+  Identifier register;
+  // we mark this as child to ensure that it has a symbol table.
+  @Child
+  CallIndexExpr callIndexExpr;
+
+  ExpandedRegisterSequenceCallExpr(Identifier registerFile,
+                                   Identifier register,
+                                   CallIndexExpr callIndexExpr,
+                                   SourceLocation loc) {
+    super(registerFile, loc);
+    this.register = register;
+    this.callIndexExpr = callIndexExpr;
+  }
+
+
+  @Override
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    target.prettyPrint(0, builder);
+    register.prettyPrint(0, builder);
   }
 }
