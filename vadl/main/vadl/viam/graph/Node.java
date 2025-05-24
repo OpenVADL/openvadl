@@ -226,7 +226,12 @@ public abstract class Node implements WithLocation {
   protected void collectData(List<Object> collection) { /* nothing to add */
   }
 
-  protected final List<Object> dataList() {
+  /**
+   * Get data list of the node.
+   *
+   * @return data list
+   */
+  public final List<Object> dataList() {
     var collection = new ArrayList<>();
     collectData(collection);
     return collection;

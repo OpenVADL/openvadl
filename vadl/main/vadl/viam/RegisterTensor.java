@@ -139,6 +139,11 @@ public class RegisterTensor extends Resource {
     return constraints.toArray(new Constraint[0]);
   }
 
+  public void setConstraints(Constraint... constraints) {
+    this.constraints.clear();
+    this.constraints.addAll(Arrays.asList(constraints));
+  }
+
   public void addConstraint(Constraint constraint) {
     constraints.add(constraint);
   }

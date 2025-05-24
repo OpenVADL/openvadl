@@ -40,6 +40,11 @@ public abstract class Logic extends Definition {
     visitor.visit(this);
   }
 
+  @Override
+  public String toString() {
+    return identifier.simpleName() + ": " + getClass().getSimpleName();
+  }
+
   /**
    * Logic definition for a forwarding unit.
    */

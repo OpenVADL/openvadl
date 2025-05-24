@@ -70,8 +70,13 @@ public class InfoUtils {
         var dotString = document.getElementById('dot-graph-%s').textContent;
         d3.select('#graph-%s')
             .graphviz()
-            .width('100%%')
-            .height('100%%')
+            .attributer((datum, _index, _nodes) => {
+              if (datum.tag == "svg") {
+                datum.attributes.width = '100%%';
+                datum.attributes.height = '100%%';
+                datum.attributes.viewBox = null;
+              }
+            })
             .renderDot(dotString);
         """.formatted(id, id);
 

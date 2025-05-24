@@ -27,10 +27,23 @@ import vadl.viam.graph.Node;
 
 /**
  * Write value from expression node to stage output.
+ *
+ * <p>The stage output value here can be null, this allows to express side effects where no formal
+ * stage output is specified, e.g., in
+ * <pre>
+ * stage WRITE_BACK =
+ * {
+ *   let instr = MEMORY.ir in
+ *   {
+ *     instr.write( @X )
+ *   }
+ * }
+ * </pre>.
  */
 public class WriteStageOutputNode extends SideEffectNode {
 
   @DataValue
+  @Nullable
   protected StageOutput stageOutput;
 
   @Input
@@ -43,7 +56,7 @@ public class WriteStageOutputNode extends SideEffectNode {
    * @param value value to be written
    */
 
-  public WriteStageOutputNode(StageOutput stageOutput, ExpressionNode value) {
+  public WriteStageOutputNode(@Nullable StageOutput stageOutput, ExpressionNode value) {
     super(null);
     this.stageOutput = stageOutput;
     this.value = value;
@@ -56,7 +69,7 @@ public class WriteStageOutputNode extends SideEffectNode {
    * @param value value to be written
    * @param condition write enable condition
    */
-  public WriteStageOutputNode(StageOutput stageOutput, ExpressionNode value,
+  public WriteStageOutputNode(@Nullable StageOutput stageOutput, ExpressionNode value,
                               @Nullable ExpressionNode condition) {
     super(condition);
     this.stageOutput = stageOutput;
@@ -64,8 +77,13 @@ public class WriteStageOutputNode extends SideEffectNode {
     this.condition = condition;
   }
 
+  @Nullable
   public StageOutput stageOutput() {
     return stageOutput;
+  }
+
+  public ExpressionNode value() {
+    return value;
   }
 
   @Override

@@ -44,10 +44,12 @@ public class AlgebraicSimplifier {
    * Apply algebraic simplification as long as something changes on the given {@link Graph}.
    *
    * @param graph where the simplification should be applied on.
+   * @return number of changes applied
    */
-  public void run(Graph graph) {
-    rules.forEach(rule -> {
+  public int run(Graph graph) {
+    return rules.stream().mapToInt(rule -> {
       boolean hasChanged;
+      int changes = 0;
 
       do {
         hasChanged = false;
@@ -64,10 +66,15 @@ public class AlgebraicSimplifier {
           var oldNode = pair.left();
           var newNode = pair.right();
 
-          oldNode.replaceAndDelete(newNode);
-          hasChanged = true;
+          if (oldNode.isActive() && !newNode.isDeleted()) { // skip if replace not possible anymore
+            oldNode.replaceAndDelete(newNode);
+            hasChanged = true;
+            changes++;
+          }
         }
       } while (hasChanged);
-    });
+
+      return changes;
+    }).sum();
   }
 }
