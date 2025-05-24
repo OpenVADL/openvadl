@@ -465,10 +465,7 @@ static inline Bits VADL_ugeq(Bits a, Width aw, Bits b, Width bw) {
 static inline Bits VADL_lsl(Bits a, Width aw, Bits b, Width bw) {
     Bits x = VADL_uextract(a, aw);
     Bits s = VADL_uextract(b, bw);
-
-    /* Typically assert s <= aw and s < 64, so we do not invoke UB. */
-    assert(s < 64 && "Shift out of range");
-    assert(s <= aw && "Shift exceeds bit-width");
+    s %= aw;
 
     Bits shifted = x << s;
     if (aw < 64) {
@@ -483,9 +480,7 @@ static inline Bits VADL_lsl(Bits a, Width aw, Bits b, Width bw) {
 static inline Bits VADL_asr(Bits a, Width aw, Bits b, Width bw) {
     SInt x = VADL_sextract(a, aw);
     Bits s = VADL_uextract(b, bw);
-
-    assert(s < 64 && "Shift out of range");
-    assert(s <= aw && "Shift exceeds bit-width");
+    s %= aw;
 
     SInt shifted = x >> s;
     if (aw < 64) {
@@ -501,9 +496,7 @@ static inline Bits VADL_asr(Bits a, Width aw, Bits b, Width bw) {
 static inline Bits VADL_lsr(Bits a, Width aw, Bits b, Width bw) {
     Bits x = VADL_uextract(a, aw);
     Bits s = VADL_uextract(b, bw);
-
-    assert(s < 64 && "Shift out of range");
-    assert(s <= aw && "Shift exceeds bit-width");
+    s %= aw;
 
     return x >> s; /* Already limited to aw bits. */
 }
@@ -514,11 +507,6 @@ static inline Bits VADL_lsr(Bits a, Width aw, Bits b, Width bw) {
 static inline Bits VADL_rol(Bits a, Width aw, Bits b, Width bw) {
     Bits x = VADL_uextract(a, aw);
     Bits s = VADL_uextract(b, bw);
-
-    /* Typically we do modulo rotate by aw, so aw must be > 0 and <=64. */
-    assert(aw > 0 && "Can't rotate 0 bits");
-    assert(aw <= 64 && "Max 64 bits supported");
-    assert(s < 64 && "Rotate out of range");
 
     s %= aw;
     if (s == 0ULL) {
@@ -537,10 +525,6 @@ static inline Bits VADL_rol(Bits a, Width aw, Bits b, Width bw) {
 static inline Bits VADL_ror(Bits a, Width aw, Bits b, Width bw) {
     Bits x = VADL_uextract(a, aw);
     Bits s = VADL_uextract(b, bw);
-
-    assert(aw > 0 && "Can't rotate 0 bits");
-    assert(aw <= 64 && "Max 64 bits supported");
-    assert(s < 64 && "Rotate out of range");
 
     s %= aw;
     if (s == 0ULL) {
@@ -563,10 +547,7 @@ static inline Bits VADL_rrx(Bits a, Width aw, Bits b, Width bw, Bits c, Width cw
     Bits s = VADL_uextract(b, bw);
     // normalize c to 0 or 1
     c = c != 0;
-
-    assert(aw > 0 && "Can't rotate 0 bits");
-    assert(aw <= 64 && "Max 64 bits supported");
-    assert(s < 64 && "Rotate out of range");
+    s %= aw;
 
     Bits m   = VADL_mask(aw);
     Bits reg = x & m;

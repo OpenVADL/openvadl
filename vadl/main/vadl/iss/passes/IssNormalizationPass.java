@@ -516,19 +516,54 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
     // do nothing
   }
 
+  private boolean isPowerOfTwo(int val) {
+    return val > 0 && (val & (val - 1)) == 0;
+  }
+
+  /**
+   * For shift operations, the second argument is always normalized by (b % N) to
+   * ensure defined behavior.
+   */
+  private void normalizeShiftAmountOperand(BuiltInCall input) {
+    var val = input.arguments().getFirst();
+    var valT = val.type().asDataType();
+    var shift = input.arguments().get(1);
+    var shiftT = shift.type().asDataType();
+    var minWidth = BitsType.minimalRequiredWidthFor(input.type().asDataType().bitWidth());
+    if (shiftT.bitWidth() < minWidth) {
+      // the shift cannot wrap around the value
+      return;
+    }
+
+    if (isPowerOfTwo(valT.bitWidth())) {
+      // b % N == b & (N - 1)
+      var rhs = Constant.Value.of(valT.bitWidth() - 1, shiftT).toNode();
+      // b -> b & (N - 1)
+      shift.replace(BuiltInTable.AND.call(shift, rhs));
+      return;
+    }
+
+    // replace by modulo (b -> b % N)
+    var nVal = Constant.Value.of(valT.bitWidth(), shiftT).toNode();
+    shift.replace(BuiltInTable.UMOD.call(shift, nVal));
+  }
+
   @Override
   public void handleLSL(BuiltInCall input) {
+    normalizeShiftAmountOperand(input);
     truncateResult(input);
   }
 
   @Override
   public void handleASR(BuiltInCall input) {
     signExtendArg(input, 0);
+    normalizeShiftAmountOperand(input);
     truncateResult(input);
   }
 
   @Override
   public void handleLSR(BuiltInCall input) {
+    normalizeShiftAmountOperand(input);
     // do nothing, as input and result are unsigned and smaller than the first operand
   }
 

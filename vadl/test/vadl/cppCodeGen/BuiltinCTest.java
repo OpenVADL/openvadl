@@ -1238,22 +1238,22 @@ public class BuiltinCTest extends DockerExecutionTest {
         // 1-bit logical shift left: 1 << 0 = 1
         lsl(0x1, 0x0, 1, 0x1),
         // 1-bit logical shift left: 1 << 1 = 0 (shift out of range for 1-bit)
-        lsl(0x1, 0x1, 1, 0x0),
-        // 2-bit logical shift left: 2 << 1 = 0 (shift out of range for 2-bit)
+        lsl(0x1, 0x1, 1, 0x1),
+        // 2-bit logical shift left: 2 << 1 = 0
         lsl(0x2, 0x1, 2, 0x0),
         // 2-bit logical shift left: 1 << 1 = 2
         lsl(0x1, 0x1, 2, 0x2),
         // 8-bit logical shift left: 127 << 1 = 254
         lsl(0x7F, 0x1, 8, 0xFE),
-        // 8-bit logical shift left: 128 << 1 = 0 (shift out of range for 8-bit)
+        // 8-bit logical shift left: 128 << 1 = 0
         lsl(0x80, 0x1, 8, 0x0),
         // 16-bit logical shift left: 32767 << 1 = 65534
         lsl(0x7FFF, 0x1, 16, 0xFFFE),
-        // 16-bit logical shift left: 32768 << 1 = 0 (shift out of range for 16-bit)
+        // 16-bit logical shift left: 32768 << 1 = 0
         lsl(0x8000, 0x1, 16, 0x0),
         // 32-bit logical shift left: 2147483647 << 1 = 4294967294
         lsl(0x7FFFFFFF, 0x1, 32, 0xFFFFFFFEL),
-        // 32-bit logical shift left: 2147483648 << 1 = 0 (shift out of range for 32-bit)
+        // 32-bit logical shift left: 2147483648 << 1 = 0
         lsl(0x80000000L, 0x1, 32, 0x0),
         // 64-bit logical shift left: 9223372036854775807 << 1 = 18446744073709551614
         lsl(0x7FFFFFFFFFFFFFFFL, 0x1, 64, 0xFFFFFFFFFFFFFFFEL),
@@ -1311,8 +1311,8 @@ public class BuiltinCTest extends DockerExecutionTest {
     return runTests(
         // 1-bit logical shift right: 1 >> 0 = 1
         lsr(0x1, 0x0, 1, 0x1),
-        // 1-bit logical shift right: 1 >> 1 = 0
-        lsr(0x1, 0x1, 1, 0x0),
+        // 1-bit logical shift right: 1 >> 1 = 0 (out of range shift)
+        lsr(0x1, 0x1, 1, 0x1),
         // 2-bit logical shift right: 2 >> 1 = 1
         lsr(0x2, 0x1, 2, 0x1),
         // 2-bit logical shift right: 3 >> 1 = 1
@@ -1415,7 +1415,7 @@ public class BuiltinCTest extends DockerExecutionTest {
   Stream<DynamicTest> rrxTests() {
     return runTests(
         // 1-bit rotate right with carry: 1 >> 1 + carry(0) = 0
-        rrx(0x1, 0x1, false, 1, 0x0),
+        rrx(0x1, 0x1, false, 1, 0x1),
         // 1-bit rotate right with carry: 1 >> 1 + carry(1) = 1
         rrx(0x1, 0x1, true, 1, 0x1),
         // 2-bit rotate right with carry: 2 >> 1 + carry(0) = 1
