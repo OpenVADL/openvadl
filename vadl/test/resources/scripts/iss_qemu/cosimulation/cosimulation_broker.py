@@ -15,7 +15,7 @@ import json
 from collections import deque
 
 import logging
-from typing import Annotated, Any, Literal, Optional
+from typing import Annotated, Any, Optional
 
 reference_ricsv64_exe = "/qemu-system-riscv64"
 our_riscv64_exe = "/qemu-system-rv64im"
@@ -200,69 +200,23 @@ clients: list[Client] = []
 
 def run_with_callback(command, on_complete, config: Config, client: Client) -> multiprocessing.Process:
     def runner():
-        process = subprocess.Popen(command)
+        stdout_path = os.path.join(config.logging.dir, f"client-{client.id}-stdout.txt")
+        stderr_path = os.path.join(config.logging.dir, f"client-{client.id}-stderr.txt")
+        stdout_file = open(stdout_path, "w")
+        stderr_file = open(stderr_path, "w")
+        process = subprocess.Popen(command, stdout=stdout_file, stderr=stderr_file)
         process.wait()
+        stdout_file.close()
+        stderr_file.close()
         on_complete(process.returncode, config, client)
     
     p = multiprocessing.Process(target=runner)
     p.start()
     return p
 
-# Usage
 def callback(returncode: int, config: Config, client: Client):
     logger.info(f"Process (client: {client.id}) finished with code: {returncode}")
     client.is_open = False
-
-def format_register_value(reg: SHMRegister) -> str:
-    logger.debug(f"format_register_value::{len(reg.data)}, {reg.size}")
-    val = ''.join('{:02x}'.format(reg.data[idx]) for idx in range(reg.size))
-    return f'0x{val}'
-
-
-# reading is possible if a client is done
-def read(client: Client, config: Config) -> Optional[TBInfo]:
-    if config.testing.protocol.layer == 'exec':
-        shm = client.shm_struct.shm_exec
-        logger.debug(f"reading client #{client.id}: reading exec")
-        for cpu_index in range(BrokerSHM_Exec.MAX_CPU_COUNT):
-            logger.debug(f"init_mask: {shm.init_mask}")
-            if not shm.init_mask & (1 << cpu_index):
-                logger.debug(f"Cpu at index {cpu_index} is not initialized")
-                continue
-
-            cpu = shm.cpus[cpu_index]
-            logger.info(f"Reading client #{client.id}: CPU={cpu.idx}:")
-            for reg in cpu.registers[:cpu.registers_size]:
-                logger.info(f"\tReg: {reg.name} = {format_register_value(reg)}")
-
-    elif config.testing.protocol.layer == 'tb':
-        logger.debug(f"reading client #{client.id}: reading tb")
-        shm = client.shm_struct.shm_tb
-        for info in shm.infos:
-            for insn in info.insns_info:
-                if insn.pc > 0:
-                    logger.info(f"Reading client #{client.id}: {insn.disas.value.decode()}")
-    else:
-        raise ValueError("illegal protocol layer: ", config.testing.protocol.layer)
-
-    return None
-
-def collect_disas(client: Client, config: Config) -> str:
-    if config.testing.protocol.layer == 'tb':
-        disas = []
-        shm = client.shm_struct.shm_tb
-        for info in shm.infos:
-            disas.append(format_tbinfo(info))
-        return "\n".join(disas)
-    else:
-        return "done!"
-
-def format_tbinfo(info: TBInfo) -> str:
-    disas = []
-    for insn in info.insns_info:
-        if insn.pc > 0:
-            disas.append(insn.disas.value.decode())
-    return "\n".join(disas)
 
 @dataclass
 class ClientDiff:
@@ -336,7 +290,8 @@ def run_lockstep(config: Config, dbgs: deque[list[dict[str, Any]]]) -> Report:
             c1shm = c1.shm_struct.shm_tb
             c2shm = c2.shm_struct.shm_tb
 
-            print(f"1: {format_tbinfo(c1shm.infos[c1shm.size-1])}\n2:{format_tbinfo(c2shm.infos[c2shm.size-1])}")
+            print("TODO: tb-block level testing")
+
             return []
 
 
@@ -403,8 +358,14 @@ def main(config: Config):
         dbgs = deque(maxlen=max_trace_len if max_trace_len >= 0 else None)
         report = run_lockstep(config, dbgs)
         j = {"report": asdict(report), "traces": list(dbgs)}
-        with open("result.json", "w") as f:
-            f.write(json.dumps(j))
+        result_file = os.path.join(config.testing.protocol.out.dir, "result.json")
+        os.makedirs(os.path.dirname(result_file), exist_ok=True)
+        with open(result_file, "w") as f:
+            if config.testing.protocol.out.format == "json":
+                f.write(json.dumps(j))
+            else:
+                logger.error(f"illegal testing output format: {config.testing.protocol.out.format}")
+                exit(1)
 
         for client in clients:
             if client.process is not None:
@@ -432,7 +393,7 @@ def cleanup_smh(config: Config, client: Client):
         pass # ignore
 
 def close_client(config: Config, client: Client):
-    print(f"Closing client: {client.id}")
+    logger.info(f"Closing client: {client.id}")
     if client.process is not None:
         client.process.terminate()
 
@@ -466,7 +427,10 @@ if __name__ == '__main__':
         exit(1)
  
     if config.logging.enable:
-        logging.basicConfig(filename=config.logging.file, level=config.logging.level)
+        filemode = "w" if config.logging.clear_on_rerun else "a"
+        filename = os.path.join(config.logging.dir, config.logging.file)
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        logging.basicConfig(filename=filename, filemode=filemode, level=config.logging.level)
     else:
         logging.disable()
 

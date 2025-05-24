@@ -9,13 +9,15 @@ Endian: TypeAlias = Literal['little', 'big']
 @dataclass
 class Logging:
     level: str
-    file: str = "cosim.log"
+    file: str = "cosim.json"
+    dir: str = "./logs"
     enable: bool = True
+    clear_on_rerun: bool = False
 
 @dataclass
 class Out:
-    dir: str = "./out"
-    format: str = "json"
+    dir: str = "./result"
+    format: Literal["json"] = "json"
 
 @dataclass
 class Protocol:
