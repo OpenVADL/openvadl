@@ -380,10 +380,8 @@ instruction set architecture AArch64Base = {
 
   model AddSubCarryInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ThreeRegOpFormat =
-      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in {
+      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in
         X(rd) := result as Bits<Size::$size> as BitsX
-        NZCV.C := flags.carry
-      }
     $ThreeRegOpEncAsm ($i; $size)
     }
 
@@ -539,7 +537,7 @@ instruction set architecture AArch64Base = {
     else if val( 3.. 2) != val( 1..0) then  4
     else 2 as SIntW
 
-  // nImmsImmr returns the concatenated values for N, imms and immr
+  // nImmrImms returns the concatenated values for N, immr and imms
 
   function nImmrImms (patSize: SIntW, leftRotations: SIntW, trailingOnes: SIntW) -> Bits13 =
     // immr is the number of right rotations of the pattern
@@ -767,7 +765,8 @@ instruction set architecture AArch64Base = {
 // If <imms> is less than <immr>, *BFM copies a bitfield of (<imms>+1) bits from
 // the least significant bits of the source register to bit position
 // (regsize-<immr>) of the destination register, where regsize is the
-// destination register size of 32 or 64 bits.
+// destination register size of 32 or 64 bits (but regsize becomes 0 in Bit5 or
+// Bit6 sized positions computations).
 //
 // BFM:  In both cases, the other bits of the destination register remain
 // unchanged.
