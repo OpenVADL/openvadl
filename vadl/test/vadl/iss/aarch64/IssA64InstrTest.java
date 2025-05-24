@@ -73,24 +73,20 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
       var disassembler = new Disassembler(isa, new TheilingDecodeTreeGenerator());
       // TODO: include X31/SP (the 0 register or stack pointer)
       autoAssembler = new AutoAssembler(disassembler)
-          .allowRegisterIndices(2, 31);
+          // register x0,x1 are used for test termination
+          // register x2 is used to test the nzcv register
+          .allowRegisterIndices(3, 31);
     }
   }
-
-  // TODO: Remove this once we have actual tests
-  @TestFactory
-  Stream<DynamicTest> simpleTest() throws IOException {
-    var asmCore = """
-        mov     x29, #2          // x29 = 2
-        mov     x28, #4          // x28 = 3
-        add     x29, x29, x28     // a0 = x29 + x28 (32-bit add)
-        """;
-    return runTest(new IssTestUtils.TestCase("Simple Test", asmCore));
-  }
-
+  
   @TestFactory
   Stream<DynamicTest> testADC() throws IOException {
     return runTestsWith(makeTestCases("ADCW", "ADCX"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> testADCS() throws IOException {
+    return runTestsWith(makeTestCasesFromPrefixes("ADCS"));
   }
 
   // TODO: check ADD
@@ -149,6 +145,7 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
       builder.fillReg("x" + regIndex, 64);
     }
     builder.add(result.assembly());
+    builder.add("mrs x2, nzcv");
     return builder.toTestCase();
   }
 }

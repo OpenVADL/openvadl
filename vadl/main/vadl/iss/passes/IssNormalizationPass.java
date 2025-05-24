@@ -544,8 +544,8 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
     }
 
     // replace by modulo (b -> b % N)
-    var nVal = Constant.Value.of(valT.bitWidth(), shiftT).toNode();
-    shift.replace(BuiltInTable.UMOD.call(shift, nVal));
+    var valN = Constant.Value.of(valT.bitWidth(), shiftT).toNode();
+    shift.replace(BuiltInTable.UMOD.call(shift, valN));
   }
 
   @Override
