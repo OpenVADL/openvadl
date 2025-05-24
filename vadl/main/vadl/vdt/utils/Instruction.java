@@ -24,4 +24,10 @@ package vadl.vdt.utils;
  * instruction and the fixed bit pattern that represents the instruction.
  */
 public record Instruction(vadl.viam.Instruction source, int width, BitPattern pattern) {
+
+  public static Instruction from(vadl.viam.Instruction insn) {
+    BitPattern pattern = PatternUtils.toFixedBitPattern(insn);
+    return new Instruction(insn, pattern.width(), pattern);
+  }
+
 }

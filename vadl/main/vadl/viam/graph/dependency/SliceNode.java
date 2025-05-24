@@ -22,6 +22,7 @@ import vadl.javaannotations.viam.Input;
 import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
+import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -29,7 +30,7 @@ import vadl.viam.graph.Node;
 /**
  * A node that represents the bit slice operation on a value.
  */
-public class SliceNode extends ExpressionNode {
+public class SliceNode extends ExpressionNode implements Canonicalizable {
 
   @DataValue
   protected Constant.BitSlice slice;
@@ -118,5 +119,16 @@ public class SliceNode extends ExpressionNode {
   @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public Node canonical() {
+    if (!(value instanceof ConstantNode constantNode)) {
+      return this;
+    }
+    var val = constantNode.constant.asVal();
+    var result = val.slice(slice).toNode();
+    ensure(result.type().isTrivialCastTo(type()), "Slice result has different width to node");
+    return result;
   }
 }

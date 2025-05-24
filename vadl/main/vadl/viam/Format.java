@@ -247,23 +247,6 @@ public class Format extends Definition implements DefProp.WithType {
 
       return function;
     }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      Field field = (Field) o;
-      return field.identifier.equals(this.identifier);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(type, bitSlice);
-    }
   }
 
 
@@ -372,7 +355,8 @@ public class Format extends Definition implements DefProp.WithType {
 
     @Override
     public String toString() {
-      return "FieldAccess{ " + accessFunction.simpleName() + " = " + accessFunction.signature()
+      return "FieldAccess{ " + simpleName() + " = "
+          + accessFunction.signature()
           + " }";
     }
 

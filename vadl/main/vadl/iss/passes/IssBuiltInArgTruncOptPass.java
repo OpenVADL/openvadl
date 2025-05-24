@@ -103,6 +103,8 @@ class IssBuiltInArgTruncOptimizer {
   void run() {
     graph.getNodes(BuiltInCall.class)
         .forEach(this::optimize);
+
+    graph.deleteUnusedDependencies();
   }
 
   private void optimize(BuiltInCall call) {

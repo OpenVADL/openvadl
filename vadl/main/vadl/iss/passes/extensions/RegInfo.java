@@ -66,6 +66,11 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
     return reg().simpleName();
   }
 
+  public int valueCTypeWidth() {
+    return CppTypeMap.nextFittingBitSize(
+        reg().resultType(reg().maxNumberOfAccessIndices()).bitWidth());
+  }
+
   public String valueCType() {
     return CppTypeMap.nextFittingUInt(reg().resultType(reg().maxNumberOfAccessIndices()));
   }

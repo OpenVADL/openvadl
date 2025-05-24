@@ -150,7 +150,7 @@
 #and_(1, $b1, 1, $b1, 1, $b1)
 
 
-// VADL::and
+// VADL::not
 
 #macro(not_ $a, $at, $result, $resultType)
 #ntest("not", {$a: $at}, "VADL::not($a as $at)", $result, $resultType )
@@ -167,6 +167,20 @@
 #not_(1, $b1, 0, $b1)
 
 
+/////////////// LOGICAL OPERATIONS /////////////////
+
+#macro(ror_ $a, $at, $b, $bt, $result, $resultType)
+#ntest("ror", {$a: $at, $b: $bt}, "VADL::ror($a as $at, $b as $bt)", $result, $resultType )
+#end
+
+#ror_(0, $u4, 0, $u4, 0, $u4)
+#ror_(1, $u4, 0, $u4, 1, $u4)
+#ror_(1, $u4, 1, $u4, 8, $u4)
+#ror_(1, $u4, 3, $u4, 2, $u4)
+#ror_(5, $u4, 2, $u4, 5, $u4)
+#ror_(0, $b1, 0, $b1, 0, $b1)
+#ror_(0, $b1, 1, $b1, 0, $b1)
+#ror_(1, $b1, 1, $b1, 1, $b1)
 
 
 
