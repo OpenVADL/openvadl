@@ -377,7 +377,6 @@ instruction set architecture AArch64Base = {
     instruction $i.id: ThreeRegOpFormat =
       let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in {
         X(rd) := result as Bits<Size::$size> as BitsX
-        NZCV.C := flags.carry
       }
     $ThreeRegOpEncAsm ($i; $size)
     }

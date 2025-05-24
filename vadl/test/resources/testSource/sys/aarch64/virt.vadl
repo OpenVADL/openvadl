@@ -1,13 +1,33 @@
 
 import aarch64::AArch64Base
 
-instruction set architecture A64 extending AArch64Base = {}
+instruction set architecture A64 extending AArch64Base = {
+
+    // TODO: Remove this once andi implemented the MRS instruction
+    format MRSFormat: Instr =
+    { op      [31..20]
+    , o0      [19]
+    , op1     [18..16]
+    , crn     [15..12]
+    , crm     [11..8]
+    , op2     [7..5]
+    , rt      [4..0]
+    }
+
+    instruction MRSNZCV: MRSFormat =
+        X(rt) := NZCV as BitsX << 28
+    encoding MRSNZCV = { op = 0b110101010011, o0 = 0b1, op1 = 0b011, crn = 0b0100, crm = 0b0010, op2 = 0b000 }
+    assembly MRSNZCV = ( "mrs X", decimal(rt), ", nzcv" )
+
+}
 
 [ htif ]
 processor Virt implements A64 = {
 
   reset = {
     PC := 0x0
+    // in upstream QEMU the ZF is set to 1 by default
+    NZCV.Z := 1
   }
 
   [ firmware ]
