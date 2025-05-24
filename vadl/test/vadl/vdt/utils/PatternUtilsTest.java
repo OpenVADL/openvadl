@@ -17,6 +17,7 @@
 package vadl.vdt.utils;
 
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -62,9 +63,9 @@ class PatternUtilsTest {
     ));
 
     /* WHEN */
-    BitPattern p1 = PatternUtils.toFixedBitPattern(i1);
-    BitPattern p2 = PatternUtils.toFixedBitPattern(i2);
-    BitPattern p3 = PatternUtils.toFixedBitPattern(i3);
+    BitPattern p1 = PatternUtils.toFixedBitPattern(i1, ByteOrder.BIG_ENDIAN);
+    BitPattern p2 = PatternUtils.toFixedBitPattern(i2, ByteOrder.BIG_ENDIAN);
+    BitPattern p3 = PatternUtils.toFixedBitPattern(i3, ByteOrder.BIG_ENDIAN);
 
     /* THEN */
     Assertions.assertEquals("1010101010101010", p1.toString());
@@ -106,12 +107,95 @@ class PatternUtilsTest {
     ));
 
     /* WHEN */
-    BitPattern p1 = PatternUtils.toFixedBitPattern(i1);
-    BitPattern p2 = PatternUtils.toFixedBitPattern(i2);
+    BitPattern p1 = PatternUtils.toFixedBitPattern(i1, ByteOrder.BIG_ENDIAN);
+    BitPattern p2 = PatternUtils.toFixedBitPattern(i2, ByteOrder.BIG_ENDIAN);
 
     /* THEN */
     Assertions.assertEquals("00001011001-----000000----------", p1.toString());
     Assertions.assertEquals("01001011001-----000000----------", p2.toString());
+  }
+
+  @Test
+  void testEncodingSwapByteOrder() {
+
+    /* GIVEN */
+    Format f = mockFormat(16, Map.of(
+        "f1", new BitSlice(new Part(15, 10)),
+        "f2", new BitSlice(new Part(9, 9)),
+        "f3", new BitSlice(new Part(8, 0))
+    ));
+
+    Instruction i1 = mockInstruction(f, Map.of(
+        "f1", new BigInteger("111111", 2),
+        "f2", new BigInteger("0", 2),
+        "f3", new BigInteger("111111111", 2)
+    ));
+
+    Instruction i2 = mockInstruction(f, Map.of(
+        "f1", new BigInteger("111111", 2),
+        "f3", new BigInteger("000000000", 2)
+    ));
+
+    Instruction i3 = mockInstruction(f, Map.of(
+        "f3", BigInteger.ZERO
+    ));
+
+    /* WHEN */
+    BitPattern p1 = PatternUtils.toFixedBitPattern(i1, ByteOrder.LITTLE_ENDIAN);
+    BitPattern p2 = PatternUtils.toFixedBitPattern(i2, ByteOrder.LITTLE_ENDIAN);
+    BitPattern p3 = PatternUtils.toFixedBitPattern(i3, ByteOrder.LITTLE_ENDIAN);
+
+    /* THEN */
+    Assertions.assertEquals("1111111111111101", p1.toString());
+    Assertions.assertEquals("00000000111111-0", p2.toString());
+    Assertions.assertEquals("00000000-------0", p3.toString());
+  }
+
+  @Test
+  void testEncoding_byteAlignPatterns_bigEndian_padRight() {
+
+    /* GIVEN */
+    Format f = mockFormat(20, Map.of(
+        "f1", new BitSlice(new Part(19, 10)),
+        "f2", new BitSlice(new Part(9, 9)),
+        "f3", new BitSlice(new Part(8, 0))
+    ));
+
+    Instruction i1 = mockInstruction(f, Map.of(
+        "f1", new BigInteger("1111111111", 2),
+        "f2", new BigInteger("0", 2),
+        "f3", new BigInteger("111111111", 2)
+    ));
+
+    /* WHEN */
+    BitPattern p1 = PatternUtils.toFixedBitPattern(i1, ByteOrder.BIG_ENDIAN);
+
+    /* THEN */
+    Assertions.assertEquals("11111111110111111111----", p1.toString());
+  }
+
+  @Test
+  void testEncoding_byteAlignPatterns_littleEndian() {
+
+    /* GIVEN */
+    Format f = mockFormat(20, Map.of(
+        "f1", new BitSlice(new Part(19, 10)),
+        "f2", new BitSlice(new Part(9, 9)),
+        "f3", new BitSlice(new Part(8, 0))
+    ));
+
+    // 01111111 11011111 1111
+    Instruction i1 = mockInstruction(f, Map.of(
+        "f1", new BigInteger("0111111111", 2),
+        "f2", new BigInteger("0", 2),
+        "f3", new BigInteger("111111111", 2)
+    ));
+
+    /* WHEN */
+    BitPattern p1 = PatternUtils.toFixedBitPattern(i1, ByteOrder.LITTLE_ENDIAN);
+
+    /* THEN */
+    Assertions.assertEquals("1111----1101111101111111", p1.toString());
   }
 
   private Format mockFormat(int size, Map<String, BitSlice> fields) {

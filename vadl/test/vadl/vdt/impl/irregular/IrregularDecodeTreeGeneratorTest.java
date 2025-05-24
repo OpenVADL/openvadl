@@ -1,0 +1,331 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.vdt.impl.irregular;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import vadl.vdt.AbstractDecisionTreeTest;
+import vadl.vdt.impl.irregular.model.DecodeEntry;
+import vadl.vdt.impl.irregular.model.ExclusionCondition;
+import vadl.vdt.model.Node;
+import vadl.vdt.target.common.DecisionTreeDecoder;
+import vadl.vdt.utils.BitPattern;
+import vadl.vdt.utils.BitVector;
+import vadl.vdt.utils.Instruction;
+
+class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
+
+  @Test
+  void testGenerate_simpleInstructions_succeeds() {
+
+    /* GIVEN */
+    final List<Instruction> instructions = createInsns(List.of(
+        "00------",
+        "01------",
+        "10----00",
+        "10----01"
+    ));
+
+    // Create decode entries with empty exclusion conditions
+    final List<DecodeEntry> decodeEntries = instructions.stream()
+        .map(i -> new DecodeEntry(i.source(), i.width(), i.pattern(), Set.of()))
+        .toList();
+
+    /* WHEN */
+    final Node dt = new IrregularDecodeTreeGenerator().generate(decodeEntries);
+
+    /* THEN */
+    final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
+
+    assertDecision(decoder, "00000000", "insn_0");
+    assertDecision(decoder, "01000000", "insn_1");
+    assertDecision(decoder, "10000000", "insn_2");
+    assertDecision(decoder, "10000001", "insn_3");
+  }
+
+  @Test
+  void testGenerate_irregularInstructions_succeeds() {
+
+    /* GIVEN */
+    final List<Instruction> insns = createInsns(List.of(
+        "00------",
+        "01------",
+        "10----00",
+        "10----01",
+        "0000--01", // New overlapping entries
+        "0000--10",
+        "0-11----"
+    ));
+
+    final List<DecodeEntry> decodeEntries = new ArrayList<>();
+
+    {
+      var entry = toDecodeEntry(insns.get(0),
+          exclude("--00----", "------00", "------11"),
+          exclude("--11----"));
+      decodeEntries.add(entry);
+    }
+    {
+      var entry = toDecodeEntry(insns.get(1), "--11----");
+      decodeEntries.add(entry);
+    }
+
+    // The rest do not have exclusion conditions
+    for (int i = 2; i < insns.size(); i++) {
+      decodeEntries.add(toDecodeEntry(insns.get(i)));
+    }
+
+    /* WHEN */
+    final Node dt = new IrregularDecodeTreeGenerator().generate(decodeEntries);
+
+    /* THEN */
+    final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
+
+    assertDecision(decoder, "00000000", "insn_0");
+    assertDecision(decoder, "01000000", "insn_1");
+    assertDecision(decoder, "10000000", "insn_2");
+    assertDecision(decoder, "10000001", "insn_3");
+    assertDecision(decoder, "00000001", "insn_4");
+    assertDecision(decoder, "00000010", "insn_5");
+    assertDecision(decoder, "00110000", "insn_6");
+  }
+
+  @Test
+  void testGenerate_handleVariableLength_succeeds() {
+
+    /* GIVEN */
+    final List<Instruction> insns = createInsns(List.of(
+        "-00--",
+        "-01--",
+        "-10----00--",
+        "-10----01--",
+        "-0000--01", // Overlapping entries
+        "-0000--10",
+        "-0-11----"
+    ));
+
+    final List<DecodeEntry> decodeEntries = new ArrayList<>();
+
+    {
+      var entry = toDecodeEntry(insns.get(0),
+          exclude("---00----", "-------00", "-------11"),
+          exclude("---11----"));
+      decodeEntries.add(entry);
+    }
+    {
+      var entry = toDecodeEntry(insns.get(1), "---11----");
+      decodeEntries.add(entry);
+    }
+
+    // The rest do not have exclusion conditions
+    for (int i = 2; i < insns.size(); i++) {
+      decodeEntries.add(toDecodeEntry(insns.get(i)));
+    }
+
+    /* WHEN */
+    final Node dt = new IrregularDecodeTreeGenerator().generate(decodeEntries);
+
+    /* THEN */
+    final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
+
+    assertDecision(decoder, "00000", "insn_0");
+    assertDecision(decoder, "00100", "insn_1");
+    assertDecision(decoder, "01000000000", "insn_2");
+    assertDecision(decoder, "01000000100", "insn_3");
+    assertDecision(decoder, "000000001", "insn_4");
+    assertDecision(decoder, "000000010", "insn_5");
+    assertDecision(decoder, "000110000", "insn_6");
+  }
+
+  @Test
+  void testGenerate_handleVariableLength_withAdditionalBits_succeeds() {
+
+    /* GIVEN */
+    final List<Instruction> insns = createInsns(List.of(
+        "-00--",
+        "-01--",
+        "-10----00--",
+        "-10----01--",
+        "-0000--01", // Overlapping entries
+        "-0000--10",
+        "-0-11----"
+    ));
+
+    final List<DecodeEntry> decodeEntries = new ArrayList<>();
+
+    {
+      var entry = toDecodeEntry(insns.get(0),
+          exclude("---00----", "-------00", "-------11"),
+          exclude("---11----"));
+      decodeEntries.add(entry);
+    }
+    {
+      var entry = toDecodeEntry(insns.get(1), "---11----");
+      decodeEntries.add(entry);
+    }
+
+    // The rest do not have exclusion conditions
+    for (int i = 2; i < insns.size(); i++) {
+      decodeEntries.add(toDecodeEntry(insns.get(i)));
+    }
+
+    /* WHEN */
+    final Node dt = new IrregularDecodeTreeGenerator().generate(decodeEntries);
+
+    /* THEN */
+    final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
+
+    // The input instructions to decode are of the same length, possibly containing additional bits
+    // from the following instructions (Here padded with 0s)
+    assertDecision(decoder, "00000000000", "insn_0");
+    assertDecision(decoder, "00100000000", "insn_1");
+    assertDecision(decoder, "01000000000", "insn_2");
+    assertDecision(decoder, "01000000100", "insn_3");
+    assertDecision(decoder, "00000000100", "insn_4");
+    assertDecision(decoder, "00000001000", "insn_5");
+    assertDecision(decoder, "00011000000", "insn_6");
+  }
+
+  @Test
+  void testGenerate_amd64_add() {
+
+    // AMD64 ADD immediate instruction encodings
+    //  - 'REX.W' = 0x48 prefix for 64-bit ops
+    //  - '66'    = Operand-size override (for 16-bit ops)
+    //  - 'ModR/M' = byte selecting register/memory destination
+    //  - '/0' in opcode means ModR/M.reg field must be 000 (the 'add' group)
+
+    // | Form                  | Prefix(es)   | Opcode    | ModR/M | Immediate | Example                |
+    // |-----------------------|--------------|-----------|--------|-----------|------------------------|
+    // | add r/m64, imm32      | REX.W        | 81 /0     | yes    | imm32     | 48 81 C0 78 56 34 12   |
+    // | add r/m32, imm32      | -            | 81 /0     | yes    | imm32     | 81 C0 78 56 34 12      |
+    // | add r/m16, imm16      | 66           | 81 /0     | yes    | imm16     | 66 81 C0 34 12         |
+    // | add r/m8, imm8        | -            | 80 /0     | yes    | imm8      | 80 C0 7F               |
+    // | add r/m64, imm8       | REX.W        | 83 /0     | yes    | imm8      | 48 83 C0 01            |
+    // | add r/m32, imm8       | -            | 83 /0     | yes    | imm8      | 83 C0 01               |
+
+    // add r/m64, imm32 (general form)
+    // e: add rax, 0x12345678
+    // p: 01001000 10000001 --000--- -------- -------- -------- --------
+    // e: 01001000 10000001 11000000 01111000 01010110 00110100 00010010
+
+    // add r/m32, imm32
+    // e: add eax, 0x12345678
+    // p: 10000001 --000--- -------- -------- -------- --------
+    // e: 10000001 11000000 01111000 01010110 00110100 00010010
+
+    // add r/m16, imm16
+    // e: add ax, 0x1234
+    // p: 01100110 10000001 --000--- -------- --------
+    // e: 01100110 10000001 11000000 00110100 00010010
+
+    // add r/m8, imm8
+    // e: add al, 0x7F
+    // p: 10000000 --000--- --------
+    // e: 10000000 11000000 01111111
+
+    // add r/m64, imm8
+    // e: add rax, 0x01
+    // p: 01001000 10000011 --000--- --------
+    // e: 01001000 10000011 11000000 00000001
+
+    // add r/m32, imm8
+    // e: add eax, 0x01
+    // p: 10000011 --000--- --------
+    // e: 10000011 11000000 00000001
+
+
+    /* GIVEN */
+    final List<Instruction> insns = createInsns(List.of(
+        "01001000 10000001 --000--- -------- -------- -------- --------",
+        "10000001 --000--- -------- -------- -------- --------",
+        "01100110 10000001 --000--- -------- --------",
+        "10000000 --000--- --------",
+        "01001000 10000011 --000--- --------",
+        "10000011 --000--- --------"
+    ));
+
+    // For this set we don't need exclusion conditions
+    final List<DecodeEntry> decodeEntries = new ArrayList<>();
+    for (Instruction insn : insns) {
+      decodeEntries.add(toDecodeEntry(insn));
+    }
+
+    /* WHEN */
+    final Node dt = new IrregularDecodeTreeGenerator().generate(decodeEntries);
+
+    /* THEN */
+    final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
+
+    // Extended instruction encodings, padded with the beginning of the insn_0 instruction
+    assertDecision(decoder,
+        "01001000 10000001 11000000 01111000 01010110 00110100 00010010", "insn_0");
+    assertDecision(decoder,
+        "10000001 11000000 01111000 01010110 00110100 00010010 01001000", "insn_1");
+    assertDecision(decoder,
+        "01100110 10000001 11000000 00110100 00010010 01001000 10000001", "insn_2");
+    assertDecision(decoder,
+        "10000000 11000000 01111111 01001000 10000001 11000000 01111000", "insn_3");
+    assertDecision(decoder,
+        "01001000 10000011 11000000 00000001 01001000 10000001 11000000", "insn_4");
+    assertDecision(decoder,
+        "10000011 11000000 00000001 01001000 10000001 11000000 01111000", "insn_5");
+  }
+
+  private DecodeEntry toDecodeEntry(Instruction insn) {
+    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), Set.of());
+  }
+
+  private DecodeEntry toDecodeEntry(Instruction insn, String... exclusionPattern) {
+    Set<ExclusionCondition> exclusions = Arrays.stream(exclusionPattern)
+        .map(s -> {
+          s = s.replace(" ", "");
+          BitPattern matching = BitPattern.fromString(s, s.length());
+          return new ExclusionCondition(matching, Set.of());
+        })
+        .collect(Collectors.toSet());
+    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), exclusions);
+  }
+
+  private DecodeEntry toDecodeEntry(Instruction insn, ExclusionCondition... exclusions) {
+    return new DecodeEntry(insn.source(), insn.width(), insn.pattern(), Set.of(exclusions));
+  }
+
+  private ExclusionCondition exclude(String matchingPattern, String... unmatchingPattern) {
+    matchingPattern = matchingPattern.replace(" ", "");
+    BitPattern matching = BitPattern.fromString(matchingPattern, matchingPattern.length());
+    Set<BitPattern> unmatching = Arrays.stream(unmatchingPattern)
+        .map(p -> {
+          p = p.replace(" ", "");
+          return BitPattern.fromString(p, p.length());
+        })
+        .collect(Collectors.toSet());
+    return new ExclusionCondition(matching, unmatching);
+  }
+
+  private void assertDecision(DecisionTreeDecoder decoder, String insn, String expectedName) {
+    insn = insn.replace(" ", "");
+    Instruction decision = decoder.decide(BitVector.fromString(insn, insn.length()));
+    Assertions.assertNotNull(decision);
+    Assertions.assertEquals(expectedName, decision.source().simpleName());
+  }
+}

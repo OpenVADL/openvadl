@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.vdt.impl.theiling;
+package vadl.vdt.impl.regular;
 
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
@@ -25,7 +25,7 @@ import vadl.vdt.target.common.DecisionTreeDecoder;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
 
-class TheilingDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
+class RegularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
 
   @Test
   void testGenerate_simpleInstructions_succeeds() {
@@ -34,7 +34,7 @@ class TheilingDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     final var instructions = createInsns(List.of("1--", "01-", "00-"));
 
     /* WHEN */
-    final Node dt = new TheilingDecodeTreeGenerator().generate(instructions);
+    final Node dt = new RegularDecodeTreeGenerator().generate(instructions);
 
     /* THEN */
     final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
@@ -58,7 +58,7 @@ class TheilingDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     final var instructions = createInsns(List.of("1--", "10-", "0--"));
 
     /* WHEN */
-    final Node dt = new TheilingDecodeTreeGenerator().generate(instructions);
+    final Node dt = new RegularDecodeTreeGenerator().generate(instructions);
 
     /* THEN */
     final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
@@ -73,6 +73,30 @@ class TheilingDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
     assertDecision(decoder, "001", "0--");
     assertDecision(decoder, "010", "0--");
     assertDecision(decoder, "011", "0--");
+  }
+
+  @Test
+  void testGenerate_padVariableLengthInsns_succeeds() {
+
+    /* GIVEN */
+    final var instructions = createInsns(List.of("1--0", "01-", "00-"));
+
+    /* WHEN */
+    final Node dt = new RegularDecodeTreeGenerator().generate(instructions);
+
+    /* THEN */
+    final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
+
+    assertDecision(decoder, "1000", "1--0");
+    assertDecision(decoder, "1100", "1--0");
+    assertDecision(decoder, "1010", "1--0");
+    assertDecision(decoder, "1110", "1--0");
+
+    assertDecision(decoder, "0100", "01--");
+    assertDecision(decoder, "0110", "01--");
+
+    assertDecision(decoder, "0010", "00--");
+    assertDecision(decoder, "0000", "00--");
   }
 
   private void assertDecision(DecisionTreeDecoder decoder, String insn, String expected) {
