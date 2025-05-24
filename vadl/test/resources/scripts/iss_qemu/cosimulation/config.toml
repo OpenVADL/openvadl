@@ -1,7 +1,19 @@
+# General settings for the QEMU plugin system which set up the co-simulation
 [qemu]
+
+# The path to the compiled cosimulation qemu-plugin
 plugin="./qemu-setup/build/contrib/plugins/libcosimulation.so"
+
+# "big" | "little": Handles how bytes are printed
 endian="little"
+
+# Whether to ignore registers that are not defined by a [qemu.gdb_reg_map] mapping
+# This option is useful to test the current implementation of a simulator which might not yet have all registers implemented against another (complete) implementation
+# Filters in conjunction with `ignore_registers`
 ignore_unset_registers = false 
+
+# Ignore specific registers
+# Filters in conjunction with `ignore_unset_registers`
 ignore_registers = [
 	"mcycle",
 	"minstret",
@@ -13,8 +25,15 @@ ignore_registers = [
 	"t0", 
 ]
 
+# Defines a list of clients to test against
+# A single client is also possible, e.g. to check if a crash or similar occurs
+# In most use-cases, 2 clients (one test-simulator and one reference-simulator) are used
 [[qemu.clients]]
+
+# The executable of the ISS
 exec="qemu-system-riscv64"
+
+# Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
 additional_args = [
 	"-nographic",
 	"-d", "plugin"
@@ -28,6 +47,7 @@ additional_args = [
 	"-nographic",
 ]
 
+# Defines a custom map where the key (e.g. x0) is mapped to another value (e.g. zero)
 [qemu.gdb_reg_map]
 x0 = "zero"
 x1 = "ra"
@@ -63,25 +83,73 @@ x30 = "t5"
 x31 = "t6"
 pc = "pc"
 
+
+# Defines the test-source and how to test
 [testing]
+
+# The path to the compiled file to use for testing
+# This file will be passed to all clients
 test_exec="./qemu-setup/build/addw.elf"
+
+# The maximum trace length during a test-run
+# The trace acts as a sized dequeue, meaning newer trace-entries push out the oldest trace-entries if the length has been reached
+# Use max_trace_length = -1 to keep all traces
 max_trace_length = -1
 
+# The testing-protocol defines how the clients are run and tested against eachother
 [testing.protocol]
-mode = "lockstep" 
+# Defines an *execution-step* of a test-run.
+# "insn": The execution-step is the *execution of a single instruction*, e.g. `addi t4,zero,2`.
+#		  This layer is independent of how an ISS generates translation-blocks for qemu.
+#		  This is the most thorough but also slowest option.
+#
+# NOTE: the following is not yet implemented.
+# "tb":   The execution-step is the *execution of a single or multiple translation-blocks*.
+#		  Multiple translation-blocks might be executed in a single step if another client executed a larger.
+#		  (but potentially equivalent to multiple smaller TBs) translation-block.
+#		  This allows instruction-equivalent clients to "synchronize" even if the generated translation-blocks differ.
+#		  This option is faster than "insn" but less thorough.
+#
+# "tb-strict": The execution-step is the *execution of a single translation-blocks*.
+#			   The same as "tb" but without the synchronization logic. Meaning that equal translation-blocks are assumed.
+#			   This option is useful if the instructions of the ISS are already correct and the TB-Block generator needs to be tested.
 layer = "insn"
+
+# "lockstep": All clients are run and compared one *execution-step* at a time.
+# 			  This means that the test will exit on the first divergence (or at the end if no diffs where found) 
+# Currently, this is the only implemented mode.
+mode = "lockstep" 
+
+# The following three options configure which instructions from the `test_exec` executable should actually be tested.
+# NOTE: Only applies to `layer = "insn"`
+# Skips the first n instructions 
 skip_n_instructions = 6
+
+# Test all remaining instructions (overrides `take_n_instructions` if set to true)
 take_all_instructions = false
+
+# Test the next (after skipped) n instructions
 take_n_instructions = 5
 
+# Where the test result should be saved and in which format
 [testing.protocol.out]
-dir = "./out"
+dir = "./cosim-run/result"
+
+# Supported formats: "json"
 format = "json"
 
 [logging]
 enable = true 
+# Python log-levels as defined here: https://docs.python.org/3/library/logging.html#logging-levels
 level = "DEBUG"
-dir = "./log"
+
+# The directory will also contain files for the stdout and stderr of each client
+dir = "./cosim-run/log"
+file = "cosim.json"
+
+# Clears the logfile every time the program is run
+clear_on_rerun = true
 
 [dev]
+# Prints the loaded configuration if set to true and exits
 dry_run = false
