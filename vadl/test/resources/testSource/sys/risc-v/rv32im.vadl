@@ -110,6 +110,11 @@ assembly description ASM for ABI = {
     "lo" -> RV32IM::lo
   }
 
+  directives = {
+    ".align" -> ALIGN_POW2,
+    ".dword" -> QUAD
+  }
+
   grammar = {
     RRIds : "ADD" | "SUB" | "AND" | "OR" | "XOR" | "SLT" | "SLTU" | "SLL" | "SRL" | "SRA"
             | "MUL" | "MULH" | "MULHSU" | "MULHU" | "DIV" | "DIVU" | "REM" | "REMU"
