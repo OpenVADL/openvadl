@@ -72,10 +72,10 @@ application binary interface ABI for AArch64Temp = {
    return address = A_LR
    frame pointer = A_FP
 
-   pseudo return instruction = TEMP_RET
-   pseudo call instruction = TEMP_CALL
-   pseudo local address load instruction = TEMP_LA
-   pseudo absolute address load instruction = TEMP_LA
+   special return instruction = TEMP_RET
+   special call instruction = TEMP_CALL
+   special local address load instruction = TEMP_LA
+   special absolute address load instruction = TEMP_LA
 
    function argument = X{0..7}
    return value = X{0..1}
