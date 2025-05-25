@@ -19,6 +19,12 @@ instruction set architecture A64 extending AArch64Base = {
     encoding MRSNZCV = { op = 0b110101010011, o0 = 0b1, op1 = 0b011, crn = 0b0100, crm = 0b0010, op2 = 0b000 }
     assembly MRSNZCV = ( "mrs X", decimal(rt), ", nzcv" )
 
+    // TODO: Remove this once andi implemented the HINT instruction
+    format HINTNopFormat: Instr =
+    { op      [31..0] }
+    instruction HINTNop: HINTNopFormat = { }
+    encoding HINTNop = { op = 0b11010101000000110010000000011111 }
+    assembly HINTNop = ( "hint #0" )
 }
 
 [ htif ]

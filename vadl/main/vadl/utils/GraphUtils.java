@@ -43,6 +43,7 @@ import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
@@ -354,6 +355,11 @@ public class GraphUtils {
     return new SelectNode(cond, trueCase, falseCase);
   }
 
+  public static SliceNode slice(ExpressionNode expr, int msb, int lsb) {
+    var slice = Constant.BitSlice.of(msb, lsb);
+    return new SliceNode(expr, slice, Type.bits(slice.bitSize()));
+  }
+
   private static ExpressionNode combineExpressions(BuiltInTable.BuiltIn operation,
                                                    ExpressionNode... exprs) {
     assert exprs.length >= 2;
@@ -364,21 +370,49 @@ public class GraphUtils {
     return expr;
   }
 
+  /**
+   * Concatenate multiple expressions.
+   */
+  public static ExpressionNode concat(ExpressionNode... exprs) {
+    if (exprs.length == 1) {
+      return exprs[0];
+    }
+    return combineExpressions(BuiltInTable.CONCATENATE_BITS, exprs);
+  }
 
   public static ExpressionNode castBool(ExpressionNode value) {
     return binaryOp(BuiltInTable.EQU, Type.bool(), value,
         Constant.Value.of(0, value.type().asDataType()).toNode());
   }
 
+  /**
+   * Sign extend value to a given type.
+   */
   public static ExpressionNode signExtend(ExpressionNode value, DataType dataType) {
+    if (dataType.isTrivialCastTo(value.type())) {
+      return value;
+    }
     return new SignExtendNode(value, dataType);
   }
 
+  /**
+   * Zero extend value to a given type.
+   */
   public static ExpressionNode zeroExtend(ExpressionNode value, DataType dataType) {
+    if (dataType.isTrivialCastTo(value.type())) {
+      return value;
+    }
     return new ZeroExtendNode(value, dataType);
   }
 
+  /**
+   * Truncate value to a given type.
+   */
   public static ExpressionNode truncate(ExpressionNode value, DataType dataType) {
+    if (value.type().asDataType().bitWidth() == dataType.bitWidth()) {
+      // no truncation required
+      return value;
+    }
     return new TruncateNode(value, dataType);
   }
 

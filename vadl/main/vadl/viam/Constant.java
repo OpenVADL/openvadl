@@ -635,11 +635,9 @@ public abstract class Constant {
      * The resulting type is the same as this type, the result is truncated on overflow.
      */
     public Constant.Value lsr(Constant.Value other) {
-      ensure(other.type().getClass() == UIntType.class,
-          "LSR shift argument must be an unsigned integer.");
-
+      var shift = other.modulo(of(type().bitWidth(), other.type()), false);
       var newValue = value
-          .shiftRight(other.intValue());
+          .shiftRight(shift.intValue());
       return fromTwosComplement(newValue, type());
     }
 
@@ -721,8 +719,8 @@ public abstract class Constant {
       var result = BigInteger.ZERO;
       // reversed index positions, e.g. (4, 1..3) -> 3,2,1,4
       var idxPos = slice.stream().boxed().toList().reversed();
-      var i = 0;
-      for (var pos : idxPos) {
+      for (var i = 0; i < idxPos.size(); i++) {
+        var pos = idxPos.get(i);
         // build the result from 0 to slice.size - 1
         if (value.testBit(pos)) {
           // if the value has 1 at pos, then we set the bit in the result
