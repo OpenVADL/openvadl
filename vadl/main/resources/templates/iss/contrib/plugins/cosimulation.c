@@ -15,6 +15,15 @@
 #include <time.h>
 #include <unistd.h>
 
+#define PLUGIN_PRINT(format, ...)                                              \
+  do {                                                                         \
+    gchar *_tmp_str = g_strdup_printf(format, ##__VA_ARGS__);                  \
+    qemu_plugin_outs(_tmp_str);                                                \
+    g_free(_tmp_str);                                                          \
+  } while (0)
+
+#define PLUGIN_PRINTLN(format, ...) PLUGIN_PRINT(format "\n", ##__VA_ARGS__)
+
 QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 
 // adjust as needed
@@ -74,7 +83,7 @@ typedef struct {
 typedef enum {
   INVALID_MODE = 0,
   TB_MODE = 1,
-  EXEC_MODE = 2,
+  INSN_MODE = 2,
 } ExecMode;
 
 typedef struct {
@@ -91,6 +100,7 @@ typedef struct {
   // if bit at cpu_idx = 1 then data is set
   int init_mask;
   SHMCPU cpus[MAX_CPU_COUNT];
+  TBInsnInfo insn_info;
 } BrokerSHM_Exec;
 
 typedef union {
@@ -190,7 +200,7 @@ static void open_sems(void) {
 }
 
 static void plugin_exit(qemu_plugin_id_t id, void *p) {
-  printf("plugin_exit\n");
+  PLUGIN_PRINTLN("plugin_exit");
 }
 
 // Connects to the broker by accessing the assigned shared memory
@@ -218,6 +228,33 @@ static BrokerSHM *connect_to_broker(void) {
   return shm;
 }
 
+static TBInsnInfo get_tbinsn_info(struct qemu_plugin_insn *insn) {
+  TBInsnInfo insn_info = {0};
+  insn_info.pc = qemu_plugin_insn_vaddr(insn);
+  insn_info.size = qemu_plugin_insn_size(insn);
+
+  const char *insn_symbol = qemu_plugin_insn_symbol(insn);
+  if (insn_symbol != NULL) {
+    strncpy(insn_info.symbol.value, insn_symbol, SHMSTRING_MAX_LEN);
+    insn_info.symbol.len = strlen(insn_info.symbol.value);
+  }
+
+  void *insn_hwaddr = qemu_plugin_insn_haddr(insn);
+  if (insn_hwaddr != NULL) {
+    char *hwaddrfmt = g_strdup_printf("%p", insn_hwaddr);
+    strncpy(insn_info.hwaddr.value, hwaddrfmt, SHMSTRING_MAX_LEN);
+    insn_info.hwaddr.len = strlen(insn_info.hwaddr.value);
+  }
+
+  char *insn_disas = qemu_plugin_insn_disas(insn);
+  if (insn_disas != NULL) {
+    strncpy(insn_info.disas.value, insn_disas, SHMSTRING_MAX_LEN);
+    insn_info.disas.len = strlen(insn_info.disas.value);
+  }
+
+  return insn_info;
+}
+
 static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
   uint64_t pc = qemu_plugin_tb_vaddr(tb);
   size_t insns = qemu_plugin_tb_n_insns(tb);
@@ -229,47 +266,25 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
   // TODO: check size of tbinfo.insns > insns
   for (int i = 0; i < insns; i++) {
     struct qemu_plugin_insn *insn = qemu_plugin_tb_get_insn(tb, i);
-
-    TBInsnInfo insn_info = {};
-    insn_info.pc = qemu_plugin_insn_vaddr(insn);
-    insn_info.size = qemu_plugin_insn_size(insn);
-
-    const char *insn_symbol = qemu_plugin_insn_symbol(insn);
-    if (insn_symbol != NULL) {
-      strncpy(insn_info.symbol.value, insn_symbol, SHMSTRING_MAX_LEN);
-      insn_info.symbol.len = strlen(insn_info.symbol.value);
-    }
-
-    void *insn_hwaddr = qemu_plugin_insn_haddr(insn);
-    if (insn_hwaddr != NULL) {
-      char *hwaddrfmt = g_strdup_printf("%p", insn_hwaddr);
-      strncpy(insn_info.hwaddr.value, hwaddrfmt, SHMSTRING_MAX_LEN);
-      insn_info.hwaddr.len = strlen(insn_info.hwaddr.value);
-    }
-
-    char *insn_disas = qemu_plugin_insn_disas(insn);
-    if (insn_disas != NULL) {
-      strncpy(insn_info.disas.value, insn_disas, SHMSTRING_MAX_LEN);
-      insn_info.disas.len = strlen(insn_info.disas.value);
-    }
-
-    tbinfo.insns_info[i] = insn_info;
+    tbinfo.insns_info[i] = get_tbinsn_info(insn);
   }
 
   tbinfo.insns_info_size = insns;
   return tbinfo;
 }
 
-static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
-  if (args.mode == EXEC_MODE) {
+static void vcpu_insn_exec(unsigned int cpu_index, void *udata) {
+  if (args.mode == INSN_MODE) {
     sem_wait(sem_client);
 
-    // struct qemu_plugin_tb *tb = udata;
-    // TBInfo tbinfo = get_tb_info(tb);
     SHMCPU cpu = get_cpu_state(cpu_index);
 
     shm->shm_exec.cpus[cpu_index] = cpu;
     shm->shm_exec.init_mask |= (1 << cpu_index);
+
+    TBInsnInfo *tbinsn_info = udata;
+    shm->shm_exec.insn_info = *tbinsn_info;
+    g_free(tbinsn_info);
 
     sem_post(sem_server);
   }
@@ -277,15 +292,29 @@ static void vcpu_tb_exec(unsigned int cpu_index, void *udata) {
 
 static void vcpu_tb_trans(qemu_plugin_id_t id, struct qemu_plugin_tb *tb) {
   if (args.mode == TB_MODE) {
+    // TODO: move TB info collection to qemu_plugin_register_vcpu_tb_exec_cb,
+    // this function should just manage the cb based on the modes
     sem_wait(sem_client);
 
     shm->shm_tb.infos[shm->shm_tb.size] = get_tb_info(tb);
     shm->shm_tb.size = shm->shm_tb.size + 1;
 
+    // qemu_plugin_register_vcpu_tb_exec_cb(tb, vcpu_tb_exec,
+    //                                      QEMU_PLUGIN_CB_R_REGS, tbinfo);
+
     sem_post(sem_server);
-  } else if (args.mode == EXEC_MODE) {
-    qemu_plugin_register_vcpu_tb_exec_cb(tb, vcpu_tb_exec,
-                                         QEMU_PLUGIN_CB_R_REGS, NULL);
+  } else if (args.mode == INSN_MODE) {
+    TBInfo *tbinfo = g_new0(TBInfo, 1);
+    *tbinfo = get_tb_info(tb);
+
+    size_t insns = qemu_plugin_tb_n_insns(tb);
+    for (int i = 0; i < insns; i++) {
+      struct qemu_plugin_insn *insn = qemu_plugin_tb_get_insn(tb, i);
+      TBInsnInfo *tbinsn_info = g_new0(TBInsnInfo, 1);
+      *tbinsn_info = get_tbinsn_info(insn);
+      qemu_plugin_register_vcpu_insn_exec_cb(
+          insn, vcpu_insn_exec, QEMU_PLUGIN_CB_R_REGS, tbinsn_info);
+    }
   }
 }
 
@@ -299,23 +328,23 @@ static void vcpu_init(qemu_plugin_id_t id, unsigned int vcpu_index) {
   CPU *c = get_cpu(vcpu_index);
   c->registers = registers_init(vcpu_index);
   if (c->registers->len >= MAX_CPU_REGISTERS) {
-    printf("Invalid plugin state: Running on a CPU with more than %d "
-           "registers: register-count: %d",
-           MAX_CPU_REGISTERS, c->registers->len);
+    PLUGIN_PRINTLN("Invalid plugin state: Running on a CPU with more than %d "
+                   "registers: register-count: %d",
+                   MAX_CPU_REGISTERS, c->registers->len);
     exit(EXIT_FAILURE);
-  } 
+  }
 }
 
 static void vcpu_exit(qemu_plugin_id_t id, unsigned int vcpu_index) {
-  printf("vcpu exiting: %d...\n", vcpu_index);
+  PLUGIN_PRINTLN("vcpu exiting: %d...", vcpu_index);
   fflush(stdout);
 }
 
 static ExecMode parse_mode(const char *mode_str) {
-  if (g_strcmp0(mode_str, "tb")) {
-    return EXEC_MODE;
-  } else if (g_strcmp0(mode_str, "execb")) {
+  if (g_strcmp0(mode_str, "tb") == 0) {
     return TB_MODE;
+  } else if (g_strcmp0(mode_str, "insn") == 0) {
+    return INSN_MODE;
   } else {
     return INVALID_MODE;
   }
@@ -324,7 +353,7 @@ static ExecMode parse_mode(const char *mode_str) {
 QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
                                            const qemu_info_t *info, int argc,
                                            char **argv) {
-  printf("::qemu_plugin_install\n");
+  PLUGIN_PRINTLN("::qemu_plugin_install");
 
   cpus = g_array_sized_new(true, true, sizeof(CPU),
                            info->system_emulation ? info->system.max_vcpus : 1);
@@ -339,23 +368,23 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
       args.client_id = strdup(argvalue);
     } else if (g_strcmp0(argname, "mode") == 0) {
       args.mode = parse_mode(argvalue);
-      printf("running in mode: %d\n", args.mode);
+      PLUGIN_PRINTLN("running in mode: %d", args.mode);
     } else {
-      fprintf(stderr, "option parsing failed: %s\n", p);
+      PLUGIN_PRINTLN("option parsing failed: %s", p);
       return EXIT_FAILURE;
     }
   }
 
   // check required options
   if (args.client_id == NULL) {
-    fprintf(stderr,
-            "option client-id=<gchar*> is required, no client-id was given\n");
+    PLUGIN_PRINTLN(
+        "option client-id=<gchar*> is required, no client-id was given");
     return EXIT_FAILURE;
   }
 
   if (args.mode == INVALID_MODE) {
-    fprintf(stderr, "invalid or missing execution mode, option mode=<ExecMode> "
-                    "is required");
+    PLUGIN_PRINTLN("invalid or missing execution mode, option mode=<ExecMode> "
+                   "is required");
     return EXIT_FAILURE;
   }
 
@@ -369,7 +398,7 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
     return EXIT_FAILURE;
   }
 
-  if (args.mode == EXEC_MODE) {
+  if (args.mode == INSN_MODE) {
     shm->shm_exec.init_mask = 0;
   }
 
