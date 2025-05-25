@@ -78,7 +78,7 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
           .allowRegisterIndices(3, 31);
     }
   }
-  
+
   @TestFactory
   Stream<DynamicTest> testADC() throws IOException {
     return runTestsWith(makeTestCases("ADCW", "ADCX"));
@@ -89,11 +89,42 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
     return runTestsWith(makeTestCasesFromPrefixes("ADCS"));
   }
 
-  // TODO: check ADD
+  // TODO: ADD (extended register): Add extended and scaled register.
 
   @TestFactory
-  Stream<DynamicTest> testADDI() throws IOException {
+  Stream<DynamicTest> testADDImm() throws IOException {
+    // ADD (immediate): Add immediate value.
     return runTestsWith(makeTestCasesFromPrefixes("ADDXI", "ADDWI"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> testADDShiftedReg() throws IOException {
+    // ADD (shifted register): Add optionally-shifted register.
+    // TODO: Add W (sf == 0) variants of shifted register ("ADDWLSL", "ADDWLSR", "ADDWASR").
+    //    This is currently not possible as the check
+    //    `if sf == '0' && imm6<5> == '1' then EndOfDecode(Decode_UNDEF);` is not implemented yet.
+    return runTestsWith(makeTestCases(
+        "ADDW", "ADDX", "ADDXLSL", "ADDXLSR", "ADDXASR"
+    ));
+  }
+
+  // TODO: ADDS (extended register): Add extended and scaled register.
+
+  @TestFactory
+  Stream<DynamicTest> testADDSImm() throws IOException {
+    // ADD (immediate): Add immediate value.
+    return runTestsWith(makeTestCasesFromPrefixes("ADDXSI", "ADDWSI"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> testADDSShiftedReg() throws IOException {
+    // ADD (shifted register): Add optionally-shifted register.
+    // TODO: Add W (sf == 0) variants of shifted register ("ADDWSLSL", "ADDWSLSR", "ADDWSASR").
+    //    This is currently not possible as the check
+    //    `if sf == '0' && imm6<5> == '1' then EndOfDecode(Decode_UNDEF);` is not implemented yet.
+    return runTestsWith(makeTestCases(
+        "ADDWS", "ADDXS", "ADDXSLSL", "ADDXSLSR", "ADDXSASR"
+    ));
   }
 
   @TestFactory
@@ -105,6 +136,47 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
   Stream<DynamicTest> testMOVK() throws IOException {
     return runTestsWith(makeTestCasesFromPrefixes("MOVK"));
   }
+
+
+  // TODO: SUB (extended register): Subtract extended and scaled register.
+
+  @TestFactory
+  Stream<DynamicTest> testSUBImm() throws IOException {
+    // SUB (immediate): Subtract immediate value.
+    return runTestsWith(makeTestCasesFromPrefixes("SUBXI", "SUBWI"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> testSUBShiftedReg() throws IOException {
+    // SUB (shifted register): Subtract optionally-shifted register.
+    // TODO: Add W (sf == 0) variants of shifted register ("SUBWLSL", "SUBWLSR", "SUBWASR").
+    //    This is currently not possible as the check
+    //    `if sf == '0' && imm6<5> == '1' then EndOfDecode(Decode_UNDEF);` is not implemented yet.
+    return runTestsWith(makeTestCases(
+        "SUBW", "SUBX", "SUBXLSL", "SUBXLSR", "SUBXASR"
+    ));
+  }
+
+
+  // TODO: SUBS (extended register): Subtract extended and scaled register.
+
+  @TestFactory
+  Stream<DynamicTest> testSUBSImm() throws IOException {
+    // SUB (immediate): Subtract immediate value.
+    return runTestsWith(makeTestCasesFromPrefixes("SUBXSI", "SUBWSI"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> testSUBSShiftedReg() throws IOException {
+    // SUB (shifted register): Subtract optionally-shifted register.
+    // TODO: Add W (sf == 0) variants of shifted register ("SUBWSLSL", "SUBWSLSR", "SUBWSASR").
+    //    This is currently not possible as the check
+    //    `if sf == '0' && imm6<5> == '1' then EndOfDecode(Decode_UNDEF);` is not implemented yet.
+    return runTestsWith(makeTestCases(
+        "SUBWS", "SUBXS", "SUBXSLSL", "SUBXSLSR", "SUBXSASR"
+    ));
+  }
+
 
   @Test
   void testAutoAssembler() {

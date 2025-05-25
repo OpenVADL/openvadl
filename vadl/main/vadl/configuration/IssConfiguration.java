@@ -30,7 +30,6 @@ public class IssConfiguration extends GeneralConfiguration {
    * ISS optimization that can be skipped using the CLI.
    */
   public enum IssOptsToSkip {
-    OPT_BUILT_INS("QEMU specific optimizations of VADL built-in calls."),
     OPT_ARGS("Argument preparation optimization for VADL built-in calls. \n"
         + "E.g., removes truncation of VADL::add arguments."),
     OPT_VAR_ALLOC("Reduces required number of temporary TCG variables to a minimum."),
