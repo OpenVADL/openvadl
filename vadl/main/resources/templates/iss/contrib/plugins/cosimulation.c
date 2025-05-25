@@ -15,15 +15,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#define PLUGIN_PRINT(format, ...)                                              \
-  do {                                                                         \
-    gchar *_tmp_str = g_strdup_printf(format, ##__VA_ARGS__);                  \
-    qemu_plugin_outs(_tmp_str);                                                \
-    g_free(_tmp_str);                                                          \
-  } while (0)
-
-#define PLUGIN_PRINTLN(format, ...) PLUGIN_PRINT(format "\n", ##__VA_ARGS__)
-
 QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 
 // adjust as needed
@@ -37,6 +28,18 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 #define MAX_CPU_COUNT 8
 
 static qemu_plugin_id_t plugin_id;
+
+#define PLUGIN_PRINT(format, ...)                                              \
+  do {                                                                         \
+    gchar *_tmp_str = g_strdup_printf(                                         \
+        "[LOG: client-id=%lu, %s:%d] " format, plugin_id,                                \
+        strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__,        \
+        __LINE__, ##__VA_ARGS__);                                              \
+    qemu_plugin_outs(_tmp_str);                                                \
+    g_free(_tmp_str);                                                          \
+  } while (0)
+
+#define PLUGIN_PRINTLN(format, ...) PLUGIN_PRINT(format "\n", ##__VA_ARGS__)
 
 typedef struct {
   size_t len;
