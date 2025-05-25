@@ -39,6 +39,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.utils.ViamUtils;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.Specification;
