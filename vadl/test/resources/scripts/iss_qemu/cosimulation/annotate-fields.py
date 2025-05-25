@@ -7,7 +7,7 @@ The generated __init__ method is printed to stdout, simply add it to the class-s
 import re
 from typing import Optional
 
-fields = '[("shm_tb", BrokerSHM_TB), ("shm_exec", BrokerSHM_Exec)]'
+fields = '[("size", c_size_t), ("buffer", c_uint8 * MAX_INSN_DATA_SIZE)]'
 
 def array_typ(typ: str) -> Optional[tuple[str, str]]:
     expr = re.compile(r"^(.*?)\*(.*?)$")

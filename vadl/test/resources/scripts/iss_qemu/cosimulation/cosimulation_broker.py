@@ -41,17 +41,41 @@ class SHMString(Structure):
     def fstr(self) -> str:
         return self.value[:self.len].decode()
 
-class TBInsnInfo(Structure):
-    _fields_ = [("pc", c_uint64), ("size", c_size_t), ("symbol", SHMString), ("hwaddr", SHMString), ("disas", SHMString)]
+class InsnData(Structure):
+    MAX_INSN_DATA_SIZE = 256
+    _fields_ = [("size", c_size_t), ("buffer", c_uint8 * MAX_INSN_DATA_SIZE)]
 
     def __repr__(self):
-        return f"TBInsnInfo(pc={self.pc}, symbol={self.symbol}, hwaddr={self.hwaddr}, disas={self.disas})"
+        # endianess here is just a guess since we cannot provide it here
+        return f"InsnData(size={self.size}, buffer={self.fbuffer('little')})"
 
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
 
-    def to_dict(self):
-        return {"pc": self.pc, "size": self.size, "symbol": self.symbol.to_dict(), "hwaddr": self.hwaddr.to_dict(), "disas": self.disas.to_dict()}
+    def to_dict(self, endian: Endian):
+        return {"size": self.size, "buffer": self.fbuffer(endian)}
+
+    def fbuffer(self, endian: Endian) -> str:
+        order = reversed if endian == 'little' else lambda x: x
+        res = b''.join(order([num.to_bytes() for num in self.buffer[:self.size]]))
+        return res.hex(' ')
+
+    def __init__(self, *args: Any, **kw: Any) -> None:
+        super().__init__(*args, **kw)
+        self.size: Annotated[int, c_size_t]
+        self.buffer: Annotated[list[int], c_uint8 * self.MAX_INSN_DATA_SIZE]
+
+class TBInsnInfo(Structure):
+    _fields_ = [("pc", c_uint64), ("size", c_size_t), ("symbol", SHMString), ("hwaddr", SHMString), ("disas", SHMString), ("data", InsnData)]
+
+    def __repr__(self):
+        return f"TBInsnInfo(pc={self.pc}, symbol={self.symbol}, hwaddr={self.hwaddr}, disas={self.disas}, data={self.data})"
+
+    def __format__(self, _: str, /) -> str:
+        return self.__repr__()
+
+    def to_dict(self, endian: Endian):
+        return {"pc": self.pc, "size": self.size, "symbol": self.symbol.to_dict(), "hwaddr": self.hwaddr.to_dict(), "disas": self.disas.to_dict(), "data": self.data.to_dict(endian)}
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
@@ -60,6 +84,7 @@ class TBInsnInfo(Structure):
         self.symbol: Annotated[SHMString, SHMString]
         self.hwaddr: Annotated[SHMString, SHMString]
         self.disas: Annotated[SHMString, SHMString]
+        self.data: Annotated[InsnData, InsnData]
 
 class TBInfo(Structure):
     INSNS_INFOS_SIZE = 32
@@ -71,12 +96,12 @@ class TBInfo(Structure):
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
 
-    def to_dict(self):
+    def to_dict(self, endian: Endian):
         return {
             "pc": self.pc, 
             "insns": self.insns, 
             "insns_info_size": self.insns_info_size, 
-            "insns_info": [insn.to_dict() for insn in self.insns_info[:self.insns_info_size]]
+            "insns_info": [insn.to_dict(endian) for insn in self.insns_info[:self.insns_info_size]]
         }
 
     def __init__(self, *args: Any, **kw: Any) -> None:
@@ -97,8 +122,8 @@ class BrokerSHM_TB(Structure):
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
 
-    def to_dict(self):
-        return {"size": self.size, "infos": [info.to_dict() for info in self.infos[:self.size]]}
+    def to_dict(self, endian: Endian):
+        return {"size": self.size, "infos": [info.to_dict(endian) for info in self.infos[:self.size]]}
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
@@ -170,7 +195,7 @@ class BrokerSHM_Exec(Structure):
         return self.__repr__()
 
     def to_dict(self, endian: Endian, gdb_map: dict[str, str]):
-        return {"init_mask": self.init_mask, "cpus": [cpu.to_dict(endian, gdb_map) for cpu in self.cpus[:]], "insn_info": self.insn_info.to_dict()}
+        return {"init_mask": self.init_mask, "cpus": [cpu.to_dict(endian, gdb_map) for cpu in self.cpus[:]], "insn_info": self.insn_info.to_dict(endian)}
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)

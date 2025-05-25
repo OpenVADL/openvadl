@@ -26,13 +26,14 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 #define MAX_REGISTER_DATA_SIZE 64
 #define MAX_CPU_REGISTERS 256
 #define MAX_CPU_COUNT 8
+#define MAX_INSN_DATA_SIZE 4
 
 static qemu_plugin_id_t plugin_id;
 
 #define PLUGIN_PRINT(format, ...)                                              \
   do {                                                                         \
     gchar *_tmp_str = g_strdup_printf(                                         \
-        "[LOG: client-id=%lu, %s:%d] " format, plugin_id,                                \
+        "[LOG: client-id=%lu, %s:%d] " format, plugin_id,                      \
         strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__,        \
         __LINE__, ##__VA_ARGS__);                                              \
     qemu_plugin_outs(_tmp_str);                                                \
@@ -40,6 +41,15 @@ static qemu_plugin_id_t plugin_id;
   } while (0)
 
 #define PLUGIN_PRINTLN(format, ...) PLUGIN_PRINT(format "\n", ##__VA_ARGS__)
+
+#define PLUGIN_ASSERT(cond, format, ...)                                       \
+  do {                                                                         \
+    if (!(cond)) {                                                                \
+      PLUGIN_PRINTLN("Invalid plugin state: %s :: " format, #cond,             \
+                     ##__VA_ARGS__);                                           \
+      exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+  } while (0)
 
 typedef struct {
   size_t len;
@@ -69,11 +79,17 @@ typedef struct {
 } SHMCPU;
 
 typedef struct {
+  size_t size;
+  uint8_t buffer[MAX_INSN_DATA_SIZE];
+} InsnData;
+
+typedef struct {
   uint64_t pc;
   size_t size;
   SHMString symbol;
   SHMString hwaddr;
   SHMString disas;
+  InsnData data;
 } TBInsnInfo;
 
 typedef struct {
@@ -224,7 +240,7 @@ static BrokerSHM *connect_to_broker(void) {
   BrokerSHM *shm = mmap(NULL, sizeof(BrokerSHM), PROT_READ | PROT_WRITE,
                         MAP_SHARED, shm_fd, 0);
   if (shm == MAP_FAILED) {
-    g_error("failed to mmap jshared memory for client: %s", args.client_id);
+    g_error("failed to mmap shared memory for client: %s", args.client_id);
     return NULL;
   }
 
@@ -255,6 +271,13 @@ static TBInsnInfo get_tbinsn_info(struct qemu_plugin_insn *insn) {
     insn_info.disas.len = strlen(insn_info.disas.value);
   }
 
+  insn_info.data.size = qemu_plugin_insn_size(insn);
+  PLUGIN_ASSERT(insn_info.data.size <= MAX_INSN_DATA_SIZE,
+                "Some instruction-data had a larger size than configured in "
+                "MAX_INSN_DATA_SIZE: %lu > %d", insn_info.data.size, MAX_INSN_DATA_SIZE);
+
+  qemu_plugin_insn_data(insn, &insn_info.data.buffer, sizeof(insn_info.data.buffer));
+
   return insn_info;
 }
 
@@ -266,7 +289,7 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
   tbinfo.pc = pc;
   tbinfo.insns = insns;
 
-  // TODO: check size of tbinfo.insns > insns
+  PLUGIN_ASSERT(insns <= TBINSNINFO_ENTRIES, "Too many instructions in a single translation-block: %lu > %d", insns, TBINSNINFO_ENTRIES);
   for (int i = 0; i < insns; i++) {
     struct qemu_plugin_insn *insn = qemu_plugin_tb_get_insn(tb, i);
     tbinfo.insns_info[i] = get_tbinsn_info(insn);
@@ -330,12 +353,7 @@ static void vcpu_init(qemu_plugin_id_t id, unsigned int vcpu_index) {
 
   CPU *c = get_cpu(vcpu_index);
   c->registers = registers_init(vcpu_index);
-  if (c->registers->len >= MAX_CPU_REGISTERS) {
-    PLUGIN_PRINTLN("Invalid plugin state: Running on a CPU with more than %d "
-                   "registers: register-count: %d",
-                   MAX_CPU_REGISTERS, c->registers->len);
-    exit(EXIT_FAILURE);
-  }
+  PLUGIN_ASSERT(c->registers->len <= MAX_CPU_REGISTERS, "Running on a CPU with more than %d registers: register-count: %d", MAX_CPU_REGISTERS, c->registers->len);
 }
 
 static void vcpu_exit(qemu_plugin_id_t id, unsigned int vcpu_index) {

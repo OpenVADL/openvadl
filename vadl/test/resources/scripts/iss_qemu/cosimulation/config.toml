@@ -123,13 +123,13 @@ mode = "lockstep"
 # The following three options configure which instructions from the `test_exec` executable should actually be tested.
 # NOTE: Only applies to `layer = "insn"`
 # Skips the first n instructions 
-skip_n_instructions = 6
+skip_n_instructions = 0
 
 # Test all remaining instructions (overrides `take_n_instructions` if set to true)
-take_all_instructions = false
+take_all_instructions = true
 
 # Test the next (after skipped) n instructions
-take_n_instructions = 5
+take_n_instructions = 0
 
 # Where the test result should be saved and in which format
 [testing.protocol.out]
