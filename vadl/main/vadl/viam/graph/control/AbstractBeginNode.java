@@ -31,6 +31,17 @@ public abstract class AbstractBeginNode extends DirectionalNode {
   public AbstractBeginNode() {
   }
 
+  /**
+   * Returns if the branch starting with this node is empty.
+   * This is the case iff the next node is an end node with no side effects.
+   */
+  public boolean isEmpty() {
+    if (next() instanceof AbstractEndNode end) {
+      return end.sideEffects().isEmpty();
+    }
+    return false;
+  }
+
   @Override
   public void accept(GraphNodeVisitor visitor) {
     visitor.visit(this);

@@ -178,10 +178,14 @@ public interface CDefaultMixins {
       ctx.wr("if (")
           .gen(node.condition())
           .ln(") { ").spacedIn()
-          .gen(node.trueBranch()).spaceOut()
-          .ln("} else {").spacedIn()
-          .gen(node.falseBranch()).spaceOut()
-          .ln("}");
+          .gen(node.trueBranch()).spaceOut();
+      if (node.falseBranch().isEmpty()) {
+        ctx.ln("}");
+      } else {
+        ctx.ln("} else {").spacedIn()
+            .gen(node.falseBranch()).spaceOut()
+            .ln("}");
+      }
     }
   }
 
