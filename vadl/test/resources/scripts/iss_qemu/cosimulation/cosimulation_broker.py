@@ -1,3 +1,9 @@
+"""
+The broker for cosimulation testing. 
+It is responsible for starting QEMU-clients with the cosimulation plugin, comparing the state between them and produce a test-report.
+The broker communicates with each QEMU-client using IPC.
+"""
+
 from ctypes import c_char, c_int, c_uint, c_uint64, c_uint8, sizeof, Structure, c_size_t, Union
 from dataclasses import dataclass, asdict
 import argparse
@@ -5,8 +11,6 @@ import os
 import mmap
 import subprocess
 import multiprocessing
-import sys
-from pprint import pformat
 import posix_ipc as ipc
 import atexit
 import subprocess
@@ -17,8 +21,11 @@ from collections import deque
 import logging
 from typing import Annotated, Any, Optional
 
-reference_ricsv64_exe = "/qemu-system-riscv64"
-our_riscv64_exe = "/qemu-system-rv64im"
+"""
+The following classes represent the equally defined c-structs in the cosimulation QEMU plugin.
+They are used to transfer data from a QEMU-client to the broker using shared memory.
+See `BrokerSHM(Structure)` as the "entrypoint" of this class-hierarchy.
+"""
 
 class SHMString(Structure):
     MAX_LEN = 256
@@ -224,6 +231,11 @@ class Client:
 clients: list[Client] = []
 
 def run_with_callback(command, on_complete, config: Config, client: Client) -> multiprocessing.Process:
+    """
+    Starts a QEMU-client using pythons multiprocessing.Process
+    After completion, the client is marked as done using client.is_open = False
+    Both stdout and stderr for each client is redirected to a dedicated file.
+    """
     def runner():
         stdout_path = os.path.join(config.logging.dir, f"client-{client.id}-stdout.txt")
         stderr_path = os.path.join(config.logging.dir, f"client-{client.id}-stderr.txt")
@@ -239,19 +251,29 @@ def run_with_callback(command, on_complete, config: Config, client: Client) -> m
     p.start()
     return p
 
-def callback(returncode: int, config: Config, client: Client):
+def on_client_complete(returncode: int, config: Config, client: Client):
     logger.info(f"Process (client: {client.id}) finished with code: {returncode}")
     client.is_open = False
 
 @dataclass
 class ClientDiff:
-    key: str
+    """
+    Contains information about a divergence that was found during testing.
+    """
+
+    key: str  
+    """Represents the location of the diverged data in the BrokerSHM struct"""
+
     expected: str
     actual: str
     description: Optional[str] = None
 
 @dataclass
 class Report:
+    """
+    A report of the test-result. Returned / Written to disk after at the end of the test-run.
+    If passed = True, then diffs will be empty since no divergence was found.
+    """
     passed: bool
     diffs: list[ClientDiff]
 
@@ -261,7 +283,36 @@ def report_from_diffs(diffs: list[ClientDiff]) -> Report:
     else:
         return Report(passed=False, diffs=diffs)
 
-def run_lockstep(config: Config, dbgs: deque[list[dict[str, Any]]]) -> Report:
+def run_lockstep(config: Config, traces: deque[list[dict[str, Any]]]) -> Report:
+    """
+    Runs the configured QEMU-clients in lockstep - meaning they are synchronized after each *execution-step*.
+    The definition of an execution-step depends on the configured layer (`config.testing.protocol.layer`).
+
+    Execution-Step based on layer:
+        - "insn": execution-step = execution of a single instruction
+        - "tb": execution-step = execution of one or multiple translation-blocks
+                multiple TBs might be executed in a single execution-step if another client generated a *larger* TB
+                this means that clients can still synchronize if the instructions are the same and only the TBs differ
+        - "tb-strict": execution-step = execution of one translation-block
+                       similar to "tb" but now the generated TBs between all clients must be identical
+
+    Currently the following values are tested:
+        - CPU:
+            - Which CPUs are used? / How many CPUs are used?
+            - Do the amount of registers per CPU match between clients (potentially ignoring a configured set of registers)?
+        - Registers:
+            - Do register-sizes match between clients?
+            - Do register-names match between clients?
+            - Do register-data match between clients?
+
+    The function will return after the first execution-step that introduced a divergence.
+    If multiple diffs are found in after a single execution-step then all of them will be reported.
+
+    Parameters:
+        config (Config)
+        traces: deque[list[dict[str, Any]]]: Collects the state of each client after each execution-step. 
+    """
+
     gdb_reg_map_values = config.qemu.gdb_reg_map.values()
     def compare_client_state() -> list[ClientDiff]:
         diffs = []
@@ -272,9 +323,10 @@ def run_lockstep(config: Config, dbgs: deque[list[dict[str, Any]]]) -> Report:
             c1shm = c1.shm_struct.shm_exec
             c2shm = c2.shm_struct.shm_exec
 
+            # Store the current state of each client as a trace
             d1 = c1shm.to_dict(config.qemu.endian, config.qemu.gdb_reg_map)
             d2 = c1shm.to_dict(config.qemu.endian, config.qemu.gdb_reg_map)
-            dbgs.append([d1, d2])
+            traces.append([d1, d2])
 
             if c1shm.init_mask != c2shm.init_mask:
                 diffs.append(ClientDiff("cpu.init_mask", f"{c1shm.init_mask:08b}", f"{c2shm.init_mask:08b}"))
@@ -283,10 +335,8 @@ def run_lockstep(config: Config, dbgs: deque[list[dict[str, Any]]]) -> Report:
                 c1cpu = c1shm.cpus[cpu_index]
                 c2cpu = c2shm.cpus[cpu_index]
 
-                # assert c1cpu.idx != c2cpu.idx, "cpu indicies should be the same, this is a bug in the plugin-code"
-
-                if config.qemu.ignore_unset_registers and c1cpu.registers_size != c2cpu.registers_size:
-                    diffs.append(ClientDiff(f"cpu.{cpu_index}.registers.size", f"{c1cpu.registers_size}", f"{c2cpu.registers_size}", "cpu registers sizes differ"))
+                if not config.qemu.ignore_unset_registers and c1cpu.registers_size != c2cpu.registers_size:
+                    diffs.append(ClientDiff(f"cpu.{cpu_index}.registers.size", f"{c1cpu.registers_size}", f"{c2cpu.registers_size}", "different number of CPU registers"))
 
                 for reg_index in range(min(c1cpu.registers_size, c2cpu.registers_size)):
                     c1reg = c1cpu.registers[reg_index]
@@ -315,25 +365,29 @@ def run_lockstep(config: Config, dbgs: deque[list[dict[str, Any]]]) -> Report:
             c1shm = c1.shm_struct.shm_tb
             c2shm = c2.shm_struct.shm_tb
 
-            print("TODO: tb-block level testing")
+            print("TODO: tb-block exec level testing")
 
             return []
 
 
     skip = config.testing.protocol.skip_n_instructions
-    take_all = config.testing.protocol.take_all_instructions
-    take = config.testing.protocol.take_n_instructions
+    execute_remaining = config.testing.protocol.execute_all_remaining_instructions
+    stop_after = config.testing.protocol.stop_after_n_instructions
 
     diffs = []
 
+    # Lockstepping logic:
+    # Release each client once and then compare their states
+    # TODO: A client might need to be released multiple times for tb-level testing
+    # NOTE: Maybe parallelize this for exec-level and tb-strict-level testing, 
+    #       for tb-level testing this might not be possible due to the differently generated TBs
     while any(map(lambda c: c.is_open, clients)):
-        # lockstepping
         for client in clients: 
             if client.is_open:
                 try:
                     client.sem_client.release()
 
-                    # wait at most 0.1 second, if an error occurs: assume that the client finished
+                    # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
                     client.sem_server.acquire(0.1)
                 except ipc.BusyError:
                     logger.debug(f"run_lockstep: BusyError: noticed that client #{client.id} shutdown. marking as closed")
@@ -343,13 +397,15 @@ def run_lockstep(config: Config, dbgs: deque[list[dict[str, Any]]]) -> Report:
             skip -= 1 
             continue
 
-        if not take_all:
-            if take > 0:
-                take -= 1
+        if not execute_remaining:
+            if stop_after > 0:
+                stop_after -= 1
             else:
                 return report_from_diffs(diffs)
 
         diffs += compare_client_state()
+
+        # early exit for lockstepping
         if len(diffs) > 0:
             return report_from_diffs(diffs)
 
@@ -376,13 +432,13 @@ def main(config: Config):
         logger.info(f"starting client: {" ".join([executable_path, *args])}")
         client = Client(i, shm, shm_struct, sem_server=sem_server, sem_client=sem_client, is_open=True, process=None)
         clients.append(client)
-        client.process = run_with_callback([executable_path, *args], callback, config, client)
+        client.process = run_with_callback([executable_path, *args], on_client_complete, config, client)
 
     if config.testing.protocol.mode == 'lockstep':
         max_trace_len = config.testing.max_trace_length
-        dbgs = deque(maxlen=max_trace_len if max_trace_len >= 0 else None)
-        report = run_lockstep(config, dbgs)
-        j = {"report": asdict(report), "traces": list(dbgs)}
+        traces = deque(maxlen=max_trace_len if max_trace_len >= 0 else None)
+        report = run_lockstep(config, traces)
+        j = {"report": asdict(report), "traces": list(traces)}
         result_file = os.path.join(config.testing.protocol.out.dir, "result.json")
         os.makedirs(os.path.dirname(result_file), exist_ok=True)
         with open(result_file, "w") as f:
@@ -399,6 +455,10 @@ def main(config: Config):
     for client in clients:
         close_client(config, client)
 
+"""
+Cleanup functions for the created IPCs
+TODO: Maybe put IPC related logic in a separate file
+"""
 def cleanup_sem(config: Config, client: Client):
     logger.debug(f"cleanup_sem of client #{client.id} start")
     try:

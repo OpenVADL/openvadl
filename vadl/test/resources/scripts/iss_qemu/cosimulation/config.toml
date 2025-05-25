@@ -125,11 +125,11 @@ mode = "lockstep"
 # Skips the first n instructions 
 skip_n_instructions = 0
 
-# Test all remaining instructions (overrides `take_n_instructions` if set to true)
-take_all_instructions = true
+# Execute all remaining instructions (overrides `stop_after_n_instructions` if set to true)
+execute_all_remaining_instructions = true
 
-# Test the next (after skipped) n instructions
-take_n_instructions = 0
+# Execute the next (after skipped) n instructions
+stop_after_n_instructions = 0
 
 # Where the test result should be saved and in which format
 [testing.protocol.out]

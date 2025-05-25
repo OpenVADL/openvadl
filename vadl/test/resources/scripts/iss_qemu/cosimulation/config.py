@@ -23,8 +23,8 @@ class Out:
 class Protocol:
     mode: Literal["lockstep"]
     layer: Literal["tb", "insn"]
-    take_all_instructions: bool
-    take_n_instructions: int
+    execute_all_remaining_instructions: bool
+    stop_after_n_instructions: int
     skip_n_instructions: int = 0
     out: Out = field(default_factory=Out)
 
