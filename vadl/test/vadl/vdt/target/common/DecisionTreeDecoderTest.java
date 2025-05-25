@@ -77,10 +77,17 @@ public class DecisionTreeDecoderTest extends AbstractTest {
         .findFirst().orElse(null);
     Assertions.assertNotNull(imm);
 
+    var immS = decoded.source().format().fieldAccesses().stream()
+        .filter(f -> "immS".equals(f.simpleName()))
+        .findFirst().orElse(null);
+    Assertions.assertNotNull(immS);
+
     // Extract the immediate field (617)
     Value immValue = decoded.get(imm);
-    Assertions.assertNotNull(immValue);
     Assertions.assertEquals(immValue.integer(), BigInteger.valueOf(617));
+
+    Value immSValue = decoded.get(immS);
+    Assertions.assertEquals(immSValue.integer(), BigInteger.valueOf(617 << 1));
   }
 
   @Test
@@ -117,10 +124,12 @@ public class DecisionTreeDecoderTest extends AbstractTest {
 
     // First, extract the raw immediate '617'
     Value immValue = FieldExtractionUtils.extract(encoding, ByteOrder.LITTLE_ENDIAN, imm);
+    Value immSValue = FieldExtractionUtils.extract(encoding, ByteOrder.LITTLE_ENDIAN, immS);
 
     /* THEN */
-    Assertions.assertNotNull(immValue);
     Assertions.assertEquals(immValue.integer(), BigInteger.valueOf(617));
+    Assertions.assertEquals(immSValue.integer(), BigInteger.valueOf(617 << 1));
+
   }
 
 }

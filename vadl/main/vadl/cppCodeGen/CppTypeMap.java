@@ -133,7 +133,10 @@ public class CppTypeMap {
     }
   }
 
-  private static int nextFittingBitSize(int old) {
+  /**
+   * Get the next greater (or equal) cpp type width.
+   */
+  public static int nextFittingBitSize(int old) {
     if (old == 1) {
       return 1;
     } else if (old > 1 && old <= 8) {

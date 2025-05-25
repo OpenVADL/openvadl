@@ -115,7 +115,7 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
 
   @Override
   public boolean isCommutative() {
-    return BuiltInTable.commutative.contains(this.builtIn);
+    return BuiltInTable.COMMUTATIVE.contains(this.builtIn);
   }
 
   @Override

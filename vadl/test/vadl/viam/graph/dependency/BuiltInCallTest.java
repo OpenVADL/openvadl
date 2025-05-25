@@ -19,7 +19,7 @@ package vadl.viam.graph.dependency;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static vadl.types.BuiltInTable.commutative;
+import static vadl.types.BuiltInTable.COMMUTATIVE;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -44,7 +44,7 @@ class BuiltInCallTest {
 
 
   private static Stream<Arguments> getCanonicalizableBuiltin() {
-    return commutative.stream().map(Arguments::of);
+    return COMMUTATIVE.stream().map(Arguments::of);
   }
 
   @ParameterizedTest

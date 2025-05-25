@@ -56,8 +56,9 @@ public class IssExtractOptimizationPass extends AbstractIssPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
+    var targetSize = configuration().targetSize().width;
     viam.isa().get().ownInstructions().forEach(i -> {
-      new IssExtractOptimizer(i.behavior()).run();
+      new IssExtractOptimizer(i.behavior(), targetSize).run();
     });
 
     return null;
@@ -67,9 +68,11 @@ public class IssExtractOptimizationPass extends AbstractIssPass {
 class IssExtractOptimizer {
 
   private Graph behavior;
+  private int targetSize;
 
-  public IssExtractOptimizer(Graph behavior) {
+  public IssExtractOptimizer(Graph behavior, int targetSize) {
     this.behavior = behavior;
+    this.targetSize = targetSize;
   }
 
   void run() {
@@ -91,7 +94,7 @@ class IssExtractOptimizer {
     // this is done by replacing them with ghost nodes.
     behavior.getNodes(IssConstExtractNode.class)
         // only consider real zero extends
-        .filter(IssExtractOptimizer::extractIsRealZeroExtend)
+        .filter(this::extractIsRealZeroExtend)
         .forEach(n -> {
           var ghostCast = new IssGhostCastNode(n.value(), n.type());
           for (var u : n.usages().toList()) {
@@ -108,9 +111,12 @@ class IssExtractOptimizer {
   }
 
   // a extract node that does not truncate the value, but only zero extends it
-  private static boolean extractIsRealZeroExtend(IssConstExtractNode node) {
+  private boolean extractIsRealZeroExtend(IssConstExtractNode node) {
     return node.extendMode() == TcgExtend.ZERO
         && node.fromWidth() <= node.toWidth()
+        // if the fromWidth is less than the target size, this must stay, as it is a truncate
+        // of the target sized value
+        && node.fromWidth() >= this.targetSize
         && node.value().type().asDataType().bitWidth() <= node.fromWidth();
   }
 

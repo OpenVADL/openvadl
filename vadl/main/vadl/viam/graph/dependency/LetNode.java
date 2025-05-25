@@ -20,6 +20,7 @@ import java.util.List;
 import vadl.javaannotations.viam.DataValue;
 import vadl.javaannotations.viam.Input;
 import vadl.utils.SourceLocation;
+import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -30,7 +31,7 @@ import vadl.viam.graph.Node;
  * <p>It stores the identifier as well as the label (once implemented)
  * to allow generating code with meaningful variable names.
  */
-public class LetNode extends ExpressionNode {
+public class LetNode extends ExpressionNode implements Canonicalizable {
   // TODO: Add label functionality
 
   @DataValue
@@ -95,6 +96,14 @@ public class LetNode extends ExpressionNode {
   @Override
   public void prettyPrint(StringBuilder sb) {
     expression.prettyPrint(sb);
+  }
+
+  @Override
+  public Node canonical() {
+    if (expression instanceof ConstantNode) {
+      return expression;
+    }
+    return this;
   }
 
 
