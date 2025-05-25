@@ -27,6 +27,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.control.BranchEndNode;
 import vadl.viam.graph.control.ControlNode;
 import vadl.viam.graph.control.InstrEndNode;
 import vadl.viam.graph.control.MergeNode;
@@ -184,6 +185,11 @@ public abstract class DataFlowAnalysis<D> {
     for (ControlNode succ : successorsOf(node)) {
       values.add(inValues.get(succ));
     }
+    if (node instanceof BranchEndNode endNode) {
+      // the merge node of the branch end
+      var mergeNode = endNode.usages().findFirst().map(MergeNode.class::cast).orElseThrow();
+      values.add(inValues.get(mergeNode));
+    }
     return meet(values);
   }
 
@@ -208,13 +214,17 @@ public abstract class DataFlowAnalysis<D> {
   }
 
   private Set<ControlNode> predecessorsOf(ControlNode node) {
+    // if the node is a merge node, we must look at its inputs (branch ends)
     return node instanceof MergeNode mergeNode
         ? mergeNode.inputs().map(ControlNode.class::cast).collect(Collectors.toSet())
         : node.predecessor() != null ? Set.of((ControlNode) node.predecessor()) : Set.of();
   }
 
   private Set<ControlNode> successorsOf(ControlNode node) {
-    return node.successors()
+    // if the node is a branch node, we must find the corresponding merge node
+    return node instanceof BranchEndNode endNode
+        ? endNode.usages().map(ControlNode.class::cast).collect(Collectors.toSet())
+        : node.successors()
         .map(ControlNode.class::cast)
         .collect(Collectors.toSet());
   }
