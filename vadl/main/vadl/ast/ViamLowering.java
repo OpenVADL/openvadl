@@ -1561,8 +1561,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .toList();
   }
 
-  private Abi.RegisterRef getRegisterRefByAliasOrRegister(Map<Identifier, Expr> aliasLookup,
-                                                          ExpandedSequenceCallExpr aliasOrRegister) {
+  private Abi.RegisterRef getRegisterRefByAliasOrRegister(
+      Map<Identifier, Expr> aliasLookup,
+      ExpandedSequenceCallExpr aliasOrRegister) {
     if (aliasOrRegister instanceof ExpandedAliasDefSequenceCallExpr registerCallExpr) {
       return mapAliasToRegisterRef(aliasLookup, (Identifier) registerCallExpr.target);
     } else {

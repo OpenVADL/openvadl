@@ -2807,6 +2807,7 @@ final class ExpandedAliasDefSequenceCallExpr extends ExpandedSequenceCallExpr {
 
   @Override
   List<Node> children() {
+    // Remove this method when #293 is fixed.
     return List.of(target);
   }
 }
