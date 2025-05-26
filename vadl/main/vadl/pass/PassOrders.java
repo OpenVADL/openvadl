@@ -44,7 +44,6 @@ import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDeco
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass;
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredicateFunctionPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
-import vadl.iss.passes.IssBuiltInSimplificationPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
@@ -417,7 +416,6 @@ public class PassOrders {
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))
         .add(new IssMemoryAccessTransformationPass(config))
-        .add(new IssBuiltInSimplificationPass(config))
         .add(new IssBuiltInArgTruncOptPass(config))
         .add(new SideEffectSchedulingPass(config))
         .add(new IssSafeResourceReadPass(config))
@@ -455,7 +453,7 @@ public class PassOrders {
 
         // includes
         .add(issDefault("/include/vadl-builtins.h", config))
-        
+
         // config rendering
         .add(issDefault("/configs/devices/gen-arch-softmmu/default.mak", config))
         .add(issDefault("/configs/targets/gen-arch-softmmu.mak", config))

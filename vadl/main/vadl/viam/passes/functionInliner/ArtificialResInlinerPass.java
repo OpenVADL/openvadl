@@ -135,9 +135,8 @@ public class ArtificialResInlinerPass extends Pass {
       var endPred = endNode.predecessor();
       endPred.setNext(copySucc);
       copyEndPred.setNext(endNode);
-    } else {
-      copyStart.safeDelete();
     }
+    copyStart.safeDelete();
 
     endNode.removeSideEffect(write);
   }

@@ -60,6 +60,16 @@ abstract class Definition extends Node {
     annotations.forEach(annotation -> annotation.prettyPrint(indent, builder));
   }
 
+  @Nullable
+  <T extends Annotation> T getAnnotation(String name, Class<T> annotationClass) {
+    return annotations.stream()
+        .map(a -> a.annotation)
+        .filter(Objects::nonNull)
+        .filter(annotationClass::isInstance)
+        .filter(a -> a.name().equals(name))
+        .map(annotationClass::cast).findFirst().orElse(null);
+  }
+
   static void prettyPrintDefinitions(int indent, StringBuilder builder,
                                      List<Definition> definitions) {
     Definition previousDefinition = null;

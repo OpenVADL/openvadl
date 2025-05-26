@@ -18,6 +18,7 @@ package vadl.ast;
 
 
 import static java.util.Objects.requireNonNull;
+import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -83,6 +84,16 @@ class AnnotationTable {
           var zero = Constant.Value.of(0, viamDef.resultType(indices.size()));
           viamDef.addConstraint(new RegisterTensor.Constraint(indices, zero));
         })
+        .build();
+
+    annotationOn(AliasDefinition.class, "zero", ZeroConstraintAnnotation::new)
+        .check((def, annotation, lowering) -> {
+          ensure(def.computedTarget instanceof RegisterDefinition,
+              () -> error("Invalid annotation target", annotation)
+                  .locationDescription(annotation,
+                      "Zero annotation can only be applied on register aliases"));
+        })
+        // this handled in the VIAM lowering when constructing the ArtificialResource
         .build();
 
     groupOn(RelocationDefinition.class)
@@ -1084,12 +1095,13 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     super.typeCheck(definition, typeChecker);
     var def = definition.target;
+
     if (!(node instanceof CallIndexExpr callExpr)) {
       throw error("Invalid zero annotation", this)
           .locationDescription(this, "Zero annotation must be of form %s.", usageString())
           .build();
     }
-    if (!(callExpr.computedTarget() == def)) {
+    if (callExpr.computedTarget() != def) {
       throw error("Invalid zero annotation", callExpr.target)
           .locationDescription(callExpr.target,
               "Zero annotation target must be the annotated register.")

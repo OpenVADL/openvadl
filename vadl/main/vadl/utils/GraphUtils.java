@@ -30,12 +30,18 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchEndNode;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -327,8 +333,12 @@ public class GraphUtils {
     return combineExpressions(BuiltInTable.OR, exprs);
   }
 
-  public static ExpressionNode equ(ExpressionNode... exprs) {
-    return combineExpressions(BuiltInTable.EQU, exprs);
+  public static ExpressionNode equ(ExpressionNode a, ExpressionNode b) {
+    return combineExpressions(BuiltInTable.EQU, a, b);
+  }
+
+  public static ExpressionNode neq(ExpressionNode a, ExpressionNode b) {
+    return combineExpressions(BuiltInTable.NEQ, a, b);
   }
 
   public static ExpressionNode sub(ExpressionNode... exprs) {
@@ -371,6 +381,31 @@ public class GraphUtils {
   public static ExpressionNode truncate(ExpressionNode value, DataType dataType) {
     return new TruncateNode(value, dataType);
   }
+
+  /**
+   * Builts an if-else control flow in the given graph.
+   * The {@link MergeNode} is linked to the provided next node.
+   *
+   * @param graph            in which it should be created
+   * @param condition        of the if node
+   * @param trueCaseEffects  side effects applied in the true branch
+   * @param falseCaseEffects side effects applied in the false branch
+   * @param next             the next control node the merge node is linked to
+   * @return the created if node
+   */
+  public static IfNode ifElseSideEffect(Graph graph, ExpressionNode condition,
+                                        List<SideEffectNode> trueCaseEffects,
+                                        List<SideEffectNode> falseCaseEffects,
+                                        ControlNode next) {
+    var trueEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>(trueCaseEffects)));
+    var trueBegin = graph.addWithInputs(new BeginNode(trueEnd));
+    var falseEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>(falseCaseEffects)));
+    var falseBegin = graph.addWithInputs(new BeginNode(falseEnd));
+    var ifNode = graph.addWithInputs(new IfNode(condition, trueBegin, falseBegin));
+    graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd), next));
+    return ifNode;
+  }
+
 
   /// CONSTANT VALUE CONSTRUCTION ///
 
