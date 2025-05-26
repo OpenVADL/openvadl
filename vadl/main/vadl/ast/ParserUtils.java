@@ -740,24 +740,23 @@ class ParserUtils {
   static List<ExpandedSequenceCallExpr> expandSequenceCalls(Parser parser,
                                                             List<SequenceCallExpr> calls) {
     var expandedCalls = new ArrayList<ExpandedSequenceCallExpr>(calls.size());
-    for (SequenceCallExpr callExpr : calls) {
-      var targetId = mapToIdentifier(callExpr.target);
-      if (callExpr.range == null && callExpr.target instanceof CallIndexExpr callIndexExpr) {
-        var registerFile = new Identifier(callIndexExpr.target.path().pathToString(),
-            callIndexExpr.location);
-        expandedCalls.add(new ExpandedRegisterSequenceCallExpr(
-            registerFile,
-            targetId,
-            (CallIndexExpr) callExpr.target,
-            callExpr.loc));
-      } else if (callExpr.range == null) {
+    for (SequenceCallExpr seqExpr : calls) {
+      var targetId = seqExpr.target;
+      if (targetId instanceof Identifier id && seqExpr.range == null) {
+        expandedCalls.add(new ExpandedAliasDefSequenceCallExpr(
+            id,
+            seqExpr.loc));
+      } else if (targetId instanceof CallIndexExpr callIndexExpr
+          && callIndexExpr.argsIndices.size() == 1
+          && callIndexExpr.argsIndices.getFirst().values.size() == 1) {
+        // X(1)
         expandedCalls.add(new ExpandedSequenceCallExpr(
-            targetId,
-            callExpr.loc));
+            callIndexExpr,
+            seqExpr.loc));
       } else {
         BigInteger start = BigInteger.ZERO;
         BigInteger end = BigInteger.ZERO;
-        if (callExpr.range instanceof RangeExpr rangeExpr) {
+        if (seqExpr.range instanceof RangeExpr rangeExpr) {
           if (rangeExpr.from instanceof IntegerLiteral integerLiteral) {
             start = integerLiteral.number;
           } else {
@@ -770,38 +769,21 @@ class ParserUtils {
             reportError(parser, "Unknown start index type " + rangeExpr.to,
                 rangeExpr.to.location());
           }
-        } else if (callExpr.range instanceof IntegerLiteral integerLiteral) {
+        } else if (seqExpr.range instanceof IntegerLiteral integerLiteral) {
           start = end = integerLiteral.number;
         } else {
-          reportError(parser, "Unknown index type " + callExpr.range, callExpr.range.location());
+          reportError(parser, "Unknown index type " + seqExpr.range, Objects.requireNonNull(
+              seqExpr.range).location());
         }
         for (BigInteger i = start; i.compareTo(end) <= 0; i = i.add(BigInteger.ONE)) {
           expandedCalls.add(
-              new ExpandedSequenceCallExpr(
-                  new Identifier(targetId.name + i, callExpr.loc),
-                  callExpr.loc));
+              new ExpandedAliasDefSequenceCallExpr(
+                  new Identifier(((Identifier) targetId).name + i, seqExpr.loc),
+                  seqExpr.loc));
         }
       }
     }
     return expandedCalls;
-  }
-
-  /**
-   * Map an expression to an {@link Identifier}. It can be already an {@link Identifier}.
-   * Or {@code X(1)} then we map the {@code expr} to {@code X1}.
-   */
-  private static Identifier mapToIdentifier(Expr expr) {
-    if (expr instanceof Identifier ident) {
-      return ident;
-    } else if (expr instanceof CallIndexExpr callIndexExpr) {
-      var indexLit = callIndexExpr.argsIndices.get(0).values.get(0);
-      var index = new ConstantEvaluator().eval(indexLit);
-      return new Identifier(callIndexExpr.target.path().pathToString()
-          + index.value().intValue(),
-          callIndexExpr.location);
-    }
-
-    throw Diagnostic.error("Not recognized identifier", expr.location()).build();
   }
 
   static void addDef(List<Definition> definitions, Definition def) {

@@ -144,8 +144,9 @@ interface ExprVisitor<R> {
 
   R visit(SequenceCallExpr expr);
 
-  R visit(ExpandedSequenceCallExpr expandedAliasSequenceCallExpr);
+  R visit(ExpandedSequenceCallExpr expr);
 
+  R visit(ExpandedAliasDefSequenceCallExpr expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -2753,12 +2754,12 @@ class SequenceCallExpr extends Expr {
   }
 }
 
-class ExpandedSequenceCallExpr extends Expr {
+sealed class ExpandedSequenceCallExpr extends Expr permits ExpandedAliasDefSequenceCallExpr {
   @Child
-  Identifier target;
+  Expr target;
   SourceLocation loc;
 
-  ExpandedSequenceCallExpr(Identifier target, SourceLocation loc) {
+ExpandedSequenceCallExpr(Expr target, SourceLocation loc) {
     this.target = target;
     this.loc = loc;
   }
@@ -2784,26 +2785,19 @@ class ExpandedSequenceCallExpr extends Expr {
   }
 }
 
-class ExpandedRegisterSequenceCallExpr extends ExpandedSequenceCallExpr {
-  // a register is not a child because `X1` does not exist as a symbol.
-  Identifier register;
-  // we mark this as child to ensure that it has a symbol table.
-  @Child
-  CallIndexExpr callIndexExpr;
-
-  ExpandedRegisterSequenceCallExpr(Identifier registerFile,
-                                   Identifier register,
-                                   CallIndexExpr callIndexExpr,
+final class ExpandedAliasDefSequenceCallExpr extends ExpandedSequenceCallExpr {
+  ExpandedAliasDefSequenceCallExpr(Identifier target,
                                    SourceLocation loc) {
-    super(registerFile, loc);
-    this.register = register;
-    this.callIndexExpr = callIndexExpr;
+    super(target, loc);
   }
 
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
 
   @Override
-  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    target.prettyPrint(0, builder);
-    register.prettyPrint(0, builder);
+  List<Node> children() {
+    return List.of(target);
   }
 }

@@ -779,6 +779,14 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
+  public Void visit(ExpandedAliasDefSequenceCallExpr expr) {
+    beforeTravel(expr);
+    expr.children().forEach(this::travel);
+    afterTravel(expr);
+    return null;
+  }
+
+  @Override
   public Void visit(AssignmentStatement statement) {
     beforeTravel(statement);
     statement.children().forEach(this::travel);
