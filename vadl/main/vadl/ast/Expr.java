@@ -2716,13 +2716,13 @@ class ForallExpr extends Expr {
 class SequenceCallExpr extends Expr {
 
   @Child
-  Expr target;
+  IsCallExpr target;
   @Nullable
   @Child
   Expr range;
   SourceLocation loc;
 
-  SequenceCallExpr(Expr target, @Nullable Expr range, SourceLocation loc) {
+  SequenceCallExpr(IsCallExpr target, @Nullable Expr range, SourceLocation loc) {
     this.target = target;
     this.range = range;
     this.loc = loc;

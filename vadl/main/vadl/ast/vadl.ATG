@@ -1932,7 +1932,7 @@ PRODUCTIONS
   sequenceCallExpr<out SequenceCallExpr call>     (. var start = nextTokenLoc();
                                                      Expr range = null;
                                                      call = null;
-                                                     Expr ident = null;
+                                                     IsCallExpr ident = null;
                                                   .)
   =
   identifier<out Identifier id1> (. ident = id1; .)
