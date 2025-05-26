@@ -33,13 +33,17 @@ instruction set architecture AArch64Base = {
   using Bits7    = Bits< 7>           //  7 bit type
   using Bits8    = Bits< 8>           //  8 bit type
   using Bits9    = Bits< 9>           //  9 bit type
+  using Bits11   = Bits<11>           // 11 bit type
   using Bits12   = Bits<12>           // 12 bit type
   using Bits13   = Bits<13>           // 13 bit type
   using Bits14   = Bits<14>           // 14 bit type
   using Bits16   = Bits<16>           // 16 bit type
   using Bits19   = Bits<19>           // 19 bit type
   using Bits21   = Bits<21>           // 21 bit type
+  using Bits24   = Bits<24>           // 24 bit type
+  using Bits25   = Bits<25>           // 25 bit type
   using Bits26   = Bits<26>           // 26 bit type
+  using Bits27   = Bits<27>           // 27 bit type
   using Instr    = Word               // instruction are 32 bit wide
   using BitsW    = Bits<SizeW>        // Bits W register type
   using BitsX    = Bits<SizeX>        // Bits X register type
@@ -506,12 +510,12 @@ instruction set architecture AArch64Base = {
   // pattern more positions than required gives the same result.
 
   function imm13DecAlt (imm13: Bits13) -> BitsX =
-    (    if imm13(12  ) = 0b1     then               (1 as Bits<64> << imm13(5..0) + 1) - 1
-    else if imm13(5   ) = 0b0     then let pattern = (1 as Bits<32> << imm13(4..0) + 1) - 1 in rep32 (pattern)
-    else if imm13(5..4) = 0b10    then let pattern = (1 as Bits<16> << imm13(3..0) + 1) - 1 in rep32 (rep16 (pattern))
-    else if imm13(5..3) = 0b110   then let pattern = (1 as Bits< 8> << imm13(2..0) + 1) - 1 in rep32 (rep16 (rep8 (pattern)))
-    else if imm13(5..2) = 0b1110  then let pattern = (1 as Bits< 4> << imm13(1..0) + 1) - 1 in rep32 (rep16 (rep8 (rep4 (pattern))))
-    else if imm13(5..1) = 0b11110 then let pattern = (1 as Bits< 2> << imm13(   0) + 1) - 1 in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
+    (    if imm13(12  ) = 0b1     then                                 (1 as Bits<64> << imm13(5..0) + 1) - 1
+    else if imm13(5   ) = 0b0     then rep32 (                         (1 as Bits<32> << imm13(4..0) + 1) - 1)
+    else if imm13(5..4) = 0b10    then rep32 (rep16(                   (1 as Bits<16> << imm13(3..0) + 1) - 1))
+    else if imm13(5..3) = 0b110   then rep32 (rep16 (rep8(             (1 as Bits< 8> << imm13(2..0) + 1) - 1)))
+    else if imm13(5..2) = 0b1110  then rep32 (rep16 (rep8 (rep4(       (1 as Bits< 4> << imm13(1..0) + 1) - 1))))
+    else if imm13(5..1) = 0b11110 then rep32 (rep16 (rep8 (rep4 (rep2 ((1 as Bits< 2> << imm13(   0) + 1) - 1)))))
     else 0  ) <>> imm13(11..6)
 
   function imm13Decode (imm13: Bits13) -> BitsX =
@@ -780,30 +784,6 @@ instruction set architecture AArch64Base = {
 // extension. Therefore, *BFM instructions are specified using a shift left
 // followed by a shift right.
 
-  function BfmLeftWSize (imms: Bits5) -> Bits5 =
-    -1 as Bits5 - imms
-
-  function BfmLeftXSize (imms: Bits6) -> Bits6 =
-    -1 as Bits6 - imms
-
-  function BfmLeftToImmsWSize (left: Bits5) -> Bits6 =
-    (-1 as Bits5 - left) as Bits6
-
-  function BfmLeftToImmsXSize (left: Bits6) -> Bits6 =
-    -1 as Bits6 - left
-
-  function BfmRightWSize (imms: Bits5, immr: Bits5) -> Bits5 =
-    immr - imms - 1
-
-  function BfmRightXSize (imms: Bits6, immr: Bits6) -> Bits6 =
-    immr - imms - 1
-
-  function BfmToImmrWSize (left: Bits5, right: Bits5) -> Bits6 =
-    (right - left) as Bits6
-
-  function BfmToImmrXSize (left: Bits6, right: Bits6) -> Bits6 =
-    right - left
-
   format BitFieldMoveFormat: Instr =  // bit field move format
     { sf         : Bits1              // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
     , op         : Bits8              // opcode
@@ -812,12 +792,15 @@ instruction set architecture AArch64Base = {
     , imms       : Bits6              // bit field length -1 or high position
     , rn         : Index              // source register
     , rd         : Index              // destination register
-    , leftWSize  = BfmLeftWSize  (imms(4..0))
-    , leftXSize  = BfmLeftXSize  (imms)
-    , rightWSize = BfmRightWSize (imms(4..0), immr(4..0))
-    , rightXSize = BfmRightXSize (imms, immr)
-    // TODO encode
-    // TODO predicate
+    , leftWSize  = -1 as Bits5 - imms as Bits5
+    , leftXSize  = -1 as Bits6 - imms
+    , rightWSize = immr as Bits5 - imms as Bits5 - 1
+    , rightXSize = immr - imms - 1
+    //, imms <- (-1 as Bits5 - leftWSize) as Bits6
+    //, imms <-  -1 as Bits6 - leftXSize
+    //, immr <- (rightWSize  - leftWSize) as Bits6
+    //, immr <-  rightXSize  - leftXSize
+    // true
     }
 
   model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -1399,5 +1382,260 @@ instruction set architecture AArch64Base = {
   $LoadPairInstrX      (                        (LDPX   ; "ldp"   ; 0b1001                ; BitsX      ))
   $StorePairInstrW     (                        (STPW   ; "stp"   ; 0b0000                ; BitsX      ))
   $StorePairInstrX     (                        (STPX   ; "stp"   ; 0b1000                ; BitsX      ))
+
+//}
+//
+//instruction set architecture AArch64Sys extending AArch64Base = {
+
+  enumeration ExceptionClass: Bits6 =        // exception class (of exception syndrome register)
+    {Uncategorized           = 0x00          //  0 Uncategorized or unknown reason (e.g. undefined instruction)
+    ,WFxAccessTrap           = 0x01          //  1 Trapped WFI or WFE instruction
+    ,AdvSIMDFPAccessTrap     = 0x07          //  7 HCPTR-trapped access to SIMD or FP
+    ,UncoveredException      = 0x0A          // 10 Trapped execution of any instruction not covered by other EC values
+    ,BranchTarget            = 0x0D          // 13 Branch Target Exception
+    ,IllegalState            = 0x0E          // 14 Illegal Execution state
+    ,SupervisorCall          = 0x15          // 21 Supervisor Call
+    ,InstructionAbortLowerEL = 0x20          // 32 Instruction Abort from a lower Exception level
+    ,InstructionAbortSameEL  = 0x21          // 33 Instruction Abort taken without a change in Exception level
+    ,PCAlignment             = 0x22          // 34 PC alignment fault
+    ,DataAbortLowerEL        = 0x24          // 36 Data Abort exception from a lower Exception level
+    ,DataAbortSameEL         = 0x25          // 37 Data Abort exception taken without a change in Exception level
+    ,SPAlignment             = 0x26          // 38 SP alignment fault
+    ,MemoryOperation         = 0x27          // 38 Memory Operation Exception
+    ,FPTrappedException      = 0x2C          // 44 IEEE trapped FP exception
+    ,SError                  = 0x2F          // 47 SError interrupt
+    ,BreakpointLowerEL       = 0x30          // 48 Breakpoint exception from a lower Exception level
+    ,BreakpointSameEL        = 0x31          // 49 Breakpoint exception taken without a change in Exception level
+    ,SoftwareStepLowerEL     = 0x32          // 50 Software Step exception from a lower Exception level
+    ,SoftwareStepSameEL      = 0x33          // 51 Software Step exception taken without a change in Exception level
+    ,WatchpointLowerEL       = 0x34          // 52 Watchpoint exception from a lower Exception level
+    ,WatchpointSameEL        = 0x35          // 53 Watchpoint exception taken without a change in Exception level
+    ,SoftwareBreakpoint      = 0x3C          // 60 BRK instruction execution
+    ,ProfilingException      = 0x3D          // 61 Profiling Exception
+    }
+
+  format ExceptionSyndromeFormat: BitsX =    // exception syndrome register format
+    { Res0    : Bits8                        // [63..56] reserved
+    , ISS2    : Bits24                       // [55..32] instruction specific syndrome extension
+    , EC      : Bits6                        // [31..26] exception class
+    , IL      : Bits1                        // [25]     instruction length
+    , ISS     : Bits25                       // [24..0]  instruction specific syndrome
+    }
+
+  format SavedProgramStateFormat: BitsX =    // saved program state register format
+    { Res0    [63..37]                       // reserved
+    , UINJ    [36]                           // INJect Undefined instruction exception
+    , PACM    [35]                           // PACM
+    , EXLOCK  [34]                           // Exception return state lock
+    , PPEND   [33]                           // PMU Profiling exception pending bit
+    , PM      [32]                           // Profiling exception mask bit
+    , NZCV    [31..28]                       // condition flags (negative, zero, carry, overflow)
+    , Res1    [27..26]                       // reserved
+    , TCO     [25]                           // tag check override
+    , DIT     [24]                           // data independent timing
+    , UAO     [23]                           // user access override
+    , PAN     [22]                           // privileged access never
+    , SS      [21]                           // software step
+    , IL      [20]                           // illegal execution state
+    , Res2    [19..14]                       // reserved
+    , ALLINT  [13]                           // All IRQ or FIQ interrupts mask
+    , SSBS    [12]                           // speculative store bypass
+    , BTYPE   [11..10]                       // branch type indicator
+    , D       [9]                            // debug  exception mask
+    , A       [8]                            // SError interrupt mask
+    , I       [7]                            // IRQ    interrupt mask
+    , F       [6]                            // FIQ    interrupt mask
+    , Res3    [5]                            // reserved
+    , M4      [4]                            // execution state (0b0 AArch64 execution state)
+    , M       [3..0]                         // exception level and selected stack pointer
+    }
+
+  enumeration SysRegEncode: Bits16 =         // system register encoding
+    { NZCV      = 0b11'011'0100'0010'000     // condition flag register
+    , CurrentEL = 0b11'000'0100'0010'010     // Current Exception Level register
+    , SPSel     = 0b11'000'0100'0010'000     // stack pointer select register
+    , SP_EL0    = 0b11'000'0100'0001'000     // stack pointer register exception level 0
+    , SP_EL1    = 0b11'100'0100'0001'000     // stack pointer register exception level 1
+    , ELR_EL1   = 0b11'000'0100'0000'001     // exception link register exception level 1
+    , VBAR_EL1  = 0b11'000'1100'0000'000     // vector base address register exception level 1
+    , ESR_EL1   = 0b11'000'0101'0010'000     // exception syndrome register exception level 1
+    , SPSR_EL1  = 0b11'000'0100'0000'000     // saved program state register exception level 1
+    }
+
+  register CurrentEL:Bits2                   // exception level register
+  register SPSel:    Bits1                   // stack pointer select register
+  register SP_EL0:   Address                 // stack pointer exception level level 0
+  register SP_EL1:   Address                 // stack pointer exception level level 1
+  register ELR_EL1:  Address                 // exception link register exception level level 1
+  register VBAR_EL1: Address                 // vector base address register exception level 1
+  register ESR_EL1:  ExceptionSyndromeFormat // exception syndrome register exception level level 1
+  register SPSR_EL1: SavedProgramStateFormat // saved program state register exception level level 1
+
+  model SaveProgramState (): Stats = {
+    SPSR_EL1 := (SPSR_EL1(63..32), NZCV, SPSR_EL1(27..4), SPSel as Bits4 | 0b0100)
+    }
+
+  model RestoreProgramState (): Stats = {
+    NZCV := SPSR_EL1.NZCV
+    }
+
+  exception GeneralException (exClass: Bits6, syndrome: Bits25, continuation: Address, exOffset: Address) = {
+    if CurrentEL = 0 then {
+      $SaveProgramState ()
+      if SPSel != 0 then {
+        SP_EL0 := SP
+        SP := SP_EL1
+      }
+      ESR_EL1.EC  := exClass
+      ESR_EL1.IL  := 0b1
+      ESR_EL1.ISS := syndrome
+      CurrentEL   := 1
+      ELR_EL1     := continuation
+      PC          := VBAR_EL1 + exOffset
+      }
+    }
+
+  model UndefinedException (): Stat = {
+    GeneralException (ExceptionClass::Uncategorized, 0, PC, 0)
+    }
+
+  model ReturnFromException (): Stats = {
+    if CurrentEL = 0
+      then raise $UndefinedException ()
+      else {
+        $RestoreProgramState ()
+        if SPSel != 0 then {
+          SP_EL1 := SP
+          SP := SP_EL0
+          }
+        CurrentEL := 0
+        PC := ELR_EL1
+        }
+    }
+
+  format MoveSystemRegFormat: Instr =        // move system register format
+    { op        : Bits11                     // [31..21] opcode
+    , rs        : Bits16                     // [20..5]  system register code
+    , rt        : Index                      // [4..0]   source/target register
+    }
+
+  format SuperVisorCallFormat: Instr =       // supervisor call format
+    { op       [31..21,4..0] : Bits16        // opcode
+    , imm16    [20..5]       : Bits16        // system call number
+    }
+
+  format UndefinedInstrFormat: Instr =       // undefined instruction format
+    { op       : Bits16                      // [31..16] opcode
+    , imm16    : Bits16                      // [15..0]  ignored
+    }
+
+  function SysRegName (sysreg: Bits16) -> String =
+    match sysreg with
+      { SysRegEncode::NZCV      => "nzcv"
+      , SysRegEncode::CurrentEL => "currentel"
+      , SysRegEncode::SPSel     => "spsel"
+      , SysRegEncode::SP_EL0    => "sp_el0"
+      , SysRegEncode::SP_EL1    => "sp_el1"
+      , SysRegEncode::ELR_EL1   => "elr_el1"
+      , SysRegEncode::ESR_EL1   => "esr_el1"
+      , SysRegEncode::SPSR_EL1  => "spsr_el1"
+      , SysRegEncode::VBAR_EL1  => "vbar_el1"
+      , _ => ("S", decimal(sysreg(15..14)), "_",
+                   decimal(sysreg(13..11)), "_",
+                   decimal(sysreg(10.. 7)), "_",
+                   decimal(sysreg( 6.. 3)), "_",
+                   decimal(sysreg( 2.. 0)))
+      }
+
+  model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: MoveSystemRegFormat =
+      if rs = SysRegEncode::NZCV
+        then X(rt) := NZCV as BitsX << 26
+        else if CurrentEL = 0
+        then raise $UndefinedException ()
+        else match rs with
+          { SysRegEncode::CurrentEL => X(rt) := CurrentEL as BitsX << 2
+          , SysRegEncode::SPSel     => X(rt) := SPSel as BitsX
+          , SysRegEncode::ESR_EL1   => X(rt) := ESR_EL1
+          , SysRegEncode::SPSR_EL1  => X(rt) := SPSR_EL1
+          , SysRegEncode::SP_EL0    => if SPSel = 0
+                                       then raise $UndefinedException ()
+                                       else X(rt) := SP_EL0
+          , SysRegEncode::SP_EL1    => if SPSel = 0
+                                       then raise $UndefinedException ()
+                                       else let sp = SP in {
+                                         SP_EL1 := sp
+                                         X(rt) := sp
+                                         }
+          , SysRegEncode::ELR_EL1   => X(rt) := ELR_EL1
+          , SysRegEncode::VBAR_EL1  => X(rt) := VBAR_EL1
+          , _                       => raise $UndefinedException ()
+          }
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo, ' ', XSize(rt), ', ', SysRegName(rs))
+    }
+
+  model MsrRegInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: MoveSystemRegFormat =
+      if rs = SysRegEncode::NZCV
+        then NZCV := X(rt)(31..28)
+        else if CurrentEL = 0
+        then raise $UndefinedException ()
+        else match rs with
+          { SysRegEncode::CurrentEL => raise $UndefinedException ()
+          , SysRegEncode::SPSR_EL1  => SPSR_EL1 := X(rt)
+          , SysRegEncode::ESR_EL1   => ESR_EL1 := X(rt)
+          , SysRegEncode::SPSel     => SPSel := X(rt)(0)
+          , SysRegEncode::SP_EL0    => SP_EL0 := X(rt)
+          , SysRegEncode::SP_EL1    => if SPSel = 0
+                                     then raise $UndefinedException ()
+                                     else let sp = X(rt) in {
+                                       SP_EL1 := sp
+                                       SP := sp
+                                       }
+          , SysRegEncode::ELR_EL1   => ELR_EL1 := X(rt)
+          , SysRegEncode::VBAR_EL1  => VBAR_EL1 := X(rt)
+          , _                     => raise $UndefinedException ()
+          }
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo, ' ', SysRegName(rs), ', ', XSize(rt))
+    }
+
+  model ExceptionCallInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: SuperVisorCallFormat = {
+      raise GeneralException (ExceptionClass::$i.funct, 0, PC.next, 0)
+      }
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo, ' #', decimal(imm16))
+    }
+
+  model ExceptionReturnInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: UndefinedInstrFormat = {
+      $ReturnFromException()
+      }
+    encoding $i.id = {op = $i.opcode, imm16 = 0b0000'0011'1110'0000}
+    assembly $i.id = ($i.mnemo)
+    }
+
+  model NopInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: UndefinedInstrFormat = {}
+    encoding $i.id = {op = $i.opcode, imm16 = 0b0010'0000'0001'1111}
+    assembly $i.id = ($i.mnemo)
+    }
+
+  model UndefinedInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: UndefinedInstrFormat =
+      raise $UndefinedException ()
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo)
+    }
+
+  $MsrRegInstr           ((MSR    ; "msr"   ; 0b1101'0101'000                              ))
+  $MrsRegInstr           ((MRS    ; "mrs"   ; 0b1101'0101'001                              ))
+  $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SupervisorCall     ))
+  $ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SoftwareBreakpoint ))
+  $ExceptionReturnInstr  ((ERET   ; "eret"  ; 0b1101'0110'1001'1111                        ))
+  $NopInstr              ((NOP    ; "nop"   ; 0b1101'0101'0000'0011                        ))
+  $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
 
 }
