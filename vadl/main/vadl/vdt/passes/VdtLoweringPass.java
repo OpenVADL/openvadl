@@ -17,12 +17,16 @@
 package vadl.vdt.passes;
 
 import java.io.IOException;
+import java.nio.ByteOrder;
+import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
+import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
+import vadl.vdt.impl.irregular.model.DecodeEntry;
+import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
 import vadl.vdt.model.Node;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
@@ -57,9 +61,15 @@ public class VdtLoweringPass extends Pass {
       return null;
     }
 
+    // TODO: get the byte order from the VADL specification -> Implement memory annotations
+    final ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
+
     var insns = isa.ownInstructions()
         .stream()
-        .map(this::prepareInstruction)
+        .map(i -> {
+          BitPattern pattern = PatternUtils.toFixedBitPattern(i, bo);
+          return new DecodeEntry(i, pattern.width(), pattern, Set.of());
+        })
         .toList();
 
     if (insns.isEmpty()) {
@@ -68,17 +78,13 @@ public class VdtLoweringPass extends Pass {
       return null;
     }
 
-    return new TheilingDecodeTreeGenerator().generate(insns);
-  }
+    if (isa.simpleName().equals("A64")) {
+      // TODO: Switch to the irregular tree generator, once we support encoding constraints
+      return new RegularDecodeTreeGenerator()
+          .generate(insns.stream()
+              .map(Instruction.class::cast).toList());
+    }
 
-  /**
-   * Prepares an instruction for the decode tree generation.
-   *
-   * @param insn The VIAM instruction
-   * @return The prepared instruction
-   */
-  private Instruction prepareInstruction(vadl.viam.Instruction insn) {
-    BitPattern pattern = PatternUtils.toFixedBitPattern(insn);
-    return new Instruction(insn, pattern.width(), pattern);
+    return new IrregularDecodeTreeGenerator().generate(insns);
   }
 }

@@ -61,7 +61,7 @@ void [(${gen_arch_lower})]_tcg_init(void)
 static target_ulong next_insn(DisasContext *ctx)
 {
     vaddr  pc_next = ctx->base.pc_next;
-    return translator_ld[(${insn_width.short})](ctx->env, &ctx->base, pc_next);
+    return translator_ld[(${insn_width.short})]_swap(ctx->env, &ctx->base, pc_next, true);
 }
 
 [# th:each="reg : ${register_tensors}"]
@@ -128,7 +128,7 @@ static inline void gen_exts(TCGv dest, TCGv arg, int bitWidth) {
  * Called by decode_insn() function produced by insn.deocde decode-tree.
  */
 
-static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
+static uint8_t decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
 
 // Include the generated VADL decode tree
 #include "vdt-decode.c"
@@ -148,14 +148,24 @@ static bool decode_insn(DisasContext *ctx, uint[(${insn_width.int})]_t insn);
  */
 static void translate(DisasContext *ctx)
 {
+    // TODO: In the future, let the decoder handle fetching & advancing the PC
     uint32_t insn = next_insn(ctx);
-    if(!decode_insn(ctx, insn)) {
-        error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04llx , insn: 0x%04x\n", ctx->base.pc_next, insn);
+    uint8_t len = decode_insn(ctx, insn);
 
-        gen_update_pc_diff(ctx, 0);
-        gen_helper_unsupported(tcg_env);
-        ctx->base.is_jmp = DISAS_NORETURN;
+    if (len) {
+      // Increment program counter
+      ctx->base.pc_next += len;
+      return;
     }
+
+    error_report("[[(${gen_arch_upper})]] translate, illegal instr, pc: 0x%04llx , insn: 0x%04x\n", ctx->base.pc_next, insn);
+
+    gen_update_pc_diff(ctx, 0);
+    gen_helper_unsupported(tcg_env);
+    ctx->base.is_jmp = DISAS_NORETURN;
+
+    // Increase pc_next so the TB size is not empty (Validated by QEMU translate-all.c:279)
+    ctx->base.pc_next += 1;
 }
 
 static void [(${gen_arch_lower})]_tr_init_disas_context(DisasContextBase *db, CPUState *cs)
@@ -191,10 +201,8 @@ static void [(${gen_arch_lower})]_tr_translate_insn(DisasContextBase *db, CPUSta
     target_ulong pc = db->pc_next;
 
     ctx->pc_curr = pc;
-    // translate current insn
+    // translate current insn (and increment program counter)
     translate(ctx);
-    // increment program counter
-    db->pc_next = db->pc_next + ([(${insn_width.int})] / [(${mem_word_size.int})]);
 }
 
 static void [(${gen_arch_lower})]_tr_tb_stop(DisasContextBase *db, CPUState *cpu)

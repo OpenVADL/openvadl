@@ -78,7 +78,7 @@ public class DecisionTreeStatsCalculator implements Visitor<DecisionTreeStatisti
     stats.setMaxDepth(0);
     stats.setMinDepth(0);
     stats.setAvgDepth(0);
-    stats.setMaxInstructionWidth(node.instruction().width());
+    stats.setMaxInstructionWidth(node.instruction().source().format().type().bitWidth());
     return stats;
   }
 }

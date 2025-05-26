@@ -25,12 +25,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import vadl.types.BitsType;
 import vadl.vdt.model.Node;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
 import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
 import vadl.vdt.utils.PBit;
+import vadl.viam.Encoding;
+import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.graph.Graph;
 
@@ -79,12 +82,20 @@ public class AbstractDecisionTreeTest {
 
     for (Map.Entry<String, String> entry : patternsByName.entrySet()) {
       String name = entry.getKey();
-      String insn = entry.getValue();
+      String insn = entry.getValue().replace(" ", "");
 
       // Prepare a dummy instruction with a unique name
       var id = Identifier.noLocation(name);
       var behaviour = new Graph("mock");
-      var source = new vadl.viam.Instruction(id, behaviour, null, null);
+      var encoding = new Encoding(Identifier.noLocation("enc"),
+          new Format(Identifier.noLocation("format"), BitsType.unsignedInt(insn.length())),
+          new Encoding.Field[0]);
+      var source = new vadl.viam.Instruction(id, behaviour, null, encoding) {
+        @Override
+        public String toString() {
+          return name;
+        }
+      };
 
       // Prepare the bit pattern
       final PBit[] bits = new PBit[insn.length()];
@@ -97,10 +108,6 @@ public class AbstractDecisionTreeTest {
       result.add(new Instruction(source, pattern.width(), pattern));
     }
     return result;
-  }
-
-  protected DecisionTreeStatistics getStats(Node tree) {
-    return new DecisionTreeStatsCalculator().calculate(tree);
   }
 
 }

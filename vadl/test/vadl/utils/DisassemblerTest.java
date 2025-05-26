@@ -16,13 +16,14 @@
 
 package vadl.utils;
 
+import static java.nio.ByteOrder.BIG_ENDIAN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigInteger;
 import org.junit.jupiter.api.Test;
 import vadl.AbstractTest;
 import vadl.types.DataType;
-import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
+import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
 import vadl.viam.Constant;
 
 public class DisassemblerTest extends AbstractTest {
@@ -32,7 +33,7 @@ public class DisassemblerTest extends AbstractTest {
     var spec = runAndGetViamSpecification("sys/risc-v/rv64im.vadl");
     var isa = spec.isa().get();
 
-    var disassembler = new Disassembler(isa, new TheilingDecodeTreeGenerator());
+    var disassembler = new Disassembler(isa, new RegularDecodeTreeGenerator(), BIG_ENDIAN);
 
     // bne x0, x0, 1234
     // 01001100000000000001100101100011

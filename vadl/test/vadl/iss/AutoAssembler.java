@@ -16,8 +16,11 @@
 
 package vadl.iss;
 
+import static vadl.utils.MemOrderUtils.reverseByteOrder;
+
 import com.google.errorprone.annotations.FormatMethod;
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,9 +41,11 @@ public class AutoAssembler {
 
   final Disassembler disassembler;
   private List<Integer> allowedRegIndices;
+  private final ByteOrder byteOrder;
 
-  public AutoAssembler(Disassembler disassembler) {
+  public AutoAssembler(Disassembler disassembler, ByteOrder byteOrder) {
     this.disassembler = disassembler;
+    this.byteOrder = byteOrder;
   }
 
   public AutoAssembler allowRegisterIndices(int startInclusive, int endExclusive) {
@@ -137,6 +142,9 @@ public class AutoAssembler {
       }
     }
 
+    if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
+      encoding = reverseByteOrder(encoding, format.type().bitWidth());
+    }
     return Constant.Value.fromInteger(encoding, format.type());
   }
 

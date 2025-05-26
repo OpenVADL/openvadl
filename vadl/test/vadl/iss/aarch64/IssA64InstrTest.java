@@ -17,6 +17,7 @@
 package vadl.iss.aarch64;
 
 import java.io.IOException;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -36,7 +37,7 @@ import vadl.pass.PassOrders;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Disassembler;
 import vadl.utils.ViamUtils;
-import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
+import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
 import vadl.viam.Definition;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
@@ -70,9 +71,12 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
       var setup =
           setupPassManagerAndRunSpec(getVadlSpec(), PassOrders.iss(getConfiguration(false)));
       isa = setup.specification().isa().get();
-      var disassembler = new Disassembler(isa, new TheilingDecodeTreeGenerator());
+      // For auto-generating assembly code, endianness doesn't really matter, as long as assembler
+      // and disassembler use the same encoding format.
+      var byteOrder = ByteOrder.LITTLE_ENDIAN;
+      var disassembler = new Disassembler(isa, new RegularDecodeTreeGenerator(), byteOrder);
       // TODO: include X31/SP (the 0 register or stack pointer)
-      autoAssembler = new AutoAssembler(disassembler)
+      autoAssembler = new AutoAssembler(disassembler, byteOrder)
           // register x0,x1 are used for test termination
           // register x2 is used to test the nzcv register
           .allowRegisterIndices(3, 31);
