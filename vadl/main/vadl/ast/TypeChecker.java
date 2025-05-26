@@ -3063,6 +3063,18 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(ExpandedSequenceCallExpr expr) {
+    throwUnimplemented(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(ExpandedAliasDefSequenceCallExpr expr) {
+    throwUnimplemented(expr);
+    return null;
+  }
+
+  @Override
   public Void visit(BlockStatement statement) {
     statement.statements.forEach(this::check);
     return null;

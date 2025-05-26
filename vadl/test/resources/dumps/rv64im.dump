@@ -4749,19 +4749,19 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . : ' ArgsIndices
 . : ' | IntegerLiteral literal: 31 (31) type: null
 . SpecialPurposeRegisterDefinition
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "sp" type: null
 . SpecialPurposeRegisterDefinition
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "ra" type: null
 . SpecialPurposeRegisterDefinition
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "gp" type: null
 . SpecialPurposeRegisterDefinition
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "fp" type: null
 . SpecialPurposeRegisterDefinition
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "tp" type: null
 . AbiSpecialPurposeInstructionDefinition
 . : Identifier name: "RET" type: null
@@ -4774,78 +4774,78 @@ ApplicationBinaryInterfaceDefinition name: "ABI"
 . AbiSpecialPurposeInstructionDefinition
 . : Identifier name: "LA" type: null
 . SpecialPurposeRegisterDefinition
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a0" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a1" type: null
 . SpecialPurposeRegisterDefinition
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a0" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a1" type: null
 . SpecialPurposeRegisterDefinition
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a0" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a1" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a2" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a3" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a4" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a5" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a6" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "a7" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "t0" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "t1" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "t2" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "t3" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "t4" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "t5" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "t6" type: null
 . SpecialPurposeRegisterDefinition
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "ra" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "gp" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "tp" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "fp" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s0" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s1" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s2" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s3" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s4" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s5" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s6" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s7" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s8" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s9" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s10" type: null
-. : SequenceCallExpr type: null
+. : ExpandedAliasDefSequenceCallExpr type: null
 . : ' Identifier name: "s11" type: null
 . AbiSequenceDefinition
 . : Parameter name: "rd"

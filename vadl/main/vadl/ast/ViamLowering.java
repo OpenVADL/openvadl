@@ -20,7 +20,6 @@ package vadl.ast;
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
-import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
@@ -98,6 +97,7 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.ConstantNode;
 
 /**
  * The lowering that converts the AST to the VIAM.
@@ -1545,8 +1545,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private Abi.RegisterRef mapSingleSpecialPurposeRegisterDef(
       Map<Identifier, Expr> aliasLookup,
       SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
-    var identifier = specialPurposeRegisterDef.exprs.stream().findFirst().orElseThrow().target;
-    return mapToRegisterRef(aliasLookup, identifier);
+    return specialPurposeRegisterDef.exprs.stream()
+        .map(aliasOrRegister -> getRegisterRefByAliasOrRegister(aliasLookup, aliasOrRegister))
+        .findFirst().orElseThrow();
   }
 
   /**
@@ -1556,20 +1557,34 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       Map<Identifier, Expr> aliasLookup,
       SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
     return specialPurposeRegisterDef.exprs.stream()
-        .map(x -> mapToRegisterRef(aliasLookup, x.target))
+        .map(aliasOrRegister -> getRegisterRefByAliasOrRegister(aliasLookup, aliasOrRegister))
         .toList();
+  }
+
+  private Abi.RegisterRef getRegisterRefByAliasOrRegister(
+      Map<Identifier, Expr> aliasLookup,
+      ExpandedSequenceCallExpr aliasOrRegister) {
+    if (aliasOrRegister instanceof ExpandedAliasDefSequenceCallExpr registerCallExpr) {
+      return mapAliasToRegisterRef(aliasLookup, (Identifier) registerCallExpr.target);
+    } else {
+      return mapToRegisterRef(aliasOrRegister.target);
+    }
   }
 
   /**
    * Maps the aliases {@code alias register zero = X(0)} to {@link Abi.RegisterRef} to be
    * used in {@link Abi}.
    */
-  private Abi.RegisterRef mapToRegisterRef(
+  private Abi.RegisterRef mapAliasToRegisterRef(
       Map<Identifier, Expr> aliasLookup,
       Identifier identifier) {
     var expr = ensureNonNull(aliasLookup.get(identifier),
         () -> error("Cannot alias for register definition",
             identifier.location()));
+    return mapToRegisterRef(expr);
+  }
+
+  private Abi.RegisterRef mapToRegisterRef(Expr expr) {
     var pair = getRegisterFile(expr);
     var registerFile = pair.left();
     var index = pair.right();
@@ -1583,25 +1598,42 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private Pair<RegisterTensor, Integer> getRegisterFile(Expr expr) {
     if (expr instanceof CallIndexExpr callExpr
         && callExpr.symbolTable != null
-        && callExpr.target instanceof Identifier identifier) {
-      var registerFile =
+        && callExpr.target instanceof Identifier identifier
+        && callExpr.argsIndices.size() == 1 && callExpr.argsIndices.get(0).values.size() == 1) {
+      var resource =
           ensurePresent(
-              Optional.ofNullable((RegisterDefinition) identifier.target())
-                  .flatMap(this::fetch)
-                  .map(x -> (RegisterTensor) x),
+              Optional.ofNullable((Definition) identifier.target)
+                  .flatMap(this::fetch),
               () -> error("Cannot find register file with the name "
                       + identifier.name,
                   callExpr.location));
 
-      ensure(callExpr.argsIndices.size() == 1 && callExpr.argsIndices.get(0).values.size() == 1,
-          () -> error("Expected an index for the register file", callExpr.location));
+      if (resource instanceof RegisterTensor registerTensor) {
+        var index = constantEvaluator.eval(callExpr.argsIndices.get(0).values.get(0));
+        return Pair.of(registerTensor, index.value().intValueExact());
+      }
+    } else if (expr instanceof Identifier identifier
+        && identifier.target != null) {
+      // This means that we have an alias.
+      var alias =
+          (ArtificialResource) ensurePresent(
+              Optional.of((Definition) identifier.target)
+                  .flatMap(this::fetch),
+              () -> error("Cannot find register file with the name "
+                      + identifier.name,
+                  identifier.loc));
 
-      var index = constantEvaluator.eval(callExpr.argsIndices.get(0).values.get(0));
-      return Pair.of(registerFile, index.value().intValueExact());
-    } else {
-      throw error("This expression is not register file", expr.location())
-          .build();
+      // Extracting the constant index from the graph.
+      var registerTensor = (RegisterTensor) alias.innerResourceRef();
+      var constantNode = alias.readFunction().behavior().getNodes(ConstantNode.class).findFirst()
+          .orElseThrow(
+              () -> error("Need a constant to lower alias into register",
+                  alias.location()).build());
+
+      return Pair.of(registerTensor, constantNode.constant().asVal().intValue());
     }
+    throw error("This expression is not register file", expr.location())
+        .build();
   }
 
   /**

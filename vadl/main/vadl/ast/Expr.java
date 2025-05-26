@@ -143,6 +143,10 @@ interface ExprVisitor<R> {
   R visit(ForallExpr expr);
 
   R visit(SequenceCallExpr expr);
+
+  R visit(ExpandedSequenceCallExpr expr);
+
+  R visit(ExpandedAliasDefSequenceCallExpr expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -2712,13 +2716,13 @@ class ForallExpr extends Expr {
 class SequenceCallExpr extends Expr {
 
   @Child
-  Identifier target;
+  IsCallExpr target;
   @Nullable
   @Child
   Expr range;
   SourceLocation loc;
 
-  SequenceCallExpr(Identifier target, @Nullable Expr range, SourceLocation loc) {
+  SequenceCallExpr(IsCallExpr target, @Nullable Expr range, SourceLocation loc) {
     this.target = target;
     this.range = range;
     this.loc = loc;
@@ -2747,5 +2751,63 @@ class SequenceCallExpr extends Expr {
       range.prettyPrint(0, builder);
       builder.append("}");
     }
+  }
+}
+
+/**
+ * It is allowed to define shortcuts in {@link SequenceCallExpr}. These shortcuts will be
+ * expanded into {@link ExpandedSequenceCallExpr} and {@link ExpandedAliasDefSequenceCallExpr}.
+ * So {@code a{0..10}} will become {@code a0, a1, ...}. Each entry is then a
+ * {@link ExpandedAliasDefSequenceCallExpr}. However, single entries need to be also represented.
+ * If it is a simple entry like {@code a0} then this will be also to
+ * {@link ExpandedAliasDefSequenceCallExpr} mapped. {@code X(1)} is a {@link CallIndexExpr} and will
+ * be mapped to {@link ExpandedSequenceCallExpr}.
+ */
+sealed class ExpandedSequenceCallExpr extends Expr permits ExpandedAliasDefSequenceCallExpr {
+  @Child
+  Expr target;
+  SourceLocation loc;
+
+  ExpandedSequenceCallExpr(Expr target, SourceLocation loc) {
+    this.target = target;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    target.prettyPrint(0, builder);
+  }
+}
+
+final class ExpandedAliasDefSequenceCallExpr extends ExpandedSequenceCallExpr {
+  ExpandedAliasDefSequenceCallExpr(Identifier target,
+                                   SourceLocation loc) {
+    super(target, loc);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  List<Node> children() {
+    // Remove this method when #293 is fixed.
+    return List.of(target);
   }
 }

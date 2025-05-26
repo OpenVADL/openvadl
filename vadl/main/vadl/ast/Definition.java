@@ -3591,11 +3591,11 @@ class SpecialPurposeRegisterDefinition extends Definition {
 
   Purpose purpose;
   @Child
-  List<SequenceCallExpr> exprs;
+  List<ExpandedSequenceCallExpr> exprs;
   SourceLocation loc;
 
   SpecialPurposeRegisterDefinition(Purpose purpose,
-                                   List<SequenceCallExpr> sequence,
+                                   List<ExpandedSequenceCallExpr> sequence,
                                    SourceLocation loc) {
     this.purpose = purpose;
     this.exprs = sequence;

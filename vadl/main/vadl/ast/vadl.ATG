@@ -939,7 +939,7 @@ PRODUCTIONS
   | FUNCTION ARGUMENT                                        (. purpose = SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT; .)
   )
   SYM_EQ
-  sequenceCallExprList<.out List<SequenceCallExpr> calls.> (. def = new SpecialPurposeRegisterDefinition(purpose, calls, start.join(lastTokenLoc())); .)
+  sequenceCallExprList<.out List<ExpandedSequenceCallExpr> calls.> (. def = new SpecialPurposeRegisterDefinition(purpose, calls, start.join(lastTokenLoc())); .)
   .
 
   abiSpecialPurposeInstructionDefinition<out Definition def>         (. var start = nextTokenLoc(); .)
@@ -1917,25 +1917,34 @@ PRODUCTIONS
   // | TODO other keywords
   .
 
-  sequenceCallExprList<.out List<SequenceCallExpr> list.> (. list = new ArrayList<>(); .)
-  = ( sequenceCallExpr<out SequenceCallExpr call>         (. list.add(call); .)
+  sequenceCallExprList<.out List<ExpandedSequenceCallExpr> list.> (. var calls = new ArrayList<SequenceCallExpr>(); .)
+  = ( sequenceCallExpr<out SequenceCallExpr call>                 (. calls.add(call); .)
     | SYM_BRACK_OPEN
-      sequenceCallExpr<out SequenceCallExpr call>         (. list.add(call); .)
+      sequenceCallExpr<out SequenceCallExpr call>                 (. calls.add(call); .)
       {
         SYM_COMMA
-        sequenceCallExpr<out call>                        (. list.add(call); .)
+        sequenceCallExpr<out call>                                (. calls.add(call); .)
       }
       SYM_BRACK_CLOSE
-    )                                                     (. list = expandSequenceCalls(this, list); .)
+    )                                                             (. list = expandSequenceCalls(this, calls); .)
   .
 
-  sequenceCallExpr<out SequenceCallExpr call> (. var start = nextTokenLoc(); .)
-  = identifier<out Identifier id>             (. Expr range = null; .)
-    [
-      SYM_BRACE_OPEN
-      rangeExpression<out range>
-      SYM_BRACE_CLOSE
-    ]                                         (. call = new SequenceCallExpr(id, range, start.join(lastTokenLoc())); .)
+  sequenceCallExpr<out SequenceCallExpr call>     (. var start = nextTokenLoc();
+                                                     Expr range = null;
+                                                     call = null;
+                                                     IsCallExpr ident = null;
+                                                  .)
+  =
+  identifier<out Identifier id1> (. ident = id1; .)
+  {
+        // X(1)
+        arguments<out CallIndexExpr.Arguments args>
+        (. ident =  new CallIndexExpr(id1, List.of(args), List.of(), start); .)
+    |  // a{0..7}
+        SYM_BRACE_OPEN
+        rangeExpression<out range>
+        SYM_BRACE_CLOSE
+  } (. call = new SequenceCallExpr(ident, range, start.join(lastTokenLoc())); .)
   .
 
   // -- MACROS -------------------------------------------------------------------------------------------------------

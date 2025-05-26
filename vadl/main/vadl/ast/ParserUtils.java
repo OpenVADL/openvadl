@@ -737,15 +737,29 @@ class ParserUtils {
     }
   }
 
-  static List<SequenceCallExpr> expandSequenceCalls(Parser parser, List<SequenceCallExpr> calls) {
-    var expandedCalls = new ArrayList<SequenceCallExpr>(calls.size());
-    for (SequenceCallExpr callExpr : calls) {
-      if (callExpr.range == null) {
-        expandedCalls.add(callExpr);
+  /**
+   * Sequences like {@code a{0..10}} will be expanded to {@code a0, a1 ...}.
+   */
+  static List<ExpandedSequenceCallExpr> expandSequenceCalls(Parser parser,
+                                                            List<SequenceCallExpr> calls) {
+    var expandedCalls = new ArrayList<ExpandedSequenceCallExpr>(calls.size());
+    for (SequenceCallExpr seqExpr : calls) {
+      var targetId = seqExpr.target;
+      if (targetId instanceof Identifier id && seqExpr.range == null) {
+        expandedCalls.add(new ExpandedAliasDefSequenceCallExpr(
+            id,
+            seqExpr.loc));
+      } else if (targetId instanceof CallIndexExpr callIndexExpr
+          && callIndexExpr.argsIndices.size() == 1
+          && callIndexExpr.argsIndices.getFirst().values.size() == 1) {
+        // X(1)
+        expandedCalls.add(new ExpandedSequenceCallExpr(
+            callIndexExpr,
+            seqExpr.loc));
       } else {
         BigInteger start = BigInteger.ZERO;
         BigInteger end = BigInteger.ZERO;
-        if (callExpr.range instanceof RangeExpr rangeExpr) {
+        if (seqExpr.range instanceof RangeExpr rangeExpr) {
           if (rangeExpr.from instanceof IntegerLiteral integerLiteral) {
             start = integerLiteral.number;
           } else {
@@ -758,15 +772,17 @@ class ParserUtils {
             reportError(parser, "Unknown start index type " + rangeExpr.to,
                 rangeExpr.to.location());
           }
-        } else if (callExpr.range instanceof IntegerLiteral integerLiteral) {
+        } else if (seqExpr.range instanceof IntegerLiteral integerLiteral) {
           start = end = integerLiteral.number;
         } else {
-          reportError(parser, "Unknown index type " + callExpr.range, callExpr.range.location());
+          reportError(parser, "Unknown index type " + seqExpr.range, Objects.requireNonNull(
+              seqExpr.range).location());
         }
         for (BigInteger i = start; i.compareTo(end) <= 0; i = i.add(BigInteger.ONE)) {
           expandedCalls.add(
-              new SequenceCallExpr(new Identifier(callExpr.target.name + i, callExpr.loc), null,
-                  callExpr.loc));
+              new ExpandedAliasDefSequenceCallExpr(
+                  new Identifier(((Identifier) targetId).name + i, seqExpr.loc),
+                  seqExpr.loc));
         }
       }
     }

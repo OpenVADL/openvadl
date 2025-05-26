@@ -453,6 +453,18 @@ class MacroExpander
   }
 
   @Override
+  public Expr visit(ExpandedSequenceCallExpr expr) {
+    return new ExpandedSequenceCallExpr(expr.target,
+        expr.loc);
+  }
+
+  @Override
+  public Expr visit(ExpandedAliasDefSequenceCallExpr expr) {
+    return new ExpandedSequenceCallExpr(expr.target,
+        expr.loc);
+  }
+
+  @Override
   public Definition visit(ConstantDefinition definition) {
     var id = expandId(definition.identifier);
     var value = expandExpr(definition.value);
