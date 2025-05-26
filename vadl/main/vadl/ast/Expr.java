@@ -2754,12 +2754,21 @@ class SequenceCallExpr extends Expr {
   }
 }
 
+/**
+ * It is allowed to define shortcuts in {@link SequenceCallExpr}. These shortcuts will be
+ * expanded into {@link ExpandedSequenceCallExpr} and {@link ExpandedAliasDefSequenceCallExpr}.
+ * So {@code a{0..10}} will become {@code a0, a1, ...}. Each entry is then a
+ * {@link ExpandedAliasDefSequenceCallExpr}. However, single entries need to be also represented.
+ * If it is a simple entry like {@code a0} then this will be also to
+ * {@link ExpandedAliasDefSequenceCallExpr} mapped. {@code X(1)} is a {@link CallIndexExpr} and will
+ * be mapped to {@link ExpandedSequenceCallExpr}.
+ */
 sealed class ExpandedSequenceCallExpr extends Expr permits ExpandedAliasDefSequenceCallExpr {
   @Child
   Expr target;
   SourceLocation loc;
 
-ExpandedSequenceCallExpr(Expr target, SourceLocation loc) {
+  ExpandedSequenceCallExpr(Expr target, SourceLocation loc) {
     this.target = target;
     this.loc = loc;
   }

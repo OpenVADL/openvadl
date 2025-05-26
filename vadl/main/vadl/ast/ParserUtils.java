@@ -737,6 +737,9 @@ class ParserUtils {
     }
   }
 
+  /**
+   * Sequences like {@code a{0..10}} will be expanded to {@code a0, a1 ...}.
+   */
   static List<ExpandedSequenceCallExpr> expandSequenceCalls(Parser parser,
                                                             List<SequenceCallExpr> calls) {
     var expandedCalls = new ArrayList<ExpandedSequenceCallExpr>(calls.size());
