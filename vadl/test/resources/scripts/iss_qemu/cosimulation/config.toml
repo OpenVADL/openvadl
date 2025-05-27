@@ -44,7 +44,10 @@ ignore_registers = [
 [[qemu.clients]]
 
 # The executable of the ISS
-exec="qemu-system-riscv64"
+exec = "qemu-system-riscv64"
+
+# "bios" | "kernel": Defines where the test-executable is passed to when starting the QEMU-client
+pass_test_exec_to = "bios"
 
 # Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
 additional_args = [
@@ -55,7 +58,10 @@ additional_args = [
 ]
 
 [[qemu.clients]]
-exec="qemu-system-riscv64"
+exec = "qemu-system-riscv64"
+
+pass_test_exec_to = "bios"
+
 additional_args = [
 	"-nographic",
 ]

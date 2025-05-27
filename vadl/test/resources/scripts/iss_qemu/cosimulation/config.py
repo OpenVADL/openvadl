@@ -51,6 +51,7 @@ class Testing:
 @dataclass
 class Client:
     exec: str
+    pass_test_exec_to: Literal['bios', 'kernel']
     additional_args: list[str]
 
 @dataclass

@@ -445,7 +445,7 @@ def main(config: Config):
 
         executable_path = client_cfg.exec
         plugin_path = f"{config.qemu.plugin},client-id={i},mode={config.testing.protocol.layer}"
-        default_args = ["-bios", config.testing.test_exec, "-plugin", plugin_path]
+        default_args = [f"-{client_cfg.pass_test_exec_to}", config.testing.test_exec, "-plugin", plugin_path]
         args = default_args + client_cfg.additional_args
         logger.info(f"starting client: {" ".join([executable_path, *args])}")
         client = Client(i, shm, shm_struct, sem_server=sem_server, sem_client=sem_client, is_open=True, process=None)
