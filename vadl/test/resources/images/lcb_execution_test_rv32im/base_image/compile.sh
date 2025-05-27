@@ -1,0 +1,1 @@
+/src/llvm-final/build/bin/clang --target=${TARGET} -I/opt/riscv/riscv64-unknown-elf/include -S -O${OPT_LEVEL} -c /src/inputs/$INPUT -o /tmp/main.s && chmod 777 /tmp/main.s && cat /tmp/main.s && sh /work/lcb_wrapper.sh
