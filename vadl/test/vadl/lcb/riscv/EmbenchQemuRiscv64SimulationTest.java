@@ -16,24 +16,35 @@
 
 package vadl.lcb.riscv;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
-import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.TargetName;
-import vadl.lcb.AbstractLcbTest;
+import vadl.lcb.LcbDockerExecutionTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.utils.Pair;
 
-public class EmbenchQemuRiscv64SimulationTest extends AbstractLcbTest {
+public class EmbenchQemuRiscv64SimulationTest extends LcbDockerExecutionTest {
+
+  public String getTarget() {
+    return "rv64im";
+  }
+
+  public String getUpstreamBuildTarget() {
+    return "RISCV";
+  }
+
+  @Override
+  protected String getUpstreamClangTarget() {
+    return "riscv64";
+  }
+
+  @Override
+  protected String getSpikeTarget() {
+    return "rv64gc";
+  }
+
+  @Override
+  protected String getAbi() {
+    return "lp64";
+  }
 
   @Test
   void runO0() throws DuplicatedPassKeyException, IOException {
@@ -46,45 +57,8 @@ public class EmbenchQemuRiscv64SimulationTest extends AbstractLcbTest {
   }
 
   void testEmbench(int optLevel) throws IOException, DuplicatedPassKeyException {
-    var target = "rv64im";
-    var upstreamBuildTarget = "RISCV";
-    var doDebug = false;
-    var configuration = new LcbConfiguration(getConfiguration(false),
-        new TargetName(target));
-
-    runLcb(configuration, "sys/risc-v/rv64im.vadl");
-
-    // Move Dockerfile.riscv32.spike.lcb into Docker Context
-    Files.createDirectories(Path.of(configuration.outputPath() + "/lcb/embench"));
-    {
-      var inputStream = new FileInputStream(
-          "test/resources/images/lcb_execution_test_rv64im/Dockerfile");
-      var outputStream =
-          new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
-      inputStream.transferTo(outputStream);
-      outputStream.close();
-    }
-
-    // Copy embench
-    {
-      var input = new File(
-          "test/resources/embench");
-      var output = new File(configuration.outputPath() + "/lcb/embench");
-      FileUtils.copyDirectory(input, output);
-    }
-
-    var redisCache = getRunningRedisCache();
-    var cachedImage =
-        EmbenchImageProvider.image(redisCache,
-            configuration.outputPath() + "/lcb/Dockerfile",
-            target, upstreamBuildTarget, doDebug);
-
-    runContainerAndCopyInputIntoContainer(cachedImage,
-        List.of(Pair.of(Path.of("../../open-vadl/vadl-test/main/resources/llvm/riscv/spike"),
-            "/src/inputs")),
-        Map.of(
-            "LLVM_PARALLEL_COMPILE_JOBS", "4",
-            "LLVM_PARALLEL_LINK_JOBS", "2"),
-        "sh /src/embench/benchmark-extras/rv64-run-benchmarks-spike-clang-lcb-O" + optLevel + ".sh");
+    var cmd = "sh /src/embench/benchmark-extras/rv64-run-benchmarks-spike-clang-lcb-O" + optLevel
+        + ".sh";
+    run("sys/risc-v/rv64im.vadl", cmd);
   }
 }
