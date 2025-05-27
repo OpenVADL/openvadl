@@ -16,46 +16,45 @@
 
 package vadl.vdt.impl.irregular;
 
-import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.ByteOrder;
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import vadl.AbstractTest;
-import vadl.configuration.GeneralConfiguration;
-import vadl.configuration.IssConfiguration;
-import vadl.pass.PassManager;
-import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.vdt.model.Node;
-import vadl.vdt.passes.VdtLoweringPass;
+import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.target.common.DecisionTreeDecoder;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
+import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
+import vadl.vdt.utils.PatternUtils;
 
 public class VariableLengthRiscTest extends AbstractTest {
 
   private static final Logger log = LoggerFactory.getLogger(VariableLengthRiscTest.class);
 
   @Test
-  void testGenerateVDT() throws IOException, DuplicatedPassKeyException {
+  void testGenerateVDT() {
 
     /* GIVEN */
 
-    var config = new GeneralConfiguration(Path.of("build/test-output"), true);
     var spec = runAndGetViamSpecification("sys/v-risc/VarRisc.vadl");
 
-    var passManager = new PassManager();
-    passManager.add(new VdtLoweringPass(new IssConfiguration(config)));
+    Assertions.assertTrue(spec.isa().isPresent());
+    var insns = spec.isa().get().ownInstructions()
+        .stream()
+        .map(i -> {
+          BitPattern pattern = PatternUtils.toFixedBitPattern(i, ByteOrder.LITTLE_ENDIAN);
+          return new DecodeEntry(i, pattern.width(), pattern, Set.of());
+        })
+        .toList();
 
     /* WHEN */
-    passManager.run(spec);
+    var decodeTree = new IrregularDecodeTreeGenerator().generate(insns);
 
     /* THEN */
-
-    var result = passManager.getPassResults();
-    var decodeTree = result.lastResultOf(VdtLoweringPass.class, Node.class);
 
     Assertions.assertNotNull(decodeTree);
 

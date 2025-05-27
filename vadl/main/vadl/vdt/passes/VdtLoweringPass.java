@@ -24,7 +24,6 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
 import vadl.vdt.model.Node;
@@ -78,13 +77,10 @@ public class VdtLoweringPass extends Pass {
       return null;
     }
 
-    if (isa.simpleName().equals("A64")) {
-      // TODO: Switch to the irregular tree generator, once we support encoding constraints
-      return new RegularDecodeTreeGenerator()
-          .generate(insns.stream()
-              .map(Instruction.class::cast).toList());
-    }
-
-    return new IrregularDecodeTreeGenerator().generate(insns);
+    // For now, we keep using the regular decode tree generator, since new one does not natively
+    // support the fallback nodes of subsumed instructions (without encoding constraints).
+    return new RegularDecodeTreeGenerator()
+        .generate(insns.stream()
+            .map(Instruction.class::cast).toList());
   }
 }
