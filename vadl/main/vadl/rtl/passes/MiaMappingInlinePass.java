@@ -34,22 +34,27 @@ import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.SubgraphUtils;
 import vadl.utils.GraphUtils;
 import vadl.utils.Pair;
+import vadl.viam.Definition;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 import vadl.viam.Stage;
-import vadl.viam.StageOutput;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.NodeList;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.ReadStageOutputNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.SideEffectNode;
-import vadl.viam.graph.dependency.WriteStageOutputNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Inline nodes from the instruction progress graph into the MiA description based on the
  * MiA mapping. This adds the instruction progress graph nodes in the stage behaviors.
  */
 public class MiaMappingInlinePass extends Pass {
+
+  public static class Result extends HashMap<Node, Node> {
+  }
 
   public MiaMappingInlinePass(GeneralConfiguration configuration) {
     super(configuration);
@@ -78,7 +83,8 @@ public class MiaMappingInlinePass extends Pass {
       return null;
     }
 
-    var map = new HashMap<Pair<Node, Stage>, StageOutput>();
+    var map = new HashMap<Pair<Node, Stage>, RegisterTensor>();
+    var inlineMap = new Result();
 
     for (Stage stage : stages) {
       var stageContexts = mapping.stageContexts(stage).toList();
@@ -92,7 +98,7 @@ public class MiaMappingInlinePass extends Pass {
           (originalFrom, originalTo, copyFrom) -> {
             if (originalTo instanceof ExpressionNode originalExpr) {
               var output = resolveStageOutput(originalExpr, stage.prev(), map);
-              return new ReadStageOutputNode(output);
+              return new ReadRegTensorNode(output, new NodeList<>(), output.resultType(), null);
             }
             return null;
           },
@@ -103,7 +109,7 @@ public class MiaMappingInlinePass extends Pass {
             if (originalFrom instanceof ExpressionNode originalExpr
                 && copyFrom instanceof ExpressionNode copyExpr) {
               var output = outputFor(originalExpr, stage, map);
-              return new WriteStageOutputNode(output, copyExpr);
+              return new WriteRegTensorNode(output, new NodeList<>(), copyExpr, null, null);
             }
             return null;
           });
@@ -125,13 +131,15 @@ public class MiaMappingInlinePass extends Pass {
           }
         }
       }
+
+      inlineMap.putAll(copyMap);
     }
 
-    return null;
+    return inlineMap;
   }
 
-  private StageOutput resolveStageOutput(ExpressionNode node, @Nullable Stage stage,
-                                         Map<Pair<Node, Stage>, StageOutput> map) {
+  private RegisterTensor resolveStageOutput(ExpressionNode node, @Nullable Stage stage,
+                                         Map<Pair<Node, Stage>, RegisterTensor> map) {
     if (stage == null) {
       throw new ViamGraphError("Can not find output of previous stage for node")
           .addContext(node);
@@ -149,15 +157,15 @@ public class MiaMappingInlinePass extends Pass {
     // create new output and pass it through from previous stage
     // by introducing a read and write node
     var output = outputFor(node, stage, map);
-    var read = new ReadStageOutputNode(inPrev);
-    var write = new WriteStageOutputNode(output, read);
+    var read = new ReadRegTensorNode(inPrev, new NodeList<>(), inPrev.resultType(), null);
+    var write = new WriteRegTensorNode(output, new NodeList<>(), read, null, null);
     stage.behavior().addWithInputs(write);
 
     return output;
   }
 
-  private StageOutput outputFor(ExpressionNode node, Stage stage,
-                                Map<Pair<Node, Stage>, StageOutput> map) {
+  private RegisterTensor outputFor(ExpressionNode node, Stage stage,
+                                   Map<Pair<Node, Stage>, RegisterTensor> map) {
     // get existing output
     var existing = map.get(Pair.of(node, stage));
     if (existing != null) {
@@ -165,20 +173,21 @@ public class MiaMappingInlinePass extends Pass {
     }
 
     // else create new output
-    var output = new StageOutput(
-        stage.identifier.append(nameFor(node)),
-        node.type()
+    var output = RegisterTensor.of(
+        stage.identifier.append(nameFor(stage, node)), node.type().asDataType().bitWidth()
     );
-    stage.addOutput(output);
+    stage.addRegister(output);
     map.put(Pair.of(node, stage), output);
 
     return output;
   }
 
-  private String nameFor(Node node) {
+  private String nameFor(Stage stage, Node node) {
     var fallback = "n" + node.id.numericId();
+    var existing = stage.registers().stream().map(Definition::simpleName)
+        .collect(Collectors.toSet());
     if (node.ensureGraph() instanceof InstructionProgressGraph ipg) {
-      return ipg.getContext(node).shortestNameHint().orElse(fallback);
+      return ipg.getContext(node).shortestNameHint(existing, 30).orElse(fallback);
     }
     return fallback;
   }

@@ -27,10 +27,12 @@ import vadl.viam.graph.dependency.ProcCallNode;
 import vadl.viam.graph.dependency.ReadArtificialResNode;
 import vadl.viam.graph.dependency.ReadMemNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadSignalNode;
 import vadl.viam.graph.dependency.ReadStageOutputNode;
 import vadl.viam.graph.dependency.WriteArtificialResNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
+import vadl.viam.graph.dependency.WriteSignalNode;
 import vadl.viam.graph.dependency.WriteStageOutputNode;
 
 /**
@@ -44,12 +46,12 @@ public interface CInvalidMixins {
   @SuppressWarnings("MissingJavadocType")
   interface SideEffect
       extends WriteRegTensor, WriteMem, WriteArtificialRes, ProcCall,
-      WriteStageOutput {
+      WriteStageOutput, WriteSignal {
 
   }
 
   @SuppressWarnings("MissingJavadocType")
-  interface HardwareRelated extends ReadStageOutput, WriteStageOutput {
+  interface HardwareRelated extends ReadStageOutput, WriteStageOutput, ReadSignal, WriteSignal {
   }
 
   @SuppressWarnings("MissingJavadocType")
@@ -148,6 +150,22 @@ public interface CInvalidMixins {
   interface ReadStageOutput {
     @Handler
     default void handle(CGenContext<Node> ctx, ReadStageOutputNode node) {
+      throwNotAllowed(node, "Read stage output");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface WriteSignal {
+    @Handler
+    default void handle(CGenContext<Node> ctx, WriteSignalNode node) {
+      throwNotAllowed(node, "Read stage output");
+    }
+  }
+
+  @SuppressWarnings("MissingJavadocType")
+  interface ReadSignal {
+    @Handler
+    default void handle(CGenContext<Node> ctx, ReadSignalNode node) {
       throwNotAllowed(node, "Read stage output");
     }
   }
