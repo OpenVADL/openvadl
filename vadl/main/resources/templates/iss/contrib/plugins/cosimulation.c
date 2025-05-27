@@ -1,3 +1,19 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 // References:
 // other plugins:
 // https://gitlab.com/qemu-project/qemu/-/blob/master/contrib/plugins
@@ -44,7 +60,7 @@ static qemu_plugin_id_t plugin_id;
 
 #define PLUGIN_ASSERT(cond, format, ...)                                       \
   do {                                                                         \
-    if (!(cond)) {                                                                \
+    if (!(cond)) {                                                             \
       PLUGIN_PRINTLN("Invalid plugin state: %s :: " format, #cond,             \
                      ##__VA_ARGS__);                                           \
       exit(EXIT_FAILURE);                                                      \
@@ -274,9 +290,11 @@ static TBInsnInfo get_tbinsn_info(struct qemu_plugin_insn *insn) {
   insn_info.data.size = qemu_plugin_insn_size(insn);
   PLUGIN_ASSERT(insn_info.data.size <= MAX_INSN_DATA_SIZE,
                 "Some instruction-data had a larger size than configured in "
-                "MAX_INSN_DATA_SIZE: %lu > %d", insn_info.data.size, MAX_INSN_DATA_SIZE);
+                "MAX_INSN_DATA_SIZE: %lu > %d",
+                insn_info.data.size, MAX_INSN_DATA_SIZE);
 
-  qemu_plugin_insn_data(insn, &insn_info.data.buffer, sizeof(insn_info.data.buffer));
+  qemu_plugin_insn_data(insn, &insn_info.data.buffer,
+                        sizeof(insn_info.data.buffer));
 
   return insn_info;
 }
@@ -289,7 +307,9 @@ static TBInfo get_tb_info(struct qemu_plugin_tb *tb) {
   tbinfo.pc = pc;
   tbinfo.insns = insns;
 
-  PLUGIN_ASSERT(insns <= TBINSNINFO_ENTRIES, "Too many instructions in a single translation-block: %lu > %d", insns, TBINSNINFO_ENTRIES);
+  PLUGIN_ASSERT(insns <= TBINSNINFO_ENTRIES,
+                "Too many instructions in a single translation-block: %lu > %d",
+                insns, TBINSNINFO_ENTRIES);
   for (int i = 0; i < insns; i++) {
     struct qemu_plugin_insn *insn = qemu_plugin_tb_get_insn(tb, i);
     tbinfo.insns_info[i] = get_tbinsn_info(insn);
@@ -353,7 +373,10 @@ static void vcpu_init(qemu_plugin_id_t id, unsigned int vcpu_index) {
 
   CPU *c = get_cpu(vcpu_index);
   c->registers = registers_init(vcpu_index);
-  PLUGIN_ASSERT(c->registers->len <= MAX_CPU_REGISTERS, "Running on a CPU with more than %d registers: register-count: %d", MAX_CPU_REGISTERS, c->registers->len);
+  PLUGIN_ASSERT(
+      c->registers->len <= MAX_CPU_REGISTERS,
+      "Running on a CPU with more than %d registers: register-count: %d",
+      MAX_CPU_REGISTERS, c->registers->len);
 }
 
 static void vcpu_exit(qemu_plugin_id_t id, unsigned int vcpu_index) {
