@@ -16,6 +16,7 @@
 
 package vadl.lcb.riscv.riscv64;
 
+import java.util.stream.Stream;
 import vadl.lcb.riscv.QemuRiscvSimulationTest;
 
 public class QemuRiscv64SimulationTest extends QemuRiscvSimulationTest {
@@ -37,6 +38,17 @@ public class QemuRiscv64SimulationTest extends QemuRiscvSimulationTest {
   @Override
   protected String getAbi() {
     return "lp64";
+  }
+
+  @Override
+  protected Stream<String> inputFilesFromCFile() {
+    // Read the base tests + the tests under rv64im
+    // The tests copy all the tests into the container, but we do need to update
+    // the file name so it points to correct subdirectory, since every file is only executed
+    // per container, and it is controlled over the "INPUT" environment variable.
+    return Stream.concat(super.inputFilesFromCFile(),
+        readFiles(TEST_RESOURCES_LLVM_RISCV_SPIKE + "/" + getTarget())
+            .map(x -> getTarget() + "/" + x));
   }
 
   @Override

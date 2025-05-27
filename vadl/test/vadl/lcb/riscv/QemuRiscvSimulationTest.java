@@ -36,6 +36,9 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
 public abstract class QemuRiscvSimulationTest extends AbstractLcbTest {
+
+  protected static final String TEST_RESOURCES_LLVM_RISCV_SPIKE = "test/resources/llvm/riscv/spike";
+
   protected abstract String getTarget();
 
   protected abstract String getUpstreamBuildTarget();
@@ -48,9 +51,13 @@ public abstract class QemuRiscvSimulationTest extends AbstractLcbTest {
 
   protected abstract String getAbi();
 
-  private static Stream<String> inputFilesFromCFile() {
+  protected Stream<String> inputFilesFromCFile() {
+    return readFiles(TEST_RESOURCES_LLVM_RISCV_SPIKE);
+  }
+
+  protected Stream<String> readFiles(String pathName) {
     return Arrays.stream(
-            Objects.requireNonNull(new File("test/resources/llvm/riscv/spike")
+            Objects.requireNonNull(new File(pathName)
                 .listFiles()))
         .filter(File::isFile)
         .map(File::getName);
