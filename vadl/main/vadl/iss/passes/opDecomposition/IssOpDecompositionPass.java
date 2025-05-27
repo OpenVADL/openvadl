@@ -39,9 +39,8 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.DataType;
 import vadl.types.Type;
-import vadl.utils.ViamUtils;
 import vadl.viam.Constant;
-import vadl.viam.DefProp;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -88,8 +87,7 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var largeOperationErrors = new ArrayList<Diagnostic>();
-    ViamUtils.findDefinitionsByFilter(viam, d -> d instanceof DefProp.WithBehavior)
-        .stream().flatMap(d -> ((DefProp.WithBehavior) d).behaviors().stream())
+    viam.isa().get().ownInstructions().stream().map(Instruction::behavior)
         .forEach(behavior -> {
           new OpDecomposer(behavior, configuration().targetSize())
               .decompose();

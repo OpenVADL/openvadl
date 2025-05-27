@@ -60,11 +60,18 @@ public class Inliner {
         .filter(funcCallNode -> !(funcCallNode.function() instanceof Relocation))
         .toList();
 
+    if (functionCalls.isEmpty()) {
+      return;
+    }
+
     functionCalls.forEach(functionCall -> {
       // replace the function call by a copy of the return value of the function
       functionCall.replaceAndDelete(
           inline(functionCall.function(), functionCall.arguments()));
     });
+
+    // do it again until there are no more function calls
+    inlineFuncs(behavior);
   }
 
 

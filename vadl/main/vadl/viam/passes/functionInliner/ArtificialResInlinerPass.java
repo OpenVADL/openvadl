@@ -74,7 +74,7 @@ public class ArtificialResInlinerPass extends Pass {
         .toList()
         .forEach(node -> {
           node.replaceAndDelete(
-              FunctionInlinerPass.inline(node.resourceDefinition().readFunction(), node.indices()));
+              Inliner.inline(node.resourceDefinition().readFunction(), node.indices()));
         });
   }
 

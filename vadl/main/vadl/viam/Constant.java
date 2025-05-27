@@ -635,7 +635,12 @@ public abstract class Constant {
      * The resulting type is the same as this type, the result is truncated on overflow.
      */
     public Constant.Value lsr(Constant.Value other) {
-      var shift = other.modulo(of(type().bitWidth(), other.type()), false);
+      var shift = other;
+      var valWidth = BigInteger.valueOf(type().bitWidth());
+      if (shift.value.compareTo(valWidth) >= 0) {
+        // if shift value is greather equal the value width, we must take the modulo
+        shift = other.modulo(of(type().bitWidth(), other.type()), false);
+      }
       var newValue = value
           .shiftRight(shift.intValue());
       return fromTwosComplement(newValue, type());
