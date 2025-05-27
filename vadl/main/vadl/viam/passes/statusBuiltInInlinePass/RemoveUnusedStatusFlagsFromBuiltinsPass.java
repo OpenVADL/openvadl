@@ -26,6 +26,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BuiltInTable;
+import vadl.utils.GraphUtils;
 import vadl.utils.VadlBuiltInStatusOnlyDispatcher;
 import vadl.utils.ViamUtils;
 import vadl.viam.DefProp;
@@ -103,7 +104,8 @@ class ResultInliner implements VadlBuiltInStatusOnlyDispatcher<BuiltInCall> {
   void inlineDefaultCarry(BuiltInCall input, BuiltInTable.BuiltIn equivalent) {
     var newNode = equivalent.call(equivalent.call(input.arguments().get(0),
             input.arguments().get(1)),
-        input.arguments().get(2));
+        GraphUtils.zeroExtend(input.arguments().get(2),
+            input.arguments().get(0).type().asDataType()));
     input.replaceAndDelete(newNode);
   }
 
