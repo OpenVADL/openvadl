@@ -19,6 +19,7 @@ package vadl.gcb.passes;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -105,7 +106,7 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
    * referenced by at least one {@link FieldRefNode}.
    */
   private List<FieldRefNode> getImmediatesWithoutFieldAccessFunction(Graph behavior,
-                                                                     HashSet<FieldRefNode> registerIndices) {
+                                                                     Set<FieldRefNode> registerIndices) {
     var fieldRefNodesInFieldAccessFunctions = behavior.getNodes(FieldAccessRefNode.class)
         .flatMap(fieldAccessRefNode -> fieldAccessRefNode.fieldAccess().fieldRefs().stream())
         .collect(Collectors.toSet());

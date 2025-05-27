@@ -30,8 +30,8 @@ application binary interface ABI for AArch64Temp = {
    pointer align = 64
 
 
-   alias register A_SP = X(31)
-   alias register A_LR = X(30)
+   alias register A_SP = S(31)
+   alias register A_LR = S(30)
    alias register A_FP = X(29)
 
    alias register X0 = X(0)

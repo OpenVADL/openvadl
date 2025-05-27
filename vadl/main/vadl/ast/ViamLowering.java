@@ -98,6 +98,9 @@ import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.passes.canonicalization.Canonicalizer;
+import vadl.viam.passes.functionInliner.Inliner;
 
 /**
  * The lowering that converts the AST to the VIAM.
@@ -1608,9 +1611,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
                       + identifier.name,
                   callExpr.location));
 
+      var index = constantEvaluator.eval(callExpr.argsIndices.get(0).values.get(0));
       if (resource instanceof RegisterTensor registerTensor) {
-        var index = constantEvaluator.eval(callExpr.argsIndices.get(0).values.get(0));
         return Pair.of(registerTensor, index.value().intValueExact());
+      } else if (resource instanceof ArtificialResource artificialResource) {
+        return getRegisterTensorFromArtificialResource(artificialResource, index);
       }
     } else if (expr instanceof Identifier identifier
         && identifier.target != null) {
@@ -1623,17 +1628,43 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
                       + identifier.name,
                   identifier.loc));
 
-      // Extracting the constant index from the graph.
-      var registerTensor = (RegisterTensor) alias.innerResourceRef();
-      var constantNode = alias.readFunction().behavior().getNodes(ConstantNode.class).findFirst()
-          .orElseThrow(
-              () -> error("Need a constant to lower alias into register",
-                  alias.location()).build());
-
-      return Pair.of(registerTensor, constantNode.constant().asVal().intValue());
+      return getRegisterTensorFromArtificialResource(alias);
     }
     throw error("This expression is not register file", expr.location())
         .build();
+  }
+
+  /**
+   * We want to lower {@link AliasDefinition} to registers, therefore we want to remap aliases to
+   * registers. This method takes an {@link ArtificialResource} and applies the {@code indices} to
+   * the function. It returns then the underlying {@link RegisterTensor} with the index.
+   */
+  private static Pair<RegisterTensor, Integer> getRegisterTensorFromArtificialResource(
+      ArtificialResource alias,
+      ConstantValue... indices) {
+    // We have an alias "alias register A_SP = S(31)"
+    // The S register file would be an artificial resource then we need to apply the "index"
+    // to read function to register file.
+    var readFunction = alias.readFunction();
+    var expression =
+        Inliner.inline(readFunction,
+            new NodeList<>(Arrays.stream(indices).map(x -> x.toViamConstant().toNode()).toList()));
+    expression = new Graph(readFunction.simpleName()).addWithInputs(expression);
+    var canonicalized = Canonicalizer.canonicalizeSubGraph(expression);
+    var registerTensor = (RegisterTensor) alias.innerResourceRef();
+
+    if (canonicalized instanceof ReadRegTensorNode readRegTensorNode) {
+      var registerIndex =
+          ((ConstantNode) readRegTensorNode.indices().get(0)).constant().asVal().intValue();
+      return Pair.of(registerTensor, registerIndex);
+    } else if (canonicalized instanceof ConstantNode constantNode) {
+      throw error(
+          "The index of the alias is hardwired to a constant value and it is therefore "
+              + "not a register.",
+          alias.location()).build();
+    } else {
+      throw error("The index of the alias is not correct.", alias.location()).build();
+    }
   }
 
   /**
