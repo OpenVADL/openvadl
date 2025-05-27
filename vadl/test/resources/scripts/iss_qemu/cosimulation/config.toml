@@ -57,6 +57,12 @@ additional_args = [
 	# "-S",
 ]
 
+# The following three options configure which instructions from the `test_exec` executable should actually be tested.
+# NOTE: Only applies to `layer = "insn" | "tb-strict"`
+# NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
+# Skips the first n instructions 
+skip_n_instructions = 100
+
 [[qemu.clients]]
 exec = "qemu-system-riscv64"
 
@@ -65,6 +71,8 @@ pass_test_exec_to = "bios"
 additional_args = [
 	"-nographic",
 ]
+
+skip_n_instructions = 50
 
 # Defines a custom map where the key (e.g. x0) is mapped to another value (e.g. zero)
 [qemu.gdb_reg_map]
@@ -138,11 +146,6 @@ layer = "insn"
 # 			  This means that the test will exit on the first divergence (or at the end if no diffs where found) 
 # Currently, this is the only implemented mode.
 mode = "lockstep" 
-
-# The following three options configure which instructions from the `test_exec` executable should actually be tested.
-# NOTE: Only applies to `layer = "insn"`
-# Skips the first n instructions 
-skip_n_instructions = 0
 
 # Execute all remaining instructions (overrides `stop_after_n_instructions` if set to true)
 execute_all_remaining_instructions = true

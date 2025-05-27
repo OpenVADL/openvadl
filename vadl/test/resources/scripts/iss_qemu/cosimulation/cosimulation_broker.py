@@ -388,7 +388,24 @@ def run_lockstep(config: Config, traces: deque[list[dict[str, Any]]]) -> Report:
             return []
 
 
-    skip = config.testing.protocol.skip_n_instructions
+    skip_per_client = [client.skip_n_instructions for client in config.qemu.clients]
+
+    # Skip first n instructions per client
+    while any(map(lambda c: c.is_open, clients)):
+        for i, client in enumerate(clients):
+            if client.is_open and skip_per_client[i] > 0:
+                skip_per_client[i] -= 1
+                try:
+                    client.sem_client.release()
+
+                    # wait at most 0.1 second
+                    # if a client already closes in this phase then simple mark it as closed
+                    # since, in case the client closed / crashed prematurely, this will be found when checking the client's state
+                    client.sem_server.acquire(0.1)
+                except ipc.BusyError:
+                    logger.debug(f"BusyError: noticed that client #{client.id} shutdown. marking as closed")
+                    client.is_open = False
+
     execute_remaining = config.testing.protocol.execute_all_remaining_instructions
     stop_after = config.testing.protocol.stop_after_n_instructions
 
@@ -408,12 +425,8 @@ def run_lockstep(config: Config, traces: deque[list[dict[str, Any]]]) -> Report:
                     # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
                     client.sem_server.acquire(0.1)
                 except ipc.BusyError:
-                    logger.debug(f"run_lockstep: BusyError: noticed that client #{client.id} shutdown. marking as closed")
+                    logger.debug(f"BusyError: noticed that client #{client.id} shutdown. marking as closed")
                     client.is_open = False
-
-        if skip > 0:
-            skip -= 1 
-            continue
 
         if not execute_remaining:
             if stop_after > 0:
@@ -533,7 +546,7 @@ if __name__ == '__main__':
         filemode = "w" if config.logging.clear_on_rerun else "a"
         filename = os.path.join(config.logging.dir, config.logging.file)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        logging.basicConfig(filename=filename, filemode=filemode, level=config.logging.level)
+        logging.basicConfig(filename=filename, filemode=filemode, level=config.logging.level, format='[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s')
     else:
         logging.disable()
 

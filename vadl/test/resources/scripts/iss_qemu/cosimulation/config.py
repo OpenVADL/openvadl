@@ -39,7 +39,6 @@ class Protocol:
     layer: Literal["tb", "insn"]
     execute_all_remaining_instructions: bool
     stop_after_n_instructions: int
-    skip_n_instructions: int = 0
     out: Out = field(default_factory=Out)
 
 @dataclass
@@ -53,6 +52,7 @@ class Client:
     exec: str
     pass_test_exec_to: Literal['bios', 'kernel']
     additional_args: list[str]
+    skip_n_instructions: int = 0
 
 @dataclass
 class Qemu:
