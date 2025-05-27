@@ -37,6 +37,7 @@ instruction set architecture AArch64Base = {
   using Bits12   = Bits<12>           // 12 bit type
   using Bits13   = Bits<13>           // 13 bit type
   using Bits14   = Bits<14>           // 14 bit type
+  using Bits15   = Bits<15>           // 15 bit type
   using Bits16   = Bits<16>           // 16 bit type
   using Bits19   = Bits<19>           // 19 bit type
   using Bits21   = Bits<21>           // 21 bit type
@@ -796,10 +797,10 @@ instruction set architecture AArch64Base = {
     , leftXSize  = -1 as Bits6 - imms
     , rightWSize = immr as Bits5 - imms as Bits5 - 1
     , rightXSize = immr - imms - 1
-    //, imms <- (-1 as Bits5 - leftWSize) as Bits6
-    //, imms <-  -1 as Bits6 - leftXSize
-    //, immr <- (rightWSize  - leftWSize) as Bits6
-    //, immr <-  rightXSize  - leftXSize
+    //, imms := (-1 as Bits5 - leftWSize) as Bits6
+    //, imms :=  -1 as Bits6 - leftXSize
+    //, immr := (rightWSize  - leftWSize) as Bits6
+    //, immr :=  rightXSize  - leftXSize
     // true
     }
 
@@ -1514,9 +1515,10 @@ instruction set architecture AArch64Base = {
     }
 
   format MoveSystemRegFormat: Instr =        // move system register format
-    { op        : Bits11                     // [31..21] opcode
-    , rs        : Bits16                     // [20..5]  system register code
+    { op        : Bits12                     // [31..20] opcode
+    , rs        : Bits15                     // [20..5]  system register code without leading one
     , rt        : Index                      // [4..0]   source/target register
+    , sysreg    = (true, rs)
     }
 
   format SuperVisorCallFormat: Instr =       // supervisor call format
@@ -1549,11 +1551,11 @@ instruction set architecture AArch64Base = {
 
   model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
     instruction $i.id: MoveSystemRegFormat =
-      if rs = SysRegEncode::NZCV
+      if sysreg = SysRegEncode::NZCV
         then X(rt) := NZCV as BitsX << 26
         else if CurrentEL = 0
         then raise $UndefinedException ()
-        else match rs with
+        else match sysreg with
           { SysRegEncode::CurrentEL => X(rt) := CurrentEL as BitsX << 2
           , SysRegEncode::SPSel     => X(rt) := SPSel as BitsX
           , SysRegEncode::ESR_EL1   => X(rt) := ESR_EL1
@@ -1572,16 +1574,16 @@ instruction set architecture AArch64Base = {
           , _                       => raise $UndefinedException ()
           }
     encoding $i.id = {op = $i.opcode}
-    assembly $i.id = ($i.mnemo, ' ', XSize(rt), ', ', SysRegName(rs))
+    assembly $i.id = ($i.mnemo, ' ', XSize(rt), ', ', SysRegName(sysreg))
     }
 
   model MsrRegInstr (i: InstrNoFunct): IsaDefs = {
     instruction $i.id: MoveSystemRegFormat =
-      if rs = SysRegEncode::NZCV
+      if sysreg = SysRegEncode::NZCV
         then NZCV := X(rt)(31..28)
         else if CurrentEL = 0
         then raise $UndefinedException ()
-        else match rs with
+        else match sysreg with
           { SysRegEncode::CurrentEL => raise $UndefinedException ()
           , SysRegEncode::SPSR_EL1  => SPSR_EL1 := X(rt)
           , SysRegEncode::ESR_EL1   => ESR_EL1 := X(rt)
@@ -1598,15 +1600,24 @@ instruction set architecture AArch64Base = {
           , _                     => raise $UndefinedException ()
           }
     encoding $i.id = {op = $i.opcode}
-    assembly $i.id = ($i.mnemo, ' ', SysRegName(rs), ', ', XSize(rt))
+    assembly $i.id = ($i.mnemo, ' ', SysRegName(sysreg), ', ', XSize(rt))
+    }
+
+  model ExceptionCallEncAsm (i: InstrWithFunct): IsaDefs = {
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo, ' #', decimal(imm16))
     }
 
   model ExceptionCallInstr (i: InstrWithFunct): IsaDefs = {
     instruction $i.id: SuperVisorCallFormat = {
       raise GeneralException (ExceptionClass::$i.funct, 0, PC.next, 0)
       }
-    encoding $i.id = {op = $i.opcode}
-    assembly $i.id = ($i.mnemo, ' #', decimal(imm16))
+    $ExceptionCallEncAsm ($i)
+    }
+
+  model HaltInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: SuperVisorCallFormat = {}
+    $ExceptionCallEncAsm ($i)
     }
 
   model ExceptionReturnInstr (i: InstrNoFunct): IsaDefs = {
@@ -1619,7 +1630,7 @@ instruction set architecture AArch64Base = {
 
   model NopInstr (i: InstrNoFunct): IsaDefs = {
     instruction $i.id: UndefinedInstrFormat = {}
-    encoding $i.id = {op = $i.opcode, imm16 = 0b0010'0000'0001'1111}
+    encoding $i.id = {op = 0b1101'0101'0000'0011, imm16 = $i.opcode}
     assembly $i.id = ($i.mnemo)
     }
 
@@ -1630,12 +1641,14 @@ instruction set architecture AArch64Base = {
     assembly $i.id = ($i.mnemo)
     }
 
-  $MsrRegInstr           ((MSR    ; "msr"   ; 0b1101'0101'000                              ))
-  $MrsRegInstr           ((MRS    ; "mrs"   ; 0b1101'0101'001                              ))
-  $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SupervisorCall     ))
-  $ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SoftwareBreakpoint ))
+  $MsrRegInstr           ((MSR    ; "msr"   ; 0b1101'0101'0001                             ))
+  $MrsRegInstr           ((MRS    ; "mrs"   ; 0b1101'0101'0011                             ))
+  $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SoftwareBreakpoint ))
+  $ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SupervisorCall     ))
   $ExceptionReturnInstr  ((ERET   ; "eret"  ; 0b1101'0110'1001'1111                        ))
-  $NopInstr              ((NOP    ; "nop"   ; 0b1101'0101'0000'0011                        ))
+  $HaltInstr             ((HLT    ; "hlt"   ; 0b1101'0100'0100'0000                        ))
+  $NopInstr              ((NOP    ; "nop"   ; 0b0010'0000'0001'1111                        ))
+  $NopInstr              ((YIELD  ; "yield" ; 0b0010'0000'0011'1111                        ))
   $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
 
 }
