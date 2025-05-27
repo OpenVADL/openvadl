@@ -17,18 +17,24 @@
 package vadl.viam;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
+import java.util.Collections;
+import java.util.List;
+import vadl.viam.graph.Graph;
 
 /**
  * Logic definition in MiA description.
  */
-public abstract class Logic extends Definition {
+public abstract class Logic extends Definition implements DefProp.WithBehavior {
 
   @LazyInit
   @SuppressWarnings("unused")
   private MicroArchitecture mia;
 
+  private Graph behavior;
+
   public Logic(Identifier identifier) {
     super(identifier);
+    this.behavior = new Graph(identifier.simpleName());
   }
 
   public void setMia(MicroArchitecture mia) {
@@ -43,6 +49,26 @@ public abstract class Logic extends Definition {
   @Override
   public String toString() {
     return identifier.simpleName() + ": " + getClass().getSimpleName();
+  }
+
+  public Graph behavior() {
+    return behavior;
+  }
+
+  @Override
+  public List<Graph> behaviors() {
+    return Collections.singletonList(behavior);
+  }
+
+  /**
+   * Logic definition for control logic (created by MiA synthesis).
+   */
+  public static class Control extends Logic {
+
+    public Control(Identifier identifier) {
+      super(identifier);
+    }
+
   }
 
   /**

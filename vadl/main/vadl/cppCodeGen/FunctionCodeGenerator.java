@@ -47,7 +47,9 @@ import vadl.viam.graph.dependency.SliceNode;
     include = "vadl.viam"
 )
 public abstract class FunctionCodeGenerator extends AbstractFunctionCodeGenerator
-    implements CDefaultMixins.AllExpressions, CDefaultMixins.Utils, CInvalidMixins.ReadStageOutput {
+    implements CDefaultMixins.AllExpressions, CDefaultMixins.Utils, CInvalidMixins.ReadStageOutput,
+    CInvalidMixins.ReadSignal {
+
   protected final CNodeContext context;
 
   /**
