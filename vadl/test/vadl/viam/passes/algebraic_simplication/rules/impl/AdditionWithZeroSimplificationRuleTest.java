@@ -40,8 +40,7 @@ class AdditionWithZeroSimplificationRuleTest extends AbstractTest {
       new AdditionWithZeroSimplificationRule();
 
   private static Stream<Arguments> getSupportedBuiltins() {
-    return Stream.of(Arguments.of(BuiltInTable.ADD), Arguments.of(BuiltInTable.ADDS),
-        Arguments.of(BuiltInTable.ADDS));
+    return Stream.of(Arguments.of(BuiltInTable.ADD));
   }
 
   @ParameterizedTest

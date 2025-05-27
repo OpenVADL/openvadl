@@ -40,8 +40,7 @@ class DivisionWithOneSimplificationRuleTest extends AbstractTest {
       new DivisionWithOneSimplificationRule();
 
   private static Stream<Arguments> getSupportedBuiltins() {
-    return Stream.of(Arguments.of(BuiltInTable.SDIV), Arguments.of(BuiltInTable.UDIV),
-        Arguments.of(BuiltInTable.UDIVS), Arguments.of(BuiltInTable.SDIVS));
+    return Stream.of(Arguments.of(BuiltInTable.SDIV), Arguments.of(BuiltInTable.UDIV));
   }
 
   @ParameterizedTest

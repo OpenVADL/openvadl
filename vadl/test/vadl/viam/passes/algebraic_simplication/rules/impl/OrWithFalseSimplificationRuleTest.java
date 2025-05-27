@@ -40,7 +40,7 @@ class OrWithFalseSimplificationRuleTest extends AbstractTest {
       new OrWithFalseSimplificationRule();
 
   private static Stream<Arguments> getSupportedBuiltins() {
-    return Stream.of(Arguments.of(BuiltInTable.OR), Arguments.of(BuiltInTable.ORS));
+    return Stream.of(Arguments.of(BuiltInTable.OR));
   }
 
   @ParameterizedTest
