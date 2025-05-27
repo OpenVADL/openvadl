@@ -256,8 +256,10 @@ public class PassOrders {
     order.add(new EmitVadlBuiltinHeaderFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
     order.add(new EmitClangTargetHeaderFilePass(configuration));
-    order.add(new vadl.lcb.template.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));
-    order.add(new vadl.lcb.template.clang.lib.Basic.Targets.EmitClangTargetCppFilePass(configuration));
+    order.add(
+        new vadl.lcb.template.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));
+    order.add(
+        new vadl.lcb.template.clang.lib.Basic.Targets.EmitClangTargetCppFilePass(configuration));
     order.add(new vadl.lcb.template.clang.lib.Basic.EmitClangBasicCMakeFilePass(configuration));
     order.add(
         new vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenModuleCMakeFilePass(configuration));
