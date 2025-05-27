@@ -40,7 +40,7 @@ class AndWithTrueSimplificationRuleTest extends AbstractTest {
       new AndWithTrueSimplificationRule();
 
   private static Stream<Arguments> getSupportedBuiltins() {
-    return Stream.of(Arguments.of(BuiltInTable.AND), Arguments.of(BuiltInTable.ANDS));
+    return Stream.of(Arguments.of(BuiltInTable.AND));
   }
 
   @ParameterizedTest

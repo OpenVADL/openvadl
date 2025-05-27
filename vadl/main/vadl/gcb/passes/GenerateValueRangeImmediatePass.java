@@ -102,7 +102,7 @@ public class GenerateValueRangeImmediatePass extends Pass {
     for (var fieldAccess : fieldAccesses) {
       for (var fieldRef : fieldAccess.fieldAccess().fieldRefs()) {
         if (fieldRef.equals(field)) {
-          return (BitsType) fieldAccess.type();
+          return (BitsType) fieldAccess.fieldAccess().type();
         }
       }
     }
