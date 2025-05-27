@@ -19,9 +19,6 @@ from dataclasses import dataclass, field
 import tomllib
 from typing import Literal 
 import dacite
-from typing import TypeAlias
-
-Endian: TypeAlias = Literal['little', 'big']
 
 @dataclass
 class Logging:
@@ -59,7 +56,6 @@ class Client:
 @dataclass
 class Qemu:
     plugin: str
-    endian: Endian 
     clients: list[Client]
     gdb_reg_map: dict[str, str]
     ignore_registers: list[str]

@@ -22,7 +22,7 @@ The broker communicates with each QEMU-client using IPC.
 """
 
 from ctypes import c_char, c_int, c_uint, c_uint64, c_uint8, sizeof, Structure, c_size_t, Union
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 import argparse
 import os
 import mmap
@@ -31,7 +31,7 @@ import multiprocessing
 import posix_ipc as ipc
 import atexit
 import subprocess
-from config import Config, Endian, load_config 
+from config import Config, load_config 
 import json
 from collections import deque
 
@@ -70,18 +70,17 @@ class InsnData(Structure):
     _fields_ = [("size", c_size_t), ("buffer", c_uint8 * MAX_INSN_DATA_SIZE)]
 
     def __repr__(self):
-        # endianess here is just a guess since we cannot provide it here
-        return f"InsnData(size={self.size}, buffer={self.fbuffer('little')})"
+        return f"InsnData(size={self.size}, buffer={self.fbuffer()})"
 
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
 
-    def to_dict(self, endian: Endian):
-        return {"size": self.size, "buffer": self.fbuffer(endian)}
+    def to_dict(self):
+        return {"size": self.size, "buffer": self.fbuffer()}
 
-    def fbuffer(self, endian: Endian) -> str:
-        order = reversed if endian == 'little' else lambda x: x
-        res = b''.join(order([num.to_bytes() for num in self.buffer[:self.size]]))
+    def fbuffer(self) -> str:
+        bytes_formatted = [num.to_bytes() for num in self.buffer[:self.size]]
+        res = b''.join(reversed(bytes_formatted))
         return res.hex(' ')
 
     def __init__(self, *args: Any, **kw: Any) -> None:
@@ -98,8 +97,8 @@ class TBInsnInfo(Structure):
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
 
-    def to_dict(self, endian: Endian):
-        return {"pc": self.pc, "size": self.size, "symbol": self.symbol.to_dict(), "hwaddr": self.hwaddr.to_dict(), "disas": self.disas.to_dict(), "data": self.data.to_dict(endian)}
+    def to_dict(self):
+        return {"pc": self.pc, "size": self.size, "symbol": self.symbol.to_dict(), "hwaddr": self.hwaddr.to_dict(), "disas": self.disas.to_dict(), "data": self.data.to_dict()}
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
@@ -120,12 +119,12 @@ class TBInfo(Structure):
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
 
-    def to_dict(self, endian: Endian):
+    def to_dict(self):
         return {
             "pc": self.pc, 
             "insns": self.insns, 
             "insns_info_size": self.insns_info_size, 
-            "insns_info": [insn.to_dict(endian) for insn in self.insns_info[:self.insns_info_size]]
+            "insns_info": [insn.to_dict() for insn in self.insns_info[:self.insns_info_size]]
         }
 
     def __init__(self, *args: Any, **kw: Any) -> None:
@@ -146,8 +145,8 @@ class BrokerSHM_TB(Structure):
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
 
-    def to_dict(self, endian: Endian):
-        return {"size": self.size, "infos": [info.to_dict(endian) for info in self.infos[:self.size]]}
+    def to_dict(self):
+        return {"size": self.size, "infos": [info.to_dict() for info in self.infos[:self.size]]}
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
@@ -165,14 +164,13 @@ class SHMRegister(Structure):
         self.name: Annotated[SHMString, SHMString]
 
     def __repr__(self):
-        # endianess here is just a guess since we cannot provide it here
-        return f"SHMRegister(size={self.size}, data={self.fdata('little')}, name={self.name})"
+        return f"SHMRegister(size={self.size}, data={self.fdata()}, name={self.name})"
 
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
 
-    def to_dict(self, endian: Endian, gdb_map: dict[str, str]):
-        return {"size": self.size, "data": self.fdata(endian), "name": self.name.to_dict(), "name-mapped": self.fname(gdb_map)}
+    def to_dict(self, gdb_map: dict[str, str]):
+        return {"size": self.size, "data": self.fdata(), "name": self.name.to_dict(), "name-mapped": self.fname(gdb_map)}
 
     def fname(self, gdb_map: dict[str, str]) -> str:
         n = self.name.fstr() # assume that the name is "printable"
@@ -181,9 +179,9 @@ class SHMRegister(Structure):
         else:
             return n
 
-    def fdata(self, endian: Endian) -> str:
-        order = reversed if endian == 'little' else lambda x: x
-        res = b''.join(order([num.to_bytes() for num in self.data[:self.size]]))
+    def fdata(self) -> str:
+        bytes_formatted = [num.to_bytes() for num in self.data[:self.size]]
+        res = b''.join(reversed(bytes_formatted))
         return res.hex(' ')
 
 
@@ -198,8 +196,8 @@ class SHMCPU(Structure):
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
 
-    def to_dict(self, endian: Endian, gdb_map: dict[str, str]):
-        return {"idx": self.idx, "registers_size": self.registers_size, "registers": [reg.to_dict(endian, gdb_map) for reg in self.registers[:self.registers_size]]}
+    def to_dict(self, gdb_map: dict[str, str]):
+        return {"idx": self.idx, "registers_size": self.registers_size, "registers": [reg.to_dict(gdb_map) for reg in self.registers[:self.registers_size]]}
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
@@ -218,8 +216,8 @@ class BrokerSHM_Exec(Structure):
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
 
-    def to_dict(self, endian: Endian, gdb_map: dict[str, str]):
-        return {"init_mask": self.init_mask, "cpus": [cpu.to_dict(endian, gdb_map) for cpu in self.cpus[:]], "insn_info": self.insn_info.to_dict(endian)}
+    def to_dict(self, gdb_map: dict[str, str]):
+        return {"init_mask": self.init_mask, "cpus": [cpu.to_dict(gdb_map) for cpu in self.cpus[:]], "insn_info": self.insn_info.to_dict()}
 
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
@@ -284,6 +282,9 @@ class ClientDiff:
     expected: str
     actual: str
     description: Optional[str] = None
+    ref_expected: dict[str, str] = field(default_factory=dict[str, str])
+    ref_actual: dict[str, str] = field(default_factory=dict[str, str])
+
 
 @dataclass
 class Report:
@@ -341,8 +342,8 @@ def run_lockstep(config: Config, traces: deque[list[dict[str, Any]]]) -> Report:
             c2shm = c2.shm_struct.shm_exec
 
             # Store the current state of each client as a trace
-            d1 = c1shm.to_dict(config.qemu.endian, config.qemu.gdb_reg_map)
-            d2 = c1shm.to_dict(config.qemu.endian, config.qemu.gdb_reg_map)
+            d1 = c1shm.to_dict(config.qemu.gdb_reg_map)
+            d2 = c1shm.to_dict(config.qemu.gdb_reg_map)
             traces.append([d1, d2])
 
             if c1shm.init_mask != c2shm.init_mask:
@@ -372,10 +373,10 @@ def run_lockstep(config: Config, traces: deque[list[dict[str, Any]]]) -> Report:
                     if r1name != r2name:
                         diffs.append(ClientDiff(f"cpu.{cpu_index}.registers.{reg_index}.name", f"{r1name}", f"{r2name}", "reg names differ"))
 
-                    r1data = c1reg.fdata(config.qemu.endian)
-                    r2data = c2reg.fdata(config.qemu.endian)
+                    r1data = c1reg.fdata()
+                    r2data = c2reg.fdata()
                     if r1data != r2data:
-                        diffs.append(ClientDiff(f"cpu.{cpu_index}.registers.{reg_index}.data", f"{r1data}", f"{r2data}", "reg data differ"))
+                        diffs.append(ClientDiff(f"cpu.{cpu_index}.registers.{reg_index}.data", f"{r1data}", f"{r2data}", "reg data differ", ref_expected=c1reg.to_dict(config.qemu.gdb_reg_map), ref_actual=c2reg.to_dict(config.qemu.gdb_reg_map)))
 
             return diffs
         else:

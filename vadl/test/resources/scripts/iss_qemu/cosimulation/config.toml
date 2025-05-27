@@ -20,9 +20,6 @@
 # The path to the compiled cosimulation qemu-plugin
 plugin="./qemu-setup/build/contrib/plugins/libcosimulation.so"
 
-# "big" | "little": Handles how bytes are printed
-endian="little"
-
 # Whether to ignore registers that are not defined by a [qemu.gdb_reg_map] mapping
 # This option is useful to test the current implementation of a simulator which might not yet have all registers implemented against another (complete) implementation
 # Filters in conjunction with `ignore_registers`
