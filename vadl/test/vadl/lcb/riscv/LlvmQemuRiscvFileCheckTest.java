@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -44,24 +45,21 @@ public abstract class LlvmQemuRiscvFileCheckTest extends LcbDockerInputFileExecu
 
   protected abstract String getAbi();
 
-  @Override
-  public Stream<String> inputFilesFromCFile(String target, int optLevel) {
-    return Arrays.stream(
-            Objects.requireNonNull(
-                new File("test/resources/llvm/riscv/llvmIR/" + target + "/O"
-                    + optLevel)
-                    .listFiles()))
-        .filter(File::isFile)
-        .map(File::getName);
-  }
+
 
   @TestFactory
   List<DynamicTest> optLevel0() throws DuplicatedPassKeyException, IOException {
-    return runEach(getSpecPath(), "test/resources/llvm/riscv/llvmIR", 0, "sh /work/filecheck.sh");
+    return runEach(getSpecPath(),
+        "test/resources/llvm/riscv/llvmIR/" + getTarget() + "/O0",
+        0,
+        "sh /work/filecheck.sh");
   }
 
   @TestFactory
   List<DynamicTest> optLevel3() throws DuplicatedPassKeyException, IOException {
-    return runEach(getSpecPath(), "test/resources/llvm/riscv/llvmIR", 3, "sh /work/filecheck.sh");
+    return runEach(getSpecPath(),
+        "test/resources/llvm/riscv/llvmIR/" + getTarget() + "/O3",
+        3,
+        "sh /work/filecheck.sh");
   }
 }

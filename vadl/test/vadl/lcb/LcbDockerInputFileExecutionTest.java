@@ -16,11 +16,15 @@
 
 package vadl.lcb;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import vadl.configuration.LcbConfiguration;
@@ -30,9 +34,16 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
 public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecutionTest {
-  public abstract Stream<String> inputFilesFromCFile(String target, int optLevel);
+  protected Stream<String> inputFiles(String sourceDirectory) {
+    return Arrays.stream(
+            Objects.requireNonNull(
+                new File(sourceDirectory)
+                    .listFiles()))
+        .filter(File::isFile)
+        .map(File::getName);
+  }
 
-  protected List<DynamicTest> runEach(String specPath, String llvmIRPath, int optLevel, String cmd)
+  protected List<DynamicTest> runEach(String specPath, String sourceDirectory, int optLevel, String cmd)
       throws DuplicatedPassKeyException,
       IOException {
     var doDebug = false;
@@ -53,15 +64,14 @@ public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecution
             getAbi(),
             doDebug);
 
-    return inputFilesFromCFile(getTarget(), optLevel).map(
+    return inputFiles(sourceDirectory).map(
         input -> DynamicTest.dynamicTest(input + " O" + optLevel, () -> {
           var name = Paths.get(input).getFileName().toString();
 
           runContainerAndCopyInputIntoContainer(cachedImage,
               List.of(
                   Pair.of(
-                      Path.of(
-                          llvmIRPath + "/" + getTarget() + "/O" + optLevel),
+                      Path.of(sourceDirectory),
                       "/src/inputs")
               ),
               Map.of("INPUT", name,
