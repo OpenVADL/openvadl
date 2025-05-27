@@ -105,8 +105,9 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
    * Get the immediates of {@code behavior} which are not in {@code registerIndices} and not
    * referenced by at least one {@link FieldRefNode}.
    */
-  private List<FieldRefNode> getImmediatesWithoutFieldAccessFunction(Graph behavior,
-                                                                     Set<FieldRefNode> registerIndices) {
+  private List<FieldRefNode> getImmediatesWithoutFieldAccessFunction(
+      Graph behavior,
+      Set<FieldRefNode> registerIndices) {
     var fieldRefNodesInFieldAccessFunctions = behavior.getNodes(FieldAccessRefNode.class)
         .flatMap(fieldAccessRefNode -> fieldAccessRefNode.fieldAccess().fieldRefs().stream())
         .collect(Collectors.toSet());
