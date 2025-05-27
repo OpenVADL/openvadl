@@ -19,13 +19,10 @@ package vadl.lcb.template.clang.lib.Basic.Targets;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
-import javax.annotation.Nonnull;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
-import vadl.viam.Abi;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
 
@@ -52,7 +49,6 @@ public class EmitClangTargetCppFilePass extends LcbTemplateRenderingPass {
   @Override
   protected Map<String, Object> createVariables(final PassResults passResults,
                                                 Specification specification) {
-    var abi = specification.abi().orElseThrow();
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.REGISTERS, extractRegisters(specification)
