@@ -554,13 +554,20 @@ if __name__ == '__main__':
         prog="Cosimulation Broker",
         description="Executes two (or more) qemu-instances in parallel which need to use the cosimulation plugin to connect to the broker."
     )
+
     parser.add_argument('-c', '--config', type=str, help="Path to the (toml) config file, default is: ./config.toml", default=default_config_file())
+    parser.add_argument('--test-exec', type=str, help="Defines where the test-executable is passed to when starting the QEMU-client")
+
+
     args = parser.parse_args()
 
     config = load_config(args.config)
     if config is None:
         print("Couldn't load config. Stopping.")
         exit(1)
+
+    if args.test_exec is not None:
+        config.testing.test_exec = args.test_exec
  
     if config.logging.enable:
         filemode = "w" if config.logging.clear_on_rerun else "a"
