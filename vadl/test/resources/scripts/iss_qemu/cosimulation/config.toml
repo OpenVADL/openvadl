@@ -43,6 +43,10 @@ ignore_registers = [
 # In most use-cases, 2 clients (one test-simulator and one reference-simulator) are used
 [[qemu.clients]]
 
+# Optional: A custom name for a client
+# Will default to the index of the client in this list
+name = "Client 1"
+
 # The executable of the ISS
 exec = "qemu-system-riscv64"
 
@@ -61,9 +65,11 @@ additional_args = [
 # NOTE: Only applies to `layer = "insn" | "tb-strict"`
 # NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
 # Skips the first n instructions 
-skip_n_instructions = 100
+skip_n_instructions = 0
 
 [[qemu.clients]]
+name = "Client 2"
+
 exec = "qemu-system-riscv64"
 
 pass_test_exec_to = "bios"
@@ -72,7 +78,7 @@ additional_args = [
 	"-nographic",
 ]
 
-skip_n_instructions = 50
+skip_n_instructions = 0
 
 # Defines a custom map where the key (e.g. x0) is mapped to another value (e.g. zero)
 [qemu.gdb_reg_map]

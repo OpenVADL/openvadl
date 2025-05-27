@@ -48,12 +48,24 @@ static qemu_plugin_id_t plugin_id;
 
 #define PLUGIN_PRINT(format, ...)                                              \
   do {                                                                         \
-    gchar *_tmp_str = g_strdup_printf(                                         \
-        "[LOG: client-id=%lu, %s:%d] " format, plugin_id,                      \
-        strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__,        \
-        __LINE__, ##__VA_ARGS__);                                              \
-    qemu_plugin_outs(_tmp_str);                                                \
-    g_free(_tmp_str);                                                          \
+    if (args.client_name_set) {                                                \
+      gchar *_tmp_str = g_strdup_printf(                                       \
+          "[LOG: plugin-id=%lu, client=%s(id=%s), %s:%d] " format, plugin_id,  \
+          args.client_name, args.client_id,                                    \
+          strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__,      \
+          __LINE__, ##__VA_ARGS__);                                            \
+      qemu_plugin_outs(_tmp_str);                                              \
+      g_free(_tmp_str);                                                        \
+    } else {                                                                   \
+      gchar *_tmp_str = g_strdup_printf(                                       \
+          "[LOG: plugin-id=%lu, client=(id=%s), %s:%d] " format, plugin_id,    \
+          args.client_id,                                                      \
+          strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__,      \
+          __LINE__, ##__VA_ARGS__);                                            \
+      qemu_plugin_outs(_tmp_str);                                              \
+      g_free(_tmp_str);                                                        \
+    }                                                                          \
+                                                                               \
   } while (0)
 
 #define PLUGIN_PRINTLN(format, ...) PLUGIN_PRINT(format "\n", ##__VA_ARGS__)
@@ -124,6 +136,8 @@ typedef enum {
 typedef struct {
   const gchar *client_id;
   ExecMode mode;
+  const gchar *client_name;
+  gboolean client_name_set;
 } Arguments;
 
 typedef struct {
@@ -397,10 +411,10 @@ static ExecMode parse_mode(const char *mode_str) {
 QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
                                            const qemu_info_t *info, int argc,
                                            char **argv) {
-  PLUGIN_PRINTLN("::qemu_plugin_install");
-
   cpus = g_array_sized_new(true, true, sizeof(CPU),
                            info->system_emulation ? info->system.max_vcpus : 1);
+
+  args.client_name_set = false;
 
   // parse options
   for (int i = 0; i < argc; i++) {
@@ -413,6 +427,11 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
     } else if (g_strcmp0(argname, "mode") == 0) {
       args.mode = parse_mode(argvalue);
       PLUGIN_PRINTLN("running in mode: %d", args.mode);
+    } else if (g_strcmp0(argname, "client-name") == 0) {
+      PLUGIN_ASSERT(!args.client_name_set,
+                    "illegally set client-name multiple times");
+      args.client_name_set = true;
+      args.client_name = strdup(argvalue);
     } else {
       PLUGIN_PRINTLN("option parsing failed: %s", p);
       return EXIT_FAILURE;
@@ -431,6 +450,8 @@ QEMU_PLUGIN_EXPORT int qemu_plugin_install(qemu_plugin_id_t id,
                    "is required");
     return EXIT_FAILURE;
   }
+
+  PLUGIN_PRINTLN("::qemu_plugin_install");
 
   shm = connect_to_broker();
   if (shm == NULL) {

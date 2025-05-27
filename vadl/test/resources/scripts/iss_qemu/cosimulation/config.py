@@ -17,7 +17,7 @@
 
 from dataclasses import dataclass, field
 import tomllib
-from typing import Literal 
+from typing import Literal, Optional 
 import dacite
 
 @dataclass
@@ -53,6 +53,7 @@ class Client:
     pass_test_exec_to: Literal['bios', 'kernel']
     additional_args: list[str]
     skip_n_instructions: int = 0
+    name: Optional[str] = None
 
 @dataclass
 class Qemu:

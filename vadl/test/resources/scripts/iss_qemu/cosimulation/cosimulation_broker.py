@@ -36,7 +36,7 @@ import json
 from collections import deque
 
 import logging
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any, Optional, TypeAlias
 
 """
 The following classes represent the equally defined c-structs in the cosimulation QEMU plugin.
@@ -190,7 +190,6 @@ class SHMCPU(Structure):
     _fields_ = [("idx", c_uint), ("registers_size", c_size_t), ("registers", SHMRegister * MAX_CPU_REGISTERS)]
 
     def __repr__(self):
-        # endianess here is just a guess since we cannot provide it here
         return f"SHMCPU(idx={self.idx}, registers_size={self.registers_size}, registers={self.registers[:self.registers_size]})"
 
     def __format__(self, _: str, /) -> str:
@@ -210,7 +209,6 @@ class BrokerSHM_Exec(Structure):
     _fields_ = [("init_mask", c_int), ("cpus", SHMCPU * MAX_CPU_COUNT), ("insn_info", TBInsnInfo)]
 
     def __repr__(self):
-        # endianess here is just a guess since we cannot provide it here
         return f"BrokerSHM_Exec(init_mask={self.init_mask}, cpus={self.cpus[:]}, insn_info={self.insn_info})"
 
     def __format__(self, _: str, /) -> str:
@@ -235,13 +233,14 @@ class BrokerSHM(Union):
 
 @dataclass
 class Client:
-    id: int
+    id: int 
     shm: ipc.SharedMemory
     shm_struct: BrokerSHM
     sem_server: ipc.Semaphore
     sem_client: ipc.Semaphore
     is_open: bool
     process: Optional[multiprocessing.Process]
+    name: Optional[str]
 
 clients: list[Client] = []
 
@@ -301,7 +300,8 @@ def report_from_diffs(diffs: list[ClientDiff]) -> Report:
     else:
         return Report(passed=False, diffs=diffs)
 
-def run_lockstep(config: Config, traces: deque[list[dict[str, Any]]]) -> Report:
+Trace: TypeAlias = list[dict[str, Any]]
+def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     """
     Runs the configured QEMU-clients in lockstep - meaning they are synchronized after each *execution-step*.
     The definition of an execution-step depends on the configured layer (`config.testing.protocol.layer`).
@@ -343,7 +343,7 @@ def run_lockstep(config: Config, traces: deque[list[dict[str, Any]]]) -> Report:
 
             # Store the current state of each client as a trace
             d1 = c1shm.to_dict(config.qemu.gdb_reg_map)
-            d2 = c1shm.to_dict(config.qemu.gdb_reg_map)
+            d2 = c2shm.to_dict(config.qemu.gdb_reg_map)
             traces.append([d1, d2])
 
             if c1shm.init_mask != c2shm.init_mask:
@@ -391,7 +391,7 @@ def run_lockstep(config: Config, traces: deque[list[dict[str, Any]]]) -> Report:
     skip_per_client = [client.skip_n_instructions for client in config.qemu.clients]
 
     # Skip first n instructions per client
-    while any(map(lambda c: c.is_open, clients)):
+    while any(map(lambda c: c.is_open, clients)) and any(map(lambda skip: skip > 0, skip_per_client)):
         for i, client in enumerate(clients):
             if client.is_open and skip_per_client[i] > 0:
                 skip_per_client[i] -= 1
@@ -457,19 +457,39 @@ def main(config: Config):
         logger.info(f"created shm and sems, spawning client with id: {i}")
 
         executable_path = client_cfg.exec
-        plugin_path = f"{config.qemu.plugin},client-id={i},mode={config.testing.protocol.layer}"
-        default_args = [f"-{client_cfg.pass_test_exec_to}", config.testing.test_exec, "-plugin", plugin_path]
+
+        plugin_path = config.qemu.plugin
+        plugin_args = [
+            f"client-id={i}",
+            f"mode={config.testing.protocol.layer}"
+        ]
+        if client_cfg.name is not None:
+            plugin_args += [f"client-name={client_cfg.name}"]
+
+        plugin = ",".join([plugin_path] + plugin_args)
+
+
+        default_args = [f"-{client_cfg.pass_test_exec_to}", config.testing.test_exec, "-plugin", plugin]
         args = default_args + client_cfg.additional_args
         logger.info(f"starting client: {" ".join([executable_path, *args])}")
-        client = Client(i, shm, shm_struct, sem_server=sem_server, sem_client=sem_client, is_open=True, process=None)
+        client = Client(i, shm, shm_struct, sem_server=sem_server, sem_client=sem_client, is_open=True, process=None, name=client_cfg.name)
         clients.append(client)
         client.process = run_with_callback([executable_path, *args], on_client_complete, config, client)
 
     if config.testing.protocol.mode == 'lockstep':
         max_trace_len = config.testing.max_trace_length
-        traces = deque(maxlen=max_trace_len if max_trace_len >= 0 else None)
+        traces: deque[Trace] = deque(maxlen=max_trace_len if max_trace_len >= 0 else None)
         report = run_lockstep(config, traces)
-        j = {"report": asdict(report), "traces": list(traces)}
+        named_traces = {
+            "names": [client.name if client.name is not None else str(client.id) for client in clients],
+            "traces": list(traces)
+        }
+
+        j = {
+            "report": asdict(report),
+            "traces": named_traces
+        }
+
         result_file = os.path.join(config.testing.protocol.out.dir, "result.json")
         os.makedirs(os.path.dirname(result_file), exist_ok=True)
         with open(result_file, "w") as f:
