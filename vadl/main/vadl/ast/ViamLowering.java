@@ -1657,7 +1657,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       var registerIndex =
           ((ConstantNode) readRegTensorNode.indices().get(0)).constant().asVal().intValue();
       return Pair.of(registerTensor, registerIndex);
-    } else if (canonicalized instanceof ConstantNode constantNode) {
+    } else if (canonicalized instanceof ConstantNode) {
       throw error(
           "The index of the alias is hardwired to a constant value and it is therefore "
               + "not a register.",
