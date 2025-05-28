@@ -424,6 +424,19 @@ public class MacroTests {
             assertThat(d).hasMessageContaining("Macro name already used: Test"));
   }
 
+  @Test
+  void macroWithRecordTypes() {
+    // There once was a time where record return types couldn't be parsed.
+    var prog1 = """
+        record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
+        
+        model ExtendInstr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
+          (ExtendId ($i.id,  $ext); $i.mnemo; $i.opcode; $i.funct)
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog1));
+  }
+
 }
 
 
