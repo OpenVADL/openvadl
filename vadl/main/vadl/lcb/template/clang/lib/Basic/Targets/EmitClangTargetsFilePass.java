@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.clang.lib.Basic.Targets;
+package vadl.lcb.template.clang.lib.Basic.Targets;
 
 import java.io.IOException;
 import java.util.Map;
