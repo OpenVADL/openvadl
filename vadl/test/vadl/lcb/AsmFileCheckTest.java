@@ -30,7 +30,7 @@ public abstract class AsmFileCheckTest extends LcbDockerInputFileExecutionTest {
   @TestFactory
   List<DynamicTest> testAsm() throws DuplicatedPassKeyException, IOException {
     return runEach(getSpecPath(),
-        "test/resources/llvm/riscv/asm/" + getComponent(),
+        "test/resources/llvm/riscv/asm/rv32im/" + getComponent(),
         0,
         "sh /work/filecheck.sh");
   }
