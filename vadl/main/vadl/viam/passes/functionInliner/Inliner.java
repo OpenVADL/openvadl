@@ -86,11 +86,12 @@ public class Inliner {
    */
   public static ExpressionNode inline(Function function,
                                       NodeList<ExpressionNode> arguments) {
+    // inline the all function calls (recursively)
+    inlineFuncs(function.behavior());
+
     // copy function behavior
     var behaviorCopy = function.behavior().copy();
 
-    // inline the all function calls (recursively)
-    inlineFuncs(behaviorCopy);
 
     // get return node of function behaviors
     var returnNode = getSingleNode(behaviorCopy, ReturnNode.class);
@@ -99,10 +100,16 @@ public class Inliner {
     // given argument from the `FunctionCallNode`.
     Streams.zip(arguments.stream(),
             Arrays.stream(function.parameters()), Pair::new)
-        .forEach(
-            pair -> behaviorCopy.getNodes(FuncParamNode.class)
-                .filter(n -> n.parameter().equals(pair.right()))
-                .forEach(usedParam -> usedParam.replaceAndDelete(pair.left().copy())));
+        .forEach(pair -> {
+          var arg = pair.left().copy();
+          var param = pair.right();
+          var paramNodes = behaviorCopy.getNodes(FuncParamNode.class).toList();
+          for (var paramNode : paramNodes) {
+            if (paramNode.parameter() == param) {
+              paramNode.replaceAndDelete(arg);
+            }
+          }
+        });
 
     // replace the function call by a copy of the return value of the function
     return returnNode.value().copy();

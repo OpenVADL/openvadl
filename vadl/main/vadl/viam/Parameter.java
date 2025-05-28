@@ -16,7 +16,6 @@
 
 package vadl.viam;
 
-import java.util.Objects;
 import javax.annotation.Nullable;
 import vadl.types.Type;
 
@@ -85,22 +84,4 @@ public class Parameter extends Definition implements DefProp.WithType {
     visitor.visit(this);
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(identifier, type);
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == null) {
-      return false;
-    }
-
-    if (obj instanceof Parameter that) {
-      return Objects.equals(identifier, that.identifier)
-          && Objects.equals(type, that.type);
-    } else {
-      return false;
-    }
-  }
 }
