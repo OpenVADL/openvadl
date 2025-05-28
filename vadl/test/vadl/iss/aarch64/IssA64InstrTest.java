@@ -136,6 +136,24 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
     return runTestsWith(makeTestCasesFromPrefixes("ASRW", "ASRX"));
   }
 
+//  @TestFactory
+//  Stream<DynamicTest> testCINC() throws IOException {
+//    // CSINC: Conditional select increment.
+//    return runTestsWith(makeTestCasesFromPrefixes("CINC"));
+//  }
+//
+//  @TestFactory
+//  Stream<DynamicTest> testCSINV() throws IOException {
+//    // CSINV: Conditional select invert.
+//    return runTestsWith(makeTestCasesFromPrefixes("CSINV"));
+//  }
+//
+//  @TestFactory
+//  Stream<DynamicTest> testCSNEG() throws IOException {
+//    // CSNEG: Conditional select negation.
+//    return runTestsWith(makeTestCasesFromPrefixes("CSNEG"));
+//  }
+
   @TestFactory
   Stream<DynamicTest> testEXTR() throws IOException {
     // EXTR: Extract register.
