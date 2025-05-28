@@ -137,6 +137,15 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
   }
 
   @TestFactory
+  Stream<DynamicTest> testEXTR() throws IOException {
+    // EXTR: Extract register.
+    // TODO: EXTR W (sf == 0) variants ("EXTRW").
+    //    This is currently not possible as the check
+    //    `if sf == '0' && imms<5> == '1' then EndOfDecode(Decode_UNDEF);` is not implemented yet.
+    return runTestsWith(makeTestCases("EXTRX"));
+  }
+
+  @TestFactory
   Stream<DynamicTest> testMOVK() throws IOException {
     return runTestsWith(makeTestCasesFromPrefixes("MOVK"));
   }

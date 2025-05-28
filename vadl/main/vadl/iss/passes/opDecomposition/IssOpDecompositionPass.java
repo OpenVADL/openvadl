@@ -24,9 +24,12 @@ import static vadl.types.BuiltInTable.SUMULL;
 import static vadl.types.BuiltInTable.UMULL;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.iss.passes.AbstractIssPass;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
 import vadl.iss.passes.opDecomposition.nodes.IssMulKind;
@@ -34,8 +37,10 @@ import vadl.iss.passes.opDecomposition.nodes.IssMulhNode;
 import vadl.iss.passes.tcgLowering.Tcg_32_64;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.types.DataType;
 import vadl.types.Type;
 import vadl.viam.Constant;
+import vadl.viam.Instruction;
 import vadl.viam.Specification;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.Node;
@@ -81,16 +86,41 @@ public class IssOpDecompositionPass extends AbstractIssPass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    viam.processor().ifPresent(m -> m.isa().ownInstructions()
-        .forEach(i -> new OpDecomposer(i.behavior(), configuration().targetSize())
-            .decompose())
-    );
+    var largeOperationErrors = new ArrayList<Diagnostic>();
+    viam.isa().get().ownInstructions().stream().map(Instruction::behavior)
+        .forEach(behavior -> {
+          new OpDecomposer(behavior, configuration().targetSize())
+              .decompose();
+          // check if there are still large operations left
+          checkNoLargeOperations(behavior).ifPresent(largeOperationErrors::add);
+        });
+
+    if (!largeOperationErrors.isEmpty()) {
+      throw new DiagnosticList(largeOperationErrors);
+    }
 
     return null;
   }
+
+  private Optional<Diagnostic> checkNoLargeOperations(Graph behavior) {
+    return behavior.getNodes(ExpressionNode.class)
+        .filter(n -> (n.type() instanceof DataType)
+            && n.type().asDataType().bitWidth() > configuration().targetSize().width)
+        .map(n -> Diagnostic.error("Too large operation type", n)
+            .locationDescription(n, "The ISS was not able to decompose this to smaller types.")
+            .note("Operation decomposition is still in early stages and "
+                + "only implemented for special cases.")
+            .build())
+        .findFirst();
+  }
 }
 
-
+/**
+ * This is the old decomposer, which is highly specialized on long mul.
+ * We should move the implementation to the {@link Decomposer} which can handle
+ * things more generalized. However, it might be necessary to find certain patterns for
+ * performance reasons.
+ */
 class OpDecomposer {
 
   Tcg_32_64 targetSize;
@@ -105,6 +135,23 @@ class OpDecomposer {
     behavior.getNodes(BuiltInCall.class).forEach(this::handle);
     // delete all dependency nodes that are not used anymore
     behavior.deleteUnusedDependencies();
+
+    // find all nodes that result has an ok width but has a too large input.
+    var foundOne = true;
+    while (foundOne) {
+      foundOne = false;
+      var hit = behavior.getNodes(ExpressionNode.class)
+          .filter(node -> node.type() instanceof DataType)
+          .filter(node -> node.type().asDataType().bitWidth() <= targetSize.width)
+          .filter(node -> node.inputs().map(ExpressionNode.class::cast)
+              .anyMatch(i -> i.type().asDataType().bitWidth() > targetSize.width))
+          .findFirst();
+      if (hit.isPresent()) {
+        foundOne = true;
+        // replace the current hit with the decomposed version.
+        new Decomposer(targetSize.width).decompose(hit.get());
+      }
+    }
   }
 
   private void handle(BuiltInCall call) {

@@ -16,30 +16,17 @@
 
 package vadl.viam.passes.functionInliner;
 
-import static vadl.utils.GraphUtils.getSingleNode;
-
-import com.google.common.collect.Streams;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.IdentityHashMap;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.utils.Pair;
 import vadl.utils.ViamUtils;
 import vadl.viam.DefProp;
-import vadl.viam.Function;
 import vadl.viam.Instruction;
-import vadl.viam.Relocation;
 import vadl.viam.Specification;
-import vadl.viam.graph.Graph;
-import vadl.viam.graph.NodeList;
-import vadl.viam.graph.control.ReturnNode;
-import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.FuncCallNode;
-import vadl.viam.graph.dependency.FuncParamNode;
 
 /**
  * A pass which inlines all the function with the given function.
@@ -92,56 +79,9 @@ public class FunctionInlinerPass extends Pass {
   private UninlinedGraph handleMainBehavior(DefProp.WithBehavior def) {
     var behavior = def.behaviors().getFirst();
     var copy = behavior.copy();
-    inline(behavior);
+    Inliner.inlineFuncs(behavior);
     return new UninlinedGraph(copy, def.asDefinition());
   }
 
-  private void inline(Graph behavior) {
-    var functionCalls = behavior.getNodes(FuncCallNode.class)
-        .filter(funcCallNode -> funcCallNode.function().behavior().isPureFunction())
-        .filter(funcCallNode -> !(funcCallNode.function() instanceof Relocation))
-        .toList();
-
-    if (functionCalls.isEmpty()) {
-      return;
-    }
-
-    functionCalls.forEach(functionCall -> {
-      // replace the function call by a copy of the return value of the function
-      functionCall.replaceAndDelete(inline(functionCall.function(), functionCall.arguments()));
-    });
-
-    // do it again until there are no more function calls
-    inline(behavior);
-  }
-
-
-  /**
-   * Get an expression node representing the inlined value of the given function definition
-   * with the given arguments.
-   * The returned node and its dependencies are all uninitialized.
-   *
-   * @param function  that should be inlined
-   * @param arguments the argument expressions that the function is called with
-   * @return the inlined return value node (uninitialized)
-   */
-  public static ExpressionNode inline(Function function, NodeList<ExpressionNode> arguments) {
-    // copy function behavior
-    var behaviorCopy = function.behavior().copy();
-    // get return node of function behaviors
-    var returnNode = getSingleNode(behaviorCopy, ReturnNode.class);
-
-    // Replace every occurrence of `FuncParamNode` by a copy of the
-    // given argument from the `FunctionCallNode`.
-    Streams.zip(arguments.stream(),
-            Arrays.stream(function.parameters()), Pair::new)
-        .forEach(
-            pair -> behaviorCopy.getNodes(FuncParamNode.class)
-                .filter(n -> n.parameter().equals(pair.right()))
-                .forEach(usedParam -> usedParam.replaceAndDelete(pair.left().copy())));
-
-    // replace the function call by a copy of the return value of the function
-    return returnNode.value().copy();
-  }
 
 }

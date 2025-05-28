@@ -78,6 +78,9 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
     return this.builtIn;
   }
 
+  public ExpressionNode arg(int index) {
+    return args.get(index);
+  }
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
