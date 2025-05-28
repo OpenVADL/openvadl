@@ -379,23 +379,31 @@ class MacroExpander
 
   @Override
   public Expr visit(ExtendIdExpr expr) {
-    var name = new StringBuilder();
+    var nameBuilder = new StringBuilder();
     var expressions = (GroupedExpr) expr.expr.accept(this);
     for (var inner : expressions.expressions) {
       if (inner instanceof Identifier id) {
-        name.append(id.name);
+        nameBuilder.append(id.name);
       } else if (inner instanceof StringLiteral string) {
-        name.append(string.value);
+        nameBuilder.append(string.value);
       } else if (inner instanceof PlaceholderExpr
           || inner instanceof ExtendIdExpr || inner instanceof IdToStrExpr) {
         // Will be expanded as soon as the used placeholders are bound
         return new ExtendIdExpr(expressions, copyLoc(expr.location()));
       } else {
         reportError("Unsupported 'ExtendId' parameter " + inner, inner.location());
-        name.append(inner);
+        nameBuilder.append(inner);
       }
     }
-    return new Identifier(name.toString(), copyLoc(expr.location()));
+
+    var name = nameBuilder.toString().trim();
+    if (name.isEmpty()) {
+      this.errors.add(error("Invalid Empty Identifier", expr)
+          .locationDescription(expr, "This expands to an empty identifier name.")
+          .note("Empty identifiers are forbidden as they needlessly obfuscate the code.")
+          .build());
+    }
+    return new Identifier(nameBuilder.toString(), copyLoc(expr.location()));
   }
 
   @Override
