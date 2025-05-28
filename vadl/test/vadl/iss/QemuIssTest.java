@@ -41,7 +41,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
   // config of qemu test image
   private static final String QEMU_TEST_IMAGE =
-      "ghcr.io/openvadl/iss-test-base@sha256:5e856261c650f7ae35d0badd1c795bfe2452015e210fceba47a0502f30e638a9";
+      "ghcr.io/openvadl/iss-test-base@sha256:c0963539e557db0024554abe4d391648e48b58f79b0a97e74357bc11af7ed0b8";
 
   // specification to image cache
   // we must separate CAS and ISS, otherwise the CAS test would use the ISS image

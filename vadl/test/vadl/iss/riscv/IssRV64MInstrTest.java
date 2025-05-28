@@ -156,8 +156,8 @@ public class IssRV64MInstrTest extends AbstractIssRiscv64InstrTest {
       var b = getBuilder(testNamePrefix, id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
-      b.fillReg(regSrc1, 64);
-      b.fillReg(regSrc2, 64);
+      b.fillRegSigned(regSrc1, 64);
+      b.fillRegSigned(regSrc2, 64);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
       return b.toTestCase(regSrc1, regSrc2, regDest);
@@ -183,7 +183,7 @@ public class IssRV64MInstrTest extends AbstractIssRiscv64InstrTest {
       var b = getBuilder(testPrefix, i);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
-      b.fillReg(regSrc1, 64);
+      b.fillRegSigned(regSrc1, 64);
       b.fillReg(regSrc2, divisor);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instr, regDest, regSrc1, regSrc2);
@@ -200,8 +200,8 @@ public class IssRV64MInstrTest extends AbstractIssRiscv64InstrTest {
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
       // Fill with 32-bit values so we test sign-ext
-      b.fillReg(regSrc1, 32);
-      b.fillReg(regSrc2, 32);
+      b.fillRegSigned(regSrc1, 32);
+      b.fillRegSigned(regSrc2, 32);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
       return b.toTestCase(regSrc1, regSrc2, regDest);

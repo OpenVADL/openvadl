@@ -136,23 +136,23 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
     return runTestsWith(makeTestCasesFromPrefixes("ASRW", "ASRX"));
   }
 
-//  @TestFactory
-//  Stream<DynamicTest> testCINC() throws IOException {
-//    // CSINC: Conditional select increment.
-//    return runTestsWith(makeTestCasesFromPrefixes("CINC"));
-//  }
-//
-//  @TestFactory
-//  Stream<DynamicTest> testCSINV() throws IOException {
-//    // CSINV: Conditional select invert.
-//    return runTestsWith(makeTestCasesFromPrefixes("CSINV"));
-//  }
-//
-//  @TestFactory
-//  Stream<DynamicTest> testCSNEG() throws IOException {
-//    // CSNEG: Conditional select negation.
-//    return runTestsWith(makeTestCasesFromPrefixes("CSNEG"));
-//  }
+  @TestFactory
+  Stream<DynamicTest> testCSINC() throws IOException {
+    // CSINC: Conditional select increment.
+    return runTestsWith(makeTestCasesFromPrefixes("CSINC"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> testCSINV() throws IOException {
+    // CSINV: Conditional select invert.
+    return runTestsWith(makeTestCasesFromPrefixes("CSINV"));
+  }
+
+  @TestFactory
+  Stream<DynamicTest> testCSNEG() throws IOException {
+    // CSNEG: Conditional select negation.
+    return runTestsWith(makeTestCasesFromPrefixes("CSNEG"));
+  }
 
   @TestFactory
   Stream<DynamicTest> testEXTR() throws IOException {
@@ -243,12 +243,33 @@ public class IssA64InstrTest extends AbstractIssAarch64InstrTest {
         TestUtils.findDefinitionByNameIn("AArch64Base::" + instrName, isa, Instruction.class);
     var result = autoAssembler.produce(instr);
     var builder = getBuilder(instrName + "_", id);
+
+    // randomize set NZCV
+    setRandomNZCV(builder);
+
+    builder.add("# test body");
+    // fill the source registers with datat
     for (var reg : result.srcRegs()) {
       var regIndex = result.assignment().get(reg);
-      builder.fillReg("x" + regIndex, 64);
+      if (regIndex.intValue() == 31) {
+        // in the case of 31 we just don't set it
+        continue;
+      }
+      var regName = "x" + regIndex;
+      builder.fillRegUnsigned(regName, 64);
     }
     builder.add(result.assembly());
+    builder.add("# end of test body");
     builder.add("mrs x2, nzcv");
     return builder.toTestCase();
   }
+
+  private void setRandomNZCV(AsmTestBuilder builder) {
+    var nzcv = TestUtils.arbitraryBits(4).sample();
+    builder.add("# set NZCV");
+    builder.add("mov x2, 0x%s", nzcv.toString(16));
+    builder.add("lsl x2, x2, 28");
+    builder.add("msr nzcv, x2");
+  }
+
 }
