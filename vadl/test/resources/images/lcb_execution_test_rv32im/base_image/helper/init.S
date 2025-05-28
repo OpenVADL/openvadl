@@ -57,7 +57,7 @@ _start:
     slli a0,a0,1
     addi a0,a0,1
     la x2, tohost
-    sd a0, 0(x2)
+    sw a0, 0(x2)
 
     .section .tohost, "aw", @progbits
     .align 6;
