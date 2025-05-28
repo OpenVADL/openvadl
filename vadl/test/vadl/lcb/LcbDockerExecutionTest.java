@@ -33,9 +33,13 @@ import vadl.utils.Pair;
 
 public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
   protected abstract String getTarget();
+
   protected abstract String getUpstreamBuildTarget();
+
   protected abstract String getUpstreamClangTarget();
+
   protected abstract String getSpikeTarget();
+
   protected abstract String getAbi();
 
   private void copyLcbExecutionTestIntoDockerContext(LcbConfiguration configuration)

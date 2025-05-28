@@ -24,6 +24,7 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 
 public abstract class AsmFileCheckTest extends LcbDockerInputFileExecutionTest {
   protected abstract String getSpecPath();
+
   protected abstract String getComponent();
 
   @TestFactory
