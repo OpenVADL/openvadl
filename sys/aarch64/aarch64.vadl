@@ -1552,7 +1552,7 @@ instruction set architecture AArch64Base = {
   model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
     instruction $i.id: MoveSystemRegFormat =
       if sysreg = SysRegEncode::NZCV
-        then X(rt) := NZCV as BitsX << 26
+        then X(rt) := NZCV as BitsX << 28
         else if CurrentEL = 0
         then raise $UndefinedException ()
         else match sysreg with
