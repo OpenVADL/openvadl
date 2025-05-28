@@ -2068,7 +2068,7 @@ PRODUCTIONS
     ]
     SYM_PAREN_CLOSE                         (. macroContext.addFirst(params); .)
     SYM_COLON
-    basicSyntaxType<out SyntaxType returnType>
+    syntaxType<out SyntaxType returnType>
     SYM_EQ
 
     SYM_BRACE_OPEN
