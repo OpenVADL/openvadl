@@ -8,8 +8,8 @@
 .extern  _halt
 .type    _halt, @function
 
-.extern _trap_start
-.type _trap_start, @function
+# .extern _trap_start
+# .type _trap_start, @function
 
 .global _start
 .type   _start, @function
@@ -62,10 +62,6 @@ _start:
     lui t0, %hi(__stack_size)
     addi t0, t0, %lo(__stack_size)
     add sp, tp, t0
-
-    // Set trap vector
-    la a5, _trap_start
-    csrw mtvec, a5
 
     call main
     // li  a0, 1
