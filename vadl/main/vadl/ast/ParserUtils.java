@@ -483,6 +483,7 @@ class ParserUtils {
   }
 
   static Diagnostic unknownSyntaxTypeError(String name, SourceLocation location) {
+    // FIXME: Also add records here and maybe move to a more unified system for suggestions.
     var available = Arrays.stream(BasicSyntaxType.values())
         .map(BasicSyntaxType::getName)
         .filter(n -> !n.contains("Invalid"))
@@ -584,12 +585,20 @@ class ParserUtils {
     return expanded;
   }
 
+  /**
+   * Defines all provided macro definitions in the provided macroTable.
+   *
+   * @param macroTable  to be modified.
+   * @param definitions to be inserted.
+   */
   static void readMacroSymbols(SymbolTable macroTable, List<Definition> definitions) {
     for (Definition definition : definitions) {
       if (definition instanceof DefinitionList list) {
         readMacroSymbols(macroTable, list.items);
       } else if (definition instanceof ModelDefinition modelDefinition) {
         macroTable.defineSymbol(modelDefinition);
+      } else if (definition instanceof RecordTypeDefinition recordTypeDefinition) {
+        macroTable.defineSymbol(recordTypeDefinition);
       }
     }
   }
