@@ -325,9 +325,13 @@ instruction set architecture AArch64Base = {
                        ', ', ExtendId($size, "SP")(rn), ', ', "#", decimal($immEx), $asm )
     }
 
+  model ExtInstrStr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
+    (ExtendId ($i.id,  $ext); $i.mnemo; $i.opcode; $i.funct)
+    }
+
   model AddSubImmInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
-    $AddSubImmInstrShft ((ExtendId ($i.id, "I"  ); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12X; 0 ; "") //  decimal(imm12)
-    $AddSubImmInstrShft ((ExtendId ($i.id, "I12"); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12S; 1 ; "") // (decimal(imm12), ", lsl #12")
+    $AddSubImmInstrShft ($ExtInstrStr ($i; "I"  ); $size; $f; imm12X; 0 ; "") //  decimal(imm12)
+    $AddSubImmInstrShft ($ExtInstrStr ($i; "I12"); $size; $f; imm12S; 1 ; "") // (decimal(imm12), ", lsl #12")
     }
 
 
@@ -356,12 +360,9 @@ instruction set architecture AArch64Base = {
 
   model AddSubSftInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
     $AddSubSftInstrBase ($i; $size; $f; X(rm); imm6 = 0, shift = ShiftType::LSL; "") // TODO pseudo instruction
-    $AddSubSftInstrBase ((ExtendId ($i.id, "LSL"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-                                  X(rm) << imm6;         shift = ShiftType::LSL; (", lsl #", decimal(imm6)))
-    $AddSubSftInstrBase ((ExtendId ($i.id, "LSR"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-                                  X(rm) as UInt >> imm6; shift = ShiftType::LSR; (", lsr #", decimal(imm6)))
-    $AddSubSftInstrBase ((ExtendId ($i.id, "ASR"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-                                  X(rm) as SInt >> imm6; shift = ShiftType::ASR; (", asr #", decimal(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "LSL"); $size; $f; X(rm) << imm6;         shift = ShiftType::LSL; (", lsl #", decimal(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "LSR"); $size; $f; X(rm) as UInt >> imm6; shift = ShiftType::LSR; (", lsr #", decimal(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "ASR"); $size; $f; X(rm) as SInt >> imm6; shift = ShiftType::ASR; (", asr #", decimal(imm6)))
     }
 
 
@@ -864,6 +865,21 @@ instruction set architecture AArch64Base = {
     $TwoRegOpEncAsm ($i; $size)
     }
 
+  model RevBytesWInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: TwoRegOpFormat =
+      let xrn = (X(rn)) in
+        let result = (xrn(39..32),xrn(47..40),xrn(55..48),xrn(63..56),xrn(7..0),xrn(15..8),xrn(23..16),xrn(31..24)) in
+          X(rd) := result as Bits<Size::$i.funct> as BitsX
+    $TwoRegOpEncAsm ($i; $i.funct)
+    }
+
+  model RevBytesXInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: TwoRegOpFormat =
+      let xrn = (X(rn)) in
+        let result = (xrn(7..0),xrn(15..8),xrn(23..16),xrn(31..24),xrn(39..32),xrn(47..40),xrn(55..48),xrn(63..56)) in
+          X(rd) := result as Bits<Size::$i.funct> as BitsX
+    $TwoRegOpEncAsm ($i; $i.funct)
+    }
 
 // conditional compare models **************************************************
 
@@ -890,13 +906,13 @@ instruction set architecture AArch64Base = {
     }
 
   model CondCompareImmInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
-    $CondCompareBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; immX as BitsW; (', #', decimal(rm)))
-    $CondCompareBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; immX         ; (', #', decimal(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; immX as BitsW; (', #', decimal(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; immX         ; (', #', decimal(rm)))
     }
 
   model CondCompareRegInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
-    $CondCompareBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; X(rm) as BitsW; (', ', WSize(rm)))
-    $CondCompareBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; X(rm)         ; (', ', XSize(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; X(rm) as BitsW; (', ', WSize(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; X(rm)         ; (', ', XSize(rm)))
     }
 
 
@@ -920,8 +936,8 @@ instruction set architecture AArch64Base = {
     }
 
   model CondSelectWX (i: InstrWithFunct, c: Cond, ex: Ex): IsaDefs = {
-    $CondSelectBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; $ex)
-    $CondSelectBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; $ex)
+    $CondSelectBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; $ex)
+    $CondSelectBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; $ex)
     }
 
   model CondSelectInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
@@ -1268,20 +1284,20 @@ instruction set architecture AArch64Base = {
 // instruction enriching models ************************************************
 
   model InstrWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
-    $modelid ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize)
-    $modelid ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize)
-    }
-
-  model InstrWXRegShift (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct): IsaDefs = {
-    $LogicRegShiftInstr ($modelid; (ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize)
-    $LogicRegShiftInstr ($modelid; (ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize)
+    $modelid ($ExtInstrStr ($i;  "W"); WSize)
+    $modelid ($ExtInstrStr ($i;  "X"); XSize)
     }
 
   model InstrWXFlags (modelid: InstrWithFunctSizeFlags, i: InstrWithFunct): IsaDefs = {
-    $modelid ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize; (WResult  ; OffFlags;  ""))
-    $modelid ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize; (XResult  ; OffFlags;  ""))
-    $modelid ((ExtendId ($i.id, "WS"); $i.mnemo; $i.opcode; $i.funct); WSize; (WResFlags; SetFlags; "s"))
-    $modelid ((ExtendId ($i.id, "XS"); $i.mnemo; $i.opcode; $i.funct); XSize; (XResFlags; SetFlags; "s"))
+    $modelid ($ExtInstrStr ($i;  "W"); WSize; (WResult  ; OffFlags;  ""))
+    $modelid ($ExtInstrStr ($i;  "X"); XSize; (XResult  ; OffFlags;  ""))
+    $modelid ($ExtInstrStr ($i; "WS"); WSize; (WResFlags; SetFlags; "s"))
+    $modelid ($ExtInstrStr ($i; "XS"); XSize; (XResFlags; SetFlags; "s"))
+    }
+
+  model InstrWXRegShift (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct): IsaDefs = {
+    $LogicRegShiftInstr ($modelid; $ExtInstrStr ($i; "W"); WSize)
+    $LogicRegShiftInstr ($modelid; $ExtInstrStr ($i; "X"); XSize)
     }
 
 
@@ -1344,6 +1360,9 @@ instruction set architecture AArch64Base = {
   $InstrWX             (CountBitsInstr        ; (CLS    ; "cls"   ; 0b1'0110'1011'0000'0000'0101; cls  ))
   $InstrWX             (CountBitsInstr        ; (CLZ    ; "clz"   ; 0b1'0110'1011'0000'0000'0100; clz  ))
   $InstrWX             (ReverseBitsInstr      ; (RBIT   ; "rbit"  ; 0b1'0110'1011'0000'0000'0000; rvb  ))
+  $RevBytesWInstr      (                        (REVW   ; "rev"   ; 0b1'0110'1011'0000'0000'0010; WSize))
+  $RevBytesWInstr      (                        (REV32  ; "rev32" ; 0b1'0110'1011'0000'0000'0010; XSize))
+  $RevBytesXInstr      (                        (REVX   ; "rev"   ; 0b1'0110'1011'0000'0000'0011; XSize))
 
   $CondInstr           (CondCompareImmInstr   ; (CCMNI  ; "ccmn"  ; 0b0111'0100'1010'0    ; adds       ))
   $CondInstr           (CondCompareImmInstr   ; (CCMPI  ; "ccmp"  ; 0b1111'0100'1010'0    ; subsc      ))
@@ -1649,6 +1668,7 @@ instruction set architecture AArch64Base = {
   $HaltInstr             ((HLT    ; "hlt"   ; 0b1101'0100'0100'0000                        ))
   $NopInstr              ((NOP    ; "nop"   ; 0b0010'0000'0001'1111                        ))
   $NopInstr              ((YIELD  ; "yield" ; 0b0010'0000'0011'1111                        ))
+  $NopInstr              ((BTI    ; "bti"   ; 0b0010'0100'0001'1111                        ))
   $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
 
 }
