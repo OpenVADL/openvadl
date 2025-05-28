@@ -2409,14 +2409,10 @@ public class TypeChecker
     var suggestions =
         Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
 
-    var diagnostic = error("Unknown Type `%s`".formatted(typeName), expr)
-        .locationDescription(expr, "No type with that name exists.");
-
-    if (!suggestions.isEmpty()) {
-      diagnostic.help("Maybe you meant one of these: %s", String.join(", ", suggestions));
-    }
-
-    throw diagnostic.build();
+    throw error("Unknown Type `%s`".formatted(typeName), expr)
+        .locationDescription(expr, "No type with that name exists.")
+        .suggestions(suggestions)
+        .build();
   }
 
   @Override
@@ -2628,12 +2624,10 @@ public class TypeChecker
               formatType.format.fields.stream()
                   .map(f -> f.identifier().name).toList());
 
-          var diagnostic = error("Unknown format field `%s`".formatted(fieldName), expr)
-              .description("Format `%s` doesn't have any field with this name", formatName);
-          if (!suggestions.isEmpty()) {
-            diagnostic.help("Maybe you meant one of these: %s", String.join(", ", suggestions));
-          }
-          throw diagnostic.build();
+          throw error("Unknown format field `%s`".formatted(fieldName), expr)
+              .description("Format `%s` doesn't have any field with this name", formatName)
+              .suggestions(suggestions)
+              .build();
         }
 
         // FIXME: @flofriday replace once computed field ranges are Constant.BitSlice
@@ -2674,12 +2668,10 @@ public class TypeChecker
     var targetSymbol = expr.symbolTable().requireSymbol(expr.target.path(), () -> {
       var suggestions = Levenshtein.suggestions(expr.target.path().pathToString(),
           expr.symbolTable().allSymbolNames());
-      var diagnostic = error("Unknown call target", expr.target)
-          .locationNote(expr.target, "Nothing found that can be called with this name.");
-      if (!suggestions.isEmpty()) {
-        diagnostic.help("Maybe you meant one of these: %s", String.join(", ", suggestions));
-      }
-      return diagnostic;
+
+      return error("Unknown call target", expr.target)
+          .locationNote(expr.target, "Nothing found that can be called with this name.")
+          .suggestions(suggestions);
     });
 
     switch (targetSymbol) {

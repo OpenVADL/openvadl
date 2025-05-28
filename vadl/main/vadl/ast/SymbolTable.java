@@ -365,7 +365,7 @@ class SymbolTable {
     // Unfortunately, we need this type to be correctly parsed because,
     // depending on it, we parse the body of the macro differently. So if we
     // don't know what it is, we must exit early.
-    throw ParserUtils.unknownSyntaxTypeError(identifier.name, identifier.location());
+    throw ParserUtils.unknownSyntaxTypeError(identifier.name, this, identifier.location());
   }
 
   /**
@@ -392,6 +392,27 @@ class SymbolTable {
     var matchingNames = symbols.entrySet().stream()
         .filter(entry -> entry.getValue() instanceof AstSymbol astSymbol
             && Arrays.stream(classes).anyMatch(klass -> klass.isInstance(astSymbol.origin)))
+        .map(Map.Entry::getKey)
+        .toList();
+
+    var names = new HashSet<>(matchingNames);
+    if (parent != null) {
+      names.addAll(parent.allSymbolNamesOf(classes));
+    }
+    return names;
+  }
+
+  /**
+   * Returns all symbol names in scope that point to the defined node classes.
+   *
+   * @param classes that are allowed.
+   * @return the set of all available names.
+   */
+  @SafeVarargs
+  final Set<String> allMacroSymbolNamesOf(Class<? extends Node>... classes) {
+    var matchingNames = macroSymbols.entrySet().stream()
+        .filter(entry -> Arrays.stream(classes)
+            .anyMatch(klass -> klass.isInstance(entry.getValue().origin)))
         .map(Map.Entry::getKey)
         .toList();
 
@@ -500,7 +521,7 @@ class SymbolTable {
 
     if (suggestions != null && !suggestions.isEmpty()) {
       diagnostic =
-          diagnostic.help("Maybe you meant one of these: %s", String.join(", ", suggestions));
+          diagnostic.suggestions(suggestions);
     }
 
     errors.add(diagnostic.build());
@@ -905,20 +926,16 @@ class SymbolTable {
 
       if (definition.annotation == null) {
         // FIXME: Show the usage strings and not just the names.
+        var suggestions = Levenshtein.suggestions(
+            definition.name(),
+            AnnotationTable.availableAnnotationNames(definition.target.getClass()));
+
         var diagnostic =
             error("Unknown Annotation: \"%s\"".formatted(definition.name()), definition)
                 .locationDescription(definition.location(),
                     "No annotation with this name exists on %s",
-                    definition.target);
-
-        var suggestions =
-            Levenshtein.suggestions(
-                definition.name(),
-                AnnotationTable.availableAnnotationNames(definition.target.getClass()));
-        if (!suggestions.isEmpty()) {
-          diagnostic =
-              diagnostic.help("Maybe you meant one of these: %s", String.join(", ", suggestions));
-        }
+                    definition.target)
+                .suggestions(suggestions);
 
         definition.symbolTable().errors.add(diagnostic.build());
         return null;

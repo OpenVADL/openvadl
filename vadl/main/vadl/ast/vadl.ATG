@@ -2192,7 +2192,7 @@ PRODUCTIONS
                                                 // Unfortunately, we need this type to be correctly parsed because,
                                                 // depending on it, we parse the body of the macro differently. So if we
                                                 // don't know what it is, we must exit early.
-                                                throwException(ParserUtils.unknownSyntaxTypeError(t.val, lastTokenLoc()));
+                                                throwException(ParserUtils.unknownSyntaxTypeError(t.val, macroTable, lastTokenLoc()));
                                             .)
   .
 

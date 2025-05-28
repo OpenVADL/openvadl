@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -482,18 +483,20 @@ class ParserUtils {
     return true;
   }
 
-  static Diagnostic unknownSyntaxTypeError(String name, SourceLocation location) {
-    // FIXME: Also add records here and maybe move to a more unified system for suggestions.
+  static Diagnostic unknownSyntaxTypeError(String name, SymbolTable macroTable,
+                                           SourceLocation location) {
+
+    // Initially add the basic types and custom defined in scope.
     var available = Arrays.stream(BasicSyntaxType.values())
         .map(BasicSyntaxType::getName)
         .filter(n -> !n.contains("Invalid"))
-        .toList();
-
-    var suggested = String.join(", ", Levenshtein.sortAll(name, available));
+        .collect(Collectors.toSet());
+    available.addAll(
+        macroTable.allMacroSymbolNamesOf(RecordTypeDefinition.class, ModelTypeDefinition.class));
 
     return error("Unknown syntax type: `%s`".formatted(name), location)
         .locationDescription(location, "No syntax type with this name exists.")
-        .help("Maybe you meant to use one of the following:\n%s", suggested)
+        .suggestions(Levenshtein.suggestions(name, available))
         .build();
   }
 

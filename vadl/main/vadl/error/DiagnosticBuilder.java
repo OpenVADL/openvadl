@@ -18,6 +18,8 @@ package vadl.error;
 
 import com.google.errorprone.annotations.FormatMethod;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
@@ -143,6 +145,29 @@ public class DiagnosticBuilder extends Throwable {
         content.formatted(args)
     ));
     return this;
+  }
+
+  /**
+   * Attaches a help message of suggestions.
+   *
+   * <p>The caller has to already provide a sorted and shortened list. Look at
+   * {@link vadl.utils.Levenshtein#suggestions(String, Collection)}} for finding suggestions based
+   * on the edit distance.
+   *
+   * @param items to display the user.
+   * @return the builder itself.
+   */
+  public DiagnosticBuilder suggestions(List<String> items) {
+    if (items.isEmpty()) {
+      return this;
+    }
+
+    if (items.size() == 1) {
+      return this.help("Did you maybe mean: %s", items.getFirst());
+    }
+
+
+    return this.help("Did you maybe mean one of: %s", String.join(", ", items));
   }
 
   public Diagnostic build() {
