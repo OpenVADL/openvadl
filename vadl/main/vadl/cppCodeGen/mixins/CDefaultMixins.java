@@ -186,6 +186,8 @@ public interface CDefaultMixins {
             .gen(node.falseBranch()).spaceOut()
             .ln("}");
       }
+      var mergeNode = node.findCorrespondingMergeNode();
+      ctx.gen(mergeNode);
     }
   }
 

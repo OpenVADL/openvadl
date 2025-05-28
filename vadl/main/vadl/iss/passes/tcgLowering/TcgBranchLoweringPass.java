@@ -171,21 +171,22 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
     // emit the else branch label
     var elseLabelPosition = ifBranchEnd.addBefore(new TcgSetLabel(elseLabel));
 
+    var mergeNode = (MergeNode) ifBranchEnd.usages().findFirst().get();
     if (!skipElse) {
       // right before the else branch label, we must take a jump to the end label
       elseLabelPosition.addBefore(new TcgBr(endLabel));
 
       // traverse and emit the false branch
-      var elseBranchEnd = traverseBranch(ifNode.falseBranch());
-      // emit the end label
-      elseBranchEnd.addBefore(new TcgSetLabel(endLabel));
+      traverseBranch(ifNode.falseBranch());
+      // emit the end label after merge node
+      mergeNode.addAfter(new TcgSetLabel(endLabel));
     }
 
     return linkBranchesAndRemoveControlSplit(
         ifNode,
         skipElse,
         tcgBranchNode,
-        (MergeNode) ifBranchEnd.usages().findFirst().get()
+        mergeNode
     );
   }
 

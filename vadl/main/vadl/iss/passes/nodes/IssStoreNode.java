@@ -38,7 +38,8 @@ public class IssStoreNode extends WriteMemNode {
    * @param storeSize the used TCG sized to store operation
    */
   public IssStoreNode(WriteMemNode origin, Tcg_8_16_32_64 storeSize) {
-    super(origin.memory(), origin.words(), origin.address(), origin.value(), origin.condition());
+    super(origin.memory(), origin.words(), origin.address(), origin.value(),
+        origin.nullableCondition());
     this.storeSize = storeSize;
   }
 

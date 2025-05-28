@@ -153,7 +153,7 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
     var regInfo = res.expectExtension(RegInfo.class);
     var cTypeWidth = regInfo.valueCTypeWidth();
     return switch (cTypeWidth) {
-      case 8 -> "ub";
+      case 1, 8 -> "ub";
       case 16 -> "uw";
       case 32 -> "l";
       case 64 -> "q";

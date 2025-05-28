@@ -65,9 +65,12 @@ public abstract class SideEffectNode extends DependencyNode {
    * Sets the condition of the side effect.
    * The condition defines under what condition the side effect takes place.
    */
-  public void setCondition(ExpressionNode condition) {
-    ensure(condition.type().isTrivialCastTo(Type.bool()), "Condition must be a boolean but was %s",
-        condition);
+  public void setCondition(@Nullable ExpressionNode condition) {
+    if (condition != null) {
+      ensure(condition.type().isTrivialCastTo(Type.bool()),
+          "Condition must be a boolean but was %s",
+          condition);
+    }
     updateUsageOf(this.condition, condition);
     this.condition = condition;
   }

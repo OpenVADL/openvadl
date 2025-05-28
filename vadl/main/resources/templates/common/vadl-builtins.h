@@ -733,7 +733,7 @@ static inline Bits VADL_concat(Bits a, Width aw, Bits b, Width bw) {
   a = VADL_uextract(a, aw);
   b = VADL_uextract(b, bw);
   // shift a << b.width
-  Bits shifted = VADL_lsl(a, aw, bw, 32);
+  Bits shifted = VADL_lsl(a, res_w, bw, 32);
   return VADL_or(shifted, res_w, b, res_w);
 }
 
