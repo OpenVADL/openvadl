@@ -1045,6 +1045,7 @@ class SymbolTable {
     public Void visit(EncodingDefinition definition) {
       // Link instruction and import all symbols from the instruction format.
       beforeTravel(definition);
+      definition.annotations.forEach(this::travel);
 
       var inst =
           definition.symbolTable().requireAs(definition.identifier(), InstructionDefinition.class);
@@ -1245,6 +1246,7 @@ class SymbolTable {
     @Override
     public Void visit(AsmDirectiveDefinition definition) {
       beforeTravel(definition);
+      definition.annotations.forEach(this::travel);
 
       // Only do rudimentary checks here, the rest is done in the typechecker.
       if (!AsmDirective.isAsmDirective(definition.builtinDirective.name)) {
@@ -1285,6 +1287,7 @@ class SymbolTable {
     @Override
     public Void visit(AsmGrammarLocalVarDefinition definition) {
       beforeTravel(definition);
+      definition.annotations.forEach(this::travel);
 
       // FIXME: @benjaminkasper99 should we maybe make "null" a symbol that is always in the
       // symboltable so we can avoid this special treatment here?
@@ -1330,6 +1333,7 @@ class SymbolTable {
     @Override
     public Void visit(AsmGrammarTypeDefinition definition) {
       beforeTravel(definition);
+      definition.annotations.forEach(this::travel);
 
       if (!AsmType.isInputAsmType(definition.id.name)) {
         var suggestions = Levenshtein.suggestions(definition.id.name,
