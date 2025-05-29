@@ -1,6 +1,6 @@
 # The QEMU (ISS) test base image comes with the required architecture toolchains, QEMU source code and sccache
 
-FROM ghcr.io/openvadl/merged-toolchain@sha256:346078ff2c7aea66a52cf563f6b09f0f02ec9e1f96ed52fec20d17077f1a3792 AS toolchains
+FROM ghcr.io/openvadl/merged-toolchain@sha256:2ceaf5369996a5f3db0e0bb8e16ae5fe53003d6ac180bd9e60a9ced954f99a9a AS toolchains
 
 FROM ubuntu:22.04 AS base
 
@@ -53,7 +53,8 @@ RUN set -ex; \
 # The QEMU ISS Test Base image, which contains the QEMU source code, toolchains and sccache
 FROM base AS iss-test-base
 COPY --from=toolchains /opt/riscv /opt/riscv
-COPY --from=toolchains /opt/aarch64 /opt/aarch64
+COPY --from=toolchains /opt/aarch64-linux /opt/aarch64-linux
+COPY --from=toolchains /opt/aarch64-elf /opt/aarch64-elf
 
 # Add toolchains to PATH
-ENV PATH=/opt/riscv/bin:/opt/aarch64/bin:$PATH
+ENV PATH=/opt/riscv/bin:/opt/aarch64-elf/bin:/opt/aarch64-linux/bin:$PATH

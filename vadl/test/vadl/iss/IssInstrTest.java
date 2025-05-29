@@ -90,6 +90,9 @@ public abstract class IssInstrTest extends QemuIssTest {
   protected final Stream<DynamicTest> runTestsWith(
       int runs,
       List<Function<Integer, IssTestUtils.TestCase>> generators) throws IOException {
+    if (generators.isEmpty()) {
+      throw new IllegalArgumentException("No generators specified");
+    }
     var image = generateIssSimulator(getVadlSpec());
     var testCases = generators.stream()
         .flatMap(genFunc -> IntStream.range(0, runs)

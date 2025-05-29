@@ -48,8 +48,8 @@ public class AutoAssembler {
     this.byteOrder = byteOrder;
   }
 
-  public AutoAssembler allowRegisterIndices(int startInclusive, int endExclusive) {
-    allowRegisterIndices(IntStream.range(startInclusive, endExclusive).boxed().toList());
+  public AutoAssembler allowRegisterIndices(int startInclusive, int endInclusive) {
+    allowRegisterIndices(IntStream.range(startInclusive, endInclusive + 1).boxed().toList());
     return this;
   }
 
@@ -68,7 +68,7 @@ public class AutoAssembler {
     for (var f : enc.fieldEncodings()) {
       assignment.put(f.formatField(), f.constant().integer());
     }
-    
+
     var regs = regIndexFields(instruction);
     var destRegs = new ArrayList<Format.Field>();
     var srcRegs = new ArrayList<Format.Field>();

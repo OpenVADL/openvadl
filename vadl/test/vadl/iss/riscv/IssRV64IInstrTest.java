@@ -56,8 +56,8 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
       var b = getBuilder(testNamePrefix, id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
-      b.fillReg(regSrc1, 64);
-      b.fillReg(regSrc2, 64);
+      b.fillRegSigned(regSrc1, 64);
+      b.fillRegSigned(regSrc2, 64);
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc1, regSrc2);
       return b.toTestCase(regSrc1, regSrc2, regDest);
@@ -69,7 +69,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var regSrc = b.anyTempReg().sample();
-      b.fillReg(regSrc, 64);
+      b.fillRegSigned(regSrc, 64);
       var imm = arbitrarySignedInt(12).sample();
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc, imm);
@@ -82,7 +82,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var regSrc = b.anyTempReg().sample();
-      b.fillReg(regSrc, 64);
+      b.fillRegSigned(regSrc, 64);
       var shamt = arbitraryUnsignedInt(6).sample();
       var regDest = b.anyTempReg().sample();
       b.add("%s %s, %s, %s", instruction, regDest, regSrc, shamt);
@@ -105,7 +105,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var storeReg = b.anyTempReg().sample();
-      b.fillReg(storeReg, dataSize);
+      b.fillRegSigned(storeReg, dataSize);
       var addrReg = b.anyTempReg().sample();
       b.fillReg(addrReg, BigInteger.valueOf(0x80000100L), BigInteger.valueOf(0x800F0000L),
           calculateAlignment(dataSize));
@@ -122,7 +122,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     return runTestsWith(id -> {
       var b = getBuilder(testNamePrefix, id);
       var storeReg = b.anyTempReg().sample();
-      b.fillReg(storeReg, dataSize);
+      b.fillRegSigned(storeReg, dataSize);
       var addrReg = b.anyTempReg().sample();
       b.fillReg(addrReg, BigInteger.valueOf(0x80000100L), BigInteger.valueOf(0x800F0000L),
           calculateAlignment(dataSize));
@@ -143,7 +143,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
       var rs1 = b.anyTempReg().sample();
       var rs2 = b.anyTempReg().sample();
       Boolean equal = Arbitraries.of(true, false).sample();
-      var val1 = b.fillReg(rs1, 64);
+      var val1 = b.fillRegSigned(rs1, 64);
       if (Boolean.TRUE.equals(equal) == branchWhenEqual) {
         b.fillReg(rs2, val1);
       } else {
@@ -439,7 +439,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
       var b = new RV64IMTestBuilder("SLLW_" + id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
-      b.fillReg(regSrc1, 64);
+      b.fillRegSigned(regSrc1, 64);
       b.fillReg(regSrc2, arbitraryUnsignedInt(5).sample()); // 5 bits for 32-bit shift
       var regDest = b.anyTempReg().sample();
       b.add("sllw %s, %s, %s", regDest, regSrc1, regSrc2);
@@ -453,7 +453,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
       var b = new RV64IMTestBuilder("SRLW_" + id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
-      b.fillReg(regSrc1, 64);
+      b.fillRegSigned(regSrc1, 64);
       b.fillReg(regSrc2, arbitraryUnsignedInt(5).sample());
       var regDest = b.anyTempReg().sample();
       b.add("srlw %s, %s, %s", regDest, regSrc1, regSrc2);
@@ -467,7 +467,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
       var b = new RV64IMTestBuilder("SRAW_" + id);
       var regSrc1 = b.anyTempReg().sample();
       var regSrc2 = b.anyTempReg().sample();
-      b.fillReg(regSrc1, 64);
+      b.fillRegSigned(regSrc1, 64);
       b.fillReg(regSrc2, arbitraryUnsignedInt(5).sample());
       var regDest = b.anyTempReg().sample();
       b.add("sraw %s, %s, %s", regDest, regSrc1, regSrc2);
@@ -480,7 +480,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     return runTestsWith(id -> {
       var b = new RV64IMTestBuilder("SLLIW_" + id);
       var regSrc = b.anyTempReg().sample();
-      b.fillReg(regSrc, 64);
+      b.fillRegSigned(regSrc, 64);
       var shamt = arbitraryUnsignedInt(5).sample();
       var regDest = b.anyTempReg().sample();
       b.add("slliw %s, %s, %s", regDest, regSrc, shamt);
@@ -493,7 +493,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     return runTestsWith(id -> {
       var b = new RV64IMTestBuilder("SRLIW_" + id);
       var regSrc = b.anyTempReg().sample();
-      b.fillReg(regSrc, 64);
+      b.fillRegSigned(regSrc, 64);
       var shamt = arbitraryUnsignedInt(5).sample();
       var regDest = b.anyTempReg().sample();
       b.add("srliw %s, %s, %s", regDest, regSrc, shamt);
@@ -506,7 +506,7 @@ public class IssRV64IInstrTest extends AbstractIssRiscv64InstrTest {
     return runTestsWith(id -> {
       var b = new RV64IMTestBuilder("SRAIW_" + id);
       var regSrc = b.anyTempReg().sample();
-      b.fillReg(regSrc, 64);
+      b.fillRegSigned(regSrc, 64);
       var shamt = arbitraryUnsignedInt(5).sample();
       var regDest = b.anyTempReg().sample();
       b.add("sraiw %s, %s, %s", regDest, regSrc, shamt);

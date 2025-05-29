@@ -52,12 +52,19 @@ public abstract class AsmTestBuilder {
     return fillReg(reg, val);
   }
 
-  public BigInteger fillReg(String reg, int size) {
+  public BigInteger fillRegSigned(String reg, int size) {
     return fillReg(reg,
         BigInteger.valueOf(-2).pow(size - 1),
         BigInteger.valueOf(2)
             .pow(size - 1)
             .subtract(BigInteger.ONE)
+    );
+  }
+
+  public BigInteger fillRegUnsigned(String reg, int size) {
+    return fillReg(reg,
+        BigInteger.ZERO,
+        BigInteger.valueOf(2).pow(size).subtract(BigInteger.ONE)
     );
   }
 
