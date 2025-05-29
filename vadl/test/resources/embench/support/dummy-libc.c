@@ -221,10 +221,10 @@ atoi (const char *nptr __attribute__ ((unused)))
   return 0;
 }
 
-double
+long
 atof (const char *nptr __attribute__ ((unused)))
 {
-  return 0.0;
+  return 0;
 }
 
 FILE *
