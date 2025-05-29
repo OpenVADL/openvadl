@@ -8,8 +8,8 @@
 .extern  _halt
 .type    _halt, @function
 
-.extern _trap_start
-.type _trap_start, @function
+# .extern _trap_start
+# .type _trap_start, @function
 
 .global _start
 .type   _start, @function
@@ -63,10 +63,21 @@ _start:
     addi t0, t0, %lo(__stack_size)
     add sp, tp, t0
 
-    // Set trap vector
-    la a5, _trap_start
-    csrw mtvec, a5
-
     call main
     // li  a0, 1
-    call terminate
+
+    slli a0,a0,1
+    addi x1, x0, 1
+    la x2, tohost
+    sw x1, 0(x2)
+    sw x0, 4(x2)
+
+    .section .tohost, "aw", @progbits
+    .align 6;
+    .global tohost;
+    tohost: .dword 0;
+    .size tohost, 8;
+    .align 6;
+    .global fromhost;
+    fromhost: .dword 0;
+    .size fromhost, 8;

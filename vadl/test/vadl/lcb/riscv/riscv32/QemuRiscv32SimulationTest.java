@@ -16,9 +16,9 @@
 
 package vadl.lcb.riscv.riscv32;
 
-import vadl.lcb.riscv.SpikeRiscvSimulationTest;
+import vadl.lcb.riscv.QemuRiscvSimulationTest;
 
-public class SpikeRiscv32SimulationTest extends SpikeRiscvSimulationTest {
+public class QemuRiscv32SimulationTest extends QemuRiscvSimulationTest {
   @Override
   protected String getTarget() {
     return "rv32im";

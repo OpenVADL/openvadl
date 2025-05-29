@@ -5,9 +5,6 @@ ENTRY(_start)
 /* https://github.com/ucb-bar/libgloss-htif/blob/master/util/htif.ld */
 SECTIONS
 {
-  . = 0xe0000000;
-  .text.trap : { *(.text.trap) }
-
   . = 0x80000000;
   .text.init : { *(.text.init) }
 

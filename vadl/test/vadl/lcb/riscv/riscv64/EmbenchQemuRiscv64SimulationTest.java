@@ -14,14 +14,37 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.riscv;
+package vadl.lcb.riscv.riscv64;
 
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import vadl.lcb.LcbDockerExecutionTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
 
-public class EmbenchSpikeRiscv32SimulationTest extends LcbDockerExecutionTest {
+public class EmbenchQemuRiscv64SimulationTest extends LcbDockerExecutionTest {
+
+  public String getTarget() {
+    return "rv64im";
+  }
+
+  public String getUpstreamBuildTarget() {
+    return "RISCV";
+  }
+
+  @Override
+  protected String getUpstreamClangTarget() {
+    return "riscv64";
+  }
+
+  @Override
+  protected String getSpikeTarget() {
+    return "rv64gc";
+  }
+
+  @Override
+  protected String getAbi() {
+    return "lp64";
+  }
 
   @Test
   void runO0() throws DuplicatedPassKeyException, IOException {
@@ -33,34 +56,9 @@ public class EmbenchSpikeRiscv32SimulationTest extends LcbDockerExecutionTest {
     testEmbench(3);
   }
 
-  @Override
-  protected String getTarget() {
-    return "rv32im";
-  }
-
-  @Override
-  protected String getUpstreamBuildTarget() {
-    return "RISCV";
-  }
-
-  @Override
-  protected String getUpstreamClangTarget() {
-    return "riscv32";
-  }
-
-  @Override
-  protected String getSpikeTarget() {
-    return "rv64im";
-  }
-
-  @Override
-  protected String getAbi() {
-    return "ilp32";
-  }
-
   void testEmbench(int optLevel) throws IOException, DuplicatedPassKeyException {
-    var cmd = "sh /src/embench/benchmark-extras/rv32-run-benchmarks-spike-clang-lcb-O" + optLevel
+    var cmd = "sh /src/embench/benchmark-extras/rv64-run-benchmarks-spike-clang-lcb-O" + optLevel
         + ".sh";
-    run("sys/risc-v/rv32im.vadl", cmd);
+    run("sys/risc-v/rv64im.vadl", cmd);
   }
 }

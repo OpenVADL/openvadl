@@ -7,7 +7,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 
 #include <support.h>
-#include <common.h>
 
 void
 initialise_board ()

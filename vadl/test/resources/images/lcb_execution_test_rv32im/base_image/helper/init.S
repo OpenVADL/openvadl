@@ -55,9 +55,10 @@ _start:
 
     # shutdown with exit code from main
     slli a0,a0,1
-    addi a0,a0,1
+    addi x1, x0, 1
     la x2, tohost
-    sd a0, 0(x2)
+    sw x1, 0(x2)
+    sw x0, 4(x2)
 
     .section .tohost, "aw", @progbits
     .align 6;
