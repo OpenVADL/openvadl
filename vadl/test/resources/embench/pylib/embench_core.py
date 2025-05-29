@@ -94,6 +94,10 @@ def setup_logging(logdir, prefix):
     logfile = os.path.join(
         logdir_abs, time.strftime('{pref}-%Y-%m-%d-%H%M%S.log'.format(pref=prefix))
     )
+    # -0000- so it is shown on top
+    latestlogfile = os.path.join(
+        logdir_abs, time.strftime('{pref}-0000-latest.log'.format(pref=prefix))
+    )
 
     # Set up logging
     log.setLevel(logging.DEBUG)
@@ -103,6 +107,9 @@ def setup_logging(logdir, prefix):
     file_h = logging.FileHandler(logfile)
     file_h.setLevel(logging.DEBUG)
     log.addHandler(file_h)
+    latestfile_h = logging.FileHandler(latestlogfile, mode='w')
+    latestfile_h.setLevel(logging.DEBUG)
+    log.addHandler(latestfile_h)
 
     # Log where the log file is
     log.debug('Log file: {log}\n'.format(log=logfile))

@@ -865,6 +865,15 @@ instruction set architecture AArch64Base = {
     $TwoRegOpEncAsm ($i; $size)
     }
 
+  model RevBytesHInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: TwoRegOpFormat = {
+      let xrn = (X(rn)) in
+        let result = (xrn(55..48),xrn(63..56),xrn(39..32),xrn(47..40),xrn(23..16),xrn(31..24),xrn(7..0),xrn(15..8)) in
+          X(rd) := result as Bits<Size::$size> as BitsX
+      }
+    $TwoRegOpEncAsm ($i; $size)
+    }
+
   model RevBytesWInstr (i: InstrWithFunct): IsaDefs = {
     instruction $i.id: TwoRegOpFormat =
       let xrn = (X(rn)) in
@@ -1360,8 +1369,9 @@ instruction set architecture AArch64Base = {
   $InstrWX             (CountBitsInstr        ; (CLS    ; "cls"   ; 0b1'0110'1011'0000'0000'0101; cls  ))
   $InstrWX             (CountBitsInstr        ; (CLZ    ; "clz"   ; 0b1'0110'1011'0000'0000'0100; clz  ))
   $InstrWX             (ReverseBitsInstr      ; (RBIT   ; "rbit"  ; 0b1'0110'1011'0000'0000'0000; rvb  ))
-  $RevBytesWInstr      (                        (REVW   ; "rev"   ; 0b1'0110'1011'0000'0000'0010; WSize))
+  $InstrWX             (RevBytesHInstr        ; (REV16  ; "rev16" ; 0b1'0110'1011'0000'0000'0001; half ))
   $RevBytesWInstr      (                        (REV32  ; "rev32" ; 0b1'0110'1011'0000'0000'0010; XSize))
+  $RevBytesWInstr      (                        (REVW   ; "rev"   ; 0b1'0110'1011'0000'0000'0010; WSize))
   $RevBytesXInstr      (                        (REVX   ; "rev"   ; 0b1'0110'1011'0000'0000'0011; XSize))
 
   $CondInstr           (CondCompareImmInstr   ; (CCMNI  ; "ccmn"  ; 0b0111'0100'1010'0    ; adds       ))
@@ -1550,6 +1560,12 @@ instruction set architecture AArch64Base = {
     , imm16    : Bits16                      // [15..0]  ignored
     }
 
+  format BTIFormat: Instr =                  // Branch target identification format
+    { op       [31..16]      : Bits16        // opcode part one
+    , opc      [15..8,5..0]  : Bits14        // opcode part two
+    , bti      [7..6]        : Bits2         // BTI target, PSTATE.BTYPE compatibility
+  }
+
   function SysRegName (sysreg: Bits16) -> String =
     match sysreg with
       { SysRegEncode::NZCV      => "nzcv"
@@ -1653,6 +1669,19 @@ instruction set architecture AArch64Base = {
     assembly $i.id = ($i.mnemo)
     }
 
+  function btiOp2(bti: Bits2) -> String = match bti with
+    { 0b01 => "c"
+    , 0b10 => "j"
+    , 0b11 => "jc"
+    , _    => ""
+    }
+
+  model BTIInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BTIFormat = {}
+    encoding $i.id = {op = 0b1101'0101'0000'0011, opc = $i.opcode}
+    assembly $i.id = ($i.mnemo, btiOp2(bti))
+    }
+
   model UndefinedInstr (i: InstrNoFunct): IsaDefs = {
     instruction $i.id: UndefinedInstrFormat =
       raise $UndefinedException ()
@@ -1668,7 +1697,7 @@ instruction set architecture AArch64Base = {
   $HaltInstr             ((HLT    ; "hlt"   ; 0b1101'0100'0100'0000                        ))
   $NopInstr              ((NOP    ; "nop"   ; 0b0010'0000'0001'1111                        ))
   $NopInstr              ((YIELD  ; "yield" ; 0b0010'0000'0011'1111                        ))
-  $NopInstr              ((BTI    ; "bti"   ; 0b0010'0100'0001'1111                        ))
+  $BTIInstr              ((BTI    ; "bti"   ; 0b0010'0100'''01'1111                        ))
   $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
 
 }

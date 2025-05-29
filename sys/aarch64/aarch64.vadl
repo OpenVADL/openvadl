@@ -156,7 +156,7 @@ instruction set architecture AArch64Base = {
 
   // assembly X register names or zero
   function XSize (idx: Index) -> String =   // do not rename
-    if idx = 31 then "zr"  else "x" + decimal( idx )
+    if idx = 31 then "xzr"  else "x" + decimal( idx )
 
   // assembly W register names or sp
   function WSizeSP (idx: Index) -> String = // do not rename
