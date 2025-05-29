@@ -948,13 +948,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   @Override
-  public ExpressionNode visit(ExtendIdExpr expr) {
+  public ExpressionNode visit(AsIdExpr expr) {
     throw new RuntimeException(
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
-  public ExpressionNode visit(IdToStrExpr expr) {
+  public ExpressionNode visit(AsStrExpr expr) {
     throw new RuntimeException(
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }

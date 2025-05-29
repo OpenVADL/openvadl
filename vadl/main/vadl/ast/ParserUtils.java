@@ -411,10 +411,10 @@ class ParserUtils {
    * After: parser is in the same state as before.
    */
   static boolean isMacroReplacementOfType(Parser parser, BasicSyntaxType syntaxType) {
-    if (parser.la.kind == Parser._EXTEND_ID) {
+    if (parser.la.kind == Parser._AS_ID) {
       return BasicSyntaxType.ID.isSubTypeOf(syntaxType);
     }
-    if (parser.la.kind == Parser._ID_TO_STR) {
+    if (parser.la.kind == Parser._AS_STR) {
       return BasicSyntaxType.STR.isSubTypeOf(syntaxType);
     }
     SyntaxType macroMatchType = macroMatchType(parser);

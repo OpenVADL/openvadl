@@ -449,7 +449,7 @@ public class MacroTests {
         record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
         
         model ExtendInstr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
-          (ExtendId ($i.id,  $ext); $i.mnemo; $i.opcode; $i.funct)
+          (AsId ($i.id,  $ext); $i.mnemo; $i.opcode; $i.funct)
         }
         """;
     Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog1));

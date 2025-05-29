@@ -130,9 +130,9 @@ interface ExprVisitor<R> {
 
   R visit(MatchExpr expr);
 
-  R visit(ExtendIdExpr expr);
+  R visit(AsIdExpr expr);
 
-  R visit(IdToStrExpr expr);
+  R visit(AsStrExpr expr);
 
   R visit(ExistsInExpr expr);
 
@@ -758,7 +758,7 @@ class StringLiteral extends Expr {
   }
 
   public StringLiteral(Identifier fromId, SourceLocation loc) {
-    // TODO More robust string escaping - only used for prettifying expanded IdToStr code
+    // TODO More robust string escaping - only used for prettifying expanded AsStr code
     this.token = '"' + fromId.name.replaceAll("\"", "\\\"") + '"';
     this.value = fromId.name;
     this.loc = loc;
@@ -827,7 +827,7 @@ class StringLiteral extends Expr {
  * }</pre></p>
  */
 sealed interface IdentifierOrPlaceholder extends IsId
-    permits Identifier, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, ExtendIdExpr {
+    permits Identifier, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, AsIdExpr {
 }
 
 /**
@@ -1052,14 +1052,14 @@ final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPla
 }
 
 /**
- * An internal temporary node representing the ExtendId built-in.
+ * An internal temporary node representing the AsId built-in.
  * This node should never leave the parser.
  */
-final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
+final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
   GroupedExpr expr;
   SourceLocation loc;
 
-  ExtendIdExpr(GroupedExpr expr, SourceLocation loc) {
+  AsIdExpr(GroupedExpr expr, SourceLocation loc) {
     this.expr = expr;
     this.loc = loc;
   }
@@ -1081,7 +1081,7 @@ final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append("ExtendId ");
+    builder.append("AsId ");
     expr.prettyPrint(0, builder);
   }
 
@@ -1094,7 +1094,7 @@ final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
       return false;
     }
 
-    ExtendIdExpr that = (ExtendIdExpr) o;
+    AsIdExpr that = (AsIdExpr) o;
     return expr.equals(that.expr);
   }
 
@@ -1118,14 +1118,14 @@ final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
 }
 
 /**
- * An internal temporary node representing the IdToStr built-in.
+ * An internal temporary node representing the AsStr built-in.
  * This node should never leave the parser.
  */
-final class IdToStrExpr extends Expr {
+final class AsStrExpr extends Expr {
   IdentifierOrPlaceholder id;
   SourceLocation loc;
 
-  IdToStrExpr(IdentifierOrPlaceholder id, SourceLocation loc) {
+  AsStrExpr(IdentifierOrPlaceholder id, SourceLocation loc) {
     this.id = id;
     this.loc = loc;
   }
@@ -1147,7 +1147,7 @@ final class IdToStrExpr extends Expr {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append("IdToStr (");
+    builder.append("AsStr (");
     id.prettyPrint(0, builder);
     builder.append(")");
   }
@@ -1161,7 +1161,7 @@ final class IdToStrExpr extends Expr {
       return false;
     }
 
-    IdToStrExpr that = (IdToStrExpr) o;
+    AsStrExpr that = (AsStrExpr) o;
     return id.equals(that.id);
   }
 
@@ -1444,7 +1444,7 @@ sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
 }
 
 sealed interface IsId extends IsSymExpr
-    permits ExtendIdExpr, Identifier, IdentifierOrPlaceholder, IdentifierPath, MacroInstanceExpr,
+    permits AsIdExpr, Identifier, IdentifierOrPlaceholder, IdentifierPath, MacroInstanceExpr,
     MacroMatchExpr, PlaceholderExpr {
   @Override
   default IsId path() {

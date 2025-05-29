@@ -177,12 +177,12 @@ public class Ungrouper
   }
 
   @Override
-  public Expr visit(ExtendIdExpr expr) {
+  public Expr visit(AsIdExpr expr) {
     return expr;
   }
 
   @Override
-  public Expr visit(IdToStrExpr expr) {
+  public Expr visit(AsStrExpr expr) {
     return expr;
   }
 

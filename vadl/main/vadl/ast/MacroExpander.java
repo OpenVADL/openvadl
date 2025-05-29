@@ -378,7 +378,7 @@ class MacroExpander
   }
 
   @Override
-  public Expr visit(ExtendIdExpr expr) {
+  public Expr visit(AsIdExpr expr) {
     var nameBuilder = new StringBuilder();
     var expressions = (GroupedExpr) expr.expr.accept(this);
     for (var inner : expressions.expressions) {
@@ -387,11 +387,11 @@ class MacroExpander
       } else if (inner instanceof StringLiteral string) {
         nameBuilder.append(string.value);
       } else if (inner instanceof PlaceholderExpr
-          || inner instanceof ExtendIdExpr || inner instanceof IdToStrExpr) {
+          || inner instanceof AsIdExpr || inner instanceof AsStrExpr) {
         // Will be expanded as soon as the used placeholders are bound
-        return new ExtendIdExpr(expressions, copyLoc(expr.location()));
+        return new AsIdExpr(expressions, copyLoc(expr.location()));
       } else {
-        reportError("Unsupported 'ExtendId' parameter " + inner, inner.location());
+        reportError("Unsupported 'AsId' parameter " + inner, inner.location());
         nameBuilder.append(inner);
       }
     }
@@ -407,12 +407,12 @@ class MacroExpander
   }
 
   @Override
-  public Expr visit(IdToStrExpr expr) {
+  public Expr visit(AsStrExpr expr) {
     var idOrPlaceholder = expandId(expr.id);
     if (idOrPlaceholder instanceof Identifier id) {
       return new StringLiteral(id, copyLoc(expr.location()));
     } else {
-      return new IdToStrExpr(idOrPlaceholder, copyLoc(expr.location()));
+      return new AsStrExpr(idOrPlaceholder, copyLoc(expr.location()));
     }
   }
 
@@ -1285,7 +1285,7 @@ class MacroExpander
         || node instanceof MacroMatchExpr || node instanceof MacroMatchStatement
         || node instanceof MacroInstanceNode || node instanceof MacroInstanceDefinition
         || node instanceof MacroInstanceExpr || node instanceof MacroInstanceStatement
-        || node instanceof ExtendIdExpr || node instanceof IdToStrExpr;
+        || node instanceof AsIdExpr || node instanceof AsStrExpr;
 
   }
 
