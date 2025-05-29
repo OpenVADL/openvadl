@@ -1964,9 +1964,7 @@ PRODUCTIONS
 
   AsStr<out Node body> (. var start = nextTokenLoc(); .)
   = AS_STR
-    SYM_PAREN_OPEN
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    SYM_PAREN_CLOSE (. body = new AsStrExpr(id, start.join(lastTokenLoc())); .)
+    groupedExpression<out GroupedExpr expr> (. body = new AsStrExpr(expr, start.join(lastTokenLoc())); .)
   .
 
   macroMatch<out Node node>                           (. var start = nextTokenLoc(); .)

@@ -408,12 +408,24 @@ class MacroExpander
 
   @Override
   public Expr visit(AsStrExpr expr) {
-    var idOrPlaceholder = expandId(expr.id);
-    if (idOrPlaceholder instanceof Identifier id) {
-      return new StringLiteral(id, copyLoc(expr.location()));
-    } else {
-      return new AsStrExpr(idOrPlaceholder, copyLoc(expr.location()));
+    var nameBuilder = new StringBuilder();
+    var expressions = (GroupedExpr) expr.expr.accept(this);
+    for (var inner : expressions.expressions) {
+      if (inner instanceof Identifier id) {
+        nameBuilder.append(id.name);
+      } else if (inner instanceof StringLiteral string) {
+        nameBuilder.append(string.value);
+      } else if (inner instanceof PlaceholderExpr
+          || inner instanceof AsIdExpr || inner instanceof AsStrExpr) {
+        // Will be expanded as soon as the used placeholders are bound
+        return new AsStrExpr(expressions, copyLoc(expr.location()));
+      } else {
+        reportError("Unsupported 'AsStr' parameter " + inner, inner.location());
+        nameBuilder.append(inner);
+      }
     }
+
+    return new StringLiteral("\"" + nameBuilder.toString() + "\"", copyLoc(expr.location()));
   }
 
   @Override

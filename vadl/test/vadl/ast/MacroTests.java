@@ -455,6 +455,42 @@ public class MacroTests {
     Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog1));
   }
 
+  @Test
+  void asIdTest() {
+    // There once was a time where record return types couldn't be parsed.
+    var prog1 = """
+        constant AsId("one") = 1
+        constant AsId("th", "ree") = 3
+        constant AsId(max, count) = 42
+        constant AsId(open, "vadl") = 2024
+        """;
+    var prog2 = """
+        constant one = 1
+        constant three = 3
+        constant maxcount = 42
+        constant openvadl = 2024
+        """;
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @Test
+  void asStrTest() {
+    // There once was a time where record return types couldn't be parsed.
+    var prog1 = """
+        function one -> String = AsStr(one)
+        function three -> String = AsStr(th, ree)
+        function maxcount -> String = AsStr("max", "count")
+        function openvadl -> String = AsStr("open", vadl)
+        """;
+    var prog2 = """
+        function one -> String = "one"
+        function three -> String = "three"
+        function maxcount -> String = "maxcount"
+        function openvadl -> String = "openvadl"
+        """;
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
 }
 
 

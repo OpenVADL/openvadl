@@ -321,8 +321,8 @@ instruction set architecture AArch64Base = {
         $f.resModel (match: Id ($f.ff = OffFlags => S ; _ => X)(rd) ; result )
         }
     encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, sh = $sh }
-    assembly $i.id = ( $i.mnemo, $f.mext, ' ', ExtendId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
-                       ', ', ExtendId($size, "SP")(rn), ', ', "#", decimal($immEx), $asm )
+    assembly $i.id = ( $i.mnemo, $f.mext, ' ', AsId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
+                       ', ', AsId($size, "SP")(rn), ', ', "#", decimal($immEx), $asm )
     }
 
   model ExtInstrStr (i: InstrWithFunct, ext: Str): InstrWithFunct = {

@@ -747,6 +747,9 @@ class StringLiteral extends Expr {
   String value;
   SourceLocation loc;
 
+  // FIXME: Cleanup StringLiteral constructors, each one does interpret their arguments a bit
+  // differently, which is quite confusing to use.
+
   public StringLiteral(String token, SourceLocation loc) {
     this.token = token;
     if (token.length() > 1) {
@@ -1052,8 +1055,18 @@ final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPla
 }
 
 /**
- * An internal temporary node representing the AsId built-in.
- * This node should never leave the parser.
+ * An internal temporary node representing the AsId lexical macro.
+ * Produces identifiers from strings or is used to concatenate multiple identifiers/strings into
+ * one.
+ *
+ * <p><pre>{@code
+ *  constant AsId("one") = 1
+ *  constant AsId("th", "ree") = 3
+ *  constant AsId(max, count) = 42
+ *  constant AsId(open, "vadl") = 2024
+ *  }</pre>
+ *
+ * <p>This node should never leave the parser.
  */
 final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
   GroupedExpr expr;
@@ -1118,15 +1131,25 @@ final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
 }
 
 /**
- * An internal temporary node representing the AsStr built-in.
- * This node should never leave the parser.
+ * An internal temporary node representing the AsStr lexical macro.
+ * Produces string literals from identifiers or is used to concatenate multiple
+ * identifiers/strings into one.
+ *
+ * <p><pre>{@code
+ *  function one -> String = AsStr(one)
+ *  function three -> String = AsStr(th, ree)
+ *  function maxcount -> String = AsStr("max", "count")
+ *  function openvadl -> String = AsStr("open", vadl)
+ *  }</pre>
+ *
+ * <p>This node should never leave the parser.
  */
 final class AsStrExpr extends Expr {
-  IdentifierOrPlaceholder id;
+  GroupedExpr expr;
   SourceLocation loc;
 
-  AsStrExpr(IdentifierOrPlaceholder id, SourceLocation loc) {
-    this.id = id;
+  AsStrExpr(GroupedExpr expr, SourceLocation loc) {
+    this.expr = expr;
     this.loc = loc;
   }
 
@@ -1147,9 +1170,8 @@ final class AsStrExpr extends Expr {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append("AsStr (");
-    id.prettyPrint(0, builder);
-    builder.append(")");
+    builder.append("AsStr ");
+    expr.prettyPrint(0, builder);
   }
 
   @Override
@@ -1162,12 +1184,12 @@ final class AsStrExpr extends Expr {
     }
 
     AsStrExpr that = (AsStrExpr) o;
-    return id.equals(that.id);
+    return expr.equals(that.expr);
   }
 
   @Override
   public int hashCode() {
-    return id.hashCode();
+    return expr.hashCode();
   }
 }
 
