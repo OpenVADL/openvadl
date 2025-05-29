@@ -42,6 +42,7 @@ import vadl.utils.WithLocation;
 import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
+import vadl.viam.Encoding;
 import vadl.viam.MemoryRegion;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
@@ -111,6 +112,17 @@ class AnnotationTable {
           var annotation = context.getOnly(Annotation.class).get();
           var relocation = (Relocation) context.targetDefinition;
           relocation.setKind(requireNonNull(mappings.get(annotation.name)));
+        })
+        .build();
+
+    annotationOn(EncodingDefinition.class, "testxyz", EncodingConstraintAnnotation::new)
+        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
+        .applyViam((def, annotation, lowering) -> {
+          // The actual formular checks are done in the the VdtEncodingConstraintValidationPass.
+          var encoding = (Encoding) def;
+          var graph = new BehaviorLowering(lowering).getFunctionGraph(annotation.expr,
+              encoding.simpleName() + " Constraint");
+          encoding.setConstraint(graph);
         })
         .build();
 
@@ -1061,7 +1073,7 @@ class EnumAnnotation extends Annotation {
  */
 class ExprAnnotation extends Annotation {
   @LazyInit
-  Expr node;
+  Expr expr;
 
   public ExprAnnotation() {
     super();
@@ -1070,13 +1082,13 @@ class ExprAnnotation extends Annotation {
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     verifyValuesCnt(definition, 1);
-    node = definition.values.getFirst();
-    node.accept(resolver);
+    expr = definition.values.getFirst();
+    expr.accept(resolver);
   }
 
   @Override
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
-    node.accept(typeChecker);
+    expr.accept(typeChecker);
   }
 
   @Override
@@ -1084,6 +1096,10 @@ class ExprAnnotation extends Annotation {
     return "[ " + name + " : <expr> ]";
   }
 
+  public void verifyExprType(Type type) {
+    ensure(expr.type() == type, () -> error("Invalid annotation expression", expr)
+        .locationDescription(expr, "Expression must be a %s", type));
+  }
 }
 
 /**
@@ -1104,7 +1120,7 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
     super.typeCheck(definition, typeChecker);
     var def = definition.target;
 
-    if (!(node instanceof CallIndexExpr callExpr)) {
+    if (!(expr instanceof CallIndexExpr callExpr)) {
       throw error("Invalid zero annotation", this)
           .locationDescription(this, "Zero annotation must be of form %s.", usageString())
           .build();
@@ -1145,6 +1161,17 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
   @Override
   public String usageString() {
     return "[ " + name + " : " + "<register>( <expr> ) ]";
+  }
+}
+
+class EncodingConstraintAnnotation extends ExprAnnotation {
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    var format = requireNonNull(((EncodingDefinition) definition.target).formatNode);
+    // Extend annotation's symbol table by the symbol table of the encoding's format.
+    definition.symbolTable().extendBy(format.symbolTable());
+    super.resolveName(definition, resolver);
   }
 }
 

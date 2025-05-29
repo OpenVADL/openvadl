@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.types.Type;
+import vadl.viam.graph.Graph;
 
 /**
  * The encoding for a specific instruction.
@@ -35,6 +36,13 @@ public class Encoding extends Definition implements DefProp.WithType {
 
   private final Field[] fieldEncodings;
   private final Format.Field[] nonEncodedFormatFields;
+
+  // The constraint graph is a function graph that accesses format fields.
+  // It is set with the `unmatch if: <expr>` annotation and specifies under which conditions
+  // an instruction encoding is valid.
+  // If it is null, there are no conditions.
+  @Nullable
+  private Graph constraint;
 
   /**
    * Constructs the encoding of an {@link Instruction}.
@@ -86,6 +94,15 @@ public class Encoding extends Definition implements DefProp.WithType {
 
   public Format format() {
     return format;
+  }
+
+  @Nullable
+  public Graph constraint() {
+    return constraint;
+  }
+
+  public void setConstraint(@Nullable Graph constraint) {
+    this.constraint = constraint;
   }
 
   @Override

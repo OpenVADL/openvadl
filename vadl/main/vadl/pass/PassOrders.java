@@ -105,6 +105,7 @@ import vadl.rtl.passes.MiaMappingInlinePass;
 import vadl.rtl.passes.MiaMappingOptimizePass;
 import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.viam.Specification;
@@ -543,6 +544,7 @@ public class PassOrders {
 
     // VDT Decode Passes
     order
+        .add(new VdtEncodingConstraintValidationPass(config))
         .add(new VdtInputPreparationPass(config))
         .add(new VdtLoweringPass(config));
   }
