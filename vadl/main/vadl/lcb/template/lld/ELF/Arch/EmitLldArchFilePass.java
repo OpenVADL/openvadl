@@ -21,7 +21,7 @@ import static java.util.Objects.requireNonNull;
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.gcb.passes.relocation.model.ImplementedUserSpecifiedRelocation;
+import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -89,7 +89,7 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
             r.llvmKind(),
             r.valueRelocation().functionName().lower(),
             r.fieldUpdateFunction().functionName().lower(),
-            r instanceof ImplementedUserSpecifiedRelocation
+            r instanceof AutomaticallyGeneratedRelocation
                 ? requireNonNull(encodingFunctions.get(r.field())).functionName().lower()
                 : ""
         )
