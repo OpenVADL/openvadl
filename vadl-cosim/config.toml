@@ -1,0 +1,183 @@
+# SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# General settings for the QEMU plugin system which set up the co-simulation
+[qemu]
+
+# The path to the compiled cosimulation qemu-plugin
+plugin="./qemu-setup/build/contrib/plugins/libcosimulation.so"
+
+# Whether to ignore registers that are not defined by a [qemu.gdb_reg_map] mapping
+# This option is useful to test the current implementation of a simulator which might not yet have all registers implemented against another (complete) implementation
+# Filters in conjunction with `ignore_registers`
+ignore_unset_registers = false 
+
+# Ignore specific registers
+# Filters in conjunction with `ignore_unset_registers`
+ignore_registers = [
+	"mcycle",
+	"minstret",
+	"cycle",
+	"instret",
+	"a1",
+	"a2",
+	"pc",
+	"t0", 
+]
+
+# Defines a list of clients to test against
+# A single client is also possible, e.g. to check if a crash or similar occurs
+# In most use-cases, 2 clients (one test-simulator and one reference-simulator) are used
+[[qemu.clients]]
+
+# Optional: A custom name for a client
+# Will default to the index of the client in this list
+name = "Client 1"
+
+# The executable of the ISS
+exec = "qemu-system-riscv64"
+
+# "bios" | "kernel": Defines where the test-executable is passed to when starting the QEMU-client
+pass_test_exec_to = "bios"
+
+# Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
+additional_args = [
+	"-nographic",
+	"-d", "plugin"
+	# "-s",
+	# "-S",
+]
+
+# The following three options configure which instructions from the `test_exec` executable should actually be tested.
+# NOTE: Only applies to `layer = "insn" | "tb-strict"`
+# NOTE: This option is must be set per client to be able to account for different setup-codes per ISS
+# Skips the first n instructions 
+skip_n_instructions = 0
+
+[[qemu.clients]]
+name = "Client 2"
+
+exec = "qemu-system-riscv64"
+
+pass_test_exec_to = "bios"
+
+additional_args = [
+	"-nographic",
+]
+
+skip_n_instructions = 0
+
+# Defines a custom map where the key (e.g. x0) is mapped to another value (e.g. zero)
+[qemu.gdb_reg_map]
+x0 = "zero"
+x1 = "ra"
+x2 = "sp"
+x3 = "gp"
+x4 = "tp"
+x5 = "t0"
+x6 = "t1"
+x7 = "t2"
+x8 = "fp"
+x9 = "s1"
+x10 = "a0"
+x11 = "a1"
+x12 = "a2"
+x13 = "a3"
+x14 = "a4"
+x15 = "a5"
+x16 = "a6"
+x17 = "a7"
+x18 = "s2"
+x19 = "s3"
+x20 = "s4"
+x21 = "s5"
+x22 = "s6"
+x23 = "s7"
+x24 = "s8"
+x25 = "s9"
+x26 = "s10"
+x27 = "s11"
+x28 = "t3"
+x29 = "t4"
+x30 = "t5"
+x31 = "t6"
+pc = "pc"
+
+
+# Defines the test-source and how to test
+[testing]
+
+# The path to the compiled file to use for testing
+# This file will be passed to all clients
+test_exec="./qemu-setup/build/addw.elf"
+
+# The maximum trace length during a test-run
+# The trace acts as a sized dequeue, meaning newer trace-entries push out the oldest trace-entries if the length has been reached
+# Use max_trace_length = -1 to keep all traces
+max_trace_length = -1
+
+# The testing-protocol defines how the clients are run and tested against eachother
+[testing.protocol]
+# Defines an *execution-step* of a test-run.
+# "insn": The execution-step is the *execution of a single instruction*, e.g. `addi t4,zero,2`.
+#		  This layer is independent of how an ISS generates translation-blocks for qemu.
+#		  This is the most thorough but also slowest option.
+#
+# NOTE: the following is not yet implemented.
+# "tb":   The execution-step is the *execution of a single or multiple translation-blocks*.
+#		  Multiple translation-blocks might be executed in a single step if another client executed a larger.
+#		  (but potentially equivalent to multiple smaller TBs) translation-block.
+#		  This allows instruction-equivalent clients to "synchronize" even if the generated translation-blocks differ.
+#		  This option is faster than "insn" but less thorough.
+#
+# "tb-strict": The execution-step is the *execution of a single translation-blocks*.
+#			   The same as "tb" but without the synchronization logic. Meaning that equal translation-blocks are assumed.
+#			   This option is useful if the instructions of the ISS are already correct and the TB-Block generator needs to be tested.
+layer = "insn"
+
+# "lockstep": All clients are run and compared one *execution-step* at a time.
+# 			  This means that the test will exit on the first divergence (or at the end if no diffs where found) 
+# Currently, this is the only implemented mode.
+mode = "lockstep" 
+
+# Execute all remaining instructions (overrides `stop_after_n_instructions` if set to true)
+execute_all_remaining_instructions = true
+
+# Execute the next (after skipped) n instructions
+stop_after_n_instructions = 0
+
+# Where the test result should be saved and in which format
+[testing.protocol.out]
+dir = "./cosim-run/result"
+
+# Supported formats: "json"
+format = "json"
+
+[logging]
+enable = true 
+# Python log-levels as defined here: https://docs.python.org/3/library/logging.html#logging-levels
+level = "DEBUG"
+
+# The directory will also contain files for the stdout and stderr of each client
+dir = "./cosim-run/log"
+file = "cosim.json"
+
+# Clears the logfile every time the program is run
+clear_on_rerun = true
+
+[dev]
+# Prints the loaded configuration if set to true and exits
+dry_run = false

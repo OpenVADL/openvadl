@@ -518,6 +518,10 @@ public class PassOrders {
         // target/gen-arch/machine.c
         .add(new EmitIssMachinePass(config))
 
+        // plugin rendering
+        .add(issDefault("/contrib/plugins/meson.build", config))
+        // cosimulation plugin
+        .add(issDefault("/contrib/plugins/cosimulation.c", config))
     ;
   }
 
