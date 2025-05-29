@@ -425,6 +425,24 @@ public class MacroTests {
   }
 
   @Test
+  void macroInIsaInheritingExtendedRecord() {
+    var prog1 = """
+        instruction set architecture Base = {
+          record Record (id: Id, mnemo: Str, opcode: Ex)
+        }
+        
+        instruction set architecture Final extending Base = {
+          model Model (r: Record): Ex = {
+            42
+          }
+        
+          constant x = $Model((abc; "xyz"; 1))
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog1));
+  }
+
+  @Test
   void macroWithRecordTypes() {
     // There once was a time where record return types couldn't be parsed.
     var prog1 = """

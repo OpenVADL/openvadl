@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -482,17 +483,20 @@ class ParserUtils {
     return true;
   }
 
-  static Diagnostic unknownSyntaxTypeError(String name, SourceLocation location) {
+  static Diagnostic unknownSyntaxTypeError(String name, SymbolTable macroTable,
+                                           SourceLocation location) {
+
+    // Initially add the basic types and custom defined in scope.
     var available = Arrays.stream(BasicSyntaxType.values())
         .map(BasicSyntaxType::getName)
         .filter(n -> !n.contains("Invalid"))
-        .toList();
-
-    var suggested = String.join(", ", Levenshtein.sortAll(name, available));
+        .collect(Collectors.toSet());
+    available.addAll(
+        macroTable.allMacroSymbolNamesOf(RecordTypeDefinition.class, ModelTypeDefinition.class));
 
     return error("Unknown syntax type: `%s`".formatted(name), location)
         .locationDescription(location, "No syntax type with this name exists.")
-        .help("Maybe you meant to use one of the following:\n%s", suggested)
+        .suggestions(Levenshtein.suggestions(name, available))
         .build();
   }
 
@@ -584,12 +588,20 @@ class ParserUtils {
     return expanded;
   }
 
+  /**
+   * Defines all provided macro definitions in the provided macroTable.
+   *
+   * @param macroTable  to be modified.
+   * @param definitions to be inserted.
+   */
   static void readMacroSymbols(SymbolTable macroTable, List<Definition> definitions) {
     for (Definition definition : definitions) {
       if (definition instanceof DefinitionList list) {
         readMacroSymbols(macroTable, list.items);
       } else if (definition instanceof ModelDefinition modelDefinition) {
         macroTable.defineSymbol(modelDefinition);
+      } else if (definition instanceof RecordTypeDefinition recordTypeDefinition) {
+        macroTable.defineSymbol(recordTypeDefinition);
       }
     }
   }
