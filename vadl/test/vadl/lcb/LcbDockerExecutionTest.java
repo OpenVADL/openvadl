@@ -92,7 +92,5 @@ public abstract class LcbDockerExecutionTest extends AbstractLcbTest {
             "LLVM_PARALLEL_LINK_JOBS", "2"),
         cmd);
   }
-
-
 }
 

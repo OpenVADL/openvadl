@@ -18,13 +18,13 @@ package vadl.lcb;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import vadl.configuration.LcbConfiguration;
@@ -34,7 +34,18 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 
 public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecutionTest {
+  /**
+   * Return a stream of file names from a given {@code sourceDirectory}. This method will
+   * not return the result of a subdirectory but only exactly the {@code sourceDirectory}.
+   * If the {@code sourceDirectory} does not exist then return nothing. This method will
+   * *not* throw an exception if the directory does not exist.
+   */
   protected Stream<String> inputFiles(String sourceDirectory) {
+    // Return nothing when directory does not exist.
+    if (!Files.exists(Path.of(sourceDirectory))) {
+      return Stream.empty();
+    }
+
     return Arrays.stream(
             Objects.requireNonNull(
                 new File(sourceDirectory)
@@ -43,7 +54,15 @@ public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecution
         .map(File::getName);
   }
 
-  protected List<DynamicTest> runEach(String specPath, String sourceDirectory, int optLevel, String cmd)
+  protected List<DynamicTest> runEach(String specPath,
+                                      String sourceDirectory,
+                                      int optLevel,
+                                      String cmd) throws DuplicatedPassKeyException, IOException {
+    return runEach(specPath, List.of(sourceDirectory), optLevel, cmd);
+  }
+
+  protected List<DynamicTest> runEach(String specPath, List<String> sourceDirectories, int optLevel,
+                                      String cmd)
       throws DuplicatedPassKeyException,
       IOException {
     var doDebug = false;
@@ -64,20 +83,27 @@ public abstract class LcbDockerInputFileExecutionTest extends LcbDockerExecution
             getAbi(),
             doDebug);
 
-    return inputFiles(sourceDirectory).map(
-        input -> DynamicTest.dynamicTest(input + " O" + optLevel, () -> {
-          var name = Paths.get(input).getFileName().toString();
+    return sourceDirectories.stream()
+        .map(sourceDirectory -> Pair.of(sourceDirectory, inputFiles(sourceDirectory))).flatMap(
+            pair -> {
+              var sourceDirectory = pair.left();
+              var inputs = pair.right();
+              return inputs.map(
+                  input -> DynamicTest.dynamicTest(input + " O" + optLevel, () -> {
+                    var name = Paths.get(input).getFileName().toString();
 
-          runContainerAndCopyInputIntoContainer(cachedImage,
-              List.of(
-                  Pair.of(
-                      Path.of(sourceDirectory),
-                      "/src/inputs")
-              ),
-              Map.of("INPUT", name,
-                  "OPT_LEVEL", optLevel + ""),
-              cmd
-          );
-        })).toList();
+                    runContainerAndCopyInputIntoContainer(cachedImage,
+                        List.of(
+                            Pair.of(
+                                Path.of(sourceDirectory),
+                                "/src/inputs")
+                        ),
+                        Map.of("INPUT", name,
+                            "OPT_LEVEL", optLevel + ""),
+                        cmd
+                    );
+                  }));
+            })
+        .toList();
   }
 }
