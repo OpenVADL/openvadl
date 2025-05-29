@@ -75,6 +75,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             case processornamevalue::TAIL:
             case processornamevalue::RET:
             case processornamevalue::J:
+            case processornamevalue::JR:
             case processornamevalue::NOP:
             case processornamevalue::MV:
             case processornamevalue::NOT:
@@ -140,6 +141,7 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
             case processornamevalue::TAIL:
             case processornamevalue::RET:
             case processornamevalue::J:
+            case processornamevalue::JR:
             case processornamevalue::NOP:
             case processornamevalue::MV:
             case processornamevalue::NOT:
@@ -202,6 +204,11 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               case processornamevalue::J:
               {
                 RV3264Base_J_expand(MCI, callback, callbackSymbol );
+                return true;
+              }
+              case processornamevalue::JR:
+              {
+                RV3264Base_JR_expand(MCI, callback, callbackSymbol );
                 return true;
               }
               case processornamevalue::NOP:
@@ -575,6 +582,21 @@ public class EmitMCInstExpanderCppFilePassTest extends AbstractLcbTest {
               a.addOperand(MCOperand::createReg(rd));
               a.addOperand(instruction.getOperand(0));
            }
+           result.push_back(a);
+           callback(a);
+           return result;
+        }
+        
+        
+        
+        std::vector<MCInst> processorNameValueMCInstExpander::RV3264Base_JR_expand(const MCInst& instruction, std::function<void(const MCInst &)> callback, std::function<void(MCSymbol* )> callbackSymbol ) const
+        {
+           std::vector< MCInst > result;
+           MCInst a = MCInst();
+           a.setOpcode(processorNameValue::JALR);
+           a.addOperand(MCOperand::createReg(processorNameValue::X0));
+           a.addOperand(instruction.getOperand(0));
+           a.addOperand(MCOperand::createImm(RV3264Base_Itype_immS_decode(0)));
            result.push_back(a);
            callback(a);
            return result;
