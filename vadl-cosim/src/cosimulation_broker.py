@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 """
 The broker for cosimulation testing. 
 It is responsible for starting QEMU-clients with the cosimulation plugin, comparing the state between them and produce a test-report.
@@ -23,7 +22,6 @@ The broker communicates with each QEMU-client using IPC.
 
 from ctypes import c_char, c_int, c_uint, c_uint64, c_uint8, sizeof, Structure, c_size_t, Union
 from dataclasses import dataclass, asdict, field
-import argparse
 import os
 import mmap
 import subprocess
@@ -31,12 +29,14 @@ import multiprocessing
 import posix_ipc as ipc
 import atexit
 import subprocess
-from config import Config, load_config 
+from src.config import Config
 import json
 from collections import deque
 
-import logging
 from typing import Annotated, Any, Optional, TypeAlias
+
+import logging
+logger = logging.getLogger(__name__)
 
 """
 The following classes represent the equally defined c-structs in the cosimulation QEMU plugin.
@@ -443,8 +443,46 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     # if the loop has exited and no diffs were found then the test passed
     return report_from_diffs(diffs)
 
-def main(config: Config):
+"""
+Cleanup functions for the created IPCs
+TODO: Maybe put IPC related logic in a separate file
+"""
+def cleanup_sem(config: Config, client: Client):
+    logger.debug(f"cleanup_sem of client #{client.id} start")
+    try:
+        client.sem_client.unlink()
+        client.sem_server.unlink()
+        client.sem_client.close()
+        client.sem_server.close()
+    except ipc.ExistentialError:
+        pass # ignore
+    logger.debug(f"cleanup_sem of client #{client.id} done")
+
+def cleanup_smh(config: Config, client: Client):
+    try:
+        client.shm.close_fd()
+        client.shm.unlink()
+    except ipc.ExistentialError:
+        pass # ignore
+
+def close_client(config: Config, client: Client):
+    logger.info(f"Closing client: {client.id}")
+    if client.process is not None:
+        client.process.terminate()
+
+def cleanup_client(config: Config, client: Client):
+    cleanup_sem(config, client)
+    cleanup_smh(config, client)
+    close_client(config, client)
+
+def cleanup(config: Config):
+    logger.info("cleaning up shm and sems for each client")
+    for client in clients:
+        cleanup_client(config, client)
+
+def start(config: Config):
     logger.debug(f"starting broker: config={config}")
+    atexit.register(cleanup, config)
 
     # create shared memory and semaphores per client
     for i, client_cfg in enumerate(config.qemu.clients):
@@ -505,81 +543,3 @@ def main(config: Config):
 
     for client in clients:
         close_client(config, client)
-
-"""
-Cleanup functions for the created IPCs
-TODO: Maybe put IPC related logic in a separate file
-"""
-def cleanup_sem(config: Config, client: Client):
-    logger.debug(f"cleanup_sem of client #{client.id} start")
-    try:
-        client.sem_client.unlink()
-        client.sem_server.unlink()
-        client.sem_client.close()
-        client.sem_server.close()
-    except ipc.ExistentialError:
-        pass # ignore
-    logger.debug(f"cleanup_sem of client #{client.id} done")
-
-def cleanup_smh(config: Config, client: Client):
-    try:
-        client.shm.close_fd()
-        client.shm.unlink()
-    except ipc.ExistentialError:
-        pass # ignore
-
-def close_client(config: Config, client: Client):
-    logger.info(f"Closing client: {client.id}")
-    if client.process is not None:
-        client.process.terminate()
-
-def cleanup_client(config: Config, client: Client):
-    cleanup_sem(config, client)
-    cleanup_smh(config, client)
-    close_client(config, client)
-
-def cleanup(config: Config):
-    logger.info("cleaning up shm and sems for each client")
-    for client in clients:
-        cleanup_client(config, client)
-
-
-def default_config_file() -> str:
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    return f"{dir_path}/config.toml"
-
-if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
-    parser = argparse.ArgumentParser(
-        prog="Cosimulation Broker",
-        description="Executes two (or more) qemu-instances in parallel which need to use the cosimulation plugin to connect to the broker."
-    )
-
-    parser.add_argument('-c', '--config', type=str, help="Path to the (toml) config file, default is: ./config.toml", default=default_config_file())
-    parser.add_argument('--test-exec', type=str, help="Defines where the test-executable is passed to when starting the QEMU-client")
-
-
-    args = parser.parse_args()
-
-    config = load_config(args.config)
-    if config is None:
-        print("Couldn't load config. Stopping.")
-        exit(1)
-
-    if args.test_exec is not None:
-        config.testing.test_exec = args.test_exec
- 
-    if config.logging.enable:
-        filemode = "w" if config.logging.clear_on_rerun else "a"
-        filename = os.path.join(config.logging.dir, config.logging.file)
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        logging.basicConfig(filename=filename, filemode=filemode, level=config.logging.level, format='[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s')
-    else:
-        logging.disable()
-
-    if not config.dev.dry_run:
-        atexit.register(cleanup, config)
-        main(config)
-    else:
-        logger.info(f"Dry-Run. Config: {config}")
-
