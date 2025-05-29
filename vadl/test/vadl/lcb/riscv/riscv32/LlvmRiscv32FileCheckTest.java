@@ -16,9 +16,9 @@
 
 package vadl.lcb.riscv.riscv32;
 
-import vadl.lcb.riscv.LlvmRiscvFileCheckTest;
+import vadl.lcb.riscv.LlvmQemuRiscvFileCheckTest;
 
-public class LlvmRiscv32FileCheckTest extends LlvmRiscvFileCheckTest {
+public class LlvmRiscv32FileCheckTest extends LlvmQemuRiscvFileCheckTest {
   @Override
   protected String getTarget() {
     return "rv32im";

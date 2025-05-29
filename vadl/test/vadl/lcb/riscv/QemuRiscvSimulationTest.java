@@ -16,28 +16,14 @@
 
 package vadl.lcb.riscv;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import vadl.configuration.LcbConfiguration;
-import vadl.gcb.valuetypes.TargetName;
-import vadl.lcb.AbstractLcbTest;
+import vadl.lcb.LcbDockerInputFileExecutionTest;
 import vadl.pass.exception.DuplicatedPassKeyException;
-import vadl.utils.Pair;
 
-public abstract class QemuRiscvSimulationTest extends AbstractLcbTest {
-
-  protected static final String TEST_RESOURCES_LLVM_RISCV_SPIKE = "test/resources/llvm/riscv/spike";
+public abstract class QemuRiscvSimulationTest extends LcbDockerInputFileExecutionTest {
 
   protected abstract String getTarget();
 
@@ -51,64 +37,21 @@ public abstract class QemuRiscvSimulationTest extends AbstractLcbTest {
 
   protected abstract String getAbi();
 
-  protected Stream<String> inputFilesFromCFile() {
-    return readFiles(TEST_RESOURCES_LLVM_RISCV_SPIKE);
-  }
-
-  protected Stream<String> readFiles(String pathName) {
-    return Arrays.stream(
-            Objects.requireNonNull(new File(pathName)
-                .listFiles()))
-        .filter(File::isFile)
-        .map(File::getName);
+  @TestFactory
+  List<DynamicTest> optLevel0() throws DuplicatedPassKeyException, IOException {
+    return runEach(getSpecPath(),
+        List.of("test/resources/llvm/riscv/spike/",
+            "test/resources/llvm/riscv/spike/" + getTarget()),
+        0,
+        "sh /work/compile.sh");
   }
 
   @TestFactory
-  List<DynamicTest> testSpikeOptLevel0() throws IOException, DuplicatedPassKeyException {
-    return run(0);
-  }
-
-  @TestFactory
-  List<DynamicTest> testSpikeOptLevel3() throws IOException, DuplicatedPassKeyException {
-    return run(3);
-  }
-
-  private @Nonnull List<DynamicTest> run(int optLevel)
-      throws IOException, DuplicatedPassKeyException {
-    var doDebug = true;
-    var target = getTarget();
-    var upstreamBuildTarget = getUpstreamBuildTarget();
-    var upstreamClangTarget = getUpstreamClangTarget();
-    var configuration = new LcbConfiguration(getConfiguration(false),
-        new TargetName(target));
-
-    runLcb(configuration, getSpecPath());
-
-    // Move Dockerfile into Docker Context
-    {
-      var inputStream = new FileInputStream(
-          "test/resources/images/lcb_execution_test_" + getTarget() + "/Dockerfile");
-      var outputStream = new FileOutputStream(configuration.outputPath() + "/lcb/Dockerfile");
-      inputStream.transferTo(outputStream);
-      outputStream.close();
-    }
-
-    var redisCache = getRunningRedisCache();
-    var cachedImage =
-        SpikeRiscvImageProvider.image(redisCache, configuration.outputPath() + "/lcb/Dockerfile",
-            target, upstreamBuildTarget, upstreamClangTarget, getSpikeTarget(), getAbi(), doDebug);
-
-    // The container is complete and has generated the assembly files.
-    return inputFilesFromCFile().map(input -> DynamicTest.dynamicTest(input, () -> {
-      runContainerAndCopyInputIntoContainer(cachedImage,
-          List.of(Pair.of(Path.of("test/resources/llvm/riscv/spike"),
-              "/src/inputs")),
-          Map.of(
-              "OPT_LEVEL", optLevel + "",
-              "INPUT",
-              input,
-              "LLVM_PARALLEL_COMPILE_JOBS", "4",
-              "LLVM_PARALLEL_LINK_JOBS", "2"));
-    })).toList();
+  List<DynamicTest> optLevel3() throws DuplicatedPassKeyException, IOException {
+    return runEach(getSpecPath(),
+        List.of("test/resources/llvm/riscv/spike/",
+            "test/resources/llvm/riscv/spike/" + getTarget()),
+        3,
+        "sh /work/compile.sh");
   }
 }
