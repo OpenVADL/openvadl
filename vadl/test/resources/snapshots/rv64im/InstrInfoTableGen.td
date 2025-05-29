@@ -3826,6 +3826,34 @@ def : Pat<(br bb:$imm),
         (J RV3264Base_Jtype_immAsLabel:$imm)>;
 
 
+def JR : Instruction
+{
+let Namespace = "processorNameValue";
+
+let OutOperandList = ( outs  );
+let InOperandList = ( ins X:$rs );
+
+let isTerminator  = 0;
+let isBranch      = 0;
+let isCall        = 0;
+let isReturn      = 0;
+let isPseudo      = 1;
+let isCodeGenOnly = 0;
+let mayLoad       = 0;
+let mayStore      = 0;
+let isBarrier     = 0;
+let isReMaterializable = 0;
+let isAsCheapAsAMove   = 0;
+
+let Constraints = "";
+let AddedComplexity = 0;
+
+let Uses = [  ];
+let Defs = [  ];
+}
+
+
+
 def LA : Instruction
 {
 let Namespace = "processorNameValue";
@@ -4329,6 +4357,8 @@ def : InstAlias<"BNEZ $rs,$offset", (BNE X:$rs, X0, RV3264Base_Btype_immAsLabel:
 
 def : InstAlias<"J $offset", (JAL X0, RV3264Base_Jtype_immAsInt64:$imm)>;
 
+def : InstAlias<"JR $rs", (JALR X0, X:$rs, 0)>;
+
 def : InstAlias<"MV $rd,$rs1", (ADDI X:$rd, X:$rs1, 0)>;
 
 def : InstAlias<"NEG $rd,$rs1", (SUB X:$rd, X0, X:$rs1)>;
@@ -4789,6 +4819,8 @@ def : Pat<(xor X:$rs1, RV3264Base_Itype_immAsInt64:$imm),
 
 def : Pat<(br bb:$imm),
         (J RV3264Base_Jtype_immAsLabel:$imm)>;
+
+
 
 
 
