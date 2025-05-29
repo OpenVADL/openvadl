@@ -402,7 +402,15 @@ class MacroExpander
           .locationDescription(expr, "This expands to an empty identifier name.")
           .note("Empty identifiers are forbidden as they needlessly obfuscate the code.")
           .build());
+    } else if (!ParserUtils.isValidIdentifier(name)) {
+      this.errors.add(error("Invalid Identifier: `%s`".formatted(name), expr)
+          .locationDescription(expr, "This expands to an invalid identifier name.")
+          .note(
+              "Identifiers must match the regex /[a-zA-Z][a-zA-Z0-9_]*/ and cannot clash "
+                  + "with a keyword.")
+          .build());
     }
+
     return new Identifier(nameBuilder.toString(), copyLoc(expr.location()));
   }
 

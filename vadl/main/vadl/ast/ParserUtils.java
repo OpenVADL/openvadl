@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
@@ -403,6 +404,29 @@ class ParserUtils {
    */
   static boolean isIdentifierToken(Token token) {
     return ID_TOKENS[token.kind];
+  }
+
+  private static final Pattern identifierPattern = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*");
+
+  /**
+   * Checks whether a string can be used as an indentifier.
+   *
+   * @param text to be checked.
+   * @return whether it would be a valid identifier.
+   */
+  static boolean isValidIdentifier(String text) {
+
+    if (!identifierPattern.matcher(text).matches()) {
+      return false;
+    }
+
+    // Only some keywords are allowed as tokens.
+    var tokenId = Scanner.literals.get(text);
+    if (tokenId != null && !ID_TOKENS[tokenId]) {
+      return false;
+    }
+
+    return true;
   }
 
   /**

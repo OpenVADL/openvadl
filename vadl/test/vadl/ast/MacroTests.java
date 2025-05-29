@@ -22,6 +22,8 @@ import static vadl.ast.AstTestUtils.assertAstEquality;
 import java.net.URI;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 
@@ -491,6 +493,18 @@ public class MacroTests {
     assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"", "7", "_x", "encoding"})
+  void invalidIdentifierAsId(String string) {
+    var prog = """
+        constant AsId("%s") = 6
+        """.formatted(string);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertTrue(
+        diagnostic.reason.contains("Invalid") && diagnostic.reason.contains("Identifier"),
+        "Reason was: `%s`".formatted(diagnostic.reason));
+  }
 }
 
 
