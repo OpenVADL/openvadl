@@ -872,6 +872,9 @@ public class TypeChecker
   public Void visit(AnnotationDefinition definition) {
     // NOTE: I have the suspicion that we might have to delay the typechecking until the definition
     // on which the annotation is placed is completely typed checked.
+    if (definition.annotation == null) {
+      System.out.printf("");
+    }
     requireNonNull(definition.annotation).typeCheck(definition, this);
     return null;
   }

@@ -668,7 +668,8 @@ class MacroExpander
   public Definition visit(AnnotationDefinition definition) {
     return new AnnotationDefinition(
         definition.keywords.stream().map(this::expandId).toList(),
-        definition.values.stream().map(this::expandExpr).toList(),
+        definition.values.stream().map(this::expandExpr)
+            .collect(Collectors.toCollection(ArrayList::new)),
         copyLoc(definition.loc));
   }
 
