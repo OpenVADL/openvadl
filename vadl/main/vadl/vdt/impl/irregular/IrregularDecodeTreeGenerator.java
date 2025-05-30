@@ -28,6 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import vadl.error.Diagnostic;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.irregular.model.ExclusionCondition;
 import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
@@ -267,15 +268,7 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
         .collect(Collectors.toSet());
 
     if (patternCandidates.isEmpty()) {
-      var loc = decodeEntries.getFirst().source();
-      var insnNames = decodeEntries.stream()
-          .map(DecodeEntry::source)
-          .map(Definition::simpleName)
-          .toList();
-      throw error(("Unable to determine splitting pattern for decoder generation between the "
-          + "following instructions: %s").formatted(insnNames), loc)
-          .help("Add additional encoding constraints to avoid overlapping instructions.")
-          .build();
+      throw toOverlappingInstructionDiagnostic(decodeEntries);
     }
 
     int bestSplit = Integer.MAX_VALUE;
@@ -301,18 +294,33 @@ public class IrregularDecodeTreeGenerator implements DecodeTreeGenerator<DecodeE
     }
 
     if (minimizingPattern == null) {
-      var loc = decodeEntries.getFirst().source();
-      var insnNames = decodeEntries.stream()
-          .map(DecodeEntry::source)
-          .map(Definition::simpleName)
-          .toList();
-      throw error(("Unable to determine splitting pattern for decoder generation between the "
-          + "following instructions: %s").formatted(insnNames), loc)
-          .help("Add additional encoding constraints to avoid overlapping instructions.")
-          .build();
+      throw toOverlappingInstructionDiagnostic(decodeEntries);
     }
 
     return minimizingPattern;
+  }
+
+  private Diagnostic toOverlappingInstructionDiagnostic(List<DecodeEntry> decodeEntries) {
+    var primary = decodeEntries.getFirst().source();
+    var insnNames = decodeEntries.stream()
+        .map(DecodeEntry::source)
+        .map(Definition::simpleName)
+        .toList();
+
+    var diagnostic = error(("Overlapping instructions found during decoder "
+        + "generation: %s").formatted(insnNames), primary);
+
+    for (DecodeEntry e : decodeEntries) {
+      var others = insnNames.stream()
+          .filter(n -> !n.equals(e.source().simpleName())).toList();
+
+      diagnostic.locationDescription(e.source().encoding(),
+          "Encoding definition overlaps with other instruction%s: %s",
+          others.size() != 1 ? "s" : "",
+          others.size() == 1 ? others.getFirst() : others);
+    }
+
+    return diagnostic.build();
   }
 
   private boolean match(BitPattern p1, BitPattern p2) {
