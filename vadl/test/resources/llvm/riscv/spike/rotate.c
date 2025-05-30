@@ -52,6 +52,15 @@ bool ArrayEquals(const Test a[], const Test b[], Range range) {
   return 1;
 }
 
+/* reverse a range within the array */
+void
+Reverse (Test array[], const Range range)
+{
+  long index;
+  for (index = Range_length (range) / 2 - 1; index >= 0; index--)
+    Swap (array[range.start + index], array[range.end - index - 1], Test);
+}
+
 /* rotate the values in an array ([0 1 2 3] becomes [1 2 3 0] if we rotate by 1) */
 void
 Rotate (Test array[], const long amount, const Range range, Test cache[],
