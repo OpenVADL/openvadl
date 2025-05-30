@@ -1,4 +1,4 @@
-FROM ghcr.io/openvadl/lcb-test-base@sha256:88d6f4e766b96ce74bd0b4fa9a5608a6eff0331ff21fe14eb16d30b9946723bf AS riscv-toolchain
+FROM ghcr.io/openvadl/lcb-test-base@sha256:37a256bc5916a01f2d5634457aa2ebed41419ffdad1af78a4dc1a8c1b4b3f267 AS riscv-toolchain
 
 # LLVM
 FROM ghcr.io/openvadl/llvm19-base@sha256:da90881797b77a7d4b626d89a7c26d8a3baab9ae0bd5660fbf2544a255ce1e03
