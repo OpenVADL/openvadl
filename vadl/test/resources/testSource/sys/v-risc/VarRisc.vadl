@@ -144,18 +144,18 @@ instruction set architecture VarRISC32 = {
   }
 
   model ComputeInstruction ( name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val ) : IsaDefs = {
-    $ShortRegInstr (ExtendId ( $name, '_S' ) ; $op ; $ltype ; $rtype ; $code )
-    $ShortImmInstr (ExtendId ( $name, 'I_S') ; $op ; $ltype ; $rtype ; $code )
+    $ShortRegInstr (AsId ( $name, '_S' ) ; $op ; $ltype ; $rtype ; $code )
+    $ShortImmInstr (AsId ( $name, 'I_S') ; $op ; $ltype ; $rtype ; $code )
     $RegInstr      (           $name         ; $op ; $ltype ; $rtype ; $code )
-    $ImmInstr      (ExtendId ( $name, 'I'  ) ; $op ; $ltype ; $rtype ; $code )
+    $ImmInstr      (AsId ( $name, 'I'  ) ; $op ; $ltype ; $rtype ; $code )
   }
 
   model LongImmInstruction (name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val) : IsaDefs = {
-    instruction ExtendId ( $name, 'I_L') : TYPE_L =
+    instruction AsId ( $name, 'I_L') : TYPE_L =
         let res = R(rs1) as $ltype $op imm in
             R(rd) := res as Regs
-    encoding ExtendId ( $name, 'I_L') = { opcode = ImmLOff + $code }
-    assembly ExtendId ( $name, 'I_L') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
+    encoding AsId ( $name, 'I_L') = { opcode = ImmLOff + $code }
+    assembly AsId ( $name, 'I_L') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
     $ComputeInstruction ( $name; $op; $ltype; $rtype; $code )
   }
 
@@ -167,10 +167,10 @@ instruction set architecture VarRISC32 = {
   }
 
   model BranchSInstruction ( name : Id, code : Val ) : IsaDefs = {
-    instruction ExtendId ( $name, '_S' ) : TYPE_B =
+    instruction AsId ( $name, '_S' ) : TYPE_B =
       PC := PC + offsetS
-    encoding ExtendId ( $name, '_S' ) = { opcode = $code }
-    assembly ExtendId ( $name, '_S' ) = ( mnemonic, ' ', decimal (offset) )
+    encoding AsId ( $name, '_S' ) = { opcode = $code }
+    assembly AsId ( $name, '_S' ) = ( mnemonic, ' ', decimal (offset) )
   }
 
   model JumpLinkInstruction ( name : Id, code : Val ) : IsaDefs = {
@@ -189,17 +189,17 @@ instruction set architecture VarRISC32 = {
     encoding $name = { opcode = MemCode, func5 = $code }
     assembly $name = ( mnemonic, ' ', register(rd), ',', decimal(imm), '(', register(rs1), ')' )
 
-    instruction ExtendId ( $name, '_L') : TYPE_L =
+    instruction AsId ( $name, '_L') : TYPE_L =
       let a = R(rs1) + immU in $memstmt
-    encoding ExtendId ( $name, '_L') = { opcode = MemLOff + $code }
-    assembly ExtendId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm), '(', register(rs1), ')' )
+    encoding AsId ( $name, '_L') = { opcode = MemLOff + $code }
+    assembly AsId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm), '(', register(rs1), ')' )
   }
 
   model ShortMemInstruction ( name : Id, memstmt : Stat, code : Val ) : IsaDefs = {
-    instruction ExtendId ( $name, '_S') : TYPE_S =
+    instruction AsId ( $name, '_S') : TYPE_S =
       let a = R(rs1) in $memstmt
-    encoding ExtendId ( $name, '_S') = { opcode = MemSOff + $code }
-    assembly ExtendId ( $name, '_S') = ( mnemonic, ' ', register(rd), ',(', register(rs1), ')' )
+    encoding AsId ( $name, '_S') = { opcode = MemSOff + $code }
+    assembly AsId ( $name, '_S') = ( mnemonic, ' ', register(rd), ',(', register(rs1), ')' )
     $MemoryInstruction ( $name; $memstmt; $code )
   }
 
@@ -210,24 +210,24 @@ instruction set architecture VarRISC32 = {
     encoding $name = { opcode = MemCode, func5 = $code }
     assembly $name = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
 
-    instruction ExtendId ( $name, '_L') : TYPE_L = {
+    instruction AsId ( $name, '_L') : TYPE_L = {
       if R(rd) as $reltype $op R(rs1) then
         PC := PC + offsetS
     }
-    encoding ExtendId ( $name, '_L') = { opcode = BraLOff + $code }
-    assembly ExtendId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
+    encoding AsId ( $name, '_L') = { opcode = BraLOff + $code }
+    assembly AsId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
   }
 
   model CondImmInstruction ( name : Id, op : BinOp, reltype: Id, imm: Id, code : Val ) : IsaDefs = {
-    instruction ExtendId ( $name, 'I') : TYPE_I =
+    instruction AsId ( $name, 'I') : TYPE_I =
       R(rd) :=  ( R(rs1) as $reltype $op $imm ) as Regs
-    encoding ExtendId ( $name, 'I') = { opcode = ImmCode, func5 = $code }
-    assembly ExtendId ( $name, 'I') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
+    encoding AsId ( $name, 'I') = { opcode = ImmCode, func5 = $code }
+    assembly AsId ( $name, 'I') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
 
-    instruction ExtendId ( $name, 'I_L') : TYPE_L =
+    instruction AsId ( $name, 'I_L') : TYPE_L =
       R(rd) :=  ( R(rd) as $reltype $op $imm ) as Regs
-    encoding ExtendId ( $name, 'I_L') = { opcode = CodeI_L, func5 = $code }
-    assembly ExtendId ( $name, 'I_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm))
+    encoding AsId ( $name, 'I_L') = { opcode = CodeI_L, func5 = $code }
+    assembly AsId ( $name, 'I_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm))
   }
 
   model CondInstruction ( name : Id, op : BinOp, reltype: Id, imm: Id, code : Val ) : IsaDefs = {
@@ -247,12 +247,12 @@ instruction set architecture VarRISC32 = {
     encoding $name = { opcode = ImmCode, func5 = $code }
     assembly $name = ( mnemonic, ' ', register(rd), ',', decimal(imm))
 
-    instruction ExtendId ( $name, '_L' ) : TYPE_L = {
+    instruction AsId ( $name, '_L' ) : TYPE_L = {
         R(rd) := PC.next
         PC := PC + offsetS
         }
-    encoding ExtendId ( $name, '_L') = { opcode = CodeI_L, func5 = $code }
-    assembly ExtendId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm))
+    encoding AsId ( $name, '_L') = { opcode = CodeI_L, func5 = $code }
+    assembly AsId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm))
   }
 
 /* instruction encoding and opcode space of opcode and func5/func9

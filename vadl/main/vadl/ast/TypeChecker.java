@@ -3016,13 +3016,13 @@ public class TypeChecker
   }
 
   @Override
-  public Void visit(ExtendIdExpr expr) {
+  public Void visit(AsIdExpr expr) {
     throw new IllegalStateException(
         "No %s should ever reach the Typechecker".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
-  public Void visit(IdToStrExpr expr) {
+  public Void visit(AsStrExpr expr) {
     throw new IllegalStateException(
         "No %s should ever reach the Typechecker".formatted(expr.getClass().getSimpleName()));
   }

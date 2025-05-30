@@ -363,13 +363,13 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   }
 
   @Override
-  public ConstantValue visit(ExtendIdExpr expr) {
+  public ConstantValue visit(AsIdExpr expr) {
     throw new IllegalStateException(
         "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
-  public ConstantValue visit(IdToStrExpr expr) {
+  public ConstantValue visit(AsStrExpr expr) {
     throw new IllegalStateException(
         "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));
   }
