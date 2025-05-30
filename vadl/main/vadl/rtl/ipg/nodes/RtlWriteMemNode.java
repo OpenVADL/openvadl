@@ -32,6 +32,7 @@ import vadl.viam.graph.dependency.WriteResourceNode;
 /**
  * Represents a write to memory on RTL. Compared to
  * {@link vadl.viam.graph.dependency.WriteMemNode} this node has:
+ * <li> Maximum words data value
  * <li> Words input to enable merging all memory writes into one node with
  * the number of words written determined by this input
  * <li> Condition input
@@ -41,6 +42,9 @@ public class RtlWriteMemNode extends WriteResourceNode {
   @DataValue
   protected Memory memory;
 
+  @DataValue
+  protected int maxWords;
+
   @Input
   protected ExpressionNode words;
 
@@ -48,14 +52,16 @@ public class RtlWriteMemNode extends WriteResourceNode {
    * Construct new write memory node.
    *
    * @param memory memory to write to
+   * @param maxWords maximum number of words to write
    * @param words input with number of words to write
    * @param address address to write to
    * @param condition write condition
    */
-  public RtlWriteMemNode(Memory memory, ExpressionNode words, ExpressionNode address,
+  public RtlWriteMemNode(Memory memory, int maxWords, ExpressionNode words, ExpressionNode address,
                          ExpressionNode value, @Nullable ExpressionNode condition) {
     super(address, value);
     this.memory = memory;
+    this.maxWords = maxWords;
     this.words = words;
     this.condition = condition;
 
@@ -66,6 +72,7 @@ public class RtlWriteMemNode extends WriteResourceNode {
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(memory);
+    collection.add(maxWords);
   }
 
   @Override
@@ -89,6 +96,10 @@ public class RtlWriteMemNode extends WriteResourceNode {
     return memory;
   }
 
+  public int maxWords() {
+    return maxWords;
+  }
+
   @Nonnull
   @Override
   public ExpressionNode address() {
@@ -99,20 +110,24 @@ public class RtlWriteMemNode extends WriteResourceNode {
     return words;
   }
 
+  /**
+   * The number of bits that is getting written to the resource (at most, depending on the words
+   * input).
+   */
   @Override
   protected int writeBitWidth() {
-    return -1;
+    return memory.wordSize() * maxWords;
   }
 
   @Override
   public Node copy() {
-    return new RtlWriteMemNode(memory, words.copy(), address().copy(), value.copy(),
+    return new RtlWriteMemNode(memory, maxWords, words.copy(), address().copy(), value.copy(),
         (condition == null) ? null : condition.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new RtlWriteMemNode(memory, words, address(), value, condition);
+    return new RtlWriteMemNode(memory, maxWords, words, address(), value, condition);
   }
 
   @Override

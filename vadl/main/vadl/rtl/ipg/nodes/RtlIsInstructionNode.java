@@ -35,7 +35,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * in the IPG (i.e., which nodes are used for which instruction) to graph nodes before inlining the
  * IPG into the stages.
  */
-public class IsInstructionNode extends ExpressionNode {
+public class RtlIsInstructionNode extends ExpressionNode {
 
   @DataValue
   private final Set<Instruction> instructions;
@@ -45,7 +45,7 @@ public class IsInstructionNode extends ExpressionNode {
    *
    * @param instructions set of instructions
    */
-  public IsInstructionNode(Set<Instruction> instructions) {
+  public RtlIsInstructionNode(Set<Instruction> instructions) {
     super(Type.bool());
     this.instructions = new HashSet<>(instructions);
   }
@@ -67,12 +67,12 @@ public class IsInstructionNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new IsInstructionNode(instructions);
+    return new RtlIsInstructionNode(instructions);
   }
 
   @Override
   public Node shallowCopy() {
-    return new IsInstructionNode(instructions);
+    return new RtlIsInstructionNode(instructions);
   }
 
   @Override

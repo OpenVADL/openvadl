@@ -26,10 +26,10 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
-import vadl.rtl.ipg.nodes.IsInstructionNode;
-import vadl.rtl.ipg.nodes.OneHotDecodeNode;
+import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
+import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
-import vadl.rtl.ipg.nodes.SelectByInstructionNode;
+import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.rtl.utils.RtlSimplifier;
@@ -84,15 +84,15 @@ public class InstructionProgressGraphLowerPass extends Pass {
     });
 
     // add select-by-instruction selection inputs
-    ipg.getNodes(SelectByInstructionNode.class).forEach(select -> {
+    ipg.getNodes(RtlSelectByInstructionNode.class).forEach(select -> {
       if (select.selection() == null) {
         // generate expression that selects output based on sets of instructions
         var oneHot = select.instructions().stream()
-            .map(ins -> ipg.add(new IsInstructionNode(ins), ins))
+            .map(ins -> ipg.add(new RtlIsInstructionNode(ins), ins))
             .map(ExpressionNode.class::cast).toList();
         added.addAll(oneHot);
         var instructions = ipg.getContext(select).instructions();
-        var selection = ipg.add(new OneHotDecodeNode(oneHot), instructions);
+        var selection = ipg.add(new RtlOneHotDecodeNode(oneHot), instructions);
         added.add(selection);
         select.setSelection(selection);
 
@@ -122,7 +122,7 @@ public class InstructionProgressGraphLowerPass extends Pass {
       }
 
       // if not active in all instructions, patch condition
-      var isIns = ipg.add(new IsInstructionNode(instructions), instructions);
+      var isIns = ipg.add(new RtlIsInstructionNode(instructions), instructions);
       var newCond = ipg.add(GraphUtils.and(cond, isIns), instructions);
       node.replaceInput(cond, newCond);
 

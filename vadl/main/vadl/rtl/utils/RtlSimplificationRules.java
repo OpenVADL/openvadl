@@ -22,8 +22,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import vadl.rtl.ipg.nodes.OneHotDecodeNode;
-import vadl.rtl.ipg.nodes.SelectByInstructionNode;
+import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
+import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.types.BuiltInTable;
 import vadl.utils.BigIntUtils;
 import vadl.viam.Constant;
@@ -192,7 +192,7 @@ public class RtlSimplificationRules {
   public static class SelByInstrEqCasesSimplificationRule implements AlgebraicSimplificationRule {
     @Override
     public Optional<Node> simplify(Node node) {
-      if (node instanceof SelectByInstructionNode n && !n.values().isEmpty()) {
+      if (node instanceof RtlSelectByInstructionNode n && !n.values().isEmpty()) {
         // check if all values are equal
         var first = n.values().get(0);
         if (n.values().stream().allMatch(first::equals)) {
@@ -220,7 +220,7 @@ public class RtlSimplificationRules {
   public static class SelByInstrConstSelSimplificationRule implements AlgebraicSimplificationRule {
     @Override
     public Optional<Node> simplify(Node node) {
-      if (node instanceof SelectByInstructionNode n) {
+      if (node instanceof RtlSelectByInstructionNode n) {
         var selInput = n.selection();
         if (selInput instanceof ConstantNode c) {
           var i = c.constant().asVal().intValue();
@@ -239,7 +239,7 @@ public class RtlSimplificationRules {
   public static class OneHotConstInSimplificationRule implements AlgebraicSimplificationRule {
     @Override
     public Optional<Node> simplify(Node node) {
-      if (node instanceof OneHotDecodeNode n) {
+      if (node instanceof RtlOneHotDecodeNode n) {
         Integer sel = null;
         for (ExpressionNode value : n.values()) {
           if (value instanceof ConstantNode c) {

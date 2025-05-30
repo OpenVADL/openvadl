@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import vadl.javaannotations.viam.Input;
 import vadl.types.Type;
+import vadl.types.UIntType;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -29,7 +30,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 /**
  * One-hot-decode node, representing a node packing a list of boolean inputs into an integer.
  */
-public class OneHotDecodeNode extends ExpressionNode {
+public class RtlOneHotDecodeNode extends ExpressionNode {
 
   @Input
   NodeList<ExpressionNode> values;
@@ -40,8 +41,8 @@ public class OneHotDecodeNode extends ExpressionNode {
    *
    * @param values value inputs (all bool)
    */
-  public OneHotDecodeNode(List<ExpressionNode> values) {
-    super(Type.unsignedInt(32 - Integer.numberOfLeadingZeros(values.size() - 1)));
+  public RtlOneHotDecodeNode(List<ExpressionNode> values) {
+    super(UIntType.minimalTypeFor(values.size() - 1));
     ensure(values.stream().allMatch(value ->
         value.type().isTrivialCastTo(Type.bool())), "One-hot inputs must all be bool");
     this.values = new NodeList<>(values);
@@ -67,12 +68,12 @@ public class OneHotDecodeNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new OneHotDecodeNode(values.copy());
+    return new RtlOneHotDecodeNode(values.copy());
   }
 
   @Override
   public Node shallowCopy() {
-    return new OneHotDecodeNode(values);
+    return new RtlOneHotDecodeNode(values);
   }
 
   @Override

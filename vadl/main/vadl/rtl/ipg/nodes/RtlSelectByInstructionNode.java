@@ -37,7 +37,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
 /**
  * Node that implements a select based on the instruction currently executed.
  */
-public class SelectByInstructionNode extends ExpressionNode {
+public class RtlSelectByInstructionNode extends ExpressionNode {
 
   @DataValue
   List<Set<Instruction>> instructions;
@@ -51,11 +51,11 @@ public class SelectByInstructionNode extends ExpressionNode {
 
   /**
    * Create new select by instruction node. Add instructions and associated values later
-   * (see {@link SelectByInstructionNode#add}).
+   * (see {@link RtlSelectByInstructionNode#add}).
    *
    * @param type result type
    */
-  public SelectByInstructionNode(Type type) {
+  public RtlSelectByInstructionNode(Type type) {
     this(type, new ArrayList<>(), new NodeList<>());
   }
 
@@ -68,13 +68,13 @@ public class SelectByInstructionNode extends ExpressionNode {
    * @param instructions list of sets of instructions
    * @param values list of values for the result
    */
-  public SelectByInstructionNode(Type type, List<Set<Instruction>> instructions,
-                                 NodeList<ExpressionNode> values) {
+  public RtlSelectByInstructionNode(Type type, List<Set<Instruction>> instructions,
+                                    NodeList<ExpressionNode> values) {
     this(type, instructions, values, null);
   }
 
   /**
-   * See {@link SelectByInstructionNode#SelectByInstructionNode(Type, List, NodeList)}.
+   * See {@link RtlSelectByInstructionNode#RtlSelectByInstructionNode(Type, List, NodeList)}.
    * The selection input supplies an integer that addresses the value to choose.
    *
    * @param type result type
@@ -82,9 +82,9 @@ public class SelectByInstructionNode extends ExpressionNode {
    * @param values list of values for the result
    * @param selection selection input
    */
-  public SelectByInstructionNode(Type type, List<Set<Instruction>> instructions,
-                                 NodeList<ExpressionNode> values,
-                                 @Nullable ExpressionNode selection) {
+  public RtlSelectByInstructionNode(Type type, List<Set<Instruction>> instructions,
+                                    NodeList<ExpressionNode> values,
+                                    @Nullable ExpressionNode selection) {
     super(type);
     ensure(instructions.size() == values.size(),
         "List of instruction sets must have same size as value inputs");
@@ -197,7 +197,7 @@ public class SelectByInstructionNode extends ExpressionNode {
    *
    * @param other the other select node
    */
-  public void merge(SelectByInstructionNode other) {
+  public void merge(RtlSelectByInstructionNode other) {
     Streams.forEachPair(
         other.instructions.stream(),
         other.values.stream(),
@@ -216,9 +216,9 @@ public class SelectByInstructionNode extends ExpressionNode {
    * @param splitValues input values to split away to new select node
    * @return new node inserted as input to this select node
    */
-  public SelectByInstructionNode split(Set<ExpressionNode> splitValues) {
+  public RtlSelectByInstructionNode split(Set<ExpressionNode> splitValues) {
     ensure(isActive(), "SelectByInstruction node must be active to be split");
-    var newSel = new SelectByInstructionNode(type());
+    var newSel = new RtlSelectByInstructionNode(type());
     var newIns = new HashSet<Instruction>();
     for (int i = 0; i < values.size(); i++) {
       var val = values.get(i);
@@ -266,13 +266,13 @@ public class SelectByInstructionNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new SelectByInstructionNode(type(), instructions, values.copy(),
+    return new RtlSelectByInstructionNode(type(), instructions, values.copy(),
         (selection != null) ? selection.copy() : null);
   }
 
   @Override
   public Node shallowCopy() {
-    return new SelectByInstructionNode(type(), instructions, values, selection);
+    return new RtlSelectByInstructionNode(type(), instructions, values, selection);
   }
 
   @Override

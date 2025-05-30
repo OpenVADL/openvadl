@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
-import vadl.rtl.ipg.nodes.InstructionWordSliceNode;
+import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.graph.Node;
@@ -110,11 +110,8 @@ public class MiaBuiltInCallMatcher {
     if (node instanceof ReadResourceNode || node instanceof WriteResourceNode) {
       return false;
     }
-    if (node instanceof InstructionWordSliceNode) {
+    if (node instanceof RtlInstructionWordSliceNode) {
       return true;
-    }
-    if (node instanceof ExpressionNode expr && expr.type().asDataType().bitWidth() > 1) {
-      return false;
     }
     return node.inputs().allMatch(MiaBuiltInCallMatcher::resolveDecode);
   }

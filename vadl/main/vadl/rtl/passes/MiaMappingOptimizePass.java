@@ -33,7 +33,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
-import vadl.rtl.ipg.nodes.SelectByInstructionNode;
+import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.rtl.utils.GraphMergeUtils;
 import vadl.rtl.utils.RtlSimplificationRules;
@@ -117,10 +117,10 @@ public class MiaMappingOptimizePass extends Pass {
       // split up select-by-instruction nodes
       var selects = mapping.stageContexts(stage)
           .flatMap(MiaMapping.NodeContext::movableIpgNodes)
-          .filter(SelectByInstructionNode.class::isInstance)
-          .map(SelectByInstructionNode.class::cast)
+          .filter(RtlSelectByInstructionNode.class::isInstance)
+          .map(RtlSelectByInstructionNode.class::cast)
           .collect(Collectors.toSet());
-      for (SelectByInstructionNode select : selects) {
+      for (RtlSelectByInstructionNode select : selects) {
         var values = new HashSet<>(select.values());
         var valOutStage = new HashSet<ExpressionNode>();
         // partition value inputs by in/out stage
@@ -179,14 +179,14 @@ public class MiaMappingOptimizePass extends Pass {
         }
         // add select-by-instruction nodes for every usage as an output before we try to merge them
         var selects = set.stream().flatMap(expr -> {
-          if (expr instanceof SelectByInstructionNode select) {
+          if (expr instanceof RtlSelectByInstructionNode select) {
             return Stream.of(select);
           }
           var outputUsages = expr.usages()
               .filter(u -> !mapping.containsInStage(stage, u)).toList();
           return outputUsages.stream().map(usage -> {
             var ins = ipg.getContext(usage).instructions();
-            var sel = ipg.add(new SelectByInstructionNode(expr.type()), ins);
+            var sel = ipg.add(new RtlSelectByInstructionNode(expr.type()), ins);
             ins.forEach(instr -> sel.add(instr, expr));
             usage.replaceInput(expr, sel);
             mapping.ensureContext(expr).ipgNodes().add(sel);
@@ -204,7 +204,7 @@ public class MiaMappingOptimizePass extends Pass {
             ));
 
         // remove select-by-instruction node again, if not merged or deleted
-        for (SelectByInstructionNode select : selects) {
+        for (RtlSelectByInstructionNode select : selects) {
           if (select.isActive() && select.values().size() == 1) {
             var expr = select.values().getFirst();
             select.replaceAndDelete(expr);

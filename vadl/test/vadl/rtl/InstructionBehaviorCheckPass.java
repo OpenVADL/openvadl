@@ -25,11 +25,11 @@ import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.rtl.ipg.nodes.IsInstructionNode;
+import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlReadRegTensorNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
-import vadl.rtl.ipg.nodes.SelectByInstructionNode;
+import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.rtl.passes.InstructionProgressGraphExtension;
 import vadl.rtl.utils.RtlSimplificationRules;
 import vadl.rtl.utils.RtlSimplifier;
@@ -96,12 +96,12 @@ public class InstructionBehaviorCheckPass extends Pass {
       }
 
       // replace is-instruction and select-by-instruction nodes with constants/constant selection
-      for (IsInstructionNode isIns : graph.getNodes(IsInstructionNode.class).toList()) {
+      for (RtlIsInstructionNode isIns : graph.getNodes(RtlIsInstructionNode.class).toList()) {
         var constNode = Constant.Value.of(isIns.instructions().contains(curInstr))
             .toNode();
         isIns.replaceAndDelete(constNode);
       }
-      for (SelectByInstructionNode sel : graph.getNodes(SelectByInstructionNode.class).toList()) {
+      for (RtlSelectByInstructionNode sel : graph.getNodes(RtlSelectByInstructionNode.class).toList()) {
         if (sel.selection() == null) { // selection inputs are handled during simplification
           for (int i = 0; i < sel.instructions().size(); i++) {
             if (sel.instructions().get(i).contains(curInstr)) {

@@ -33,7 +33,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * {@link vadl.viam.graph.dependency.FieldRefNode}s to simple bit slices of the instruction word,
  * which are unique across formats.
  */
-public class InstructionWordSliceNode extends ExpressionNode {
+public class RtlInstructionWordSliceNode extends ExpressionNode {
 
   @DataValue
   protected BitsType formatType;
@@ -50,7 +50,7 @@ public class InstructionWordSliceNode extends ExpressionNode {
    * @param slice bit slice
    * @param type data type of the slice result
    */
-  public InstructionWordSliceNode(BitsType formatType, Constant.BitSlice slice, DataType type) {
+  public RtlInstructionWordSliceNode(BitsType formatType, Constant.BitSlice slice, DataType type) {
     super(type);
     this.formatType = formatType;
     this.slice = slice;
@@ -65,8 +65,8 @@ public class InstructionWordSliceNode extends ExpressionNode {
    * @param fields set of format fields
    * @param type data type of the slice result
    */
-  public InstructionWordSliceNode(BitsType formatType, Constant.BitSlice slice,
-                                  Set<Format.Field> fields, DataType type) {
+  public RtlInstructionWordSliceNode(BitsType formatType, Constant.BitSlice slice,
+                                     Set<Format.Field> fields, DataType type) {
     super(type);
     this.formatType = formatType;
     this.slice = slice;
@@ -123,7 +123,7 @@ public class InstructionWordSliceNode extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new InstructionWordSliceNode(formatType, slice, fields, type().asDataType());
+    return new RtlInstructionWordSliceNode(formatType, slice, fields, type().asDataType());
   }
 
   @Override

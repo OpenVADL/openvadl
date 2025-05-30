@@ -29,13 +29,13 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
-import vadl.rtl.ipg.nodes.InstructionWordSliceNode;
-import vadl.rtl.ipg.nodes.IsInstructionNode;
-import vadl.rtl.ipg.nodes.OneHotDecodeNode;
+import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
+import vadl.rtl.ipg.nodes.RtlIsInstructionNode;
+import vadl.rtl.ipg.nodes.RtlOneHotDecodeNode;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlWriteMemNode;
-import vadl.rtl.ipg.nodes.SelectByInstructionNode;
+import vadl.rtl.ipg.nodes.RtlSelectByInstructionNode;
 import vadl.rtl.map.MiaMapping;
 import vadl.types.BuiltInTable;
 import vadl.types.SIntType;
@@ -48,7 +48,6 @@ import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.SelectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -92,8 +91,8 @@ public class InstructionProgressGraphNamePass extends Pass {
     optIsa.get().registerTensors().forEach(reg -> nameReadWrite(ipg, reg));
     optIsa.get().ownMemories().forEach(mem -> nameReadWrite(ipg, mem));
     name(ipg, ConstantNode.class, this::constName);
-    names(ipg, InstructionWordSliceNode.class, this::nameInsWordSlice);
-    name(ipg, IsInstructionNode.class, node -> "is_" + nameInsSet(node.instructions(), ipg));
+    names(ipg, RtlInstructionWordSliceNode.class, this::nameInsWordSlice);
+    name(ipg, RtlIsInstructionNode.class, node -> "is_" + nameInsSet(node.instructions(), ipg));
     nameOneHot(ipg);
     names(ipg, SignExtendNode.class,
         node -> ipg.getContext(node.value()).nameHints().stream()
@@ -190,7 +189,7 @@ public class InstructionProgressGraphNamePass extends Pass {
   }
 
   private void nameOneHot(InstructionProgressGraph ipg) {
-    name(ipg, OneHotDecodeNode.class, node -> {
+    name(ipg, RtlOneHotDecodeNode.class, node -> {
       var hints = node.values().stream()
           .map(v -> ipg.getContext(v).shortestNameHint()).toList();
       if (hints.stream().allMatch(Optional::isPresent)) {
@@ -231,7 +230,7 @@ public class InstructionProgressGraphNamePass extends Pass {
     }
   }
 
-  private List<String> nameInsWordSlice(InstructionWordSliceNode node) {
+  private List<String> nameInsWordSlice(RtlInstructionWordSliceNode node) {
     return node.fields().stream().map(Definition::simpleName).toList();
   }
 
@@ -279,23 +278,23 @@ public class InstructionProgressGraphNamePass extends Pass {
   }
 
   private void nameSelectByIns(InstructionProgressGraph ipg) {
-    ipg.getNodes(SelectByInstructionNode.class)
+    ipg.getNodes(RtlSelectByInstructionNode.class)
         .forEach(node -> nameSelectByIns(ipg, node));
   }
 
-  private void nameSelectByIns(InstructionProgressGraph ipg, SelectByInstructionNode node) {
+  private void nameSelectByIns(InstructionProgressGraph ipg, RtlSelectByInstructionNode node) {
     var nodeContext = ipg.getContext(node);
     var nameHints = nodeContext.nameHints();
 
     // add name hints to cascaded selects
     nameHints.forEach(nameHint -> {
       name(ipg, node.selection(), "sel_" + nameHint);
-      if (node.selection() instanceof SelectByInstructionNode sel) {
+      if (node.selection() instanceof RtlSelectByInstructionNode sel) {
         nameSelectByIns(ipg, sel);
       }
       node.values().forEach(value -> {
         name(ipg, value, nameHint);
-        if (value instanceof SelectByInstructionNode sel) {
+        if (value instanceof RtlSelectByInstructionNode sel) {
           nameSelectByIns(ipg, sel);
         }
       });

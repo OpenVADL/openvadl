@@ -33,7 +33,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.rtl.ipg.InstructionProgressGraph;
-import vadl.rtl.ipg.nodes.InstructionWordSliceNode;
+import vadl.rtl.ipg.nodes.RtlInstructionWordSliceNode;
 import vadl.rtl.ipg.nodes.RtlConditionalReadNode;
 import vadl.rtl.ipg.nodes.RtlReadMemNode;
 import vadl.rtl.ipg.nodes.RtlReadRegTensorNode;
@@ -133,7 +133,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
     behavior.getNodes(FieldRefNode.class).toList().forEach(fieldRefNode -> {
       var field = fieldRefNode.formatField();
       var slice = behavior.addWithInputs(
-          new InstructionWordSliceNode(field.format().type(), field.bitSlice(), field.type()));
+          new RtlInstructionWordSliceNode(field.format().type(), field.bitSlice(), field.type()));
       slice.addField(field);
       fieldRefNode.replaceAndDelete(slice);
     });
@@ -230,8 +230,8 @@ public class InstructionProgressGraphCreationPass extends Pass {
             .filter(read -> read.resourceDefinition().equals(mem))
             .toList().forEach(read -> {
               var words = new ConstantNode(Constant.Value.of(read.words(), wordType));
-              ExpressionNode rtlRead = new RtlReadMemNode(read.memory(), words, read.address(),
-                  resType, GraphUtils.bool(true).toNode());
+              ExpressionNode rtlRead = new RtlReadMemNode(read.memory(), maxRead.getAsInt(), words,
+                  read.address(), resType, GraphUtils.bool(true).toNode());
               if (read.type().bitWidth() < resType.bitWidth()) {
                 rtlRead = new TruncateNode(rtlRead, read.type());
               }
@@ -257,8 +257,8 @@ public class InstructionProgressGraphCreationPass extends Pass {
               if (value.type().asDataType().bitWidth() < valType.bitWidth()) {
                 value = new ZeroExtendNode(value, valType);
               }
-              var rtlWrite = new RtlWriteMemNode(write.memory(), words, write.address(), value,
-                  write.nullableCondition());
+              var rtlWrite = new RtlWriteMemNode(write.memory(), maxWrite.getAsInt(), words,
+                  write.address(), value, write.nullableCondition());
               ipg.replaceAndDelete(write, rtlWrite);
             });
       }

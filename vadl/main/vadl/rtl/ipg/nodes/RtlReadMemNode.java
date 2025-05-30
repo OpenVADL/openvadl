@@ -33,6 +33,7 @@ import vadl.viam.graph.dependency.ReadResourceNode;
 /**
  * Represents a read from memory on RTL. Compared to
  * {@link vadl.viam.graph.dependency.ReadMemNode} this node differs in:
+ * <li> Maximum words data value
  * <li> Words input to enable merging all memory reads into one node with
  * the number of words read determined by this input
  * <li> Condition input
@@ -41,6 +42,9 @@ public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalRe
 
   @DataValue
   protected Memory memory;
+
+  @DataValue
+  protected int maxWords;
 
   @Input
   protected ExpressionNode words;
@@ -53,15 +57,17 @@ public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalRe
    * Construct new read memory node.
    *
    * @param memory memory to read from
+   * @param maxWords maximum number of words to write
    * @param words input with number of words to read
    * @param address address to read from
    * @param type read result type
    * @param condition read condition
    */
-  public RtlReadMemNode(Memory memory, ExpressionNode words, ExpressionNode address,
+  public RtlReadMemNode(Memory memory, int maxWords, ExpressionNode words, ExpressionNode address,
                         DataType type, @Nullable ExpressionNode condition) {
     super(address, type);
     this.memory = memory;
+    this.maxWords = maxWords;
     this.words = words;
     this.condition = condition;
   }
@@ -70,6 +76,7 @@ public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalRe
   protected void collectData(List<Object> collection) {
     super.collectData(collection);
     collection.add(memory);
+    collection.add(maxWords);
   }
 
   @Override
@@ -120,13 +127,13 @@ public class RtlReadMemNode extends ReadResourceNode implements RtlConditionalRe
 
   @Override
   public ExpressionNode copy() {
-    return new RtlReadMemNode(memory, words.copy(), address().copy(), type(),
+    return new RtlReadMemNode(memory, maxWords, words.copy(), address().copy(), type(),
         (condition != null) ? condition.copy() : null);
   }
 
   @Override
   public Node shallowCopy() {
-    return new RtlReadMemNode(memory, words, address(), type(), condition);
+    return new RtlReadMemNode(memory, maxWords, words, address(), type(), condition);
   }
 
   @Override
