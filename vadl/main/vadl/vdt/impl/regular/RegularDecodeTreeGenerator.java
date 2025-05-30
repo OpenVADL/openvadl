@@ -16,6 +16,8 @@
 
 package vadl.vdt.impl.regular;
 
+import static vadl.error.Diagnostic.error;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
+import vadl.error.Diagnostic;
 import vadl.vdt.model.DecodeTreeGenerator;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.impl.LeafNodeImpl;
@@ -34,6 +37,7 @@ import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
 import vadl.vdt.utils.Instruction;
 import vadl.vdt.utils.PBit;
+import vadl.viam.Definition;
 
 /**
  * Uses the Theiling algorithm to generate a decode tree.
@@ -181,7 +185,7 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
     }
 
     if (m.size() != 1) {
-      throw new IllegalArgumentException("Overlapping instructions found: " + m);
+      throw toOverlappingInstructionDiagnostic(instructions);
     }
 
     final var defaultInsn = m.iterator().next();
@@ -196,10 +200,34 @@ public class RegularDecodeTreeGenerator implements DecodeTreeGenerator<Instructi
     }
 
     if (newMask.toValue().equals(BigInteger.ZERO)) {
-      throw new IllegalArgumentException("Overlapping instructions found: " + subsumed);
+      throw toOverlappingInstructionDiagnostic(subsumed);
     }
 
     return new ImmutableTriple<>(defaultInsn, subsumed, newMask);
+  }
+
+  private Diagnostic toOverlappingInstructionDiagnostic(Collection<Instruction> insns) {
+
+    var primary = insns.iterator().next().source();
+    var insnNames = insns.stream()
+        .map(Instruction::source)
+        .map(Definition::simpleName)
+        .toList();
+
+    var diagnostic = error(("Overlapping encodings found during generation between "
+        + "the following instructions: %s").formatted(insnNames), primary);
+
+    for (Instruction e : insns) {
+      var others = insnNames.stream()
+          .filter(n -> !n.equals(e.source().simpleName())).toList();
+
+      diagnostic.locationDescription(e.source().encoding(),
+          "Encoding definition overlaps with other instruction%s: %s",
+          others.size() != 1 ? "s" : "",
+          others.size() == 1 ? others.getFirst() : others);
+    }
+
+    return diagnostic.build();
   }
 
   /**

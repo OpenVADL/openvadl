@@ -98,6 +98,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.viam.Specification;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
@@ -534,7 +535,9 @@ public class PassOrders {
   private static void addDecodePasses(PassOrder order, GeneralConfiguration config) {
 
     // VDT Decode Passes
-    order.add(new VdtLoweringPass(config));
+    order
+        .add(new VdtInputPreparationPass(config))
+        .add(new VdtLoweringPass(config));
   }
 
   /**

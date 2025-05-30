@@ -258,7 +258,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
     node.getMatchingChild().accept(this);
     appendable.unindent();
 
-    appendable.append("} else {");
+    appendable.appendLn("} else {");
 
     appendable.indent();
     node.getOtherChild().accept(this);

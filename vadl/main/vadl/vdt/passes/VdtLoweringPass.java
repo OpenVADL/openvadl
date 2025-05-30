@@ -17,19 +17,15 @@
 package vadl.vdt.passes;
 
 import java.io.IOException;
-import java.nio.ByteOrder;
-import java.util.Set;
+import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
-import vadl.vdt.impl.regular.RegularDecodeTreeGenerator;
 import vadl.vdt.model.Node;
-import vadl.vdt.utils.BitPattern;
-import vadl.vdt.utils.Instruction;
-import vadl.vdt.utils.PatternUtils;
 import vadl.viam.Specification;
 
 /**
@@ -52,35 +48,18 @@ public class VdtLoweringPass extends Pass {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public @Nullable Node execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var isa = viam.isa().orElse(null);
-    if (isa == null) {
-      return null;
-    }
-
-    // TODO: get the byte order from the VADL specification -> Implement memory annotations
-    final ByteOrder bo = ByteOrder.LITTLE_ENDIAN;
-
-    var insns = isa.ownInstructions()
-        .stream()
-        .map(i -> {
-          BitPattern pattern = PatternUtils.toFixedBitPattern(i, bo);
-          return new DecodeEntry(i, pattern.width(), pattern, Set.of());
-        })
-        .toList();
-
-    if (insns.isEmpty()) {
+    Object entries = passResults.lastNullableResultOf(VdtInputPreparationPass.class);
+    if (entries == null) {
       // just skip if there are no instructions.
       // this will only happen if we use the check command
       return null;
     }
 
-    // For now, we keep using the regular decode tree generator, since new one does not natively
-    // support the fallback nodes of subsumed instructions (without encoding constraints).
-    return new RegularDecodeTreeGenerator()
-        .generate(insns.stream()
-            .map(Instruction.class::cast).toList());
+    final List<DecodeEntry> insns = (List<DecodeEntry>) entries;
+    return new IrregularDecodeTreeGenerator().generate(insns);
   }
 }
