@@ -1,1 +1,1 @@
-/src/llvm-final/build/bin/clang --target=${UPSTREAM_CLANG_TARGET} -march=${ABI} -I/opt/riscv/riscv64-unknown-elf/include -S -O${OPT_LEVEL} -c /src/inputs/$INPUT -o /tmp/main.s && chmod 777 /tmp/main.s && cat /tmp/main.s && sh /work/lcb_wrapper.sh
+/src/llvm-final/build/bin/clang --target=${UPSTREAM_CLANG_TARGET} -march=${SPIKE_TARGET} -I/opt/riscv/riscv64-unknown-elf/include -S -O${OPT_LEVEL} -c /src/inputs/$INPUT -o /tmp/main.s && chmod 777 /tmp/main.s && cat /tmp/main.s && sh /work/lcb_wrapper.sh
