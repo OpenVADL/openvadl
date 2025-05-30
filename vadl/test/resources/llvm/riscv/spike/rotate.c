@@ -5,6 +5,15 @@
 #include <string.h>
 typedef uint8_t bool;
 
+#define Swap(value1, value2, type) { \
+	Var(a, &(value1), type*); \
+	Var(b, &(value2), type*); \
+	\
+	Var(c, *a, type); \
+	*a = *b; \
+	*b = c; \
+}
+
 /* structure to test stable sorting (index will contain its original index in the array, to make sure it doesn't switch places with other items) */
 typedef struct
 {
