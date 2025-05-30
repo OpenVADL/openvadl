@@ -588,7 +588,7 @@ $InstModel( ( ADD ; + ) )
 ~~~
 \endlisting
 
-### Lexical Macro Functions (ExtendId, IdToStr)
+### Lexical Macro Functions (AsId, AsStr)
 
 While most of the needs are covered by syntactical macros, string and identifier manipulation is best done using lexical
 macros.
@@ -596,9 +596,9 @@ A lexical macro acts on the abstraction level of token streams in contrast to an
 Two use-cases are supported using special syntax type converting functions.
 Firstly, templates generating instruction behavior and assembly often need the instruction name once in form of an
 identifier (`Id`) and again in form of a string (`Str`).
-This use case is covered by the `IdToStr` function (will be renamed to `AsStr`).
+This use case is covered by the `AsStr` function (will be renamed to `AsStr`).
 This function takes an `Id` typed syntax element and converts it to a `Str` typed syntax element.
-Secondly, the `ExtendId` function allows safe identifier manipulation (will be renamed to `AsId`).
+Secondly, the `AsId` function allows safe identifier manipulation (will be renamed to `AsId`).
 This function takes an arbitrary number of `Id` or `Str` typed syntax elements, converts `Id` typed elements to `Str`,
 concatenates them and returns a single `Id` typed syntax element.
 Listing \r{lexical_macros} shows a small example of both functions with their typed result as comment.
@@ -608,8 +608,8 @@ Therefore, it is not possible to define or refer to a model name or parameter us
 
 \listing{lexical_macros, Lexical Macro Examples}
 ~~~{.vadl}
-ExtendId( "", I, "Am", An, "Identifier" ) // --> IAmAnIdentifier : Id
-IdToStr( IAmAString )                     // --> "IAmAString"    : Str
+AsId( "", I, "Am", An, "Identifier" ) // --> IAmAnIdentifier : Id
+AsStr( IAmAString )                     // --> "IAmAString"    : Str
 ~~~
 \endlisting
 
@@ -733,12 +733,12 @@ record Instr (id: Id, ass: Str, op: BinOp, opcode: Bin)
 record Cond  (str: Str, code: Id, ex: Ex)
 
 model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
-  instruction ExtendId ($instr.id, $cond.str) : ArLoImm =
+  instruction AsId ($instr.id, $cond.str) : ArLoImm =
     if ($cond.ex) then
       R(rd) := R(rn) $instr.op imm12 as Word
-  encoding ExtendId ($instr.id, $cond.str) =
+  encoding AsId ($instr.id, $cond.str) =
     {cc = cond::$cond.code, op = $instr.opcode, flags = 0}
-  assembly ExtendId ($instr.id, $cond.str) =
+  assembly AsId ($instr.id, $cond.str) =
     ($instr.ass, $cond.str, ' ', register(rd), ',', register(rn), ',', decimal(imm12))
   }
 
@@ -769,7 +769,7 @@ The `Cond` record type definition consists of a string representing the extensio
 of the enumeration of the condition encoding and a boolean expression for condition evaluation.
 
 Now 15 different instructions with a unique identifier have to be created.
-This can be handled with the lexical macro function `ExtendId` by appending the extension string of the condition to the
+This can be handled with the lexical macro function `AsId` by appending the extension string of the condition to the
 identifier.
 
 The final problem is that there is a set of models which describe different kinds of conditional instructions and all

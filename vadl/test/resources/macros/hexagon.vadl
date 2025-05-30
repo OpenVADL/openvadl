@@ -255,7 +255,7 @@ instruction set architecture QDSP6 =
       R(d5) := VADL::$op($lhs, $rhs)
     }
     encoding $name = { $encs }
-    assembly $name = (AsmR(d5), " = ", IdToStr(op), "(", $asm, ")")
+    assembly $name = (AsmR(d5), " = ", AsStr(op), "(", $asm, ")")
   }
 
   $ALUBase ( AddImm    ; AddImmFormat ; iclass=0b1011                               ; add   ; R(s5); extendS(imm) ; (AsmR(s5),",#",decimal(imm)) )
@@ -453,7 +453,7 @@ instruction set architecture QDSP6 =
       R(d5) := VADL::$op($lhs, $rhs)
     }
     encoding $name = { $encs }
-    assembly $name = ($asmprefix, AsmR(d5), " = ", IdToStr($op), "(", $asm, ")")
+    assembly $name = ($asmprefix, AsmR(d5), " = ", AsStr($op), "(", $asm, ")")
   }
 
   $ALUPredBase( AddImmPredPos; AddPredImmFormat; iclass=0b0111, rs=0, majop=0b100, ps=0, dn=0; add; R(s5); extendS(immS); AsmPred(u2, false, false); (AsmR(s5),",#",decimal(immS));  testpred(u2))
@@ -760,14 +760,14 @@ instruction set architecture QDSP6 =
     assembly $name = (AsmP($p), "=", $asmPred, "; ", AsmPred($p, $neg, true), " jump:", $asmHint, " #", decimal(dispS))
   }
   model CmpJump ( name: Id, iformat: Id, encs: Encs, predEx: Ex, asmPred: Ex ) : IsaDefs = {
-    $CmpJumpBase( ExtendId($name, "P0", "Pos", "NT"); $iformat; hint=0, $encs; 0; 0;  ($predEx); $asmPred; "nt" )
-    $CmpJumpBase( ExtendId($name, "P1", "Pos", "NT"); $iformat; hint=0, $encs; 0; 1;  ($predEx); $asmPred; "nt" )
-    $CmpJumpBase( ExtendId($name, "P0", "Neg", "NT"); $iformat; hint=0, $encs; 1; 0; !($predEx); $asmPred; "nt" )
-    $CmpJumpBase( ExtendId($name, "P1", "Neg", "NT"); $iformat; hint=0, $encs; 1; 1; !($predEx); $asmPred; "nt" )
-    $CmpJumpBase( ExtendId($name, "P0", "Pos", "T" ); $iformat; hint=1, $encs; 0; 0;  ($predEx); $asmPred; "t" )
-    $CmpJumpBase( ExtendId($name, "P1", "Pos", "T" ); $iformat; hint=1, $encs; 0; 1;  ($predEx); $asmPred; "t" )
-    $CmpJumpBase( ExtendId($name, "P0", "Neg", "T" ); $iformat; hint=1, $encs; 1; 0; !($predEx); $asmPred; "t" )
-    $CmpJumpBase( ExtendId($name, "P1", "Neg", "T" ); $iformat; hint=1, $encs; 1; 1; !($predEx); $asmPred; "t" )
+    $CmpJumpBase( AsId($name, "P0", "Pos", "NT"); $iformat; hint=0, $encs; 0; 0;  ($predEx); $asmPred; "nt" )
+    $CmpJumpBase( AsId($name, "P1", "Pos", "NT"); $iformat; hint=0, $encs; 0; 1;  ($predEx); $asmPred; "nt" )
+    $CmpJumpBase( AsId($name, "P0", "Neg", "NT"); $iformat; hint=0, $encs; 1; 0; !($predEx); $asmPred; "nt" )
+    $CmpJumpBase( AsId($name, "P1", "Neg", "NT"); $iformat; hint=0, $encs; 1; 1; !($predEx); $asmPred; "nt" )
+    $CmpJumpBase( AsId($name, "P0", "Pos", "T" ); $iformat; hint=1, $encs; 0; 0;  ($predEx); $asmPred; "t" )
+    $CmpJumpBase( AsId($name, "P1", "Pos", "T" ); $iformat; hint=1, $encs; 0; 1;  ($predEx); $asmPred; "t" )
+    $CmpJumpBase( AsId($name, "P0", "Neg", "T" ); $iformat; hint=1, $encs; 1; 0; !($predEx); $asmPred; "t" )
+    $CmpJumpBase( AsId($name, "P1", "Neg", "T" ); $iformat; hint=1, $encs; 1; 1; !($predEx); $asmPred; "t" )
   }
 
   $CmpJump( CmpJumpEqMinus1; CmpJumpFormat   ; op=0b001100;  R(s5)          =  -1            ; ("cmp.eq(",AsmR(s5),"#-1)") )
@@ -839,14 +839,14 @@ instruction set architecture QDSP6 =
   }
 
   model LoadBase ( base: LoadBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
-    $base( ExtendId( $name, IdToStr($type), "GPRel" )        ; LoadFormat          ; iclass=0b0100, gp=1, type1=0b1,      type=MemoryAccessType::$type, unsigned=0; $size; GP + scaledImmU(immGPRel, $scale)    ; ExtendId(S, IdToStr($type)); ""; ($asmfunc, AsmAddrGPRel(immGPRel))       ; true )
-    $base( ExtendId( $name, IdToStr($type), "RegRel" )       ; LoadFormat          ; iclass=0b1001, gp=0, type1=0b1,      type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); ExtendId(S, IdToStr($type)); ""; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; true )
-    $base( ExtendId( $name, IdToStr($type), "PredPosRegRel" ); LoadRegRelPredFormat; iclass=0b0100, op=0b010, dn=0, ps=0, type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); ExtendId(S, IdToStr($type)); AsmPred(t2, false, false); ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ;  testpred(t2) )
-    $base( ExtendId( $name, IdToStr($type), "PredNegRegRel" ); LoadRegRelPredFormat; iclass=0b0100, op=0b010, dn=0, ps=1, type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); ExtendId(S, IdToStr($type)); AsmPred(t2, true , false); ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; !testpred(t2) )
+    $base( AsId( $name, AsStr($type), "GPRel" )        ; LoadFormat          ; iclass=0b0100, gp=1, type1=0b1,      type=MemoryAccessType::$type, unsigned=0; $size; GP + scaledImmU(immGPRel, $scale)    ; AsId(S, AsStr($type)); ""; ($asmfunc, AsmAddrGPRel(immGPRel))       ; true )
+    $base( AsId( $name, AsStr($type), "RegRel" )       ; LoadFormat          ; iclass=0b1001, gp=0, type1=0b1,      type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); AsId(S, AsStr($type)); ""; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; true )
+    $base( AsId( $name, AsStr($type), "PredPosRegRel" ); LoadRegRelPredFormat; iclass=0b0100, op=0b010, dn=0, ps=0, type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); AsId(S, AsStr($type)); AsmPred(t2, false, false); ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ;  testpred(t2) )
+    $base( AsId( $name, AsStr($type), "PredNegRegRel" ); LoadRegRelPredFormat; iclass=0b0100, op=0b010, dn=0, ps=1, type=MemoryAccessType::$type, unsigned=0; $size; R(s5) + scaledImmS(immRegRel, $scale); AsId(S, AsStr($type)); AsmPred(t2, true , false); ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; !testpred(t2) )
   }
   model LoadBaseU (base: LoadBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
-    $base( ExtendId( $name, "U", IdToStr($type), "GPRel" ) ; LoadFormat; iclass=0b0100, gp=1, type1=0b1, type=MemoryAccessType::$type, unsigned=1; $size; GP + scaledImmU(immGPRel, $scale)    ; ExtendId(U, IdToStr($type)); ""; ($asmfunc, AsmAddrGPRel(immGPRel))       ; true )
-    $base( ExtendId( $name, "U", IdToStr($type), "RegRel" ); LoadFormat; iclass=0b1001, gp=0, type1=0b1, type=MemoryAccessType::$type, unsigned=1; $size; R(s5) + scaledImmS(immRegRel, $scale); ExtendId(U, IdToStr($type)); ""; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; true )
+    $base( AsId( $name, "U", AsStr($type), "GPRel" ) ; LoadFormat; iclass=0b0100, gp=1, type1=0b1, type=MemoryAccessType::$type, unsigned=1; $size; GP + scaledImmU(immGPRel, $scale)    ; AsId(U, AsStr($type)); ""; ($asmfunc, AsmAddrGPRel(immGPRel))       ; true )
+    $base( AsId( $name, "U", AsStr($type), "RegRel" ); LoadFormat; iclass=0b1001, gp=0, type1=0b1, type=MemoryAccessType::$type, unsigned=1; $size; R(s5) + scaledImmS(immRegRel, $scale); AsId(U, AsStr($type)); ""; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; true )
   }
 
   $LoadBase ( LoadSizeBase;   Load ; Byte   ; 1 ; 0; "memb"  )
@@ -949,12 +949,12 @@ instruction set architecture QDSP6 =
   }
 
   model StoreBase   ( base: StoreBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
-    $base( ExtendId( $name, IdToStr($type), "GPRel" )      ; iclass=0b0100, gp=1, type1=0, type=MemoryAccessType::$type, unsigned = 0; $size; GP + scaledImmU(immGPRel, $scale)    ; $type; 0        ; ($asmfunc, AsmAddrGPRel(immGPRel))       ; "")
-    $base( ExtendId( $name, IdToStr($type), "RegRel" )     ; iclass=0b1010, gp=0, type1=1, type=MemoryAccessType::$type, unsigned = 0; $size; R(s5) + scaledImmS(immRegRel, $scale); $type; 0        ; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; "")
+    $base( AsId( $name, AsStr($type), "GPRel" )      ; iclass=0b0100, gp=1, type1=0, type=MemoryAccessType::$type, unsigned = 0; $size; GP + scaledImmU(immGPRel, $scale)    ; $type; 0        ; ($asmfunc, AsmAddrGPRel(immGPRel))       ; "")
+    $base( AsId( $name, AsStr($type), "RegRel" )     ; iclass=0b1010, gp=0, type1=1, type=MemoryAccessType::$type, unsigned = 0; $size; R(s5) + scaledImmS(immRegRel, $scale); $type; 0        ; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; "")
   }
   model StoreBaseHigh( base: StoreBaseT, name: Id, type: Id, size: Lit, scale: Lit, asmfunc: Ex) : IsaDefs = {
-    $base( ExtendId( $name, "H", IdToStr($type), "GPRel" ) ; iclass=0b0100, gp=1, type1=0, type=MemoryAccessType::$type, unsigned = 1; $size; GP + scaledImmU(immGPRel, $scale)    ; $type; $size * 8; ($asmfunc, AsmAddrGPRel(immGPRel))       ; ".H")
-    $base( ExtendId( $name, "H", IdToStr($type), "RegRel" ); iclass=0b1010, gp=0, type1=1, type=MemoryAccessType::$type, unsigned = 1; $size; R(s5) + scaledImmS(immRegRel, $scale); $type; $size * 8; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; ".H")
+    $base( AsId( $name, "H", AsStr($type), "GPRel" ) ; iclass=0b0100, gp=1, type1=0, type=MemoryAccessType::$type, unsigned = 1; $size; GP + scaledImmU(immGPRel, $scale)    ; $type; $size * 8; ($asmfunc, AsmAddrGPRel(immGPRel))       ; ".H")
+    $base( AsId( $name, "H", AsStr($type), "RegRel" ); iclass=0b1010, gp=0, type1=1, type=MemoryAccessType::$type, unsigned = 1; $size; R(s5) + scaledImmS(immRegRel, $scale); $type; $size * 8; ($asmfunc, AsmAddrRegRel(s5, immRegRel)) ; ".H")
   }
 
   $StoreBase    ( StoreSizeBase ;  Store ; Byte ;   1 ; 0; "memb"  )
@@ -1075,7 +1075,7 @@ instruction set architecture QDSP6 =
       R(x5) := VADL::$op(immU, VADL::$shiftop(R(x5), shiftU) as UInt)
     }
     encoding $name = { iclass=0b1101, regtype=0b1110, $encs }
-    assembly $name = (AsmR(x5), " = ", IdToStr($op), "(#", decimal(immU), IdToStr($shiftop), "(", AsmR(x5), "#", decimal(shiftU), "))")
+    assembly $name = (AsmR(x5), " = ", AsStr($op), "(#", decimal(immU), AsStr($shiftop), "(", AsmR(x5), "#", decimal(shiftU), "))")
   }
 
   $ALUImmShifted ( AddImmAsl ; majop=0b010 ; add ; lsl )

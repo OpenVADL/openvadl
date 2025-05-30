@@ -123,7 +123,7 @@ TOKENS
   ENUMERATION  = "enumeration".
   EXCEPTION    = "exception".
   EXISTS       = "exists".
-  EXTEND_ID    = "ExtendId".
+  AS_ID    = "AsId".
   EXTENDING    = "extending".
   FALSE        = "false".
   FETCH        = "fetch".
@@ -138,7 +138,7 @@ TOKENS
   GRAMMAR      = "grammar".
   GROUP        = "group".
   HIT          = "hit".
-  ID_TO_STR    = "IdToStr".
+  AS_STR    = "AsStr".
   IF_KW        = "if".
   INT          = "int".
   IMPLEMENTS   = "implements".
@@ -1952,21 +1952,19 @@ PRODUCTIONS
   macroReplacement<out Node body> (. body = DUMMY_ID; .)
   = ( macroMatch<out body>
     | maximumMacroExpr<out body>
-    | extendId<out body>
-    | idToStr<out body>
+    | AsId<out body>
+    | AsStr<out body>
     )                             (. body = expandNode(this, body); .)
   .
 
-  extendId<out Node body>                   (. var start = nextTokenLoc(); .)
-  = EXTEND_ID
-    groupedExpression<out GroupedExpr expr> (. body = new ExtendIdExpr(expr, start.join(lastTokenLoc())); .)
+  AsId<out Node body>                   (. var start = nextTokenLoc(); .)
+  = AS_ID
+    groupedExpression<out GroupedExpr expr> (. body = new AsIdExpr(expr, start.join(lastTokenLoc())); .)
   .
 
-  idToStr<out Node body> (. var start = nextTokenLoc(); .)
-  = ID_TO_STR
-    SYM_PAREN_OPEN
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    SYM_PAREN_CLOSE (. body = new IdToStrExpr(id, start.join(lastTokenLoc())); .)
+  AsStr<out Node body> (. var start = nextTokenLoc(); .)
+  = AS_STR
+    groupedExpression<out GroupedExpr expr> (. body = new AsStrExpr(expr, start.join(lastTokenLoc())); .)
   .
 
   macroMatch<out Node node>                           (. var start = nextTokenLoc(); .)

@@ -26,12 +26,12 @@ record Instr (id: Id, ass: Str, op: BinOp, opcode: Bin)
 record Cond  (str: Str, code: Id, ex: Ex)
 
 model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
-  instruction ExtendId ($instr.id, $cond.str) : ArLoImm =
+  instruction AsId ($instr.id, $cond.str) : ArLoImm =
     if ($cond.ex) then
       R(rd) := R(rn) $instr.op imm12 as Word
-  encoding ExtendId ($instr.id, $cond.str) =
+  encoding AsId ($instr.id, $cond.str) =
     {cc = cond::$cond.code, op = $instr.opcode, flags = 0}
-  assembly ExtendId ($instr.id, $cond.str) =
+  assembly AsId ($instr.id, $cond.str) =
     ($instr.ass, $cond.str, ' ', register(rd), ',', register(rn), ',', decimal(imm12))
   }
 

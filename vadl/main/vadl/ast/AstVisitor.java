@@ -715,7 +715,7 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(ExtendIdExpr expr) {
+  public Void visit(AsIdExpr expr) {
     beforeTravel(expr);
     expr.children().forEach(this::travel);
     afterTravel(expr);
@@ -723,7 +723,7 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
-  public Void visit(IdToStrExpr expr) {
+  public Void visit(AsStrExpr expr) {
     beforeTravel(expr);
     expr.children().forEach(this::travel);
     afterTravel(expr);
