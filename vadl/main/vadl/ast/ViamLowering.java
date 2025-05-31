@@ -221,8 +221,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     return fetchWith(definition, d -> d.accept(this));
   }
 
-  private <D extends Definition> Optional<vadl.viam.Definition> fetchWith(D definition,
-                                                                          java.util.function.Function<D, Optional<vadl.viam.Definition>> visitMethod) {
+  private <D extends Definition> Optional<vadl.viam.Definition> fetchWith(
+      D definition,
+      java.util.function.Function<D, Optional<vadl.viam.Definition>> visitMethod) {
     if (definitionCache.containsKey(definition)) {
       return definitionCache.get(definition);
     }
@@ -1140,8 +1141,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     ));
   }
 
-  private Optional<vadl.viam.Definition> visitEncoding(EncodingDefinition definition,
-                                                       InstructionDefinition instructionDefinition) {
+  private Optional<vadl.viam.Definition> visitEncoding(
+      EncodingDefinition definition,
+      InstructionDefinition instructionDefinition) {
     var fields = new ArrayList<Encoding.Field>();
     for (var item : definition.encodings.items) {
       var encodingDef = (EncodingDefinition.EncodingField) item;
