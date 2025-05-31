@@ -13,3 +13,5 @@ COPY lcb_wrapper.sh .
 COPY llvm.sh .
 COPY compile.sh .
 COPY filecheck.sh .
+COPY upstream.sh .
+COPY compare.sh .
