@@ -5,6 +5,14 @@
 #include <string.h>
 typedef uint8_t bool;
 
+/* structure to test stable sorting (index will contain its original index in the array, to make sure it doesn't switch places with other items) */
+typedef struct
+{
+  int value;
+  int index;
+} Test;
+
+#define Var(name, value, type) type name = value
 #define Swap(value1, value2, type) { \
 	Var(a, &(value1), type*); \
 	Var(b, &(value2), type*); \
@@ -13,13 +21,6 @@ typedef uint8_t bool;
 	*a = *b; \
 	*b = c; \
 }
-
-/* structure to test stable sorting (index will contain its original index in the array, to make sure it doesn't switch places with other items) */
-typedef struct
-{
-  int value;
-  int index;
-} Test;
 
 bool
 TestCompare (Test item1, Test item2)
@@ -69,6 +70,8 @@ Reverse (Test array[], const Range range)
   for (index = Range_length (range) / 2 - 1; index >= 0; index--)
     Swap (array[range.start + index], array[range.end - index - 1], Test);
 }
+
+
 
 /* rotate the values in an array ([0 1 2 3] becomes [1 2 3 0] if we rotate by 1) */
 void
