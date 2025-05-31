@@ -81,20 +81,28 @@ final class ConstraintValidator {
     // general checks if better error messages.
     behavior.getNodes().forEach(node -> {
       ensure(!(node instanceof ReadResourceNode),
-          () -> error("Invalid annotation expression", node)
-              .locationDescription(node, "Resource reads are not allowed in this annotation.")
-      );
+          () -> error("Invalid constraint expression", node)
+              .locationDescription(node,
+                  "Resource read operations (e.g., memory or I/O accesses) "
+                      + "are not permitted in encoding constraints."));
 
       ensure(!(node instanceof FieldAccessRefNode),
-          () -> error("Invalid annotation expression", node)
+          () -> error("Invalid constraint expression", node)
               .locationDescription(node,
-                  "Fields access functions are not allowed in this annotation.")
-      );
+                  "Field access calls are disallowed in encoding constraints."));
 
       if (node instanceof FieldRefNode fieldRef) {
         ensure(fields.contains(fieldRef.formatField()), () ->
-            error("Invalid annotation expression", fieldRef)
-                .locationDescription(node, "Only fields of this encoding can be accessed."));
+            error("Invalid constraint expression", fieldRef)
+                .locationDescription(node,
+                    "The field is not defined in this encoding's format. "
+                        + "Only fields belonging to this encoding format may be referenced."));
+
+        ensure(encoding.fieldEncodingOf(fieldRef.formatField()) == null,
+            () -> error("Invalid constraint expression", fieldRef)
+                .locationDescription(fieldRef,
+                    "The field is set by the encoding and "
+                        + "can therefore not be used for encoding constraints."));
       }
     });
 
@@ -105,7 +113,7 @@ final class ConstraintValidator {
 
 
   /**
-   * Structure of Terms:
+   * Structure of Terms.
    * <ul>
    * <li>Every field reference is a term</li>
    * <li>Every constant is a term</li>
@@ -119,16 +127,19 @@ final class ConstraintValidator {
       case SliceNode s -> {
         if (!(s.value() instanceof FieldRefNode)) {
           throw error("Invalid constraint expression", s.value())
-              .locationDescription(s.value(), "Slice can only be applied on a format field.")
+              .locationDescription(s.value(), "A slice must be applied directly to a format field.")
               .build();
         }
       }
-      default -> throw error("Invalid constraint expression", term).build();
+      default -> throw error("Invalid constraint expression", term)
+          .help("Only format fields, constant values, "
+              + "and slices on format fields are allowed as terms.")
+          .build();
     }
   }
 
   /**
-   * Structure of atomic formulas:
+   * Structure of atomic formulas.
    *
    * <p>If t1 and t2 are terms, where t1 is a non-constant term and t2 is a constant, then
    * {@code t1 = t2} and {@code t1 != t2} are atomic formulas.</p>
@@ -137,7 +148,8 @@ final class ConstraintValidator {
     if (!(atomicFormula instanceof BuiltInCall call)
         || (call.builtIn() != BuiltInTable.EQU && call.builtIn() != BuiltInTable.NEQ)) {
       throw error("Invalid constraint expression", atomicFormula)
-          .locationDescription(atomicFormula, "A `=` or `!=` comparison was expected.")
+          .locationDescription(atomicFormula,
+              "Expected a comparison using `=` or `!=` between a format field and a constant.")
           .build();
     }
     var a = call.arg(0);
@@ -149,17 +161,23 @@ final class ConstraintValidator {
 
     // if both or none are constants, this is an invalid atomic formular
     if ((a instanceof ConstantNode) == (b instanceof ConstantNode)) {
-      throw error("Invalid constraint expression", atomicFormula)
+      var fields = encoding.nonEncodedFormatFields();
+      var err = error("Invalid constraint expression", atomicFormula)
           .locationDescription(atomicFormula,
-              "Expected one constant and one format field or slice.")
-          .build();
+              "Exactly one side must be a constant, the other a format field or a slice.");
+      if (fields.length > 2) {
+        var f1 = fields[0].simpleName();
+        var f2 = fields[1].simpleName();
+        err.help("`%s = 1` is valid, but `3 = 5` or `%s = %s` is not.", f1, f1, f2);
+      }
+      throw err.build();
     }
 
     // fine otherwise
   }
 
   /**
-   * Structure of formulas:
+   * Structure of formulas.
    * <ul>
    *   <li>Every atomic formula is a formula.</li>
    *   <li>If p and q are atomic formulas, then {@code p && q} is a formula.</li>
@@ -169,7 +187,8 @@ final class ConstraintValidator {
   private void checkFormular(ExpressionNode formular) {
     if (!(formular instanceof BuiltInCall call)) {
       throw error("Invalid constraint expression", formular)
-          .locationDescription(formular, "Comparison expected")
+          .locationDescription(formular,
+              "Expected a comparison or logical operation (`=`, `!=`, `&&`, `||`).")
           .build();
     }
 
