@@ -115,7 +115,7 @@ class AnnotationTable {
         })
         .build();
 
-    annotationOn(EncodingDefinition.class, "testxyz", EncodingConstraintAnnotation::new)
+    annotationOn(EncodingDefinition.class, "unmatch when", EncodingConstraintAnnotation::new)
         .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
         .applyViam((def, annotation, lowering) -> {
           // The actual formular checks are done in the the VdtEncodingConstraintValidationPass.
