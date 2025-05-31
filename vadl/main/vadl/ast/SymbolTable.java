@@ -1046,7 +1046,6 @@ class SymbolTable {
     public Void visit(EncodingDefinition definition) {
       // Link instruction and import all symbols from the instruction format.
       beforeTravel(definition);
-      definition.annotations.forEach(this::travel);
 
       var inst =
           definition.symbolTable().requireAs(definition.identifier(), InstructionDefinition.class);
@@ -1082,6 +1081,7 @@ class SymbolTable {
         }
       }
 
+      definition.annotations.forEach(this::travel);
       afterTravel(definition);
       return null;
     }
