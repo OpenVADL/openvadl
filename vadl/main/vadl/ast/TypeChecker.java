@@ -2155,9 +2155,9 @@ public class TypeChecker
       } else if (leftTyp instanceof UIntType || rightTyp instanceof UIntType) {
         expr.type = Type.unsignedInt(leftBitWidth * 2);
         return null;
-      } else {
-        expr.type = Type.bits(leftBitWidth * 2);
       }
+      expr.type = Type.bits(leftBitWidth * 2);
+      return null;
     }
 
     var bitWidth = ((BitsType) leftTyp).bitWidth();
