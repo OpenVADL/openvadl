@@ -98,6 +98,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtEncodingConstraintValidationPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
@@ -539,6 +540,7 @@ public class PassOrders {
     order
         .add(new VdtEncodingConstraintValidationPass(config))
         .add(new VdtInputPreparationPass(config))
+        .add(new VdtConstraintSynthesisPass(config))
         .add(new VdtLoweringPass(config));
   }
 

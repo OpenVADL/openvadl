@@ -38,7 +38,7 @@ public class Encoding extends Definition implements DefProp.WithType {
   private final Format.Field[] nonEncodedFormatFields;
 
   // The constraint graph is a function graph that accesses format fields.
-  // It is set with the `unmatch if: <expr>` annotation and specifies under which conditions
+  // It is set with the `select when: <expr>` annotation and specifies under which conditions
   // an instruction encoding is valid.
   // If it is null, there are no conditions.
   @Nullable

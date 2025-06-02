@@ -28,6 +28,7 @@ import vadl.configuration.IssConfiguration;
 import vadl.pass.PassManager;
 import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.model.Node;
+import vadl.vdt.passes.VdtConstraintSynthesisPass;
 import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.vdt.target.common.DecisionTreeStatsCalculator;
@@ -48,6 +49,7 @@ class Aarch64Test extends AbstractTest {
 
     var manager = new PassManager();
     manager.add(new VdtInputPreparationPass(config));
+    manager.add(new VdtConstraintSynthesisPass(config));
     manager.add(new VdtLoweringPass(config));
 
     /* WHEN */

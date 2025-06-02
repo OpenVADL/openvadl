@@ -16,6 +16,8 @@
 
 package vadl.vdt.impl.irregular;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,10 +25,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import vadl.TestUtils;
+import vadl.configuration.GeneralConfiguration;
+import vadl.pass.Pass;
+import vadl.pass.PassManager;
+import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.vdt.AbstractDecisionTreeTest;
 import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.impl.irregular.model.ExclusionCondition;
 import vadl.vdt.model.Node;
+import vadl.vdt.passes.VdtConstraintSynthesisPass;
+import vadl.vdt.passes.VdtInputPreparationPass;
+import vadl.vdt.passes.VdtLoweringPass;
 import vadl.vdt.target.common.DecisionTreeDecoder;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.BitVector;
@@ -289,6 +299,87 @@ class IrregularDecodeTreeGeneratorTest extends AbstractDecisionTreeTest {
         "01001000 10000011 11000000 00000001 01001000 10000001 11000000", "insn_4");
     assertDecision(decoder,
         "10000011 11000000 00000001 01001000 10000001 11000000 01111000", "insn_5");
+  }
+
+  private static final String TEST_ISA = """
+      instruction set architecture TEST = {
+      
+        register X: Bits<5>
+      
+        format Format: Bits<8> =
+        { a  [7]
+        , b  [6]
+        , c  [5..4]
+        , d  [3..2]
+        , e  [1..0]
+        }
+      
+        instruction I1: Format = { }
+        instruction I2: Format = { }
+        instruction I3: Format = { }
+        instruction I4: Format = { }
+        instruction I5: Format = { }
+        instruction I6: Format = { }
+        instruction I7: Format = { }
+      
+        assembly I1 = ( mnemonic )
+        assembly I2 = ( mnemonic )
+        assembly I3 = ( mnemonic )
+        assembly I4 = ( mnemonic )
+        assembly I5 = ( mnemonic )
+        assembly I6 = ( mnemonic )
+        assembly I7 = ( mnemonic )
+      
+        [select when: c != 0b11 && (c != 0b00 || e = 0b00 || e = 0b11)]
+        encoding I1 = { a = 0b0, b = 0b0 }
+      
+        [select when: c != 0b11]           // Subsumed I5 & I6, overlaps with I7
+        encoding I2 = { a = 0b0, b = 0b1 } // Overlaps with I7
+      
+        encoding I3 = { a = 0b1, b = 0b0, e = 0b00 }
+        encoding I4 = { a = 0b1, b = 0b0, e = 0b01 }
+        encoding I5 = { a = 0b0, b = 0b0, c = 0b00, e = 0b01 }
+        encoding I6 = { a = 0b0, b = 0b0, c = 0b00, e = 0b10 }
+        encoding I7 = { a = 0b0, c = 0b11 }
+      }
+      """;
+
+  @Test
+  void testEncodingConstraints() throws DuplicatedPassKeyException, IOException {
+
+    /* GIVEN */
+    var spec = TestUtils.compileToViam(TEST_ISA);
+    var config = new GeneralConfiguration(Path.of("build/test-output"), false);
+
+    var passManager = new PassManager();
+    passManager.add(new VdtInputPreparationPass(config));
+    passManager.add(new VdtConstraintSynthesisPass(config));
+    passManager.add(new VdtLoweringPass(config));
+
+    /* WHEN */
+    passManager.run(spec);
+
+    /* THEN */
+    final Node dt = getResult(passManager, VdtLoweringPass.class);
+    Assertions.assertNotNull(dt);
+
+    final DecisionTreeDecoder decoder = new DecisionTreeDecoder(dt);
+
+    assertDecision(decoder, "00000000", "I1");
+    assertDecision(decoder, "00000001", "I5");
+    assertDecision(decoder, "00000010", "I6");
+    assertDecision(decoder, "00000011", "I1");
+    assertDecision(decoder, "00110000", "I7");
+
+    assertDecision(decoder, "01000000", "I2");
+    assertDecision(decoder, "01010000", "I2");
+    assertDecision(decoder, "01100000", "I2");
+    assertDecision(decoder, "01110000", "I7");
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T, U extends Pass> T getResult(PassManager passManager, Class<U> passType) {
+    return (T) passManager.getPassResults().lastResultOf(passType);
   }
 
   private DecodeEntry toDecodeEntry(Instruction insn) {
