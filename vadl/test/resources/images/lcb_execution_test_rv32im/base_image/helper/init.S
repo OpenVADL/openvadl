@@ -51,13 +51,19 @@ _start:
     addi t0, t0, %lo(__stack_size)
     add sp, tp, t0
 
-    jal main
+    jal x1, main
 
     # shutdown with exit code from main
-    slli a0,a0,1
-    addi x1, x0, 1
+    # slli a0,a0,1
+    # addi x1, x0, 1
+    # la x2, tohost
+    # sw x1, 0(x2)
+    # sw x0, 4(x2)
+
+    slli a0, a0, 1
+    ori a0, a0, 1
     la x2, tohost
-    sw x1, 0(x2)
+    sw a0, 0(x2)
     sw x0, 4(x2)
 
     .section .tohost, "aw", @progbits
