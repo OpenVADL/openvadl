@@ -77,7 +77,7 @@ application binary interface ABI for RV32I = {
 
    // ra is callee saved because it is used as normal register and has to be restored.
    caller saved = [ a{0..7}, t{0..6} ]
-   callee saved = [ ra, gp, tp, fp, s{0..11} ]
+   callee saved = [ ra, s{0..11} ]
 
   constant sequence( rd : Bits<5>, val : SInt<32> ) =
   {
