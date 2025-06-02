@@ -15,3 +15,5 @@ COPY compile.sh .
 COPY filecheck.sh .
 COPY upstream.sh .
 COPY compare.sh .
+COPY elf_machine_updater .
+COPY asm.sh .
