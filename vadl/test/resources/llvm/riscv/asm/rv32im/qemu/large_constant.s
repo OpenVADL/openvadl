@@ -1,0 +1,31 @@
+.globl main
+
+main:
+        addi    sp,sp,-32
+        sw      ra,28(sp)
+        sw      s0,24(sp)
+        addi    s0,sp,32
+        li      a2,-2147483648
+        addi    a2,a2,1337
+        li      a3,-1
+        sw      a2,-24(s0)
+        sw      a3,-20(s0)
+        li      a2,-2147483648
+        addi    a2,a2,1337
+        li      a3,-1
+        sw      a2,-32(s0)
+        sw      a3,-28(s0)
+        lw      a2,-24(s0)
+        lw      a3,-32(s0)
+        xor     a4,a2,a3
+        lw      a2,-20(s0)
+        lw      a3,-28(s0)
+        xor     a5,a2,a3
+        or      a5,a4,a5
+        snez    a5,a5
+        andi    a5,a5,0xff
+        mv      a0,a5
+        lw      ra,28(sp)
+        lw      s0,24(sp)
+        addi    sp,sp,32
+        jr      ra
