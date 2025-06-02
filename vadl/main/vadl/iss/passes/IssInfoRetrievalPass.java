@@ -17,13 +17,18 @@
 package vadl.iss.passes;
 
 import java.io.IOException;
+import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.extensions.ExceptionInfo;
 import vadl.iss.passes.extensions.RegInfo;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
+import vadl.utils.ViamUtils;
+import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * Collects information about registers, exceptions that are raised by instructions in the ISA.
@@ -55,9 +60,41 @@ public class IssInfoRetrievalPass extends AbstractIssPass {
     }
 
     isa.registerTensors().forEach(r -> {
-      r.attachExtension(new RegInfo());
+      r.attachExtension(new RegInfoRetriever(viam, r).regInfoFor());
     });
 
     return null;
   }
+}
+
+record RegInfoRetriever(Specification spec, RegisterTensor reg) {
+
+  RegInfo regInfoFor() {
+    var vecReg = false;
+    var outerMostAccess = 0;
+    if (reg.dimCount() != 1) {
+      // for multidimensional registers we check the outermost accessed dimension
+      // of the register.
+      // if the register is always accessed on the innermost dimension, it is a pure register file.
+      // otherwise it is a vector, as it is accessed across dimension boundaries.
+      outerMostAccess = outerMostAccessedDimension(reg);
+      vecReg = outerMostAccess != reg.innermostDim().index();
+    }
+
+    return new RegInfo(vecReg, outerMostAccess);
+  }
+
+
+  private int outerMostAccessedDimension(RegisterTensor registerTensor) {
+    // if there is a register access that does not use all access indices, the register
+    // is not allways accessed with innermost dimension.
+    return ViamUtils.findAllWithBehavior(spec).flatMap(b -> b.behaviors().stream())
+        .flatMap(b -> b.getNodes(Set.of(ReadRegTensorNode.class, WriteRegTensorNode.class)))
+        .map(n -> switch (n) {
+          case ReadRegTensorNode r when r.regTensor() == registerTensor -> r.indices().size();
+          case WriteRegTensorNode w when w.regTensor() == registerTensor -> w.indices().size();
+          default -> throw new IllegalStateException("not reachable");
+        }).mapToInt(Integer::intValue).min().orElse(registerTensor.maxNumberOfAccessIndices());
+  }
+
 }

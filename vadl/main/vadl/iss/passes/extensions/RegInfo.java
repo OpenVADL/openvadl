@@ -38,6 +38,14 @@ public class RegInfo extends DefinitionExtension<RegisterTensor> implements Rend
 
   @Nullable
   private Map<String, Object> renderObj;
+  private boolean isVecReg;
+  // 0 if the whole thing got accessed (read or written) at once
+  private int outermostAccessedDim;
+
+  public RegInfo(boolean isVecReg, int outermostAccessedDim) {
+    this.isVecReg = isVecReg;
+    this.outermostAccessedDim = outermostAccessedDim;
+  }
 
   public RegisterTensor reg() {
     return extendingDef();

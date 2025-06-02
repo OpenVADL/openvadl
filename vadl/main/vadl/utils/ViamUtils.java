@@ -19,7 +19,9 @@ package vadl.utils;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import vadl.viam.DefProp;
 import vadl.viam.Definition;
 import vadl.viam.DefinitionVisitor;
 
@@ -83,5 +85,11 @@ public class ViamUtils {
         }
       }
     }.findAllIn(root);
+  }
+
+
+  public static Stream<DefProp.WithBehavior> findAllWithBehavior(Definition root) {
+    return findDefinitionsByFilter(root, d -> d instanceof DefProp.WithBehavior).stream().map(
+        DefProp.WithBehavior.class::cast);
   }
 }
