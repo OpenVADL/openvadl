@@ -115,13 +115,14 @@ class AnnotationTable {
         })
         .build();
 
-    annotationOn(EncodingDefinition.class, "unmatch when", EncodingConstraintAnnotation::new)
+    annotationOn(EncodingDefinition.class, "select when", EncodingConstraintAnnotation::new)
         .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
         .applyViam((def, annotation, lowering) -> {
           // The actual formular checks are done in the the VdtEncodingConstraintValidationPass.
           var encoding = (Encoding) def;
           var graph = new BehaviorLowering(lowering).getFunctionGraph(annotation.expr,
               encoding.simpleName() + " Constraint");
+          graph.setParentDefinition(encoding);
           encoding.setConstraint(graph);
         })
         .build();

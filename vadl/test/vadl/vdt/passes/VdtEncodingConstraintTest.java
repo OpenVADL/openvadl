@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.TestUtils;
 import vadl.error.Diagnostic;
+import vadl.vdt.passes.validate.EncodingConstraintValidator;
 import vadl.viam.Encoding;
 
 @SuppressWarnings("OverloadMethodsDeclarationOrder")
@@ -45,7 +46,7 @@ public class VdtEncodingConstraintTest {
           }
         
           instruction Instr: Format = { }
-          [ unmatch when : %s ]
+          [ select when : %s ]
           encoding Instr = { three = 0b1 }
           assembly Instr = ( mnemonic )
         }
@@ -57,7 +58,9 @@ public class VdtEncodingConstraintTest {
         "0b1 = one",
         "0b1 != one(0)",
         "one(4..2) = 0b10 && four = 0xF",
-        "one(0) = 1 || (two(0) = 1 && one = 1)"
+        "one(0) = 1 || (two(0) = 1 && one = 1)",
+        "one(0) = 1 || (two(0) = 1 && one = 1) || two != 2",
+        "one(0) = 1 && (two(0) = 1 || one = 1) && two != 2"
     );
   }
 
@@ -68,7 +71,7 @@ public class VdtEncodingConstraintTest {
       var spec = TestUtils.compileToViam(wrapProg(formula));
       var encoding =
           TestUtils.findDefinitionByNameIn("TEST::Instr::encoding", spec, Encoding.class);
-      var validator = new ConstraintValidator(encoding);
+      var validator = new EncodingConstraintValidator(encoding);
       validator.check();
     });
   }
@@ -85,8 +88,6 @@ public class VdtEncodingConstraintTest {
             "The field is set by the encoding and can therefore not be used for encoding constraints."),
         Arguments.of("four(4..0) = two",
             "Exactly one side must be a constant, the other a format field or a slice."),
-        Arguments.of("one(0) = 1 && (two(0) = 1 || one = 1)",
-            "Expected a comparison using `=` or `!=` between a format field and a constant."),
         Arguments.of("one as Bits<1> = 1",
             "Only format fields, constant values, and slices on format fields are allowed as terms."),
         Arguments.of("one <= 1",
@@ -98,13 +99,13 @@ public class VdtEncodingConstraintTest {
 
   @MethodSource("invalidFormulas")
   @ParameterizedTest
-  void validFormulas(String formula, String error) {
+  void invalidFormulas(String formula, String error) {
     assertThatThrownBy(() -> {
       var spec = TestUtils.compileToViam(wrapProg(formula));
       var encoding =
           TestUtils.findDefinitionByNameIn("TEST::Instr::encoding", spec, Encoding.class);
 
-      var validator = new ConstraintValidator(encoding);
+      var validator = new EncodingConstraintValidator(encoding);
       validator.check();
     })
         .isExactlyInstanceOf(Diagnostic.class)

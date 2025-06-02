@@ -1093,6 +1093,31 @@ public abstract class Constant {
               ));
     }
 
+    /**
+     * Apply another slicing operation to the current bit slice. E.g.: for given a slice [17..13]
+     * and applying the slice [2, 0] to it, results in the bit slice [15, 13].
+     *
+     * @param slice The additional slice to apply
+     * @return The new bit slice, after applying the additional slicing operation.
+     */
+    public BitSlice apply(BitSlice slice) {
+
+      if (slice.msb() > bitSize()) {
+        throw new IllegalArgumentException("Cannot apply bit slice " + slice + " to " + this);
+      }
+
+      int[] baseIndices = stream().toArray();
+      int[] sliceIndices = slice.stream().toArray();
+
+      final Constant.BitSlice.Part[] newParts = new Constant.BitSlice.Part[sliceIndices.length];
+      for (int idx = 0; idx < sliceIndices.length; idx++) {
+        int si = baseIndices[baseIndices.length - 1 - sliceIndices[idx]];
+        newParts[idx] = new Constant.BitSlice.Part(si, si);
+      }
+
+      return new Constant.BitSlice(newParts);
+    }
+
     private static List<Part> normalized(Part[] parts) {
       // flat map all parts to a single array of integers
       var flattened = Arrays.stream(parts)
