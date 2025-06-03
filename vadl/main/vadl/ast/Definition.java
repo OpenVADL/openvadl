@@ -718,8 +718,8 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
       }
 
       AuxiliaryField that = (AuxiliaryField) o;
-      return Objects.equals(field, that.field) && Objects.equals(expr, that.expr) &&
-          kind == that.kind;
+      return Objects.equals(field, that.field) && Objects.equals(expr, that.expr)
+          && kind == that.kind;
     }
 
     @Override

@@ -22,15 +22,17 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import vadl.error.Diagnostic;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.types.Type;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
@@ -45,6 +47,7 @@ public class Format extends Definition implements DefProp.WithType {
   private final BitsType type;
   private Field[] fields;
   private List<FieldAccess> fieldAccesses;
+  private List<FieldEncoding> fieldEncodings;
 
   /**
    * Constructs a new instance of a VADL format.
@@ -57,6 +60,7 @@ public class Format extends Definition implements DefProp.WithType {
     this.type = type;
     this.fields = new Field[] {};
     this.fieldAccesses = new ArrayList<>();
+    this.fieldEncodings = new ArrayList<>();
   }
 
   public Field[] fields() {
@@ -75,15 +79,80 @@ public class Format extends Definition implements DefProp.WithType {
     return fieldAccesses;
   }
 
-  public void addFieldAccess(FieldAccess fieldAccess) {
-    fieldAccesses.add(fieldAccess);
-  }
-
   /**
    * Used by VIAM builder only.
    */
   public void setFieldAccesses(FieldAccess[] fieldAccesses) {
     this.fieldAccesses = new ArrayList<>(Arrays.stream(fieldAccesses).toList());
+  }
+
+  public List<FieldEncoding> fieldEncodings() {
+    return fieldEncodings;
+  }
+
+  /**
+   * Get all field encodings used to encode the given {@link FieldAccess}es into
+   * the format encoding.
+   * This may be multiple encodings if the field access functions are encoded into multiple
+   * format fields. Each encoding might contain multiple references to different
+   * {@link FieldAccess}es.
+   * However, each returned encoding only contains field accesses that where passed to this
+   * method.
+   *
+   * <p>This method is used by the LCB to determine encodings for instruction operands
+   * (aka field access functions).
+   * <pre>{@code
+   * format BitFieldMoveFormat: Instr =
+   *   { ...
+   *   , immr       :  Bits6            // rotate right count (bit field low position)
+   *   , imms       :  Bits6            // bit field length -1 or high position
+   *   , leftWSize  =  (-1 as Bits5 - imms(4..0)) as BitsX
+   *   , leftXSize  =  (-1 as Bits6 - imms) as BitsX
+   *   , rightWSize =  (immr(4..0) - imms(4..0) - 1) as BitsX
+   *   , rightXSize =  (immr - imms - 1) as BitsX
+   *   , imms       :=  -1 as Bits5 - leftWSize as Bits6
+   *   , imms       :=  -1 as Bits6 - leftXSize as Bits6
+   *   , immr       := (rightWSize - leftWSize) as Bits6
+   *   , immr       := (rightXSize - leftXSize) as Bits6
+   *   }
+   * }</pre>
+   * In this example, an invocation {@code fieldEncodingOf(leftWSize)} would return
+   * {@code {imms := -1 as Bits5 - leftWSize as Bits6}}.
+   * The invocation {@code fieldEncodingOf(leftWSize, rightWSize)} would return
+   * {@code {imms := -1 as Bits5 - leftWSize as Bits6, immr := (rightWSize - leftWSize) as Bits6}}.
+   * Note an invocation like {@code fieldEncodingOf(rightXSize, rightXSize)} would return
+   * no encodings, as there is no encoding that only uses the given two field accesses.
+   * </p>
+   *
+   * @param fieldAccesses that are used to encode some field
+   * @return a list of field encodings that use the given field accesses to encode the field
+   *     value.
+   */
+  public List<FieldEncoding> fieldEncodingsOf(Set<FieldAccess> fieldAccesses) {
+    var encodings = fieldEncodings.stream()
+        .filter(e -> fieldAccesses.containsAll(e.usedFieldAccesses()))
+        .toList();
+    var encodedFields = encodings.stream().map(FieldEncoding::targetField)
+        .distinct().count();
+    ensure(encodings.size() == encodedFields,
+        "There are duplicated field encodings that match the given field accesses.");
+    return encodings;
+  }
+
+  public void setFieldEncoding(FieldEncoding fieldEncoding) {
+    var encodings = fieldEncodingsOf(fieldEncoding.usedFieldAccesses());
+    var anyOnThisTarget =
+        encodings.stream().anyMatch(e -> e.targetField().equals(fieldEncoding.targetField()));
+    ensure(!anyOnThisTarget,
+        "There is already a field encoding that match the given field accesses.");
+    encodings.add(fieldEncoding);
+  }
+
+  /**
+   * Used by VIAM builder only.
+   */
+  public void setFieldEncodings(List<FieldEncoding> fieldEncodings) {
+    this.fieldEncodings = fieldEncodings;
   }
 
   @Override
@@ -263,8 +332,6 @@ public class Format extends Definition implements DefProp.WithType {
   public static class FieldAccess extends Definition implements DefProp.WithType {
 
     private final Function accessFunction;
-    @Nullable
-    private Function encoding;
     @LazyInit
     private Function predicate;
     private final List<Field> fieldRefs;
@@ -276,10 +343,9 @@ public class Format extends Definition implements DefProp.WithType {
      *
      * @param identifier     The identifier of the Immediate.
      * @param accessFunction The access function of the FieldAccess.  {@code () -> T}
-     * @param encoding       The encoding function of the Immediate.  {@code (var: T) -> R}
      * @param predicate      The predicate function of the Immediate. {@code () -> Bool}
      */
-    public FieldAccess(Identifier identifier, Function accessFunction, @Nullable Function encoding,
+    public FieldAccess(Identifier identifier, Function accessFunction,
                        @Nullable Function predicate) {
       super(identifier);
 
@@ -292,14 +358,9 @@ public class Format extends Definition implements DefProp.WithType {
           decodeFormatFields);
 
       this.fieldRefs = decodeFormatFields;
-      this.encoding = encoding;
       if (predicate != null) {
         this.predicate = predicate;
       }
-    }
-
-    public FieldAccess(Identifier identifier, Function accessFunction) {
-      this(identifier, accessFunction, null, null);
     }
 
     public Function accessFunction() {
@@ -308,23 +369,20 @@ public class Format extends Definition implements DefProp.WithType {
 
     /**
      * If the encoding function is null, it wasn't yet inferred nor specified by the user.
+     *
+     * @deprecated This shouldn’t be used anymore.
+     *     Use {@link Format#fieldEncodingsOf(Set)} instead.
      */
+    // TODO: @kper remove this once you adapted your code accordingly
     @Nullable
-    public Function encoding() {
-      return encoding;
+    @Deprecated
+    public FieldEncoding encoding() {
+      var encodings = format().fieldEncodingsOf(Set.of(this));
+      return encodings.isEmpty() ? null : encodings.getFirst();
     }
 
-    /**
-     * Sets the encoding to the given function. This must be called
-     * by the pass that infers the encoding function. It will fail
-     * if the encoding was already set before.
-     */
-    public void setEncoding(Function encoding) {
-      ViamError.ensure(this.encoding == null, () -> Diagnostic.error(
-          "Cannot regenerate an encoding for a field access which already has an encoding.",
-          encoding.location()));
-      this.encoding = encoding;
-      verify();
+    public Format format() {
+      return fieldRefs.getFirst().format();
     }
 
     // only called by the lowering
@@ -390,13 +448,60 @@ public class Format extends Definition implements DefProp.WithType {
       }
       FieldAccess that = (FieldAccess) o;
       return Objects.equals(accessFunction, that.accessFunction)
-          && Objects.equals(encoding, that.encoding) && Objects.equals(predicate, that.predicate)
+          && Objects.equals(predicate, that.predicate)
           && Objects.equals(fieldRefs, that.fieldRefs);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(accessFunction, encoding, predicate, fieldRefs);
+      return Objects.hash(accessFunction, predicate, fieldRefs);
+    }
+  }
+
+  /**
+   * Represents the encoding of a {@link Field} from {@link FieldAccess}es.
+   * It has a behavior like a function that contains references to field accesses
+   * using {@link FieldAccessRefNode}s.
+   */
+  public static class FieldEncoding extends Definition {
+
+    private final Field targetFieldRef;
+    private final Set<FieldAccess> usedFieldAccessRefs;
+
+    private final Graph behavior;
+
+    /**
+     * An encoding of a format field using field accesses.
+     *
+     * @param identifier     of this definition. Typically, the target name and a counter.
+     * @param targetFieldRef the encoding target.
+     * @param behavior       the behavior that defines how the field accesses are encoded into the
+     *                       target field.
+     *                       The used field accesses are determined from this behavior.
+     */
+    public FieldEncoding(Identifier identifier, Field targetFieldRef, Graph behavior) {
+      super(identifier);
+      this.targetFieldRef = targetFieldRef;
+      this.usedFieldAccessRefs = behavior.getNodes(FieldAccessRefNode.class)
+          .map(FieldAccessRefNode::fieldAccess).collect(Collectors.toSet());
+      this.behavior = behavior;
+    }
+
+    @Override
+    public void accept(DefinitionVisitor visitor) {
+
+    }
+
+    public Graph behavior() {
+      return behavior;
+    }
+
+    public Field targetField() {
+      return targetFieldRef;
+    }
+
+    public Set<FieldAccess> usedFieldAccesses() {
+      return usedFieldAccessRefs;
     }
   }
 }
