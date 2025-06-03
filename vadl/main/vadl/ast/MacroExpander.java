@@ -521,9 +521,11 @@ class MacroExpander
 
   @Override
   public Definition visit(FormatDefinition definition) {
-    var fields = definition.fields.stream().map(f -> (FormatField) f.accept(this)).toList();
+    var fields = definition.fields.stream().map(f -> (FormatField) f.accept(this))
+        .collect(Collectors.toCollection(ArrayList::new));
     var auxFields = definition.auxiliaryFields.stream()
-        .map(f -> (FormatDefinition.AuxiliaryField) f.accept(this)).toList();
+        .map(f -> (FormatDefinition.AuxiliaryField) f.accept(this))
+        .collect(Collectors.toCollection(ArrayList::new));
     var id = expandId(definition.identifier);
     return new FormatDefinition(id, definition.typeLiteral, fields, auxFields,
         copyLoc(definition.loc))

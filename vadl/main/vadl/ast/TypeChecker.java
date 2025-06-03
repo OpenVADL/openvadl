@@ -665,7 +665,7 @@ public class TypeChecker
     ensure(auxiliaryField.expr.type() == Type.bool(),
         () -> error("Invalid field access predicate", auxiliaryField.field)
             .locationDescription(auxiliaryField.field,
-                "The predicate must be a bool expression, but was %s.",
+                "The predicate must be a `Bool` expression, but was `%s`.",
                 auxiliaryField.expr.type()));
   }
 

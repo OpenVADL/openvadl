@@ -30,10 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import vadl.AbstractTest;
-import vadl.types.Type;
-import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.ConstantNode;
-import vadl.viam.graph.dependency.ZeroExtendNode;
 
 public class FormatTest extends AbstractTest {
 
@@ -175,70 +171,5 @@ public class FormatTest extends AbstractTest {
       assertEquals("OUT_OF_ORDER::THIRD", third.identifier.name());
     }
 
-  }
-
-  // FIXME: @ffreitag part of https://ea.complang.tuwien.ac.at/vadl/open-vadl/issues/377
-  // @Test
-  public void fieldAccess() {
-    var spec = runAndGetViamSpecification("unit/format/valid_fieldAccess.vadl");
-
-    var formats = spec.formats().toList();
-    var simple_access = findFormatByName(formats, "SIMPLE_ACCESS");
-    var auxiliary_access = findFormatByName(formats, "AUXILIARY_ACCESS");
-
-
-    {
-      var fields = simple_access.fields();
-      assertEquals(2, fields.length);
-      var hi = fields[0];
-
-      var fieldAccesses = simple_access.fieldAccesses();
-      assertEquals(1, fieldAccesses.size());
-      var var = fieldAccesses.get(0);
-      assertEquals("SIMPLE_ACCESS::VAR", var.identifier.name());
-
-      var accessFunction = var.accessFunction();
-      assertEquals("SIMPLE_ACCESS::VAR::decode", accessFunction.identifier.name());
-      assertEquals(Type.concreteRelation(Type.bits(4)),
-          accessFunction.signature());
-      assertEquals(accessFunction.returnType(), var.type());
-
-      var predicate = var.predicate();
-      assertEquals("SIMPLE_ACCESS::VAR::predicate", predicate.identifier.name());
-      assertEquals(Type.concreteRelation(Type.bits(4), Type.bool()), predicate.signature());
-      assertTrue(predicate.behavior().isPureFunction());
-      assertEquals(1, predicate.behavior().getNodes(ConstantNode.class).count());
-
-      var encoding = var.encoding();
-      assertEquals("SIMPLE_ACCESS::HI::encode0", encoding.identifier.name());
-      assertEquals(Type.concreteRelation(Type.bits(4), hi.type()), encoding.signature());
-      assertEquals("SIMPLE_ACCESS::HI::encode0::VAR",
-          encoding.parameters()[0].identifier.name());
-    }
-
-    {
-      var fields = auxiliary_access.fields();
-      assertEquals(2, fields.length);
-      var hi = fields[0];
-
-      var fieldAccesses = auxiliary_access.fieldAccesses();
-      var var = fieldAccesses.get(0);
-
-      var predicate = var.predicate();
-      assertEquals("AUXILIARY_ACCESS::VAR_predicate0", predicate.identifier.name());
-      assertEquals(Type.concreteRelation(Type.bits(4), Type.bool()), predicate.signature());
-      assertTrue(predicate.behavior().isPureFunction());
-      assertEquals("AUXILIARY_ACCESS::VAR_predicate0::VAR",
-          predicate.parameters()[0].identifier.name());
-      assertEquals(1, predicate.behavior().getNodes(BuiltInCall.class).count());
-
-      var encoding = var.encoding();
-      assertEquals("AUXILIARY_ACCESS::HI_encode0", encoding.identifier.name());
-      assertEquals(Type.concreteRelation(Type.bits(4), hi.type()), encoding.signature());
-      assertTrue(encoding.behavior().isPureFunction());
-      assertEquals("AUXILIARY_ACCESS::HI_encode0::VAR",
-          encoding.parameters()[0].identifier.name());
-      assertEquals(1, encoding.behavior().getNodes(ZeroExtendNode.class).count());
-    }
   }
 }

@@ -18,6 +18,7 @@ package vadl.ast;
 
 
 import static java.util.Objects.requireNonNull;
+import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
 import static vadl.viam.ViamError.ensureNonNull;
@@ -27,6 +28,7 @@ import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -34,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -102,6 +105,7 @@ import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
 import vadl.viam.graph.dependency.ReadResourceNode;
 import vadl.viam.graph.dependency.WriteResourceNode;
@@ -336,6 +340,22 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private <T, U> List<T> filterAndCastToInstance(List<U> values, Class<T> type) {
     return values.stream().filter(v -> v.getClass().equals(type)).map(type::cast)
         .collect(Collectors.toCollection(ArrayList::new));
+  }
+
+  private void checkNoResourceAccesses(Graph behavior, String inDescription) {
+    behavior.getNodes(Set.of(ReadResourceNode.class, WriteResourceNode.class))
+        .forEach(n -> {
+          throw error("Illegal resource access", n)
+              .locationDescription(n, "Resource access is not allowed in %s.", inDescription)
+              .build();
+        });
+  }
+
+  private void checkLeafNodes(Graph behavior,
+                              Consumer<ExpressionNode> check) {
+    behavior.getNodes()
+        .filter(Node::isLeaf)
+        .forEach(n -> check.accept((ExpressionNode) n));
   }
 
   @Override
@@ -1035,17 +1055,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .filter(f -> f instanceof DerivedFormatField)
         .map(f -> (DerivedFormatField) f)
         .map(derivedField -> {
-          var identifier =
-              generateIdentifier(definition.viamId + "::" + derivedField.identifier().name,
-                  derivedField.identifier());
-
-          var accessName = identifier.name() + "::decode";
-          var accessGraph =
-              new BehaviorLowering(this).getFunctionGraph(derivedField.expr, accessName);
-          var access =
-              new Function(generateIdentifier(accessName, derivedField.identifier),
-                  new vadl.viam.Parameter[0],
-                  getViamType(derivedField.expr.type()), accessGraph);
+          var identifier = generateIdentifier(derivedField.viamId, derivedField.identifier());
+          var access = getFieldAccessFunction(derivedField);
 
           // construct a default predicate that just returns true.
           // if there is a user-specified predicate, this will be overwritten by the one provided
@@ -1059,7 +1070,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
               new vadl.viam.Parameter[] {}, Type.bool(), predicateGraph
           );
 
-          var field = new Format.FieldAccess(identifier, access, null, predicate);
+          var field = new Format.FieldAccess(identifier, access, predicate);
           formatFieldCache.put(derivedField, field);
 
           return field;
@@ -1071,9 +1082,45 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .filter(f -> f.kind == FormatDefinition.AuxiliaryField.AuxKind.PREDICATE)
         .forEach(this::setFieldAccessPredicate);
 
+    var cnt = new AtomicInteger();
+    var encodings = definition.auxiliaryFields.stream()
+        .filter(f -> f.kind == FormatDefinition.AuxiliaryField.AuxKind.ENCODING)
+        .map(e -> getFieldEncoding(
+            format.identifier.append("encoding", e.field.name + "_" + cnt.getAndIncrement())
+                .withSourceLocation(e.field.loc),
+            e)
+        ).toList();
+
     format.setFields(fields);
     format.setFieldAccesses(fieldAccesses);
+    format.setFieldEncodings(encodings);
+
+    checkFormatFieldEncodings(format);
+
     return Optional.of(format);
+  }
+
+  private Function getFieldAccessFunction(DerivedFormatField derivedField) {
+    var accessName = derivedField.viamId + "::decode";
+    var accessGraph =
+        new BehaviorLowering(this).getFunctionGraph(derivedField.expr, accessName);
+    var access =
+        new Function(generateIdentifier(accessName, derivedField.identifier),
+            new vadl.viam.Parameter[0],
+            getViamType(derivedField.expr.type()), accessGraph);
+
+    checkNoResourceAccesses(accessGraph, "field access function");
+    checkLeafNodes(accessGraph, (n) -> {
+      switch (n) {
+        case ConstantNode c -> { /* fine */ }
+        case FieldRefNode r -> { /* fine */ }
+        default -> throw error("Illegal expression", n)
+            .locationDescription(n,
+                "Only constants and fields are allowed in field access function.")
+            .build();
+      }
+    });
+    return access;
   }
 
   /**
@@ -1105,20 +1152,86 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     lowered.setPredicate(predFunc);
   }
 
-  private void checkNoResourceAccesses(Graph behavior, String inDescription) {
-    behavior.getNodes(Set.of(ReadResourceNode.class, WriteResourceNode.class))
-        .forEach(n -> {
-          throw error("Illegal resource access", n)
-              .locationDescription(n, "Resources accesses are not allowed in %s.", inDescription)
-              .build();
-        });
+  /**
+   * Get the field encoding for the {@link vadl.ast.FormatDefinition.AuxiliaryField}
+   * with the kind {@code ENCODING}.
+   */
+  private Format.FieldEncoding getFieldEncoding(vadl.viam.Identifier ident,
+                                                FormatDefinition.AuxiliaryField encode) {
+    var behavior = new BehaviorLowering(this).getFunctionGraph(encode.expr, ident.toString());
+    var field = (Format.Field) requireNonNull(formatFieldCache.get(encode.fieldDef()));
+    var encoding = new Format.FieldEncoding(ident, field, behavior);
+    encoding.setSourceLocation(encode.location());
+
+    checkNoResourceAccesses(behavior, "field access encoding");
+    checkLeafNodes(behavior, (n) -> {
+      switch (n) {
+        case ConstantNode c -> { /* fine */ }
+        case FieldAccessRefNode r -> { /* fine */ }
+        default -> throw error("Illegal expression", n)
+            .locationDescription(n,
+                "Only constants and fields are allowed in field access encoding.")
+            .build();
+      }
+    });
+
+    // at least one access function must use this field for its decoding
+    var anyUseOfThisField = encoding.usedFieldAccesses().stream()
+        .flatMap(f -> f.fieldRefs().stream())
+        .anyMatch(e -> e == field);
+    ensure(anyUseOfThisField, () -> error("Invalid field access encoding", encode)
+        .description(
+            "At least one of the field accesses must use the target field `%s` in its access functions.",
+            field.simpleName()));
+    return encoding;
   }
 
-  private void checkLeafNodes(Graph behavior,
-                              Consumer<ExpressionNode> check) {
-    behavior.getNodes()
-        .filter(Node::isLeaf)
-        .forEach(n -> check.accept((ExpressionNode) n));
+  private void checkFormatFieldEncodings(Format format) {
+    var fieldEncodings = format.fieldEncodings();
+    var encMap = new HashMap<Format.Field, List<Format.FieldEncoding>>();
+    for (var enc : fieldEncodings) {
+      encMap.computeIfAbsent(enc.targetField(), k -> new ArrayList<>())
+          .add(enc);
+    }
+
+    for (var enc : encMap.keySet()) {
+      var encodings = encMap.get(enc);
+      // check if there is any set that is a subset of any other set of encSets
+      for (int i = 0; i < encodings.size(); i++) {
+        for (int j = 0; j < encodings.size(); j++) {
+          if (i == j) {
+            continue;
+          }
+          var encI = encodings.get(i);
+          var encJ = encodings.get(j);
+          if (encI.usedFieldAccesses().containsAll(encJ.usedFieldAccesses())) {
+            throw error("Conflicting access function encodings", encI)
+                .locationDescription(encI,
+                    "Field `%s` is already target field for a subset of access functions.",
+                    encI.targetField().simpleName())
+                .locationDescription(encJ,
+                    "This access functions encoding uses a subset of access functions.")
+                .build();
+          }
+        }
+      }
+    }
+
+    // check if the encoding for some field access exists if necessary.
+    // this does not include instruction specific checks
+    for (var acc : format.fieldAccesses()) {
+      for (var field : acc.fieldRefs()) {
+        var encs = encMap.get(field);
+        if (encs == null) {
+          // if the field access uses more than one field, an encoding function is mandatory
+          ensure(acc.fieldRefs().size() == 1, () -> error("Missing access function encoding", acc)
+              .description(
+                  "The encoding for this access function cannot be generated, "
+                      + "as it uses multiple format fields. Each used field needs an encoding.")
+              .help("Add an access function encoding with `%s := <expr>`", field.simpleName()));
+        }
+      }
+    }
   }
 
   @Override
