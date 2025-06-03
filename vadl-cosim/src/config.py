@@ -17,8 +17,9 @@
 
 from dataclasses import dataclass, field
 import tomllib
-from typing import Literal, Optional 
+from typing import Literal, Optional
 import dacite
+
 
 @dataclass
 class Logging:
@@ -28,10 +29,12 @@ class Logging:
     enable: bool = True
     clear_on_rerun: bool = False
 
+
 @dataclass
 class Out:
     dir: str = "./result"
     format: Literal["json"] = "json"
+
 
 @dataclass
 class Protocol:
@@ -41,19 +44,22 @@ class Protocol:
     stop_after_n_instructions: int
     out: Out = field(default_factory=Out)
 
+
 @dataclass
 class Testing:
     test_exec: str
     protocol: Protocol
     max_trace_length: int
 
+
 @dataclass
 class Client:
     exec: str
-    pass_test_exec_to: Literal['bios', 'kernel']
+    pass_test_exec_to: Literal["bios", "kernel"]
     additional_args: list[str]
     skip_n_instructions: int = 0
     name: Optional[str] = None
+
 
 @dataclass
 class Qemu:
@@ -63,9 +69,11 @@ class Qemu:
     ignore_registers: list[str]
     ignore_unset_registers: bool = True
 
+
 @dataclass
 class Dev:
     dry_run: bool
+
 
 @dataclass
 class Config:
@@ -73,6 +81,7 @@ class Config:
     testing: Testing
     logging: Logging
     dev: Dev
+
 
 def load_config(path: str) -> Config | None:
     with open(path, mode="rb") as config_file:
@@ -83,4 +92,3 @@ def load_config(path: str) -> Config | None:
             print(f"Missing required field: {e}")
         except Exception as e:
             print(f"Error while loading config: {e}")
-
