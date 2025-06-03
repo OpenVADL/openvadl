@@ -652,8 +652,7 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
    * The predicate or encoding of a derived format field.
    * Encodings are written using {@code :=} and predicates with {@code :-}.
    *
-   * <p><pre>
-   * {@code
+   * <p>Example format incldugin encoding and predicate: <pre>{@code
    * format BitFieldMoveFormat: Instr =
    *   { sf         :  Bits1
    *   , op         :  Bits8
@@ -662,29 +661,33 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
    *   , imms       :=  -1 as Bits5 - leftWSize as Bits6
    *   , leftWSize  :- leftWSize  as Bits5 as BitsX = leftWSize
    *   }
-   * </pre>
+   * }</pre>
    */
   static class AuxiliaryField extends Definition {
 
-    enum Kind {
+    enum AuxKind {
       PREDICATE, ENCODING
     }
 
     @Child
-    Identifier id;
+    Identifier field;
     @Child
     Expr expr;
-    Kind kind;
+    AuxKind kind;
 
-    AuxiliaryField(Identifier id, Kind kind, Expr expr) {
-      this.id = id;
+    AuxiliaryField(Identifier field, AuxKind kind, Expr expr) {
+      this.field = field;
       this.kind = kind;
       this.expr = expr;
     }
 
+    FormatField fieldDef() {
+      return (FormatField) Objects.requireNonNull(field.target);
+    }
+
     @Override
     public SourceLocation location() {
-      return id.location().join(expr.location());
+      return field.location().join(expr.location());
     }
 
     @Override
@@ -695,7 +698,7 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     @Override
     public void prettyPrint(int indent, StringBuilder builder) {
       builder.append(prettyIndentString(indent));
-      id.prettyPrint(0, builder);
+      field.prettyPrint(0, builder);
       var assign = switch (kind) {
         case PREDICATE -> " :- ";
         case ENCODING -> " := ";
@@ -704,7 +707,7 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
       expr.prettyPrint(0, builder);
     }
 
-    public Kind kind() {
+    public AuxKind kind() {
       return kind;
     }
 
@@ -715,13 +718,13 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
       }
 
       AuxiliaryField that = (AuxiliaryField) o;
-      return Objects.equals(id, that.id) && Objects.equals(expr, that.expr) &&
+      return Objects.equals(field, that.field) && Objects.equals(expr, that.expr) &&
           kind == that.kind;
     }
 
     @Override
     public int hashCode() {
-      int result = Objects.hashCode(id);
+      int result = Objects.hashCode(field);
       result = 31 * result + Objects.hashCode(expr);
       result = 31 * result + Objects.hashCode(kind);
       return result;
@@ -3671,7 +3674,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
  * is that {@link AbiClangNumericTypeDefinition} requires an integer as property.
  */
 class AbiClangNumericTypeDefinition extends Definition {
-  TypeName typeName;
+  NumTypeName typeName;
   @Child
   Expr size;
   SourceLocation loc;
@@ -3695,7 +3698,7 @@ class AbiClangNumericTypeDefinition extends Definition {
         && Objects.equals(size, that.size);
   }
 
-  enum TypeName {
+  enum NumTypeName {
     POINTER_WIDTH("pointer width"),
     POINTER_ALIGN("pointer align"),
     LONG_WIDTH("long width"),
@@ -3703,12 +3706,12 @@ class AbiClangNumericTypeDefinition extends Definition {
 
     final String keyword;
 
-    TypeName(String keyword) {
+    NumTypeName(String keyword) {
       this.keyword = keyword;
     }
   }
 
-  public AbiClangNumericTypeDefinition(TypeName typeName,
+  public AbiClangNumericTypeDefinition(NumTypeName typeName,
                                        Expr size,
                                        SourceLocation loc) {
     this.loc = loc;
@@ -3768,6 +3771,7 @@ class AbiClangTypeDefinition extends Definition {
         && typeSize == that.typeSize;
   }
 
+  @SuppressWarnings("SameNameButDifferent")
   enum TypeName {
     // Type of the size_t in C.
     SIZE_TYPE("size_t type"),

@@ -433,10 +433,10 @@ PRODUCTIONS
     )
   .
 
-  auxiliaryField<out FormatDefinition.AuxiliaryField auxField> (. FormatDefinition.AuxiliaryField.Kind kind = null; .)
+  auxiliaryField<out FormatDefinition.AuxiliaryField auxField> (. FormatDefinition.AuxiliaryField.AuxKind kind = null; .)
   = identifier<out Identifier id>
-    ( SYM_PREDICATE                                            (. kind = FormatDefinition.AuxiliaryField.Kind.PREDICATE; .)
-    | SYM_ASSIGN                                               (. kind = FormatDefinition.AuxiliaryField.Kind.ENCODING; .)
+    ( SYM_PREDICATE                                            (. kind = FormatDefinition.AuxiliaryField.AuxKind.PREDICATE; .)
+    | SYM_ASSIGN                                               (. kind = FormatDefinition.AuxiliaryField.AuxKind.ENCODING; .)
     )
     expression<out Expr expr, BIN_OPS>                          (. auxField = new FormatDefinition.AuxiliaryField(id, kind, expr); .)
   .
@@ -450,7 +450,6 @@ PRODUCTIONS
     }
     SYM_BRACK_CLOSE                     (. TypeLiteral type = null; .)
     [
-      IF (la.kind == _SYM_COLON)
       SYM_COLON
       typeLiteral<out type>
     ]                                   (. field = new RangeFormatField(id, ranges, type); .)
@@ -885,16 +884,16 @@ PRODUCTIONS
   )
   .
 
-  clangNumericTypeDefinition<out Definition def>    (. def = DUMMY_DEF; var startLoc = nextTokenLoc(); AbiClangNumericTypeDefinition.TypeName typeName = null; .)
+  clangNumericTypeDefinition<out Definition def>    (. def = DUMMY_DEF; var startLoc = nextTokenLoc(); AbiClangNumericTypeDefinition.NumTypeName typeName = null; .)
   =
   (
     POINTER (
-         WIDTH                                      (. typeName = AbiClangNumericTypeDefinition.TypeName.POINTER_WIDTH; .)
-      |  ALIGN                                      (. typeName = AbiClangNumericTypeDefinition.TypeName.POINTER_ALIGN; .)
+         WIDTH                                      (. typeName = AbiClangNumericTypeDefinition.NumTypeName.POINTER_WIDTH; .)
+      |  ALIGN                                      (. typeName = AbiClangNumericTypeDefinition.NumTypeName.POINTER_ALIGN; .)
     )
     | LONG (
-         WIDTH                                      (. typeName = AbiClangNumericTypeDefinition.TypeName.LONG_WIDTH; .)
-      |  ALIGN                                      (. typeName = AbiClangNumericTypeDefinition.TypeName.LONG_ALIGN; .)
+         WIDTH                                      (. typeName = AbiClangNumericTypeDefinition.NumTypeName.LONG_WIDTH; .)
+      |  ALIGN                                      (. typeName = AbiClangNumericTypeDefinition.NumTypeName.LONG_ALIGN; .)
     )
   )
   SYM_EQ expression<out Expr expr, BIN_OPS>         (. def = new AbiClangNumericTypeDefinition(typeName, expr, startLoc.join(lastTokenLoc())); .)

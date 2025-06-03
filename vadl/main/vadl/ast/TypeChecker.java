@@ -587,6 +587,24 @@ public class TypeChecker
       }
     }
 
+    // check that there are not multiple predicates for the same access field
+    var derivedFieldsWithPredicate =
+        new HashMap<DerivedFormatField, FormatDefinition.AuxiliaryField>();
+    for (var aux : definition.auxiliaryFields) {
+      check(aux);
+      if (aux.kind == FormatDefinition.AuxiliaryField.AuxKind.PREDICATE) {
+        var conflict = derivedFieldsWithPredicate.get(aux.fieldDef());
+        if (conflict != null) {
+          throw error("Conflicting field access predicates", aux.field)
+              .locationDescription(aux.field,
+                  "A predicate for the field access `%s` already exists.", aux.field.name)
+              .locationHelp(conflict, "Predicate already defined here.")
+              .build();
+        }
+        derivedFieldsWithPredicate.put((DerivedFormatField) aux.fieldDef(), aux);
+      }
+    }
+
     if (bitsVerifier.hasViolations()) {
       throw error("Invalid Format", definition)
           .description("%s", requireNonNull(bitsVerifier.getViolationsMessage()))
@@ -616,8 +634,39 @@ public class TypeChecker
 
   @Override
   public Void visit(FormatDefinition.AuxiliaryField definition) {
-    throwUnimplemented(definition);
+    check(definition.expr);
+    switch (definition.kind) {
+      case PREDICATE -> checkFieldAccessPredicate(definition);
+      case ENCODING -> checkFieldEncoding(definition);
+    }
     return null;
+  }
+
+  private void checkFieldEncoding(FormatDefinition.AuxiliaryField auxiliaryField) {
+    var field = auxiliaryField.field.target();
+    var fieldType = switch (field) {
+      case RangeFormatField r -> requireNonNull(r.type);
+      case TypedFormatField f -> f.typeLiteral.type();
+      default -> throw error("Invalid format field encoding", auxiliaryField.field)
+          .locationDescription(auxiliaryField.field, "The encoding must reference a format field.")
+          .build();
+    };
+    tryWrapImplicitCast(auxiliaryField.expr, fieldType);
+  }
+
+  private void checkFieldAccessPredicate(FormatDefinition.AuxiliaryField auxiliaryField) {
+    var field = auxiliaryField.field.target();
+    if (!(field instanceof DerivedFormatField fieldAccess)) {
+      throw error("Invalid format field predicate", auxiliaryField.field)
+          .locationDescription(auxiliaryField.field,
+              "The predicate must reference a field access function.")
+          .build();
+    }
+    ensure(auxiliaryField.expr.type() == Type.bool(),
+        () -> error("Invalid field access predicate", auxiliaryField.field)
+            .locationDescription(auxiliaryField.field,
+                "The predicate must be a bool expression, but was %s.",
+                auxiliaryField.expr.type()));
   }
 
   @Override

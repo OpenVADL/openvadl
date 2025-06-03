@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -94,11 +95,16 @@ import vadl.viam.asm.rules.AsmGrammarRule;
 import vadl.viam.asm.rules.AsmNonTerminalRule;
 import vadl.viam.asm.rules.AsmTerminalRule;
 import vadl.viam.graph.Graph;
+import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.graph.dependency.ReadResourceNode;
+import vadl.viam.graph.dependency.WriteResourceNode;
 import vadl.viam.passes.canonicalization.Canonicalizer;
 import vadl.viam.passes.functionInliner.Inliner;
 
@@ -987,91 +993,132 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         new Format(generateIdentifier(definition.viamId, definition.identifier()),
             (BitsType) getViamType(definition.typeLiteral.type()));
 
-    var fields = new ArrayList<Format.Field>();
-    var fieldAccesses = new ArrayList<Format.FieldAccess>();
-    for (var fieldDefinition : definition.fields) {
+    // first lower all format fields (that are not derived format fields).
+    // this is because derived format fields may reference fields, which already must be lowered.
+    var fields = definition.fields.stream()
+        .filter(f -> !(f instanceof DerivedFormatField))
+        .map(fieldDefinition -> {
+          var fieldIdent =
+              generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
+                  fieldDefinition.identifier());
 
-      if (fieldDefinition instanceof TypedFormatField typedField) {
-        var field = new Format.Field(
-            generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
-                fieldDefinition.identifier()),
-            (BitsType) getViamType(typedField.typeLiteral.type()),
-            new Constant.BitSlice(new Constant.BitSlice.Part(
-                requireNonNull(typedField.range).from(),
-                requireNonNull(typedField.range).to())),
-            format
-        );
-        if (typedField.typeLiteral.type() instanceof FormatType formatType) {
-          field.setRefFormat((Format) fetch(formatType.format).orElseThrow());
-        }
-        formatFieldCache.put(typedField, field);
-        fields.add(field);
-        continue;
-      }
+          var field = switch (fieldDefinition) {
+            case TypedFormatField typed -> {
+              var res = new Format.Field(fieldIdent,
+                  (BitsType) getViamType(typed.typeLiteral.type()),
+                  new Constant.BitSlice(new Constant.BitSlice.Part(
+                      requireNonNull(typed.range).from(),
+                      requireNonNull(typed.range).to())),
+                  format
+              );
+              if (typed.typeLiteral.type() instanceof FormatType formatType) {
+                res.setRefFormat((Format) fetch(formatType.format).orElseThrow());
+              }
+              yield res;
+            }
+            case RangeFormatField rangeField -> new Format.Field(fieldIdent,
+                (BitsType) getViamType(requireNonNull(rangeField.type)),
+                new Constant.BitSlice(requireNonNull(rangeField.computedRanges).stream()
+                    .map(r -> new Constant.BitSlice.Part(r.from(), r.to()))
+                    .toArray(Constant.BitSlice.Part[]::new)),
+                format
+            );
+            default -> throw new IllegalStateException("Unexpected value: " + fieldDefinition);
+          };
 
-      if (fieldDefinition instanceof RangeFormatField rangeField) {
-        var field = new Format.Field(
-            generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
-                fieldDefinition.identifier()),
-            (BitsType) getViamType(requireNonNull(rangeField.type)),
-            new Constant.BitSlice(requireNonNull(rangeField.computedRanges).stream()
-                .map(r -> new Constant.BitSlice.Part(r.from(), r.to()))
-                .toArray(Constant.BitSlice.Part[]::new)),
-            format
-        );
-        fields.add(field);
-        formatFieldCache.put(rangeField, field);
-        continue;
-      }
-
-      if (fieldDefinition instanceof DerivedFormatField derivedField) {
-        var identifier =
-            generateIdentifier(definition.viamId + "::" + fieldDefinition.identifier().name,
-                fieldDefinition.identifier());
-
-        var accessName = identifier.name() + "::decode";
-        var accessGraph =
-            new BehaviorLowering(this).getFunctionGraph(derivedField.expr, accessName);
-        var access =
-            new Function(generateIdentifier(accessName, derivedField.identifier),
-                new vadl.viam.Parameter[0],
-                getViamType(derivedField.expr.type()), accessGraph);
-
-        // FIXME: Add encoding from language
-        @Nullable Function encoding = null;
+          formatFieldCache.put(fieldDefinition, field);
+          return field;
+        }).toArray(Format.Field[]::new);
 
 
-        // FIXME: Add real predicates
-        var predicateName = identifier.name() + "::predicate";
-        var predicateGraph =
-            new BehaviorLowering(this).getFunctionGraph(
-                new BoolLiteral(true, SourceLocation.INVALID_SOURCE_LOCATION),
-                predicateName);
+    var fieldAccesses = definition.fields.stream()
+        .filter(f -> f instanceof DerivedFormatField)
+        .map(f -> (DerivedFormatField) f)
+        .map(derivedField -> {
+          var identifier =
+              generateIdentifier(definition.viamId + "::" + derivedField.identifier().name,
+                  derivedField.identifier());
 
-        var parameter = new vadl.viam.Parameter(
-            new vadl.viam.Identifier(fieldDefinition.identifier().name,
-                SourceLocation.INVALID_SOURCE_LOCATION),
-            getViamType(derivedField.expr.type()));
-        var predicate = new Function(
-            generateIdentifier(predicateName, derivedField.identifier),
-            new vadl.viam.Parameter[] {parameter}, Type.bool(), predicateGraph
-        );
+          var accessName = identifier.name() + "::decode";
+          var accessGraph =
+              new BehaviorLowering(this).getFunctionGraph(derivedField.expr, accessName);
+          var access =
+              new Function(generateIdentifier(accessName, derivedField.identifier),
+                  new vadl.viam.Parameter[0],
+                  getViamType(derivedField.expr.type()), accessGraph);
 
+          // construct a default predicate that just returns true.
+          // if there is a user-specified predicate, this will be overwritten by the one provided
+          // (in setFieldAccessPredicate).
+          var predName = identifier.name() + "::predicate";
+          var predicateGraph =
+              new BehaviorLowering(this).getFunctionGraph(
+                  new BoolLiteral(true, SourceLocation.INVALID_SOURCE_LOCATION), predName);
+          var predicate = new Function(
+              generateIdentifier(predName, derivedField.identifier),
+              new vadl.viam.Parameter[] {}, Type.bool(), predicateGraph
+          );
 
-        var field = new Format.FieldAccess(identifier, access, encoding, predicate);
-        fieldAccesses.add(field);
-        formatFieldCache.put(derivedField, field);
-        continue;
-      }
+          var field = new Format.FieldAccess(identifier, access, null, predicate);
+          formatFieldCache.put(derivedField, field);
 
-      throw new IllegalStateException(
-          "Don't know how to generate fields for " + fieldDefinition.getClass());
-    }
+          return field;
+        }).toArray(Format.FieldAccess[]::new);
 
-    format.setFields(fields.toArray(new Format.Field[0]));
-    format.setFieldAccesses(
-        fieldAccesses.toArray(fieldAccesses.toArray(new Format.FieldAccess[0])));
+    // lower predicates, which are lowered and set when all field accesses got added to the
+    // #formatFieldCache, as they are referencing them.
+    definition.auxiliaryFields.stream()
+        .filter(f -> f.kind == FormatDefinition.AuxiliaryField.AuxKind.PREDICATE)
+        .forEach(this::setFieldAccessPredicate);
+
+    format.setFields(fields);
+    format.setFieldAccesses(fieldAccesses);
     return Optional.of(format);
+  }
+
+  /**
+   * As predicates references fields of the format we must first add the fields to
+   * the {@link #formatFieldCache} before lowering the predicates.
+   */
+  private void setFieldAccessPredicate(FormatDefinition.AuxiliaryField predField) {
+    var derivedField = (DerivedFormatField) predField.fieldDef();
+    var lowered = (Format.FieldAccess) requireNonNull(formatFieldCache.get(derivedField));
+    var fieldIdent = lowered.identifier;
+
+    var predName = fieldIdent.name() + "::predicate";
+    var predIdent = generateIdentifier(predName, derivedField.identifier);
+
+    var behavior = new BehaviorLowering(this).getFunctionGraph(predField.expr, predName);
+    checkNoResourceAccesses(behavior, "field access predicate");
+    checkLeafNodes(behavior, (n) -> {
+      switch (n) {
+        case ConstantNode c -> { /* fine */ }
+        case FieldAccessRefNode r -> { /* fine */ }
+        default -> throw error("Illegal expression", n)
+            .locationDescription(n,
+                "Only constants and field access functions are allowed in field access predicate.")
+            .build();
+      }
+    });
+
+    var predFunc = new Function(predIdent, new vadl.viam.Parameter[] {}, Type.bool(), behavior);
+    lowered.setPredicate(predFunc);
+  }
+
+  private void checkNoResourceAccesses(Graph behavior, String inDescription) {
+    behavior.getNodes(Set.of(ReadResourceNode.class, WriteResourceNode.class))
+        .forEach(n -> {
+          throw error("Illegal resource access", n)
+              .locationDescription(n, "Resources accesses are not allowed in %s.", inDescription)
+              .build();
+        });
+  }
+
+  private void checkLeafNodes(Graph behavior,
+                              Consumer<ExpressionNode> check) {
+    behavior.getNodes()
+        .filter(Node::isLeaf)
+        .forEach(n -> check.accept((ExpressionNode) n));
   }
 
   @Override
@@ -1094,7 +1141,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(FormatDefinition.AuxiliaryField definition) {
-    throw new IllegalStateException("Not implemented");
+    // For now this is implemented when visiting FormatDefinition
+    // (and visitAuxiliaryField)
+    return Optional.empty();
   }
 
   @Override

@@ -553,7 +553,7 @@ class MacroExpander
 
   @Override
   public Definition visit(FormatDefinition.AuxiliaryField definition) {
-    return new FormatDefinition.AuxiliaryField(definition.id, definition.kind,
+    return new FormatDefinition.AuxiliaryField(definition.field, definition.kind,
         expandExpr(definition.expr));
   }
 
