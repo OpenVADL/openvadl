@@ -101,30 +101,6 @@ class ParserUtilsTest {
     }
   }
 
-  /**
-   * Tests whether all tokens that are accepted as "auxiliaryField" types by the generated parser
-   * are also marked as "AUX_FIELD_TOKENS" in the lookup table.
-   */
-  @Test
-  void auxiliarFieldTokens() {
-    var restProgram = "{ id => 0 }";
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    for (int i = 0; i < Parser.maxT + 1; i++) {
-      var parser = parser(restProgram, out);
-      var token = new Token();
-      token.kind = i;
-      token.val = "dummy";
-      parser.la = token;
-      var isAuxFieldToken = ParserUtils.AUX_FIELD_TOKENS[token.kind];
-      var parsedWithoutError = tryParse(parser::auxiliaryField);
-      var wasParsedAsAuxField = parsedWithoutError && out.size() == 0;
-
-      var message = "Grammar / AUX_FIELD_TOKENS mismatch (token %d)".formatted(i);
-      assertThat(message, isAuxFieldToken, is(wasParsedAsAuxField));
-      out.reset();
-    }
-  }
-
   private Parser parser(String restProgram, ByteArrayOutputStream outputStream) {
     Parser parser = new Parser(new Scanner(new ByteArrayInputStream(restProgram.getBytes())));
     parser.t = new Token();

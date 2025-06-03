@@ -16,6 +16,7 @@
 
 package vadl.viam;
 
+import com.google.errorprone.annotations.concurrent.LazyInit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -256,13 +257,16 @@ public class Format extends Definition implements DefProp.WithType {
    * <p>An immediate contains a decode function, an encoding function (to encode the
    * format field/fieldRef from the immediate content) and a predicate function (to
    * test if an immediate is valid).
+   * Both may reference other field accesses via a
+   * {@link vadl.viam.graph.dependency.FieldAccessRefNode}.
    */
   public static class FieldAccess extends Definition implements DefProp.WithType {
 
     private final Function accessFunction;
     @Nullable
     private Function encoding;
-    private final Function predicate;
+    @LazyInit
+    private Function predicate;
     private final List<Field> fieldRefs;
 
 
@@ -273,10 +277,10 @@ public class Format extends Definition implements DefProp.WithType {
      * @param identifier     The identifier of the Immediate.
      * @param accessFunction The access function of the FieldAccess.  {@code () -> T}
      * @param encoding       The encoding function of the Immediate.  {@code (var: T) -> R}
-     * @param predicate      The predicate function of the Immediate. {@code (var: T) -> Bool}
+     * @param predicate      The predicate function of the Immediate. {@code () -> Bool}
      */
     public FieldAccess(Identifier identifier, Function accessFunction, @Nullable Function encoding,
-                       Function predicate) {
+                       @Nullable Function predicate) {
       super(identifier);
 
       this.accessFunction = accessFunction;
@@ -289,7 +293,13 @@ public class Format extends Definition implements DefProp.WithType {
 
       this.fieldRefs = decodeFormatFields;
       this.encoding = encoding;
-      this.predicate = predicate;
+      if (predicate != null) {
+        this.predicate = predicate;
+      }
+    }
+
+    public FieldAccess(Identifier identifier, Function accessFunction) {
+      this(identifier, accessFunction, null, null);
     }
 
     public Function accessFunction() {
@@ -315,6 +325,11 @@ public class Format extends Definition implements DefProp.WithType {
           encoding.location()));
       this.encoding = encoding;
       verify();
+    }
+
+    // only called by the lowering
+    public void setPredicate(Function predicate) {
+      this.predicate = predicate;
     }
 
     public Function predicate() {
