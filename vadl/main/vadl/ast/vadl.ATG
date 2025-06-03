@@ -118,7 +118,6 @@ TOKENS
   DIRECTIVES   = "directives".
   DO           = "do".
   ELSE         = "else".
-  ENCODE       = "encode".
   ENCODING     = "encoding".
   ENUMERATION  = "enumeration".
   EXCEPTION    = "exception".
@@ -167,7 +166,6 @@ TOKENS
   PIC          = "pic".
   PIPELINE     = "pipeline".
   POINTER      = "pointer".
-  PREDICATE    = "predicate".
   PREDICTION   = "prediction".
   PROCESS      = "process".
   PROCESSOR    = "processor".
@@ -246,6 +244,7 @@ TOKENS
   SYM_NOT_ELEM_OF = "∉".
   SYM_PAREN_CLOSE = ")".
   SYM_PAREN_OPEN  = "(".
+  SYM_PREDICATE   = ":-".
   SYM_PLUS        = "+".
   SYM_PLUS_EQ     = "+=".
   SYM_QUESTION    = "?".
@@ -416,10 +415,11 @@ PRODUCTIONS
   [
     SYM_EQ SYM_BRACE_OPEN
     formatField<out FormatField f1>             (. fields.add(f1); .)
-    {
-      SYM_COMMA formatField<out FormatField f2> (. fields.add(f2); .)
-    | SYM_COLON
-      auxiliaryField<out FormatDefinition.AuxiliaryField aux>    (. auxFields.add(aux); .)
+    { SYM_COMMA                                 (. var peek = scanner.Peek().kind; .)
+      ( IF (la.kind == _identifierToken && ( peek == _SYM_ASSIGN || peek == _SYM_PREDICATE ))
+        auxiliaryField<out FormatDefinition.AuxiliaryField aux>    (. auxFields.add(aux); .)
+      | formatField<out FormatField f2> (. fields.add(f2); .)
+      )
     }
     SYM_BRACE_CLOSE
   ]                                                              (. def = new FormatDefinition(id, type, fields, auxFields, startLoc.join(lastTokenLoc())); .)
@@ -433,22 +433,12 @@ PRODUCTIONS
     )
   .
 
-  auxiliaryField<out FormatDefinition.AuxiliaryField auxField> (. FormatDefinition.AuxiliaryFieldKind kind = null; .)
-  = (
-    PREDICATE                                                  (. kind = FormatDefinition.AuxiliaryFieldKind.PREDICATE; .)
-  | ENCODE                                                     (. kind = FormatDefinition.AuxiliaryFieldKind.ENCODE; .)
-  )
-    SYM_BRACE_OPEN                                             (. var auxEntries = new ArrayList<FormatDefinition.AuxiliaryFieldEntry>(); .)
-    identifier<out Identifier fieldId>
-    SYM_BIGARROW
-    expression<out Expr fieldExpr, BIN_OPS>                    (. auxEntries.add(new FormatDefinition.AuxiliaryFieldEntry(fieldId, fieldExpr)); .)
-    {
-      SYM_COMMA
-      identifier<out fieldId>
-      SYM_BIGARROW
-      expression<out fieldExpr, BIN_OPS>                       (. auxEntries.add(new FormatDefinition.AuxiliaryFieldEntry(fieldId, fieldExpr)); .)
-    }
-    SYM_BRACE_CLOSE                                            (. auxField = new FormatDefinition.AuxiliaryField(kind, auxEntries); .)
+  auxiliaryField<out FormatDefinition.AuxiliaryField auxField> (. FormatDefinition.AuxiliaryField.Kind kind = null; .)
+  = identifier<out Identifier id>
+    ( SYM_PREDICATE                                            (. kind = FormatDefinition.AuxiliaryField.Kind.PREDICATE; .)
+    | SYM_ASSIGN                                               (. kind = FormatDefinition.AuxiliaryField.Kind.ENCODING; .)
+    )
+    expression<out Expr expr, BIN_OPS>                          (. auxField = new FormatDefinition.AuxiliaryField(id, kind, expr); .)
   .
 
   formatFieldRange<out FormatField field, Identifier id>
@@ -460,7 +450,7 @@ PRODUCTIONS
     }
     SYM_BRACK_CLOSE                     (. TypeLiteral type = null; .)
     [
-      IF (la.kind == _SYM_COLON && !AUX_FIELD_TOKENS[la.kind])
+      IF (la.kind == _SYM_COLON)
       SYM_COLON
       typeLiteral<out type>
     ]                                   (. field = new RangeFormatField(id, ranges, type); .)
@@ -1849,7 +1839,6 @@ PRODUCTIONS
   | CALL
   | CONSTANT
   // | DESCRIPTION
-  | ENCODE
   | EXCEPTION
   | FETCH
   | GLOBAL
@@ -1868,7 +1857,6 @@ PRODUCTIONS
   | NOP
   // | OPERAND
   | OPERATION
-  | PREDICATE
   | PREDICTION
   // | PROCEDURE
   | READ

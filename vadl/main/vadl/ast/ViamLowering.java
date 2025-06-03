@@ -1093,6 +1093,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   }
 
   @Override
+  public Optional<vadl.viam.Definition> visit(FormatDefinition.AuxiliaryField definition) {
+    throw new IllegalStateException("Not implemented");
+  }
+
+  @Override
   public Optional<vadl.viam.Definition> visit(FunctionDefinition definition) {
     return Optional.of(
         produceFunction(

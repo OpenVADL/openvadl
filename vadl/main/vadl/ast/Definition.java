@@ -146,6 +146,8 @@ interface DefinitionVisitor<R> {
 
   R visit(TypedFormatField definition);
 
+  R visit(FormatDefinition.AuxiliaryField definition);
+
   R visit(FunctionDefinition definition);
 
   R visit(GroupDefinition definition);
@@ -648,35 +650,41 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
 
   /**
    * The predicate or encoding of a derived format field.
+   * Encodings are written using {@code :=} and predicates with {@code :-}.
    *
    * <p><pre>
    * {@code
-   * format ABC : Bits<8> =
-   *   { A  : Bits<2>
-   *   , B  : Bits<6>
-   *   , C = A as Bits<4>
-   *   : encode {               // This is an auxiliary field
-   *     HI => VAR as Bits<2>
-   *     }
-   *   : predicate {            // This is an auxiliary field
-   *     VAR => VAR = 0
-   *     }
+   * format BitFieldMoveFormat: Instr =
+   *   { sf         :  Bits1
+   *   , op         :  Bits8
+   *   , imms       :  Bits6
+   *   , leftWSize  =  (-1 as Bits5 - imms(4..0)) as BitsX
+   *   , imms       :=  -1 as Bits5 - leftWSize as Bits6
+   *   , leftWSize  :- leftWSize  as Bits5 as BitsX = leftWSize
    *   }
-   * }
    * </pre>
    */
-  static class AuxiliaryField extends Node {
-    private final AuxiliaryFieldKind kind;
-    private final List<AuxiliaryFieldEntry> entries;
+  static class AuxiliaryField extends Definition {
 
-    AuxiliaryField(AuxiliaryFieldKind kind, List<AuxiliaryFieldEntry> entries) {
+    enum Kind {
+      PREDICATE, ENCODING
+    }
+
+    @Child
+    Identifier id;
+    @Child
+    Expr expr;
+    Kind kind;
+
+    AuxiliaryField(Identifier id, Kind kind, Expr expr) {
+      this.id = id;
       this.kind = kind;
-      this.entries = entries;
+      this.expr = expr;
     }
 
     @Override
     public SourceLocation location() {
-      return entries.get(0).id.location().join(entries.get(entries.size() - 1).expr.location());
+      return id.location().join(expr.location());
     }
 
     @Override
@@ -687,90 +695,42 @@ class FormatDefinition extends Definition implements IdentifiableNode, TypedNode
     @Override
     public void prettyPrint(int indent, StringBuilder builder) {
       builder.append(prettyIndentString(indent));
-      builder.append(
-          switch (kind) {
-            case PREDICATE -> ": predicate\n";
-            case ENCODE -> ": encode\n";
-          });
-      var isFirst = true;
-      for (var entry : entries) {
-        if (isFirst) {
-          builder.append(prettyIndentString(indent + 1)).append("{ ");
-          isFirst = false;
-        } else {
-          builder.append(prettyIndentString(indent + 1)).append(", ");
-        }
-        entry.id.prettyPrint(0, builder);
-        builder.append(" => ");
-        entry.expr.prettyPrint(0, builder);
-        builder.append("\n");
-      }
-      builder.append(prettyIndentString(indent + 1)).append("}\n");
+      id.prettyPrint(0, builder);
+      var assign = switch (kind) {
+        case PREDICATE -> " :- ";
+        case ENCODING -> " := ";
+      };
+      builder.append(assign);
+      expr.prettyPrint(0, builder);
     }
 
-    public AuxiliaryFieldKind kind() {
+    public Kind kind() {
       return kind;
     }
 
-    public List<AuxiliaryFieldEntry> entries() {
-      return entries;
-    }
-
     @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (obj == null || obj.getClass() != this.getClass()) {
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      var that = (AuxiliaryField) obj;
-      return Objects.equals(this.kind, that.kind)
-          && Objects.equals(this.entries, that.entries);
+
+      AuxiliaryField that = (AuxiliaryField) o;
+      return Objects.equals(id, that.id) && Objects.equals(expr, that.expr) &&
+          kind == that.kind;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(kind, entries);
-    }
-  }
-
-  static final class AuxiliaryFieldEntry {
-    Identifier id;
-    Expr expr;
-
-    AuxiliaryFieldEntry(Identifier id, Expr expr) {
-      this.id = id;
-      this.expr = expr;
+      int result = Objects.hashCode(id);
+      result = 31 * result + Objects.hashCode(expr);
+      result = 31 * result + Objects.hashCode(kind);
+      return result;
     }
 
     @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (obj == null || obj.getClass() != this.getClass()) {
-        return false;
-      }
-      var that = (AuxiliaryFieldEntry) obj;
-      return Objects.equals(this.id, that.id)
-          && Objects.equals(this.expr, that.expr);
+    <R> R accept(DefinitionVisitor<R> visitor) {
+      return visitor.visit(this);
     }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(id, expr);
-    }
-
-    @Override
-    public String toString() {
-      return this.getClass().getSimpleName();
-    }
-
-  }
-
-  enum AuxiliaryFieldKind {
-    PREDICATE, ENCODE
   }
 
   public FormatDefinition(IdentifierOrPlaceholder identifier, TypeLiteral typeLiteral,
@@ -1271,7 +1231,7 @@ class RegisterDefinition extends Definition implements IdentifiableNode, TypedNo
       if (obj == null || obj.getClass() != this.getClass()) {
         return false;
       }
-      var that = (RegisterDefinition.RelationTypeLiteral) obj;
+      var that = (RelationTypeLiteral) obj;
       return Objects.equals(this.argTypes, that.argTypes)
           && Objects.equals(this.resultType, that.resultType);
     }
@@ -3711,7 +3671,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
  * is that {@link AbiClangNumericTypeDefinition} requires an integer as property.
  */
 class AbiClangNumericTypeDefinition extends Definition {
-  AbiClangNumericTypeDefinition.TypeName typeName;
+  TypeName typeName;
   @Child
   Expr size;
   SourceLocation loc;
@@ -3748,7 +3708,7 @@ class AbiClangNumericTypeDefinition extends Definition {
     }
   }
 
-  public AbiClangNumericTypeDefinition(AbiClangNumericTypeDefinition.TypeName typeName,
+  public AbiClangNumericTypeDefinition(TypeName typeName,
                                        Expr size,
                                        SourceLocation loc) {
     this.loc = loc;
@@ -3785,7 +3745,7 @@ class AbiClangNumericTypeDefinition extends Definition {
  * Is it unsigned or signed?
  */
 class AbiClangTypeDefinition extends Definition {
-  AbiClangTypeDefinition.TypeName typeName;
+  TypeName typeName;
   TypeSize typeSize;
   SourceLocation loc;
 
@@ -3833,8 +3793,8 @@ class AbiClangTypeDefinition extends Definition {
     }
   }
 
-  public AbiClangTypeDefinition(AbiClangTypeDefinition.TypeName typeName,
-                                AbiClangTypeDefinition.TypeSize typeSize,
+  public AbiClangTypeDefinition(TypeName typeName,
+                                TypeSize typeSize,
                                 SourceLocation loc) {
     this.loc = loc;
     this.typeName = typeName;

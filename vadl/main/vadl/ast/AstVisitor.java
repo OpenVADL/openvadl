@@ -291,6 +291,14 @@ class RecursiveAstVisitor implements AstVisitor<Void> {
   }
 
   @Override
+  public Void visit(FormatDefinition.AuxiliaryField definition) {
+    beforeTravel(definition);
+    definition.children().forEach(this::travel);
+    afterTravel(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(FunctionDefinition definition) {
     beforeTravel(definition);
     definition.children().forEach(this::travel);

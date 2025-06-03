@@ -615,6 +615,12 @@ public class TypeChecker
   }
 
   @Override
+  public Void visit(FormatDefinition.AuxiliaryField definition) {
+    throwUnimplemented(definition);
+    return null;
+  }
+
+  @Override
   public Void visit(InstructionSetDefinition definition) {
     for (var extension : definition.extendingNodes()) {
       check(extension);
