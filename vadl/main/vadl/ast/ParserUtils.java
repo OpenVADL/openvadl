@@ -56,9 +56,6 @@ class ParserUtils {
   // Must be kept in sync with allowedIdentifierKeywords
   static boolean[] ID_TOKENS;
 
-  // Must be kept in sync with auxiliaryFields
-  static boolean[] AUX_FIELD_TOKENS;
-
   // Dummy nodes - for use in scenarios where the parser encountered an error, but since the parser
   // keeps going, using null would lead to a NullPointerException.
   static Identifier DUMMY_ID = new Identifier("dummy", SourceLocation.INVALID_SOURCE_LOCATION);
@@ -119,7 +116,6 @@ class ParserUtils {
     ID_TOKENS[Parser._BINARY] = true;
     ID_TOKENS[Parser._CALL] = true;
     ID_TOKENS[Parser._CONSTANT] = true;
-    ID_TOKENS[Parser._ENCODE] = true;
     ID_TOKENS[Parser._EXCEPTION] = true;
     ID_TOKENS[Parser._FETCH] = true;
     ID_TOKENS[Parser._GLOBAL] = true;
@@ -132,7 +128,6 @@ class ParserUtils {
     ID_TOKENS[Parser._NONE] = true;
     ID_TOKENS[Parser._NOP] = true;
     ID_TOKENS[Parser._OPERATION] = true;
-    ID_TOKENS[Parser._PREDICATE] = true;
     ID_TOKENS[Parser._PREDICTION] = true;
     ID_TOKENS[Parser._READ] = true;
     ID_TOKENS[Parser._REGISTER] = true;
@@ -166,10 +161,6 @@ class ParserUtils {
     ID_TOKENS[Parser._UNSIGNED] = true;
     ID_TOKENS[Parser._WIDTH] = true;
     ID_TOKENS[Parser._WRITE] = true;
-
-    AUX_FIELD_TOKENS = NO_OPS.clone();
-    AUX_FIELD_TOKENS[Parser._PREDICATE] = true;
-    AUX_FIELD_TOKENS[Parser._ENCODE] = true;
 
 
     EXPECTED_STRS = new String[NO_OPS.length];

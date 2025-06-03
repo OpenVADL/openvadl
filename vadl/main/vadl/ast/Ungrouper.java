@@ -235,9 +235,7 @@ public class Ungrouper
   public Void visit(FormatDefinition definition) {
     ungroupAnnotations(definition);
     definition.fields.forEach(f -> f.accept(this));
-    for (FormatDefinition.AuxiliaryField auxiliaryField : definition.auxiliaryFields) {
-      auxiliaryField.entries().forEach(entry -> entry.expr = entry.expr.accept(this));
-    }
+    definition.auxiliaryFields.forEach(f -> f.accept(this));
     return null;
   }
 
@@ -262,6 +260,12 @@ public class Ungrouper
   public Void visit(TypedFormatField definition) {
     ungroupAnnotations(definition);
     definition.typeLiteral = (TypeLiteral) definition.typeLiteral.accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visit(FormatDefinition.AuxiliaryField definition) {
+    definition.expr.accept(this);
     return null;
   }
 
