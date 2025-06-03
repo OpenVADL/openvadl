@@ -26,6 +26,7 @@ from typing import Optional
 
 fields = '[("size", c_size_t), ("buffer", c_uint8 * MAX_INSN_DATA_SIZE)]'
 
+
 def array_typ(typ: str) -> Optional[tuple[str, str]]:
     expr = re.compile(r"^(.*?)\*(.*?)$")
     found = expr.findall(typ)
@@ -34,6 +35,7 @@ def array_typ(typ: str) -> Optional[tuple[str, str]]:
         return f[0].strip(), f[1].strip()
     else:
         return None
+
 
 def python_typ(typ: str) -> str:
     typ_map = {
@@ -49,12 +51,13 @@ def python_typ(typ: str) -> str:
     else:
         return typ
 
+
 expr = re.compile(r'(\("(.*?)",(.*?)\))')
 found = expr.findall(fields)
 
-output = ''
-output += 'def __init__(self, *args: Any, **kw: Any) -> None:\n'
-output += '\tsuper().__init__(*args, **kw)\n'
+output = ""
+output += "def __init__(self, *args: Any, **kw: Any) -> None:\n"
+output += "\tsuper().__init__(*args, **kw)\n"
 
 for match in found:
     name = match[1].strip()
@@ -63,13 +66,15 @@ for match in found:
     if arr_typ:
         inner_typ = arr_typ[0]
         inner_size = arr_typ[1]
-        if inner_typ == 'c_char':
-            output += f'\tself.{name}: Annotated[bytes, {inner_typ} * self.{inner_size}]\n'
+        if inner_typ == "c_char":
+            output += (
+                f"\tself.{name}: Annotated[bytes, {inner_typ} * self.{inner_size}]\n"
+            )
         else:
             ptyp = python_typ(inner_typ)
-            output += f'\tself.{name}: Annotated[list[{ptyp}], {inner_typ} * self.{inner_size}]\n'
+            output += f"\tself.{name}: Annotated[list[{ptyp}], {inner_typ} * self.{inner_size}]\n"
     else:
         ptyp = python_typ(typ)
-        output += f'\tself.{name}: Annotated[{ptyp}, {typ}]\n'
+        output += f"\tself.{name}: Annotated[{ptyp}, {typ}]\n"
 
 print(output)

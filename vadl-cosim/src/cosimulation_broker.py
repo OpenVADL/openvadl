@@ -15,12 +15,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-The broker for cosimulation testing. 
+The broker for cosimulation testing.
 It is responsible for starting QEMU-clients with the cosimulation plugin, comparing the state between them and produce a test-report.
 The broker communicates with each QEMU-client using IPC.
 """
 
-from ctypes import c_char, c_int, c_uint, c_uint64, c_uint8, sizeof, Structure, c_size_t, Union
 from dataclasses import dataclass, asdict, field
 import os
 import mmap
@@ -30,210 +29,20 @@ import posix_ipc as ipc
 import atexit
 import subprocess
 from src.config import Config
+from src.cstructs import BrokerSHM
 import json
 from collections import deque
-
-from typing import Annotated, Any, Optional, TypeAlias
+from typing import Any, Optional, TypeAlias
+from ctypes import sizeof
 
 import logging
+
 logger = logging.getLogger(__name__)
 
-"""
-The following classes represent the equally defined c-structs in the cosimulation QEMU plugin.
-They are used to transfer data from a QEMU-client to the broker using shared memory.
-See `BrokerSHM(Structure)` as the "entrypoint" of this class-hierarchy.
-"""
-
-class SHMString(Structure):
-    MAX_LEN = 256
-    _fields_ = [("len", c_size_t), ("value", c_char * MAX_LEN)]
-
-    def __repr__(self):
-        return f"SHMString(len={self.len}, value={self.fstr()})"
-
-    def __format__(self, _: str, /) -> str:
-        return self.__repr__()
-
-    def to_dict(self):
-        return {"len": self.len, "value": self.fstr()}
-
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        super().__init__(*args, **kw)
-        self.len: Annotated[int, c_size_t]
-        self.value: Annotated[bytes, c_char * self.MAX_LEN]
-
-    def fstr(self) -> str:
-        return self.value[:self.len].decode()
-
-class InsnData(Structure):
-    MAX_INSN_DATA_SIZE = 256
-    _fields_ = [("size", c_size_t), ("buffer", c_uint8 * MAX_INSN_DATA_SIZE)]
-
-    def __repr__(self):
-        return f"InsnData(size={self.size}, buffer={self.fbuffer()})"
-
-    def __format__(self, _: str, /) -> str:
-        return self.__repr__()
-
-    def to_dict(self):
-        return {"size": self.size, "buffer": self.fbuffer()}
-
-    def fbuffer(self) -> str:
-        bytes_formatted = [num.to_bytes() for num in self.buffer[:self.size]]
-        res = b''.join(reversed(bytes_formatted))
-        return res.hex(' ')
-
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        super().__init__(*args, **kw)
-        self.size: Annotated[int, c_size_t]
-        self.buffer: Annotated[list[int], c_uint8 * self.MAX_INSN_DATA_SIZE]
-
-class TBInsnInfo(Structure):
-    _fields_ = [("pc", c_uint64), ("size", c_size_t), ("symbol", SHMString), ("hwaddr", SHMString), ("disas", SHMString), ("data", InsnData)]
-
-    def __repr__(self):
-        return f"TBInsnInfo(pc={self.pc}, symbol={self.symbol}, hwaddr={self.hwaddr}, disas={self.disas}, data={self.data})"
-
-    def __format__(self, _: str, /) -> str:
-        return self.__repr__()
-
-    def to_dict(self):
-        return {"pc": self.pc, "size": self.size, "symbol": self.symbol.to_dict(), "hwaddr": self.hwaddr.to_dict(), "disas": self.disas.to_dict(), "data": self.data.to_dict()}
-
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        super().__init__(*args, **kw)
-        self.pc: Annotated[int, c_uint64]
-        self.size: Annotated[int, c_size_t]
-        self.symbol: Annotated[SHMString, SHMString]
-        self.hwaddr: Annotated[SHMString, SHMString]
-        self.disas: Annotated[SHMString, SHMString]
-        self.data: Annotated[InsnData, InsnData]
-
-class TBInfo(Structure):
-    INSNS_INFOS_SIZE = 32
-    _fields_ = [("pc", c_uint64), ("insns", c_size_t), ("insns_info_size", c_size_t), ("insns_info", TBInsnInfo * INSNS_INFOS_SIZE)]
-
-    def __repr__(self):
-        return f"TBInfo(pc={self.pc}, insns={self.insns}, insns_info_size={self.insns_info_size}, insns_info={self.insns_info[:self.insns_info_size]})"
-
-    def __format__(self, _: str, /) -> str:
-        return self.__repr__()
-
-    def to_dict(self):
-        return {
-            "pc": self.pc, 
-            "insns": self.insns, 
-            "insns_info_size": self.insns_info_size, 
-            "insns_info": [insn.to_dict() for insn in self.insns_info[:self.insns_info_size]]
-        }
-
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        super().__init__(*args, **kw)
-        self.pc: Annotated[int, c_uint64]
-        self.insns: Annotated[int, c_size_t]
-        self.insns_info_size: Annotated[int, c_size_t]
-        self.insns_info: Annotated[list[TBInsnInfo], TBInsnInfo * self.INSNS_INFOS_SIZE]
-
-
-class BrokerSHM_TB(Structure):
-    INFOS_SIZE = 1024
-    _fields_ = [("size", c_size_t), ("infos", TBInfo * INFOS_SIZE)]
-
-    def __repr__(self):
-        return f"BrokerSHM_TB(size={self.size}, infos={self.infos[:self.size]})"
-    
-    def __format__(self, _: str, /) -> str:
-        return self.__repr__()
-
-    def to_dict(self):
-        return {"size": self.size, "infos": [info.to_dict() for info in self.infos[:self.size]]}
-
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        super().__init__(*args, **kw)
-        self.size: Annotated[int, c_size_t]
-        self.infos: Annotated[list[TBInfo], TBInfo * self.INFOS_SIZE]
-
-class SHMRegister(Structure):
-    MAX_REGISTER_DATA_SIZE = 64
-    _fields_ = [("size", c_int), ("data", c_uint8 * MAX_REGISTER_DATA_SIZE), ("name", SHMString)]
-
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        super().__init__(*args, **kw)
-        self.size: Annotated[int, c_int]
-        self.data: Annotated[list[int], c_uint8 * self.MAX_REGISTER_DATA_SIZE]
-        self.name: Annotated[SHMString, SHMString]
-
-    def __repr__(self):
-        return f"SHMRegister(size={self.size}, data={self.fdata()}, name={self.name})"
-
-    def __format__(self, _: str, /) -> str:
-        return self.__repr__()
-
-    def to_dict(self, gdb_map: dict[str, str]):
-        return {"size": self.size, "data": self.fdata(), "name": self.name.to_dict(), "name-mapped": self.fname(gdb_map)}
-
-    def fname(self, gdb_map: dict[str, str]) -> str:
-        n = self.name.fstr() # assume that the name is "printable"
-        if n in gdb_map:
-            return gdb_map[n]
-        else:
-            return n
-
-    def fdata(self) -> str:
-        bytes_formatted = [num.to_bytes() for num in self.data[:self.size]]
-        res = b''.join(reversed(bytes_formatted))
-        return res.hex(' ')
-
-
-class SHMCPU(Structure):
-    MAX_CPU_REGISTERS = 256
-    _fields_ = [("idx", c_uint), ("registers_size", c_size_t), ("registers", SHMRegister * MAX_CPU_REGISTERS)]
-
-    def __repr__(self):
-        return f"SHMCPU(idx={self.idx}, registers_size={self.registers_size}, registers={self.registers[:self.registers_size]})"
-
-    def __format__(self, _: str, /) -> str:
-        return self.__repr__()
-
-    def to_dict(self, gdb_map: dict[str, str]):
-        return {"idx": self.idx, "registers_size": self.registers_size, "registers": [reg.to_dict(gdb_map) for reg in self.registers[:self.registers_size]]}
-
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        super().__init__(*args, **kw)
-        self.idx: Annotated[int, c_uint]
-        self.registers_size: Annotated[int, c_size_t]
-        self.registers: Annotated[list[SHMRegister], SHMRegister * self.MAX_CPU_REGISTERS]
-
-class BrokerSHM_Exec(Structure):
-    MAX_CPU_COUNT = 8
-    _fields_ = [("init_mask", c_int), ("cpus", SHMCPU * MAX_CPU_COUNT), ("insn_info", TBInsnInfo)]
-
-    def __repr__(self):
-        return f"BrokerSHM_Exec(init_mask={self.init_mask}, cpus={self.cpus[:]}, insn_info={self.insn_info})"
-
-    def __format__(self, _: str, /) -> str:
-        return self.__repr__()
-
-    def to_dict(self, gdb_map: dict[str, str]):
-        return {"init_mask": self.init_mask, "cpus": [cpu.to_dict(gdb_map) for cpu in self.cpus[:]], "insn_info": self.insn_info.to_dict()}
-
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        super().__init__(*args, **kw)
-        self.init_mask: Annotated[int, c_int]
-        self.cpus: Annotated[list[SHMCPU], SHMCPU * self.MAX_CPU_COUNT]
-        self.insn_info: Annotated[TBInsnInfo, TBInsnInfo]
-
-class BrokerSHM(Union):
-    _fields_ = [("shm_tb", BrokerSHM_TB), ("shm_exec", BrokerSHM_Exec)]
-
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        super().__init__(*args, **kw)
-        self.shm_tb: Annotated[BrokerSHM_TB, BrokerSHM_TB]
-        self.shm_exec: Annotated[BrokerSHM_Exec, BrokerSHM_Exec]
 
 @dataclass
 class Client:
-    id: int 
+    id: int
     shm: ipc.SharedMemory
     shm_struct: BrokerSHM
     sem_server: ipc.Semaphore
@@ -242,14 +51,19 @@ class Client:
     process: Optional[multiprocessing.Process]
     name: Optional[str]
 
+
 clients: list[Client] = []
 
-def run_with_callback(command, on_complete, config: Config, client: Client) -> multiprocessing.Process:
+
+def run_with_callback(
+    command, on_complete, config: Config, client: Client
+) -> multiprocessing.Process:
     """
     Starts a QEMU-client using pythons multiprocessing.Process
     After completion, the client is marked as done using client.is_open = False
     Both stdout and stderr for each client is redirected to a dedicated file.
     """
+
     def runner():
         stdout_path = os.path.join(config.logging.dir, f"client-{client.id}-stdout.txt")
         stderr_path = os.path.join(config.logging.dir, f"client-{client.id}-stderr.txt")
@@ -260,14 +74,16 @@ def run_with_callback(command, on_complete, config: Config, client: Client) -> m
         stdout_file.close()
         stderr_file.close()
         on_complete(process.returncode, config, client)
-    
+
     p = multiprocessing.Process(target=runner)
     p.start()
     return p
 
+
 def on_client_complete(returncode: int, config: Config, client: Client):
     logger.info(f"Process (client: {client.id}) finished with code: {returncode}")
     client.is_open = False
+
 
 @dataclass
 class ClientDiff:
@@ -275,7 +91,7 @@ class ClientDiff:
     Contains information about a divergence that was found during testing.
     """
 
-    key: str  
+    key: str
     """Represents the location of the diverged data in the BrokerSHM struct"""
 
     expected: str
@@ -291,8 +107,10 @@ class Report:
     A report of the test-result. Returned / Written to disk after at the end of the test-run.
     If passed = True, then diffs will be empty since no divergence was found.
     """
+
     passed: bool
     diffs: list[ClientDiff]
+
 
 def report_from_diffs(diffs: list[ClientDiff]) -> Report:
     if len(diffs) == 0:
@@ -300,7 +118,10 @@ def report_from_diffs(diffs: list[ClientDiff]) -> Report:
     else:
         return Report(passed=False, diffs=diffs)
 
+
 Trace: TypeAlias = list[dict[str, Any]]
+
+
 def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     """
     Runs the configured QEMU-clients in lockstep - meaning they are synchronized after each *execution-step*.
@@ -328,16 +149,17 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
 
     Parameters:
         config (Config)
-        traces: deque[list[dict[str, Any]]]: Collects the state of each client after each execution-step. 
+        traces: deque[list[dict[str, Any]]]: Collects the state of each client after each execution-step.
     """
 
     gdb_reg_map_values = config.qemu.gdb_reg_map.values()
+
     def compare_client_state() -> list[ClientDiff]:
         diffs = []
         c1 = clients[0]
         c2 = clients[1]
 
-        if config.testing.protocol.layer == 'insn':
+        if config.testing.protocol.layer == "insn":
             c1shm = c1.shm_struct.shm_exec
             c2shm = c2.shm_struct.shm_exec
 
@@ -347,14 +169,30 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
             traces.append([d1, d2])
 
             if c1shm.init_mask != c2shm.init_mask:
-                diffs.append(ClientDiff("cpu.init_mask", f"{c1shm.init_mask:08b}", f"{c2shm.init_mask:08b}"))
+                diffs.append(
+                    ClientDiff(
+                        "cpu.init_mask",
+                        f"{c1shm.init_mask:08b}",
+                        f"{c2shm.init_mask:08b}",
+                    )
+                )
 
             for cpu_index in range(BrokerSHM_Exec.MAX_CPU_COUNT):
                 c1cpu = c1shm.cpus[cpu_index]
                 c2cpu = c2shm.cpus[cpu_index]
 
-                if not config.qemu.ignore_unset_registers and c1cpu.registers_size != c2cpu.registers_size:
-                    diffs.append(ClientDiff(f"cpu.{cpu_index}.registers.size", f"{c1cpu.registers_size}", f"{c2cpu.registers_size}", "different number of CPU registers"))
+                if (
+                    not config.qemu.ignore_unset_registers
+                    and c1cpu.registers_size != c2cpu.registers_size
+                ):
+                    diffs.append(
+                        ClientDiff(
+                            f"cpu.{cpu_index}.registers.size",
+                            f"{c1cpu.registers_size}",
+                            f"{c2cpu.registers_size}",
+                            "different number of CPU registers",
+                        )
+                    )
 
                 for reg_index in range(min(c1cpu.registers_size, c2cpu.registers_size)):
                     c1reg = c1cpu.registers[reg_index]
@@ -363,20 +201,45 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
                     c2reg = c2cpu.registers[reg_index]
                     r2name = c2reg.fname(config.qemu.gdb_reg_map)
 
-                    if r1name in config.qemu.ignore_registers or \
-                        (config.qemu.ignore_unset_registers and not r1name in gdb_reg_map_values):
+                    if r1name in config.qemu.ignore_registers or (
+                        config.qemu.ignore_unset_registers
+                        and not r1name in gdb_reg_map_values
+                    ):
                         continue
 
                     if c1reg.size != c2reg.size:
-                        diffs.append(ClientDiff(f"cpu.{cpu_index}.registers.{reg_index}.size", f"{c1reg.size}", f"{c2reg.size}", "reg sizes differ"))
+                        diffs.append(
+                            ClientDiff(
+                                f"cpu.{cpu_index}.registers.{reg_index}.size",
+                                f"{c1reg.size}",
+                                f"{c2reg.size}",
+                                "reg sizes differ",
+                            )
+                        )
 
                     if r1name != r2name:
-                        diffs.append(ClientDiff(f"cpu.{cpu_index}.registers.{reg_index}.name", f"{r1name}", f"{r2name}", "reg names differ"))
+                        diffs.append(
+                            ClientDiff(
+                                f"cpu.{cpu_index}.registers.{reg_index}.name",
+                                f"{r1name}",
+                                f"{r2name}",
+                                "reg names differ",
+                            )
+                        )
 
                     r1data = c1reg.fdata()
                     r2data = c2reg.fdata()
                     if r1data != r2data:
-                        diffs.append(ClientDiff(f"cpu.{cpu_index}.registers.{reg_index}.data", f"{r1data}", f"{r2data}", "reg data differ", ref_expected=c1reg.to_dict(config.qemu.gdb_reg_map), ref_actual=c2reg.to_dict(config.qemu.gdb_reg_map)))
+                        diffs.append(
+                            ClientDiff(
+                                f"cpu.{cpu_index}.registers.{reg_index}.data",
+                                f"{r1data}",
+                                f"{r2data}",
+                                "reg data differ",
+                                ref_expected=c1reg.to_dict(config.qemu.gdb_reg_map),
+                                ref_actual=c2reg.to_dict(config.qemu.gdb_reg_map),
+                            )
+                        )
 
             return diffs
         else:
@@ -387,11 +250,12 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
 
             return []
 
-
     skip_per_client = [client.skip_n_instructions for client in config.qemu.clients]
 
     # Skip first n instructions per client
-    while any(map(lambda c: c.is_open, clients)) and any(map(lambda skip: skip > 0, skip_per_client)):
+    while any(map(lambda c: c.is_open, clients)) and any(
+        map(lambda skip: skip > 0, skip_per_client)
+    ):
         for i, client in enumerate(clients):
             if client.is_open and skip_per_client[i] > 0:
                 skip_per_client[i] -= 1
@@ -403,7 +267,9 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
                     # since, in case the client closed / crashed prematurely, this will be found when checking the client's state
                     client.sem_server.acquire(0.1)
                 except ipc.BusyError:
-                    logger.debug(f"BusyError: noticed that client #{client.id} shutdown. marking as closed")
+                    logger.debug(
+                        f"BusyError: noticed that client #{client.id} shutdown. marking as closed"
+                    )
                     client.is_open = False
 
     execute_remaining = config.testing.protocol.execute_all_remaining_instructions
@@ -414,10 +280,10 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     # Lockstepping logic:
     # Release each client once and then compare their states
     # TODO: A client might need to be released multiple times for tb-level testing
-    # NOTE: Maybe parallelize this for exec-level and tb-strict-level testing, 
+    # NOTE: Maybe parallelize this for exec-level and tb-strict-level testing,
     #       for tb-level testing this might not be possible due to the differently generated TBs
     while any(map(lambda c: c.is_open, clients)):
-        for client in clients: 
+        for client in clients:
             if client.is_open:
                 try:
                     client.sem_client.release()
@@ -425,7 +291,9 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
                     # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
                     client.sem_server.acquire(0.1)
                 except ipc.BusyError:
-                    logger.debug(f"BusyError: noticed that client #{client.id} shutdown. marking as closed")
+                    logger.debug(
+                        f"BusyError: noticed that client #{client.id} shutdown. marking as closed"
+                    )
                     client.is_open = False
 
         if not execute_remaining:
@@ -443,10 +311,13 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     # if the loop has exited and no diffs were found then the test passed
     return report_from_diffs(diffs)
 
+
 """
 Cleanup functions for the created IPCs
 TODO: Maybe put IPC related logic in a separate file
 """
+
+
 def cleanup_sem(config: Config, client: Client):
     logger.debug(f"cleanup_sem of client #{client.id} start")
     try:
@@ -455,30 +326,35 @@ def cleanup_sem(config: Config, client: Client):
         client.sem_client.close()
         client.sem_server.close()
     except ipc.ExistentialError:
-        pass # ignore
+        pass  # ignore
     logger.debug(f"cleanup_sem of client #{client.id} done")
+
 
 def cleanup_smh(config: Config, client: Client):
     try:
         client.shm.close_fd()
         client.shm.unlink()
     except ipc.ExistentialError:
-        pass # ignore
+        pass  # ignore
+
 
 def close_client(config: Config, client: Client):
     logger.info(f"Closing client: {client.id}")
     if client.process is not None:
         client.process.terminate()
 
+
 def cleanup_client(config: Config, client: Client):
     cleanup_sem(config, client)
     cleanup_smh(config, client)
     close_client(config, client)
 
+
 def cleanup(config: Config):
     logger.info("cleaning up shm and sems for each client")
     for client in clients:
         cleanup_client(config, client)
+
 
 def start(config: Config):
     logger.debug(f"starting broker: config={config}")
@@ -486,9 +362,11 @@ def start(config: Config):
 
     # create shared memory and semaphores per client
     for i, client_cfg in enumerate(config.qemu.clients):
-        shm = ipc.SharedMemory(f"/cosimulation-shm-{i}", ipc.O_CREX, size=sizeof(BrokerSHM))
+        shm = ipc.SharedMemory(
+            f"/cosimulation-shm-{i}", ipc.O_CREX, size=sizeof(BrokerSHM)
+        )
         mm = mmap.mmap(shm.fd, sizeof(BrokerSHM))
-        shm_struct = BrokerSHM.from_buffer(mm) 
+        shm_struct = BrokerSHM.from_buffer(mm)
 
         sem_server = ipc.Semaphore(f"/cosimulation-sem-server-{i}", ipc.O_CREX)
         sem_client = ipc.Semaphore(f"/cosimulation-sem-client-{i}", ipc.O_CREX)
@@ -497,36 +375,50 @@ def start(config: Config):
         executable_path = client_cfg.exec
 
         plugin_path = config.qemu.plugin
-        plugin_args = [
-            f"client-id={i}",
-            f"mode={config.testing.protocol.layer}"
-        ]
+        plugin_args = [f"client-id={i}", f"mode={config.testing.protocol.layer}"]
         if client_cfg.name is not None:
             plugin_args += [f"client-name={client_cfg.name}"]
 
         plugin = ",".join([plugin_path] + plugin_args)
 
-
-        default_args = [f"-{client_cfg.pass_test_exec_to}", config.testing.test_exec, "-plugin", plugin]
+        default_args = [
+            f"-{client_cfg.pass_test_exec_to}",
+            config.testing.test_exec,
+            "-plugin",
+            plugin,
+        ]
         args = default_args + client_cfg.additional_args
-        logger.info(f"starting client: {" ".join([executable_path, *args])}")
-        client = Client(i, shm, shm_struct, sem_server=sem_server, sem_client=sem_client, is_open=True, process=None, name=client_cfg.name)
+        logger.info(f"starting client: {' '.join([executable_path, *args])}")
+        client = Client(
+            i,
+            shm,
+            shm_struct,
+            sem_server=sem_server,
+            sem_client=sem_client,
+            is_open=True,
+            process=None,
+            name=client_cfg.name,
+        )
         clients.append(client)
-        client.process = run_with_callback([executable_path, *args], on_client_complete, config, client)
+        client.process = run_with_callback(
+            [executable_path, *args], on_client_complete, config, client
+        )
 
-    if config.testing.protocol.mode == 'lockstep':
+    if config.testing.protocol.mode == "lockstep":
         max_trace_len = config.testing.max_trace_length
-        traces: deque[Trace] = deque(maxlen=max_trace_len if max_trace_len >= 0 else None)
+        traces: deque[Trace] = deque(
+            maxlen=max_trace_len if max_trace_len >= 0 else None
+        )
         report = run_lockstep(config, traces)
         named_traces = {
-            "names": [client.name if client.name is not None else str(client.id) for client in clients],
-            "traces": list(traces)
+            "names": [
+                client.name if client.name is not None else str(client.id)
+                for client in clients
+            ],
+            "traces": list(traces),
         }
 
-        j = {
-            "report": asdict(report),
-            "traces": named_traces
-        }
+        j = {"report": asdict(report), "traces": named_traces}
 
         result_file = os.path.join(config.testing.protocol.out.dir, "result.json")
         os.makedirs(os.path.dirname(result_file), exist_ok=True)
@@ -534,7 +426,9 @@ def start(config: Config):
             if config.testing.protocol.out.format == "json":
                 f.write(json.dumps(j))
             else:
-                logger.error(f"illegal testing output format: {config.testing.protocol.out.format}")
+                logger.error(
+                    f"illegal testing output format: {config.testing.protocol.out.format}"
+                )
                 exit(1)
 
         for client in clients:
