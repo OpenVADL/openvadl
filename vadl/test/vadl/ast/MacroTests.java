@@ -505,6 +505,34 @@ public class MacroTests {
         diagnostic.reason.contains("Invalid") && diagnostic.reason.contains("Identifier"),
         "Reason was: `%s`".formatted(diagnostic.reason));
   }
+
+  @Test
+  void assemblyExpandedToMultipleDefinitions() {
+    // There once was a bug where the assemblies weren't expanded correctly, and the symboltable
+    // threw an error with code like that.
+    // https://github.com/OpenVADL/openvadl/issues/304
+    var prog = """
+        instruction set architecture TEST = {
+          format Fa: Bits<32> =
+          { field   [31..0]
+          }
+          format Fb: Bits<64> =
+          { field   [63..0]
+          }
+        
+          register    X : Bits<5>   -> Bits<32>
+        
+          instruction One : Fa = X(0) := 1
+          instruction Two : Fb = X(0) := 2
+          encoding One = {field = 1}
+          encoding Two = {field = 2}
+        
+          // This line caused the issue before
+          assembly One, Two = (mnemonic, " ", decimal(field))
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog));
+  }
 }
 
 

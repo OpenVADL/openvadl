@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
@@ -610,6 +611,26 @@ class ParserUtils {
       return macroExpander.expandNode(expanded);
     }
     return expanded;
+  }
+
+  /**
+   * Assembly definitions can be written with multiple identifiers to be bound to multiple
+   * (pseudo) instructions. However, for correct further processing they need to be expanded into
+   * multiple definitions.
+   *
+   * @param isaDefs to be expanded.
+   * @return returns the original isaDefs with the Assemblies expanded.
+   */
+  static List<Definition> expandAssemblyDefinitionsInIsa(List<Definition> isaDefs) {
+    return isaDefs.stream()
+        .flatMap(def -> {
+          if (def instanceof AssemblyDefinition assembly) {
+            return new MacroExpander(Map.of(), Map.of(), def.location())
+                .expandAssemblies(assembly).stream();
+          }
+          return Stream.of(def);
+        })
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   /**
