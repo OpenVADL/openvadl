@@ -302,6 +302,8 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
     }
 
 
+    // FIXME: Add functions
+
     throw new RuntimeException(
         "The constant evaluator cannot handle such calls");
   }
