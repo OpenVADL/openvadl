@@ -998,8 +998,7 @@ public class TypeChecker
 
   @Override
   public Void visit(ImportDefinition importDefinition) {
-    // Do nothing on purpose.
-    // The symboltable should have already resolved everything.
+    importDefinition.moduleAst.definitions.forEach(this::check);
     return null;
   }
 
