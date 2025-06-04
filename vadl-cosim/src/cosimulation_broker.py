@@ -20,22 +20,22 @@ It is responsible for starting QEMU-clients with the cosimulation plugin, compar
 The broker communicates with each QEMU-client using IPC.
 """
 
-from dataclasses import dataclass, asdict, field
-import os
-import mmap
-import subprocess
-import multiprocessing
-import posix_ipc as ipc
 import atexit
-import subprocess
-from src.config import Config
-from src.cstructs import BrokerSHM
 import json
-from collections import deque
-from typing import Any, Optional, TypeAlias
-from ctypes import sizeof
-
 import logging
+import mmap
+import multiprocessing
+import os
+import subprocess
+from collections import deque
+from ctypes import sizeof
+from dataclasses import asdict, dataclass, field
+from typing import Any, Optional, TypeAlias
+
+import posix_ipc as ipc
+
+from src.config import Config
+from src.cstructs import BrokerSHM, BrokerSHM_Exec, SHMCPU, SHMRegister
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +121,104 @@ def report_from_diffs(diffs: list[ClientDiff]) -> Report:
 
 Trace: TypeAlias = list[dict[str, Any]]
 
+def diff_cpus(cpus1: list[SHMCPU], init_mask1: int, cpus2: list[SHMCPU], init_mask2: int, config: Config) -> list[ClientDiff]:
+    diffs: list[ClientDiff] = []
+
+    if init_mask1 != init_mask2:
+        diffs.append(
+            ClientDiff(
+                "cpu.init_mask",
+                f"{init_mask1:08b}",
+                f"{init_mask1:08b}",
+            )
+        )
+        return diffs
+
+    for idx in range(BrokerSHM_Exec.MAX_CPU_COUNT):
+        if init_mask1 & (1 << idx):
+            cpu1 = cpus1[idx]
+            cpu2 = cpus2[idx]
+            diffs.extend(diff_cpu(cpu1, cpu2, idx, config))
+
+    return diffs
+
+def diff_cpu(
+    cpu1: SHMCPU, cpu2: SHMCPU, cpu_index: int, config: Config
+) -> list[ClientDiff]:
+    diffs: list[ClientDiff] = []
+
+    if (
+        not config.qemu.ignore_unset_registers
+        and cpu1.registers_size != cpu2.registers_size
+    ):
+        diffs.append(
+            ClientDiff(
+                f"cpu.{cpu_index}.registers.size",
+                f"{cpu1.registers_size}",
+                f"{cpu2.registers_size}",
+                "different number of CPU registers",
+            )
+        )
+
+    for reg_index in range(min(cpu1.registers_size, cpu2.registers_size)):
+        c1reg = cpu1.registers[reg_index]
+        c2reg = cpu2.registers[reg_index]
+
+        diffs.extend(diff_register(c1reg, c2reg, cpu_index, reg_index, config))
+
+    return diffs
+
+
+def diff_register(
+    reg1: SHMRegister, reg2: SHMRegister, cpu_index: int, reg_index: int, config: Config
+) -> list[ClientDiff]:
+    diffs: list[ClientDiff] = []
+
+    r1name = reg1.fname(config.qemu.gdb_reg_map)
+    r2name = reg2.fname(config.qemu.gdb_reg_map)
+
+    if r1name in config.qemu.ignore_registers or (
+        config.qemu.ignore_unset_registers
+        and r1name not in config.qemu.gdb_reg_map.values()
+    ):
+        return diffs
+
+    if reg1.size != reg2.size:
+        diffs.append(
+            ClientDiff(
+                f"cpu.{cpu_index}.registers.{reg_index}.size",
+                f"{reg1.size}",
+                f"{reg2.size}",
+                "reg sizes differ",
+            )
+        )
+
+    if r1name != r2name:
+        diffs.append(
+            ClientDiff(
+                f"cpu.{cpu_index}.registers.{reg_index}.name",
+                f"{r1name}",
+                f"{r2name}",
+                "reg names differ",
+            )
+        )
+
+    r1data = reg1.fdata()
+    r2data = reg2.fdata()
+    if r1data != r2data:
+        diffs.append(
+            ClientDiff(
+                f"cpu.{cpu_index}.registers.{reg_index}.data",
+                f"{r1data}",
+                f"{r2data}",
+                "reg data differ",
+                ref_expected=reg1.to_dict(config.qemu.gdb_reg_map),
+                ref_actual=reg2.to_dict(config.qemu.gdb_reg_map),
+            )
+        )
+
+    return diffs
+
 
 def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     """
@@ -152,103 +250,42 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
         traces: deque[list[dict[str, Any]]]: Collects the state of each client after each execution-step.
     """
 
-    gdb_reg_map_values = config.qemu.gdb_reg_map.values()
-
     def compare_client_state() -> list[ClientDiff]:
         diffs = []
-        c1 = clients[0]
-        c2 = clients[1]
+        trace_entry = []
+        for c in clients:
+            if config.testing.protocol.layer == "insn":
+                d = c.shm_struct.shm_exec.to_dict(config.qemu.gdb_reg_map)
+                trace_entry.append(d)
+            else:
+                d = c.shm_struct.shm_tb.to_dict(config.qemu.gdb_reg_map)
+                trace_entry.append(d)
+        traces.append(trace_entry)
 
-        if config.testing.protocol.layer == "insn":
-            c1shm = c1.shm_struct.shm_exec
-            c2shm = c2.shm_struct.shm_exec
+        for i in range(len(clients)):
+            for j in range(i+1, len(clients)):
+                c1 = clients[i]
+                c2 = clients[j]
 
-            # Store the current state of each client as a trace
-            d1 = c1shm.to_dict(config.qemu.gdb_reg_map)
-            d2 = c2shm.to_dict(config.qemu.gdb_reg_map)
-            traces.append([d1, d2])
+                if config.testing.protocol.layer == "insn":
+                    c1shm = c1.shm_struct.shm_exec
+                    c2shm = c2.shm_struct.shm_exec
 
-            if c1shm.init_mask != c2shm.init_mask:
-                diffs.append(
-                    ClientDiff(
-                        "cpu.init_mask",
-                        f"{c1shm.init_mask:08b}",
-                        f"{c2shm.init_mask:08b}",
-                    )
-                )
 
-            for cpu_index in range(BrokerSHM_Exec.MAX_CPU_COUNT):
-                c1cpu = c1shm.cpus[cpu_index]
-                c2cpu = c2shm.cpus[cpu_index]
+                    diffs.extend(diff_cpus(c1shm.cpus, c1shm.init_mask, c2shm.cpus, c2shm.init_mask, config))
+                    # TODO: diff insn_info?
 
-                if (
-                    not config.qemu.ignore_unset_registers
-                    and c1cpu.registers_size != c2cpu.registers_size
-                ):
-                    diffs.append(
-                        ClientDiff(
-                            f"cpu.{cpu_index}.registers.size",
-                            f"{c1cpu.registers_size}",
-                            f"{c2cpu.registers_size}",
-                            "different number of CPU registers",
-                        )
-                    )
+                    return diffs
+                else:
+                    c1shm = c1.shm_struct.shm_tb
+                    c2shm = c2.shm_struct.shm_tb
 
-                for reg_index in range(min(c1cpu.registers_size, c2cpu.registers_size)):
-                    c1reg = c1cpu.registers[reg_index]
-                    r1name = c1reg.fname(config.qemu.gdb_reg_map)
+                    diffs.extend(diff_cpus(c1shm.cpus, c1shm.init_mask, c2shm.cpus, c2shm.init_mask, config))
+                    # TODO: diff insn_info?
 
-                    c2reg = c2cpu.registers[reg_index]
-                    r2name = c2reg.fname(config.qemu.gdb_reg_map)
+                    return diffs
 
-                    if r1name in config.qemu.ignore_registers or (
-                        config.qemu.ignore_unset_registers
-                        and not r1name in gdb_reg_map_values
-                    ):
-                        continue
-
-                    if c1reg.size != c2reg.size:
-                        diffs.append(
-                            ClientDiff(
-                                f"cpu.{cpu_index}.registers.{reg_index}.size",
-                                f"{c1reg.size}",
-                                f"{c2reg.size}",
-                                "reg sizes differ",
-                            )
-                        )
-
-                    if r1name != r2name:
-                        diffs.append(
-                            ClientDiff(
-                                f"cpu.{cpu_index}.registers.{reg_index}.name",
-                                f"{r1name}",
-                                f"{r2name}",
-                                "reg names differ",
-                            )
-                        )
-
-                    r1data = c1reg.fdata()
-                    r2data = c2reg.fdata()
-                    if r1data != r2data:
-                        diffs.append(
-                            ClientDiff(
-                                f"cpu.{cpu_index}.registers.{reg_index}.data",
-                                f"{r1data}",
-                                f"{r2data}",
-                                "reg data differ",
-                                ref_expected=c1reg.to_dict(config.qemu.gdb_reg_map),
-                                ref_actual=c2reg.to_dict(config.qemu.gdb_reg_map),
-                            )
-                        )
-
-            return diffs
-        else:
-            c1shm = c1.shm_struct.shm_tb
-            c2shm = c2.shm_struct.shm_tb
-
-            print("TODO: tb-block exec level testing")
-
-            return []
+        return []
 
     skip_per_client = [client.skip_n_instructions for client in config.qemu.clients]
 
@@ -282,31 +319,61 @@ def run_lockstep(config: Config, traces: deque[Trace]) -> Report:
     # TODO: A client might need to be released multiple times for tb-level testing
     # NOTE: Maybe parallelize this for exec-level and tb-strict-level testing,
     #       for tb-level testing this might not be possible due to the differently generated TBs
-    while any(map(lambda c: c.is_open, clients)):
-        for client in clients:
-            if client.is_open:
-                try:
-                    client.sem_client.release()
+    
+    if config.testing.protocol.layer == "insn" or config.testing.protocol.layer == "tb-strict":
+        while any(map(lambda c: c.is_open, clients)):
+            for client in clients:
+                if client.is_open:
+                    try:
+                        client.sem_client.release()
 
-                    # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
-                    client.sem_server.acquire(0.1)
-                except ipc.BusyError:
-                    logger.debug(
-                        f"BusyError: noticed that client #{client.id} shutdown. marking as closed"
-                    )
-                    client.is_open = False
+                        # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
+                        client.sem_server.acquire(0.1)
+                    except ipc.BusyError:
+                        logger.debug(
+                            f"BusyError: noticed that client #{client.id} shutdown. marking as closed"
+                        )
+                        client.is_open = False
 
-        if not execute_remaining:
-            if stop_after > 0:
-                stop_after -= 1
-            else:
+            if not execute_remaining:
+                if stop_after > 0:
+                    stop_after -= 1
+                else:
+                    return report_from_diffs(diffs)
+
+            diffs += compare_client_state()
+
+            # early exit for lockstepping
+            if len(diffs) > 0:
+                return report_from_diffs(diffs)
+    else:
+        # TODO: implement translation-block syncing
+        while any(map(lambda c: c.is_open, clients)):
+            for client in clients:
+                if client.is_open:
+                    try:
+                        client.sem_client.release()
+
+                        # wait at most 0.1 second, if an error occurs: assume that the client finished (crashing = finishing)
+                        client.sem_server.acquire(0.1)
+                    except ipc.BusyError:
+                        logger.debug(
+                            f"BusyError: noticed that client #{client.id} shutdown. marking as closed"
+                        )
+                        client.is_open = False
+
+            if not execute_remaining:
+                if stop_after > 0:
+                    stop_after -= 1
+                else:
+                    return report_from_diffs(diffs)
+
+            diffs += compare_client_state()
+
+            # early exit for lockstepping
+            if len(diffs) > 0:
                 return report_from_diffs(diffs)
 
-        diffs += compare_client_state()
-
-        # early exit for lockstepping
-        if len(diffs) > 0:
-            return report_from_diffs(diffs)
 
     # if the loop has exited and no diffs were found then the test passed
     return report_from_diffs(diffs)
@@ -375,7 +442,13 @@ def start(config: Config):
         executable_path = client_cfg.exec
 
         plugin_path = config.qemu.plugin
-        plugin_args = [f"client-id={i}", f"mode={config.testing.protocol.layer}"]
+        client_mode = ""
+        if config.testing.protocol.layer == "tb" or config.testing.protocol.layer == "tb-strict":
+            client_mode = "tb"
+        else:
+            client_mode = config.testing.protocol.layer
+
+        plugin_args = [f"client-id={i}", f"mode={client_mode}"]
         if client_cfg.name is not None:
             plugin_args += [f"client-name={client_cfg.name}"]
 

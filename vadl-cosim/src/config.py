@@ -39,7 +39,7 @@ class Out:
 @dataclass
 class Protocol:
     mode: Literal["lockstep"]
-    layer: Literal["tb", "insn"]
+    layer: Literal["tb", "insn", "tb-strict"]
     execute_all_remaining_instructions: bool
     stop_after_n_instructions: int
     out: Out = field(default_factory=Out)
