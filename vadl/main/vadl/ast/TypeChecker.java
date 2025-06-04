@@ -538,10 +538,23 @@ public class TypeChecker
           // NOTE: From is always larger than to
           var rangeSize = (from - to) + 1;
           if (rangeSize < 1) {
-            throw error("Invalid Range", rangeField)
-                .description("Range must be >= 1 but was %s", fieldBitWidth)
+            throw error("Invalid Range", range)
+                .locationDescription(range, "Range must span more than one bit but was %s",
+                    fieldBitWidth)
+                .locationNote(range,
+                    "Ranges are specified as `from..to` where from is always larger than to.")
                 .build();
           }
+
+          // Check range is not out of bounds.
+          if (from < 0 || from >= bitWidth || to < 0 || to > bitWidth) {
+            throw error("Invalid Range", range)
+                .locationDescription(range,
+                    "Provided range `%d..%d` out of bounds for available range `%d..0`",
+                    from, to, bitWidth - 1)
+                .build();
+          }
+
           fieldBitWidth += rangeSize;
           rangeField.computedRanges.add(new FormatDefinition.BitRange(from, to));
           bitsVerifier.addRange(from, to);
