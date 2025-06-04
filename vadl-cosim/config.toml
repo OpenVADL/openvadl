@@ -23,7 +23,7 @@ plugin="./qemu-setup/build/contrib/plugins/libcosimulation.so"
 # Whether to ignore registers that are not defined by a [qemu.gdb_reg_map] mapping
 # This option is useful to test the current implementation of a simulator which might not yet have all registers implemented against another (complete) implementation
 # Filters in conjunction with `ignore_registers`
-ignore_unset_registers = false 
+ignore_unset_registers = true
 
 # Ignore specific registers
 # Filters in conjunction with `ignore_unset_registers`
@@ -56,7 +56,7 @@ pass_test_exec_to = "bios"
 # Applies additional arguments to the ISS-executable, e.g. `qemu-system-riscv64 -nographic -d plugin`
 additional_args = [
 	"-nographic",
-	"-d", "plugin"
+	"-d", "plugin",
 	# "-s",
 	# "-S",
 ]
@@ -146,7 +146,7 @@ max_trace_length = -1
 # "tb-strict": The execution-step is the *execution of a single translation-blocks*.
 #			   The same as "tb" but without the synchronization logic. Meaning that equal translation-blocks are assumed.
 #			   This option is useful if the instructions of the ISS are already correct and the TB-Block generator needs to be tested.
-layer = "insn"
+layer = "tb-strict"
 
 # "lockstep": All clients are run and compared one *execution-step* at a time.
 # 			  This means that the test will exit on the first divergence (or at the end if no diffs where found) 
