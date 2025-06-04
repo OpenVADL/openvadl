@@ -1156,6 +1156,7 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
    * Get the field encoding for the {@link vadl.ast.FormatDefinition.AuxiliaryField}
    * with the kind {@code ENCODING}.
    */
+  @SuppressWarnings("LineLength")
   private Format.FieldEncoding getFieldEncoding(vadl.viam.Identifier ident,
                                                 FormatDefinition.AuxiliaryField encode) {
     var behavior = new BehaviorLowering(this).getFunctionGraph(encode.expr, ident.toString());

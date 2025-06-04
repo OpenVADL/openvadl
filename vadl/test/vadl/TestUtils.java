@@ -249,7 +249,7 @@ public class TestUtils {
   }
 
   public static Format.FieldAccess createFieldAccess(String name, Function accessFunction) {
-    return new Format.FieldAccess(createIdentifier(name), accessFunction, null, null);
+    return new Format.FieldAccess(createIdentifier(name), accessFunction, null);
   }
 
   public static Function createFunction(String name, DataType retTy) {

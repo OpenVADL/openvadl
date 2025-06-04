@@ -17,7 +17,6 @@
 package vadl.gcb.passes.encodingGeneration.strategies.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static vadl.TestUtils.createField;
 import static vadl.TestUtils.createFieldAccess;
@@ -67,7 +66,6 @@ class TrivialImmediateStrategyTest extends AbstractTest {
     // Then
     assertNotNull(fieldAccess.encoding());
     assertNotNull(fieldAccess.encoding().behavior());
-    assertEquals(fieldAccess.encoding().returnType(), DataType.bits(20));
     assertThat(fieldAccess.encoding().behavior().getNodes())
         .anyMatch(
             x -> x.getClass() == SliceNode.class

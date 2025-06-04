@@ -31,7 +31,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.utils.Pair;
 import vadl.viam.Format;
-import vadl.viam.Function;
+import vadl.viam.Parameter;
 import vadl.viam.Specification;
 
 /**
@@ -52,7 +52,7 @@ public class CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass extends Pas
   /**
    * Output of the pass.
    */
-  public record Output(Map<Function, GcbCppFunctionForFieldAccess> byFunction,
+  public record Output(Map<Format.FieldEncoding, GcbCppFunctionForFieldAccess> byFunction,
                        Map<Format.Field, GcbCppFunctionForFieldAccess> byField) {
 
   }
@@ -61,9 +61,10 @@ public class CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass extends Pas
   @Override
   public Output execute(PassResults passResults,
                         Specification viam) throws IOException {
-    var byFunction = new IdentityHashMap<Function, GcbCppFunctionForFieldAccess>();
+    var byFunction = new IdentityHashMap<Format.FieldEncoding, GcbCppFunctionForFieldAccess>();
     var byField = new IdentityHashMap<Format.Field, GcbCppFunctionForFieldAccess>();
 
+    // TODO: Reimplement this with the new Format.FieldEncoding
     viam.isa()
         .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
         .flatMap(x -> x.fieldAccesses().stream())
@@ -87,11 +88,12 @@ public class CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass extends Pas
    * Wraps the {@code function} into a {@link GcbCppFunctionForFieldAccess}.
    */
   private GcbCppFunctionForFieldAccess createGcbFieldAccessCppFunction(
-      Function function,
+      Format.FieldEncoding function,
       Format.FieldAccess fieldAccess) {
     return new GcbCppFunctionForFieldAccess(function.identifier,
-        function.parameters(),
-        function.returnType(),
+        // TODO: Fix parameter (currently no parameter)
+        new Parameter[] {},
+        function.targetField().type(),
         function.behavior(),
         fieldAccess);
   }

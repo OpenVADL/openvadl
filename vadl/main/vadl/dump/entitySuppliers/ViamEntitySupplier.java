@@ -155,9 +155,7 @@ public class ViamEntitySupplier extends DefinitionVisitor.Empty
     var entity = entityOf(fieldAccess);
     for (var se : entity.subEntities()) {
       var de = (DefinitionEntity) se.subEntity;
-      if (de.origin() == fieldAccess.encoding()) {
-        se.name = "Encoding Function";
-      } else if (de.origin() == fieldAccess.accessFunction()) {
+      if (de.origin() == fieldAccess.accessFunction()) {
         se.name = "Access Function";
       } else if (de.origin() == fieldAccess.predicate()) {
         se.name = "Predicate Function";

@@ -139,13 +139,17 @@ public class Format extends Definition implements DefProp.WithType {
     return encodings;
   }
 
+  /**
+   * Sets the given field encodings in the {@link #fieldEncodings()}.
+   * It checks that it is not in conflict with another field encoding.
+   */
   public void setFieldEncoding(FieldEncoding fieldEncoding) {
     var encodings = fieldEncodingsOf(fieldEncoding.usedFieldAccesses());
     var anyOnThisTarget =
         encodings.stream().anyMatch(e -> e.targetField().equals(fieldEncoding.targetField()));
     ensure(!anyOnThisTarget,
         "There is already a field encoding that match the given field accesses.");
-    encodings.add(fieldEncoding);
+    fieldEncodings.add(fieldEncoding);
   }
 
   /**

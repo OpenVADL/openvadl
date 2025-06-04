@@ -19,9 +19,9 @@ package vadl.gcb.passes.encodingGeneration;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import vadl.configuration.GcbConfiguration;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticList;
 import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
 import vadl.gcb.passes.encodingGeneration.strategies.impl.ArithmeticImmediateStrategy;
 import vadl.gcb.passes.encodingGeneration.strategies.impl.ShiftedImmediateStrategy;
@@ -30,15 +30,14 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Format.FieldAccess;
-import vadl.viam.Function;
 import vadl.viam.Specification;
-import vadl.viam.ViamError;
 
 /**
- * This pass generates the {@link FieldAccess#encoding()} when the {@link Function} is {@code null}.
+ * This pass generates the {@link vadl.viam.Format.FieldEncoding} when there is no encoding
+ * for a {@link FieldAccess} defined.
  * <pre>{@code
  * format Utype : Inst =
- * {     imm    : Bits<20>
+ * { imm    : Bits<20>
  * , rd     : Index
  * , opcode : Bits7
  * , immU = imm as UInt<32>
@@ -52,9 +51,6 @@ import vadl.viam.ViamError;
  * }</pre>
  */
 public class GenerateFieldAccessEncodingFunctionPass extends Pass {
-
-  private static final Logger logger = LoggerFactory.getLogger(
-      GenerateFieldAccessEncodingFunctionPass.class);
 
   public static final List<EncodingGenerationStrategy> strategies = List.of(
       new TrivialImmediateStrategy(),
@@ -95,10 +91,14 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
         .toList();
 
     if (!hasNoEncoding.isEmpty()) {
-      for (var format : hasNoEncoding) {
-        logger.atError().log("Format {} has no encoding", format.simpleName());
-      }
-      throw new ViamError("Not all formats have an encoding");
+      var errors =
+          hasNoEncoding.stream().map(x -> Diagnostic.error("Missing access function encoding", x)
+              .locationDescription(x,
+                  "The LCB couldn't generate an encoding for this access function.")
+              .help("Add a custom encoding `%s := <expr>` to the format.", x.fieldRefs().getFirst())
+              .build()
+          ).toList();
+      throw new DiagnosticList(errors);
     }
 
 

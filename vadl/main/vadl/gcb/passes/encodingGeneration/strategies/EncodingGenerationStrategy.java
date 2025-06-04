@@ -16,10 +16,10 @@
 
 package vadl.gcb.passes.encodingGeneration.strategies;
 
-import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Parameter;
+import vadl.viam.graph.Graph;
 
 /**
  * The implementor of this interface can generate a field access encoding function.
@@ -37,13 +37,11 @@ public interface EncodingGenerationStrategy {
   void generateEncoding(Format.FieldAccess fieldAccess);
 
   /**
-   * Creates a new function for {@link Encoding}. This function has side effects for the
-   * {@code fieldAccess}.
-   *
-   * @param fieldAccess for which the encoding should be generated.
-   * @return the {@link Parameter} which is the input for the encoding function.
+   * Creates a new {@link vadl.viam.Format.FieldEncoding} for the given field
+   * and the behavior graph.
+   * It assumes that there is only a single field references by the field access.
    */
-  default Parameter setupEncodingForFieldAccess(Format.FieldAccess fieldAccess) {
+  default void setFieldEncoding(Format.FieldAccess fieldAccess, Graph behavior) {
     var ident = fieldAccess.identifier.append("encoding");
     var identParam = ident.append(fieldAccess.simpleName());
     var param = new Parameter(identParam, fieldAccess.accessFunction().returnType());
@@ -51,7 +49,8 @@ public interface EncodingGenerationStrategy {
         new Function(ident, new Parameter[] {param}, fieldAccess.fieldRef().type());
     param.setParent(function);
 
-    fieldAccess.setEncoding(function);
-    return param;
+    var format = fieldAccess.format();
+    var encoding = new Format.FieldEncoding(ident, fieldAccess.fieldRef(), behavior);
+    format.setFieldEncoding(encoding);
   }
 }
