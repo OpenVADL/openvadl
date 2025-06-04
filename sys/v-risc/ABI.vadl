@@ -1,0 +1,78 @@
+// SPDX-FileCopyrightText : © 2024 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: Apache-2.0
+
+import VarRisc::{VarRISC32}
+
+application binary interface ABI for VarRISC32 = {
+   size_t type = unsigned int
+   pointer align = 32
+
+   //
+   // Register alias definitions
+   //
+
+   alias register zero = R(0)
+
+   alias register ra = R(1)
+
+   alias register sp = R(2)
+
+   alias register gp = R(3)
+   alias register tp = R(4)
+
+   alias register t0 = R(5)
+   alias register t1 = R(6)
+   alias register t2 = R(7)
+
+   // [ preferred alias ]
+   alias register fp = R(8)
+
+   alias register s0 = R(8)
+   alias register s1 = R(9)
+
+   alias register a0 = R(10)
+   alias register a1 = R(11)
+   alias register a2 = R(12)
+   alias register a3 = R(13)
+   alias register a4 = R(14)
+   alias register a5 = R(15)
+   alias register a6 = R(16)
+   alias register a7 = R(17)
+
+   alias register s2 = R(18)
+   alias register s3 = R(19)
+   alias register s4 = R(20)
+   alias register s5 = R(21)
+   alias register s6 = R(22)
+   alias register s7 = R(23)
+   alias register s8 = R(24)
+   alias register s9 = R(25)
+   alias register s10 = R(26)
+   alias register s11 = R(27)
+
+   alias register t3 = R(28)
+   alias register t4 = R(29)
+   alias register t5 = R(30)
+   alias register t6 = R(31)
+
+   // [ alignment : HalfWord ]
+   stack pointer = sp
+   return address = ra
+   global pointer = gp
+   frame pointer = fp
+   thread pointer = tp
+
+   special return instruction = RET
+   special call instruction = CALL
+   //special local address load instruction = LLA
+   //special global address load instruction = LGA_32
+   special absolute address load instruction = LA
+
+   return value = a{0..1}
+   function argument = a{0..7}
+
+   // ra is callee saved because it is used as normal register and has to be restored.
+   caller saved = [ a{0..7}, t{0..6} ]
+   callee saved = [ ra, gp, tp, fp, s{0..11} ]
+
+}

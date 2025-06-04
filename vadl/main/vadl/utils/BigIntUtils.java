@@ -155,5 +155,4 @@ public class BigIntUtils {
     }
     return new BigInteger(1, value.toByteArray());
   }
-
 }

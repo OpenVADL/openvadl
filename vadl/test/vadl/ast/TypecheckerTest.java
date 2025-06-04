@@ -717,6 +717,24 @@ public class TypecheckerTest {
   }
 
   @Test
+  public void invalidFormatOutOfBoundsRange() {
+    var prog = """
+        instruction set architecture TEST = {
+          format Format: Bits<32> =
+          { field   [32..0]             // wrong higher offset
+          , accFunc = field as SInt
+          }
+        }
+        
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    var typechecker = new TypeChecker();
+    Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast),
+        "Program isn't typesafe");
+  }
+
+
+  @Test
   public void enumWithTypes() {
     var prog = """
           enumeration ENUM: Bits<2> =

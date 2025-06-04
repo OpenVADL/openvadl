@@ -16,52 +16,75 @@
 
 package vadl.vdt.target.iss;
 
+import static vadl.error.Diagnostic.error;
+import static vadl.utils.MemOrderUtils.reverseByteOrder;
 import static vadl.utils.StringBuilderUtils.join;
 import static vadl.vdt.target.common.DecisionTreeStatsCalculator.statistics;
+import static vadl.vdt.utils.BitVectorUtils.fittingPowerOfTwo;
 
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.AccessFunctionCodeGenerator;
+import vadl.error.Diagnostic;
+import vadl.error.DiagnosticBuilder;
+import vadl.error.DiagnosticList;
+import vadl.javaannotations.DispatchFor;
+import vadl.javaannotations.Handler;
 import vadl.types.BitsType;
 import vadl.types.DataType;
 import vadl.utils.codegen.CodeGeneratorAppendable;
 import vadl.utils.codegen.StringBuilderAppendable;
-import vadl.vdt.impl.theiling.InnerNodeImpl;
-import vadl.vdt.impl.theiling.LeafNodeImpl;
+import vadl.vdt.impl.irregular.tree.MultiDecisionNode;
+import vadl.vdt.impl.irregular.tree.SingleDecisionNode;
+import vadl.vdt.impl.regular.InnerNodeImpl;
 import vadl.vdt.model.InnerNode;
 import vadl.vdt.model.LeafNode;
 import vadl.vdt.model.Node;
 import vadl.vdt.model.Visitor;
+import vadl.vdt.model.impl.LeafNodeImpl;
+import vadl.vdt.target.common.dto.DecisionTreeStatistics;
 import vadl.vdt.utils.BitPattern;
 import vadl.vdt.utils.Instruction;
+import vadl.viam.Constant;
+import vadl.viam.Constant.BitSlice.Part;
 import vadl.viam.Format;
 
 /**
  * Generate C/C++ code for a decision tree from an in-memory representation of the decision tree.
  */
+@DispatchFor(value = InnerNode.class, include = {"vadl.vdt"})
 public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
 
   private final CodeGeneratorAppendable appendable = new StringBuilderAppendable();
 
+  private final Node tree;
+  private final DecisionTreeStatistics stats;
+  private final ByteOrder byteOrder;
+
+  /**
+   * Construct the decode tree generator.
+   *
+   * @param tree      The vadl decode tree
+   * @param byteOrder The architecture's memory byte order for extraction of format fields.
+   */
+  public IssDecisionTreeCodeGenerator(Node tree, ByteOrder byteOrder) {
+    this.tree = tree;
+    this.byteOrder = byteOrder;
+    this.stats = statistics(tree);
+  }
+
   /**
    * Generate the code for the given decision tree.
-   *
-   * @param tree The decode decision tree to generate code for
    */
-  public CharSequence generate(Node tree) {
-
-    // Imports (could be moved to the template)
-    appendable
-        .append("#include <stdint.h>\n")
-        .append("#include \"vadl-builtins.h\"\n\n");
-
-    // TODO: Potentially pass the ISA here, so we don't have to traverse the tree for the format
-    //       and instruction definitions.
+  public CharSequence generate() {
 
     // Step 0: Generate code for DTOs (structs) holding the decoded fields (one for each format)
 
@@ -75,13 +98,12 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
     generateTranslateDeclarations(insns);
 
     // Step 2: Generate code to extract the fields from the instruction word to the DTOs
-
-    final String insnWordCType = CppTypeMap.getCppTypeNameByVadlType(getInsnWordType(tree));
+    final String insnWordCType = CppTypeMap.getCppTypeNameByVadlType(getInsnWordType());
     generateFormatExtractors(insnWordCType, formats);
 
     // Step 3: Generate code for the decoding decision tree
 
-    appendable.append("static bool decode_insn(")
+    appendable.append("static uint8_t decode_insn(")
         .append("DisasContext *ctx, ")
         .append(insnWordCType).append(" insn) {\n\n");
 
@@ -103,7 +125,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
     // Generate the actual decision tree code
     tree.accept(this);
 
-    appendable.append("return false;\n");
+    appendable.append("return 0;\n");
 
     appendable.unindent();
     appendable.append("}\n");
@@ -117,15 +139,11 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
    *
    * @param node The inner node
    */
-  @Override
-  public Void visit(InnerNode node) {
+  @Handler
+  public Void handle(InnerNodeImpl node) {
 
-    if (!(node instanceof InnerNodeImpl n)) {
-      throw new IllegalArgumentException("Node type not supported: " + node.getClass());
-    }
-
-    final BigInteger mask = n.getMask().toValue();
-    final Map<BitPattern, Node> children = n.getChildren();
+    final BigInteger mask = node.getMask().toValue();
+    final Map<BitPattern, Node> children = node.getChildren();
 
     appendable.append("switch (insn & 0x")
         .append(mask.toString(16))
@@ -143,18 +161,123 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
       appendable.unindent();
     }
 
-    if (n.getFallback() != null) {
+    if (node.getFallback() != null) {
       appendable.append("default:\n");
       appendable.indent();
-      n.getFallback().accept(this);
+      node.getFallback().accept(this);
       appendable.unindent();
     } else {
-      appendable.append("default:\n").indent().append("return false;\n").unindent();
+      appendable.append("default:\n").indent().append("return 0;\n").unindent();
     }
 
     appendable.unindent();
     appendable.append("}\n");
 
+    return null;
+  }
+
+  /**
+   * Generate the decision code for a multi-decision (switch) node.
+   *
+   * @param node The inner decision node.
+   * @return Void
+   */
+  @Handler
+  public Void handle(MultiDecisionNode node) {
+
+    final DataType insnType = getInsnWordType();
+    final int insnWidth = insnType.bitWidth();
+
+    final BigInteger mask = node.getMask().toValue();
+    final int offset = node.getOffset();
+    final int length = node.getLength();
+
+    final Map<BitPattern, Node> children = node.getChildren();
+
+    int shift = insnWidth - (node.getOffset() + length);
+    if (offset > 0 && shift > 0) {
+      appendable.append("switch ((insn >> %d) & 0x%s) {\n".formatted(
+          shift, mask.toString(16)
+      ));
+    } else {
+      appendable.append("switch (insn & 0x")
+          .append(mask.toString(16))
+          .append(") {\n");
+    }
+
+    appendable.indent();
+
+    for (Map.Entry<BitPattern, Node> entry : children.entrySet()) {
+      final BigInteger caseValue = entry.getKey().toBitVector().toValue();
+      appendable.append("case 0x").append(caseValue.toString(16))
+          .append(":\n");
+
+      appendable.indent();
+      entry.getValue().accept(this);
+      appendable.unindent();
+    }
+
+    appendable.append("default:\n")
+        .indent()
+        .append("return 0;\n")
+        .unindent();
+
+    appendable.unindent();
+    appendable.append("}\n");
+
+    return null;
+  }
+
+  /**
+   * Generate the decision code for a single-decision (if/else) node.
+   *
+   * @param node The inner decision node.
+   * @return Void
+   */
+  @Handler
+  public Void handle(SingleDecisionNode node) {
+
+    final DataType insnType = getInsnWordType();
+    final int insnWidth = insnType.bitWidth();
+
+    final BigInteger mask = node.getPattern().toMaskVector().toValue();
+    final BigInteger value = node.getPattern().toBitVector().toValue();
+    final int offset = node.getOffset();
+    final int length = node.getLength();
+
+    int shift = insnWidth - (node.getOffset() + length);
+    if (offset > 0 && shift > 0) {
+      appendable.append("if ((insn >> %d) & 0x%x == 0x%x) {\n"
+          .formatted(shift, mask, value));
+    } else {
+      appendable.append("if (insn & 0x%x ==  0x%x) {\n"
+          .formatted(mask, value));
+    }
+
+    appendable.indent();
+    node.getMatchingChild().accept(this);
+    appendable.unindent();
+
+    appendable.appendLn("} else {");
+
+    appendable.indent();
+    node.getOtherChild().accept(this);
+    appendable.unindent();
+
+    appendable.append("}\n");
+
+    return null;
+  }
+
+  /**
+   * An inner node represents a decision point in the decision tree. We generate a switch statement
+   * to select the correct child node based on relevant bits in the instruction word.
+   *
+   * @param node The inner node
+   */
+  @Override
+  public Void visit(InnerNode node) {
+    IssDecisionTreeCodeGeneratorDispatcher.dispatch(this, node);
     return null;
   }
 
@@ -167,11 +290,9 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
   @Override
   public Void visit(LeafNode node) {
 
-    if (!(node instanceof LeafNodeImpl lf)) {
+    if (!(node instanceof LeafNodeImpl(Instruction insn))) {
       throw new IllegalArgumentException("Leaf node type not supported: " + node.getClass());
     }
-
-    final Instruction insn = lf.instruction();
 
     // Extract the fields from the instruction word
     appendable.append("extract_")
@@ -179,12 +300,15 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
         .append("(insn, &insn_args.")
         .append(insn.source().format().simpleName().toLowerCase(Locale.US))
         .append(");\n");
+
     // Call the translation function
     appendable.append("return trans_")
         .append(insn.source().simpleName().toLowerCase(Locale.US))
         .append("(ctx, &insn_args.")
         .append(insn.source().format().simpleName().toLowerCase(Locale.US))
-        .append(");\n");
+        .append(") ? ")
+        .append(insn.source().format().type().bitWidth() / 8)
+        .appendLn(" : 0;");
 
     return null;
   }
@@ -299,8 +423,22 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
   }
 
   private CharSequence extractField(Format.Field field) {
+
+    final int insnWidth = getInsnWordType().bitWidth();
+    final int formatWidth = field.format().type().bitWidth();
+    final int shift = insnWidth - formatWidth;
+
+    // Shift the bit slices according to the insn word width
     var parts = field.bitSlice().parts()
+        .map(p -> Part.of(p.msb() + shift, p.lsb() + shift))
         .toList();
+    var slice = new Constant.BitSlice(parts.toArray(new Part[0]));
+
+    // Possibly translate to little-endian format
+    if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
+      slice = reverseByteOrder(slice, insnWidth);
+      parts = slice.parts().toList();
+    }
 
     // Walk from the least significant part to the most significant part. This way we can calculate
     // the offset to shift the extracted value to the correct position in the field.
@@ -320,8 +458,15 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
         expr.append("(");
       }
 
-      expr.append("((insn >> ").append(lsb).append(") & 0x")
-          .append(BigInteger.valueOf((1L << width) - 1).toString(16)).append(")");
+      if (lsb == 0) {
+        expr.append("(insn");
+      } else {
+        expr.append("((insn >> ").append(lsb).append(")");
+      }
+
+      expr.append(" & 0x")
+          .append(BigInteger.valueOf((1L << width) - 1).toString(16))
+          .append(")");
 
       if (offset > 0) {
         expr.append(" << ").append(offset).append(")");
@@ -330,7 +475,7 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
       offset += width;
 
       // Insert at the front of the list to maintain the correct order (msb to lsb)
-      partExpressions.add(0, expr);
+      partExpressions.addFirst(expr);
     }
 
     return join(" | ", partExpressions);
@@ -343,10 +488,9 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
    * @return The C++ expression for the field access
    */
   private String accessField(Format.FieldAccess access) {
-    var fieldRef = access.fieldRef();
-    var refName = "a->" + fieldRef.simpleName();
-
-    var generator = new AccessFunctionCodeGenerator(access, null, refName);
+    var fieldRefs = access.fieldRefs().stream()
+        .collect(Collectors.toMap(Function.identity(), f -> "a->" + f.simpleName()));
+    var generator = new AccessFunctionCodeGenerator(access, null, fieldRefs);
     return generator.genReturnExpression();
   }
 
@@ -386,34 +530,30 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
    * Determine the C++ type of the instruction word. We'll use the smallest unsigned integer type
    * that can hold the maximum instruction width.
    *
-   * @param tree the decision tree
    * @return the C++ type of the instruction word
    */
-  private DataType getInsnWordType(Node tree) {
-    var maxWidth = statistics(tree).getMaxInstructionWidth();
-    var insnType = BitsType.bits(fittingPowerOfTwo(maxWidth)).fittingCppType();
-    if (insnType == null) {
-      throw new IllegalArgumentException(
-          "Instruction word too wide: " + maxWidth + " bits");
+  private DataType getInsnWordType() {
+    var maxWidth = stats.getMaxInstructionWidth();
+    int bitWidth = fittingPowerOfTwo(maxWidth);
+
+    var resultType = BitsType.bits(bitWidth).fittingCppType();
+
+    if (resultType == null) {
+      // For every instruction format > 128 bit, throw a diagnostic. In the future the ISS decoder
+      // may be adapted to handle arbitrary instruction widths.
+      final List<Diagnostic> diagnostics = getFormats(getInstructions(tree))
+          .stream()
+          .filter(f -> f.type().bitWidth() > 128)
+          .map(f ->
+              error("Instructions of more than 128 bit are currently not supported by the "
+                  + "decoder generator.", f)
+                  .help("Reduce the width of the instruction format."))
+          .map(DiagnosticBuilder::build)
+          .toList();
+      throw new DiagnosticList(diagnostics);
     }
-    return insnType;
+
+    return resultType;
   }
 
-  /**
-   * Find the smallest power of two that is greater or equal to n.
-   *
-   * @param n the input number
-   * @return the smallest fitting power of two
-   */
-  private int fittingPowerOfTwo(int n) {
-    final BigInteger bigN = BigInteger.valueOf(n);
-    if (bigN.compareTo(BigInteger.ZERO) <= 0) {
-      throw new IllegalArgumentException("Input must be a positive integer");
-    }
-    if (bigN.getLowestSetBit() == bigN.bitLength() - 1) {
-      // n is already a power of two
-      return n;
-    }
-    return BigInteger.ONE.shiftLeft(bigN.bitLength()).intValue();
-  }
 }

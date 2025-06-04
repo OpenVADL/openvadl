@@ -17,6 +17,7 @@
 package vadl.iss.passes.tcgLowering.nodes;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgExtend;
@@ -71,6 +72,13 @@ public class TcgLoadMemory extends TcgOpNode {
 
   public TcgVRefNode addr() {
     return addr;
+  }
+
+  @Override
+  public Set<TcgVRefNode> usedVars() {
+    var used = super.usedVars();
+    used.add(addr);
+    return used;
   }
 
   @Override

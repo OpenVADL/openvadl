@@ -141,13 +141,11 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                   GcbCppFunctionForFieldAccess encodingFunction) {
     var decodeFunctionGenerator =
         new GcbAccessOrExtractionFunctionCodeGenerator(accessFunction, accessFunction.fieldAccess(),
-            accessFunction.identifier.lower(),
-            accessFunction.fieldAccess().fieldRef().simpleName());
+            accessFunction.identifier.lower());
     var encodeFunctionGenerator =
         new GcbAccessOrExtractionFunctionCodeGenerator(encodingFunction,
             encodingFunction.fieldAccess(),
-            encodingFunction.identifier.lower(),
-            encodingFunction.fieldAccess().fieldRef().simpleName());
+            encodingFunction.identifier.lower());
 
     var decodeFunction = decodeFunctionGenerator.genFunctionDefinition();
     var encodeFunction = encodeFunctionGenerator.genFunctionDefinition();

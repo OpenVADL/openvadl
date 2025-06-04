@@ -34,7 +34,6 @@ import vadl.types.ConcreteRelationType;
 import vadl.types.Type;
 import vadl.types.asmTypes.AsmType;
 import vadl.utils.SourceLocation;
-import vadl.viam.PseudoInstruction;
 import vadl.viam.asm.AsmToken;
 
 /**
@@ -61,6 +60,16 @@ abstract class Definition extends Node {
     annotations.forEach(annotation -> annotation.prettyPrint(indent, builder));
   }
 
+  @Nullable
+  <T extends Annotation> T getAnnotation(String name, Class<T> annotationClass) {
+    return annotations.stream()
+        .map(a -> a.annotation)
+        .filter(Objects::nonNull)
+        .filter(annotationClass::isInstance)
+        .filter(a -> a.name().equals(name))
+        .map(annotationClass::cast).findFirst().orElse(null);
+  }
+
   static void prettyPrintDefinitions(int indent, StringBuilder builder,
                                      List<Definition> definitions) {
     Definition previousDefinition = null;
@@ -79,7 +88,7 @@ abstract class Definition extends Node {
 }
 
 interface DefinitionVisitor<R> {
-  R visit(AbiPseudoInstructionDefinition definition);
+  R visit(AbiSpecialPurposeInstructionDefinition definition);
 
   R visit(AbiSequenceDefinition definition);
 
@@ -3413,18 +3422,20 @@ class ApplicationBinaryInterfaceDefinition extends Definition implements Identif
 }
 
 /**
- * The compiler generator requires a few {@link PseudoInstruction}. Those need to be defined
- * in the ABI. They are distinguised with the {@link AbiPseudoInstructionDefinition#kind}
+ * The compiler generator requires a few special instructions. Those need to be defined
+ * in the ABI. They are distinguished with the {@link AbiSpecialPurposeInstructionDefinition#kind}
  * property.
  */
-class AbiPseudoInstructionDefinition extends Definition {
+class AbiSpecialPurposeInstructionDefinition extends Definition {
 
   Kind kind;
   @Child
   IdentifierOrPlaceholder target;
   SourceLocation loc;
 
-  AbiPseudoInstructionDefinition(Kind kind, IdentifierOrPlaceholder target, SourceLocation loc) {
+  AbiSpecialPurposeInstructionDefinition(Kind kind,
+                                         IdentifierOrPlaceholder target,
+                                         SourceLocation loc) {
     this.kind = kind;
     this.target = target;
     this.loc = loc;
@@ -3449,7 +3460,7 @@ class AbiPseudoInstructionDefinition extends Definition {
   void prettyPrint(int indent, StringBuilder builder) {
     prettyPrintAnnotations(indent, builder);
     builder.append(prettyIndentString(indent));
-    builder.append("pseudo ").append(kind.keyword).append(" instruction = ");
+    builder.append("special ").append(kind.keyword).append(" instruction = ");
     target.prettyPrint(indent + 1, builder);
     builder.append("\n");
   }
@@ -3462,7 +3473,7 @@ class AbiPseudoInstructionDefinition extends Definition {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AbiPseudoInstructionDefinition that = (AbiPseudoInstructionDefinition) o;
+    AbiSpecialPurposeInstructionDefinition that = (AbiSpecialPurposeInstructionDefinition) o;
     return kind == that.kind && target.equals(that.target);
   }
 
@@ -3580,11 +3591,11 @@ class SpecialPurposeRegisterDefinition extends Definition {
 
   Purpose purpose;
   @Child
-  List<SequenceCallExpr> exprs;
+  List<ExpandedSequenceCallExpr> exprs;
   SourceLocation loc;
 
   SpecialPurposeRegisterDefinition(Purpose purpose,
-                                   List<SequenceCallExpr> sequence,
+                                   List<ExpandedSequenceCallExpr> sequence,
                                    SourceLocation loc) {
     this.purpose = purpose;
     this.exprs = sequence;
@@ -3682,7 +3693,7 @@ class SpecialPurposeRegisterDefinition extends Definition {
 
       numberOfOccurrencesAbi = Map.of(Purpose.STACK_POINTER, Occurrence.ONE,
           Purpose.RETURN_ADDRESS, Occurrence.ONE,
-          Purpose.GLOBAL_POINTER, Occurrence.ONE,
+          Purpose.GLOBAL_POINTER, Occurrence.OPTIONAL,
           Purpose.FRAME_POINTER, Occurrence.ONE,
           Purpose.THREAD_POINTER, Occurrence.OPTIONAL,
           Purpose.RETURN_VALUE, Occurrence.ONE,

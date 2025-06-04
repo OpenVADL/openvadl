@@ -20,7 +20,6 @@ package vadl.ast;
 import static java.util.Objects.requireNonNull;
 import static vadl.error.Diagnostic.error;
 import static vadl.error.Diagnostic.warning;
-import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensureNonNull;
 import static vadl.viam.ViamError.ensurePresent;
 
@@ -66,13 +65,13 @@ import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.Memory;
 import vadl.viam.MemoryRegion;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.Procedure;
 import vadl.viam.Processor;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.Specification;
-import vadl.viam.annotations.EnableHtifAnno;
 import vadl.viam.asm.AsmDirectiveMapping;
 import vadl.viam.asm.AsmModifier;
 import vadl.viam.asm.AsmToken;
@@ -98,6 +97,10 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.ProcEndNode;
 import vadl.viam.graph.control.StartNode;
+import vadl.viam.graph.dependency.ConstantNode;
+import vadl.viam.graph.dependency.ReadRegTensorNode;
+import vadl.viam.passes.canonicalization.Canonicalizer;
+import vadl.viam.passes.functionInliner.Inliner;
 
 /**
  * The lowering that converts the AST to the VIAM.
@@ -408,8 +411,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var returnAddressDef =
         getSpecialPurposeRegisterDefinition(definition.definitions,
             SpecialPurposeRegisterDefinition.Purpose.RETURN_ADDRESS);
-    var globalPtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
-        SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER);
+    var globalPtr = getOptionalSpecialPurposeRegisterDefinition(definition.definitions,
+        SpecialPurposeRegisterDefinition.Purpose.GLOBAL_POINTER)
+        .map(def -> mapSingleSpecialPurposeRegisterDef(aliasLookup, def));
     var framePtrDef = getSpecialPurposeRegisterDefinition(definition.definitions,
         SpecialPurposeRegisterDefinition.Purpose.FRAME_POINTER);
     var threadPtr = getOptionalSpecialPurposeRegisterDefinition(definition.definitions,
@@ -418,7 +422,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
     var stackPointer = mapSingleSpecialPurposeRegisterDef(aliasLookup, stackPointerDef);
     var returnAddress = mapSingleSpecialPurposeRegisterDef(aliasLookup, returnAddressDef);
-    var globalPtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, globalPtrDef);
     var framePtr = mapSingleSpecialPurposeRegisterDef(aliasLookup, framePtrDef);
 
     // Calling Convention
@@ -436,31 +439,33 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var callerSaved = mapSpecialPurposeRegistersDef(aliasLookup, callerSavedDef);
     var calleeSaved = mapSpecialPurposeRegistersDef(aliasLookup, calleeSavedDef);
 
-    // Pseudo Instructions
+    // Special Instructions
 
-    var pseudoRetInstrDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.RETURN);
-    var pseudoCallInstrDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.CALL);
-    var pseudoLocalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD);
-    var pseudoAbsoluteAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD);
-    var pseudoGlobalAddressLoadDef = getAbiPseudoInstruction(definition.definitions,
-        AbiPseudoInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD);
+    var specialRetInstrDef = getAbiSpecialInstruction(definition.definitions,
+        AbiSpecialPurposeInstructionDefinition.Kind.RETURN);
+    var specialCallInstrDef = getAbiSpecialInstruction(definition.definitions,
+        AbiSpecialPurposeInstructionDefinition.Kind.CALL);
+    var specialLocalAddressLoadDef = getAbiSpecialInstruction(definition.definitions,
+        AbiSpecialPurposeInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD);
+    var specialAbsoluteAddressLoadDef = getAbiSpecialInstruction(definition.definitions,
+        AbiSpecialPurposeInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD);
+    var specialGlobalAddressLoadDef = getAbiSpecialInstruction(definition.definitions,
+        AbiSpecialPurposeInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD);
 
-    var pseudoRet = (PseudoInstruction) fetch(pseudoRetInstrDef).orElseThrow(() ->
-        error("Cannot find the pseudo return instruction", definition.location())
+    var specialRet = (PrintableInstruction) fetch(specialRetInstrDef).orElseThrow(() ->
+        error("Cannot find the return instruction", definition.location())
             .help("Maybe check if this instruction really exists or was spelled incorrectly?")
             .build());
-    var pseudoCall = (PseudoInstruction) fetch(pseudoCallInstrDef).orElseThrow(() ->
-        error("Cannot find the pseudo call instruction", definition.location())
+    var specialCall = (PrintableInstruction) fetch(specialCallInstrDef).orElseThrow(() ->
+        error("Cannot find the call instruction", definition.location())
             .help("Maybe check if this instruction really exists or was spelled incorrectly?")
             .build());
-    var pseudoLocalAddressLoad = fetch(pseudoLocalAddressLoadDef).map(x -> (PseudoInstruction) x);
-    var pseudoGlobalAddressLoad = fetch(pseudoGlobalAddressLoadDef).map(x -> (PseudoInstruction) x);
-    var pseudoAbsoluteAddressLoad =
-        (PseudoInstruction) fetch(pseudoAbsoluteAddressLoadDef).orElseThrow();
+    var specialLocalAddressLoad =
+        fetch(specialLocalAddressLoadDef).map(x -> (PrintableInstruction) x);
+    var specialGlobalAddressLoad =
+        fetch(specialGlobalAddressLoadDef).map(x -> (PrintableInstruction) x);
+    var specialAbsoluteAddressLoad =
+        (PrintableInstruction) fetch(specialAbsoluteAddressLoadDef).orElseThrow();
 
     // Aliases
     Map<Pair<RegisterTensor, Integer>, List<Abi.RegisterAlias>> aliases =
@@ -521,11 +526,11 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         calleeSaved,
         functionArguments,
         returnValues,
-        pseudoRet,
-        pseudoCall,
-        pseudoLocalAddressLoad,
-        pseudoAbsoluteAddressLoad,
-        pseudoGlobalAddressLoad,
+        specialRet,
+        specialCall,
+        specialLocalAddressLoad,
+        specialAbsoluteAddressLoad,
+        specialGlobalAddressLoad,
         Abi.Alignment.DOUBLE_WORD,
         Abi.Alignment.DOUBLE_WORD,
         registerFileAlignment,
@@ -894,7 +899,8 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       parameterCache.put(parameter, viamParameter);
       parameters.add(viamParameter);
     }
-    var behavior = new BehaviorLowering(this).getFunctionGraph(expr, "behaviour");
+    var behavior =
+        new BehaviorLowering(this).getFunctionGraph(expr, identifier.simpleName() + " behavior");
 
     return new Function(identifier,
         parameters.toArray(new vadl.viam.Parameter[0]),
@@ -1287,9 +1293,6 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
     var abi = abiNode != null ? (Abi) fetch(abiNode).orElse(null) : null;
     var mip = new Processor(identifier, isa, abi, null, reset, memRegions, null);
 
-    // FIXME: Remove this, once annotation framework is supported
-    mip.addAnnotation(new EnableHtifAnno());
-
     return Optional.of(mip);
   }
 
@@ -1531,10 +1534,10 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
   @Override
   public Optional<vadl.viam.Definition> visit(
-      AbiPseudoInstructionDefinition definition) {
-    var pseudoInstructionDefinition = (PseudoInstructionDefinition) definition.target.target();
+      AbiSpecialPurposeInstructionDefinition definition) {
+    var instructionDef = (Definition) definition.target.target();
 
-    return Optional.ofNullable(pseudoInstructionDefinition).flatMap(this::fetch);
+    return Optional.ofNullable(instructionDef).flatMap(this::fetch);
   }
 
   /**
@@ -1545,8 +1548,9 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private Abi.RegisterRef mapSingleSpecialPurposeRegisterDef(
       Map<Identifier, Expr> aliasLookup,
       SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
-    var identifier = specialPurposeRegisterDef.exprs.stream().findFirst().orElseThrow().target;
-    return mapToRegisterRef(aliasLookup, identifier);
+    return specialPurposeRegisterDef.exprs.stream()
+        .map(aliasOrRegister -> getRegisterRefByAliasOrRegister(aliasLookup, aliasOrRegister))
+        .findFirst().orElseThrow();
   }
 
   /**
@@ -1556,20 +1560,34 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
       Map<Identifier, Expr> aliasLookup,
       SpecialPurposeRegisterDefinition specialPurposeRegisterDef) {
     return specialPurposeRegisterDef.exprs.stream()
-        .map(x -> mapToRegisterRef(aliasLookup, x.target))
+        .map(aliasOrRegister -> getRegisterRefByAliasOrRegister(aliasLookup, aliasOrRegister))
         .toList();
+  }
+
+  private Abi.RegisterRef getRegisterRefByAliasOrRegister(
+      Map<Identifier, Expr> aliasLookup,
+      ExpandedSequenceCallExpr aliasOrRegister) {
+    if (aliasOrRegister instanceof ExpandedAliasDefSequenceCallExpr registerCallExpr) {
+      return mapAliasToRegisterRef(aliasLookup, (Identifier) registerCallExpr.target);
+    } else {
+      return mapToRegisterRef(aliasOrRegister.target);
+    }
   }
 
   /**
    * Maps the aliases {@code alias register zero = X(0)} to {@link Abi.RegisterRef} to be
    * used in {@link Abi}.
    */
-  private Abi.RegisterRef mapToRegisterRef(
+  private Abi.RegisterRef mapAliasToRegisterRef(
       Map<Identifier, Expr> aliasLookup,
       Identifier identifier) {
     var expr = ensureNonNull(aliasLookup.get(identifier),
         () -> error("Cannot alias for register definition",
             identifier.location()));
+    return mapToRegisterRef(expr);
+  }
+
+  private Abi.RegisterRef mapToRegisterRef(Expr expr) {
     var pair = getRegisterFile(expr);
     var registerFile = pair.left();
     var index = pair.right();
@@ -1583,24 +1601,69 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
   private Pair<RegisterTensor, Integer> getRegisterFile(Expr expr) {
     if (expr instanceof CallIndexExpr callExpr
         && callExpr.symbolTable != null
-        && callExpr.target instanceof Identifier identifier) {
-      var registerFile =
+        && callExpr.target instanceof Identifier identifier
+        && callExpr.argsIndices.size() == 1 && callExpr.argsIndices.get(0).values.size() == 1) {
+      var resource =
           ensurePresent(
-              Optional.ofNullable((RegisterDefinition) identifier.target())
-                  .flatMap(this::fetch)
-                  .map(x -> (RegisterTensor) x),
+              Optional.ofNullable((Definition) identifier.target)
+                  .flatMap(this::fetch),
               () -> error("Cannot find register file with the name "
                       + identifier.name,
                   callExpr.location));
 
-      ensure(callExpr.argsIndices.size() == 1 && callExpr.argsIndices.get(0).values.size() == 1,
-          () -> error("Expected an index for the register file", callExpr.location));
-
       var index = constantEvaluator.eval(callExpr.argsIndices.get(0).values.get(0));
-      return Pair.of(registerFile, index.value().intValueExact());
+      if (resource instanceof RegisterTensor registerTensor) {
+        return Pair.of(registerTensor, index.value().intValueExact());
+      } else if (resource instanceof ArtificialResource artificialResource) {
+        return getRegisterTensorFromArtificialResource(artificialResource, index);
+      }
+    } else if (expr instanceof Identifier identifier
+        && identifier.target != null) {
+      // This means that we have an alias.
+      var alias =
+          (ArtificialResource) ensurePresent(
+              Optional.of((Definition) identifier.target)
+                  .flatMap(this::fetch),
+              () -> error("Cannot find register file with the name "
+                      + identifier.name,
+                  identifier.loc));
+
+      return getRegisterTensorFromArtificialResource(alias);
+    }
+    throw error("This expression is not register file", expr.location())
+        .build();
+  }
+
+  /**
+   * We want to lower {@link AliasDefinition} to registers, therefore we want to remap aliases to
+   * registers. This method takes an {@link ArtificialResource} and applies the {@code indices} to
+   * the function. It returns then the underlying {@link RegisterTensor} with the index.
+   */
+  private static Pair<RegisterTensor, Integer> getRegisterTensorFromArtificialResource(
+      ArtificialResource alias,
+      ConstantValue... indices) {
+    // We have an alias "alias register A_SP = S(31)"
+    // The S register file would be an artificial resource then we need to apply the "index"
+    // to read function to register file.
+    var readFunction = alias.readFunction();
+    var expression =
+        Inliner.inline(readFunction,
+            new NodeList<>(Arrays.stream(indices).map(x -> x.toViamConstant().toNode()).toList()));
+    expression = new Graph(readFunction.simpleName()).addWithInputs(expression);
+    var canonicalized = Canonicalizer.canonicalizeSubGraph(expression);
+    var registerTensor = (RegisterTensor) alias.innerResourceRef();
+
+    if (canonicalized instanceof ReadRegTensorNode readRegTensorNode) {
+      var registerIndex =
+          ((ConstantNode) readRegTensorNode.indices().get(0)).constant().asVal().intValue();
+      return Pair.of(registerTensor, registerIndex);
+    } else if (canonicalized instanceof ConstantNode) {
+      throw error(
+          "The index of the alias is hardwired to a constant value and it is therefore "
+              + "not a register.",
+          alias.location()).build();
     } else {
-      throw error("This expression is not register file", expr.location())
-          .build();
+      throw error("The index of the alias is not correct.", alias.location()).build();
     }
   }
 
@@ -1640,17 +1703,17 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
 
 
   /**
-   * Extracts {@link AbiPseudoInstructionDefinition} from an
+   * Extracts {@link AbiSpecialPurposeInstructionDefinition} from an
    * {@link ApplicationBinaryInterfaceDefinition}.
    */
-  private Optional<AbiPseudoInstructionDefinition> getAbiPseudoInstruction(
-      List<Definition> definitions, AbiPseudoInstructionDefinition.Kind kind) {
-    var pseudoInstructions = definitions
+  private Optional<AbiSpecialPurposeInstructionDefinition> getAbiSpecialInstruction(
+      List<Definition> definitions, AbiSpecialPurposeInstructionDefinition.Kind kind) {
+    var instructions = definitions
         .stream()
-        .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
+        .filter(x -> x instanceof AbiSpecialPurposeInstructionDefinition y && y.kind == kind)
         .toList();
 
-    return pseudoInstructions.stream().findFirst().map(x -> (AbiPseudoInstructionDefinition) x);
+    return instructions.stream().findFirst().map(x -> (AbiSpecialPurposeInstructionDefinition) x);
   }
 
   /**

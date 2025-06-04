@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
+import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Counter;
@@ -155,6 +156,8 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
 
     // unschedule unnecessary conditions again
     unscheduleConditions(graph);
+
+    graph.deleteUnusedDependencies();
   }
 
   /**
@@ -257,6 +260,14 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
       var mustBeScheduled = toProcess.inputs()
           .anyMatch(n -> getResultOf(n).isPresent());
 
+      if (mustBeScheduled && node instanceof IssGhostCastNode ghostCast) {
+        // ghost cast nodes are removed if they are not used as C expressions
+        var inputScheduleNode = getResultOf(ghostCast.value()).orElseThrow();
+        ghostCast.usages().toList().forEach(u -> u.replaceInput(ghostCast, ghostCast.value()));
+        // remove the schedule node of the ghostCast's value node.
+        return Optional.of(inputScheduleNode);
+      }
+
       return mustBeScheduled
           ? Optional.of(scheduleNode(node))
           : Optional.empty();
@@ -329,6 +340,9 @@ class IssTcgScheduler extends GraphProcessor<Optional<ScheduledNode>> implements
    * This will unschedule the condition of the if/select node, if it can be
    * directly checked in the TCG brcond/movcond op.
    * This optimizes unnecessary setconds and moves in the resulting TCG ops.
+   *
+   * <p>it is possible if the condition is not used as input by others than the scheduled node
+   * and write nodes that use it as condition only.</p>
    */
   private static void unscheduleCondition(BuiltInCall cond) {
     if (TcgPassUtils.conditionOf(cond.builtIn()) == null) {

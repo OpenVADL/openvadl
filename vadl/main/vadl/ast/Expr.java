@@ -130,9 +130,9 @@ interface ExprVisitor<R> {
 
   R visit(MatchExpr expr);
 
-  R visit(ExtendIdExpr expr);
+  R visit(AsIdExpr expr);
 
-  R visit(IdToStrExpr expr);
+  R visit(AsStrExpr expr);
 
   R visit(ExistsInExpr expr);
 
@@ -143,6 +143,10 @@ interface ExprVisitor<R> {
   R visit(ForallExpr expr);
 
   R visit(SequenceCallExpr expr);
+
+  R visit(ExpandedSequenceCallExpr expr);
+
+  R visit(ExpandedAliasDefSequenceCallExpr expr);
 }
 
 final class Identifier extends Expr implements IsId, IdentifierOrPlaceholder {
@@ -743,6 +747,9 @@ class StringLiteral extends Expr {
   String value;
   SourceLocation loc;
 
+  // FIXME: Cleanup StringLiteral constructors, each one does interpret their arguments a bit
+  // differently, which is quite confusing to use.
+
   public StringLiteral(String token, SourceLocation loc) {
     this.token = token;
     if (token.length() > 1) {
@@ -754,7 +761,7 @@ class StringLiteral extends Expr {
   }
 
   public StringLiteral(Identifier fromId, SourceLocation loc) {
-    // TODO More robust string escaping - only used for prettifying expanded IdToStr code
+    // TODO More robust string escaping - only used for prettifying expanded AsStr code
     this.token = '"' + fromId.name.replaceAll("\"", "\\\"") + '"';
     this.value = fromId.name;
     this.loc = loc;
@@ -823,7 +830,7 @@ class StringLiteral extends Expr {
  * }</pre></p>
  */
 sealed interface IdentifierOrPlaceholder extends IsId
-    permits Identifier, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, ExtendIdExpr {
+    permits Identifier, MacroInstanceExpr, MacroMatchExpr, PlaceholderExpr, AsIdExpr {
 }
 
 /**
@@ -1048,14 +1055,24 @@ final class MacroMatchExpr extends Expr implements IsMacroMatch, IdentifierOrPla
 }
 
 /**
- * An internal temporary node representing the ExtendId built-in.
- * This node should never leave the parser.
+ * An internal temporary node representing the AsId lexical macro.
+ * Produces identifiers from strings or is used to concatenate multiple identifiers/strings into
+ * one.
+ *
+ * <p><pre>{@code
+ *  constant AsId("one") = 1
+ *  constant AsId("th", "ree") = 3
+ *  constant AsId(max, count) = 42
+ *  constant AsId(open, "vadl") = 2024
+ *  }</pre>
+ *
+ * <p>This node should never leave the parser.
  */
-final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
+final class AsIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
   GroupedExpr expr;
   SourceLocation loc;
 
-  ExtendIdExpr(GroupedExpr expr, SourceLocation loc) {
+  AsIdExpr(GroupedExpr expr, SourceLocation loc) {
     this.expr = expr;
     this.loc = loc;
   }
@@ -1077,7 +1094,7 @@ final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append("ExtendId ");
+    builder.append("AsId ");
     expr.prettyPrint(0, builder);
   }
 
@@ -1090,7 +1107,7 @@ final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
       return false;
     }
 
-    ExtendIdExpr that = (ExtendIdExpr) o;
+    AsIdExpr that = (AsIdExpr) o;
     return expr.equals(that.expr);
   }
 
@@ -1114,15 +1131,25 @@ final class ExtendIdExpr extends Expr implements IdentifierOrPlaceholder, IsId {
 }
 
 /**
- * An internal temporary node representing the IdToStr built-in.
- * This node should never leave the parser.
+ * An internal temporary node representing the AsStr lexical macro.
+ * Produces string literals from identifiers or is used to concatenate multiple
+ * identifiers/strings into one.
+ *
+ * <p><pre>{@code
+ *  function one -> String = AsStr(one)
+ *  function three -> String = AsStr(th, ree)
+ *  function maxcount -> String = AsStr("max", "count")
+ *  function openvadl -> String = AsStr("open", vadl)
+ *  }</pre>
+ *
+ * <p>This node should never leave the parser.
  */
-final class IdToStrExpr extends Expr {
-  IdentifierOrPlaceholder id;
+final class AsStrExpr extends Expr {
+  GroupedExpr expr;
   SourceLocation loc;
 
-  IdToStrExpr(IdentifierOrPlaceholder id, SourceLocation loc) {
-    this.id = id;
+  AsStrExpr(GroupedExpr expr, SourceLocation loc) {
+    this.expr = expr;
     this.loc = loc;
   }
 
@@ -1143,9 +1170,8 @@ final class IdToStrExpr extends Expr {
 
   @Override
   public void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
-    builder.append("IdToStr (");
-    id.prettyPrint(0, builder);
-    builder.append(")");
+    builder.append("AsStr ");
+    expr.prettyPrint(0, builder);
   }
 
   @Override
@@ -1157,13 +1183,13 @@ final class IdToStrExpr extends Expr {
       return false;
     }
 
-    IdToStrExpr that = (IdToStrExpr) o;
-    return id.equals(that.id);
+    AsStrExpr that = (AsStrExpr) o;
+    return expr.equals(that.expr);
   }
 
   @Override
   public int hashCode() {
-    return id.hashCode();
+    return expr.hashCode();
   }
 }
 
@@ -1440,7 +1466,7 @@ sealed interface IsSymExpr extends IsCallExpr permits SymbolExpr, IsId {
 }
 
 sealed interface IsId extends IsSymExpr
-    permits ExtendIdExpr, Identifier, IdentifierOrPlaceholder, IdentifierPath, MacroInstanceExpr,
+    permits AsIdExpr, Identifier, IdentifierOrPlaceholder, IdentifierPath, MacroInstanceExpr,
     MacroMatchExpr, PlaceholderExpr {
   @Override
   default IsId path() {
@@ -2712,13 +2738,13 @@ class ForallExpr extends Expr {
 class SequenceCallExpr extends Expr {
 
   @Child
-  Identifier target;
+  IsCallExpr target;
   @Nullable
   @Child
   Expr range;
   SourceLocation loc;
 
-  SequenceCallExpr(Identifier target, @Nullable Expr range, SourceLocation loc) {
+  SequenceCallExpr(IsCallExpr target, @Nullable Expr range, SourceLocation loc) {
     this.target = target;
     this.range = range;
     this.loc = loc;
@@ -2747,5 +2773,63 @@ class SequenceCallExpr extends Expr {
       range.prettyPrint(0, builder);
       builder.append("}");
     }
+  }
+}
+
+/**
+ * It is allowed to define shortcuts in {@link SequenceCallExpr}. These shortcuts will be
+ * expanded into {@link ExpandedSequenceCallExpr} and {@link ExpandedAliasDefSequenceCallExpr}.
+ * So {@code a{0..10}} will become {@code a0, a1, ...}. Each entry is then a
+ * {@link ExpandedAliasDefSequenceCallExpr}. However, single entries need to be also represented.
+ * If it is a simple entry like {@code a0} then this will be also to
+ * {@link ExpandedAliasDefSequenceCallExpr} mapped. {@code X(1)} is a {@link CallIndexExpr} and will
+ * be mapped to {@link ExpandedSequenceCallExpr}.
+ */
+sealed class ExpandedSequenceCallExpr extends Expr permits ExpandedAliasDefSequenceCallExpr {
+  @Child
+  Expr target;
+  SourceLocation loc;
+
+  ExpandedSequenceCallExpr(Expr target, SourceLocation loc) {
+    this.target = target;
+    this.loc = loc;
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  public SourceLocation location() {
+    return loc;
+  }
+
+  @Override
+  SyntaxType syntaxType() {
+    return BasicSyntaxType.EX;
+  }
+
+  @Override
+  void prettyPrintExpr(int indent, StringBuilder builder, Precedence parentPrec) {
+    target.prettyPrint(0, builder);
+  }
+}
+
+final class ExpandedAliasDefSequenceCallExpr extends ExpandedSequenceCallExpr {
+  ExpandedAliasDefSequenceCallExpr(Identifier target,
+                                   SourceLocation loc) {
+    super(target, loc);
+  }
+
+  @Override
+  <R> R accept(ExprVisitor<R> visitor) {
+    return visitor.visit(this);
+  }
+
+  @Override
+  List<Node> children() {
+    // Remove this method when #293 is fixed.
+    return List.of(target);
   }
 }

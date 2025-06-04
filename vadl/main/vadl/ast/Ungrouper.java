@@ -177,12 +177,12 @@ public class Ungrouper
   }
 
   @Override
-  public Expr visit(ExtendIdExpr expr) {
+  public Expr visit(AsIdExpr expr) {
     return expr;
   }
 
   @Override
-  public Expr visit(IdToStrExpr expr) {
+  public Expr visit(AsStrExpr expr) {
     return expr;
   }
 
@@ -211,6 +211,16 @@ public class Ungrouper
 
   @Override
   public Expr visit(SequenceCallExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(ExpandedSequenceCallExpr expr) {
+    return expr;
+  }
+
+  @Override
+  public Expr visit(ExpandedAliasDefSequenceCallExpr expr) {
     return expr;
   }
 
@@ -336,7 +346,7 @@ public class Ungrouper
   }
 
   @Override
-  public Void visit(AbiPseudoInstructionDefinition definition) {
+  public Void visit(AbiSpecialPurposeInstructionDefinition definition) {
     ungroupAnnotations(definition);
     return null;
   }

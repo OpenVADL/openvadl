@@ -47,10 +47,10 @@ public class ViamLoweringTest {
   @Test
   void shouldThrow_whenPseudoReturnInstructionMissing() {
     var prog = """
-          pseudo return instruction = DOESNOTEXIST
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = DOESNOTEXIST
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -64,16 +64,16 @@ public class ViamLoweringTest {
         """;
     var throwable = Assertions.assertThrows(DiagnosticList.class,
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)));
-    TestUtils.assertErrors(throwable, "Symbol not found: DOESNOTEXIST");
+    TestUtils.assertErrors(throwable, "Unknown Symbol: \"DOESNOTEXIST\"");
   }
 
   @Test
   void shouldThrow_whenPseudoCallInstructionMissing() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = DOESNOTEXIST
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = DOESNOTEXIST
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -87,6 +87,6 @@ public class ViamLoweringTest {
         """;
     var throwable = Assertions.assertThrows(DiagnosticList.class,
         () -> VadlParser.parse(inputWrappedByValidAbi(prog)));
-    TestUtils.assertErrors(throwable, "Symbol not found: DOESNOTEXIST");
+    TestUtils.assertErrors(throwable, "Unknown Symbol: \"DOESNOTEXIST\"");
   }
 }

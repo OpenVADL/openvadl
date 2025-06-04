@@ -37,6 +37,9 @@ import org.slf4j.Logger;
 import vadl.utils.functionInterfaces.TriFunction;
 import vadl.viam.Constant;
 import vadl.viam.ViamError;
+import vadl.viam.graph.NodeList;
+import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.ExpressionNode;
 
 /**
  * The BuiltInTable class represents a collection of built-in functions and operations in VADL.
@@ -843,6 +846,7 @@ public class BuiltInTable {
   public static final BuiltIn ROR =
       func("VADL::ror", "<>>", Type.relation(BitsType.class, UIntType.class, BitsType.class))
           .takesDefault()
+          .compute(Constant.Value::ror)
           .returnsFirstBitWidth(BitsType.class)
           .build();
 
@@ -941,6 +945,29 @@ public class BuiltInTable {
           .returnsFirstBitWidth(UIntType.class)
           .build();
 
+  /**
+   * Counting trailing zeros.
+   *
+   * <p>{@code function ctz( a : Bits<N> ) -> UInt<N>  }
+   */
+  public static final BuiltIn CTZ =
+      func("VADL::ctz", Type.relation(BitsType.class, UIntType.class))
+          .takesDefault()
+          .returnsFirstBitWidth(UIntType.class)
+          .build();
+
+
+  /**
+   * Counting trailing ones.
+   *
+   * <p>{@code function cto( a : Bits<N> ) -> UInt<N> }
+   */
+  public static final BuiltIn CTO =
+      func("VADL::cto", Type.relation(BitsType.class, UIntType.class))
+          .takesDefault()
+          .returnsFirstBitWidth(UIntType.class)
+          .build();
+
 
   ///// FUNCTIONS //////
 
@@ -959,22 +986,24 @@ public class BuiltInTable {
   /**
    * Concatenates two strings to a new string.
    *
-   * <p>{@code function concatenate(String<N>, String<M>) -> String<X>}
+   * <p>{@code function concat(String<N>, String<M>) -> String<X>}
    */
   public static final BuiltIn CONCATENATE_STRINGS =
-      func("VADL::concatenate",
+      func("VADL::concat",
           Type.relation(StringType.class, StringType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
+          .compute(
+              (a, b) -> new Constant.Str(((Constant.Str) a).value() + ((Constant.Str) b).value()))
           .build();
 
   /**
    * Concatenates two bit values to a new bit value with a length of the sum of the input values.
    *
-   * <p>{@code function concatenate(Bits<N>, Bits<M>) -> Bits<N + M>}
+   * <p>{@code function concat(Bits<N>, Bits<M>) -> Bits<N + M>}
    */
   public static final BuiltIn CONCATENATE_BITS =
-      func("VADL::concatenate",
+      func("VADL::concat",
           Type.relation(BitsType.class, BitsType.class, BitsType.class))
           .takesDefault()
           .returnsFromDataTypes(args -> Type.bits(args.stream().mapToInt(DataType::bitWidth).sum()))
@@ -1014,6 +1043,7 @@ public class BuiltInTable {
           Type.relation(BitsType.class, StringType.class))
           .takesDefault()
           .returns(Type.string())
+          .computeUnary(a -> new Constant.Str(a.asVal().decimal()))
           .build();
 
   /**
@@ -1255,6 +1285,8 @@ public class BuiltInTable {
       CLZ,
       CLO,
       CLS,
+      CTZ,
+      CTO,
 
       // FUNCTIONS
 
@@ -1280,7 +1312,7 @@ public class BuiltInTable {
       INSTRUCTION_COMPUTE
   );
 
-  public static final HashSet<BuiltIn> commutative = new HashSet<>(List.of(
+  public static final HashSet<BuiltIn> COMMUTATIVE = new HashSet<>(List.of(
       // ARITHMETIC
       ADD,
       ADDS,
@@ -1310,6 +1342,13 @@ public class BuiltInTable {
       EQU,
       NEQ
   ));
+
+  // built-ins that are not pure, so they depend on an outer context, which makes them magical.
+  public static final HashSet<BuiltIn> MAGIC_BUILT_IN = new HashSet<>(List.of(
+      REGISTER,
+      MNEMONIC
+  ));
+
 
   public static Set<BuiltIn> ASM_PARSER_BUILT_INS =
       Collections.newSetFromMap(new IdentityHashMap<>());
@@ -1378,6 +1417,12 @@ public class BuiltInTable {
       return Optional.empty();
     }
 
+    /**
+     * Return {@code true} when the {@link BuiltIn} is a {@link TupleType}.
+     */
+    public boolean isStatusBuiltin() {
+      return signature.resultTypeClass() == TupleType.class;
+    }
 
     /**
      * Checks whether the given concrete types are valid argument types for this BuiltIn.
@@ -1466,7 +1511,7 @@ public class BuiltInTable {
 
     @Override
     public String toString() {
-      return "VADL::" + name + signature;
+      return name + signature;
     }
 
     public List<Class<? extends Type>> argTypeClasses() {
@@ -1487,6 +1532,19 @@ public class BuiltInTable {
 
     private static final Logger logger = getLogger(BuiltIn.class);
 
+    /**
+     * Creates a {@link BuiltInCall} node from this built-in and the given arguments.
+     */
+    public BuiltInCall call(ExpressionNode... args) {
+      return BuiltInCall.of(this, args);
+    }
+
+    /**
+     * Creates a {@link BuiltInCall} node from this built-in and the given arguments.
+     */
+    public BuiltInCall  call(NodeList<ExpressionNode> arguments) {
+      return BuiltInCall.of(this, arguments);
+    }
   }
 
   private static BuiltInBuilder func(String name, @Nullable String operator,
@@ -1687,6 +1745,7 @@ public class BuiltInTable {
         }
       };
     }
+
 
     @Contract("false, _, _ -> fail")
     @FormatMethod

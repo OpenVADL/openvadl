@@ -17,16 +17,15 @@
 package vadl.vdt.passes;
 
 import java.io.IOException;
+import java.util.List;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
-import vadl.vdt.impl.theiling.TheilingDecodeTreeGenerator;
+import vadl.vdt.impl.irregular.IrregularDecodeTreeGenerator;
+import vadl.vdt.impl.irregular.model.DecodeEntry;
 import vadl.vdt.model.Node;
-import vadl.vdt.utils.BitPattern;
-import vadl.vdt.utils.Instruction;
-import vadl.vdt.utils.PatternUtils;
 import vadl.viam.Specification;
 
 /**
@@ -49,36 +48,18 @@ public class VdtLoweringPass extends Pass {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public @Nullable Node execute(PassResults passResults, Specification viam)
       throws IOException {
 
-    var isa = viam.isa().orElse(null);
-    if (isa == null) {
-      return null;
-    }
-
-    var insns = isa.ownInstructions()
-        .stream()
-        .map(this::prepareInstruction)
-        .toList();
-
-    if (insns.isEmpty()) {
+    Object entries = passResults.lastNullableResultOf(VdtInputPreparationPass.class);
+    if (entries == null) {
       // just skip if there are no instructions.
       // this will only happen if we use the check command
       return null;
     }
 
-    return new TheilingDecodeTreeGenerator().generate(insns);
-  }
-
-  /**
-   * Prepares an instruction for the decode tree generation.
-   *
-   * @param insn The VIAM instruction
-   * @return The prepared instruction
-   */
-  private Instruction prepareInstruction(vadl.viam.Instruction insn) {
-    BitPattern pattern = PatternUtils.toFixedBitPattern(insn);
-    return new Instruction(insn, pattern.width(), pattern);
+    final List<DecodeEntry> insns = (List<DecodeEntry>) entries;
+    return new IrregularDecodeTreeGenerator().generate(insns);
   }
 }

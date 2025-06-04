@@ -21,17 +21,23 @@ import static vadl.error.Diagnostic.error;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
 import vadl.types.BuiltInTable;
 import vadl.types.asmTypes.AsmType;
+import vadl.utils.Levenshtein;
 import vadl.utils.SourceLocation;
+import vadl.utils.WithLocation;
 
 class SymbolTable {
   @Nullable
@@ -359,9 +365,63 @@ class SymbolTable {
     // Unfortunately, we need this type to be correctly parsed because,
     // depending on it, we parse the body of the macro differently. So if we
     // don't know what it is, we must exit early.
-    throw ParserUtils.unknownSyntaxTypeError(identifier.name, identifier.location());
+    throw ParserUtils.unknownSyntaxTypeError(identifier.name, this, identifier.location());
   }
 
+  /**
+   * Returns all symbol names in scope.
+   *
+   * @return the set of all available names.
+   */
+  Set<String> allSymbolNames() {
+    var names = new HashSet<>(symbols.keySet());
+    if (parent != null) {
+      names.addAll(parent.allSymbolNames());
+    }
+    return names;
+  }
+
+  /**
+   * Returns all symbol names in scope that point to the defined node classes.
+   *
+   * @param classes that are allowed.
+   * @return the set of all available names.
+   */
+  @SafeVarargs
+  final Set<String> allSymbolNamesOf(Class<? extends Node>... classes) {
+    var matchingNames = symbols.entrySet().stream()
+        .filter(entry -> entry.getValue() instanceof AstSymbol astSymbol
+            && Arrays.stream(classes).anyMatch(klass -> klass.isInstance(astSymbol.origin)))
+        .map(Map.Entry::getKey)
+        .toList();
+
+    var names = new HashSet<>(matchingNames);
+    if (parent != null) {
+      names.addAll(parent.allSymbolNamesOf(classes));
+    }
+    return names;
+  }
+
+  /**
+   * Returns all symbol names in scope that point to the defined node classes.
+   *
+   * @param classes that are allowed.
+   * @return the set of all available names.
+   */
+  @SafeVarargs
+  final Set<String> allMacroSymbolNamesOf(Class<? extends Node>... classes) {
+    var matchingNames = macroSymbols.entrySet().stream()
+        .filter(entry -> Arrays.stream(classes)
+            .anyMatch(klass -> klass.isInstance(entry.getValue().origin)))
+        .map(Map.Entry::getKey)
+        .toList();
+
+    var names = new HashSet<>(matchingNames);
+    if (parent != null) {
+      names.addAll(parent.allSymbolNamesOf(classes));
+    }
+    return names;
+  }
 
   /**
    * Copies all symbols of the given symbol table into this symbol table.
@@ -449,6 +509,22 @@ class SymbolTable {
     error.locationDescription(otherLoc, "First defined here.");
 
     errors.add(error.build());
+  }
+
+  private void reportUnkownError(String type, String actual, WithLocation locatable,
+                                 @Nullable List<String> suggestions) {
+
+    var diagnostic = error("Unknown %s: \"%s\"".formatted(type, actual), locatable)
+        .locationDescription(locatable,
+            "No %s with this name exists.", type.toLowerCase(Locale.US)
+        );
+
+    if (suggestions != null && !suggestions.isEmpty()) {
+      diagnostic =
+          diagnostic.suggestions(suggestions);
+    }
+
+    errors.add(diagnostic.build());
   }
 
   private void reportError(String error, SourceLocation location) {
@@ -814,8 +890,11 @@ class SymbolTable {
     public Void visit(Identifier expr) {
       var symbol = expr.symbolTable().resolve(expr);
       if (symbol == null) {
+        var suggestions =
+            Levenshtein.suggestions(expr.pathToString(), expr.symbolTable().allSymbolNames());
+
         expr.symbolTable()
-            .reportError("Symbol not found: " + expr.pathToString(), expr.location());
+            .reportUnkownError("Symbol", expr.pathToString(), expr.location(), suggestions);
       }
       return null;
     }
@@ -824,8 +903,11 @@ class SymbolTable {
     public Void visit(IdentifierPath expr) {
       var symbol = expr.symbolTable().resolve(expr);
       if (symbol == null) {
+        var suggestions =
+            Levenshtein.suggestions(expr.pathToString(), expr.symbolTable().allSymbolNames());
+
         expr.symbolTable()
-            .reportError("Symbol not found: " + expr.pathToString(), expr.location());
+            .reportUnkownError("Symbol", expr.pathToString(), expr.location(), suggestions);
       }
       return null;
     }
@@ -843,14 +925,19 @@ class SymbolTable {
 
 
       if (definition.annotation == null) {
-        // FIXME: Add a more descriptive error message and a body.
-        // FIXME: Add a list of available annotations (usage strings) as help to the error.
-        definition.symbolTable().errors.add(
-            error("Unknown Annotation", definition)
+        // FIXME: Show the usage strings and not just the names.
+        var suggestions = Levenshtein.suggestions(
+            definition.name(),
+            AnnotationTable.availableAnnotationNames(definition.target.getClass()));
+
+        var diagnostic =
+            error("Unknown Annotation: \"%s\"".formatted(definition.name()), definition)
                 .locationDescription(definition.location(),
-                    "No annotation with the name \"%s\" exists on %s", definition.name(),
+                    "No annotation with this name exists on %s",
                     definition.target)
-                .build());
+                .suggestions(suggestions);
+
+        definition.symbolTable().errors.add(diagnostic.build());
         return null;
       }
 
@@ -958,6 +1045,7 @@ class SymbolTable {
     public Void visit(EncodingDefinition definition) {
       // Link instruction and import all symbols from the instruction format.
       beforeTravel(definition);
+      definition.annotations.forEach(this::travel);
 
       var inst =
           definition.symbolTable().requireAs(definition.identifier(), InstructionDefinition.class);
@@ -980,8 +1068,12 @@ class SymbolTable {
           // Verify that the field specified really is a field in the encoding
           var field = fieldEncoding.field;
           if (format.getField(field.name) == null) {
+            var suggestions = Levenshtein.suggestions(
+                field.name,
+                format.fields.stream().map(f -> f.identifier().name).toList());
+
             definition.symbolTable()
-                .reportError("Format field %s not found".formatted(field.name), field.location());
+                .reportUnkownError("Field", field.name, field.location(), suggestions);
           }
 
           // Verify that the value is visited.
@@ -1063,9 +1155,12 @@ class SymbolTable {
             }
           }
           if (foundField == null) {
+            var suggestions = Levenshtein.suggestions(namedArgument.name.name,
+                format.fields.stream().map(f -> f.identifier().name).toList());
+
             statement.symbolTable()
-                .reportError("Unknown format field " + namedArgument.name.name,
-                    namedArgument.name.location());
+                .reportUnkownError("Field", namedArgument.name.name, namedArgument.location(),
+                    suggestions);
           }
           namedArgument.value.accept(this);
         }
@@ -1084,18 +1179,24 @@ class SymbolTable {
               }
             }
             if (foundParam == null) {
+              var suggestions =
+                  Levenshtein.suggestions(namedArgument.name.name,
+                      pseudoInstr.params.stream().map(p -> p.identifier().name).toList());
               statement.symbolTable()
-                  .reportError(
-                      "Unknown instruction param %s (%s)".formatted(namedArgument.name.name,
-                          pseudoInstr.identifier().name),
-                      namedArgument.name.location());
+                  .reportUnkownError("Instruction Parameter", namedArgument.name.name,
+                      namedArgument.name, suggestions);
             }
             namedArgument.value.accept(this);
           }
         } else {
+          // FIXME: Limit suggestions to instructions
+          var suggestions = Levenshtein.suggestions(statement.id().name,
+              statement.symbolTable().allSymbolNamesOf(InstructionDefinition.class,
+                  PseudoInstructionDefinition.class));
+
           statement.symbolTable()
-              .reportError("Unknown instruction " + statement.id().name,
-                  statement.loc);
+              .reportUnkownError("Instruction", statement.id().name, statement.location(),
+                  suggestions);
         }
       }
       for (Expr unnamedArgument : statement.unnamedArguments) {
@@ -1128,9 +1229,12 @@ class SymbolTable {
       var relocation = definition.relocation;
       var symbol = definition.symbolTable().resolve(relocation);
       if (symbol == null) {
+        var suggestions = Levenshtein.suggestions(
+            relocation.name,
+            definition.symbolTable().allSymbolNames());
+
         definition.symbolTable()
-            .reportError("Unknown relocation symbol: " + relocation.pathToString(),
-                relocation.location());
+            .reportUnkownError("Relocation", relocation.pathToString(), relocation, suggestions);
       }
 
       definition.children().forEach(this::travel);
@@ -1142,12 +1246,17 @@ class SymbolTable {
     @Override
     public Void visit(AsmDirectiveDefinition definition) {
       beforeTravel(definition);
+      definition.annotations.forEach(this::travel);
 
       // Only do rudimentary checks here, the rest is done in the typechecker.
       if (!AsmDirective.isAsmDirective(definition.builtinDirective.name)) {
+        var suggestions = Levenshtein.suggestions(definition.builtinDirective.name,
+            Arrays.stream(AsmDirective.values()).map(Enum::toString).toList()
+        );
+
         definition.symbolTable()
-            .reportError("Unknown asm directive: " + definition.builtinDirective.name,
-                definition.builtinDirective.location());
+            .reportUnkownError("Asm Directive", definition.builtinDirective.name,
+                definition.builtinDirective, suggestions);
       }
 
       afterTravel(definition);
@@ -1178,6 +1287,7 @@ class SymbolTable {
     @Override
     public Void visit(AsmGrammarLocalVarDefinition definition) {
       beforeTravel(definition);
+      definition.annotations.forEach(this::travel);
 
       // FIXME: @benjaminkasper99 should we maybe make "null" a symbol that is always in the
       // symboltable so we can avoid this special treatment here?
@@ -1197,9 +1307,13 @@ class SymbolTable {
       if (definition.id != null) {
         var idSymbol = definition.symbolTable().resolve(definition.id);
         if (idSymbol == null) {
+          var suggestions = Levenshtein.suggestions(
+              definition.id.name,
+              definition.symbolTable().allSymbolNames());
+
           definition.symbolTable()
-              .reportError("Unknown symbol in asm grammar rule: " + definition.id.name,
-                  definition.id.location());
+              .reportUnkownError("Asm Grammar Rule", definition.id.name, definition.id,
+                  suggestions);
         }
       }
 
@@ -1219,11 +1333,14 @@ class SymbolTable {
     @Override
     public Void visit(AsmGrammarTypeDefinition definition) {
       beforeTravel(definition);
+      definition.annotations.forEach(this::travel);
 
       if (!AsmType.isInputAsmType(definition.id.name)) {
+        var suggestions = Levenshtein.suggestions(definition.id.name,
+            AsmType.ASM_TYPES.values().stream().map(AsmType::name).toList());
+
         definition.symbolTable()
-            .reportError("Unknown asm type: " + definition.id.name,
-                definition.id.location());
+            .reportUnkownError("Asm Type", definition.id.name, definition.id, suggestions);
       }
 
       afterTravel(definition);

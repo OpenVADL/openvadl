@@ -178,10 +178,16 @@ public interface CDefaultMixins {
       ctx.wr("if (")
           .gen(node.condition())
           .ln(") { ").spacedIn()
-          .gen(node.trueBranch()).spaceOut()
-          .ln("} else {").spacedIn()
-          .gen(node.falseBranch()).spaceOut()
-          .ln("}");
+          .gen(node.trueBranch()).spaceOut();
+      if (node.falseBranch().isEmpty()) {
+        ctx.ln("}");
+      } else {
+        ctx.ln("} else {").spacedIn()
+            .gen(node.falseBranch()).spaceOut()
+            .ln("}");
+      }
+      var mergeNode = node.findCorrespondingMergeNode();
+      ctx.gen(mergeNode);
     }
   }
 
@@ -331,8 +337,15 @@ public interface CDefaultMixins {
   @SuppressWarnings("MissingJavadocType")
   interface Slice {
     @Handler
-    default void handle(CGenContext<Node> ctx, SliceNode toHandle) {
-      throw new UnsupportedOperationException("Type SliceNode not yet implemented");
+    @SuppressWarnings("MissingJavadocMethodCheck")
+    default void handle(CGenContext<Node> ctx, SliceNode node) {
+      ctx.wr("VADL_slice(")
+          .gen(node.value())
+          .wr(", %s", node.bitSlice().partSize());
+      node.bitSlice().parts().forEach(p -> {
+        ctx.wr(", " + p.msb() + ", " + p.lsb());
+      });
+      ctx.wr(")");
     }
   }
 

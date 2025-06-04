@@ -30,12 +30,20 @@ import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
+import vadl.viam.graph.control.BeginNode;
+import vadl.viam.graph.control.BranchEndNode;
+import vadl.viam.graph.control.ControlNode;
+import vadl.viam.graph.control.IfNode;
+import vadl.viam.graph.control.MergeNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.LetNode;
 import vadl.viam.graph.dependency.SelectNode;
+import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
+import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
 
@@ -117,6 +125,33 @@ public class GraphUtils {
           return getInputNodes(i, filter);
         });
   }
+
+  /**
+   * Retrieve all usages of the given node by unrolling all let nodes.
+   * If a usage node is a let node, all usages of the let node are recursively added as well.
+   */
+  public static Stream<Node> getUsagesByUnrollingLets(ExpressionNode node) {
+    return node.usages()
+        .flatMap(u -> {
+          if (u instanceof LetNode letNode) {
+            return getUsagesByUnrollingLets(letNode);
+          }
+          return Stream.of(u);
+        });
+  }
+
+  /**
+   * Determines if a specified filter applies to the given node or at least one of its dependencies.
+   *
+   * @param node   The starting node to check.
+   * @param filter A function that applies a condition to each node,
+   *               returning true if the node has a dependency and should be considered.
+   * @return true if itself or any dependency satisfies the filter condition; false otherwise.
+   */
+  public static boolean isOrhasDependencies(Node node, Function<Node, Boolean> filter) {
+    return filter.apply((Node) node) || hasDependencies(node, filter);
+  }
+
 
   /**
    * Determines if a given node has dependencies based on a provided filter function.
@@ -299,8 +334,12 @@ public class GraphUtils {
     return combineExpressions(BuiltInTable.OR, exprs);
   }
 
-  public static ExpressionNode equ(ExpressionNode... exprs) {
-    return combineExpressions(BuiltInTable.EQU, exprs);
+  public static ExpressionNode equ(ExpressionNode a, ExpressionNode b) {
+    return combineExpressions(BuiltInTable.EQU, a, b);
+  }
+
+  public static ExpressionNode neq(ExpressionNode a, ExpressionNode b) {
+    return combineExpressions(BuiltInTable.NEQ, a, b);
   }
 
   public static ExpressionNode neq(ExpressionNode... exprs) {
@@ -320,6 +359,11 @@ public class GraphUtils {
     return new SelectNode(cond, trueCase, falseCase);
   }
 
+  public static SliceNode slice(ExpressionNode expr, int msb, int lsb) {
+    var slice = Constant.BitSlice.of(msb, lsb);
+    return new SliceNode(expr, slice, Type.bits(slice.bitSize()));
+  }
+
   private static ExpressionNode combineExpressions(BuiltInTable.BuiltIn operation,
                                                    ExpressionNode... exprs) {
     assert exprs.length >= 2;
@@ -330,23 +374,76 @@ public class GraphUtils {
     return expr;
   }
 
+  /**
+   * Concatenate multiple expressions.
+   */
+  public static ExpressionNode concat(ExpressionNode... exprs) {
+    if (exprs.length == 1) {
+      return exprs[0];
+    }
+    return combineExpressions(BuiltInTable.CONCATENATE_BITS, exprs);
+  }
 
   public static ExpressionNode castBool(ExpressionNode value) {
     return binaryOp(BuiltInTable.EQU, Type.bool(), value,
         Constant.Value.of(0, value.type().asDataType()).toNode());
   }
 
+  /**
+   * Sign extend value to a given type.
+   */
   public static ExpressionNode signExtend(ExpressionNode value, DataType dataType) {
+    if (dataType.isTrivialCastTo(value.type())) {
+      return value;
+    }
     return new SignExtendNode(value, dataType);
   }
 
+  /**
+   * Zero extend value to a given type.
+   */
   public static ExpressionNode zeroExtend(ExpressionNode value, DataType dataType) {
+    if (dataType.isTrivialCastTo(value.type())) {
+      return value;
+    }
     return new ZeroExtendNode(value, dataType);
   }
 
+  /**
+   * Truncate value to a given type.
+   */
   public static ExpressionNode truncate(ExpressionNode value, DataType dataType) {
+    if (value.type().asDataType().bitWidth() == dataType.bitWidth()) {
+      // no truncation required
+      return value;
+    }
     return new TruncateNode(value, dataType);
   }
+
+  /**
+   * Builts an if-else control flow in the given graph.
+   * The {@link MergeNode} is linked to the provided next node.
+   *
+   * @param graph            in which it should be created
+   * @param condition        of the if node
+   * @param trueCaseEffects  side effects applied in the true branch
+   * @param falseCaseEffects side effects applied in the false branch
+   * @param next             the next control node the merge node is linked to
+   * @return the created if node
+   */
+  public static IfNode ifElseSideEffect(Graph graph, ExpressionNode condition,
+                                        List<SideEffectNode> trueCaseEffects,
+                                        List<SideEffectNode> falseCaseEffects,
+                                        ControlNode next) {
+    var trueEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>(trueCaseEffects)));
+    var trueBegin = graph.addWithInputs(new BeginNode(trueEnd));
+    var falseEnd = graph.addWithInputs(new BranchEndNode(new NodeList<>(falseCaseEffects)));
+    var falseBegin = graph.addWithInputs(new BeginNode(falseEnd));
+    var ifNode = graph.addWithInputs(new IfNode(condition, trueBegin, falseBegin));
+    graph.addWithInputs(new MergeNode(new NodeList<>(trueEnd, falseEnd), next));
+    return ifNode;
+  }
+
 
   /// CONSTANT VALUE CONSTRUCTION ///
 

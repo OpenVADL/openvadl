@@ -30,6 +30,7 @@ import vadl.configuration.LcbConfiguration;
 import vadl.cppCodeGen.passes.fieldNodeReplacement.FieldNodeReplacementPassForDecoding;
 import vadl.dump.CollectBehaviorDotGraphPass;
 import vadl.dump.HtmlDumpPass;
+import vadl.gcb.passes.DetectRegisterIndicesPass;
 import vadl.gcb.passes.DetermineRelocationTypeForFieldPass;
 import vadl.gcb.passes.GenerateCompilerRegistersPass;
 import vadl.gcb.passes.GenerateValueRangeImmediatePass;
@@ -44,7 +45,6 @@ import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDeco
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass;
 import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredicateFunctionPass;
 import vadl.iss.passes.IssBuiltInArgTruncOptPass;
-import vadl.iss.passes.IssBuiltInSimplificationPass;
 import vadl.iss.passes.IssConfigurationPass;
 import vadl.iss.passes.IssExtractOptimizationPass;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
@@ -105,6 +105,7 @@ import vadl.rtl.passes.MiaMappingInlinePass;
 import vadl.rtl.passes.MiaMappingOptimizePass;
 import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
+import vadl.vdt.passes.VdtInputPreparationPass;
 import vadl.vdt.passes.VdtLoweringPass;
 import vadl.viam.Specification;
 import vadl.viam.passes.DuplicateWriteDetectionPass;
@@ -120,6 +121,7 @@ import vadl.viam.passes.functionInliner.FunctionInlinerPass;
 import vadl.viam.passes.sideEffectScheduling.SideEffectSchedulingPass;
 import vadl.viam.passes.sideeffect_condition.SideEffectConditionResolvingPass;
 import vadl.viam.passes.staticCounterAccess.StaticCounterAccessResolvingPass;
+import vadl.viam.passes.statusBuiltInInlinePass.RemoveUnusedStatusFlagsFromBuiltinsPass;
 import vadl.viam.passes.statusBuiltInInlinePass.StatusBuiltInInlinePass;
 import vadl.viam.passes.verification.ViamVerificationPass;
 
@@ -159,6 +161,7 @@ public class PassOrders {
     order.add(new ViamCreationPass(configuration));
     order.add(new ViamVerificationPass(configuration));
 
+    order.add(new RemoveUnusedStatusFlagsFromBuiltinsPass(configuration));
     order.add(new StatusBuiltInInlinePass(configuration));
 
     // Common optimizations
@@ -207,9 +210,10 @@ public class PassOrders {
     order.add(new GenerateCompilerRegistersPass(gcbConfiguration));
     // skip inlining of field access
     order.skip(FieldAccessInlinerPass.class);
+    order.add(new DetectRegisterIndicesPass(gcbConfiguration));
+    order.add(new NormalizeFieldsToFieldAccessFunctionsPass(gcbConfiguration));
     order.add(new IdentifyFieldUsagePass(gcbConfiguration));
     order.add(new IsaMachineInstructionMatchingPass(gcbConfiguration));
-    order.add(new NormalizeFieldsToFieldAccessFunctionsPass(gcbConfiguration));
     order.add(new DetermineRelocationTypeForFieldPass(gcbConfiguration));
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
@@ -260,8 +264,10 @@ public class PassOrders {
     order.add(new EmitVadlBuiltinHeaderFilePass(configuration));
     order.add(new vadl.lcb.clang.lib.Driver.ToolChains.EmitClangToolChainFilePass(configuration));
     order.add(new EmitClangTargetHeaderFilePass(configuration));
-    order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));
-    order.add(new vadl.lcb.clang.lib.Basic.Targets.EmitClangTargetCppFilePass(configuration));
+    order.add(
+        new vadl.lcb.template.clang.lib.Basic.Targets.EmitClangTargetsFilePass(configuration));
+    order.add(
+        new vadl.lcb.template.clang.lib.Basic.Targets.EmitClangTargetCppFilePass(configuration));
     order.add(new vadl.lcb.template.clang.lib.Basic.EmitClangBasicCMakeFilePass(configuration));
     order.add(
         new vadl.lcb.template.clang.lib.CodeGen.EmitCodeGenModuleCMakeFilePass(configuration));
@@ -424,7 +430,6 @@ public class PassOrders {
         .add(new IssNormalizationPass(config))
         .add(new IssExtractOptimizationPass(config))
         .add(new IssMemoryAccessTransformationPass(config))
-        .add(new IssBuiltInSimplificationPass(config))
         .add(new IssBuiltInArgTruncOptPass(config))
         .add(new SideEffectSchedulingPass(config))
         .add(new IssSafeResourceReadPass(config))
@@ -459,6 +464,9 @@ public class PassOrders {
     order
         // top-level meson build. just because we want to add target trace-events
         .add(issDefault("meson.build", config))
+
+        // includes
+        .add(issDefault("/include/vadl-builtins.h", config))
 
         // config rendering
         .add(issDefault("/configs/devices/gen-arch-softmmu/default.mak", config))
@@ -496,7 +504,6 @@ public class PassOrders {
         .add(issDefault("/target/gen-arch/trace.h", config))
         .add(issDefault("/target/gen-arch/Kconfig", config))
         .add(issDefault("/target/gen-arch/meson.build", config))
-        .add(issDefault("/target/gen-arch/vadl-builtins.h", config))
         .add(issDefault("/target/gen-arch/helper.c", config))
         .add(issDefault("/target/gen-arch/helper.h", config))
         .add(issDefault("/target/gen-arch/cpu-bits.h", config))
@@ -519,6 +526,10 @@ public class PassOrders {
         // target/gen-arch/machine.c
         .add(new EmitIssMachinePass(config))
 
+        // plugin rendering
+        .add(issDefault("/contrib/plugins/meson.build", config))
+        // cosimulation plugin
+        .add(issDefault("/contrib/plugins/cosimulation.c", config))
     ;
   }
 
@@ -531,7 +542,9 @@ public class PassOrders {
   private static void addDecodePasses(PassOrder order, GeneralConfiguration config) {
 
     // VDT Decode Passes
-    order.add(new VdtLoweringPass(config));
+    order
+        .add(new VdtInputPreparationPass(config))
+        .add(new VdtLoweringPass(config));
   }
 
   /**

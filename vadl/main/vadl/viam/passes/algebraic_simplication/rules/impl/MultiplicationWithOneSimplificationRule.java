@@ -40,10 +40,10 @@ public class MultiplicationWithOneSimplificationRule implements AlgebraicSimplif
     if (node instanceof ExpressionNode n) {
       var matcher =
           new BuiltInMatcher(
-              List.of(BuiltInTable.MUL, BuiltInTable.MULS, BuiltInTable.SMULL, BuiltInTable.SMULLS,
-                  BuiltInTable.UMULL, BuiltInTable.SUMULL, BuiltInTable.SUMULLS),
+              List.of(BuiltInTable.MUL, BuiltInTable.SMULL,
+                  BuiltInTable.UMULL, BuiltInTable.SUMULL),
               List.of(new AnyNodeMatcher(), new ConstantValueMatcher(
-                  Constant.Value.of(1, (DataType) n.type()))));
+                  Constant.Value.of(1, getType(n)))));
 
       var matchings = TreeMatcher.matches(Stream.of(node), matcher);
       if (!matchings.isEmpty()) {

@@ -103,10 +103,12 @@ type casting rules from `Bits<N>`:
 
 \lbl{refman_literals}
 
-For the type `Bool` there exist the two boolean literals `true` (value `1` as `Bits<1>`) and `false` (value `0` as `Bits<1>`).
+For the type `Bool` there exist the two boolean literals `true` (value `1` as `Bits<1>`) and `false` (value `0` as
+`Bits<1>`).
 
 Binary literals start with `0b` and hexadecimal literals start with `0x`.
-Binary, decimal and hexadecimal literals represent signed integers with an arbitrary length, they are implemented as a `BigInteger`.
+Binary, decimal and hexadecimal literals represent signed integers with an arbitrary length, they are implemented as a
+`BigInteger`.
 In the evaluation of constant expressions no truncation can happen.
 The apostrophe can be used to make the representation more comprehensible (see Listing \r{lst_literals}).
 
@@ -123,7 +125,6 @@ constant bitEx  = binLit + decEx // has the value 32
 ~~~
 
 \endlisting
-
 
 ### Tensors
 
@@ -421,20 +422,22 @@ function rrx ( a : Bits<N>, c : Bool ) -> Bits<N>
 ## Bit Counting Operations
 
 \listing{basic_math_bit_counting, VADL Bit Counting Operations}
+
 ~~~{.vadl}
 function cob( a : Bits<N> ) -> UInt<N> // counting one bits
 function czb( a : Bits<N> ) -> UInt<N> // counting zero bits
 function clz( a : Bits<N> ) -> UInt<N> // counting leading zeros
 function clo( a : Bits<N> ) -> UInt<N> // counting leading ones
 function cls( a : Bits<N> ) -> UInt<N> // counting leading sign bits (without sign bit)
+function ctz( a : Bits<N> ) -> UInt<N> // counting trailing zeros
+function cto( a : Bits<N> ) -> UInt<N> // counting trailing ones
 ~~~
-\endlisting
 
+\endlisting
 
 ## Assembly Directives
 
 \lbl{table_assembly_directives}
-
 
 | directive                 | explanation                                                                                                              |
 |:--------------------------|:-------------------------------------------------------------------------------------------------------------------------|
@@ -607,23 +610,21 @@ function cls( a : Bits<N> ) -> UInt<N> // counting leading sign bits (without si
 | WEAK_REFERENCE            |                                                                                                                          |
 | ZERO                      | .zero size; emit `size` amount of 0-valued bytes                                                                         |
 
-
 ## Assembly Grammar Rule Types
 
-| type          | explanation                                                                                                 |
-|:--------------|:------------------------------------------------------------------------------------------------------------|
-| @constant     | represents an integer value.                                                                                |
-| @expression   | represents a complex expression for an immediate operand. The `Expression` default rule is of this type.    |
-| @instruction  | represents an entire machine or pseudo instruction. It needs to consist of at least the `mnemonic` operand. |
-| @modifier     | represents a modifier defined in the `modifier` mappings of the assembly description.                       |
-| @operand      | represents a machine operand, which is used to build an instruction in the parser.                          |
-| @operands     | represents a sequence of `@operands`.                                                                       |
-| @register     | represents a register of the instruction set architecture corresponding to the assembly description.        |
-| @statements   | represents a sequence of `@instruction`, where each instruction is followed by an `EOL`.                    |
-| @string       | represents a sequence of characters. Most terminal rules are of this type.                                  |
-| @symbol       | represents a reference to a symbol, such as an assembly label.                                              |
-| @void         | represents the empty type. For rules like `EOL`.                                                            |
-
+| type         | explanation                                                                                                 |
+|:-------------|:------------------------------------------------------------------------------------------------------------|
+| @constant    | represents an integer value.                                                                                |
+| @expression  | represents a complex expression for an immediate operand. The `Expression` default rule is of this type.    |
+| @instruction | represents an entire machine or pseudo instruction. It needs to consist of at least the `mnemonic` operand. |
+| @modifier    | represents a modifier defined in the `modifier` mappings of the assembly description.                       |
+| @operand     | represents a machine operand, which is used to build an instruction in the parser.                          |
+| @operands    | represents a sequence of `@operands`.                                                                       |
+| @register    | represents a register of the instruction set architecture corresponding to the assembly description.        |
+| @statements  | represents a sequence of `@instruction`, where each instruction is followed by an `EOL`.                    |
+| @string      | represents a sequence of characters. Most terminal rules are of this type.                                  |
+| @symbol      | represents a reference to a symbol, such as an assembly label.                                              |
+| @void        | represents the empty type. For rules like `EOL`.                                                            |
 
 ## Assembly Grammar Rule Type Casts
 
@@ -648,6 +649,7 @@ function cls( a : Bits<N> ) -> UInt<N> // counting leading sign bits (without si
 ## Assembly Terminal Rules
 
 \listing{assembly_terminals, Assembly Terminal Rules}
+
 ~~~{.vadl}
 @string   | AMP            | "&"
 @string   | AMPAMP         | "&&"
@@ -690,14 +692,16 @@ function cls( a : Bits<N> ) -> UInt<N> // counting leading sign bits (without si
 @string   | STRING         | "\\\".*\\\""
 @string   | TILDE          | "~"
 ~~~
+
 \endlisting
 
-
 ## Assembly Nonterminal Rules
+
 The following grammar rules are default rules that can be used in other rule definitions.
 Default grammar rules can be overwritten by defining a new rule with the exact same name.
 
-- Expression: An expression can be a signed integer, a complex expression (e.g., `2 + 3`) or a symbol reference (e.g., `.foo`).
+- Expression: An expression can be a signed integer, a complex expression (e.g., `2 + 3`) or a symbol reference (e.g.,
+  `.foo`).
 - Identifier: Identifier is used to allow any string.
 - ImmediateOperand: ImmediateOperand is an expression with a cast to @operand.
 - Instruction: The instruction default rule is an alternative over all grammar rules with the type @instruction.
@@ -708,6 +712,7 @@ Default grammar rules can be overwritten by defining a new rule with the exact s
 - Statement: Statement is the Instruction default rule followed by an End-Of-Line token.
 
 \listing{assembly_nonterminals, Assembly Nonterminal Rules}
+
 ~~~{.vadl}
  Expression        | @expression
  Identifier        | @string
@@ -719,4 +724,5 @@ Default grammar rules can be overwritten by defining a new rule with the exact s
  Register          | @register
  Statement         | @instruction
 ~~~
+
 \endlisting

@@ -20,6 +20,7 @@ import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.types.BoolType;
 import vadl.types.Type;
+import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -28,7 +29,7 @@ import vadl.viam.graph.Node;
  * Represents the If-Expression in a VADL specification.
  * All its cases produce a value and are side effect free.
  */
-public class SelectNode extends ExpressionNode {
+public class SelectNode extends ExpressionNode implements Canonicalizable {
 
   @Input
   ExpressionNode condition;
@@ -122,5 +123,15 @@ public class SelectNode extends ExpressionNode {
     sb.append(" : ");
     falseCase.prettyPrint(sb);
     sb.append(")");
+  }
+
+  @Override
+  public Node canonical() {
+    if (condition instanceof ConstantNode constantNode) {
+      return constantNode.constant().asVal().bool()
+          ? trueCase : falseCase;
+    }
+
+    return this;
   }
 }

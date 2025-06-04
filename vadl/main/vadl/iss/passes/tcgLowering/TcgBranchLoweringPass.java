@@ -81,7 +81,7 @@ public class TcgBranchLoweringPass extends AbstractIssPass {
   @Override
   public @Nullable Object execute(PassResults passResults, Specification viam)
       throws IOException {
-    
+
     var optimizeCtrlFlow = !configuration().isSkip(IssConfiguration.IssOptsToSkip.OPT_CTRL_FLOW);
 
     viam.isa().ifPresent(isa -> isa.ownInstructions()
@@ -171,21 +171,22 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
     // emit the else branch label
     var elseLabelPosition = ifBranchEnd.addBefore(new TcgSetLabel(elseLabel));
 
+    var mergeNode = (MergeNode) ifBranchEnd.usages().findFirst().get();
     if (!skipElse) {
       // right before the else branch label, we must take a jump to the end label
       elseLabelPosition.addBefore(new TcgBr(endLabel));
 
       // traverse and emit the false branch
-      var elseBranchEnd = traverseBranch(ifNode.falseBranch());
-      // emit the end label
-      elseBranchEnd.addBefore(new TcgSetLabel(endLabel));
+      traverseBranch(ifNode.falseBranch());
+      // emit the end label after merge node
+      mergeNode.addAfter(new TcgSetLabel(endLabel));
     }
 
     return linkBranchesAndRemoveControlSplit(
         ifNode,
         skipElse,
         tcgBranchNode,
-        (MergeNode) ifBranchEnd.usages().findFirst().get()
+        mergeNode
     );
   }
 
@@ -319,10 +320,8 @@ class TcgBranchLoweringExecutor implements CfgTraverser {
    *
    * @param node the expression node
    * @return the associated TCG variable
-   * @throws IllegalStateException if the node is not associated with a TCG variable
    */
   private TcgVRefNode varOf(ExpressionNode node) {
-    node.ensure(isTcg(node), "Expected to be a tcg node");
     return assignments.singleDestOf(node);
   }
 

@@ -35,7 +35,7 @@ public class VdtEnricherCollection {
   public static InfoEnricher VDT_DOT_GRAPH_MODAL_ENRICHER =
       InfoEnricher.forType(VdtEntity.class, (entity, passResults) -> {
 
-        var dot = DotGraphGenerator.generate(entity.tree());
+        var dot = new DotGraphGenerator(entity.tree()).generate();
 
         // Add a modal to the definition entity
         var info = new Info.Modal("Decode Tree (DOT)", "");
@@ -87,7 +87,7 @@ public class VdtEnricherCollection {
   public static InfoEnricher VDT_TXT_GRAPH_EXPANDABLE =
       InfoEnricher.forType(VdtEntity.class, (entity, passResults) -> {
 
-        var graph = TextGraphGenerator.generate(entity.tree());
+        var graph = new TextGraphGenerator(entity.tree()).generate();
         var info = InfoUtils.createCodeBlockExpandable(
             "Decode Tree (Text)",
             graph.toString()
@@ -99,7 +99,7 @@ public class VdtEnricherCollection {
   public static InfoEnricher VDT_TXT_TABLE_EXPANDABLE =
       InfoEnricher.forType(VdtEntity.class, (entity, passResults) -> {
 
-        var graph = InsnDecisionTableGenerator.generate(entity.tree());
+        var graph = new InsnDecisionTableGenerator(entity.tree()).generate();
         var info = InfoUtils.createTableExpandable(
             "Decisions by instruction",
             graph

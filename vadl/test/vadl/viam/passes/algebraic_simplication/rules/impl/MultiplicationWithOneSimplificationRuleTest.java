@@ -40,10 +40,10 @@ class MultiplicationWithOneSimplificationRuleTest extends AbstractTest {
       new MultiplicationWithOneSimplificationRule();
 
   private static Stream<Arguments> getSupportedBuiltins() {
-    return Stream.of(Arguments.of(BuiltInTable.MUL), Arguments.of(BuiltInTable.MULS),
-        Arguments.of(BuiltInTable.SMULL), Arguments.of(BuiltInTable.SMULLS),
-        Arguments.of(BuiltInTable.UMULL), Arguments.of(BuiltInTable.SUMULL),
-        Arguments.of(BuiltInTable.SUMULLS));
+    return Stream.of(Arguments.of(BuiltInTable.MUL),
+        Arguments.of(BuiltInTable.SMULL),
+        Arguments.of(BuiltInTable.UMULL),
+        Arguments.of(BuiltInTable.SUMULL));
   }
 
   @ParameterizedTest

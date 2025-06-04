@@ -74,7 +74,7 @@ public class ArtificialResInlinerPass extends Pass {
         .toList()
         .forEach(node -> {
           node.replaceAndDelete(
-              FunctionInlinerPass.inline(node.resourceDefinition().readFunction(), node.indices()));
+              Inliner.inline(node.resourceDefinition().readFunction(), node.indices()));
         });
   }
 
@@ -101,6 +101,7 @@ public class ArtificialResInlinerPass extends Pass {
         .map(ProcEndNode.class::cast).findFirst().orElseThrow();
     final var copyStart = addedNodes.stream().filter(StartNode.class::isInstance)
         .map(StartNode.class::cast).findFirst().orElseThrow();
+
 
     // map all params to passed argument expressions
     var params = proc.parameters();
@@ -134,10 +135,10 @@ public class ArtificialResInlinerPass extends Pass {
       var endPred = endNode.predecessor();
       endPred.setNext(copySucc);
       copyEndPred.setNext(endNode);
-    } else {
-      copyStart.safeDelete();
     }
+    copyStart.safeDelete();
 
     endNode.removeSideEffect(write);
   }
 }
+

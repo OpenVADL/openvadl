@@ -1,0 +1,4 @@
+posix_ipc
+tomli
+dacite
+dataclasses-json

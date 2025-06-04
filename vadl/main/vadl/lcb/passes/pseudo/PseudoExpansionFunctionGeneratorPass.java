@@ -56,7 +56,10 @@ public class PseudoExpansionFunctionGeneratorPass extends Pass {
   protected Stream<Pair<PseudoInstruction, Graph>> getApplicable(
       Specification viam) {
     var abi = (Abi) viam.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var specifiedSequences = Stream.of(abi.returnSequence(), abi.callSequence());
+    var specifiedSequences = Stream.of(abi.returnSequence(), abi.callSequence())
+        // we only expand them, when they are pseudo instructions.
+        .filter(x -> x instanceof PseudoInstruction)
+        .map(x -> (PseudoInstruction) x);
 
     var pseudoInstructions = Stream.concat(viam.isa()
             .map(isa -> isa.ownPseudoInstructions().stream()).orElseGet(Stream::empty),

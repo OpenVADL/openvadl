@@ -18,7 +18,11 @@ package vadl.ast;
 
 
 import static vadl.error.Diagnostic.error;
+import static vadl.utils.GraphUtils.ifElseSideEffect;
 import static vadl.utils.GraphUtils.intU;
+import static vadl.utils.GraphUtils.neq;
+import static vadl.utils.GraphUtils.or;
+import static vadl.utils.GraphUtils.select;
 
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -200,13 +204,49 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
     return graph;
   }
 
+
+  /**
+   * Produces a boolean expression that returns whether the given constraint values
+   * are different from the given indices expressions.
+   * It is assumed that {@code constraints.size() <= indices.size()}.
+   *
+   * <p>Consider the following VADL spec <pre>{@code
+   *  register A: Bits<4><5><32>
+   *  [ zero : Y(1)(2) ]
+   *  alias register Y = A
+   * }</pre>
+   * The check for access of {@code Y(a)(b)} looks like
+   * <pre>{@code
+   *  (a != 1) || (b != 2)
+   * }</pre>
+   */
+  private ExpressionNode buildConstraintDontMatchCheck(List<ExpressionNode> indices,
+                                                       List<ConstantValue> constraints) {
+    var constChecks = new ExpressionNode[constraints.size()];
+    for (int i = 0; i < constraints.size(); i++) {
+      // compare each constraint index value with the given one
+      var idxExpr = indices.get(i);
+      var idxConst = constraints.get(i).toViamConstant()
+          .zeroExtend(idxExpr.type().asDataType())  // cast constant to same type as expr
+          .toNode();
+      // check if constraint and expression are different
+      constChecks[i] = neq(idxExpr, idxConst);
+    }
+    return constChecks.length == 1
+        ? constChecks[0]
+        // build conjunction of all comparisons
+        : or(constChecks);
+  }
+
   Function getRegisterAliasReadFunc(AliasDefinition definition) {
     var graph = new Graph("%s Read Behavior".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
-    var identifier = viamLowering.generateIdentifier(definition.viamId + "::read", definition.loc);
-    var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
+    final var identifier =
+        viamLowering.generateIdentifier(definition.viamId + "::read", definition.loc);
+    final var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
+    final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
 
     DataType resultType;
     // Initially the indices are all fixed arguments specified in the alias definition.
@@ -232,18 +272,30 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       resultType = definition.type().asDataType();
     }
 
-    // FIXME: Add conditions based on annotations
     var reg = (RegisterTensor) viamLowering.fetch(regFileDef).orElseThrow();
     var regReadType = regFileDef.type() instanceof ConcreteRelationType relType
         ? relType.resultType().asDataType() : resultType.asDataType();
-    var regRead = new ReadRegTensorNode(
+    ExpressionNode regAccess = new ReadRegTensorNode(
         reg,
         indices,
         regReadType,
         null
     );
 
-    var returnNode = graph.addWithInputs(new ReturnNode(regRead));
+    if (zeroConst != null) {
+      // Wrap the register read in a conditional read, depending on the indices values.
+      // Compatibility was already checked by the annotation itself during type checking.
+      var dontMatch = buildConstraintDontMatchCheck(indices, zeroConst.indices);
+      // if the indices constraints don't match the arguments,
+      // we return the register read, otherwise zero
+      regAccess = select(
+          dontMatch,
+          regAccess,
+          Constant.Value.of(0, regReadType).toNode()
+      );
+    }
+
+    var returnNode = graph.addWithInputs(new ReturnNode(regAccess));
     graph.addWithInputs(new StartNode(returnNode));
 
     // FIXME: Modify based on annotations
@@ -256,12 +308,14 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   Procedure getRegisterAliasWriteProc(AliasDefinition definition) {
-    var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
+    final var graph = new Graph("%s Write Procedure".formatted(definition.viamId));
     graph.setSourceLocation(definition.location());
     currentGraph = graph;
 
-    var identifier = viamLowering.generateIdentifier(definition.viamId + "::write", definition.loc);
-    var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
+    final var identifier =
+        viamLowering.generateIdentifier(definition.viamId + "::write", definition.loc);
+    final var regFileDef = (RegisterDefinition) Objects.requireNonNull(definition.computedTarget);
+    final var zeroConst = definition.getAnnotation("zero", ZeroConstraintAnnotation.class);
 
     DataType resultType;
     // Initially the indices are all fixed arguments specified in the alias definition.
@@ -308,10 +362,23 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
         null
     );
 
-    var end = graph.addWithInputs(new ProcEndNode(new NodeList<>(regfileWrite)));
-    graph.addWithInputs(new StartNode(end));
+    ControlNode nextOfStart;
+    if (zeroConst == null) {
+      // If there is no zero constraint on the artifical resource
+      // we attach the side effect to the proc end node
+      nextOfStart = graph.addWithInputs(new ProcEndNode(new NodeList<>(regfileWrite)));
+    } else {
+      // If there is a zero constraint, we must build an if-else control flow
+      // and apply the side effect on the true branch of the if
+      // (so in the case that the indices don't match the constraint values).
+      var dontMatch = buildConstraintDontMatchCheck(indices, zeroConst.indices);
+      var end = graph.addWithInputs(new ProcEndNode(new NodeList<>()));
+      nextOfStart =
+          ifElseSideEffect(graph, dontMatch, List.of(regfileWrite), List.of(), end);
+    }
 
-    // FIXME: Modify based on annotations
+    graph.addWithInputs(new StartNode(nextOfStart));
+
     return new Procedure(
         identifier,
         params.toArray(vadl.viam.Parameter[]::new),
@@ -881,13 +948,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   }
 
   @Override
-  public ExpressionNode visit(ExtendIdExpr expr) {
+  public ExpressionNode visit(AsIdExpr expr) {
     throw new RuntimeException(
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
 
   @Override
-  public ExpressionNode visit(IdToStrExpr expr) {
+  public ExpressionNode visit(AsStrExpr expr) {
     throw new RuntimeException(
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }
@@ -918,6 +985,18 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
 
   @Override
   public ExpressionNode visit(SequenceCallExpr expr) {
+    throw new RuntimeException(
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+  }
+
+  @Override
+  public ExpressionNode visit(ExpandedSequenceCallExpr expr) {
+    throw new RuntimeException(
+        "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
+  }
+
+  @Override
+  public ExpressionNode visit(ExpandedAliasDefSequenceCallExpr expr) {
     throw new RuntimeException(
         "The behavior generator doesn't implement yet: " + expr.getClass().getSimpleName());
   }

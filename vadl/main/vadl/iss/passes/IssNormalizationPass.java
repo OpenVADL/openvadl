@@ -16,6 +16,11 @@
 
 package vadl.iss.passes;
 
+import static vadl.error.DiagUtils.throwNotAllowed;
+import static vadl.utils.GraphUtils.bits;
+import static vadl.utils.GraphUtils.intU;
+import static vadl.utils.GraphUtils.sub;
+
 import com.google.errorprone.annotations.FormatMethod;
 import java.io.IOException;
 import java.util.Collections;
@@ -24,6 +29,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.nodes.IssConstExtractNode;
+import vadl.iss.passes.nodes.IssGhostCastNode;
 import vadl.iss.passes.nodes.IssStaticPcRegNode;
 import vadl.iss.passes.nodes.IssValExtractNode;
 import vadl.iss.passes.opDecomposition.nodes.IssMul2Node;
@@ -36,7 +42,11 @@ import vadl.javaannotations.Handler;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.BitsType;
+import vadl.types.BuiltInTable;
+import vadl.types.Type;
+import vadl.utils.GraphUtils;
 import vadl.utils.VadlBuiltInNoStatusDispatcher;
+import vadl.viam.Constant;
 import vadl.viam.Specification;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
@@ -240,7 +250,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(TupleGetFieldNode toHandle) {
-    throw new UnsupportedOperationException("Type TupleGetFieldNode not yet implemented");
+    throwNotAllowed(toHandle, "Tuple GetFieldNode");
   }
 
   @Handler
@@ -263,7 +273,7 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(ReadArtificialResNode toHandle) {
-    throw new UnsupportedOperationException("Type ReadArtificialResNode not yet implemented");
+    // do nothing
   }
 
   @Handler
@@ -322,8 +332,8 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
   }
 
   @Handler
-  void handle(SliceNode toHandle) {
-    throw new UnsupportedOperationException("Type SliceNode not yet implemented");
+  void handle(SliceNode node) {
+    // is handled in the operation lowering
   }
 
 
@@ -506,30 +516,125 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
     // do nothing
   }
 
+  private boolean isPowerOfTwo(int val) {
+    return val > 0 && (val & (val - 1)) == 0;
+  }
+
+  /**
+   * For shift operations, the second argument is always normalized by (b % N) to
+   * ensure defined behavior.
+   */
+  private void normalizeShiftAmountOperand(BuiltInCall input) {
+    var val = input.arguments().getFirst();
+    var valT = val.type().asDataType();
+    var shift = input.arguments().get(1);
+    var shiftT = shift.type().asDataType();
+    var minWidth = BitsType.minimalRequiredWidthFor(input.type().asDataType().bitWidth());
+    if (shiftT.bitWidth() < minWidth) {
+      // the shift cannot wrap around the value
+      return;
+    }
+
+    if (isPowerOfTwo(valT.bitWidth())) {
+      // b % N == b & (N - 1)
+      var rhs = Constant.Value.of(valT.bitWidth() - 1, shiftT).toNode();
+      // b -> b & (N - 1)
+      shift.replace(BuiltInTable.AND.call(shift, rhs));
+      return;
+    }
+
+    // replace by modulo (b -> b % N)
+    var valN = Constant.Value.of(valT.bitWidth(), shiftT).toNode();
+    shift.replace(BuiltInTable.UMOD.call(shift, valN));
+  }
+
   @Override
   public void handleLSL(BuiltInCall input) {
+    normalizeShiftAmountOperand(input);
     truncateResult(input);
   }
 
   @Override
   public void handleASR(BuiltInCall input) {
     signExtendArg(input, 0);
+    normalizeShiftAmountOperand(input);
     truncateResult(input);
   }
 
   @Override
   public void handleLSR(BuiltInCall input) {
+    normalizeShiftAmountOperand(input);
     // do nothing, as input and result are unsigned and smaller than the first operand
   }
 
   @Override
+  @SuppressWarnings("LocalVariableName")
   public void handleROL(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
+    var opWidth = input.type().asDataType().bitWidth();
+    if (opWidth == targetSize) {
+      // if the operation is on target size, there is nothing to do
+      return;
+    }
+
+    // rotation operation where
+    // a = value
+    // b = shift amount
+    // N = size of value
+    // r = (b % N)
+    // (a << r) | (a >> (N - r))
+
+    var a = input.arguments().getFirst();
+    var b = input.arguments().get(1);
+    var N = Constant.Value.of(opWidth, Type.bits(32)).toNode();
+    // b % N
+    var r = BuiltInTable.UMOD.call(b, N);
+    // a << r
+    var aLsrR = BuiltInTable.LSL.call(a, r);
+    // N - r
+    var Nr = BuiltInTable.SUB.call(N, r);
+    // a >> Nr
+    var aNr = BuiltInTable.LSR.call(a, Nr);
+    // aLsrR | aNr
+    var result = BuiltInTable.OR.call(aLsrR, aNr);
+    // replace call
+    result = input.replaceAndDelete(result);
+    // truncate result to operation width, as a << r might cause an overflow
+    truncate(result, opWidth);
   }
 
   @Override
+  @SuppressWarnings("LocalVariableName")
   public void handleROR(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
+    var opWidth = input.type().asDataType().bitWidth();
+    if (opWidth == targetSize) {
+      // if the operation is on target size, there is nothing to do
+      return;
+    }
+
+    // rotation operation where
+    // a = value
+    // b = shift amount
+    // N = size of value
+    // r = (b % N)
+    // (a >> r) | (a << (N - r))
+
+    var a = input.arguments().getFirst();
+    var b = input.arguments().get(1);
+    var N = Constant.Value.of(opWidth, Type.bits(32)).toNode();
+    // b % N
+    var r = BuiltInTable.UMOD.call(b, N);
+    // a >> r
+    var aLsrR = BuiltInTable.LSR.call(a, r);
+    // N - r
+    var Nr = BuiltInTable.SUB.call(N, r);
+    // a << Nr
+    var aNr = BuiltInTable.LSL.call(a, Nr);
+    // aLsrR | aNr
+    var result = BuiltInTable.OR.call(aLsrR, aNr);
+    // replace call
+    result = input.replaceAndDelete(result);
+    // truncate result to operation width, as a << (N - r) might cause an overflow
+    truncate(result, opWidth);
   }
 
   @Override
@@ -549,7 +654,21 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleCLZ(BuiltInCall input) {
-    throw graphError(input, "Normalization not yet implemented for this built-in");
+    var val = input.arguments().get(0);
+    var valT = val.type().asDataType();
+    if (valT.bitWidth() == targetSize) {
+      return;
+    }
+    // if val is smaller than target size, we know that the target size leading
+    // bits until the msb of val will be null.
+    // e.g. 0010 -> 4 - 2 = 2
+    var constLeadingZ = targetSize - valT.bitWidth();
+    // replace original by subtraction that subtracts constant leading zeros from the target size
+    // clz result.
+    input.replace(BuiltInTable.SUB.call(
+        input,
+        bits(constLeadingZ, input.type().asDataType().bitWidth()).toNode()
+    ));
   }
 
   @Override
@@ -559,7 +678,54 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Override
   public void handleCLS(BuiltInCall input) {
+    // we replace CLS as there is no such TCG operation.
+    // it is replaced by transformations that allow us to use CLZ (count leading zeros)
+    // instead.
+    var arg = input.arguments().getFirst();
+    var argT = arg.type().asDataType();
+    var resT = input.type().asDataType();
+    if (argT.bitWidth() <= 1) {
+      // if <= 1 replace by 0
+      input.replaceAndDelete(intU(0, resT.bitWidth()).toNode());
+      return;
+    }
+
+    var bitWidth = argT.bitWidth();
+    var sign = new SliceNode(
+        arg,
+        Constant.BitSlice.of(bitWidth - 1, bitWidth - 1),
+        Type.bits(1)
+    );
+    // v = sign ? ~a : a;
+    var v = new SelectNode(sign, GraphUtils.not(arg), arg);
+    ExpressionNode result = BuiltInTable.CLZ.call(v);
+
+    // leading zeros that are known to be zero on a target size operation.
+    // this is only non-zero for cls operating on < targetSize.
+    // N - 1 because we don't count the sign bit itself
+    var guaranteedZeros = targetSize - (bitWidth - 1);
+    if (guaranteedZeros > 0) {
+      result = sub(result, intU(guaranteedZeros, bitWidth).toNode());
+    }
+
+    // replace CLS
+    input.replaceAndDelete(result);
+  }
+
+  @Override
+  public void handleCTZ(BuiltInCall input) {
     throw graphError(input, "Normalization not yet implemented for this built-in");
+
+  }
+
+  @Override
+  public void handleCTO(BuiltInCall input) {
+    throw graphError(input, "Normalization not yet implemented for this built-in");
+  }
+
+  @Override
+  public void handleConcat(BuiltInCall input) {
+    // do nothing (result is already fine)
   }
 
 
@@ -572,6 +738,11 @@ class IssNormalizer implements VadlBuiltInNoStatusDispatcher<BuiltInCall> {
 
   @Handler
   void handle(IssValExtractNode toHandle) {
+    throw graphError(toHandle, "Node should not occur here");
+  }
+
+  @Handler
+  void handle(IssGhostCastNode toHandle) {
     throw graphError(toHandle, "Node should not occur here");
   }
 

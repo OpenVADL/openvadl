@@ -46,7 +46,7 @@ instruction set architecture VarRISC32 = {
   program counter PC : Addr              // program counter has address type
 
   [zero: R(0) ]
-  register file R : Index -> Regs        // 32 register sized integer registers
+  register R : Index -> Regs             // 32 register sized integer registers
 
   memory MEM : Addr -> Byte              // byte addressed memory
 
@@ -144,18 +144,18 @@ instruction set architecture VarRISC32 = {
   }
 
   model ComputeInstruction ( name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val ) : IsaDefs = {
-    $ShortRegInstr (ExtendId ( $name, '_S' ) ; $op ; $ltype ; $rtype ; $code )
-    $ShortImmInstr (ExtendId ( $name, 'I_S') ; $op ; $ltype ; $rtype ; $code )
+    $ShortRegInstr (AsId ( $name, '_S' ) ; $op ; $ltype ; $rtype ; $code )
+    $ShortImmInstr (AsId ( $name, 'I_S') ; $op ; $ltype ; $rtype ; $code )
     $RegInstr      (           $name         ; $op ; $ltype ; $rtype ; $code )
-    $ImmInstr      (ExtendId ( $name, 'I'  ) ; $op ; $ltype ; $rtype ; $code )
+    $ImmInstr      (AsId ( $name, 'I'  ) ; $op ; $ltype ; $rtype ; $code )
   }
 
   model LongImmInstruction (name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val) : IsaDefs = {
-    instruction ExtendId ( $name, 'I_L') : TYPE_L =
+    instruction AsId ( $name, 'I_L') : TYPE_L =
         let res = R(rs1) as $ltype $op imm in
             R(rd) := res as Regs
-    encoding ExtendId ( $name, 'I_L') = { opcode = ImmLOff + $code }
-    assembly ExtendId ( $name, 'I_L') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
+    encoding AsId ( $name, 'I_L') = { opcode = ImmLOff + $code }
+    assembly AsId ( $name, 'I_L') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
     $ComputeInstruction ( $name; $op; $ltype; $rtype; $code )
   }
 
@@ -167,10 +167,10 @@ instruction set architecture VarRISC32 = {
   }
 
   model BranchSInstruction ( name : Id, code : Val ) : IsaDefs = {
-    instruction ExtendId ( $name, '_S' ) : TYPE_B =
+    instruction AsId ( $name, '_S' ) : TYPE_B =
       PC := PC + offsetS
-    encoding ExtendId ( $name, '_S' ) = { opcode = $code }
-    assembly ExtendId ( $name, '_S' ) = ( mnemonic, ' ', decimal (offset) )
+    encoding AsId ( $name, '_S' ) = { opcode = $code }
+    assembly AsId ( $name, '_S' ) = ( mnemonic, ' ', decimal (offset) )
   }
 
   model JumpLinkInstruction ( name : Id, code : Val ) : IsaDefs = {
@@ -189,17 +189,17 @@ instruction set architecture VarRISC32 = {
     encoding $name = { opcode = MemCode, func5 = $code }
     assembly $name = ( mnemonic, ' ', register(rd), ',', decimal(imm), '(', register(rs1), ')' )
 
-    instruction ExtendId ( $name, '_L') : TYPE_L =
+    instruction AsId ( $name, '_L') : TYPE_L =
       let a = R(rs1) + immU in $memstmt
-    encoding ExtendId ( $name, '_L') = { opcode = MemLOff + $code }
-    assembly ExtendId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm), '(', register(rs1), ')' )
+    encoding AsId ( $name, '_L') = { opcode = MemLOff + $code }
+    assembly AsId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm), '(', register(rs1), ')' )
   }
 
   model ShortMemInstruction ( name : Id, memstmt : Stat, code : Val ) : IsaDefs = {
-    instruction ExtendId ( $name, '_S') : TYPE_S =
+    instruction AsId ( $name, '_S') : TYPE_S =
       let a = R(rs1) in $memstmt
-    encoding ExtendId ( $name, '_S') = { opcode = MemSOff + $code }
-    assembly ExtendId ( $name, '_S') = ( mnemonic, ' ', register(rd), ',(', register(rs1), ')' )
+    encoding AsId ( $name, '_S') = { opcode = MemSOff + $code }
+    assembly AsId ( $name, '_S') = ( mnemonic, ' ', register(rd), ',(', register(rs1), ')' )
     $MemoryInstruction ( $name; $memstmt; $code )
   }
 
@@ -210,24 +210,24 @@ instruction set architecture VarRISC32 = {
     encoding $name = { opcode = MemCode, func5 = $code }
     assembly $name = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
 
-    instruction ExtendId ( $name, '_L') : TYPE_L = {
+    instruction AsId ( $name, '_L') : TYPE_L = {
       if R(rd) as $reltype $op R(rs1) then
         PC := PC + offsetS
     }
-    encoding ExtendId ( $name, '_L') = { opcode = BraLOff + $code }
-    assembly ExtendId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
+    encoding AsId ( $name, '_L') = { opcode = BraLOff + $code }
+    assembly AsId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
   }
 
   model CondImmInstruction ( name : Id, op : BinOp, reltype: Id, imm: Id, code : Val ) : IsaDefs = {
-    instruction ExtendId ( $name, 'I') : TYPE_I =
+    instruction AsId ( $name, 'I') : TYPE_I =
       R(rd) :=  ( R(rs1) as $reltype $op $imm ) as Regs
-    encoding ExtendId ( $name, 'I') = { opcode = ImmCode, func5 = $code }
-    assembly ExtendId ( $name, 'I') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
+    encoding AsId ( $name, 'I') = { opcode = ImmCode, func5 = $code }
+    assembly AsId ( $name, 'I') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
 
-    instruction ExtendId ( $name, 'I_L') : TYPE_L =
+    instruction AsId ( $name, 'I_L') : TYPE_L =
       R(rd) :=  ( R(rd) as $reltype $op $imm ) as Regs
-    encoding ExtendId ( $name, 'I_L') = { opcode = CodeI_L, func5 = $code }
-    assembly ExtendId ( $name, 'I_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm))
+    encoding AsId ( $name, 'I_L') = { opcode = CodeI_L, func5 = $code }
+    assembly AsId ( $name, 'I_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm))
   }
 
   model CondInstruction ( name : Id, op : BinOp, reltype: Id, imm: Id, code : Val ) : IsaDefs = {
@@ -247,12 +247,12 @@ instruction set architecture VarRISC32 = {
     encoding $name = { opcode = ImmCode, func5 = $code }
     assembly $name = ( mnemonic, ' ', register(rd), ',', decimal(imm))
 
-    instruction ExtendId ( $name, '_L' ) : TYPE_L = {
+    instruction AsId ( $name, '_L' ) : TYPE_L = {
         R(rd) := PC.next
         PC := PC + offsetS
         }
-    encoding ExtendId ( $name, '_L') = { opcode = CodeI_L, func5 = $code }
-    assembly ExtendId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm))
+    encoding AsId ( $name, '_L') = { opcode = CodeI_L, func5 = $code }
+    assembly AsId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm))
   }
 
 /* instruction encoding and opcode space of opcode and func5/func9
@@ -345,12 +345,13 @@ TYPE_R opcode 63 func9    16     17     18     19     20     21     22     23   
   // TYPE_R three operand instructions                 RegCode 63 )
 
   pseudo instruction BRA( offset : SInt<11> ) = {
-    BEQZ( 0, offset )
+    BEQ{ rd = 0, rs1 = 0, imm = offset }
   }
   pseudo instruction BRA_L( offset : SIntR ) = {
-    BEQZ_L( 0, offset )
+    BEQ_L{ rd = 0, rs1 = 0, imm = offset }
   }
-  assembly BRA, BRA_L = ( mnemonic, ' ', decimal(offset) )
+  assembly BRA   = ( mnemonic, ' ', decimal(offset) )
+  assembly BRA_L = ( mnemonic, ' ', decimal(offset) )
 
   pseudo instruction BEQZ( rd: Index, offset : SInt<11> ) = {
     BEQ{ rd = rd, rs1 = 0, imm = offset }
@@ -358,7 +359,8 @@ TYPE_R opcode 63 func9    16     17     18     19     20     21     22     23   
   pseudo instruction BEQZ_L( rd: Index, offset : SIntR ) = {
     BEQ_L{ rd = rd, rs1 = 0, imm = offset }
   }
-  assembly BEQZ, BEQZ_L = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
+  assembly BEQZ   = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
+  assembly BEQZ_L = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
 
   pseudo instruction BNEZ( rd: Index, offset : SInt<11> ) = {
     BNE{ rd = rd, rs1 = 0, imm = offset }
@@ -366,7 +368,8 @@ TYPE_R opcode 63 func9    16     17     18     19     20     21     22     23   
   pseudo instruction BNEZ_L( rd: Index, offset : SIntR ) = {
     BNE_L{ rd = rd, rs1 = 0, imm = offset }
   }
-  assembly BNEZ, BNEZ_L = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
+  assembly BNEZ   = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
+  assembly BNEZ_L = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
 
   pseudo instruction BLTZ( rd: Index, offset : SInt<11> ) = {
     BLT{ rd = rd, rs1 = 0, imm = offset }
@@ -374,7 +377,8 @@ TYPE_R opcode 63 func9    16     17     18     19     20     21     22     23   
   pseudo instruction BLTZ_L( rd: Index, offset : SIntR ) = {
     BLT_L{ rd = rd, rs1 = 0, imm = offset }
   }
-  assembly BLTZ, BLTZ_L = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
+  assembly BLTZ   = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
+  assembly BLTZ_L = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
 
   pseudo instruction BLEZ( rd: Index, offset : SInt<11> ) = {
     BLE{ rd = rd, rs1 = 0, imm = offset }
@@ -382,7 +386,8 @@ TYPE_R opcode 63 func9    16     17     18     19     20     21     22     23   
   pseudo instruction BLEZ_L( rd: Index, offset : SIntR ) = {
     BLE_L{ rd = rd, rs1 = 0, imm = offset }
   }
-  assembly BLEZ, BLEZ_L = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
+  assembly BLEZ   = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
+  assembly BLEZ_L = ( mnemonic, ' ', register(rd), ',', decimal(offset) )
 
   pseudo instruction BGTZ( rs1: Index, offset : SInt<11> ) = {
     BLT{ rd = 0, rs1 = rs1, imm = offset }
@@ -390,7 +395,8 @@ TYPE_R opcode 63 func9    16     17     18     19     20     21     22     23   
   pseudo instruction BGTZ_L( rs1: Index, offset : SIntR ) = {
     BLT_L{ rd = 0, rs1 = rs1, imm = offset }
   }
-  assembly BGTZ, BGTZ_L = ( mnemonic, ' ', register(rs1), ',', decimal(offset) )
+  assembly BGTZ   = ( mnemonic, ' ', register(rs1), ',', decimal(offset) )
+  assembly BGTZ_L = ( mnemonic, ' ', register(rs1), ',', decimal(offset) )
 
   pseudo instruction BGEZ( rs1: Index, offset : SInt<11> ) = {
     BLE{ rd = 0, rs1 = rs1, imm = offset }
@@ -398,15 +404,25 @@ TYPE_R opcode 63 func9    16     17     18     19     20     21     22     23   
   pseudo instruction BGEZ_L( rs1: Index, offset : SIntR ) = {
     BLE_L{ rd = 0, rs1 = rs1, imm = offset }
   }
-  assembly BGEZ, BGEZ_L = ( mnemonic, ' ', register(rs1), ',', decimal(offset) )
+  assembly BGEZ   = ( mnemonic, ' ', register(rs1), ',', decimal(offset) )
+  assembly BGEZ_L = ( mnemonic, ' ', register(rs1), ',', decimal(offset) )
 
   pseudo instruction JMP ( rd: Index ) = {
     JAL{ rd = rd, rs1 = 0 }
   }
   assembly JMP = ( mnemonic )
-
   pseudo instruction RET = {
-    JMP( LinkIdx )
+    JAL{ rd = LinkIdx, rs1imm = 0 }
   }
   assembly RET = ( mnemonic )
+
+  pseudo instruction CALL( symbol : SIntR ) = {
+    BAL_L{ rd = LinkIdx, imm = symbol }
+  }
+  assembly CALL = (mnemonic, " ", hex( symbol ))
+
+  pseudo instruction LA( rd: Index, symbol: SIntR ) = {
+    ADDI_L { rd = rd, func5 = 0, imm = symbol }
+  }
+  assembly LA = (mnemonic, " ", register(rd), ",", hex( symbol ))
 }

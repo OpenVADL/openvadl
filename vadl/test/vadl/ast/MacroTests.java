@@ -22,6 +22,8 @@ import static vadl.ast.AstTestUtils.assertAstEquality;
 import java.net.URI;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
 
@@ -424,6 +426,85 @@ public class MacroTests {
             assertThat(d).hasMessageContaining("Macro name already used: Test"));
   }
 
+  @Test
+  void macroInIsaInheritingExtendedRecord() {
+    var prog1 = """
+        instruction set architecture Base = {
+          record Record (id: Id, mnemo: Str, opcode: Ex)
+        }
+        
+        instruction set architecture Final extending Base = {
+          model Model (r: Record): Ex = {
+            42
+          }
+        
+          constant x = $Model((abc; "xyz"; 1))
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog1));
+  }
+
+  @Test
+  void macroWithRecordTypes() {
+    // There once was a time where record return types couldn't be parsed.
+    var prog1 = """
+        record InstrWithFunct (id: Id, mnemo: Str, opcode: Ex, funct: Id)
+        
+        model ExtendInstr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
+          (AsId ($i.id,  $ext); $i.mnemo; $i.opcode; $i.funct)
+        }
+        """;
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog1));
+  }
+
+  @Test
+  void asIdTest() {
+    // There once was a time where record return types couldn't be parsed.
+    var prog1 = """
+        constant AsId("one") = 1
+        constant AsId("th", "ree") = 3
+        constant AsId(max, count) = 42
+        constant AsId(open, "vadl") = 2024
+        """;
+    var prog2 = """
+        constant one = 1
+        constant three = 3
+        constant maxcount = 42
+        constant openvadl = 2024
+        """;
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @Test
+  void asStrTest() {
+    // There once was a time where record return types couldn't be parsed.
+    var prog1 = """
+        function one -> String = AsStr(one)
+        function three -> String = AsStr(th, ree)
+        function maxcount -> String = AsStr("max", "count")
+        function openvadl -> String = AsStr("open", vadl)
+        """;
+    var prog2 = """
+        function one -> String = "one"
+        function three -> String = "three"
+        function maxcount -> String = "maxcount"
+        function openvadl -> String = "openvadl"
+        """;
+    assertAstEquality(VadlParser.parse(prog1), VadlParser.parse(prog2));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", "7", "_x", "encoding"})
+  void invalidIdentifierAsId(String string) {
+    var prog = """
+        constant AsId("%s") = 6
+        """.formatted(string);
+    var diagnostics = Assertions.assertThrows(DiagnosticList.class, () -> VadlParser.parse(prog));
+    var diagnostic = diagnostics.items.getFirst();
+    Assertions.assertTrue(
+        diagnostic.reason.contains("Invalid") && diagnostic.reason.contains("Identifier"),
+        "Reason was: `%s`".formatted(diagnostic.reason));
+  }
 }
 
 

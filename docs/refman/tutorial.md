@@ -588,7 +588,7 @@ $InstModel( ( ADD ; + ) )
 ~~~
 \endlisting
 
-### Lexical Macro Functions (ExtendId, IdToStr)
+### Lexical Macro Functions (AsId, AsStr)
 
 While most of the needs are covered by syntactical macros, string and identifier manipulation is best done using lexical
 macros.
@@ -596,9 +596,9 @@ A lexical macro acts on the abstraction level of token streams in contrast to an
 Two use-cases are supported using special syntax type converting functions.
 Firstly, templates generating instruction behavior and assembly often need the instruction name once in form of an
 identifier (`Id`) and again in form of a string (`Str`).
-This use case is covered by the `IdToStr` function (will be renamed to `AsStr`).
+This use case is covered by the `AsStr` function (will be renamed to `AsStr`).
 This function takes an `Id` typed syntax element and converts it to a `Str` typed syntax element.
-Secondly, the `ExtendId` function allows safe identifier manipulation (will be renamed to `AsId`).
+Secondly, the `AsId` function allows safe identifier manipulation (will be renamed to `AsId`).
 This function takes an arbitrary number of `Id` or `Str` typed syntax elements, converts `Id` typed elements to `Str`,
 concatenates them and returns a single `Id` typed syntax element.
 Listing \r{lexical_macros} shows a small example of both functions with their typed result as comment.
@@ -608,8 +608,8 @@ Therefore, it is not possible to define or refer to a model name or parameter us
 
 \listing{lexical_macros, Lexical Macro Examples}
 ~~~{.vadl}
-ExtendId( "", I, "Am", An, "Identifier" ) // --> IAmAnIdentifier : Id
-IdToStr( IAmAString )                     // --> "IAmAString"    : Str
+AsId( "", I, "Am", An, "Identifier" ) // --> IAmAnIdentifier : Id
+AsStr( IAmAString )                     // --> "IAmAString"    : Str
 ~~~
 \endlisting
 
@@ -733,12 +733,12 @@ record Instr (id: Id, ass: Str, op: BinOp, opcode: Bin)
 record Cond  (str: Str, code: Id, ex: Ex)
 
 model ALImmCondInstr (cond: Cond, instr: Instr) : IsaDefs = {
-  instruction ExtendId ($instr.id, $cond.str) : ArLoImm =
+  instruction AsId ($instr.id, $cond.str) : ArLoImm =
     if ($cond.ex) then
       R(rd) := R(rn) $instr.op imm12 as Word
-  encoding ExtendId ($instr.id, $cond.str) =
+  encoding AsId ($instr.id, $cond.str) =
     {cc = cond::$cond.code, op = $instr.opcode, flags = 0}
-  assembly ExtendId ($instr.id, $cond.str) =
+  assembly AsId ($instr.id, $cond.str) =
     ($instr.ass, $cond.str, ' ', register(rd), ',', register(rn), ',', decimal(imm12))
   }
 
@@ -769,7 +769,7 @@ The `Cond` record type definition consists of a string representing the extensio
 of the enumeration of the condition encoding and a boolean expression for condition evaluation.
 
 Now 15 different instructions with a unique identifier have to be created.
-This can be handled with the lexical macro function `ExtendId` by appending the extension string of the condition to the
+This can be handled with the lexical macro function `AsId` by appending the extension string of the condition to the
 identifier.
 
 The final problem is that there is a set of models which describe different kinds of conditional instructions and all
@@ -1529,7 +1529,7 @@ The \ac{ABI} specification section in \ac{VADL} supports the definition of
 - register aliases,
 - special purpose registers with alignment information,
 - calling conventions,
-- pseudo instruction references and
+- special instruction references and
 - special instruction sequences.
 
 Listing \r{application_binary_interface} shows all elements of the \ac{ABI} section.
@@ -1559,11 +1559,11 @@ application binary interface ABI for RV32I = {
   caller saved = [ a{0..7}, t{0..6} ]
   callee saved = [ ra, gp, tp, fp, s{0..11} ]
 
-  pseudo call instruction   = CALL
-  pseudo return instruction = RET
-  pseudo absolute address load instruction = LA
-  pseudo local address load instruction    = LLA
-  pseudo global address load instruction   = LGA_32
+  special call instruction   = CALL
+  special return instruction = RET
+  special absolute address load instruction = LA
+  special local address load instruction    = LLA
+  special global address load instruction   = LGA_32
 
   constant sequence( rd : Bits<5>, val : SInt<32> ) = {
     LUI  { rd = rd, imm = hi( val ) }
@@ -1604,15 +1604,15 @@ To be more concise, \ac{VADL} provides a special syntax to address multiple regi
 In the example, the compact expression `a{0..7}` evaluates to `[a0, a1, a2, a3, a4, a5, a6, a7]`. Note that the callee saved sequence contains the return address `ra` on purpose in the example even though the official RISC-V ABI documentation states it as caller saved. This is [required](https://discourse.llvm.org/t/why-is-return-address-x1-defined-as-callee-saved-register/84736) because a function call changes the register whereas the return won't restore the old value.
 
 The compiler generator cannot automatically deduce all necessary code sequences for its functionality.
-There exist two mechanisms to select such code sequences, referencing pseudo instructions and defining special sequences.
+There exist two mechanisms to select such code sequences, referencing special instructions and defining special sequences.
 
-The reference to a pseudo instruction starts with the keyword `pseudo` followed by some keywords describing the functionality, the keyword `instruction`, the equality symbol `"="` and the name of the referenced pseudo instruction.
-Five pseudo instruction references are available.
-`call` is a pseudo instruction implementing a function call.
-`return` is a pseudo instruction implementing a function return.
-`absolute address load` is a pseudo instruction implementing the loading of an absolute address.
-`local address load` is a pseudo instruction implementing the loading of a local program counter relative address.
-`global address load` is a pseudo instruction implementing the loading of an address using a global offset table.
+The reference to a special instruction starts with the keyword `special` followed by some keywords describing the functionality, the keyword `instruction`, the equality symbol `"="` and the name of the referenced special instruction.
+Five special instruction references are available.
+`call` is a special instruction implementing a function call.
+`return` is a special instruction implementing a function return.
+`absolute address load` is a special instruction implementing the loading of an absolute address.
+`local address load` is a special instruction implementing the loading of a local program counter relative address.
+`global address load` is a special instruction implementing the loading of an address using a global offset table.
 
 The definition of compiler sequences uses a syntax similarly to the definition of pseudo instructions.
 Instead of the keyword `pseudo instruction` they use `constant sequence` and `register adjustment sequence`.
@@ -1623,7 +1623,7 @@ They define efficient code sequences to add immediate values of different types 
 If an immediate does not fit into the immediate of a register adjustment sequence, then a constant sequence will be used.
 This requires an additional register which can be more costly.
 
-The compiler generator does not only generate a compiler backend but also a C frontend. To lower C code correctly, the generator requires additional information about the memory layout of types. In the example above, this indicated with `size type = unsigned int` which makes the `size_t` datatype 4 bytes long without a sign bit.
+The compiler generator does not only generate a compiler backend but also a C frontend. To lower C code correctly, the generator requires additional information about the memory layout of types. In the example above, this indicated with `size_t type = unsigned int` which makes the `size_t` datatype 4 bytes long without a sign bit.
 
 ## Assembly Description Definition
 

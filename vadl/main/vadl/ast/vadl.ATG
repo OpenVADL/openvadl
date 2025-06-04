@@ -123,7 +123,7 @@ TOKENS
   ENUMERATION  = "enumeration".
   EXCEPTION    = "exception".
   EXISTS       = "exists".
-  EXTEND_ID    = "ExtendId".
+  AS_ID    = "AsId".
   EXTENDING    = "extending".
   FALSE        = "false".
   FETCH        = "fetch".
@@ -138,7 +138,7 @@ TOKENS
   GRAMMAR      = "grammar".
   GROUP        = "group".
   HIT          = "hit".
-  ID_TO_STR    = "IdToStr".
+  AS_STR    = "AsStr".
   IF_KW        = "if".
   INT          = "int".
   IMPLEMENTS   = "implements".
@@ -189,6 +189,7 @@ TOKENS
   SIGNAL       = "signal".
   SIGNED       = "signed".
   SIZE_T       = "size_t".
+  SPECIAL      = "special".
   SOURCE       = "source".
   STACK        = "stack".
   STAGE        = "stage".
@@ -872,7 +873,7 @@ PRODUCTIONS
   = annotations<.out List<AnnotationDefinition> annotations.> (. var peek = scanner.Peek(); .)
     ( specialPurposeRegisterSingleDef<out def>
     | aliasDefinition<out def>
-    | abiPseudoInstructionDefinition<out def>
+    | abiSpecialPurposeInstructionDefinition<out def>
     | abiSequenceDef<out def>
     | clangTypeDefinition<out def>
     | clangNumericTypeDefinition<out def>
@@ -938,21 +939,21 @@ PRODUCTIONS
   | FUNCTION ARGUMENT                                        (. purpose = SpecialPurposeRegisterDefinition.Purpose.FUNCTION_ARGUMENT; .)
   )
   SYM_EQ
-  sequenceCallExprList<.out List<SequenceCallExpr> calls.> (. def = new SpecialPurposeRegisterDefinition(purpose, calls, start.join(lastTokenLoc())); .)
+  sequenceCallExprList<.out List<ExpandedSequenceCallExpr> calls.> (. def = new SpecialPurposeRegisterDefinition(purpose, calls, start.join(lastTokenLoc())); .)
   .
 
-  abiPseudoInstructionDefinition<out Definition def>         (. var start = nextTokenLoc(); .)
-  =                                                          (. AbiPseudoInstructionDefinition.Kind kind = null; .)
-  PSEUDO
+  abiSpecialPurposeInstructionDefinition<out Definition def>         (. var start = nextTokenLoc(); .)
+  =                                                          (. AbiSpecialPurposeInstructionDefinition.Kind kind = null; .)
+  SPECIAL
   (
-    RETURN INSTRUCTION                                       (. kind = AbiPseudoInstructionDefinition.Kind.RETURN; .)
-    | CALL INSTRUCTION                                       (. kind = AbiPseudoInstructionDefinition.Kind.CALL; .)
-    | LOCAL ADDRESS LOAD INSTRUCTION                         (. kind = AbiPseudoInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD; .)
-    | GLOBAL ADDRESS LOAD INSTRUCTION                        (. kind = AbiPseudoInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD; .)
-    | ABSOLUTE ADDRESS LOAD INSTRUCTION                      (. kind = AbiPseudoInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD; .)
+    RETURN INSTRUCTION                                       (. kind = AbiSpecialPurposeInstructionDefinition.Kind.RETURN; .)
+    | CALL INSTRUCTION                                       (. kind = AbiSpecialPurposeInstructionDefinition.Kind.CALL; .)
+    | LOCAL ADDRESS LOAD INSTRUCTION                         (. kind = AbiSpecialPurposeInstructionDefinition.Kind.LOCAL_ADDRESS_LOAD; .)
+    | GLOBAL ADDRESS LOAD INSTRUCTION                        (. kind = AbiSpecialPurposeInstructionDefinition.Kind.GLOBAL_ADDRESS_LOAD; .)
+    | ABSOLUTE ADDRESS LOAD INSTRUCTION                      (. kind = AbiSpecialPurposeInstructionDefinition.Kind.ABSOLUTE_ADDRESS_LOAD; .)
   )
   SYM_EQ
-  identifier<out Identifier id>  (. def = new AbiPseudoInstructionDefinition(kind, id, start.join(lastTokenLoc())); .)
+  identifier<out Identifier id>  (. def = new AbiSpecialPurposeInstructionDefinition(kind, id, start.join(lastTokenLoc())); .)
   .
 
   abiSequenceDef<out Definition def>                         (. var start = nextTokenLoc(); .)
@@ -1916,25 +1917,34 @@ PRODUCTIONS
   // | TODO other keywords
   .
 
-  sequenceCallExprList<.out List<SequenceCallExpr> list.> (. list = new ArrayList<>(); .)
-  = ( sequenceCallExpr<out SequenceCallExpr call>         (. list.add(call); .)
+  sequenceCallExprList<.out List<ExpandedSequenceCallExpr> list.> (. var calls = new ArrayList<SequenceCallExpr>(); .)
+  = ( sequenceCallExpr<out SequenceCallExpr call>                 (. calls.add(call); .)
     | SYM_BRACK_OPEN
-      sequenceCallExpr<out SequenceCallExpr call>         (. list.add(call); .)
+      sequenceCallExpr<out SequenceCallExpr call>                 (. calls.add(call); .)
       {
         SYM_COMMA
-        sequenceCallExpr<out call>                        (. list.add(call); .)
+        sequenceCallExpr<out call>                                (. calls.add(call); .)
       }
       SYM_BRACK_CLOSE
-    )                                                     (. list = expandSequenceCalls(this, list); .)
+    )                                                             (. list = expandSequenceCalls(this, calls); .)
   .
 
-  sequenceCallExpr<out SequenceCallExpr call> (. var start = nextTokenLoc(); .)
-  = identifier<out Identifier id>             (. Expr range = null; .)
-    [
-      SYM_BRACE_OPEN
-      rangeExpression<out range>
-      SYM_BRACE_CLOSE
-    ]                                         (. call = new SequenceCallExpr(id, range, start.join(lastTokenLoc())); .)
+  sequenceCallExpr<out SequenceCallExpr call>     (. var start = nextTokenLoc();
+                                                     Expr range = null;
+                                                     call = null;
+                                                     IsCallExpr ident = null;
+                                                  .)
+  =
+  identifier<out Identifier id1> (. ident = id1; .)
+  {
+        // X(1)
+        arguments<out CallIndexExpr.Arguments args>
+        (. ident =  new CallIndexExpr(id1, List.of(args), List.of(), start); .)
+    |  // a{0..7}
+        SYM_BRACE_OPEN
+        rangeExpression<out range>
+        SYM_BRACE_CLOSE
+  } (. call = new SequenceCallExpr(ident, range, start.join(lastTokenLoc())); .)
   .
 
   // -- MACROS -------------------------------------------------------------------------------------------------------
@@ -1942,21 +1952,19 @@ PRODUCTIONS
   macroReplacement<out Node body> (. body = DUMMY_ID; .)
   = ( macroMatch<out body>
     | maximumMacroExpr<out body>
-    | extendId<out body>
-    | idToStr<out body>
+    | AsId<out body>
+    | AsStr<out body>
     )                             (. body = expandNode(this, body); .)
   .
 
-  extendId<out Node body>                   (. var start = nextTokenLoc(); .)
-  = EXTEND_ID
-    groupedExpression<out GroupedExpr expr> (. body = new ExtendIdExpr(expr, start.join(lastTokenLoc())); .)
+  AsId<out Node body>                   (. var start = nextTokenLoc(); .)
+  = AS_ID
+    groupedExpression<out GroupedExpr expr> (. body = new AsIdExpr(expr, start.join(lastTokenLoc())); .)
   .
 
-  idToStr<out Node body> (. var start = nextTokenLoc(); .)
-  = ID_TO_STR
-    SYM_PAREN_OPEN
-    identifierOrPlaceholder<out IdentifierOrPlaceholder id>
-    SYM_PAREN_CLOSE (. body = new IdToStrExpr(id, start.join(lastTokenLoc())); .)
+  AsStr<out Node body> (. var start = nextTokenLoc(); .)
+  = AS_STR
+    groupedExpression<out GroupedExpr expr> (. body = new AsStrExpr(expr, start.join(lastTokenLoc())); .)
   .
 
   macroMatch<out Node node>                           (. var start = nextTokenLoc(); .)
@@ -2058,7 +2066,7 @@ PRODUCTIONS
     ]
     SYM_PAREN_CLOSE                         (. macroContext.addFirst(params); .)
     SYM_COLON
-    basicSyntaxType<out SyntaxType returnType>
+    syntaxType<out SyntaxType returnType>
     SYM_EQ
 
     SYM_BRACE_OPEN
@@ -2182,7 +2190,7 @@ PRODUCTIONS
                                                 // Unfortunately, we need this type to be correctly parsed because,
                                                 // depending on it, we parse the body of the macro differently. So if we
                                                 // don't know what it is, we must exit early.
-                                                throwException(ParserUtils.unknownSyntaxTypeError(t.val, lastTokenLoc()));
+                                                throwException(ParserUtils.unknownSyntaxTypeError(t.val, macroTable, lastTokenLoc()));
                                             .)
   .
 

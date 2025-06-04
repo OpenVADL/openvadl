@@ -198,7 +198,11 @@ public class Graph {
    * @return the node added to the graph or its duplicate
    */
   public <T extends Node> T addWithInputs(T node) {
-    node.ensure(node.isUninitialized(), "Node to be added must not be initialized");
+    node.ensure(!node.isDeleted(), "Node to be added must not be deleted");
+    if (node.isActive()) {
+      node.ensure(node.isActiveIn(this), "Node to be added must not be part of different graph");
+      return node;
+    }
     node.applyOnInputsUnsafe((n, target) -> {
       if (target == null || target.isActive()) {
         return target;
@@ -488,7 +492,7 @@ public class Graph {
     Map<Node, Node> cache = new LinkedHashMap<>();
 
     // make shallow copy of all nodes. we will replace the links in the next step
-    this.nodes.stream().filter(Objects::nonNull).forEach(oldNode -> {
+    this.getNodes().forEach(oldNode -> {
       var newNode = oldNode.shallowCopy();
       cache.put(oldNode, newNode);
     });

@@ -25,6 +25,7 @@ import static vadl.utils.GraphUtils.unaryOp;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,6 +43,7 @@ import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
 import vadl.types.BuiltInTable;
 import vadl.types.Type;
 import vadl.utils.GraphUtils;
+import vadl.viam.Constant;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
@@ -51,6 +53,7 @@ import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ExpressionNode;
+import vadl.viam.graph.dependency.SliceNode;
 
 public class BuiltinCTest extends DockerExecutionTest {
 
@@ -59,6 +62,96 @@ public class BuiltinCTest extends DockerExecutionTest {
   @BeforeEach
   public void beforeEach() {
     counter = 0;
+  }
+
+  @TestFactory
+  Stream<DynamicTest> sliceTests() {
+    return runTests(
+        // Extract bits 3 to 0 from 0xAB (10101011) → 1011 → 0x0B
+        sliceTest(0x0B, 0xAB, 3, 0),
+
+        // Extract bits 7 to 4 from 0xAB (10101011) → 1010 → 0x0A
+        sliceTest(0x0A, 0xAB, 7, 4),
+
+        // Extract bits 7 to 0 from 0xAB (10101011) → 10101011 → 0xAB
+        sliceTest(0xAB, 0xAB, 7, 0),
+
+        // Extract bits 7 to 0 from 0xAB (10101011) in reverse order
+        sliceTest(0xD5, 0xAB, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7),
+
+        // Extract bits 7, 5, 3, 1 from 0xAB (10101011) → 1111
+        sliceTest(0b1111, 0b10101011, 7, 7, 5, 5, 3, 3, 1, 1),
+
+        sliceTest(0b10, 0b01, 0, 0, 1, 1),
+
+        // Extract bits 3 to 0 and 11 to 8 from 0xF0F0 (1111000011110000) → 0000 0000 → 0x00
+        sliceTest(0x00, 0xF0F0, 3, 0, 11, 8),
+
+        // Extract bits 11 to 8 and 3 to 0 from 0xF0F0 (1111000011110000) → 1100 1100 → 0xCC
+        sliceTest(0xCC, 0xF0F0, 13, 10, 5, 2),
+
+        // Extract bits 11 to 8 and 3 to 0 from 0xF0F0 (1111000011110000) → 0110011100 → 0x19c
+        sliceTest(0x19c, 0xF0F0, 0, 0, 13, 10, 14, 14, 5, 2),
+
+
+        // Extract bit 15 and bits 6 to 0 from 0xFFFF (1111111111111111) → 1 1111111 → 0xFF
+        sliceTest(0xFF, 0xFFFF, 15, 15, 6, 0),
+
+        // Extract bits 15 to 8 from 0xABCD (1010101111001101) → 10101011 → 0xAB
+        sliceTest(0xAB, 0xABCD, 15, 8),
+
+        // Extract bits 7 to 0 from 0xABCD (1010101111001101) → 11001101 → 0xCD
+        sliceTest(0xCD, 0xABCD, 7, 0),
+
+        // Extract bits 15 to 0 from 0xABCD (1010101111001101) → 1010101111001101 → 0xABCD
+        sliceTest(0xABCD, 0xABCD, 15, 0),
+
+        // Extract bits 3, 2, 1, 0 from 0x0F (00001111) → 1111 → 0x0F
+        sliceTest(0x0F, 0x0F, 3, 3, 2, 2, 1, 1, 0, 0),
+
+        // Extract bits 0, 1, 2, 3 from 0x0F (00001111) → 1111 → 0x0F
+        sliceTest(0x0F, 0x0F, 0, 0, 1, 1, 2, 2, 3, 3),
+
+        // Extract bits 7 to 0 from 0xFF (11111111) → 11111111 → 0xFF
+        sliceTest(0xFF, 0xFF, 7, 0),
+
+        // Extract bits 7 to 0 from 0xFF (11111111) in reverse order
+        sliceTest(0xFF, 0xFF, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7),
+
+        // Extract bits 15 to 8 and bits 7 to 0 from 0xABCD (1010101111001101) → 1010101111001101 → 0xABCD
+        sliceTest(0xABCD, 0xABCD, 15, 8, 7, 0),
+
+        // Extract bits 7 to 0 and bits 15 to 8 from 0xABCD (1010101111001101) → 1100110110101011 → 0xCDAB
+        sliceTest(0xCDAB, 0xABCD, 7, 0, 15, 8),
+
+        // Extract bits 3 to 0 from 0x0 (00000000) → 0000 → 0x00
+        sliceTest(0x00, 0x0, 3, 0),
+
+        // Extract bits 3 to 0 from 0xF (00001111) → 1111 → 0x0F
+        sliceTest(0x0F, 0xF, 3, 0),
+
+        // Extract bits 3 to 0 from 0x10 (00010000) → 0000 → 0x00
+        sliceTest(0x00, 0x10, 3, 0)
+    );
+  }
+
+  private Function sliceTest(long expected, long val, int... ranges) {
+    if (ranges.length % 2 != 0) {
+      throw new AssertionError("slice tests must have even number of arguments");
+    }
+    var parts = new ArrayList<Constant.BitSlice.Part>();
+    for (int i = 0; i < ranges.length; i += 2) {
+      parts.add(new Constant.BitSlice.Part(ranges[i], ranges[i + 1]));
+    }
+    var bitSlice = new Constant.BitSlice(parts.toArray(new Constant.BitSlice.Part[0]));
+    return genericFunc("slice_" + counter++, binaryOp(BuiltInTable.EQU,
+        Type.bool(),
+        new SliceNode(
+            GraphUtils.bits(val, 64).toNode(),
+            bitSlice,
+            Type.bits(bitSlice.bitSize())
+        ),
+        bitsNode(expected, bitSlice.bitSize())));
   }
 
   /// / ARITHMETIC OPERATIONS ////
@@ -1145,22 +1238,22 @@ public class BuiltinCTest extends DockerExecutionTest {
         // 1-bit logical shift left: 1 << 0 = 1
         lsl(0x1, 0x0, 1, 0x1),
         // 1-bit logical shift left: 1 << 1 = 0 (shift out of range for 1-bit)
-        lsl(0x1, 0x1, 1, 0x0),
-        // 2-bit logical shift left: 2 << 1 = 0 (shift out of range for 2-bit)
+        lsl(0x1, 0x1, 1, 0x1),
+        // 2-bit logical shift left: 2 << 1 = 0
         lsl(0x2, 0x1, 2, 0x0),
         // 2-bit logical shift left: 1 << 1 = 2
         lsl(0x1, 0x1, 2, 0x2),
         // 8-bit logical shift left: 127 << 1 = 254
         lsl(0x7F, 0x1, 8, 0xFE),
-        // 8-bit logical shift left: 128 << 1 = 0 (shift out of range for 8-bit)
+        // 8-bit logical shift left: 128 << 1 = 0
         lsl(0x80, 0x1, 8, 0x0),
         // 16-bit logical shift left: 32767 << 1 = 65534
         lsl(0x7FFF, 0x1, 16, 0xFFFE),
-        // 16-bit logical shift left: 32768 << 1 = 0 (shift out of range for 16-bit)
+        // 16-bit logical shift left: 32768 << 1 = 0
         lsl(0x8000, 0x1, 16, 0x0),
         // 32-bit logical shift left: 2147483647 << 1 = 4294967294
         lsl(0x7FFFFFFF, 0x1, 32, 0xFFFFFFFEL),
-        // 32-bit logical shift left: 2147483648 << 1 = 0 (shift out of range for 32-bit)
+        // 32-bit logical shift left: 2147483648 << 1 = 0
         lsl(0x80000000L, 0x1, 32, 0x0),
         // 64-bit logical shift left: 9223372036854775807 << 1 = 18446744073709551614
         lsl(0x7FFFFFFFFFFFFFFFL, 0x1, 64, 0xFFFFFFFFFFFFFFFEL),
@@ -1218,8 +1311,8 @@ public class BuiltinCTest extends DockerExecutionTest {
     return runTests(
         // 1-bit logical shift right: 1 >> 0 = 1
         lsr(0x1, 0x0, 1, 0x1),
-        // 1-bit logical shift right: 1 >> 1 = 0
-        lsr(0x1, 0x1, 1, 0x0),
+        // 1-bit logical shift right: 1 >> 1 = 0 (out of range shift)
+        lsr(0x1, 0x1, 1, 0x1),
         // 2-bit logical shift right: 2 >> 1 = 1
         lsr(0x2, 0x1, 2, 0x1),
         // 2-bit logical shift right: 3 >> 1 = 1
@@ -1322,7 +1415,7 @@ public class BuiltinCTest extends DockerExecutionTest {
   Stream<DynamicTest> rrxTests() {
     return runTests(
         // 1-bit rotate right with carry: 1 >> 1 + carry(0) = 0
-        rrx(0x1, 0x1, false, 1, 0x0),
+        rrx(0x1, 0x1, false, 1, 0x1),
         // 1-bit rotate right with carry: 1 >> 1 + carry(1) = 1
         rrx(0x1, 0x1, true, 1, 0x1),
         // 2-bit rotate right with carry: 2 >> 1 + carry(0) = 1
@@ -1582,6 +1675,75 @@ public class BuiltinCTest extends DockerExecutionTest {
 
   private Function cls(long a, int size, long expected) {
     return unaryTest(BuiltInTable.CLS, a, size, expected);
+  }
+
+  /* ───── Count Trailing Zeros ────────────────────────────── */
+  @TestFactory
+  Stream<DynamicTest> ctzTests() {
+    return runTests(
+        // 1-bit
+        ctz(0x0, 1, 0x1),           // 0 → 1 trailing zero
+        ctz(0x1, 1, 0x0),           // 1 → 0
+        // 2-bit
+        ctz(0x0, 2, 0x2),
+        ctz(0x1, 2, 0x0),
+        ctz(0x2, 2, 0x1),           // 10b → 1
+        // 8-bit
+        ctz(0xFF, 8, 0x0),
+        ctz(0x80, 8, 0x7),
+        ctz(0x01, 8, 0x0),
+        ctz(0x00, 8, 0x8),
+        // 16-bit
+        ctz(0x8000, 16, 0xF),
+        ctz(0x0001, 16, 0x0),
+        ctz(0x0000, 16, 0x10),
+        // 32-bit
+        ctz(0x80000000L, 32, 0x1F),
+        ctz(0x00000001, 32, 0x0),
+        ctz(0x00000000, 32, 0x20),
+        // 64-bit
+        ctz(0x8000000000000000L, 64, 0x3F),
+        ctz(0x0000000000000001L, 64, 0x0),
+        ctz(0x0000000000000000L, 64, 0x40)
+    );
+  }
+
+  private Function ctz(long a, int size, long expected) {
+    return unaryTest(BuiltInTable.CTZ, a, size, expected);
+  }
+
+  /* ───── Count Trailing Ones ─────────────────────────────── */
+  @TestFactory
+  Stream<DynamicTest> ctoTests() {
+    return runTests(
+        // 1-bit
+        cto(0x0, 1, 0x0),
+        cto(0x1, 1, 0x1),
+        // 2-bit
+        cto(0x0, 2, 0x0),
+        cto(0x1, 2, 0x1),
+        cto(0x3, 2, 0x2),           // 11b → 2
+        // 8-bit
+        cto(0xFF, 8, 0x8),
+        cto(0x01, 8, 0x1),
+        cto(0xFE, 8, 0x0),
+        // 16-bit
+        cto(0xFFFF, 16, 0x10),
+        cto(0x0001, 16, 0x1),
+        cto(0xFFFE, 16, 0x0),
+        // 32-bit
+        cto(0xFFFFFFFFL, 32, 0x20),
+        cto(0x00000001, 32, 0x1),
+        cto(0xFFFFFFFE, 32, 0x0),
+        // 64-bit
+        cto(0xFFFFFFFFFFFFFFFFL, 64, 0x40),
+        cto(0x0000000000000001L, 64, 0x1),
+        cto(0xFFFFFFFFFFFFFFFEL, 64, 0x0)
+    );
+  }
+
+  private Function cto(long a, int size, long expected) {
+    return unaryTest(BuiltInTable.CTO, a, size, expected);
   }
 
   /// TEST HELPER FUNCTIONS ///

@@ -56,6 +56,7 @@ import vadl.types.asmTypes.AsmType;
 import vadl.types.asmTypes.GroupAsmType;
 import vadl.types.asmTypes.InstructionAsmType;
 import vadl.types.asmTypes.StringAsmType;
+import vadl.utils.Levenshtein;
 import vadl.utils.Pair;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
@@ -537,10 +538,23 @@ public class TypeChecker
           // NOTE: From is always larger than to
           var rangeSize = (from - to) + 1;
           if (rangeSize < 1) {
-            throw error("Invalid Range", rangeField)
-                .description("Range must be >= 1 but was %s", fieldBitWidth)
+            throw error("Invalid Range", range)
+                .locationDescription(range, "Range must span more than one bit but was %s",
+                    fieldBitWidth)
+                .locationNote(range,
+                    "Ranges are specified as `from..to` where from is always larger than to.")
                 .build();
           }
+
+          // Check range is not out of bounds.
+          if (from < 0 || from >= bitWidth || to < 0 || to > bitWidth) {
+            throw error("Invalid Range", range)
+                .locationDescription(range,
+                    "Provided range `%d..%d` out of bounds for available range `%d..0`",
+                    from, to, bitWidth - 1)
+                .build();
+          }
+
           fieldBitWidth += rangeSize;
           rangeField.computedRanges.add(new FormatDefinition.BitRange(from, to));
           bitsVerifier.addRange(from, to);
@@ -780,7 +794,7 @@ public class TypeChecker
   }
 
   @Override
-  public Void visit(AbiPseudoInstructionDefinition definition) {
+  public Void visit(AbiSpecialPurposeInstructionDefinition definition) {
     // Isn't type checked on purpose because there is nothing to type check.
     return null;
   }
@@ -871,6 +885,9 @@ public class TypeChecker
   public Void visit(AnnotationDefinition definition) {
     // NOTE: I have the suspicion that we might have to delay the typechecking until the definition
     // on which the annotation is placed is completely typed checked.
+    if (definition.annotation == null) {
+      System.out.printf("");
+    }
     requireNonNull(definition.annotation).typeCheck(definition, this);
     return null;
   }
@@ -1048,11 +1065,12 @@ public class TypeChecker
     }
 
     // Check whether there exists just one pseudo instruction.
-    for (var entry : AbiPseudoInstructionDefinition.Kind.numberOfOccurrencesAbi.entrySet()) {
+    for (var entry :
+        AbiSpecialPurposeInstructionDefinition.Kind.numberOfOccurrencesAbi.entrySet()) {
       var kind = entry.getKey();
       var pseudoInstructions = definition.definitions
           .stream()
-          .filter(x -> x instanceof AbiPseudoInstructionDefinition y && y.kind == kind)
+          .filter(x -> x instanceof AbiSpecialPurposeInstructionDefinition y && y.kind == kind)
           .toList();
 
       var noValues = error(
@@ -1706,6 +1724,7 @@ public class TypeChecker
   @Override
   public Void visit(ProcessorDefinition definition) {
     definition.definitions.forEach(this::check);
+    check(definition.implementedIsaNode());
 
     // FIXME: Do we need to limit certain operations here?
     //  (like Resource access -- except memory write of course)
@@ -2149,9 +2168,9 @@ public class TypeChecker
       } else if (leftTyp instanceof UIntType || rightTyp instanceof UIntType) {
         expr.type = Type.unsignedInt(leftBitWidth * 2);
         return null;
-      } else {
-        expr.type = Type.bits(leftBitWidth * 2);
       }
+      expr.type = Type.bits(leftBitWidth * 2);
+      return null;
     }
 
     var bitWidth = ((BitsType) leftTyp).bitWidth();
@@ -2383,14 +2402,7 @@ public class TypeChecker
     }
 
     // Find the type from the symbol table
-    var typeTarget = expr.symbolTable().require(expr.baseType, () -> {
-      var sb = new StringBuilder();
-      expr.prettyPrint(0, sb);
-      var typeName = sb.toString();
-      throw error("Unknown Type `%s`".formatted(typeName), expr)
-          .description("No type with that name exists.")
-          .build();
-    });
+    var typeTarget = expr.symbolTable().findAs(expr.baseType, Node.class);
 
     if (typeTarget instanceof UsingDefinition usingDef) {
       return check(usingDef.typeLiteral);
@@ -2401,7 +2413,22 @@ public class TypeChecker
       return new FormatType(formatDef);
     }
 
-    throw new IllegalStateException("Unimplemented " + typeTarget);
+    // Throw unknown type error
+    var sb = new StringBuilder();
+    expr.prettyPrint(0, sb);
+    var typeName = sb.toString();
+
+    var baseTypes = Arrays.asList("SInt", "UInt", "Bits", "String", "Bool");
+    var candidateTypes = new ArrayList<>(baseTypes);
+    candidateTypes.addAll(
+        expr.symbolTable().allSymbolNamesOf(FormatDefinition.class, UsingDefinition.class));
+    var suggestions =
+        Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
+
+    throw error("Unknown Type `%s`".formatted(typeName), expr)
+        .locationDescription(expr, "No type with that name exists.")
+        .suggestions(suggestions)
+        .build();
   }
 
   @Override
@@ -2608,8 +2635,14 @@ public class TypeChecker
         var fieldType = formatType.format.getFieldType(fieldName);
         if (fieldType == null) {
           var formatName = formatType.format.identifier().name;
+          var suggestions = Levenshtein.suggestions(
+              fieldName,
+              formatType.format.fields.stream()
+                  .map(f -> f.identifier().name).toList());
+
           throw error("Unknown format field `%s`".formatted(fieldName), expr)
-              .description("Format `%s` doesn't have any field named `%s`", formatName, fieldName)
+              .description("Format `%s` doesn't have any field with this name", formatName)
+              .suggestions(suggestions)
               .build();
         }
 
@@ -2623,8 +2656,10 @@ public class TypeChecker
       } else if (type instanceof StatusType) {
         var allowedStatusfields = List.of("negative", "zero", "carry", "overflow");
         if (!allowedStatusfields.contains(fieldName)) {
+          var suggestions = Levenshtein.sortAll(fieldName, allowedStatusfields);
           throw error("Unknown status field `%s`".formatted(fieldName), expr)
               .note("Allowed fields are: %s", String.join(", ", allowedStatusfields))
+              .help("Maybe you meant one of these: %s", String.join(", ", suggestions))
               .build();
         }
         var fieldType = Type.bool();
@@ -2646,9 +2681,14 @@ public class TypeChecker
     // as identifiers only store AstSymbol origins, and the call expr might refer to a
     // BuiltInSymbol, we must do a separate request to the symbol table an can't rely on the
     // expression's identifier target.
-    var targetSymbol = expr.symbolTable().requireSymbol(expr.target.path(), () ->
-        error("Unknown call target", expr.target)
-            .locationNote(expr.target, "Nothing found that can be called with this name."));
+    var targetSymbol = expr.symbolTable().requireSymbol(expr.target.path(), () -> {
+      var suggestions = Levenshtein.suggestions(expr.target.path().pathToString(),
+          expr.symbolTable().allSymbolNames());
+
+      return error("Unknown call target", expr.target)
+          .locationNote(expr.target, "Nothing found that can be called with this name.")
+          .suggestions(suggestions);
+    });
 
     switch (targetSymbol) {
       case SymbolTable.AstSymbol astSymbol -> processCallOfTarget(expr, astSymbol.origin());
@@ -2989,13 +3029,13 @@ public class TypeChecker
   }
 
   @Override
-  public Void visit(ExtendIdExpr expr) {
+  public Void visit(AsIdExpr expr) {
     throw new IllegalStateException(
         "No %s should ever reach the Typechecker".formatted(expr.getClass().getSimpleName()));
   }
 
   @Override
-  public Void visit(IdToStrExpr expr) {
+  public Void visit(AsStrExpr expr) {
     throw new IllegalStateException(
         "No %s should ever reach the Typechecker".formatted(expr.getClass().getSimpleName()));
   }
@@ -3026,6 +3066,18 @@ public class TypeChecker
 
   @Override
   public Void visit(SequenceCallExpr expr) {
+    throwUnimplemented(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(ExpandedSequenceCallExpr expr) {
+    throwUnimplemented(expr);
+    return null;
+  }
+
+  @Override
+  public Void visit(ExpandedAliasDefSequenceCallExpr expr) {
     throwUnimplemented(expr);
     return null;
   }

@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 typedef uint64_t Bits; // Generic 64-bit container of bit patterns
 typedef Bits UInt; // Interpreted as an unsigned 64-bit integer
@@ -464,10 +465,7 @@ static inline Bits VADL_ugeq(Bits a, Width aw, Bits b, Width bw) {
 static inline Bits VADL_lsl(Bits a, Width aw, Bits b, Width bw) {
     Bits x = VADL_uextract(a, aw);
     Bits s = VADL_uextract(b, bw);
-
-    /* Typically assert s <= aw and s < 64, so we do not invoke UB. */
-    assert(s < 64 && "Shift out of range");
-    assert(s <= aw && "Shift exceeds bit-width");
+    s %= aw;
 
     Bits shifted = x << s;
     if (aw < 64) {
@@ -482,9 +480,7 @@ static inline Bits VADL_lsl(Bits a, Width aw, Bits b, Width bw) {
 static inline Bits VADL_asr(Bits a, Width aw, Bits b, Width bw) {
     SInt x = VADL_sextract(a, aw);
     Bits s = VADL_uextract(b, bw);
-
-    assert(s < 64 && "Shift out of range");
-    assert(s <= aw && "Shift exceeds bit-width");
+    s %= aw;
 
     SInt shifted = x >> s;
     if (aw < 64) {
@@ -500,9 +496,7 @@ static inline Bits VADL_asr(Bits a, Width aw, Bits b, Width bw) {
 static inline Bits VADL_lsr(Bits a, Width aw, Bits b, Width bw) {
     Bits x = VADL_uextract(a, aw);
     Bits s = VADL_uextract(b, bw);
-
-    assert(s < 64 && "Shift out of range");
-    assert(s <= aw && "Shift exceeds bit-width");
+    s %= aw;
 
     return x >> s; /* Already limited to aw bits. */
 }
@@ -513,11 +507,6 @@ static inline Bits VADL_lsr(Bits a, Width aw, Bits b, Width bw) {
 static inline Bits VADL_rol(Bits a, Width aw, Bits b, Width bw) {
     Bits x = VADL_uextract(a, aw);
     Bits s = VADL_uextract(b, bw);
-
-    /* Typically we do modulo rotate by aw, so aw must be > 0 and <=64. */
-    assert(aw > 0 && "Can't rotate 0 bits");
-    assert(aw <= 64 && "Max 64 bits supported");
-    assert(s < 64 && "Rotate out of range");
 
     s %= aw;
     if (s == 0ULL) {
@@ -536,10 +525,6 @@ static inline Bits VADL_rol(Bits a, Width aw, Bits b, Width bw) {
 static inline Bits VADL_ror(Bits a, Width aw, Bits b, Width bw) {
     Bits x = VADL_uextract(a, aw);
     Bits s = VADL_uextract(b, bw);
-
-    assert(aw > 0 && "Can't rotate 0 bits");
-    assert(aw <= 64 && "Max 64 bits supported");
-    assert(s < 64 && "Rotate out of range");
 
     s %= aw;
     if (s == 0ULL) {
@@ -562,10 +547,7 @@ static inline Bits VADL_rrx(Bits a, Width aw, Bits b, Width bw, Bits c, Width cw
     Bits s = VADL_uextract(b, bw);
     // normalize c to 0 or 1
     c = c != 0;
-
-    assert(aw > 0 && "Can't rotate 0 bits");
-    assert(aw <= 64 && "Max 64 bits supported");
-    assert(s < 64 && "Rotate out of range");
+    s %= aw;
 
     Bits m   = VADL_mask(aw);
     Bits reg = x & m;
@@ -625,8 +607,6 @@ static inline Bits VADL_clz(Bits a, Width w) {
      * We'll shift the value down until the top bit is set or the value is 0.
      */
     Bits topBitPos = w;
-    Bits maskW     = VADL_mask(w); /* e.g., (1ULL << w) - 1. */
-    x &= maskW;
 
     Bits leading = 0ULL;
     while (leading < w) {
@@ -650,8 +630,6 @@ static inline Bits VADL_clo(Bits a, Width w) {
         return 0ULL;
     }
     Bits x     = VADL_uextract(a, w);
-    Bits maskW = VADL_mask(w);
-    x &= maskW;
 
     Bits leading = 0ULL;
     while (leading < w) {
@@ -698,5 +676,112 @@ static inline Bits VADL_cls(Bits a, Width w) {
     return leading;
 }
 
+/*-----------------------------------------------------------------------
+ *    ctz(a : Bits<N>) => count trailing zeros in a
+ *---------------------------------------------------------------------*/
+static inline Bits VADL_ctz(Bits a, Width w) {
+    /* We look at only w bits. If w == 0, there's nothing to count. */
+    if (w == 0) {
+        return 0ULL;
+    }
+    Bits x = VADL_uextract(a, w);
+
+    Bits trailing = 0ULL;
+    while (trailing < w) {
+        /* Check least‑significant bit among w bits */
+        if ((x & 1ULL) != 0ULL) {
+            break; /* found a 1 => stop */
+        }
+        trailing++;
+        x >>= 1ULL; /* shift right so next bit becomes LSB */
+    }
+    return trailing;
+}
+
+/*-----------------------------------------------------------------------
+ *    cto(a : Bits<N>) => count trailing ones in a
+ *---------------------------------------------------------------------*/
+static inline Bits VADL_cto(Bits a, Width w) {
+    /* We look at only w bits. If w == 0, there's nothing to count. */
+    if (w == 0) {
+        return 0ULL;
+    }
+    Bits x = VADL_uextract(a, w);
+
+    Bits trailing = 0ULL;
+    while (trailing < w) {
+        /* Check least‑significant bit among w bits */
+        if ((x & 1ULL) == 0ULL) {
+            break; /* found a 0 => stop */
+        }
+        trailing++;
+        x >>= 1ULL;
+    }
+    return trailing;
+}
+
+
+/************************
+ * MISC
+ ************************/
+
+/*-----------------------------------------------------------------------
+ *    concat(a: Bits<N>, b: Bits<M>) -> Bits<N + M> (concatenate bits)
+ *---------------------------------------------------------------------*/
+static inline Bits VADL_concat(Bits a, Width aw, Bits b, Width bw) {
+  Width res_w = aw + bw;
+  a = VADL_uextract(a, aw);
+  b = VADL_uextract(b, bw);
+  // shift a << b.width
+  Bits shifted = VADL_lsl(a, res_w, bw, 32);
+  return VADL_or(shifted, res_w, b, res_w);
+}
+
+/**
+ * Extracts and concatenates specified bit ranges from a 64-bit value.
+ *
+ * @param v      The 64-bit input value.
+ * @param nparts The number of (hi, lo) index pairs provided.
+ * @param ...    A variable list of integer pairs: hi1, lo1, hi2, lo2, ..., hin, lon.
+ *               Each pair defines a bit range from bit lo to bit hi (inclusive).
+ *               Bits are extracted and concatenated in the order provided,
+ *               starting from the least significant bit of the result.
+ *
+ * @return A 64-bit value containing the concatenated bits from the specified ranges.
+ *
+ * Example:
+ *   VADL_slice(0xF0F0, 2, 11, 8, 3, 0)
+ *   Extracts bits 11..8 and 3..0 from 0xF0F0 and concatenates them into the result.
+ */
+static inline Bits VADL_slice(uint64_t v, uint32_t nparts, ...) {
+    va_list ap;
+    va_start(ap, nparts);
+
+    va_list ap2;
+    va_copy(ap2, ap);
+    uint32_t total_width = 0;
+    for (uint32_t i = 0; i < nparts; ++i) {
+        int hi = va_arg(ap2, int);
+        int lo = va_arg(ap2, int);
+        total_width += (hi - lo + 1);
+    }
+    va_end(ap2);
+
+    uint64_t result = 0;
+    uint32_t out_bit = total_width;
+
+    for (uint32_t i = 0; i < nparts; ++i) {
+        int hi = va_arg(ap, int);
+        int lo = va_arg(ap, int);
+        int width = hi - lo + 1;
+        out_bit -= width;
+        uint64_t mask = VADL_mask(width);
+        uint64_t part = (v >> lo) & mask;
+        result |= (part << out_bit);
+    }
+
+    va_end(ap);
+    return result;
+}
 
 #endif //VADL_BUILTINS_H

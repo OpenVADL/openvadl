@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
+import vadl.error.Diagnostic;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -97,11 +98,15 @@ public class GenerateValueRangeImmediatePass extends Pass {
    * If it does, then take its type. If not then just use the field's type.
    */
   private BitsType getType(Instruction instruction, Format.Field field) {
-    var accessType = instruction.behavior().getNodes(FieldAccessRefNode.class)
-        .filter(fieldAccessRefNode -> fieldAccessRefNode.fieldAccess().fieldRef().equals(field))
-        .findFirst()
-        .map(x -> (BitsType) x.fieldAccess().type());
+    var fieldAccesses = instruction.behavior().getNodes(FieldAccessRefNode.class).toList();
+    for (var fieldAccess : fieldAccesses) {
+      for (var fieldRef : fieldAccess.fieldAccess().fieldRefs()) {
+        if (fieldRef.equals(field)) {
+          return (BitsType) fieldAccess.fieldAccess().type();
+        }
+      }
+    }
 
-    return accessType.orElseGet(() -> (BitsType) field.type());
+    throw Diagnostic.error("Cannot get type", instruction.location()).build();
   }
 }

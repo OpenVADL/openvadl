@@ -33,13 +33,18 @@ instruction set architecture AArch64Base = {
   using Bits7    = Bits< 7>           //  7 bit type
   using Bits8    = Bits< 8>           //  8 bit type
   using Bits9    = Bits< 9>           //  9 bit type
+  using Bits11   = Bits<11>           // 11 bit type
   using Bits12   = Bits<12>           // 12 bit type
   using Bits13   = Bits<13>           // 13 bit type
   using Bits14   = Bits<14>           // 14 bit type
+  using Bits15   = Bits<15>           // 15 bit type
   using Bits16   = Bits<16>           // 16 bit type
   using Bits19   = Bits<19>           // 19 bit type
   using Bits21   = Bits<21>           // 21 bit type
+  using Bits24   = Bits<24>           // 24 bit type
+  using Bits25   = Bits<25>           // 25 bit type
   using Bits26   = Bits<26>           // 26 bit type
+  using Bits27   = Bits<27>           // 27 bit type
   using Instr    = Word               // instruction are 32 bit wide
   using BitsW    = Bits<SizeW>        // Bits W register type
   using BitsX    = Bits<SizeX>        // Bits X register type
@@ -55,7 +60,7 @@ instruction set architecture AArch64Base = {
   memory        MEM : Address -> Byte // byte addressed memory
  
   register        S : Index -> BitsX  // general purpose register file with stack pointer
-//[zero : X(31)]                      // X(31) is the zero register
+  [zero : X(31)]                      // X(31) is the zero register
   alias register  X = S               // general purpose register file with zero register
   alias register SP : Address = S(31) // stack pointer
   alias register LR : Address = S(30) // link register (return address)
@@ -151,7 +156,7 @@ instruction set architecture AArch64Base = {
 
   // assembly X register names or zero
   function XSize (idx: Index) -> String =   // do not rename
-    if idx = 31 then "zr"  else "x" + decimal( idx )
+    if idx = 31 then "xzr"  else "x" + decimal( idx )
 
   // assembly W register names or sp
   function WSizeSP (idx: Index) -> String = // do not rename
@@ -223,6 +228,11 @@ instruction set architecture AArch64Base = {
     NZCV := (flags.negative, flags.zero, flags.carry, flags.overflow)
     }
 
+  // set NZ flags, clear CV flags
+  model SetNZClearCVFlags (): Stats = {
+    NZCV := (flags.negative, flags.zero, false, false)
+    }
+
   // assigns zero extended word result to destination expression
   model WResult (dest: CallEx, result: Ex): Stats = {
     $dest := ($result) as BitsW as BitsX
@@ -260,14 +270,14 @@ instruction set architecture AArch64Base = {
     }
 
   model AddSubExtInstrBase (i: InstrWithFunct, extId: Id, size: Id, f: Flags, extEx: Ex, optId: Id, enc: Encs, asm: Ex): IsaDefs = {
-    instruction ExtendId ($i.id, $extId): AddSubExtFormat =
+    instruction AsId ($i.id, $extId): AddSubExtFormat =
       let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, ($extEx) as Bits<Size::$size>) in {
         $f.resModel (match: Id ($f.ff = OffFlags => S ; _ => X)(rd) ; result )
         }
     //[raise Undefined : imm3(2) = 1 && imm3(1..0) != 0]
-    encoding ExtendId ($i.id, $extId) = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, option = ExtendType::$optId, $enc }
-    assembly ExtendId ($i.id, $extId) = ( $i.mnemo, $f.mext, ' ', ExtendId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd), 
-                       ', ', ExtendId($size, "SP")(rn), ', ', $asm )
+    encoding AsId ($i.id, $extId) = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, option = ExtendType::$optId, $enc }
+    assembly AsId ($i.id, $extId) = ( $i.mnemo, $f.mext, ' ', AsId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
+                       ', ', AsId($size, "SP")(rn), ', ', $asm )
     }
 
   model AddSubExtInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
@@ -305,19 +315,23 @@ instruction set architecture AArch64Base = {
     , imm12S   = imm12 as BitsX << 12 // zero extended shifted immediate operand
     }
 
-  model AddSubImmInstrShft (i: InstrWithFunct, size: Id, f: Flags, immEx: Ex, sh: Int, asm: Str): IsaDefs = {
+  model AddSubImmInstrShft (i: InstrWithFunct, size: Id, f: Flags, immEx: Ex, sh: Lit, asm: Str): IsaDefs = {
     instruction $i.id: AddSubImmFormat =
       let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, ($immEx) as Bits<Size::$size>) in {
         $f.resModel (match: Id ($f.ff = OffFlags => S ; _ => X)(rd) ; result )
         }
     encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, sh = $sh }
-    assembly $i.id = ( $i.mnemo, $f.mext, ' ', ExtendId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd), 
-                       ', ', ExtendId($size, "SP")(rn), ', ', "#", decimal(imm12), $asm )
+    assembly $i.id = ( $i.mnemo, $f.mext, ' ', AsId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
+                       ', ', AsId($size, "SP")(rn), ', ', "#", decimal($immEx), $asm )
+    }
+
+  model ExtInstrStr (i: InstrWithFunct, ext: Str): InstrWithFunct = {
+    (AsId ($i.id,  $ext); $i.mnemo; $i.opcode; $i.funct)
     }
 
   model AddSubImmInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
-    $AddSubImmInstrShft ((ExtendId ($i.id, "I"  ); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12X; 0 ; "")
-    $AddSubImmInstrShft ((ExtendId ($i.id, "I12"); $i.mnemo; $i.opcode; $i.funct); $size; $f; imm12S; 1 ; ", lsl #12")
+    $AddSubImmInstrShft ($ExtInstrStr ($i; "I"  ); $size; $f; imm12X; 0 ; "") //  decimal(imm12)
+    $AddSubImmInstrShft ($ExtInstrStr ($i; "I12"); $size; $f; imm12S; 1 ; "") // (decimal(imm12), ", lsl #12")
     }
 
 
@@ -346,12 +360,9 @@ instruction set architecture AArch64Base = {
 
   model AddSubSftInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
     $AddSubSftInstrBase ($i; $size; $f; X(rm); imm6 = 0, shift = ShiftType::LSL; "") // TODO pseudo instruction
-    $AddSubSftInstrBase ((ExtendId ($i.id, "LSL"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-                                  X(rm) << imm6;         shift = ShiftType::LSL; (", lsl #", decimal(imm6)))
-    $AddSubSftInstrBase ((ExtendId ($i.id, "LSR"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-                                  X(rm) as UInt >> imm6; shift = ShiftType::LSR; (", lsr #", decimal(imm6)))
-    $AddSubSftInstrBase ((ExtendId ($i.id, "ASR"); $i.mnemo; $i.opcode; $i.funct); $size; $f;
-                                  X(rm) as SInt >> imm6; shift = ShiftType::ASR; (", asr #", decimal(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "LSL"); $size; $f; X(rm) << imm6;         shift = ShiftType::LSL; (", lsl #", decimal(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "LSR"); $size; $f; X(rm) as UInt >> imm6; shift = ShiftType::LSR; (", lsr #", decimal(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "ASR"); $size; $f; X(rm) as SInt >> imm6; shift = ShiftType::ASR; (", asr #", decimal(imm6)))
     }
 
 
@@ -375,10 +386,8 @@ instruction set architecture AArch64Base = {
 
   model AddSubCarryInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ThreeRegOpFormat =
-      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in {
+      let result, flags = VADL::$i.funct(X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>, NZCV.C) in
         X(rd) := result as Bits<Size::$size> as BitsX
-        NZCV.C := flags.carry
-      }
     $ThreeRegOpEncAsm ($i; $size)
     }
 
@@ -471,6 +480,10 @@ instruction set architecture AArch64Base = {
 
 // logic immediate models ******************************************************
 
+  // Additional information on immediate operand de/encoding is available at
+  // https://dinfuehr.github.io/blog/encoding-of-immediate-values-on-aarch64/
+  // https://kddnewton.com/2022/08/11/aarch64-bitmask-immediates.html
+
   // pattern replication functions
 
   function rep2  (pattern: Bits< 2>) -> Bits< 4> = (pattern, pattern)
@@ -479,20 +492,94 @@ instruction set architecture AArch64Base = {
   function rep16 (pattern: Bits<16>) -> Bits<32> = (pattern, pattern)
   function rep32 (pattern: Bits<32>) -> Bits<64> = (pattern, pattern)
 
+  // replicate replicates the size0 sized pattern in pat0 until 64 bit are
+  // filled, size0 must be a power of 2 > 1, the bits above the pattern in
+  // pat0 must be zero
+ 
+  function replicate (pat0: BitsX, size0: Bits6) -> BitsX =
+    if size0 = 0 then pat0 else let pat1 = pat0 << size0 | pat0 in let size1 = size0 << 1 in
+    if size1 = 0 then pat1 else let pat2 = pat1 << size1 | pat1 in let size2 = size1 << 1 in
+    if size2 = 0 then pat2 else let pat3 = pat2 << size2 | pat2 in let size3 = size2 << 1 in
+    if size3 = 0 then pat3 else let pat4 = pat3 << size3 | pat3 in let size4 = size3 << 1 in
+    if size4 = 0 then pat4 else            pat4 << size4 | pat4
+
   // imm13Decode takes the N, imms and immr fields as a combined 13 bit value
   // and returns the replicated and rotated 64 bit immediate value for defined
   // N, imms and immr values. 0 is returned for undefined values of imms, either
-  // explicitely or implicitely by shifting 1 zero times and subtracting 1 which
-  // also results in 0. The unused high bits of immr are ignored.
+  // explicitely for an invalid level or implicitely for an invalid length of
+  // all ones by shifting 1 zero times and subtracting 1 which also results in
+  // 0. The unused high bits of immr have no effect as rotating the identical
+  // pattern more positions than required gives the same result.
+
+  function imm13DecAlt (imm13: Bits13) -> BitsX =
+    (    if imm13(12  ) = 0b1     then                                 (1 as Bits<64> << imm13(5..0) + 1) - 1
+    else if imm13(5   ) = 0b0     then rep32 (                         (1 as Bits<32> << imm13(4..0) + 1) - 1)
+    else if imm13(5..4) = 0b10    then rep32 (rep16(                   (1 as Bits<16> << imm13(3..0) + 1) - 1))
+    else if imm13(5..3) = 0b110   then rep32 (rep16 (rep8(             (1 as Bits< 8> << imm13(2..0) + 1) - 1)))
+    else if imm13(5..2) = 0b1110  then rep32 (rep16 (rep8 (rep4(       (1 as Bits< 4> << imm13(1..0) + 1) - 1))))
+    else if imm13(5..1) = 0b11110 then rep32 (rep16 (rep8 (rep4 (rep2 ((1 as Bits< 2> << imm13(   0) + 1) - 1)))))
+    else 0  ) <>> imm13(11..6)
 
   function imm13Decode (imm13: Bits13) -> BitsX =
-    if      imm13(12.. 7) = 0b0'11110 then let pattern = ((1 as Bits< 2> << (imm13(    6) + 1)) - 1) <>> imm13(   0) in rep32 (rep16 (rep8 (rep4 (rep2 (pattern)))))
-    else if imm13(12.. 8) = 0b0'1110  then let pattern = ((1 as Bits< 4> << (imm13( 7..6) + 1)) - 1) <>> imm13(1..0) in rep32 (rep16 (rep8 (rep4 (pattern))))
-    else if imm13(12.. 9) = 0b0'110   then let pattern = ((1 as Bits< 8> << (imm13( 8..6) + 1)) - 1) <>> imm13(2..0) in rep32 (rep16 (rep8 (pattern)))
-    else if imm13(12..10) = 0b0'10    then let pattern = ((1 as Bits<16> << (imm13( 9..6) + 1)) - 1) <>> imm13(3..0) in rep32 (rep16 (pattern))
-    else if imm13(12..11) = 0b0'0     then let pattern = ((1 as Bits<32> << (imm13(10..6) + 1)) - 1) <>> imm13(4..0) in rep32 (pattern)
-    else if imm13(12    ) = 0b1       then               ((1 as Bits<64> << (imm13(11..6) + 1)) - 1) <>> imm13(5..0)
-    else 0
+    (    if imm13(12  ) = 0b1     then            (1 as BitsX << imm13(5..0) + 1) - 1
+    else if imm13(5   ) = 0b0     then replicate ((1 as BitsX << imm13(4..0) + 1) - 1, 32)
+    else if imm13(5..4) = 0b10    then replicate ((1 as BitsX << imm13(3..0) + 1) - 1, 16)
+    else if imm13(5..3) = 0b110   then replicate ((1 as BitsX << imm13(2..0) + 1) - 1,  8)
+    else if imm13(5..2) = 0b1110  then replicate ((1 as BitsX << imm13(1..0) + 1) - 1,  4)
+    else if imm13(5..1) = 0b11110 then replicate ((1 as BitsX << imm13(   0) + 1) - 1,  2)
+    else 0  ) <>> imm13(11..6)
+
+  // patternSize determines the size of a repeating pattern.
+  // Zero and all ones are invalid patterns for the immediate operands of
+  // logical instructions. The function returns the valid pattern sizes
+  // (2,4,8,16,32,64) or 0 for an invalid pattern size.
+
+  function patternSize (val: BitsX) -> SIntW =
+         if val =  0    || val = -1   then  0
+    else if val(63..32) != val(31..0) then 64
+    else if val(31..16) != val(15..0) then 32
+    else if val(15.. 8) != val( 7..0) then 16
+    else if val( 7.. 4) != val( 3..0) then  8
+    else if val( 3.. 2) != val( 1..0) then  4
+    else 2 as SIntW
+
+  // nImmrImms returns the concatenated values for N, immr and imms
+
+  function nImmrImms (patSize: SIntW, leftRotations: SIntW, trailingOnes: SIntW) -> Bits13 =
+    // immr is the number of right rotations of the pattern
+    // imms is a bitwise or of the pattern size and the number of ones - 1
+    let immr = (patSize - leftRotations &  patSize - 1) as Bits6 in
+    let imms = (~(patSize - 1) << 1 | trailingOnes - 1) as Bits6 in
+      (patSize = 64,immr,imms)
+
+// The function isOnesZeros returns true if the argument onesZeros is a
+// sequence of one or more ones followed by one or more zeroes.
+
+  function isOnesZeros(onesZeros: BitsX) -> Bool =
+    let mask = ((onesZeros - 1) | onesZeros) in
+      (mask + 1 & mask) = 0
+
+// imm13Encode encodes an unsigned 64 bit integer into the 13 bit N|immr|imms
+// representation for a valid pattern, otherwise it returns 0 as Bits13
+
+  function imm13Encode (val: BitsX) -> Bits13 =
+    let size = patternSize (val) in
+    if size = 0 then 0 else
+    let mask = ~(0 as BitsX) >> (64 - size) in
+    let imm = val & mask in
+    if isOnesZeros(imm) then
+      let leftRotations = VADL::ctz(imm) as SIntW in
+        nImmrImms(size, leftRotations, VADL::cto(imm >> leftRotations) as SIntW)
+    else let immNmask = imm | ~mask in
+      if isOnesZeros(~immNmask) then
+        let leadingOnes = VADL::clo(immNmask) as SIntW in
+          nImmrImms(size, 64 - leadingOnes, (leadingOnes + VADL::cto(immNmask) as SIntW) - (64 - size))
+      else 0 as Bits13
+
+  function imm13EncodeWSize (val: BitsX) -> Bits13 =
+    let trunc = val as BitsW as BitsX in
+      if trunc != val then 0
+      else imm13Encode (val << Size::WSize | val)
 
   format LogicImmFormat: Instr =      // logic immediate format
     { sf       : Bits1                // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
@@ -508,14 +595,14 @@ instruction set architecture AArch64Base = {
   model LogicImmEncAsm (i: InstrWithFunct, size: Id, ext: Str): IsaDefs = {
     //[raise Undefined : sf = 0 && imm13(12) = 1]
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
-    assembly $i.id = ($i.mnemo, ' ', ExtendId($size, $ext)(rd), ', ', $size(rn), ', #', decimal(immX))
+    assembly $i.id = ($i.mnemo, ' ', AsId($size, $ext)(rd), ', ', $size(rn), ', #', decimal(immX))
     }
 
   model LogicImmFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: LogicImmFormat =
       let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, immX as Bits<Size::$size>) in {
         X(rd) := result as Bits<Size::$size> as BitsX
-        $SetFlags ()
+        $SetNZClearCVFlags ()
         }
     $LogicImmEncAsm ($i; $size; "")
     }
@@ -556,7 +643,7 @@ instruction set architecture AArch64Base = {
     }
 
   model LogicRegFlagInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
-    $LogicRegGeneralInstr ($i; $size; $s; SetFlags)
+    $LogicRegGeneralInstr ($i; $size; $s; SetNZClearCVFlags)
     }
 
   model LogicRegNegInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
@@ -564,11 +651,11 @@ instruction set architecture AArch64Base = {
     }
 
   model LogicRegNegFlagInstr (i: InstrWithFunct, size: Id, s: RegShift): IsaDefs = {
-    $LogicRegGeneralInstr ($i; $size; (~($s.ex); $s.enc; $s.asm); SetFlags)
+    $LogicRegGeneralInstr ($i; $size; (~($s.ex); $s.enc; $s.asm); SetNZClearCVFlags)
     }
 
   model LogicRegShiftExtInstr (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct, ext: Str, size: Id, s: RegShift): IsaDefs = {
-    $modelid ((ExtendId ($i.id, $ext); $i.mnemo; $i.opcode; $i.funct); $size; $s)
+    $modelid ((AsId ($i.id, $ext); $i.mnemo; $i.opcode; $i.funct); $size; $s)
     }
 
   model LogicRegShiftInstr (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct, size: Id): IsaDefs = {
@@ -619,10 +706,10 @@ instruction set architecture AArch64Base = {
   model notOrIdent (not: Id, ex: Ex) : Ex = { match: Ex ($not = not => ~($ex) ;_=> $ex) }
   
   model MovInstr (i: InstrWithFunct, size: Id, pos: Id, posex: Ex): IsaDefs = {
-    instruction ExtendId ($i.id, $pos): MovFormat = 
+    instruction AsId ($i.id, $pos): MovFormat =
       X(rd) := $posex
-    encoding ExtendId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
-    assembly ExtendId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', decimal(imm16),
+    encoding AsId ($i.id, $pos) = { sf = SF::$size, op = $i.opcode, pos = Position::$pos }
+    assembly AsId ($i.id, $pos) = ($i.mnemo, ' ', $size(rd), ', #', decimal(imm16),
       match: Str ($pos = Pos00 => ""; $pos = Pos16 => ", LSL #16"; $pos = Pos32 => ", LSL #32"; _ => ", LSL #48"))
     }
 
@@ -666,7 +753,7 @@ instruction set architecture AArch64Base = {
   model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: ExtractRegFormat =
       let pair = (X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>) in
-        X(rd) :=  (pair >> ExtendId (shift, $size)) as Bits<Size::$size> as BitsX
+        X(rd) :=  (pair >> AsId (shift, $size)) as Bits<Size::$size> as BitsX
     encoding $i.id = { op = $i.opcode, sf = SF::$size, N = SF::$size }
     assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), ', #', decimal(imms))
     }
@@ -684,7 +771,8 @@ instruction set architecture AArch64Base = {
 // If <imms> is less than <immr>, *BFM copies a bitfield of (<imms>+1) bits from
 // the least significant bits of the source register to bit position
 // (regsize-<immr>) of the destination register, where regsize is the
-// destination register size of 32 or 64 bits.
+// destination register size of 32 or 64 bits (but regsize becomes 0 in Bit5 or
+// Bit6 sized positions computations).
 //
 // BFM:  In both cases, the other bits of the destination register remain
 // unchanged.
@@ -695,23 +783,8 @@ instruction set architecture AArch64Base = {
 // set to zero.
 //
 // For SBFM and UBFM there exist pseudo instructions for shifts and sign/zero
-// extension. Therefore, *BFM are specified using shift builtins.
-
-  function BitfieldLeftWSize (imms: Bits5) -> Bits5 =
-    (Size::WSize - 1) as Bits5 - imms
-
-  function BitfieldLeftXSize (imms: Bits6) -> Bits6 =
-    (Size::XSize - 1) as Bits6 - imms
-
-  function BitfieldRightWSize (imms: Bits5, immr: Bits5) -> Bits5 =
-    if imms as UInt >= immr
-      then (Size::WSize - 1) as Bits5 - imms + immr
-      else immr - imms - 1
-
-  function BitfieldRightXSize (imms: Bits6, immr: Bits6) -> Bits6 =
-    if imms as UInt >= immr
-      then (Size::XSize - 1) as Bits6 - imms + immr
-      else immr - imms - 1
+// extension. Therefore, *BFM instructions are specified using a shift left
+// followed by a shift right.
 
   format BitFieldMoveFormat: Instr =  // bit field move format
     { sf         : Bits1              // size field (enum SF), if (sf = 0) 32 bit operation else 64 bit
@@ -721,12 +794,15 @@ instruction set architecture AArch64Base = {
     , imms       : Bits6              // bit field length -1 or high position
     , rn         : Index              // source register
     , rd         : Index              // destination register
-    , leftWSize  = BitfieldLeftWSize  (imms(4..0))
-    , leftXSize  = BitfieldLeftXSize  (imms)
-    , rightWSize = BitfieldRightWSize (imms(4..0), immr(4..0))
-    , rightXSize = BitfieldRightXSize (imms, immr)
-    // TODO encode
-    // TODO predicate
+    , leftWSize  = -1 as Bits5 - imms as Bits5
+    , leftXSize  = -1 as Bits6 - imms
+    , rightWSize = immr as Bits5 - imms as Bits5 - 1
+    , rightXSize = immr - imms - 1
+    //, imms := (-1 as Bits5 - leftWSize) as Bits6
+    //, imms :=  -1 as Bits6 - leftXSize
+    //, immr := (rightWSize  - leftWSize) as Bits6
+    //, immr :=  rightXSize  - leftXSize
+    // true
     }
 
   model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
@@ -734,8 +810,8 @@ instruction set architecture AArch64Base = {
     // (sf != N) cannot happen as N is set in encoding
     // [raise Undefined : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
     instruction $i.id: BitFieldMoveFormat =
-      let left = ExtendId (left, $size) in
-        let right = ExtendId (right, $size) in
+      let left = AsId (left, $size) in
+        let right = AsId (right, $size) in
           let xrn = X(rn) as $i.funct<Size::$size> << left >> right in
             let result = match: Ex ($i.mnemo = "bfm" =>
               let mask = ~(~(0 as Bits<Size::$size>) << left >> right) in
@@ -784,11 +860,35 @@ instruction set architecture AArch64Base = {
 
   model ReverseBitsInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     instruction $i.id: TwoRegOpFormat =
-      let result = ExtendId (revBits, $size) (X(rn) as Bits<Size::$size>) in
+      let result = AsId (revBits, $size) (X(rn) as Bits<Size::$size>) in
         X(rd) := result as Bits<Size::$size> as BitsX
     $TwoRegOpEncAsm ($i; $size)
     }
 
+  model RevBytesHInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    instruction $i.id: TwoRegOpFormat = {
+      let xrn = (X(rn)) in
+        let result = (xrn(55..48),xrn(63..56),xrn(39..32),xrn(47..40),xrn(23..16),xrn(31..24),xrn(7..0),xrn(15..8)) in
+          X(rd) := result as Bits<Size::$size> as BitsX
+      }
+    $TwoRegOpEncAsm ($i; $size)
+    }
+
+  model RevBytesWInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: TwoRegOpFormat =
+      let xrn = (X(rn)) in
+        let result = (xrn(39..32),xrn(47..40),xrn(55..48),xrn(63..56),xrn(7..0),xrn(15..8),xrn(23..16),xrn(31..24)) in
+          X(rd) := result as Bits<Size::$i.funct> as BitsX
+    $TwoRegOpEncAsm ($i; $i.funct)
+    }
+
+  model RevBytesXInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: TwoRegOpFormat =
+      let xrn = (X(rn)) in
+        let result = (xrn(7..0),xrn(15..8),xrn(23..16),xrn(31..24),xrn(39..32),xrn(47..40),xrn(55..48),xrn(63..56)) in
+          X(rd) := result as Bits<Size::$i.funct> as BitsX
+    $TwoRegOpEncAsm ($i; $i.funct)
+    }
 
 // conditional compare models **************************************************
 
@@ -815,13 +915,13 @@ instruction set architecture AArch64Base = {
     }
 
   model CondCompareImmInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
-    $CondCompareBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; immX as BitsW; (', #', decimal(rm)))
-    $CondCompareBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; immX         ; (', #', decimal(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; immX as BitsW; (', #', decimal(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; immX         ; (', #', decimal(rm)))
     }
 
   model CondCompareRegInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
-    $CondCompareBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; X(rm) as BitsW; (', ', WSize(rm)))
-    $CondCompareBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; X(rm)         ; (', ', XSize(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; X(rm) as BitsW; (', ', WSize(rm)))
+    $CondCompareBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; X(rm)         ; (', ', XSize(rm)))
     }
 
 
@@ -845,8 +945,8 @@ instruction set architecture AArch64Base = {
     }
 
   model CondSelectWX (i: InstrWithFunct, c: Cond, ex: Ex): IsaDefs = {
-    $CondSelectBaseInstr ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); $c; WSize; $ex)
-    $CondSelectBaseInstr ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); $c; XSize; $ex)
+    $CondSelectBaseInstr ($ExtInstrStr ($i; "W"); $c; WSize; $ex)
+    $CondSelectBaseInstr ($ExtInstrStr ($i; "X"); $c; XSize; $ex)
     }
 
   model CondSelectInstr (i: InstrWithFunct, c: Cond): IsaDefs = {
@@ -926,7 +1026,7 @@ instruction set architecture AArch64Base = {
     }
 
   model ExtendCondInstr (modelid: InstrWithCond, i: InstrWithFunct, c: Cond): IsaDefs = {
-    $modelid ((ExtendId($i.id, $c.cc); $i.mnemo; $i.opcode; $i.funct); $c)
+    $modelid ((AsId($i.id, $c.cc); $i.mnemo; $i.opcode; $i.funct); $c)
     }
 
   model CondInstr (modelid: InstrWithCond, i: InstrWithFunct): IsaDefs = {
@@ -1073,14 +1173,14 @@ instruction set architecture AArch64Base = {
     }
 
   model MemoryRegisterXtd (i: InstrNoFunct, m: Memory, option: Id, scaled: Id, asm: Ex, addr: Ex): IsaDefs = {
-  	$MemoryRegisterBase ((ExtendId ($i.id, $option, $scaled); $i.mnemo; $i.opcode); $m; $option; $scaled; $asm; $addr)
+  	$MemoryRegisterBase ((AsId ($i.id, $option, $scaled); $i.mnemo; $i.opcode); $m; $option; $scaled; $asm; $addr)
     }
 
   model MemoryRegisterInstr (i: InstrNoFunct, m: Memory): IsaDefs = {
     $MemoryRegisterXtd ($i; $m; UXTW; Un; (WSize(rm), ", uxtw"   );               X(rm) as UIntW as BitsX)
     $MemoryRegisterXtd ($i; $m; UXTW; Is; (WSize(rm), ", uxtw #", decimal(size)); X(rm) as UIntW as BitsX << AccSize::$m.accsize)
     $MemoryRegisterXtd ($i; $m; UXTX; Un; (XSize(rm)             );               X(rm))
-    $MemoryRegisterXtd ($i; $m; UXTX; Is; (XSize(rm), ", lsl #", decimal(size) ); X(rm) << AccSize::$m.accsize)
+    $MemoryRegisterXtd ($i; $m; UXTX; Is; (XSize(rm), ", lsl #",  decimal(size)); X(rm) << AccSize::$m.accsize)
     $MemoryRegisterXtd ($i; $m; SXTW; Un; (WSize(rm), ", sxtw"   );               X(rm) as SIntW as BitsX)
     $MemoryRegisterXtd ($i; $m; SXTW; Is; (WSize(rm), ", sxtw #", decimal(size)); X(rm) as SIntW as BitsX << AccSize::$m.accsize)
     $MemoryRegisterXtd ($i; $m; SXTX; Un; (XSize(rm), ", sxtx"   );               X(rm))
@@ -1107,7 +1207,7 @@ instruction set architecture AArch64Base = {
 // memory enriching models *****************************************************
 
   model MemoryInstr (memmodel: MemoryModel, i: InstrNoFunct, xtdId: Str, m: Memory): IsaDefs = {
-  	$memmodel ((ExtendId ($i.id, $xtdId); $i.mnemo; $i.opcode); $m)
+  	$memmodel ((AsId ($i.id, $xtdId); $i.mnemo; $i.opcode); $m)
     }
 
   model StoreInstr (memmodel: MemoryModel, i: InstrNoFunct): IsaDefs = {
@@ -1151,25 +1251,25 @@ instruction set architecture AArch64Base = {
 
   model MemoryRegPairEncAsm (i: InstrWithFunct, extId: Str, size: Id, isLoad: Bool, op: Bin, asm: Ex): IsaDefs = {
     //[raise Undefined() : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
-    encoding ExtendId ($i.id, $extId) = { opc = $i.opcode, op = $op }
-    assembly ExtendId ($i.id, $extId) = ($i.mnemo, ' ', $size(rt), ', ', $size(rt2), $asm)
+    encoding AsId ($i.id, $extId) = { opc = $i.opcode, op = $op }
+    assembly AsId ($i.id, $extId) = ($i.mnemo, ' ', $size(rt), ', ', $size(rt2), $asm)
     }
 
   model MemoryRegPairInstr (i: InstrWithFunct, size: Id, isLoad: Bool, memstmts: Stats): IsaDefs = {
     // TODO check SP alignment
     instruction $i.id: MemoryPairFormat = 
-      let addr = S(rn) + ExtendId (off, $size) in { $memstmts }
+      let addr = S(rn) + AsId (off, $size) in { $memstmts }
     $MemoryRegPairEncAsm ($i; ""; $size; $isLoad; 0b101'010; ("[", XSizeSP(rn), Imm7decimal(imm7), "]"))
-    instruction ExtendId ($i.id, "Pre"): MemoryPairFormat =
-      let addr = S(rn) + ExtendId (off, $size) in {
+    instruction AsId ($i.id, "Pre"): MemoryPairFormat =
+      let addr = S(rn) + AsId (off, $size) in {
           $memstmts
           S(rn) := addr
         }
     $MemoryRegPairEncAsm ($i; "Pre"; $size; $isLoad; 0b101'011; ("[", XSizeSP(rn), Imm7decimal(imm7), "]!"))
-    instruction ExtendId ( $i.id, "Pst"): MemoryPairFormat =
+    instruction AsId ( $i.id, "Pst"): MemoryPairFormat =
       let addr = S(rn) in {
           $memstmts
-          S(rn) := addr + ExtendId (off, $size)
+          S(rn) := addr + AsId (off, $size)
         }
     $MemoryRegPairEncAsm ($i; "Pst"; $size; $isLoad; 0b101'001; ("[", XSizeSP(rn), "]", Imm7decimal(imm7)))
     }
@@ -1193,20 +1293,20 @@ instruction set architecture AArch64Base = {
 // instruction enriching models ************************************************
 
   model InstrWX (modelid: InstrWithFunctSize, i: InstrWithFunct): IsaDefs = {
-    $modelid ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize)
-    $modelid ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize)
-    }
-
-  model InstrWXRegShift (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct): IsaDefs = {
-    $LogicRegShiftInstr ($modelid; (ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize)
-    $LogicRegShiftInstr ($modelid; (ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize)
+    $modelid ($ExtInstrStr ($i;  "W"); WSize)
+    $modelid ($ExtInstrStr ($i;  "X"); XSize)
     }
 
   model InstrWXFlags (modelid: InstrWithFunctSizeFlags, i: InstrWithFunct): IsaDefs = {
-    $modelid ((ExtendId ($i.id,  "W"); $i.mnemo; $i.opcode; $i.funct); WSize; (WResult  ; OffFlags;  ""))
-    $modelid ((ExtendId ($i.id,  "X"); $i.mnemo; $i.opcode; $i.funct); XSize; (XResult  ; OffFlags;  ""))
-    $modelid ((ExtendId ($i.id, "WS"); $i.mnemo; $i.opcode; $i.funct); WSize; (WResFlags; SetFlags; "s"))
-    $modelid ((ExtendId ($i.id, "XS"); $i.mnemo; $i.opcode; $i.funct); XSize; (XResFlags; SetFlags; "s"))
+    $modelid ($ExtInstrStr ($i;  "W"); WSize; (WResult  ; OffFlags;  ""))
+    $modelid ($ExtInstrStr ($i;  "X"); XSize; (XResult  ; OffFlags;  ""))
+    $modelid ($ExtInstrStr ($i; "WS"); WSize; (WResFlags; SetFlags; "s"))
+    $modelid ($ExtInstrStr ($i; "XS"); XSize; (XResFlags; SetFlags; "s"))
+    }
+
+  model InstrWXRegShift (modelid: InstrWithFunctSizeRegShift, i: InstrWithFunct): IsaDefs = {
+    $LogicRegShiftInstr ($modelid; $ExtInstrStr ($i; "W"); WSize)
+    $LogicRegShiftInstr ($modelid; $ExtInstrStr ($i; "X"); XSize)
     }
 
 
@@ -1269,6 +1369,10 @@ instruction set architecture AArch64Base = {
   $InstrWX             (CountBitsInstr        ; (CLS    ; "cls"   ; 0b1'0110'1011'0000'0000'0101; cls  ))
   $InstrWX             (CountBitsInstr        ; (CLZ    ; "clz"   ; 0b1'0110'1011'0000'0000'0100; clz  ))
   $InstrWX             (ReverseBitsInstr      ; (RBIT   ; "rbit"  ; 0b1'0110'1011'0000'0000'0000; rvb  ))
+  $InstrWX             (RevBytesHInstr        ; (REV16  ; "rev16" ; 0b1'0110'1011'0000'0000'0001; half ))
+  $RevBytesWInstr      (                        (REV32  ; "rev32" ; 0b1'0110'1011'0000'0000'0010; XSize))
+  $RevBytesWInstr      (                        (REVW   ; "rev"   ; 0b1'0110'1011'0000'0000'0010; WSize))
+  $RevBytesXInstr      (                        (REVX   ; "rev"   ; 0b1'0110'1011'0000'0000'0011; XSize))
 
   $CondInstr           (CondCompareImmInstr   ; (CCMNI  ; "ccmn"  ; 0b0111'0100'1010'0    ; adds       ))
   $CondInstr           (CondCompareImmInstr   ; (CCMPI  ; "ccmp"  ; 0b1111'0100'1010'0    ; subsc      ))
@@ -1308,5 +1412,292 @@ instruction set architecture AArch64Base = {
   $LoadPairInstrX      (                        (LDPX   ; "ldp"   ; 0b1001                ; BitsX      ))
   $StorePairInstrW     (                        (STPW   ; "stp"   ; 0b0000                ; BitsX      ))
   $StorePairInstrX     (                        (STPX   ; "stp"   ; 0b1000                ; BitsX      ))
+
+//}
+//
+//instruction set architecture AArch64Sys extending AArch64Base = {
+
+  enumeration ExceptionClass: Bits6 =        // exception class (of exception syndrome register)
+    {Uncategorized           = 0x00          //  0 Uncategorized or unknown reason (e.g. undefined instruction)
+    ,WFxAccessTrap           = 0x01          //  1 Trapped WFI or WFE instruction
+    ,AdvSIMDFPAccessTrap     = 0x07          //  7 HCPTR-trapped access to SIMD or FP
+    ,UncoveredException      = 0x0A          // 10 Trapped execution of any instruction not covered by other EC values
+    ,BranchTarget            = 0x0D          // 13 Branch Target Exception
+    ,IllegalState            = 0x0E          // 14 Illegal Execution state
+    ,SupervisorCall          = 0x15          // 21 Supervisor Call
+    ,InstructionAbortLowerEL = 0x20          // 32 Instruction Abort from a lower Exception level
+    ,InstructionAbortSameEL  = 0x21          // 33 Instruction Abort taken without a change in Exception level
+    ,PCAlignment             = 0x22          // 34 PC alignment fault
+    ,DataAbortLowerEL        = 0x24          // 36 Data Abort exception from a lower Exception level
+    ,DataAbortSameEL         = 0x25          // 37 Data Abort exception taken without a change in Exception level
+    ,SPAlignment             = 0x26          // 38 SP alignment fault
+    ,MemoryOperation         = 0x27          // 38 Memory Operation Exception
+    ,FPTrappedException      = 0x2C          // 44 IEEE trapped FP exception
+    ,SError                  = 0x2F          // 47 SError interrupt
+    ,BreakpointLowerEL       = 0x30          // 48 Breakpoint exception from a lower Exception level
+    ,BreakpointSameEL        = 0x31          // 49 Breakpoint exception taken without a change in Exception level
+    ,SoftwareStepLowerEL     = 0x32          // 50 Software Step exception from a lower Exception level
+    ,SoftwareStepSameEL      = 0x33          // 51 Software Step exception taken without a change in Exception level
+    ,WatchpointLowerEL       = 0x34          // 52 Watchpoint exception from a lower Exception level
+    ,WatchpointSameEL        = 0x35          // 53 Watchpoint exception taken without a change in Exception level
+    ,SoftwareBreakpoint      = 0x3C          // 60 BRK instruction execution
+    ,ProfilingException      = 0x3D          // 61 Profiling Exception
+    }
+
+  format ExceptionSyndromeFormat: BitsX =    // exception syndrome register format
+    { Res0    : Bits8                        // [63..56] reserved
+    , ISS2    : Bits24                       // [55..32] instruction specific syndrome extension
+    , EC      : Bits6                        // [31..26] exception class
+    , IL      : Bits1                        // [25]     instruction length
+    , ISS     : Bits25                       // [24..0]  instruction specific syndrome
+    }
+
+  format SavedProgramStateFormat: BitsX =    // saved program state register format
+    { Res0    [63..37]                       // reserved
+    , UINJ    [36]                           // INJect Undefined instruction exception
+    , PACM    [35]                           // PACM
+    , EXLOCK  [34]                           // Exception return state lock
+    , PPEND   [33]                           // PMU Profiling exception pending bit
+    , PM      [32]                           // Profiling exception mask bit
+    , NZCV    [31..28]                       // condition flags (negative, zero, carry, overflow)
+    , Res1    [27..26]                       // reserved
+    , TCO     [25]                           // tag check override
+    , DIT     [24]                           // data independent timing
+    , UAO     [23]                           // user access override
+    , PAN     [22]                           // privileged access never
+    , SS      [21]                           // software step
+    , IL      [20]                           // illegal execution state
+    , Res2    [19..14]                       // reserved
+    , ALLINT  [13]                           // All IRQ or FIQ interrupts mask
+    , SSBS    [12]                           // speculative store bypass
+    , BTYPE   [11..10]                       // branch type indicator
+    , D       [9]                            // debug  exception mask
+    , A       [8]                            // SError interrupt mask
+    , I       [7]                            // IRQ    interrupt mask
+    , F       [6]                            // FIQ    interrupt mask
+    , Res3    [5]                            // reserved
+    , M4      [4]                            // execution state (0b0 AArch64 execution state)
+    , M       [3..0]                         // exception level and selected stack pointer
+    }
+
+  enumeration SysRegEncode: Bits16 =         // system register encoding
+    { NZCV      = 0b11'011'0100'0010'000     // condition flag register
+    , CurrentEL = 0b11'000'0100'0010'010     // Current Exception Level register
+    , SPSel     = 0b11'000'0100'0010'000     // stack pointer select register
+    , SP_EL0    = 0b11'000'0100'0001'000     // stack pointer register exception level 0
+    , SP_EL1    = 0b11'100'0100'0001'000     // stack pointer register exception level 1
+    , ELR_EL1   = 0b11'000'0100'0000'001     // exception link register exception level 1
+    , VBAR_EL1  = 0b11'000'1100'0000'000     // vector base address register exception level 1
+    , ESR_EL1   = 0b11'000'0101'0010'000     // exception syndrome register exception level 1
+    , SPSR_EL1  = 0b11'000'0100'0000'000     // saved program state register exception level 1
+    }
+
+  register CurrentEL:Bits2                   // exception level register
+  register SPSel:    Bits1                   // stack pointer select register
+  register SP_EL0:   Address                 // stack pointer exception level level 0
+  register SP_EL1:   Address                 // stack pointer exception level level 1
+  register ELR_EL1:  Address                 // exception link register exception level level 1
+  register VBAR_EL1: Address                 // vector base address register exception level 1
+  register ESR_EL1:  ExceptionSyndromeFormat // exception syndrome register exception level level 1
+  register SPSR_EL1: SavedProgramStateFormat // saved program state register exception level level 1
+
+  model SaveProgramState (): Stats = {
+    SPSR_EL1 := (SPSR_EL1(63..32), NZCV, SPSR_EL1(27..4), SPSel as Bits4 | 0b0100)
+    }
+
+  model RestoreProgramState (): Stats = {
+    NZCV := SPSR_EL1.NZCV
+    }
+
+  exception GeneralException (exClass: Bits6, syndrome: Bits25, continuation: Address, exOffset: Address) = {
+    if CurrentEL = 0 then {
+      $SaveProgramState ()
+      if SPSel != 0 then {
+        SP_EL0 := SP
+        SP := SP_EL1
+      }
+      ESR_EL1.EC  := exClass
+      ESR_EL1.IL  := 0b1
+      ESR_EL1.ISS := syndrome
+      CurrentEL   := 1
+      ELR_EL1     := continuation
+      PC          := VBAR_EL1 + exOffset
+      }
+    }
+
+  model UndefinedException (): Stat = {
+    GeneralException (ExceptionClass::Uncategorized, 0, PC, 0)
+    }
+
+  model ReturnFromException (): Stats = {
+    if CurrentEL = 0
+      then raise $UndefinedException ()
+      else {
+        $RestoreProgramState ()
+        if SPSel != 0 then {
+          SP_EL1 := SP
+          SP := SP_EL0
+          }
+        CurrentEL := 0
+        PC := ELR_EL1
+        }
+    }
+
+  format MoveSystemRegFormat: Instr =        // move system register format
+    { op        : Bits12                     // [31..20] opcode
+    , rs        : Bits15                     // [20..5]  system register code without leading one
+    , rt        : Index                      // [4..0]   source/target register
+    , sysreg    = (true, rs)
+    }
+
+  format SuperVisorCallFormat: Instr =       // supervisor call format
+    { op       [31..21,4..0] : Bits16        // opcode
+    , imm16    [20..5]       : Bits16        // system call number
+    }
+
+  format UndefinedInstrFormat: Instr =       // undefined instruction format
+    { op       : Bits16                      // [31..16] opcode
+    , imm16    : Bits16                      // [15..0]  ignored
+    }
+
+  format BTIFormat: Instr =                  // Branch target identification format
+    { op       [31..16]      : Bits16        // opcode part one
+    , opc      [15..8,5..0]  : Bits14        // opcode part two
+    , bti      [7..6]        : Bits2         // BTI target, PSTATE.BTYPE compatibility
+  }
+
+  function SysRegName (sysreg: Bits16) -> String =
+    match sysreg with
+      { SysRegEncode::NZCV      => "nzcv"
+      , SysRegEncode::CurrentEL => "currentel"
+      , SysRegEncode::SPSel     => "spsel"
+      , SysRegEncode::SP_EL0    => "sp_el0"
+      , SysRegEncode::SP_EL1    => "sp_el1"
+      , SysRegEncode::ELR_EL1   => "elr_el1"
+      , SysRegEncode::ESR_EL1   => "esr_el1"
+      , SysRegEncode::SPSR_EL1  => "spsr_el1"
+      , SysRegEncode::VBAR_EL1  => "vbar_el1"
+      , _ => ("S", decimal(sysreg(15..14)), "_",
+                   decimal(sysreg(13..11)), "_",
+                   decimal(sysreg(10.. 7)), "_",
+                   decimal(sysreg( 6.. 3)), "_",
+                   decimal(sysreg( 2.. 0)))
+      }
+
+  model MrsRegInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: MoveSystemRegFormat =
+      if sysreg = SysRegEncode::NZCV
+        then X(rt) := NZCV as BitsX << 28
+        else if CurrentEL = 0
+        then raise $UndefinedException ()
+        else match sysreg with
+          { SysRegEncode::CurrentEL => X(rt) := CurrentEL as BitsX << 2
+          , SysRegEncode::SPSel     => X(rt) := SPSel as BitsX
+          , SysRegEncode::ESR_EL1   => X(rt) := ESR_EL1
+          , SysRegEncode::SPSR_EL1  => X(rt) := SPSR_EL1
+          , SysRegEncode::SP_EL0    => if SPSel = 0
+                                       then raise $UndefinedException ()
+                                       else X(rt) := SP_EL0
+          , SysRegEncode::SP_EL1    => if SPSel = 0
+                                       then raise $UndefinedException ()
+                                       else let sp = SP in {
+                                         SP_EL1 := sp
+                                         X(rt) := sp
+                                         }
+          , SysRegEncode::ELR_EL1   => X(rt) := ELR_EL1
+          , SysRegEncode::VBAR_EL1  => X(rt) := VBAR_EL1
+          , _                       => raise $UndefinedException ()
+          }
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo, ' ', XSize(rt), ', ', SysRegName(sysreg))
+    }
+
+  model MsrRegInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: MoveSystemRegFormat =
+      if sysreg = SysRegEncode::NZCV
+        then NZCV := X(rt)(31..28)
+        else if CurrentEL = 0
+        then raise $UndefinedException ()
+        else match sysreg with
+          { SysRegEncode::CurrentEL => raise $UndefinedException ()
+          , SysRegEncode::SPSR_EL1  => SPSR_EL1 := X(rt)
+          , SysRegEncode::ESR_EL1   => ESR_EL1 := X(rt)
+          , SysRegEncode::SPSel     => SPSel := X(rt)(0)
+          , SysRegEncode::SP_EL0    => SP_EL0 := X(rt)
+          , SysRegEncode::SP_EL1    => if SPSel = 0
+                                     then raise $UndefinedException ()
+                                     else let sp = X(rt) in {
+                                       SP_EL1 := sp
+                                       SP := sp
+                                       }
+          , SysRegEncode::ELR_EL1   => ELR_EL1 := X(rt)
+          , SysRegEncode::VBAR_EL1  => VBAR_EL1 := X(rt)
+          , _                     => raise $UndefinedException ()
+          }
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo, ' ', SysRegName(sysreg), ', ', XSize(rt))
+    }
+
+  model ExceptionCallEncAsm (i: InstrWithFunct): IsaDefs = {
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo, ' #', decimal(imm16))
+    }
+
+  model ExceptionCallInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: SuperVisorCallFormat = {
+      raise GeneralException (ExceptionClass::$i.funct, 0, PC.next, 0)
+      }
+    $ExceptionCallEncAsm ($i)
+    }
+
+  model HaltInstr (i: InstrWithFunct): IsaDefs = {
+    instruction $i.id: SuperVisorCallFormat = {}
+    $ExceptionCallEncAsm ($i)
+    }
+
+  model ExceptionReturnInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: UndefinedInstrFormat = {
+      $ReturnFromException()
+      }
+    encoding $i.id = {op = $i.opcode, imm16 = 0b0000'0011'1110'0000}
+    assembly $i.id = ($i.mnemo)
+    }
+
+  model NopInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: UndefinedInstrFormat = {}
+    encoding $i.id = {op = 0b1101'0101'0000'0011, imm16 = $i.opcode}
+    assembly $i.id = ($i.mnemo)
+    }
+
+  function btiOp2(bti: Bits2) -> String = match bti with
+    { 0b01 => "c"
+    , 0b10 => "j"
+    , 0b11 => "jc"
+    , _    => ""
+    }
+
+  model BTIInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: BTIFormat = {}
+    encoding $i.id = {op = 0b1101'0101'0000'0011, opc = $i.opcode}
+    assembly $i.id = ($i.mnemo, btiOp2(bti))
+    }
+
+  model UndefinedInstr (i: InstrNoFunct): IsaDefs = {
+    instruction $i.id: UndefinedInstrFormat =
+      raise $UndefinedException ()
+    encoding $i.id = {op = $i.opcode}
+    assembly $i.id = ($i.mnemo)
+    }
+
+  $MsrRegInstr           ((MSR    ; "msr"   ; 0b1101'0101'0001                             ))
+  $MrsRegInstr           ((MRS    ; "mrs"   ; 0b1101'0101'0011                             ))
+  $ExceptionCallInstr    ((BRK    ; "brk"   ; 0b1101'0100'0010'0000   ; SoftwareBreakpoint ))
+  $ExceptionCallInstr    ((SVC    ; "svc"   ; 0b1101'0100'0000'0001   ; SupervisorCall     ))
+  $ExceptionReturnInstr  ((ERET   ; "eret"  ; 0b1101'0110'1001'1111                        ))
+  $HaltInstr             ((HLT    ; "hlt"   ; 0b1101'0100'0100'0000                        ))
+  $NopInstr              ((NOP    ; "nop"   ; 0b0010'0000'0001'1111                        ))
+  $NopInstr              ((YIELD  ; "yield" ; 0b0010'0000'0011'1111                        ))
+  $BTIInstr              ((BTI    ; "bti"   ; 0b0010'0100'''01'1111                        ))
+  $UndefinedInstr        ((UDF    ; "udf"   ; 0b0000'0000'0000'0000                        ))
 
 }

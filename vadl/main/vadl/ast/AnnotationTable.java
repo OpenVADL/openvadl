@@ -18,6 +18,7 @@ package vadl.ast;
 
 
 import static java.util.Objects.requireNonNull;
+import static vadl.error.Diagnostic.ensure;
 import static vadl.error.Diagnostic.error;
 
 import com.google.errorprone.annotations.concurrent.LazyInit;
@@ -46,6 +47,7 @@ import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
+import vadl.viam.annotations.EnableHtifAnno;
 
 @SuppressWarnings({"UnusedMethod", "UnusedVariable"})
 class AnnotationTable {
@@ -84,6 +86,16 @@ class AnnotationTable {
         })
         .build();
 
+    annotationOn(AliasDefinition.class, "zero", ZeroConstraintAnnotation::new)
+        .check((def, annotation, lowering) -> {
+          ensure(def.computedTarget instanceof RegisterDefinition,
+              () -> error("Invalid annotation target", annotation)
+                  .locationDescription(annotation,
+                      "Zero annotation can only be applied on register aliases"));
+        })
+        // this handled in the VIAM lowering when constructing the ArtificialResource
+        .build();
+
     groupOn(RelocationDefinition.class)
         .add("global offset", EnableAnnotation::new)
         .add("relative", EnableAnnotation::new)
@@ -101,6 +113,15 @@ class AnnotationTable {
           relocation.setKind(requireNonNull(mappings.get(annotation.name)));
         })
         .build();
+
+    /// PROCESSOR RELATED ///
+
+    annotationOn(ProcessorDefinition.class, "htif", EnableAnnotation::new)
+        .applyViam((def, annotation, lowering) -> {
+          if (annotation.isEnabled) {
+            def.addAnnotation(new EnableHtifAnno());
+          }
+        }).build();
 
     groupOn(CpuMemoryRegionDefinition.class)
         .add("firmware", EnableAnnotation::new)
@@ -152,6 +173,9 @@ class AnnotationTable {
     return annotation;
   }
 
+  static List<String> availableAnnotationNames(Class<? extends Definition> klass) {
+    return annotationFactories.getOrDefault(klass, Map.of()).keySet().stream().toList();
+  }
 
   /**
    * Groups annotations from the provided definition into a map where the key is
@@ -1071,12 +1095,13 @@ class ZeroConstraintAnnotation extends ExprAnnotation {
   void typeCheck(AnnotationDefinition definition, TypeChecker typeChecker) {
     super.typeCheck(definition, typeChecker);
     var def = definition.target;
+
     if (!(node instanceof CallIndexExpr callExpr)) {
       throw error("Invalid zero annotation", this)
           .locationDescription(this, "Zero annotation must be of form %s.", usageString())
           .build();
     }
-    if (!(callExpr.computedTarget() == def)) {
+    if (callExpr.computedTarget() != def) {
       throw error("Invalid zero annotation", callExpr.target)
           .locationDescription(callExpr.target,
               "Zero annotation target must be the annotated register.")

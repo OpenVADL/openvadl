@@ -62,22 +62,19 @@ public abstract class AbstractEmitImmediateFilePass extends LcbTemplateRendering
         decodeFunctions.values().stream().map(x ->
                 new GcbAccessOrExtractionFunctionCodeGenerator(x,
                     x.fieldAccess(),
-                    x.identifier.lower(),
-                    x.fieldAccess().fieldRef().simpleName()).genFunctionDefinition())
+                    x.identifier.lower()).genFunctionDefinition())
             .sorted()
             .toList(),
         "decodeFunctionNames", decodeFunctionNames,
         "encodeFunctions",
         encodeFunctions.values().stream()
             .map(x -> new GcbAccessOrExtractionFunctionCodeGenerator(x, x.fieldAccess(),
-                x.identifier.lower(),
-                x.fieldAccess().fieldRef().simpleName()).genFunctionDefinition())
+                x.identifier.lower()).genFunctionDefinition())
             .sorted()
             .toList(),
         "predicateFunctions", predicateFunctions.values().stream()
             .map(x -> new GcbAccessOrExtractionFunctionCodeGenerator(x, x.fieldAccess(),
-                x.identifier.lower(),
-                x.fieldAccess().fieldRef().simpleName()).genFunctionDefinition())
+                x.identifier.lower()).genFunctionDefinition())
             .sorted()
             .toList());
   }

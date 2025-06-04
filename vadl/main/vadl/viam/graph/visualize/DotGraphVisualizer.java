@@ -120,13 +120,16 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
     });
 
     nodes.forEach(node -> {
-      node.inputs().filter(this::nodeFilter).forEach((input) -> {
+      var inputs = node.inputs().filter(this::nodeFilter).toList();
+      for (var i = 0; i < inputs.size(); i++) {
+        var input = inputs.get(i);
         dotBuilder.append("     ")
             .append(wrapStr(input.id))
             .append(" -> ")
             .append(wrapStr(node.id))
-            .append("[dir=back arrowtail=empty];\n");
-      });
+            .append("[dir=back arrowtail=empty label=\"i: " + i + "\"];\n");
+      }
+
 
       node.successors().filter(this::nodeFilter).forEach(successor -> {
 

@@ -247,23 +247,6 @@ public class Format extends Definition implements DefProp.WithType {
 
       return function;
     }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      Field field = (Field) o;
-      return field.identifier.equals(this.identifier);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(type, bitSlice);
-    }
   }
 
 
@@ -280,7 +263,7 @@ public class Format extends Definition implements DefProp.WithType {
     @Nullable
     private Function encoding;
     private final Function predicate;
-    private final Field fieldRef;
+    private final List<Field> fieldRefs;
 
 
     /**
@@ -298,12 +281,13 @@ public class Format extends Definition implements DefProp.WithType {
 
       this.accessFunction = accessFunction;
 
-      var decodeFormatRefs = accessFunction.behavior().getNodes(FieldRefNode.class).toList();
-      ensure(!decodeFormatRefs.isEmpty(),
+      var decodeFormatFields = accessFunction.behavior().getNodes(FieldRefNode.class)
+          .map(FieldRefNode::formatField).toList();
+      ensure(!decodeFormatFields.isEmpty(),
           "Immediate decode function must reference at least one format field. Got: %s",
-          decodeFormatRefs);
+          decodeFormatFields);
 
-      this.fieldRef = decodeFormatRefs.get(0).formatField();
+      this.fieldRefs = decodeFormatFields;
       this.encoding = encoding;
       this.predicate = predicate;
     }
@@ -337,8 +321,19 @@ public class Format extends Definition implements DefProp.WithType {
       return predicate;
     }
 
+    /**
+     * Returns the first format field the field access refers to.
+     *
+     * @deprecated As there can be multiple format fields.
+     */
+    @Deprecated
     public Field fieldRef() {
-      return fieldRef;
+      ensure(fieldRefs.size() == 1, "Only one field reference expected, but found: %s", fieldRefs);
+      return fieldRefs().getFirst();
+    }
+
+    public List<Field> fieldRefs() {
+      return fieldRefs;
     }
 
     @Override
@@ -349,17 +344,19 @@ public class Format extends Definition implements DefProp.WithType {
     @Override
     public void verify() {
       super.verify();
-      if (encoding != null) {
-        ensure(encoding.returnType() instanceof DataType
-                && encoding.returnType().isTrivialCastTo(fieldRef.type()),
-            "Encoding type mismatch. Couldn't match encoding type %s with field reference type %s",
-            encoding.returnType(), fieldRef().type());
-      }
+      // TODO: We must specify how we treat encoding of multiple fields from one access function
+      // if (encoding != null) {
+      // ensure(encoding.returnType() instanceof DataType
+      //         && encoding.returnType().isTrivialCastTo(fieldRef.type()),
+      //     "Encoding type mismatch. Couldn't match encoding type %s with field reference type %s",
+      //     encoding.returnType(), fieldRef().type());
+      // }
     }
 
     @Override
     public String toString() {
-      return "FieldAccess{ " + accessFunction.simpleName() + " = " + accessFunction.signature()
+      return "FieldAccess{ " + simpleName() + " = "
+          + accessFunction.signature()
           + " }";
     }
 
@@ -379,12 +376,12 @@ public class Format extends Definition implements DefProp.WithType {
       FieldAccess that = (FieldAccess) o;
       return Objects.equals(accessFunction, that.accessFunction)
           && Objects.equals(encoding, that.encoding) && Objects.equals(predicate, that.predicate)
-          && Objects.equals(fieldRef, that.fieldRef);
+          && Objects.equals(fieldRefs, that.fieldRefs);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(accessFunction, encoding, predicate, fieldRef);
+      return Objects.hash(accessFunction, encoding, predicate, fieldRefs);
     }
   }
 }

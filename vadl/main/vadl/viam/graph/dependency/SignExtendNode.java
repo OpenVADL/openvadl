@@ -24,10 +24,6 @@ import vadl.viam.graph.Node;
 
 /**
  * Represents a sign extension of the node's value to the assigned type.
- * This node is constructed during the
- * {@link vadl.viam.passes.typeCastElimination.TypeCastEliminationPass}.
- *
- * @see vadl.viam.passes.typeCastElimination.TypeCastEliminator
  */
 public class SignExtendNode extends UnaryNode implements Canonicalizable {
 

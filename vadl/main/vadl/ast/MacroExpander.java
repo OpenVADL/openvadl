@@ -378,34 +378,62 @@ class MacroExpander
   }
 
   @Override
-  public Expr visit(ExtendIdExpr expr) {
-    var name = new StringBuilder();
+  public Expr visit(AsIdExpr expr) {
+    var nameBuilder = new StringBuilder();
     var expressions = (GroupedExpr) expr.expr.accept(this);
     for (var inner : expressions.expressions) {
       if (inner instanceof Identifier id) {
-        name.append(id.name);
+        nameBuilder.append(id.name);
       } else if (inner instanceof StringLiteral string) {
-        name.append(string.value);
+        nameBuilder.append(string.value);
       } else if (inner instanceof PlaceholderExpr
-          || inner instanceof ExtendIdExpr || inner instanceof IdToStrExpr) {
+          || inner instanceof AsIdExpr || inner instanceof AsStrExpr) {
         // Will be expanded as soon as the used placeholders are bound
-        return new ExtendIdExpr(expressions, copyLoc(expr.location()));
+        return new AsIdExpr(expressions, copyLoc(expr.location()));
       } else {
-        reportError("Unsupported 'ExtendId' parameter " + inner, inner.location());
-        name.append(inner);
+        reportError("Unsupported 'AsId' parameter " + inner, inner.location());
+        nameBuilder.append(inner);
       }
     }
-    return new Identifier(name.toString(), copyLoc(expr.location()));
+
+    var name = nameBuilder.toString().trim();
+    if (name.isEmpty()) {
+      this.errors.add(error("Invalid Empty Identifier", expr)
+          .locationDescription(expr, "This expands to an empty identifier name.")
+          .note("Empty identifiers are forbidden as they needlessly obfuscate the code.")
+          .build());
+    } else if (!ParserUtils.isValidIdentifier(name)) {
+      this.errors.add(error("Invalid Identifier: `%s`".formatted(name), expr)
+          .locationDescription(expr, "This expands to an invalid identifier name.")
+          .note(
+              "Identifiers must match the regex /[a-zA-Z][a-zA-Z0-9_]*/ and cannot clash "
+                  + "with a keyword.")
+          .build());
+    }
+
+    return new Identifier(nameBuilder.toString(), copyLoc(expr.location()));
   }
 
   @Override
-  public Expr visit(IdToStrExpr expr) {
-    var idOrPlaceholder = expandId(expr.id);
-    if (idOrPlaceholder instanceof Identifier id) {
-      return new StringLiteral(id, copyLoc(expr.location()));
-    } else {
-      return new IdToStrExpr(idOrPlaceholder, copyLoc(expr.location()));
+  public Expr visit(AsStrExpr expr) {
+    var nameBuilder = new StringBuilder();
+    var expressions = (GroupedExpr) expr.expr.accept(this);
+    for (var inner : expressions.expressions) {
+      if (inner instanceof Identifier id) {
+        nameBuilder.append(id.name);
+      } else if (inner instanceof StringLiteral string) {
+        nameBuilder.append(string.value);
+      } else if (inner instanceof PlaceholderExpr
+          || inner instanceof AsIdExpr || inner instanceof AsStrExpr) {
+        // Will be expanded as soon as the used placeholders are bound
+        return new AsStrExpr(expressions, copyLoc(expr.location()));
+      } else {
+        reportError("Unsupported 'AsStr' parameter " + inner, inner.location());
+        nameBuilder.append(inner);
+      }
     }
+
+    return new StringLiteral("\"" + nameBuilder.toString() + "\"", copyLoc(expr.location()));
   }
 
   @Override
@@ -449,6 +477,18 @@ class MacroExpander
   @Override
   public Expr visit(SequenceCallExpr expr) {
     return new SequenceCallExpr(expr.target, expr.range == null ? null : expr.range.accept(this),
+        expr.loc);
+  }
+
+  @Override
+  public Expr visit(ExpandedSequenceCallExpr expr) {
+    return new ExpandedSequenceCallExpr(expr.target,
+        expr.loc);
+  }
+
+  @Override
+  public Expr visit(ExpandedAliasDefSequenceCallExpr expr) {
+    return new ExpandedSequenceCallExpr(expr.target,
         expr.loc);
   }
 
@@ -600,8 +640,8 @@ class MacroExpander
   }
 
   @Override
-  public Definition visit(AbiPseudoInstructionDefinition definition) {
-    return new AbiPseudoInstructionDefinition(definition.kind,
+  public Definition visit(AbiSpecialPurposeInstructionDefinition definition) {
+    return new AbiSpecialPurposeInstructionDefinition(definition.kind,
         expandId(definition.target),
         copyLoc(definition.loc)
     ).withAnnotations(expandAnnotations(definition.annotations));
@@ -628,7 +668,8 @@ class MacroExpander
   public Definition visit(AnnotationDefinition definition) {
     return new AnnotationDefinition(
         definition.keywords.stream().map(this::expandId).toList(),
-        definition.values.stream().map(this::expandExpr).toList(),
+        definition.values.stream().map(this::expandExpr)
+            .collect(Collectors.toCollection(ArrayList::new)),
         copyLoc(definition.loc));
   }
 
@@ -1265,7 +1306,7 @@ class MacroExpander
         || node instanceof MacroMatchExpr || node instanceof MacroMatchStatement
         || node instanceof MacroInstanceNode || node instanceof MacroInstanceDefinition
         || node instanceof MacroInstanceExpr || node instanceof MacroInstanceStatement
-        || node instanceof ExtendIdExpr || node instanceof IdToStrExpr;
+        || node instanceof AsIdExpr || node instanceof AsStrExpr;
 
   }
 

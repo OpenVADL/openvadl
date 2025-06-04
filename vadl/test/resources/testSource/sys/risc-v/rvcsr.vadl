@@ -183,21 +183,21 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
 
   // extend = "" or "I", offset = 0 or 4, rs1imm = X(rs1) or rs1 as Regs
   model CsrInstr (extend : Str, offset : Int, rs1imm : Ex) : IsaDefs = {
-    $CsrBaseInstr (ExtendId(CSRRW, $extend) ; 0b001 ; $offset ; // atomic CSR Read / Write
+    $CsrBaseInstr (AsId(CSRRW, $extend) ; 0b001 ; $offset ; // atomic CSR Read / Write
             let rs1imm = $rs1imm in {
               if rd != 0 then
                 X(rd)     := CSR(csridx)
               CSR(csridx) := rs1imm
             }
       )
-    $CsrBaseInstr (ExtendId(CSRRS, $extend) ; 0b010 ; $offset ; // atomic CSR Read and Set bits
+    $CsrBaseInstr (AsId(CSRRS, $extend) ; 0b010 ; $offset ; // atomic CSR Read and Set bits
             let csr_csridx = CSR(csridx) in {
               if rs1 != 0 then
                 CSR(csridx) := csr_csridx | $rs1imm
               X(rd)         := csr_csridx
             }
       )
-    $CsrBaseInstr (ExtendId(CSRRC, $extend) ; 0b011 ; $offset ; // atomic CSR Read and Clear bits
+    $CsrBaseInstr (AsId(CSRRC, $extend) ; 0b011 ; $offset ; // atomic CSR Read and Clear bits
             let csr_csridx = CSR(csridx) in {
               if rs1 != 0 then
                 CSR(csridx) := csr_csridx & ~($rs1imm)
@@ -212,6 +212,7 @@ instruction set architecture RV32IZicsr extending RV3264Base = {
 
 instruction set architecture RV32IMZicsr extending RV32IZicsr, RV3264M = { }
 
+[ htif ]
 processor Spike implements RV32IMZicsr = {
     constant reset_vec_addr = 0x1000
 

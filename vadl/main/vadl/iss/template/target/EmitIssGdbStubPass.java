@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.function.TriConsumer;
 import vadl.configuration.IssConfiguration;
 import vadl.iss.passes.IssGdbInfoExtractionPass;
+import vadl.iss.passes.extensions.RegInfo;
 import vadl.iss.template.IssTemplateRenderingPass;
 import vadl.pass.PassResults;
 import vadl.utils.codegen.CodeGeneratorAppendable;
@@ -147,21 +148,16 @@ public class EmitIssGdbStubPass extends IssTemplateRenderingPass {
         .appendLn("}");
   }
 
+  @SuppressWarnings("LocalVariableName")
   private static String shortMachineWord(RegisterTensor res) {
-    int width = res.resultType().bitWidth();
-    res.ensure(isStandard(width),
-        "The resource with is none of 8, 16, 32, 64. "
-            + "Currently the GDB register write requires those types.");
-    return switch (width) {
-      case 8 -> "b";
-      case 16 -> "w";
+    var regInfo = res.expectExtension(RegInfo.class);
+    var cTypeWidth = regInfo.valueCTypeWidth();
+    return switch (cTypeWidth) {
+      case 1, 8 -> "ub";
+      case 16 -> "uw";
       case 32 -> "l";
       case 64 -> "q";
-      default -> throw new IllegalStateException("Unexpected width: " + width);
+      default -> throw new IllegalStateException("Unexpected width: " + cTypeWidth);
     };
-  }
-
-  private static boolean isStandard(int width) {
-    return width == 8 || width == 16 || width == 32 || width == 64;
   }
 }

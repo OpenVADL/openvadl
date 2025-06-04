@@ -32,10 +32,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticList;
+import vadl.utils.Levenshtein;
 import vadl.utils.SourceLocation;
 
 class ParserUtils {
@@ -404,16 +406,39 @@ class ParserUtils {
     return ID_TOKENS[token.kind];
   }
 
+  private static final Pattern identifierPattern = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*");
+
+  /**
+   * Checks whether a string can be used as an indentifier.
+   *
+   * @param text to be checked.
+   * @return whether it would be a valid identifier.
+   */
+  static boolean isValidIdentifier(String text) {
+
+    if (!identifierPattern.matcher(text).matches()) {
+      return false;
+    }
+
+    // Only some keywords are allowed as tokens.
+    var tokenId = Scanner.literals.get(text);
+    if (tokenId != null && !ID_TOKENS[tokenId]) {
+      return false;
+    }
+
+    return true;
+  }
+
   /**
    * Pre-parses the next few tokens to determine the type of the following placeholder / macro.
    * Before: parser must be in a state where the lookahead token is the "$" symbol.
    * After: parser is in the same state as before.
    */
   static boolean isMacroReplacementOfType(Parser parser, BasicSyntaxType syntaxType) {
-    if (parser.la.kind == Parser._EXTEND_ID) {
+    if (parser.la.kind == Parser._AS_ID) {
       return BasicSyntaxType.ID.isSubTypeOf(syntaxType);
     }
-    if (parser.la.kind == Parser._ID_TO_STR) {
+    if (parser.la.kind == Parser._AS_STR) {
       return BasicSyntaxType.STR.isSubTypeOf(syntaxType);
     }
     SyntaxType macroMatchType = macroMatchType(parser);
@@ -482,16 +507,20 @@ class ParserUtils {
     return true;
   }
 
-  static Diagnostic unknownSyntaxTypeError(String name, SourceLocation location) {
-    // FIXME: In the future we can prioritize them with levenshtein distance.
+  static Diagnostic unknownSyntaxTypeError(String name, SymbolTable macroTable,
+                                           SourceLocation location) {
+
+    // Initially add the basic types and custom defined in scope.
     var available = Arrays.stream(BasicSyntaxType.values())
         .map(BasicSyntaxType::getName)
         .filter(n -> !n.contains("Invalid"))
-        .collect(Collectors.joining(", "));
+        .collect(Collectors.toSet());
+    available.addAll(
+        macroTable.allMacroSymbolNamesOf(RecordTypeDefinition.class, ModelTypeDefinition.class));
 
     return error("Unknown syntax type: `%s`".formatted(name), location)
         .locationDescription(location, "No syntax type with this name exists.")
-        .help("Maybe you meant to use one of the following:\n%s", available)
+        .suggestions(Levenshtein.suggestions(name, available))
         .build();
   }
 
@@ -583,12 +612,20 @@ class ParserUtils {
     return expanded;
   }
 
+  /**
+   * Defines all provided macro definitions in the provided macroTable.
+   *
+   * @param macroTable  to be modified.
+   * @param definitions to be inserted.
+   */
   static void readMacroSymbols(SymbolTable macroTable, List<Definition> definitions) {
     for (Definition definition : definitions) {
       if (definition instanceof DefinitionList list) {
         readMacroSymbols(macroTable, list.items);
       } else if (definition instanceof ModelDefinition modelDefinition) {
         macroTable.defineSymbol(modelDefinition);
+      } else if (definition instanceof RecordTypeDefinition recordTypeDefinition) {
+        macroTable.defineSymbol(recordTypeDefinition);
       }
     }
   }
@@ -736,15 +773,29 @@ class ParserUtils {
     }
   }
 
-  static List<SequenceCallExpr> expandSequenceCalls(Parser parser, List<SequenceCallExpr> calls) {
-    var expandedCalls = new ArrayList<SequenceCallExpr>(calls.size());
-    for (SequenceCallExpr callExpr : calls) {
-      if (callExpr.range == null) {
-        expandedCalls.add(callExpr);
+  /**
+   * Sequences like {@code a{0..10}} will be expanded to {@code a0, a1 ...}.
+   */
+  static List<ExpandedSequenceCallExpr> expandSequenceCalls(Parser parser,
+                                                            List<SequenceCallExpr> calls) {
+    var expandedCalls = new ArrayList<ExpandedSequenceCallExpr>(calls.size());
+    for (SequenceCallExpr seqExpr : calls) {
+      var targetId = seqExpr.target;
+      if (targetId instanceof Identifier id && seqExpr.range == null) {
+        expandedCalls.add(new ExpandedAliasDefSequenceCallExpr(
+            id,
+            seqExpr.loc));
+      } else if (targetId instanceof CallIndexExpr callIndexExpr
+          && callIndexExpr.argsIndices.size() == 1
+          && callIndexExpr.argsIndices.getFirst().values.size() == 1) {
+        // X(1)
+        expandedCalls.add(new ExpandedSequenceCallExpr(
+            callIndexExpr,
+            seqExpr.loc));
       } else {
         BigInteger start = BigInteger.ZERO;
         BigInteger end = BigInteger.ZERO;
-        if (callExpr.range instanceof RangeExpr rangeExpr) {
+        if (seqExpr.range instanceof RangeExpr rangeExpr) {
           if (rangeExpr.from instanceof IntegerLiteral integerLiteral) {
             start = integerLiteral.number;
           } else {
@@ -757,15 +808,17 @@ class ParserUtils {
             reportError(parser, "Unknown start index type " + rangeExpr.to,
                 rangeExpr.to.location());
           }
-        } else if (callExpr.range instanceof IntegerLiteral integerLiteral) {
+        } else if (seqExpr.range instanceof IntegerLiteral integerLiteral) {
           start = end = integerLiteral.number;
         } else {
-          reportError(parser, "Unknown index type " + callExpr.range, callExpr.range.location());
+          reportError(parser, "Unknown index type " + seqExpr.range, Objects.requireNonNull(
+              seqExpr.range).location());
         }
         for (BigInteger i = start; i.compareTo(end) <= 0; i = i.add(BigInteger.ONE)) {
           expandedCalls.add(
-              new SequenceCallExpr(new Identifier(callExpr.target.name + i, callExpr.loc), null,
-                  callExpr.loc));
+              new ExpandedAliasDefSequenceCallExpr(
+                  new Identifier(((Identifier) targetId).name + i, seqExpr.loc),
+                  seqExpr.loc));
         }
       }
     }

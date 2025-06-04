@@ -78,6 +78,9 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
     return this.builtIn;
   }
 
+  public ExpressionNode arg(int index) {
+    return args.get(index);
+  }
 
   @Override
   public void accept(GraphNodeVisitor visitor) {
@@ -115,7 +118,7 @@ public class BuiltInCall extends AbstractFunctionCallNode implements Canonicaliz
 
   @Override
   public boolean isCommutative() {
-    return BuiltInTable.commutative.contains(this.builtIn);
+    return BuiltInTable.COMMUTATIVE.contains(this.builtIn);
   }
 
   @Override

@@ -18,10 +18,9 @@ package vadl.iss;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
@@ -42,7 +41,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
 
   // config of qemu test image
   private static final String QEMU_TEST_IMAGE =
-      "ghcr.io/openvadl/qemu-base@sha256:f4cb8676c5a3cdb4f886b8bbcde6bae07c3b03e9f8a78bc216a7358bdff2054b";
+      "ghcr.io/openvadl/iss-test-base@sha256:c0963539e557db0024554abe4d391648e48b58f79b0a97e74357bc11af7ed0b8";
 
   // specification to image cache
   // we must separate CAS and ISS, otherwise the CAS test would use the ISS image
@@ -91,25 +90,25 @@ public abstract class QemuIssTest extends DockerExecutionTest {
         }
 
         // generate iss image from the output path
-        return getIssImage(issOutputPath, configuration, "riscv64-softmmu", "riscv32-softmmu");
+        return getIssImage(issOutputPath, configuration);
       } catch (IOException | DuplicatedPassKeyException e) {
         throw new RuntimeException(e);
       }
     });
   }
 
+  protected List<String> withUpstreamTargets() {
+    return List.of();
+  }
 
   /**
    * This will produce a new image for the given generated iss sources.
    *
    * @param generatedIssSources the path to the generated ISS/QEMU sources.
-   * @param referenceTargets    The reference targets that should also be build
-   *                            (e.g. riscv64-softmmu)
    * @return a new image that builds the ISS at build time.
    */
   private ImageFromDockerfile getIssImage(Path generatedIssSources,
-                                          IssConfiguration configuration,
-                                          String... referenceTargets
+                                          IssConfiguration configuration
   ) {
 
     // get redis cache for faster compilation using sccache
@@ -118,7 +117,7 @@ public abstract class QemuIssTest extends DockerExecutionTest {
     var targetName = configuration.targetName().toLowerCase();
     var softmmuTarget = targetName + "-softmmu";
     var qemuBin = "qemu-system-" + targetName;
-    var refTargetString = Arrays.stream(referenceTargets).collect(Collectors.joining(","));
+    var refTargetString = String.join(",", withUpstreamTargets());
     var refTarget = refTargetString.isEmpty() ? "" : "," + refTargetString;
 
     var dockerImage = new ImageFromDockerfile()

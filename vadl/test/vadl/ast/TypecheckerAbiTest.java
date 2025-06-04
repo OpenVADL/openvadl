@@ -57,10 +57,10 @@ public class TypecheckerAbiTest {
   @Test
   void valid() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -81,10 +81,10 @@ public class TypecheckerAbiTest {
   @Test
   void valid_whenThreadPointerMissing() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -105,10 +105,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenPseudoReturnInstructionMissing() {
     var prog = """
-          // pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          // special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -131,10 +131,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenPseudoCallInstructionMissing() {
     var prog = """
-          pseudo return instruction = NOP
-          // pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          // special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -157,10 +157,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenPseudoNonPicAddressLoadInstructionMissing() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          // pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          // special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -184,10 +184,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenStackPointerMissing() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           // stack pointer = zero
           return address = zero
@@ -211,10 +211,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenStackPointerHasMultipleRegisters() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = [ zero, zero]
           return address = zero
@@ -238,10 +238,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenReturnAddressHasMultipleRegisters() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = [ zero, zero]
@@ -265,10 +265,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenGlobalPointerHasMultipleRegisters() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -292,10 +292,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenFramePointerHasMultipleRegisters() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -319,10 +319,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenThreadPointerHasMultipleRegisters() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -346,10 +346,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenFramePointerMissing() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -371,39 +371,12 @@ public class TypecheckerAbiTest {
   }
 
   @Test
-  void shouldThrow_whenGlobalPointerMissing() {
-    var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
-          alias register zero = X(0)
-          stack pointer = zero
-          return address = zero
-          //global pointer = zero
-          frame pointer = zero
-          thread pointer = zero
-          return value = zero
-          function argument = zero
-          caller saved = zero
-          callee saved = zero
-        """;
-    var ast = Assertions.assertDoesNotThrow(
-        () -> VadlParser.parse(inputWrappedByValidAbi(prog)), "Cannot parse input");
-    var typechecker = new TypeChecker();
-    var throwable = Assertions.assertThrows(Diagnostic.class, () -> typechecker.verify(ast));
-    Assertions.assertEquals(Diagnostic.Level.ERROR, throwable.level);
-    Assertions.assertEquals("No GLOBAL_POINTER registers were declared but one was expected",
-        throwable.reason);
-  }
-
-  @Test
   void shouldThrow_whenReturnValueMissing() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -427,10 +400,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenFunctionArgumentMissing() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -454,10 +427,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenCallerSavedMissing() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -481,10 +454,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenCalleeSavedMissing() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -508,10 +481,10 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_wheMultipleFramePointerDefined() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero
@@ -537,11 +510,11 @@ public class TypecheckerAbiTest {
   @Test
   void shouldThrow_whenMultiplePseudoLocalAddressLoadInstructionDefined() {
     var prog = """
-          pseudo return instruction = NOP
-          pseudo call instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo local address load instruction = NOP
-          pseudo absolute address load instruction = NOP
+          special return instruction = NOP
+          special call instruction = NOP
+          special local address load instruction = NOP
+          special local address load instruction = NOP
+          special absolute address load instruction = NOP
           alias register zero = X(0)
           stack pointer = zero
           return address = zero

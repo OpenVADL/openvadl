@@ -18,6 +18,7 @@ package vadl.viam.passes.statusBuiltInInlinePass;
 
 import static java.util.Objects.requireNonNull;
 import static vadl.utils.GraphUtils.equ;
+import static vadl.utils.GraphUtils.getUsagesByUnrollingLets;
 import static vadl.utils.GraphUtils.testSignBit;
 
 import java.math.BigInteger;
@@ -29,7 +30,6 @@ import vadl.viam.Constant;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.ViamGraphError;
 import vadl.viam.graph.dependency.BuiltInCall;
-import vadl.viam.graph.dependency.DependencyNode;
 import vadl.viam.graph.dependency.ExpressionNode;
 import vadl.viam.graph.dependency.TupleGetFieldNode;
 
@@ -81,7 +81,7 @@ abstract class Inliner {
     initUsers(builtInCall);
   }
 
-  final void inline() {
+  public void inline() {
     inline(resultUser, this::getResult);
     inline(zeroUser, this::getZero);
     inline(carryUser, this::getCarry);
@@ -170,8 +170,8 @@ abstract class Inliner {
 
     // from a given node that represents the status tuple, we get all users of the status fields
     // and assign them to the class' fields.
-    Consumer<DependencyNode> initStatusUsers = (DependencyNode node) -> {
-      node.usages().forEach(usage -> {
+    Consumer<ExpressionNode> initStatusUsers = (ExpressionNode node) -> {
+      getUsagesByUnrollingLets(node).forEach(usage -> {
         if (usage instanceof TupleGetFieldNode getField) {
           switch (getField.index()) {
             case 0 -> negativeUser = getField;
@@ -187,7 +187,8 @@ abstract class Inliner {
     };
 
 
-    builtInCall.usages().filter(TupleGetFieldNode.class::isInstance)
+    getUsagesByUnrollingLets(builtInCall)
+        .filter(TupleGetFieldNode.class::isInstance)
         .map(TupleGetFieldNode.class::cast)
         .forEach(node -> {
           switch (node.index()) {

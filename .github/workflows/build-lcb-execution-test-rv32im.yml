@@ -1,0 +1,34 @@
+name: Build lcb execution test rv32im
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-image-build.yml
+    strategy:
+      matrix:
+        target:
+          - platform: linux/arm64
+            runner: self-hosted-arm64
+          - platform: linux/amd64
+            runner: self-hosted-x64
+    secrets:
+      X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
+    with:
+      image: ghcr.io/openvadl/lcb-execution-test-rv32im-base-image
+      context: vadl/test/resources/images/lcb_execution_test_rv32im/base_image
+      platform: ${{ matrix.target.platform }}
+      runner: ${{ matrix.target.runner }}
+
+  merge:
+    needs: build
+    uses: ./.github/workflows/reusable-image-merge.yml
+    secrets:
+      X06_KEYCHAIN_PASSWORD: ${{ secrets.X06_KEYCHAIN_PASSWORD }}
+    with:
+      image: ghcr.io/openvadl/lcb-execution-test-rv32im-base-image

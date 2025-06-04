@@ -108,6 +108,22 @@ public class IssConstExtractNode extends IssExprNode {
     safeDelete();
   }
 
+  /**
+   * Replaces this node on the user by a {@link IssGhostCastNode}.
+   * This is done if the extract is not required, but we still want to preserve the result
+   * type information of the removed extract.
+   *
+   * @param user The user that has this node as input. After this operation it will
+   *             have a ghost node as input instead.
+   */
+  public void replaceByGhostCastForUser(Node user) {
+    ensure(usages().anyMatch(u -> user == u),
+        "Provided user was not found in usages of this node. User: %s", user);
+    ensure(graph() != null, "This node is not yet initialized");
+    var cast = graph().add(new IssGhostCastNode(value, type()));
+    user.replaceInput(this, cast);
+  }
+
   @Override
   public DataType type() {
     return (DataType) super.type();

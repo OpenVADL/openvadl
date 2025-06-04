@@ -64,6 +64,7 @@ import vadl.viam.graph.dependency.SideEffectNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
+import vadl.viam.graph.dependency.TupleGetFieldNode;
 import vadl.viam.graph.dependency.WriteMemNode;
 import vadl.viam.graph.dependency.WriteRegTensorNode;
 import vadl.viam.graph.dependency.ZeroExtendNode;
@@ -367,6 +368,11 @@ public class TableGenPatternPrinterVisitor
   @Override
   public void visit(SideEffectNode sideEffectNode) {
     sideEffectNode.accept(this);
+  }
+
+  @Override
+  public void visit(TupleGetFieldNode tupleGetFieldNode) {
+    throw new RuntimeException("not implemented");
   }
 
   protected void joinArgumentsWithComma(NodeList<ExpressionNode> args) {

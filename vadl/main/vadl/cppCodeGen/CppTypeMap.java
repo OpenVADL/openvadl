@@ -133,7 +133,10 @@ public class CppTypeMap {
     }
   }
 
-  private static int nextFittingBitSize(int old) {
+  /**
+   * Get the next greater (or equal) cpp type width.
+   */
+  public static int nextFittingBitSize(int old) {
     if (old == 1) {
       return 1;
     } else if (old > 1 && old <= 8) {
@@ -149,5 +152,30 @@ public class CppTypeMap {
     }
 
     throw new RuntimeException("Types with more than 128 bits are not supported");
+  }
+
+  /**
+   * Returns the next fitting unsigned integer as C stdint string.
+   * This will only look at the bit-width of the type.
+   * It assumes that the given type is a {@link vadl.types.DataType}.
+   */
+  public static String nextFittingUInt(Type type) {
+    return nextFittingUInt(type.asDataType().bitWidth());
+  }
+
+  /**
+   * Returns the next fitting unsigned integer as C stdint string.
+   */
+  public static String nextFittingUInt(int size) {
+    if (size <= 8) {
+      return "uint8_t";
+    } else if (size <= 16) {
+      return "uint16_t";
+    } else if (size <= 32) {
+      return "uint32_t";
+    } else if (size <= 64) {
+      return "uint64_t";
+    }
+    throw new RuntimeException("Types with more than 64 bits are not supported");
   }
 }

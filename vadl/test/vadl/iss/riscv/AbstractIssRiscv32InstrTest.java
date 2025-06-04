@@ -16,11 +16,16 @@
 
 package vadl.iss.riscv;
 
+import java.util.List;
 import java.util.Map;
 import vadl.iss.IssInstrTest;
 
 public abstract class AbstractIssRiscv32InstrTest extends IssInstrTest {
 
+  @Override
+  protected List<String> withUpstreamTargets() {
+    return List.of("riscv32-softmmu");
+  }
 
   @Override
   public Map<String, String> gdbRegMap() {

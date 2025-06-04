@@ -74,7 +74,7 @@ public class WriteArtificialResNode extends WriteResourceNode {
   @Override
   public Node shallowCopy() {
     return new WriteArtificialResNode(resource,
-        indices().copy(),
+        indices(),
         value,
         condition);
   }

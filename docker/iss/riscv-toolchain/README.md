@@ -15,7 +15,6 @@ On both machines execute the following
 docker buildx build \
   -t <username>/riscv-toolchain \
   -f Dockerfile \
-  --platform linux/arm64 \
   --output push-by-digest=true,type=image,push=true \
   .
 ```
