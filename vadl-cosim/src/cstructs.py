@@ -109,16 +109,15 @@ class TBInsnInfo(Structure):
 
 
 class TBInfo(Structure):
-    INSNS_INFOS_SIZE = 32
+    TBINSNINFO_ENTRIES = 32
     _fields_ = [
         ("pc", c_uint64),
-        ("insns", c_size_t),
         ("insns_info_size", c_size_t),
-        ("insns_info", TBInsnInfo * INSNS_INFOS_SIZE),
+        ("insns_info", TBInsnInfo * TBINSNINFO_ENTRIES),
     ]
 
     def __repr__(self):
-        return f"TBInfo(pc={self.pc}, insns={self.insns}, insns_info_size={self.insns_info_size}, insns_info={self.insns_info[: self.insns_info_size]})"
+        return f"TBInfo(pc={self.pc}, insns_info_size={self.insns_info_size}, insns_info={self.insns_info[: self.insns_info_size]})"
 
     def __format__(self, _: str, /) -> str:
         return self.__repr__()
@@ -126,7 +125,6 @@ class TBInfo(Structure):
     def to_dict(self):
         return {
             "pc": self.pc,
-            "insns": self.insns,
             "insns_info_size": self.insns_info_size,
             "insns_info": [
                 insn.to_dict() for insn in self.insns_info[: self.insns_info_size]
@@ -136,31 +134,8 @@ class TBInfo(Structure):
     def __init__(self, *args: Any, **kw: Any) -> None:
         super().__init__(*args, **kw)
         self.pc: Annotated[int, c_uint64]
-        self.insns: Annotated[int, c_size_t]
         self.insns_info_size: Annotated[int, c_size_t]
         self.insns_info: Annotated[list[TBInsnInfo], TBInsnInfo * self.INSNS_INFOS_SIZE]
-
-
-class BrokerSHM_TB(Structure):
-    INFOS_SIZE = 1024
-    _fields_ = [("size", c_size_t), ("infos", TBInfo * INFOS_SIZE)]
-
-    def __repr__(self):
-        return f"BrokerSHM_TB(size={self.size}, infos={self.infos[: self.size]})"
-
-    def __format__(self, _: str, /) -> str:
-        return self.__repr__()
-
-    def to_dict(self):
-        return {
-            "size": self.size,
-            "infos": [info.to_dict() for info in self.infos[: self.size]],
-        }
-
-    def __init__(self, *args: Any, **kw: Any) -> None:
-        super().__init__(*args, **kw)
-        self.size: Annotated[int, c_size_t]
-        self.infos: Annotated[list[TBInfo], TBInfo * self.INFOS_SIZE]
 
 
 class SHMRegister(Structure):
@@ -234,6 +209,34 @@ class SHMCPU(Structure):
         self.registers: Annotated[
             list[SHMRegister], SHMRegister * self.MAX_CPU_REGISTERS
         ]
+
+
+class BrokerSHM_TB(Structure):
+    MAX_CPU_COUNT = 8
+    _fields_ = [
+        ("init_mask", c_int),
+        ("cpus", SHMCPU * MAX_CPU_COUNT),
+        ("tb_info", TBInfo),
+    ]
+
+    def __repr__(self):
+        return f"BrokerSHM_TB(init_mask={self.init_mask}, cpus={self.cpus[:]}, tb_info={self.tb_info})"
+
+    def __format__(self, _: str, /) -> str:
+        return self.__repr__()
+
+    def to_dict(self, gdb_map: dict[str, str]):
+        return {
+            "init_mask": self.init_mask,
+            "cpus": [cpu.to_dict(gdb_map) for cpu in self.cpus[:]],
+            "tb_info": self.tb_info.to_dict(),
+        }
+
+    def __init__(self, *args: Any, **kw: Any) -> None:
+        super().__init__(*args, **kw)
+        self.init_mask: Annotated[int, c_int]
+        self.cpus: Annotated[list[SHMCPU], SHMCPU * self.MAX_CPU_COUNT]
+        self.tb_info: Annotated[TBInfo, TBInfo]
 
 
 class BrokerSHM_Exec(Structure):
