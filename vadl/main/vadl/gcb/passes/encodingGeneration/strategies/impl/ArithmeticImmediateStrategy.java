@@ -23,13 +23,12 @@ import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.Format;
-import vadl.viam.ViamError;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.dependency.BuiltInCall;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FieldRefNode;
-import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SignExtendNode;
 import vadl.viam.graph.dependency.SliceNode;
 import vadl.viam.graph.dependency.TruncateNode;
@@ -71,7 +70,6 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
 
   @Override
   public void generateEncoding(Format.FieldAccess fieldAccess) {
-    var parameter = setupEncodingForFieldAccess(fieldAccess);
     var accessFunction = fieldAccess.accessFunction();
     var copy = accessFunction.behavior().copy();
     final var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();
@@ -101,9 +99,7 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
     // y = x - 6
     // y + 6 = x
     // The heuristic just swaps the operators.
-
-    var funcParam = new FuncParamNode(parameter);
-    fieldRef.replaceAndDelete(funcParam);
+    fieldRef.replaceAndDelete(new FieldAccessRefNode(fieldAccess, fieldAccess.type()));
 
     returnNode.applyOnInputs(new GraphVisitor.Applier<>() {
       @Nullable
@@ -113,8 +109,7 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
           to.applyOnInputs(this);
         }
 
-        if (to instanceof BuiltInCall) {
-          var cast = (BuiltInCall) to;
+        if (to instanceof BuiltInCall cast) {
           if (cast.builtIn() == BuiltInTable.ADD) {
             cast.setBuiltIn(BuiltInTable.SUB);
           } else if (cast.builtIn() == BuiltInTable.SUB) {
@@ -128,17 +123,12 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
 
     // At the end of the encoding function, the type must be exactly as the field type
     var sliceNode =
-        new SliceNode(returnNode.value(), new Constant.BitSlice(new Constant.BitSlice.Part[] {
-            new Constant.BitSlice.Part(fieldRefBits.bitWidth() - 1, 0)
-        }), (DataType) fieldRef.type());
+        new SliceNode(returnNode.value(), new Constant.BitSlice(
+            new Constant.BitSlice.Part(fieldRefBits.bitWidth() - 1, 0)),
+            (DataType) fieldRef.type());
     var addedSliceNode = copy.add(sliceNode);
     returnNode.replaceInput(returnNode.value(), addedSliceNode);
 
-    var encoding = fieldAccess.encoding();
-    if (encoding != null) {
-      encoding.setBehavior(copy);
-    } else {
-      throw new ViamError("An encoding must already exist");
-    }
+    setFieldEncoding(fieldAccess, copy);
   }
 }
