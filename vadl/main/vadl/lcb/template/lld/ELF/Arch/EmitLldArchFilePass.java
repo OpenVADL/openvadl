@@ -16,13 +16,18 @@
 
 package vadl.lcb.template.lld.ELF.Arch;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
+import vadl.gcb.passes.relocation.model.AutomaticallyGeneratedRelocation;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.lcb.template.utils.ImmediateEncodingFunctionProvider;
 import vadl.pass.PassResults;
+import vadl.template.Renderable;
 import vadl.viam.Specification;
 
 /**
@@ -49,6 +54,23 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
 
   }
 
+  record ElfRelocationInfo(String elfName, String kind,
+                           String relocationFunction, String patchInstructionFunction,
+                           String encodingFunction) implements
+      Renderable {
+
+    @Override
+    public Map<String, Object> renderObj() {
+      return Map.of(
+          "elfName", elfName,
+          "kind", kind,
+          "relocationFunction", relocationFunction,
+          "patchInstructionFunction", patchInstructionFunction,
+          "encodingFunction", encodingFunction
+      );
+    }
+  }
+
   private ElfInfo createElfInfo() {
     return new ElfInfo(false, 32);
   }
@@ -59,12 +81,26 @@ public class EmitLldArchFilePass extends LcbTemplateRenderingPass {
     var output =
         (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
             GenerateLinkerComponentsPass.class);
-    var relocations = output.elfRelocations();
+
+    var encodingFunctions = ImmediateEncodingFunctionProvider.generateEncodeFunctions(passResults);
+
+    var elfRelocations = output.elfRelocations().stream().map(
+        r -> new ElfRelocationInfo(r.elfRelocationName().value(),
+            r.llvmKind(),
+            r.valueRelocation().functionName().lower(),
+            r.fieldUpdateFunction().functionName().lower(),
+            r instanceof AutomaticallyGeneratedRelocation
+                ? requireNonNull(encodingFunctions.get(r.field())).functionName().lower()
+                : ""
+        )
+    ).toList();
+
     var elfInfo = createElfInfo();
+
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         CommonVarNames.MAX_INSTRUCTION_WORDSIZE, elfInfo.maxInstructionWordSize(),
         CommonVarNames.IS_BIG_ENDIAN, elfInfo.isBigEndian(),
-        CommonVarNames.RELOCATIONS, relocations);
+        "elfRelocations", elfRelocations);
   }
 }

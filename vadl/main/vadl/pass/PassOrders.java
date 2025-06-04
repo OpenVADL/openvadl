@@ -95,6 +95,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitConstMatIntHeaderFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterCppFilePass;
 import vadl.lcb.template.lib.Target.MCTargetDesc.EmitInstPrinterHeaderFilePass;
+import vadl.lcb.template.lld.ELF.Arch.EmitLldVadlBuiltinsHeaderFilePass;
 import vadl.rtl.passes.InstructionProgressGraphCreationPass;
 import vadl.rtl.passes.StageOrderingPass;
 import vadl.template.AbstractTemplateRenderingPass;
@@ -278,6 +279,7 @@ public class PassOrders {
         new vadl.lcb.template.lld.ELF.Arch.EmitLldManualEncodingHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lld.ELF.Arch.EmitImmediateUtilsHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lld.ELF.Arch.EmitLldArchFilePass(configuration));
+    order.add(new EmitLldVadlBuiltinsHeaderFilePass(configuration));
     order.add(new vadl.lcb.template.lld.ELF.EmitLldTargetCppFilePass(configuration));
     order.add(new vadl.lcb.template.EmitLcbMakeFilePass(configuration));
     order.add(new vadl.lcb.include.llvm.BinaryFormat.ELFRelocs.EmitTargetElfRelocsDefFilePass(

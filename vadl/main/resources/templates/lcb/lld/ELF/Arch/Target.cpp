@@ -10,7 +10,7 @@
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Target.h"
-#include "[(${namespace})]ManualEncoding.hpp"
+#include "[(${namespace})]ManualEncoding.cpp"
 #include "[(${namespace})]Relocations.hpp"
 #include "ImmediateUtils.h"
 
@@ -46,9 +46,9 @@ namespace lld
                 return R_NONE;
             case R_[(${namespace})]_32:
             case R_[(${namespace})]_64:
-            [#th:block th:each="relocation: ${relocations}" ]
-            case [(${relocation.elfRelocationName.value})]:
-                return [(${relocation.llvmKind})];
+            [#th:block th:each="elfRelocation: ${elfRelocations}" ]
+            case [(${elfRelocation.elfName})]:
+                return [(${elfRelocation.kind})];
             [/th:block]
             default:
                 error(getErrorLocation(loc) + "unknown relocation (" + Twine(type) +
@@ -77,6 +77,17 @@ namespace lld
             write64[#th:block th:text="${isBigEndian}? 'be' : 'le'" \][/th:block](loc, val);
         }
 
+        [#th:block th:each="elfRelocation: ${elfRelocations}" ]
+        static uint[(${maxInstructionWordSize})]_t relocate_[(${elfRelocation.elfName})](uint[(${maxInstructionWordSize})]_t word, uint64_t val)
+        {
+            uint64_t relocated =  [(${elfRelocation.relocationFunction})](val);
+            [#th:block th:if="${not #strings.isEmpty(elfRelocation.encodingFunction)}" ]
+            relocated = [(${elfRelocation.encodingFunction})](relocated);
+            [/th:block]
+            return [(${elfRelocation.patchInstructionFunction})](word, relocated);
+        }
+        [/th:block]
+
         void [(${namespace})]::relocate(uint8_t *loc, const Relocation &rel, const uint64_t val) const
         {
             const unsigned bits = config->wordsize * 8;
@@ -94,6 +105,17 @@ namespace lld
                 write64(loc, val);
                 return;
             }
+
+            [#th:block th:each="elfRelocation: ${elfRelocations}" ]
+            case [(${elfRelocation.elfName})]:
+            {
+                uint[(${maxInstructionWordSize})]_t word = read[(${maxInstructionWordSize})](loc);
+                word = relocate_[(${elfRelocation.elfName})](word, val);
+                write[(${maxInstructionWordSize})](loc, word);
+                return;
+            }
+            [/th:block]
+
             default : llvm_unreachable("unknown relocation");
             }
         }

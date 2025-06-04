@@ -26,6 +26,10 @@ J 100
 # CHECK: <MCInst #{{[0-9]+}} J
 # CHECK-NEXT: <MCOperand Imm:100>>
 
+JR a5
+# CHECK: <MCInst #{{[0-9]+}} JR
+# CHECK-NEXT: <MCOperand Reg:17>>
+
 MV x0, x1
 # CHECK: <MCInst #{{[0-9]+}} MV
 # CHECK-NEXT: <MCOperand Reg:2>

@@ -294,22 +294,22 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
   [relative]
   relocation pcrel_hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
   [relative]
-  relocation pcrel_lo( symbol : Bits<32> ) -> SInt<12> = symbol as SInt<12>
+  relocation pcrel_lo( symbol : Bits<32> ) -> SInt<12> = (symbol + 4) as SInt<12>
 
   [global offset]
   relocation got_pcrel_hi( symbol : Bits<32> ) -> UInt<20> = ( ( symbol + 0x800 as Bits<32> ) >> 12 ) as UInt<20>
 
   pseudo instruction CALL( symbol : Bits<32> ) =
   {
-      LUI{ rd = 1 as Bits5, imm = hi( symbol ) }
-      JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = lo( symbol ) }
+      AUIPC{ rd = 1 as Bits5, imm = pcrel_hi( symbol ) }
+      JALR{ rd = 1 as Bits5, rs1 = 1 as Bits5, imm = pcrel_lo( symbol ) }
   }
   assembly CALL = (mnemonic, " ", hex( symbol ))
 
   pseudo instruction TAIL( symbol : Bits<32> ) =
   {
-      AUIPC{ rd = 6 as Bits5, imm = hi( symbol ) }
-      JALR{ rd = 0 as Bits5, rs1 = 6 as Bits5, imm = lo( symbol ) as Bits<12> }
+      AUIPC{ rd = 6 as Bits5, imm = pcrel_hi( symbol ) }
+      JALR{ rd = 0 as Bits5, rs1 = 6 as Bits5, imm = pcrel_lo( symbol ) as Bits<12> }
   }
   assembly TAIL = (mnemonic, " ", hex( symbol ))
 
@@ -324,6 +324,12 @@ $Arch3264 ( // ((((((((((((((((((((((((((((((((((((((((
       JAL{ rd = 0 as Bits5, immS = offset }
   }
   assembly J = (mnemonic, " ", decimal( offset ))
+
+  pseudo instruction JR( rs : Index ) =
+  {
+      JALR { rd = 0 as Bits5, rs1 = rs, imm = 0 as Bits<12> }
+  }
+  assembly JR = (mnemonic, " ", register( rs ))
 
   pseudo instruction NOP =
   {

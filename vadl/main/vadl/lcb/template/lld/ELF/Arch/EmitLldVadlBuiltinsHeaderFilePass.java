@@ -1,0 +1,53 @@
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.lcb.template.lld.ELF.Arch;
+
+import java.io.IOException;
+import java.util.Map;
+import vadl.configuration.GeneralConfiguration;
+import vadl.lcb.template.CommonVarNames;
+import vadl.lcb.template.LcbTemplateRenderingPass;
+import vadl.pass.PassResults;
+import vadl.viam.Specification;
+
+/**
+ * This file emits a file which handles the sign extends and truncations in VADL's CPP emitted
+ * code.
+ */
+public class EmitLldVadlBuiltinsHeaderFilePass extends LcbTemplateRenderingPass {
+  public EmitLldVadlBuiltinsHeaderFilePass(GeneralConfiguration configuration)
+      throws IOException {
+    super(configuration);
+  }
+
+  @Override
+  protected String getTemplatePath() {
+    return "common/vadl-builtins.h";
+  }
+
+  @Override
+  protected String getOutputPath() {
+    return "lld/ELF/Arch/vadl-builtins.h";
+  }
+
+  @Override
+  protected Map<String, Object> createVariables(PassResults passResults,
+                                                Specification specification) {
+    return Map.of(CommonVarNames.NAMESPACE,
+        lcbConfiguration().targetName().value().toLowerCase());
+  }
+}

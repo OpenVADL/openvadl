@@ -81,7 +81,7 @@ public class EmitMCAsmInfoCppFilePass extends LcbTemplateRenderingPass {
 
     return specification.assemblyDescription()
         .map(asmDesc -> asmDesc.directives().stream()
-            .noneMatch(AsmDirectiveMapping::getAlignmentIsInBytes)
+            .allMatch(AsmDirectiveMapping::getAlignmentIsInBytes)
         ).orElse(true);
   }
 }
