@@ -342,7 +342,7 @@ PRODUCTIONS
                                                                     }); .)
     SYM_EQ SYM_BRACE_OPEN
     isaDefinitionList<.out List<Definition> definitions.>       (. macroTable = macroTable.pop(); .)
-    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, definitions, startLocation.join(lastTokenLoc()));
+    SYM_BRACE_CLOSE                                             (. isaDef = new InstructionSetDefinition(identifier, extending, ParserUtils.expandAssemblyDefinitionsInIsa(definitions), startLocation.join(lastTokenLoc()));
                                                                    macroTable.defineSymbol(isaDef); .)
   .
 
