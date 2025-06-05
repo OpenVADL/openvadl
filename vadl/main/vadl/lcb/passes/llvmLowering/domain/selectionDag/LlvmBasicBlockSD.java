@@ -17,13 +17,16 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 
+import java.awt.print.Printable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.types.Type;
+import vadl.viam.CompilerInstruction;
 import vadl.viam.Format;
+import vadl.viam.Instruction;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -33,6 +36,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
  * LLVM node which represents the basic block as selection dag node.
  */
 public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowerable {
+  private final Printable instruction;
   private final ValueType llvmType;
   private final TableGenImmediateRecord immediateOperand;
 
@@ -41,16 +45,21 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
    * Creates an {@link LlvmBasicBlockSD} object that holds a reference to a format field
    * access. But in the selection dag, the immediate is a reference to a basic block.
    *
+   * @param instruction  which scopes the {@link vadl.viam.Format.FieldAccess}.
    * @param fieldAccess  the format immediate to be referenced
    * @param originalType of the node. This type might not be correctly sized because vadl allows
    *                     arbitrary bit sizes.
    * @param llvmType     is same as {@code originalType} when it is a valid LLVM type. Otherwise,
    *                     it is the next upcasted type.
    */
-  public LlvmBasicBlockSD(Format.FieldAccess fieldAccess, Type originalType, ValueType llvmType) {
+  public LlvmBasicBlockSD(Printable instruction,
+                          Format.FieldAccess fieldAccess,
+                          Type originalType,
+                          ValueType llvmType) {
     super(fieldAccess, originalType);
+    this.instruction = instruction;
     this.immediateOperand =
-        new TableGenImmediateRecord(fieldAccess, llvmType);
+        new TableGenImmediateRecord(instruction, fieldAccess, llvmType);
     this.llvmType = llvmType;
   }
 
@@ -60,12 +69,12 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
 
   @Override
   public ExpressionNode copy() {
-    return new LlvmBasicBlockSD(fieldAccess, type(), llvmType);
+    return new LlvmBasicBlockSD(instruction, fieldAccess, type(), llvmType);
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmBasicBlockSD(fieldAccess, type(), llvmType);
+    return new LlvmBasicBlockSD(instruction, fieldAccess, type(), llvmType);
   }
 
   @Override
