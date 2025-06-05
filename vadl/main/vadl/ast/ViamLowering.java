@@ -1083,13 +1083,13 @@ public class ViamLowering implements DefinitionVisitor<Optional<vadl.viam.Defini
         .forEach(this::setFieldAccessPredicate);
 
     var cnt = new AtomicInteger();
-    var encodings = definition.auxiliaryFields.stream()
+    ArrayList<Format.FieldEncoding> encodings = new ArrayList(definition.auxiliaryFields.stream()
         .filter(f -> f.kind == FormatDefinition.AuxiliaryField.AuxKind.ENCODING)
         .map(e -> getFieldEncoding(
             format.identifier.append("encoding", e.field.name + "_" + cnt.getAndIncrement())
                 .withSourceLocation(e.field.loc),
             e)
-        ).toList();
+        ).toList());
 
     format.setFields(fields);
     format.setFieldAccesses(fieldAccesses);
