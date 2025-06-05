@@ -20,6 +20,7 @@ import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.ViamError;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
@@ -66,7 +67,8 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(Format.FieldAccess fieldAccess) {
+  public void generateEncoding(PrintableInstruction printableInstruction,
+                               Format.FieldAccess fieldAccess) {
     var accessFunction = fieldAccess.accessFunction();
     var fieldRef = fieldAccess.fieldRef();
 
@@ -99,6 +101,6 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
     var behavior = new Graph("Generated encoding of " + fieldAccess.simpleName());
     behavior.addWithInputs(returnNode);
     behavior.add(startNode);
-    setFieldEncoding(fieldAccess, behavior);
+    setFieldEncoding(printableInstruction, fieldAccess, behavior);
   }
 }

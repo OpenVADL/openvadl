@@ -17,7 +17,7 @@
 package vadl.gcb.passes.encodingGeneration;
 
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Set;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.error.Diagnostic;
@@ -69,25 +69,25 @@ public class GenerateFieldAccessEncodingFunctionPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) {
-    viam.isa()
-        .map(x -> x.ownFormats().stream())
-        .orElseGet(Stream::empty)
-        .flatMap(x -> x.fieldAccesses().stream())
-        .filter(x -> x.encoding() == null)
-        .forEach(fieldAccess -> {
+    for (var instruction : viam.isa().orElseThrow().ownInstructions()) {
+      var format = instruction.format();
+      for (var fieldAccess : instruction.format().fieldAccesses()) {
+        if (format.fieldEncodingsOf(Set.of(fieldAccess)).isEmpty()) {
           // We need to compute multiple encoding functions based on the field access function.
           // Different field access functions require different heuristics for the encoding.
           for (var strategy : strategies) {
             if (strategy.checkIfApplicable(fieldAccess)) {
-              strategy.generateEncoding(fieldAccess);
+              strategy.generateEncoding(instruction, fieldAccess);
               break;
             }
           }
-        });
+        }
+      }
+    }
 
     var hasNoEncoding = viam.findAllFormats()
         .flatMap(x -> x.fieldAccesses().stream())
-        .filter(x -> x.encoding() == null)
+        .filter(x -> x.format().fieldEncodingsOf(Set.of(x)).isEmpty())
         .toList();
 
     if (!hasNoEncoding.isEmpty()) {

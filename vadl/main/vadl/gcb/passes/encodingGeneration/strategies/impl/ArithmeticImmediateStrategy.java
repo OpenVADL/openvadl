@@ -23,6 +23,7 @@ import vadl.types.BuiltInTable;
 import vadl.types.DataType;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ReturnNode;
@@ -69,7 +70,7 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(Format.FieldAccess fieldAccess) {
+  public void generateEncoding(PrintableInstruction instruction, Format.FieldAccess fieldAccess) {
     var accessFunction = fieldAccess.accessFunction();
     var copy = accessFunction.behavior().copy();
     final var returnNode = copy.getNodes(ReturnNode.class).findFirst().get();
@@ -129,6 +130,6 @@ public class ArithmeticImmediateStrategy implements EncodingGenerationStrategy {
     var addedSliceNode = copy.add(sliceNode);
     returnNode.replaceInput(returnNode.value(), addedSliceNode);
 
-    setFieldEncoding(fieldAccess, copy);
+    setFieldEncoding(instruction, fieldAccess, copy);
   }
 }

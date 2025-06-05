@@ -76,12 +76,12 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
 
   @Override
   public ExpressionNode copy() {
-    return new LlvmFieldAccessRefNode(fieldAccess, type(), llvmType, usage);
+    return new LlvmFieldAccessRefNode(instruction, fieldAccess, type(), llvmType, usage);
   }
 
   @Override
   public Node shallowCopy() {
-    return new LlvmFieldAccessRefNode(fieldAccess, type(), llvmType, usage);
+    return new LlvmFieldAccessRefNode(instruction, fieldAccess, type(), llvmType, usage);
   }
 
   public TableGenImmediateRecord immediateOperand() {

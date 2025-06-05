@@ -19,6 +19,7 @@ package vadl.gcb.passes.encodingGeneration.strategies.impl;
 import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
@@ -54,7 +55,7 @@ public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(Format.FieldAccess fieldAccess) {
+  public void generateEncoding(PrintableInstruction instruction, Format.FieldAccess fieldAccess) {
     var fieldRef = fieldAccess.fieldRef();
     // The field takes up a certain slice.
     // But we need to take a slice of the immediate of the same size.
@@ -70,6 +71,6 @@ public class TrivialImmediateStrategy implements EncodingGenerationStrategy {
     var behavior = new Graph("Generated encoding of " + fieldAccess.simpleName());
     behavior.addWithInputs(returnNode);
     behavior.add(startNode);
-    setFieldEncoding(fieldAccess, behavior);
+    setFieldEncoding(instruction, fieldAccess, behavior);
   }
 }

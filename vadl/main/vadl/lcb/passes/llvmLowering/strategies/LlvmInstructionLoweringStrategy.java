@@ -91,6 +91,7 @@ import vadl.utils.Pair;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
@@ -147,16 +148,24 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   protected List<GraphVisitor.NodeApplier
-      <? extends Node, ? extends Node>> replacementHooksWithDefaultFieldAccessReplacement() {
+      <? extends Node, ? extends Node>> replacementHooksWithDefaultFieldAccessReplacement(
+      PrintableInstruction printableInstruction) {
     var hooks = new ArrayList<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>();
-    return replacementHooks(hooks, new LcbFieldAccessRefNodeReplacement(hooks, architectureType));
+    return replacementHooks(
+        hooks,
+        new LcbFieldAccessRefNodeReplacement(printableInstruction, hooks, architectureType));
   }
 
   protected List<GraphVisitor.NodeApplier
-      <? extends Node, ? extends Node>> replacementHooksWithFieldAccessWithBasicBlockReplacement() {
+      <? extends Node, ? extends Node>> replacementHooksWithFieldAccessWithBasicBlockReplacement(
+      PrintableInstruction printableInstruction
+  ) {
     var hooks = new ArrayList<GraphVisitor.NodeApplier<? extends Node, ? extends Node>>();
-    return replacementHooks(hooks,
-        new LcbFieldAccessRefNodeByLlvmBasicBlockReplacement(hooks, architectureType));
+    return replacementHooks(
+        hooks,
+        new LcbFieldAccessRefNodeByLlvmBasicBlockReplacement(printableInstruction,
+            hooks,
+            architectureType));
   }
 
   /**
@@ -220,7 +229,7 @@ public abstract class LlvmInstructionLoweringStrategy {
   }
 
   protected abstract List<GraphVisitor.NodeApplier
-      <? extends Node, ? extends Node>> replacementHooks();
+      <? extends Node, ? extends Node>> replacementHooks(PrintableInstruction printableInstruction);
 
   /**
    * Flags indicate special properties of a machine instruction. This method checks the
@@ -291,7 +300,7 @@ public abstract class LlvmInstructionLoweringStrategy {
       Instruction instruction,
       Graph unmodifiedBehavior,
       Abi abi) {
-    var visitor = replacementHooksWithDefaultFieldAccessReplacement();
+    var visitor = replacementHooksWithDefaultFieldAccessReplacement(instruction);
     var copy = unmodifiedBehavior.copy();
 
     if (!checkIfNoControlFlow(copy) && !checkIfNotAllowedDataflowNodes(copy)) {

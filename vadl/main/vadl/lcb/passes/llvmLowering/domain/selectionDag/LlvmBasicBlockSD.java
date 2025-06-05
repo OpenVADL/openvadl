@@ -17,16 +17,14 @@
 package vadl.lcb.passes.llvmLowering.domain.selectionDag;
 
 
-import java.awt.print.Printable;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.types.Type;
-import vadl.viam.CompilerInstruction;
 import vadl.viam.Format;
-import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -36,7 +34,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
  * LLVM node which represents the basic block as selection dag node.
  */
 public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowerable {
-  private final Printable instruction;
+  private final PrintableInstruction instruction;
   private final ValueType llvmType;
   private final TableGenImmediateRecord immediateOperand;
 
@@ -52,7 +50,7 @@ public class LlvmBasicBlockSD extends FieldAccessRefNode implements LlvmNodeLowe
    * @param llvmType     is same as {@code originalType} when it is a valid LLVM type. Otherwise,
    *                     it is the next upcasted type.
    */
-  public LlvmBasicBlockSD(Printable instruction,
+  public LlvmBasicBlockSD(PrintableInstruction instruction,
                           Format.FieldAccess fieldAccess,
                           Type originalType,
                           ValueType llvmType) {

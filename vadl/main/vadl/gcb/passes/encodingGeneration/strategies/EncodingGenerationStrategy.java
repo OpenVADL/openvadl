@@ -17,8 +17,7 @@
 package vadl.gcb.passes.encodingGeneration.strategies;
 
 import vadl.viam.Format;
-import vadl.viam.Function;
-import vadl.viam.Parameter;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
 
 /**
@@ -34,21 +33,17 @@ public interface EncodingGenerationStrategy {
    * Create the inverse behavior graph of a field access function.
    * It also adds the created nodes to {@code vadl.viam.Format.FieldAccess#encoding}.
    */
-  void generateEncoding(Format.FieldAccess fieldAccess);
+  void generateEncoding(PrintableInstruction instruction, Format.FieldAccess fieldAccess);
 
   /**
    * Creates a new {@link vadl.viam.Format.FieldEncoding} for the given field
    * and the behavior graph.
    * It assumes that there is only a single field references by the field access.
    */
-  default void setFieldEncoding(Format.FieldAccess fieldAccess, Graph behavior) {
-    var ident = fieldAccess.identifier.append("encoding");
-    var identParam = ident.append(fieldAccess.simpleName());
-    var param = new Parameter(identParam, fieldAccess.accessFunction().returnType());
-    var function =
-        new Function(ident, new Parameter[] {param}, fieldAccess.fieldRef().type());
-    param.setParent(function);
-
+  default void setFieldEncoding(PrintableInstruction instruction,
+                                Format.FieldAccess fieldAccess,
+                                Graph behavior) {
+    var ident = fieldAccess.identifier.last().prepend(instruction.identifier());
     var format = fieldAccess.format();
     var encoding = new Format.FieldEncoding(ident, fieldAccess.fieldRef(), behavior);
     format.setFieldEncoding(encoding);

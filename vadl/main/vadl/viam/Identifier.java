@@ -116,6 +116,15 @@ public record Identifier(
         location);
   }
 
+  /**
+   * Returns a new identifier but only the last part.
+   */
+  public Identifier last() {
+    var parts = Arrays.stream(this.parts()).toList();
+    return new Identifier(Stream.of(parts.getLast()).toArray(String[]::new),
+        location);
+  }
+
   @Override
   public String toString() {
     return name();

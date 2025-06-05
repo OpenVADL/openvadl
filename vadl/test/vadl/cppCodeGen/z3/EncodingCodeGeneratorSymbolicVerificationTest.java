@@ -33,6 +33,7 @@ import vadl.pass.exception.DuplicatedPassKeyException;
 import vadl.utils.Pair;
 import vadl.utils.VadlFileUtils;
 import vadl.viam.Format;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.control.ReturnNode;
 
 /**
@@ -72,12 +73,13 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
     var spec = setup.specification();
 
     List<Pair<String, String>> copyMappings = new ArrayList<>();
-    spec.findAllFormats().flatMap(f -> f.fieldAccesses().stream())
-        .forEach(fieldAccess -> {
-          var testCase = createTestCase(fieldAccess);
-          copyMappings.add(Pair.of(path.toString() + "/inputs/" + testCase.testName() + ".py",
-              "/inputs/" + testCase.testName() + ".py"));
-        });
+    spec.isa().orElseThrow().ownInstructions().forEach(instruction -> {
+      instruction.format().fieldAccesses().forEach(fieldAccess -> {
+        var testCase = createTestCase(instruction, fieldAccess);
+        copyMappings.add(Pair.of(path.toString() + "/inputs/" + testCase.testName() + ".py",
+            "/inputs/" + testCase.testName() + ".py"));
+      });
+    });
 
     runContainerAndCopyDirectoryIntoContainerAndCopyOutputBack(image,
         copyMappings,
@@ -87,7 +89,8 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
     return assertStatusCodes(path + "/result.csv");
   }
 
-  private TestCase createTestCase(Format.FieldAccess fieldAccess) {
+  private TestCase createTestCase(PrintableInstruction instruction,
+                                  Format.FieldAccess fieldAccess) {
     var decodingFunction = fieldAccess.accessFunction();
     // Then generate the z3 code for the f_x
     var visitorDecode = new Z3EncodingCodeGeneratorVisitor(GENERIC_FIELD_NAME);
@@ -98,7 +101,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
     if (fieldAccess.encoding() == null) {
       for (var strategy : GenerateFieldAccessEncodingFunctionPass.strategies) {
         if (strategy.checkIfApplicable(fieldAccess)) {
-          strategy.generateEncoding(fieldAccess);
+          strategy.generateEncoding(instruction, fieldAccess);
           break;
         }
       }
@@ -124,12 +127,12 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
      */
     String z3Code = String.format("""
             from z3 import *
-
+            
             x = BitVec('x', %d) # field
-
+            
             f_x = %s
             f_z = %s
-
+            
             def prove(f):
                 s = Solver()
                 s.add(Not(f))
@@ -139,7 +142,7 @@ public class EncodingCodeGeneratorSymbolicVerificationTest extends AbstractGcbTe
                 else:
                     print("failed to prove")
                     exit(1)
-
+            
             prove(x == f_z)
             """, fieldAccess.fieldRef().bitSlice().bitSize(),
         generatedDecodeFunctionCode,

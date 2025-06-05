@@ -37,17 +37,17 @@ public final class TableGenImmediateOperandRenderer {
     var lowestPossibleValue =
         GenerateValueRangeImmediatePass.lowestPossibleValue(operand.formatFieldBitSize(), rawType);
     return StringSubstitutor.replace("""
-                class [${rawName}]<ValueType ty> : Operand<ty>
-                {
-                  let EncoderMethod = "[${encoderMethod}]";
-                  let DecoderMethod = "[${decoderMethod}]";
-                }
+            class ${rawName}<ValueType ty> : Operand<ty>
+            {
+              let EncoderMethod = "${encoderMethod}";
+              let DecoderMethod = "${decoderMethod}";
+            }
 
-                def [${fullName}]
-                    : [${rawName}]<[${type}]>
-                    , ImmLeaf<[${type}], [{ return Imm >= [${lowestPossibleValue}] && Imm <= [${highestPossibleValue}] && [${predicateMethod}](Imm); }]>;
+            def ${fullName}
+                : ${rawName}<${type}>
+                , ImmLeaf<${type}, [{ return Imm >= ${lowestPossibleValue} && Imm <= ${highestPossibleValue} && ${predicateMethod}(Imm); }]>;
 
-                def [${rawName}]AsLabel : [${rawName}]<OtherVT>;
+            def ${rawName}AsLabel : ${rawName}<OtherVT>;
             """,
         Map.of("rawName", operand.rawName(),
             "fullName", operand.fullname(),
