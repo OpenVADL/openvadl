@@ -270,11 +270,11 @@ instruction set architecture AArch64Base = {
     }
 
   model AddSubExtInstrBase (i: InstrWithFunct, extId: Id, size: Id, f: Flags, extEx: Ex, optId: Id, enc: Encs, asm: Ex): IsaDefs = {
+    [undefined when : imm3(2) = 1 && imm3(1..0) != 0]
     instruction AsId ($i.id, $extId): AddSubExtFormat =
       let result, flags = VADL::$i.funct (S(rn) as Bits<Size::$size>, ($extEx) as Bits<Size::$size>) in {
         $f.resModel (match: Id ($f.ff = OffFlags => S ; _ => X)(rd) ; result )
         }
-    //[raise Undefined : imm3(2) = 1 && imm3(1..0) != 0]
     encoding AsId ($i.id, $extId) = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, option = ExtendType::$optId, $enc }
     assembly AsId ($i.id, $extId) = ( $i.mnemo, $f.mext, ' ', AsId($size, match: Str ($f.ff = OffFlags => "SP" ; _ => ""))(rd),
                        ', ', AsId($size, "SP")(rn), ', ', $asm )
@@ -349,11 +349,11 @@ instruction set architecture AArch64Base = {
     }
 
   model AddSubSftInstrBase (i: InstrWithFunct, size: Id, f: Flags, sftex: Ex, enc: Encs, asm: Ex): IsaDefs = {
+    [undefined when : sf = 0 && imm6(5) = 1]
     instruction $i.id: AddSubSftFormat =
       let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, ($sftex) as Bits<Size::$size>) in {
         $f.resModel (X(rd) ; result )
       }
-    //[raise Undefined : sf = 0 && imm6(5) = 1]
     encoding $i.id = { op = $i.opcode, sf = SF::$size, ff = FF::$f.ff, $enc }
     assembly $i.id = ( $i.mnemo, $f.mext, ' ', $size(rd), ', ', $size(rn), ', ', $size(rm), $asm )
     }
@@ -593,12 +593,12 @@ instruction set architecture AArch64Base = {
     }
 
   model LogicImmEncAsm (i: InstrWithFunct, size: Id, ext: Str): IsaDefs = {
-    //[raise Undefined : sf = 0 && imm13(12) = 1]
     encoding $i.id = { op = $i.opcode, sf = SF::$size }
     assembly $i.id = ($i.mnemo, ' ', AsId($size, $ext)(rd), ', ', $size(rn), ', #', decimal(immX))
     }
 
   model LogicImmFlagInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    [undefined when : sf = 0 && imm13(12) = 1]
     instruction $i.id: LogicImmFormat =
       let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, immX as Bits<Size::$size>) in {
         X(rd) := result as Bits<Size::$size> as BitsX
@@ -628,12 +628,12 @@ instruction set architecture AArch64Base = {
     }
 
   model LogicRegGeneralInstr (i: InstrWithFunct, size: Id, s: RegShift, f: NoSetFlags): IsaDefs = {
+    [undefined when : sf = 0 && imm6(5) = 1]
     instruction $i.id: LogicRegShiftFormat =
       let result, flags = VADL::$i.funct (X(rn) as Bits<Size::$size>, $s.ex) in {
         X(rd) := result as Bits<Size::$size> as BitsX
         $f ()
         }
-    //[raise Undefined : sf = 0 && imm6(5) = 1]
     encoding $i.id = { op = $i.opcode,  sf = SF::$size, $s.enc }
     assembly $i.id = ($i.mnemo, ' ', $size(rd), ', ', $size(rn), ', ', $s.asm)
     }
@@ -808,7 +808,7 @@ instruction set architecture AArch64Base = {
   model BitfieldMoveInstr (i: InstrWithFunct, size: Id): IsaDefs = {
     // if (sf = 0) specification ignores imms(5) and immr(5)
     // (sf != N) cannot happen as N is set in encoding
-    // [raise Undefined : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
+    [undefined when : sf = 0 && (imms(5) = 1 || immr(5) = 1)]
     instruction $i.id: BitFieldMoveFormat =
       let left = AsId (left, $size) in
         let right = AsId (right, $size) in
@@ -1250,22 +1250,24 @@ instruction set architecture AArch64Base = {
     }
 
   model MemoryRegPairEncAsm (i: InstrWithFunct, extId: Str, size: Id, isLoad: Bool, op: Bin, asm: Ex): IsaDefs = {
-    //[raise Undefined() : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
     encoding AsId ($i.id, $extId) = { opc = $i.opcode, op = $op }
     assembly AsId ($i.id, $extId) = ($i.mnemo, ' ', $size(rt), ', ', $size(rt2), $asm)
     }
 
   model MemoryRegPairInstr (i: InstrWithFunct, size: Id, isLoad: Bool, memstmts: Stats): IsaDefs = {
     // TODO check SP alignment
+    // [undefined when : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
     instruction $i.id: MemoryPairFormat =
       let addr = S(rn) + AsId (off, $size) in { $memstmts }
     $MemoryRegPairEncAsm ($i; ""; $size; $isLoad; 0b101'010; ("[", XSizeSP(rn), Imm7decimal(imm7), "]"))
+    // [undefined when : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
     instruction AsId ($i.id, "Pre"): MemoryPairFormat =
       let addr = S(rn) + AsId (off, $size) in {
           $memstmts
           S(rn) := addr
         }
     $MemoryRegPairEncAsm ($i; "Pre"; $size; $isLoad; 0b101'011; ("[", XSizeSP(rn), Imm7decimal(imm7), "]!"))
+    // [undefined when : match: Ex ( $isLoad = true => Ex1 ; _=> Ex2)]
     instruction AsId ( $i.id, "Pst"): MemoryPairFormat =
       let addr = S(rn) in {
           $memstmts
