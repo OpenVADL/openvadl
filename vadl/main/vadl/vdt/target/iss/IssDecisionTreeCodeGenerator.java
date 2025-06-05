@@ -33,6 +33,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.common.AccessFunctionCodeGenerator;
+import vadl.cppCodeGen.common.PureFunctionCodeGenerator;
+import vadl.cppCodeGen.context.CGenContext;
 import vadl.error.Diagnostic;
 import vadl.error.DiagnosticBuilder;
 import vadl.error.DiagnosticList;
@@ -56,6 +58,11 @@ import vadl.vdt.utils.Instruction;
 import vadl.viam.Constant;
 import vadl.viam.Constant.BitSlice.Part;
 import vadl.viam.Format;
+import vadl.viam.Identifier;
+import vadl.viam.Parameter;
+import vadl.viam.annotations.InstructionUndefinedAnno;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
+import vadl.viam.graph.dependency.FieldRefNode;
 
 /**
  * Generate C/C++ code for a decision tree from an in-memory representation of the decision tree.
@@ -97,11 +104,15 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
     //           with translate.c)
     generateTranslateDeclarations(insns);
 
-    // Step 2: Generate code to extract the fields from the instruction word to the DTOs
+    // Step 2: Generate check undefined functions
+    //           (which come from the [ undefined when ] annotation)
+    generateInstructionUndefinedChecks(insns);
+
+    // Step 3: Generate code to extract the fields from the instruction word to the DTOs
     final String insnWordCType = CppTypeMap.getCppTypeNameByVadlType(getInsnWordType());
     generateFormatExtractors(insnWordCType, formats);
 
-    // Step 3: Generate code for the decoding decision tree
+    // Step 4: Generate code for the decoding decision tree
 
     appendable.append("static uint8_t decode_insn(")
         .append("DisasContext *ctx, ")
@@ -294,18 +305,31 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
       throw new IllegalArgumentException("Leaf node type not supported: " + node.getClass());
     }
 
+    var argsStr = "insn_args." + insn.source().format().simpleName().toLowerCase(Locale.US);
+
     // Extract the fields from the instruction word
     appendable.append("extract_")
         .append(insn.source().format().simpleName().toLowerCase(Locale.US))
-        .append("(insn, &insn_args.")
-        .append(insn.source().format().simpleName().toLowerCase(Locale.US))
+        .append("(insn, &")
+        .append(argsStr)
         .append(");\n");
+
+    // If there is an [ undefined when ] annotation on the instruction,
+    // we call the generated `is_undef_<insn-name>` and return false, if the method returns true.
+    var insnUndefAnno = insn.source().annotation(InstructionUndefinedAnno.class);
+    if (insnUndefAnno != null) {
+      appendable.append("if (is_undef_")
+          .append(insn.source().simpleName().toLowerCase(Locale.US))
+          .append("(")
+          .append(argsStr)
+          .appendLn(")) { return false; }");
+    }
 
     // Call the translation function
     appendable.append("return trans_")
         .append(insn.source().simpleName().toLowerCase(Locale.US))
-        .append("(ctx, &insn_args.")
-        .append(insn.source().format().simpleName().toLowerCase(Locale.US))
+        .append("(ctx, &")
+        .append(argsStr)
         .append(") ? ")
         .append(insn.source().format().type().bitWidth() / 8)
         .appendLn(" : 0;");
@@ -420,6 +444,59 @@ public class IssDecisionTreeCodeGenerator implements Visitor<Void> {
       appendable.unindent();
       appendable.append("};\n\n");
     }
+  }
+
+  /**
+   * Generate the instruction check function for each instruction with an
+   * {@link InstructionUndefinedAnno} applied to it.
+   * The function returns {@code true} if the expression in the annotation evaluates
+   * to true, otherwise it returns {@code false}.
+   */
+  private void generateInstructionUndefinedChecks(List<vadl.viam.Instruction> insns) {
+
+    for (var insn : insns) {
+      var undefAnno = insn.annotation(InstructionUndefinedAnno.class);
+      if (undefAnno == null) {
+        continue;
+      }
+
+      // Get the C-code check expression
+      var exprCode = getInsnUndefinedCheckExpr(undefAnno);
+
+      // Generate instruction undefined check function
+      var insnName = insn.simpleName().toLowerCase(Locale.US);
+      appendable.append("static Bits is_undef_")
+          .append(insnName)
+          .append("(arg_")
+          .append(insnName)
+          .appendLn(" insn) {")
+          .indent()
+          .append("return ")
+          .append(exprCode)
+          .appendLn(";")
+          .unindent()
+          .appendLn("}");
+    }
+    appendable.newLine();
+  }
+
+  private static String getInsnUndefinedCheckExpr(InstructionUndefinedAnno undefAnno) {
+    var func = new vadl.viam.Function(Identifier.noLocation("dummy"),
+        new Parameter[] {},
+        DataType.bool(), undefAnno.graph());
+    var generator = new PureFunctionCodeGenerator(func) {
+      @Override
+      public void handle(CGenContext<vadl.viam.graph.Node> ctx, FieldRefNode toHandle) {
+        ctx.wr("insn.").wr(toHandle.formatField().simpleName().toLowerCase(Locale.US));
+      }
+
+      @Override
+      public void handle(CGenContext<vadl.viam.graph.Node> ctx, FieldAccessRefNode toHandle) {
+        ctx.wr("insn.").wr(toHandle.fieldAccess().simpleName().toLowerCase(Locale.US));
+      }
+    };
+
+    return generator.genReturnExpression();
   }
 
   private CharSequence extractField(Format.Field field) {
