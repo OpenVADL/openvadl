@@ -162,7 +162,7 @@ public class RtlSimplificationRules {
   public static class SelectWithEqCasesSimplificationRule implements AlgebraicSimplificationRule {
     @Override
     public Optional<Node> simplify(Node node) {
-      if (node instanceof SelectNode n && n.trueCase() == n.falseCase()) {
+      if (node instanceof SelectNode n && n.trueCase().equals(n.falseCase())) {
         return Optional.of(n.trueCase());
       }
       return Optional.empty();

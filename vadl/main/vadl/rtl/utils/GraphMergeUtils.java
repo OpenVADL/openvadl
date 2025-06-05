@@ -271,7 +271,8 @@ public class GraphMergeUtils {
 
     @Override
     public int compare(Pair<T, T> pair1, Pair<T, T> pair2) {
-      return -Long.compare(
+      // negation for descending order!
+      return - Long.compare(
           countEqualInputs(pair1.left(), pair1.right()),
           countEqualInputs(pair2.left(), pair2.right())
       );
@@ -319,7 +320,8 @@ public class GraphMergeUtils {
 
     @Override
     public int compare(Pair<T, T> pair1, Pair<T, T> pair2) {
-      var inputs = -Long.compare(
+      // negation for descending order!
+      var inputs = - Long.compare(
           countEqualInputs(pair1.left(), pair1.right()),
           countEqualInputs(pair2.left(), pair2.right())
       );

@@ -49,6 +49,8 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
 
   private final IdentityHashMap<Node, NodeContext> contexts = new IdentityHashMap<>();
 
+  private final IdentityHashMap<Stage, Set<NodeContext>> stageContexts = new IdentityHashMap<>();
+
   public MiaMapping(MicroArchitecture mia, InstructionProgressGraph ipg) {
     this.mia = mia;
     this.ipg = ipg;
@@ -66,9 +68,18 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
     return contexts;
   }
 
+  /**
+   * Stream stage's node contexts.
+   *
+   * @param stage stage
+   * @return stream of node contexts
+   */
   public Stream<NodeContext> stageContexts(Stage stage) {
-    return contexts().values().stream()
-        .filter(context -> stage.equals(context.stage()));
+    var contexts = stageContexts.get(stage);
+    if (contexts == null) {
+      return Stream.empty();
+    }
+    return contexts.stream();
   }
 
   /**
@@ -83,6 +94,7 @@ public class MiaMapping extends DefinitionExtension<MicroArchitecture> {
     var context = contexts.computeIfAbsent(miaNode, node -> new NodeContext(stage, node));
     context.pred().addAll(inputContexts);
     inputContexts.forEach(input -> input.succ().add(context));
+    stageContexts.computeIfAbsent(stage, s -> new HashSet<>()).add(context);
     return context;
   }
 

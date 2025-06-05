@@ -18,6 +18,7 @@ package vadl.rtl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.Assertions;
@@ -126,10 +127,6 @@ public class InstructionBehaviorCheckPass extends Pass {
       var resources = new ArrayList<Resource>();
       resources.addAll(isa.registerTensors());
       resources.addAll(isa.ownMemories());
-      var pc = isa.pc();
-      if (pc != null) {
-        resources.remove(pc.registerTensor()); // do not check pc for now
-      }
 
       for (Resource res : resources) {
         compare(curInstr.behavior(), graph, ReadResourceNode.class, res);
@@ -157,9 +154,9 @@ public class InstructionBehaviorCheckPass extends Pass {
         .filter(n -> filterResource(n, resource)).toList();
     var inGraph = graph.getNodes(typeIpg)
         .filter(n -> filterResource(n, resource)).toList();
-    Assertions.assertEquals(inInstr.size(), inGraph.size(), "Number of "
-        + typeIns.getSimpleName() + " nodes does not number of " + typeIpg.getSimpleName()
-        + " nodes for resource " + resource);
+    Assertions.assertEquals(countNodes(inInstr, resource), inGraph.size(),
+        "Number of " + typeIns.getSimpleName() + " nodes does not number of "
+            + typeIpg.getSimpleName() + " nodes for resource " + resource);
   }
 
   private boolean filterResource(Node node, Resource resource) {
@@ -173,5 +170,13 @@ public class InstructionBehaviorCheckPass extends Pass {
       return n.resourceDefinition().equals(resource);
     }
     return false;
+  }
+
+  private int countNodes(List<? extends Node> nodes, Resource resource) {
+    if (!resource.hasAddress()) {
+      // reads from the same register considered as the same read
+      return (nodes.isEmpty()) ? 0 : 1;
+    }
+    return nodes.size();
   }
 }

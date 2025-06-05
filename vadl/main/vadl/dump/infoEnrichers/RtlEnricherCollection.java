@@ -80,27 +80,36 @@ public class RtlEnricherCollection {
           var ext = resource.extension(HazardAnalysis.class);
           if (ext != null) {
             var nodes = col("Nodes", ext.reads().stream()
-                .map(HazardAnalysis.ReadAnalysis::node).map(Node::toString)
+                .map(HazardAnalysis.ReadAnalysis::node)
+                .map(Node::toString)
                 .map(HtmlEscapers.htmlEscaper()::escape));
             var eff = col("Effect", ext.reads().stream()
-                .map(HazardAnalysis.ReadAnalysis::effect).map(Stage::simpleName));
+                .map(HazardAnalysis.ReadAnalysis::effect)
+                .map(Stage::simpleName));
             var cond = col("Condition", ext.reads().stream()
-                .map(HazardAnalysis.ReadAnalysis::condition).map(Stage::simpleName));
+                .map(HazardAnalysis.ReadAnalysis::condition)
+                .map(Stage::simpleName));
             var addr = col("Address", ext.reads().stream()
                 .map(HazardAnalysis.ReadAnalysis::address)
                 .map(s -> (s == null) ? "" : s.simpleName()));
             var val = col("Value", ext.reads().stream().map(r -> ""));
 
-            ext.writes().stream().map(HazardAnalysis.WriteAnalysis::node)
-                .map(Node::toString).map(HtmlEscapers.htmlEscaper()::escape).forEach(nodes::add);
-            ext.writes().stream().map(HazardAnalysis.WriteAnalysis::effect)
+            ext.writes().stream()
+                .map(HazardAnalysis.WriteAnalysis::node)
+                .map(Node::toString)
+                .map(HtmlEscapers.htmlEscaper()::escape).forEach(nodes::add);
+            ext.writes().stream()
+                .map(HazardAnalysis.WriteAnalysis::effect)
                 .map(Stage::simpleName).forEach(eff::add);
-            ext.writes().stream().map(HazardAnalysis.WriteAnalysis::condition)
+            ext.writes().stream()
+                .map(HazardAnalysis.WriteAnalysis::condition)
                 .map(Stage::simpleName).forEach(cond::add);
-            ext.writes().stream().map(HazardAnalysis.WriteAnalysis::address)
+            ext.writes().stream()
+                .map(HazardAnalysis.WriteAnalysis::address)
                 .map(s -> (s == null) ? "" : s.simpleName()).forEach(addr::add);
-            ext.writes().stream().map(HazardAnalysis.WriteAnalysis::effect).map(Stage::simpleName)
-                .forEach(val::add);
+            ext.writes().stream()
+                .map(HazardAnalysis.WriteAnalysis::effect)
+                .map(Stage::simpleName).forEach(val::add);
 
             defEntity.addInfo(InfoUtils.createTableExpandable(
                 "Read/Write Hazards",

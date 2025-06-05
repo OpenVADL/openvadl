@@ -48,6 +48,7 @@ import vadl.viam.Instruction;
 import vadl.viam.InstructionSetArchitecture;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
+import vadl.viam.ViamError;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.NodeList;
 import vadl.viam.graph.control.AbstractBeginNode;
@@ -279,13 +280,10 @@ public class InstructionProgressGraphCreationPass extends Pass {
               read.setCondition(
                   ipg.addWithInputs(GraphUtils.bool(true).toNode(), instructions));
             } else {
-              if (read.condition() == null) {
-                if (!cond.isActiveIn(ipg)) {
-                  cond = ipg.addWithInputs(cond, instructions);
-                }
-              } else {
-                cond = ipg.addWithInputs(GraphUtils.and(cond, read.condition()), instructions);
+              if (read.condition() != null) {
+                cond = GraphUtils.and(cond, read.condition());
               }
+              cond = ipg.addWithInputs(cond, instructions);
               read.setCondition(cond);
             }
           });
@@ -366,6 +364,7 @@ public class InstructionProgressGraphCreationPass extends Pass {
             indices.stream(), constrValues.stream(),
             (index, constr) -> GraphUtils.neq(index, constr.toNode())
         )
-        .reduce(GraphUtils::or).orElseThrow();
+        .reduce(GraphUtils::or).orElseThrow(() ->
+            new ViamError("Malformed register file constraint without indices"));
   }
 }

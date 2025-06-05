@@ -81,13 +81,14 @@ public class MiaMappingInlinePass extends Pass {
     var map = new HashMap<Pair<Node, Stage>, StageOutput>();
 
     for (Stage stage : stages) {
-      var set = mapping.stageContexts(stage)
+      var stageContexts = mapping.stageContexts(stage).toList();
+      var stageNodes = stageContexts.stream()
           .map(MiaMapping.NodeContext::ipgNodes).flatMap(Collection::stream)
           .collect(Collectors.toSet());
 
       // copy subgraph to stage behavior
       // add stage outputs to pass data between stages
-      var copyMap = SubgraphUtils.copy(stage.behavior(), set,
+      var copyMap = SubgraphUtils.copy(stage.behavior(), stageNodes,
           (originalFrom, originalTo, copyFrom) -> {
             if (originalTo instanceof ExpressionNode originalExpr) {
               var output = resolveStageOutput(originalExpr, stage.prev(), map);
@@ -108,19 +109,20 @@ public class MiaMappingInlinePass extends Pass {
           });
 
       // add conditions to read and write nodes
-      for (Node src : set) {
-        var dest = copyMap.get(src);
-        var contexts = mapping.findContexts(src).toList();
-        if (dest instanceof SideEffectNode node) {
-          var cond = node.condition();
-          node.ensure(cond != null, "Condition input must be set before we extend it");
-          node.setCondition(patchCondition(cond, contexts));
-        }
-        if (dest instanceof RtlConditionalReadNode read) {
-          var cond = read.condition();
-          read.asReadNode().ensure(cond != null,
-              "Condition input must be set before we extend it");
-          read.setCondition(patchCondition(cond, contexts));
+      for (MiaMapping.NodeContext context : stageContexts) {
+        for (Node src : context.ipgNodes()) {
+          var dest = copyMap.get(src);
+          if (dest instanceof SideEffectNode node) {
+            var cond = node.condition();
+            node.ensure(cond != null, "Condition input must be set before we extend it");
+            node.setCondition(patchCondition(cond, context));
+          }
+          if (dest instanceof RtlConditionalReadNode read) {
+            var cond = read.condition();
+            read.asReadNode().ensure(cond != null,
+                "Condition input must be set before we extend it");
+            read.setCondition(patchCondition(cond, context));
+          }
         }
       }
     }
@@ -181,16 +183,13 @@ public class MiaMappingInlinePass extends Pass {
     return fallback;
   }
 
-  private ExpressionNode patchCondition(ExpressionNode cond,
-                                        List<MiaMapping.NodeContext> contexts) {
-    for (MiaMapping.NodeContext context : contexts) {
-      var miaCond = context.sideEffects().stream()
-          .map(SideEffectNode::nullableCondition)
-          .map(Optional::ofNullable)
-          .reduce(this::orReduce); // returns empty if a null or true condition is encountered
-      if (miaCond.isPresent() && miaCond.get().isPresent()) {
-        cond = cond.ensureGraph().addWithInputs(GraphUtils.and(miaCond.get().get(), cond));
-      }
+  private ExpressionNode patchCondition(ExpressionNode cond, MiaMapping.NodeContext context) {
+    var miaCond = context.sideEffects().stream()
+        .map(SideEffectNode::nullableCondition)
+        .map(Optional::ofNullable)
+        .reduce(this::orReduce); // returns empty if a null or true condition is encountered
+    if (miaCond.isPresent() && miaCond.get().isPresent()) {
+      cond = cond.ensureGraph().addWithInputs(GraphUtils.and(miaCond.get().get(), cond));
     }
     return cond;
   }

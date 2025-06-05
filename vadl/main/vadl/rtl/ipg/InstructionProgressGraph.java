@@ -63,13 +63,13 @@ public class InstructionProgressGraph extends Graph {
     return instructions;
   }
 
-  private Collection<Instruction> addWithInstructions = Collections.emptyList();
-
   /**
    * Adds the given node with all its inputs to the graph.
    * If this or any input is a unique node, it will be only
    * added if there is no duplicate. Mark all added nodes
    * and its inputs with the given instructions.
+   * <i>This does not mark all input nodes of the node
+   * referenced by passing already active nodes.</i>
    *
    * @param <T> node type
    * @param node node to add with its inputs
@@ -77,19 +77,19 @@ public class InstructionProgressGraph extends Graph {
    * @return the node added to the graph or its duplicate
    */
   public <T extends Node> T addWithInputs(T node, Collection<Instruction> instructions) {
-    addWithInstructions = instructions;
+    var ignoreSet = new HashSet<Node>();
+    collectActiveInputs(node, ignoreSet);
     var result = addWithInputs(node);
-    addWithInstructions = Collections.emptyList();
+    markNodeWithInputs(result, instructions, ignoreSet);
     return result;
   }
 
-  @Override
-  public <T extends Node> T addWithInputs(T node) {
-    var result = super.addWithInputs(node);
-    if (result != node) {
-      markNodeWithInputs(result, addWithInstructions);
+  private void collectActiveInputs(Node node, Set<Node> set) {
+    if (node.isActive()) {
+      set.add(node);
+    } else {
+      node.inputs().forEach(input -> collectActiveInputs(input, set));
     }
-    return result;
   }
 
   /**
@@ -110,11 +110,8 @@ public class InstructionProgressGraph extends Graph {
 
   @Override
   public <T extends Node> T add(T node) {
-    contexts.computeIfAbsent(node, NodeContext::new);
     var result = super.add(node);
-    if (!addWithInstructions.isEmpty()) {
-      markNode(result, addWithInstructions);
-    }
+    contexts.computeIfAbsent(result, NodeContext::new);
     return result;
   }
 
@@ -189,11 +186,16 @@ public class InstructionProgressGraph extends Graph {
    * @param instructions instructions
    */
   public void markNodeWithInputs(Node node, Collection<Instruction> instructions) {
-    if (instructions.isEmpty()) {
+    markNodeWithInputs(node, instructions, Collections.emptySet());
+  }
+
+  private void markNodeWithInputs(Node node, Collection<Instruction> instructions,
+                                  Set<Node> ignoreSet) {
+    if (ignoreSet.contains(node) || instructions.isEmpty()) {
       return;
     }
     markNode(node, instructions);
-    node.inputs().forEach(input -> markNodeWithInputs(input, instructions));
+    node.inputs().forEach(input -> markNodeWithInputs(input, instructions, ignoreSet));
   }
 
   /**
