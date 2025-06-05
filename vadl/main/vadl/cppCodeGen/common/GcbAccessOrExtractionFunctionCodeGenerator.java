@@ -23,6 +23,7 @@ import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.types.BitsType;
 import vadl.viam.Format;
 import vadl.viam.graph.Node;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.FuncParamNode;
 import vadl.viam.graph.dependency.SliceNode;
 
@@ -86,6 +87,11 @@ public class GcbAccessOrExtractionFunctionCodeGenerator extends AccessFunctionCo
   @Override
   public void handle(CGenContext<Node> ctx, FuncParamNode toHandle) {
     ctx.wr(toHandle.parameter().simpleName());
+  }
+
+  @Override
+  protected void handle(CGenContext<Node> ctx, FieldAccessRefNode toHandle) {
+    //super.handle(ctx, toHandle);
   }
 
   @Override

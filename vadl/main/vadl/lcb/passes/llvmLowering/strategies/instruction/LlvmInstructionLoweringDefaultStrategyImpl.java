@@ -29,6 +29,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.viam.Abi;
 import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
@@ -55,8 +56,9 @@ public class LlvmInstructionLoweringDefaultStrategyImpl
   }
 
   @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
-    return replacementHooksWithDefaultFieldAccessReplacement();
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
+      PrintableInstruction printableInstruction) {
+    return replacementHooksWithDefaultFieldAccessReplacement(printableInstruction);
   }
 
   @Override

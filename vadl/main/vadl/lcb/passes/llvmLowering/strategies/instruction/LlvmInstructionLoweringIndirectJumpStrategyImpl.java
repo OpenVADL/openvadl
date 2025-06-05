@@ -52,6 +52,7 @@ import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
@@ -104,7 +105,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
       Graph unmodifiedBehavior,
       Abi abi) {
     var copy = unmodifiedBehavior.copy();
-    var visitor = replacementHooksWithDefaultFieldAccessReplacement();
+    var visitor = replacementHooksWithDefaultFieldAccessReplacement(instruction);
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {
       visitReplacementHooks(visitor, node);
@@ -131,8 +132,9 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
-    return replacementHooksWithDefaultFieldAccessReplacement();
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
+      PrintableInstruction printableInstruction) {
+    return replacementHooksWithDefaultFieldAccessReplacement(printableInstruction);
   }
 
   @Override
@@ -150,11 +152,11 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
         .ifPresent((uncastInputRegister) -> {
           result.add(generateIndirectCall(supportedInstructions, abi,
               (TableGenInstructionRegisterFileOperand) uncastInputRegister));
-          result.add(generateBranchIndirect(supportedInstructions,
+          result.add(generateBranchIndirect(instruction, supportedInstructions,
               (TableGenInstructionRegisterFileOperand) uncastInputRegister));
           result.add(generateBranchIndirectWithZero(
               (TableGenInstructionRegisterFileOperand) uncastInputRegister));
-          result.add(generateBranchIndirectWithAdd(supportedInstructions,
+          result.add(generateBranchIndirectWithAdd(instruction, supportedInstructions,
               (TableGenInstructionRegisterFileOperand) uncastInputRegister));
         });
 
@@ -204,6 +206,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
   }
 
   private static @Nonnull TableGenPseudoInstExpansionPattern generateBranchIndirect(
+      Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       TableGenInstructionRegisterFileOperand inputRegister) {
     /*
@@ -228,8 +231,9 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
         () -> Diagnostic.error("Cannot construct llvm type from field access",
             immediate.location()));
-    var fieldRef = new LlvmFieldAccessRefNode(immediate.fieldAccess(), immediate.type(), llvmType,
-        LlvmFieldAccessRefNode.Usage.Immediate);
+    var fieldRef =
+        new LlvmFieldAccessRefNode(instruction, immediate.fieldAccess(), immediate.type(), llvmType,
+            LlvmFieldAccessRefNode.Usage.Immediate);
     var machine = new Graph("machine");
     machine.addWithInputs(new LcbMachineInstructionNode(
         new NodeList<>(
@@ -253,6 +257,7 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
 
   @Nonnull
   private TableGenPattern generateBranchIndirectWithAdd(
+      Instruction instruction,
       IsaMachineInstructionMatchingPass.Result supportedInstructions,
       TableGenInstructionRegisterFileOperand inputRegister) {
     var database = new Database(supportedInstructions);
@@ -275,8 +280,9 @@ public class LlvmInstructionLoweringIndirectJumpStrategyImpl
     var llvmType = ensurePresent(ValueType.from(immediate.fieldAccess().type()),
         () -> Diagnostic.error("Cannot construct llvm type from field access",
             immediate.location()));
-    var fieldRef = new LlvmFieldAccessRefNode(immediate.fieldAccess(), immediate.type(), llvmType,
-        LlvmFieldAccessRefNode.Usage.Immediate);
+    var fieldRef =
+        new LlvmFieldAccessRefNode(instruction, immediate.fieldAccess(), immediate.type(), llvmType,
+            LlvmFieldAccessRefNode.Usage.Immediate);
     selector.addWithInputs(new LlvmBrindSD(new NodeList<>(
         new LlvmAddSD(new NodeList<>(llvmRegister, fieldRef), Type.dummy())),
         Type.dummy()));

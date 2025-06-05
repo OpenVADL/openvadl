@@ -21,7 +21,6 @@ import static vadl.viam.ViamError.ensurePresent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import vadl.configuration.GeneralConfiguration;
 import vadl.cppCodeGen.CppTypeMap;
@@ -33,6 +32,7 @@ import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.viam.Abi;
 import vadl.viam.Specification;
+import vadl.viam.graph.control.InstrCallNode;
 
 /**
  * This pass extracts the immediates from the TableGen records.
@@ -56,6 +56,7 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
 
     var immediates = new ArrayList<TableGenImmediateRecord>();
 
+    // We do it first for machine instructions.
     viam.isa().orElseThrow()
         .ownInstructions().forEach(instruction -> {
           instruction.format().fieldAccesses().forEach(fieldAccess -> {
@@ -78,6 +79,32 @@ public class GenerateTableGenImmediateRecordPass extends Pass {
                   llvmType.get()));
             }
           });
+        });
+
+    // But, we also have to do it for pseudo instructions.
+    // Because, we generate immediates for every instruction (and not format anymore).
+    // In the case of RISC-V's `J` case, we have to generate an immediate for `immS`.
+    viam.isa().orElseThrow()
+        .ownPseudoInstructions().forEach(pseudoInstruction -> {
+          for (var machineInstruction : pseudoInstruction.behavior().getNodes(InstrCallNode.class)
+              .toList()) {
+            for (var operand : machineInstruction.getParamFieldsOrAccesses()) {
+              /*
+              # Here is `immS` a field access function, and we need to generate an immediate record.
+              pseudo instruction J( offset : SIntR ) =
+              {
+                JAL{ rd = 0 as Bits5, immS = offset }
+              }
+               */
+              if (operand.isRight()) {
+                var fieldAccess = operand.right();
+                var originalType = abi.stackPointer().registerFile().resultType();
+                var llvmType = ValueType.from(originalType);
+                immediates.add(
+                    new TableGenImmediateRecord(pseudoInstruction, fieldAccess, llvmType.get()));
+              }
+            }
+          }
         });
 
     return immediates;

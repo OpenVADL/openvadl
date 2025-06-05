@@ -16,13 +16,11 @@
 
 package vadl.lcb.passes.llvmLowering.strategies.instruction;
 
-import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.MachineInstructionLabel;
@@ -31,10 +29,6 @@ import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionParam
 import vadl.lcb.passes.llvmLowering.domain.machineDag.LcbMachineInstructionValueNode;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmAddSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFieldAccessRefNode;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmFrameIndexSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmReadRegFileNode;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmStoreSD;
-import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmTruncStore;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
@@ -43,13 +37,11 @@ import vadl.types.Type;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
-import vadl.viam.Memory;
-import vadl.viam.RegisterTensor;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ReadRegTensorNode;
-import vadl.viam.graph.dependency.WriteResourceNode;
 
 /**
  * Lowers instructions which can store into memory.
@@ -68,8 +60,9 @@ public class LlvmInstructionLoweringMemoryStoreStrategyImpl
   }
 
   @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
-    return replacementHooksWithDefaultFieldAccessReplacement();
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
+      PrintableInstruction printableInstruction) {
+    return replacementHooksWithDefaultFieldAccessReplacement(printableInstruction);
   }
 
   @Override

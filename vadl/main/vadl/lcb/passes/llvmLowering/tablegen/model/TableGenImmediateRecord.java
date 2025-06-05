@@ -77,16 +77,22 @@ public class TableGenImmediateRecord {
       PrintableInstruction instruction,
       Format.FieldAccess fieldAccess,
       ValueType llvmType) {
-    this(fieldAccess.fieldRef().identifier.prepend(instruction.identifier()),
-        Objects.requireNonNull(fieldAccess.encoding().identifier.prepend(instruction.identifier()))
-            .append(
-                EmitMCCodeEmitterCppFilePass.WRAPPER),
-        Objects.requireNonNull(fieldAccess.encoding()).identifier.prepend(instruction.identifier()),
-        fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
-        fieldAccess.accessFunction().identifier.prepend(instruction.identifier()),
-        fieldAccess.predicate().identifier.prepend(instruction.identifier()),
-        llvmType,
-        fieldAccess);
+    var fieldRef = fieldAccess.fieldRef().identifier.tail();
+    var encodingIdentifier = Objects.requireNonNull(fieldAccess.encoding()).identifier.last();
+    var decodingIdentifier = Objects.requireNonNull(fieldAccess).accessFunction().identifier.last();
+    var predicateIdentifier = fieldAccess.predicate().identifier.last();
+    this.name = fieldRef.prepend(instruction.identifier()).lower();
+    this.rawEncoderMethod = encodingIdentifier.prepend(instruction.identifier());
+    this.encoderMethod = rawEncoderMethod.append(EmitMCCodeEmitterCppFilePass.WRAPPER);
+    this.rawDecoderMethod = decodingIdentifier.prepend(instruction.identifier());
+    this.decoderMethod = rawDecoderMethod.append(EmitDisassemblerCppFilePass.WRAPPER);
+    this.predicateMethod = predicateIdentifier.prepend(instruction.identifier());
+    this.llvmType = llvmType;
+    this.fieldAccessRef = fieldAccess;
+    this.absoluteVariantKind = VariantKind.absolute(fieldAccessRef.fieldRef());
+    this.relativeVariantKind = VariantKind.relative(fieldAccess.fieldRef());
+    this.rawType = (BitsType) fieldAccessRef.type();
+    this.formatFieldBitSize = fieldAccessRef.fieldRef().size();
   }
 
   public String rawName() {

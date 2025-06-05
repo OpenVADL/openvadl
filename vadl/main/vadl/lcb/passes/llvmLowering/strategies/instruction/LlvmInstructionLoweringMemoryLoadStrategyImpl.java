@@ -19,6 +19,7 @@ package vadl.lcb.passes.llvmLowering.strategies.instruction;
 import static vadl.viam.ViamError.ensure;
 import static vadl.viam.ViamError.ensurePresent;
 
+import java.awt.print.Printable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +47,7 @@ import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
 import vadl.viam.Memory;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
@@ -68,8 +70,9 @@ public class LlvmInstructionLoweringMemoryLoadStrategyImpl
   }
 
   @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
-    return replacementHooksWithDefaultFieldAccessReplacement();
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
+      PrintableInstruction instruction) {
+    return replacementHooksWithDefaultFieldAccessReplacement(instruction);
   }
 
   @Override
