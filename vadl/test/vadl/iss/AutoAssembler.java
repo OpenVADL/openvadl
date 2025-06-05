@@ -16,6 +16,8 @@
 
 package vadl.iss;
 
+import static java.util.Objects.requireNonNull;
+import static vadl.utils.GraphUtils.getSingleNode;
 import static vadl.utils.MemOrderUtils.reverseByteOrder;
 
 import com.google.errorprone.annotations.FormatMethod;
@@ -32,10 +34,17 @@ import vadl.TestUtils;
 import vadl.iss.passes.nodes.TcgVRefNode;
 import vadl.iss.passes.tcgLowering.TcgV;
 import vadl.utils.Disassembler;
+import vadl.utils.GraphUtils;
 import vadl.viam.Constant;
+import vadl.viam.Encoding;
 import vadl.viam.Format;
 import vadl.viam.Instruction;
+import vadl.viam.annotations.InstructionUndefinedAnno;
+import vadl.viam.graph.control.ReturnNode;
+import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.FieldRefNode;
+import vadl.viam.passes.canonicalization.Canonicalizer;
+import vadl.viam.passes.functionInliner.Inliner;
 
 public class AutoAssembler {
 
@@ -60,24 +69,26 @@ public class AutoAssembler {
 
   public Result produce(Instruction instruction) {
     checkState();
-
-    // Field : Encoding Value
-    var assignment = new HashMap<Format.Field, BigInteger>();
-
     var enc = instruction.encoding();
-    for (var f : enc.fieldEncodings()) {
-      assignment.put(f.formatField(), f.constant().integer());
+    var regs = regIndexFields(instruction);
+
+    // try to find assignment for encoding
+    var tries = 0;
+    Map<Format.Field, BigInteger> assignment;
+    do {
+      assignment = genAssignment(enc, regs);
+    } while (!testAssignment(instruction, assignment) && tries++ < 10);
+    
+    if (tries >= 10) {
+      throw new IllegalStateException("Couldn't find OK assignment within 10 tries.");
     }
 
-    var regs = regIndexFields(instruction);
+    // find destination and source registers
     var destRegs = new ArrayList<Format.Field>();
     var srcRegs = new ArrayList<Format.Field>();
     for (var reg : regs.entrySet()) {
       var field = reg.getValue();
       var tcgV = reg.getKey();
-      // select register indices
-      var i = Arbitraries.of(allowedRegIndices).sample();
-      assignment.put(field, BigInteger.valueOf(i));
       if (tcgV.isDest()) {
         destRegs.add(field);
       } else {
@@ -85,17 +96,57 @@ public class AutoAssembler {
       }
     }
 
-    for (var f : enc.nonEncodedFormatFields()) {
-      assignment.computeIfAbsent(f, k -> TestUtils.arbitraryBits(k.size()).sample());
-    }
-
     var instrCode = encode(assignment);
     var assembly = disassembler.disassemble(instrCode);
     return new Result(srcRegs, destRegs, assignment, assembly, instrCode);
   }
 
+  private Map<Format.Field, BigInteger> genAssignment(Encoding encoding,
+                                                      Map<TcgV, Format.Field> registers) {
+    var assignment = new HashMap<Format.Field, BigInteger>();
+    for (var f : encoding.fieldEncodings()) {
+      assignment.put(f.formatField(), f.constant().integer());
+    }
+    for (var reg : registers.entrySet()) {
+      var field = reg.getValue();
+      // select register indices
+      var i = Arbitraries.of(allowedRegIndices).sample();
+      assignment.put(field, BigInteger.valueOf(i));
+    }
+    for (var f : encoding.nonEncodedFormatFields()) {
+      assignment.computeIfAbsent(f, k -> TestUtils.arbitraryBits(k.size()).sample());
+    }
+    return assignment;
+  }
+
   private void checkState() {
     check(!allowedRegIndices.isEmpty(), "There must be at least one allowed register to be used.");
+  }
+
+  private boolean testAssignment(Instruction instr, Map<Format.Field, BigInteger> assignment) {
+    return !testIsUndefinedInstr(instr, assignment);
+  }
+
+  private boolean testIsUndefinedInstr(Instruction instr,
+                                       Map<Format.Field, BigInteger> assignment) {
+    var undefAnno = instr.annotation(InstructionUndefinedAnno.class);
+    if (undefAnno != null) {
+      var graph = undefAnno.graph().copy();
+      Inliner.inlineFuncs(graph);
+      Inliner.inlineFieldAccess(graph);
+      // replace field nodes by constants (from assignments)
+      graph.getNodes(FieldRefNode.class).forEach(node -> {
+        var ass = requireNonNull(assignment.get(node.formatField()));
+        node.replaceAndDelete(
+            GraphUtils.bits(ass.intValue(), node.formatField().size()).toNode()
+        );
+      });
+
+      var expr = getSingleNode(graph, ReturnNode.class).value();
+      var result = Canonicalizer.canonicalizeSubGraph(expr);
+      return ((ConstantNode) result).constant().asVal().intValue() != 0;
+    }
+    return false;
   }
 
   private Map<TcgV, Format.Field> regIndexFields(Instruction instruction) {

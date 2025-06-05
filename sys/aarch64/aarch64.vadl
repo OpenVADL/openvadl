@@ -756,6 +756,7 @@ instruction set architecture AArch64Base = {
     }
 
   model ExtractRegPairInstr (i: InstrWithFunct, size: Id): IsaDefs = {
+    [undefined when : sf = 0 && imms(5)]
     instruction $i.id: ExtractRegFormat =
       let pair = (X(rn) as Bits<Size::$size>, X(rm) as Bits<Size::$size>) in
         X(rd) :=  (pair >> AsId (shift, $size)) as Bits<Size::$size> as BitsX
