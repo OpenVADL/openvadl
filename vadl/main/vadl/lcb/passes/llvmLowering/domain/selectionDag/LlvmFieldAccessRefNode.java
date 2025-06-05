@@ -22,6 +22,7 @@ import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.types.Type;
 import vadl.viam.Format;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.ExpressionNode;
@@ -32,6 +33,7 @@ import vadl.viam.graph.dependency.FieldAccessRefNode;
  * it requires additional information for rendering an immediate.
  */
 public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
+  private final PrintableInstruction instruction;
   private final ValueType llvmType;
   private final TableGenImmediateRecord immediateOperand;
   private final Usage usage;
@@ -57,13 +59,16 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
    *                     it is the next upcasted type.
    * @param usage        indicates how the field is used.
    */
-  public LlvmFieldAccessRefNode(Format.FieldAccess fieldAccess,
-                                Type originalType,
-                                ValueType llvmType,
-                                Usage usage) {
+  public LlvmFieldAccessRefNode(
+      PrintableInstruction instruction,
+      Format.FieldAccess fieldAccess,
+      Type originalType,
+      ValueType llvmType,
+      Usage usage) {
     super(fieldAccess, originalType);
+    this.instruction = instruction;
     this.immediateOperand =
-        new TableGenImmediateRecord(fieldAccess, llvmType);
+        new TableGenImmediateRecord(instruction, fieldAccess, llvmType);
     this.llvmType = llvmType;
     this.usage = usage;
     setSourceLocation(fieldAccess.location());

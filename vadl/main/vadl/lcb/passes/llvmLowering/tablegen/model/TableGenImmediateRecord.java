@@ -24,6 +24,7 @@ import vadl.lcb.template.lib.Target.MCTargetDesc.EmitMCCodeEmitterCppFilePass;
 import vadl.types.BitsType;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
+import vadl.viam.PrintableInstruction;
 
 /**
  * Represents an immediate record in TableGen.
@@ -72,15 +73,18 @@ public class TableGenImmediateRecord {
   /**
    * Constructor.
    */
-  public TableGenImmediateRecord(Format.FieldAccess fieldAccess,
-                                 ValueType llvmType) {
-    this(fieldAccess.fieldRef().identifier,
-        Objects.requireNonNull(fieldAccess.encoding()).identifier.append(
-            EmitMCCodeEmitterCppFilePass.WRAPPER),
-        Objects.requireNonNull(fieldAccess.encoding()).identifier,
+  public TableGenImmediateRecord(
+      PrintableInstruction instruction,
+      Format.FieldAccess fieldAccess,
+      ValueType llvmType) {
+    this(fieldAccess.fieldRef().identifier.prepend(instruction.identifier()),
+        Objects.requireNonNull(fieldAccess.encoding().identifier.prepend(instruction.identifier()))
+            .append(
+                EmitMCCodeEmitterCppFilePass.WRAPPER),
+        Objects.requireNonNull(fieldAccess.encoding()).identifier.prepend(instruction.identifier()),
         fieldAccess.accessFunction().identifier.append(EmitDisassemblerCppFilePass.WRAPPER),
-        fieldAccess.accessFunction().identifier,
-        fieldAccess.predicate().identifier,
+        fieldAccess.accessFunction().identifier.prepend(instruction.identifier()),
+        fieldAccess.predicate().identifier.prepend(instruction.identifier()),
         llvmType,
         fieldAccess);
   }
