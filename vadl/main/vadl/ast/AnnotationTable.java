@@ -43,12 +43,14 @@ import vadl.utils.functionInterfaces.TriConsumer;
 import vadl.viam.AssemblyDescription;
 import vadl.viam.Constant;
 import vadl.viam.Encoding;
+import vadl.viam.Instruction;
 import vadl.viam.MemoryRegion;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Relocation;
 import vadl.viam.annotations.AsmParserCaseSensitive;
 import vadl.viam.annotations.AsmParserCommentString;
 import vadl.viam.annotations.EnableHtifAnno;
+import vadl.viam.annotations.InstructionUndefinedAnno;
 
 @SuppressWarnings({"UnusedMethod", "UnusedVariable"})
 class AnnotationTable {
@@ -124,6 +126,19 @@ class AnnotationTable {
               encoding.simpleName() + " Constraint");
           graph.setParentDefinition(encoding);
           encoding.setConstraint(graph);
+        })
+        .build();
+
+    annotationOn(InstructionDefinition.class, "undefined when", InstructionUndefinedAnnotation::new)
+        .check((def, annotation, lowering) -> annotation.verifyExprType(Type.bool()))
+        .applyViam((def, annotation, lowering) -> {
+          var instr = (Instruction) def;
+          var graph = new BehaviorLowering(lowering).getFunctionGraph(annotation.expr,
+              instr.simpleName() + " Constraint");
+          graph.setParentDefinition(instr);
+          var anno = new InstructionUndefinedAnno(graph);
+          anno.check();
+          instr.addAnnotation(anno);
         })
         .build();
 
@@ -1170,6 +1185,17 @@ class EncodingConstraintAnnotation extends ExprAnnotation {
   @Override
   void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
     var format = requireNonNull(((EncodingDefinition) definition.target).formatNode);
+    // Extend annotation's symbol table by the symbol table of the encoding's format.
+    definition.symbolTable().extendBy(format.symbolTable());
+    super.resolveName(definition, resolver);
+  }
+}
+
+class InstructionUndefinedAnnotation extends ExprAnnotation {
+
+  @Override
+  void resolveName(AnnotationDefinition definition, SymbolTable.SymbolResolver resolver) {
+    var format = requireNonNull(((InstructionDefinition) definition.target).formatNode);
     // Extend annotation's symbol table by the symbol table of the encoding's format.
     definition.symbolTable().extendBy(format.symbolTable());
     super.resolveName(definition, resolver);
