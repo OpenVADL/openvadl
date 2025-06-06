@@ -17,12 +17,10 @@
 package vadl.lcb.template.utils;
 
 import java.util.Map;
-import java.util.stream.Collectors;
-import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
-import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass;
+import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
+import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.PassResults;
-import vadl.utils.Pair;
-import vadl.viam.Format;
 
 /**
  * Utility class for encodings.
@@ -31,14 +29,9 @@ public class ImmediateEncodingFunctionProvider {
   /**
    * Get the encoding functions.
    */
-  public static Map<Format.Field, GcbCppFunctionForFieldAccess> generateEncodeFunctions(
+  public static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> generateEncodeFunctions(
       PassResults passResults) {
-    return ((CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass.Output)
-        passResults.lastResultOf(CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass.class))
-        .byField()
-        .entrySet()
-        .stream()
-        .map(x -> new Pair<>(x.getKey(), x.getValue()))
-        .collect(Collectors.toMap(Pair::left, Pair::right));
+    return ((CreateFunctionsFromImmediatesPass.Output)
+        passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).encodings();
   }
 }

@@ -66,7 +66,11 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
    */
   public static final String WRAPPER = "wrapper";
 
-  record Immediate(String wrapperName, String decodeMethodName, int bitWidth, long mask) implements
+  record Immediate(String wrapperName,
+      /* this is actually rawDecoderMethodName */
+                   String decodeMethodName,
+                   int bitWidth,
+                   long mask) implements
       Renderable {
 
     @Override
@@ -94,12 +98,13 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
         .entrySet()
         .stream()
         .map(entry -> {
-          var field = entry.getKey();
-          var wrapperName = entry.getValue().identifier.append(WRAPPER).lower();
-          var decoderMethod = entry.getValue().functionName().lower();
+          var immediateRecord = entry.getKey();
+          var field = immediateRecord.fieldAccessRef().fieldRef();
+          var wrapperName = immediateRecord.decoderMethod().lower();
+          var rawDecoderMethod = immediateRecord.rawDecoderMethod();
           var bitWidth = field.size();
 
-          return new Immediate(wrapperName, decoderMethod, bitWidth,
+          return new Immediate(wrapperName, rawDecoderMethod, bitWidth,
               (int) Math.pow(2, bitWidth) - 1);
         })
         .sorted(Comparator.comparing(o -> o.wrapperName))

@@ -96,9 +96,10 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
 
   private List<Aggregate> generateImmediates(PassResults passResults) {
     return generateEncodeFunctions(passResults)
-        .values()
+        .keySet()
         .stream()
-        .map(f -> new Aggregate(f.identifier.append(WRAPPER).lower(), f.identifier.lower()))
+        .map(gcbCppFunctionWithBody -> new Aggregate(gcbCppFunctionWithBody.encoderMethod().lower(),
+            gcbCppFunctionWithBody.rawEncoderMethod()))
         .toList();
   }
 
@@ -174,10 +175,10 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
         GenerateLinkerComponentsPass.class);
 
     return tableGenMachineInstructions.stream()
-        .filter(tableGenMachineInstruction -> {
-          return !tableGenMachineInstruction.llvmLoweringRecord().info().inputImmediates()
-              .isEmpty();
-        })
+        .filter(
+            tableGenMachineInstruction -> !tableGenMachineInstruction.llvmLoweringRecord().info()
+                .inputImmediates()
+                .isEmpty())
         .map(tableGenMachineInstruction -> {
           var instruction = tableGenMachineInstruction.instruction();
 

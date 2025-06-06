@@ -14,24 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package vadl.lcb.template.utils;
+package vadl.cppCodeGen.model;
 
-import java.util.Map;
-import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
-import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
-import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
-import vadl.pass.PassResults;
+public record GcbCppFunctionWithBody(GcbCppFunctionBodyLess header, String code) {
 
-/**
- * Utility class for decodings.
- */
-public class ImmediateDecodingFunctionProvider {
-  /**
-   * Get the decoding functions.
-   */
-  public static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> generateDecodeFunctions(
-      PassResults passResults) {
-    return ((CreateFunctionsFromImmediatesPass.Output)
-        passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).decodings();
-  }
 }

@@ -30,7 +30,7 @@ import vadl.viam.PrintableInstruction;
  * Represents an immediate record in TableGen.
  */
 public class TableGenImmediateRecord {
-  private final String name;
+  private final String rawName;
   // The `encoderMethod` will be used by tablegen and has different arguments.
   private final Identifier encoderMethod;
   // The `rawEncoderMethod` is the method for the raw logic.
@@ -45,30 +45,7 @@ public class TableGenImmediateRecord {
   private final VariantKind absoluteVariantKind;
   private final VariantKind relativeVariantKind;
 
-  /**
-   * Constructor for an immediate operand.
-   */
-  private TableGenImmediateRecord(Identifier identifier,
-                                  Identifier encoderIdentifier,
-                                  Identifier rawEncoderIdentifier,
-                                  Identifier decoderIdentifier,
-                                  Identifier rawDecoderIdentifier,
-                                  Identifier predicateIdentifier,
-                                  ValueType llvmType,
-                                  Format.FieldAccess fieldAccessRef) {
-    this.name = identifier.lower();
-    this.encoderMethod = encoderIdentifier;
-    this.rawEncoderMethod = rawEncoderIdentifier;
-    this.decoderMethod = decoderIdentifier;
-    this.rawDecoderMethod = rawDecoderIdentifier;
-    this.predicateMethod = predicateIdentifier;
-    this.llvmType = llvmType;
-    this.rawType = (BitsType) fieldAccessRef.type();
-    this.formatFieldBitSize = fieldAccessRef.fieldRef().size();
-    this.fieldAccessRef = fieldAccessRef;
-    this.absoluteVariantKind = VariantKind.absolute(fieldAccessRef.fieldRef());
-    this.relativeVariantKind = VariantKind.relative(fieldAccessRef.fieldRef());
-  }
+  private final PrintableInstruction instructionRef;
 
   /**
    * Constructor.
@@ -77,11 +54,12 @@ public class TableGenImmediateRecord {
       PrintableInstruction instruction,
       Format.FieldAccess fieldAccess,
       ValueType llvmType) {
+    this.instructionRef = instruction;
     var fieldRef = fieldAccess.fieldRef().identifier.tail();
     var encodingIdentifier = Objects.requireNonNull(fieldAccess.encoding()).identifier.last();
     var decodingIdentifier = Objects.requireNonNull(fieldAccess).accessFunction().identifier.last();
     var predicateIdentifier = fieldAccess.predicate().identifier.last();
-    this.name = fieldRef.prepend(instruction.identifier()).lower();
+    this.rawName = fieldRef.prepend(instruction.identifier()).lower();
     this.rawEncoderMethod = encodingIdentifier.prepend(instruction.identifier());
     this.encoderMethod = rawEncoderMethod.append(EmitMCCodeEmitterCppFilePass.WRAPPER);
     this.rawDecoderMethod = decodingIdentifier.prepend(instruction.identifier());
@@ -95,20 +73,24 @@ public class TableGenImmediateRecord {
     this.formatFieldBitSize = fieldAccessRef.fieldRef().size();
   }
 
-  public String rawName() {
-    return name;
+  public PrintableInstruction instructionRef() {
+    return instructionRef;
   }
 
-  public String encoderMethod() {
-    return encoderMethod.lower();
+  public String rawName() {
+    return rawName;
+  }
+
+  public Identifier encoderMethod() {
+    return encoderMethod;
   }
 
   public String rawEncoderMethod() {
     return rawEncoderMethod.lower();
   }
 
-  public String decoderMethod() {
-    return decoderMethod.lower();
+  public Identifier decoderMethod() {
+    return decoderMethod;
   }
 
   public String rawDecoderMethod() {
@@ -124,11 +106,11 @@ public class TableGenImmediateRecord {
   }
 
   public String fullname() {
-    return String.format("%sAs%s", this.name, llvmType.getTableGen());
+    return String.format("%sAs%s", this.rawName, llvmType.getTableGen());
   }
 
-  public String predicateMethod() {
-    return predicateMethod.lower();
+  public Identifier predicateMethod() {
+    return predicateMethod;
   }
 
   public int formatFieldBitSize() {
@@ -144,7 +126,7 @@ public class TableGenImmediateRecord {
       return false;
     }
     TableGenImmediateRecord that = (TableGenImmediateRecord) o;
-    return Objects.equals(name, that.name)
+    return Objects.equals(rawName, that.rawName)
         && Objects.equals(encoderMethod, that.encoderMethod)
         && Objects.equals(decoderMethod, that.decoderMethod)
         && Objects.equals(predicateMethod, that.predicateMethod)
@@ -153,7 +135,7 @@ public class TableGenImmediateRecord {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, encoderMethod, decoderMethod, predicateMethod, llvmType);
+    return Objects.hash(rawName, encoderMethod, decoderMethod, predicateMethod, llvmType);
   }
 
   public Format.FieldAccess fieldAccessRef() {

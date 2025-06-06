@@ -21,7 +21,7 @@ import static vadl.viam.ViamError.ensure;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
@@ -31,6 +31,7 @@ import vadl.lcb.template.utils.BaseInfoFunctionProvider;
 import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
+import vadl.utils.Pair;
 import vadl.viam.Specification;
 
 /**
@@ -105,19 +106,24 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
                                      GenerateLinkerComponentsPass.Output output) {
 
     var decodeVariantKinds = output.variantKindStore().decodeVariantKinds();
-    var decodeFunctions = ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults);
+    var decodeFunctions = ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults)
+        .entrySet()
+        .stream()
+        .map(x -> new Pair<>(x.getKey().fieldAccessRef(), x.getValue()))
+        .collect(Collectors.toMap(Pair::left, Pair::right));
 
-    var fieldAccesses = specification.isa().map(isa -> isa.ownFormats().stream()).orElseGet(
-        Stream::empty).flatMap(formats -> formats.fieldAccesses().stream());
+    var fieldAccesses = specification.isa().stream().flatMap(isa -> isa.ownFormats().stream())
+        .flatMap(formats -> formats.fieldAccesses().stream());
 
     return fieldAccesses.map(
         fieldAccess -> {
           var variantKind = decodeVariantKinds.get(fieldAccess);
-          var decodeFunction = decodeFunctions.get(fieldAccess.fieldRef());
+          var decodeFunction = decodeFunctions.get(fieldAccess);
           ensure(variantKind != null, "No variant kind found for field access: %s", fieldAccess);
           ensure(decodeFunction != null,
               "No decode function found for field access: %s", fieldAccess);
-          return new DecodeMapping(variantKind.value(), decodeFunction.functionName().lower());
+          return new DecodeMapping(variantKind.value(),
+              decodeFunction.header().functionName().lower());
         }).toList();
   }
 }
