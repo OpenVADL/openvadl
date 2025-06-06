@@ -203,6 +203,25 @@ class MacroExpander
     return copy;
   }
 
+  /**
+   * Expands assembly definitions with multiple identifiers into multiple definitions.
+   * Not quite a macro to expand, but the assemblies with multiple identifiers kinda behave like
+   * macros.
+   *
+   * @param definition to be expanded.
+   * @return a list of the expanded definitions.
+   */
+  public List<AssemblyDefinition> expandAssemblies(AssemblyDefinition definition) {
+    return definition.identifiers.stream().map(identifier -> new AssemblyDefinition(
+            new ArrayList<>(List.of(identifier)),
+            expandExpr(definition.expr),
+            copyLoc(definition.loc)
+        )
+            .withAnnotations(expandAnnotations(definition.annotations)))
+        .map(def -> (AssemblyDefinition) def)
+        .collect(Collectors.toCollection(ArrayList::new));
+  }
+
   @Override
   public Expr visit(Identifier expr) {
     return new Identifier(expr.name, copyLoc(expr.location()));
@@ -604,6 +623,7 @@ class MacroExpander
     return new EncodingDefinition(instrId, fieldEncodings, copyLoc(definition.loc))
         .withAnnotations(expandAnnotations(definition.annotations));
   }
+
 
   @Override
   public Definition visit(AssemblyDefinition definition) {

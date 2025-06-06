@@ -759,8 +759,14 @@ public class TypeChecker
 
   @Override
   public Void visit(AssemblyDefinition definition) {
-    check(definition.expr);
-    var exprType = requireNonNull(definition.expr.type);
+    if (definition.identifiers.size() != 1) {
+      // All assembly definitions with multiple identifiers should have already been expanded to
+      // multiple definitions by the parser, with each only containing a single identifier.
+      throw new IllegalStateException(
+          "No Assemblydefinition should have multiple identifiers in the typechecker.");
+    }
+
+    var exprType = check(definition.expr);
 
     if (exprType.getClass() != StringType.class) {
       throw typeMissmatchError(definition.expr, "`String`", exprType);
@@ -992,8 +998,7 @@ public class TypeChecker
 
   @Override
   public Void visit(ImportDefinition importDefinition) {
-    // Do nothing on purpose.
-    // The symboltable should have already resolved everything.
+    importDefinition.moduleAst.definitions.forEach(this::check);
     return null;
   }
 
