@@ -211,7 +211,7 @@ instruction set architecture VarRISC32 = {
     assembly $name = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
 
     instruction AsId ( $name, '_L') : TYPE_L = {
-      if R(rd) as $reltype $op R(rs1) then
+      if R(rd) as $reltype $op R(func5) then
         PC := PC + offsetS
     }
     encoding AsId ( $name, '_L') = { opcode = BraLOff + $code }
