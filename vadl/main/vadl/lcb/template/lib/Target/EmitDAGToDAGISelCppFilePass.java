@@ -16,18 +16,9 @@
 
 package vadl.lcb.template.lib.Target;
 
-import static vadl.viam.ViamError.ensureNonNull;
-import static vadl.viam.ViamError.ensurePresent;
-
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import vadl.configuration.LcbConfiguration;
-import vadl.error.Diagnostic;
-import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
-import vadl.gcb.passes.MachineInstructionLabel;
 import vadl.lcb.codegen.model.llvm.ValueType;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -35,7 +26,6 @@ import vadl.pass.PassResults;
 import vadl.viam.Abi;
 import vadl.viam.RegisterTensor;
 import vadl.viam.Specification;
-import vadl.viam.graph.dependency.WriteRegTensorNode;
 
 /**
  * This file contains the transformation from DAG to InstructionSelectionDag.
@@ -64,37 +54,38 @@ public class EmitDAGToDAGISelCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var abi =
         (Abi) specification.definitions().filter(x -> x instanceof Abi).findFirst().get();
-    var labelledInstructions =
-        ensureNonNull(
-            (IsaMachineInstructionMatchingPass.Result) passResults.lastResultOf(
-                IsaMachineInstructionMatchingPass.class), "labelling must be present")
-            .labels();
-    var lui =
-        ensurePresent(
-            Objects.requireNonNull(labelledInstructions)
-                .getOrDefault(MachineInstructionLabel.LUI, Collections.emptyList())
-                .stream().findFirst(),
-            () -> Diagnostic.error("Expected an instruction of load upper immediate",
-                specification.location()));
-    var registerFile =
-        ensurePresent(
-            lui.behavior().getNodes(WriteRegTensorNode.class)
-                .map(WriteRegTensorNode::regTensor)
-                .filter(RegisterTensor::isRegisterFile)
-                .findFirst(),
-            () -> Diagnostic.error("Cannot find a register for load upper immediate",
-                lui.location()));
-    var zero = ensurePresent(
-        Arrays.stream(registerFile.constraints()).filter(x -> x.value().intValue() == 0)
-            .findFirst(),
-        () -> Diagnostic.error("Cannot find a zero constraint", registerFile.location()));
-    var zeroRegister = registerFile.identifier.simpleName() + zero.indices().getFirst().intValue();
+    var stackPointerType =
+        ValueType.from(abi.framePointer().registerFile().resultType()).get().getLlvmType();
 
-    return Map.of(CommonVarNames.NAMESPACE,
-        lcbConfiguration().targetName().value().toLowerCase(),
-        "lui", lui.identifier.simpleName(),
-        "zeroRegister", zeroRegister,
-        "stackPointerType",
-        ValueType.from(abi.framePointer().registerFile().resultType()).get().getLlvmType());
+    // Register files with a zero constraint.
+    var registerFilesCandidates = specification.isa().orElseThrow()
+        .registerTensors()
+        .stream()
+        .filter(RegisterTensor::isRegisterFile)
+        .filter(x -> x.zeroRegister().isPresent())
+        .toList();
+
+    // The idea is that when we have zero register then we can use it.
+    // So we can use RR instructions and not only RI.
+    // This only works when we know that there is only one register file. Otherwise,
+    // we might get a problem.
+    if (registerFilesCandidates.size() == 1) {
+      var registerFile = registerFilesCandidates.stream().findFirst().get();
+      var zeroIndex = registerFile.zeroRegister().get().getFirst().intValue();
+      var zeroRegister = registerFile.generateRegisterFileName(zeroIndex);
+
+      return Map.of(CommonVarNames.NAMESPACE,
+          lcbConfiguration().targetName().value().toLowerCase(),
+          "replaceImmZeroByRegisterZero", true,
+          "zeroRegister", zeroRegister,
+          "stackPointerType", stackPointerType
+      );
+    } else {
+      return Map.of(CommonVarNames.NAMESPACE,
+          lcbConfiguration().targetName().value().toLowerCase(),
+          "replaceImmZeroByRegisterZero", false,
+          "zeroRegister", "",
+          "stackPointerType", stackPointerType);
+    }
   }
 }
