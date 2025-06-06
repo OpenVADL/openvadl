@@ -33,13 +33,14 @@ import vadl.cppCodeGen.SymbolTable;
 import vadl.cppCodeGen.context.CGenContext;
 import vadl.cppCodeGen.context.CNodeContext;
 import vadl.cppCodeGen.context.CNodeWithBaggageContext;
-import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
+import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.gcb.valuetypes.VariantKind;
 import vadl.lcb.passes.llvmLowering.domain.LlvmLoweringRecord;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.utils.Pair;
 import vadl.viam.CompilerInstruction;
@@ -47,6 +48,7 @@ import vadl.viam.Format;
 import vadl.viam.Function;
 import vadl.viam.Identifier;
 import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Relocation;
 import vadl.viam.graph.HasRegisterTensor;
@@ -82,7 +84,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
 
   private final TargetName targetName;
   private final IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages;
-  private final Map<Format.Field, GcbCppFunctionForFieldAccess> immediateDecodings;
+  private final Map<TableGenImmediateRecord, GcbCppFunctionWithBody> immediateDecodings;
+  private final Map<FieldInInstruction, GcbCppFunctionWithBody> immediateDecodingsByField;
   private final List<HasRelocationComputationAndUpdate> relocations;
   private final CompilerInstruction compilerInstruction;
   private final SymbolTable symbolTable;
@@ -90,6 +93,9 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   private final IdentityHashMap<Instruction, LlvmLoweringRecord.Machine> machineInstructionRecords;
   private final IdentityHashMap<NewLabelNode, String> labelSymbolNameLookup;
 
+  record FieldInInstruction(PrintableInstruction instruction, Format.Field field) {
+
+  }
 
   /**
    * Constructor.
@@ -97,7 +103,7 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
   public CompilerInstructionExpansionCodeGenerator(
       TargetName targetName,
       IdentifyFieldUsagePass.ImmediateDetectionContainer fieldUsages,
-      Map<Format.Field, GcbCppFunctionForFieldAccess> immediateDecodings,
+      Map<TableGenImmediateRecord, GcbCppFunctionWithBody> immediateDecodings,
       List<HasRelocationComputationAndUpdate> relocations,
       GenerateLinkerComponentsPass.VariantKindStore variantKindStore,
       CompilerInstruction compilerInstruction,
@@ -106,13 +112,20 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
     super(function);
     this.targetName = targetName;
     this.fieldUsages = fieldUsages;
-    this.immediateDecodings = immediateDecodings;
     this.relocations = relocations;
     this.compilerInstruction = compilerInstruction;
     this.symbolTable = new SymbolTable();
     this.variantKindStore = variantKindStore;
     this.machineInstructionRecords = machineInstructionRecords;
     this.labelSymbolNameLookup = new IdentityHashMap<>();
+    this.immediateDecodings = immediateDecodings;
+    this.immediateDecodingsByField = immediateDecodings
+        .entrySet()
+        .stream().map(x -> new Pair<>(
+            new FieldInInstruction(x.getKey().instructionRef(),
+                x.getKey().fieldAccessRef().fieldRef()),
+            x.getValue()))
+        .collect(Collectors.toMap(x -> x.left(), Pair::right));
   }
 
   @Override
@@ -219,15 +232,15 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
           field.location()).build();
     });
 
-    switch (usage.get(0)) {
+    switch (usage.getFirst()) {
       case IMMEDIATE -> {
-
         var immediateValueString = String.valueOf(toHandle.constant().asVal().intValue());
 
         if (!instructionCallNode.isParameterFieldAccess(field)) {
-          var decodingFunction = immediateDecodings.get(field);
+          var decodingFunction =
+              immediateDecodingsByField.get(new FieldInInstruction(instruction, field));
           ensure(decodingFunction != null, "decodingFunction must not be null");
-          var decodingFunctionName = decodingFunction.functionName().lower();
+          var decodingFunctionName = decodingFunction.header().functionName().lower();
           immediateValueString = decodingFunctionName + "(" + immediateValueString + ")";
         }
 

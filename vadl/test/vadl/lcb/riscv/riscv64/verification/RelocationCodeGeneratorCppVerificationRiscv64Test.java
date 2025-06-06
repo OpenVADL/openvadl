@@ -23,7 +23,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import org.junit.jupiter.api.DynamicTest;
@@ -35,9 +34,8 @@ import vadl.cppCodeGen.common.ValueRelocationFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.gcb.passes.IdentifyFieldUsagePass;
 import vadl.gcb.passes.relocation.model.HasRelocationComputationAndUpdate;
-import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromExtractionFunctionPass;
-import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessFunctionFromPredicateFunctionPass;
 import vadl.lcb.AbstractLcbTest;
+import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.pass.PassKey;
 import vadl.pass.exception.DuplicatedPassKeyException;
@@ -54,8 +52,8 @@ public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractL
     var configuration = getConfiguration(false);
     var temporaryPasses = List.of(
         new TemporaryTestPassInjection(
-            CreateGcbFieldAccessFunctionFromPredicateFunctionPass.class,
-            new CreateGcbFieldAccessCppFunctionFromExtractionFunctionPass(configuration)
+            CreateFunctionsFromImmediatesPass.class,
+            new CreateFunctionsFromImmediatesPass(configuration)
         )
     );
     var testSetup = runLcb(configuration,
@@ -94,8 +92,8 @@ public class RelocationCodeGeneratorCppVerificationRiscv64Test extends AbstractL
             .getPassResults()
             .lastResultOf(IdentifyFieldUsagePass.class);
 
-    var instructions = specification.isa().map(x -> x.ownInstructions().stream())
-        .orElse(Stream.empty()).toList();
+    var instructions =
+        specification.isa().stream().flatMap(x -> x.ownInstructions().stream()).toList();
     List<Pair<String, String>> copyMappings = new ArrayList<>();
 
     for (var instruction : instructions) {
