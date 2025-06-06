@@ -125,6 +125,15 @@ public record Identifier(
         location);
   }
 
+  /**
+   * Returns a new identifier but without the last part.
+   */
+  public Identifier dropLast() {
+    var parts = Arrays.stream(this.parts()).toList();
+    return new Identifier(parts.subList(0, parts.size() - 1).toArray(String[]::new),
+        location);
+  }
+
   @Override
   public String toString() {
     return name();

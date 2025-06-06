@@ -34,4 +34,13 @@ public class ImmediateDecodingFunctionProvider {
     return ((CreateFunctionsFromImmediatesPass.Output)
         passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).decodings();
   }
+
+  /**
+   * Get the decoding wrapper functions.
+   */
+  public static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> generateDecodeWrapperFunctions(
+      PassResults passResults) {
+    return ((CreateFunctionsFromImmediatesPass.Output)
+        passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).decodingWrappers();
+  }
 }

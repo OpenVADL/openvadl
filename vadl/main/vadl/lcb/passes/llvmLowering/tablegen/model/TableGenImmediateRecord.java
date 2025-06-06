@@ -57,12 +57,13 @@ public class TableGenImmediateRecord {
     this.instructionRef = instruction;
     var fieldRef = fieldAccess.fieldRef().identifier.tail();
     var encodingIdentifier = Objects.requireNonNull(fieldAccess.encoding()).identifier.last();
-    var decodingIdentifier = Objects.requireNonNull(fieldAccess).accessFunction().identifier.last();
+    var decodingIdentifier =
+        Objects.requireNonNull(fieldAccess).accessFunction().identifier.dropLast().last();
     var predicateIdentifier = fieldAccess.predicate().identifier.last();
     this.rawName = fieldRef.prepend(instruction.identifier()).lower();
     this.rawEncoderMethod = encodingIdentifier.prepend(instruction.identifier());
     this.encoderMethod = rawEncoderMethod.append(EmitMCCodeEmitterCppFilePass.WRAPPER);
-    this.rawDecoderMethod = decodingIdentifier.prepend(instruction.identifier());
+    this.rawDecoderMethod = decodingIdentifier.prepend(instruction.identifier()).append("decode");
     this.decoderMethod = rawDecoderMethod.append(EmitDisassemblerCppFilePass.WRAPPER);
     this.predicateMethod = predicateIdentifier.prepend(instruction.identifier());
     this.llvmType = llvmType;
@@ -85,16 +86,16 @@ public class TableGenImmediateRecord {
     return encoderMethod;
   }
 
-  public String rawEncoderMethod() {
-    return rawEncoderMethod.lower();
+  public Identifier rawEncoderMethod() {
+    return rawEncoderMethod;
   }
 
   public Identifier decoderMethod() {
     return decoderMethod;
   }
 
-  public String rawDecoderMethod() {
-    return rawDecoderMethod.lower();
+  public Identifier rawDecoderMethod() {
+    return rawDecoderMethod;
   }
 
   public ValueType llvmType() {

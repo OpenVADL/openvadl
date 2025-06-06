@@ -358,7 +358,7 @@ public class AssemblyInstructionPrinterCodeGeneratorVisitor
       var tableGenImmediate = tableGenInstruction.getInOperands().get(indexInInputs);
       var immediateRecord =
           ((TableGenInstructionImmediateOperand) tableGenImmediate).immediateOperand();
-      var encodeMethod = immediateRecord.rawEncoderMethod();
+      var encodeMethod = immediateRecord.rawEncoderMethod().lower();
 
       var encodedSymbol = symbolTable.getNextVariable();
 

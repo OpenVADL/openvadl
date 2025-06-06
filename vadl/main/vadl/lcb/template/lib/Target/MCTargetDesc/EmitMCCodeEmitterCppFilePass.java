@@ -99,7 +99,7 @@ public class EmitMCCodeEmitterCppFilePass extends LcbTemplateRenderingPass {
         .keySet()
         .stream()
         .map(gcbCppFunctionWithBody -> new Aggregate(gcbCppFunctionWithBody.encoderMethod().lower(),
-            gcbCppFunctionWithBody.rawEncoderMethod()))
+            gcbCppFunctionWithBody.rawEncoderMethod().lower()))
         .toList();
   }
 

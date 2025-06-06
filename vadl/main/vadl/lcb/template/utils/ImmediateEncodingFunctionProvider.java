@@ -34,4 +34,13 @@ public class ImmediateEncodingFunctionProvider {
     return ((CreateFunctionsFromImmediatesPass.Output)
         passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).encodings();
   }
+
+  /**
+   * Get the encoding functions.
+   */
+  public static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> generateEncodeWrapperFunctions(
+      PassResults passResults) {
+    return ((CreateFunctionsFromImmediatesPass.Output)
+        passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).encodingsWrappers();
+  }
 }
