@@ -19,10 +19,11 @@ package vadl.lcb.passes.llvmLowering.strategies.nodeLowering;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
+import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmBrCcSD;
 import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmCondCode;
+import vadl.lcb.passes.llvmLowering.domain.selectionDag.LlvmUnlowerableSD;
 import vadl.types.BuiltInTable;
-import vadl.viam.ViamError;
 import vadl.viam.graph.GraphVisitor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.dependency.BuiltInCall;
@@ -62,31 +63,34 @@ public class LcbWriteRegNodeReplacement
         // 3. the second operand of the comparison
         // 4. the immediate offset
 
-        var conditional = (BuiltInCall) writeRegNode.condition();
-        var condCond = LlvmCondCode.from(conditional.builtIn());
-        if (condCond == null) {
-          throw new ViamError("CondCode must be not null");
+        if (writeRegNode.condition() instanceof BuiltInCall conditional) {
+          var condCond = LlvmCondCode.from(conditional.builtIn());
+          if (condCond == null) {
+            throw Diagnostic.error("CondCode must not be null", conditional.location()).build();
+          }
+
+          visitApplicable(conditional.arguments().get(0));
+          visitApplicable(conditional.arguments().get(1));
+
+          var first = conditional.arguments().get(0);
+          var second = conditional.arguments().get(1);
+          var immOffset =
+              builtin.arguments().stream().filter(x -> x instanceof FieldAccessRefNode)
+                  .findFirst();
+
+          if (immOffset.isEmpty()) {
+            throw Diagnostic.error("Immediate Offset is missing", builtin.location()).build();
+          }
+
+          writeRegNode.value().replaceAndDelete(new LlvmBrCcSD(
+              condCond,
+              first,
+              second,
+              immOffset.get()
+          ));
+        } else {
+          writeRegNode.value().replaceAndDelete(new LlvmUnlowerableSD());
         }
-
-        visitApplicable(conditional.arguments().get(0));
-        visitApplicable(conditional.arguments().get(1));
-
-        var first = conditional.arguments().get(0);
-        var second = conditional.arguments().get(1);
-        var immOffset =
-            builtin.arguments().stream().filter(x -> x instanceof FieldAccessRefNode)
-                .findFirst();
-
-        if (immOffset.isEmpty()) {
-          throw new ViamError("Immediate Offset is missing");
-        }
-
-        writeRegNode.value().replaceAndDelete(new LlvmBrCcSD(
-            condCond,
-            first,
-            second,
-            immOffset.get()
-        ));
       }
     }
 
