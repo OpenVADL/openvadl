@@ -134,6 +134,17 @@ public class InstrCallNode extends DirectionalNode {
         paramField -> paramField.isRight() && paramField.right().fieldRef().equals(field));
   }
 
+  /**
+   * Extract the {@link Format.FieldAccess} from {@code paramFieldsOrAccesses}.
+   */
+  public List<Format.FieldAccess> usedFieldAccesses() {
+    return paramFieldsOrAccesses
+        .stream()
+        .filter(Either::isRight)
+        .map(Either::right)
+        .toList();
+  }
+
   @Override
   public void verifyState() {
     ensure(paramFieldsOrAccesses.size() == arguments.size(),
