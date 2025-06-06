@@ -31,7 +31,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.shaded.com.google.common.collect.Streams;
-import vadl.cppCodeGen.common.GcbAccessOrExtractionFunctionCodeGenerator;
+import vadl.cppCodeGen.common.GcbAccessOrPredicateFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.lcb.AbstractLcbTest;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -135,7 +135,7 @@ public class ImmediateExtractionCodeGeneratorCppVerificationRiscv64Test extends 
     var extractFunction =
         new GcbImmediateExtractionCppFunction(fieldAccess.fieldRef().extractFunction());
     var extractionFunctionCodeGenerator =
-        new GcbAccessOrExtractionFunctionCodeGenerator(extractFunction,
+        new GcbAccessOrPredicateFunctionCodeGenerator(extractFunction,
             fieldAccess, extractFunction.identifier.lower());
     var extractionFunctionCode = extractionFunctionCodeGenerator.genFunctionDefinition();
     var extractionFunctionName = extractionFunctionCodeGenerator.genFunctionName();

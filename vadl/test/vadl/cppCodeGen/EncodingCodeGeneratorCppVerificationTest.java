@@ -30,7 +30,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import vadl.configuration.GcbConfiguration;
-import vadl.cppCodeGen.common.GcbAccessOrExtractionFunctionCodeGenerator;
+import vadl.cppCodeGen.common.GcbAccessOrPredicateFunctionCodeGenerator;
 import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
@@ -136,12 +136,12 @@ public class EncodingCodeGeneratorCppVerificationTest extends AbstractCppCodeGen
                   GcbCppFunctionWithBody accessFunction,
                   GcbCppFunctionWithBody encodingFunction) {
     var decodeFunctionGenerator =
-        new GcbAccessOrExtractionFunctionCodeGenerator(accessFunction.header(),
+        new GcbAccessOrPredicateFunctionCodeGenerator(accessFunction.header(),
             accessFunction.header()
                 .fieldAccess(),
             accessFunction.header().identifier.lower());
     var encodeFunctionGenerator =
-        new GcbAccessOrExtractionFunctionCodeGenerator(encodingFunction.header(),
+        new GcbAccessOrPredicateFunctionCodeGenerator(encodingFunction.header(),
             encodingFunction.header().fieldAccess(),
             encodingFunction.header().identifier.lower());
 
