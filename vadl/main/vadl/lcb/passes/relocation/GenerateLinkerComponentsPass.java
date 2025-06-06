@@ -37,6 +37,7 @@ import vadl.gcb.passes.relocation.model.Modifier;
 import vadl.gcb.passes.relocation.model.RelocationsBeforeElfExpansion;
 import vadl.gcb.passes.relocation.model.UserSpecifiedRelocation;
 import vadl.gcb.valuetypes.VariantKind;
+import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
@@ -124,6 +125,8 @@ public class GenerateLinkerComponentsPass extends Pass {
     var fieldUsages =
         (IdentifyFieldUsagePass.ImmediateDetectionContainer) passResults.lastResultOf(
             IdentifyFieldUsagePass.class);
+    var immediates = (CreateFunctionsFromImmediatesPass.Output) passResults.lastResultOf(
+        CreateFunctionsFromImmediatesPass.class);
 
     final var modifiers = new ArrayList<Modifier>();
     final var variantKinds = new ArrayList<VariantKind>();
@@ -169,13 +172,8 @@ public class GenerateLinkerComponentsPass extends Pass {
 
       variantStore.addUserDefined(userSpecifiedRelocation, variantKind);
 
-      for (var instruction : instructions) {
-        // We cannot use all the fields of a format because not all are immediates.
-        // That's why we need the `fieldUsages`.
-        var immediateFields = fieldUsages.getImmediates(instruction);
-        for (var imm : immediateFields) {
-          candidates.add(new Pair<>(userSpecifiedRelocation, imm));
-        }
+      for (var encoding : immediates.encodings().keySet()) {
+        candidates.add(Pair.of(userSpecifiedRelocation, encoding.fieldAccessRef().fieldRef()));
       }
     }
 
