@@ -51,11 +51,11 @@ public final class TableGenImmediateOperandRenderer {
             """,
         Map.of("rawName", operand.rawName(),
             "fullName", operand.fullname(),
-            "encoderMethod", operand.encoderMethod(),
-            "decoderMethod", operand.decoderMethod(),
+            "encoderMethod", operand.encoderMethod().lower(),
+            "decoderMethod", operand.decoderMethod().lower(),
             "type", operand.llvmType().getLlvmType(),
             "lowestPossibleValue", lowestPossibleValue,
             "highestPossibleValue", highestPossibleValue,
-            "predicateMethod", operand.predicateMethod()));
+            "predicateMethod", operand.predicateMethod().lower()));
   }
 }
