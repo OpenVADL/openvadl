@@ -20,7 +20,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 import vadl.configuration.GcbConfiguration;
 import vadl.configuration.GeneralConfiguration;
-import vadl.configuration.LcbConfiguration;
+import vadl.error.Diagnostic;
 import vadl.gcb.valuetypes.TargetName;
 import vadl.pass.Pass;
 import vadl.pass.PassName;
@@ -48,7 +48,8 @@ public class SetMissingConfigurationValuesPass extends Pass {
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
     var config = (GcbConfiguration) configuration();
-    var targetName = viam.isa().map(x -> x.identifier).orElseThrow();
+    var targetName = viam.isa().map(x -> x.identifier).orElseThrow(() ->
+        Diagnostic.error("VIAM has no ISA", viam.location()).build());
 
     if (config.isTargetNameNull()) {
       config.setTargetName(new TargetName(targetName.simpleName().toLowerCase()));

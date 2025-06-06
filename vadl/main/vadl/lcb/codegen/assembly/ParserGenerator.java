@@ -21,6 +21,7 @@ import static vadl.viam.ViamError.ensure;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import vadl.error.Diagnostic;
 import vadl.gcb.passes.assembly.AssemblyConstant;
 import vadl.gcb.passes.assembly.AssemblyRegisterNode;
 import vadl.template.Renderable;
@@ -124,7 +125,7 @@ public class ParserGenerator {
       return "";
     }
 
-    throw new ViamError("not supported");
+    throw Diagnostic.error("not supported expression for parser generator", x.location()).build();
   }
 
   private static String mapToName(FieldRefNode node) {

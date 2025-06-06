@@ -49,7 +49,6 @@ import vadl.viam.Identifier;
 import vadl.viam.Instruction;
 import vadl.viam.PseudoInstruction;
 import vadl.viam.Relocation;
-import vadl.viam.ViamError;
 import vadl.viam.graph.HasRegisterTensor;
 import vadl.viam.graph.Node;
 import vadl.viam.graph.control.ControlNode;
@@ -183,7 +182,8 @@ public class CompilerInstructionExpansionCodeGenerator extends FunctionCodeGener
       }
       case REGISTER -> ctx.ln("%s.addOperand(instruction.getOperand(%d));", instructionSymbol,
           pseudoInstructionIndex);
-      default -> throw new ViamError("not supported");
+      default -> throw Diagnostic.error("Cannot detect the usage of this field",
+          instructionCallNode.location().join(field.location())).build();
     }
   }
 
