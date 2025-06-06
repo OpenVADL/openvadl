@@ -48,22 +48,6 @@ public class AccessFunctionCodeGenerator extends FunctionCodeGenerator {
 
   /**
    * Creates a new pure function code generator for the specified function. The function will be
-   * named with the specified name.
-   *
-   * @param fieldAccess  The field fieldAccess for which the function should be generated
-   * @param functionName The name of the access function to generate
-   */
-  public AccessFunctionCodeGenerator(Format.FieldAccess fieldAccess,
-                                     @Nullable String functionName) {
-    super(fieldAccess.accessFunction());
-    this.fieldAccess = fieldAccess;
-    this.functionName = functionName == null ? function.simpleName() : functionName;
-    this.fieldNames = fieldAccess.fieldRefs().stream()
-        .collect(Collectors.toMap(identity(), Definition::simpleName));
-  }
-
-  /**
-   * Creates a new pure function code generator for the specified function. The function will be
    * named with the specified name. The references to the fields to access will be generated based
    * on the supplied fieldNames.
    *
