@@ -17,7 +17,8 @@
 package vadl.gcb.passes;
 
 import java.util.Set;
-import vadl.viam.ViamError;
+import vadl.error.Diagnostic;
+import vadl.utils.SourceLocation;
 
 /**
  * The {@link MachineInstructionLabelGroup} groups together multiple {@link MachineInstructionLabel}
@@ -79,6 +80,9 @@ public enum MachineInstructionLabelGroup {
       return asCheapAsMoveCandidates;
     }
 
-    throw new ViamError("not supported");
+    throw Diagnostic.error(
+            "Not supported to convert machine instruction label group to a set of "
+                + "machine instructions", SourceLocation.INVALID_SOURCE_LOCATION)
+        .build();
   }
 }
