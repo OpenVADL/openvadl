@@ -43,7 +43,6 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
-import vadl.utils.Either;
 import vadl.viam.Abi;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
@@ -197,11 +196,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
 
   private static @Nonnull Format.FieldAccess getFieldAccessFunctionFromFormatOrThrowError(
       InstrCallNode machineInstruction) {
-    var usedFieldAccessFunctions = machineInstruction.getParamFieldsOrAccesses()
-        .stream()
-        .filter(Either::isRight)
-        .map(Either::right)
-        .toList();
+    var usedFieldAccessFunctions = machineInstruction.usedFieldAccesses();
     if (usedFieldAccessFunctions.isEmpty()) {
       throw Diagnostic.error(
               "Machine instruction must have one field access function to be able to "

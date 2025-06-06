@@ -95,13 +95,16 @@ bool [(${namespace})]DAGToDAGISel::trySelect(SDNode *Node)
          auto ConstNode = cast<ConstantSDNode>(Node);
          MVT VT = Node->getSimpleValueType(0);
 
-         // Handle zeros
+         [#th:block th:if="${replaceImmZeroByRegisterZero}"]
+         // The idea is that when we have zero register then we can use it.
+         // So we can use RR instructions and not only RI.
          if (VT == MVT::[(${stackPointerType})] && ConstNode->isZero()) {
            SDValue New = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), SDLoc(Node),
                                                 [(${namespace})]::[(${zeroRegister})], MVT::[(${stackPointerType})]);
            ReplaceNode(Node, New.getNode());
            return true;
          }
+         [/th:block]
 
          // Handle rest
          int64_t Imm = ConstNode->getSExtValue();

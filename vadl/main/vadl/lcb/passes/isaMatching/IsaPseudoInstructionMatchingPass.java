@@ -62,8 +62,8 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
   }
 
   /**
-  * Result of the pass.
-*/
+   * Result of the pass.
+   */
   public record Result(Map<PseudoInstructionLabel, List<PseudoInstruction>> labels,
                        Map<PseudoInstruction, PseudoInstructionLabel> reverse) {
 
@@ -127,7 +127,14 @@ public class IsaPseudoInstructionMatchingPass extends Pass implements IsaMatchin
 
     var instrCallNode =
         ensurePresent(pseudoInstruction.behavior().getNodes(InstrCallNode.class).findFirst(),
-            "instruction call node must exist");
+            "Instruction call node must exist");
+
+    // We need at least one immediate to branch to a basic block.
+    // If it has none then it is not an unconditional jump.
+    if (instrCallNode.usedFieldAccesses().isEmpty()) {
+      return false;
+    }
+
     var machineInstructionLabel = flipped.get(instrCallNode.target());
     return machineInstructionLabel == MachineInstructionLabel.JAL;
   }
