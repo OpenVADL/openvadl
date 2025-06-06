@@ -325,4 +325,24 @@ public class ParserTest {
     }
     return ast;
   }
+
+  @Test
+  void nestedLetStatementLetExpr() {
+    // Previously, there was a parsing bug requiring parenthesis around the inner let to be
+    // correctly parsed.
+    // https://github.com/OpenVADL/openvadl/issues/242
+    var prog = """
+        instruction set architecture Test = {
+          register X : Bits<5> -> Bits<64>
+        
+          format testFormat : Bits<8> = {op: Bits<8>}
+        
+          instruction test : testFormat =
+            let stmt = let expr = 1 in 1 in
+              X(31) := 1
+          }
+        """;
+
+    Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog));
+  }
 }
