@@ -90,6 +90,7 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
                     null, // can be automatically generated
                     createPredicateFunction(id, fieldRefNode)
                 );
+                instruction.format().fieldAccesses().add(fieldAccess);
                 var fieldAccessRefNode = new FieldAccessRefNode(
                     fieldAccess,
                     fieldRefNode.type()
