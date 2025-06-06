@@ -107,7 +107,7 @@ instruction set architecture VarRISC32 = {
 
   model ShortRegInstr (name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val) : IsaDefs = {
     instruction $name : TYPE_S =
-      let res = R(rd) as $ltype $op R(rs1) as $rtype in
+      let res = R(rd) as $ltype $op R(rs1imm) as $rtype in
           R(rd) := res as Regs
     encoding $name = { opcode = $code }
     assembly $name = ( mnemonic, ' ', register(rd), ',', register(rs1) )
@@ -152,7 +152,7 @@ instruction set architecture VarRISC32 = {
 
   model LongImmInstruction (name : Id, op : BinOp, ltype: Id, rtype: Id, code : Val) : IsaDefs = {
     instruction AsId ( $name, 'I_L') : TYPE_L =
-        let res = R(rs1) as $ltype $op imm in
+        let res = R(func5) as $ltype $op imm in
             R(rd) := res as Regs
     encoding AsId ( $name, 'I_L') = { opcode = ImmLOff + $code }
     assembly AsId ( $name, 'I_L') = ( mnemonic, ' ', register(rd), ',', register(rs1), ',', decimal(imm) )
@@ -161,7 +161,7 @@ instruction set architecture VarRISC32 = {
 
   model MoveInstruction (name : Id, code : Val) : IsaDefs = {
     instruction $name : TYPE_S =
-      R(rd) := R(rs1)
+      R(rd) := R(rs1imm)
     encoding $name = { opcode = $code }
     assembly $name = ( mnemonic, ' ', register(rd), ':=', register(rs1))
   }
@@ -177,7 +177,7 @@ instruction set architecture VarRISC32 = {
     instruction $name : TYPE_S =
       let retaddr = PC.next in {
         PC := R(rd)
-        R(rs1) := retaddr
+        R(rs1imm) := retaddr
       }
     encoding $name = { opcode = $code }
     assembly $name = ( mnemonic, ' ', register(rd), ',', register(rs1) )
@@ -190,14 +190,14 @@ instruction set architecture VarRISC32 = {
     assembly $name = ( mnemonic, ' ', register(rd), ',', decimal(imm), '(', register(rs1), ')' )
 
     instruction AsId ( $name, '_L') : TYPE_L =
-      let a = R(rs1) + immU in $memstmt
+      let a = R(func5) + immU in $memstmt
     encoding AsId ( $name, '_L') = { opcode = MemLOff + $code }
     assembly AsId ( $name, '_L') = ( mnemonic, ' ', register(rd), ',', decimal(imm), '(', register(rs1), ')' )
   }
 
   model ShortMemInstruction ( name : Id, memstmt : Stat, code : Val ) : IsaDefs = {
     instruction AsId ( $name, '_S') : TYPE_S =
-      let a = R(rs1) in $memstmt
+      let a = R(rs1imm) in $memstmt
     encoding AsId ( $name, '_S') = { opcode = MemSOff + $code }
     assembly AsId ( $name, '_S') = ( mnemonic, ' ', register(rd), ',(', register(rs1), ')' )
     $MemoryInstruction ( $name; $memstmt; $code )

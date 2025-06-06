@@ -3,6 +3,8 @@
 
 import VarRisc::{VarRISC32}
 
+instruction set architecture VarRISC extending VarRISC32 = {}
+
 application binary interface ABI for VarRISC32 = {
    size_t type = unsigned int
    pointer align = 32
