@@ -66,6 +66,7 @@ public class LlvmFieldAccessRefNode extends FieldAccessRefNode {
         new TableGenImmediateRecord(fieldAccess, llvmType);
     this.llvmType = llvmType;
     this.usage = usage;
+    setSourceLocation(fieldAccess.location());
   }
 
   @Override

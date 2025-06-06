@@ -21,9 +21,7 @@ import vadl.error.Diagnostic;
 import vadl.lcb.passes.llvmLowering.LlvmNodeLowerable;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenMachineInstructionVisitor;
 import vadl.lcb.passes.llvmLowering.strategies.visitors.TableGenNodeVisitor;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.InstructionOperandPrintable;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenDefaultInstructionOperand;
-import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionImmediateOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionIndexedRegisterFileOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionOperand;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionRegisterFileOperand;
@@ -68,7 +66,8 @@ public class LlvmReadRegFileNode extends ReadRegTensorNode implements LlvmNodeLo
     } else if (address instanceof FuncParamNode funcParamNode) {
       instructionOperand = new TableGenInstructionIndexedRegisterFileOperand(this, funcParamNode);
     } else {
-      throw Diagnostic.error("Not supported", address.location()).build();
+      throw Diagnostic.error("Cannot construct a tablegen operand from this", address.location())
+          .build();
     }
   }
 
