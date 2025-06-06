@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
@@ -86,15 +85,14 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
 
   private List<RegisterUtils.RegisterClass> extractRegisterClasses(Specification specification,
                                                                    Abi abi) {
-    return specification.isa().map(x -> x.registerTensors().stream())
-        .orElse(Stream.empty())
+    return specification.isa().stream().flatMap(x -> x.registerTensors().stream())
         .filter(RegisterTensor::isRegisterFile)
         .map(x -> RegisterUtils.getRegisterClass(x, abi.aliases()))
         .toList();
   }
 
   private List<Immediate> extractImmediates(PassResults passResults) {
-    return ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults)
+    return ImmediateDecodingFunctionProvider.generateDecodeWrapperFunctions(passResults)
         .entrySet()
         .stream()
         .map(entry -> {
@@ -104,7 +102,7 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
           var rawDecoderMethod = immediateRecord.rawDecoderMethod();
           var bitWidth = field.size();
 
-          return new Immediate(wrapperName, rawDecoderMethod, bitWidth,
+          return new Immediate(wrapperName, rawDecoderMethod.lower(), bitWidth,
               (int) Math.pow(2, bitWidth) - 1);
         })
         .sorted(Comparator.comparing(o -> o.wrapperName))
@@ -116,8 +114,7 @@ public class EmitDisassemblerCppFilePass extends LcbTemplateRenderingPass {
    * The method throws an exception when different sizes exist.
    */
   private int getInstructionSize(Specification specification) {
-    List<Integer> sizes = specification.isa()
-        .map(x -> x.ownFormats().stream()).orElseGet(Stream::empty)
+    List<Integer> sizes = specification.isa().stream().flatMap(x -> x.ownFormats().stream())
         .mapToInt(x -> Arrays.stream(x.fields()).mapToInt(Format.Field::size).sum())
         .distinct()
         .boxed()

@@ -34,6 +34,7 @@ import vadl.pass.Pass;
 import vadl.pass.PassName;
 import vadl.pass.PassResults;
 import vadl.types.Type;
+import vadl.utils.SourceLocation;
 import vadl.viam.Format;
 import vadl.viam.Identifier;
 import vadl.viam.Parameter;
@@ -50,7 +51,9 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
   }
 
   public record Output(Map<TableGenImmediateRecord, GcbCppFunctionWithBody> encodings,
+                       Map<TableGenImmediateRecord, GcbCppFunctionWithBody> encodingsWrappers,
                        Map<TableGenImmediateRecord, GcbCppFunctionWithBody> decodings,
+                       Map<TableGenImmediateRecord, GcbCppFunctionWithBody> decodingWrappers,
                        Map<TableGenImmediateRecord, GcbCppFunctionWithBody> predicates) {
 
   }
@@ -58,23 +61,79 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
   @Nullable
   @Override
   public Object execute(PassResults passResults, Specification viam) throws IOException {
-    var encodings = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
+    var abi = viam.abi().orElseThrow();
+
+    /*
+      What's the difference between `decodings` and `decodingWrappers`?
+
+      The decodings are pure extraction function like what you would expect from your field access
+      function.
+
+      ``` (not entirely correct)
+        static int64_t RV3264Base_ADDI_decode_wrapper() {
+           return VADL_sextract(param, 12);
+      ```
+
+      The wrapper is just an abstraction for LLVM. Note that the wrapper method calls the underlying
+      decoder function.
+
+      ```
+        DecodeStatus RV3264Base_ADDI_decode_wrapper(
+          MCInst &Inst,
+          uint64_t Imm,
+          int64_t Address,
+          const void *Decoder)
+        {
+            Imm = Imm & 4095;
+            Imm = RV3264Base_ADDI_decode(Imm);
+            Inst.addOperand(MCOperand::createImm(Imm));
+            return MCDisassembler::Success;
+      }
+      ```
+     */
+
     var decodings = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
+    var decodingWrappers = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
+
+    // Same applies to encoding and encodingWrappers
+    var encodings = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
+    var encodingWrappers = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
+
     var predicates = new IdentityHashMap<TableGenImmediateRecord, GcbCppFunctionWithBody>();
     var immediates = (List<TableGenImmediateRecord>) passResults.lastResultOf(
         GenerateTableGenImmediateRecordPass.class);
 
     for (var immediate : immediates) {
+      var stackPointer = abi.stackPointer();
+      var stackPointerType =
+          Objects.requireNonNull(stackPointer.registerFile().resultType().fittingCppType());
+      encodingWrappers.put(immediate, encodingWrappers(immediate));
       encodings.put(immediate, encoding(immediate));
-      decodings.put(immediate, decoding(immediate));
-      predicates.put(immediate, predicate(immediate));
+      decodingWrappers.put(immediate, decodingWrapper(immediate));
+      decodings.put(immediate, decoding(stackPointerType, immediate));
+      predicates.put(immediate, predicate(stackPointerType, immediate));
     }
 
-    return new Output(encodings, decodings, predicates);
+    return new Output(encodings, encodingWrappers, decodings, decodingWrappers, predicates);
   }
 
   @Nonnull
   private GcbCppFunctionWithBody encoding(TableGenImmediateRecord immediate) {
+    var encodingBodyLessFunction = new GcbCppFunctionBodyLess(
+        immediate.rawEncoderMethod(),
+        new Parameter[] {},
+        CppTypeMap.upcast(
+            Objects.requireNonNull(immediate.fieldAccessRef().encoding()).targetField().type()),
+        immediate.fieldAccessRef().encoding().behavior(),
+        immediate.fieldAccessRef());
+    return new GcbCppFunctionWithBody(encodingBodyLessFunction,
+        generateCode(immediate.rawEncoderMethod(),
+            immediate.fieldAccessRef(),
+            encodingBodyLessFunction));
+  }
+
+  @Nonnull
+  private GcbCppFunctionWithBody encodingWrappers(TableGenImmediateRecord immediate) {
     var encodingBodyLessFunction = new GcbCppFunctionBodyLess(
         immediate.encoderMethod(),
         new Parameter[] {},
@@ -89,7 +148,7 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
   }
 
   @Nonnull
-  private GcbCppFunctionWithBody decoding(TableGenImmediateRecord immediate) {
+  private GcbCppFunctionWithBody decodingWrapper(TableGenImmediateRecord immediate) {
     var bodyLessFunction = new GcbCppFunctionBodyLess(
         immediate.decoderMethod(),
         new Parameter[] {},
@@ -103,15 +162,36 @@ public class CreateFunctionsFromImmediatesPass extends Pass {
   }
 
   @Nonnull
-  private GcbCppFunctionWithBody predicate(TableGenImmediateRecord immediate) {
+  private GcbCppFunctionWithBody decoding(Type stackPointerType,
+                                          TableGenImmediateRecord immediate) {
+    var bodyLessFunction = new GcbCppFunctionBodyLess(
+        immediate.rawDecoderMethod(),
+        // We use the size of the stack pointer to decide what the parameter's type is.
+        new Parameter[] {
+            new Parameter(new Identifier("param", SourceLocation.INVALID_SOURCE_LOCATION),
+                stackPointerType)},
+        CppTypeMap.upcast(immediate.fieldAccessRef().accessFunction().returnType()),
+        immediate.fieldAccessRef().accessFunction().behavior(),
+        immediate.fieldAccessRef());
+    return new GcbCppFunctionWithBody(bodyLessFunction,
+        generateCode(immediate.rawDecoderMethod(),
+            immediate.fieldAccessRef(),
+            bodyLessFunction));
+  }
+
+  @Nonnull
+  private GcbCppFunctionWithBody predicate(Type stackPointerType,
+                                           TableGenImmediateRecord immediate) {
     var bodyLessFunction = new GcbCppFunctionBodyLess(
         immediate.predicateMethod(),
-        new Parameter[] {},
+        new Parameter[] {
+            new Parameter(new Identifier("param", SourceLocation.INVALID_SOURCE_LOCATION),
+                stackPointerType)},
         Type.bool(),
         immediate.fieldAccessRef().predicate().behavior(),
         immediate.fieldAccessRef());
     return new GcbCppFunctionWithBody(bodyLessFunction,
-        generateCode(immediate.encoderMethod(),
+        generateCode(immediate.predicateMethod(),
             immediate.fieldAccessRef(),
             bodyLessFunction));
   }
