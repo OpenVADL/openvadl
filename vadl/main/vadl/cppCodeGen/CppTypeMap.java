@@ -123,7 +123,8 @@ public class CppTypeMap {
   }
 
   /**
-   * Upcast the given type to the next fitting bit size.
+   * Upcast the given type to the next fitting bit size. It will not upcast {@code type} when it
+   * is already a valid cpp type.
    */
   public static BitsType upcast(Type type) {
     if (type instanceof BitsType cast) {

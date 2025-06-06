@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.PseudoInstructionLabel;
@@ -177,8 +178,9 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
   }
 
   private static @Nonnull ValueType upcastFieldAccess(Format.FieldAccess fieldAccess) {
-    return ensurePresent(ValueType.from(fieldAccess.type()),
-        () -> Diagnostic.error("Cannot convert immediate type to LLVM type.",
+    return ensurePresent(ValueType.from(CppTypeMap.upcast(fieldAccess.type())),
+        () -> Diagnostic.error(
+                String.format("Cannot convert immediate type to LLVM type: %s", fieldAccess.type()),
                 fieldAccess.location())
             .help("Check whether this type exists in LLVM"));
   }
@@ -202,7 +204,7 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
         .toList();
     if (usedFieldAccessFunctions.isEmpty()) {
       throw Diagnostic.error(
-              "Machine instruction must at one field access function to be able to "
+              "Machine instruction must have one field access function to be able to "
                   + "deduce the immediate layout for the machine instruction.",
               machineInstruction.location())
           .help("Use a field access function so the generator knows that this is the immediate.")
