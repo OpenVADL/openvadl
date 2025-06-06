@@ -1,4 +1,20 @@
-package vadl.rtl.ipg;
+// SPDX-FileCopyrightText : © 2025 TU Wien <vadl@tuwien.ac.at>
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+package vadl.rtl.ipg.nodes;
 
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +33,7 @@ import vadl.viam.graph.dependency.ExpressionNode;
  * {@link vadl.viam.graph.dependency.FieldRefNode}s to simple bit slices of the instruction word,
  * which are unique across formats.
  */
-public class InstructionWordSlice extends ExpressionNode {
+public class RtlInstructionWordSliceNode extends ExpressionNode {
 
   @DataValue
   protected BitsType formatType;
@@ -34,11 +50,36 @@ public class InstructionWordSlice extends ExpressionNode {
    * @param slice bit slice
    * @param type data type of the slice result
    */
-  public InstructionWordSlice(BitsType formatType, Constant.BitSlice slice, DataType type) {
+  public RtlInstructionWordSliceNode(BitsType formatType, Constant.BitSlice slice, DataType type) {
     super(type);
     this.formatType = formatType;
     this.slice = slice;
     this.fields = new HashSet<>();
+  }
+
+  /**
+   * Create a new instruction word slice node.
+   *
+   * @param formatType format type (type of the instruction word)
+   * @param slice bit slice
+   * @param fields set of format fields
+   * @param type data type of the slice result
+   */
+  public RtlInstructionWordSliceNode(BitsType formatType, Constant.BitSlice slice,
+                                     Set<Format.Field> fields, DataType type) {
+    super(type);
+    this.formatType = formatType;
+    this.slice = slice;
+    this.fields = fields;
+  }
+
+  /**
+   * Get the instruction format type.
+   *
+   * @return format type
+   */
+  public BitsType formatType() {
+    return formatType;
   }
 
   /**
@@ -82,7 +123,7 @@ public class InstructionWordSlice extends ExpressionNode {
 
   @Override
   public ExpressionNode copy() {
-    return new InstructionWordSlice(formatType, slice, type().asDataType());
+    return new RtlInstructionWordSliceNode(formatType, slice, fields, type().asDataType());
   }
 
   @Override

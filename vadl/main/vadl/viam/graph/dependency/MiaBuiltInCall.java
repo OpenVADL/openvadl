@@ -78,4 +78,18 @@ public class MiaBuiltInCall extends BuiltInCall {
     this.logic.add(logic);
   }
 
+  /**
+   * Match resource with resource list of this builtin call. If the list is empty, any resource
+   * matches.
+   *
+   * @param resource resource to match
+   * @return true if resource matches
+   */
+  public boolean matchResource(Resource resource) {
+    if (resources.isEmpty()) {
+      return true;
+    }
+    return resources.contains(resource);
+  }
+
 }

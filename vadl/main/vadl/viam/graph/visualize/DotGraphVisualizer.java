@@ -16,7 +16,12 @@
 
 package vadl.viam.graph.visualize;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import vadl.viam.graph.Graph;
@@ -33,6 +38,7 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
   private @Nullable Graph graph;
   private boolean withSourceLocation = false;
   private @Nullable Predicate<Node> nodeFilter;
+  private @Nullable Function<Node, String> cluster;
   private String name = "unnamed";
 
   @Override
@@ -57,7 +63,12 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
     return this;
   }
 
-  private boolean nodeFilter(Node node) {
+  public DotGraphVisualizer withCluster(Function<Node, String> cluster) {
+    this.cluster = cluster;
+    return this;
+  }
+
+  protected boolean nodeFilter(Node node) {
     if (nodeFilter == null) {
       return true;
     }
@@ -73,15 +84,42 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
     dotBuilder.append("    label=%s\n".formatted(wrapStr(name)));
     dotBuilder.append("\n");
 
-    var nodes = graph.getNodes(Node.class).filter(this::nodeFilter);
+    var nodes = graph.getNodes(Node.class).filter(this::nodeFilter).toList();
+
+    var subgraphs = new HashMap<String, Collection<Node>>();
+    if (cluster == null) {
+      subgraphs.put(null, nodes);
+    } else {
+      for (Node node : nodes) {
+        var subgraph = cluster.apply(node);
+        subgraphs.computeIfAbsent(subgraph, k -> new HashSet<>()).add(node);
+      }
+    }
+    var colors = colorKey(subgraphs.keySet());
+
+    subgraphs.forEach((subgraph, set) -> {
+      if (subgraph != null) {
+        dotBuilder
+            .append("subgraph cluster_").append(subgraph).append(" {\n")
+            .append("  label=%s".formatted(wrapStr(subgraph))).append(";\n")
+            .append("  style=filled;\n")
+            .append("  labeljust=l;\n")
+            .append("  fillcolor=\"").append(colors.get(subgraph)).append("\";\n");
+      }
+      set.forEach(node -> {
+        dotBuilder
+            .append("     ")
+            .append(wrapStr(node.id()))
+            .append(" [label=%s %s]".formatted(wrapStr(label(node)), nodeStyle(node)))
+            .append(";\n");
+      });
+      if (subgraph != null) {
+        dotBuilder
+            .append("}\n");
+      }
+    });
 
     nodes.forEach(node -> {
-      dotBuilder
-          .append("     ")
-          .append(wrapStr(node.id()))
-          .append(" [label=%s %s]".formatted(wrapStr(label(node)), nodeStyle(node)))
-          .append(";\n");
-
       var inputs = node.inputs().filter(this::nodeFilter).toList();
       for (var i = 0; i < inputs.size(); i++) {
         var input = inputs.get(i);
@@ -142,6 +180,19 @@ public class DotGraphVisualizer implements GraphVisualizer<String, Graph> {
     }
 
     return "";
+  }
+
+  private String color(int code) {
+    return "/pastel19/" + (Math.abs(code % 9) + 1);
+  }
+
+  private Map<String, String> colorKey(final Collection<String> keys) {
+    var colors = new HashMap<String, String>();
+    int i = 0;
+    for (String key : keys) {
+      colors.put(key, color(i++));
+    }
+    return colors;
   }
 
 }

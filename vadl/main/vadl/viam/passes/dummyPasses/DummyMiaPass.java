@@ -18,7 +18,6 @@ package vadl.viam.passes.dummyPasses;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -47,6 +46,60 @@ import vadl.viam.graph.dependency.WriteStageOutputNode;
 /**
  * Adds a hardcoded {@link vadl.viam.MicroArchitecture} definition to the VIAM specification.
  * This is deleted as soon as the frontend can handle the translation.
+ *
+ * <pre>
+ * [forwarding]
+ * logic bypass
+ *
+ * [branch predictor]
+ * logic predict
+ *
+ * stage FETCH -> ( fr : FetchResult ) =
+ * {
+ *   fr := fetchNext
+ * }
+ *
+ * stage DECODE -> ( ir : Instruction ) =
+ * {
+ *   let instr = decode( FETCH.fr ) in
+ *   {
+ *     instr.address( @X )
+ *     instr.readOrForward( @X, @bypass )
+ *     ir := instr
+ *   }
+ * }
+ *
+ * stage EXECUTE -> ( ir : Instruction ) =
+ * {
+ *   let instr = DECODE.ir in
+ *   {
+ *     instr.read( @PC )
+ *     instr.compute
+ *     instr.verify
+ *     instr.write( @PC )
+ *     instr.results( @X, @bypass )
+ *     ir := instr
+ *   }
+ * }
+ *
+ * stage MEMORY -> ( ir : Instruction ) =
+ * {
+ *   let instr = EXECUTE.ir in
+ *   {
+ *     instr.write( @MEM )
+ *     instr.read( @MEM )
+ *     ir := instr
+ *   }
+ * }
+ *
+ * stage WRITE_BACK =
+ * {
+ *   let instr = MEMORY.ir in
+ *   {
+ *     instr.write( @X )
+ *   }
+ * }
+ * </pre>
  */
 public class DummyMiaPass extends Pass {
 
@@ -277,7 +330,7 @@ public class DummyMiaPass extends Pass {
    * </pre>.
    */
   private static Stage writeBack(Identifier ident, StageOutput memoryIr, RegisterTensor regFile) {
-    return new Stage(ident, writeBackBehavior(memoryIr, regFile), Collections.emptyList());
+    return new Stage(ident, writeBackBehavior(memoryIr, regFile), List.of());
   }
 
   private static Graph writeBackBehavior(StageOutput memoryIr, RegisterTensor regFile) {
@@ -286,7 +339,8 @@ public class DummyMiaPass extends Pass {
     var i1 = new MiaBuiltInCall(BuiltInTable.INSTRUCTION_WRITE, new NodeList<>(rd),
         MicroArchitectureType.instruction());
     i1.add(regFile);
-    beh.addWithInputs(i1); // TODO ?
+    var wr = new WriteStageOutputNode(null, i1);
+    beh.addWithInputs(wr);
     return beh;
   }
 

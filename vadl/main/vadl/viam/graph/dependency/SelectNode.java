@@ -19,6 +19,7 @@ package vadl.viam.graph.dependency;
 import java.util.List;
 import vadl.javaannotations.viam.Input;
 import vadl.types.BoolType;
+import vadl.types.Type;
 import vadl.viam.graph.Canonicalizable;
 import vadl.viam.graph.GraphNodeVisitor;
 import vadl.viam.graph.GraphVisitor;
@@ -38,17 +39,28 @@ public class SelectNode extends ExpressionNode implements Canonicalizable {
   @Input
   ExpressionNode falseCase;
 
+
   /**
    * Constructor to instantiate a select node.
    */
   public SelectNode(ExpressionNode condition, ExpressionNode trueCase, ExpressionNode falseCase) {
-    super(trueCase.type());
+    this(trueCase.type(), condition, trueCase, falseCase);
+  }
+
+  /**
+   * Constructor to instantiate a select node.
+   */
+  public SelectNode(Type type, ExpressionNode condition, ExpressionNode trueCase,
+                    ExpressionNode falseCase) {
+    super(type);
     this.condition = condition;
     this.trueCase = trueCase;
     this.falseCase = falseCase;
 
-    ensure(trueCase.type().isTrivialCastTo(falseCase.type()),
-        "True and false case must have the same type. %s vs %s", trueCase.type(), falseCase.type());
+    ensure(trueCase.type().isTrivialCastTo(type),
+        "True case can not be cast to result type. %s vs %s", trueCase.type(), type);
+    ensure(falseCase.type().isTrivialCastTo(type),
+        "False case can not be cast to result type. %s vs %s", falseCase.type(), type);
     ensure(condition.type().isTrivialCastTo(BoolType.bool()), "Condition must have type Bool");
   }
 
