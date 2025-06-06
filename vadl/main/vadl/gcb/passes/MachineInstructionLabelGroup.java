@@ -81,7 +81,7 @@ public enum MachineInstructionLabelGroup {
     }
 
     throw Diagnostic.error(
-            "not supported to convert machine instruction label group to a set of "
+            "Not supported to convert machine instruction label group to a set of "
                 + "machine instructions", SourceLocation.INVALID_SOURCE_LOCATION)
         .build();
   }

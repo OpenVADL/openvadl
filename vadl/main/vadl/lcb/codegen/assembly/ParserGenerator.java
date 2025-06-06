@@ -125,7 +125,7 @@ public class ParserGenerator {
       return "";
     }
 
-    throw Diagnostic.error("not supported expression for parser generator", x.location()).build();
+    throw Diagnostic.error("Not supported expression for parser generator", x.location()).build();
   }
 
   private static String mapToName(FieldRefNode node) {
