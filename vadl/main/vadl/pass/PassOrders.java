@@ -218,9 +218,6 @@ public class PassOrders {
     order.add(new GenerateValueRangeImmediatePass(gcbConfiguration));
     order.add(new GenerateFieldAccessEncodingFunctionPass(gcbConfiguration));
     order.add(new FieldNodeReplacementPassForDecoding(gcbConfiguration));
-    //order.add(new CreateGcbFieldAccessCppFunctionFromEncodingFunctionPass(gcbConfiguration));
-    //order.add(new CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass(gcbConfiguration));
-    //order.add(new CreateGcbFieldAccessFunctionFromPredicateFunctionPass(gcbConfiguration));
     order.add(new AssemblyConcatBuiltinMergingPass(gcbConfiguration));
     order.add(new InstructionPatternPruningPass(gcbConfiguration));
 
