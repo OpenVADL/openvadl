@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import vadl.cppCodeGen.CppTypeMap;
 import vadl.error.Diagnostic;
 import vadl.gcb.passes.IsaMachineInstructionMatchingPass;
 import vadl.gcb.passes.PseudoInstructionLabel;
@@ -42,6 +43,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenInstAlias;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenSelectionWithOutputPattern;
 import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstructionBareSymbolOperand;
+import vadl.utils.Either;
 import vadl.viam.Abi;
 import vadl.viam.Format;
 import vadl.viam.PseudoInstruction;
@@ -176,8 +178,9 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
   }
 
   private static @Nonnull ValueType upcastFieldAccess(Format.FieldAccess fieldAccess) {
-    return ensurePresent(ValueType.from(fieldAccess.type()),
-        () -> Diagnostic.error("Cannot convert immediate type to LLVM type.",
+    return ensurePresent(ValueType.from(CppTypeMap.upcast(fieldAccess.type())),
+        () -> Diagnostic.error(
+                String.format("Cannot convert immediate type to LLVM type: %s", fieldAccess.type()),
                 fieldAccess.location())
             .help("Check whether this type exists in LLVM"));
   }
@@ -194,11 +197,25 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
 
   private static @Nonnull Format.FieldAccess getFieldAccessFunctionFromFormatOrThrowError(
       InstrCallNode machineInstruction) {
-    ensure(machineInstruction.target().format().fieldAccesses().size() == 1, () ->
-        Diagnostic.error(
-            "Machine instruction must only have one field access function to be able to "
-                + "deduce the immediate layout for the machine instruction.",
-            machineInstruction.location()));
+    var usedFieldAccessFunctions = machineInstruction.getParamFieldsOrAccesses()
+        .stream()
+        .filter(Either::isRight)
+        .map(Either::right)
+        .toList();
+    if (usedFieldAccessFunctions.isEmpty()) {
+      throw Diagnostic.error(
+              "Machine instruction must have one field access function to be able to "
+                  + "deduce the immediate layout for the machine instruction.",
+              machineInstruction.location())
+          .help("Use a field access function so the generator knows that this is the immediate.")
+          .build();
+    } else if (usedFieldAccessFunctions.size() > 1) {
+      throw Diagnostic.error(
+          "Machine instruction must only have exactly one field access function to be able to "
+              + "deduce the immediate layout for the machine instruction.",
+          machineInstruction.location()).build();
+    }
+
     return
         ensurePresent(machineInstruction.target().format().fieldAccesses().stream().findFirst(),
             () -> Diagnostic.error("Cannot find a field access function",

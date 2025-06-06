@@ -1225,6 +1225,7 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
       argExprs.add(fetch(arg.value));
     }
     var call = new InstrCallNode(target, fieldsOrAccesses, argExprs);
+    call.setSourceLocation(statement.location());
     call = addToGraph(call);
     return SubgraphContext.of(statement, call);
   }
