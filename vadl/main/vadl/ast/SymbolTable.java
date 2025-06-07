@@ -925,13 +925,14 @@ class SymbolTable {
 
 
       if (definition.annotation == null) {
-        // FIXME: Show the usage strings and not just the names.
         var suggestions = Levenshtein.suggestions(
             definition.name(),
-            AnnotationTable.availableAnnotationNames(definition.target.getClass()));
+            AnnotationTable.availableAnnotationDeclarations(definition.target.getClass()),
+            AnnotationDeclaration::name
+        ).stream().map(AnnotationDeclaration::usageString).toList();
 
         var diagnostic =
-            error("Unknown Annotation: \"%s\"".formatted(definition.name()), definition)
+            error("Unknown Annotation: `%s`".formatted(definition.name()), definition)
                 .locationDescription(definition.location(),
                     "No annotation with this name exists on %s",
                     definition.target)

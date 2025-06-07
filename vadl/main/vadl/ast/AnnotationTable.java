@@ -173,6 +173,14 @@ class AnnotationTable {
     return annotation;
   }
 
+  static List<AnnotationDeclaration> availableAnnotationDeclarations(
+      Class<? extends Definition> klass) {
+    return annotationFactories.getOrDefault(klass, Map.of())
+        .values().stream().map(Supplier::get)
+        .map(annotation -> (AnnotationDeclaration) annotation)
+        .toList();
+  }
+
   static List<String> availableAnnotationNames(Class<? extends Definition> klass) {
     return annotationFactories.getOrDefault(klass, Map.of()).keySet().stream().toList();
   }
