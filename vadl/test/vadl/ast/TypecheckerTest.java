@@ -584,6 +584,53 @@ public class TypecheckerTest {
 
 
   @Test
+  public void extendedLongMultiplyTest() {
+    var prog = """
+        instruction set architecture Test = {
+          register X : Bits<5> -> Bits<64>       // general purpose register file with stack pointer
+          format ThreeRegOpFormat: Bits<32> =    // three register operand format
+            { sf       [31]                      // size field, if (sf = 0) 32 bit operation else 64 bit
+            , op       [30..21,15..10]           // opcode
+            , rm       [20..16]                  // 2nd source register
+            , rn       [9..5]                    // 1st source register
+            , rd       [4..0]                    // destination register
+            }
+        
+          model ThreeRegOpEncAsm (i: Id, op: Lit): IsaDefs = {
+            encoding $i = { op = $op, sf = 1 }
+            assembly $i = (mnemonic, ' ', register(rd), ', ', register(rn), ', ', register(rm))
+            }
+        
+          model ThreeRegOp (i: Id, op: Lit): IsaDefs = {
+            instruction $i : ThreeRegOpFormat =
+              let result = VADL::$i (X(rn), X(rm)) in
+                X(rd) := result(127..64)
+            $ThreeRegOpEncAsm ($i; $op)
+            }
+        
+          model ThreeRegOpFlags (i: Id, op: Lit): IsaDefs = {
+            instruction $i : ThreeRegOpFormat =
+              let result, flags = VADL::$i (X(rn), X(rm)) in
+                X(rd) := result(127..64)
+            $ThreeRegOpEncAsm ($i; $op)
+            }
+        
+          $ThreeRegOp (smull;  0)
+          $ThreeRegOp (umull;  1)
+          $ThreeRegOp (sumull; 2)
+          $ThreeRegOpFlags (smulls;  10)
+          $ThreeRegOpFlags (umulls;  11)
+          $ThreeRegOpFlags (sumulls; 12)
+        } 
+        """;
+    var ast = Assertions.assertDoesNotThrow(() -> VadlParser.parse(prog), "Cannot parse input");
+    new ModelRemover().removeModels(ast);
+    var typechecker = new TypeChecker();
+    Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
+  }
+
+
+  @Test
   public void functionDefinition() {
     var prog = """
         function addOne(n: SInt<8>) -> SInt<8> = n + 1 
@@ -1049,4 +1096,6 @@ public class TypecheckerTest {
     var typechecker = new TypeChecker();
     Assertions.assertDoesNotThrow(() -> typechecker.verify(ast), "Program isn't typesafe");
   }
+
+
 }
