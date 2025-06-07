@@ -18,7 +18,7 @@ package vadl.cppCodeGen.common;
 
 import vadl.cppCodeGen.CppTypeMap;
 import vadl.cppCodeGen.context.CGenContext;
-import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
+import vadl.cppCodeGen.model.GcbCppFunctionBodyLess;
 import vadl.cppCodeGen.model.GcbImmediateExtractionCppFunction;
 import vadl.types.BitsType;
 import vadl.viam.Format;
@@ -28,23 +28,23 @@ import vadl.viam.graph.dependency.SliceNode;
 
 /**
  * Produce a pure function that allows to access format field references.
- * It generates code for accessing fields or extracting fields from instructions.
+ * It generates code for accessing fields or predicating fields from instructions.
  */
-public class GcbAccessOrExtractionFunctionCodeGenerator extends AccessFunctionCodeGenerator {
+public class GcbAccessOrPredicateFunctionCodeGenerator extends AccessFunctionCodeGenerator {
 
   /**
    * Constructor.
    */
-  public GcbAccessOrExtractionFunctionCodeGenerator(GcbCppFunctionForFieldAccess accessFunction,
-                                                    Format.FieldAccess fieldAccess,
-                                                    String functionName) {
+  public GcbAccessOrPredicateFunctionCodeGenerator(GcbCppFunctionBodyLess accessFunction,
+                                                   Format.FieldAccess fieldAccess,
+                                                   String functionName) {
     super(accessFunction, fieldAccess, functionName);
   }
 
   /**
    * Constructor.
    */
-  public GcbAccessOrExtractionFunctionCodeGenerator(
+  public GcbAccessOrPredicateFunctionCodeGenerator(
       GcbImmediateExtractionCppFunction extractionFunction,
       Format.FieldAccess fieldAccess,
       String functionName) {

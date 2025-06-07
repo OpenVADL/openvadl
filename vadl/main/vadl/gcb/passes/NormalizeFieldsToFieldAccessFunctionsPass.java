@@ -87,7 +87,6 @@ public class NormalizeFieldsToFieldAccessFunctionsPass extends Pass {
                 var fieldAccess = new Format.FieldAccess(
                     id,
                     createAccessFunction(id, fieldRefNode),
-                    null, // can be automatically generated
                     createPredicateFunction(id, fieldRefNode)
                 );
                 instruction.format().fieldAccesses().add(fieldAccess);

@@ -17,10 +17,11 @@
 package vadl.lcb.template.utils;
 
 import java.util.Map;
-import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
-import vadl.gcb.passes.typeNormalization.CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass;
+import vadl.cppCodeGen.model.GcbCppFunctionBodyLess;
+import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
+import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
+import vadl.lcb.passes.llvmLowering.tablegen.model.TableGenImmediateRecord;
 import vadl.pass.PassResults;
-import vadl.viam.Format;
 
 /**
  * Utility class for decodings.
@@ -29,10 +30,18 @@ public class ImmediateDecodingFunctionProvider {
   /**
    * Get the decoding functions.
    */
-  public static Map<Format.Field, GcbCppFunctionForFieldAccess> generateDecodeFunctions(
+  public static Map<TableGenImmediateRecord, GcbCppFunctionWithBody> generateDecodeFunctions(
       PassResults passResults) {
-    return ((CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass.Output)
-        passResults.lastResultOf(CreateGcbFieldAccessCppFunctionFromDecodeFunctionPass.class))
-        .byField();
+    return ((CreateFunctionsFromImmediatesPass.Output)
+        passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).decodings();
+  }
+
+  /**
+   * Get the decoding wrapper functions.
+   */
+  public static Map<TableGenImmediateRecord, GcbCppFunctionBodyLess> generateDecodeWrapperFunctions(
+      PassResults passResults) {
+    return ((CreateFunctionsFromImmediatesPass.Output)
+        passResults.lastResultOf(CreateFunctionsFromImmediatesPass.class)).decodingWrappers();
   }
 }

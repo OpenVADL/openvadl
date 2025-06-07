@@ -34,6 +34,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.6")
     implementation("commons-io:commons-io:2.16.1")
     implementation("org.apache.commons:commons-lang3:3.17.0")
+    implementation("org.apache.commons:commons-text:1.10.0")
 
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))

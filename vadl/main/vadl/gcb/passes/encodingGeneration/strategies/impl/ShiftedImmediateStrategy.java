@@ -20,13 +20,15 @@ import vadl.gcb.passes.encodingGeneration.strategies.EncodingGenerationStrategy;
 import vadl.types.BuiltInTable;
 import vadl.viam.Constant;
 import vadl.viam.Format;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.ViamError;
+import vadl.viam.graph.Graph;
 import vadl.viam.graph.control.ReturnNode;
 import vadl.viam.graph.control.StartNode;
 import vadl.viam.graph.dependency.BuiltInCall;
 import vadl.viam.graph.dependency.ConstantNode;
 import vadl.viam.graph.dependency.ExpressionNode;
-import vadl.viam.graph.dependency.FuncParamNode;
+import vadl.viam.graph.dependency.FieldAccessRefNode;
 import vadl.viam.graph.dependency.SliceNode;
 
 /**
@@ -65,13 +67,13 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
   }
 
   @Override
-  public void generateEncoding(Format.FieldAccess fieldAccess) {
-    var parameter = setupEncodingForFieldAccess(fieldAccess);
+  public void generateEncoding(PrintableInstruction printableInstruction,
+                               Format.FieldAccess fieldAccess) {
     var accessFunction = fieldAccess.accessFunction();
     var fieldRef = fieldAccess.fieldRef();
 
     var originalShift =
-        (BuiltInCall) accessFunction.behavior().getNodes(BuiltInCall.class).findFirst().get();
+        accessFunction.behavior().getNodes(BuiltInCall.class).findFirst().get();
     var shiftValue =
         ((Constant.Value) ((ConstantNode) originalShift.arguments()
             .get(1)).constant()).integer();
@@ -86,7 +88,9 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
       var lowerBound = shiftValue.intValue();
       var slice = new Constant.BitSlice(
           Constant.BitSlice.Part.of(upperBound, lowerBound));
-      invertedSliceNode = new SliceNode(new FuncParamNode(parameter), slice, fieldRef.type());
+      invertedSliceNode =
+          new SliceNode(new FieldAccessRefNode(fieldAccess, fieldAccess.type()), slice,
+              fieldRef.type());
     } else {
       throw new ViamError("Inverting builtin is not supported");
     }
@@ -94,12 +98,9 @@ public class ShiftedImmediateStrategy implements EncodingGenerationStrategy {
     var returnNode = new ReturnNode(invertedSliceNode);
     var startNode = new StartNode(returnNode);
 
-    var encoding = fieldAccess.encoding();
-    if (encoding != null && encoding.behavior() != null) {
-      encoding.behavior().addWithInputs(returnNode);
-      encoding.behavior().add(startNode);
-    } else {
-      throw new ViamError("An encoding must already exist");
-    }
+    var behavior = new Graph("Generated encoding of " + fieldAccess.simpleName());
+    behavior.addWithInputs(returnNode);
+    behavior.add(startNode);
+    setFieldEncoding(printableInstruction, fieldAccess, behavior);
   }
 }

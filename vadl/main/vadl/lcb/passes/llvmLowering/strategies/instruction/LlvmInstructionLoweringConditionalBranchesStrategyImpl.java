@@ -55,6 +55,7 @@ import vadl.lcb.passes.llvmLowering.tablegen.model.tableGenOperand.TableGenInstr
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
@@ -80,8 +81,9 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
   }
 
   @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
-    return replacementHooksWithFieldAccessWithBasicBlockReplacement();
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
+      PrintableInstruction instruction) {
+    return replacementHooksWithFieldAccessWithBasicBlockReplacement(instruction);
   }
 
   @Override
@@ -90,7 +92,7 @@ public class LlvmInstructionLoweringConditionalBranchesStrategyImpl
       Instruction instruction,
       Graph uninlinedBehavior,
       Abi abi) {
-    var visitor = replacementHooks();
+    var visitor = replacementHooks(instruction);
     var copy = uninlinedBehavior.copy();
 
     for (var node : copy.getNodes(SideEffectNode.class).toList()) {

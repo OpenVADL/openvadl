@@ -114,7 +114,8 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
 
           var instrCallNode = getInstrCallNodeOrThrowError(pseudo);
           var fieldAccess = getFieldAccessFunctionFromFormatOrThrowError(instrCallNode);
-          var fieldAccessNode = new LlvmFieldAccessRefNode(fieldAccess,
+          var fieldAccessNode = new LlvmFieldAccessRefNode(pseudo,
+              fieldAccess,
               fieldAccess.type(),
               upcastFieldAccess(fieldAccess),
               LlvmFieldAccessRefNode.Usage.BasicBlock);
@@ -161,11 +162,15 @@ public class LlvmPseudoInstructionLoweringUnconditionalJumpsStrategyImpl extends
     var upcasted = upcastFieldAccess(fieldAccess);
 
     selector.addWithInputs(
-        new LlvmBrSD(new LlvmBasicBlockSD(fieldAccess, fieldAccess.type(), upcasted)));
+        new LlvmBrSD(new LlvmBasicBlockSD(
+            pseudo,
+            fieldAccess,
+            fieldAccess.type(),
+            upcasted)));
     machine.addWithInputs(new LcbPseudoInstructionNode(
         new NodeList<>(
             new LcbMachineInstructionParameterNode(new TableGenInstructionBareSymbolOperand(
-                new LlvmBasicBlockSD(fieldAccess, fieldAccess.type(), upcasted),
+                new LlvmBasicBlockSD(pseudo, fieldAccess, fieldAccess.type(), upcasted),
                 fieldAccess.simpleName()))
         ), pseudo));
 

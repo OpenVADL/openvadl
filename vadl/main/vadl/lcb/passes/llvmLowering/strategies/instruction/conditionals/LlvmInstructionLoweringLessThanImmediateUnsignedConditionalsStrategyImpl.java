@@ -40,6 +40,7 @@ import vadl.types.BuiltInTable;
 import vadl.viam.Abi;
 import vadl.viam.Constant;
 import vadl.viam.Instruction;
+import vadl.viam.PrintableInstruction;
 import vadl.viam.RegisterTensor;
 import vadl.viam.graph.Graph;
 import vadl.viam.graph.GraphVisitor;
@@ -69,8 +70,9 @@ public class LlvmInstructionLoweringLessThanImmediateUnsignedConditionalsStrateg
   }
 
   @Override
-  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks() {
-    return replacementHooksWithDefaultFieldAccessReplacement();
+  protected List<GraphVisitor.NodeApplier<? extends Node, ? extends Node>> replacementHooks(
+      PrintableInstruction printableInstruction) {
+    return replacementHooksWithDefaultFieldAccessReplacement(printableInstruction);
   }
 
   @Override

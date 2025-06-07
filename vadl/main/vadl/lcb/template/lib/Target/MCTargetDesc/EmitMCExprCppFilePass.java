@@ -21,14 +21,13 @@ import static vadl.viam.ViamError.ensure;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import vadl.configuration.LcbConfiguration;
 import vadl.gcb.valuetypes.VariantKind;
+import vadl.lcb.passes.llvmLowering.CreateFunctionsFromImmediatesPass;
 import vadl.lcb.passes.relocation.GenerateLinkerComponentsPass;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.lcb.template.utils.BaseInfoFunctionProvider;
-import vadl.lcb.template.utils.ImmediateDecodingFunctionProvider;
 import vadl.pass.PassResults;
 import vadl.template.Renderable;
 import vadl.viam.Specification;
@@ -69,6 +68,8 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
                                                 Specification specification) {
     var output = (GenerateLinkerComponentsPass.Output) passResults.lastResultOf(
         GenerateLinkerComponentsPass.class);
+    var immediateOutput = (CreateFunctionsFromImmediatesPass.Output) passResults.lastResultOf(
+        CreateFunctionsFromImmediatesPass.class);
     var variantKinds = output.variantKinds().stream().map(x -> Map.of(
         "human", x.human(),
         "value", x.value()
@@ -80,9 +81,8 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
         .map(VariantKind::value)
         .toList();
 
-
     var baseInfos = BaseInfoFunctionProvider.getBaseInfoRecords(passResults);
-    var decodeMappings = decodeMappings(passResults, specification, output);
+    var decodeMappings = decodeMappings(output, immediateOutput);
 
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
@@ -101,23 +101,20 @@ public class EmitMCExprCppFilePass extends LcbTemplateRenderingPass {
    * apply the correct decode function for the variant kind.
    * see: {@link EmitMCInstExpanderCppFilePass}, {@link EmitMCCodeEmitterCppFilePass}
    */
-  List<DecodeMapping> decodeMappings(PassResults passResults, Specification specification,
-                                     GenerateLinkerComponentsPass.Output output) {
+  private List<DecodeMapping> decodeMappings(GenerateLinkerComponentsPass.Output output,
+                                     CreateFunctionsFromImmediatesPass.Output immediates) {
 
     var decodeVariantKinds = output.variantKindStore().decodeVariantKinds();
-    var decodeFunctions = ImmediateDecodingFunctionProvider.generateDecodeFunctions(passResults);
 
-    var fieldAccesses = specification.isa().map(isa -> isa.ownFormats().stream()).orElseGet(
-        Stream::empty).flatMap(formats -> formats.fieldAccesses().stream());
-
-    return fieldAccesses.map(
-        fieldAccess -> {
+    return immediates.decodings().keySet().stream()
+        .map(immediateRecord -> {
+          var fieldAccess = immediateRecord.fieldAccessRef();
+          var decodeFunction = immediateRecord.decoderMethod().lower();
           var variantKind = decodeVariantKinds.get(fieldAccess);
-          var decodeFunction = decodeFunctions.get(fieldAccess.fieldRef());
-          ensure(variantKind != null, "No variant kind found for field access: %s", fieldAccess);
-          ensure(decodeFunction != null,
-              "No decode function found for field access: %s", fieldAccess);
-          return new DecodeMapping(variantKind.value(), decodeFunction.functionName().lower());
+          ensure(variantKind != null, "No variant kind found for field access: %s",
+              fieldAccess);
+          return new DecodeMapping(variantKind.value(),
+              decodeFunction);
         }).toList();
   }
 }

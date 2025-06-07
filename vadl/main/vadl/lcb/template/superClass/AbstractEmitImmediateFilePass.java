@@ -23,9 +23,8 @@ import static vadl.lcb.template.utils.ImmediatePredicateFunctionProvider.generat
 import java.io.IOException;
 import java.util.Map;
 import vadl.configuration.LcbConfiguration;
-import vadl.cppCodeGen.common.GcbAccessOrExtractionFunctionCodeGenerator;
 import vadl.cppCodeGen.model.CppFunctionName;
-import vadl.cppCodeGen.model.GcbCppFunctionForFieldAccess;
+import vadl.cppCodeGen.model.GcbCppFunctionWithBody;
 import vadl.lcb.template.CommonVarNames;
 import vadl.lcb.template.LcbTemplateRenderingPass;
 import vadl.pass.PassResults;
@@ -51,7 +50,7 @@ public abstract class AbstractEmitImmediateFilePass extends LcbTemplateRendering
     var decodeFunctionNames = decodeFunctions
         .values()
         .stream()
-        .map(GcbCppFunctionForFieldAccess::functionName)
+        .map(x -> x.header().functionName())
         .map(CppFunctionName::lower)
         .sorted()
         .toList();
@@ -59,22 +58,17 @@ public abstract class AbstractEmitImmediateFilePass extends LcbTemplateRendering
     return Map.of(CommonVarNames.NAMESPACE,
         lcbConfiguration().targetName().value().toLowerCase(),
         "decodeFunctions",
-        decodeFunctions.values().stream().map(x ->
-                new GcbAccessOrExtractionFunctionCodeGenerator(x,
-                    x.fieldAccess(),
-                    x.identifier.lower()).genFunctionDefinition())
+        decodeFunctions.values().stream().map(GcbCppFunctionWithBody::code)
             .sorted()
             .toList(),
         "decodeFunctionNames", decodeFunctionNames,
         "encodeFunctions",
         encodeFunctions.values().stream()
-            .map(x -> new GcbAccessOrExtractionFunctionCodeGenerator(x, x.fieldAccess(),
-                x.identifier.lower()).genFunctionDefinition())
+            .map(GcbCppFunctionWithBody::code)
             .sorted()
             .toList(),
         "predicateFunctions", predicateFunctions.values().stream()
-            .map(x -> new GcbAccessOrExtractionFunctionCodeGenerator(x, x.fieldAccess(),
-                x.identifier.lower()).genFunctionDefinition())
+            .map(GcbCppFunctionWithBody::code)
             .sorted()
             .toList());
   }
