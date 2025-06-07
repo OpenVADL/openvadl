@@ -20,6 +20,7 @@ import com.google.errorprone.annotations.FormatMethod;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import vadl.utils.SourceLocation;
 import vadl.utils.WithLocation;
 
@@ -162,12 +163,16 @@ public class DiagnosticBuilder extends Throwable {
       return this;
     }
 
-    if (items.size() == 1) {
-      return this.help("Did you maybe mean: %s", items.getFirst());
+    var text = String.join(", ", items);
+    if (text.length() > 40) {
+      text = items.stream().map(item -> "\n    - " + item).collect(Collectors.joining());
     }
 
+    if (items.size() == 1) {
+      return this.help("Did you maybe mean: %s", text);
+    }
 
-    return this.help("Did you maybe mean one of: %s", String.join(", ", items));
+    return this.help("Did you maybe mean one of: %s", text);
   }
 
   public Diagnostic build() {

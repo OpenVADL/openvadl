@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -44,19 +45,21 @@ public class Levenshtein {
    * @return a sorted list of ranked pairs consisting of each string from the dictionary and its
    *     corresponding edit distance to the target
    */
-  public static List<Pair<String, Integer>> rank(String target, Collection<String> dictionary,
-                                                 @Nullable Integer maxSolutions,
-                                                 @Nullable Double maxChange) {
+  public static <T> List<Pair<T, Integer>> rank(String target, Iterable<T> dictionary,
+                                                java.util.function.Function<T, String> toString,
+                                                @Nullable Integer maxSolutions,
+                                                @Nullable Double maxChange) {
 
     @Nullable Long upperBound =
         maxChange != null ? Math.round(target.length() * maxChange) : null;
 
-    List<Pair<String, Integer>> results = new ArrayList<>(dictionary.size());
+    List<Pair<T, Integer>> results = new ArrayList<>();
 
     var lastRow = new int[target.length() + 1];
     var currentRow = new int[target.length() + 1];
 
-    for (String word : dictionary) {
+    for (var item : dictionary) {
+      var word = toString.apply(item);
 
       // Init the last row (since the current row will be moved into the last row first thing in
       // the loop below we actually have to write to the current row).
@@ -94,7 +97,7 @@ public class Levenshtein {
       // just take as the upperbound the cost of the worst word in our selection we already found.
 
       var cost = currentRow[target.length()];
-      results.add(new Pair<>(word, cost));
+      results.add(new Pair<>(item, cost));
     }
 
     results.sort(Comparator.comparingInt(Pair::right));
@@ -110,15 +113,28 @@ public class Levenshtein {
   }
 
   /**
-   * Computes the <a href ="https://en.wikipedia.org/wiki/Levenshtein_distance">Levenshtein
-   * distance</a> (edit distance) between two strings.
+   * Computes the <a href ="https://en.wikipedia.org/wiki/Levenshtein_distance"></a> (edit distance) between two strings.
    *
    * @param first  the first string to be compared
    * @param second the second string to be compared
    * @return the Levenshtein distance between the two strings
    */
   public static int distance(String first, String second) {
-    return rank(first, List.of(second), null, null).getFirst().right();
+    return rank(first, List.of(second), Function.identity(), null, null).getFirst().right();
+  }
+
+  /**
+   * Sorts a list of strings based on their similarity to a target string using
+   * the Levenshtein distance (edit distance).
+   *
+   * @param target     the target string to which the dictionary strings are compared
+   * @param dictionary the list of strings to be sorted
+   * @param toString   a function to map the dictionary to strings
+   * @return a sorted list of strings
+   */
+  public static <T> List<T> sortAll(String target, Iterable<T> dictionary,
+                                    Function<T, String> toString) {
+    return rank(target, dictionary, toString, null, null).stream().map(Pair::left).toList();
   }
 
   /**
@@ -129,8 +145,29 @@ public class Levenshtein {
    * @param dictionary the list of strings to be sorted
    * @return a sorted list of strings
    */
-  public static List<String> sortAll(String target, Collection<String> dictionary) {
-    return rank(target, dictionary, null, null).stream().map(Pair::left).toList();
+  public static List<String> sortAll(String target, Iterable<String> dictionary) {
+    return rank(target, dictionary, Function.identity(), null, null).stream().map(Pair::left)
+        .toList();
+  }
+
+  /**
+   * An opinionated fuzzy string search used for suggestions based on the Levenshtein distance.
+   * Used as the default in the open-vadl compiler to generate suggestions.
+   *
+   * <p>If a variable cannot be found, this method can be used to find similarly named variables
+   * and suggest them in the error message.
+   *
+   * <p>Be aware that potentially none of the provided options are close enough and an empty list
+   * might be returned.
+   *
+   * @param target     against which the available options should be compared against.
+   * @param dictionary of all available options.
+   * @param toString   a function to map the dictionary to strings
+   * @return a sorted list to be provided as suggestions.
+   */
+  public static <T> List<T> suggestions(String target, Iterable<T> dictionary,
+                                        java.util.function.Function<T, String> toString) {
+    return rank(target, dictionary, toString, 6, 0.5).stream().map(Pair::left).toList();
   }
 
   /**
@@ -148,6 +185,6 @@ public class Levenshtein {
    * @return a sorted list to be provided as suggestions.
    */
   public static List<String> suggestions(String target, Collection<String> dictionary) {
-    return rank(target, dictionary, 6, 0.5).stream().map(Pair::left).toList();
+    return suggestions(target, dictionary, Function.identity());
   }
 }

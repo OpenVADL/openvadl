@@ -1204,7 +1204,13 @@ class BehaviorLowering implements StatementVisitor<SubgraphContext>, ExprVisitor
   @Override
   public SubgraphContext visit(InstructionCallStatement statement) {
     if (statement.instrDef instanceof PseudoInstructionDefinition) {
-      throw new IllegalStateException("The behavior generator doesn't implement yet");
+      // FIXME: Implement flattening as described in
+      // https://github.com/OpenVADL/openvadl/issues/312
+      // This will require a lot of special handling as we have to create datastrucutres for a
+      // "stack" that holds the arguments, and implementing recursive calls.
+      throw error("Not yet supported", statement)
+          .locationDescription(statement, "Calling pseudo instructions isn't supported yet.")
+          .build();
     }
 
     var target =
