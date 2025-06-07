@@ -78,6 +78,20 @@ public class BitPattern implements Vector<PBit>, Predicate<BitVector> {
   }
 
   /**
+   * Creates an 'empty' bit pattern, i.e.: one where all bits are set to <i>don't care</i>.
+   *
+   * @param width The width of the bit pattern
+   * @return The empty bit pattern
+   */
+  public static BitPattern empty(int width) {
+    final PBit[] bits = new PBit[width];
+    for (int i = 0; i < width; i++) {
+      bits[i] = new PBit(PBit.Value.DONT_CARE);
+    }
+    return new BitPattern(bits);
+  }
+
+  /**
    * Convert a bit pattern to a bit vector. This is a helper method to convert the bit pattern with
    * potentially ignored (don't care) bits to a bit vector. All bits not set to 'don't care' will
    * be set to 1 in the resulting bit vector.
