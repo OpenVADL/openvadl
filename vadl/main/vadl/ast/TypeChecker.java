@@ -24,7 +24,6 @@ import static vadl.error.Diagnostic.warning;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -36,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import vadl.error.DeferredDiagnosticStore;
@@ -288,6 +288,18 @@ public class TypeChecker
       return true;
     }
 
+    // Tensors need special rules for casting
+    if (from instanceof TensorType fromTensor && to instanceof TensorType toTensor) {
+      return fromTensor.flattenBitsType().equals(toTensor.flattenBitsType());
+    }
+    if (from instanceof TensorType fromTensor && to instanceof BitsType toBits) {
+      return fromTensor.flattenBitsType().equals(toBits);
+    }
+    if (from instanceof BitsType fromBits && to instanceof TensorType toTensor) {
+      return toTensor.flattenBitsType().equals(fromBits);
+    }
+
+    // Casting rules for basic types
     var castTable = Map.of(
         ConstantType.class, List.of(BitsType.class, BoolType.class),
         BitsType.class, List.of(BitsType.class, BoolType.class),
@@ -2399,28 +2411,73 @@ public class TypeChecker
   private Type parseTypeLiteral(TypeLiteral expr, @Nullable Integer preferredBitWidth) {
     var base = expr.baseType.pathToString();
 
-    if (base.equals("Bool")) {
-      if (!expr.sizeIndices.isEmpty()) {
-        throw error("Invalid Type Notation", expr.location())
-            .description("The Bool type doesn't use the size notation as it is always one bit.")
-            .build();
-      }
-      return Type.bool();
+    // 1. Check whether the base exists.
+    var builtinBases = List.of("Bool", "String", "Bits", "UInt", "SInt");
+    var customTarget = expr.symbolTable().findAs(expr.baseType, Node.class);
+    if (!(customTarget instanceof UsingDefinition) && !(customTarget instanceof FormatDefinition)) {
+      customTarget = null;
     }
 
-    if (base.equals("String")) {
-      if (!expr.sizeIndices.isEmpty()) {
-        throw error("Invalid Type Notation", expr.location())
-            .description("The String type doesn't use the size notation.")
-            .build();
-      }
-      return Type.string();
+    if (!builtinBases.contains(base) && customTarget == null) {
+      var candidateTypes = new ArrayList<>(builtinBases);
+      candidateTypes.addAll(
+          expr.symbolTable().allSymbolNamesOf(FormatDefinition.class, UsingDefinition.class));
+      var suggestions =
+          Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
+
+      throw error("Unknown Type `%s`".formatted(base), expr)
+          .locationDescription(expr, "No type with that name exists.")
+          .suggestions(suggestions)
+          .build();
     }
 
-    // The basic types SINT<n>, UINT<n> and BITS<n>
-    if (Arrays.asList("SInt", "UInt", "Bits").contains(base)) {
+    // 2. Calculate the sizes
+    var sizes = expr.sizeIndices.stream().map(sizeExpr -> {
+      check(sizeExpr);
+      var size = constantEvaluator.eval(sizeExpr).value().intValueExact();
 
-      if (expr.sizeIndices.isEmpty() && preferredBitWidth == null) {
+      if (size < 1) {
+        throw error("Invalid Type Notation", sizeExpr.location())
+            .locationDescription(sizeExpr.location(),
+                "Width must of a %s must be greater or equal 1 but was %d", base, size)
+            .build();
+      }
+
+      return size;
+    }).toList();
+
+
+    // For the builtin bits types we can infer the size (sometimes)
+    if (List.of("Bits", "SInt", "UInt").contains(base)
+        && expr.sizeIndices.isEmpty()
+        && preferredBitWidth != null) {
+
+      sizes = List.of(preferredBitWidth);
+    }
+
+    // 3. Create the builtin types
+    Map<String, Supplier<Type>> unSizedBuiltins = Map.of(
+        "Bool", Type::bool,
+        "String", Type::string);
+
+    if (unSizedBuiltins.containsKey(base)) {
+      if (!sizes.isEmpty()) {
+        throw error("Invalid Type Notation", expr.location())
+            .description("The %s type doesn't use the size notation.", base)
+            .help("Try removing the size parameter here.")
+            .build();
+      }
+      return unSizedBuiltins.get(base).get();
+    }
+
+    Map<String, Function<Integer, BitsType>> sizedBuiltins = Map.of(
+        "Bits", Type::bits,
+        "SInt", Type::signedInt,
+        "UInt", Type::unsignedInt
+    );
+
+    if (sizedBuiltins.containsKey(base)) {
+      if (sizes.isEmpty()) {
         throw error("Invalid Type Notation", expr.location())
             .description(
                 "Unsized `%s` can only be used in special places when it's obvious what the bit"
@@ -2430,63 +2487,39 @@ public class TypeChecker
             .build();
       }
 
-      if (!expr.sizeIndices.isEmpty() && expr.sizeIndices.size() != 1) {
-        throw error("Invalid Type Notation", expr.location())
-            .description("The %s type requires exactly one size parameter.", base)
-            .build();
+      if (sizes.size() == 1) {
+        return sizedBuiltins.get(base).apply(sizes.getFirst());
       }
 
-      int bitWidth;
-      if (!expr.sizeIndices.isEmpty()) {
-        var widthExpr = expr.sizeIndices.getFirst();
-        check(widthExpr);
-        bitWidth = constantEvaluator.eval(widthExpr).value().intValueExact();
+      return new TensorType(sizes.subList(0, sizes.size() - 1),
+          sizedBuiltins.get(base).apply(sizes.getLast()));
+    }
 
-        if (bitWidth < 1) {
-          throw error("Invalid Type Notation", widthExpr.location())
-              .locationDescription(widthExpr.location(),
-                  "Width must of a %s must be greater than 1 but was %s", base, bitWidth)
-              .build();
-        }
-      } else {
-        bitWidth = requireNonNull(preferredBitWidth);
+    // 4. Create the custom types
+    Type customTargetType = switch (requireNonNull(customTarget)) {
+      case UsingDefinition usingDef -> check(usingDef.typeLiteral);
+      case FormatDefinition formatDef -> {
+        check(formatDef);
+        yield new FormatType(formatDef);
       }
+      default -> throw new IllegalStateException("Unexpected value: " + customTarget);
+    };
 
-      return switch (base) {
-        case "SInt" -> Type.signedInt(bitWidth);
-        case "UInt" -> Type.unsignedInt(bitWidth);
-        case "Bits" -> Type.bits(bitWidth);
-        default -> throw new IllegalStateException("Unexpected value: " + base);
-      };
+    if (sizes.isEmpty()) {
+      return customTargetType;
     }
 
-    // Find the type from the symbol table
-    var typeTarget = expr.symbolTable().findAs(expr.baseType, Node.class);
-
-    if (typeTarget instanceof UsingDefinition usingDef) {
-      return check(usingDef.typeLiteral);
+    // Only some types can be used to create a tensor.
+    if (customTargetType instanceof BitsType customBits) {
+      return new TensorType(sizes, customBits);
     }
 
-    if (typeTarget instanceof FormatDefinition formatDef) {
-      check(formatDef);
-      return new FormatType(formatDef);
+    if (customTargetType instanceof TensorType customTensor) {
+      return new TensorType(sizes, customTensor);
     }
 
-    // Throw unknown type error
-    var sb = new StringBuilder();
-    expr.prettyPrint(0, sb);
-    var typeName = sb.toString();
-
-    var baseTypes = Arrays.asList("SInt", "UInt", "Bits", "String", "Bool");
-    var candidateTypes = new ArrayList<>(baseTypes);
-    candidateTypes.addAll(
-        expr.symbolTable().allSymbolNamesOf(FormatDefinition.class, UsingDefinition.class));
-    var suggestions =
-        Levenshtein.suggestions(expr.baseType.pathToString(), candidateTypes);
-
-    throw error("Unknown Type `%s`".formatted(typeName), expr)
-        .locationDescription(expr, "No type with that name exists.")
-        .suggestions(suggestions)
+    throw error("Invalid Tensor Type", expr)
+        .locationDescription(expr, "You can only create tensors from data types.")
         .build();
   }
 
