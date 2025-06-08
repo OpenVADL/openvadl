@@ -360,9 +360,9 @@ instruction set architecture AArch64Base = {
 
   model AddSubSftInstr (i: InstrWithFunct, size: Id, f: Flags): IsaDefs = {
     $AddSubSftInstrBase ($i; $size; $f; X(rm); imm6 = 0, shift = ShiftType::LSL; "") // TODO pseudo instruction
-    $AddSubSftInstrBase ($ExtInstrStr ($i; "LSL"); $size; $f; X(rm) << imm6;         shift = ShiftType::LSL; (", lsl #", decimal(imm6)))
-    $AddSubSftInstrBase ($ExtInstrStr ($i; "LSR"); $size; $f; X(rm) as UInt >> imm6; shift = ShiftType::LSR; (", lsr #", decimal(imm6)))
-    $AddSubSftInstrBase ($ExtInstrStr ($i; "ASR"); $size; $f; X(rm) as SInt >> imm6; shift = ShiftType::ASR; (", asr #", decimal(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "LSL"); $size; $f; X(rm) as Bits<Size::$size> << imm6; shift = ShiftType::LSL; (", lsl #", decimal(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "LSR"); $size; $f; X(rm) as UInt<Size::$size> >> imm6; shift = ShiftType::LSR; (", lsr #", decimal(imm6)))
+    $AddSubSftInstrBase ($ExtInstrStr ($i; "ASR"); $size; $f; X(rm) as SInt<Size::$size> >> imm6; shift = ShiftType::ASR; (", asr #", decimal(imm6)))
     }
 
 
