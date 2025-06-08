@@ -314,7 +314,7 @@ class MacroExpander
   public Expr visit(TypeLiteral expr) {
     var baseType = (IsId) expandExpr((Expr) expr.baseType);
     var sizeIndices = new ArrayList<>(expr.sizeIndices);
-    sizeIndices.replaceAll(this::expandExprs);
+    sizeIndices.replaceAll(this::expandExpr);
     return new TypeLiteral(baseType, sizeIndices, copyLoc(expr.location()));
   }
 
