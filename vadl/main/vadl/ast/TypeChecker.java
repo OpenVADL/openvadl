@@ -2430,8 +2430,7 @@ public class TypeChecker
             .build();
       }
 
-      if (!expr.sizeIndices.isEmpty()
-          && (expr.sizeIndices.size() != 1 || expr.sizeIndices.get(0).size() != 1)) {
+      if (!expr.sizeIndices.isEmpty() && expr.sizeIndices.size() != 1) {
         throw error("Invalid Type Notation", expr.location())
             .description("The %s type requires exactly one size parameter.", base)
             .build();
@@ -2439,7 +2438,7 @@ public class TypeChecker
 
       int bitWidth;
       if (!expr.sizeIndices.isEmpty()) {
-        var widthExpr = expr.sizeIndices.get(0).get(0);
+        var widthExpr = expr.sizeIndices.getFirst();
         check(widthExpr);
         bitWidth = constantEvaluator.eval(widthExpr).value().intValueExact();
 
