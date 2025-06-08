@@ -24,6 +24,6 @@ class FormatType extends BitsType {
 
   @Override
   public String toString() {
-    return "Format<\"%s\", %s>".formatted(format.identifier().name, format.typeLiteral.type);
+    return format.identifier().name;
   }
 }
