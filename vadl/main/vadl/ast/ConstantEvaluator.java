@@ -220,6 +220,12 @@ class ConstantEvaluator implements ExprVisitor<ConstantValue> {
   }
 
   @Override
+  public ConstantValue visit(TensorLiteral expr) {
+    throw new RuntimeException(
+        "Constant evaluator cannot evaluate %s yet.".formatted(expr.getClass().getSimpleName()));
+  }
+
+  @Override
   public ConstantValue visit(PlaceholderExpr expr) {
     throw new IllegalStateException(
         "The constant evaluator should never see a %s".formatted(expr.getClass().getSimpleName()));

@@ -261,6 +261,11 @@ class MacroExpander
   }
 
   @Override
+  public Expr visit(TensorLiteral expr) {
+    return new TensorLiteral(expandExprs(expr.children), copyLoc(expr.loc));
+  }
+
+  @Override
   public Expr visit(PlaceholderExpr expr) {
     Node arg = resolveArg(expr.segments);
     return Objects.requireNonNullElse((Expr) arg, expr);

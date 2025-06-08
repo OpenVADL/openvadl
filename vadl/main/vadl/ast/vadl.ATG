@@ -1653,6 +1653,7 @@ PRODUCTIONS
   literal<out Expr expr> (. expr = DUMMY_EXPR; .)
   = valLiteral<out expr>
   | stringLiteral<out expr>
+  | tensorLiteral<out expr>
   .
 
   valLiteral<out Expr expr> (. expr = DUMMY_EXPR; .)
@@ -1672,6 +1673,16 @@ PRODUCTIONS
   boolLiteral<out Expr expr> (. expr = DUMMY_EXPR; .)
   = TRUE                     (. expr = new BoolLiteral(true, lastTokenLoc()); .)
   | FALSE                    (. expr = new BoolLiteral(false, lastTokenLoc()); .)
+  .
+
+  tensorLiteral<out Expr expr>         (. var start = nextTokenLoc(); var children = new ArrayList<Expr>(); .)
+  = SYM_BRACK_OPEN
+  expression<out Expr child, BIN_OPS>       (. children.add(child); .)
+  {
+    SYM_COMMA
+    expression<out child, BIN_OPS>    (. children.add(child); .)
+  }
+  SYM_BRACK_CLOSE                       (. expr = new TensorLiteral(children, start.join(lastTokenLoc())); .)
   .
 
   referenceLiteral<out IsId reference>

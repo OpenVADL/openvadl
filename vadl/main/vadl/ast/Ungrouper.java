@@ -85,6 +85,12 @@ public class Ungrouper
   }
 
   @Override
+  public Expr visit(TensorLiteral expr) {
+    expr.children.replaceAll(e -> e.accept(this));
+    return expr;
+  }
+
+  @Override
   public Expr visit(PlaceholderExpr expr) {
     return expr;
   }
